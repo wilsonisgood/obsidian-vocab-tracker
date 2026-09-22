@@ -1,0 +1,10 @@
+{
+  "id": "vocab-tracker",
+  "name": "Vocab Tracker",
+  "version": "1.1.0",
+  "minAppVersion": "1.0.0",
+  "description": "Click any English word (or ==highlighted== word) in reading mode to track vocabulary. Review progress in a sidebar or vocab-list.md.",
+  "author": "will",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}
