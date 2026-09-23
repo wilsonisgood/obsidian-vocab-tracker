@@ -98,14 +98,12 @@ class VocabSidebarView extends ItemView {
   render() {
     const root = this.containerEl.children[1] as HTMLElement;
     root.empty();
-    root.style.cssText = "padding:12px;overflow-y:auto;height:100%;box-sizing:border-box;";
+    root.addClass("vocab-tracker-sidebar");
 
-    const header = root.createEl("div");
-    header.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;";
-    header.createEl("h4", { text: "Vocab Tracker" }).style.margin = "0";
-    const openList = header.createEl("span", { text: "📄" });
+    const header = root.createEl("div", { cls: "vocab-tracker-header" });
+    header.createEl("h4", { text: "Vocab Tracker" });
+    const openList = header.createEl("span", { text: "📄", cls: "vocab-tracker-icon-btn" });
     openList.title = "Open vocab-list.md";
-    openList.style.cssText = "cursor:pointer;font-size:1em;";
     openList.onclick = () => this.plugin.openVocabFile();
 
     const { entries } = this.plugin.vocabData;
@@ -115,23 +113,17 @@ class VocabSidebarView extends ItemView {
       const entry = entries.find(
         (e) => e.word.toLowerCase() === this.activeWord.toLowerCase()
       );
-      const card = root.createEl("div");
-      card.style.cssText =
-        "background:var(--background-secondary);padding:12px;border-radius:8px;margin-bottom:16px;";
+      const card = root.createEl("div", { cls: "vocab-tracker-card" });
 
-      const titleRow = card.createEl("div");
-      titleRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;";
-      titleRow.createEl("span", { text: this.activeWord }).style.cssText =
-        "font-size:1.1em;font-weight:bold;";
-      const close = titleRow.createEl("span", { text: "×" });
-      close.style.cssText = "cursor:pointer;color:var(--text-muted);font-size:1.2em;";
+      const titleRow = card.createEl("div", { cls: "vocab-tracker-card-header" });
+      titleRow.createEl("span", { text: this.activeWord, cls: "vocab-tracker-card-title" });
+      const close = titleRow.createEl("span", { text: "×", cls: "vocab-tracker-close-btn" });
       close.onclick = () => { this.activeWord = ""; this.render(); };
 
       if (entry) {
         this.renderEntryForm(card, entry);
       } else {
-        const btn = card.createEl("button", { text: "+ Add to vocab list" });
-        btn.style.cssText = "width:100%;padding:7px;cursor:pointer;border-radius:5px;font-size:0.9em;";
+        const btn = card.createEl("button", { text: "+ Add to vocab list", cls: "vocab-tracker-btn-block" });
         btn.onclick = async () => {
           await this.plugin.addWordToVocab(this.activeWord);
         };
@@ -152,19 +144,16 @@ class VocabSidebarView extends ItemView {
       scopeLabel = "This note";
     }
 
-    const listHeader = root.createEl("div");
-    listHeader.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:6px;";
+    const listHeader = root.createEl("div", { cls: "vocab-tracker-list-header" });
 
-    const countLabel = listHeader.createEl("div");
-    countLabel.style.cssText = "font-size:0.8em;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;";
+    const countLabel = listHeader.createEl("div", { cls: "vocab-tracker-count-label" });
     countLabel.textContent = `${scopeLabel} (${list.length})`;
 
-    const toggle = listHeader.createEl("div");
-    toggle.style.cssText = "display:flex;gap:4px;flex-shrink:0;";
+    const toggle = listHeader.createEl("div", { cls: "vocab-tracker-toggle-group" });
     const mkToggle = (label: string, mode: FilterMode) => {
       const on = this.filterMode === mode;
-      const b = toggle.createEl("span", { text: label });
-      b.style.cssText = `cursor:pointer;font-size:0.72em;padding:2px 8px;border-radius:10px;background:${on ? "var(--interactive-accent)" : "var(--background-secondary)"};color:${on ? "var(--text-on-accent)" : "var(--text-muted)"};`;
+      const b = toggle.createEl("span", { text: label, cls: "vocab-tracker-toggle-btn" });
+      b.toggleClass("is-active", on);
       b.onclick = () => {
         this.filterMode = mode;
         this.render();
@@ -174,42 +163,40 @@ class VocabSidebarView extends ItemView {
     mkToggle("All", "all");
 
     if (list.length === 0) {
-      const hint = root.createEl("div", {
+      root.createEl("div", {
         text:
           this.filterMode === "note" && canFilter
             ? "No tracked words from this note yet. Click an English word in reading mode to add one."
             : "Click an English word in reading mode to start tracking.",
+        cls: "vocab-tracker-hint",
       });
-      hint.style.cssText = "font-size:0.85em;color:var(--text-muted);line-height:1.5;";
       return;
     }
 
     for (const entry of list) {
-      const row = root.createEl("div");
       const isActive = entry.word.toLowerCase() === this.activeWord.toLowerCase();
-      row.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:7px 9px;margin-bottom:4px;border-radius:5px;cursor:pointer;background:${isActive ? "var(--interactive-accent)" : "var(--background-secondary)"};`;
+      const row = root.createEl("div", { cls: "vocab-tracker-row" });
+      row.toggleClass("is-active", isActive);
 
       const left = row.createEl("span");
-      const wordSpan = left.createEl("span", { text: entry.word });
-      wordSpan.style.color = isActive ? "var(--text-on-accent)" : "var(--text-normal)";
+      left.createEl("span", { text: entry.word, cls: "vocab-tracker-row-word" });
       if (entry.level) {
-        const badge = left.createEl("span", { text: entry.level });
-        badge.style.cssText = `margin-left:5px;font-size:0.7em;padding:1px 5px;border-radius:3px;vertical-align:middle;background:${isActive ? "rgba(255,255,255,.25)" : "var(--interactive-accent)"};color:${isActive ? "var(--text-on-accent)" : "var(--text-on-accent)"};`;
+        left.createEl("span", { text: entry.level, cls: "vocab-tracker-row-badge" });
       }
 
-      const right = row.createEl("span");
-      right.style.cssText = "display:flex;align-items:center;gap:6px;flex-shrink:0;";
+      const right = row.createEl("span", { cls: "vocab-tracker-row-actions" });
 
-      const speak = right.createEl("span", { text: "🔊" });
+      const speak = right.createEl("span", {
+        text: "🔊",
+        cls: ["vocab-tracker-speak-icon", "vocab-tracker-row-speak"],
+      });
       speak.title = "Pronounce";
-      speak.style.cssText = `cursor:pointer;font-size:0.95em;line-height:1;user-select:none;opacity:${isActive ? "1" : ".7"};`;
       speak.onclick = (e) => {
         e.stopPropagation();
         this.plugin.speakWord(entry);
       };
 
-      const del = right.createEl("span", { text: "×" });
-      del.style.cssText = `color:${isActive ? "rgba(255,255,255,.6)" : "var(--text-muted)"};padding:0 3px;font-size:1.1em;line-height:1;cursor:pointer;`;
+      const del = right.createEl("span", { text: "×", cls: "vocab-tracker-row-delete" });
       del.onclick = async (e) => {
         e.stopPropagation();
         await this.plugin.deleteEntry(entry);
@@ -227,25 +214,18 @@ class VocabSidebarView extends ItemView {
 
   renderEntryForm(container: HTMLElement, entry: VocabEntry) {
     // Phonetic / part of speech + pronounce
-    const sub = container.createEl("div");
-    sub.style.cssText = "display:flex;align-items:center;gap:8px;margin:-4px 0 10px;";
-    const subText = sub.createEl("span");
-    subText.style.cssText = "font-size:0.82em;color:var(--text-muted);";
+    const sub = container.createEl("div", { cls: "vocab-tracker-form-sub" });
+    const subText = sub.createEl("span", { cls: "vocab-tracker-form-subtext" });
     subText.textContent =
       [entry.phonetic, entry.partOfSpeech].filter(Boolean).join("  ·  ") || entry.word;
-    const speak = sub.createEl("span", { text: "🔊" });
+    const speak = sub.createEl("span", { text: "🔊", cls: "vocab-tracker-speak-icon" });
     speak.title = "Pronounce";
-    speak.style.cssText = "cursor:pointer;font-size:0.95em;line-height:1;user-select:none;";
     speak.onclick = () => this.plugin.speakWord(entry);
 
     // Level
-    const lvlWrap = container.createEl("div");
-    lvlWrap.style.marginBottom = "8px";
-    lvlWrap.createEl("div", { text: "Level" }).style.cssText =
-      "font-size:0.75em;color:var(--text-muted);margin-bottom:3px;";
-    const sel = lvlWrap.createEl("select");
-    sel.style.cssText =
-      "width:100%;padding:5px;background:var(--background-primary);color:var(--text-normal);border:1px solid var(--background-modifier-border);border-radius:4px;";
+    const lvlWrap = container.createEl("div", { cls: "vocab-tracker-field" });
+    lvlWrap.createEl("div", { text: "Level", cls: "vocab-tracker-field-label" });
+    const sel = lvlWrap.createEl("select", { cls: ["vocab-tracker-select", "vocab-tracker-field-box"] });
     for (const lvl of LEVELS) {
       const opt = sel.createEl("option", {
         text: lvl || "— not set —",
@@ -269,17 +249,14 @@ class VocabSidebarView extends ItemView {
     ];
 
     for (const f of textFields) {
-      const wrap = container.createEl("div");
-      wrap.style.marginBottom = "7px";
-      wrap.createEl("div", { text: f.label }).style.cssText =
-        "font-size:0.75em;color:var(--text-muted);margin-bottom:3px;";
-      const inp: any = wrap.createEl(f.multiline ? "textarea" : "input");
+      const wrap = container.createEl("div", { cls: "vocab-tracker-field" });
+      wrap.createEl("div", { text: f.label, cls: "vocab-tracker-field-label" });
+      const cls = ["vocab-tracker-input", "vocab-tracker-field-box"];
+      if (f.multiline) cls.push("vocab-tracker-textarea");
+      const inp: any = wrap.createEl(f.multiline ? "textarea" : "input", { cls });
       if (!f.multiline) inp.type = "text";
       inp.value = String((entry as any)[f.key] ?? "");
       inp.placeholder = f.label;
-      inp.style.cssText =
-        "width:100%;padding:5px;box-sizing:border-box;background:var(--background-primary);color:var(--text-normal);border:1px solid var(--background-modifier-border);border-radius:4px;font-size:0.9em;" +
-        (f.multiline ? "resize:vertical;min-height:46px;font-family:inherit;line-height:1.4;" : "");
       inp.onchange = async () => {
         (entry as any)[f.key] = inp.value;
         await this.plugin.saveVocab();
@@ -288,8 +265,7 @@ class VocabSidebarView extends ItemView {
 
     // Source link
     if (entry.source && entry.source.path) {
-      const src = container.createEl("div");
-      src.style.cssText = "font-size:0.8em;margin:8px 0 4px;cursor:pointer;color:var(--text-accent);";
+      const src = container.createEl("div", { cls: "vocab-tracker-source-link" });
       const name = entry.source.path.split("/").pop();
       src.textContent = `📍 ${name} : line ${entry.source.line + 1}`;
       src.title = "Jump to where this word was captured";
@@ -297,16 +273,12 @@ class VocabSidebarView extends ItemView {
     }
 
     // Meta + buttons
-    const meta = container.createEl("div");
-    meta.style.cssText =
-      "font-size:0.72em;color:var(--text-muted);margin:6px 0;";
+    const meta = container.createEl("div", { cls: "vocab-tracker-meta" });
     meta.textContent = `Added: ${entry.added}  ·  Reviewed: ${entry.lastReviewed} (${entry.reviews}×)`;
 
-    const btnRow = container.createEl("div");
-    btnRow.style.cssText = "display:flex;gap:6px;";
+    const btnRow = container.createEl("div", { cls: "vocab-tracker-btn-row" });
 
-    const btn = btnRow.createEl("button", { text: "✓ Mark as reviewed" });
-    btn.style.cssText = "flex:1;padding:6px;cursor:pointer;border-radius:5px;font-size:0.88em;";
+    const btn = btnRow.createEl("button", { text: "✓ Mark as reviewed", cls: "vocab-tracker-btn-flex" });
     btn.onclick = async () => {
       entry.lastReviewed = nowStamp();
       entry.reviews += 1;
@@ -314,9 +286,8 @@ class VocabSidebarView extends ItemView {
       this.render();
     };
 
-    const fetchBtn = btnRow.createEl("button", { text: "🔄 Fetch" });
+    const fetchBtn = btnRow.createEl("button", { text: "🔄 Fetch", cls: "vocab-tracker-btn" });
     fetchBtn.title = "Fetch dictionary data (definition, synonyms, phonetic)";
-    fetchBtn.style.cssText = "padding:6px 10px;cursor:pointer;border-radius:5px;font-size:0.88em;";
     fetchBtn.onclick = async () => {
       fetchBtn.textContent = "…";
       fetchBtn.disabled = true;
@@ -762,7 +733,7 @@ export default class VocabTrackerPlugin extends Plugin {
     el.querySelectorAll<HTMLElement>("mark").forEach((mark) => {
       const word = mark.textContent?.trim() ?? "";
       if (!word) return;
-      mark.style.cursor = "pointer";
+      mark.addClass("vocab-tracker-tracked-mark");
       mark.title = `Track "${word}" in Vocab Tracker`;
       mark.addEventListener("click", async () => {
         const leaf = await this.activateSidebar();
@@ -779,36 +750,34 @@ export default class VocabTrackerPlugin extends Plugin {
     _ctx: MarkdownPostProcessorContext
   ) {
     const { entries } = this.vocabData;
-    el.style.fontFamily = "inherit";
+    el.addClass("vocab-tracker-dashboard");
 
     if (entries.length === 0) {
       el.createEl("p", {
         text: "No words yet. Highlight ==words== in your notes and click them to start tracking.",
-      }).style.color = "var(--text-muted)";
+        cls: "vocab-tracker-empty-state",
+      });
       return;
     }
 
     // Stats bar
-    const stats = el.createEl("div");
-    stats.style.cssText =
-      "display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;";
+    const stats = el.createEl("div", { cls: "vocab-tracker-stats" });
     stats.createEl("span", {
       text: `📚 ${entries.length} word${entries.length !== 1 ? "s" : ""}`,
-    }).style.cssText =
-      "padding:3px 10px;background:var(--background-secondary);border-radius:12px;font-size:0.82em;";
+      cls: "vocab-tracker-stat-pill",
+    });
     for (const lvl of ["A1", "A2", "B1", "B2", "C1", "C2"]) {
       const n = entries.filter((e) => e.level === lvl).length;
       if (!n) continue;
-      const b = stats.createEl("span", { text: `${lvl}: ${n}` });
-      b.style.cssText =
-        "padding:3px 10px;background:var(--interactive-accent);color:var(--text-on-accent);border-radius:12px;font-size:0.82em;";
+      stats.createEl("span", {
+        text: `${lvl}: ${n}`,
+        cls: ["vocab-tracker-stat-pill", "is-accent"],
+      });
     }
 
     // Search
-    const search = el.createEl("input");
+    const search = el.createEl("input", { cls: ["vocab-tracker-search-input", "vocab-tracker-field-box"] });
     search.placeholder = "Search words…";
-    search.style.cssText =
-      "width:100%;padding:6px;box-sizing:border-box;margin-bottom:10px;background:var(--background-primary);color:var(--text-normal);border:1px solid var(--background-modifier-border);border-radius:4px;";
 
     const tableWrap = el.createEl("div");
 
@@ -818,94 +787,70 @@ export default class VocabTrackerPlugin extends Plugin {
         e.word.toLowerCase().includes(q.toLowerCase())
       );
 
-      const tbl = tableWrap.createEl("table");
-      tbl.style.cssText = "width:100%;border-collapse:collapse;";
+      const tbl = tableWrap.createEl("table", { cls: "vocab-tracker-table" });
 
       const hdrRow = tbl.createEl("thead").createEl("tr");
       for (const h of ["Word", "Level", "Last Reviewed", "Reviews"]) {
-        const th = hdrRow.createEl("th", { text: h });
-        th.style.cssText =
-          "text-align:left;padding:6px 8px;border-bottom:2px solid var(--background-modifier-border);font-size:0.8em;color:var(--text-muted);font-weight:600;";
+        hdrRow.createEl("th", { text: h });
       }
 
       const tbody = tbl.createEl("tbody");
 
       for (const entry of rows) {
         // Main row
-        const tr = tbody.createEl("tr");
-        tr.style.cursor = "pointer";
-        tr.onmouseenter = () =>
-          (tr.style.background = "var(--background-secondary)");
-        tr.onmouseleave = () => (tr.style.background = "");
+        const tr = tbody.createEl("tr", { cls: "vocab-tracker-table-row" });
 
-        const wTd = tr.createEl("td");
-        wTd.style.cssText = "padding:8px;font-weight:500;";
-        wTd.textContent = entry.word;
+        tr.createEl("td", { text: entry.word, cls: "vocab-tracker-cell-word" });
 
         const lTd = tr.createEl("td");
-        lTd.style.padding = "8px";
         if (entry.level) {
-          const b = lTd.createEl("span", { text: entry.level });
-          b.style.cssText =
-            "padding:2px 6px;background:var(--interactive-accent);color:var(--text-on-accent);border-radius:3px;font-size:0.78em;font-weight:600;";
+          lTd.createEl("span", { text: entry.level, cls: "vocab-tracker-level-badge" });
         } else {
-          lTd.style.color = "var(--text-muted)";
+          lTd.addClass("vocab-tracker-text-muted");
           lTd.textContent = "—";
         }
 
-        tr.createEl("td", { text: entry.lastReviewed }).style.cssText =
-          "padding:8px;font-size:0.85em;color:var(--text-muted);";
-        tr.createEl("td", { text: String(entry.reviews) }).style.cssText =
-          "padding:8px;font-size:0.85em;color:var(--text-muted);";
+        tr.createEl("td", { text: entry.lastReviewed, cls: "vocab-tracker-cell-muted" });
+        tr.createEl("td", { text: String(entry.reviews), cls: "vocab-tracker-cell-muted" });
 
         // Detail row (hidden by default)
-        const dtr = tbody.createEl("tr");
-        dtr.style.display = "none";
-        const dtd = dtr.createEl("td");
+        const dtr = tbody.createEl("tr", { cls: "vocab-tracker-hidden" });
+        const dtd = dtr.createEl("td", { cls: "vocab-tracker-detail-cell" });
         dtd.setAttribute("colspan", "4");
-        dtd.style.cssText =
-          "padding:12px 16px;background:var(--background-secondary);border-bottom:1px solid var(--background-modifier-border);";
 
         tr.onclick = () => {
-          const open = dtr.style.display !== "none";
-          if (open) { dtr.style.display = "none"; return; }
+          const open = !dtr.hasClass("vocab-tracker-hidden");
+          if (open) { dtr.addClass("vocab-tracker-hidden"); return; }
 
           dtd.empty();
-          dtr.style.display = "";
+          dtr.removeClass("vocab-tracker-hidden");
 
           // Phonetic / part of speech + pronounce
-          const sub = dtd.createEl("div");
-          sub.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:10px;";
-          const subText = sub.createEl("span");
-          subText.style.cssText = "font-size:0.82em;color:var(--text-muted);";
+          const sub = dtd.createEl("div", { cls: "vocab-tracker-detail-sub" });
+          const subText = sub.createEl("span", { cls: "vocab-tracker-form-subtext" });
           subText.textContent =
             [entry.phonetic, entry.partOfSpeech].filter(Boolean).join("  ·  ") || entry.word;
-          const speak = sub.createEl("span", { text: "🔊" });
+          const speak = sub.createEl("span", { text: "🔊", cls: "vocab-tracker-speak-icon" });
           speak.title = "Pronounce";
-          speak.style.cssText = "cursor:pointer;font-size:0.95em;line-height:1;user-select:none;";
           speak.onclick = () => this.speakWord(entry);
 
           // Info grid
-          const grid = dtd.createEl("div");
-          grid.style.cssText =
-            "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;";
+          const grid = dtd.createEl("div", { cls: "vocab-tracker-field-grid" });
 
           const mkField = (
             label: string,
             key: keyof VocabEntry,
             opts: { full?: boolean; multiline?: boolean } = {}
           ) => {
-            const wrap = grid.createEl("div");
-            if (opts.full) wrap.style.gridColumn = "1 / -1";
-            wrap.createEl("div", { text: label }).style.cssText =
-              "font-size:0.75em;color:var(--text-muted);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;";
-            const inp: any = wrap.createEl(opts.multiline ? "textarea" : "input");
+            const wrap = grid.createEl("div", { cls: "vocab-tracker-grid-field" });
+            wrap.toggleClass("is-full", !!opts.full);
+            wrap.createEl("div", { text: label, cls: "vocab-tracker-grid-field-label" });
+            const cls = ["vocab-tracker-input", "vocab-tracker-field-box"];
+            if (opts.multiline) cls.push("vocab-tracker-textarea");
+            const inp: any = wrap.createEl(opts.multiline ? "textarea" : "input", { cls });
             if (!opts.multiline) inp.type = "text";
             inp.value = String((entry as any)[key] ?? "");
             inp.placeholder = `Add ${label.toLowerCase()}…`;
-            inp.style.cssText =
-              "width:100%;padding:5px;box-sizing:border-box;background:var(--background-primary);color:var(--text-normal);border:1px solid var(--background-modifier-border);border-radius:4px;font-size:0.9em;" +
-              (opts.multiline ? "resize:vertical;min-height:46px;font-family:inherit;line-height:1.4;" : "");
             inp.onchange = async () => {
               (entry as any)[key] = inp.value;
               await this.saveVocab();
@@ -919,13 +864,9 @@ export default class VocabTrackerPlugin extends Plugin {
           mkField("Grammar tips", "grammar", { full: true });
 
           // Level (spans 2 cols)
-          const lvlWrap = grid.createEl("div");
-          lvlWrap.style.gridColumn = "1 / -1";
-          lvlWrap.createEl("div", { text: "Level" }).style.cssText =
-            "font-size:0.75em;color:var(--text-muted);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;";
-          const sel = lvlWrap.createEl("select");
-          sel.style.cssText =
-            "padding:5px 8px;background:var(--background-primary);color:var(--text-normal);border:1px solid var(--background-modifier-border);border-radius:4px;";
+          const lvlWrap = grid.createEl("div", { cls: ["vocab-tracker-grid-field", "is-full"] });
+          lvlWrap.createEl("div", { text: "Level", cls: "vocab-tracker-grid-field-label" });
+          const sel = lvlWrap.createEl("select", { cls: ["vocab-tracker-grid-select", "vocab-tracker-field-box"] });
           for (const lvl of LEVELS) {
             const opt = sel.createEl("option", {
               text: lvl || "— not set —",
@@ -941,36 +882,29 @@ export default class VocabTrackerPlugin extends Plugin {
 
           // Source link
           if (entry.source && entry.source.path) {
-            const src = dtd.createEl("div");
-            src.style.cssText = "font-size:0.8em;margin:2px 0 8px;cursor:pointer;color:var(--text-accent);";
+            const src = dtd.createEl("div", { cls: "vocab-tracker-detail-source-link" });
             const name = entry.source.path.split("/").pop();
             src.textContent = `📍 ${name} : line ${entry.source.line + 1}`;
             src.onclick = () => this.jumpToSource(entry);
           }
 
           // Footer: meta + buttons
-          const footer = dtd.createEl("div");
-          footer.style.cssText =
-            "display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;";
+          const footer = dtd.createEl("div", { cls: "vocab-tracker-detail-footer" });
           footer.createEl("span", {
             text: `Added: ${entry.added}`,
-          }).style.cssText = "font-size:0.75em;color:var(--text-muted);";
+            cls: "vocab-tracker-added-label",
+          });
 
-          const btnGroup = footer.createEl("div");
-          btnGroup.style.cssText = "display:flex;gap:6px;flex-shrink:0;";
+          const btnGroup = footer.createEl("div", { cls: "vocab-tracker-btn-group" });
 
-          const fetchBtn = btnGroup.createEl("button", { text: "🔄 Fetch" });
-          fetchBtn.style.cssText =
-            "padding:3px 10px;border:1px solid var(--background-modifier-border);background:transparent;border-radius:4px;cursor:pointer;font-size:0.82em;";
+          const fetchBtn = btnGroup.createEl("button", { text: "🔄 Fetch", cls: "vocab-tracker-btn-ghost" });
           fetchBtn.onclick = async () => {
             fetchBtn.textContent = "…";
             await this.enrichEntry(entry);
             draw(search.value);
           };
 
-          const delBtn = btnGroup.createEl("button", { text: "Delete word" });
-          delBtn.style.cssText =
-            "padding:3px 10px;color:var(--text-error);background:transparent;border:1px solid var(--text-error);border-radius:4px;cursor:pointer;font-size:0.82em;";
+          const delBtn = btnGroup.createEl("button", { text: "Delete word", cls: "vocab-tracker-btn-danger" });
           delBtn.onclick = async () => {
             await this.deleteEntry(entry);
             draw(search.value);
