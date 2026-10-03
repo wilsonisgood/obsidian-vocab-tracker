@@ -5,6 +5,7 @@
     "inlineSources": true,
     "module": "ESNext",
     "target": "ES2018",
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "ScriptHost"],
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "strict": true,

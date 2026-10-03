@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => VocabTrackerPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian = require("obsidian");
+var import_obsidian2 = require("obsidian");
 
 // src/core/text/wordRe.ts
 function escapeRe(s) {
@@ -104,6 +104,195 @@ function findSourceLine(content, word, sentence) {
   return best;
 }
 
+// src/platform/ObsidianHttp.ts
+var import_obsidian = require("obsidian");
+var ObsidianHttp = class {
+  encodeQueryParam(text) {
+    return import_obsidian.Platform.isMobile ? text : encodeURIComponent(text);
+  }
+  async get(url) {
+    const res = await (0, import_obsidian.requestUrl)({ url, throw: false });
+    return {
+      status: res.status,
+      get json() {
+        return res.json;
+      }
+    };
+  }
+};
+
+// src/core/errorMessage.ts
+function errorMessage(e) {
+  return e instanceof Error ? e.message : String(e);
+}
+
+// src/services/dictionary/sources/wiktionary.ts
+async function fetchWiktionaryDefinition(http, w) {
+  var _a, _b;
+  let res;
+  try {
+    res = await http.get(`https://en.wiktionary.org/api/rest_v1/page/definition/${http.encodeQueryParam(w)}`);
+  } catch (e) {
+    throw new Error(`Wiktionary request failed (${errorMessage(e)})`, { cause: e });
+  }
+  if (res.status === 404) throw new Error(`"${w}" not found in dictionary`);
+  if (res.status !== 200) throw new Error(`Wiktionary API returned HTTP ${res.status}`);
+  let data;
+  try {
+    data = res.json;
+  } catch (e) {
+    throw new Error("couldn't parse Wiktionary response", { cause: e });
+  }
+  const entries = Array.isArray(data == null ? void 0 : data.en) ? data.en : [];
+  const entry = entries.find((en) => {
+    var _a2, _b2;
+    return (_b2 = (_a2 = en.definitions) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.definition;
+  });
+  if (!entry) throw new Error(`"${w}" not found in dictionary`);
+  const rawDefinition = ((_b = (_a = entry.definitions) == null ? void 0 : _a[0]) == null ? void 0 : _b.definition) || "";
+  const definition = rawDefinition.replace(/<[^>]+>/g, "").trim();
+  const partOfSpeech = (entry.partOfSpeech || "").toLowerCase();
+  return { definition, partOfSpeech };
+}
+
+// src/services/dictionary/sources/datamuse.ts
+var POS_MAP = {
+  n: "noun",
+  v: "verb",
+  adj: "adjective",
+  adv: "adverb",
+  u: ""
+};
+async function fetchDatamuseDefinition(http, w) {
+  var _a, _b, _c;
+  let res;
+  try {
+    res = await http.get(`https://api.datamuse.com/words?sp=${http.encodeQueryParam(w)}&md=d&max=1`);
+  } catch (e) {
+    throw new Error(`Datamuse request failed (${errorMessage(e)})`, { cause: e });
+  }
+  if (res.status !== 200) throw new Error(`Datamuse API returned HTTP ${res.status}`);
+  let arr;
+  try {
+    arr = res.json;
+  } catch (e) {
+    throw new Error("couldn't parse Datamuse response", { cause: e });
+  }
+  const defs = Array.isArray(arr) && Array.isArray((_a = arr[0]) == null ? void 0 : _a.defs) ? arr[0].defs : [];
+  if (defs.length === 0) throw new Error(`"${w}" not found in dictionary`);
+  const [posTag, definition] = defs[0].split("	");
+  const partOfSpeech = (_c = (_b = POS_MAP[posTag]) != null ? _b : posTag) != null ? _c : "";
+  return { definition: (definition || "").trim(), partOfSpeech };
+}
+async function fetchDatamuseRelated(http, w, rel) {
+  try {
+    const res = await http.get(`https://api.datamuse.com/words?${rel}=${http.encodeQueryParam(w)}&max=8`);
+    const json = res.json;
+    if (res.status !== 200 || !Array.isArray(json)) return [];
+    return json.map((entry) => entry.word);
+  } catch (e) {
+    return [];
+  }
+}
+
+// src/services/dictionary/translate/validate.ts
+function looksLikeValidTranslation(s) {
+  return s.length > 0 && !/%[0-9A-Fa-f]{2}/.test(s);
+}
+
+// src/services/dictionary/translate/google.ts
+async function translateWithGoogle(http, text) {
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=${http.encodeQueryParam(text)}`;
+  let res;
+  try {
+    res = await http.get(url);
+  } catch (e) {
+    throw new Error(`Google Translate request failed (${errorMessage(e)})`, { cause: e });
+  }
+  if (res.status !== 200) throw new Error(`Google Translate returned HTTP ${res.status}`);
+  let data;
+  try {
+    data = res.json;
+  } catch (e) {
+    throw new Error("couldn't parse Google Translate response", { cause: e });
+  }
+  const segments = Array.isArray(data == null ? void 0 : data[0]) ? data[0] : [];
+  const translated = segments.map((seg) => (seg == null ? void 0 : seg[0]) || "").join("");
+  if (!looksLikeValidTranslation(translated)) throw new Error("empty or corrupted translation");
+  return translated;
+}
+
+// src/services/dictionary/translate/mymemory.ts
+async function translateWithMyMemory(http, text) {
+  var _a;
+  const url = `https://api.mymemory.translated.net/get?q=${http.encodeQueryParam(text)}&langpair=en|zh-TW`;
+  let res;
+  try {
+    res = await http.get(url);
+  } catch (e) {
+    throw new Error(`MyMemory request failed (${errorMessage(e)})`, { cause: e });
+  }
+  if (res.status !== 200) throw new Error(`MyMemory returned HTTP ${res.status}`);
+  let data;
+  try {
+    data = res.json;
+  } catch (e) {
+    throw new Error("couldn't parse MyMemory response", { cause: e });
+  }
+  const translated = ((_a = data == null ? void 0 : data.responseData) == null ? void 0 : _a.translatedText) || "";
+  if (!looksLikeValidTranslation(translated)) throw new Error("empty or corrupted translation");
+  return translated;
+}
+
+// src/services/dictionary/DictionaryService.ts
+var DictionaryService = class {
+  constructor(http) {
+    this.http = http;
+  }
+  // Wiktionary first, Datamuse as fallback for the definition; Datamuse
+  // always supplies synonyms/antonyms. All three requests run concurrently.
+  async fetchDictionary(word) {
+    const w = word.toLowerCase();
+    const defPromise = this.fetchDefinition(w);
+    const synPromise = fetchDatamuseRelated(this.http, w, "rel_syn");
+    const antPromise = fetchDatamuseRelated(this.http, w, "rel_ant");
+    const { definition, partOfSpeech } = await defPromise;
+    const definitionZh = await this.translateToZhTW(definition);
+    const synonyms = await synPromise;
+    const antonyms = await antPromise;
+    return { phonetic: "", audio: "", partOfSpeech, definition, definitionZh, synonyms, antonyms };
+  }
+  // Translation is a bonus — failure here must not sink the definition
+  // fetch, so it soft-fails to "".
+  async translateToZhTW(text) {
+    if (!text) return "";
+    try {
+      return await translateWithGoogle(this.http, text);
+    } catch (primaryErr) {
+      try {
+        return await translateWithMyMemory(this.http, text);
+      } catch (fallbackErr) {
+        console.error("Vocab Tracker: translation failed", primaryErr, fallbackErr);
+        return "";
+      }
+    }
+  }
+  async fetchDefinition(w) {
+    try {
+      return await fetchWiktionaryDefinition(this.http, w);
+    } catch (primaryErr) {
+      try {
+        return await fetchDatamuseDefinition(this.http, w);
+      } catch (fallbackErr) {
+        throw new Error(
+          `${errorMessage(primaryErr)}; fallback also failed: ${errorMessage(fallbackErr)}`,
+          { cause: fallbackErr }
+        );
+      }
+    }
+  }
+};
+
 // main.ts
 var VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 var VOCAB_FOLDER = "vocab-list";
@@ -118,7 +307,7 @@ function autoGrowTextarea(el) {
   el.style.height = "auto";
   el.style.height = `${el.scrollHeight}px`;
 }
-var VocabSidebarView = class extends import_obsidian.ItemView {
+var VocabSidebarView = class extends import_obsidian2.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     // Word clicked via a plain ==mark== that isn't tracked yet — prompts an
@@ -236,7 +425,7 @@ var VocabSidebarView = class extends import_obsidian.ItemView {
     }
   }
 };
-var VocabTrackerPlugin = class extends import_obsidian.Plugin {
+var VocabTrackerPlugin = class extends import_obsidian2.Plugin {
   constructor() {
     super(...arguments);
     this.vocabData = { entries: [] };
@@ -244,6 +433,7 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
   async onload() {
     const saved = await this.loadData();
     if (saved) this.vocabData = saved;
+    this.dictionary = new DictionaryService(new ObsidianHttp());
     this.registerView(
       VOCAB_VIEW_TYPE,
       (leaf) => new VocabSidebarView(leaf, this)
@@ -298,7 +488,7 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
       await this.app.vault.createFolder(VOCAB_FOLDER);
     }
     const legacy = this.app.vault.getAbstractFileByPath(VOCAB_FILE_LEGACY);
-    if (legacy instanceof import_obsidian.TFile) {
+    if (legacy instanceof import_obsidian2.TFile) {
       await this.app.fileManager.renameFile(legacy, VOCAB_FILE);
       return;
     }
@@ -323,7 +513,7 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
     const exists = this.vocabData.entries.some(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
-    const menu = new import_obsidian.Menu();
+    const menu = new import_obsidian2.Menu();
     menu.addItem((item) => {
       item.setTitle(
         exists ? `Open "${word}" in Vocab Tracker` : `Add "${word}" to Vocab Tracker`
@@ -331,7 +521,7 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
       item.setIcon(exists ? "book-open" : "plus");
       item.onClick(async () => {
         const added = await this.addWordToVocab(word, ctx);
-        new import_obsidian.Notice(added ? `Added "${word}" to vocab list` : `Opened "${word}"`);
+        new import_obsidian2.Notice(added ? `Added "${word}" to vocab list` : `Opened "${word}"`);
       });
     });
     menu.showAtMouseEvent(evt);
@@ -412,7 +602,7 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
     if (!entry.source || !entry.source.path) return;
     const file = this.app.vault.getAbstractFileByPath(entry.source.path);
     if (!file) {
-      new import_obsidian.Notice("Source note not found: " + entry.source.path);
+      new import_obsidian2.Notice("Source note not found: " + entry.source.path);
       return;
     }
     const leaf = this.app.workspace.getLeaf(false);
@@ -429,7 +619,7 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
   }
   speakSynth(word) {
     if (!("speechSynthesis" in window)) {
-      new import_obsidian.Notice("No pronunciation available on this device.");
+      new import_obsidian2.Notice("No pronunciation available on this device.");
       return;
     }
     const u = new SpeechSynthesisUtterance(word);
@@ -440,7 +630,7 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
   // ── Auto-fetch dictionary data (Wiktionary, falls back to Datamuse) ──
   async enrichEntry(entry, opts = {}) {
     try {
-      const data = await this.fetchDictionary(entry.word);
+      const data = await this.dictionary.fetchDictionary(entry.word);
       if (!entry.phonetic) entry.phonetic = data.phonetic;
       if (!entry.audio) entry.audio = data.audio;
       if (!entry.partOfSpeech) entry.partOfSpeech = data.partOfSpeech;
@@ -452,185 +642,10 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
       const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
       const view = leaf && leaf.view;
       if (view) view.render();
-      if (opts.verbose) new import_obsidian.Notice(`Vocab Tracker: fetched "${entry.word}"`);
+      if (opts.verbose) new import_obsidian2.Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
-      new import_obsidian.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
-    }
-  }
-  // Wiktionary's REST API sits behind Wikimedia's global CDN (fast + reliable
-  // worldwide, incl. mobile networks); Datamuse is the fallback for the
-  // definition itself and always supplies synonyms/antonyms, since Wiktionary's
-  // endpoint doesn't return those. All three requests run concurrently.
-  async fetchDictionary(word) {
-    const w = word.toLowerCase();
-    const defPromise = this.fetchDefinition(w);
-    const synPromise = this.fetchDatamuseRelated(w, "rel_syn");
-    const antPromise = this.fetchDatamuseRelated(w, "rel_ant");
-    const { definition, partOfSpeech } = await defPromise;
-    const definitionZh = await this.translateToZhTW(definition);
-    const synonyms = await synPromise;
-    const antonyms = await antPromise;
-    return { phonetic: "", audio: "", partOfSpeech, definition, definitionZh, synonyms, antonyms };
-  }
-  // Obsidian mobile's requestUrl (iOS/Android) mangles query params that
-  // arrive pre-percent-encoded — the transport layer re-processes the URL
-  // and strips/duplicates the encoding, so "%20" ends up sent to the server
-  // literally instead of as a space (matches ionic-team/capacitor#7523).
-  // Desktop's requestUrl has no such bug and needs the encoding, so only
-  // mobile skips it and leaves escaping to the native request layer.
-  encodeQueryParam(text) {
-    return import_obsidian.Platform.isMobile ? text : encodeURIComponent(text);
-  }
-  // Safety net for the mobile encoding bug above (and for providers that
-  // return an HTTP 200 with an English error string instead of throwing):
-  // reject anything that still looks like raw percent-encoding or is
-  // obviously not a translation, so callers fall back instead of showing
-  // garbage like "%20act %20of %20putting".
-  looksLikeValidTranslation(s) {
-    return s.length > 0 && !/%[0-9A-Fa-f]{2}/.test(s);
-  }
-  // Google's unofficial endpoint (no key, best quality, converts to
-  // Traditional automatically) is tried first; MyMemory is the sanctioned
-  // free-tier fallback. Translation is a bonus — failure here must not sink
-  // the definition fetch, so it soft-fails to "".
-  async translateToZhTW(text) {
-    if (!text) return "";
-    try {
-      return await this.translateWithGoogle(text);
-    } catch (primaryErr) {
-      try {
-        return await this.translateWithMyMemory(text);
-      } catch (fallbackErr) {
-        console.error("Vocab Tracker: translation failed", primaryErr, fallbackErr);
-        return "";
-      }
-    }
-  }
-  async translateWithGoogle(text) {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=${this.encodeQueryParam(text)}`;
-    let res;
-    try {
-      res = await (0, import_obsidian.requestUrl)({ url, throw: false });
-    } catch (e) {
-      throw new Error(`Google Translate request failed (${(e == null ? void 0 : e.message) || e})`);
-    }
-    if (res.status !== 200) throw new Error(`Google Translate returned HTTP ${res.status}`);
-    let data;
-    try {
-      data = res.json;
-    } catch (e) {
-      throw new Error("couldn't parse Google Translate response");
-    }
-    const segments = Array.isArray(data == null ? void 0 : data[0]) ? data[0] : [];
-    const translated = segments.map((seg) => (seg == null ? void 0 : seg[0]) || "").join("");
-    if (!this.looksLikeValidTranslation(translated)) throw new Error("empty or corrupted translation");
-    return translated;
-  }
-  async translateWithMyMemory(text) {
-    var _a;
-    const url = `https://api.mymemory.translated.net/get?q=${this.encodeQueryParam(text)}&langpair=en|zh-TW`;
-    let res;
-    try {
-      res = await (0, import_obsidian.requestUrl)({ url, throw: false });
-    } catch (e) {
-      throw new Error(`MyMemory request failed (${(e == null ? void 0 : e.message) || e})`);
-    }
-    if (res.status !== 200) throw new Error(`MyMemory returned HTTP ${res.status}`);
-    let data;
-    try {
-      data = res.json;
-    } catch (e) {
-      throw new Error("couldn't parse MyMemory response");
-    }
-    const translated = ((_a = data == null ? void 0 : data.responseData) == null ? void 0 : _a.translatedText) || "";
-    if (!this.looksLikeValidTranslation(translated)) throw new Error("empty or corrupted translation");
-    return translated;
-  }
-  async fetchDefinition(w) {
-    try {
-      return await this.fetchWiktionaryDefinition(w);
-    } catch (primaryErr) {
-      try {
-        return await this.fetchDatamuseDefinition(w);
-      } catch (fallbackErr) {
-        throw new Error(
-          `${(primaryErr == null ? void 0 : primaryErr.message) || primaryErr}; fallback also failed: ${(fallbackErr == null ? void 0 : fallbackErr.message) || fallbackErr}`
-        );
-      }
-    }
-  }
-  async fetchWiktionaryDefinition(w) {
-    let res;
-    try {
-      res = await (0, import_obsidian.requestUrl)({
-        url: `https://en.wiktionary.org/api/rest_v1/page/definition/${this.encodeQueryParam(w)}`,
-        throw: false
-      });
-    } catch (e) {
-      throw new Error(`Wiktionary request failed (${(e == null ? void 0 : e.message) || e})`);
-    }
-    if (res.status === 404) throw new Error(`"${w}" not found in dictionary`);
-    if (res.status !== 200) throw new Error(`Wiktionary API returned HTTP ${res.status}`);
-    let data;
-    try {
-      data = res.json;
-    } catch (e) {
-      throw new Error("couldn't parse Wiktionary response");
-    }
-    const entries = Array.isArray(data == null ? void 0 : data.en) ? data.en : [];
-    const entry = entries.find((en) => {
-      var _a, _b;
-      return (_b = (_a = en.definitions) == null ? void 0 : _a[0]) == null ? void 0 : _b.definition;
-    });
-    if (!entry) throw new Error(`"${w}" not found in dictionary`);
-    const rawDefinition = entry.definitions[0].definition || "";
-    const definition = rawDefinition.replace(/<[^>]+>/g, "").trim();
-    const partOfSpeech = (entry.partOfSpeech || "").toLowerCase();
-    return { definition, partOfSpeech };
-  }
-  async fetchDatamuseDefinition(w) {
-    var _a, _b;
-    let res;
-    try {
-      res = await (0, import_obsidian.requestUrl)({
-        url: `https://api.datamuse.com/words?sp=${this.encodeQueryParam(w)}&md=d&max=1`,
-        throw: false
-      });
-    } catch (e) {
-      throw new Error(`Datamuse request failed (${(e == null ? void 0 : e.message) || e})`);
-    }
-    if (res.status !== 200) throw new Error(`Datamuse API returned HTTP ${res.status}`);
-    let arr;
-    try {
-      arr = res.json;
-    } catch (e) {
-      throw new Error("couldn't parse Datamuse response");
-    }
-    const defs = Array.isArray(arr) && arr[0] && Array.isArray(arr[0].defs) ? arr[0].defs : [];
-    if (defs.length === 0) throw new Error(`"${w}" not found in dictionary`);
-    const posMap = {
-      n: "noun",
-      v: "verb",
-      adj: "adjective",
-      adv: "adverb",
-      u: ""
-    };
-    const [posTag, definition] = defs[0].split("	");
-    const partOfSpeech = (_b = (_a = posMap[posTag]) != null ? _a : posTag) != null ? _b : "";
-    return { definition: (definition || "").trim(), partOfSpeech };
-  }
-  // Soft-fails to [] — missing synonyms/antonyms shouldn't sink the whole fetch.
-  async fetchDatamuseRelated(w, rel) {
-    try {
-      const res = await (0, import_obsidian.requestUrl)({
-        url: `https://api.datamuse.com/words?${rel}=${this.encodeQueryParam(w)}&max=8`,
-        throw: false
-      });
-      if (res.status !== 200 || !Array.isArray(res.json)) return [];
-      return res.json.map((entry) => entry.word);
-    } catch (e) {
-      return [];
+      new import_obsidian2.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
     }
   }
   refreshSidebar() {

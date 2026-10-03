@@ -3,19 +3,18 @@ import {
   MarkdownPostProcessorContext,
   Menu,
   Notice,
-  Platform,
   Plugin,
   TFile,
   WorkspaceLeaf,
-  requestUrl,
 } from "obsidian";
 import type { VocabData, VocabEntry, VocabSource } from "./src/core/model/entry";
 import type { WordContext } from "./src/core/model/word-context";
-import type { DictionaryResult } from "./src/core/model/dictionary";
 import { buildWordRe, escapeRe } from "./src/core/text/wordRe";
 import { replaceOutsideCode, wrapOutsideCode } from "./src/core/text/outsideCode";
 import { extractSentence } from "./src/core/text/sentence";
 import { findSourceLine } from "./src/core/text/sourceLine";
+import { ObsidianHttp } from "./src/platform/ObsidianHttp";
+import { DictionaryService } from "./src/services/dictionary/DictionaryService";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -184,10 +183,13 @@ class VocabSidebarView extends ItemView {
 
 export default class VocabTrackerPlugin extends Plugin {
   vocabData: VocabData = { entries: [] };
+  dictionary!: DictionaryService;
 
   async onload() {
     const saved = await this.loadData();
     if (saved) this.vocabData = saved;
+
+    this.dictionary = new DictionaryService(new ObsidianHttp());
 
     // Sidebar
     this.registerView(
@@ -431,7 +433,7 @@ export default class VocabTrackerPlugin extends Plugin {
 
   async enrichEntry(entry: VocabEntry, opts: { verbose?: boolean } = {}) {
     try {
-      const data = await this.fetchDictionary(entry.word);
+      const data = await this.dictionary.fetchDictionary(entry.word);
 
       if (!entry.phonetic) entry.phonetic = data.phonetic;
       if (!entry.audio) entry.audio = data.audio;
@@ -449,197 +451,6 @@ export default class VocabTrackerPlugin extends Plugin {
     } catch (e: any) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
       new Notice(`Vocab Tracker: couldn't fetch "${entry.word}" — ${e?.message || e}`);
-    }
-  }
-
-  // Wiktionary's REST API sits behind Wikimedia's global CDN (fast + reliable
-  // worldwide, incl. mobile networks); Datamuse is the fallback for the
-  // definition itself and always supplies synonyms/antonyms, since Wiktionary's
-  // endpoint doesn't return those. All three requests run concurrently.
-  async fetchDictionary(word: string): Promise<DictionaryResult> {
-    const w = word.toLowerCase();
-
-    const defPromise = this.fetchDefinition(w);
-    const synPromise = this.fetchDatamuseRelated(w, "rel_syn");
-    const antPromise = this.fetchDatamuseRelated(w, "rel_ant");
-
-    const { definition, partOfSpeech } = await defPromise;
-    const definitionZh = await this.translateToZhTW(definition);
-    const synonyms = await synPromise;
-    const antonyms = await antPromise;
-
-    return { phonetic: "", audio: "", partOfSpeech, definition, definitionZh, synonyms, antonyms };
-  }
-
-  // Obsidian mobile's requestUrl (iOS/Android) mangles query params that
-  // arrive pre-percent-encoded — the transport layer re-processes the URL
-  // and strips/duplicates the encoding, so "%20" ends up sent to the server
-  // literally instead of as a space (matches ionic-team/capacitor#7523).
-  // Desktop's requestUrl has no such bug and needs the encoding, so only
-  // mobile skips it and leaves escaping to the native request layer.
-  encodeQueryParam(text: string): string {
-    return Platform.isMobile ? text : encodeURIComponent(text);
-  }
-
-  // Safety net for the mobile encoding bug above (and for providers that
-  // return an HTTP 200 with an English error string instead of throwing):
-  // reject anything that still looks like raw percent-encoding or is
-  // obviously not a translation, so callers fall back instead of showing
-  // garbage like "%20act %20of %20putting".
-  looksLikeValidTranslation(s: string): boolean {
-    return s.length > 0 && !/%[0-9A-Fa-f]{2}/.test(s);
-  }
-
-  // Google's unofficial endpoint (no key, best quality, converts to
-  // Traditional automatically) is tried first; MyMemory is the sanctioned
-  // free-tier fallback. Translation is a bonus — failure here must not sink
-  // the definition fetch, so it soft-fails to "".
-  async translateToZhTW(text: string): Promise<string> {
-    if (!text) return "";
-    try {
-      return await this.translateWithGoogle(text);
-    } catch (primaryErr) {
-      try {
-        return await this.translateWithMyMemory(text);
-      } catch (fallbackErr) {
-        console.error("Vocab Tracker: translation failed", primaryErr, fallbackErr);
-        return "";
-      }
-    }
-  }
-
-  async translateWithGoogle(text: string): Promise<string> {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=${this.encodeQueryParam(text)}`;
-    let res;
-    try {
-      res = await requestUrl({ url, throw: false });
-    } catch (e: any) {
-      throw new Error(`Google Translate request failed (${e?.message || e})`);
-    }
-    if (res.status !== 200) throw new Error(`Google Translate returned HTTP ${res.status}`);
-
-    let data: any;
-    try {
-      data = res.json;
-    } catch (e) {
-      throw new Error("couldn't parse Google Translate response");
-    }
-    const segments = Array.isArray(data?.[0]) ? data[0] : [];
-    const translated = segments.map((seg: any) => seg?.[0] || "").join("");
-    if (!this.looksLikeValidTranslation(translated)) throw new Error("empty or corrupted translation");
-    return translated;
-  }
-
-  async translateWithMyMemory(text: string): Promise<string> {
-    const url = `https://api.mymemory.translated.net/get?q=${this.encodeQueryParam(text)}&langpair=en|zh-TW`;
-    let res;
-    try {
-      res = await requestUrl({ url, throw: false });
-    } catch (e: any) {
-      throw new Error(`MyMemory request failed (${e?.message || e})`);
-    }
-    if (res.status !== 200) throw new Error(`MyMemory returned HTTP ${res.status}`);
-
-    let data: any;
-    try {
-      data = res.json;
-    } catch (e) {
-      throw new Error("couldn't parse MyMemory response");
-    }
-    const translated = data?.responseData?.translatedText || "";
-    if (!this.looksLikeValidTranslation(translated)) throw new Error("empty or corrupted translation");
-    return translated;
-  }
-
-  async fetchDefinition(w: string): Promise<{ definition: string; partOfSpeech: string }> {
-    try {
-      return await this.fetchWiktionaryDefinition(w);
-    } catch (primaryErr: any) {
-      try {
-        return await this.fetchDatamuseDefinition(w);
-      } catch (fallbackErr: any) {
-        throw new Error(
-          `${primaryErr?.message || primaryErr}; fallback also failed: ${fallbackErr?.message || fallbackErr}`
-        );
-      }
-    }
-  }
-
-  async fetchWiktionaryDefinition(w: string): Promise<{ definition: string; partOfSpeech: string }> {
-    let res;
-    try {
-      res = await requestUrl({
-        url: `https://en.wiktionary.org/api/rest_v1/page/definition/${this.encodeQueryParam(w)}`,
-        throw: false,
-      });
-    } catch (e: any) {
-      throw new Error(`Wiktionary request failed (${e?.message || e})`);
-    }
-    if (res.status === 404) throw new Error(`"${w}" not found in dictionary`);
-    if (res.status !== 200) throw new Error(`Wiktionary API returned HTTP ${res.status}`);
-
-    let data: any;
-    try {
-      data = res.json;
-    } catch (e) {
-      throw new Error("couldn't parse Wiktionary response");
-    }
-    const entries: any[] = Array.isArray(data?.en) ? data.en : [];
-    const entry = entries.find((en) => en.definitions?.[0]?.definition);
-    if (!entry) throw new Error(`"${w}" not found in dictionary`);
-
-    const rawDefinition: string = entry.definitions[0].definition || "";
-    const definition = rawDefinition.replace(/<[^>]+>/g, "").trim();
-    const partOfSpeech = (entry.partOfSpeech || "").toLowerCase();
-
-    return { definition, partOfSpeech };
-  }
-
-  async fetchDatamuseDefinition(w: string): Promise<{ definition: string; partOfSpeech: string }> {
-    let res;
-    try {
-      res = await requestUrl({
-        url: `https://api.datamuse.com/words?sp=${this.encodeQueryParam(w)}&md=d&max=1`,
-        throw: false,
-      });
-    } catch (e: any) {
-      throw new Error(`Datamuse request failed (${e?.message || e})`);
-    }
-    if (res.status !== 200) throw new Error(`Datamuse API returned HTTP ${res.status}`);
-
-    let arr: any;
-    try {
-      arr = res.json;
-    } catch (e) {
-      throw new Error("couldn't parse Datamuse response");
-    }
-    const defs: string[] = Array.isArray(arr) && arr[0] && Array.isArray(arr[0].defs) ? arr[0].defs : [];
-    if (defs.length === 0) throw new Error(`"${w}" not found in dictionary`);
-
-    const posMap: Record<string, string> = {
-      n: "noun",
-      v: "verb",
-      adj: "adjective",
-      adv: "adverb",
-      u: "",
-    };
-    const [posTag, definition] = defs[0].split("\t");
-    const partOfSpeech = posMap[posTag] ?? posTag ?? "";
-
-    return { definition: (definition || "").trim(), partOfSpeech };
-  }
-
-  // Soft-fails to [] — missing synonyms/antonyms shouldn't sink the whole fetch.
-  async fetchDatamuseRelated(w: string, rel: "rel_syn" | "rel_ant"): Promise<string[]> {
-    try {
-      const res = await requestUrl({
-        url: `https://api.datamuse.com/words?${rel}=${this.encodeQueryParam(w)}&max=8`,
-        throw: false,
-      });
-      if (res.status !== 200 || !Array.isArray(res.json)) return [];
-      return res.json.map((entry: any) => entry.word);
-    } catch (e) {
-      return [];
     }
   }
 
