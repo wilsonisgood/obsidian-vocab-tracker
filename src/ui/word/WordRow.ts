@@ -87,7 +87,7 @@ export function renderVocabRow(
 
   const commitField = async (key: EditableField, value: string) => {
     entry[key] = value;
-    await plugin.saveVocab();
+    await plugin.store.touch(entry);
     refresh();
   };
 
@@ -192,7 +192,7 @@ export function renderVocabRow(
     e.stopPropagation();
     entry.lastReviewed = nowStamp();
     entry.reviews += 1;
-    await plugin.saveVocab();
+    await plugin.store.touch(entry);
     refresh();
   };
 

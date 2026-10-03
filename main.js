@@ -345,6 +345,11 @@ var TypedEmitter = class {
   }
 };
 
+// src/core/nowIso.ts
+function nowIso() {
+  return (/* @__PURE__ */ new Date()).toISOString();
+}
+
 // src/core/store/VocabStore.ts
 var WRITE_DEBOUNCE_MS = 500;
 var VocabStore = class {
@@ -357,6 +362,47 @@ var VocabStore = class {
   }
   get vocabData() {
     return this.data;
+  }
+  // Live entries only — excludes soft-deleted (tombstoned) ones. UI code
+  // should read this instead of vocabData.entries directly; the raw array
+  // (tombstones included) is only needed by persistence and merge.ts.
+  get entries() {
+    return this.data.entries.filter((e) => !e.deletedAt);
+  }
+  // Stamps a brand-new entry and adds it. Pushes the same object reference
+  // the caller holds (not a copy) so later direct mutations on it — e.g.
+  // enrichEntry filling in dictionary fields — land in this.data too.
+  addEntry(entry) {
+    var _a;
+    const stamp = nowIso();
+    entry.createdAt = (_a = entry.createdAt) != null ? _a : stamp;
+    entry.updatedAt = stamp;
+    entry.rev = 0;
+    this.data.entries.push(entry);
+    return this.save();
+  }
+  // Call after directly mutating fields on an entry that's already in
+  // this.data.entries, so its updatedAt/rev stay meaningful to merge.ts.
+  touch(entry) {
+    var _a;
+    entry.updatedAt = nowIso();
+    entry.rev = ((_a = entry.rev) != null ? _a : 0) + 1;
+    return this.save();
+  }
+  // Soft-delete: sets deletedAt instead of removing the entry, so a delete
+  // on one device can be merged against an edit on another (see
+  // core/store/merge.ts) instead of the record just vanishing or
+  // reappearing depending on write order. Permanently purged after 30 days
+  // by core/store/cleanupTombstones.ts.
+  deleteEntry(id) {
+    var _a;
+    const entry = this.data.entries.find((e) => e.id === id);
+    if (!entry) return Promise.resolve();
+    const stamp = nowIso();
+    entry.deletedAt = stamp;
+    entry.updatedAt = stamp;
+    entry.rev = ((_a = entry.rev) != null ? _a : 0) + 1;
+    return this.save();
   }
   // Emits data:changed immediately (so the UI reflects the edit right
   // away) but coalesces the actual disk write: rapid edits (e.g. typing in
@@ -387,11 +433,6 @@ var VocabStore = class {
     this.events.emit("data:changed", this.data);
   }
 };
-
-// src/core/nowIso.ts
-function nowIso() {
-  return (/* @__PURE__ */ new Date()).toISOString();
-}
 
 // src/core/migrations/v1-to-v2.ts
 function parseAddedAt(added) {
@@ -437,6 +478,17 @@ async function loadMigrated(storage, shard = "data") {
     await storage.writeShard(shard, data);
   }
   return data;
+}
+
+// src/core/store/cleanupTombstones.ts
+var THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1e3;
+function cleanupTombstones(data, now = Date.now()) {
+  const entries = data.entries.filter((e) => {
+    if (!e.deletedAt) return true;
+    return now - new Date(e.deletedAt).getTime() < THIRTY_DAYS_MS;
+  });
+  if (entries.length === data.entries.length) return data;
+  return { ...data, entries };
 }
 
 // src/core/nowStamp.ts
@@ -584,7 +636,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
   subText.textContent = [entry.phonetic, entry.partOfSpeech].filter(Boolean).join("  \xB7  ") || entry.word;
   const commitField = async (key, value) => {
     entry[key] = value;
-    await plugin.saveVocab();
+    await plugin.store.touch(entry);
     refresh();
   };
   const mkField = (label, key, opts = {}) => {
@@ -662,7 +714,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
     e.stopPropagation();
     entry.lastReviewed = nowStamp();
     entry.reviews += 1;
-    await plugin.saveVocab();
+    await plugin.store.touch(entry);
     refresh();
   };
   const speak = actions.createEl("span", { cls: "vocab-tracker-speak-icon" });
@@ -741,7 +793,7 @@ var VocabSidebarView = class extends import_obsidian5.ItemView {
   // Called when a tracked word is clicked (reading-mode word / ==mark==).
   // Expands its row in place rather than opening a separate card.
   setWord(word) {
-    const entry = this.plugin.vocabData.entries.find(
+    const entry = this.plugin.store.entries.find(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
     if (entry) {
@@ -765,7 +817,7 @@ var VocabSidebarView = class extends import_obsidian5.ItemView {
     (0, import_obsidian5.setIcon)(openList, "file-text");
     openList.title = t("sidebar.openList");
     openList.onclick = () => this.plugin.openVocabFile();
-    const { entries } = this.plugin.vocabData;
+    const entries = this.plugin.store.entries;
     if (this.pendingWord) {
       const banner = root.createEl("div", { cls: "vocab-tracker-add-prompt" });
       banner.createEl("span", { text: `"${this.pendingWord}"`, cls: "vocab-tracker-add-prompt-word" });
@@ -842,7 +894,7 @@ var VocabSidebarView = class extends import_obsidian5.ItemView {
 // src/ui/blocks/dashboard.ts
 function renderDashboard(plugin, _source, el, _ctx) {
   var _a;
-  const { entries } = plugin.vocabData;
+  const entries = plugin.store.entries;
   el.addClass("vocab-tracker-dashboard");
   if (entries.length === 0) {
     el.createEl("p", {
@@ -895,7 +947,7 @@ var VocabTrackerPlugin = class extends import_obsidian6.Plugin {
   }
   async onload() {
     this.storage = new ObsidianStorage(this);
-    this.vocabData = await loadMigrated(this.storage);
+    this.vocabData = cleanupTombstones(await loadMigrated(this.storage));
     this.store = new VocabStore(this.vocabData, (data) => this.storage.writeShard("data", data));
     this.dictionary = new DictionaryService(new ObsidianHttp());
     this.registerView(
@@ -930,9 +982,6 @@ var VocabTrackerPlugin = class extends import_obsidian6.Plugin {
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
     await this.store.flush();
-  }
-  async saveVocab() {
-    await this.store.save();
   }
   async activateSidebar() {
     var _a;
@@ -979,7 +1028,7 @@ var VocabTrackerPlugin = class extends import_obsidian6.Plugin {
     const ctx = this.getWordContext(evt.clientX, evt.clientY);
     if (!ctx.word) return;
     const word = ctx.word;
-    const exists = this.vocabData.entries.some(
+    const exists = this.store.entries.some(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
     const menu = new import_obsidian6.Menu();
@@ -1024,8 +1073,7 @@ var VocabTrackerPlugin = class extends import_obsidian6.Plugin {
     return { word, sentence };
   }
   async addWordToVocab(word, ctx = {}) {
-    const { entries } = this.vocabData;
-    const existing = entries.find(
+    const existing = this.store.entries.find(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
     let source = null;
@@ -1055,13 +1103,12 @@ var VocabTrackerPlugin = class extends import_obsidian6.Plugin {
         lastReviewed: nowStamp(),
         reviews: 0
       };
-      entries.push(entry);
-      await this.saveVocab();
+      await this.store.addEntry(entry);
       this.enrichEntry(entry);
     } else {
       if (!existing.source && source) existing.source = source;
       if (!existing.example && ctx.sentence) existing.example = ctx.sentence;
-      await this.saveVocab();
+      await this.store.touch(existing);
     }
     const leaf = await this.activateSidebar();
     leaf.view.setWord(word);
@@ -1107,7 +1154,7 @@ var VocabTrackerPlugin = class extends import_obsidian6.Plugin {
       if (!entry.definitionZh) entry.definitionZh = data.definitionZh;
       if (!entry.synonyms) entry.synonyms = data.synonyms.join(", ");
       if (!entry.antonyms) entry.antonyms = data.antonyms.join(", ");
-      await this.saveVocab();
+      await this.store.touch(entry);
       const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
       const view = leaf && leaf.view;
       if (view) view.render();
@@ -1129,10 +1176,7 @@ var VocabTrackerPlugin = class extends import_obsidian6.Plugin {
   }
   // ── Delete a tracked word and remove its ==highlight== ─────────
   async deleteEntry(entry) {
-    this.vocabData.entries = this.vocabData.entries.filter(
-      (e) => e.id !== entry.id
-    );
-    await this.saveVocab();
+    await this.store.deleteEntry(entry.id);
     if (entry.source && entry.source.path) {
       await this.unhighlightWord(entry.word, entry.source.path);
     }

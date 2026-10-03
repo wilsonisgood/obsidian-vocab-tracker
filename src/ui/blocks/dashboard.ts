@@ -11,7 +11,7 @@ export function renderDashboard(
   el: HTMLElement,
   _ctx: MarkdownPostProcessorContext
 ) {
-  const { entries } = plugin.vocabData;
+  const entries = plugin.store.entries;
   el.addClass("vocab-tracker-dashboard");
 
   if (entries.length === 0) {

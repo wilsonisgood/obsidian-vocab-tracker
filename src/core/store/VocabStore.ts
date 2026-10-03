@@ -1,11 +1,12 @@
-import type { VocabData } from "../model/entry";
+import type { VocabData, VocabEntry } from "../model/entry";
 import { TypedEmitter } from "../events";
+import { nowIso } from "../nowIso";
 
 export interface VocabStoreEvents {
   // Coarse-grained for now: every save (add/edit/delete/enrich) fires this.
-  // PR5 (UI split, 規劃書 06 M0 step 5) will replace per-row `view.render()`
-  // calls with subscriptions here; per-entry events arrive with the schema
-  // v2 store in M1.
+  // PR5 (UI split, 規劃書 06 M0 step 5) replaced per-row `view.render()`
+  // calls with subscriptions here; per-entry events are still a later step
+  // (not needed until a view wants to re-render just one row).
   "data:changed": VocabData;
 }
 
@@ -23,6 +24,48 @@ export class VocabStore {
 
   get vocabData(): VocabData {
     return this.data;
+  }
+
+  // Live entries only — excludes soft-deleted (tombstoned) ones. UI code
+  // should read this instead of vocabData.entries directly; the raw array
+  // (tombstones included) is only needed by persistence and merge.ts.
+  get entries(): VocabEntry[] {
+    return this.data.entries.filter((e) => !e.deletedAt);
+  }
+
+  // Stamps a brand-new entry and adds it. Pushes the same object reference
+  // the caller holds (not a copy) so later direct mutations on it — e.g.
+  // enrichEntry filling in dictionary fields — land in this.data too.
+  addEntry(entry: VocabEntry): Promise<void> {
+    const stamp = nowIso();
+    entry.createdAt = entry.createdAt ?? stamp;
+    entry.updatedAt = stamp;
+    entry.rev = 0;
+    this.data.entries.push(entry);
+    return this.save();
+  }
+
+  // Call after directly mutating fields on an entry that's already in
+  // this.data.entries, so its updatedAt/rev stay meaningful to merge.ts.
+  touch(entry: VocabEntry): Promise<void> {
+    entry.updatedAt = nowIso();
+    entry.rev = (entry.rev ?? 0) + 1;
+    return this.save();
+  }
+
+  // Soft-delete: sets deletedAt instead of removing the entry, so a delete
+  // on one device can be merged against an edit on another (see
+  // core/store/merge.ts) instead of the record just vanishing or
+  // reappearing depending on write order. Permanently purged after 30 days
+  // by core/store/cleanupTombstones.ts.
+  deleteEntry(id: string): Promise<void> {
+    const entry = this.data.entries.find((e) => e.id === id);
+    if (!entry) return Promise.resolve();
+    const stamp = nowIso();
+    entry.deletedAt = stamp;
+    entry.updatedAt = stamp;
+    entry.rev = (entry.rev ?? 0) + 1;
+    return this.save();
   }
 
   // Emits data:changed immediately (so the UI reflects the edit right

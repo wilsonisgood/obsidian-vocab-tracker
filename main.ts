@@ -17,6 +17,7 @@ import { ObsidianStorage } from "./src/platform/ObsidianStorage";
 import { DictionaryService } from "./src/services/dictionary/DictionaryService";
 import { VocabStore } from "./src/core/store/VocabStore";
 import { loadMigrated } from "./src/core/migrations/loadMigrated";
+import { cleanupTombstones } from "./src/core/store/cleanupTombstones";
 import { nowStamp } from "./src/core/nowStamp";
 import { VocabSidebarView, VOCAB_VIEW_TYPE } from "./src/ui/sidebar/VocabSidebarView";
 import { renderDashboard } from "./src/ui/blocks/dashboard";
@@ -39,7 +40,7 @@ export default class VocabTrackerPlugin extends Plugin {
 
   async onload() {
     this.storage = new ObsidianStorage(this);
-    this.vocabData = await loadMigrated(this.storage);
+    this.vocabData = cleanupTombstones(await loadMigrated(this.storage));
 
     this.store = new VocabStore(this.vocabData, (data) => this.storage.writeShard("data", data));
     this.dictionary = new DictionaryService(new ObsidianHttp());
@@ -89,10 +90,6 @@ export default class VocabTrackerPlugin extends Plugin {
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
     await this.store.flush();
-  }
-
-  async saveVocab() {
-    await this.store.save();
   }
 
   async activateSidebar(): Promise<WorkspaceLeaf> {
@@ -152,7 +149,7 @@ export default class VocabTrackerPlugin extends Plugin {
     if (!ctx.word) return;
     const word = ctx.word;
 
-    const exists = this.vocabData.entries.some(
+    const exists = this.store.entries.some(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
 
@@ -206,8 +203,7 @@ export default class VocabTrackerPlugin extends Plugin {
   }
 
   async addWordToVocab(word: string, ctx: Partial<WordContext> = {}): Promise<boolean> {
-    const { entries } = this.vocabData;
-    const existing = entries.find(
+    const existing = this.store.entries.find(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
 
@@ -241,13 +237,12 @@ export default class VocabTrackerPlugin extends Plugin {
         lastReviewed: nowStamp(),
         reviews: 0,
       };
-      entries.push(entry);
-      await this.saveVocab();
+      await this.store.addEntry(entry);
       this.enrichEntry(entry);
     } else {
       if (!existing.source && source) existing.source = source;
       if (!existing.example && ctx.sentence) existing.example = ctx.sentence;
-      await this.saveVocab();
+      await this.store.touch(existing);
     }
 
     const leaf = await this.activateSidebar();
@@ -301,7 +296,7 @@ export default class VocabTrackerPlugin extends Plugin {
       if (!entry.definitionZh) entry.definitionZh = data.definitionZh;
       if (!entry.synonyms) entry.synonyms = data.synonyms.join(", ");
       if (!entry.antonyms) entry.antonyms = data.antonyms.join(", ");
-      await this.saveVocab();
+      await this.store.touch(entry);
 
       const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
       const view = leaf && (leaf.view as VocabSidebarView);
@@ -326,10 +321,7 @@ export default class VocabTrackerPlugin extends Plugin {
   // ── Delete a tracked word and remove its ==highlight== ─────────
 
   async deleteEntry(entry: VocabEntry) {
-    this.vocabData.entries = this.vocabData.entries.filter(
-      (e) => e.id !== entry.id
-    );
-    await this.saveVocab();
+    await this.store.deleteEntry(entry.id);
     if (entry.source && entry.source.path) {
       await this.unhighlightWord(entry.word, entry.source.path);
     }

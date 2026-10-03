@@ -34,7 +34,7 @@ export class VocabSidebarView extends ItemView {
   // Called when a tracked word is clicked (reading-mode word / ==mark==).
   // Expands its row in place rather than opening a separate card.
   setWord(word: string) {
-    const entry = this.plugin.vocabData.entries.find(
+    const entry = this.plugin.store.entries.find(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
     if (entry) {
@@ -60,7 +60,7 @@ export class VocabSidebarView extends ItemView {
     openList.title = t("sidebar.openList");
     openList.onclick = () => this.plugin.openVocabFile();
 
-    const { entries } = this.plugin.vocabData;
+    const entries = this.plugin.store.entries;
 
     // ── Not-yet-tracked word banner ──────────────────────────────
     if (this.pendingWord) {
