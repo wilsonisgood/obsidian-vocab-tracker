@@ -491,6 +491,37 @@ function cleanupTombstones(data, now = Date.now()) {
   return { ...data, entries };
 }
 
+// src/core/store/merge.ts
+function updatedAtMs(entry) {
+  return entry.updatedAt ? new Date(entry.updatedAt).getTime() : 0;
+}
+function pickNewer(a, b) {
+  var _a, _b;
+  const aMs = updatedAtMs(a);
+  const bMs = updatedAtMs(b);
+  if (aMs !== bMs) return aMs > bMs ? a : b;
+  return ((_a = a.rev) != null ? _a : 0) >= ((_b = b.rev) != null ? _b : 0) ? a : b;
+}
+function merge(local, remote) {
+  var _a, _b;
+  const byId = /* @__PURE__ */ new Map();
+  const order = [];
+  for (const entry of local.entries) {
+    byId.set(entry.id, entry);
+    order.push(entry.id);
+  }
+  for (const entry of remote.entries) {
+    const existing = byId.get(entry.id);
+    if (!existing) order.push(entry.id);
+    byId.set(entry.id, existing ? pickNewer(existing, entry) : entry);
+  }
+  return {
+    schemaVersion: 2,
+    settings: (_b = (_a = local.settings) != null ? _a : remote.settings) != null ? _b : { schemaVersion: 2 },
+    entries: order.map((id) => byId.get(id))
+  };
+}
+
 // src/core/nowStamp.ts
 function nowStamp() {
   const d = /* @__PURE__ */ new Date();
@@ -982,6 +1013,22 @@ var VocabTrackerPlugin = class extends import_obsidian6.Plugin {
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
     await this.store.flush();
+  }
+  // Fires when the data.json on disk changed from outside this session —
+  // sync (iCloud/Obsidian Sync/Git) pulling in another device's edits.
+  // Merge instead of overwriting so neither side's changes get clobbered.
+  async onExternalSettingsChange() {
+    var _a;
+    const disk = await this.storage.readShard("data");
+    if (!disk) return;
+    const merged = merge(this.vocabData, disk);
+    this.vocabData = merged;
+    this.store.replace(merged);
+    if (JSON.stringify(merged) !== JSON.stringify(disk)) {
+      await this.storage.writeShard("data", merged);
+    }
+    const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
+    (_a = leaf == null ? void 0 : leaf.view) == null ? void 0 : _a.render();
   }
   async activateSidebar() {
     var _a;

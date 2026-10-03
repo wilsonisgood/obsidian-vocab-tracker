@@ -18,6 +18,7 @@ import { DictionaryService } from "./src/services/dictionary/DictionaryService";
 import { VocabStore } from "./src/core/store/VocabStore";
 import { loadMigrated } from "./src/core/migrations/loadMigrated";
 import { cleanupTombstones } from "./src/core/store/cleanupTombstones";
+import { merge } from "./src/core/store/merge";
 import { nowStamp } from "./src/core/nowStamp";
 import { VocabSidebarView, VOCAB_VIEW_TYPE } from "./src/ui/sidebar/VocabSidebarView";
 import { renderDashboard } from "./src/ui/blocks/dashboard";
@@ -90,6 +91,27 @@ export default class VocabTrackerPlugin extends Plugin {
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
     await this.store.flush();
+  }
+
+  // Fires when the data.json on disk changed from outside this session —
+  // sync (iCloud/Obsidian Sync/Git) pulling in another device's edits.
+  // Merge instead of overwriting so neither side's changes get clobbered.
+  async onExternalSettingsChange() {
+    const disk = await this.storage.readShard<VocabData>("data");
+    if (!disk) return;
+
+    const merged = merge(this.vocabData, disk);
+    this.vocabData = merged;
+    this.store.replace(merged);
+
+    if (JSON.stringify(merged) !== JSON.stringify(disk)) {
+      await this.storage.writeShard("data", merged);
+    }
+
+    // Not refreshSidebar(): that gates on the active file path to skip
+    // redundant renders, but data actually changed here regardless of path.
+    const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
+    (leaf?.view as VocabSidebarView | undefined)?.render();
   }
 
   async activateSidebar(): Promise<WorkspaceLeaf> {
