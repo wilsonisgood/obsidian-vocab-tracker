@@ -13,8 +13,10 @@ import { replaceOutsideCode, wrapOutsideCode } from "./src/core/text/outsideCode
 import { extractSentence } from "./src/core/text/sentence";
 import { findSourceLine } from "./src/core/text/sourceLine";
 import { ObsidianHttp } from "./src/platform/ObsidianHttp";
+import { ObsidianStorage } from "./src/platform/ObsidianStorage";
 import { DictionaryService } from "./src/services/dictionary/DictionaryService";
 import { VocabStore } from "./src/core/store/VocabStore";
+import { loadMigrated } from "./src/core/migrations/loadMigrated";
 import { nowStamp } from "./src/core/nowStamp";
 import { VocabSidebarView, VOCAB_VIEW_TYPE } from "./src/ui/sidebar/VocabSidebarView";
 import { renderDashboard } from "./src/ui/blocks/dashboard";
@@ -33,12 +35,13 @@ export default class VocabTrackerPlugin extends Plugin {
   vocabData: VocabData = { entries: [] };
   store!: VocabStore;
   dictionary!: DictionaryService;
+  storage!: ObsidianStorage;
 
   async onload() {
-    const saved = await this.loadData();
-    if (saved) this.vocabData = saved;
+    this.storage = new ObsidianStorage(this);
+    this.vocabData = await loadMigrated(this.storage);
 
-    this.store = new VocabStore(this.vocabData, (data) => this.saveData(data));
+    this.store = new VocabStore(this.vocabData, (data) => this.storage.writeShard("data", data));
     this.dictionary = new DictionaryService(new ObsidianHttp());
 
     // Sidebar
@@ -80,6 +83,12 @@ export default class VocabTrackerPlugin extends Plugin {
     );
 
     this.app.workspace.onLayoutReady(() => this.ensureVocabFile());
+  }
+
+  // So a debounced write (VocabStore's 500ms coalescing) isn't lost if
+  // Obsidian closes right after an edit, before the timer fires.
+  async onunload() {
+    await this.store.flush();
   }
 
   async saveVocab() {

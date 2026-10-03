@@ -17,3 +17,15 @@ export interface HttpPort {
   encodeQueryParam(text: string): string;
   get(url: string): Promise<HttpResponse>;
 }
+
+// Abstracts the plugin's on-disk data so core/** never imports "obsidian".
+// One file per shard (regulation 06 §4.2: "data" today, "threads"/"learn"/
+// etc. land with the milestones that actually write them) — adding a shard
+// later is a new readShard/writeShard call, not an interface change.
+export interface StoragePort {
+  readShard<T>(name: string): Promise<T | null>;
+  writeShard<T>(name: string, data: T): Promise<void>;
+  // Writes `data` (the pre-migration raw shard) somewhere recoverable,
+  // called once right before a migration's first write-back.
+  backup(name: string, data: unknown): Promise<void>;
+}

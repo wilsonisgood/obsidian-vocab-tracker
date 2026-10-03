@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => VocabTrackerPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 
 // src/core/text/wordRe.ts
 function escapeRe(s) {
@@ -118,6 +118,34 @@ var ObsidianHttp = class {
         return res.json;
       }
     };
+  }
+};
+
+// src/platform/ObsidianStorage.ts
+var import_obsidian2 = require("obsidian");
+var UNSUPPORTED_SHARD = (name) => new Error(`ObsidianStorage: shard "${name}" is not implemented yet`);
+var ObsidianStorage = class {
+  constructor(plugin) {
+    this.plugin = plugin;
+  }
+  async readShard(name) {
+    var _a;
+    if (name !== "data") throw UNSUPPORTED_SHARD(name);
+    return (_a = await this.plugin.loadData()) != null ? _a : null;
+  }
+  async writeShard(name, data) {
+    if (name !== "data") throw UNSUPPORTED_SHARD(name);
+    await this.plugin.saveData(data);
+  }
+  async backup(name, data) {
+    const dir = this.plugin.manifest.dir;
+    if (!dir) throw new Error("ObsidianStorage: plugin manifest.dir is unavailable");
+    const adapter = this.plugin.app.vault.adapter;
+    const backupDir = (0, import_obsidian2.normalizePath)(`${dir}/backup`);
+    if (!await adapter.exists(backupDir)) await adapter.mkdir(backupDir);
+    const stamp = (/* @__PURE__ */ new Date()).toISOString().replace(/:/g, "-");
+    const path = (0, import_obsidian2.normalizePath)(`${backupDir}/${name}-v1-${stamp}.json`);
+    await adapter.write(path, JSON.stringify(data, null, 2));
   }
 };
 
@@ -318,18 +346,40 @@ var TypedEmitter = class {
 };
 
 // src/core/store/VocabStore.ts
+var WRITE_DEBOUNCE_MS = 500;
 var VocabStore = class {
   constructor(data, persist) {
     this.data = data;
     this.persist = persist;
     this.events = new TypedEmitter();
+    this.writeTimer = null;
+    this.pendingWrite = Promise.resolve();
   }
   get vocabData() {
     return this.data;
   }
+  // Emits data:changed immediately (so the UI reflects the edit right
+  // away) but coalesces the actual disk write: rapid edits (e.g. typing in
+  // an inline-editable field) share one write instead of one per
+  // keystroke. Callers that need the write to have actually landed (e.g.
+  // before closing a file) should use flush(), not rely on this resolving.
   async save() {
-    await this.persist(this.data);
     this.events.emit("data:changed", this.data);
+    if (this.writeTimer) clearTimeout(this.writeTimer);
+    this.writeTimer = setTimeout(() => {
+      this.writeTimer = null;
+      this.pendingWrite = this.persist(this.data);
+    }, WRITE_DEBOUNCE_MS);
+  }
+  // Forces any debounced write to land now — call on plugin unload so a
+  // pending edit isn't lost if Obsidian closes before the timer fires.
+  async flush() {
+    if (this.writeTimer) {
+      clearTimeout(this.writeTimer);
+      this.writeTimer = null;
+      this.pendingWrite = this.persist(this.data);
+    }
+    await this.pendingWrite;
   }
   // Used by onExternalSettingsChange (multi-device sync) once that exists.
   replace(data) {
@@ -337,6 +387,57 @@ var VocabStore = class {
     this.events.emit("data:changed", this.data);
   }
 };
+
+// src/core/nowIso.ts
+function nowIso() {
+  return (/* @__PURE__ */ new Date()).toISOString();
+}
+
+// src/core/migrations/v1-to-v2.ts
+function parseAddedAt(added) {
+  const d = new Date(added.replace(" ", "T"));
+  return Number.isNaN(d.getTime()) ? nowIso() : d.toISOString();
+}
+function migrateEntry(entry) {
+  const createdAt = entry.added ? parseAddedAt(entry.added) : nowIso();
+  return {
+    ...entry,
+    lang: "en",
+    createdAt,
+    updatedAt: createdAt,
+    rev: 0
+  };
+}
+function migrateV1ToV2(raw) {
+  return {
+    schemaVersion: 2,
+    settings: { schemaVersion: 2 },
+    entries: raw.entries.map(migrateEntry)
+  };
+}
+
+// src/core/migrations/index.ts
+function isSchemaV2(raw) {
+  return !!raw && typeof raw === "object" && raw.schemaVersion === 2;
+}
+function migrate(raw) {
+  if (!raw) {
+    return { data: { schemaVersion: 2, settings: { schemaVersion: 2 }, entries: [] }, migrated: false };
+  }
+  if (isSchemaV2(raw)) return { data: raw, migrated: false };
+  return { data: migrateV1ToV2(raw), migrated: true };
+}
+
+// src/core/migrations/loadMigrated.ts
+async function loadMigrated(storage, shard = "data") {
+  const raw = await storage.readShard(shard);
+  const { data, migrated } = migrate(raw);
+  if (migrated) {
+    await storage.backup(shard, raw);
+    await storage.writeShard(shard, data);
+  }
+  return data;
+}
 
 // src/core/nowStamp.ts
 function nowStamp() {
@@ -346,10 +447,10 @@ function nowStamp() {
 }
 
 // src/ui/sidebar/VocabSidebarView.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 
 // src/ui/word/WordRow.ts
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 
 // src/core/i18n/en.ts
 var en = {
@@ -446,7 +547,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
   row.toggleClass("is-expanded", state !== "collapsed");
   const head = row.createEl("div", { cls: "vocab-tracker-row-header" });
   const del = head.createEl("span", { cls: "vocab-tracker-row-delete" });
-  (0, import_obsidian2.setIcon)(del, "x");
+  (0, import_obsidian3.setIcon)(del, "x");
   del.title = t("row.delete");
   del.onclick = async (e) => {
     e.stopPropagation();
@@ -460,7 +561,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
   }
   head.createEl("span", { cls: "vocab-tracker-row-spacer" });
   const arrow = head.createEl("span", { cls: "vocab-tracker-row-arrow" });
-  (0, import_obsidian2.setIcon)(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
+  (0, import_obsidian3.setIcon)(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
   arrow.title = state === "collapsed" ? t("row.expand") : t("row.collapse");
   head.onclick = () => {
     setState(state === "collapsed" ? "half" : "collapsed");
@@ -470,7 +571,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
     const speak2 = head.createEl("span", {
       cls: ["vocab-tracker-speak-icon", "vocab-tracker-row-speak"]
     });
-    (0, import_obsidian2.setIcon)(speak2, "volume-2");
+    (0, import_obsidian3.setIcon)(speak2, "volume-2");
     speak2.title = t("row.pronounce");
     speak2.onclick = (e) => {
       e.stopPropagation();
@@ -537,7 +638,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
   }
   const footer = body.createEl("div", { cls: "vocab-tracker-row-footer" });
   const moreBtn = footer.createEl("span", { cls: "vocab-tracker-footer-icon" });
-  (0, import_obsidian2.setIcon)(moreBtn, state === "full" ? "chevron-down" : "info");
+  (0, import_obsidian3.setIcon)(moreBtn, state === "full" ? "chevron-down" : "info");
   moreBtn.title = state === "full" ? t("row.showLess") : t("row.showMore");
   moreBtn.onclick = (e) => {
     e.stopPropagation();
@@ -546,7 +647,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
   };
   const actions = footer.createEl("span", { cls: "vocab-tracker-row-footer-actions" });
   const fetchBtn = actions.createEl("span", { cls: "vocab-tracker-footer-icon" });
-  (0, import_obsidian2.setIcon)(fetchBtn, "refresh-cw");
+  (0, import_obsidian3.setIcon)(fetchBtn, "refresh-cw");
   fetchBtn.title = t("row.fetch");
   fetchBtn.onclick = async (e) => {
     e.stopPropagation();
@@ -555,7 +656,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
     refresh();
   };
   const reviewBtn = actions.createEl("span", { cls: "vocab-tracker-footer-icon" });
-  (0, import_obsidian2.setIcon)(reviewBtn, "check");
+  (0, import_obsidian3.setIcon)(reviewBtn, "check");
   reviewBtn.title = t("row.markReviewed");
   reviewBtn.onclick = async (e) => {
     e.stopPropagation();
@@ -565,7 +666,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
     refresh();
   };
   const speak = actions.createEl("span", { cls: "vocab-tracker-speak-icon" });
-  (0, import_obsidian2.setIcon)(speak, "volume-2");
+  (0, import_obsidian3.setIcon)(speak, "volume-2");
   speak.title = t("row.pronounce");
   speak.onclick = (e) => {
     e.stopPropagation();
@@ -574,7 +675,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
 }
 
 // src/ui/word/GroupedWordList.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 function renderGroupedVocabList(plugin, container, rows, collapsedGroups, expandState, refresh) {
   var _a, _b;
   const groups = /* @__PURE__ */ new Map();
@@ -589,7 +690,7 @@ function renderGroupedVocabList(plugin, container, rows, collapsedGroups, expand
     const isCollapsed = collapsedGroups.has(title);
     const heading = container.createEl("div", { cls: "vocab-tracker-group-heading" });
     const arrow = heading.createEl("span", { cls: "vocab-tracker-group-arrow" });
-    (0, import_obsidian3.setIcon)(arrow, isCollapsed ? "chevron-up" : "chevron-down");
+    (0, import_obsidian4.setIcon)(arrow, isCollapsed ? "chevron-up" : "chevron-down");
     heading.createEl("span", { text: title, cls: "vocab-tracker-group-title", title });
     heading.createEl("span", { cls: "vocab-tracker-group-spacer" });
     heading.createEl("span", { text: String(groupRows.length), cls: "vocab-tracker-group-count" });
@@ -615,7 +716,7 @@ function renderGroupedVocabList(plugin, container, rows, collapsedGroups, expand
 
 // src/ui/sidebar/VocabSidebarView.ts
 var VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
-var VocabSidebarView = class extends import_obsidian4.ItemView {
+var VocabSidebarView = class extends import_obsidian5.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     // Word clicked via a plain ==mark== that isn't tracked yet — prompts an
@@ -661,7 +762,7 @@ var VocabSidebarView = class extends import_obsidian4.ItemView {
     const header = root.createEl("div", { cls: "vocab-tracker-header" });
     header.createEl("h4", { text: t("sidebar.title") });
     const openList = header.createEl("span", { cls: "vocab-tracker-icon-btn" });
-    (0, import_obsidian4.setIcon)(openList, "file-text");
+    (0, import_obsidian5.setIcon)(openList, "file-text");
     openList.title = t("sidebar.openList");
     openList.onclick = () => this.plugin.openVocabFile();
     const { entries } = this.plugin.vocabData;
@@ -673,7 +774,7 @@ var VocabSidebarView = class extends import_obsidian4.ItemView {
         await this.plugin.addWordToVocab(this.pendingWord);
       };
       const dismiss = banner.createEl("span", { cls: "vocab-tracker-close-btn" });
-      (0, import_obsidian4.setIcon)(dismiss, "x");
+      (0, import_obsidian5.setIcon)(dismiss, "x");
       dismiss.onclick = () => {
         this.pendingWord = "";
         this.render();
@@ -787,15 +888,15 @@ function renderDashboard(plugin, _source, el, _ctx) {
 var VOCAB_FOLDER = "vocab-list";
 var VOCAB_FILE = `${VOCAB_FOLDER}/vocab-list.md`;
 var VOCAB_FILE_LEGACY = "vocab-list.md";
-var VocabTrackerPlugin = class extends import_obsidian5.Plugin {
+var VocabTrackerPlugin = class extends import_obsidian6.Plugin {
   constructor() {
     super(...arguments);
     this.vocabData = { entries: [] };
   }
   async onload() {
-    const saved = await this.loadData();
-    if (saved) this.vocabData = saved;
-    this.store = new VocabStore(this.vocabData, (data) => this.saveData(data));
+    this.storage = new ObsidianStorage(this);
+    this.vocabData = await loadMigrated(this.storage);
+    this.store = new VocabStore(this.vocabData, (data) => this.storage.writeShard("data", data));
     this.dictionary = new DictionaryService(new ObsidianHttp());
     this.registerView(
       VOCAB_VIEW_TYPE,
@@ -825,6 +926,11 @@ var VocabTrackerPlugin = class extends import_obsidian5.Plugin {
     );
     this.app.workspace.onLayoutReady(() => this.ensureVocabFile());
   }
+  // So a debounced write (VocabStore's 500ms coalescing) isn't lost if
+  // Obsidian closes right after an edit, before the timer fires.
+  async onunload() {
+    await this.store.flush();
+  }
   async saveVocab() {
     await this.store.save();
   }
@@ -851,7 +957,7 @@ var VocabTrackerPlugin = class extends import_obsidian5.Plugin {
       await this.app.vault.createFolder(VOCAB_FOLDER);
     }
     const legacy = this.app.vault.getAbstractFileByPath(VOCAB_FILE_LEGACY);
-    if (legacy instanceof import_obsidian5.TFile) {
+    if (legacy instanceof import_obsidian6.TFile) {
       await this.app.fileManager.renameFile(legacy, VOCAB_FILE);
       return;
     }
@@ -876,7 +982,7 @@ var VocabTrackerPlugin = class extends import_obsidian5.Plugin {
     const exists = this.vocabData.entries.some(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
-    const menu = new import_obsidian5.Menu();
+    const menu = new import_obsidian6.Menu();
     menu.addItem((item) => {
       item.setTitle(
         exists ? `Open "${word}" in Vocab Tracker` : `Add "${word}" to Vocab Tracker`
@@ -884,7 +990,7 @@ var VocabTrackerPlugin = class extends import_obsidian5.Plugin {
       item.setIcon(exists ? "book-open" : "plus");
       item.onClick(async () => {
         const added = await this.addWordToVocab(word, ctx);
-        new import_obsidian5.Notice(added ? `Added "${word}" to vocab list` : `Opened "${word}"`);
+        new import_obsidian6.Notice(added ? `Added "${word}" to vocab list` : `Opened "${word}"`);
       });
     });
     menu.showAtMouseEvent(evt);
@@ -965,7 +1071,7 @@ var VocabTrackerPlugin = class extends import_obsidian5.Plugin {
     if (!entry.source || !entry.source.path) return;
     const file = this.app.vault.getAbstractFileByPath(entry.source.path);
     if (!file) {
-      new import_obsidian5.Notice("Source note not found: " + entry.source.path);
+      new import_obsidian6.Notice("Source note not found: " + entry.source.path);
       return;
     }
     const leaf = this.app.workspace.getLeaf(false);
@@ -982,7 +1088,7 @@ var VocabTrackerPlugin = class extends import_obsidian5.Plugin {
   }
   speakSynth(word) {
     if (!("speechSynthesis" in window)) {
-      new import_obsidian5.Notice("No pronunciation available on this device.");
+      new import_obsidian6.Notice("No pronunciation available on this device.");
       return;
     }
     const u = new SpeechSynthesisUtterance(word);
@@ -1005,10 +1111,10 @@ var VocabTrackerPlugin = class extends import_obsidian5.Plugin {
       const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
       const view = leaf && leaf.view;
       if (view) view.render();
-      if (opts.verbose) new import_obsidian5.Notice(`Vocab Tracker: fetched "${entry.word}"`);
+      if (opts.verbose) new import_obsidian6.Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
-      new import_obsidian5.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
+      new import_obsidian6.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
     }
   }
   refreshSidebar() {
