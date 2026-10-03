@@ -15,6 +15,7 @@ import { extractSentence } from "./src/core/text/sentence";
 import { findSourceLine } from "./src/core/text/sourceLine";
 import { ObsidianHttp } from "./src/platform/ObsidianHttp";
 import { DictionaryService } from "./src/services/dictionary/DictionaryService";
+import { VocabStore } from "./src/core/store/VocabStore";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -183,12 +184,14 @@ class VocabSidebarView extends ItemView {
 
 export default class VocabTrackerPlugin extends Plugin {
   vocabData: VocabData = { entries: [] };
+  store!: VocabStore;
   dictionary!: DictionaryService;
 
   async onload() {
     const saved = await this.loadData();
     if (saved) this.vocabData = saved;
 
+    this.store = new VocabStore(this.vocabData, (data) => this.saveData(data));
     this.dictionary = new DictionaryService(new ObsidianHttp());
 
     // Sidebar
@@ -233,7 +236,7 @@ export default class VocabTrackerPlugin extends Plugin {
   }
 
   async saveVocab() {
-    await this.saveData(this.vocabData);
+    await this.store.save();
   }
 
   async activateSidebar(): Promise<WorkspaceLeaf> {

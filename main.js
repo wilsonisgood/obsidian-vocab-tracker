@@ -293,6 +293,51 @@ var DictionaryService = class {
   }
 };
 
+// src/core/events.ts
+var TypedEmitter = class {
+  constructor() {
+    this.listeners = /* @__PURE__ */ new Map();
+  }
+  on(event, fn) {
+    let set = this.listeners.get(event);
+    if (!set) {
+      set = /* @__PURE__ */ new Set();
+      this.listeners.set(event, set);
+    }
+    set.add(fn);
+    return () => this.off(event, fn);
+  }
+  off(event, fn) {
+    var _a;
+    (_a = this.listeners.get(event)) == null ? void 0 : _a.delete(fn);
+  }
+  emit(event, payload) {
+    var _a;
+    for (const fn of (_a = this.listeners.get(event)) != null ? _a : []) fn(payload);
+  }
+};
+
+// src/core/store/VocabStore.ts
+var VocabStore = class {
+  constructor(data, persist) {
+    this.data = data;
+    this.persist = persist;
+    this.events = new TypedEmitter();
+  }
+  get vocabData() {
+    return this.data;
+  }
+  async save() {
+    await this.persist(this.data);
+    this.events.emit("data:changed", this.data);
+  }
+  // Used by onExternalSettingsChange (multi-device sync) once that exists.
+  replace(data) {
+    this.data = data;
+    this.events.emit("data:changed", this.data);
+  }
+};
+
 // main.ts
 var VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 var VOCAB_FOLDER = "vocab-list";
@@ -433,6 +478,7 @@ var VocabTrackerPlugin = class extends import_obsidian2.Plugin {
   async onload() {
     const saved = await this.loadData();
     if (saved) this.vocabData = saved;
+    this.store = new VocabStore(this.vocabData, (data) => this.saveData(data));
     this.dictionary = new DictionaryService(new ObsidianHttp());
     this.registerView(
       VOCAB_VIEW_TYPE,
@@ -463,7 +509,7 @@ var VocabTrackerPlugin = class extends import_obsidian2.Plugin {
     this.app.workspace.onLayoutReady(() => this.ensureVocabFile());
   }
   async saveVocab() {
-    await this.saveData(this.vocabData);
+    await this.store.save();
   }
   async activateSidebar() {
     var _a;
