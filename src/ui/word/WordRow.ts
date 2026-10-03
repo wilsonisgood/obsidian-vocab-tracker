@@ -1,6 +1,8 @@
+import { setIcon } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import { nowStamp } from "../../core/nowStamp";
+import { t } from "../../core/i18n";
 
 // Progressive-disclosure state for a single row: collapsed (one line),
 // half (synonyms-and-up visible), full (everything visible).
@@ -18,9 +20,9 @@ function autoGrowTextarea(el: HTMLTextAreaElement) {
 // ── Shared row renderer: sidebar list + dashboard both use this ──
 //
 // Three progressive-disclosure states:
-//   collapsed — one line: ✕ delete · word+level · expand toggle · 🔊 speak
+//   collapsed — one line: delete · word+level · expand toggle · speak
 //   half      — + phonetic/POS, synonyms, definition, 中文翻译;
-//               footer: more toggle · 🔄 fetch · ✓ reviewed · 🔊 speak
+//               footer: more toggle · fetch · reviewed · speak
 //   full      — + antonyms (if any), example, grammar, source,
 //               added/reviewed, level
 export function renderVocabRow(
@@ -37,8 +39,9 @@ export function renderVocabRow(
   // ── Header: always visible ───────────────────────────────────
   const head = row.createEl("div", { cls: "vocab-tracker-row-header" });
 
-  const del = head.createEl("span", { text: "✕", cls: "vocab-tracker-row-delete" });
-  del.title = "Delete";
+  const del = head.createEl("span", { cls: "vocab-tracker-row-delete" });
+  setIcon(del, "x");
+  del.title = t("row.delete");
   del.onclick = async (e) => {
     e.stopPropagation();
     await plugin.deleteEntry(entry);
@@ -53,11 +56,9 @@ export function renderVocabRow(
 
   head.createEl("span", { cls: "vocab-tracker-row-spacer" });
 
-  const arrow = head.createEl("span", {
-    text: state === "collapsed" ? "⌃" : "⌵",
-    cls: "vocab-tracker-row-arrow",
-  });
-  arrow.title = state === "collapsed" ? "Expand" : "Collapse";
+  const arrow = head.createEl("span", { cls: "vocab-tracker-row-arrow" });
+  setIcon(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
+  arrow.title = state === "collapsed" ? t("row.expand") : t("row.collapse");
 
   head.onclick = () => {
     setState(state === "collapsed" ? "half" : "collapsed");
@@ -66,10 +67,10 @@ export function renderVocabRow(
 
   if (state === "collapsed") {
     const speak = head.createEl("span", {
-      text: "🔊",
       cls: ["vocab-tracker-speak-icon", "vocab-tracker-row-speak"],
     });
-    speak.title = "Pronounce";
+    setIcon(speak, "volume-2");
+    speak.title = t("row.pronounce");
     speak.onclick = (e) => {
       e.stopPropagation();
       plugin.speakWord(entry);
@@ -107,7 +108,7 @@ export function renderVocabRow(
       const inp = wrap.createEl("textarea", { cls });
       inp.rows = 1; // UA default is 2 rows — pin to 1 so auto-grow starts tight
       inp.value = value;
-      inp.placeholder = `Add ${label.toLowerCase()}…`;
+      inp.placeholder = t("row.field.placeholder", { label: label.toLowerCase() });
       inp.onclick = (e) => e.stopPropagation();
       autoGrowTextarea(inp);
       inp.addEventListener("input", () => autoGrowTextarea(inp));
@@ -116,7 +117,7 @@ export function renderVocabRow(
       const inp = wrap.createEl("input", { cls });
       inp.type = "text";
       inp.value = value;
-      inp.placeholder = `Add ${label.toLowerCase()}…`;
+      inp.placeholder = t("row.field.placeholder", { label: label.toLowerCase() });
       inp.onclick = (e) => e.stopPropagation();
       inp.onchange = () => commitField(key, inp.value);
     }
@@ -125,49 +126,47 @@ export function renderVocabRow(
   // Synonyms shares the exact same auto-growing textarea treatment as
   // Definition/中文翻译, so a long list wraps flush-left instead of
   // truncating in a single-line input.
-  mkField("Synonyms", "synonyms", { multiline: true });
-  mkField("Definition", "definition", { multiline: true });
-  mkField("中文翻译", "definitionZh", { multiline: true });
+  mkField(t("row.field.synonyms"), "synonyms", { multiline: true });
+  mkField(t("row.field.definition"), "definition", { multiline: true });
+  mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
 
   if (state === "full") {
     // Antonyms is hidden entirely when empty rather than showing an
     // empty prompt box — unlike the other fields, it's not something
     // most words have.
-    if (entry.antonyms) mkField("Antonyms", "antonyms");
+    if (entry.antonyms) mkField(t("row.field.antonyms"), "antonyms");
 
-    mkField("Example sentence (from note)", "example", { multiline: true });
-    mkField("Grammar tips", "grammar");
+    mkField(t("row.field.example"), "example", { multiline: true });
+    mkField(t("row.field.grammar"), "grammar");
 
     if (entry.source && entry.source.path) {
       const src = body.createEl("div", { cls: "vocab-tracker-source-link" });
       const name = entry.source.path.split("/").pop();
       src.textContent = `📍 ${name} : line ${entry.source.line + 1}`;
-      src.title = "Jump to where this word was captured";
+      src.title = t("row.jumpToSource");
       src.onclick = (e) => {
         e.stopPropagation();
         plugin.jumpToSource(entry);
       };
     }
 
-    body.createEl("div", { text: `Added: ${entry.added}`, cls: "vocab-tracker-meta" });
+    body.createEl("div", { text: t("row.meta.added", { date: entry.added }), cls: "vocab-tracker-meta" });
     body.createEl("div", {
-      text: `Reviewed: ${entry.lastReviewed} (${entry.reviews}×)`,
+      text: t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }),
       cls: "vocab-tracker-meta",
     });
 
     // Level — last, right below the Added/Reviewed lines. Comma-separated
     // free-form tags (e.g. "多益中級, 托福高級"), same field style as everything else.
-    mkField("Level", "level", { multiline: true });
+    mkField(t("row.field.level"), "level", { multiline: true });
   }
 
   // ── Footer: more-info toggle · fetch · reviewed · speak ──────
   const footer = body.createEl("div", { cls: "vocab-tracker-row-footer" });
 
-  const moreBtn = footer.createEl("span", {
-    text: state === "full" ? "⌵" : "ℹ️",
-    cls: "vocab-tracker-footer-icon",
-  });
-  moreBtn.title = state === "full" ? "Show less" : "Show more";
+  const moreBtn = footer.createEl("span", { cls: "vocab-tracker-footer-icon" });
+  setIcon(moreBtn, state === "full" ? "chevron-down" : "info");
+  moreBtn.title = state === "full" ? t("row.showLess") : t("row.showMore");
   moreBtn.onclick = (e) => {
     e.stopPropagation();
     setState(state === "full" ? "half" : "full");
@@ -176,8 +175,9 @@ export function renderVocabRow(
 
   const actions = footer.createEl("span", { cls: "vocab-tracker-row-footer-actions" });
 
-  const fetchBtn = actions.createEl("span", { text: "🔄", cls: "vocab-tracker-footer-icon" });
-  fetchBtn.title = "Fetch dictionary data (definition, synonyms, phonetic)";
+  const fetchBtn = actions.createEl("span", { cls: "vocab-tracker-footer-icon" });
+  setIcon(fetchBtn, "refresh-cw");
+  fetchBtn.title = t("row.fetch");
   fetchBtn.onclick = async (e) => {
     e.stopPropagation();
     fetchBtn.textContent = "…";
@@ -185,8 +185,9 @@ export function renderVocabRow(
     refresh();
   };
 
-  const reviewBtn = actions.createEl("span", { text: "✓", cls: "vocab-tracker-footer-icon" });
-  reviewBtn.title = "Mark as reviewed";
+  const reviewBtn = actions.createEl("span", { cls: "vocab-tracker-footer-icon" });
+  setIcon(reviewBtn, "check");
+  reviewBtn.title = t("row.markReviewed");
   reviewBtn.onclick = async (e) => {
     e.stopPropagation();
     entry.lastReviewed = nowStamp();
@@ -195,8 +196,9 @@ export function renderVocabRow(
     refresh();
   };
 
-  const speak = actions.createEl("span", { text: "🔊", cls: "vocab-tracker-speak-icon" });
-  speak.title = "Pronounce";
+  const speak = actions.createEl("span", { cls: "vocab-tracker-speak-icon" });
+  setIcon(speak, "volume-2");
+  speak.title = t("row.pronounce");
   speak.onclick = (e) => {
     e.stopPropagation();
     plugin.speakWord(entry);

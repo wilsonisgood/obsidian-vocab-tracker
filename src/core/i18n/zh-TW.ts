@@ -1,0 +1,38 @@
+import type { en } from "./en";
+
+export const zhTW: Record<keyof typeof en, string> = {
+  "sidebar.title": "單字追蹤",
+  "sidebar.openList": "開啟 vocab-list.md",
+  "sidebar.addPrompt.cta": "＋ 加入單字庫",
+  "sidebar.filter.note": "本篇筆記",
+  "sidebar.filter.all": "全部",
+  "sidebar.scope.note": "本篇筆記",
+  "sidebar.scope.all": "全部單字",
+  "sidebar.hint.noteEmpty": "這篇筆記還沒有追蹤的單字。在閱讀模式點擊英文單字即可加入。",
+  "sidebar.hint.allEmpty": "在閱讀模式點擊英文單字開始追蹤。",
+
+  "row.delete": "刪除",
+  "row.expand": "展開",
+  "row.collapse": "收合",
+  "row.pronounce": "發音",
+  "row.jumpToSource": "跳到這個字出現的地方",
+  "row.showMore": "顯示更多",
+  "row.showLess": "顯示較少",
+  "row.fetch": "抓取字典資料（定義、同義詞、音標）",
+  "row.markReviewed": "標記為已複習",
+  "row.meta.added": "加入時間：{date}",
+  "row.meta.reviewed": "複習時間：{date}（{count} 次）",
+  "row.field.synonyms": "同義詞",
+  "row.field.definition": "定義",
+  "row.field.definitionZh": "中文翻译",
+  "row.field.antonyms": "反義詞",
+  "row.field.example": "例句（來自筆記）",
+  "row.field.grammar": "文法提示",
+  "row.field.level": "程度",
+  "row.field.placeholder": "新增{label}…",
+
+  "dashboard.empty": "還沒有單字。在筆記中用 ==單字== 標記並點擊即可開始追蹤。",
+  "dashboard.search": "搜尋單字…",
+  "dashboard.stat.word": "📚 {count} 個單字",
+  "dashboard.stat.words": "📚 {count} 個單字",
+};

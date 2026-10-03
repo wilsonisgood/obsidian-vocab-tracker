@@ -5,7 +5,13 @@ import builtins from "builtin-modules";
 const prod = process.argv[2] === "production";
 
 const context = await esbuild.context({
-  entryPoints: ["main.ts"],
+  // main.ts -> main.js; src/styles/index.css (which @imports the rest of
+  // src/styles/*.css) -> styles.css. Both land at the repo root, where
+  // Obsidian expects them.
+  entryPoints: [
+    { in: "main.ts", out: "main" },
+    { in: "src/styles/index.css", out: "styles" },
+  ],
   bundle: true,
   external: [
     "obsidian",
@@ -24,7 +30,7 @@ const context = await esbuild.context({
   logLevel: "info",
   sourcemap: prod ? false : "inline",
   treeShaking: true,
-  outfile: "main.js",
+  outdir: ".",
 });
 
 if (prod) {

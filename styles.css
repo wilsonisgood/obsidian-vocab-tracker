@@ -1,33 +1,113 @@
-/* Vocab Tracker styles */
+/* src/styles/kit.css */
+.vocab-tracker-icon-btn {
+  cursor: pointer;
+}
+.vocab-tracker-close-btn {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 1.2em;
+}
+.vocab-tracker-toggle-group {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.vocab-tracker-toggle-btn {
+  cursor: pointer;
+  font-size: 0.72em;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+}
+.vocab-tracker-toggle-btn.is-active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.vocab-tracker-btn {
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 0.88em;
+}
+.vocab-tracker-speak-icon {
+  cursor: pointer;
+  font-size: 0.95em;
+  line-height: 1;
+  user-select: none;
+  flex-shrink: 0;
+}
+.vocab-tracker-footer-icon {
+  cursor: pointer;
+  font-size: 0.95em;
+  line-height: 1;
+  user-select: none;
+  opacity: 0.8;
+}
+.vocab-tracker-footer-icon:hover {
+  opacity: 1;
+}
+.vocab-tracker-field-box {
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+}
+.vocab-tracker-field.is-filled .vocab-tracker-field-box {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+}
+.vocab-tracker-field.is-filled .vocab-tracker-field-box:focus {
+  background: var(--background-primary);
+  border-color: var(--background-modifier-border);
+  padding: 5px;
+}
+.vocab-tracker-input {
+  width: 100%;
+  padding: 5px;
+  box-sizing: border-box;
+  font-size: 0.9em;
+}
+.vocab-tracker-textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 1.4em;
+  font-family: inherit;
+  line-height: 1.4;
+}
+.vocab-tracker-meta {
+  font-size: 0.72em;
+  color: var(--text-muted);
+  margin: 6px 0;
+}
+.vocab-tracker-stat-pill {
+  padding: 3px 10px;
+  background: var(--background-secondary);
+  border-radius: 12px;
+  font-size: 0.82em;
+}
+.vocab-tracker-stat-pill.is-accent {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
 
+/* src/styles/sidebar.css */
 .vocab-tracker-sidebar {
   padding: 12px;
   overflow-y: auto;
   height: 100%;
   box-sizing: border-box;
 }
-
 .vocab-tracker-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
 }
-
 .vocab-tracker-header h4 {
   margin: 0;
 }
-
-.vocab-tracker-icon-btn {
-  cursor: pointer;
-}
-
-.vocab-tracker-close-btn {
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 1.2em;
-}
-
 .vocab-tracker-add-prompt {
   display: flex;
   align-items: center;
@@ -37,12 +117,10 @@
   border-radius: 6px;
   margin-bottom: 12px;
 }
-
 .vocab-tracker-add-prompt-word {
   font-weight: 600;
   flex: 1;
 }
-
 .vocab-tracker-list-header {
   display: flex;
   align-items: center;
@@ -50,7 +128,6 @@
   margin-bottom: 6px;
   gap: 6px;
 }
-
 .vocab-tracker-count-label {
   font-size: 0.8em;
   color: var(--text-muted);
@@ -58,45 +135,21 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-
-.vocab-tracker-toggle-group {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.vocab-tracker-toggle-btn {
-  cursor: pointer;
-  font-size: 0.72em;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: var(--background-secondary);
-  color: var(--text-muted);
-}
-
-.vocab-tracker-toggle-btn.is-active {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-
 .vocab-tracker-hint {
   font-size: 0.85em;
   color: var(--text-muted);
   line-height: 1.5;
 }
-
 .vocab-tracker-list {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-
 .vocab-tracker-row {
   border-radius: 5px;
   background: var(--background-secondary);
   overflow: hidden;
 }
-
 .vocab-tracker-row-header {
   display: flex;
   align-items: center;
@@ -104,17 +157,14 @@
   padding: 7px 9px;
   cursor: pointer;
 }
-
 .vocab-tracker-row-wordwrap {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .vocab-tracker-row-word {
   color: var(--text-normal);
 }
-
 .vocab-tracker-row-badge {
   margin-left: 5px;
   font-size: 0.7em;
@@ -124,30 +174,18 @@
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
-
 .vocab-tracker-row-spacer {
   flex: 1;
 }
-
 .vocab-tracker-row-arrow {
   color: var(--text-muted);
   font-size: 0.95em;
   line-height: 1;
   flex-shrink: 0;
 }
-
-.vocab-tracker-speak-icon {
-  cursor: pointer;
-  font-size: 0.95em;
-  line-height: 1;
-  user-select: none;
-  flex-shrink: 0;
-}
-
 .vocab-tracker-row-speak {
   opacity: 0.7;
 }
-
 .vocab-tracker-row-delete {
   color: var(--text-muted);
   padding: 0 3px;
@@ -156,81 +194,23 @@
   cursor: pointer;
   flex-shrink: 0;
 }
-
 .vocab-tracker-row-body {
   padding: 0 9px 9px;
 }
-
-/* ── Fields shared by half/full expanded rows ─────────────────── */
-
 .vocab-tracker-form-subtext {
   font-size: 0.82em;
   color: var(--text-muted);
   margin: -2px 0 6px;
 }
-
 .vocab-tracker-field {
   margin-bottom: 6px;
 }
-
-.vocab-tracker-field-box {
-  background: var(--background-primary);
-  color: var(--text-normal);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 4px;
-}
-
-/* Filled fields drop their box — read as plain text, flush with the
-   phonetic line, with the box chrome only appearing once you focus in. */
-.vocab-tracker-field.is-filled .vocab-tracker-field-box {
-  background: transparent;
-  border-color: transparent;
-  padding: 0;
-}
-
-.vocab-tracker-field.is-filled .vocab-tracker-field-box:focus {
-  background: var(--background-primary);
-  border-color: var(--background-modifier-border);
-  padding: 5px;
-}
-
-.vocab-tracker-input {
-  width: 100%;
-  padding: 5px;
-  box-sizing: border-box;
-  font-size: 0.9em;
-}
-
-.vocab-tracker-textarea {
-  resize: none;
-  overflow: hidden;
-  min-height: 1.4em;
-  font-family: inherit;
-  line-height: 1.4;
-}
-
 .vocab-tracker-source-link {
   font-size: 0.8em;
   margin: 8px 0 4px;
   cursor: pointer;
   color: var(--text-accent);
 }
-
-.vocab-tracker-meta {
-  font-size: 0.72em;
-  color: var(--text-muted);
-  margin: 6px 0;
-}
-
-.vocab-tracker-btn {
-  padding: 6px 10px;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 0.88em;
-}
-
-/* ── Row footer: more-info toggle · fetch · reviewed · speak ───── */
-
 .vocab-tracker-row-footer {
   display: flex;
   align-items: center;
@@ -238,67 +218,36 @@
   gap: 10px;
   margin-top: 4px;
 }
-
 .vocab-tracker-row-footer-actions {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.vocab-tracker-footer-icon {
-  cursor: pointer;
-  font-size: 0.95em;
-  line-height: 1;
-  user-select: none;
-  opacity: 0.8;
-}
-
-.vocab-tracker-footer-icon:hover {
-  opacity: 1;
-}
-
-/* ── Reading-mode ==highlight== marks ───────────────────────────── */
-
+/* src/styles/reading.css */
 .vocab-tracker-tracked-mark {
   cursor: pointer;
 }
 
-/* ── Dashboard ───────────────────────────────────────────────────── */
-
+/* src/styles/blocks.css */
 .vocab-tracker-dashboard {
   font-family: inherit;
 }
-
 .vocab-tracker-empty-state {
   color: var(--text-muted);
 }
-
 .vocab-tracker-stats {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
   margin-bottom: 14px;
 }
-
-.vocab-tracker-stat-pill {
-  padding: 3px 10px;
-  background: var(--background-secondary);
-  border-radius: 12px;
-  font-size: 0.82em;
-}
-
-.vocab-tracker-stat-pill.is-accent {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-
 .vocab-tracker-search-input {
   width: 100%;
   padding: 6px;
   box-sizing: border-box;
   margin-bottom: 10px;
 }
-
 .vocab-tracker-group-heading {
   display: flex;
   align-items: center;
@@ -309,16 +258,13 @@
   color: var(--text-muted);
   margin: 14px 0 6px;
 }
-
 .vocab-tracker-group-heading:first-child {
   margin-top: 0;
 }
-
 .vocab-tracker-group-arrow {
   font-size: 0.9em;
   flex-shrink: 0;
 }
-
 .vocab-tracker-group-title {
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -327,14 +273,14 @@
   white-space: nowrap;
   min-width: 0;
 }
-
 .vocab-tracker-group-spacer {
   flex: 1;
   min-width: 6px;
 }
-
 .vocab-tracker-group-count {
   font-weight: 400;
   opacity: 0.8;
   flex-shrink: 0;
 }
+
+/* src/styles/index.css */

@@ -1,0 +1,7 @@
+/* Vocab Tracker styles — bundled by esbuild into styles.css at the repo
+   root (Obsidian loads that file directly; see esbuild.config.mjs). */
+
+@import "./kit.css";
+@import "./sidebar.css";
+@import "./reading.css";
+@import "./blocks.css";

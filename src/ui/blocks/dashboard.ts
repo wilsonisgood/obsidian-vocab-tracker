@@ -2,6 +2,7 @@ import type { MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { ExpandState } from "../word/WordRow";
 import { renderGroupedVocabList } from "../word/GroupedWordList";
+import { t } from "../../core/i18n";
 
 // ── vocab-dashboard renderer ───────────────────────────────────
 export function renderDashboard(
@@ -15,7 +16,7 @@ export function renderDashboard(
 
   if (entries.length === 0) {
     el.createEl("p", {
-      text: "No words yet. Highlight ==words== in your notes and click them to start tracking.",
+      text: t("dashboard.empty"),
       cls: "vocab-tracker-empty-state",
     });
     return;
@@ -24,7 +25,10 @@ export function renderDashboard(
   // Stats bar
   const stats = el.createEl("div", { cls: "vocab-tracker-stats" });
   stats.createEl("span", {
-    text: `📚 ${entries.length} word${entries.length !== 1 ? "s" : ""}`,
+    text:
+      entries.length === 1
+        ? t("dashboard.stat.word", { count: entries.length })
+        : t("dashboard.stat.words", { count: entries.length }),
     cls: "vocab-tracker-stat-pill",
   });
   const tagCounts = new Map<string, number>();
@@ -42,7 +46,7 @@ export function renderDashboard(
 
   // Search
   const search = el.createEl("input", { cls: ["vocab-tracker-search-input", "vocab-tracker-field-box"] });
-  search.placeholder = "Search words…";
+  search.placeholder = t("dashboard.search");
 
   const listWrap = el.createEl("div", { cls: "vocab-tracker-list" });
   const expandState: Map<string, ExpandState> = new Map();

@@ -1,8 +1,9 @@
-import { ItemView, WorkspaceLeaf } from "obsidian";
+import { ItemView, WorkspaceLeaf, setIcon } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { ExpandState } from "../word/WordRow";
 import { renderVocabRow } from "../word/WordRow";
 import { renderGroupedVocabList } from "../word/GroupedWordList";
+import { t } from "../../core/i18n";
 
 export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 
@@ -25,7 +26,7 @@ export class VocabSidebarView extends ItemView {
   }
 
   getViewType() { return VOCAB_VIEW_TYPE; }
-  getDisplayText() { return "Vocab Tracker"; }
+  getDisplayText() { return t("sidebar.title"); }
   getIcon() { return "book-open"; }
 
   async onOpen() { this.render(); }
@@ -53,9 +54,10 @@ export class VocabSidebarView extends ItemView {
     root.addClass("vocab-tracker-sidebar");
 
     const header = root.createEl("div", { cls: "vocab-tracker-header" });
-    header.createEl("h4", { text: "Vocab Tracker" });
-    const openList = header.createEl("span", { text: "📄", cls: "vocab-tracker-icon-btn" });
-    openList.title = "Open vocab-list.md";
+    header.createEl("h4", { text: t("sidebar.title") });
+    const openList = header.createEl("span", { cls: "vocab-tracker-icon-btn" });
+    setIcon(openList, "file-text");
+    openList.title = t("sidebar.openList");
     openList.onclick = () => this.plugin.openVocabFile();
 
     const { entries } = this.plugin.vocabData;
@@ -64,11 +66,12 @@ export class VocabSidebarView extends ItemView {
     if (this.pendingWord) {
       const banner = root.createEl("div", { cls: "vocab-tracker-add-prompt" });
       banner.createEl("span", { text: `"${this.pendingWord}"`, cls: "vocab-tracker-add-prompt-word" });
-      const addBtn = banner.createEl("button", { text: "+ Add to vocab list", cls: "vocab-tracker-btn" });
+      const addBtn = banner.createEl("button", { text: t("sidebar.addPrompt.cta"), cls: "vocab-tracker-btn" });
       addBtn.onclick = async () => {
         await this.plugin.addWordToVocab(this.pendingWord);
       };
-      const dismiss = banner.createEl("span", { text: "×", cls: "vocab-tracker-close-btn" });
+      const dismiss = banner.createEl("span", { cls: "vocab-tracker-close-btn" });
+      setIcon(dismiss, "x");
       dismiss.onclick = () => { this.pendingWord = ""; this.render(); };
     }
 
@@ -78,12 +81,12 @@ export class VocabSidebarView extends ItemView {
     if (this.filterMode === undefined) this.filterMode = "note";
 
     let list = entries;
-    let scopeLabel = "All words";
+    let scopeLabel = t("sidebar.scope.all");
     if (this.filterMode === "note" && canFilter) {
       list = entries.filter(
         (e) => e.source && e.source.path === activeFile!.path
       );
-      scopeLabel = "This note";
+      scopeLabel = t("sidebar.scope.note");
     }
 
     const listHeader = root.createEl("div", { cls: "vocab-tracker-list-header" });
@@ -101,15 +104,15 @@ export class VocabSidebarView extends ItemView {
         this.render();
       };
     };
-    mkToggle("This note", "note");
-    mkToggle("All", "all");
+    mkToggle(t("sidebar.filter.note"), "note");
+    mkToggle(t("sidebar.filter.all"), "all");
 
     if (list.length === 0) {
       root.createEl("div", {
         text:
           this.filterMode === "note" && canFilter
-            ? "No tracked words from this note yet. Click an English word in reading mode to add one."
-            : "Click an English word in reading mode to start tracking.",
+            ? t("sidebar.hint.noteEmpty")
+            : t("sidebar.hint.allEmpty"),
         cls: "vocab-tracker-hint",
       });
       return;

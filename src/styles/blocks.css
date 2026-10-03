@@ -1,0 +1,63 @@
+/* ── vocab-dashboard code block ───────────────────────────────────── */
+
+.vocab-tracker-dashboard {
+  font-family: inherit;
+}
+
+.vocab-tracker-empty-state {
+  color: var(--text-muted);
+}
+
+.vocab-tracker-stats {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.vocab-tracker-search-input {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+.vocab-tracker-group-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 14px 0 6px;
+}
+
+.vocab-tracker-group-heading:first-child {
+  margin-top: 0;
+}
+
+.vocab-tracker-group-arrow {
+  font-size: 0.9em;
+  flex-shrink: 0;
+}
+
+.vocab-tracker-group-title {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.vocab-tracker-group-spacer {
+  flex: 1;
+  min-width: 6px;
+}
+
+.vocab-tracker-group-count {
+  font-weight: 400;
+  opacity: 0.8;
+  flex-shrink: 0;
+}

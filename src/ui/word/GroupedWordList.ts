@@ -1,3 +1,4 @@
+import { setIcon } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import type { ExpandState } from "./WordRow";
@@ -31,10 +32,8 @@ export function renderGroupedVocabList(
     const isCollapsed = collapsedGroups.has(title);
 
     const heading = container.createEl("div", { cls: "vocab-tracker-group-heading" });
-    heading.createEl("span", {
-      text: isCollapsed ? "⌃" : "⌵",
-      cls: "vocab-tracker-group-arrow",
-    });
+    const arrow = heading.createEl("span", { cls: "vocab-tracker-group-arrow" });
+    setIcon(arrow, isCollapsed ? "chevron-up" : "chevron-down");
     heading.createEl("span", { text: title, cls: "vocab-tracker-group-title", title });
     heading.createEl("span", { cls: "vocab-tracker-group-spacer" });
     heading.createEl("span", { text: String(groupRows.length), cls: "vocab-tracker-group-count" });

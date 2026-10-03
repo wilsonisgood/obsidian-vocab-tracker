@@ -1,0 +1,112 @@
+/* ── Small reusable pieces shared across sidebar, rows and dashboard ── */
+
+.vocab-tracker-icon-btn {
+  cursor: pointer;
+}
+
+.vocab-tracker-close-btn {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 1.2em;
+}
+
+.vocab-tracker-toggle-group {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.vocab-tracker-toggle-btn {
+  cursor: pointer;
+  font-size: 0.72em;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+}
+
+.vocab-tracker-toggle-btn.is-active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.vocab-tracker-btn {
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 0.88em;
+}
+
+.vocab-tracker-speak-icon {
+  cursor: pointer;
+  font-size: 0.95em;
+  line-height: 1;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.vocab-tracker-footer-icon {
+  cursor: pointer;
+  font-size: 0.95em;
+  line-height: 1;
+  user-select: none;
+  opacity: 0.8;
+}
+
+.vocab-tracker-footer-icon:hover {
+  opacity: 1;
+}
+
+.vocab-tracker-field-box {
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+}
+
+/* Filled fields drop their box — read as plain text, flush with the
+   phonetic line, with the box chrome only appearing once you focus in. */
+.vocab-tracker-field.is-filled .vocab-tracker-field-box {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+}
+
+.vocab-tracker-field.is-filled .vocab-tracker-field-box:focus {
+  background: var(--background-primary);
+  border-color: var(--background-modifier-border);
+  padding: 5px;
+}
+
+.vocab-tracker-input {
+  width: 100%;
+  padding: 5px;
+  box-sizing: border-box;
+  font-size: 0.9em;
+}
+
+.vocab-tracker-textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 1.4em;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.vocab-tracker-meta {
+  font-size: 0.72em;
+  color: var(--text-muted);
+  margin: 6px 0;
+}
+
+.vocab-tracker-stat-pill {
+  padding: 3px 10px;
+  background: var(--background-secondary);
+  border-radius: 12px;
+  font-size: 0.82em;
+}
+
+.vocab-tracker-stat-pill.is-accent {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
