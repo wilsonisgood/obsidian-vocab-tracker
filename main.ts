@@ -9,53 +9,15 @@ import {
   WorkspaceLeaf,
   requestUrl,
 } from "obsidian";
+import type { VocabData, VocabEntry, VocabSource } from "./src/core/model/entry";
+import type { WordContext } from "./src/core/model/word-context";
+import type { DictionaryResult } from "./src/core/model/dictionary";
+import { buildWordRe, escapeRe } from "./src/core/text/wordRe";
+import { replaceOutsideCode, wrapOutsideCode } from "./src/core/text/outsideCode";
+import { extractSentence } from "./src/core/text/sentence";
+import { findSourceLine } from "./src/core/text/sourceLine";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-interface VocabSource {
-  path: string;
-  line: number;
-}
-
-interface VocabEntry {
-  id: string;
-  word: string;
-  // Free-form, comma-separated level/exam tags (e.g. "多益中級, 托福高級")
-  // — a word can carry several at once, unlike the old single CEFR select.
-  level: string;
-  synonyms: string;
-  antonyms: string;
-  example: string;
-  definition: string;
-  definitionZh: string;
-  phonetic: string;
-  audio?: string;
-  partOfSpeech: string;
-  grammar: string;
-  source: VocabSource | null;
-  added: string;
-  lastReviewed: string;
-  reviews: number;
-}
-
-interface VocabData {
-  entries: VocabEntry[];
-}
-
-interface WordContext {
-  word: string;
-  sentence: string;
-}
-
-interface DictionaryResult {
-  phonetic: string;
-  audio: string;
-  partOfSpeech: string;
-  definition: string;
-  definitionZh: string;
-  synonyms: string[];
-  antonyms: string[];
-}
 
 type FilterMode = "note" | "all";
 
@@ -76,10 +38,6 @@ function nowStamp(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
-
-function escapeRe(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // Grows a textarea to fit its content instead of showing a scrollbar/resize
@@ -382,32 +340,8 @@ export default class VocabTrackerPlugin extends Plugin {
     const word = text.slice(start, end).replace(/^[-']+|[-']+$/g, "");
     if (!/^[A-Za-z][A-Za-z'\-]*$/.test(word)) return { word: "", sentence: "" };
 
-    const sentence = this.extractSentence(text, start, end, node);
+    const sentence = extractSentence(text, start, end, node);
     return { word, sentence };
-  }
-
-  extractSentence(text: string, start: number, end: number, node: Node | null): string {
-    let s = start;
-    let e = end;
-    while (s > 0 && !/[.!?\n]/.test(text[s - 1])) s--;
-    while (e < text.length && !/[.!?\n]/.test(text[e])) e++;
-    if (e < text.length && /[.!?]/.test(text[e])) e++;
-
-    let sentence = text.slice(s, e).trim();
-
-    if ((s > 0 || e < text.length) && node && node.parentElement) {
-      return sentence;
-    }
-
-    const block =
-      node &&
-      node.parentElement &&
-      node.parentElement.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
-    if (block) {
-      const full = (block.textContent || "").replace(/\s+/g, " ").trim();
-      if (full.length <= 400) return full;
-    }
-    return sentence;
   }
 
   async addWordToVocab(word: string, ctx: Partial<WordContext> = {}): Promise<boolean> {
@@ -420,11 +354,11 @@ export default class VocabTrackerPlugin extends Plugin {
     const file = this.app.workspace.getActiveFile();
     if (file && file.extension === "md") {
       const content = await this.app.vault.read(file);
-      const line = this.findSourceLine(content, word, ctx.sentence);
+      const line = findSourceLine(content, word, ctx.sentence);
       source = { path: file.path, line: line < 0 ? 0 : line };
 
       // Highlight the word in the note so it stays visible
-      const updated = this.wrapOutsideCode(content, this.buildWordRe(word));
+      const updated = wrapOutsideCode(content, buildWordRe(word));
       if (updated !== content) await this.app.vault.modify(file, updated);
     }
 
@@ -458,46 +392,6 @@ export default class VocabTrackerPlugin extends Plugin {
     const leaf = await this.activateSidebar();
     (leaf.view as VocabSidebarView).setWord(word);
     return existing == null;
-  }
-
-  buildWordRe(word: string): RegExp {
-    return new RegExp(
-      `(?<![A-Za-z0-9'=\\-])${escapeRe(word)}(?![A-Za-z0-9'=\\-])`,
-      "gi"
-    );
-  }
-
-  // ── Locate the clicked word's line in the note's source ────────
-
-  findSourceLine(content: string, word: string, sentence?: string): number {
-    const lines = content.split("\n");
-    const wordRe = new RegExp(
-      `(?<![A-Za-z0-9'\\-])${escapeRe(word)}(?![A-Za-z0-9'\\-])`,
-      "i"
-    );
-
-    const candidates: number[] = [];
-    for (let i = 0; i < lines.length; i++) {
-      if (wordRe.test(lines[i])) candidates.push(i);
-    }
-    if (candidates.length === 0) return -1;
-    if (candidates.length === 1 || !sentence) return candidates[0];
-
-    // Several lines contain the word — pick the one that overlaps the
-    // clicked sentence the most.
-    const sentWords = new Set(sentence.toLowerCase().match(/[a-z']+/g) || []);
-    let best = candidates[0];
-    let bestScore = -1;
-    for (const i of candidates) {
-      const lw = lines[i].toLowerCase().match(/[a-z']+/g) || [];
-      let score = 0;
-      for (const w of lw) if (sentWords.has(w)) score++;
-      if (score > bestScore) {
-        bestScore = score;
-        best = i;
-      }
-    }
-    return best;
   }
 
   async jumpToSource(entry: VocabEntry) {
@@ -759,29 +653,6 @@ export default class VocabTrackerPlugin extends Plugin {
     view.render();
   }
 
-  // ── ==Highlight== helpers, skipping code spans and fences ──────
-
-  wrapOutsideCode(content: string, re: RegExp): string {
-    return this.replaceOutsideCode(content, re, "==$&==");
-  }
-
-  replaceOutsideCode(content: string, re: RegExp, repl: string): string {
-    const lines = content.split("\n");
-    let inFence = false;
-    for (let i = 0; i < lines.length; i++) {
-      if (/^\s*(```|~~~)/.test(lines[i])) {
-        inFence = !inFence;
-        continue;
-      }
-      if (inFence) continue;
-      lines[i] = lines[i].replace(
-        /(`[^`]*`)|([^`]+)/g,
-        (_m, code, text) => (code != null ? code : text.replace(re, repl))
-      );
-    }
-    return lines.join("\n");
-  }
-
   // ── Delete a tracked word and remove its ==highlight== ─────────
 
   async deleteEntry(entry: VocabEntry) {
@@ -799,7 +670,7 @@ export default class VocabTrackerPlugin extends Plugin {
     if (!file || file.extension !== "md") return;
     const re = new RegExp(`==(${escapeRe(word)})==`, "gi");
     const content = await this.app.vault.read(file);
-    const updated = this.replaceOutsideCode(content, re, "$1");
+    const updated = replaceOutsideCode(content, re, "$1");
     if (updated !== content) await this.app.vault.modify(file, updated);
   }
 

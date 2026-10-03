@@ -24,6 +24,87 @@ __export(main_exports, {
 });
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
+
+// src/core/text/wordRe.ts
+function escapeRe(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function buildWordRe(word) {
+  return new RegExp(
+    `(?<![A-Za-z0-9'=\\-])${escapeRe(word)}(?![A-Za-z0-9'=\\-])`,
+    "gi"
+  );
+}
+
+// src/core/text/outsideCode.ts
+function replaceOutsideCode(content, re, repl) {
+  const lines = content.split("\n");
+  let inFence = false;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*(```|~~~)/.test(lines[i])) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    lines[i] = lines[i].replace(
+      /(`[^`]*`)|([^`]+)/g,
+      (_m, code, text) => code != null ? code : text.replace(re, repl)
+    );
+  }
+  return lines.join("\n");
+}
+function wrapOutsideCode(content, re) {
+  return replaceOutsideCode(content, re, "==$&==");
+}
+
+// src/core/text/sentence.ts
+function extractSentence(text, start, end, node) {
+  let s = start;
+  let e = end;
+  while (s > 0 && !/[.!?\n]/.test(text[s - 1])) s--;
+  while (e < text.length && !/[.!?\n]/.test(text[e])) e++;
+  if (e < text.length && /[.!?]/.test(text[e])) e++;
+  const sentence = text.slice(s, e).trim();
+  if ((s > 0 || e < text.length) && node && node.parentElement) {
+    return sentence;
+  }
+  const block = node && node.parentElement && node.parentElement.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
+  if (block) {
+    const full = (block.textContent || "").replace(/\s+/g, " ").trim();
+    if (full.length <= 400) return full;
+  }
+  return sentence;
+}
+
+// src/core/text/sourceLine.ts
+function findSourceLine(content, word, sentence) {
+  const lines = content.split("\n");
+  const wordRe = new RegExp(
+    `(?<![A-Za-z0-9'\\-])${escapeRe(word)}(?![A-Za-z0-9'\\-])`,
+    "i"
+  );
+  const candidates = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (wordRe.test(lines[i])) candidates.push(i);
+  }
+  if (candidates.length === 0) return -1;
+  if (candidates.length === 1 || !sentence) return candidates[0];
+  const sentWords = new Set(sentence.toLowerCase().match(/[a-z']+/g) || []);
+  let best = candidates[0];
+  let bestScore = -1;
+  for (const i of candidates) {
+    const lw = lines[i].toLowerCase().match(/[a-z']+/g) || [];
+    let score = 0;
+    for (const w of lw) if (sentWords.has(w)) score++;
+    if (score > bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  }
+  return best;
+}
+
+// main.ts
 var VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 var VOCAB_FOLDER = "vocab-list";
 var VOCAB_FILE = `${VOCAB_FOLDER}/vocab-list.md`;
@@ -32,9 +113,6 @@ function nowStamp() {
   const d = /* @__PURE__ */ new Date();
   const p = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
-function escapeRe(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 function autoGrowTextarea(el) {
   el.style.height = "auto";
@@ -283,25 +361,8 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
     while (end < text.length && isWordChar(text[end])) end++;
     const word = text.slice(start, end).replace(/^[-']+|[-']+$/g, "");
     if (!/^[A-Za-z][A-Za-z'\-]*$/.test(word)) return { word: "", sentence: "" };
-    const sentence = this.extractSentence(text, start, end, node);
+    const sentence = extractSentence(text, start, end, node);
     return { word, sentence };
-  }
-  extractSentence(text, start, end, node) {
-    let s = start;
-    let e = end;
-    while (s > 0 && !/[.!?\n]/.test(text[s - 1])) s--;
-    while (e < text.length && !/[.!?\n]/.test(text[e])) e++;
-    if (e < text.length && /[.!?]/.test(text[e])) e++;
-    let sentence = text.slice(s, e).trim();
-    if ((s > 0 || e < text.length) && node && node.parentElement) {
-      return sentence;
-    }
-    const block = node && node.parentElement && node.parentElement.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
-    if (block) {
-      const full = (block.textContent || "").replace(/\s+/g, " ").trim();
-      if (full.length <= 400) return full;
-    }
-    return sentence;
   }
   async addWordToVocab(word, ctx = {}) {
     const { entries } = this.vocabData;
@@ -312,9 +373,9 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
     const file = this.app.workspace.getActiveFile();
     if (file && file.extension === "md") {
       const content = await this.app.vault.read(file);
-      const line = this.findSourceLine(content, word, ctx.sentence);
+      const line = findSourceLine(content, word, ctx.sentence);
       source = { path: file.path, line: line < 0 ? 0 : line };
-      const updated = this.wrapOutsideCode(content, this.buildWordRe(word));
+      const updated = wrapOutsideCode(content, buildWordRe(word));
       if (updated !== content) await this.app.vault.modify(file, updated);
     }
     if (!existing) {
@@ -346,39 +407,6 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
     const leaf = await this.activateSidebar();
     leaf.view.setWord(word);
     return existing == null;
-  }
-  buildWordRe(word) {
-    return new RegExp(
-      `(?<![A-Za-z0-9'=\\-])${escapeRe(word)}(?![A-Za-z0-9'=\\-])`,
-      "gi"
-    );
-  }
-  // ── Locate the clicked word's line in the note's source ────────
-  findSourceLine(content, word, sentence) {
-    const lines = content.split("\n");
-    const wordRe = new RegExp(
-      `(?<![A-Za-z0-9'\\-])${escapeRe(word)}(?![A-Za-z0-9'\\-])`,
-      "i"
-    );
-    const candidates = [];
-    for (let i = 0; i < lines.length; i++) {
-      if (wordRe.test(lines[i])) candidates.push(i);
-    }
-    if (candidates.length === 0) return -1;
-    if (candidates.length === 1 || !sentence) return candidates[0];
-    const sentWords = new Set(sentence.toLowerCase().match(/[a-z']+/g) || []);
-    let best = candidates[0];
-    let bestScore = -1;
-    for (const i of candidates) {
-      const lw = lines[i].toLowerCase().match(/[a-z']+/g) || [];
-      let score = 0;
-      for (const w of lw) if (sentWords.has(w)) score++;
-      if (score > bestScore) {
-        bestScore = score;
-        best = i;
-      }
-    }
-    return best;
   }
   async jumpToSource(entry) {
     if (!entry.source || !entry.source.path) return;
@@ -615,26 +643,6 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
     view._lastFilePath = path;
     view.render();
   }
-  // ── ==Highlight== helpers, skipping code spans and fences ──────
-  wrapOutsideCode(content, re) {
-    return this.replaceOutsideCode(content, re, "==$&==");
-  }
-  replaceOutsideCode(content, re, repl) {
-    const lines = content.split("\n");
-    let inFence = false;
-    for (let i = 0; i < lines.length; i++) {
-      if (/^\s*(```|~~~)/.test(lines[i])) {
-        inFence = !inFence;
-        continue;
-      }
-      if (inFence) continue;
-      lines[i] = lines[i].replace(
-        /(`[^`]*`)|([^`]+)/g,
-        (_m, code, text) => code != null ? code : text.replace(re, repl)
-      );
-    }
-    return lines.join("\n");
-  }
   // ── Delete a tracked word and remove its ==highlight== ─────────
   async deleteEntry(entry) {
     this.vocabData.entries = this.vocabData.entries.filter(
@@ -650,7 +658,7 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
     if (!file || file.extension !== "md") return;
     const re = new RegExp(`==(${escapeRe(word)})==`, "gi");
     const content = await this.app.vault.read(file);
-    const updated = this.replaceOutsideCode(content, re, "$1");
+    const updated = replaceOutsideCode(content, re, "$1");
     if (updated !== content) await this.app.vault.modify(file, updated);
   }
   // ── Shared row renderer: sidebar list + dashboard both use this ──
