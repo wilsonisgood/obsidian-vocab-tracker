@@ -3,6 +3,7 @@ import {
   MarkdownPostProcessorContext,
   Menu,
   Notice,
+  Platform,
   Plugin,
   TFile,
   WorkspaceLeaf,
@@ -10,9 +11,6 @@ import {
 } from "obsidian";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-const LEVELS = ["", "A1", "A2", "B1", "B2", "C1", "C2"] as const;
-type Level = (typeof LEVELS)[number];
 
 interface VocabSource {
   path: string;
@@ -22,11 +20,14 @@ interface VocabSource {
 interface VocabEntry {
   id: string;
   word: string;
-  level: Level;
+  // Free-form, comma-separated level/exam tags (e.g. "多益中級, 托福高級")
+  // — a word can carry several at once, unlike the old single CEFR select.
+  level: string;
   synonyms: string;
   antonyms: string;
   example: string;
   definition: string;
+  definitionZh: string;
   phonetic: string;
   audio?: string;
   partOfSpeech: string;
@@ -51,16 +52,25 @@ interface DictionaryResult {
   audio: string;
   partOfSpeech: string;
   definition: string;
+  definitionZh: string;
   synonyms: string[];
   antonyms: string[];
 }
 
 type FilterMode = "note" | "all";
 
+// Progressive-disclosure state for a single row: collapsed (one line),
+// half (synonyms-and-up visible), full (everything visible).
+type ExpandState = "collapsed" | "half" | "full";
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
-const VOCAB_FILE = "vocab-list.md";
+// Lives inside its own folder so related notes (per-exam lists, planning
+// docs, etc.) can sit alongside it instead of cluttering the vault root.
+const VOCAB_FOLDER = "vocab-list";
+const VOCAB_FILE = `${VOCAB_FOLDER}/vocab-list.md`;
+const VOCAB_FILE_LEGACY = "vocab-list.md";
 
 function nowStamp(): string {
   const d = new Date();
@@ -72,12 +82,23 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// Grows a textarea to fit its content instead of showing a scrollbar/resize
+// handle — called once on render and again on every keystroke.
+function autoGrowTextarea(el: HTMLTextAreaElement) {
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+}
+
 // ─── Sidebar View ─────────────────────────────────────────────────────────────
 
 class VocabSidebarView extends ItemView {
   plugin: VocabTrackerPlugin;
-  activeWord = "";
+  // Word clicked via a plain ==mark== that isn't tracked yet — prompts an
+  // "add to vocab" banner instead of a full row (see processMarks).
+  pendingWord = "";
   filterMode?: FilterMode;
+  expandState: Map<string, ExpandState> = new Map();
+  collapsedGroups: Set<string> = new Set();
 
   constructor(leaf: WorkspaceLeaf, plugin: VocabTrackerPlugin) {
     super(leaf);
@@ -90,8 +111,20 @@ class VocabSidebarView extends ItemView {
 
   async onOpen() { this.render(); }
 
+  // Called when a tracked word is clicked (reading-mode word / ==mark==).
+  // Expands its row in place rather than opening a separate card.
   setWord(word: string) {
-    this.activeWord = word;
+    const entry = this.plugin.vocabData.entries.find(
+      (e) => e.word.toLowerCase() === word.toLowerCase()
+    );
+    if (entry) {
+      if (this.expandState.get(entry.id) === undefined) {
+        this.expandState.set(entry.id, "half");
+      }
+      this.pendingWord = "";
+    } else {
+      this.pendingWord = word;
+    }
     this.render();
   }
 
@@ -108,26 +141,16 @@ class VocabSidebarView extends ItemView {
 
     const { entries } = this.plugin.vocabData;
 
-    // ── Active word card ─────────────────────────────────────────
-    if (this.activeWord) {
-      const entry = entries.find(
-        (e) => e.word.toLowerCase() === this.activeWord.toLowerCase()
-      );
-      const card = root.createEl("div", { cls: "vocab-tracker-card" });
-
-      const titleRow = card.createEl("div", { cls: "vocab-tracker-card-header" });
-      titleRow.createEl("span", { text: this.activeWord, cls: "vocab-tracker-card-title" });
-      const close = titleRow.createEl("span", { text: "×", cls: "vocab-tracker-close-btn" });
-      close.onclick = () => { this.activeWord = ""; this.render(); };
-
-      if (entry) {
-        this.renderEntryForm(card, entry);
-      } else {
-        const btn = card.createEl("button", { text: "+ Add to vocab list", cls: "vocab-tracker-btn-block" });
-        btn.onclick = async () => {
-          await this.plugin.addWordToVocab(this.activeWord);
-        };
-      }
+    // ── Not-yet-tracked word banner ──────────────────────────────
+    if (this.pendingWord) {
+      const banner = root.createEl("div", { cls: "vocab-tracker-add-prompt" });
+      banner.createEl("span", { text: `"${this.pendingWord}"`, cls: "vocab-tracker-add-prompt-word" });
+      const addBtn = banner.createEl("button", { text: "+ Add to vocab list", cls: "vocab-tracker-btn" });
+      addBtn.onclick = async () => {
+        await this.plugin.addWordToVocab(this.pendingWord);
+      };
+      const dismiss = banner.createEl("span", { text: "×", cls: "vocab-tracker-close-btn" });
+      dismiss.onclick = () => { this.pendingWord = ""; this.render(); };
     }
 
     // ── Scope: words from this note, or all words ────────────────
@@ -173,127 +196,29 @@ class VocabSidebarView extends ItemView {
       return;
     }
 
-    for (const entry of list) {
-      const isActive = entry.word.toLowerCase() === this.activeWord.toLowerCase();
-      const row = root.createEl("div", { cls: "vocab-tracker-row" });
-      row.toggleClass("is-active", isActive);
-
-      const left = row.createEl("span");
-      left.createEl("span", { text: entry.word, cls: "vocab-tracker-row-word" });
-      if (entry.level) {
-        left.createEl("span", { text: entry.level, cls: "vocab-tracker-row-badge" });
+    const listEl = root.createEl("div", { cls: "vocab-tracker-list" });
+    if (this.filterMode === "all") {
+      // Grouped by source note, same as the vocab-list dashboard — "This
+      // note" stays flat since every row would be in the same group anyway.
+      this.plugin.renderGroupedVocabList(
+        listEl,
+        list,
+        this.collapsedGroups,
+        this.expandState,
+        () => this.render()
+      );
+    } else {
+      for (const entry of list) {
+        const state = this.expandState.get(entry.id) ?? "collapsed";
+        this.plugin.renderVocabRow(
+          listEl,
+          entry,
+          state,
+          (s) => this.expandState.set(entry.id, s),
+          () => this.render()
+        );
       }
-
-      const right = row.createEl("span", { cls: "vocab-tracker-row-actions" });
-
-      const speak = right.createEl("span", {
-        text: "🔊",
-        cls: ["vocab-tracker-speak-icon", "vocab-tracker-row-speak"],
-      });
-      speak.title = "Pronounce";
-      speak.onclick = (e) => {
-        e.stopPropagation();
-        this.plugin.speakWord(entry);
-      };
-
-      const del = right.createEl("span", { text: "×", cls: "vocab-tracker-row-delete" });
-      del.onclick = async (e) => {
-        e.stopPropagation();
-        await this.plugin.deleteEntry(entry);
-        if (this.activeWord.toLowerCase() === entry.word.toLowerCase())
-          this.activeWord = "";
-        this.render();
-      };
-
-      row.onclick = () => {
-        this.activeWord = entry.word;
-        this.render();
-      };
     }
-  }
-
-  renderEntryForm(container: HTMLElement, entry: VocabEntry) {
-    // Phonetic / part of speech + pronounce
-    const sub = container.createEl("div", { cls: "vocab-tracker-form-sub" });
-    const subText = sub.createEl("span", { cls: "vocab-tracker-form-subtext" });
-    subText.textContent =
-      [entry.phonetic, entry.partOfSpeech].filter(Boolean).join("  ·  ") || entry.word;
-    const speak = sub.createEl("span", { text: "🔊", cls: "vocab-tracker-speak-icon" });
-    speak.title = "Pronounce";
-    speak.onclick = () => this.plugin.speakWord(entry);
-
-    // Level
-    const lvlWrap = container.createEl("div", { cls: "vocab-tracker-field" });
-    lvlWrap.createEl("div", { text: "Level", cls: "vocab-tracker-field-label" });
-    const sel = lvlWrap.createEl("select", { cls: ["vocab-tracker-select", "vocab-tracker-field-box"] });
-    for (const lvl of LEVELS) {
-      const opt = sel.createEl("option", {
-        text: lvl || "— not set —",
-        value: lvl,
-      });
-      if (entry.level === lvl) opt.selected = true;
-    }
-    sel.onchange = async () => {
-      entry.level = sel.value as Level;
-      await this.plugin.saveVocab();
-      this.render();
-    };
-
-    // Text fields
-    const textFields: { label: string; key: keyof VocabEntry; multiline?: boolean }[] = [
-      { label: "Definition", key: "definition", multiline: true },
-      { label: "Synonyms", key: "synonyms" },
-      { label: "Antonyms", key: "antonyms" },
-      { label: "Example sentence (from note)", key: "example", multiline: true },
-      { label: "Grammar tips", key: "grammar" },
-    ];
-
-    for (const f of textFields) {
-      const wrap = container.createEl("div", { cls: "vocab-tracker-field" });
-      wrap.createEl("div", { text: f.label, cls: "vocab-tracker-field-label" });
-      const cls = ["vocab-tracker-input", "vocab-tracker-field-box"];
-      if (f.multiline) cls.push("vocab-tracker-textarea");
-      const inp: any = wrap.createEl(f.multiline ? "textarea" : "input", { cls });
-      if (!f.multiline) inp.type = "text";
-      inp.value = String((entry as any)[f.key] ?? "");
-      inp.placeholder = f.label;
-      inp.onchange = async () => {
-        (entry as any)[f.key] = inp.value;
-        await this.plugin.saveVocab();
-      };
-    }
-
-    // Source link
-    if (entry.source && entry.source.path) {
-      const src = container.createEl("div", { cls: "vocab-tracker-source-link" });
-      const name = entry.source.path.split("/").pop();
-      src.textContent = `📍 ${name} : line ${entry.source.line + 1}`;
-      src.title = "Jump to where this word was captured";
-      src.onclick = () => this.plugin.jumpToSource(entry);
-    }
-
-    // Meta + buttons
-    const meta = container.createEl("div", { cls: "vocab-tracker-meta" });
-    meta.textContent = `Added: ${entry.added}  ·  Reviewed: ${entry.lastReviewed} (${entry.reviews}×)`;
-
-    const btnRow = container.createEl("div", { cls: "vocab-tracker-btn-row" });
-
-    const btn = btnRow.createEl("button", { text: "✓ Mark as reviewed", cls: "vocab-tracker-btn-flex" });
-    btn.onclick = async () => {
-      entry.lastReviewed = nowStamp();
-      entry.reviews += 1;
-      await this.plugin.saveVocab();
-      this.render();
-    };
-
-    const fetchBtn = btnRow.createEl("button", { text: "🔄 Fetch", cls: "vocab-tracker-btn" });
-    fetchBtn.title = "Fetch dictionary data (definition, synonyms, phonetic)";
-    fetchBtn.onclick = async () => {
-      fetchBtn.textContent = "…";
-      fetchBtn.disabled = true;
-      await this.plugin.enrichEntry(entry);
-      this.render();
-    };
   }
 }
 
@@ -370,12 +295,24 @@ export default class VocabTrackerPlugin extends Plugin {
   }
 
   async ensureVocabFile() {
-    if (!this.app.vault.getAbstractFileByPath(VOCAB_FILE)) {
-      await this.app.vault.create(
-        VOCAB_FILE,
-        "# Vocabulary List\n\n> Click a row to expand its details. Edit fields inline and they save automatically.\n\n```vocab-dashboard\n```\n"
-      );
+    if (this.app.vault.getAbstractFileByPath(VOCAB_FILE)) return;
+
+    if (!this.app.vault.getAbstractFileByPath(VOCAB_FOLDER)) {
+      await this.app.vault.createFolder(VOCAB_FOLDER);
     }
+
+    // Migrate a pre-existing vault-root vocab-list.md into the folder
+    // instead of leaving it orphaned next to a freshly created empty one.
+    const legacy = this.app.vault.getAbstractFileByPath(VOCAB_FILE_LEGACY);
+    if (legacy instanceof TFile) {
+      await this.app.fileManager.renameFile(legacy, VOCAB_FILE);
+      return;
+    }
+
+    await this.app.vault.create(
+      VOCAB_FILE,
+      "# Vocabulary List\n\n> Click a row to expand its details. Edit fields inline and they save automatically.\n\n```vocab-dashboard\n```\n"
+    );
   }
 
   // ── Click any English word in reading mode ─────────────────────
@@ -500,6 +437,7 @@ export default class VocabTrackerPlugin extends Plugin {
         antonyms: "",
         example: ctx.sentence || "",
         definition: "",
+        definitionZh: "",
         phonetic: "",
         partOfSpeech: "",
         grammar: "",
@@ -595,82 +533,220 @@ export default class VocabTrackerPlugin extends Plugin {
     window.speechSynthesis.speak(u);
   }
 
-  // ── Auto-fetch dictionary data (Free Dictionary API) ───────────
+  // ── Auto-fetch dictionary data (Wiktionary, falls back to Datamuse) ──
 
-  async enrichEntry(entry: VocabEntry) {
+  async enrichEntry(entry: VocabEntry, opts: { verbose?: boolean } = {}) {
     try {
       const data = await this.fetchDictionary(entry.word);
-      if (!data) return;
 
       if (!entry.phonetic) entry.phonetic = data.phonetic;
       if (!entry.audio) entry.audio = data.audio;
       if (!entry.partOfSpeech) entry.partOfSpeech = data.partOfSpeech;
       if (!entry.definition) entry.definition = data.definition;
+      if (!entry.definitionZh) entry.definitionZh = data.definitionZh;
       if (!entry.synonyms) entry.synonyms = data.synonyms.join(", ");
       if (!entry.antonyms) entry.antonyms = data.antonyms.join(", ");
       await this.saveVocab();
 
       const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
       const view = leaf && (leaf.view as VocabSidebarView);
-      if (view && view.activeWord && view.activeWord.toLowerCase() === entry.word.toLowerCase()) {
-        view.render();
-      }
-    } catch (e) {
+      if (view) view.render();
+      if (opts.verbose) new Notice(`Vocab Tracker: fetched "${entry.word}"`);
+    } catch (e: any) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
+      new Notice(`Vocab Tracker: couldn't fetch "${entry.word}" — ${e?.message || e}`);
     }
   }
 
-  async fetchDictionary(word: string): Promise<DictionaryResult | null> {
-    const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`;
-    const res = await requestUrl({ url, throw: false });
-    if (res.status !== 200) return null;
+  // Wiktionary's REST API sits behind Wikimedia's global CDN (fast + reliable
+  // worldwide, incl. mobile networks); Datamuse is the fallback for the
+  // definition itself and always supplies synonyms/antonyms, since Wiktionary's
+  // endpoint doesn't return those. All three requests run concurrently.
+  async fetchDictionary(word: string): Promise<DictionaryResult> {
+    const w = word.toLowerCase();
 
-    const arr = res.json;
-    if (!Array.isArray(arr) || arr.length === 0) return null;
-    const first = arr[0];
+    const defPromise = this.fetchDefinition(w);
+    const synPromise = this.fetchDatamuseRelated(w, "rel_syn");
+    const antPromise = this.fetchDatamuseRelated(w, "rel_ant");
 
-    let phonetic: string = first.phonetic || "";
-    let audio = "";
-    if (Array.isArray(first.phonetics)) {
-      if (!phonetic) {
-        const p = first.phonetics.find((p: any) => p.text);
-        if (p) phonetic = p.text;
+    const { definition, partOfSpeech } = await defPromise;
+    const definitionZh = await this.translateToZhTW(definition);
+    const synonyms = await synPromise;
+    const antonyms = await antPromise;
+
+    return { phonetic: "", audio: "", partOfSpeech, definition, definitionZh, synonyms, antonyms };
+  }
+
+  // Obsidian mobile's requestUrl (iOS/Android) mangles query params that
+  // arrive pre-percent-encoded — the transport layer re-processes the URL
+  // and strips/duplicates the encoding, so "%20" ends up sent to the server
+  // literally instead of as a space (matches ionic-team/capacitor#7523).
+  // Desktop's requestUrl has no such bug and needs the encoding, so only
+  // mobile skips it and leaves escaping to the native request layer.
+  encodeQueryParam(text: string): string {
+    return Platform.isMobile ? text : encodeURIComponent(text);
+  }
+
+  // Safety net for the mobile encoding bug above (and for providers that
+  // return an HTTP 200 with an English error string instead of throwing):
+  // reject anything that still looks like raw percent-encoding or is
+  // obviously not a translation, so callers fall back instead of showing
+  // garbage like "%20act %20of %20putting".
+  looksLikeValidTranslation(s: string): boolean {
+    return s.length > 0 && !/%[0-9A-Fa-f]{2}/.test(s);
+  }
+
+  // Google's unofficial endpoint (no key, best quality, converts to
+  // Traditional automatically) is tried first; MyMemory is the sanctioned
+  // free-tier fallback. Translation is a bonus — failure here must not sink
+  // the definition fetch, so it soft-fails to "".
+  async translateToZhTW(text: string): Promise<string> {
+    if (!text) return "";
+    try {
+      return await this.translateWithGoogle(text);
+    } catch (primaryErr) {
+      try {
+        return await this.translateWithMyMemory(text);
+      } catch (fallbackErr) {
+        console.error("Vocab Tracker: translation failed", primaryErr, fallbackErr);
+        return "";
       }
-      const a = first.phonetics.find((p: any) => p.audio);
-      if (a) audio = a.audio;
     }
+  }
 
-    const meanings: any[] = first.meanings || [];
-    const partOfSpeech: string = meanings.length ? meanings[0].partOfSpeech || "" : "";
+  async translateWithGoogle(text: string): Promise<string> {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=${this.encodeQueryParam(text)}`;
+    let res;
+    try {
+      res = await requestUrl({ url, throw: false });
+    } catch (e: any) {
+      throw new Error(`Google Translate request failed (${e?.message || e})`);
+    }
+    if (res.status !== 200) throw new Error(`Google Translate returned HTTP ${res.status}`);
 
-    let definition = "";
-    for (const m of meanings) {
-      const d = (m.definitions || []).find((d: any) => d.definition);
-      if (d) {
-        definition = d.definition;
-        break;
+    let data: any;
+    try {
+      data = res.json;
+    } catch (e) {
+      throw new Error("couldn't parse Google Translate response");
+    }
+    const segments = Array.isArray(data?.[0]) ? data[0] : [];
+    const translated = segments.map((seg: any) => seg?.[0] || "").join("");
+    if (!this.looksLikeValidTranslation(translated)) throw new Error("empty or corrupted translation");
+    return translated;
+  }
+
+  async translateWithMyMemory(text: string): Promise<string> {
+    const url = `https://api.mymemory.translated.net/get?q=${this.encodeQueryParam(text)}&langpair=en|zh-TW`;
+    let res;
+    try {
+      res = await requestUrl({ url, throw: false });
+    } catch (e: any) {
+      throw new Error(`MyMemory request failed (${e?.message || e})`);
+    }
+    if (res.status !== 200) throw new Error(`MyMemory returned HTTP ${res.status}`);
+
+    let data: any;
+    try {
+      data = res.json;
+    } catch (e) {
+      throw new Error("couldn't parse MyMemory response");
+    }
+    const translated = data?.responseData?.translatedText || "";
+    if (!this.looksLikeValidTranslation(translated)) throw new Error("empty or corrupted translation");
+    return translated;
+  }
+
+  async fetchDefinition(w: string): Promise<{ definition: string; partOfSpeech: string }> {
+    try {
+      return await this.fetchWiktionaryDefinition(w);
+    } catch (primaryErr: any) {
+      try {
+        return await this.fetchDatamuseDefinition(w);
+      } catch (fallbackErr: any) {
+        throw new Error(
+          `${primaryErr?.message || primaryErr}; fallback also failed: ${fallbackErr?.message || fallbackErr}`
+        );
       }
     }
+  }
 
-    const syn = new Set<string>();
-    const ant = new Set<string>();
-    for (const m of meanings) {
-      (m.synonyms || []).forEach((s: string) => syn.add(s));
-      (m.antonyms || []).forEach((a: string) => ant.add(a));
-      for (const d of m.definitions || []) {
-        (d.synonyms || []).forEach((s: string) => syn.add(s));
-        (d.antonyms || []).forEach((a: string) => ant.add(a));
-      }
+  async fetchWiktionaryDefinition(w: string): Promise<{ definition: string; partOfSpeech: string }> {
+    let res;
+    try {
+      res = await requestUrl({
+        url: `https://en.wiktionary.org/api/rest_v1/page/definition/${this.encodeQueryParam(w)}`,
+        throw: false,
+      });
+    } catch (e: any) {
+      throw new Error(`Wiktionary request failed (${e?.message || e})`);
     }
+    if (res.status === 404) throw new Error(`"${w}" not found in dictionary`);
+    if (res.status !== 200) throw new Error(`Wiktionary API returned HTTP ${res.status}`);
 
-    return {
-      phonetic,
-      audio,
-      partOfSpeech,
-      definition,
-      synonyms: [...syn].slice(0, 8),
-      antonyms: [...ant].slice(0, 8),
+    let data: any;
+    try {
+      data = res.json;
+    } catch (e) {
+      throw new Error("couldn't parse Wiktionary response");
+    }
+    const entries: any[] = Array.isArray(data?.en) ? data.en : [];
+    const entry = entries.find((en) => en.definitions?.[0]?.definition);
+    if (!entry) throw new Error(`"${w}" not found in dictionary`);
+
+    const rawDefinition: string = entry.definitions[0].definition || "";
+    const definition = rawDefinition.replace(/<[^>]+>/g, "").trim();
+    const partOfSpeech = (entry.partOfSpeech || "").toLowerCase();
+
+    return { definition, partOfSpeech };
+  }
+
+  async fetchDatamuseDefinition(w: string): Promise<{ definition: string; partOfSpeech: string }> {
+    let res;
+    try {
+      res = await requestUrl({
+        url: `https://api.datamuse.com/words?sp=${this.encodeQueryParam(w)}&md=d&max=1`,
+        throw: false,
+      });
+    } catch (e: any) {
+      throw new Error(`Datamuse request failed (${e?.message || e})`);
+    }
+    if (res.status !== 200) throw new Error(`Datamuse API returned HTTP ${res.status}`);
+
+    let arr: any;
+    try {
+      arr = res.json;
+    } catch (e) {
+      throw new Error("couldn't parse Datamuse response");
+    }
+    const defs: string[] = Array.isArray(arr) && arr[0] && Array.isArray(arr[0].defs) ? arr[0].defs : [];
+    if (defs.length === 0) throw new Error(`"${w}" not found in dictionary`);
+
+    const posMap: Record<string, string> = {
+      n: "noun",
+      v: "verb",
+      adj: "adjective",
+      adv: "adverb",
+      u: "",
     };
+    const [posTag, definition] = defs[0].split("\t");
+    const partOfSpeech = posMap[posTag] ?? posTag ?? "";
+
+    return { definition: (definition || "").trim(), partOfSpeech };
+  }
+
+  // Soft-fails to [] — missing synonyms/antonyms shouldn't sink the whole fetch.
+  async fetchDatamuseRelated(w: string, rel: "rel_syn" | "rel_ant"): Promise<string[]> {
+    try {
+      const res = await requestUrl({
+        url: `https://api.datamuse.com/words?${rel}=${this.encodeQueryParam(w)}&max=8`,
+        throw: false,
+      });
+      if (res.status !== 200 || !Array.isArray(res.json)) return [];
+      return res.json.map((entry: any) => entry.word);
+    } catch (e) {
+      return [];
+    }
   }
 
   refreshSidebar() {
@@ -727,6 +803,239 @@ export default class VocabTrackerPlugin extends Plugin {
     if (updated !== content) await this.app.vault.modify(file, updated);
   }
 
+  // ── Shared row renderer: sidebar list + dashboard both use this ──
+  //
+  // Three progressive-disclosure states:
+  //   collapsed — one line: ✕ delete · word+level · expand toggle · 🔊 speak
+  //   half      — + phonetic/POS, synonyms, definition, 中文翻译;
+  //               footer: more toggle · 🔄 fetch · ✓ reviewed · 🔊 speak
+  //   full      — + antonyms (if any), example, grammar, source,
+  //               added/reviewed, level
+  renderVocabRow(
+    container: HTMLElement,
+    entry: VocabEntry,
+    state: ExpandState,
+    setState: (s: ExpandState) => void,
+    refresh: () => void
+  ) {
+    const row = container.createEl("div", { cls: "vocab-tracker-row" });
+    row.toggleClass("is-expanded", state !== "collapsed");
+
+    // ── Header: always visible ───────────────────────────────────
+    const head = row.createEl("div", { cls: "vocab-tracker-row-header" });
+
+    const del = head.createEl("span", { text: "✕", cls: "vocab-tracker-row-delete" });
+    del.title = "Delete";
+    del.onclick = async (e) => {
+      e.stopPropagation();
+      await this.deleteEntry(entry);
+      refresh();
+    };
+
+    const wordWrap = head.createEl("span", { cls: "vocab-tracker-row-wordwrap" });
+    wordWrap.createEl("span", { text: entry.word, cls: "vocab-tracker-row-word" });
+    for (const tag of entry.level.split(",").map((t) => t.trim()).filter(Boolean)) {
+      wordWrap.createEl("span", { text: tag, cls: "vocab-tracker-row-badge" });
+    }
+
+    head.createEl("span", { cls: "vocab-tracker-row-spacer" });
+
+    const arrow = head.createEl("span", {
+      text: state === "collapsed" ? "⌃" : "⌵",
+      cls: "vocab-tracker-row-arrow",
+    });
+    arrow.title = state === "collapsed" ? "Expand" : "Collapse";
+
+    head.onclick = () => {
+      setState(state === "collapsed" ? "half" : "collapsed");
+      refresh();
+    };
+
+    if (state === "collapsed") {
+      const speak = head.createEl("span", {
+        text: "🔊",
+        cls: ["vocab-tracker-speak-icon", "vocab-tracker-row-speak"],
+      });
+      speak.title = "Pronounce";
+      speak.onclick = (e) => {
+        e.stopPropagation();
+        this.speakWord(entry);
+      };
+      return;
+    }
+
+    // ── Body: half + full ────────────────────────────────────────
+    const body = row.createEl("div", { cls: "vocab-tracker-row-body" });
+
+    const subText = body.createEl("div", { cls: "vocab-tracker-form-subtext" });
+    subText.textContent =
+      [entry.phonetic, entry.partOfSpeech].filter(Boolean).join("  ·  ") || entry.word;
+
+    const mkField = (
+      label: string,
+      key: keyof VocabEntry,
+      opts: { multiline?: boolean } = {}
+    ) => {
+      const value = String((entry as any)[key] ?? "");
+      // No field-name labels — the placeholder alone says what belongs here,
+      // and a filled field reads as plain text once the border drops away.
+      const wrap = body.createEl("div", { cls: "vocab-tracker-field" });
+      if (value) wrap.addClass("is-filled");
+      const cls = ["vocab-tracker-input", "vocab-tracker-field-box"];
+      if (opts.multiline) cls.push("vocab-tracker-textarea");
+      const inp: any = wrap.createEl(opts.multiline ? "textarea" : "input", { cls });
+      if (!opts.multiline) inp.type = "text";
+      else inp.rows = 1; // UA default is 2 rows — pin to 1 so auto-grow starts tight
+      inp.value = value;
+      inp.placeholder = `Add ${label.toLowerCase()}…`;
+      inp.onclick = (e: MouseEvent) => e.stopPropagation();
+      if (opts.multiline) {
+        autoGrowTextarea(inp);
+        inp.addEventListener("input", () => autoGrowTextarea(inp));
+      }
+      inp.onchange = async () => {
+        (entry as any)[key] = inp.value;
+        await this.saveVocab();
+        refresh();
+      };
+    };
+
+    // Synonyms shares the exact same auto-growing textarea treatment as
+    // Definition/中文翻译, so a long list wraps flush-left instead of
+    // truncating in a single-line input.
+    mkField("Synonyms", "synonyms", { multiline: true });
+    mkField("Definition", "definition", { multiline: true });
+    mkField("中文翻译", "definitionZh", { multiline: true });
+
+    if (state === "full") {
+      // Antonyms is hidden entirely when empty rather than showing an
+      // empty prompt box — unlike the other fields, it's not something
+      // most words have.
+      if (entry.antonyms) mkField("Antonyms", "antonyms");
+
+      mkField("Example sentence (from note)", "example", { multiline: true });
+      mkField("Grammar tips", "grammar");
+
+      if (entry.source && entry.source.path) {
+        const src = body.createEl("div", { cls: "vocab-tracker-source-link" });
+        const name = entry.source.path.split("/").pop();
+        src.textContent = `📍 ${name} : line ${entry.source.line + 1}`;
+        src.title = "Jump to where this word was captured";
+        src.onclick = (e) => {
+          e.stopPropagation();
+          this.jumpToSource(entry);
+        };
+      }
+
+      body.createEl("div", { text: `Added: ${entry.added}`, cls: "vocab-tracker-meta" });
+      body.createEl("div", {
+        text: `Reviewed: ${entry.lastReviewed} (${entry.reviews}×)`,
+        cls: "vocab-tracker-meta",
+      });
+
+      // Level — last, right below the Added/Reviewed lines. Comma-separated
+      // free-form tags (e.g. "多益中級, 托福高級"), same field style as everything else.
+      mkField("Level", "level", { multiline: true });
+    }
+
+    // ── Footer: more-info toggle · fetch · reviewed · speak ──────
+    const footer = body.createEl("div", { cls: "vocab-tracker-row-footer" });
+
+    const moreBtn = footer.createEl("span", {
+      text: state === "full" ? "⌵" : "ℹ️",
+      cls: "vocab-tracker-footer-icon",
+    });
+    moreBtn.title = state === "full" ? "Show less" : "Show more";
+    moreBtn.onclick = (e) => {
+      e.stopPropagation();
+      setState(state === "full" ? "half" : "full");
+      refresh();
+    };
+
+    const actions = footer.createEl("span", { cls: "vocab-tracker-row-footer-actions" });
+
+    const fetchBtn = actions.createEl("span", { text: "🔄", cls: "vocab-tracker-footer-icon" });
+    fetchBtn.title = "Fetch dictionary data (definition, synonyms, phonetic)";
+    fetchBtn.onclick = async (e) => {
+      e.stopPropagation();
+      fetchBtn.textContent = "…";
+      await this.enrichEntry(entry, { verbose: true });
+      refresh();
+    };
+
+    const reviewBtn = actions.createEl("span", { text: "✓", cls: "vocab-tracker-footer-icon" });
+    reviewBtn.title = "Mark as reviewed";
+    reviewBtn.onclick = async (e) => {
+      e.stopPropagation();
+      entry.lastReviewed = nowStamp();
+      entry.reviews += 1;
+      await this.saveVocab();
+      refresh();
+    };
+
+    const speak = actions.createEl("span", { text: "🔊", cls: "vocab-tracker-speak-icon" });
+    speak.title = "Pronounce";
+    speak.onclick = (e) => {
+      e.stopPropagation();
+      this.speakWord(entry);
+    };
+  }
+
+  // ── Shared grouped list: dashboard + sidebar "All" tab both use this ──
+  //
+  // Groups rows by source note title into collapsible sections, each
+  // showing its word count — the sidebar/dashboard" second level of
+  // organization" on top of each row's own collapsed/half/full state.
+  renderGroupedVocabList(
+    container: HTMLElement,
+    rows: VocabEntry[],
+    collapsedGroups: Set<string>,
+    expandState: Map<string, ExpandState>,
+    refresh: () => void
+  ) {
+    const groups = new Map<string, VocabEntry[]>();
+    for (const entry of rows) {
+      const title = entry.source?.path
+        ? entry.source.path.split("/").pop()!.replace(/\.md$/, "")
+        : "(no note)";
+      if (!groups.has(title)) groups.set(title, []);
+      groups.get(title)!.push(entry);
+    }
+
+    const titles = [...groups.keys()].sort((a, b) => a.localeCompare(b));
+    for (const title of titles) {
+      const groupRows = groups.get(title)!;
+      const isCollapsed = collapsedGroups.has(title);
+
+      const heading = container.createEl("div", { cls: "vocab-tracker-group-heading" });
+      heading.createEl("span", {
+        text: isCollapsed ? "⌃" : "⌵",
+        cls: "vocab-tracker-group-arrow",
+      });
+      heading.createEl("span", { text: title, cls: "vocab-tracker-group-title", title });
+      heading.createEl("span", { cls: "vocab-tracker-group-spacer" });
+      heading.createEl("span", { text: String(groupRows.length), cls: "vocab-tracker-group-count" });
+      heading.onclick = () => {
+        if (isCollapsed) collapsedGroups.delete(title);
+        else collapsedGroups.add(title);
+        refresh();
+      };
+
+      if (isCollapsed) continue;
+
+      for (const entry of groupRows) {
+        const state = expandState.get(entry.id) ?? "collapsed";
+        this.renderVocabRow(
+          container,
+          entry,
+          state,
+          (s) => expandState.set(entry.id, s),
+          refresh
+        );
+      }
+    }
+  }
+
   // ── Mark click handler ─────────────────────────────────────────
 
   processMarks(el: HTMLElement, _ctx: MarkdownPostProcessorContext) {
@@ -766,11 +1075,15 @@ export default class VocabTrackerPlugin extends Plugin {
       text: `📚 ${entries.length} word${entries.length !== 1 ? "s" : ""}`,
       cls: "vocab-tracker-stat-pill",
     });
-    for (const lvl of ["A1", "A2", "B1", "B2", "C1", "C2"]) {
-      const n = entries.filter((e) => e.level === lvl).length;
-      if (!n) continue;
+    const tagCounts = new Map<string, number>();
+    for (const e of entries) {
+      for (const tag of e.level.split(",").map((t) => t.trim()).filter(Boolean)) {
+        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+      }
+    }
+    for (const [tag, n] of [...tagCounts.entries()].sort((a, b) => b[1] - a[1])) {
       stats.createEl("span", {
-        text: `${lvl}: ${n}`,
+        text: `${tag}: ${n}`,
         cls: ["vocab-tracker-stat-pill", "is-accent"],
       });
     }
@@ -779,138 +1092,19 @@ export default class VocabTrackerPlugin extends Plugin {
     const search = el.createEl("input", { cls: ["vocab-tracker-search-input", "vocab-tracker-field-box"] });
     search.placeholder = "Search words…";
 
-    const tableWrap = el.createEl("div");
+    const listWrap = el.createEl("div", { cls: "vocab-tracker-list" });
+    const expandState: Map<string, ExpandState> = new Map();
+    const collapsedGroups: Set<string> = new Set();
 
+    // Grouped by source note title — lets a note that only holds a
+    // vocab-dashboard block double as a per-note word list. Each group
+    // heading is itself collapsible and shows its word count.
     const draw = (q: string) => {
-      tableWrap.empty();
+      listWrap.empty();
       const rows = entries.filter((e) =>
         e.word.toLowerCase().includes(q.toLowerCase())
       );
-
-      const tbl = tableWrap.createEl("table", { cls: "vocab-tracker-table" });
-
-      const hdrRow = tbl.createEl("thead").createEl("tr");
-      for (const h of ["Word", "Level", "Last Reviewed", "Reviews"]) {
-        hdrRow.createEl("th", { text: h });
-      }
-
-      const tbody = tbl.createEl("tbody");
-
-      for (const entry of rows) {
-        // Main row
-        const tr = tbody.createEl("tr", { cls: "vocab-tracker-table-row" });
-
-        tr.createEl("td", { text: entry.word, cls: "vocab-tracker-cell-word" });
-
-        const lTd = tr.createEl("td");
-        if (entry.level) {
-          lTd.createEl("span", { text: entry.level, cls: "vocab-tracker-level-badge" });
-        } else {
-          lTd.addClass("vocab-tracker-text-muted");
-          lTd.textContent = "—";
-        }
-
-        tr.createEl("td", { text: entry.lastReviewed, cls: "vocab-tracker-cell-muted" });
-        tr.createEl("td", { text: String(entry.reviews), cls: "vocab-tracker-cell-muted" });
-
-        // Detail row (hidden by default)
-        const dtr = tbody.createEl("tr", { cls: "vocab-tracker-hidden" });
-        const dtd = dtr.createEl("td", { cls: "vocab-tracker-detail-cell" });
-        dtd.setAttribute("colspan", "4");
-
-        tr.onclick = () => {
-          const open = !dtr.hasClass("vocab-tracker-hidden");
-          if (open) { dtr.addClass("vocab-tracker-hidden"); return; }
-
-          dtd.empty();
-          dtr.removeClass("vocab-tracker-hidden");
-
-          // Phonetic / part of speech + pronounce
-          const sub = dtd.createEl("div", { cls: "vocab-tracker-detail-sub" });
-          const subText = sub.createEl("span", { cls: "vocab-tracker-form-subtext" });
-          subText.textContent =
-            [entry.phonetic, entry.partOfSpeech].filter(Boolean).join("  ·  ") || entry.word;
-          const speak = sub.createEl("span", { text: "🔊", cls: "vocab-tracker-speak-icon" });
-          speak.title = "Pronounce";
-          speak.onclick = () => this.speakWord(entry);
-
-          // Info grid
-          const grid = dtd.createEl("div", { cls: "vocab-tracker-field-grid" });
-
-          const mkField = (
-            label: string,
-            key: keyof VocabEntry,
-            opts: { full?: boolean; multiline?: boolean } = {}
-          ) => {
-            const wrap = grid.createEl("div", { cls: "vocab-tracker-grid-field" });
-            wrap.toggleClass("is-full", !!opts.full);
-            wrap.createEl("div", { text: label, cls: "vocab-tracker-grid-field-label" });
-            const cls = ["vocab-tracker-input", "vocab-tracker-field-box"];
-            if (opts.multiline) cls.push("vocab-tracker-textarea");
-            const inp: any = wrap.createEl(opts.multiline ? "textarea" : "input", { cls });
-            if (!opts.multiline) inp.type = "text";
-            inp.value = String((entry as any)[key] ?? "");
-            inp.placeholder = `Add ${label.toLowerCase()}…`;
-            inp.onchange = async () => {
-              (entry as any)[key] = inp.value;
-              await this.saveVocab();
-            };
-          };
-
-          mkField("Definition", "definition", { full: true, multiline: true });
-          mkField("Synonyms", "synonyms");
-          mkField("Antonyms", "antonyms");
-          mkField("Example sentence (from note)", "example", { full: true, multiline: true });
-          mkField("Grammar tips", "grammar", { full: true });
-
-          // Level (spans 2 cols)
-          const lvlWrap = grid.createEl("div", { cls: ["vocab-tracker-grid-field", "is-full"] });
-          lvlWrap.createEl("div", { text: "Level", cls: "vocab-tracker-grid-field-label" });
-          const sel = lvlWrap.createEl("select", { cls: ["vocab-tracker-grid-select", "vocab-tracker-field-box"] });
-          for (const lvl of LEVELS) {
-            const opt = sel.createEl("option", {
-              text: lvl || "— not set —",
-              value: lvl,
-            });
-            if (entry.level === lvl) opt.selected = true;
-          }
-          sel.onchange = async () => {
-            entry.level = sel.value as Level;
-            await this.saveVocab();
-            draw(search.value); // refresh badges
-          };
-
-          // Source link
-          if (entry.source && entry.source.path) {
-            const src = dtd.createEl("div", { cls: "vocab-tracker-detail-source-link" });
-            const name = entry.source.path.split("/").pop();
-            src.textContent = `📍 ${name} : line ${entry.source.line + 1}`;
-            src.onclick = () => this.jumpToSource(entry);
-          }
-
-          // Footer: meta + buttons
-          const footer = dtd.createEl("div", { cls: "vocab-tracker-detail-footer" });
-          footer.createEl("span", {
-            text: `Added: ${entry.added}`,
-            cls: "vocab-tracker-added-label",
-          });
-
-          const btnGroup = footer.createEl("div", { cls: "vocab-tracker-btn-group" });
-
-          const fetchBtn = btnGroup.createEl("button", { text: "🔄 Fetch", cls: "vocab-tracker-btn-ghost" });
-          fetchBtn.onclick = async () => {
-            fetchBtn.textContent = "…";
-            await this.enrichEntry(entry);
-            draw(search.value);
-          };
-
-          const delBtn = btnGroup.createEl("button", { text: "Delete word", cls: "vocab-tracker-btn-danger" });
-          delBtn.onclick = async () => {
-            await this.deleteEntry(entry);
-            draw(search.value);
-          };
-        };
-      }
+      this.renderGroupedVocabList(listWrap, rows, collapsedGroups, expandState, () => draw(search.value));
     };
 
     draw("");

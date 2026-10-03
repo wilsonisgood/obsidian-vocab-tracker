@@ -24,9 +24,10 @@ __export(main_exports, {
 });
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
-var LEVELS = ["", "A1", "A2", "B1", "B2", "C1", "C2"];
 var VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
-var VOCAB_FILE = "vocab-list.md";
+var VOCAB_FOLDER = "vocab-list";
+var VOCAB_FILE = `${VOCAB_FOLDER}/vocab-list.md`;
+var VOCAB_FILE_LEGACY = "vocab-list.md";
 function nowStamp() {
   const d = /* @__PURE__ */ new Date();
   const p = (n) => String(n).padStart(2, "0");
@@ -35,10 +36,18 @@ function nowStamp() {
 function escapeRe(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+function autoGrowTextarea(el) {
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+}
 var VocabSidebarView = class extends import_obsidian.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
-    this.activeWord = "";
+    // Word clicked via a plain ==mark== that isn't tracked yet — prompts an
+    // "add to vocab" banner instead of a full row (see processMarks).
+    this.pendingWord = "";
+    this.expandState = /* @__PURE__ */ new Map();
+    this.collapsedGroups = /* @__PURE__ */ new Set();
     this.plugin = plugin;
   }
   getViewType() {
@@ -53,11 +62,24 @@ var VocabSidebarView = class extends import_obsidian.ItemView {
   async onOpen() {
     this.render();
   }
+  // Called when a tracked word is clicked (reading-mode word / ==mark==).
+  // Expands its row in place rather than opening a separate card.
   setWord(word) {
-    this.activeWord = word;
+    const entry = this.plugin.vocabData.entries.find(
+      (e) => e.word.toLowerCase() === word.toLowerCase()
+    );
+    if (entry) {
+      if (this.expandState.get(entry.id) === void 0) {
+        this.expandState.set(entry.id, "half");
+      }
+      this.pendingWord = "";
+    } else {
+      this.pendingWord = word;
+    }
     this.render();
   }
   render() {
+    var _a;
     const root = this.containerEl.children[1];
     root.empty();
     root.addClass("vocab-tracker-sidebar");
@@ -67,26 +89,18 @@ var VocabSidebarView = class extends import_obsidian.ItemView {
     openList.title = "Open vocab-list.md";
     openList.onclick = () => this.plugin.openVocabFile();
     const { entries } = this.plugin.vocabData;
-    if (this.activeWord) {
-      const entry = entries.find(
-        (e) => e.word.toLowerCase() === this.activeWord.toLowerCase()
-      );
-      const card = root.createEl("div", { cls: "vocab-tracker-card" });
-      const titleRow = card.createEl("div", { cls: "vocab-tracker-card-header" });
-      titleRow.createEl("span", { text: this.activeWord, cls: "vocab-tracker-card-title" });
-      const close = titleRow.createEl("span", { text: "\xD7", cls: "vocab-tracker-close-btn" });
-      close.onclick = () => {
-        this.activeWord = "";
+    if (this.pendingWord) {
+      const banner = root.createEl("div", { cls: "vocab-tracker-add-prompt" });
+      banner.createEl("span", { text: `"${this.pendingWord}"`, cls: "vocab-tracker-add-prompt-word" });
+      const addBtn = banner.createEl("button", { text: "+ Add to vocab list", cls: "vocab-tracker-btn" });
+      addBtn.onclick = async () => {
+        await this.plugin.addWordToVocab(this.pendingWord);
+      };
+      const dismiss = banner.createEl("span", { text: "\xD7", cls: "vocab-tracker-close-btn" });
+      dismiss.onclick = () => {
+        this.pendingWord = "";
         this.render();
       };
-      if (entry) {
-        this.renderEntryForm(card, entry);
-      } else {
-        const btn = card.createEl("button", { text: "+ Add to vocab list", cls: "vocab-tracker-btn-block" });
-        btn.onclick = async () => {
-          await this.plugin.addWordToVocab(this.activeWord);
-        };
-      }
     }
     const activeFile = this.plugin.app.workspace.getActiveFile();
     const canFilter = !!activeFile;
@@ -121,108 +135,27 @@ var VocabSidebarView = class extends import_obsidian.ItemView {
       });
       return;
     }
-    for (const entry of list) {
-      const isActive = entry.word.toLowerCase() === this.activeWord.toLowerCase();
-      const row = root.createEl("div", { cls: "vocab-tracker-row" });
-      row.toggleClass("is-active", isActive);
-      const left = row.createEl("span");
-      left.createEl("span", { text: entry.word, cls: "vocab-tracker-row-word" });
-      if (entry.level) {
-        left.createEl("span", { text: entry.level, cls: "vocab-tracker-row-badge" });
+    const listEl = root.createEl("div", { cls: "vocab-tracker-list" });
+    if (this.filterMode === "all") {
+      this.plugin.renderGroupedVocabList(
+        listEl,
+        list,
+        this.collapsedGroups,
+        this.expandState,
+        () => this.render()
+      );
+    } else {
+      for (const entry of list) {
+        const state = (_a = this.expandState.get(entry.id)) != null ? _a : "collapsed";
+        this.plugin.renderVocabRow(
+          listEl,
+          entry,
+          state,
+          (s) => this.expandState.set(entry.id, s),
+          () => this.render()
+        );
       }
-      const right = row.createEl("span", { cls: "vocab-tracker-row-actions" });
-      const speak = right.createEl("span", {
-        text: "\u{1F50A}",
-        cls: ["vocab-tracker-speak-icon", "vocab-tracker-row-speak"]
-      });
-      speak.title = "Pronounce";
-      speak.onclick = (e) => {
-        e.stopPropagation();
-        this.plugin.speakWord(entry);
-      };
-      const del = right.createEl("span", { text: "\xD7", cls: "vocab-tracker-row-delete" });
-      del.onclick = async (e) => {
-        e.stopPropagation();
-        await this.plugin.deleteEntry(entry);
-        if (this.activeWord.toLowerCase() === entry.word.toLowerCase())
-          this.activeWord = "";
-        this.render();
-      };
-      row.onclick = () => {
-        this.activeWord = entry.word;
-        this.render();
-      };
     }
-  }
-  renderEntryForm(container, entry) {
-    var _a;
-    const sub = container.createEl("div", { cls: "vocab-tracker-form-sub" });
-    const subText = sub.createEl("span", { cls: "vocab-tracker-form-subtext" });
-    subText.textContent = [entry.phonetic, entry.partOfSpeech].filter(Boolean).join("  \xB7  ") || entry.word;
-    const speak = sub.createEl("span", { text: "\u{1F50A}", cls: "vocab-tracker-speak-icon" });
-    speak.title = "Pronounce";
-    speak.onclick = () => this.plugin.speakWord(entry);
-    const lvlWrap = container.createEl("div", { cls: "vocab-tracker-field" });
-    lvlWrap.createEl("div", { text: "Level", cls: "vocab-tracker-field-label" });
-    const sel = lvlWrap.createEl("select", { cls: ["vocab-tracker-select", "vocab-tracker-field-box"] });
-    for (const lvl of LEVELS) {
-      const opt = sel.createEl("option", {
-        text: lvl || "\u2014 not set \u2014",
-        value: lvl
-      });
-      if (entry.level === lvl) opt.selected = true;
-    }
-    sel.onchange = async () => {
-      entry.level = sel.value;
-      await this.plugin.saveVocab();
-      this.render();
-    };
-    const textFields = [
-      { label: "Definition", key: "definition", multiline: true },
-      { label: "Synonyms", key: "synonyms" },
-      { label: "Antonyms", key: "antonyms" },
-      { label: "Example sentence (from note)", key: "example", multiline: true },
-      { label: "Grammar tips", key: "grammar" }
-    ];
-    for (const f of textFields) {
-      const wrap = container.createEl("div", { cls: "vocab-tracker-field" });
-      wrap.createEl("div", { text: f.label, cls: "vocab-tracker-field-label" });
-      const cls = ["vocab-tracker-input", "vocab-tracker-field-box"];
-      if (f.multiline) cls.push("vocab-tracker-textarea");
-      const inp = wrap.createEl(f.multiline ? "textarea" : "input", { cls });
-      if (!f.multiline) inp.type = "text";
-      inp.value = String((_a = entry[f.key]) != null ? _a : "");
-      inp.placeholder = f.label;
-      inp.onchange = async () => {
-        entry[f.key] = inp.value;
-        await this.plugin.saveVocab();
-      };
-    }
-    if (entry.source && entry.source.path) {
-      const src = container.createEl("div", { cls: "vocab-tracker-source-link" });
-      const name = entry.source.path.split("/").pop();
-      src.textContent = `\u{1F4CD} ${name} : line ${entry.source.line + 1}`;
-      src.title = "Jump to where this word was captured";
-      src.onclick = () => this.plugin.jumpToSource(entry);
-    }
-    const meta = container.createEl("div", { cls: "vocab-tracker-meta" });
-    meta.textContent = `Added: ${entry.added}  \xB7  Reviewed: ${entry.lastReviewed} (${entry.reviews}\xD7)`;
-    const btnRow = container.createEl("div", { cls: "vocab-tracker-btn-row" });
-    const btn = btnRow.createEl("button", { text: "\u2713 Mark as reviewed", cls: "vocab-tracker-btn-flex" });
-    btn.onclick = async () => {
-      entry.lastReviewed = nowStamp();
-      entry.reviews += 1;
-      await this.plugin.saveVocab();
-      this.render();
-    };
-    const fetchBtn = btnRow.createEl("button", { text: "\u{1F504} Fetch", cls: "vocab-tracker-btn" });
-    fetchBtn.title = "Fetch dictionary data (definition, synonyms, phonetic)";
-    fetchBtn.onclick = async () => {
-      fetchBtn.textContent = "\u2026";
-      fetchBtn.disabled = true;
-      await this.plugin.enrichEntry(entry);
-      this.render();
-    };
   }
 };
 var VocabTrackerPlugin = class extends import_obsidian.Plugin {
@@ -282,12 +215,19 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
     await leaf.openFile(file);
   }
   async ensureVocabFile() {
-    if (!this.app.vault.getAbstractFileByPath(VOCAB_FILE)) {
-      await this.app.vault.create(
-        VOCAB_FILE,
-        "# Vocabulary List\n\n> Click a row to expand its details. Edit fields inline and they save automatically.\n\n```vocab-dashboard\n```\n"
-      );
+    if (this.app.vault.getAbstractFileByPath(VOCAB_FILE)) return;
+    if (!this.app.vault.getAbstractFileByPath(VOCAB_FOLDER)) {
+      await this.app.vault.createFolder(VOCAB_FOLDER);
     }
+    const legacy = this.app.vault.getAbstractFileByPath(VOCAB_FILE_LEGACY);
+    if (legacy instanceof import_obsidian.TFile) {
+      await this.app.fileManager.renameFile(legacy, VOCAB_FILE);
+      return;
+    }
+    await this.app.vault.create(
+      VOCAB_FILE,
+      "# Vocabulary List\n\n> Click a row to expand its details. Edit fields inline and they save automatically.\n\n```vocab-dashboard\n```\n"
+    );
   }
   // ── Click any English word in reading mode ─────────────────────
   handleReadingClick(evt) {
@@ -386,6 +326,7 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
         antonyms: "",
         example: ctx.sentence || "",
         definition: "",
+        definitionZh: "",
         phonetic: "",
         partOfSpeech: "",
         grammar: "",
@@ -468,72 +409,201 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
   }
-  // ── Auto-fetch dictionary data (Free Dictionary API) ───────────
-  async enrichEntry(entry) {
+  // ── Auto-fetch dictionary data (Wiktionary, falls back to Datamuse) ──
+  async enrichEntry(entry, opts = {}) {
     try {
       const data = await this.fetchDictionary(entry.word);
-      if (!data) return;
       if (!entry.phonetic) entry.phonetic = data.phonetic;
       if (!entry.audio) entry.audio = data.audio;
       if (!entry.partOfSpeech) entry.partOfSpeech = data.partOfSpeech;
       if (!entry.definition) entry.definition = data.definition;
+      if (!entry.definitionZh) entry.definitionZh = data.definitionZh;
       if (!entry.synonyms) entry.synonyms = data.synonyms.join(", ");
       if (!entry.antonyms) entry.antonyms = data.antonyms.join(", ");
       await this.saveVocab();
       const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
       const view = leaf && leaf.view;
-      if (view && view.activeWord && view.activeWord.toLowerCase() === entry.word.toLowerCase()) {
-        view.render();
-      }
+      if (view) view.render();
+      if (opts.verbose) new import_obsidian.Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
+      new import_obsidian.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
     }
   }
+  // Wiktionary's REST API sits behind Wikimedia's global CDN (fast + reliable
+  // worldwide, incl. mobile networks); Datamuse is the fallback for the
+  // definition itself and always supplies synonyms/antonyms, since Wiktionary's
+  // endpoint doesn't return those. All three requests run concurrently.
   async fetchDictionary(word) {
-    const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`;
-    const res = await (0, import_obsidian.requestUrl)({ url, throw: false });
-    if (res.status !== 200) return null;
-    const arr = res.json;
-    if (!Array.isArray(arr) || arr.length === 0) return null;
-    const first = arr[0];
-    let phonetic = first.phonetic || "";
-    let audio = "";
-    if (Array.isArray(first.phonetics)) {
-      if (!phonetic) {
-        const p = first.phonetics.find((p2) => p2.text);
-        if (p) phonetic = p.text;
+    const w = word.toLowerCase();
+    const defPromise = this.fetchDefinition(w);
+    const synPromise = this.fetchDatamuseRelated(w, "rel_syn");
+    const antPromise = this.fetchDatamuseRelated(w, "rel_ant");
+    const { definition, partOfSpeech } = await defPromise;
+    const definitionZh = await this.translateToZhTW(definition);
+    const synonyms = await synPromise;
+    const antonyms = await antPromise;
+    return { phonetic: "", audio: "", partOfSpeech, definition, definitionZh, synonyms, antonyms };
+  }
+  // Obsidian mobile's requestUrl (iOS/Android) mangles query params that
+  // arrive pre-percent-encoded — the transport layer re-processes the URL
+  // and strips/duplicates the encoding, so "%20" ends up sent to the server
+  // literally instead of as a space (matches ionic-team/capacitor#7523).
+  // Desktop's requestUrl has no such bug and needs the encoding, so only
+  // mobile skips it and leaves escaping to the native request layer.
+  encodeQueryParam(text) {
+    return import_obsidian.Platform.isMobile ? text : encodeURIComponent(text);
+  }
+  // Safety net for the mobile encoding bug above (and for providers that
+  // return an HTTP 200 with an English error string instead of throwing):
+  // reject anything that still looks like raw percent-encoding or is
+  // obviously not a translation, so callers fall back instead of showing
+  // garbage like "%20act %20of %20putting".
+  looksLikeValidTranslation(s) {
+    return s.length > 0 && !/%[0-9A-Fa-f]{2}/.test(s);
+  }
+  // Google's unofficial endpoint (no key, best quality, converts to
+  // Traditional automatically) is tried first; MyMemory is the sanctioned
+  // free-tier fallback. Translation is a bonus — failure here must not sink
+  // the definition fetch, so it soft-fails to "".
+  async translateToZhTW(text) {
+    if (!text) return "";
+    try {
+      return await this.translateWithGoogle(text);
+    } catch (primaryErr) {
+      try {
+        return await this.translateWithMyMemory(text);
+      } catch (fallbackErr) {
+        console.error("Vocab Tracker: translation failed", primaryErr, fallbackErr);
+        return "";
       }
-      const a = first.phonetics.find((p) => p.audio);
-      if (a) audio = a.audio;
     }
-    const meanings = first.meanings || [];
-    const partOfSpeech = meanings.length ? meanings[0].partOfSpeech || "" : "";
-    let definition = "";
-    for (const m of meanings) {
-      const d = (m.definitions || []).find((d2) => d2.definition);
-      if (d) {
-        definition = d.definition;
-        break;
+  }
+  async translateWithGoogle(text) {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=${this.encodeQueryParam(text)}`;
+    let res;
+    try {
+      res = await (0, import_obsidian.requestUrl)({ url, throw: false });
+    } catch (e) {
+      throw new Error(`Google Translate request failed (${(e == null ? void 0 : e.message) || e})`);
+    }
+    if (res.status !== 200) throw new Error(`Google Translate returned HTTP ${res.status}`);
+    let data;
+    try {
+      data = res.json;
+    } catch (e) {
+      throw new Error("couldn't parse Google Translate response");
+    }
+    const segments = Array.isArray(data == null ? void 0 : data[0]) ? data[0] : [];
+    const translated = segments.map((seg) => (seg == null ? void 0 : seg[0]) || "").join("");
+    if (!this.looksLikeValidTranslation(translated)) throw new Error("empty or corrupted translation");
+    return translated;
+  }
+  async translateWithMyMemory(text) {
+    var _a;
+    const url = `https://api.mymemory.translated.net/get?q=${this.encodeQueryParam(text)}&langpair=en|zh-TW`;
+    let res;
+    try {
+      res = await (0, import_obsidian.requestUrl)({ url, throw: false });
+    } catch (e) {
+      throw new Error(`MyMemory request failed (${(e == null ? void 0 : e.message) || e})`);
+    }
+    if (res.status !== 200) throw new Error(`MyMemory returned HTTP ${res.status}`);
+    let data;
+    try {
+      data = res.json;
+    } catch (e) {
+      throw new Error("couldn't parse MyMemory response");
+    }
+    const translated = ((_a = data == null ? void 0 : data.responseData) == null ? void 0 : _a.translatedText) || "";
+    if (!this.looksLikeValidTranslation(translated)) throw new Error("empty or corrupted translation");
+    return translated;
+  }
+  async fetchDefinition(w) {
+    try {
+      return await this.fetchWiktionaryDefinition(w);
+    } catch (primaryErr) {
+      try {
+        return await this.fetchDatamuseDefinition(w);
+      } catch (fallbackErr) {
+        throw new Error(
+          `${(primaryErr == null ? void 0 : primaryErr.message) || primaryErr}; fallback also failed: ${(fallbackErr == null ? void 0 : fallbackErr.message) || fallbackErr}`
+        );
       }
     }
-    const syn = /* @__PURE__ */ new Set();
-    const ant = /* @__PURE__ */ new Set();
-    for (const m of meanings) {
-      (m.synonyms || []).forEach((s) => syn.add(s));
-      (m.antonyms || []).forEach((a) => ant.add(a));
-      for (const d of m.definitions || []) {
-        (d.synonyms || []).forEach((s) => syn.add(s));
-        (d.antonyms || []).forEach((a) => ant.add(a));
-      }
+  }
+  async fetchWiktionaryDefinition(w) {
+    let res;
+    try {
+      res = await (0, import_obsidian.requestUrl)({
+        url: `https://en.wiktionary.org/api/rest_v1/page/definition/${this.encodeQueryParam(w)}`,
+        throw: false
+      });
+    } catch (e) {
+      throw new Error(`Wiktionary request failed (${(e == null ? void 0 : e.message) || e})`);
     }
-    return {
-      phonetic,
-      audio,
-      partOfSpeech,
-      definition,
-      synonyms: [...syn].slice(0, 8),
-      antonyms: [...ant].slice(0, 8)
+    if (res.status === 404) throw new Error(`"${w}" not found in dictionary`);
+    if (res.status !== 200) throw new Error(`Wiktionary API returned HTTP ${res.status}`);
+    let data;
+    try {
+      data = res.json;
+    } catch (e) {
+      throw new Error("couldn't parse Wiktionary response");
+    }
+    const entries = Array.isArray(data == null ? void 0 : data.en) ? data.en : [];
+    const entry = entries.find((en) => {
+      var _a, _b;
+      return (_b = (_a = en.definitions) == null ? void 0 : _a[0]) == null ? void 0 : _b.definition;
+    });
+    if (!entry) throw new Error(`"${w}" not found in dictionary`);
+    const rawDefinition = entry.definitions[0].definition || "";
+    const definition = rawDefinition.replace(/<[^>]+>/g, "").trim();
+    const partOfSpeech = (entry.partOfSpeech || "").toLowerCase();
+    return { definition, partOfSpeech };
+  }
+  async fetchDatamuseDefinition(w) {
+    var _a, _b;
+    let res;
+    try {
+      res = await (0, import_obsidian.requestUrl)({
+        url: `https://api.datamuse.com/words?sp=${this.encodeQueryParam(w)}&md=d&max=1`,
+        throw: false
+      });
+    } catch (e) {
+      throw new Error(`Datamuse request failed (${(e == null ? void 0 : e.message) || e})`);
+    }
+    if (res.status !== 200) throw new Error(`Datamuse API returned HTTP ${res.status}`);
+    let arr;
+    try {
+      arr = res.json;
+    } catch (e) {
+      throw new Error("couldn't parse Datamuse response");
+    }
+    const defs = Array.isArray(arr) && arr[0] && Array.isArray(arr[0].defs) ? arr[0].defs : [];
+    if (defs.length === 0) throw new Error(`"${w}" not found in dictionary`);
+    const posMap = {
+      n: "noun",
+      v: "verb",
+      adj: "adjective",
+      adv: "adverb",
+      u: ""
     };
+    const [posTag, definition] = defs[0].split("	");
+    const partOfSpeech = (_b = (_a = posMap[posTag]) != null ? _a : posTag) != null ? _b : "";
+    return { definition: (definition || "").trim(), partOfSpeech };
+  }
+  // Soft-fails to [] — missing synonyms/antonyms shouldn't sink the whole fetch.
+  async fetchDatamuseRelated(w, rel) {
+    try {
+      const res = await (0, import_obsidian.requestUrl)({
+        url: `https://api.datamuse.com/words?${rel}=${this.encodeQueryParam(w)}&max=8`,
+        throw: false
+      });
+      if (res.status !== 200 || !Array.isArray(res.json)) return [];
+      return res.json.map((entry) => entry.word);
+    } catch (e) {
+      return [];
+    }
   }
   refreshSidebar() {
     var _a;
@@ -583,6 +653,181 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
     const updated = this.replaceOutsideCode(content, re, "$1");
     if (updated !== content) await this.app.vault.modify(file, updated);
   }
+  // ── Shared row renderer: sidebar list + dashboard both use this ──
+  //
+  // Three progressive-disclosure states:
+  //   collapsed — one line: ✕ delete · word+level · expand toggle · 🔊 speak
+  //   half      — + phonetic/POS, synonyms, definition, 中文翻译;
+  //               footer: more toggle · 🔄 fetch · ✓ reviewed · 🔊 speak
+  //   full      — + antonyms (if any), example, grammar, source,
+  //               added/reviewed, level
+  renderVocabRow(container, entry, state, setState, refresh) {
+    const row = container.createEl("div", { cls: "vocab-tracker-row" });
+    row.toggleClass("is-expanded", state !== "collapsed");
+    const head = row.createEl("div", { cls: "vocab-tracker-row-header" });
+    const del = head.createEl("span", { text: "\u2715", cls: "vocab-tracker-row-delete" });
+    del.title = "Delete";
+    del.onclick = async (e) => {
+      e.stopPropagation();
+      await this.deleteEntry(entry);
+      refresh();
+    };
+    const wordWrap = head.createEl("span", { cls: "vocab-tracker-row-wordwrap" });
+    wordWrap.createEl("span", { text: entry.word, cls: "vocab-tracker-row-word" });
+    for (const tag of entry.level.split(",").map((t) => t.trim()).filter(Boolean)) {
+      wordWrap.createEl("span", { text: tag, cls: "vocab-tracker-row-badge" });
+    }
+    head.createEl("span", { cls: "vocab-tracker-row-spacer" });
+    const arrow = head.createEl("span", {
+      text: state === "collapsed" ? "\u2303" : "\u2335",
+      cls: "vocab-tracker-row-arrow"
+    });
+    arrow.title = state === "collapsed" ? "Expand" : "Collapse";
+    head.onclick = () => {
+      setState(state === "collapsed" ? "half" : "collapsed");
+      refresh();
+    };
+    if (state === "collapsed") {
+      const speak2 = head.createEl("span", {
+        text: "\u{1F50A}",
+        cls: ["vocab-tracker-speak-icon", "vocab-tracker-row-speak"]
+      });
+      speak2.title = "Pronounce";
+      speak2.onclick = (e) => {
+        e.stopPropagation();
+        this.speakWord(entry);
+      };
+      return;
+    }
+    const body = row.createEl("div", { cls: "vocab-tracker-row-body" });
+    const subText = body.createEl("div", { cls: "vocab-tracker-form-subtext" });
+    subText.textContent = [entry.phonetic, entry.partOfSpeech].filter(Boolean).join("  \xB7  ") || entry.word;
+    const mkField = (label, key, opts = {}) => {
+      var _a;
+      const value = String((_a = entry[key]) != null ? _a : "");
+      const wrap = body.createEl("div", { cls: "vocab-tracker-field" });
+      if (value) wrap.addClass("is-filled");
+      const cls = ["vocab-tracker-input", "vocab-tracker-field-box"];
+      if (opts.multiline) cls.push("vocab-tracker-textarea");
+      const inp = wrap.createEl(opts.multiline ? "textarea" : "input", { cls });
+      if (!opts.multiline) inp.type = "text";
+      else inp.rows = 1;
+      inp.value = value;
+      inp.placeholder = `Add ${label.toLowerCase()}\u2026`;
+      inp.onclick = (e) => e.stopPropagation();
+      if (opts.multiline) {
+        autoGrowTextarea(inp);
+        inp.addEventListener("input", () => autoGrowTextarea(inp));
+      }
+      inp.onchange = async () => {
+        entry[key] = inp.value;
+        await this.saveVocab();
+        refresh();
+      };
+    };
+    mkField("Synonyms", "synonyms", { multiline: true });
+    mkField("Definition", "definition", { multiline: true });
+    mkField("\u4E2D\u6587\u7FFB\u8BD1", "definitionZh", { multiline: true });
+    if (state === "full") {
+      if (entry.antonyms) mkField("Antonyms", "antonyms");
+      mkField("Example sentence (from note)", "example", { multiline: true });
+      mkField("Grammar tips", "grammar");
+      if (entry.source && entry.source.path) {
+        const src = body.createEl("div", { cls: "vocab-tracker-source-link" });
+        const name = entry.source.path.split("/").pop();
+        src.textContent = `\u{1F4CD} ${name} : line ${entry.source.line + 1}`;
+        src.title = "Jump to where this word was captured";
+        src.onclick = (e) => {
+          e.stopPropagation();
+          this.jumpToSource(entry);
+        };
+      }
+      body.createEl("div", { text: `Added: ${entry.added}`, cls: "vocab-tracker-meta" });
+      body.createEl("div", {
+        text: `Reviewed: ${entry.lastReviewed} (${entry.reviews}\xD7)`,
+        cls: "vocab-tracker-meta"
+      });
+      mkField("Level", "level", { multiline: true });
+    }
+    const footer = body.createEl("div", { cls: "vocab-tracker-row-footer" });
+    const moreBtn = footer.createEl("span", {
+      text: state === "full" ? "\u2335" : "\u2139\uFE0F",
+      cls: "vocab-tracker-footer-icon"
+    });
+    moreBtn.title = state === "full" ? "Show less" : "Show more";
+    moreBtn.onclick = (e) => {
+      e.stopPropagation();
+      setState(state === "full" ? "half" : "full");
+      refresh();
+    };
+    const actions = footer.createEl("span", { cls: "vocab-tracker-row-footer-actions" });
+    const fetchBtn = actions.createEl("span", { text: "\u{1F504}", cls: "vocab-tracker-footer-icon" });
+    fetchBtn.title = "Fetch dictionary data (definition, synonyms, phonetic)";
+    fetchBtn.onclick = async (e) => {
+      e.stopPropagation();
+      fetchBtn.textContent = "\u2026";
+      await this.enrichEntry(entry, { verbose: true });
+      refresh();
+    };
+    const reviewBtn = actions.createEl("span", { text: "\u2713", cls: "vocab-tracker-footer-icon" });
+    reviewBtn.title = "Mark as reviewed";
+    reviewBtn.onclick = async (e) => {
+      e.stopPropagation();
+      entry.lastReviewed = nowStamp();
+      entry.reviews += 1;
+      await this.saveVocab();
+      refresh();
+    };
+    const speak = actions.createEl("span", { text: "\u{1F50A}", cls: "vocab-tracker-speak-icon" });
+    speak.title = "Pronounce";
+    speak.onclick = (e) => {
+      e.stopPropagation();
+      this.speakWord(entry);
+    };
+  }
+  // ── Shared grouped list: dashboard + sidebar "All" tab both use this ──
+  //
+  // Groups rows by source note title into collapsible sections, each
+  // showing its word count — the sidebar/dashboard" second level of
+  // organization" on top of each row's own collapsed/half/full state.
+  renderGroupedVocabList(container, rows, collapsedGroups, expandState, refresh) {
+    var _a, _b;
+    const groups = /* @__PURE__ */ new Map();
+    for (const entry of rows) {
+      const title = ((_a = entry.source) == null ? void 0 : _a.path) ? entry.source.path.split("/").pop().replace(/\.md$/, "") : "(no note)";
+      if (!groups.has(title)) groups.set(title, []);
+      groups.get(title).push(entry);
+    }
+    const titles = [...groups.keys()].sort((a, b) => a.localeCompare(b));
+    for (const title of titles) {
+      const groupRows = groups.get(title);
+      const isCollapsed = collapsedGroups.has(title);
+      const heading = container.createEl("div", { cls: "vocab-tracker-group-heading" });
+      heading.createEl("span", {
+        text: isCollapsed ? "\u2303" : "\u2335",
+        cls: "vocab-tracker-group-arrow"
+      });
+      heading.createEl("span", { text: title, cls: "vocab-tracker-group-title", title });
+      heading.createEl("span", { cls: "vocab-tracker-group-spacer" });
+      heading.createEl("span", { text: String(groupRows.length), cls: "vocab-tracker-group-count" });
+      heading.onclick = () => {
+        if (isCollapsed) collapsedGroups.delete(title);
+        else collapsedGroups.add(title);
+        refresh();
+      };
+      if (isCollapsed) continue;
+      for (const entry of groupRows) {
+        const state = (_b = expandState.get(entry.id)) != null ? _b : "collapsed";
+        this.renderVocabRow(
+          container,
+          entry,
+          state,
+          (s) => expandState.set(entry.id, s),
+          refresh
+        );
+      }
+    }
+  }
   // ── Mark click handler ─────────────────────────────────────────
   processMarks(el, _ctx) {
     el.querySelectorAll("mark").forEach((mark) => {
@@ -599,6 +844,7 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
   }
   // ── vocab-dashboard renderer ───────────────────────────────────
   renderDashboard(_source, el, _ctx) {
+    var _a;
     const { entries } = this.vocabData;
     el.addClass("vocab-tracker-dashboard");
     if (entries.length === 0) {
@@ -613,119 +859,29 @@ var VocabTrackerPlugin = class extends import_obsidian.Plugin {
       text: `\u{1F4DA} ${entries.length} word${entries.length !== 1 ? "s" : ""}`,
       cls: "vocab-tracker-stat-pill"
     });
-    for (const lvl of ["A1", "A2", "B1", "B2", "C1", "C2"]) {
-      const n = entries.filter((e) => e.level === lvl).length;
-      if (!n) continue;
+    const tagCounts = /* @__PURE__ */ new Map();
+    for (const e of entries) {
+      for (const tag of e.level.split(",").map((t) => t.trim()).filter(Boolean)) {
+        tagCounts.set(tag, ((_a = tagCounts.get(tag)) != null ? _a : 0) + 1);
+      }
+    }
+    for (const [tag, n] of [...tagCounts.entries()].sort((a, b) => b[1] - a[1])) {
       stats.createEl("span", {
-        text: `${lvl}: ${n}`,
+        text: `${tag}: ${n}`,
         cls: ["vocab-tracker-stat-pill", "is-accent"]
       });
     }
     const search = el.createEl("input", { cls: ["vocab-tracker-search-input", "vocab-tracker-field-box"] });
     search.placeholder = "Search words\u2026";
-    const tableWrap = el.createEl("div");
+    const listWrap = el.createEl("div", { cls: "vocab-tracker-list" });
+    const expandState = /* @__PURE__ */ new Map();
+    const collapsedGroups = /* @__PURE__ */ new Set();
     const draw = (q) => {
-      tableWrap.empty();
+      listWrap.empty();
       const rows = entries.filter(
         (e) => e.word.toLowerCase().includes(q.toLowerCase())
       );
-      const tbl = tableWrap.createEl("table", { cls: "vocab-tracker-table" });
-      const hdrRow = tbl.createEl("thead").createEl("tr");
-      for (const h of ["Word", "Level", "Last Reviewed", "Reviews"]) {
-        hdrRow.createEl("th", { text: h });
-      }
-      const tbody = tbl.createEl("tbody");
-      for (const entry of rows) {
-        const tr = tbody.createEl("tr", { cls: "vocab-tracker-table-row" });
-        tr.createEl("td", { text: entry.word, cls: "vocab-tracker-cell-word" });
-        const lTd = tr.createEl("td");
-        if (entry.level) {
-          lTd.createEl("span", { text: entry.level, cls: "vocab-tracker-level-badge" });
-        } else {
-          lTd.addClass("vocab-tracker-text-muted");
-          lTd.textContent = "\u2014";
-        }
-        tr.createEl("td", { text: entry.lastReviewed, cls: "vocab-tracker-cell-muted" });
-        tr.createEl("td", { text: String(entry.reviews), cls: "vocab-tracker-cell-muted" });
-        const dtr = tbody.createEl("tr", { cls: "vocab-tracker-hidden" });
-        const dtd = dtr.createEl("td", { cls: "vocab-tracker-detail-cell" });
-        dtd.setAttribute("colspan", "4");
-        tr.onclick = () => {
-          const open = !dtr.hasClass("vocab-tracker-hidden");
-          if (open) {
-            dtr.addClass("vocab-tracker-hidden");
-            return;
-          }
-          dtd.empty();
-          dtr.removeClass("vocab-tracker-hidden");
-          const sub = dtd.createEl("div", { cls: "vocab-tracker-detail-sub" });
-          const subText = sub.createEl("span", { cls: "vocab-tracker-form-subtext" });
-          subText.textContent = [entry.phonetic, entry.partOfSpeech].filter(Boolean).join("  \xB7  ") || entry.word;
-          const speak = sub.createEl("span", { text: "\u{1F50A}", cls: "vocab-tracker-speak-icon" });
-          speak.title = "Pronounce";
-          speak.onclick = () => this.speakWord(entry);
-          const grid = dtd.createEl("div", { cls: "vocab-tracker-field-grid" });
-          const mkField = (label, key, opts = {}) => {
-            var _a;
-            const wrap = grid.createEl("div", { cls: "vocab-tracker-grid-field" });
-            wrap.toggleClass("is-full", !!opts.full);
-            wrap.createEl("div", { text: label, cls: "vocab-tracker-grid-field-label" });
-            const cls = ["vocab-tracker-input", "vocab-tracker-field-box"];
-            if (opts.multiline) cls.push("vocab-tracker-textarea");
-            const inp = wrap.createEl(opts.multiline ? "textarea" : "input", { cls });
-            if (!opts.multiline) inp.type = "text";
-            inp.value = String((_a = entry[key]) != null ? _a : "");
-            inp.placeholder = `Add ${label.toLowerCase()}\u2026`;
-            inp.onchange = async () => {
-              entry[key] = inp.value;
-              await this.saveVocab();
-            };
-          };
-          mkField("Definition", "definition", { full: true, multiline: true });
-          mkField("Synonyms", "synonyms");
-          mkField("Antonyms", "antonyms");
-          mkField("Example sentence (from note)", "example", { full: true, multiline: true });
-          mkField("Grammar tips", "grammar", { full: true });
-          const lvlWrap = grid.createEl("div", { cls: ["vocab-tracker-grid-field", "is-full"] });
-          lvlWrap.createEl("div", { text: "Level", cls: "vocab-tracker-grid-field-label" });
-          const sel = lvlWrap.createEl("select", { cls: ["vocab-tracker-grid-select", "vocab-tracker-field-box"] });
-          for (const lvl of LEVELS) {
-            const opt = sel.createEl("option", {
-              text: lvl || "\u2014 not set \u2014",
-              value: lvl
-            });
-            if (entry.level === lvl) opt.selected = true;
-          }
-          sel.onchange = async () => {
-            entry.level = sel.value;
-            await this.saveVocab();
-            draw(search.value);
-          };
-          if (entry.source && entry.source.path) {
-            const src = dtd.createEl("div", { cls: "vocab-tracker-detail-source-link" });
-            const name = entry.source.path.split("/").pop();
-            src.textContent = `\u{1F4CD} ${name} : line ${entry.source.line + 1}`;
-            src.onclick = () => this.jumpToSource(entry);
-          }
-          const footer = dtd.createEl("div", { cls: "vocab-tracker-detail-footer" });
-          footer.createEl("span", {
-            text: `Added: ${entry.added}`,
-            cls: "vocab-tracker-added-label"
-          });
-          const btnGroup = footer.createEl("div", { cls: "vocab-tracker-btn-group" });
-          const fetchBtn = btnGroup.createEl("button", { text: "\u{1F504} Fetch", cls: "vocab-tracker-btn-ghost" });
-          fetchBtn.onclick = async () => {
-            fetchBtn.textContent = "\u2026";
-            await this.enrichEntry(entry);
-            draw(search.value);
-          };
-          const delBtn = btnGroup.createEl("button", { text: "Delete word", cls: "vocab-tracker-btn-danger" });
-          delBtn.onclick = async () => {
-            await this.deleteEntry(entry);
-            draw(search.value);
-          };
-        };
-      }
+      this.renderGroupedVocabList(listWrap, rows, collapsedGroups, expandState, () => draw(search.value));
     };
     draw("");
     search.oninput = () => draw(search.value);

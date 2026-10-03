@@ -28,31 +28,19 @@
   font-size: 1.2em;
 }
 
-.vocab-tracker-card {
-  background: var(--background-secondary);
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-}
-
-.vocab-tracker-card-header {
+.vocab-tracker-add-prompt {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 8px;
+  background: var(--background-secondary);
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
 }
 
-.vocab-tracker-card-title {
-  font-size: 1.1em;
-  font-weight: bold;
-}
-
-.vocab-tracker-btn-block {
-  width: 100%;
-  padding: 7px;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 0.9em;
+.vocab-tracker-add-prompt-word {
+  font-weight: 600;
+  flex: 1;
 }
 
 .vocab-tracker-list-header {
@@ -97,27 +85,34 @@
   line-height: 1.5;
 }
 
-.vocab-tracker-row {
+.vocab-tracker-list {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 7px 9px;
-  margin-bottom: 4px;
-  border-radius: 5px;
-  cursor: pointer;
-  background: var(--background-secondary);
+  flex-direction: column;
+  gap: 4px;
 }
 
-.vocab-tracker-row.is-active {
-  background: var(--interactive-accent);
+.vocab-tracker-row {
+  border-radius: 5px;
+  background: var(--background-secondary);
+  overflow: hidden;
+}
+
+.vocab-tracker-row-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  cursor: pointer;
+}
+
+.vocab-tracker-row-wordwrap {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .vocab-tracker-row-word {
   color: var(--text-normal);
-}
-
-.vocab-tracker-row.is-active .vocab-tracker-row-word {
-  color: var(--text-on-accent);
 }
 
 .vocab-tracker-row-badge {
@@ -130,14 +125,14 @@
   color: var(--text-on-accent);
 }
 
-.vocab-tracker-row.is-active .vocab-tracker-row-badge {
-  background: rgba(255, 255, 255, 0.25);
+.vocab-tracker-row-spacer {
+  flex: 1;
 }
 
-.vocab-tracker-row-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.vocab-tracker-row-arrow {
+  color: var(--text-muted);
+  font-size: 0.95em;
+  line-height: 1;
   flex-shrink: 0;
 }
 
@@ -146,57 +141,36 @@
   font-size: 0.95em;
   line-height: 1;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .vocab-tracker-row-speak {
   opacity: 0.7;
 }
 
-.vocab-tracker-row.is-active .vocab-tracker-row-speak {
-  opacity: 1;
-}
-
 .vocab-tracker-row-delete {
   color: var(--text-muted);
   padding: 0 3px;
-  font-size: 1.1em;
+  font-size: 0.95em;
   line-height: 1;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
-.vocab-tracker-row.is-active .vocab-tracker-row-delete {
-  color: rgba(255, 255, 255, 0.6);
+.vocab-tracker-row-body {
+  padding: 0 9px 9px;
 }
 
-/* ── Entry form (sidebar card + dashboard detail row share these) ── */
-
-.vocab-tracker-form-sub {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: -4px 0 10px;
-}
-
-.vocab-tracker-detail-sub {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
+/* ── Fields shared by half/full expanded rows ─────────────────── */
 
 .vocab-tracker-form-subtext {
   font-size: 0.82em;
   color: var(--text-muted);
+  margin: -2px 0 6px;
 }
 
 .vocab-tracker-field {
-  margin-bottom: 8px;
-}
-
-.vocab-tracker-field-label {
-  font-size: 0.75em;
-  color: var(--text-muted);
-  margin-bottom: 3px;
+  margin-bottom: 6px;
 }
 
 .vocab-tracker-field-box {
@@ -206,8 +180,17 @@
   border-radius: 4px;
 }
 
-.vocab-tracker-select {
-  width: 100%;
+/* Filled fields drop their box — read as plain text, flush with the
+   phonetic line, with the box chrome only appearing once you focus in. */
+.vocab-tracker-field.is-filled .vocab-tracker-field-box {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+}
+
+.vocab-tracker-field.is-filled .vocab-tracker-field-box:focus {
+  background: var(--background-primary);
+  border-color: var(--background-modifier-border);
   padding: 5px;
 }
 
@@ -219,8 +202,9 @@
 }
 
 .vocab-tracker-textarea {
-  resize: vertical;
-  min-height: 46px;
+  resize: none;
+  overflow: hidden;
+  min-height: 1.4em;
   font-family: inherit;
   line-height: 1.4;
 }
@@ -232,30 +216,10 @@
   color: var(--text-accent);
 }
 
-.vocab-tracker-detail-source-link {
-  font-size: 0.8em;
-  margin: 2px 0 8px;
-  cursor: pointer;
-  color: var(--text-accent);
-}
-
 .vocab-tracker-meta {
   font-size: 0.72em;
   color: var(--text-muted);
   margin: 6px 0;
-}
-
-.vocab-tracker-btn-row {
-  display: flex;
-  gap: 6px;
-}
-
-.vocab-tracker-btn-flex {
-  flex: 1;
-  padding: 6px;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 0.88em;
 }
 
 .vocab-tracker-btn {
@@ -263,6 +227,34 @@
   cursor: pointer;
   border-radius: 5px;
   font-size: 0.88em;
+}
+
+/* ── Row footer: more-info toggle · fetch · reviewed · speak ───── */
+
+.vocab-tracker-row-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.vocab-tracker-row-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vocab-tracker-footer-icon {
+  cursor: pointer;
+  font-size: 0.95em;
+  line-height: 1;
+  user-select: none;
+  opacity: 0.8;
+}
+
+.vocab-tracker-footer-icon:hover {
+  opacity: 1;
 }
 
 /* ── Reading-mode ==highlight== marks ───────────────────────────── */
@@ -307,122 +299,42 @@
   margin-bottom: 10px;
 }
 
-.vocab-tracker-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.vocab-tracker-table th {
-  text-align: left;
-  padding: 6px 8px;
-  border-bottom: 2px solid var(--background-modifier-border);
-  font-size: 0.8em;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.vocab-tracker-table td {
-  padding: 8px;
-}
-
-.vocab-tracker-table-row {
-  cursor: pointer;
-}
-
-.vocab-tracker-table-row:hover {
-  background: var(--background-secondary);
-}
-
-.vocab-tracker-cell-word {
-  font-weight: 500;
-}
-
-.vocab-tracker-cell-muted {
-  font-size: 0.85em;
-  color: var(--text-muted);
-}
-
-.vocab-tracker-text-muted {
-  color: var(--text-muted);
-}
-
-.vocab-tracker-level-badge {
-  padding: 2px 6px;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  border-radius: 3px;
-  font-size: 0.78em;
-  font-weight: 600;
-}
-
-.vocab-tracker-hidden {
-  display: none;
-}
-
-.vocab-tracker-detail-cell {
-  padding: 12px 16px;
-  background: var(--background-secondary);
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.vocab-tracker-field-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.vocab-tracker-grid-field.is-full {
-  grid-column: 1 / -1;
-}
-
-.vocab-tracker-grid-field-label {
-  font-size: 0.75em;
-  color: var(--text-muted);
-  margin-bottom: 3px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.vocab-tracker-grid-select {
-  padding: 5px 8px;
-}
-
-.vocab-tracker-detail-footer {
+.vocab-tracker-group-heading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.vocab-tracker-added-label {
-  font-size: 0.75em;
-  color: var(--text-muted);
-}
-
-.vocab-tracker-btn-group {
-  display: flex;
   gap: 6px;
+  cursor: pointer;
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 14px 0 6px;
+}
+
+.vocab-tracker-group-heading:first-child {
+  margin-top: 0;
+}
+
+.vocab-tracker-group-arrow {
+  font-size: 0.9em;
   flex-shrink: 0;
 }
 
-.vocab-tracker-btn-ghost {
-  padding: 3px 10px;
-  border: 1px solid var(--background-modifier-border);
-  background: transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.82em;
+.vocab-tracker-group-title {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
-.vocab-tracker-btn-danger {
-  padding: 3px 10px;
-  color: var(--text-error);
-  background: transparent;
-  border: 1px solid var(--text-error);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.82em;
+.vocab-tracker-group-spacer {
+  flex: 1;
+  min-width: 6px;
+}
+
+.vocab-tracker-group-count {
+  font-weight: 400;
+  opacity: 0.8;
+  flex-shrink: 0;
 }
