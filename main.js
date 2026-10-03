@@ -522,6 +522,18 @@ function merge(local, remote) {
   };
 }
 
+// src/core/store/updateSourcePaths.ts
+function updateSourcePaths(entries, oldPath, newPath) {
+  const changed = [];
+  for (const entry of entries) {
+    if (entry.source && entry.source.path === oldPath) {
+      entry.source.path = newPath;
+      changed.push(entry);
+    }
+  }
+  return changed;
+}
+
 // src/core/nowStamp.ts
 function nowStamp() {
   const d = /* @__PURE__ */ new Date();
@@ -1006,6 +1018,13 @@ var VocabTrackerPlugin = class extends import_obsidian6.Plugin {
     );
     this.registerEvent(
       this.app.workspace.on("file-open", () => this.refreshSidebar())
+    );
+    this.registerEvent(
+      this.app.vault.on("rename", async (file, oldPath) => {
+        if (!(file instanceof import_obsidian6.TFile)) return;
+        const changed = updateSourcePaths(this.vocabData.entries, oldPath, file.path);
+        for (const entry of changed) await this.store.touch(entry);
+      })
     );
     this.app.workspace.onLayoutReady(() => this.ensureVocabFile());
   }

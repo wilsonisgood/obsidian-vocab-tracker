@@ -19,6 +19,7 @@ import { VocabStore } from "./src/core/store/VocabStore";
 import { loadMigrated } from "./src/core/migrations/loadMigrated";
 import { cleanupTombstones } from "./src/core/store/cleanupTombstones";
 import { merge } from "./src/core/store/merge";
+import { updateSourcePaths } from "./src/core/store/updateSourcePaths";
 import { nowStamp } from "./src/core/nowStamp";
 import { VocabSidebarView, VOCAB_VIEW_TYPE } from "./src/ui/sidebar/VocabSidebarView";
 import { renderDashboard } from "./src/ui/blocks/dashboard";
@@ -82,6 +83,15 @@ export default class VocabTrackerPlugin extends Plugin {
     );
     this.registerEvent(
       this.app.workspace.on("file-open", () => this.refreshSidebar())
+    );
+
+    // Keep tracked entries pointed at their source note when it's moved/renamed
+    this.registerEvent(
+      this.app.vault.on("rename", async (file, oldPath) => {
+        if (!(file instanceof TFile)) return;
+        const changed = updateSourcePaths(this.vocabData.entries, oldPath, file.path);
+        for (const entry of changed) await this.store.touch(entry);
+      })
     );
 
     this.app.workspace.onLayoutReady(() => this.ensureVocabFile());
