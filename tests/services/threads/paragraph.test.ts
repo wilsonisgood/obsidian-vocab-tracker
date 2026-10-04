@@ -177,6 +177,16 @@ describe("ThreadService.askParagraph", () => {
     expect(index.count(PATH, sectionText(now, 2, 2))).toBe(0);
   });
 
+  it("a second question from text without the new block id reuses the thread", async () => {
+    const { threads, vault } = setup(async () => result("answer"));
+    const id = await threads.askParagraph(section(NOTE, 4, 5), { taskId: "paragraph.grammar" });
+    // The UI still holds the section as it was before ^vt was written.
+    const again = await threads.askParagraph(section(NOTE, 4, 5), { taskId: "paragraph.translate" });
+    expect(again).toBe(id);
+    expect(threads.paragraphThreads(PATH)).toHaveLength(1);
+    expect(vault.files.get(PATH)?.match(/\^vt-/g)).toHaveLength(1);
+  });
+
   it("a double click doesn't anchor the same paragraph twice", async () => {
     let release: (r: AiRunResult) => void = () => {};
     const { threads, ai, vault } = setup(() => new Promise((r) => (release = r)));

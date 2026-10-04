@@ -363,43 +363,58 @@ export class ThreadService {
     await this.ensureLoaded();
     if (this.disposed) return null;
 
-    const thread = "threadId" in target ? this.get(target.threadId) : this.paragraphThread(target.path, target.text);
+    let thread = "threadId" in target ? this.get(target.threadId) : this.paragraphThread(target.path, target.text);
     if ("threadId" in target && !thread) return null;
-    if (thread && (thread.anchor.kind !== "paragraph" || this.isBusy(thread.id))) return null;
+    if (thread && thread.anchor.kind !== "paragraph") return null;
 
+    let lock: string | null = null;
     let anchor: ParagraphAnchor;
-    let threadId: string;
-    if (thread && thread.anchor.kind === "paragraph") {
+    if (thread?.anchor.kind === "paragraph") {
       anchor = thread.anchor;
-      threadId = thread.id;
     } else {
       const ref = target as SectionRef;
-      const lock = `${ref.path}\n${ref.lineStart}`;
+      lock = `${ref.path}\n${ref.lineStart}`;
       if (this.creating.has(lock)) return null;
       this.creating.add(lock);
       try {
         anchor = await anchors.create(ref);
-      } finally {
+      } catch (e) {
         this.creating.delete(lock);
+        throw e;
       }
-      threadId = PARAGRAPH_THREAD_PREFIX + this.newId();
+      // The caller's text may predate the ^vt id an earlier question wrote:
+      // keep using the thread already bound to that id.
+      const blockId = anchor.blockId;
+      thread = blockId
+        ? this.paragraphThreads(ref.path).find((th) => th.anchor.kind === "paragraph" && th.anchor.blockId === blockId)
+        : undefined;
+      if (thread?.anchor.kind === "paragraph") anchor = thread.anchor;
     }
 
-    const where = await anchors.resolve(anchor);
-    const input = paragraphInput(anchor, where, {
-      question: req.question,
-      selection: req.selection,
-      knownWords: this.deps.store.entries.map((e) => e.word),
-    });
-    await this.ask({
-      threadId,
-      anchor,
-      taskId: req.taskId,
-      input,
-      display: this.displayFor(req),
-      question: req.question,
-      selection: req.selection,
-    });
+    let threadId: string;
+    try {
+      if (thread && this.isBusy(thread.id)) return null;
+      threadId = thread?.id ?? PARAGRAPH_THREAD_PREFIX + this.newId();
+      const where = await anchors.resolve(anchor);
+      const input = paragraphInput(anchor, where, {
+        question: req.question,
+        selection: req.selection,
+        knownWords: this.deps.store.entries.map((e) => e.word),
+      });
+      await this.ask({
+        threadId,
+        anchor,
+        taskId: req.taskId,
+        input,
+        display: this.displayFor(req),
+        question: req.question,
+        selection: req.selection,
+      });
+    } finally {
+      // Held until the new thread is registered, so a double click can't
+      // open a second one.
+      if (lock) this.creating.delete(lock);
+    }
     return threadId;
   }
 
