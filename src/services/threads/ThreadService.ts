@@ -8,6 +8,11 @@ import type { VocabStore } from "../../core/store/VocabStore";
 import type { AiService } from "../ai/AiService";
 import { isAiError } from "../ai/errors";
 import type { ChatMessage } from "../ai/providers/types";
+import type { AnchorResolution, ParagraphAnchor, ParagraphAnchorService, SectionRef } from "../anchors/ParagraphAnchorService";
+import { paragraphKey, questionCount } from "../anchors/ParagraphIndex";
+import { paragraphInput } from "../anchors/paragraphInput";
+import { trailingBlockId } from "../../core/text/blockId";
+import { paragraphHash } from "../../core/text/hash";
 import { addPin, pinText, removePin } from "./pin";
 import { findWordSource, wordInput } from "./wordInput";
 
@@ -43,6 +48,9 @@ export interface ThreadServiceDeps {
   store: VocabStore;
   ai: ThreadAi;
   notes: NoteReaderPort;
+  // Paragraph discussions (M5). Optional so word-only setups and tests
+  // don't need a vault; the paragraph methods throw without it.
+  anchors?: Pick<ParagraphAnchorService, "create" | "resolve">;
   clock?: () => Date;
   newId?: () => string;
 }
@@ -63,6 +71,18 @@ export interface WordAsk {
   question?: string;
   selection?: string;
 }
+
+export interface ParagraphAsk {
+  taskId: string;
+  question?: string;
+  selection?: string;
+}
+
+// An existing paragraph thread, or a reading-mode section to start (or
+// find) one for.
+export type ParagraphTarget = { threadId: string } | SectionRef;
+
+const PARAGRAPH_THREAD_PREFIX = "paragraph:";
 
 function defaultId(now: Date): string {
   return `${now.getTime().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -97,6 +117,9 @@ export class ThreadService {
   // threadId → the assistant turn currently streaming.
   private active = new Map<string, Turn>();
   private partial = new Map<string, string>();
+  // Sections whose anchor is being created (path + line), so a double
+  // click can't write two block ids into the same paragraph.
+  private creating = new Set<string>();
   private disposed = false;
   private clock: () => Date;
   private newId: () => string;
@@ -240,10 +263,15 @@ export class ThreadService {
     }
   }
 
+  // What the user bubble shows: the question, else the quick action's label.
+  private displayFor(req: { taskId: string; question?: string }): string {
+    const label = this.deps.ai.tasks.get(req.taskId)?.label;
+    return req.question?.trim() || (label ? t(label) : req.taskId);
+  }
+
   async askWord(entry: VocabEntry, req: WordAsk): Promise<void> {
     const source = await findWordSource(entry, this.deps.notes);
-    const label = this.deps.ai.tasks.get(req.taskId)?.label;
-    const display = req.question?.trim() || (label ? t(label) : req.taskId);
+    const display = this.displayFor(req);
     const anchor: Anchor = { kind: "word", entryId: entry.id };
     if (entry.source?.path) anchor.origin = { path: entry.source.path };
     await this.ask({
@@ -260,20 +288,167 @@ export class ThreadService {
   // 重試: the failed answer and its question are tombstoned (not removed —
   // see Turn.deletedAt) and the same question is asked again.
   async retryWord(entry: VocabEntry, turnId: string): Promise<void> {
-    const thread = this.wordThread(entry.id);
-    if (!thread || this.isBusy(thread.id)) return;
+    const question = this.dropFailedRound(this.wordThread(entry.id), turnId);
+    if (!question?.taskId) return;
+    await this.askWord(entry, { taskId: question.taskId, question: question.question, selection: question.selection });
+  }
+
+  // Tombstones an answer and the question before it; returns the question.
+  private dropFailedRound(thread: Thread | undefined, turnId: string): Turn | null {
+    if (!thread || this.isBusy(thread.id)) return null;
     const turns = liveTurns(thread);
     const i = turns.findIndex((turn) => turn.id === turnId);
-    if (i < 1) return;
+    if (i < 1) return null;
     const question = turns[i - 1];
-    if (question.role !== "user" || !question.taskId) return;
+    if (question.role !== "user" || !question.taskId) return null;
     const now = this.nowIso();
     for (const turn of [question, turns[i]]) {
       turn.deletedAt = now;
       turn.updatedAt = now;
     }
     this.changed(thread);
-    await this.askWord(entry, { taskId: question.taskId, question: question.question, selection: question.selection });
+    return question;
+  }
+
+  // ─── Paragraph discussions (規劃書 06 §5.1, M5) ──────────────────────────
+
+  // Live paragraph threads, optionally only those of one note — the
+  // sidebar's 「段落討論（n）」 list and the badge index's source.
+  paragraphThreads(path?: string): Thread[] {
+    return this.threads.filter(
+      (th) => !th.deletedAt && th.anchor.kind === "paragraph" && (path === undefined || th.anchor.path === path)
+    );
+  }
+
+  // The discussion of a reading-mode section (its raw text), matched the
+  // same way the badge index is: a block anchor by its block id, a hash
+  // anchor by the text hash. If two devices each started one, a block-id
+  // match wins, then the most recently updated.
+  paragraphThread(path: string, sectionText: string): Thread | undefined {
+    const candidates = this.paragraphThreads(path);
+    if (!candidates.length) return undefined;
+    const id = trailingBlockId(sectionText);
+    const keys = new Set<string>([`h:${paragraphHash(sectionText)}`]);
+    if (id) keys.add(`b:${id}`);
+    const hits = candidates.filter((th) => keys.has(paragraphKey(th.anchor as ParagraphAnchor)));
+    hits.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
+    return hits.find((th) => id && (th.anchor as ParagraphAnchor).blockId === id) ?? hits[0];
+  }
+
+  paragraphQuestionCount(threadId: string): number {
+    return questionCount(this.get(threadId));
+  }
+
+  // 孤立判斷: where the thread's paragraph is now (block id → hash), or
+  // why it's orphaned (note deleted, paragraph gone). `edited` drives the
+  // 「原文已修改」 banner. Null for unknown / non-paragraph threads.
+  async paragraphStatus(threadId: string): Promise<AnchorResolution | null> {
+    await this.ensureLoaded();
+    const thread = this.get(threadId);
+    if (!thread || thread.anchor.kind !== "paragraph") return null;
+    return this.requireAnchors().resolve(thread.anchor);
+  }
+
+  // Asks about a paragraph. The first question about a section creates
+  // its anchor (block mode writes ` ^vt-xxxxxx` into the note) and the
+  // thread; later ones reuse them. Resolves to the thread id, or null when
+  // nothing was sent (unknown thread, the thread is busy, or the same
+  // section's anchor is still being created by another call).
+  async askParagraph(target: ParagraphTarget, req: ParagraphAsk): Promise<string | null> {
+    const anchors = this.requireAnchors();
+    await this.ensureLoaded();
+    if (this.disposed) return null;
+
+    const thread = "threadId" in target ? this.get(target.threadId) : this.paragraphThread(target.path, target.text);
+    if ("threadId" in target && !thread) return null;
+    if (thread && (thread.anchor.kind !== "paragraph" || this.isBusy(thread.id))) return null;
+
+    let anchor: ParagraphAnchor;
+    let threadId: string;
+    if (thread && thread.anchor.kind === "paragraph") {
+      anchor = thread.anchor;
+      threadId = thread.id;
+    } else {
+      const ref = target as SectionRef;
+      const lock = `${ref.path}\n${ref.lineStart}`;
+      if (this.creating.has(lock)) return null;
+      this.creating.add(lock);
+      try {
+        anchor = await anchors.create(ref);
+      } finally {
+        this.creating.delete(lock);
+      }
+      threadId = PARAGRAPH_THREAD_PREFIX + this.newId();
+    }
+
+    const where = await anchors.resolve(anchor);
+    const input = paragraphInput(anchor, where, {
+      question: req.question,
+      selection: req.selection,
+      knownWords: this.deps.store.entries.map((e) => e.word),
+    });
+    await this.ask({
+      threadId,
+      anchor,
+      taskId: req.taskId,
+      input,
+      display: this.displayFor(req),
+      question: req.question,
+      selection: req.selection,
+    });
+    return threadId;
+  }
+
+  async retryParagraph(threadId: string, turnId: string): Promise<void> {
+    const question = this.dropFailedRound(this.get(threadId), turnId);
+    if (!question?.taskId) return;
+    await this.askParagraph({ threadId }, { taskId: question.taskId, question: question.question, selection: question.selection });
+  }
+
+  // 文章改名 (規劃書 06 §4.6): paragraph anchors follow the note; a folder
+  // rename moves every note under it. Returns how many threads moved.
+  async renameParagraphPath(oldPath: string, newPath: string): Promise<number> {
+    await this.ensureLoaded();
+    let moved = 0;
+    for (const th of this.paragraphThreads()) {
+      const a = th.anchor as ParagraphAnchor;
+      let next: string | null = null;
+      if (a.path === oldPath) next = newPath;
+      else if (a.path.startsWith(`${oldPath}/`)) next = newPath + a.path.slice(oldPath.length);
+      if (next === null) continue;
+      th.anchor = { ...a, path: next };
+      this.changed(th);
+      moved++;
+    }
+    return moved;
+  }
+
+  // 重新綁定: points a discussion (typically an orphaned one) at another
+  // section, anchoring it the way a first question would. The turns stay.
+  async rebindParagraph(threadId: string, ref: SectionRef): Promise<boolean> {
+    await this.ensureLoaded();
+    const thread = this.get(threadId);
+    if (!thread || thread.anchor.kind !== "paragraph" || this.isBusy(threadId)) return false;
+    thread.anchor = await this.requireAnchors().create(ref);
+    this.changed(thread);
+    return true;
+  }
+
+  // 刪除: tombstones the whole thread (kept on disk so a merge with another
+  // device's copy can't bring it back). Note deletion itself never calls
+  // this — orphaned discussions stay until the user decides (§4.6).
+  async deleteThread(threadId: string): Promise<void> {
+    await this.ensureLoaded();
+    const thread = this.get(threadId);
+    if (!thread) return;
+    if (this.isBusy(threadId)) this.stop(threadId);
+    thread.deletedAt = this.nowIso();
+    this.changed(thread);
+  }
+
+  private requireAnchors(): NonNullable<ThreadServiceDeps["anchors"]> {
+    if (!this.deps.anchors) throw new Error("ThreadService: paragraph anchors are not configured");
+    return this.deps.anchors;
   }
 
   // 釘選到文法提示: appends the answer (minus its 「你問的是」 line) to the

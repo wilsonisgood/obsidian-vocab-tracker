@@ -1,16 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { VocabEntry } from "../../../src/core/model/entry";
-import { defaultLearnerProfile } from "../../../src/core/model/settings";
 import type { Thread } from "../../../src/core/model/thread";
 import type { NoteReaderPort } from "../../../src/core/ports";
 import { VocabStore } from "../../../src/core/store/VocabStore";
-import type { AiRunResult, RunOptions } from "../../../src/services/ai/AiService";
+import type { AiRunResult } from "../../../src/services/ai/AiService";
 import { AiError } from "../../../src/services/ai/errors";
-import type { AiRequest } from "../../../src/services/ai/providers/types";
-import { defaultTaskRegistry } from "../../../src/services/ai/tasks/registry";
-import { historyOf, THREADS_SHARD, ThreadService, type ThreadAi } from "../../../src/services/threads/ThreadService";
+import { historyOf, THREADS_SHARD, ThreadService } from "../../../src/services/threads/ThreadService";
 import { addPin, pinText, removePin } from "../../../src/services/threads/pin";
 import { MemoryStorage } from "../ai/fakes";
+import { FakeAi, result, type Script } from "./fakes";
 
 const NOTE = "# Speech\n\nLast time I was in a stadium this size, I was wearing a ==glittery== leotard.\n\nThe end.";
 
@@ -31,45 +29,6 @@ function entry(): VocabEntry {
     added: "",
     lastReviewed: "",
     reviews: 0,
-  };
-}
-
-type Script = (req: AiRequest, opt: RunOptions) => Promise<AiRunResult>;
-
-// Real task registry and prompt building, scripted completions.
-class FakeAi implements ThreadAi {
-  tasks = defaultTaskRegistry();
-  requests: AiRequest[] = [];
-  cancelled: string[] = [];
-  private controllers = new Map<string, AbortController>();
-  constructor(public script: Script) {}
-
-  prepare: ThreadAi["prepare"] = (task, input, history = []) => {
-    const t = typeof task === "string" ? this.tasks.get(task) : task;
-    if (!t) throw new Error("unknown task");
-    return { task: t, request: t.build(input, { profile: defaultLearnerProfile(), history }) };
-  };
-
-  complete: ThreadAi["complete"] = (req, opt = {}) => {
-    this.requests.push(req);
-    return this.script(req, opt);
-  };
-
-  cancel(threadId: string): void {
-    this.cancelled.push(threadId);
-    this.controllers.get(threadId)?.abort();
-  }
-}
-
-function result(text: string, extra: Partial<AiRunResult> = {}): AiRunResult {
-  return {
-    text,
-    usage: { input: 10, output: 5, cacheRead: 0, cacheWrite: 0 },
-    model: "claude-sonnet-5",
-    stop: "end",
-    transport: "fetch",
-    provider: "anthropic",
-    ...extra,
   };
 }
 
