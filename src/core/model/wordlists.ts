@@ -8,6 +8,11 @@ export interface WordlistTagSettings {
 }
 
 export interface WordlistSettings {
+  // Per-section sync stamp (see SectionStamp in ./settings). Deliberately
+  // not copied by resolveWordlistSettings: main.ts compares resolved
+  // settings as JSON to decide whether lists need reloading, and a
+  // stamp-only change must not trigger that.
+  updatedAt?: string;
   // Vault folder holding one list file per tag.
   folder: string;
   // Master switch for reading-view underlines (the sidebar stats still run).

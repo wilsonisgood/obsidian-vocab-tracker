@@ -6,6 +6,14 @@ import type { WordlistSettings } from "./wordlists";
 // the defaults below at read time, so adding a field later never needs a
 // migration — old data simply picks up the new default.
 
+// Each settings section carries its own stamp so two devices editing
+// different sections (Mac: flashcards, iPhone: AI) both survive a sync —
+// core/store/merge.ts picks the newer copy section by section. Written only
+// by VocabStore.updateSettings (via stampChangedSections below).
+export interface SectionStamp {
+  updatedAt?: string;
+}
+
 export type ProviderId = "anthropic" | "openai-compatible";
 
 export interface ProviderSettings {
@@ -17,7 +25,7 @@ export interface ProviderSettings {
   fastModel: string;
 }
 
-export interface AiSettings {
+export interface AiSettings extends SectionStamp {
   // Master switch; AI stays off until the user opts in (規劃書 06 §12).
   enabled: boolean;
   provider: ProviderId;
@@ -38,7 +46,7 @@ export type AnswerLanguage = (typeof ANSWER_LANGUAGES)[number];
 
 // Who the learner is — rendered into a system block on every AI request
 // (services/ai/context/profile.ts) so answers match their level and goal.
-export interface LearnerProfile {
+export interface LearnerProfile extends SectionStamp {
   level: CefrLevel | "";
   goal: LearnerGoal;
   answerLanguage: AnswerLanguage;
@@ -50,26 +58,84 @@ export interface LearnerProfile {
 
 export type UiLocaleSetting = "auto" | "en" | "zh-TW";
 
+export interface UiSettings extends SectionStamp {
+  locale: UiLocaleSetting;
+}
+
 export interface PluginSettings {
   schemaVersion: 2;
-  // Lets core/store/merge.ts pick the newer settings object when two
-  // devices both changed settings, instead of always keeping the local one.
+  // Set to the same stamp as the section(s) an edit changed; never newer
+  // than the newest section stamp when this version wrote it. merge.ts goes
+  // by the per-section stamps and uses this one to spot copies edited by an
+  // older plugin version (top-level newer than every section — see
+  // legacyStamp below), to break ties, and to pick whose top-level/unknown
+  // keys to keep.
   updatedAt?: string;
-  ui?: { locale: UiLocaleSetting };
+  ui?: UiSettings;
   ai?: AiSettings;
   learner?: LearnerProfile;
   // Read through resolveSrsSettings() (core/model/srs.ts), which fills in
   // DEFAULT_SRS_SETTINGS for anything missing.
-  srs?: Partial<SrsSettings>;
+  srs?: Partial<SrsSettings> & SectionStamp;
   // Read through resolveWordlistSettings() (core/model/wordlists.ts).
   wordlists?: Partial<WordlistSettings>;
 }
 
+// The sections merged independently, each with its own updatedAt.
+export const SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists"] as const;
+export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
+
 export type ResolvedSettings = PluginSettings & {
-  ui: { locale: UiLocaleSetting };
+  ui: UiSettings;
   ai: AiSettings;
   learner: LearnerProfile;
 };
+
+// Epoch ms of a stamp; missing or unparseable stamps count as oldest (0).
+export function stampMs(iso: unknown): number {
+  if (typeof iso !== "string" || !iso) return 0;
+  const ms = new Date(iso).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
+// Older plugin versions (still around while devices update one by one via
+// BRAT) edit sections without stamping them — or drop the stamp when they
+// rebuild a section — yet still bump the top-level updatedAt. This version
+// only ever bumps it together with a section stamp of the same value, so a
+// top-level stamp newer than every section stamp means an old version
+// changed this copy at that time, in some section we can't pinpoint.
+// Every object-valued key counts as a section here, so one added by a newer
+// plugin version is included too.
+export function legacyStamp(s: PluginSettings): { ms: number; iso: string } | null {
+  const ms = stampMs(s.updatedAt);
+  let newest = 0;
+  for (const v of Object.values(s)) {
+    if (v && typeof v === "object") newest = Math.max(newest, stampMs((v as SectionStamp).updatedAt));
+  }
+  return ms > newest ? { ms, iso: s.updatedAt as string } : null;
+}
+
+// Called by VocabStore.updateSettings before an edit. Once this version
+// bumps the top-level stamp, legacyStamp can no longer see an old version's
+// edit — so first hand that time down to every section older than it,
+// which is exactly the time merge.ts would have given those sections
+// (pickSection raises each one to the old-version edit time). Merge
+// outcomes are therefore the same before and after the carry.
+//
+// Sections that aren't there have nothing to carry (a later edit that
+// creates one stamps it as changed). Sections only filled in by
+// withSettingsDefaults (ui/ai/learner) do get the stamp: merge.ts already
+// treats them like any other section of that copy, and the old version
+// persisted them the same way, so there's no telling them apart from
+// sections the user really set.
+export function carryLegacyStamp(s: PluginSettings): void {
+  const legacy = legacyStamp(s);
+  if (!legacy) return;
+  for (const key of SETTINGS_SECTIONS) {
+    const section = s[key] as SectionStamp | undefined;
+    if (section && typeof section === "object" && stampMs(section.updatedAt) < legacy.ms) section.updatedAt = legacy.iso;
+  }
+}
 
 // Model IDs verified against the Claude API model table (2026-06):
 // Sonnet for answers that need judgement, Haiku for cheap/fast ones.
@@ -120,4 +186,54 @@ export function withSettingsDefaults(raw: PluginSettings | undefined): ResolvedS
     ai: { ...aiDefaults, ...ai, providers: { ...(ai.providers ?? {}), ...providers } },
     learner: { ...defaultLearnerProfile(), ...(base.learner ?? {}) },
   };
+}
+
+// Key-order-independent JSON of a section, ignoring its own stamp — so a
+// section rebuilt with the same values (e.g. `s.srs = { ...resolved, ...patch }`)
+// doesn't count as changed just because its keys came out in another order.
+// Also what merge.ts compares to tell whether two copies really differ.
+export function sectionFingerprint(section: unknown): string {
+  if (!section || typeof section !== "object") return String(section);
+  return JSON.stringify({ ...section, updatedAt: undefined }, (_key, v: unknown) =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? Object.fromEntries(
+          Object.keys(v)
+            .sort()
+            .map((k) => [k, (v as Record<string, unknown>)[k]])
+        )
+      : v
+  );
+}
+
+export type SettingsSnapshot = Record<SettingsSection, { fingerprint: string; updatedAt?: string }>;
+
+// Taken before an edit; pass to stampChangedSections afterwards.
+export function snapshotSettingsSections(s: PluginSettings): SettingsSnapshot {
+  const out = {} as SettingsSnapshot;
+  for (const key of SETTINGS_SECTIONS) {
+    const section = s[key] as SectionStamp | undefined;
+    out[key] = { fingerprint: sectionFingerprint(section), updatedAt: section?.updatedAt };
+  }
+  return out;
+}
+
+// Stamps only the sections whose content differs from `before`, and
+// returns them. A section whose content didn't change but whose object was
+// replaced (losing its stamp, e.g. rebuilt through resolveSrsSettings) gets
+// its old stamp back, so a no-op edit can't make it look newer or older.
+export function stampChangedSections(s: PluginSettings, before: SettingsSnapshot, stamp: string): SettingsSection[] {
+  const changed: SettingsSection[] = [];
+  for (const key of SETTINGS_SECTIONS) {
+    const section = s[key] as SectionStamp | undefined;
+    if (!section || typeof section !== "object") continue;
+    if (sectionFingerprint(section) !== before[key].fingerprint) {
+      section.updatedAt = stamp;
+      changed.push(key);
+    } else if (before[key].updatedAt !== undefined) {
+      section.updatedAt = before[key].updatedAt;
+    } else {
+      delete section.updatedAt;
+    }
+  }
+  return changed;
 }

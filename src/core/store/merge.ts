@@ -1,15 +1,79 @@
 import type { VocabData, VocabEntry } from "../model/entry";
-import type { PluginSettings } from "../model/settings";
+import {
+  SETTINGS_SECTIONS,
+  legacyStamp,
+  sectionFingerprint,
+  stampMs,
+  type PluginSettings,
+  type SectionStamp,
+} from "../model/settings";
 
-// Settings are one record (not a collection), so they merge whole: the
-// object stamped more recently wins. Ties and unstamped objects keep the
-// local side — the pre-M3 behaviour, when settings held nothing editable.
-function pickNewerSettings(local?: PluginSettings, remote?: PluginSettings): PluginSettings {
+// Old-version edit time of a copy, if any (see legacyStamp).
+type Legacy = ReturnType<typeof legacyStamp>;
+
+// One section, compared as a whole (wordlists.tags included — no per-tag
+// merging):
+// - same content → keep the copy with the newer stamp;
+// - otherwise each copy's effective time is its own stamp (missing = oldest),
+//   raised to the old-version edit time when its side has one, and the newer
+//   wins. A copy that only won thanks to that raise keeps it as its own
+//   stamp, so the old version's edit stays newer after later merges;
+// - a missing section never beats a present one;
+// - equal effective times (e.g. both copies unstamped, with no old-version
+//   edit on either side) go to the side with the newer top-level stamp —
+//   the copy edited more recently, as under the old whole-object rule — and
+//   only then to the larger fingerprint, so both devices converge without
+//   the values themselves deciding whose settings survive.
+function pickSection(
+  local: unknown,
+  remote: unknown,
+  localLegacy: Legacy,
+  remoteLegacy: Legacy,
+  lTop: number,
+  rTop: number
+): unknown {
+  const lOwn = stampMs((local as SectionStamp | undefined)?.updatedAt);
+  const rOwn = stampMs((remote as SectionStamp | undefined)?.updatedAt);
+  const lf = sectionFingerprint(local);
+  const rf = sectionFingerprint(remote);
+  if (lf === rf) return rOwn > lOwn ? remote : local;
+
+  const effective = (section: unknown, own: number, legacy: Legacy) =>
+    section === undefined ? -1 : Math.max(own, legacy?.ms ?? 0);
+  const l = effective(local, lOwn, localLegacy);
+  const r = effective(remote, rOwn, remoteLegacy);
+  const remoteWins = l !== r ? r > l : lTop !== rTop ? rTop > lTop : rf > lf;
+  const [winner, eff, own, legacy] = remoteWins ? [remote, r, rOwn, remoteLegacy] : [local, l, lOwn, localLegacy];
+  return legacy && eff > own ? { ...(winner as object), updatedAt: legacy.iso } : winner;
+}
+
+// Everything outside the known sections, for breaking a top-level tie.
+function restFingerprint(s: PluginSettings): string {
+  const rest: Record<string, unknown> = { ...s };
+  for (const key of SETTINGS_SECTIONS) delete rest[key];
+  return sectionFingerprint(rest);
+}
+
+// Settings merge section by section (ui, ai, learner, srs, wordlists), so a
+// Mac editing flashcard settings and an iPhone editing AI settings both
+// survive. Everything outside those sections (schemaVersion, keys from a
+// newer plugin version) comes from whichever side has the newer top-level
+// updatedAt — which is also the merged updatedAt.
+function mergeSettings(local?: PluginSettings, remote?: PluginSettings): PluginSettings {
   if (!local) return remote ?? { schemaVersion: 2 };
   if (!remote) return local;
-  const l = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
-  const r = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
-  return r > l ? remote : local;
+  const l = stampMs(local.updatedAt);
+  const r = stampMs(remote.updatedAt);
+  const remoteNewer = l !== r ? r > l : restFingerprint(remote) > restFingerprint(local);
+  const out: Record<string, unknown> = { ...(remoteNewer ? remote : local) };
+  const localLegacy = legacyStamp(local);
+  const remoteLegacy = legacyStamp(remote);
+  for (const key of SETTINGS_SECTIONS) {
+    const picked = pickSection(local[key], remote[key], localLegacy, remoteLegacy, l, r);
+    if (picked === undefined) delete out[key];
+    else out[key] = picked;
+  }
+  return out as unknown as PluginSettings;
 }
 
 // Entries without updatedAt (shouldn't happen once everything goes through
@@ -46,7 +110,7 @@ export function merge(local: VocabData, remote: VocabData): VocabData {
 
   return {
     schemaVersion: 2,
-    settings: pickNewerSettings(local.settings, remote.settings),
+    settings: mergeSettings(local.settings, remote.settings),
     entries: order.map((id) => byId.get(id) as VocabEntry),
   };
 }
