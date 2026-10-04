@@ -123,19 +123,39 @@ var ObsidianHttp = class {
 
 // src/platform/ObsidianStorage.ts
 var import_obsidian2 = require("obsidian");
+var FILE_SHARDS = /* @__PURE__ */ new Set(["usage"]);
 var UNSUPPORTED_SHARD = (name) => new Error(`ObsidianStorage: shard "${name}" is not implemented yet`);
 var ObsidianStorage = class {
   constructor(plugin) {
     this.plugin = plugin;
   }
+  shardPath(name) {
+    const dir = this.plugin.manifest.dir;
+    if (!dir) throw new Error("ObsidianStorage: plugin manifest.dir is unavailable");
+    return (0, import_obsidian2.normalizePath)(`${dir}/store/${name}.json`);
+  }
   async readShard(name) {
     var _a;
-    if (name !== "data") throw UNSUPPORTED_SHARD(name);
-    return (_a = await this.plugin.loadData()) != null ? _a : null;
+    if (name === "data") return (_a = await this.plugin.loadData()) != null ? _a : null;
+    if (!FILE_SHARDS.has(name)) throw UNSUPPORTED_SHARD(name);
+    const adapter = this.plugin.app.vault.adapter;
+    const path = this.shardPath(name);
+    if (!await adapter.exists(path)) return null;
+    try {
+      return JSON.parse(await adapter.read(path));
+    } catch (e) {
+      console.error(`Vocab Tracker: couldn't parse ${path}`, e);
+      return null;
+    }
   }
   async writeShard(name, data) {
-    if (name !== "data") throw UNSUPPORTED_SHARD(name);
-    await this.plugin.saveData(data);
+    if (name === "data") return this.plugin.saveData(data);
+    if (!FILE_SHARDS.has(name)) throw UNSUPPORTED_SHARD(name);
+    const adapter = this.plugin.app.vault.adapter;
+    const path = this.shardPath(name);
+    const dir = path.slice(0, path.lastIndexOf("/"));
+    if (!await adapter.exists(dir)) await adapter.mkdir(dir);
+    await adapter.write(path, JSON.stringify(data));
   }
   async backup(name, data) {
     const dir = this.plugin.manifest.dir;
@@ -350,6 +370,51 @@ function nowIso() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
 
+// src/core/model/settings.ts
+var DEFAULT_ANTHROPIC_SMART_MODEL = "claude-sonnet-5";
+var DEFAULT_ANTHROPIC_FAST_MODEL = "claude-haiku-4-5";
+function defaultAiSettings() {
+  return {
+    enabled: false,
+    provider: "anthropic",
+    providers: {
+      anthropic: {
+        apiKey: "",
+        baseUrl: "https://api.anthropic.com",
+        smartModel: DEFAULT_ANTHROPIC_SMART_MODEL,
+        fastModel: DEFAULT_ANTHROPIC_FAST_MODEL
+      },
+      "openai-compatible": {
+        apiKey: "",
+        baseUrl: "http://localhost:11434/v1",
+        smartModel: "",
+        fastModel: ""
+      }
+    },
+    monthlyTokenBudget: 0
+  };
+}
+function defaultLearnerProfile() {
+  return { level: "", goal: "general", answerLanguage: "zh-TW", maxAnswerChars: 300, extra: "" };
+}
+function withSettingsDefaults(raw) {
+  var _a, _b, _c, _d, _e, _f;
+  const base = raw != null ? raw : { schemaVersion: 2 };
+  const aiDefaults = defaultAiSettings();
+  const ai = (_a = base.ai) != null ? _a : aiDefaults;
+  const providers = { ...aiDefaults.providers };
+  for (const id of Object.keys(providers)) {
+    providers[id] = { ...aiDefaults.providers[id], ...(_c = (_b = ai.providers) == null ? void 0 : _b[id]) != null ? _c : {} };
+  }
+  return {
+    ...base,
+    schemaVersion: 2,
+    ui: { locale: "auto", ...(_d = base.ui) != null ? _d : {} },
+    ai: { ...aiDefaults, ...ai, providers: { ...(_e = ai.providers) != null ? _e : {}, ...providers } },
+    learner: { ...defaultLearnerProfile(), ...(_f = base.learner) != null ? _f : {} }
+  };
+}
+
 // src/core/store/VocabStore.ts
 var WRITE_DEBOUNCE_MS = 500;
 var VocabStore = class {
@@ -362,6 +427,22 @@ var VocabStore = class {
   }
   get vocabData() {
     return this.data;
+  }
+  // Settings with every default filled in. Written back into this.data so
+  // later in-place edits (updateSettings) land on the persisted object;
+  // re-resolving after replace() (sync merge) picks up remote fields too.
+  get settings() {
+    const resolved = withSettingsDefaults(this.data.settings);
+    this.data.settings = resolved;
+    return resolved;
+  }
+  // The only way UI code should change settings: stamps updatedAt so
+  // merge.ts can tell which device's settings are newer.
+  updateSettings(mutate) {
+    const s = this.settings;
+    mutate(s);
+    s.updatedAt = nowIso();
+    return this.save();
   }
   // Live entries only — excludes soft-deleted (tombstoned) ones. UI code
   // should read this instead of vocabData.entries directly; the raw array
@@ -493,6 +574,13 @@ function cleanupTombstones(data, now = Date.now()) {
 }
 
 // src/core/store/merge.ts
+function pickNewerSettings(local, remote) {
+  if (!local) return remote != null ? remote : { schemaVersion: 2 };
+  if (!remote) return local;
+  const l = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
+  const r = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
+  return r > l ? remote : local;
+}
 function updatedAtMs(entry) {
   return entry.updatedAt ? new Date(entry.updatedAt).getTime() : 0;
 }
@@ -504,7 +592,6 @@ function pickNewer(a, b) {
   return ((_a = a.rev) != null ? _a : 0) >= ((_b = b.rev) != null ? _b : 0) ? a : b;
 }
 function merge(local, remote) {
-  var _a, _b;
   const byId = /* @__PURE__ */ new Map();
   const order = [];
   for (const entry of local.entries) {
@@ -518,7 +605,7 @@ function merge(local, remote) {
   }
   return {
     schemaVersion: 2,
-    settings: (_b = (_a = local.settings) != null ? _a : remote.settings) != null ? _b : { schemaVersion: 2 },
+    settings: pickNewerSettings(local.settings, remote.settings),
     entries: order.map((id) => byId.get(id))
   };
 }
@@ -581,7 +668,94 @@ var en = {
   "dashboard.empty": "No words yet. Highlight ==words== in your notes and click them to start tracking.",
   "dashboard.search": "Search words\u2026",
   "dashboard.stat.word": "\u{1F4DA} {count} word",
-  "dashboard.stat.words": "\u{1F4DA} {count} words"
+  "dashboard.stat.words": "\u{1F4DA} {count} words",
+  // ── M3: AI foundation + settings ──────────────────────────────────
+  "ai.provider.anthropic": "Claude (Anthropic)",
+  "ai.provider.openai": "OpenAI-compatible (OpenAI, Gemini, Ollama\u2026)",
+  "ai.task.paragraph.grammar": "Grammar",
+  "ai.task.paragraph.translate": "Translate",
+  "ai.task.paragraph.vocab": "New words",
+  "ai.task.paragraph.paraphrase": "Paraphrase",
+  "ai.task.word.usage": "Usage",
+  "ai.task.word.compare": "Compare",
+  "ai.task.word.sentence": "Sentences",
+  "ai.task.word.mnemonic": "Mnemonic",
+  "ai.error.disabled": "AI is turned off. Enable it in Settings \u203A Vocab Tracker.",
+  "ai.error.no_key": "No API key yet. Add one in Settings \u203A Vocab Tracker.",
+  "ai.error.auth": "The API key was rejected. Check it in Settings \u203A Vocab Tracker.",
+  "ai.error.rate_limit": "Too many requests right now. Wait a moment and retry.",
+  "ai.error.overloaded": "The AI service is busy. Retry in a moment.",
+  "ai.error.network": "Couldn't reach the AI service. Check the connection and retry.",
+  "ai.error.offline": "You're offline. Earlier discussions are still readable.",
+  "ai.error.cors": "The AI service blocked this request (CORS).",
+  "ai.error.refused": "The AI declined to answer this one.",
+  "ai.error.too_long": "This is too long for the model. Try a shorter selection.",
+  "ai.error.bad_request": "The AI service rejected the request \u2014 check the model name and base URL.",
+  "ai.error.bad_output": "The AI's answer couldn't be read. Retry.",
+  "ai.error.aborted": "Stopped.",
+  "ai.error.budget": "This month's token budget is used up. Raise it in Settings \u203A Vocab Tracker.",
+  "ai.action.retry": "Retry",
+  "ai.action.openSettings": "Open settings",
+  "ai.bubble.streaming": "Answering\u2026",
+  "ai.gate.noKey.title": "Set up AI to start discussing",
+  "ai.gate.noKey.body": "Add an API key in Settings \u203A Vocab Tracker. Claude works, and so do OpenAI-compatible services (OpenAI, Gemini, local Ollama).",
+  "ai.gate.disabled.title": "AI is turned off",
+  "ai.gate.disabled.body": "Turn on \u201CEnable AI\u201D in Settings \u203A Vocab Tracker to discuss words and paragraphs.",
+  "ai.gate.offline": "You're offline. Earlier discussions are readable; you can ask again once you're back online.",
+  "settings.section.general": "General",
+  "settings.general.locale.name": "Interface language",
+  "settings.general.locale.desc": "Language of the plugin's buttons and messages. AI answers follow the learner profile below.",
+  "settings.general.locale.auto": "Follow Obsidian",
+  "settings.section.ai": "AI",
+  "settings.ai.enabled.name": "Enable AI",
+  "settings.ai.enabled.desc": "Off by default. Nothing is sent anywhere until this is on.",
+  "settings.ai.provider.name": "Provider",
+  "settings.ai.provider.desc": "Where questions are sent.",
+  "settings.ai.key.name": "API key",
+  "settings.ai.key.descSecret": "Stored in Obsidian's secret storage on this device \u2014 not in data.json.",
+  "settings.ai.key.descData": "Stored in this plugin's data.json, which syncs with your vault. Use a dedicated key with a spending limit.",
+  "settings.ai.key.optional": "Optional for local servers such as Ollama.",
+  "settings.ai.baseUrl.name": "Base URL",
+  "settings.ai.baseUrl.desc": "Endpoint that serves /chat/completions.",
+  "settings.ai.smartModel.name": "Model for explanations",
+  "settings.ai.smartModel.desc": "Used for grammar, comparisons and free-form questions.",
+  "settings.ai.fastModel.name": "Model for quick tasks",
+  "settings.ai.fastModel.desc": "Used for translation, word lists, sentences and mnemonics.",
+  "settings.ai.model.placeholder": "model name",
+  "settings.ai.test.name": "Test connection",
+  "settings.ai.test.desc": "Sends a tiny request to each configured model.",
+  "settings.ai.test.button": "Test connection",
+  "settings.ai.test.running": "Testing\u2026",
+  "settings.ai.test.ok": "Connected: {models} ({transport}, {ms} ms)",
+  "settings.ai.test.fetch": "streaming",
+  "settings.ai.test.requestUrl": "compatibility mode, no streaming",
+  "settings.ai.test.noModel": "Fill in the model names first.",
+  "settings.ai.budget.name": "Monthly token budget",
+  "settings.ai.budget.desc": "Requests stop once this month's usage reaches it (cache reads count 1/10). 0 = no limit.",
+  "settings.ai.usage.name": "Usage",
+  "settings.ai.usage.value": "This month {month} tokens \xB7 today {today}",
+  "settings.ai.usage.detail": "Input {input} \xB7 output {output} \xB7 cache read {cacheRead} \xB7 cache write {cacheWrite} \xB7 {requests} requests",
+  "settings.ai.privacy": "When you ask, the paragraph (or the whole note, for paragraph discussions), the word's details and your question are sent to the provider above.",
+  "settings.section.learner": "Learner profile",
+  "settings.learner.desc": "Added to every AI request so answers fit your level.",
+  "settings.learner.level.name": "Level (CEFR)",
+  "settings.learner.level.none": "Not set",
+  "settings.learner.goal.name": "Goal",
+  "settings.learner.goal.general": "General reading",
+  "settings.learner.goal.toefl": "TOEFL",
+  "settings.learner.goal.toeic": "TOEIC",
+  "settings.learner.goal.ielts": "IELTS",
+  "settings.learner.goal.gept": "GEPT",
+  "settings.learner.goal.school": "School exams",
+  "settings.learner.language.name": "Answer language",
+  "settings.learner.language.zh-TW": "Traditional Chinese",
+  "settings.learner.language.en": "English",
+  "settings.learner.language.bilingual": "Chinese + English",
+  "settings.learner.maxChars.name": "Answer length",
+  "settings.learner.maxChars.desc": "Rough upper limit in characters. 0 = no limit.",
+  "settings.learner.extra.name": "Anything else",
+  "settings.learner.extra.desc": "Free text added to every request, e.g. \u201CI'm an engineer; examples from tech are welcome.\u201D",
+  "settings.learner.preview.name": "What the AI sees"
 };
 
 // src/core/i18n/zh-TW.ts
@@ -617,7 +791,94 @@ var zhTW = {
   "dashboard.empty": "\u9084\u6C92\u6709\u55AE\u5B57\u3002\u5728\u7B46\u8A18\u4E2D\u7528 ==\u55AE\u5B57== \u6A19\u8A18\u4E26\u9EDE\u64CA\u5373\u53EF\u958B\u59CB\u8FFD\u8E64\u3002",
   "dashboard.search": "\u641C\u5C0B\u55AE\u5B57\u2026",
   "dashboard.stat.word": "\u{1F4DA} {count} \u500B\u55AE\u5B57",
-  "dashboard.stat.words": "\u{1F4DA} {count} \u500B\u55AE\u5B57"
+  "dashboard.stat.words": "\u{1F4DA} {count} \u500B\u55AE\u5B57",
+  // ── M3: AI foundation + settings ──────────────────────────────────
+  "ai.provider.anthropic": "Claude\uFF08Anthropic\uFF09",
+  "ai.provider.openai": "OpenAI \u76F8\u5BB9\uFF08OpenAI\u3001Gemini\u3001Ollama\u2026\uFF09",
+  "ai.task.paragraph.grammar": "\u6587\u6CD5",
+  "ai.task.paragraph.translate": "\u7FFB\u8B6F",
+  "ai.task.paragraph.vocab": "\u751F\u5B57",
+  "ai.task.paragraph.paraphrase": "\u63DB\u53E5\u8A71\u8AAA",
+  "ai.task.word.usage": "\u7528\u6CD5",
+  "ai.task.word.compare": "\u6BD4\u8F03",
+  "ai.task.word.sentence": "\u9020\u53E5",
+  "ai.task.word.mnemonic": "\u8A18\u61B6\u6CD5",
+  "ai.error.disabled": "AI \u76EE\u524D\u95DC\u9589\u3002\u5230\u300C\u8A2D\u5B9A \u203A Vocab Tracker\u300D\u958B\u555F\u3002",
+  "ai.error.no_key": "\u9084\u6C92\u6709 API key\u3002\u5230\u300C\u8A2D\u5B9A \u203A Vocab Tracker\u300D\u586B\u5165\u3002",
+  "ai.error.auth": "API key \u7121\u6548\u6216\u6C92\u6709\u6B0A\u9650\uFF0C\u8ACB\u5230\u300C\u8A2D\u5B9A \u203A Vocab Tracker\u300D\u6AA2\u67E5\u3002",
+  "ai.error.rate_limit": "\u8ACB\u6C42\u592A\u983B\u7E41\uFF0C\u7A0D\u7B49\u4E00\u4E0B\u518D\u91CD\u8A66\u3002",
+  "ai.error.overloaded": "AI \u670D\u52D9\u5FD9\u788C\u4E2D\uFF0C\u7A0D\u5F8C\u518D\u91CD\u8A66\u3002",
+  "ai.error.network": "\u9023\u4E0D\u5230 AI \u670D\u52D9\uFF0C\u8ACB\u6AA2\u67E5\u7DB2\u8DEF\u5F8C\u91CD\u8A66\u3002",
+  "ai.error.offline": "\u76EE\u524D\u96E2\u7DDA\u3002\u4E4B\u524D\u7684\u8A0E\u8AD6\u53EF\u4EE5\u770B\uFF0C\u9023\u7DDA\u5F8C\u624D\u80FD\u7E7C\u7E8C\u554F\u3002",
+  "ai.error.cors": "AI \u670D\u52D9\u64CB\u4E0B\u4E86\u9019\u500B\u8ACB\u6C42\uFF08CORS\uFF09\u3002",
+  "ai.error.refused": "AI \u62D2\u7D55\u56DE\u7B54\u9019\u4E00\u984C\u3002",
+  "ai.error.too_long": "\u5167\u5BB9\u592A\u9577\uFF0C\u8D85\u904E\u6A21\u578B\u4E0A\u9650\u3002\u8A66\u8457\u9078\u77ED\u4E00\u9EDE\u7684\u7BC4\u570D\u3002",
+  "ai.error.bad_request": "AI \u670D\u52D9\u62D2\u7D55\u4E86\u8ACB\u6C42\uFF0C\u8ACB\u6AA2\u67E5\u6A21\u578B\u540D\u7A31\u8207 Base URL\u3002",
+  "ai.error.bad_output": "AI \u7684\u56DE\u7B54\u683C\u5F0F\u4E0D\u5C0D\uFF0C\u8ACB\u91CD\u8A66\u3002",
+  "ai.error.aborted": "\u5DF2\u505C\u6B62\u3002",
+  "ai.error.budget": "\u672C\u6708 token \u984D\u5EA6\u5DF2\u7528\u5B8C\uFF0C\u53EF\u5230\u300C\u8A2D\u5B9A \u203A Vocab Tracker\u300D\u8ABF\u6574\u3002",
+  "ai.action.retry": "\u91CD\u8A66",
+  "ai.action.openSettings": "\u958B\u555F\u8A2D\u5B9A",
+  "ai.bubble.streaming": "\u56DE\u7B54\u4E2D\u2026",
+  "ai.gate.noKey.title": "\u8A2D\u5B9A AI \u5F8C\u624D\u80FD\u8A0E\u8AD6",
+  "ai.gate.noKey.body": "\u5728\u300C\u8A2D\u5B9A \u203A Vocab Tracker\u300D\u586B\u5165 API key\uFF0C\u53EF\u4EE5\u7528 Claude\uFF0C\u4E5F\u53EF\u4EE5\u7528 OpenAI \u76F8\u5BB9\u7684\u670D\u52D9\uFF08OpenAI\u3001Gemini\u3001\u672C\u6A5F Ollama\uFF09\u3002",
+  "ai.gate.disabled.title": "AI \u76EE\u524D\u95DC\u9589",
+  "ai.gate.disabled.body": "\u5728\u300C\u8A2D\u5B9A \u203A Vocab Tracker\u300D\u6253\u958B\u300C\u555F\u7528 AI\u300D\uFF0C\u5C31\u80FD\u8A0E\u8AD6\u55AE\u5B57\u548C\u6BB5\u843D\u3002",
+  "ai.gate.offline": "\u76EE\u524D\u96E2\u7DDA\u3002\u4E4B\u524D\u7684\u8A0E\u8AD6\u53EF\u4EE5\u770B\uFF0C\u9023\u7DDA\u5F8C\u624D\u80FD\u7E7C\u7E8C\u554F\u3002",
+  "settings.section.general": "\u4E00\u822C",
+  "settings.general.locale.name": "\u4ECB\u9762\u8A9E\u8A00",
+  "settings.general.locale.desc": "\u63D2\u4EF6\u6309\u9215\u8207\u8A0A\u606F\u7684\u8A9E\u8A00\u3002AI \u56DE\u7B54\u7684\u8A9E\u8A00\u8ACB\u770B\u4E0B\u65B9\u300C\u5B78\u7FD2\u8005\u8A2D\u5B9A\u300D\u3002",
+  "settings.general.locale.auto": "\u8DDF\u96A8 Obsidian",
+  "settings.section.ai": "AI",
+  "settings.ai.enabled.name": "\u555F\u7528 AI",
+  "settings.ai.enabled.desc": "\u9810\u8A2D\u95DC\u9589\u3002\u6253\u958B\u4E4B\u524D\uFF0C\u4E0D\u6703\u628A\u4EFB\u4F55\u5167\u5BB9\u9001\u51FA\u53BB\u3002",
+  "settings.ai.provider.name": "\u670D\u52D9",
+  "settings.ai.provider.desc": "\u554F\u984C\u8981\u9001\u5230\u54EA\u88E1\u3002",
+  "settings.ai.key.name": "API key",
+  "settings.ai.key.descSecret": "\u5B58\u5728\u9019\u53F0\u88DD\u7F6E\u7684 Obsidian \u6A5F\u5BC6\u5132\u5B58\uFF0C\u4E0D\u6703\u5BEB\u9032 data.json\u3002",
+  "settings.ai.key.descData": "\u5B58\u5728\u63D2\u4EF6\u7684 data.json\uFF0C\u6703\u8DDF\u8457 vault \u540C\u6B65\u3002\u5EFA\u8B70\u53E6\u958B\u4E00\u628A\u5C08\u7528 key \u4E26\u8A2D\u5B9A\u7528\u91CF\u4E0A\u9650\u3002",
+  "settings.ai.key.optional": "\u672C\u6A5F\u670D\u52D9\uFF08\u4F8B\u5982 Ollama\uFF09\u53EF\u4EE5\u4E0D\u586B\u3002",
+  "settings.ai.baseUrl.name": "Base URL",
+  "settings.ai.baseUrl.desc": "\u63D0\u4F9B /chat/completions \u7684\u7AEF\u9EDE\u3002",
+  "settings.ai.smartModel.name": "\u89E3\u8AAA\u7528\u6A21\u578B",
+  "settings.ai.smartModel.desc": "\u7528\u5728\u6587\u6CD5\u3001\u6BD4\u8F03\u3001\u81EA\u7531\u63D0\u554F\u3002",
+  "settings.ai.fastModel.name": "\u5FEB\u901F\u4EFB\u52D9\u6A21\u578B",
+  "settings.ai.fastModel.desc": "\u7528\u5728\u7FFB\u8B6F\u3001\u751F\u5B57\u3001\u9020\u53E5\u3001\u8A18\u61B6\u6CD5\u3002",
+  "settings.ai.model.placeholder": "\u6A21\u578B\u540D\u7A31",
+  "settings.ai.test.name": "\u6E2C\u8A66\u9023\u7DDA",
+  "settings.ai.test.desc": "\u5C0D\u6BCF\u500B\u8A2D\u5B9A\u7684\u6A21\u578B\u9001\u4E00\u500B\u5F88\u5C0F\u7684\u8ACB\u6C42\u3002",
+  "settings.ai.test.button": "\u6E2C\u8A66\u9023\u7DDA",
+  "settings.ai.test.running": "\u6E2C\u8A66\u4E2D\u2026",
+  "settings.ai.test.ok": "\u9023\u7DDA\u6210\u529F\uFF1A{models}\uFF08{transport}\uFF0C{ms} ms\uFF09",
+  "settings.ai.test.fetch": "\u4E32\u6D41",
+  "settings.ai.test.requestUrl": "\u76F8\u5BB9\u6A21\u5F0F\uFF0C\u4E0D\u4E32\u6D41",
+  "settings.ai.test.noModel": "\u8ACB\u5148\u586B\u6A21\u578B\u540D\u7A31\u3002",
+  "settings.ai.budget.name": "\u6BCF\u6708 token \u4E0A\u9650",
+  "settings.ai.budget.desc": "\u672C\u6708\u7528\u91CF\u5230\u9054\u4E0A\u9650\u5C31\u505C\u6B62\u9001\u51FA\uFF08\u5FEB\u53D6\u8B80\u53D6\u4EE5 1/10 \u8A08\uFF09\u30020 = \u4E0D\u9650\u3002",
+  "settings.ai.usage.name": "\u7528\u91CF",
+  "settings.ai.usage.value": "\u672C\u6708 {month} tokens \xB7 \u4ECA\u5929 {today}",
+  "settings.ai.usage.detail": "\u8F38\u5165 {input} \xB7 \u8F38\u51FA {output} \xB7 \u5FEB\u53D6\u8B80 {cacheRead} \xB7 \u5FEB\u53D6\u5BEB {cacheWrite} \xB7 \u5171 {requests} \u6B21",
+  "settings.ai.privacy": "\u63D0\u554F\u6642\uFF0C\u6703\u628A\u6BB5\u843D\uFF08\u6BB5\u843D\u8A0E\u8AD6\u6703\u9644\u4E0A\u6574\u7BC7\u7B46\u8A18\uFF09\u3001\u55AE\u5B57\u8CC7\u6599\u548C\u4F60\u7684\u554F\u984C\u9001\u5230\u4E0A\u9762\u9078\u7684\u670D\u52D9\u3002",
+  "settings.section.learner": "\u5B78\u7FD2\u8005\u8A2D\u5B9A",
+  "settings.learner.desc": "\u6703\u9644\u5728\u6BCF\u4E00\u6B21 AI \u8ACB\u6C42\u88E1\uFF0C\u8B93\u56DE\u7B54\u7B26\u5408\u4F60\u7684\u7A0B\u5EA6\u3002",
+  "settings.learner.level.name": "\u7A0B\u5EA6\uFF08CEFR\uFF09",
+  "settings.learner.level.none": "\u672A\u8A2D\u5B9A",
+  "settings.learner.goal.name": "\u76EE\u6A19",
+  "settings.learner.goal.general": "\u4E00\u822C\u95B1\u8B80",
+  "settings.learner.goal.toefl": "\u6258\u798F",
+  "settings.learner.goal.toeic": "\u591A\u76CA",
+  "settings.learner.goal.ielts": "\u96C5\u601D",
+  "settings.learner.goal.gept": "\u5168\u6C11\u82F1\u6AA2",
+  "settings.learner.goal.school": "\u5B78\u6821\u8003\u8A66",
+  "settings.learner.language.name": "\u56DE\u7B54\u8A9E\u8A00",
+  "settings.learner.language.zh-TW": "\u7E41\u9AD4\u4E2D\u6587",
+  "settings.learner.language.en": "\u82F1\u6587",
+  "settings.learner.language.bilingual": "\u4E2D\u82F1\u5C0D\u7167",
+  "settings.learner.maxChars.name": "\u56DE\u7B54\u9577\u5EA6",
+  "settings.learner.maxChars.desc": "\u5927\u7D04\u7684\u5B57\u6578\u4E0A\u9650\u30020 = \u4E0D\u9650\u3002",
+  "settings.learner.extra.name": "\u5176\u4ED6\u88DC\u5145",
+  "settings.learner.extra.desc": "\u6703\u539F\u5C01\u4E0D\u52D5\u9644\u5728\u6BCF\u6B21\u8ACB\u6C42\u88E1\uFF0C\u4F8B\u5982\u300C\u6211\u662F\u5DE5\u7A0B\u5E2B\uFF0C\u4F8B\u53E5\u53EF\u4EE5\u7528\u79D1\u6280\u60C5\u5883\u300D\u3002",
+  "settings.learner.preview.name": "AI \u6703\u770B\u5230"
 };
 
 // src/core/i18n/index.ts
