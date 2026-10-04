@@ -19,7 +19,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "row.showMore": "顯示更多",
   "row.showLess": "顯示較少",
   "row.fetch": "抓取字典資料（定義、同義詞、音標）",
-  "row.markReviewed": "標記為已複習",
+  "row.markReviewed": "標記為已複習（評為「記得」）",
   "row.meta.added": "加入時間：{date}",
   "row.meta.reviewed": "複習時間：{date}（{count} 次）",
   "row.field.synonyms": "同義詞",
@@ -41,7 +41,6 @@ export const zhTW: Record<keyof typeof en, string> = {
   "dashboard.startReview.none": "單字卡 · 目前沒有到期",
   "row.nextReview": "下次複習：{date}",
   "row.due.today": "今天",
-  "row.due.new": "新字",
 
   "srs.interval.m": "{n} 分鐘",
   "srs.interval.h": "{n} 小時",

@@ -1,12 +1,19 @@
 import { setIcon } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
-import { nowStamp } from "../../core/nowStamp";
+import { Rating } from "../../core/model/srs";
+import { dueLabel } from "../../core/text/dueLabel";
 import { t } from "../../core/i18n";
 
 // Progressive-disclosure state for a single row: collapsed (one line),
 // half (synonyms-and-up visible), full (everything visible).
 export type ExpandState = "collapsed" | "half" | "full";
+
+export interface RowOptions {
+  // Next-review date chip in the header (dashboard, 設計稿 L1). Off in the
+  // narrow sidebar, where the header is already crowded.
+  showDue?: boolean;
+}
 
 type EditableField = "synonyms" | "definition" | "definitionZh" | "antonyms" | "example" | "grammar" | "level";
 
@@ -31,9 +38,11 @@ export function renderVocabRow(
   entry: VocabEntry,
   state: ExpandState,
   setState: (s: ExpandState) => void,
-  refresh: () => void
+  refresh: () => void,
+  opts: RowOptions = {}
 ) {
   const row = container.createEl("div", { cls: "vocab-tracker-row" });
+  const due = plugin.srs.nextDue(entry);
   row.toggleClass("is-expanded", state !== "collapsed");
 
   // ── Header: always visible ───────────────────────────────────
@@ -55,6 +64,17 @@ export function renderVocabRow(
   }
 
   head.createEl("span", { cls: "vocab-tracker-row-spacer" });
+
+  // Never-reviewed words get no chip: on an existing vault that's every
+  // word, and a column of "new" labels says nothing.
+  if (opts.showDue && due) {
+    const label = dueLabel(due, new Date());
+    const chip = head.createEl("span", { cls: "vt-row-due" });
+    chip.toggleClass("is-today", label.kind === "today");
+    setIcon(chip.createSpan({ cls: "vt-row-due-icon" }), "calendar");
+    chip.createSpan({ text: label.kind === "today" ? t("row.due.today") : label.text });
+    chip.title = t("row.nextReview", { date: due.toLocaleString() });
+  }
 
   const arrow = head.createEl("span", { cls: "vocab-tracker-row-arrow" });
   setIcon(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
@@ -155,6 +175,12 @@ export function renderVocabRow(
       text: t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }),
       cls: "vocab-tracker-meta",
     });
+    if (due) {
+      body.createEl("div", {
+        text: t("row.nextReview", { date: due.toLocaleString() }),
+        cls: "vocab-tracker-meta",
+      });
+    }
 
     // Level — last, right below the Added/Reviewed lines. Comma-separated
     // free-form tags (e.g. "多益中級, 托福高級"), same field style as everything else.
@@ -188,11 +214,12 @@ export function renderVocabRow(
   const reviewBtn = actions.createEl("span", { cls: "vocab-tracker-footer-icon" });
   setIcon(reviewBtn, "check");
   reviewBtn.title = t("row.markReviewed");
+  // "I know this one" from the list = a Good rating (規劃書 06 §7.1), so it
+  // reschedules the card instead of just bumping the legacy counters
+  // (SrsService.rate still updates lastReviewed/reviews too).
   reviewBtn.onclick = async (e) => {
     e.stopPropagation();
-    entry.lastReviewed = nowStamp();
-    entry.reviews += 1;
-    await plugin.store.touch(entry);
+    await plugin.srs.rate(entry, Rating.Good, "manual");
     refresh();
   };
 

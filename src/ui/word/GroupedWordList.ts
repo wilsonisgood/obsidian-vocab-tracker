@@ -1,7 +1,7 @@
 import { setIcon } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
-import type { ExpandState } from "./WordRow";
+import type { ExpandState, RowOptions } from "./WordRow";
 import { renderVocabRow } from "./WordRow";
 
 // ── Shared grouped list: dashboard + sidebar "All" tab both use this ──
@@ -15,7 +15,8 @@ export function renderGroupedVocabList(
   rows: VocabEntry[],
   collapsedGroups: Set<string>,
   expandState: Map<string, ExpandState>,
-  refresh: () => void
+  refresh: () => void,
+  rowOpts: RowOptions = {}
 ) {
   const groups = new Map<string, VocabEntry[]>();
   for (const entry of rows) {
@@ -53,7 +54,8 @@ export function renderGroupedVocabList(
         entry,
         state,
         (s) => expandState.set(entry.id, s),
-        refresh
+        refresh,
+        rowOpts
       );
     }
   }

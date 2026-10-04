@@ -242,6 +242,46 @@
   flex-wrap: wrap;
   margin-bottom: 14px;
 }
+.vt-dash-review {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 36px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+body.is-mobile .vt-dash-review {
+  min-height: 44px;
+}
+.vt-dash-review-icon {
+  display: inline-flex;
+}
+.vt-dash-review-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.vt-row-due {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  margin-right: 6px;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+}
+.vt-row-due.is-today {
+  color: var(--text-accent);
+}
+.vt-row-due-icon {
+  display: inline-flex;
+}
+.vt-row-due-icon svg {
+  width: 12px;
+  height: 12px;
+}
 .vocab-tracker-search-input {
   width: 100%;
   padding: 6px;

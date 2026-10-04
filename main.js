@@ -25,7 +25,7 @@ __export(main_exports, {
   default: () => VocabTrackerPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian8 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // src/core/text/wordRe.ts
 function escapeRe(s) {
@@ -564,6 +564,33 @@ var import_obsidian5 = require("obsidian");
 // src/ui/word/WordRow.ts
 var import_obsidian3 = require("obsidian");
 
+// src/core/model/srs.ts
+var SrsState = { New: 0, Learning: 1, Review: 2, Relearning: 3 };
+var Rating = { Again: 1, Hard: 2, Good: 3, Easy: 4 };
+var RATINGS = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy];
+var CARD_MODES = ["en-zh", "zh-en", "cloze", "listen"];
+var DEFAULT_SRS_SETTINGS = { retention: 0.9, dailyNew: 20 };
+function resolveSrsSettings(partial) {
+  const retention = Number(partial == null ? void 0 : partial.retention);
+  const dailyNew = Number(partial == null ? void 0 : partial.dailyNew);
+  return {
+    retention: Number.isFinite(retention) && retention > 0 ? Math.min(0.99, Math.max(0.7, retention)) : DEFAULT_SRS_SETTINGS.retention,
+    dailyNew: Number.isFinite(dailyNew) && dailyNew >= 0 ? Math.floor(dailyNew) : DEFAULT_SRS_SETTINGS.dailyNew
+  };
+}
+
+// src/core/text/dueLabel.ts
+function dueLabel(due, now) {
+  const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  if (due.getTime() < tomorrow.getTime()) return { kind: "today" };
+  const p = (n) => String(n).padStart(2, "0");
+  const md = `${p(due.getMonth() + 1)}/${p(due.getDate())}`;
+  return {
+    kind: "date",
+    text: due.getFullYear() === now.getFullYear() ? md : `${due.getFullYear()}/${md}`
+  };
+}
+
 // src/core/i18n/en.ts
 var en = {
   "sidebar.title": "Vocab Tracker",
@@ -583,7 +610,7 @@ var en = {
   "row.showMore": "Show more",
   "row.showLess": "Show less",
   "row.fetch": "Fetch dictionary data (definition, synonyms, phonetic)",
-  "row.markReviewed": "Mark as reviewed",
+  "row.markReviewed": "Mark as reviewed (rates Good)",
   "row.meta.added": "Added: {date}",
   "row.meta.reviewed": "Reviewed: {date} ({count}\xD7)",
   "row.field.synonyms": "Synonyms",
@@ -603,7 +630,6 @@ var en = {
   "dashboard.startReview.none": "Flashcards \xB7 nothing due",
   "row.nextReview": "Next review: {date}",
   "row.due.today": "Today",
-  "row.due.new": "New",
   "srs.interval.m": "{n} min",
   "srs.interval.h": "{n} h",
   "srs.interval.d": "{n} d",
@@ -667,7 +693,7 @@ var zhTW = {
   "row.showMore": "\u986F\u793A\u66F4\u591A",
   "row.showLess": "\u986F\u793A\u8F03\u5C11",
   "row.fetch": "\u6293\u53D6\u5B57\u5178\u8CC7\u6599\uFF08\u5B9A\u7FA9\u3001\u540C\u7FA9\u8A5E\u3001\u97F3\u6A19\uFF09",
-  "row.markReviewed": "\u6A19\u8A18\u70BA\u5DF2\u8907\u7FD2",
+  "row.markReviewed": "\u6A19\u8A18\u70BA\u5DF2\u8907\u7FD2\uFF08\u8A55\u70BA\u300C\u8A18\u5F97\u300D\uFF09",
   "row.meta.added": "\u52A0\u5165\u6642\u9593\uFF1A{date}",
   "row.meta.reviewed": "\u8907\u7FD2\u6642\u9593\uFF1A{date}\uFF08{count} \u6B21\uFF09",
   "row.field.synonyms": "\u540C\u7FA9\u8A5E",
@@ -687,7 +713,6 @@ var zhTW = {
   "dashboard.startReview.none": "\u55AE\u5B57\u5361 \xB7 \u76EE\u524D\u6C92\u6709\u5230\u671F",
   "row.nextReview": "\u4E0B\u6B21\u8907\u7FD2\uFF1A{date}",
   "row.due.today": "\u4ECA\u5929",
-  "row.due.new": "\u65B0\u5B57",
   "srs.interval.m": "{n} \u5206\u9418",
   "srs.interval.h": "{n} \u5C0F\u6642",
   "srs.interval.d": "{n} \u5929",
@@ -750,8 +775,9 @@ function autoGrowTextarea(el) {
   el.style.height = "auto";
   el.style.height = `${el.scrollHeight}px`;
 }
-function renderVocabRow(plugin, container, entry, state, setState, refresh) {
+function renderVocabRow(plugin, container, entry, state, setState, refresh, opts = {}) {
   const row = container.createEl("div", { cls: "vocab-tracker-row" });
+  const due = plugin.srs.nextDue(entry);
   row.toggleClass("is-expanded", state !== "collapsed");
   const head = row.createEl("div", { cls: "vocab-tracker-row-header" });
   const del = head.createEl("span", { cls: "vocab-tracker-row-delete" });
@@ -768,6 +794,14 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
     wordWrap.createEl("span", { text: tag, cls: "vocab-tracker-row-badge" });
   }
   head.createEl("span", { cls: "vocab-tracker-row-spacer" });
+  if (opts.showDue && due) {
+    const label = dueLabel(due, /* @__PURE__ */ new Date());
+    const chip = head.createEl("span", { cls: "vt-row-due" });
+    chip.toggleClass("is-today", label.kind === "today");
+    (0, import_obsidian3.setIcon)(chip.createSpan({ cls: "vt-row-due-icon" }), "calendar");
+    chip.createSpan({ text: label.kind === "today" ? t("row.due.today") : label.text });
+    chip.title = t("row.nextReview", { date: due.toLocaleString() });
+  }
   const arrow = head.createEl("span", { cls: "vocab-tracker-row-arrow" });
   (0, import_obsidian3.setIcon)(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
   arrow.title = state === "collapsed" ? t("row.expand") : t("row.collapse");
@@ -795,14 +829,14 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
     await plugin.store.touch(entry);
     refresh();
   };
-  const mkField = (label, key, opts = {}) => {
+  const mkField = (label, key, opts2 = {}) => {
     var _a;
     const value = (_a = entry[key]) != null ? _a : "";
     const wrap = body.createEl("div", { cls: "vocab-tracker-field" });
     if (value) wrap.addClass("is-filled");
     const cls = ["vocab-tracker-input", "vocab-tracker-field-box"];
-    if (opts.multiline) cls.push("vocab-tracker-textarea");
-    if (opts.multiline) {
+    if (opts2.multiline) cls.push("vocab-tracker-textarea");
+    if (opts2.multiline) {
       const inp = wrap.createEl("textarea", { cls });
       inp.rows = 1;
       inp.value = value;
@@ -842,6 +876,12 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
       text: t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }),
       cls: "vocab-tracker-meta"
     });
+    if (due) {
+      body.createEl("div", {
+        text: t("row.nextReview", { date: due.toLocaleString() }),
+        cls: "vocab-tracker-meta"
+      });
+    }
     mkField(t("row.field.level"), "level", { multiline: true });
   }
   const footer = body.createEl("div", { cls: "vocab-tracker-row-footer" });
@@ -868,9 +908,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
   reviewBtn.title = t("row.markReviewed");
   reviewBtn.onclick = async (e) => {
     e.stopPropagation();
-    entry.lastReviewed = nowStamp();
-    entry.reviews += 1;
-    await plugin.store.touch(entry);
+    await plugin.srs.rate(entry, Rating.Good, "manual");
     refresh();
   };
   const speak = actions.createEl("span", { cls: "vocab-tracker-speak-icon" });
@@ -884,7 +922,7 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh) {
 
 // src/ui/word/GroupedWordList.ts
 var import_obsidian4 = require("obsidian");
-function renderGroupedVocabList(plugin, container, rows, collapsedGroups, expandState, refresh) {
+function renderGroupedVocabList(plugin, container, rows, collapsedGroups, expandState, refresh, rowOpts = {}) {
   var _a, _b;
   const groups = /* @__PURE__ */ new Map();
   for (const entry of rows) {
@@ -916,7 +954,8 @@ function renderGroupedVocabList(plugin, container, rows, collapsedGroups, expand
         entry,
         state,
         (s) => expandState.set(entry.id, s),
-        refresh
+        refresh,
+        rowOpts
       );
     }
   }
@@ -1048,7 +1087,8 @@ var VocabSidebarView = class extends import_obsidian5.ItemView {
 };
 
 // src/ui/blocks/dashboard.ts
-function renderDashboard(plugin, _source, el, _ctx) {
+var import_obsidian6 = require("obsidian");
+function renderDashboard(plugin, _source, el, ctx) {
   var _a;
   const entries = plugin.store.entries;
   el.addClass("vocab-tracker-dashboard");
@@ -1076,6 +1116,7 @@ function renderDashboard(plugin, _source, el, _ctx) {
       cls: ["vocab-tracker-stat-pill", "is-accent"]
     });
   }
+  renderReviewButton(plugin, el, ctx);
   const search = el.createEl("input", { cls: ["vocab-tracker-search-input", "vocab-tracker-field-box"] });
   search.placeholder = t("dashboard.search");
   const listWrap = el.createEl("div", { cls: "vocab-tracker-list" });
@@ -1086,10 +1127,32 @@ function renderDashboard(plugin, _source, el, _ctx) {
     const rows = entries.filter(
       (e) => e.word.toLowerCase().includes(q.toLowerCase())
     );
-    renderGroupedVocabList(plugin, listWrap, rows, collapsedGroups, expandState, () => draw(search.value));
+    renderGroupedVocabList(plugin, listWrap, rows, collapsedGroups, expandState, () => draw(search.value), {
+      showDue: true
+    });
   };
   draw("");
   search.oninput = () => draw(search.value);
+}
+function renderReviewButton(plugin, el, ctx) {
+  const btn = el.createEl("button", { cls: "vt-dash-review" });
+  (0, import_obsidian6.setIcon)(btn.createSpan({ cls: "vt-dash-review-icon" }), "layers");
+  const label = btn.createSpan();
+  btn.onclick = () => void plugin.openFlashcards();
+  const update = () => {
+    const n = plugin.srs.queue().length;
+    label.setText(n > 0 ? t("dashboard.startReview", { count: n }) : t("dashboard.startReview.none"));
+    btn.toggleClass("mod-cta", n > 0);
+  };
+  update();
+  const child = new import_obsidian6.MarkdownRenderChild(el);
+  let alive = true;
+  child.register(() => alive = false);
+  child.register(plugin.store.events.on("data:changed", update));
+  ctx.addChild(child);
+  void plugin.srs.ensureLoaded().then(() => {
+    if (alive) update();
+  });
 }
 
 // node_modules/ts-fsrs/dist/index.mjs
@@ -1116,14 +1179,14 @@ var State = /* @__PURE__ */ ((State2) => {
   State2[State2["Relearning"] = 3] = "Relearning";
   return State2;
 })(State || {});
-var Rating = /* @__PURE__ */ ((Rating22) => {
+var Rating2 = /* @__PURE__ */ ((Rating22) => {
   Rating22[Rating22["Manual"] = 0] = "Manual";
   Rating22[Rating22["Again"] = 1] = "Again";
   Rating22[Rating22["Hard"] = 2] = "Hard";
   Rating22[Rating22["Good"] = 3] = "Good";
   Rating22[Rating22["Easy"] = 4] = "Easy";
   return Rating22;
-})(Rating || {});
+})(Rating2 || {});
 var TypeConvert = class _TypeConvert {
   static card(card) {
     return {
@@ -1137,7 +1200,7 @@ var TypeConvert = class _TypeConvert {
     if (typeof value === "string") {
       const firstLetter = value.charAt(0).toUpperCase();
       const restOfString = value.slice(1).toLowerCase();
-      const ret = Rating[`${firstLetter}${restOfString}`];
+      const ret = Rating2[`${firstLetter}${restOfString}`];
       if (ret === void 0) {
         throw new FSRSValidationError(`Invalid rating:[${value}]`);
       }
@@ -1259,10 +1322,10 @@ function show_diff_message(due, last_review, unit, timeUnit = TIMEUNITFORMAT) {
   return `${Math.floor(diff)}${unit ? timeUnit[i] : ""}`;
 }
 var Grades = Object.freeze([
-  Rating.Again,
-  Rating.Hard,
-  Rating.Good,
-  Rating.Easy
+  Rating2.Again,
+  Rating2.Hard,
+  Rating2.Good,
+  Rating2.Easy
 ]);
 var FUZZ_RANGES = [
   {
@@ -1364,17 +1427,17 @@ var BasicLearningStepsStrategy = (params, state, cur_step) => {
   const result = {};
   const step_info = getStepInfo(Math.max(0, cur_step));
   if (state === State.Review) {
-    result[Rating.Again] = {
+    result[Rating2.Again] = {
       scheduled_minutes: toMinutes(step_info),
       next_step: 0
     };
     return result;
   } else {
-    result[Rating.Again] = {
+    result[Rating2.Again] = {
       scheduled_minutes: getAgainInterval(),
       next_step: 0
     };
-    result[Rating.Hard] = {
+    result[Rating2.Hard] = {
       scheduled_minutes: getHardInterval(),
       next_step: cur_step
     };
@@ -1382,7 +1445,7 @@ var BasicLearningStepsStrategy = (params, state, cur_step) => {
     if (next_info) {
       const nextMin = getGoodMinutes(next_info);
       if (nextMin) {
-        result[Rating.Good] = {
+        result[Rating2.Good] = {
           scheduled_minutes: Math.round(nextMin),
           next_step: cur_step + 1
         };
@@ -1446,10 +1509,10 @@ var AbstractScheduler = class {
   }
   preview() {
     return {
-      [Rating.Again]: this.review(Rating.Again),
-      [Rating.Hard]: this.review(Rating.Hard),
-      [Rating.Good]: this.review(Rating.Good),
-      [Rating.Easy]: this.review(Rating.Easy),
+      [Rating2.Again]: this.review(Rating2.Again),
+      [Rating2.Hard]: this.review(Rating2.Hard),
+      [Rating2.Good]: this.review(Rating2.Good),
+      [Rating2.Easy]: this.review(Rating2.Easy),
       [Symbol.iterator]: this.previewIterator.bind(this)
     };
   }
@@ -1910,7 +1973,7 @@ var FSRSAlgorithm = class {
     const delta_d = -this.param.w[6] * (g - 3);
     const next_d = d + this.linear_damping(delta_d, d);
     return clamp(
-      this.mean_reversion(this.init_difficulty(Rating.Easy), next_d),
+      this.mean_reversion(this.init_difficulty(Rating2.Easy), next_d),
       1,
       10
     );
@@ -1937,8 +2000,8 @@ var FSRSAlgorithm = class {
    */
   next_recall_stability(d, s, r, g) {
     const w = this.param.w;
-    const hard_penalty = Rating.Hard === g ? w[15] : 1;
-    const easy_bound = Rating.Easy === g ? w[16] : 1;
+    const hard_penalty = Rating2.Hard === g ? w[15] : 1;
+    const easy_bound = Rating2.Easy === g ? w[16] : 1;
     return roundTo(
       clamp(
         s * (1 + Math.exp(w[8]) * (11 - d) * Math.pow(s, -w[9]) * (Math.exp((1 - r) * w[10]) - 1) * hard_penalty * easy_bound),
@@ -1978,7 +2041,7 @@ var FSRSAlgorithm = class {
   next_short_term_stability(s, g) {
     const w = this.param.w;
     const sinc = Math.pow(s, -w[19]) * Math.exp(w[17] * (g - 3 + w[18]));
-    const maskedSinc = g >= Rating.Hard ? Math.max(sinc, 1) : sinc;
+    const maskedSinc = g >= Rating2.Hard ? Math.max(sinc, 1) : sinc;
     return roundTo(clamp(s * maskedSinc, S_MIN, 36500), 8);
   }
   /**
@@ -2154,34 +2217,34 @@ var BasicScheduler = class extends AbstractScheduler {
       interval,
       this.current.stability
     );
-    const next_again = this.next_ds(interval, Rating.Again, retrievability);
-    const next_hard = this.next_ds(interval, Rating.Hard, retrievability);
-    const next_good = this.next_ds(interval, Rating.Good, retrievability);
-    const next_easy = this.next_ds(interval, Rating.Easy, retrievability);
+    const next_again = this.next_ds(interval, Rating2.Again, retrievability);
+    const next_hard = this.next_ds(interval, Rating2.Hard, retrievability);
+    const next_good = this.next_ds(interval, Rating2.Good, retrievability);
+    const next_easy = this.next_ds(interval, Rating2.Easy, retrievability);
     this.next_interval(next_hard, next_good, next_easy, interval);
     this.next_state(next_hard, next_good, next_easy);
-    this.applyLearningSteps(next_again, Rating.Again, State.Relearning);
+    this.applyLearningSteps(next_again, Rating2.Again, State.Relearning);
     next_again.lapses += 1;
     const item_again = {
       card: next_again,
-      log: this.buildLog(Rating.Again)
+      log: this.buildLog(Rating2.Again)
     };
     const item_hard = {
       card: next_hard,
-      log: super.buildLog(Rating.Hard)
+      log: super.buildLog(Rating2.Hard)
     };
     const item_good = {
       card: next_good,
-      log: super.buildLog(Rating.Good)
+      log: super.buildLog(Rating2.Good)
     };
     const item_easy = {
       card: next_easy,
-      log: super.buildLog(Rating.Easy)
+      log: super.buildLog(Rating2.Easy)
     };
-    this.next.set(Rating.Again, item_again);
-    this.next.set(Rating.Hard, item_hard);
-    this.next.set(Rating.Good, item_good);
-    this.next.set(Rating.Easy, item_easy);
+    this.next.set(Rating2.Again, item_again);
+    this.next.set(Rating2.Hard, item_hard);
+    this.next.set(Rating2.Good, item_good);
+    this.next.set(Rating2.Easy, item_easy);
     return this.next.get(grade);
   }
   /**
@@ -2243,10 +2306,10 @@ var LongTermScheduler = class extends AbstractScheduler {
     this.current.scheduled_days = 0;
     this.current.elapsed_days = 0;
     const first_interval = 0;
-    const next_again = this.next_ds(first_interval, Rating.Again);
-    const next_hard = this.next_ds(first_interval, Rating.Hard);
-    const next_good = this.next_ds(first_interval, Rating.Good);
-    const next_easy = this.next_ds(first_interval, Rating.Easy);
+    const next_again = this.next_ds(first_interval, Rating2.Again);
+    const next_hard = this.next_ds(first_interval, Rating2.Hard);
+    const next_good = this.next_ds(first_interval, Rating2.Good);
+    const next_easy = this.next_ds(first_interval, Rating2.Easy);
     this.next_interval(
       next_again,
       next_hard,
@@ -2289,10 +2352,10 @@ var LongTermScheduler = class extends AbstractScheduler {
       interval,
       this.current.stability
     );
-    const next_again = this.next_ds(interval, Rating.Again, retrievability);
-    const next_hard = this.next_ds(interval, Rating.Hard, retrievability);
-    const next_good = this.next_ds(interval, Rating.Good, retrievability);
-    const next_easy = this.next_ds(interval, Rating.Easy, retrievability);
+    const next_again = this.next_ds(interval, Rating2.Again, retrievability);
+    const next_hard = this.next_ds(interval, Rating2.Hard, retrievability);
+    const next_good = this.next_ds(interval, Rating2.Good, retrievability);
+    const next_easy = this.next_ds(interval, Rating2.Easy, retrievability);
     this.next_interval(next_again, next_hard, next_good, next_easy, interval);
     this.next_state(next_again, next_hard, next_good, next_easy);
     next_again.lapses += 1;
@@ -2340,24 +2403,24 @@ var LongTermScheduler = class extends AbstractScheduler {
   update_next(next_again, next_hard, next_good, next_easy) {
     const item_again = {
       card: next_again,
-      log: this.buildLog(Rating.Again)
+      log: this.buildLog(Rating2.Again)
     };
     const item_hard = {
       card: next_hard,
-      log: super.buildLog(Rating.Hard)
+      log: super.buildLog(Rating2.Hard)
     };
     const item_good = {
       card: next_good,
-      log: super.buildLog(Rating.Good)
+      log: super.buildLog(Rating2.Good)
     };
     const item_easy = {
       card: next_easy,
-      log: super.buildLog(Rating.Easy)
+      log: super.buildLog(Rating2.Easy)
     };
-    this.next.set(Rating.Again, item_again);
-    this.next.set(Rating.Hard, item_hard);
-    this.next.set(Rating.Good, item_good);
-    this.next.set(Rating.Easy, item_easy);
+    this.next.set(Rating2.Again, item_again);
+    this.next.set(Rating2.Hard, item_hard);
+    this.next.set(Rating2.Good, item_good);
+    this.next.set(Rating2.Easy, item_easy);
   }
 };
 var Reschedule = class {
@@ -2401,7 +2464,7 @@ var Reschedule = class {
     let next_card;
     if (state === State.New) {
       log = {
-        rating: Rating.Manual,
+        rating: Rating2.Manual,
         state,
         due: due != null ? due : reviewed,
         stability: card.stability,
@@ -2422,7 +2485,7 @@ var Reschedule = class {
       }
       const scheduled_days = date_diff(due, reviewed, "days");
       log = {
-        rating: Rating.Manual,
+        rating: Rating2.Manual,
         state: card.state,
         due: card.last_review || card.due,
         stability: card.stability,
@@ -2460,7 +2523,7 @@ var Reschedule = class {
     for (const review of reviews) {
       let item;
       review.review = TypeConvert.time(review.review);
-      if (review.rating === Rating.Manual) {
+      if (review.rating === Rating2.Manual) {
         let interval = 0;
         if (cur_card.state !== State.New && cur_card.last_review) {
           interval = date_diff(review.review, cur_card.last_review, "days");
@@ -2689,7 +2752,7 @@ var FSRS = class extends FSRSAlgorithm {
   next(card, now, grade, afterHandler) {
     const instance = this.getScheduler(card, now);
     const g = TypeConvert.rating(grade);
-    if (g === Rating.Manual) {
+    if (g === Rating2.Manual) {
       throw new FSRSValidationError("Cannot review a manual rating");
     }
     const recordLogItem = instance.review(g);
@@ -2737,7 +2800,7 @@ var FSRS = class extends FSRSAlgorithm {
   rollback(card, log, afterHandler) {
     const processedCard = TypeConvert.card(card);
     const processedLog = TypeConvert.review_log(log);
-    if (processedLog.rating === Rating.Manual) {
+    if (processedLog.rating === Rating2.Manual) {
       throw new FSRSValidationError("Cannot rollback a manual rating");
     }
     let last_due;
@@ -2754,7 +2817,7 @@ var FSRS = class extends FSRSAlgorithm {
       case State.Review:
         last_due = processedLog.review;
         last_review = processedLog.due;
-        last_lapses = processedCard.lapses - (processedLog.rating === Rating.Again && processedLog.state === State.Review ? 1 : 0);
+        last_lapses = processedCard.lapses - (processedLog.rating === Rating2.Again && processedLog.state === State.Review ? 1 : 0);
         break;
     }
     const prevCard = {
@@ -2828,7 +2891,7 @@ var FSRS = class extends FSRSAlgorithm {
     now = TypeConvert.time(now);
     const scheduled_days = processedCard.state === State.New ? 0 : date_diff(now, processedCard.due, "days");
     const forget_log = {
-      rating: Rating.Manual,
+      rating: Rating2.Manual,
       state: processedCard.state,
       due: processedCard.due,
       stability: processedCard.stability,
@@ -2905,7 +2968,7 @@ var FSRS = class extends FSRSAlgorithm {
       reviews.sort(reviewsOrderBy);
     }
     if (skipManual) {
-      reviews = reviews.filter((review) => review.rating !== Rating.Manual);
+      reviews = reviews.filter((review) => review.rating !== Rating2.Manual);
     }
     const rescheduleSvc = new Reschedule(this);
     const collections = rescheduleSvc.reschedule(
@@ -2929,21 +2992,6 @@ var FSRS = class extends FSRSAlgorithm {
 var fsrs = (params) => {
   return new FSRS(params || {});
 };
-
-// src/core/model/srs.ts
-var SrsState = { New: 0, Learning: 1, Review: 2, Relearning: 3 };
-var Rating2 = { Again: 1, Hard: 2, Good: 3, Easy: 4 };
-var RATINGS = [Rating2.Again, Rating2.Hard, Rating2.Good, Rating2.Easy];
-var CARD_MODES = ["en-zh", "zh-en", "cloze", "listen"];
-var DEFAULT_SRS_SETTINGS = { retention: 0.9, dailyNew: 20 };
-function resolveSrsSettings(partial) {
-  const retention = Number(partial == null ? void 0 : partial.retention);
-  const dailyNew = Number(partial == null ? void 0 : partial.dailyNew);
-  return {
-    retention: Number.isFinite(retention) && retention > 0 ? Math.min(0.99, Math.max(0.7, retention)) : DEFAULT_SRS_SETTINGS.retention,
-    dailyNew: Number.isFinite(dailyNew) && dailyNew >= 0 ? Math.floor(dailyNew) : DEFAULT_SRS_SETTINGS.dailyNew
-  };
-}
 
 // src/core/store/reviewLogs.ts
 var REVIEW_LOG_RETENTION_DAYS = 90;
@@ -3032,10 +3080,10 @@ function countDueBetween(entries, filter, from, to) {
 var REVIEWS_SHARD = "reviews";
 var WRITE_DEBOUNCE_MS2 = 500;
 var GRADE = {
-  1: Rating.Again,
-  2: Rating.Hard,
-  3: Rating.Good,
-  4: Rating.Easy
+  1: Rating2.Again,
+  2: Rating2.Hard,
+  3: Rating2.Good,
+  4: Rating2.Easy
 };
 function toFsrsCard(card) {
   var _a;
@@ -3218,7 +3266,7 @@ var SrsService = class {
 };
 
 // src/ui/blocks/flashcards.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 
 // src/core/text/interval.ts
 var MIN = 60 * 1e3;
@@ -3279,7 +3327,7 @@ function formatInterval(ms) {
   const { value, unit } = splitInterval(ms);
   return t(`srs.interval.${unit}`, { n: value });
 }
-var FlashcardsBlock = class extends import_obsidian6.MarkdownRenderChild {
+var FlashcardsBlock = class extends import_obsidian7.MarkdownRenderChild {
   constructor(containerEl, plugin, params) {
     super(containerEl);
     this.plugin = plugin;
@@ -3441,7 +3489,7 @@ var FlashcardsBlock = class extends import_obsidian6.MarkdownRenderChild {
       };
     }
     const src = bar.createDiv({ cls: "vt-fc-source" });
-    (0, import_obsidian6.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "folder");
+    (0, import_obsidian7.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "folder");
     src.createSpan({ text: (_a = this.params.source) != null ? _a : t("flashcards.source.all") });
   }
   renderCard() {
@@ -3497,7 +3545,7 @@ var FlashcardsBlock = class extends import_obsidian6.MarkdownRenderChild {
     const meta = [entry.phonetic, entry.partOfSpeech].filter(Boolean).join(" \xB7 ");
     if (meta) sub.createSpan({ text: meta });
     const speak = sub.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
-    (0, import_obsidian6.setIcon)(speak, "volume-2");
+    (0, import_obsidian7.setIcon)(speak, "volume-2");
     speak.onclick = () => this.plugin.speakWord(entry);
   }
   // Cloze sentence with the word blanked ("blank") or revealed and
@@ -3519,7 +3567,7 @@ var FlashcardsBlock = class extends import_obsidian6.MarkdownRenderChild {
       cls: "vt-fc-listen",
       attr: { "aria-label": t("flashcards.listen.replay") }
     });
-    (0, import_obsidian6.setIcon)(play, "volume-2");
+    (0, import_obsidian7.setIcon)(play, "volume-2");
     play.onclick = () => this.plugin.speakWord(entry);
     if (!this.flipped) {
       const input = el.createEl("input", {
@@ -3538,7 +3586,7 @@ var FlashcardsBlock = class extends import_obsidian6.MarkdownRenderChild {
     }
     const ok = this.typed.trim().toLowerCase() === entry.word.trim().toLowerCase();
     const result = el.createDiv({ cls: ["vt-fc-result", ok ? "is-correct" : "is-wrong"] });
-    (0, import_obsidian6.setIcon)(result.createSpan({ cls: "vt-fc-icon" }), ok ? "check" : "x");
+    (0, import_obsidian7.setIcon)(result.createSpan({ cls: "vt-fc-icon" }), ok ? "check" : "x");
     result.createSpan({
       text: ok ? t("flashcards.listen.correct") : t("flashcards.listen.wrong", { answer: this.typed.trim() || "\u2014" })
     });
@@ -3551,7 +3599,7 @@ var FlashcardsBlock = class extends import_obsidian6.MarkdownRenderChild {
     if (entry.example && this.mode !== "cloze") this.renderSentence(el, entry, "answer");
     if ((_a = entry.source) == null ? void 0 : _a.path) {
       const src = el.createDiv({ cls: "vt-fc-origin" });
-      (0, import_obsidian6.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "file-text");
+      (0, import_obsidian7.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "file-text");
       src.createSpan({ text: entry.source.path.split("/").pop().replace(/\.md$/, "") });
       src.onclick = () => this.plugin.jumpToSource(entry);
     }
@@ -3569,7 +3617,7 @@ var FlashcardsBlock = class extends import_obsidian6.MarkdownRenderChild {
   }
   renderEmpty() {
     const box = this.root.createDiv({ cls: "vt-fc-empty" });
-    (0, import_obsidian6.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
+    (0, import_obsidian7.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
     box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.empty.title") });
     box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.empty.body") });
     if (this.mode === "cloze") {
@@ -3580,16 +3628,16 @@ var FlashcardsBlock = class extends import_obsidian6.MarkdownRenderChild {
   }
   renderDone() {
     const box = this.root.createDiv({ cls: "vt-fc-empty vt-fc-done" });
-    (0, import_obsidian6.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
+    (0, import_obsidian7.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
     box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.done.title") });
     box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.done.body") });
-    const recalled = this.results.filter((r) => r.rating >= Rating2.Good).length;
+    const recalled = this.results.filter((r) => r.rating >= Rating.Good).length;
     const tiles = box.createDiv({ cls: "vt-fc-tiles" });
     tile(tiles, String(this.plugin.srs.reviewsToday(this.filter())), t("flashcards.done.reviewedToday"));
     tile(tiles, `${recalled} / ${this.results.length}`, t("flashcards.done.recalled"));
     tile(tiles, String(this.plugin.srs.dueTomorrow(this.filter())), t("flashcards.done.dueTomorrow"));
     const forgotten = [
-      ...new Set(this.results.filter((r) => r.rating === Rating2.Again).map((r) => r.id))
+      ...new Set(this.results.filter((r) => r.rating === Rating.Again).map((r) => r.id))
     ].map((id) => this.live(id)).filter((e) => !!e);
     if (forgotten.length > 0) {
       box.createDiv({ cls: "vt-fc-section-title", text: t("flashcards.done.forgotten") });
@@ -3599,14 +3647,14 @@ var FlashcardsBlock = class extends import_obsidian6.MarkdownRenderChild {
         row.createSpan({ cls: "vt-fc-forgotten-word", text: entry.word });
         row.createSpan({ cls: "vt-fc-forgotten-zh", text: entry.definitionZh });
         const speak = row.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
-        (0, import_obsidian6.setIcon)(speak, "volume-2");
+        (0, import_obsidian7.setIcon)(speak, "volume-2");
         speak.onclick = () => this.plugin.speakWord(entry);
       }
     }
     const actions = box.createDiv({ cls: "vt-fc-actions" });
     if (forgotten.length > 0) {
       const retry = actions.createEl("button", { cls: "vt-fc-btn mod-cta" });
-      (0, import_obsidian6.setIcon)(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
+      (0, import_obsidian7.setIcon)(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
       retry.createSpan({ text: t("flashcards.done.retryForgotten", { count: forgotten.length }) });
       retry.onclick = () => this.startSession(forgotten.map((e) => e.id), { speak: true });
     }
@@ -3633,7 +3681,7 @@ function tile(container, value, label) {
 }
 
 // src/ui/blocks/flashcardsFile.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 var FLASHCARDS_FILE = "vocab-list/\u55AE\u5B57\u5361.md";
 var FLASHCARDS_CONTENT = "# \u55AE\u5B57\u5361\n\n```vocab-flashcards\n```\n";
 async function openFlashcardsFile(app) {
@@ -3643,14 +3691,14 @@ async function openFlashcardsFile(app) {
     if (!app.vault.getAbstractFileByPath(folder)) await app.vault.createFolder(folder);
     file = await app.vault.create(FLASHCARDS_FILE, FLASHCARDS_CONTENT);
   }
-  if (file instanceof import_obsidian7.TFile) await app.workspace.getLeaf(false).openFile(file);
+  if (file instanceof import_obsidian8.TFile) await app.workspace.getLeaf(false).openFile(file);
 }
 
 // main.ts
 var VOCAB_FOLDER = "vocab-list";
 var VOCAB_FILE = `${VOCAB_FOLDER}/vocab-list.md`;
 var VOCAB_FILE_LEGACY = "vocab-list.md";
-var VocabTrackerPlugin = class extends import_obsidian8.Plugin {
+var VocabTrackerPlugin = class extends import_obsidian9.Plugin {
   constructor() {
     super(...arguments);
     this.vocabData = { entries: [] };
@@ -3698,7 +3746,7 @@ var VocabTrackerPlugin = class extends import_obsidian8.Plugin {
     );
     this.registerEvent(
       this.app.vault.on("rename", async (file, oldPath) => {
-        if (!(file instanceof import_obsidian8.TFile)) return;
+        if (!(file instanceof import_obsidian9.TFile)) return;
         const changed = updateSourcePaths(this.vocabData.entries, oldPath, file.path);
         for (const entry of changed) await this.store.touch(entry);
       })
@@ -3753,7 +3801,7 @@ var VocabTrackerPlugin = class extends import_obsidian8.Plugin {
       await this.app.vault.createFolder(VOCAB_FOLDER);
     }
     const legacy = this.app.vault.getAbstractFileByPath(VOCAB_FILE_LEGACY);
-    if (legacy instanceof import_obsidian8.TFile) {
+    if (legacy instanceof import_obsidian9.TFile) {
       await this.app.fileManager.renameFile(legacy, VOCAB_FILE);
       return;
     }
@@ -3778,7 +3826,7 @@ var VocabTrackerPlugin = class extends import_obsidian8.Plugin {
     const exists = this.store.entries.some(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
-    const menu = new import_obsidian8.Menu();
+    const menu = new import_obsidian9.Menu();
     menu.addItem((item) => {
       item.setTitle(
         exists ? `Open "${word}" in Vocab Tracker` : `Add "${word}" to Vocab Tracker`
@@ -3786,7 +3834,7 @@ var VocabTrackerPlugin = class extends import_obsidian8.Plugin {
       item.setIcon(exists ? "book-open" : "plus");
       item.onClick(async () => {
         const added = await this.addWordToVocab(word, ctx);
-        new import_obsidian8.Notice(added ? `Added "${word}" to vocab list` : `Opened "${word}"`);
+        new import_obsidian9.Notice(added ? `Added "${word}" to vocab list` : `Opened "${word}"`);
       });
     });
     menu.showAtMouseEvent(evt);
@@ -3865,7 +3913,7 @@ var VocabTrackerPlugin = class extends import_obsidian8.Plugin {
     if (!entry.source || !entry.source.path) return;
     const file = this.app.vault.getAbstractFileByPath(entry.source.path);
     if (!file) {
-      new import_obsidian8.Notice("Source note not found: " + entry.source.path);
+      new import_obsidian9.Notice("Source note not found: " + entry.source.path);
       return;
     }
     const leaf = this.app.workspace.getLeaf(false);
@@ -3882,7 +3930,7 @@ var VocabTrackerPlugin = class extends import_obsidian8.Plugin {
   }
   speakSynth(word) {
     if (!("speechSynthesis" in window)) {
-      new import_obsidian8.Notice("No pronunciation available on this device.");
+      new import_obsidian9.Notice("No pronunciation available on this device.");
       return;
     }
     const u = new SpeechSynthesisUtterance(word);
@@ -3905,10 +3953,10 @@ var VocabTrackerPlugin = class extends import_obsidian8.Plugin {
       const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
       const view = leaf && leaf.view;
       if (view) view.render();
-      if (opts.verbose) new import_obsidian8.Notice(`Vocab Tracker: fetched "${entry.word}"`);
+      if (opts.verbose) new import_obsidian9.Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
-      new import_obsidian8.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
+      new import_obsidian9.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
     }
   }
   refreshSidebar() {

@@ -18,7 +18,7 @@ export const en = {
   "row.showMore": "Show more",
   "row.showLess": "Show less",
   "row.fetch": "Fetch dictionary data (definition, synonyms, phonetic)",
-  "row.markReviewed": "Mark as reviewed",
+  "row.markReviewed": "Mark as reviewed (rates Good)",
   "row.meta.added": "Added: {date}",
   "row.meta.reviewed": "Reviewed: {date} ({count}×)",
   "row.field.synonyms": "Synonyms",
@@ -40,7 +40,6 @@ export const en = {
   "dashboard.startReview.none": "Flashcards · nothing due",
   "row.nextReview": "Next review: {date}",
   "row.due.today": "Today",
-  "row.due.new": "New",
 
   "srs.interval.m": "{n} min",
   "srs.interval.h": "{n} h",
