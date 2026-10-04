@@ -3,10 +3,13 @@
 // 「你選取的文字裡（似乎）沒有 X，…」 reminder (word tasks v3, always first)
 // and then the 「你問的是：…」 scope line. Otherwise they'd be sent back as
 // 學習者的筆記 in every later word prompt. Leading Markdown emphasis or a
-// quote marker is tolerated; any wording after 你選取的文字 is.
+// quote marker is tolerated. Only the reminder's own shape
+// (你選取的文字[裡中]（似乎／好像）沒有…) counts, so an answer that merely
+// starts by talking about the selection (「你選取的文字「…」裡，X 修飾 Y。」)
+// keeps its first line.
 
 const LEAD = String.raw`^\s*(?:[>*_]+\s*)?`;
-const SELECTION_NOTICE_RE = new RegExp(`${LEAD}你選取的文字[^\\n]*(?:\\n+|$)`);
+const SELECTION_NOTICE_RE = new RegExp(`${LEAD}你選取的文字[裡里中內]?(?:似乎|好像)?沒有[^\\n]*(?:\\n+|$)`);
 const SCOPE_LINE_RE = new RegExp(`${LEAD}你問的是[:：][^\\n]*\\n+`);
 
 export function pinText(answer: string): string {
