@@ -23,6 +23,10 @@ import { updateSourcePaths } from "./src/core/store/updateSourcePaths";
 import { nowStamp } from "./src/core/nowStamp";
 import { VocabSidebarView, VOCAB_VIEW_TYPE } from "./src/ui/sidebar/VocabSidebarView";
 import { renderDashboard } from "./src/ui/blocks/dashboard";
+import { SrsService } from "./src/services/srs/SrsService";
+import { renderFlashcards } from "./src/ui/blocks/flashcards";
+import { openFlashcardsFile } from "./src/ui/blocks/flashcardsFile";
+import { t } from "./src/core/i18n";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -39,6 +43,7 @@ export default class VocabTrackerPlugin extends Plugin {
   store!: VocabStore;
   dictionary!: DictionaryService;
   storage!: ObsidianStorage;
+  srs!: SrsService;
 
   async onload() {
     this.storage = new ObsidianStorage(this);
@@ -46,6 +51,7 @@ export default class VocabTrackerPlugin extends Plugin {
 
     this.store = new VocabStore(this.vocabData, (data) => this.storage.writeShard("data", data));
     this.dictionary = new DictionaryService(new ObsidianHttp());
+    this.srs = new SrsService({ store: this.store, storage: this.storage });
 
     // Sidebar
     this.registerView(
@@ -64,6 +70,17 @@ export default class VocabTrackerPlugin extends Plugin {
       "vocab-dashboard",
       (source, el, ctx) => renderDashboard(this, source, el, ctx)
     );
+
+    // M2: vocab-flashcards code block (FSRS review session)
+    this.registerMarkdownCodeBlockProcessor(
+      "vocab-flashcards",
+      (source, el, ctx) => renderFlashcards(this, source, el, ctx)
+    );
+    this.addCommand({
+      id: "open-flashcards",
+      name: t("command.openFlashcards"),
+      callback: () => this.openFlashcards(),
+    });
 
     // Command palette
     this.addCommand({
@@ -100,13 +117,18 @@ export default class VocabTrackerPlugin extends Plugin {
   // So a debounced write (VocabStore's 500ms coalescing) isn't lost if
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
-    await this.store.flush();
+    await Promise.all([this.store.flush(), this.srs.flush()]);
   }
 
   // Fires when the data.json on disk changed from outside this session —
   // sync (iCloud/Obsidian Sync/Git) pulling in another device's edits.
   // Merge instead of overwriting so neither side's changes get clobbered.
   async onExternalSettingsChange() {
+    // reviews.json syncs alongside data.json but isn't what fires this
+    // event; refresh it here too so the new-card cap sees the other
+    // device's reviews without waiting for our next write.
+    void this.srs.reloadLogs();
+
     const disk = await this.storage.readShard<VocabData>("data");
     if (!disk) return;
 
@@ -140,6 +162,10 @@ export default class VocabTrackerPlugin extends Plugin {
     const file = this.app.vault.getAbstractFileByPath(VOCAB_FILE) as TFile;
     const leaf = this.app.workspace.getLeaf(false);
     await leaf.openFile(file);
+  }
+
+  openFlashcards() {
+    return openFlashcardsFile(this.app);
   }
 
   async ensureVocabFile() {

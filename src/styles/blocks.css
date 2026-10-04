@@ -61,3 +61,458 @@
   opacity: 0.8;
   flex-shrink: 0;
 }
+
+/* ── vocab-flashcards code block (設計稿 L2–L4, M2) ───────────────── */
+
+/* Tokens map to Obsidian variables (規劃書 06 §9.1) so light/dark and
+   community themes work. Scoped to the block until a shared tokens.css
+   exists. */
+.vt-flashcards {
+  --vt-accent: var(--interactive-accent);
+  --vt-accent-text: var(--text-accent);
+  --vt-surface: var(--background-secondary);
+  --vt-card: var(--background-primary);
+  --vt-border: var(--background-modifier-border);
+  --vt-muted: var(--text-muted);
+  --vt-mark: var(--text-highlight-bg);
+  --vt-radius: var(--radius-m);
+  --vt-tap: 36px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 640px;
+  margin: 0 auto;
+  outline: none;
+  font-family: inherit;
+}
+
+body.is-mobile .vt-flashcards {
+  --vt-tap: 44px;
+}
+
+.vt-flashcards:focus-visible {
+  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+  border-radius: var(--vt-radius);
+}
+
+.vt-fc-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.vt-fc-icon svg,
+.vt-fc-icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Toolbar: mode switch + source filter */
+.vt-fc-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vt-fc-modes {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: var(--vt-radius);
+  background: var(--vt-surface);
+  flex-wrap: wrap;
+}
+
+.vt-fc-mode {
+  min-height: calc(var(--vt-tap) - 8px);
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+}
+
+.vt-fc-mode.is-active {
+  background: var(--vt-card);
+  color: var(--text-normal);
+  box-shadow: var(--shadow-s);
+}
+
+.vt-fc-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-fc-progress {
+  text-align: center;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Card */
+.vt-fc-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 20px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-card);
+  text-align: center;
+}
+
+.vt-fc-front,
+.vt-fc-back {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.vt-fc-back {
+  padding-top: 12px;
+  border-top: 1px solid var(--vt-border);
+}
+
+.vt-fc-word {
+  font-size: 2em;
+  font-weight: 600;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.vt-fc-prompt,
+.vt-fc-answer {
+  font-size: 1.4em;
+  font-weight: 600;
+}
+
+.vt-fc-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--vt-muted);
+}
+
+.vt-fc-def {
+  color: var(--text-normal);
+}
+
+.vt-fc-sentence {
+  font-size: 1.05em;
+  line-height: 1.6;
+}
+
+.vt-fc-back .vt-fc-sentence {
+  color: var(--vt-muted);
+  font-style: italic;
+}
+
+.vt-fc-blank {
+  color: var(--vt-accent-text);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.vt-fc-mark {
+  background: var(--vt-mark);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.vt-fc-origin {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+}
+
+.vt-fc-origin:hover {
+  color: var(--vt-accent-text);
+}
+
+.vt-fc-hint {
+  color: var(--text-faint);
+  font-size: var(--font-ui-small);
+}
+
+.vt-fc-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--vt-tap);
+  min-height: var(--vt-tap);
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--vt-muted);
+  cursor: pointer;
+}
+
+.vt-fc-icon-btn:hover {
+  color: var(--text-normal);
+}
+
+.vt-fc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--vt-tap);
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.vt-fc-kbd {
+  padding: 0 5px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--radius-s);
+  background: var(--vt-surface);
+  color: var(--vt-muted);
+  font-family: var(--font-monospace);
+  font-size: 0.75em;
+}
+
+body.is-mobile .vt-fc-kbd {
+  display: none;
+}
+
+/* Listen & spell */
+.vt-fc-listen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--vt-accent);
+  color: var(--text-on-accent);
+  cursor: pointer;
+}
+
+.vt-fc-listen svg {
+  width: 28px;
+  height: 28px;
+}
+
+.vt-fc-input {
+  width: min(100%, 280px);
+  min-height: var(--vt-tap);
+  text-align: center;
+  font-size: 1.1em;
+}
+
+.vt-fc-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.vt-fc-result.is-correct {
+  color: var(--color-green);
+}
+
+.vt-fc-result.is-wrong {
+  color: var(--color-red);
+}
+
+/* Rating buttons: one row on desktop, 2×2 on phones (M2) */
+.vt-fc-ratings {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+body.is-mobile .vt-fc-ratings {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.vt-fc-rate {
+  --vt-rate: var(--vt-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: auto;
+  min-height: 56px;
+  padding: 8px 4px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-surface);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.vt-fc-rate:hover {
+  border-color: var(--vt-rate);
+}
+
+.vt-fc-rate.is-r1 { --vt-rate: var(--color-red); }
+.vt-fc-rate.is-r2 { --vt-rate: var(--color-orange); }
+.vt-fc-rate.is-r3 { --vt-rate: var(--color-green); }
+.vt-fc-rate.is-r4 { --vt-rate: var(--color-blue); }
+
+.vt-fc-rate-label {
+  color: var(--vt-rate);
+  font-weight: 600;
+}
+
+.vt-fc-rate-interval {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+/* Session stats footer */
+.vt-fc-stats {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-fc-stat {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.vt-fc-stat-n {
+  color: var(--text-normal);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Empty / done (L4) */
+.vt-fc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 20px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-card);
+  text-align: center;
+}
+
+.vt-fc-empty-icon {
+  color: var(--vt-accent-text);
+}
+
+.vt-fc-empty-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.vt-fc-empty-title {
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.vt-fc-empty-body {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-fc-tiles {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.vt-fc-tile {
+  min-width: 96px;
+  padding: 10px 12px;
+  border-radius: var(--vt-radius);
+  background: var(--vt-surface);
+}
+
+.vt-fc-tile-value {
+  font-size: 1.4em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-fc-tile-label {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-fc-section-title {
+  align-self: stretch;
+  margin-top: 12px;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  text-align: left;
+}
+
+.vt-fc-forgotten {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vt-fc-forgotten-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 8px;
+  border-radius: var(--radius-s);
+  background: var(--vt-surface);
+  text-align: left;
+}
+
+.vt-fc-forgotten-word {
+  font-weight: 600;
+}
+
+.vt-fc-forgotten-zh {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--vt-muted);
+}
+
+.vt-fc-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.vt-fc-link {
+  color: var(--vt-accent-text);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+}
+
+body.is-mobile .vt-fc-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--vt-tap);
+}

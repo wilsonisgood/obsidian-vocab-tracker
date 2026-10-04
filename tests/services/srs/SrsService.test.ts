@@ -161,4 +161,21 @@ describe("SrsService", () => {
     await srs.rate(entry, Rating.Easy, "en-zh");
     expect(srs.nextDue(entry)?.toISOString()).toBe(entry.srs?.due);
   });
+
+  it("reviewsToday() counts today's logs for words matching the source filter", async () => {
+    const entries = [
+      makeEntry({ id: "a", source: { path: "eng/a.md", line: 0 } }),
+      makeEntry({ id: "b", source: { path: "misc/b.md", line: 0 } }),
+    ];
+    const { srs, storage } = setup(entries);
+    storage.shards.set(REVIEWS_SHARD, {
+      logs: [{ id: "y", entryId: "a", at: new Date(2026, 9, 3, 20).toISOString(), rating: 3, mode: "en-zh", elapsedMs: 0 }],
+    });
+    await srs.ensureLoaded();
+    await srs.rate(entries[0], Rating.Again, "en-zh");
+    await srs.rate(entries[0], Rating.Good, "en-zh");
+    await srs.rate(entries[1], Rating.Good, "en-zh");
+    expect(srs.reviewsToday()).toBe(3);
+    expect(srs.reviewsToday({ source: "eng/" })).toBe(2);
+  });
 });

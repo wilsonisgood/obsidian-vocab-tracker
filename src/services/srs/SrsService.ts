@@ -28,6 +28,7 @@ import {
   buildQueue,
   countDueBetween,
   isNewCard,
+  matchesFilter,
   startOfLocalDay,
   type QueueFilter,
 } from "./queue";
@@ -153,6 +154,19 @@ export class SrsService {
   dueTomorrow(filter: QueueFilter = {}): number {
     const today = startOfLocalDay(this.clock());
     return countDueBetween(this.deps.store.vocabData.entries, filter, addDays(today, 1), addDays(today, 2));
+  }
+
+  // Reviews logged today (local calendar day) for words matching the
+  // source filter — the done screen's "今天複習". Counts every rating, so
+  // a card failed and retried counts twice, same as the effort it took.
+  reviewsToday(filter: QueueFilter = {}): number {
+    const dayStart = startOfLocalDay(this.clock()).getTime();
+    const ids = new Set(
+      this.deps.store.vocabData.entries
+        .filter((e) => matchesFilter(e, { source: filter.source }))
+        .map((e) => e.id)
+    );
+    return this.logs.filter((l) => ids.has(l.entryId) && new Date(l.at).getTime() >= dayStart).length;
   }
 
   // When this entry is next due, or null for a card that's never been
