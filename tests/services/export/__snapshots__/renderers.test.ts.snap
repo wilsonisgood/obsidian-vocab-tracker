@@ -1,0 +1,303 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`AI note renderer > renders empty states (snapshot) 1`] = `
+"---
+vocab-tracker: ai-note
+source: "[[Note]]"
+---
+
+%% vt:begin paragraphs %%
+*還沒有段落討論。*
+%% vt:end paragraphs %%
+
+%% vt:begin words %%
+## 這篇學到的單字
+
+*這篇還沒有加入單字。*
+%% vt:end words %%
+
+%% 以下是你的筆記，插件不會改動 %%
+"
+`;
+
+exports[`AI note renderer > renders paragraphs in note order, then the words (snapshot) 1`] = `
+"---
+vocab-tracker: ai-note
+source: "[[eng/Taylor_Swift_NYU_Speech_Transcript]]"
+---
+
+%% vt:begin paragraphs %%
+## ¶12 Last time I was in a stadium this size,…
+
+![[eng/Taylor_Swift_NYU_Speech_Transcript#^vt-a1b2c3]]
+
+### 10/01 · 文法
+> **Q** 為什麼用 was dancing，不用 danced？
+
+**過去進行式**用來描述那一刻正在進行的畫面……
+
+### 10/03 · 換句話說
+> **Q** 用比較簡單的說法改寫
+
+The last time I stood in a stadium this big…
+
+## ¶13 all the trustees and members of the boar…
+
+> all the trustees and members of the board
+
+### 10/02 · 翻譯
+> **Q** 翻譯
+
+所有董事與理事會成員……
+
+## 原文中找不到這段
+
+> A paragraph that was
+> deleted from the note.
+
+### 10/02
+> **Q** 這段在說什麼？
+
+在說一段已經被刪掉的內容。
+%% vt:end paragraphs %%
+
+%% vt:begin words %%
+## 這篇學到的單字
+
+- [[vocab-list/單字/glittery|glittery]] · 1 則討論
+- [[vocab-list/單字/leotard|leotard]]
+- honorees
+%% vt:end words %%
+
+%% 以下是你的筆記，插件不會改動 %%
+"
+`;
+
+exports[`trivia favourites renderer > renders saved items newest first (snapshot) 1`] = `
+"\`\`\`vocab-trivia
+\`\`\`
+
+%% vt:begin trivia-favorites %%
+## 收藏
+
+### leotard 來自一位法國特技演員
+
+Jules Léotard 在 19 世紀穿著這種緊身衣表演空中飛人。
+
+*[[vocab-list/單字/leotard|leotard]] · 10/04*
+
+### gl- 開頭的字常跟「光」有關
+
+glow、gleam、glint、glare、glimmer 都跟光有關。
+語言學把這種現象叫做 phonaestheme。
+
+*[[vocab-list/單字/glittery|glittery]] · 10/03*
+%% vt:end trivia-favorites %%
+"
+`;
+
+exports[`word page renderer > renders English labels (snapshot) 1`] = `
+"---
+vocab-tracker: word
+vocab-tracker-id: x
+---
+\`\`\`vocab-word
+\`\`\`
+
+%% vt:begin families %%
+## Word families
+
+*No word families yet.*
+%% vt:end families %%
+
+%% vt:begin usage %%
+## Usage
+
+*No usage notes yet.*
+%% vt:end usage %%
+
+%% vt:begin trivia %%
+## Saved trivia
+
+*Nothing saved yet.*
+%% vt:end trivia %%
+
+%% vt:begin discussion %%
+## AI discussion
+
+*No discussion yet.*
+%% vt:end discussion %%
+
+%% Your notes below — the plugin never changes them %%
+"
+`;
+
+exports[`word page renderer > renders empty states (snapshot) 1`] = `
+"---
+vocab-tracker: word
+vocab-tracker-id: x
+---
+\`\`\`vocab-word
+\`\`\`
+
+%% vt:begin families %%
+## 字族
+
+*還沒有字族。*
+%% vt:end families %%
+
+%% vt:begin usage %%
+## 用法
+
+*還沒有用法。*
+%% vt:end usage %%
+
+%% vt:begin trivia %%
+## 冷知識收藏
+
+*還沒有收藏。*
+%% vt:end trivia %%
+
+%% vt:begin discussion %%
+## AI 討論
+
+*還沒有討論。*
+%% vt:end discussion %%
+
+%% 以下是你的筆記，插件不會改動 %%
+"
+`;
+
+exports[`word page renderer > renders every section (snapshot) 1`] = `
+"[families]
+## 字族
+
+### clothing · 服裝
+
+- **舞台服裝**：**glittery** · [[vocab-list/單字/leotard|leotard]] 緊身衣 · sequin 亮片 · tulle 薄紗
+
+### gl- · 發光家族
+
+- **glittery** · glisten （濕潤地）發亮 · glimmer 微光
+
+[usage]
+## 用法
+
+- \`glittery + 服裝 / 妝容\` 最常見的搭配，帶亮片、閃粉的感覺
+  - *a glittery dress, glittery eyeshadow*
+- \`glittery + 抽象名詞\` 比喻光鮮亮麗，常帶一點「表面風光」的語氣
+  - *a glittery career*
+
+**相關片語**：glitter（閃爍） · all that glitters is not gold
+
+[trivia]
+## 冷知識收藏
+
+### gl- 開頭的字常跟「光」有關
+
+glow、gleam、glint、glare、glimmer 都跟光有關。
+語言學把這種現象叫做 phonaestheme。
+
+*10/03*
+
+**也提到這個字**
+
+- leotard 來自一位法國特技演員（[[vocab-list/單字/leotard|leotard]]）
+
+[discussion]
+## AI 討論
+
+### 10/02 · 比較
+> **Q** glittery 和 sparkly 差在哪？
+
+**glittery** 強調「帶亮片、閃粉」的質感；**sparkly** 比較籠統，指一閃一閃的光。
+
+- a glittery dress
+- sparkly eyes
+
+### 10/03
+> 「glittery leotard」
+> **Q** 怎麼用在程式碼註解裡？
+
+例如：
+
+\`\`\`js
+// a glittery
+\`\`\`
+
+*（已停止）*"
+`;
+
+exports[`word page renderer > renders the new-file template (snapshot) 1`] = `
+"---
+vocab-tracker: word
+vocab-tracker-id: "1721900000000"
+---
+\`\`\`vocab-word
+\`\`\`
+
+%% vt:begin families %%
+## 字族
+
+### clothing · 服裝
+
+- **舞台服裝**：**glittery** · [[vocab-list/單字/leotard|leotard]] 緊身衣 · sequin 亮片 · tulle 薄紗
+
+### gl- · 發光家族
+
+- **glittery** · glisten （濕潤地）發亮 · glimmer 微光
+%% vt:end families %%
+
+%% vt:begin usage %%
+## 用法
+
+- \`glittery + 服裝 / 妝容\` 最常見的搭配，帶亮片、閃粉的感覺
+  - *a glittery dress, glittery eyeshadow*
+- \`glittery + 抽象名詞\` 比喻光鮮亮麗，常帶一點「表面風光」的語氣
+  - *a glittery career*
+
+**相關片語**：glitter（閃爍） · all that glitters is not gold
+%% vt:end usage %%
+
+%% vt:begin trivia %%
+## 冷知識收藏
+
+### gl- 開頭的字常跟「光」有關
+
+glow、gleam、glint、glare、glimmer 都跟光有關。
+語言學把這種現象叫做 phonaestheme。
+
+*10/03*
+
+**也提到這個字**
+
+- leotard 來自一位法國特技演員（[[vocab-list/單字/leotard|leotard]]）
+%% vt:end trivia %%
+
+%% vt:begin discussion %%
+## AI 討論
+
+### 10/02 · 比較
+> **Q** glittery 和 sparkly 差在哪？
+
+**glittery** 強調「帶亮片、閃粉」的質感；**sparkly** 比較籠統，指一閃一閃的光。
+
+- a glittery dress
+- sparkly eyes
+
+### 10/03
+> 「glittery leotard」
+> **Q** 怎麼用在程式碼註解裡？
+
+例如：
+
+\`\`\`js
+// a glittery
+\`\`\`
+
+*（已停止）*
+%% vt:end discussion %%
+
+%% 以下是你的筆記，插件不會改動 %%
+"
+`;
