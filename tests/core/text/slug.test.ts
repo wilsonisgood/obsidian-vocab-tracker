@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { joinPath, linkTarget, noteBasename, slugify, wordSlug } from "../../../src/core/text/slug";
+import { joinPath, linkTarget, MAX_NAME_BYTES, noteBasename, slugify, utf8Bytes, wordSlug } from "../../../src/core/text/slug";
 
 describe("slugify", () => {
   it("keeps ordinary names as they are", () => {
@@ -55,9 +55,31 @@ describe("slugify", () => {
     expect(slugify("   ", "word")).toBe("word");
   });
 
-  it("caps very long names", () => {
-    const out = slugify("x".repeat(500));
-    expect(out.length).toBe(100);
+  it("caps very long names at 200 UTF-8 bytes", () => {
+    expect(slugify("x".repeat(500))).toBe("x".repeat(MAX_NAME_BYTES));
+    // 3 bytes per CJK character: 66 fit (198 bytes), the 67th doesn't.
+    const cjk = slugify("字".repeat(100));
+    expect(cjk).toBe("字".repeat(66));
+    expect(utf8Bytes(cjk)).toBe(198);
+  });
+
+  it("never cuts an emoji in half", () => {
+    // 4 bytes (2 UTF-16 units) each: exactly 50 fit.
+    expect(slugify("😀".repeat(80))).toBe("😀".repeat(50));
+    const odd = slugify(`a${"😀".repeat(80)}`);
+    expect(odd).toBe(`a${"😀".repeat(49)}`);
+    expect(/[\ud800-\udbff]$/.test(odd)).toBe(false);
+    // A joined emoji cut at the joiner doesn't leave it dangling.
+    const family = "👩‍👩‍👧";
+    expect(slugify(`${"x".repeat(197)}${family}`)).toBe("x".repeat(197));
+    // 193 + 4 (👩) + 3 (joiner) = 200: the joiner fits but is dropped.
+    expect(slugify(`${"x".repeat(193)}${family}`)).toBe(`${"x".repeat(193)}👩`);
+  });
+
+  it("takes a smaller byte budget, e.g. what's left after a suffix", () => {
+    expect(slugify("字字字", "untitled", 7)).toBe("字字");
+    expect(slugify("trailing cut .x", "untitled", 13)).toBe("trailing cut");
+    expect(slugify("字", "untitled", 2)).toBe("untitled");
   });
 
   it("normalizes to NFC so the same word always maps to the same file", () => {
@@ -79,6 +101,20 @@ describe("wordSlug", () => {
 
   it("has a fallback for empty words", () => {
     expect(wordSlug("")).toBe("word");
+  });
+
+  it("leaves room for the .md extension", () => {
+    expect(utf8Bytes(`${wordSlug("x".repeat(300))}.md`)).toBe(MAX_NAME_BYTES);
+  });
+});
+
+describe("utf8Bytes", () => {
+  it("counts UTF-8 bytes per code point", () => {
+    expect(utf8Bytes("abc")).toBe(3);
+    expect(utf8Bytes("é")).toBe(2);
+    expect(utf8Bytes("字")).toBe(3);
+    expect(utf8Bytes("😀")).toBe(4);
+    expect(utf8Bytes("a字😀")).toBe(new TextEncoder().encode("a字😀").length);
   });
 });
 

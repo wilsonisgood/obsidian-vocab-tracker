@@ -3,6 +3,7 @@
 exports[`AI note renderer > renders empty states (snapshot) 1`] = `
 "---
 vocab-tracker: ai-note
+vocab-tracker-id: "Note.md"
 source: "[[Note]]"
 ---
 
@@ -23,6 +24,7 @@ source: "[[Note]]"
 exports[`AI note renderer > renders paragraphs in note order, then the words (snapshot) 1`] = `
 "---
 vocab-tracker: ai-note
+vocab-tracker-id: "eng/Taylor_Swift_NYU_Speech_Transcript.md"
 source: "[[eng/Taylor_Swift_NYU_Speech_Transcript]]"
 ---
 

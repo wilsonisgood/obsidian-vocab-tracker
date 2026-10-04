@@ -1,10 +1,20 @@
 import type { Thread } from "../../core/model/thread";
-import { joinPath, linkTarget, noteBasename, slugify, wordSlug } from "../../core/text/slug";
+import { joinPath, linkTarget, MAX_NAME_BYTES, noteBasename, slugify, utf8Bytes, wordSlug } from "../../core/text/slug";
 import { exportLabels } from "./labels";
 import { applyManagedBlocks, type ManagedSection } from "./managedBlock";
 import type { VaultPort } from "../../core/ports";
 import { DEFAULT_EXPORT_FOLDERS, type ExportDataPort, type ExportFolders } from "./ports";
-import { hasAiNoteContent, renderAiNoteFile, renderAiNoteSections, type AiNoteInput } from "./renderers/aiNote";
+import {
+  AI_NOTE_KIND,
+  aiNoteOwner,
+  claimAiNote,
+  hasAiNoteContent,
+  renderAiNoteFile,
+  renderAiNoteSections,
+  retargetAiNote,
+  type AiNoteInput,
+  type AiNoteOwner,
+} from "./renderers/aiNote";
 import { threadRounds } from "./renderers/common";
 import { renderTriviaFavoritesFile, renderTriviaFavoritesSections } from "./renderers/triviaFavorites";
 import {
@@ -29,6 +39,11 @@ import type { ExportFamily, ExportLabels, ExportTrivia, RenderContext } from "./
 //   change was announced.
 // - Only managed blocks are replaced (managedBlock.ts); files are created
 //   only when there's something to show (§8.2), never overwritten.
+// - An article's note is 討論串/<name>.ai.md. Articles with the same name
+//   in different folders each get their own: the second one is
+//   "<name> (<folder>).ai.md", then "<name> (<folder>) 2.ai.md"… The note's
+//   frontmatter `vocab-tracker-id` (the article path) says whose it is,
+//   and finds it again after the user renames or moves it.
 
 export const EXPORT_DEBOUNCE_MS = 1000;
 
@@ -43,6 +58,15 @@ type Job =
   | { kind: "trivia" };
 
 export type ExportKind = Job["kind"];
+
+const AI_NOTE_EXT = ".ai.md";
+// Names tried for one article's note before giving up.
+const MAX_NOTE_NAMES = 20;
+// The folder name in "<name> (<folder>).ai.md" is cut to this.
+const FOLDER_LABEL_BYTES = 60;
+
+// Thrown inside process() to leave another article's note untouched.
+class NotThisArticle extends Error {}
 
 export interface ExportServiceDeps {
   vault: VaultPort;
@@ -91,7 +115,10 @@ function mergeJobs(a: Job, b: Job): Job {
 export class ExportService {
   private timers = new Map<string, { timer: ReturnType<typeof setTimeout>; job: Job }>();
   // File path → the latest write queued for it (each waits for the last).
+  // An article's note queues under its first name (noteQueue).
   private queues = new Map<string, Promise<void>>();
+  // Article path → its note, as last found or created.
+  private notePaths = new Map<string, string>();
   private subscriptions: (() => void)[] = [];
   private disposed = false;
   private readonly debounceMs: number;
@@ -117,8 +144,37 @@ export class ExportService {
     return this.deps.vault.findManaged(WORD_PAGE_KIND, entryId) ?? this.defaultWordPagePath(word);
   }
 
+  // The names an article's note can have, in the order they're tried:
+  // "Notes", "Notes (b)", "Notes (b) 2"… for "a/b/Notes.md" ("Notes 2"…
+  // for an article at the vault root). The name is shortened, never the
+  // suffix, so long names still differ.
+  aiNoteNames(articlePath: string): string[] {
+    const folder = this.folders().threads;
+    const budget = MAX_NAME_BYTES - utf8Bytes(AI_NOTE_EXT);
+    const base = noteBasename(articlePath);
+    const name = (suffix: string) => joinPath(folder, `${slugify(base, "untitled", budget - utf8Bytes(suffix))}${suffix}${AI_NOTE_EXT}`);
+    const dir = articlePath.slice(0, Math.max(0, articlePath.lastIndexOf("/")));
+    const label = slugify(dir.slice(dir.lastIndexOf("/") + 1), "", FOLDER_LABEL_BYTES);
+    const tag = label ? ` (${label})` : "";
+    const names = [name("")];
+    if (tag) names.push(name(tag));
+    for (let n = 2; names.length < MAX_NOTE_NAMES; n++) names.push(name(`${tag} ${n}`));
+    return names;
+  }
+
+  // Where an article's note is when it was written in this session or has
+  // its id, else where a new one would go first.
   aiNotePath(articlePath: string): string {
-    return joinPath(this.folders().threads, `${slugify(noteBasename(articlePath))}.ai.md`);
+    const { vault } = this.deps;
+    const known = this.notePaths.get(articlePath);
+    if (known && vault.exists(known)) return known;
+    return vault.findManaged(AI_NOTE_KIND, articlePath) ?? this.aiNoteNames(articlePath)[0];
+  }
+
+  // Writes for one article's note wait in the queue of its first name, so
+  // same-name articles (which compete for it) also take turns.
+  private noteQueue(articlePath: string): string {
+    return this.aiNoteNames(articlePath)[0];
   }
 
   // ── Announcing changes ───────────────────────────────────────────────
@@ -197,27 +253,23 @@ export class ExportService {
     return this.run({ kind: "word", entryId, create: "always" });
   }
 
-  // An article was renamed or moved (規劃書 06 §4.6): its .ai.md follows.
-  // The paragraph anchors themselves are updated by their owner first.
+  // An article was renamed or moved (規劃書 06 §4.6): its .ai.md's id and
+  // source follow, and so does its name unless the user renamed or moved
+  // the note themselves. The paragraph anchors are updated by their owner
+  // first. An export still pending for the old path moves to the new one
+  // with its create mode, so a note due to be created still is.
   async renameArticle(oldPath: string, newPath: string): Promise<void> {
     const oldKey = jobKey({ kind: "note", articlePath: oldPath, create: "never" });
     const pending = this.timers.get(oldKey);
+    let create: CreateMode = "never";
     if (pending) {
       clearTimeout(pending.timer);
       this.timers.delete(oldKey);
+      if (pending.job.kind === "note") create = pending.job.create;
     }
-    const from = this.aiNotePath(oldPath);
-    const to = this.aiNotePath(newPath);
-    if (from !== to) {
-      await this.enqueue(from, async () => {
-        const { vault } = this.deps;
-        // Never clobber a note already at the new name.
-        if (!vault.exists(from) || vault.exists(to)) return;
-        await vault.rename(from, to);
-      });
-    }
-    // Embeds and the source link point at the new path.
-    this.articleChanged(newPath, "never");
+    if (oldPath !== newPath) await this.enqueue(this.noteQueue(oldPath), () => this.moveNote(oldPath, newPath));
+    // Embeds point at the new path.
+    this.articleChanged(newPath, create);
   }
 
   // Runs every pending export now and waits for all writes to land.
@@ -278,8 +330,10 @@ export class ExportService {
         return path;
       }
       case "note": {
-        const path = this.aiNotePath(job.articlePath);
-        await this.enqueue(path, () => this.writeNote(path, job.articlePath, job.create));
+        let path = null as string | null;
+        await this.enqueue(this.noteQueue(job.articlePath), async () => {
+          path = await this.writeNote(job.articlePath, job.create);
+        });
         return path;
       }
       case "trivia": {
@@ -326,7 +380,75 @@ export class ExportService {
     await this.write(path, renderWordPageSections(input, ctx), allowed ? () => renderWordPageFile(input, ctx) : null);
   }
 
-  private async writeNote(path: string, articlePath: string, create: CreateMode): Promise<void> {
+  // Finds the article's note — where it was last seen, by its frontmatter
+  // id, then under each of its names in turn — and, once process() has
+  // confirmed it really is this article's note, runs `update` on it. The
+  // first free name is where a new note goes, if `create` is given.
+  // Resolves to the note's path, or null when there's none.
+  private async resolveNote(
+    articlePath: string,
+    update: (text: string, owner: AiNoteOwner) => string,
+    create: (() => string) | null,
+    renamedTo?: string
+  ): Promise<string | null> {
+    const { vault } = this.deps;
+    const others = new Set<string>();
+    const tryUpdate = async (path: string): Promise<boolean> => {
+      try {
+        await vault.process(path, (text) => {
+          const owner = aiNoteOwner(text, articlePath, renamedTo);
+          if (owner === "other") throw new NotThisArticle();
+          return update(text, owner);
+        });
+      } catch (e) {
+        if (!(e instanceof NotThisArticle)) throw e;
+        others.add(path);
+        return false;
+      }
+      this.notePaths.set(articlePath, path);
+      return true;
+    };
+
+    for (const known of [this.notePaths.get(articlePath), vault.findManaged(AI_NOTE_KIND, articlePath)]) {
+      if (known && !others.has(known) && vault.exists(known) && (await tryUpdate(known))) return known;
+    }
+    for (const path of this.aiNoteNames(articlePath)) {
+      if (others.has(path)) continue;
+      if (!vault.exists(path)) {
+        if (!create) return null;
+        try {
+          await vault.create(path, create());
+          this.notePaths.set(articlePath, path);
+          return path;
+        } catch (e) {
+          if (!vault.exists(path)) throw e;
+          // It appeared meanwhile (sync, a same-name article): whose is it?
+        }
+      }
+      if (await tryUpdate(path)) return path;
+    }
+    return null;
+  }
+
+  private async moveNote(oldPath: string, newPath: string): Promise<void> {
+    const found = await this.resolveNote(oldPath, (text) => retargetAiNote(text, newPath), null, newPath);
+    this.notePaths.delete(oldPath);
+    if (!found) return;
+    this.notePaths.set(newPath, found);
+    // A note the user renamed or moved stays where they put it.
+    if (!this.aiNoteNames(oldPath).includes(found)) return;
+    const { vault } = this.deps;
+    for (const to of this.aiNoteNames(newPath)) {
+      if (to === found) return;
+      // Never clobber a note already at a name.
+      if (vault.exists(to)) continue;
+      await vault.rename(found, to);
+      this.notePaths.set(newPath, to);
+      return;
+    }
+  }
+
+  private async writeNote(articlePath: string, create: CreateMode): Promise<string | null> {
     await this.deps.data.ready?.();
     const { data } = this.deps;
     const paragraphs = (await data.paragraphThreads(articlePath)).flatMap(({ thread, index }) => {
@@ -346,8 +468,17 @@ export class ExportService {
       }));
     const input: AiNoteInput = { articlePath, paragraphs, words };
     const ctx = this.context();
+    const sections = renderAiNoteSections(input, ctx);
     const allowed = create === "always" || (create === "ifContent" && hasAiNoteContent(input));
-    await this.write(path, renderAiNoteSections(input, ctx), allowed ? () => renderAiNoteFile(input, ctx) : null);
+    return this.resolveNote(
+      articlePath,
+      (text, owner) => {
+        const updated = applyManagedBlocks(text, sections);
+        // An older note found by its name or source gets the id now.
+        return owner === "id" ? updated : claimAiNote(updated, articlePath);
+      },
+      allowed ? () => renderAiNoteFile(input, ctx) : null
+    );
   }
 
   private async writeTrivia(path: string): Promise<void> {

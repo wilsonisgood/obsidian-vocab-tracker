@@ -115,7 +115,11 @@ export function fill(template: string, vars: Record<string, string | number>): s
 // stay strings and links keep their brackets.
 const YAML_KEYWORDS = /^(true|false|yes|no|on|off|null|~)$/i;
 
+// One value: bare when it's a plain word, else a JSON string.
+export function yamlValue(v: string): string {
+  return /^[a-z][\w-]*$/i.test(v) && !YAML_KEYWORDS.test(v) ? v : JSON.stringify(v);
+}
+
 export function frontmatter(fields: Record<string, string>): string {
-  const value = (v: string) => (/^[a-z][\w-]*$/i.test(v) && !YAML_KEYWORDS.test(v) ? v : JSON.stringify(v));
-  return ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${value(v)}`), "---"].join("\n");
+  return ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${yamlValue(v)}`), "---"].join("\n");
 }

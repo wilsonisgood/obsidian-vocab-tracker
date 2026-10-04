@@ -142,8 +142,17 @@ class FakeData implements ExportDataPort {
   }
 }
 
-function paragraph(blockId: string, snapshot: string, index: number | null, turns = [turn("user", "?"), turn("assistant", "答案")]): ParagraphThread {
-  return { index, thread: { id: `p:${blockId}`, anchor: { kind: "paragraph", path: ARTICLE, blockId, hash: "h", snapshot }, turns } };
+function paragraph(blockId: string, snapshot: string, index: number | null, turns = [turn("user", "?"), turn("assistant", "答案")], path = ARTICLE): ParagraphThread {
+  return { index, thread: { id: `p:${blockId}`, anchor: { kind: "paragraph", path, blockId, hash: "h", snapshot }, turns } };
+}
+
+const THREADS = "vocab-list/討論串";
+
+// An existing .ai.md. `id: null` writes the older format without
+// vocab-tracker-id (only the source link says whose it is).
+function aiNoteFile(article: string, body: string, id: string | null = article, source = article.replace(/\.md$/, "")): string {
+  const fm = ["---", "vocab-tracker: ai-note", ...(id === null ? [] : [`vocab-tracker-id: ${JSON.stringify(id)}`]), `source: "[[${source}]]"`, "---"];
+  return `${fm.join("\n")}\n${body}`;
 }
 
 let vault: FakeVault;
@@ -454,14 +463,19 @@ describe("AI notes", () => {
     const text = vault.files.get(to)!;
     expect(text).toContain("![[eng/Swift NYU#^vt-aaaaaa]]");
     expect(text.endsWith("\nmy notes\n")).toBe(true);
+    expect(text).toContain('vocab-tracker-id: "eng/Swift NYU.md"\nsource: "[[eng/Swift NYU]]"\n');
+    expect(vault.findManaged("ai-note", renamed)).toBe(to);
   });
 
   it("rename never overwrites a note already at the new name", async () => {
-    vault.files.set(AI_NOTE, "old\n");
-    vault.files.set("vocab-list/討論串/New.ai.md", "someone else's\n");
+    const theirs = aiNoteFile("other/New.md", "someone else's\n");
+    vault.files.set(AI_NOTE, aiNoteFile(ARTICLE, "old\n"));
+    vault.files.set(`${THREADS}/New.ai.md`, theirs);
     await svc.renameArticle(ARTICLE, "New.md");
-    expect(vault.files.get("vocab-list/討論串/New.ai.md")).toBe("someone else's\n");
-    expect(vault.files.get(AI_NOTE)).toBe("old\n");
+    expect(vault.files.get(`${THREADS}/New.ai.md`)).toBe(theirs);
+    // At the vault root there's no folder to tell them apart: a number.
+    expect(vault.exists(AI_NOTE)).toBe(false);
+    expect(vault.files.get(`${THREADS}/New 2.ai.md`)).toBe(aiNoteFile("New.md", "old\n"));
   });
 
   it("rename drops a pending export for the old path", async () => {
@@ -470,6 +484,187 @@ describe("AI notes", () => {
     await svc.renameArticle(ARTICLE, "eng/New.md");
     await vi.advanceTimersByTimeAsync(2000);
     expect(vault.exists(AI_NOTE)).toBe(false);
+  });
+});
+
+describe("AI notes: articles with the same name", () => {
+  const A = "a/Notes.md";
+  const B = "b/Notes.md";
+  const NOTES = `${THREADS}/Notes.ai.md`;
+  const NOTES_B = `${THREADS}/Notes (b).ai.md`;
+
+  function discuss(path: string, snapshot: string): void {
+    data.paragraphs.set(path, [paragraph(`vt-${path.length}`, snapshot, 0, undefined, path)]);
+  }
+
+  it("gives each article its own note; neither overwrites the other", async () => {
+    discuss(A, "Paragraph from a.");
+    svc.articleChanged(A);
+    await vi.advanceTimersByTimeAsync(1000);
+    discuss(B, "Paragraph from b.");
+    svc.articleChanged(B);
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect([...vault.files.keys()]).toEqual([NOTES, NOTES_B]);
+    const a = vault.files.get(NOTES)!;
+    const b = vault.files.get(NOTES_B)!;
+    expect(a).toContain('vocab-tracker-id: "a/Notes.md"\nsource: "[[a/Notes]]"');
+    expect(a).toContain("Paragraph from a.");
+    expect(a).not.toContain("Paragraph from b.");
+    expect(b).toContain('vocab-tracker-id: "b/Notes.md"\nsource: "[[b/Notes]]"');
+    expect(b).toContain("Paragraph from b.");
+
+    // Later writes keep going to each article's own note.
+    discuss(A, "Edited a.");
+    discuss(B, "Edited b.");
+    svc.articleChanged(B);
+    svc.articleChanged(A);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.size).toBe(2);
+    expect(vault.files.get(NOTES)).toContain("Edited a.");
+    expect(vault.files.get(NOTES)).not.toContain("Edited b.");
+    expect(vault.files.get(NOTES_B)).toContain("Edited b.");
+    expect(vault.files.get(NOTES_B)).not.toContain("Edited a.");
+  });
+
+  it("numbers further clashes, and a fresh service finds each note again by its id", async () => {
+    const C = "x/b/Notes.md"; // same folder name as B
+    const ROOT = "Notes.md";
+    for (const p of [A, B, C, ROOT]) discuss(p, `Paragraph from ${p}.`);
+    for (const p of [A, B, C, ROOT]) svc.articleChanged(p);
+    await vi.advanceTimersByTimeAsync(1000);
+    // Root-level Notes.md has no folder name to add: a number instead.
+    expect([...vault.files.keys()].sort()).toEqual([NOTES, NOTES_B, `${THREADS}/Notes (b) 2.ai.md`, `${THREADS}/Notes 2.ai.md`].sort());
+    for (const path of vault.files.keys()) {
+      const id = /vocab-tracker-id: "(.*)"/.exec(vault.files.get(path)!)![1];
+      expect(vault.files.get(path)).toContain(`Paragraph from ${id}.`);
+    }
+
+    // Restarted: nothing remembered, the ids lead the way.
+    svc.dispose();
+    svc = make();
+    discuss(C, "Edited c.");
+    svc.articleChanged(C, "never");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.get(vault.findManaged("ai-note", C)!)).toContain("Edited c.");
+    expect(vault.files.size).toBe(4);
+  });
+
+  it("an older note without an id belongs to the article its source links to", async () => {
+    const blocks = "%% vt:begin paragraphs %%\nold\n%% vt:end paragraphs %%\n%% vt:begin words %%\n%% vt:end words %%\n";
+    const legacy = aiNoteFile(A, `${blocks}\nmy notes on a\n`, null);
+    vault.files.set(NOTES, legacy);
+
+    discuss(B, "Paragraph from b.");
+    svc.articleChanged(B);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.get(NOTES)).toBe(legacy);
+    expect(vault.files.get(NOTES_B)).toContain("Paragraph from b.");
+
+    discuss(A, "Paragraph from a.");
+    svc.articleChanged(A, "never");
+    await vi.advanceTimersByTimeAsync(1000);
+    const a = vault.files.get(NOTES)!;
+    expect(a).toContain("Paragraph from a.");
+    expect(a.endsWith("\nmy notes on a\n")).toBe(true);
+    // Claimed: the id is added right after the kind, the rest kept.
+    expect(a.startsWith('---\nvocab-tracker: ai-note\nvocab-tracker-id: "a/Notes.md"\nsource: "[[a/Notes]]"\n---\n')).toBe(true);
+    expect(vault.findManaged("ai-note", A)).toBe(NOTES);
+  });
+
+  it("an older note whose source is another article is left alone", async () => {
+    const legacy = aiNoteFile(B, "b's\n", null);
+    vault.files.set(NOTES, legacy);
+    discuss(A, "Paragraph from a.");
+    svc.articleChanged(A);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.get(NOTES)).toBe(legacy);
+    expect(vault.files.get(`${THREADS}/Notes (a).ai.md`)).toContain("Paragraph from a.");
+  });
+
+  it("a note that appears at the name just before the create isn't taken over", async () => {
+    const theirs = aiNoteFile(B, "synced from another device\n");
+    vault.gate = async () => {
+      if (!vault.files.has(NOTES)) vault.files.set(NOTES, theirs);
+    };
+    discuss(A, "Paragraph from a.");
+    svc.articleChanged(A);
+    await vi.advanceTimersByTimeAsync(1000);
+    vault.gate = null;
+    expect(vault.files.get(NOTES)).toBe(theirs);
+    expect(vault.files.get(`${THREADS}/Notes (a).ai.md`)).toContain("Paragraph from a.");
+  });
+
+  it("finds a note the user renamed or moved, by its id", async () => {
+    vault.files.set("Study/a 的討論.md", aiNoteFile(A, "mine\n"));
+    vault.files.set(NOTES, aiNoteFile(B, "b's\n"));
+    discuss(A, "Paragraph from a.");
+    svc.articleChanged(A);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.size).toBe(2);
+    expect(vault.files.get("Study/a 的討論.md")).toContain("Paragraph from a.");
+    expect(svc.aiNotePath(A)).toBe("Study/a 的討論.md");
+  });
+
+  it("renaming updates only the id and source lines; the note is found under the new path", async () => {
+    discuss(A, "Paragraph from a.");
+    svc.articleChanged(A);
+    await vi.advanceTimersByTimeAsync(1000);
+    const before = vault.files.get(NOTES)!.replace("\n---\n\n", "\naliases: [n]\n---\n\n") + "\nmy notes\n";
+    vault.files.set(NOTES, before);
+    vault.log = [];
+
+    await svc.renameArticle(A, "c/Notes.md");
+    // Same name: the file stays, its frontmatter follows the article.
+    expect(vault.log).toEqual([`process ${NOTES}`]);
+    expect(vault.files.get(NOTES)).toBe(before.replace('"a/Notes.md"', '"c/Notes.md"').replace("[[a/Notes]]", "[[c/Notes]]"));
+    expect(vault.findManaged("ai-note", "c/Notes.md")).toBe(NOTES);
+    expect(vault.findManaged("ai-note", A)).toBeNull();
+  });
+
+  it("renaming leaves a note the user moved where it is", async () => {
+    const moved = "Study/mine.md";
+    vault.files.set(moved, aiNoteFile(A, "mine\n"));
+    await svc.renameArticle(A, "a/Renamed.md");
+    expect([...vault.files.keys()]).toEqual([moved]);
+    expect(vault.files.get(moved)).toBe(aiNoteFile("a/Renamed.md", "mine\n"));
+  });
+
+  it("renaming finds an older note whose source Obsidian already pointed at the new path", async () => {
+    // Obsidian updates links on rename, possibly to the shortest form.
+    vault.files.set(NOTES, aiNoteFile(A, "old\n", null, "Renamed"));
+    await svc.renameArticle(A, "a/Renamed.md");
+    expect(vault.exists(NOTES)).toBe(false);
+    expect(vault.files.get(`${THREADS}/Renamed.ai.md`)).toBe(
+      '---\nvocab-tracker: ai-note\nvocab-tracker-id: "a/Renamed.md"\nsource: "[[a/Renamed]]"\n---\nold\n'
+    );
+  });
+
+  it("a rename within the debounce still creates the note, under the new path", async () => {
+    discuss("a/New.md", "Paragraph.");
+    svc.articleChanged(A); // "ifContent", pending
+    await vi.advanceTimersByTimeAsync(500);
+    await svc.renameArticle(A, "a/New.md");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect([...vault.files.keys()]).toEqual([`${THREADS}/New.ai.md`]);
+    expect(vault.files.get(`${THREADS}/New.ai.md`)).toContain('vocab-tracker-id: "a/New.md"');
+  });
+
+  it("a rename without a pending change only updates an existing note", async () => {
+    discuss("a/New.md", "Paragraph.");
+    await svc.renameArticle(A, "a/New.md");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.size).toBe(0);
+  });
+
+  it("long names are shortened, never the suffix that tells them apart", () => {
+    const long = "字".repeat(100);
+    const names = svc.aiNoteNames(`${"夾".repeat(40)}/${long}.md`);
+    const files = names.map((n) => n.slice(THREADS.length + 1));
+    expect(new Set(files).size).toBe(names.length);
+    for (const f of files) expect(new TextEncoder().encode(f).length).toBeLessThanOrEqual(200);
+    expect(files[1].endsWith(` (${"夾".repeat(20)}).ai.md`)).toBe(true);
+    expect(files[2].endsWith(` (${"夾".repeat(20)}) 2.ai.md`)).toBe(true);
   });
 });
 
