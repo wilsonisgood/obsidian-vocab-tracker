@@ -116,6 +116,24 @@ export const en = {
   "ai.action.openSettings": "Open settings",
   "ai.bubble.streaming": "Answering…",
 
+  // ── M4: word discussion ──────────────────────────────────────────
+  "word.tab.data": "Data",
+  "word.tab.ai": "AI",
+  "chat.placeholder.word": "Ask about {word}…",
+  "chat.send": "Send",
+  "chat.stop": "Stop",
+  "chat.selection": "Selection: “{text}”",
+  "chat.selection.remove": "Don't attach the selection",
+  "chat.selection.hint": "Sent with your next question so the AI knows which sentence you mean.",
+  "chat.empty": "No discussion yet. Pick a button above or type a question.",
+  "chat.meta.origin": "from ¶{n}",
+  "chat.action.pin": "Pin to grammar tips",
+  "chat.action.unpin": "Unpin",
+  "chat.action.copy": "Copy",
+  "chat.copied": "Copied",
+  "chat.truncated": "The answer hit the length limit and was cut off.",
+  "chat.retryWait": "The service is busy — retrying in {seconds}s…",
+
   "ai.gate.noKey.title": "Set up AI to start discussing",
   "ai.gate.noKey.body":
     "Add an API key in Settings › Vocab Tracker. Claude works, and so do OpenAI-compatible services (OpenAI, Gemini, local Ollama).",

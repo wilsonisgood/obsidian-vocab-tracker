@@ -117,6 +117,24 @@ export const zhTW: Record<keyof typeof en, string> = {
   "ai.action.openSettings": "開啟設定",
   "ai.bubble.streaming": "回答中…",
 
+  // ── M4：單字討論 ──────────────────────────────────────────────────
+  "word.tab.data": "資料",
+  "word.tab.ai": "AI",
+  "chat.placeholder.word": "問 {word}…",
+  "chat.send": "送出",
+  "chat.stop": "停止",
+  "chat.selection": "選取：「{text}」",
+  "chat.selection.remove": "不要附上選取的文字",
+  "chat.selection.hint": "下一個問題會附上這段文字，讓 AI 知道你問的是哪一句。",
+  "chat.empty": "還沒有討論。點上面的按鈕，或直接輸入問題。",
+  "chat.meta.origin": "出自 ¶{n}",
+  "chat.action.pin": "釘選到文法提示",
+  "chat.action.unpin": "取消釘選",
+  "chat.action.copy": "複製",
+  "chat.copied": "已複製",
+  "chat.truncated": "回答達到長度上限，後面被截掉了。",
+  "chat.retryWait": "服務忙碌，{seconds} 秒後重試…",
+
   "ai.gate.noKey.title": "設定 AI 後才能討論",
   "ai.gate.noKey.body":
     "在「設定 › Vocab Tracker」填入 API key，可以用 Claude，也可以用 OpenAI 相容的服務（OpenAI、Gemini、本機 Ollama）。",

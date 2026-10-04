@@ -4,6 +4,9 @@ import type { VocabEntry } from "../../core/model/entry";
 import { Rating } from "../../core/model/srs";
 import { dueLabel } from "../../core/text/dueLabel";
 import { t } from "../../core/i18n";
+import { wordThreadId } from "../../core/model/thread";
+import { renderWordAiTab } from "./AiTab";
+import type { WordTab, WordUi } from "./wordUi";
 
 // Progressive-disclosure state for a single row: collapsed (one line),
 // half (synonyms-and-up visible), full (everything visible).
@@ -13,6 +16,8 @@ export interface RowOptions {
   // Next-review date chip in the header (dashboard, 設計稿 L1). Off in the
   // narrow sidebar, where the header is already crowded.
   showDue?: boolean;
+  // Enables the 「資料 · ✦ AI」 tabs on expanded rows (規劃書 06 §9.4, M4).
+  ui?: WordUi;
 }
 
 type EditableField = "synonyms" | "definition" | "definitionZh" | "antonyms" | "example" | "grammar" | "level";
@@ -105,6 +110,14 @@ export function renderVocabRow(
   subText.textContent =
     [entry.phonetic, entry.partOfSpeech].filter(Boolean).join("  ·  ") || entry.word;
 
+  if (opts.ui) {
+    const tab = renderTabs(plugin, body, entry, opts.ui, refresh);
+    if (tab === "ai") {
+      renderWordAiTab(plugin, body, entry, opts.ui);
+      return;
+    }
+  }
+
   const commitField = async (key: EditableField, value: string) => {
     entry[key] = value;
     await plugin.store.touch(entry);
@@ -157,7 +170,8 @@ export function renderVocabRow(
     if (entry.antonyms) mkField(t("row.field.antonyms"), "antonyms");
 
     mkField(t("row.field.example"), "example", { multiline: true });
-    mkField(t("row.field.grammar"), "grammar");
+    // Multiline: pinned AI answers (釘選到文法提示) land here.
+    mkField(t("row.field.grammar"), "grammar", { multiline: true });
 
     if (entry.source && entry.source.path) {
       const src = body.createEl("div", { cls: "vocab-tracker-source-link" });
@@ -230,4 +244,47 @@ export function renderVocabRow(
     e.stopPropagation();
     plugin.speakWord(entry);
   };
+}
+
+// 「資料 · ✦ AI n」 (design D2/D3). Returns the tab to draw. The badge
+// counts questions in the word's thread and updates live; the thread shard
+// loads lazily, so the count fills in once it's read.
+function renderTabs(
+  plugin: VocabTrackerPlugin,
+  body: HTMLElement,
+  entry: VocabEntry,
+  ui: WordUi,
+  refresh: () => void
+): WordTab {
+  const current = ui.tabs.get(entry.id) ?? "data";
+  const bar = body.createDiv({ cls: "vt-tabs" });
+  const mkTab = (tab: WordTab, label: string, icon?: string) => {
+    const el = bar.createEl("button", { cls: "vt-tab" });
+    el.toggleClass("is-active", tab === current);
+    if (icon) setIcon(el.createSpan({ cls: "vt-tab-icon" }), icon);
+    el.createSpan({ text: label });
+    el.onclick = (e) => {
+      e.stopPropagation();
+      if (tab === current) return;
+      ui.tabs.set(entry.id, tab);
+      refresh();
+    };
+    return el;
+  };
+  mkTab("data", t("word.tab.data"));
+  const count = mkTab("ai", t("word.tab.ai"), "sparkles").createSpan({ cls: "vt-tab-count" });
+
+  const update = () => {
+    const n = plugin.threads.wordQuestionCount(entry.id);
+    count.setText(n > 0 ? String(n) : "");
+  };
+  const threadId = wordThreadId(entry.id);
+  ui.component.register(
+    plugin.threads.events.on("thread:upsert", (th) => {
+      if (th.id === threadId) update();
+    })
+  );
+  ui.component.register(plugin.threads.events.on("threads:reloaded", update));
+  void plugin.threads.ensureLoaded().then(update);
+  return current;
 }

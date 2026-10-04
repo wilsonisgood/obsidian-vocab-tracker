@@ -4,6 +4,7 @@ import type { ExpandState } from "../word/WordRow";
 import { renderVocabRow } from "../word/WordRow";
 import { renderGroupedVocabList } from "../word/GroupedWordList";
 import { t } from "../../core/i18n";
+import { WordUi } from "../word/wordUi";
 
 export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 
@@ -19,6 +20,7 @@ export class VocabSidebarView extends ItemView {
   filterMode?: FilterMode;
   expandState: Map<string, ExpandState> = new Map();
   collapsedGroups: Set<string> = new Set();
+  wordUi = new WordUi(this);
 
   constructor(leaf: WorkspaceLeaf, plugin: VocabTrackerPlugin) {
     super(leaf);
@@ -50,6 +52,7 @@ export class VocabSidebarView extends ItemView {
 
   render() {
     const root = this.containerEl.children[1] as HTMLElement;
+    this.wordUi.beginRender();
     root.empty();
     root.addClass("vocab-tracker-sidebar");
 
@@ -128,7 +131,8 @@ export class VocabSidebarView extends ItemView {
         list,
         this.collapsedGroups,
         this.expandState,
-        () => this.render()
+        () => this.render(),
+        { ui: this.wordUi }
       );
     } else {
       for (const entry of list) {
@@ -139,7 +143,8 @@ export class VocabSidebarView extends ItemView {
           entry,
           state,
           (s) => this.expandState.set(entry.id, s),
-          () => this.render()
+          () => this.render(),
+          { ui: this.wordUi }
         );
       }
     }
