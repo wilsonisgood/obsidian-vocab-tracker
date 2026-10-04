@@ -399,7 +399,8 @@ export class ThreadService {
       const input = paragraphInput(anchor, where, {
         question: req.question,
         selection: req.selection,
-        knownWords: this.deps.store.entries.map((e) => e.word),
+        // Auto-imported exam words aren't learned yet: still explain them.
+        knownWords: this.deps.store.entries.filter((e) => e.origin !== "wordlist").map((e) => e.word),
       });
       await this.ask({
         threadId,

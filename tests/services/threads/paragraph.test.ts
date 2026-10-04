@@ -112,6 +112,15 @@ describe("ThreadService.askParagraph", () => {
     expect(last).toMatchSnapshot();
   });
 
+  it("vocab still explains auto-imported exam words", async () => {
+    const { threads, ai, store } = setup(async () => result("ok"), "hash");
+    store.entries.find((e) => e.word === "ensemble")!.origin = "wordlist";
+    await threads.askParagraph(section(NOTE, 4, 5), { taskId: "paragraph.vocab" });
+    const last = ai.requests[0].messages.at(-1)?.content ?? "";
+    expect(last).toContain("glittery");
+    expect(last).not.toContain("glittery, ensemble");
+  });
+
   it("follow-ups reuse the thread and replay `sent` verbatim as history", async () => {
     const { threads, ai, vault } = setup(async () => result("answer"));
     const id = await threads.askParagraph(section(NOTE, 4, 5), { taskId: "paragraph.grammar" });

@@ -89,16 +89,6 @@ exports[`M7 AiRequest snapshots > trivia.followup — with history and selection
 apron, napkin, glittery
 
 ── system[2] ──
-〔這次的主角〕apron
-詞性：noun
-中文：圍裙
-學習者遇到它的句子：She wore an apron.
-
-── system[3] ──
-〔已講過的冷知識〕（不要重複這些內容；同一個字要換一個角度）
-- glittery：gl- 和光有關
-
-── system[4] ──
 〔學習者設定〕
 我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要，盡量在 300 字以內完成說明（英文原文與例句不計入字數）。
 
@@ -111,6 +101,14 @@ apron, napkin, glittery
 apron 原本是 a napron。
 
 ── user ──
+〔這次的主角〕apron
+詞性：noun
+中文：圍裙
+學習者遇到它的句子：She wore an apron.
+
+〔已講過的冷知識〕（不要重複這些內容；同一個字要換一個角度）
+- glittery：gl- 和光有關
+
 〔選取的文字〕
 a napron
 
@@ -139,36 +137,58 @@ exports[`M7 AiRequest snapshots > trivia.next — A1/TOEFL profile 1`] = `
 apron, napkin, glittery
 
 ── system[2] ──
+〔學習者設定〕
+我是一個 A1（入門）程度、正在準備托福（TOEFL）的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要，盡量在 200 字以內完成說明（英文原文與例句不計入字數）。
+
+── user ──
 〔這次的主角〕apron
 詞性：noun
 中文：圍裙
 學習者遇到它的句子：She wore an apron.
 
-── system[3] ──
 〔已講過的冷知識〕（不要重複這些內容；同一個字要換一個角度）
 - glittery：gl- 和光有關
 
-── system[4] ──
-〔學習者設定〕
-我是一個 A1（入門）程度、正在準備托福（TOEFL）的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要，盡量在 200 字以內完成說明（英文原文與例句不計入字數）。
-
-── user ──
 任務：再來一則冷知識（主角：apron）
 講一則和 apron 有關的冷知識，從字源、用法的演變、文化背景、容易混淆的字、有趣的搭配裡挑一個最有記憶點的角度。"
 `;
 
 exports[`M7 AiRequest snapshots > trivia.quiz / etymology / joke — final user turn > trivia.etymology 1`] = `
-"任務：字源（主角：apron）
+"〔這次的主角〕apron
+詞性：noun
+中文：圍裙
+學習者遇到它的句子：She wore an apron.
+
+〔已講過的冷知識〕（不要重複這些內容；同一個字要換一個角度）
+- glittery：gl- 和光有關
+
+任務：字源（主角：apron）
 講 apron 的字源或字根字首，以及它和哪些常見的字有關係。字源不確定、或各家說法不一時，直接說明，再改講可靠的構詞或用法，不要編造。"
 `;
 
 exports[`M7 AiRequest snapshots > trivia.quiz / etymology / joke — final user turn > trivia.joke 1`] = `
-"任務：笑話（主角：apron）
+"〔這次的主角〕apron
+詞性：noun
+中文：圍裙
+學習者遇到它的句子：She wore an apron.
+
+〔已講過的冷知識〕（不要重複這些內容；同一個字要換一個角度）
+- glittery：gl- 和光有關
+
+任務：笑話（主角：apron）
 用 apron 說一個簡短的笑話、雙關或文字遊戲，最後用一兩句說明笑點，以及 apron 在這裡的意思。"
 `;
 
 exports[`M7 AiRequest snapshots > trivia.quiz / etymology / joke — final user turn > trivia.quiz 1`] = `
-"任務：考我一題（主角：apron）
+"〔這次的主角〕apron
+詞性：noun
+中文：圍裙
+學習者遇到它的句子：She wore an apron.
+
+〔已講過的冷知識〕（不要重複這些內容；同一個字要換一個角度）
+- glittery：gl- 和光有關
+
+任務：考我一題（主角：apron）
 出一題關於 apron 的小題目：選擇題（最多四個選項）或填空題，用英文例句或情境出題，難度符合〔學習者設定〕。先不要公布答案，最後一行寫：「回覆你的答案，我再告訴你對不對。」"
 `;
 

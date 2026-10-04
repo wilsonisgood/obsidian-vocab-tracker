@@ -84,7 +84,7 @@ function triviaTask(
 ): AiTask<TriviaInput, TriviaAnswer> {
   const task: AiTask<TriviaInput, TriviaAnswer> = {
     id: `trivia.${id}`,
-    version: 1,
+    version: 2,
     surface: "trivia",
     tier: "smart",
     // Headroom for adaptive thinking on Sonnet 5; the visible answer is
@@ -96,10 +96,12 @@ function triviaTask(
       return composeRequest({
         base: TRIVIA_BASE_PROMPT,
         cached: [c.knownBlock],
-        context: [c.subjectBlock, c.toldBlock],
         profile: profileForTask(ctx.profile, task, input),
         history: ctx.history,
-        user: renderTemplate(TRIVIA_TEMPLATES[id], c.slots),
+        // The subject and the told list change every round, so they ride
+        // in this round's message: kept in the system prompt they would
+        // break the history cache on every request (規劃書 06 §6.4.1 #5).
+        user: [c.subjectBlock, c.toldBlock, renderTemplate(TRIVIA_TEMPLATES[id], c.slots)].filter(Boolean).join("\n\n"),
         tier: task.tier,
         maxTokens: task.maxTokens,
       });

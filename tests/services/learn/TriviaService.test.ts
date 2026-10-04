@@ -55,7 +55,10 @@ describe("TriviaService.ask", () => {
     });
     const req = threads.requests[0];
     expect(req.system[1]).toEqual({ text: "〔已學單字〕\napron, napkin, glittery", cache: true });
-    expect(req.system[2].text).toContain("〔這次的主角〕apron");
+    // Per-round blocks ride in the message, so the system prompt (and the
+    // history cache behind it) stays the same from round to round.
+    expect(req.system.some((b) => b.text.includes("〔這次的主角〕apron"))).toBe(false);
+    expect(req.messages.at(-1)?.content).toContain("〔這次的主角〕apron");
     expect(req.messages.at(-1)?.content).toContain("任務：再來一則冷知識（主角：apron）");
     expect(trivia.currentSubject()?.id).toBe("apron");
   });
@@ -86,7 +89,9 @@ describe("TriviaService.ask", () => {
       { word: "apron", title: "a napron → an apron" },
       { word: "apron", title: "a napron → an apron" },
     ]);
-    expect(threads.requests[1].system.some((b) => b.text.includes("〔已講過的冷知識〕") && b.text.includes("- apron：a napron → an apron"))).toBe(true);
+    const last = threads.requests[1].messages.at(-1)?.content ?? "";
+    expect(last).toContain("〔已講過的冷知識〕");
+    expect(last).toContain("- apron：a napron → an apron");
   });
 
   it("follow-ups stay on the current subject and carry the question", async () => {
