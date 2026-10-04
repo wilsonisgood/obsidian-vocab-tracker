@@ -135,6 +135,7 @@ describe("VocabStore", () => {
         expect(entry.rev).toBe(0);
         expect(entry.createdAt).toBeDefined();
         expect(entry.updatedAt).toBe(entry.createdAt);
+        expect(entry.lang).toBe("en");
 
         // Mutating the caller's reference after addEntry must be visible
         // in the store's array (enrichEntry relies on this).

@@ -41,6 +41,7 @@ export class VocabStore {
     entry.createdAt = entry.createdAt ?? stamp;
     entry.updatedAt = stamp;
     entry.rev = 0;
+    entry.lang = entry.lang ?? "en";
     this.data.entries.push(entry);
     return this.save();
   }

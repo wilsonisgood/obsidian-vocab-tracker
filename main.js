@@ -373,11 +373,12 @@ var VocabStore = class {
   // the caller holds (not a copy) so later direct mutations on it — e.g.
   // enrichEntry filling in dictionary fields — land in this.data too.
   addEntry(entry) {
-    var _a;
+    var _a, _b;
     const stamp = nowIso();
     entry.createdAt = (_a = entry.createdAt) != null ? _a : stamp;
     entry.updatedAt = stamp;
     entry.rev = 0;
+    entry.lang = (_b = entry.lang) != null ? _b : "en";
     this.data.entries.push(entry);
     return this.save();
   }
