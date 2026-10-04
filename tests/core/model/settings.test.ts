@@ -70,3 +70,20 @@ describe("VocabStore settings", () => {
     expect(writes).toHaveLength(1);
   });
 });
+
+describe("resolveWordlistSettings", () => {
+  it("fills defaults and normalises the folder", async () => {
+    const { resolveWordlistSettings, defaultTagColor } = await import("../../../src/core/model/wordlists");
+    expect(resolveWordlistSettings(undefined)).toEqual({
+      folder: "vocab-wordlists",
+      highlight: true,
+      inflections: true,
+      autoImport: true,
+      tags: {},
+    });
+    expect(resolveWordlistSettings({ folder: "/lists/exams/" }).folder).toBe("lists/exams");
+    expect(resolveWordlistSettings({ folder: "  " }).folder).toBe("vocab-wordlists");
+    expect(defaultTagColor("exam/TOEFL")).toBe("#3b82f6");
+    expect(defaultTagColor("custom/醫學")).toBe(defaultTagColor("custom/醫學"));
+  });
+});

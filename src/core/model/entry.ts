@@ -49,6 +49,9 @@ export interface VocabEntry extends Record_ {
   // it. services/srs treats a missing card as a brand-new one (due now)
   // rather than adding a v2→v3 migration just to backfill empty cards.
   srs?: SrsCard;
+  // How the word got here. Absent = added by hand (click in reading view);
+  // "wordlist" = auto-imported from an exam word list match.
+  origin?: "wordlist";
 }
 
 export interface VocabData {

@@ -3,6 +3,7 @@ import { t, type I18nKey } from "../../core/i18n";
 import type { VocabStore } from "../../core/store/VocabStore";
 import type { AiService } from "../../services/ai/AiService";
 import type { ApiKeys } from "../../services/ai/keys";
+import type { WordlistService } from "../../services/wordlists/WordlistService";
 
 // Everything a settings section may need. Sections get services, never the
 // plugin instance, so they stay testable and don't reach into main.ts.
@@ -11,8 +12,12 @@ export interface SettingsContext {
   store: VocabStore;
   ai: AiService;
   keys: ApiKeys;
+  wordlists: WordlistService;
   // Re-applies the interface language after the locale setting changes.
   applyLocale: () => void;
+  // After a word-list setting changed: "display" = colours/toggles only,
+  // "scan" = cached note scans are stale too, "reload" = re-read the lists.
+  onWordlistsChanged: (change: "display" | "scan" | "reload") => void;
   // Re-renders the whole tab (e.g. after switching provider, whose fields differ).
   redisplay: () => void;
 }

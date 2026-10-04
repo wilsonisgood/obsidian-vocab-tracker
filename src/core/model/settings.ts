@@ -1,4 +1,5 @@
 import type { SrsSettings } from "./srs";
+import type { WordlistSettings } from "./wordlists";
 
 // Plugin settings (規劃書 06 §4.1 `Settings`). Stored inside data.json's
 // `settings` object; every sub-object is optional on disk and filled from
@@ -60,6 +61,8 @@ export interface PluginSettings {
   // Read through resolveSrsSettings() (core/model/srs.ts), which fills in
   // DEFAULT_SRS_SETTINGS for anything missing.
   srs?: Partial<SrsSettings>;
+  // Read through resolveWordlistSettings() (core/model/wordlists.ts).
+  wordlists?: Partial<WordlistSettings>;
 }
 
 export type ResolvedSettings = PluginSettings & {
