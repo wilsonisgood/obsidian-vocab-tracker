@@ -235,6 +235,36 @@ describe("pin to grammar", () => {
     expect(entry.grammar).toBe("形容詞");
   });
 
+  it("strips the selection reminder before the scope line, so neither reaches the grammar note", async () => {
+    const { threads, entry } = setup(async () =>
+      result("你選取的文字裡似乎沒有 glittery，以下以出處段落為準。\n\n你問的是：「I was wearing a glittery leotard.」\n\n**亮片感**的形容詞")
+    );
+    entry.grammar = "形容詞";
+    await threads.askWord(entry, { taskId: "word.usage", selection: "Someone read stories to you." });
+    await threads.setPinned(entry, threads.wordThread("e1")?.turns[1].id as string, true);
+    expect(entry.grammar).toBe("形容詞\n\n**亮片感**的形容詞");
+  });
+
+  it("pinText removes every reminder variant", () => {
+    const body = "**亮片感**的形容詞";
+    const scope = "你問的是：「wearing a glittery leotard」\n\n";
+    for (const notice of [
+      "你選取的文字裡沒有 glittery，以下以出處段落為準。",
+      "你選取的文字裡似乎沒有 glittery，以下以出處段落為準。",
+      "你選取的文字裡似乎沒有 toil，以下以出處句子為準。",
+      "你選取的文字裡似乎沒有 toil，以下直接說明 toil。",
+      "你選取的文字中好像沒有 glittery，所以以下以出處為準：",
+      "**你選取的文字裡似乎沒有 glittery，以下以出處段落為準。**",
+      "> 你選取的文字裡似乎沒有 glittery。",
+    ]) {
+      expect(pinText(`${notice}\n\n${scope}${body}`)).toBe(body);
+      expect(pinText(`${notice}\n${body}`)).toBe(body);
+    }
+    expect(pinText("**你問的是：**「x」\n\nbody")).toBe("body");
+    // Only a leading reminder is stripped; the same words inside the body stay.
+    expect(pinText(`${body}\n\n你選取的文字裡似乎沒有 x`)).toBe(`${body}\n\n你選取的文字裡似乎沒有 x`);
+  });
+
   it("helpers", () => {
     expect(pinText("你問的是：整段（¶2）\n\nbody")).toBe("body");
     expect(pinText("no scope line")).toBe("no scope line");

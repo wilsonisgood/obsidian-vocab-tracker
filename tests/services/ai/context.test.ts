@@ -81,6 +81,13 @@ describe("buildWordContext", () => {
     expect(buildWordContext({ entry }).slots.selectionMissesWord).toBe("");
     expect(buildWordContext({ entry, selection: "   " }).slots.selectionMissesWord).toBe("");
   });
+
+  it("tells the templates which source block is present", () => {
+    expect(buildWordContext({ entry: { word: "x" }, sourceParagraph: "p" }).slots.sourceKind).toBe("段落");
+    expect(buildWordContext({ entry: { word: "x", example: "e" }, sourceParagraph: "p" }).slots.sourceKind).toBe("段落");
+    expect(buildWordContext({ entry: { word: "x", example: "e" } }).slots.sourceKind).toBe("句子");
+    expect(buildWordContext({ entry: { word: "x" } }).slots.sourceKind).toBe("");
+  });
 });
 
 describe("selectionHasWord", () => {
@@ -93,36 +100,87 @@ describe("selectionHasWord", () => {
     expect(has("leotard", "a glittery leotard.")).toBe(true);
   });
 
-  it("tolerates inflected and closely derived forms, both ways", () => {
+  it("tolerates regular inflection of the word", () => {
     expect(has("glitter", "the stage glittered")).toBe(true);
     expect(has("glittered", "all that glitters")).toBe(true);
-    expect(has("glittery", "it glittered under the lights")).toBe(true);
     expect(has("run", "she was running late")).toBe(true);
     expect(has("running", "he runs every day")).toBe(true);
-    expect(has("happy", "I've never been happier")).toBe(true);
-    expect(has("big", "the biggest stadium")).toBe(true);
+    expect(has("stop", "it stopped")).toBe(true);
     expect(has("study", "she studied hard")).toBe(true);
+    expect(has("studies", "a case study")).toBe(true);
     expect(has("make", "making a speech")).toBe(true);
+    expect(has("use", "it was used")).toBe(true);
     expect(has("lie", "lying in bed")).toBe(true);
     expect(has("box", "two boxes")).toBe(true);
-    expect(has("easy", "easily done")).toBe(true);
     expect(has("Taylor", "Taylor’s speech")).toBe(true);
+  });
+
+  it("undoes comparatives, adverbs and -y adjectives on the selection side only", () => {
+    expect(has("happy", "I've never been happier")).toBe(true);
+    expect(has("big", "the biggest stadium")).toBe(true);
+    expect(has("nice", "even nicer")).toBe(true);
+    expect(has("easy", "easily done")).toBe(true);
+    expect(has("quick", "move quickly")).toBe(true);
+    expect(has("glitter", "a glittery leotard")).toBe(true);
+    // …but not on the word side: glittery's notice still shows for "glittered"
+    // (the notice tells the model to ignore it for real variants).
+    expect(has("glittery", "it glittered under the lights")).toBe(false);
+    expect(has("happier", "a happy day")).toBe(false);
+  });
+
+  it("doesn't over-strip short or suffix-looking words (反例)", () => {
+    const line = "Someone read stories to you and offered up some moral code for you to try and live by.";
+    expect(has("forest", line)).toBe(false); // forest ≠ for
+    expect(has("news", "a new car")).toBe(false);
+    expect(has("many", "every man")).toBe(false);
+    expect(has("every", "I have ever seen")).toBe(false);
+    expect(has("party", "part of it")).toBe(false);
+    expect(has("early", "an ear")).toBe(false);
+    expect(has("army", "his arm")).toBe(false);
+    expect(has("card", "a car")).toBe(false);
+    expect(has("busy", "the bus")).toBe(false);
+    // Selection side, short stems: army ≠ arm, early ≠ ear.
+    expect(has("arm", "the army")).toBe(false);
+    expect(has("ear", "early on")).toBe(false);
+  });
+
+  it("matches hyphenated compounds part by part and with the hyphen removed", () => {
+    expect(has("glittery", "a glittery-gold dress")).toBe(true);
+    expect(has("aware", "she was self-aware")).toBe(true);
+    expect(has("known", "a well-known speech")).toBe(true);
+    expect(has("well-known", "a well-known speech")).toBe(true);
+    expect(has("well-known", "it is well known")).toBe(true);
+    expect(has("e-mail", "send an email")).toBe(true);
+    expect(has("email", "send an e-mail")).toBe(true);
+    expect(has("email", "send an e‑mail")).toBe(true); // U+2011 non-breaking hyphen
+    expect(has("self-aware", "aware of himself")).toBe(false);
   });
 
   it("matches multi-word entries in order, allowing a few words in between", () => {
     expect(has("gloss over", "they glossed over the details")).toBe(true);
     expect(has("gloss over", "Don't GLOSS it over")).toBe(true);
     expect(has("gloss over", "glossing the whole problem over")).toBe(true);
-    expect(has("give up", "she never gave up")).toBe(false); // irregular forms aren't handled
     expect(has("gloss over", "over the gloss")).toBe(false);
     expect(has("gloss over", "a glossy finish")).toBe(false);
     expect(has("gloss over", "gloss on the paint, and then far more words later over")).toBe(false);
-    expect(has("well-known", "a well-known speech")).toBe(true);
   });
 
-  it("counts a selection that is just part of the word", () => {
+  it("known limitation: irregular forms read as missing (the notice tells the model to ignore itself then)", () => {
+    expect(has("give up", "she never gave up")).toBe(false);
+    expect(has("knife", "two knives")).toBe(false);
+    expect(has("analysis", "several analyses")).toBe(false);
+    // Rules can't tell these apart either; it just means no notice.
+    expect(has("evening", "even so")).toBe(true);
+  });
+
+  it("counts a selection that is the start of the word itself", () => {
     expect(has("glittery", "glitter")).toBe(true);
-    expect(has("glittery", "litt")).toBe(true);
+    expect(has("glittery", "Glitt")).toBe(true);
+    expect(has("understand", "stand")).toBe(false); // not a prefix
+    expect(has("information", "format")).toBe(false);
+    expect(has("together", "her")).toBe(false);
+    expect(has("understand", "under")).toBe(false); // prefix, but only half the word
+    expect(has("glittery", "lit")).toBe(false);
   });
 
   it("reports the user's real case as missing", () => {
