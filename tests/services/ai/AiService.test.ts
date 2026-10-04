@@ -4,6 +4,7 @@ import type { FetchPort, FetchResponse, RawHttpRequest } from "../../../src/core
 import { AiService } from "../../../src/services/ai/AiService";
 import { ApiKeys } from "../../../src/services/ai/keys";
 import type { AiRequest } from "../../../src/services/ai/providers/types";
+import { paragraphGrammar } from "../../../src/services/ai/tasks/paragraph";
 import { UsageTracker } from "../../../src/services/ai/usage";
 import { errorResponse, FakeNetwork, fixture, MemoryDevice, MemorySecrets, MemoryStorage, response } from "./fakes";
 
@@ -93,6 +94,15 @@ describe("AiService.complete", () => {
   it("turns a refusal into a refused error", async () => {
     const s = setup(() => response(fixture("anthropic-refusal.txt")));
     await expect(s.ai.complete(REQ)).rejects.toMatchObject({ code: "refused" });
+  });
+
+  it("runs a task and tags the result with its id and version", async () => {
+    const s = setup(okStream);
+    const r = await s.ai.run(paragraphGrammar, { article: { paragraphs: ["One.", "Two."] }, paragraphIndex: 1 });
+    expect(r).toMatchObject({ taskId: "paragraph.grammar", taskVersion: 1 });
+    const body = JSON.parse(s.fetch.requests[0].body ?? "{}");
+    expect(body.model).toBe("claude-sonnet-5");
+    expect(body.system.at(-1).text).toContain("〔學習者設定〕");
   });
 });
 

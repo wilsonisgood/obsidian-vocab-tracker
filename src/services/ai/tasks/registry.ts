@@ -1,4 +1,6 @@
+import { PARAGRAPH_TASKS } from "./paragraph";
 import type { AiTask, Surface } from "./types";
+import { WORD_TASKS } from "./word";
 
 // Registry of every AI task (規劃書 06 §6.3). QuickActions (M4) renders
 // `forSurface(s).filter(t => t.label)` as buttons; family/verb/trivia tasks
@@ -35,5 +37,5 @@ export class TaskRegistry {
 }
 
 export function defaultTaskRegistry(): TaskRegistry {
-  return new TaskRegistry([]);
+  return new TaskRegistry([...PARAGRAPH_TASKS, ...WORD_TASKS]);
 }
