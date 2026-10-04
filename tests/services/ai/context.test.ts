@@ -75,7 +75,7 @@ describe("buildWordContext", () => {
 describe("renderProfile", () => {
   it("renders the default profile", () => {
     expect(renderProfile(defaultLearnerProfile())).toBe(
-      "〔學習者設定〕\n我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要，盡量在 300 字以內完成說明。"
+      "〔學習者設定〕\n我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要，盡量在 300 字以內完成說明（英文原文與例句不計入字數）。"
     );
   });
 

@@ -5,12 +5,14 @@ import { buildParagraphContext, type ParagraphInput } from "../../../../src/serv
 import { buildWordContext, type WordInput } from "../../../../src/services/ai/context/wordContext";
 import type { AiRequest, ChatMessage } from "../../../../src/services/ai/providers/types";
 import { trimHistory } from "../../../../src/services/ai/tasks/compose";
+import { scaledChars } from "../../../../src/services/ai/tasks/length";
 import {
   PARAGRAPH_BASE_PROMPT,
   PARAGRAPH_TASKS,
   PARAGRAPH_TEMPLATES,
   paragraphCustom,
   paragraphGrammar,
+  paragraphParaphrase,
   paragraphTranslate,
   paragraphVocab,
 } from "../../../../src/services/ai/tasks/paragraph";
@@ -184,6 +186,45 @@ describe("prompt structure invariants", () => {
     const req = paragraphCustom.build({ ...input, question: "now" }, ctx(defaultLearnerProfile(), history));
     expect(req.messages).toHaveLength(13);
     expect(req.messages.at(-1)?.role).toBe("user");
+  });
+});
+
+describe("answer length per task (規劃書 06 §6.4.1 #2)", () => {
+  const profileBlock = (req: AiRequest) => req.system.at(-1)?.text ?? "";
+  const LONG = "word ".repeat(200).trim(); // 999 characters
+  const longArticle = { title: "", paragraphs: ["Intro.", LONG] };
+
+  it("translate and paraphrase grow with the source text", () => {
+    expect(scaledChars(300, 999, 0.6)).toBe(900);
+    expect(profileBlock(paragraphTranslate.build({ article: longArticle, paragraphIndex: 1 }, ctx()))).toContain("盡量在 900 字以內");
+    expect(profileBlock(paragraphParaphrase.build({ article: longArticle, paragraphIndex: 1 }, ctx()))).toContain("盡量在 600 字以內");
+  });
+
+  it("measures the selection instead of the paragraph when there is one", () => {
+    const req = paragraphTranslate.build({ article: longArticle, paragraphIndex: 1, selection: "word word" }, ctx());
+    expect(profileBlock(req)).toContain("盡量在 350 字以內");
+  });
+
+  it("explanation tasks keep the learner's limit, and no limit stays unlimited", () => {
+    expect(profileBlock(paragraphGrammar.build({ article: longArticle, paragraphIndex: 1 }, ctx()))).toContain("盡量在 300 字以內");
+    const unlimited = { ...defaultLearnerProfile(), maxAnswerChars: 0 };
+    expect(profileBlock(paragraphTranslate.build({ article: longArticle, paragraphIndex: 1 }, ctx(unlimited)))).not.toContain("字以內");
+    expect(scaledChars(0, 999, 0.6)).toBe(0);
+  });
+
+  it("tells the model English quotes and examples don't count", () => {
+    expect(profileBlock(paragraphGrammar.build({ article: ARTICLE, paragraphIndex: 1 }, ctx()))).toContain("英文原文與例句不計入字數");
+  });
+});
+
+describe("follow-ups (規劃書 06 §6.4.1 #3)", () => {
+  it("both base prompts tell the model not to repeat the scope line for the same sentence", () => {
+    for (const base of [PARAGRAPH_BASE_PROMPT, WORD_BASE_PROMPT]) {
+      expect(base).toContain("追問時（前面的對話已經寫過「你問的是」）");
+      expect(base).toContain("就不要再寫這一行");
+    }
+    expect(PARAGRAPH_TEMPLATES.custom).toContain("決定第一行要不要寫出範圍");
+    expect(WORD_TEMPLATES.custom).toContain("決定第一行要不要寫出那一句");
   });
 });
 

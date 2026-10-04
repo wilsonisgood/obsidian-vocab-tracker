@@ -133,11 +133,17 @@ export class AiService {
   }
 
   async run<I>(task: AiTask<I, unknown> | string, input: I, opt: RunOptions = {}): Promise<AiRunResult> {
-    const t = typeof task === "string" ? this.tasks.get(task) : task;
-    if (!t) throw new Error(`Unknown AI task "${String(task)}"`);
-    const req = t.build(input, { profile: this.deps.settings().learner, history: opt.history ?? [] });
-    const result = await this.complete(req, opt);
+    const { task: t, request } = this.prepare(task, input, opt.history);
+    const result = await this.complete(request, opt);
     return { ...result, taskId: t.id, taskVersion: t.version };
+  }
+
+  // Builds the request without sending it, so a caller (ThreadService) can
+  // store the exact final message before calling complete().
+  prepare<I>(task: AiTask<I, unknown> | string, input: I, history: ChatMessage[] = []): { task: AiTask<I, unknown>; request: AiRequest } {
+    const t = typeof task === "string" ? (this.tasks.get(task) as AiTask<I, unknown> | undefined) : task;
+    if (!t) throw new Error(`Unknown AI task "${String(task)}"`);
+    return { task: t, request: t.build(input, { profile: this.deps.settings().learner, history }) };
   }
 
   async complete(req: AiRequest, opt: RunOptions = {}): Promise<AiRunResult> {

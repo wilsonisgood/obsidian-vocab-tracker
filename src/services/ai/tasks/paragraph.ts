@@ -1,6 +1,7 @@
 import { renderTemplate } from "../../../core/text/template";
 import { buildParagraphContext, type ParagraphInput } from "../context/paragraphContext";
 import { composeRequest } from "./compose";
+import { profileForTask, scaledChars } from "./length";
 import type { AiTask, TaskContext } from "./types";
 
 // Paragraph-surface prompts (規劃書 06 §6.3/§6.4). Every prompt is a plain
@@ -26,6 +27,7 @@ export const PARAGRAPH_BASE_PROMPT = `你是一位耐心、精準的英文閱讀
 - 回答的第一行固定寫出範圍，原文照抄、不要翻譯：
   - 針對某一句：你問的是：「<那一句英文原文>」
   - 針對整段：你問的是：整段（¶<段落編號>）
+- 追問時（前面的對話已經寫過「你問的是」），如果這次問的還是同一句或同一個範圍，就不要再寫這一行，直接回答；換了句子或範圍才重新寫。
 - 真的無法判斷時，列出最可能的一到兩句請使用者確認，不要硬猜。
 - 第一行之後空一行，再開始回答。`;
 
@@ -57,18 +59,19 @@ export const PARAGRAPH_TEMPLATES = {
   custom: `${SELECTION_HEADER}〔使用者的問題〕（¶{{paragraphNumber}}）
 {{question}}
 
-請先依「判斷使用者在問哪一句」的規則在第一行寫出範圍，再回答問題。`,
+請依「判斷使用者在問哪一句」的規則決定第一行要不要寫出範圍，再回答問題。`,
 } as const;
 
 type ParagraphTaskId = keyof typeof PARAGRAPH_TEMPLATES;
 
 function paragraphTask(
   id: ParagraphTaskId,
-  opts: Pick<AiTask<ParagraphInput>, "tier" | "maxTokens" | "label">
+  opts: Pick<AiTask<ParagraphInput>, "tier" | "maxTokens" | "label" | "answerChars">
 ): AiTask<ParagraphInput> {
-  return {
+  const task: AiTask<ParagraphInput> = {
     id: `paragraph.${id}`,
-    version: 1,
+    // v2: follow-ups skip a repeated 「你問的是」 line (規劃書 06 §6.4.1 #3).
+    version: 2,
     surface: "paragraph",
     ...opts,
     build(input: ParagraphInput, ctx: TaskContext) {
@@ -77,7 +80,7 @@ function paragraphTask(
         base: PARAGRAPH_BASE_PROMPT,
         cached: [c.articleBlock],
         context: [c.focusBlock],
-        profile: ctx.profile,
+        profile: profileForTask(ctx.profile, task, input),
         history: ctx.history,
         user: renderTemplate(PARAGRAPH_TEMPLATES[id], c.slots),
         tier: opts.tier,
@@ -85,15 +88,34 @@ function paragraphTask(
       });
     },
   };
+  return task;
+}
+
+// The English the answer is about: the selection, else the whole paragraph.
+function sourceChars(input: ParagraphInput): number {
+  const selection = input.selection?.trim();
+  return (selection || input.article.paragraphs[input.paragraphIndex] || "").trim().length;
 }
 
 // maxTokens leaves headroom for adaptive thinking on Sonnet 5, which
 // counts against max_tokens; the visible answer is still kept short by
 // the profile's length instruction.
 export const paragraphGrammar = paragraphTask("grammar", { tier: "smart", maxTokens: 4096, label: "ai.task.paragraph.grammar" });
-export const paragraphTranslate = paragraphTask("translate", { tier: "fast", maxTokens: 2048, label: "ai.task.paragraph.translate" });
+// Translate and paraphrase grow with the source text (規劃書 06 §6.4.1 #2);
+// the explanation tasks keep the learner's own limit.
+export const paragraphTranslate = paragraphTask("translate", {
+  tier: "fast",
+  maxTokens: 2048,
+  label: "ai.task.paragraph.translate",
+  answerChars: (input, max) => scaledChars(max, sourceChars(input), 0.6),
+});
 export const paragraphVocab = paragraphTask("vocab", { tier: "fast", maxTokens: 2048, label: "ai.task.paragraph.vocab" });
-export const paragraphParaphrase = paragraphTask("paraphrase", { tier: "smart", maxTokens: 4096, label: "ai.task.paragraph.paraphrase" });
+export const paragraphParaphrase = paragraphTask("paraphrase", {
+  tier: "smart",
+  maxTokens: 4096,
+  label: "ai.task.paragraph.paraphrase",
+  answerChars: (input, max) => scaledChars(max, sourceChars(input), 0.3),
+});
 // No label: free-form questions come from the composer, not a button.
 export const paragraphCustom = paragraphTask("custom", { tier: "smart", maxTokens: 4096 });
 

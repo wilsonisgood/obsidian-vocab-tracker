@@ -20,6 +20,7 @@ export const WORD_BASE_PROMPT = `你是一位耐心、精準的英文單字家�
 - 使用者的問題可能很口語，例如「這句裡它是什麼意思」「我看不懂這句」，也可能直接貼上或引用原文的一小段（可能不完整、有錯字、大小寫不同）。
 - 依序用這些線索找出他指的那一句：有〔選取的文字〕時以包含它的句子為準；問題裡引用了英文片段時，在〔出處段落〕找包含這個片段的句子；都沒有線索時，以〔出處段落〕中含有這個單字的句子為準。
 - 只要回答牽涉原文裡的某一句，第一行固定寫：你問的是：「<那一句英文原文>」（原文照抄，不要翻譯），空一行再開始回答。問題和原文句子無關時（例如只問字根、造句），不用寫這一行。
+- 追問時（前面的對話已經寫過「你問的是」），如果這次問的還是同一句，就不要再寫這一行，直接回答；換了句子才重新寫。
 - 真的無法判斷時，列出最可能的一到兩句請使用者確認，不要硬猜。`;
 
 const SELECTION_HEADER = `{{#selection}}〔選取的文字〕
@@ -43,7 +44,7 @@ export const WORD_TEMPLATES = {
   custom: `${SELECTION_HEADER}〔使用者的問題〕（關於 {{word}}）
 {{question}}
 
-如果問題牽涉原文裡的某一句，先依「判斷使用者在問哪一句」的規則在第一行寫出那一句，再回答問題。`,
+如果問題牽涉原文裡的某一句，依「判斷使用者在問哪一句」的規則決定第一行要不要寫出那一句，再回答問題。`,
 } as const;
 
 type WordTaskId = keyof typeof WORD_TEMPLATES;
@@ -51,7 +52,8 @@ type WordTaskId = keyof typeof WORD_TEMPLATES;
 function wordTask(id: WordTaskId, opts: Pick<AiTask<WordInput>, "tier" | "maxTokens" | "label">): AiTask<WordInput> {
   return {
     id: `word.${id}`,
-    version: 1,
+    // v2: follow-ups skip a repeated 「你問的是」 line (規劃書 06 §6.4.1 #3).
+    version: 2,
     surface: "word",
     ...opts,
     build(input: WordInput, ctx: TaskContext) {

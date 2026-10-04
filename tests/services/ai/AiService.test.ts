@@ -99,7 +99,7 @@ describe("AiService.complete", () => {
   it("runs a task and tags the result with its id and version", async () => {
     const s = setup(okStream);
     const r = await s.ai.run(paragraphGrammar, { article: { paragraphs: ["One.", "Two."] }, paragraphIndex: 1 });
-    expect(r).toMatchObject({ taskId: "paragraph.grammar", taskVersion: 1 });
+    expect(r).toMatchObject({ taskId: "paragraph.grammar", taskVersion: 2 });
     const body = JSON.parse(s.fetch.requests[0].body ?? "{}");
     expect(body.model).toBe("claude-sonnet-5");
     expect(body.system.at(-1).text).toContain("〔學習者設定〕");
