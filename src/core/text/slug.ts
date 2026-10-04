@@ -10,11 +10,42 @@ const FORBIDDEN = /[/\\:*?"<>|#^[\]]/g;
 // eslint-disable-next-line no-control-regex
 const CONTROL = /[\u0000-\u001f\u007f]/g;
 
-// Long enough for any real word or article title; keeps the full path well
-// under the 255-byte limit some file systems have even with CJK names.
-const MAX_LENGTH = 100;
+// File systems cap a single file *name* (not the path) at 255 bytes
+// (APFS, ext4; NTFS counts 255 UTF-16 units, which UTF-8 bytes never
+// undercount). A CJK character is 3 bytes in UTF-8 and an emoji 4, so the
+// cap is counted in bytes, not characters. 200 leaves room for what sync
+// tools append on a conflict (" (conflicted copy 2026-10-04)"). Callers
+// pass what's left after the extension, see wordSlug.
+export const MAX_NAME_BYTES = 200;
 
-export function slugify(name: string, fallback = "untitled"): string {
+// UTF-8 length of a string, without allocating the encoded bytes.
+export function utf8Bytes(s: string): number {
+  let n = 0;
+  for (const ch of s) {
+    const cp = ch.codePointAt(0) ?? 0;
+    n += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
+  }
+  return n;
+}
+
+// The longest prefix of whole code points (Array.from, so an emoji's
+// surrogate pair is never split) that fits in `maxBytes`. A zero-width
+// joiner left dangling by the cut is dropped too.
+function truncateBytes(s: string, maxBytes: number): string {
+  if (utf8Bytes(s) <= maxBytes) return s;
+  let out = "";
+  let n = 0;
+  for (const ch of Array.from(s)) {
+    const size = utf8Bytes(ch);
+    if (n + size > maxBytes) break;
+    out += ch;
+    n += size;
+  }
+  return out.replace(/\u200d+$/, "");
+}
+
+// `maxBytes` is the budget for the name without its extension.
+export function slugify(name: string, fallback = "untitled", maxBytes = MAX_NAME_BYTES): string {
   let s = name.normalize("NFC").replace(CONTROL, "").replace(FORBIDDEN, "-");
   s = s.replace(/\s+/g, " ").trim();
   // Collapse the runs of "-" that replacements leave behind ("a / b" →
@@ -23,14 +54,14 @@ export function slugify(name: string, fallback = "untitled"): string {
   // A leading "." hides the file; trailing dots and spaces are dropped by
   // Windows, which would make the name differ between synced devices.
   s = s.replace(/^[.\s]+/, "").replace(/[.\s]+$/, "");
-  if (s.length > MAX_LENGTH) s = s.slice(0, MAX_LENGTH).replace(/[.\s]+$/, "");
+  s = truncateBytes(s, Math.max(0, maxBytes)).replace(/[.\s]+$/, "");
   return s || fallback;
 }
 
 // Words that differ only in case share one page: "Glittery" and "glittery"
 // both go to glittery.md (so do keys built from it for queues and maps).
 export function wordSlug(word: string): string {
-  return slugify(word.toLocaleLowerCase("en"), "word");
+  return slugify(word.toLocaleLowerCase("en"), "word", MAX_NAME_BYTES - utf8Bytes(".md"));
 }
 
 export function joinPath(...parts: string[]): string {

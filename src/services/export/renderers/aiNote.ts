@@ -1,5 +1,6 @@
 import type { Turn } from "../../../core/model/thread";
-import { linkTarget } from "../../../core/text/slug";
+import { linkTarget, noteBasename } from "../../../core/text/slug";
+import { editFrontmatter, readFrontmatter } from "../frontmatter";
 import { buildManagedFile, type ManagedSection } from "../managedBlock";
 import type { RenderContext } from "../types";
 import { blockquote, fill, frontmatter, italic, oneLine, renderRounds, roundsOf, wordRef } from "./common";
@@ -90,7 +91,65 @@ export function renderAiNoteSections(input: AiNoteInput, ctx: RenderContext): Ma
   ];
 }
 
+// `vocab-tracker-id` is the article's path: how the note is found again
+// after the user renames or moves it, and how two articles with the same
+// name in different folders tell their notes apart.
 export function renderAiNoteFile(input: AiNoteInput, ctx: RenderContext): string {
-  const head = frontmatter({ "vocab-tracker": AI_NOTE_KIND, source: `[[${linkTarget(input.articlePath)}]]` });
+  const head = frontmatter({
+    "vocab-tracker": AI_NOTE_KIND,
+    "vocab-tracker-id": input.articlePath,
+    source: `[[${linkTarget(input.articlePath)}]]`,
+  });
   return buildManagedFile(head, renderAiNoteSections(input, ctx), `%% ${ctx.labels.userNotesHint} %%\n`);
+}
+
+// ── Whose note is it ─────────────────────────────────────────────────
+
+// How a .ai.md relates to an article:
+// - "id": its `vocab-tracker-id` is the article's path.
+// - "source": an older note without the id whose `source` links to the
+//   article.
+// - "unclaimed": nothing says whose it is (no frontmatter, or neither
+//   field) — taken by the article whose name it has.
+// - "other": another article's note, or not an AI note at all.
+export type AiNoteOwner = "id" | "source" | "unclaimed" | "other";
+
+// "[[eng/Speech|alias]]" → "eng/Speech".
+function sourceTarget(source: string): string {
+  const m = /^\[\[([^\]|#]*)/.exec(source.trim());
+  return (m ? m[1] : source).trim().replace(/\.md$/i, "");
+}
+
+// `renamedTo`: during a rename, the article's new path counts as the same
+// article. Obsidian may already have rewritten the source link to it,
+// possibly in its shortest form ("[[Speech]]").
+export function aiNoteOwner(text: string, articlePath: string, renamedTo?: string): AiNoteOwner {
+  const fm = readFrontmatter(text);
+  if (!fm) return "unclaimed";
+  const kind = fm["vocab-tracker"];
+  if (kind !== undefined && kind !== AI_NOTE_KIND) return "other";
+  const paths = renamedTo === undefined ? [articlePath] : [articlePath, renamedTo];
+  const id = fm["vocab-tracker-id"];
+  if (id) return paths.includes(id) ? "id" : "other";
+  if (!fm.source) return "unclaimed";
+  const target = sourceTarget(fm.source);
+  if (paths.some((p) => linkTarget(p) === target)) return "source";
+  if (renamedTo !== undefined && target === noteBasename(renamedTo)) return "source";
+  return "other";
+}
+
+// Marks a note as this article's (adds `vocab-tracker-id`, and the kind if
+// missing), so findManaged finds it from now on. Only those frontmatter
+// lines change; a note without frontmatter is left as is.
+export function claimAiNote(text: string, articlePath: string): string {
+  const fields: Record<string, string> = {};
+  if (readFrontmatter(text)?.["vocab-tracker"] === undefined) fields["vocab-tracker"] = AI_NOTE_KIND;
+  fields["vocab-tracker-id"] = articlePath;
+  return editFrontmatter(text, fields, { add: true, after: "vocab-tracker" });
+}
+
+// After the article was renamed: points the id and the source link (when
+// the note has one) at the new path. Nothing else in the note changes.
+export function retargetAiNote(text: string, newPath: string): string {
+  return editFrontmatter(claimAiNote(text, newPath), { source: `[[${linkTarget(newPath)}]]` });
 }
