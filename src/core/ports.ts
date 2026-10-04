@@ -132,11 +132,14 @@ export interface VaultPort {
   create(path: string, content: string): Promise<void>;
   // Atomic read-modify-write of an existing file (Obsidian's
   // vault.process): `fn` gets the current text and returns the new text.
+  // Whatever `fn` throws rejects the call and leaves the file untouched
+  // (ExportService relies on this to skip another article's .ai.md).
   process(path: string, fn: (text: string) => string): Promise<void>;
   // Moves a file, keeping links to it updated (fileManager.renameFile).
   rename(from: string, to: string): Promise<void>;
   // A note whose frontmatter has `vocab-tracker: <kind>` and
-  // `vocab-tracker-id: <id>` — finds a word page the user renamed or moved
+  // `vocab-tracker-id: <id>` — finds a word page ("word", id = entry id) or
+  // an AI note ("ai-note", id = article path) the user renamed or moved
   // (規劃書 06 §4.6). Null when there's none. Compare the id as a string:
   // YAML may have parsed an unquoted numeric id as a number.
   findManaged(kind: string, id: string): string | null;
