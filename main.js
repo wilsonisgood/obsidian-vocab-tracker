@@ -437,6 +437,9 @@ var VocabStore = class {
     this.events = new TypedEmitter();
     this.writeTimer = null;
     this.pendingWrite = Promise.resolve();
+    // Settings objects already passed through withSettingsDefaults, so the
+    // getter returns a stable object instead of re-resolving on every read.
+    this.resolvedSettings = /* @__PURE__ */ new WeakSet();
   }
   get vocabData() {
     return this.data;
@@ -445,8 +448,11 @@ var VocabStore = class {
   // later in-place edits (updateSettings) land on the persisted object;
   // re-resolving after replace() (sync merge) picks up remote fields too.
   get settings() {
-    const resolved = withSettingsDefaults(this.data.settings);
+    const current = this.data.settings;
+    if (current && this.resolvedSettings.has(current)) return current;
+    const resolved = withSettingsDefaults(current);
     this.data.settings = resolved;
+    this.resolvedSettings.add(resolved);
     return resolved;
   }
   // The only way UI code should change settings: stamps updatedAt so
@@ -1640,6 +1646,7 @@ function trimSlash(url) {
 }
 
 // src/services/ai/providers/types.ts
+var TEST_MAX_TOKENS = 256;
 function emptyUsage() {
   return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
 }
@@ -1792,7 +1799,7 @@ var AnthropicProvider = class {
     let transport = "fetch";
     for (const model of models) {
       const res = await this.deps.transport.send(
-        this.request({ model, max_tokens: 16, stream: true, messages: [{ role: "user", content: "ping" }] }),
+        this.request({ model, max_tokens: TEST_MAX_TOKENS, stream: true, messages: [{ role: "user", content: "ping" }] }),
         signal
       );
       await throwIfHttpError(res);
@@ -1965,7 +1972,7 @@ var OpenAiCompatProvider = class {
     let transport = "fetch";
     for (const model of models) {
       const body = buildOpenAiBody(
-        { system: [], messages: [{ role: "user", content: "ping" }], maxTokens: 16, tier: "fast" },
+        { system: [], messages: [{ role: "user", content: "ping" }], maxTokens: TEST_MAX_TOKENS, tier: "fast" },
         model,
         this.baseUrl
       );

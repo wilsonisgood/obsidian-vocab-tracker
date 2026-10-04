@@ -31,10 +31,17 @@ export class VocabStore {
   // later in-place edits (updateSettings) land on the persisted object;
   // re-resolving after replace() (sync merge) picks up remote fields too.
   get settings(): ResolvedSettings {
-    const resolved = withSettingsDefaults(this.data.settings);
+    const current = this.data.settings;
+    if (current && this.resolvedSettings.has(current)) return current as ResolvedSettings;
+    const resolved = withSettingsDefaults(current);
     this.data.settings = resolved;
+    this.resolvedSettings.add(resolved);
     return resolved;
   }
+
+  // Settings objects already passed through withSettingsDefaults, so the
+  // getter returns a stable object instead of re-resolving on every read.
+  private resolvedSettings = new WeakSet<object>();
 
   // The only way UI code should change settings: stamps updatedAt so
   // merge.ts can tell which device's settings are newer.

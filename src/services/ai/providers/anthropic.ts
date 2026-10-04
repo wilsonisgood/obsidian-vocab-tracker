@@ -4,6 +4,7 @@ import type { SseEvent } from "../transport/sse";
 import { consumeBody, parseJson, throwIfHttpError, trimSlash } from "./stream";
 import {
   emptyUsage,
+  TEST_MAX_TOKENS,
   type AiProvider,
   type AiRequest,
   type AiResult,
@@ -191,7 +192,7 @@ export class AnthropicProvider implements AiProvider {
     let transport: TestConnectionResult["transport"] = "fetch";
     for (const model of models) {
       const res = await this.deps.transport.send(
-        this.request({ model, max_tokens: 16, stream: true, messages: [{ role: "user", content: "ping" }] }),
+        this.request({ model, max_tokens: TEST_MAX_TOKENS, stream: true, messages: [{ role: "user", content: "ping" }] }),
         signal
       );
       await throwIfHttpError(res);

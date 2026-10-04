@@ -195,7 +195,7 @@ describe("Anthropic response parsing", () => {
     const t = new FakeTransport(() => response(fixture("anthropic-basic.txt")));
     const r = await anthropic(t).testConnection(signal());
     expect(r.models).toEqual(["claude-sonnet-5", "claude-haiku-4-5"]);
-    expect(t.requests.map((q) => JSON.parse(q.body ?? "").max_tokens)).toEqual([16, 16]);
+    expect(t.requests.map((q) => JSON.parse(q.body ?? "").max_tokens)).toEqual([256, 256]);
   });
 });
 

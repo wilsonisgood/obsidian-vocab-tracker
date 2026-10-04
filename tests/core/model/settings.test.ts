@@ -59,6 +59,8 @@ describe("VocabStore settings", () => {
       writes.push(structuredClone(d));
     });
     expect(store.settings.ai.enabled).toBe(false);
+    // Stable object across reads (no re-resolve churn).
+    expect(store.settings).toBe(store.settings);
     await store.updateSettings((s) => {
       s.ai.enabled = true;
     });

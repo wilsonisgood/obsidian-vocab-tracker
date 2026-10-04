@@ -81,6 +81,11 @@ export interface ProviderDeps {
   now?: () => number;
 }
 
+// max_tokens for the 測試連線 ping. Generous on purpose: Sonnet 5 thinks
+// adaptively by default and thinking counts against max_tokens, so a tiny
+// cap risks a truncated or rejected test even though the setup is fine.
+export const TEST_MAX_TOKENS = 256;
+
 export function emptyUsage(): Usage {
   return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
 }

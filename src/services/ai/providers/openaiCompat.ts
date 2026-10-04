@@ -5,6 +5,7 @@ import type { SseEvent } from "../transport/sse";
 import { consumeBody, extractJson, parseJson, throwIfHttpError, trimSlash } from "./stream";
 import {
   emptyUsage,
+  TEST_MAX_TOKENS,
   type AiProvider,
   type AiRequest,
   type AiResult,
@@ -207,7 +208,7 @@ export class OpenAiCompatProvider implements AiProvider {
     let transport: TestConnectionResult["transport"] = "fetch";
     for (const model of models) {
       const body = buildOpenAiBody(
-        { system: [], messages: [{ role: "user", content: "ping" }], maxTokens: 16, tier: "fast" },
+        { system: [], messages: [{ role: "user", content: "ping" }], maxTokens: TEST_MAX_TOKENS, tier: "fast" },
         model,
         this.baseUrl
       );
