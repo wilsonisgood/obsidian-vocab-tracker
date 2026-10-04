@@ -68,7 +68,7 @@ describe("ThreadService.askWord", () => {
     const [q, a] = th.turns;
     expect(q).toMatchObject({ role: "user", content: "Usage", taskId: "word.usage", selection: "wearing a glittery leotard" });
     expect(q.sent).toContain("〔選取的文字〕\nwearing a glittery leotard");
-    expect(a).toMatchObject({ role: "assistant", status: "done", taskVersion: 2, model: "claude-sonnet-5", stop: "end" });
+    expect(a).toMatchObject({ role: "assistant", status: "done", taskVersion: 3, model: "claude-sonnet-5", stop: "end" });
     expect(threads.isBusy(th.id)).toBe(false);
     expect(threads.wordQuestionCount("e1")).toBe(1);
 

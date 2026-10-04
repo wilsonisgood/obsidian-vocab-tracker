@@ -24,6 +24,7 @@ import {
   wordCompare,
   wordCustom,
   wordMnemonic,
+  wordUsage,
 } from "../../../../src/services/ai/tasks/word";
 
 // Snapshot tests of the exact requests sent to the model (規劃書 06 §11):
@@ -52,6 +53,10 @@ const GLITTERY: WordInput = {
   sourceParagraph: ARTICLE.paragraphs[1],
   sourceTitle: "Taylor Swift NYU Commencement Speech",
 };
+
+// The selection from the user's report: another paragraph, no "glittery".
+const OFF_TOPIC =
+  "Someone read stories to you and taught you to dream and offered up some moral code of right and wrong for you to try and live by.";
 
 const ctx = (profile: LearnerProfile = defaultLearnerProfile(), history: ChatMessage[] = []) => ({ profile, history });
 
@@ -104,6 +109,54 @@ describe("composed AiRequest snapshots", () => {
 
   it("word.mnemonic — no source paragraph", () => {
     expect(render(wordMnemonic.build({ entry: { word: "toil" } }, ctx()))).toMatchSnapshot();
+  });
+
+  it("word.usage — selection that doesn't contain the word (full request)", () => {
+    expect(render(wordUsage.build({ ...GLITTERY, selection: OFF_TOPIC }, ctx()))).toMatchSnapshot();
+  });
+
+  it("word.custom — selection without the word, no source", () => {
+    const req = wordCustom.build({ entry: { word: "toil" }, selection: "the cat sat", question: "這是什麼意思？" }, ctx());
+    expect(req.messages.at(-1)?.content).toMatchSnapshot();
+  });
+});
+
+describe("selection that doesn't contain the word (規劃書 06 §6.4)", () => {
+  const user = (input: WordInput) => wordUsage.build(input, ctx()).messages.at(-1)?.content ?? "";
+  const NOTICE = "〔注意〕";
+
+  it("asks for a reminder on the first line, then the source paragraph as usual", () => {
+    const msg = user({ ...GLITTERY, selection: OFF_TOPIC });
+    expect(msg.startsWith(`〔選取的文字〕\n${OFF_TOPIC}\n\n${NOTICE}`)).toBe(true);
+    expect(msg).toContain("回答的第一行固定寫：你選取的文字裡沒有 glittery，以下以出處段落為準。");
+    expect(msg).toContain("需要寫「你問的是：…」那一行時，放在這句提醒之後");
+    expect(msg).toContain("任務：用法（glittery）");
+  });
+
+  it("renders exactly as before when the selection contains the word", () => {
+    for (const selection of ["glittery leotard", "a GLITTERY dress", "Glittery!"]) {
+      const msg = user({ ...GLITTERY, selection });
+      expect(msg).not.toContain(NOTICE);
+      expect(msg).toBe(`〔選取的文字〕\n${selection}\n\n${user(GLITTERY)}`);
+    }
+  });
+
+  it("no selection: no selection block and no reminder", () => {
+    const msg = user(GLITTERY);
+    expect(msg).not.toContain("〔選取的文字〕");
+    expect(msg).not.toContain(NOTICE);
+    expect(msg.startsWith("任務：用法（glittery）")).toBe(true);
+  });
+
+  it("applies to every word task", () => {
+    for (const t of WORD_TASKS) {
+      expect(t.build({ ...GLITTERY, selection: OFF_TOPIC, question: "?" }, ctx()).messages.at(-1)?.content).toContain(NOTICE);
+      expect(t.build({ ...GLITTERY, selection: "glittery", question: "?" }, ctx()).messages.at(-1)?.content).not.toContain(NOTICE);
+    }
+  });
+
+  it("bumps the word tasks to version 3", () => {
+    for (const t of WORD_TASKS) expect(t.version).toBe(3);
   });
 });
 
