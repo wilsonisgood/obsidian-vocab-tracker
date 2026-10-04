@@ -80,3 +80,9 @@ export interface SecretPort {
 export interface NetworkPort {
   isOnline(): boolean;
 }
+
+// Read-only access to notes in the vault (source paragraphs for AI
+// context). Null when the note no longer exists.
+export interface NoteReaderPort {
+  read(path: string): Promise<string | null>;
+}
