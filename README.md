@@ -26,7 +26,7 @@
 | 你在 AI 分頁按快捷鈕或送出問題 | 見下方〈AI 會送出哪些文字〉 | 你在設定選的服務：Anthropic（`api.anthropic.com`），或你填的 OpenAI 相容 Base URL | Anthropic 需要；OpenAI 相容端點可以不填（例如本機 Ollama） |
 | 你在設定按「測試連線」 | 每個設定的模型各送一次 `ping` | 同上 | 同上 |
 
-除此之外，插件不會連到其他地方，也沒有任何統計或追蹤。發音用的是裝置內建的語音合成。
+除此之外，插件不會連到其他地方，也沒有任何統計或追蹤。發音用的是裝置內建的語音合成；唯一的例外是舊版插件查過字典、單字資料裡存有發音檔網址的單字，按發音時會從那個網址播放（播放失敗才改用語音合成）。
 
 字典與翻譯不受「啟用 AI」開關控制，加入單字後就會查詢；送出的只有單字和它的英文定義，不包含筆記內容。
 
@@ -44,11 +44,11 @@
 2. **這個單字的資料**：單字、音標、詞性、中文、英文定義、同義詞、反義詞，以及你在「文法提示」欄寫的內容。空白的欄位不送。
 3. **出處段落**：插件會打開單字的出處筆記，送出**單字所在的那一整段**（不是只有那一句），以及**筆記的檔名**（不含資料夾路徑）。找不到出處筆記或那一行時，改送單字卡上存的例句。
 4. **學習者設定**：程度、目標、回答語言、回答長度，和「其他補充」欄位的原文。這一塊的內容會完整顯示在「設定 › 學習者設定 › AI 會看到」，送出的就是那段文字。
-5. **對話歷史**：同一個單字之前的最近 6 輪問答（你當時送出的內容和 AI 的回答）。失敗的那幾輪不送。
+5. **對話歷史**：同一個單字之前最多 6 輪的問答（你當時送出的內容和 AI 的回答）。失敗的那幾輪不送。
 6. **這次的問題**：你打的問題，或快捷鈕的任務說明。
-7. **反白的文字**：你最近一次在任一篇筆記（閱讀模式或編輯模式）反白的文字，最多 1,500 字。它會先顯示在輸入框上方的「選取：『…』」，可以按 × 不附上；送出一次後就不會再附上，要重新反白才會再出現。
+7. **反白的文字**：你最近一次在任一篇筆記（閱讀模式或編輯模式）反白的文字，最多 1,500 個字元。它會先顯示在輸入框上方的「選取：『…』」，可以按 × 不附上；送出一次後，下一個問題就不會再附上，要重新反白才會再出現。不過附上過的選取文字會留在那一輪的對話裡，之後最多 6 輪會隨著對話歷史再送出。
 
-**不會**送出：其他筆記、整篇出處筆記（只送那一段）、單字庫裡的其他單字、複習紀錄、vault 名稱或資料夾路徑、API key 以外的設定。
+**不會**送出：其他筆記、整篇出處筆記（只送那一段）、單字庫裡的其他單字、複習紀錄、vault 名稱或資料夾路徑，以及上面第 4 項學習者設定以外的其他設定。API key 只會放在請求的驗證 header 裡，送到你選的那個服務，不會出現在 prompt 內容中。
 
 > 段落討論的介面還沒推出。程式裡已經寫好的段落 prompt 會送出整篇筆記（太長時只送該段前後各 3 段），推出時會在這裡補上說明。
 
@@ -61,10 +61,13 @@
 依你的 Obsidian 版本而定，設定頁「API key」欄位的說明會寫出目前是哪一種：
 
 - **Obsidian 1.11.4 以上**：存在 Obsidian 的機密儲存（SecretStorage），只在這台裝置，**不會**寫進 `data.json`。每台裝置要各自輸入一次。
-- **更舊的版本**：存在插件的 `data.json`（`.obsidian/plugins/vocab-tracker/data.json`），**是明文**。如果你的同步方式會同步插件資料夾（iCloud、Git、Syncthing 等），**key 會跟著同步到其他裝置**；把 vault 或插件資料夾分享給別人時，key 也會一起給出去。
+- **更舊的版本**：存在插件的 `data.json`（`.obsidian/plugins/vocab-tracker/data.json`），**是明文**。如果你的同步方式會同步插件資料夾（iCloud、Git、Syncthing 等；Obsidian Sync 開啟社群插件的同步設定時，`data.json` 也會同步），**key 會跟著同步到其他裝置**；把 vault 或插件資料夾分享給別人時，key 也會一起給出去。
 - 從舊版 Obsidian 升級上來、原本存在 `data.json` 的 key 會繼續使用；在新版重新輸入一次，就會搬進機密儲存，並把 `data.json` 裡的那份清掉。
 
-「測試連線」顯示的請求內容會把 key 遮起來，可以放心複製給別人看。
+「測試連線」會顯示請求與回應的內容，方便排查問題。分享之前請注意：
+
+- 只有驗證類的 header（`Authorization`、`x-api-key`、`x-goog-api-key`、`api-key`）會遮起來，而且會保留 key 的前 6 碼、後 4 碼和總長度（例如 `sk-ant…AbCd [108]`），方便辨認用的是哪一把。
+- 其他內容原樣顯示。**不要把 key 寫進 Base URL 的 query（例如 `?key=…`）**，那部分不會被遮。
 
 ### 建議：用專用 key，並設定用量上限
 
@@ -150,6 +153,7 @@ achieve,達成,v.
 
 - 「設定 › 考試字表 › 自動加入考試字彙」預設開啟。
 - **每篇筆記只自動匯入一次**：第一次打開時，把筆記裡屬於字表的字全部加入單字庫，「程度」欄標上考試名稱（例如 `TOEFL, IELTS`），例句用該字第一次出現的那一句。之後再打開、或筆記後來新增了內容，都不會再自動匯入。
+- 只要已經載入任何字表，筆記一打開就會被記為「已匯入」，**就算裡面沒有考試字也一樣**。所以新增一份字表之後，在那之前就打開過的筆記不會自動補上新字表的字，要用下面的指令手動匯入。
 - 想對同一篇再匯入一次，用指令「把本篇的考試字彙加入單字庫」。
 - 已經在單字庫裡的字不會重複加入，只會在「程度」欄補上考試名稱。
 - **刪掉的字不會回來**：已經匯入過的筆記不會再匯入，所以你刪掉的字不會因為重新打開筆記又出現；刪除後 30 天內，其他筆記的自動匯入和上面的指令也會跳過它。（30 天後刪除紀錄會被清掉，這時才第一次打開、而且含有這個字的筆記，還是會把它加回來。）
@@ -164,7 +168,7 @@ achieve,達成,v.
 **Privacy**
 
 - **Dictionary/translation (always on, no key):** the word is sent to Wiktionary and Datamuse; its English definition is sent to Google Translate's unofficial endpoint (fallback: MyMemory). No note content is sent.
-- **AI (off by default):** nothing is sent until you enable AI and press a quick action / send a question (or click "Test connection", which sends `ping`). A word question sends: the built-in tutor instructions, the word's fields (incl. your "grammar note"), the **full source paragraph and the note's file name**, your learner profile (shown verbatim under *Learner settings › What the AI sees*), the last 6 rounds of that word's conversation, your question, and your most recent text selection in any note (max 1,500 chars; shown above the composer and removable with ×). Requests go only to the provider you chose: Anthropic, or the OpenAI-compatible base URL you entered (OpenAI, Gemini, a local Ollama…).
+- **AI (off by default):** nothing is sent until you enable AI and press a quick action / send a question (or click "Test connection", which sends `ping`). A word question sends: the built-in tutor instructions, the word's fields (incl. your "grammar note"), the **full source paragraph and the note's file name**, your learner profile (shown verbatim under *Learner settings › What the AI sees*), up to the last 6 rounds of that word's conversation (including selections attached in those rounds), your question, and your most recent text selection in any note (max 1,500 characters; shown above the composer and removable with ×). The API key only travels in the auth header to that provider. Requests go only to the provider you chose: Anthropic, or the OpenAI-compatible base URL you entered (OpenAI, Gemini, a local Ollama…).
 - **API key storage:** on Obsidian 1.11.4+ the key is kept in Obsidian's SecretStorage on that device only (not in `data.json`; enter it once per device). On older versions it is stored **in plain text** in the plugin's `data.json` and **syncs with your vault** if your sync includes the plugin folder.
 - **Recommended:** create a dedicated key for this plugin, set a spend limit in your provider's console, and set the plugin's *Monthly token limit* (Settings › AI; counted by the plugin, cache reads weighted 1/10, checked before each request).
 - Without a key, every non-AI feature keeps working.
