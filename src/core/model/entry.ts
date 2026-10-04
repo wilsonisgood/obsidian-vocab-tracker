@@ -1,3 +1,5 @@
+import type { SrsCard, SrsSettings } from "./srs";
+
 export interface VocabSource {
   path: string;
   line: number;
@@ -41,10 +43,21 @@ export interface VocabEntry extends Record_ {
   added: string;
   lastReviewed: string;
   reviews: number;
+  // FSRS scheduling state. Absent on entries that have never been rated —
+  // including every entry migrated before M2, since v1→v2 shipped without
+  // it. services/srs treats a missing card as a brand-new one (due now)
+  // rather than adding a v2→v3 migration just to backfill empty cards.
+  srs?: SrsCard;
 }
 
 export interface VocabData {
   schemaVersion?: 2;
-  settings?: { schemaVersion: 2 };
+  settings?: {
+    schemaVersion: 2;
+    // Optional so existing data.json files stay valid; read through
+    // resolveSrsSettings() (core/model/srs.ts), which fills in
+    // DEFAULT_SRS_SETTINGS. No settings UI yet — that's M3's SettingsTab.
+    srs?: Partial<SrsSettings>;
+  };
   entries: VocabEntry[];
 }

@@ -123,29 +123,44 @@ var ObsidianHttp = class {
 
 // src/platform/ObsidianStorage.ts
 var import_obsidian2 = require("obsidian");
-var UNSUPPORTED_SHARD = (name) => new Error(`ObsidianStorage: shard "${name}" is not implemented yet`);
 var ObsidianStorage = class {
   constructor(plugin) {
     this.plugin = plugin;
   }
   async readShard(name) {
     var _a;
-    if (name !== "data") throw UNSUPPORTED_SHARD(name);
-    return (_a = await this.plugin.loadData()) != null ? _a : null;
+    if (name === "data") return (_a = await this.plugin.loadData()) != null ? _a : null;
+    const adapter = this.plugin.app.vault.adapter;
+    const path = this.shardPath(name);
+    if (!await adapter.exists(path)) return null;
+    return JSON.parse(await adapter.read(path));
   }
   async writeShard(name, data) {
-    if (name !== "data") throw UNSUPPORTED_SHARD(name);
-    await this.plugin.saveData(data);
+    if (name === "data") {
+      await this.plugin.saveData(data);
+      return;
+    }
+    const adapter = this.plugin.app.vault.adapter;
+    const dir = (0, import_obsidian2.normalizePath)(`${this.pluginDir()}/store`);
+    if (!await adapter.exists(dir)) await adapter.mkdir(dir);
+    await adapter.write(this.shardPath(name), JSON.stringify(data));
   }
   async backup(name, data) {
-    const dir = this.plugin.manifest.dir;
-    if (!dir) throw new Error("ObsidianStorage: plugin manifest.dir is unavailable");
     const adapter = this.plugin.app.vault.adapter;
-    const backupDir = (0, import_obsidian2.normalizePath)(`${dir}/backup`);
+    const backupDir = (0, import_obsidian2.normalizePath)(`${this.pluginDir()}/backup`);
     if (!await adapter.exists(backupDir)) await adapter.mkdir(backupDir);
     const stamp = (/* @__PURE__ */ new Date()).toISOString().replace(/:/g, "-");
     const path = (0, import_obsidian2.normalizePath)(`${backupDir}/${name}-v1-${stamp}.json`);
     await adapter.write(path, JSON.stringify(data, null, 2));
+  }
+  pluginDir() {
+    const dir = this.plugin.manifest.dir;
+    if (!dir) throw new Error("ObsidianStorage: plugin manifest.dir is unavailable");
+    return dir;
+  }
+  shardPath(name) {
+    if (!/^[a-z0-9-]+$/i.test(name)) throw new Error(`ObsidianStorage: invalid shard name "${name}"`);
+    return (0, import_obsidian2.normalizePath)(`${this.pluginDir()}/store/${name}.json`);
   }
 };
 
@@ -536,8 +551,7 @@ function updateSourcePaths(entries, oldPath, newPath) {
 }
 
 // src/core/nowStamp.ts
-function nowStamp() {
-  const d = /* @__PURE__ */ new Date();
+function nowStamp(d = /* @__PURE__ */ new Date()) {
   const p = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
