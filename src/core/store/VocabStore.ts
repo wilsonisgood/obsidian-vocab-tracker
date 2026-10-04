@@ -2,6 +2,7 @@ import type { VocabData, VocabEntry } from "../model/entry";
 import { TypedEmitter } from "../events";
 import { nowIso } from "../nowIso";
 import {
+  carryLegacyStamp,
   snapshotSettingsSections,
   stampChangedSections,
   withSettingsDefaults,
@@ -54,9 +55,12 @@ export class VocabStore {
   // independently. The top-level updatedAt gets the very same stamp, and
   // only when some section changed — so it never exceeds the newest section
   // stamp, which is how merge.ts recognises a copy last edited by an older
-  // plugin version (those bump only the top-level stamp).
+  // plugin version (those bump only the top-level stamp). Such a copy first
+  // hands that old-version time down to its sections (carryLegacyStamp),
+  // since bumping the top-level stamp here would hide it from merge.ts.
   updateSettings(mutate: (s: ResolvedSettings) => void): Promise<void> {
     const s = this.settings;
+    carryLegacyStamp(s);
     const before = snapshotSettingsSections(s);
     mutate(s);
     const stamp = nowIso();

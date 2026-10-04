@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  carryLegacyStamp,
   defaultAiSettings,
   defaultLearnerProfile,
   snapshotSettingsSections,
@@ -186,6 +187,64 @@ describe("snapshotSettingsSections / stampChangedSections", () => {
     const copy = structuredClone(s);
     expect(stampChangedSections(s, snapshotSettingsSections(s), "2026-10-01T00:00:00.000Z")).toEqual([]);
     expect(s).toEqual(copy);
+  });
+});
+
+describe("carryLegacyStamp", () => {
+  const T1 = "2026-09-01T00:00:00.000Z";
+  const T2 = "2026-10-01T00:00:00.000Z";
+
+  it("does nothing to a copy this version wrote last", () => {
+    const s: PluginSettings = { schemaVersion: 2, updatedAt: T2, ui: { locale: "en", updatedAt: T2 }, learner: defaultLearnerProfile() };
+    const copy = structuredClone(s);
+    carryLegacyStamp(s);
+    expect(s).toEqual(copy);
+    const unstamped: PluginSettings = { schemaVersion: 2, learner: defaultLearnerProfile() };
+    carryLegacyStamp(unstamped);
+    expect(unstamped.learner?.updatedAt).toBeUndefined();
+  });
+
+  it("stamps every present section older than an old-version edit, and only those", () => {
+    const s = {
+      schemaVersion: 2,
+      updatedAt: T2,
+      ui: { locale: "en", updatedAt: T1 },
+      learner: { ...defaultLearnerProfile(), updatedAt: "not a date" },
+      srs: { dailyNew: 5 },
+      futureSection: { x: 1 },
+    } as PluginSettings;
+    carryLegacyStamp(s);
+    expect(s.ui?.updatedAt).toBe(T2);
+    expect(s.learner?.updatedAt).toBe(T2);
+    expect(s.srs?.updatedAt).toBe(T2);
+    expect(s.ai).toBeUndefined();
+    expect(s.wordlists).toBeUndefined();
+    expect((s as unknown as { futureSection: object }).futureSection).toEqual({ x: 1 });
+    // Afterwards the copy no longer looks old-version-edited: idempotent.
+    const copy = structuredClone(s);
+    carryLegacyStamp(s);
+    expect(s).toEqual(copy);
+  });
+
+  it("runs inside updateSettings, before the edit is stamped", async () => {
+    const store = new VocabStore(
+      { schemaVersion: 2, settings: { schemaVersion: 2, updatedAt: T1, learner: { ...defaultLearnerProfile(), level: "B2" } }, entries: [] },
+      async () => {}
+    );
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(T2));
+    try {
+      await store.updateSettings((s) => (s.ui.locale = "en"));
+    } finally {
+      vi.useRealTimers();
+    }
+    const s = store.vocabData.settings!;
+    expect(s.updatedAt).toBe(T2);
+    expect(s.ui?.updatedAt).toBe(T2);
+    // Getter-filled ai and stored learner both carry the old-version time.
+    expect(s.learner?.updatedAt).toBe(T1);
+    expect(s.ai?.updatedAt).toBe(T1);
+    expect(s.srs).toBeUndefined();
   });
 });
 

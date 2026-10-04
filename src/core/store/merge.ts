@@ -1,35 +1,15 @@
 import type { VocabData, VocabEntry } from "../model/entry";
-import { SETTINGS_SECTIONS, sectionFingerprint, type PluginSettings, type SectionStamp } from "../model/settings";
+import {
+  SETTINGS_SECTIONS,
+  legacyStamp,
+  sectionFingerprint,
+  stampMs,
+  type PluginSettings,
+  type SectionStamp,
+} from "../model/settings";
 
-// Missing or unparseable stamps count as oldest.
-function stampMs(iso: unknown): number {
-  if (typeof iso !== "string" || !iso) return 0;
-  const ms = new Date(iso).getTime();
-  return Number.isNaN(ms) ? 0 : ms;
-}
-
-// Newest stamp carried by any section — every object-valued key counts, so
-// a section added by a newer plugin version is included too.
-function newestSectionMs(s: PluginSettings): number {
-  let max = 0;
-  for (const v of Object.values(s)) {
-    if (v && typeof v === "object") max = Math.max(max, stampMs((v as SectionStamp).updatedAt));
-  }
-  return max;
-}
-
-// Older plugin versions (still around while devices update one by one via
-// BRAT) edit sections without stamping them — or drop the stamp when they
-// rebuild a section — yet still bump the top-level updatedAt. This version
-// only ever bumps it together with a section stamp of the same value, so a
-// top-level stamp newer than every section stamp means an old version
-// changed this copy at that time, in some section we can't pinpoint.
-function legacyEdit(s: PluginSettings): { ms: number; iso: string } | null {
-  const ms = stampMs(s.updatedAt);
-  return ms > newestSectionMs(s) ? { ms, iso: s.updatedAt as string } : null;
-}
-
-type Legacy = ReturnType<typeof legacyEdit>;
+// Old-version edit time of a copy, if any (see legacyStamp).
+type Legacy = ReturnType<typeof legacyStamp>;
 
 // One section, compared as a whole (wordlists.tags included — no per-tag
 // merging):
@@ -39,10 +19,19 @@ type Legacy = ReturnType<typeof legacyEdit>;
 //   wins. A copy that only won thanks to that raise keeps it as its own
 //   stamp, so the old version's edit stays newer after later merges;
 // - a missing section never beats a present one;
-// - exact ties go to the larger fingerprint, so both devices converge.
-// Data from before per-section stamps (both copies unstamped) falls out as
-// the old whole-object rule: whichever side's top-level stamp is newer.
-function pickSection(local: unknown, remote: unknown, localLegacy: Legacy, remoteLegacy: Legacy): unknown {
+// - equal effective times (e.g. both copies unstamped, with no old-version
+//   edit on either side) go to the side with the newer top-level stamp —
+//   the copy edited more recently, as under the old whole-object rule — and
+//   only then to the larger fingerprint, so both devices converge without
+//   the values themselves deciding whose settings survive.
+function pickSection(
+  local: unknown,
+  remote: unknown,
+  localLegacy: Legacy,
+  remoteLegacy: Legacy,
+  lTop: number,
+  rTop: number
+): unknown {
   const lOwn = stampMs((local as SectionStamp | undefined)?.updatedAt);
   const rOwn = stampMs((remote as SectionStamp | undefined)?.updatedAt);
   const lf = sectionFingerprint(local);
@@ -53,7 +42,7 @@ function pickSection(local: unknown, remote: unknown, localLegacy: Legacy, remot
     section === undefined ? -1 : Math.max(own, legacy?.ms ?? 0);
   const l = effective(local, lOwn, localLegacy);
   const r = effective(remote, rOwn, remoteLegacy);
-  const remoteWins = l !== r ? r > l : rf > lf;
+  const remoteWins = l !== r ? r > l : lTop !== rTop ? rTop > lTop : rf > lf;
   const [winner, eff, own, legacy] = remoteWins ? [remote, r, rOwn, remoteLegacy] : [local, l, lOwn, localLegacy];
   return legacy && eff > own ? { ...(winner as object), updatedAt: legacy.iso } : winner;
 }
@@ -77,10 +66,10 @@ function mergeSettings(local?: PluginSettings, remote?: PluginSettings): PluginS
   const r = stampMs(remote.updatedAt);
   const remoteNewer = l !== r ? r > l : restFingerprint(remote) > restFingerprint(local);
   const out: Record<string, unknown> = { ...(remoteNewer ? remote : local) };
-  const localLegacy = legacyEdit(local);
-  const remoteLegacy = legacyEdit(remote);
+  const localLegacy = legacyStamp(local);
+  const remoteLegacy = legacyStamp(remote);
   for (const key of SETTINGS_SECTIONS) {
-    const picked = pickSection(local[key], remote[key], localLegacy, remoteLegacy);
+    const picked = pickSection(local[key], remote[key], localLegacy, remoteLegacy, l, r);
     if (picked === undefined) delete out[key];
     else out[key] = picked;
   }

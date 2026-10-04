@@ -68,7 +68,8 @@ export interface PluginSettings {
   // than the newest section stamp when this version wrote it. merge.ts goes
   // by the per-section stamps and uses this one to spot copies edited by an
   // older plugin version (top-level newer than every section — see
-  // legacyEdit in merge.ts) and to pick whose top-level/unknown keys to keep.
+  // legacyStamp below), to break ties, and to pick whose top-level/unknown
+  // keys to keep.
   updatedAt?: string;
   ui?: UiSettings;
   ai?: AiSettings;
@@ -89,6 +90,52 @@ export type ResolvedSettings = PluginSettings & {
   ai: AiSettings;
   learner: LearnerProfile;
 };
+
+// Epoch ms of a stamp; missing or unparseable stamps count as oldest (0).
+export function stampMs(iso: unknown): number {
+  if (typeof iso !== "string" || !iso) return 0;
+  const ms = new Date(iso).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
+// Older plugin versions (still around while devices update one by one via
+// BRAT) edit sections without stamping them — or drop the stamp when they
+// rebuild a section — yet still bump the top-level updatedAt. This version
+// only ever bumps it together with a section stamp of the same value, so a
+// top-level stamp newer than every section stamp means an old version
+// changed this copy at that time, in some section we can't pinpoint.
+// Every object-valued key counts as a section here, so one added by a newer
+// plugin version is included too.
+export function legacyStamp(s: PluginSettings): { ms: number; iso: string } | null {
+  const ms = stampMs(s.updatedAt);
+  let newest = 0;
+  for (const v of Object.values(s)) {
+    if (v && typeof v === "object") newest = Math.max(newest, stampMs((v as SectionStamp).updatedAt));
+  }
+  return ms > newest ? { ms, iso: s.updatedAt as string } : null;
+}
+
+// Called by VocabStore.updateSettings before an edit. Once this version
+// bumps the top-level stamp, legacyStamp can no longer see an old version's
+// edit — so first hand that time down to every section older than it,
+// which is exactly the time merge.ts would have given those sections
+// (pickSection raises each one to the old-version edit time). Merge
+// outcomes are therefore the same before and after the carry.
+//
+// Sections that aren't there have nothing to carry (a later edit that
+// creates one stamps it as changed). Sections only filled in by
+// withSettingsDefaults (ui/ai/learner) do get the stamp: merge.ts already
+// treats them like any other section of that copy, and the old version
+// persisted them the same way, so there's no telling them apart from
+// sections the user really set.
+export function carryLegacyStamp(s: PluginSettings): void {
+  const legacy = legacyStamp(s);
+  if (!legacy) return;
+  for (const key of SETTINGS_SECTIONS) {
+    const section = s[key] as SectionStamp | undefined;
+    if (section && typeof section === "object" && stampMs(section.updatedAt) < legacy.ms) section.updatedAt = legacy.iso;
+  }
+}
 
 // Model IDs verified against the Claude API model table (2026-06):
 // Sonnet for answers that need judgement, Haiku for cheap/fast ones.

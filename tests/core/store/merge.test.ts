@@ -154,6 +154,23 @@ describe("merge() settings, section by section", () => {
     expect([a.ui, b.ui]).toContainEqual(ab?.ui);
   });
 
+  it("breaks an equal-time tie by the newer top-level stamp before comparing values", () => {
+    // Neither learner copy is stamped and neither side has an old-version
+    // edit, so their own times tie. The fingerprint alone would keep the
+    // default ("zh-TW" sorts after "bilingual"); the newer copy should win.
+    const edited: PluginSettings = {
+      schemaVersion: 2,
+      updatedAt: T2,
+      srs: { dailyNew: 1, updatedAt: T2 },
+      learner: { ...defaultLearnerProfile(), answerLanguage: "bilingual" },
+    };
+    const stale: PluginSettings = { schemaVersion: 2, updatedAt: T1, ui: { locale: "en", updatedAt: T1 }, learner: defaultLearnerProfile() };
+    for (const s of both(edited, stale)) expect(s?.learner).toEqual(edited.learner);
+    // A copy with no top-level stamp at all counts as oldest.
+    const fresh: PluginSettings = { schemaVersion: 2, learner: defaultLearnerProfile() };
+    for (const s of both(edited, fresh)) expect(s?.learner).toEqual(edited.learner);
+  });
+
   it("keeps the newer stamp when both copies have the same content", () => {
     const a: PluginSettings = { schemaVersion: 2, updatedAt: T1, ui: { locale: "en", updatedAt: T1 } };
     const b: PluginSettings = { schemaVersion: 2, updatedAt: T2, ui: { updatedAt: T2, locale: "en" } };
@@ -331,6 +348,109 @@ describe("merge() settings, section by section", () => {
       expect(merge(withSettings(ab!), withSettings(old)).settings).toEqual(ab);
       expect(merge(withSettings(ab!), withSettings(fresh)).settings).toEqual(ab);
       expect(merge(withSettings(old), withSettings(ab!)).settings).toEqual(ab);
+    });
+  });
+
+  describe("a copy last edited by an older version, then edited on this version", () => {
+    const LEGACY = "2026-09-01T00:00:00.000Z";
+    const AUG20 = "2026-08-20T00:00:00.000Z";
+    const OCT1 = "2026-10-01T00:00:00.000Z";
+    const OCT2 = "2026-10-02T00:00:00.000Z";
+    const nurse = { ...defaultLearnerProfile(), answerLanguage: "bilingual" as const, level: "B2" as const, extra: "nurse" };
+
+    // A real data.json from the old version: it persisted the resolved
+    // ui/ai/learner (plus srs), bumped only the top-level stamp, and
+    // stamped no section.
+    const legacyMac = (): VocabData => ({
+      schemaVersion: 2,
+      settings: {
+        schemaVersion: 2,
+        updatedAt: LEGACY,
+        ui: { locale: "auto" },
+        ai: defaultAiSettings(),
+        learner: { ...nurse },
+        srs: { retention: 0.9, dailyNew: 20 },
+      },
+      entries: [],
+    });
+
+    async function at(iso: string, fn: () => Promise<void>): Promise<void> {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(iso));
+      try {
+        await fn();
+      } finally {
+        vi.useRealTimers();
+      }
+    }
+
+    const syncBothWays = (a: VocabData, b: VocabData) => {
+      const onA = merge(structuredClone(a), structuredClone(b)).settings;
+      const onB = merge(structuredClone(b), structuredClone(a)).settings;
+      expect(onA).toEqual(onB);
+      return onA!;
+    };
+
+    // Mac upgrades and changes flashcard settings first thing.
+    async function upgradedMac(): Promise<VocabStore> {
+      const mac = new VocabStore(legacyMac(), async () => {});
+      await at(OCT1, () => mac.updateSettings((s) => (s.srs = { ...resolveSrsSettings(s.srs), dailyNew: 40 })));
+      return mac;
+    }
+
+    it("hands the old-version time down to the untouched sections", async () => {
+      const s = (await upgradedMac()).vocabData.settings!;
+      expect(s.updatedAt).toBe(OCT1);
+      expect(s.srs).toEqual({ retention: 0.9, dailyNew: 40, updatedAt: OCT1 });
+      expect(s.learner).toEqual({ ...nurse, updatedAt: LEGACY });
+      expect(s.ai?.updatedAt).toBe(LEGACY);
+      expect(s.ui?.updatedAt).toBe(LEGACY);
+      expect(s.wordlists).toBeUndefined();
+    });
+
+    it("A: keeps the old-version learner over a brand-new device's defaults", async () => {
+      const mac = await upgradedMac();
+      // Fresh install: learner only filled in by the getter, never stamped.
+      const fresh = new VocabStore({ schemaVersion: 2, settings: { schemaVersion: 2 }, entries: [] }, async () => {});
+      expect(fresh.settings.learner).toEqual(defaultLearnerProfile());
+      let s = syncBothWays(mac.vocabData, fresh.vocabData);
+      expect(s.learner).toEqual({ ...nurse, updatedAt: LEGACY });
+      expect(s.srs?.dailyNew).toBe(40);
+
+      // Even when the new device's top-level stamp is the newer one (it
+      // edited something else afterwards).
+      await at(OCT2, () => fresh.updateSettings((x) => (x.ai.enabled = true)));
+      s = syncBothWays(mac.vocabData, fresh.vocabData);
+      expect(s.learner).toEqual({ ...nurse, updatedAt: LEGACY });
+      expect(s.ai?.enabled).toBe(true);
+      expect(s.srs?.dailyNew).toBe(40);
+    });
+
+    it("B: keeps the old-version learner (9/1) over another device's earlier edit (8/20)", async () => {
+      const other = new VocabStore({ schemaVersion: 2, settings: { schemaVersion: 2 }, entries: [] }, async () => {});
+      await at(AUG20, () => other.updateSettings((x) => (x.learner.level = "C1")));
+      expect(other.vocabData.settings?.learner?.updatedAt).toBe(AUG20);
+      const mac = await upgradedMac();
+      const s = syncBothWays(mac.vocabData, other.vocabData);
+      expect(s.learner).toEqual({ ...nurse, updatedAt: LEGACY });
+      expect(s.srs?.dailyNew).toBe(40);
+      expect(s.updatedAt).toBe(OCT1);
+    });
+
+    it("merges the untouched sections exactly as before the edit", async () => {
+      const other = new VocabStore({ schemaVersion: 2, settings: { schemaVersion: 2 }, entries: [] }, async () => {});
+      await at(AUG20, () =>
+        other.updateSettings((x) => {
+          x.learner.level = "C1";
+          x.ui.locale = "en";
+        })
+      );
+      await at(OCT2, () => other.updateSettings((x) => (x.ai.monthlyTokenBudget = 5)));
+      const before = syncBothWays(legacyMac(), other.vocabData);
+      const after = syncBothWays((await upgradedMac()).vocabData, other.vocabData);
+      for (const key of ["ui", "ai", "learner"] as const) expect(after[key]).toEqual(before[key]);
+      expect(after.ui?.locale).toBe("auto");
+      expect(after.ai?.monthlyTokenBudget).toBe(5);
     });
   });
 
