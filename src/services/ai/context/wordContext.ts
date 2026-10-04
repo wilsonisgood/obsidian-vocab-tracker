@@ -70,9 +70,12 @@ export const WORD_TEMPLATE = `〔單字〕{{word}}
 // the word), so a false "missing" costs little — while a false "contains"
 // silently drops the notice. Hence the asymmetry below:
 //
-// - The WORD side only undoes regular inflection (-s/-es/-ies/-ed/-ied/-ing)
-//   and keeps stems of 4+ letters, so forest ≠ for, news ≠ new,
-//   many ≠ man, card ≠ car. Entries are usually base forms anyway.
+// - The WORD side is stored as clicked (used, eyes, lying, boxes, happier…),
+//   not necessarily a base form, so it undoes regular inflection
+//   (-s/-es/-ies/-ed/-ied/-ing/-ying) and -ier/-iest. Bare stems need 4+
+//   letters (news ≠ new); a rebuilt whole word may have 3 (used → use,
+//   eyes → eye, cries → cry, boxes → box). No -er/-est/-y/-ly/-st/-d
+//   stripping there, so forest ≠ for, many ≠ man, every ≠ ever, card ≠ car.
 // - The SELECTION side also undoes comparatives, adverbs and -y adjectives
 //   (happier → happy, easily → easy, glossy → gloss), stems of 4+ letters
 //   for those (army ≠ arm, early ≠ ear).
@@ -102,38 +105,65 @@ const isConsonant = (c: string) => /[b-df-hj-np-tv-z]/.test(c);
 
 type Side = "word" | "selection";
 
+const ACCIDENTAL = new Set(["she", "the", "her"]);
+
 function wordForms(token: string, side: Side): Set<string> {
   const w = token.endsWith("'s") ? token.slice(0, -2) : token;
   const out = new Set([token, w]);
   const ends = (suf: string) => w.length > suf.length && w.endsWith(suf);
+  // On the word side a reduction landing on a very common function word is
+  // an accident (shed → she, thing → the, herring → her), never the base.
+  const add = (form: string) => {
+    if (!(side === "word" && ACCIDENTAL.has(form))) out.add(form);
+  };
   // A bare stem left by cutting a suffix; doubled final consonant undone
   // (running → runn → run, biggest → bigg → big).
   const stem = (base: string, min: number) => {
     if (base.length < min) return;
-    out.add(base);
+    add(base);
     const last = base[base.length - 1];
-    if (last === base[base.length - 2] && isConsonant(last)) out.add(base.slice(0, -1));
+    if (last === base[base.length - 2] && isConsonant(last)) add(base.slice(0, -1));
   };
   // A rebuilt full word (studied → study, making → make, lying → lie).
   const rebuilt = (base: string, min: number) => {
-    if (base.length >= min) out.add(base);
+    if (base.length >= min) add(base);
   };
 
-  // Regular inflection, both sides.
+  // Regular inflection, both sides. Bare stems need 4+ letters on the word
+  // side (news ≠ new); rebuilt whole words only 3 (used → use, cries → cry).
   const min = side === "word" ? 4 : 3;
-  if (ends("ies") || ends("ied")) rebuilt(w.slice(0, -3) + "y", min);
-  if (ends("s") && !ends("ss")) stem(w.slice(0, -1), min);
-  if (ends("es")) stem(w.slice(0, -2), min);
-  if (ends("ed") && !ends("eed")) {
+  if (ends("ies") || ends("ied")) rebuilt(w.slice(0, -3) + "y", 3); // cries → cry
+  if (ends("s") && !ends("ss")) {
+    const base = w.slice(0, -1);
+    // A 3-letter base ending in e is a whole word (eyes → eye, dies → die).
+    if (side === "word" && base.endsWith("e")) rebuilt(base, 3);
+    else stem(base, min);
+  }
+  if (ends("es")) {
+    const base = w.slice(0, -2);
+    // -es only follows s/x/z/ch/sh/o (boxes → box, buses → bus), so on the
+    // word side it's a whole word then and junk otherwise (cares ≠ car).
+    if (side === "selection") stem(base, min);
+    else if (/(?:[sxzo]|ch|sh)$/.test(base)) rebuilt(base, 3);
+  }
+  if (ends("eed")) {
+    // agreed → agree, but seed/feed/need are no past tenses (≠ see/fee).
+    rebuilt(w.slice(0, -1), 4);
+  } else if (ends("ed")) {
     stem(w.slice(0, -2), min); // walked → walk
-    rebuilt(w.slice(0, -1), min); // used → use
+    rebuilt(w.slice(0, -1), 3); // used → use, aged → age
   }
   if (ends("ing")) {
     stem(w.slice(0, -3), min); // walking → walk
-    rebuilt(w.slice(0, -3) + "e", min); // making → make
+    rebuilt(w.slice(0, -3) + "e", 3); // making → make, using → use
   }
-  if (ends("ying")) rebuilt(w.slice(0, -4) + "ie", min); // lying → lie
-  if (side === "word") return out;
+  if (ends("ying")) rebuilt(w.slice(0, -4) + "ie", 3); // lying → lie
+  if (side === "word") {
+    // Entries are stored as clicked, so comparatives occur too.
+    if (ends("ier")) rebuilt(w.slice(0, -3) + "y", 4); // happier → happy (not pry)
+    if (ends("iest")) rebuilt(w.slice(0, -4) + "y", 4); // happiest → happy (priest ≠ pry)
+    return out;
+  }
 
   // Selection only: comparatives, superlatives, adverbs, -y adjectives.
   if (ends("ier")) rebuilt(w.slice(0, -3) + "y", 4); // happier → happy

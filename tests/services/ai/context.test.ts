@@ -115,6 +115,52 @@ describe("selectionHasWord", () => {
     expect(has("Taylor", "Taylor’s speech")).toBe(true);
   });
 
+  it("handles -eed past tenses without turning seed/feed/need into see/fee/nee", () => {
+    expect(has("agree", "they agreed")).toBe(true);
+    expect(has("agreed", "I agree")).toBe(true);
+    expect(has("guarantee", "it is guaranteed")).toBe(true);
+    expect(has("guaranteed", "no guarantee")).toBe(true);
+    expect(has("disagree", "we disagreed")).toBe(true);
+    expect(has("free", "she was freed")).toBe(true);
+    expect(has("seed", "I see")).toBe(false);
+    expect(has("see", "a seed")).toBe(false);
+    expect(has("feed", "a small fee")).toBe(false);
+  });
+
+  it("reduces entries stored as clicked (not base forms) down to 3-letter words", () => {
+    const pairs: [string, string][] = [
+      ["used", "use it"],
+      ["uses", "use it"],
+      ["eyes", "one eye"],
+      ["dies", "it will die"],
+      ["died", "it will die"],
+      ["ties", "a red tie"],
+      ["aged", "his age"],
+      ["owed", "I owe you"],
+      ["lying", "don't lie"],
+      ["lies", "don't lie"],
+      ["boxes", "a box"],
+      ["buses", "by bus"],
+      ["cries", "a loud cry"],
+      ["cried", "a loud cry"],
+      ["sees", "I see"],
+      ["happier", "a happy day"],
+      ["happiest", "a happy day"],
+      ["running", "a long run"],
+      ["glittered", "all that glitters"],
+    ];
+    for (const [word, selection] of pairs) expect({ word, selection, has: has(word, selection) }).toEqual({ word, selection, has: true });
+  });
+
+  it("still keeps word-side reductions from landing on unrelated short words", () => {
+    expect(has("news", "a new car")).toBe(false); // 3-letter bare stem not ending in e
+    expect(has("cares", "a car")).toBe(false); // -es only after s/x/z/ch/sh/o
+    expect(has("shed", "she said")).toBe(false);
+    expect(has("thing", "the end")).toBe(false);
+    expect(has("herring", "her car")).toBe(false);
+    expect(has("priest", "pry it open")).toBe(false);
+  });
+
   it("undoes comparatives, adverbs and -y adjectives on the selection side only", () => {
     expect(has("happy", "I've never been happier")).toBe(true);
     expect(has("big", "the biggest stadium")).toBe(true);
@@ -125,7 +171,6 @@ describe("selectionHasWord", () => {
     // …but not on the word side: glittery's notice still shows for "glittered"
     // (the notice tells the model to ignore it for real variants).
     expect(has("glittery", "it glittered under the lights")).toBe(false);
-    expect(has("happier", "a happy day")).toBe(false);
   });
 
   it("doesn't over-strip short or suffix-looking words (反例)", () => {

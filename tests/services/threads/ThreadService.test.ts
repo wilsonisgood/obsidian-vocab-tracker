@@ -289,6 +289,12 @@ describe("pin to grammar", () => {
       expect(pinText(`${notice}\n${body}`)).toBe(body);
     }
     expect(pinText("**你問的是：**「x」\n\nbody")).toBe("body");
+    // An answer that just starts by talking about the selection is kept whole.
+    expect(pinText("你選取的文字「a glittery leotard」裡，glittery 修飾 leotard。")).toBe(
+      "你選取的文字「a glittery leotard」裡，glittery 修飾 leotard。"
+    );
+    expect(pinText("你選取的文字是一句比喻…\n\n更多")).toBe("你選取的文字是一句比喻…\n\n更多");
+    expect(pinText("你選取的文字裡有 glittery。\n\n更多")).toBe("你選取的文字裡有 glittery。\n\n更多");
     // Only a leading reminder is stripped; the same words inside the body stay.
     expect(pinText(`${body}\n\n你選取的文字裡似乎沒有 x`)).toBe(`${body}\n\n你選取的文字裡似乎沒有 x`);
   });
