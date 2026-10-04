@@ -59,7 +59,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
 
   onload() {
     this.containerEl.empty();
-    this.root = this.containerEl.createDiv({ cls: "vt vt-flashcards" });
+    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-flashcards"] });
     // Focusable so Space / 1–4 work once the user clicks into the block.
     // Deliberately a listener on the block, not a global keydown (§7.1):
     // keys typed anywhere else in Obsidian must never rate a card.
@@ -279,7 +279,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
 
     if (!this.flipped) {
       card.createDiv({ cls: "vt-fc-hint", text: t(`flashcards.hint.${this.mode}` as I18nKey) });
-      const flip = card.createEl("button", { cls: "vt-fc-btn vt-fc-flip" });
+      const flip = card.createEl("button", { cls: ["vt-fc-btn", "vt-fc-flip"] });
       flip.createSpan({ text: t("flashcards.flip") });
       flip.createEl("kbd", { cls: "vt-fc-kbd", text: t("flashcards.flipKey") });
       flip.onclick = () => this.flip();
@@ -375,7 +375,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
     const grid = this.root.createDiv({ cls: "vt-fc-ratings" });
     for (const rating of RATINGS) {
       const b = grid.createEl("button", { cls: ["vt-fc-rate", `is-r${rating}`] });
-      b.createEl("kbd", { cls: "vt-fc-kbd vt-fc-rate-key", text: String(rating) });
+      b.createEl("kbd", { cls: ["vt-fc-kbd", "vt-fc-rate-key"], text: String(rating) });
       b.createSpan({ cls: "vt-fc-rate-label", text: t(`srs.rating.${rating}` as I18nKey) });
       b.createSpan({ cls: "vt-fc-rate-interval", text: formatInterval(preview[rating].intervalMs) });
       b.onclick = () => void this.rate(rating);
@@ -395,7 +395,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
   }
 
   private renderDone() {
-    const box = this.root.createDiv({ cls: "vt-fc-empty vt-fc-done" });
+    const box = this.root.createDiv({ cls: ["vt-fc-empty", "vt-fc-done"] });
     setIcon(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
     box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.done.title") });
     box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.done.body") });
@@ -427,7 +427,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
 
     const actions = box.createDiv({ cls: "vt-fc-actions" });
     if (forgotten.length > 0) {
-      const retry = actions.createEl("button", { cls: "vt-fc-btn mod-cta" });
+      const retry = actions.createEl("button", { cls: ["vt-fc-btn", "mod-cta"] });
       setIcon(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
       retry.createSpan({ text: t("flashcards.done.retryForgotten", { count: forgotten.length }) });
       retry.onclick = () => this.startSession(forgotten.map((e) => e.id), { speak: true });

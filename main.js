@@ -3349,7 +3349,7 @@ var FlashcardsBlock = class extends import_obsidian7.MarkdownRenderChild {
   }
   onload() {
     this.containerEl.empty();
-    this.root = this.containerEl.createDiv({ cls: "vt vt-flashcards" });
+    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-flashcards"] });
     this.root.tabIndex = 0;
     this.registerDomEvent(this.root, "keydown", (e) => this.onKey(e));
     this.registerDomEvent(this.root, "click", (e) => e.stopPropagation());
@@ -3521,7 +3521,7 @@ var FlashcardsBlock = class extends import_obsidian7.MarkdownRenderChild {
     }
     if (!this.flipped) {
       card.createDiv({ cls: "vt-fc-hint", text: t(`flashcards.hint.${this.mode}`) });
-      const flip = card.createEl("button", { cls: "vt-fc-btn vt-fc-flip" });
+      const flip = card.createEl("button", { cls: ["vt-fc-btn", "vt-fc-flip"] });
       flip.createSpan({ text: t("flashcards.flip") });
       flip.createEl("kbd", { cls: "vt-fc-kbd", text: t("flashcards.flipKey") });
       flip.onclick = () => this.flip();
@@ -3609,7 +3609,7 @@ var FlashcardsBlock = class extends import_obsidian7.MarkdownRenderChild {
     const grid = this.root.createDiv({ cls: "vt-fc-ratings" });
     for (const rating of RATINGS) {
       const b = grid.createEl("button", { cls: ["vt-fc-rate", `is-r${rating}`] });
-      b.createEl("kbd", { cls: "vt-fc-kbd vt-fc-rate-key", text: String(rating) });
+      b.createEl("kbd", { cls: ["vt-fc-kbd", "vt-fc-rate-key"], text: String(rating) });
       b.createSpan({ cls: "vt-fc-rate-label", text: t(`srs.rating.${rating}`) });
       b.createSpan({ cls: "vt-fc-rate-interval", text: formatInterval(preview[rating].intervalMs) });
       b.onclick = () => void this.rate(rating);
@@ -3627,7 +3627,7 @@ var FlashcardsBlock = class extends import_obsidian7.MarkdownRenderChild {
     tile(tiles, String(this.plugin.srs.dueTomorrow(this.filter())), t("flashcards.done.dueTomorrow"));
   }
   renderDone() {
-    const box = this.root.createDiv({ cls: "vt-fc-empty vt-fc-done" });
+    const box = this.root.createDiv({ cls: ["vt-fc-empty", "vt-fc-done"] });
     (0, import_obsidian7.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
     box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.done.title") });
     box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.done.body") });
@@ -3653,7 +3653,7 @@ var FlashcardsBlock = class extends import_obsidian7.MarkdownRenderChild {
     }
     const actions = box.createDiv({ cls: "vt-fc-actions" });
     if (forgotten.length > 0) {
-      const retry = actions.createEl("button", { cls: "vt-fc-btn mod-cta" });
+      const retry = actions.createEl("button", { cls: ["vt-fc-btn", "mod-cta"] });
       (0, import_obsidian7.setIcon)(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
       retry.createSpan({ text: t("flashcards.done.retryForgotten", { count: forgotten.length }) });
       retry.onclick = () => this.startSession(forgotten.map((e) => e.id), { speak: true });
