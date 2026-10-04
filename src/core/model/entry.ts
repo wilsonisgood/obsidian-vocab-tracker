@@ -1,3 +1,5 @@
+import type { PluginSettings } from "./settings";
+
 export interface VocabSource {
   path: string;
   line: number;
@@ -45,6 +47,6 @@ export interface VocabEntry extends Record_ {
 
 export interface VocabData {
   schemaVersion?: 2;
-  settings?: { schemaVersion: 2 };
+  settings?: PluginSettings;
   entries: VocabEntry[];
 }
