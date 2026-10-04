@@ -7,7 +7,7 @@ import {
   type ParagraphAnchor,
   type SectionRef,
 } from "../../../src/services/anchors/ParagraphAnchorService";
-import type { AnchorMode } from "../../../src/services/anchors/ports";
+import type { AnchorMode } from "../../../src/core/ports";
 import { sectionText } from "../../../src/services/anchors/sections";
 import { idSource, MemoryVault } from "./fakes";
 

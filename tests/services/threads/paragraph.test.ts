@@ -6,7 +6,7 @@ import type { AiRunResult } from "../../../src/services/ai/AiService";
 import { AiError } from "../../../src/services/ai/errors";
 import { ParagraphAnchorService, type ParagraphAnchor } from "../../../src/services/anchors/ParagraphAnchorService";
 import { ParagraphIndex } from "../../../src/services/anchors/ParagraphIndex";
-import type { AnchorMode } from "../../../src/services/anchors/ports";
+import type { AnchorMode } from "../../../src/core/ports";
 import { sectionText } from "../../../src/services/anchors/sections";
 import { THREADS_SHARD, ThreadService } from "../../../src/services/threads/ThreadService";
 import { MemoryStorage } from "../ai/fakes";

@@ -1,5 +1,5 @@
 import { blockIdsIn } from "../../../src/core/text/blockId";
-import type { ParagraphVaultPort } from "../../../src/services/anchors/ports";
+import type { ParagraphVaultPort } from "../../../src/core/ports";
 
 // In-memory vault: process() is atomic like Obsidian's vault.process, and
 // blockIdTaken looks at every note (the metadataCache's view).

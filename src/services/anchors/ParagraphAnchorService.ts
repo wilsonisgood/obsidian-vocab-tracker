@@ -2,7 +2,7 @@ import type { Anchor } from "../../core/model/thread";
 import { blockIdsIn, findBlockLine, newBlockId, trailingBlockId, withBlockId } from "../../core/text/blockId";
 import { normalizeParagraph, paragraphHash } from "../../core/text/hash";
 import { plainParagraph } from "../../core/text/paragraphs";
-import type { AnchorMode, ParagraphVaultPort } from "./ports";
+import type { AnchorMode, ParagraphVaultPort } from "../../core/ports";
 import { isAnchorable, noteSections, sectionAt, sectionText, type NoteSection } from "./sections";
 
 // Paragraph anchors (規劃書 06 §5.1). The first question about a paragraph
