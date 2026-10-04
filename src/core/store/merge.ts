@@ -1,15 +1,40 @@
 import type { VocabData, VocabEntry } from "../model/entry";
-import type { PluginSettings } from "../model/settings";
+import { SETTINGS_SECTIONS, type PluginSettings, type SectionStamp } from "../model/settings";
 
-// Settings are one record (not a collection), so they merge whole: the
-// object stamped more recently wins. Ties and unstamped objects keep the
-// local side — the pre-M3 behaviour, when settings held nothing editable.
-function pickNewerSettings(local?: PluginSettings, remote?: PluginSettings): PluginSettings {
+// Missing or unparseable stamps count as oldest.
+function stampMs(iso: string | undefined): number {
+  const ms = iso ? new Date(iso).getTime() : 0;
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
+// One section, compared as a whole (wordlists.tags included — no per-tag
+// merging). A stamped copy beats an unstamped one; when neither copy is
+// stamped (settings written before per-section stamps existed) we fall back
+// to the old whole-object rule and follow the newer top-level updatedAt.
+// Ties keep local.
+function pickSection(local: unknown, remote: unknown, remoteNewerOverall: boolean): unknown {
+  const l = (local as SectionStamp | undefined)?.updatedAt;
+  const r = (remote as SectionStamp | undefined)?.updatedAt;
+  if (!l && !r) return remoteNewerOverall ? (remote ?? local) : (local ?? remote);
+  return stampMs(r) > stampMs(l) ? remote : local;
+}
+
+// Settings merge section by section (ui, ai, learner, srs, wordlists), so a
+// Mac editing flashcard settings and an iPhone editing AI settings both
+// survive. Everything outside those sections (schemaVersion, keys from a
+// newer plugin version) comes from whichever side has the newer top-level
+// updatedAt — which is also the merged updatedAt.
+function mergeSettings(local?: PluginSettings, remote?: PluginSettings): PluginSettings {
   if (!local) return remote ?? { schemaVersion: 2 };
   if (!remote) return local;
-  const l = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
-  const r = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
-  return r > l ? remote : local;
+  const remoteNewer = stampMs(remote.updatedAt) > stampMs(local.updatedAt);
+  const out: Record<string, unknown> = { ...(remoteNewer ? remote : local) };
+  for (const key of SETTINGS_SECTIONS) {
+    const picked = pickSection(local[key], remote[key], remoteNewer);
+    if (picked === undefined) delete out[key];
+    else out[key] = picked;
+  }
+  return out as unknown as PluginSettings;
 }
 
 // Entries without updatedAt (shouldn't happen once everything goes through
@@ -46,7 +71,7 @@ export function merge(local: VocabData, remote: VocabData): VocabData {
 
   return {
     schemaVersion: 2,
-    settings: pickNewerSettings(local.settings, remote.settings),
+    settings: mergeSettings(local.settings, remote.settings),
     entries: order.map((id) => byId.get(id) as VocabEntry),
   };
 }

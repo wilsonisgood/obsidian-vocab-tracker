@@ -1,7 +1,12 @@
 import type { VocabData, VocabEntry } from "../model/entry";
 import { TypedEmitter } from "../events";
 import { nowIso } from "../nowIso";
-import { withSettingsDefaults, type ResolvedSettings } from "../model/settings";
+import {
+  snapshotSettingsSections,
+  stampChangedSections,
+  withSettingsDefaults,
+  type ResolvedSettings,
+} from "../model/settings";
 
 export interface VocabStoreEvents {
   // Coarse-grained for now: every save (add/edit/delete/enrich) fires this.
@@ -43,12 +48,17 @@ export class VocabStore {
   // getter returns a stable object instead of re-resolving on every read.
   private resolvedSettings = new WeakSet<object>();
 
-  // The only way UI code should change settings: stamps updatedAt so
-  // merge.ts can tell which device's settings are newer.
+  // The only way UI code should change settings. Stamps updatedAt on just
+  // the sections (ui/ai/learner/srs/wordlists) whose content actually
+  // changed, so merge.ts can keep the newer copy of each section
+  // independently; the top-level updatedAt is bumped every time.
   updateSettings(mutate: (s: ResolvedSettings) => void): Promise<void> {
     const s = this.settings;
+    const before = snapshotSettingsSections(s);
     mutate(s);
-    s.updatedAt = nowIso();
+    const stamp = nowIso();
+    stampChangedSections(s, before, stamp);
+    s.updatedAt = stamp;
     return this.save();
   }
 
