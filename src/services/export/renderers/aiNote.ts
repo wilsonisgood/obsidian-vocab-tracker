@@ -110,7 +110,8 @@ export function renderAiNoteFile(input: AiNoteInput, ctx: RenderContext): string
 // - "source": an older note without the id whose `source` links to the
 //   article.
 // - "unclaimed": nothing says whose it is (no frontmatter, or neither
-//   field) — taken by the article whose name it has.
+//   field) — taken by the first article that writes it under one of its
+//   names, which marks it with its id at once (claimAiNote).
 // - "other": another article's note, or not an AI note at all.
 export type AiNoteOwner = "id" | "source" | "unclaimed" | "other";
 
@@ -139,17 +140,21 @@ export function aiNoteOwner(text: string, articlePath: string, renamedTo?: strin
 }
 
 // Marks a note as this article's (adds `vocab-tracker-id`, and the kind if
-// missing), so findManaged finds it from now on. Only those frontmatter
-// lines change; a note without frontmatter is left as is.
+// missing), so findManaged finds it from now on and a same-name article
+// sees it as "other". Only those frontmatter lines change. A note without
+// frontmatter gets a minimal one inserted at the top; nothing else in it
+// changes — without it, same-name articles would take turns overwriting
+// an "unclaimed" note.
 export function claimAiNote(text: string, articlePath: string): string {
   const fields: Record<string, string> = {};
   if (readFrontmatter(text)?.["vocab-tracker"] === undefined) fields["vocab-tracker"] = AI_NOTE_KIND;
   fields["vocab-tracker-id"] = articlePath;
-  return editFrontmatter(text, fields, { add: true, after: "vocab-tracker" });
+  return editFrontmatter(text, fields, { add: true, after: "vocab-tracker", create: true });
 }
 
 // After the article was renamed: points the id and the source link (when
-// the note has one) at the new path. Nothing else in the note changes.
+// the note has one) at the new path. Nothing else in the note changes
+// (an unclaimed note gets the minimal frontmatter, as in claimAiNote).
 export function retargetAiNote(text: string, newPath: string): string {
   return editFrontmatter(claimAiNote(text, newPath), { source: `[[${linkTarget(newPath)}]]` });
 }

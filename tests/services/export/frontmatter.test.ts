@@ -14,6 +14,10 @@ describe("readFrontmatter", () => {
     expect(readFrontmatter("---\n---\nbody")).toEqual({});
     expect(readFrontmatter("---\r\nk: v\r\n---\r\n")).toEqual({ k: "v" });
   });
+
+  it("reads frontmatter after a byte order mark", () => {
+    expect(readFrontmatter("\ufeff---\nk: v\n---\nbody\n")).toEqual({ k: "v" });
+  });
 });
 
 describe("editFrontmatter", () => {
@@ -31,8 +35,17 @@ describe("editFrontmatter", () => {
     expect(editFrontmatter(text, { k: "v" })).toBe(text);
   });
 
-  it("never adds frontmatter to a note without one", () => {
+  it("adds frontmatter to a note without one only when asked to", () => {
     expect(editFrontmatter("just text\n", { k: "v" }, { add: true })).toBe("just text\n");
+    expect(editFrontmatter("just text\n", { k: "v" }, { create: true })).toBe("just text\n");
+    expect(editFrontmatter("just text\n", { k: "v", n: "1" }, { add: true, create: true })).toBe('---\nk: v\nn: "1"\n---\njust text\n');
+    expect(editFrontmatter("", { k: "v" }, { add: true, create: true })).toBe("---\nk: v\n---\n");
+    // After a byte order mark, with the note's own line breaks.
+    expect(editFrontmatter("\ufeffa\r\nb\r\n", { k: "v" }, { add: true, create: true })).toBe("\ufeff---\r\nk: v\r\n---\r\na\r\nb\r\n");
+  });
+
+  it("edits frontmatter that follows a byte order mark", () => {
+    expect(editFrontmatter("\ufeff---\nk: v\n---\nbody\n", { k: "w" })).toBe("\ufeff---\nk: w\n---\nbody\n");
   });
 
   it("replaces a block list value with the key", () => {
@@ -78,7 +91,10 @@ describe("claimAiNote / retargetAiNote", () => {
     expect(claimAiNote("---\naliases: [x]\n---\nbody\n", "a/Notes.md")).toBe(
       '---\naliases: [x]\nvocab-tracker: ai-note\nvocab-tracker-id: "a/Notes.md"\n---\nbody\n'
     );
-    expect(claimAiNote("body\n", "a/Notes.md")).toBe("body\n");
+    // No frontmatter: a minimal one on top, the text below unchanged.
+    expect(claimAiNote("body\n", "a/Notes.md")).toBe('---\nvocab-tracker: ai-note\nvocab-tracker-id: "a/Notes.md"\n---\nbody\n');
+    // Once claimed it's no longer unclaimed: a same-name article sees "other".
+    expect(aiNoteOwner(claimAiNote("body\n", "a/Notes.md"), "b/Notes.md")).toBe("other");
   });
 
   it("retarget points the id and an existing source at the new path", () => {

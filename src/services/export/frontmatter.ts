@@ -13,13 +13,21 @@ interface Located {
   end: number;
 }
 
+// A byte order mark some editors (Windows Notepad) put at the start.
+const BOM = "\ufeff";
+
+function bomLength(text: string): number {
+  return text.startsWith(BOM) ? BOM.length : 0;
+}
+
 function locate(text: string): Located | null {
-  const open = /^---[ \t]*\r?\n/.exec(text);
+  const bom = bomLength(text);
+  const open = /^---[ \t]*\r?\n/.exec(text.slice(bom));
   if (!open) return null;
   const close = /^(?:---|\.\.\.)[ \t]*$/gm;
-  close.lastIndex = open[0].length;
+  close.lastIndex = bom + open[0].length;
   const m = close.exec(text);
-  return m ? { start: open[0].length, end: m.index } : null;
+  return m ? { start: bom + open[0].length, end: m.index } : null;
 }
 
 const LINE = /^([\w-]+):[ \t]*(.*?)[ \t]*$/;
@@ -61,13 +69,22 @@ export interface FrontmatterEdit {
   add?: boolean;
   // Added keys go right after this key's line, else at the end.
   after?: string;
+  // With `add`: a note without frontmatter gets one, holding just
+  // `fields`, inserted at the very top (after a BOM). Otherwise such a
+  // note is returned unchanged.
+  create?: boolean;
 }
 
-// Sets `fields` in the frontmatter. A note without frontmatter is returned
-// unchanged — this never adds one.
+// Sets `fields` in the frontmatter.
 export function editFrontmatter(text: string, fields: Record<string, string>, opts: FrontmatterEdit = {}): string {
   const at = locate(text);
-  if (!at) return text;
+  if (!at) {
+    if (!opts.add || !opts.create) return text;
+    const eol = /\r\n/.exec(text)?.[0] ?? "\n";
+    const head = ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${yamlValue(v)}`), "---", ""].join(eol);
+    const bom = bomLength(text);
+    return text.slice(0, bom) + head + text.slice(bom);
+  }
   const body = lines(text.slice(at.start, at.end));
   const eol = /\r\n/.test(text.slice(0, at.start)) ? "\r\n" : "\n";
   const done = new Set<string>();
