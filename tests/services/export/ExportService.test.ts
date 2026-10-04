@@ -1,12 +1,22 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { TypedEmitter } from "../../../src/core/events";
+import { getLocale, setLocale, type Locale } from "../../../src/core/i18n";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import type { Thread } from "../../../src/core/model/thread";
 import { ExportService, shortDate } from "../../../src/services/export/ExportService";
 import { findManagedBlock } from "../../../src/services/export/managedBlock";
-import type { ExportDataPort, ParagraphThread, VaultPort } from "../../../src/services/export/ports";
+import type { VaultPort } from "../../../src/core/ports";
+import type { ExportDataPort, ParagraphThread } from "../../../src/services/export/ports";
 import type { ExportFamily, ExportTrivia, ExportUsage } from "../../../src/services/export/types";
 import { ARTICLE, entry, FAMILIES, GLITTERY, GLITTERY_THREAD, LEOTARD, TRIVIA, turn, USAGE, wordThread } from "./fixtures";
+
+// The expectations below are written against the Chinese labels.
+let previousLocale: Locale;
+beforeAll(() => {
+  previousLocale = getLocale();
+  setLocale("zh-TW");
+});
+afterAll(() => setLocale(previousLocale));
 
 const WORDS = "vocab-list/單字";
 const GLITTERY_PAGE = `${WORDS}/glittery.md`;

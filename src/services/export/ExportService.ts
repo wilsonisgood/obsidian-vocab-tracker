@@ -1,8 +1,9 @@
 import type { Thread } from "../../core/model/thread";
 import { joinPath, linkTarget, noteBasename, slugify, wordSlug } from "../../core/text/slug";
-import { EXPORT_LABELS_ZH } from "./labels";
+import { exportLabels } from "./labels";
 import { applyManagedBlocks, type ManagedSection } from "./managedBlock";
-import { DEFAULT_EXPORT_FOLDERS, type ExportDataPort, type ExportFolders, type VaultPort } from "./ports";
+import type { VaultPort } from "../../core/ports";
+import { DEFAULT_EXPORT_FOLDERS, type ExportDataPort, type ExportFolders } from "./ports";
 import { hasAiNoteContent, renderAiNoteFile, renderAiNoteSections, type AiNoteInput } from "./renderers/aiNote";
 import { threadRounds } from "./renderers/common";
 import { renderTriviaFavoritesFile, renderTriviaFavoritesSections } from "./renderers/triviaFavorites";
@@ -360,7 +361,7 @@ export class ExportService {
   private context(): RenderContext {
     const { data, vault } = this.deps;
     return {
-      labels: this.deps.labels?.() ?? EXPORT_LABELS_ZH,
+      labels: this.deps.labels?.() ?? exportLabels(),
       formatDate: this.deps.formatDate ?? shortDate,
       taskLabel: this.deps.taskLabel ?? (() => undefined),
       entryWord: (id) => data.entry(id)?.word,

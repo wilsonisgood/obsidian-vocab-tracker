@@ -123,3 +123,21 @@ export interface ParagraphVaultPort extends NoteReaderPort {
 // is discussed. "hash": never touch the note (設定「不要修改我的筆記」) —
 // the anchor is the paragraph's text hash and breaks when the text changes.
 export type AnchorMode = "block" | "hash";
+
+// Markdown files in the vault, implemented by platform/ObsidianVault.ts.
+export interface VaultPort {
+  exists(path: string): boolean;
+  // Creates the file, and any missing parent folders. Rejects when the
+  // file already exists (never overwrites).
+  create(path: string, content: string): Promise<void>;
+  // Atomic read-modify-write of an existing file (Obsidian's
+  // vault.process): `fn` gets the current text and returns the new text.
+  process(path: string, fn: (text: string) => string): Promise<void>;
+  // Moves a file, keeping links to it updated (fileManager.renameFile).
+  rename(from: string, to: string): Promise<void>;
+  // A note whose frontmatter has `vocab-tracker: <kind>` and
+  // `vocab-tracker-id: <id>` — finds a word page the user renamed or moved
+  // (規劃書 06 §4.6). Null when there's none. Compare the id as a string:
+  // YAML may have parsed an unquoted numeric id as a number.
+  findManaged(kind: string, id: string): string | null;
+}

@@ -12,8 +12,7 @@ import {
   triviaMentioning,
   type WordPageInput,
 } from "../../../src/services/export/renderers/wordPage";
-import { EXPORT_LABELS_EN } from "../../../src/services/export/labels";
-import { ARTICLE, ctx, FAMILIES, GLITTERY, GLITTERY_THREAD, LEOTARD, TRIVIA, turn, USAGE } from "./fixtures";
+import { ARTICLE, ctx, labelsIn, FAMILIES, GLITTERY, GLITTERY_THREAD, LEOTARD, TRIVIA, turn, USAGE } from "./fixtures";
 
 // Snapshot tests of the exported Markdown (規劃書 06 §11): any change to
 // what lands in the user's vault shows up in review.
@@ -79,7 +78,7 @@ describe("word page renderer", () => {
   });
 
   it("renders English labels (snapshot)", () => {
-    expect(renderWordPageFile(EMPTY, { ...ctx(), labels: EXPORT_LABELS_EN })).toMatchSnapshot();
+    expect(renderWordPageFile(EMPTY, { ...ctx(), labels: labelsIn("en") })).toMatchSnapshot();
   });
 
   it("writes frontmatter the word page decorator and id lookup rely on", () => {

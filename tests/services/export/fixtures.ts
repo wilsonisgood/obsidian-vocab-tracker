@@ -1,7 +1,8 @@
 import type { VocabEntry } from "../../../src/core/model/entry";
 import type { Thread, Turn } from "../../../src/core/model/thread";
-import { EXPORT_LABELS_ZH } from "../../../src/services/export/labels";
-import type { ExportFamily, ExportTrivia, ExportUsage, RenderContext } from "../../../src/services/export/types";
+import { getLocale, setLocale, type Locale } from "../../../src/core/i18n";
+import { exportLabels } from "../../../src/services/export/labels";
+import type { ExportFamily, ExportLabels, ExportTrivia, ExportUsage, RenderContext } from "../../../src/services/export/types";
 
 export const ARTICLE = "eng/Taylor_Swift_NYU_Speech_Transcript.md";
 
@@ -154,9 +155,19 @@ const TASK_LABELS: Record<string, string> = {
 const WORDS: Record<string, string> = { [GLITTERY.id]: "glittery", [LEOTARD.id]: "leotard", [SEQUIN.id]: "sequin" };
 
 // Deterministic context: dates in UTC, a fixed set of words with pages.
+export function labelsIn(locale: Locale): ExportLabels {
+  const previous = getLocale();
+  setLocale(locale);
+  try {
+    return exportLabels();
+  } finally {
+    setLocale(previous);
+  }
+}
+
 export function ctx(pages: Record<string, string> = { leotard: "vocab-list/單字/leotard", glittery: "vocab-list/單字/glittery" }): RenderContext {
   return {
-    labels: EXPORT_LABELS_ZH,
+    labels: labelsIn("zh-TW"),
     formatDate: (iso) => `${iso.slice(5, 7)}/${iso.slice(8, 10)}`,
     taskLabel: (id) => TASK_LABELS[id],
     entryWord: (id) => WORDS[id],
