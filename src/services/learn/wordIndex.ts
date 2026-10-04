@@ -9,6 +9,17 @@ import { lemmaCandidates } from "../../core/wordlists/lemma";
 
 const TOKEN_RE = /[A-Za-z][A-Za-z'-]*/g;
 
+// An entry stored as a plural ("aprons") also matches the singular. Only
+// plurals: lemma rules run backwards turn common words into learned ones
+// (thing → "the", likely → "like", shed → "she").
+const STOP = new Set(["the", "she", "new", "even", "like", "use", "her", "his", "one"]);
+function pluralBases(w: string): string[] {
+  if (w.length > 4 && w.endsWith("ies")) return [w.slice(0, -3) + "y"];
+  if (/(?:s|x|z|ch|sh)es$/.test(w)) return [w.slice(0, -2)];
+  if (w.length > 3 && w.endsWith("s") && !/(?:ss|us|is)$/.test(w)) return [w.slice(0, -1)];
+  return [];
+}
+
 export class WordIndex {
   private exact = new Map<string, VocabEntry>();
   // Base forms of the entries' own words ("aprons" → "apron").
@@ -28,7 +39,7 @@ export class WordIndex {
       if (!this.exact.has(w)) this.exact.set(w, e);
     }
     for (const [w, e] of this.exact) {
-      for (const b of lemmaCandidates(w)) if (!this.exact.has(b) && !this.base.has(b)) this.base.set(b, e);
+      for (const b of pluralBases(w)) if (!STOP.has(b) && !this.exact.has(b) && !this.base.has(b)) this.base.set(b, e);
     }
   }
 

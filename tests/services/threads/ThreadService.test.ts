@@ -143,6 +143,19 @@ describe("ThreadService.askWord", () => {
     expect(threads.wordQuestionCount("e1")).toBe(1);
   });
 
+  it("keeps a trivia round's subject on both turns", async () => {
+    const { threads } = setup(async () => result("**Apron** 原本是 a napron"));
+    await threads.ask({
+      threadId: "trivia-session",
+      anchor: { kind: "trivia-session" },
+      taskId: "trivia.next",
+      input: { knownWords: ["glittery"], told: [] },
+      display: "再來一則",
+      subjectEntryId: "e1",
+    });
+    expect(threads.get("trivia-session")!.turns.map((t) => t.subjectEntryId)).toEqual(["e1", "e1"]);
+  });
+
   it("ignores a second question while one is streaming", async () => {
     let release: (r: AiRunResult) => void = () => {};
     const { threads, ai, entry } = setup(() => new Promise((r) => (release = r)));

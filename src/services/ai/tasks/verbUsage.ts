@@ -1,4 +1,3 @@
-import type { I18nKey } from "../../../core/i18n";
 import type { UsagePattern, UsageRelated } from "../../../core/model/usage";
 import { renderTemplate } from "../../../core/text/template";
 import { buildWordContext, type WordInput } from "../context/wordContext";
@@ -92,13 +91,11 @@ export function parseVerbUsage(json: unknown): VerbUsageDraft {
   return { patterns, related };
 }
 
-const pendingKey = (key: string) => key as I18nKey;
-
 export const verbUsage: AiTask<WordInput, VerbUsageDraft> = {
   id: "verb.usage",
   version: 1,
   surface: "verb",
-  label: pendingKey("ai.task.verb.usage"),
+  label: "ai.task.verb.usage",
   tier: "smart",
   maxTokens: 4096,
   answerChars: () => 0,

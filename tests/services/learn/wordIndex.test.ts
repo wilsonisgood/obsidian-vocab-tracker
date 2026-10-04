@@ -44,4 +44,9 @@ describe("WordIndex.mentions", () => {
   it("doesn't match inside other words", () => {
     expect(idx.mentions("glittery napkinless eked")).toEqual(["eke"]);
   });
+
+  it("doesn't take common words for learned words they look like", () => {
+    const common = new WordIndex(["thing", "likely", "shed", "evening", "news"].map((w) => ({ ...ENTRIES[0], id: w, word: w })));
+    expect(common.mentions("I like the new apron she wore, even so.")).toEqual([]);
+  });
 });

@@ -1,4 +1,3 @@
-import type { I18nKey } from "../../../core/i18n";
 import { renderTemplate } from "../../../core/text/template";
 import { AiError } from "../errors";
 import { extractJson } from "../providers/stream";
@@ -161,13 +160,11 @@ export function parseFamilies(json: unknown): FamilyDraft[] {
   return out;
 }
 
-const pendingKey = (key: string) => key as I18nKey;
-
 export const familyGenerate: AiTask<FamilyInput, FamilyDraft[]> = {
   id: "family.generate",
   version: 1,
   surface: "family",
-  label: pendingKey("ai.task.family.generate"),
+  label: "ai.task.family.generate",
   tier: "smart",
   // A full regroup lists many members; leave room for thinking too.
   maxTokens: 8192,

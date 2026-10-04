@@ -64,6 +64,8 @@ export interface AskParams {
   display: string;
   question?: string;
   selection?: string;
+  // 冷知識: the word this round is about (規劃書 06 §7.4), kept on both turns.
+  subjectEntryId?: string;
 }
 
 export interface WordAsk {
@@ -210,6 +212,7 @@ export class ThreadService {
     };
     if (p.question) user.question = p.question;
     if (p.selection) user.selection = p.selection;
+    if (p.subjectEntryId) user.subjectEntryId = p.subjectEntryId;
     const answer: Turn = {
       id: this.newId(),
       role: "assistant",
@@ -219,6 +222,7 @@ export class ThreadService {
       taskVersion: task.version,
       status: "streaming",
     };
+    if (p.subjectEntryId) answer.subjectEntryId = p.subjectEntryId;
     thread.turns.push(user, answer);
     this.active.set(thread.id, answer);
     this.partial.set(answer.id, "");

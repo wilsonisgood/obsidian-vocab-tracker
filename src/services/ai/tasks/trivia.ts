@@ -1,4 +1,3 @@
-import type { I18nKey } from "../../../core/i18n";
 import { renderTemplate } from "../../../core/text/template";
 import { buildTriviaContext, type TriviaInput } from "../context/triviaContext";
 import type { AiResult } from "../providers/types";
@@ -79,11 +78,6 @@ export function splitTrivia(text: string): TriviaAnswer {
   return { title: clip(sentence.trim(), TITLE_MAX), body: trimmed };
 }
 
-// I18n keys that don't exist yet: integration adds them to core/i18n
-// (see the M7 handoff report). Typed as I18nKey so QuickActions can render
-// them once the dictionary has them.
-const pendingKey = (key: string) => key as I18nKey;
-
 function triviaTask(
   id: keyof typeof TRIVIA_TEMPLATES,
   opts: Pick<AiTask<TriviaInput, TriviaAnswer>, "label" | "answerChars">
@@ -121,10 +115,10 @@ function triviaTask(
 const TRIVIA_CHARS = 200;
 const capped = (_input: TriviaInput, max: number) => Math.min(max, TRIVIA_CHARS);
 
-export const triviaNext = triviaTask("next", { label: pendingKey("ai.task.trivia.next"), answerChars: capped });
-export const triviaQuiz = triviaTask("quiz", { label: pendingKey("ai.task.trivia.quiz"), answerChars: capped });
-export const triviaEtymology = triviaTask("etymology", { label: pendingKey("ai.task.trivia.etymology"), answerChars: capped });
-export const triviaJoke = triviaTask("joke", { label: pendingKey("ai.task.trivia.joke"), answerChars: capped });
+export const triviaNext = triviaTask("next", { label: "ai.task.trivia.next", answerChars: capped });
+export const triviaQuiz = triviaTask("quiz", { label: "ai.task.trivia.quiz", answerChars: capped });
+export const triviaEtymology = triviaTask("etymology", { label: "ai.task.trivia.etymology", answerChars: capped });
+export const triviaJoke = triviaTask("joke", { label: "ai.task.trivia.joke", answerChars: capped });
 // No label: follow-ups come from the composer, not a button.
 export const triviaFollowup = triviaTask("followup", {});
 

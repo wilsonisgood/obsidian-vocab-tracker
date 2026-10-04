@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AiError } from "../../../src/services/ai/errors";
-import { VerbUsageService, verbThreadId, type EntryWithUsage } from "../../../src/services/learn/VerbUsageService";
+import { VerbUsageService, verbThreadId } from "../../../src/services/learn/VerbUsageService";
 import { entry, FakeLearnAi, FakeVocab, result } from "./fakes";
 
 const NOW = new Date("2026-10-04T12:00:00Z");
@@ -44,7 +44,7 @@ describe("VerbUsageService", () => {
       generatedAt: NOW.toISOString(),
       model: "claude-sonnet-5-5",
     });
-    expect((e as EntryWithUsage).usage).toBe(block);
+    expect(e.usage).toBe(block);
     expect(verbs.usage(e)).toBe(block);
     expect(vocab.touched).toEqual([e]);
     expect(busy).toEqual([true, false]);
@@ -64,7 +64,7 @@ describe("VerbUsageService", () => {
 
   it("keeps the old block when the answer is malformed", async () => {
     const { verbs, vocab } = setup(() => result("sorry", { json: { patterns: [] } }));
-    const e = vocab.entries[0] as EntryWithUsage;
+    const e = vocab.entries[0];
     const old = { patterns: [], related: [], generatedAt: "x", model: "m" };
     e.usage = old;
     await expect(verbs.generate(e)).rejects.toMatchObject({ code: "bad_output" });

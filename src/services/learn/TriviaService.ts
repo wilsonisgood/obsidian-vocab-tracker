@@ -1,10 +1,10 @@
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import type { Anchor, Thread, Turn } from "../../core/model/thread";
 import { TRIVIA_THREAD_ID, type TriviaItem } from "../../core/model/trivia";
 import { knownWordList, MAX_TOLD, type ToldTrivia, type TriviaInput } from "../ai/context/triviaContext";
 import type { WordFacts } from "../ai/context/wordContext";
 import { splitTrivia, TRIVIA_TASK_BY_KIND, triviaFollowup, type TriviaKind } from "../ai/tasks/trivia";
-import { learnLabel } from "./labels";
 import type { LearnStore } from "./LearnStore";
 import type { TriviaThreadsPort } from "./ports";
 import { pickSubject, recentSubjects, subjectOf, triviaRounds } from "./triviaPick";
@@ -139,7 +139,7 @@ export class TriviaService {
       anchor: ANCHOR,
       taskId: task.id,
       input: this.input(subject),
-      display: learnLabel(`ai.task.trivia.${kind}`),
+      display: t(`ai.task.trivia.${kind}`),
       subjectEntryId: subject.id,
     });
     return subject;

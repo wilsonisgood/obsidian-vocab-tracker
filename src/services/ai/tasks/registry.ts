@@ -1,10 +1,12 @@
+import { FAMILY_TASKS } from "./family";
 import { PARAGRAPH_TASKS } from "./paragraph";
+import { TRIVIA_TASKS } from "./trivia";
 import type { AiTask, Surface } from "./types";
+import { VERB_TASKS } from "./verbUsage";
 import { WORD_TASKS } from "./word";
 
 // Registry of every AI task (規劃書 06 §6.3). QuickActions (M4) renders
-// `forSurface(s).filter(t => t.label)` as buttons; family/verb/trivia tasks
-// register here when M7 adds them.
+// `forSurface(s).filter(t => t.label)` as buttons.
 //
 // Stored loosely typed: each task's input type is only known at its call
 // site, which looks the task up by its exported constant, not by string.
@@ -37,5 +39,5 @@ export class TaskRegistry {
 }
 
 export function defaultTaskRegistry(): TaskRegistry {
-  return new TaskRegistry([...PARAGRAPH_TASKS, ...WORD_TASKS]);
+  return new TaskRegistry([...PARAGRAPH_TASKS, ...WORD_TASKS, ...FAMILY_TASKS, ...VERB_TASKS, ...TRIVIA_TASKS]);
 }

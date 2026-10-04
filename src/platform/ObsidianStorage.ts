@@ -6,7 +6,7 @@ import type { StoragePort } from "../core/ports";
 // (規劃書 06 §4.2) and must be listed here by the milestone that starts
 // writing it — unknown names still throw instead of silently no-op-ing, so
 // a typo'd shard name fails loudly.
-const FILE_SHARDS = new Set(["reviews", "usage", "threads", "imports"]);
+const FILE_SHARDS = new Set(["reviews", "usage", "threads", "imports", "learn"]);
 
 const UNSUPPORTED_SHARD = (name: string) =>
   new Error(`ObsidianStorage: shard "${name}" is not implemented yet`);

@@ -1,4 +1,6 @@
+import type { FamilyOrigin } from "./family";
 import type { SrsCard } from "./srs";
+import type { UsageBlock } from "./usage";
 import type { PluginSettings } from "./settings";
 
 export interface VocabSource {
@@ -50,8 +52,11 @@ export interface VocabEntry extends Record_ {
   // rather than adding a v2→v3 migration just to backfill empty cards.
   srs?: SrsCard;
   // How the word got here. Absent = added by hand (click in reading view);
-  // "wordlist" = auto-imported from an exam word list match.
-  origin?: "wordlist";
+  // "wordlist" = auto-imported from an exam word list match;
+  // "family:<id>" = added from a word family's suggestions (規劃書 06 §7.2).
+  origin?: "wordlist" | FamilyOrigin;
+  // Verb usage (L6, 規劃書 06 §7.3).
+  usage?: UsageBlock;
 }
 
 export interface VocabData {

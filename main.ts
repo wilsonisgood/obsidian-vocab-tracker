@@ -38,6 +38,10 @@ import { VocabSettingsTab } from "./src/ui/settings/SettingsTab";
 import { SETTINGS_SECTIONS } from "./src/ui/settings/sections";
 import { ObsidianNotes } from "./src/platform/ObsidianNotes";
 import { ThreadService } from "./src/services/threads/ThreadService";
+import { LearnStore } from "./src/services/learn/LearnStore";
+import { FamilyService } from "./src/services/learn/FamilyService";
+import { VerbUsageService } from "./src/services/learn/VerbUsageService";
+import { TriviaService } from "./src/services/learn/TriviaService";
 import { SelectionTracker } from "./src/ui/chat/SelectionTracker";
 import { ObsidianWordlists, inFolder } from "./src/platform/ObsidianWordlists";
 import { WordlistService } from "./src/services/wordlists/WordlistService";
@@ -76,6 +80,10 @@ export default class VocabTrackerPlugin extends Plugin {
   ai!: AiService;
   notes!: ObsidianNotes;
   threads!: ThreadService;
+  learn!: LearnStore;
+  families!: FamilyService;
+  verbs!: VerbUsageService;
+  trivia!: TriviaService;
   selection!: SelectionTracker;
   wordlists!: WordlistService;
   noteImports!: NoteImports;
@@ -121,6 +129,13 @@ export default class VocabTrackerPlugin extends Plugin {
     // highlighted in a note so the AI tab can attach it to the next question.
     this.notes = new ObsidianNotes(this.app);
     this.threads = new ThreadService({ storage: this.storage, store: this.store, ai, notes: this.notes });
+
+    // M7: word families, verb usage and trivia. learn.json loads lazily,
+    // the first time one of them is used.
+    this.learn = new LearnStore({ storage: this.storage });
+    this.families = new FamilyService({ ai, vocab: this.store, learn: this.learn, dictionary: this.dictionary });
+    this.verbs = new VerbUsageService({ ai, vocab: this.store });
+    this.trivia = new TriviaService({ threads: this.threads, vocab: this.store, learn: this.learn });
     this.selection = new SelectionTracker(this.app);
     this.registerDomEvent(document, "selectionchange", () => this.selection.update());
 
@@ -239,7 +254,7 @@ export default class VocabTrackerPlugin extends Plugin {
     // so far, before ai.dispose() aborts the requests.
     this.threads?.dispose();
     this.ai?.dispose();
-    await Promise.all([this.store.flush(), this.srs.flush(), this.threads?.flush()]);
+    await Promise.all([this.store.flush(), this.srs.flush(), this.threads?.flush(), this.learn?.flush()]);
   }
 
   // Interface language: the user's setting, or Obsidian's language on "auto".
@@ -256,6 +271,7 @@ export default class VocabTrackerPlugin extends Plugin {
     // device's reviews without waiting for our next write.
     void this.srs.reloadLogs();
     void this.threads.reload();
+    void this.learn.reload();
     void this.noteImports.load();
 
     const disk = await this.storage.readShard<VocabData>("data");

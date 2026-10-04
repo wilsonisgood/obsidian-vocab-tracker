@@ -98,6 +98,12 @@ export const zhTW: Record<keyof typeof en, string> = {
   "ai.task.word.compare": "比較",
   "ai.task.word.sentence": "造句",
   "ai.task.word.mnemonic": "記憶法",
+  "ai.task.family.generate": "找字族",
+  "ai.task.verb.usage": "產生用法",
+  "ai.task.trivia.next": "再來一則",
+  "ai.task.trivia.quiz": "考我一題",
+  "ai.task.trivia.etymology": "字源",
+  "ai.task.trivia.joke": "笑話",
 
   "ai.error.disabled": "AI 目前關閉。到「設定 › Vocab Tracker」開啟。",
   "ai.error.no_key": "還沒有 API key。到「設定 › Vocab Tracker」填入。",

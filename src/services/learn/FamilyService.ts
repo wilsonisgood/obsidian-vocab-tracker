@@ -241,9 +241,7 @@ export class FamilyService {
         reviews: 0,
       };
       if (d?.audio) entry.audio = d.audio;
-      // TODO(M7 integration): VocabEntry.origin only allows "wordlist" until
-      // it's widened to include FamilyOrigin; drop the cast then.
-      (entry as { origin?: string }).origin = familyOrigin(w.familyId);
+      entry.origin = familyOrigin(w.familyId);
       entries.push(entry);
     }
     await this.deps.vocab.addEntries(entries);

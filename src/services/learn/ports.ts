@@ -25,10 +25,8 @@ export interface DictionaryLookupPort {
 // AiService — structured tasks are one-shot runs, not threads.
 export type LearnAi = Pick<AiService, "run" | "cancel">;
 
-// ThreadService. `subjectEntryId` is stored on the new turns once
-// ThreadService.ask() supports it (M7 integration item); until then it is
-// ignored and favorites/selection fall back to what the turns carry.
-export type TriviaAskParams = AskParams & { subjectEntryId?: string };
+// ThreadService.
+export type TriviaAskParams = AskParams;
 
 export interface TriviaThreadsPort {
   ensureLoaded(): Promise<void>;

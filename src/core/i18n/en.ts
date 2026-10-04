@@ -97,6 +97,12 @@ export const en = {
   "ai.task.word.compare": "Compare",
   "ai.task.word.sentence": "Sentences",
   "ai.task.word.mnemonic": "Mnemonic",
+  "ai.task.family.generate": "Find families",
+  "ai.task.verb.usage": "Generate usage",
+  "ai.task.trivia.next": "Another one",
+  "ai.task.trivia.quiz": "Quiz me",
+  "ai.task.trivia.etymology": "Etymology",
+  "ai.task.trivia.joke": "Joke",
 
   "ai.error.disabled": "AI is turned off. Enable it in Settings › Vocab Tracker.",
   "ai.error.no_key": "No API key yet. Add one in Settings › Vocab Tracker.",

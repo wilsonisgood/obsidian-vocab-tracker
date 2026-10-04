@@ -246,7 +246,7 @@ describe("task registry", () => {
     for (const t of defaultTaskRegistry().all()) {
       expect(t.version).toBeGreaterThanOrEqual(1);
       expect(t.maxTokens).toBeGreaterThan(0);
-      expect(!!t.label).toBe(!t.id.endsWith(".custom"));
+      expect(!!t.label).toBe(!(t.id.endsWith(".custom") || t.id === "trivia.followup"));
     }
   });
 });

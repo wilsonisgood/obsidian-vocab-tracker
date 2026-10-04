@@ -8,9 +8,6 @@ import type { LearnAi, LearnVocabPort } from "./ports";
 // stored on the entry (VocabEntry.usage), generated once, and replaced only
 // when the learner presses 「重新產生」.
 
-// TODO(M7 integration): drop once VocabEntry has `usage?: UsageBlock`.
-export type EntryWithUsage = VocabEntry & { usage?: UsageBlock };
-
 export interface VerbUsageEvents {
   "verb:busy": { entryId: string; busy: boolean };
 }
@@ -46,7 +43,7 @@ export class VerbUsageService {
   }
 
   usage(entry: VocabEntry): UsageBlock | undefined {
-    return (entry as EntryWithUsage).usage;
+    return entry.usage;
   }
 
   isBusy(entryId: string): boolean {
@@ -71,7 +68,7 @@ export class VerbUsageService {
       );
       const draft = verbUsage.parse!(r);
       const block: UsageBlock = { ...draft, generatedAt: this.clock().toISOString(), model: r.model };
-      (entry as EntryWithUsage).usage = block;
+      entry.usage = block;
       await this.deps.vocab.touch(entry);
       return block;
     } finally {
