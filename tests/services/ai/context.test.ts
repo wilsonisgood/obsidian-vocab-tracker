@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultLearnerProfile } from "../../../src/core/model/settings";
 import { buildParagraphContext } from "../../../src/services/ai/context/paragraphContext";
 import { renderProfile } from "../../../src/services/ai/context/profile";
-import { buildWordContext } from "../../../src/services/ai/context/wordContext";
+import { buildWordContext, selectionHasWord } from "../../../src/services/ai/context/wordContext";
 
 const paragraphs = Array.from({ length: 12 }, (_, i) => `Paragraph ${i + 1} text.`);
 
@@ -69,6 +69,73 @@ describe("buildWordContext", () => {
   it("falls back to the captured sentence when no paragraph is available", () => {
     const c = buildWordContext({ entry: { word: "toil", example: "years of toil" } });
     expect(c.wordBlock).toBe("〔單字〕toil\n\n〔出處句子〕\nyears of toil");
+  });
+
+  it("flags a selection that doesn't contain the word, and only then", () => {
+    const entry = { word: "glittery" };
+    expect(buildWordContext({ entry, selection: "a glittery leotard" }).slots.selectionMissesWord).toBe("");
+    expect(buildWordContext({ entry, selection: "  Someone read stories to you.  " }).slots).toMatchObject({
+      selection: "Someone read stories to you.",
+      selectionMissesWord: "yes",
+    });
+    expect(buildWordContext({ entry }).slots.selectionMissesWord).toBe("");
+    expect(buildWordContext({ entry, selection: "   " }).slots.selectionMissesWord).toBe("");
+  });
+});
+
+describe("selectionHasWord", () => {
+  const has = (word: string, selection: string) => selectionHasWord(selection, word);
+
+  it("matches the word as written, ignoring case", () => {
+    expect(has("glittery", "wearing a glittery leotard")).toBe(true);
+    expect(has("glittery", "A GLITTERY leotard")).toBe(true);
+    expect(has("Glittery", "glittery")).toBe(true);
+    expect(has("leotard", "a glittery leotard.")).toBe(true);
+  });
+
+  it("tolerates inflected and closely derived forms, both ways", () => {
+    expect(has("glitter", "the stage glittered")).toBe(true);
+    expect(has("glittered", "all that glitters")).toBe(true);
+    expect(has("glittery", "it glittered under the lights")).toBe(true);
+    expect(has("run", "she was running late")).toBe(true);
+    expect(has("running", "he runs every day")).toBe(true);
+    expect(has("happy", "I've never been happier")).toBe(true);
+    expect(has("big", "the biggest stadium")).toBe(true);
+    expect(has("study", "she studied hard")).toBe(true);
+    expect(has("make", "making a speech")).toBe(true);
+    expect(has("lie", "lying in bed")).toBe(true);
+    expect(has("box", "two boxes")).toBe(true);
+    expect(has("easy", "easily done")).toBe(true);
+    expect(has("Taylor", "Taylor’s speech")).toBe(true);
+  });
+
+  it("matches multi-word entries in order, allowing a few words in between", () => {
+    expect(has("gloss over", "they glossed over the details")).toBe(true);
+    expect(has("gloss over", "Don't GLOSS it over")).toBe(true);
+    expect(has("gloss over", "glossing the whole problem over")).toBe(true);
+    expect(has("give up", "she never gave up")).toBe(false); // irregular forms aren't handled
+    expect(has("gloss over", "over the gloss")).toBe(false);
+    expect(has("gloss over", "a glossy finish")).toBe(false);
+    expect(has("gloss over", "gloss on the paint, and then far more words later over")).toBe(false);
+    expect(has("well-known", "a well-known speech")).toBe(true);
+  });
+
+  it("counts a selection that is just part of the word", () => {
+    expect(has("glittery", "glitter")).toBe(true);
+    expect(has("glittery", "litt")).toBe(true);
+  });
+
+  it("reports the user's real case as missing", () => {
+    const sel =
+      "Someone read stories to you and taught you to dream and offered up some moral code of right and wrong for you to try and live by.";
+    expect(has("glittery", sel)).toBe(false);
+    expect(has("elated", sel)).toBe(false);
+    expect(has("ensemble", "This is much more my speed.")).toBe(false);
+  });
+
+  it("never flags an empty selection or a word it can't tokenize", () => {
+    expect(has("glittery", "")).toBe(false);
+    expect(has("閃亮", "something else")).toBe(true);
   });
 });
 
