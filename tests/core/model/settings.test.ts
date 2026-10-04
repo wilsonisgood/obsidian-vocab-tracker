@@ -53,14 +53,18 @@ describe("merge() settings", () => {
   it("takes the more recently updated settings object when no section is stamped", () => {
     const local = { schemaVersion: 2 as const, updatedAt: "2026-10-01T00:00:00.000Z", learner: { level: "A1" } } as PluginSettings;
     const remote = { schemaVersion: 2 as const, updatedAt: "2026-10-02T00:00:00.000Z", learner: { level: "C1" } } as PluginSettings;
-    expect(merge(data(local), data(remote)).settings).toEqual(remote);
-    expect(merge(data(remote), data(local)).settings).toEqual(remote);
+    // The winning section takes the top-level time as its own stamp.
+    const expected = { ...remote, learner: { level: "C1", updatedAt: remote.updatedAt } };
+    expect(merge(data(local), data(remote)).settings).toEqual(expected);
+    expect(merge(data(remote), data(local)).settings).toEqual(expected);
   });
 
-  it("keeps local settings when neither side is stamped", () => {
-    const local = { schemaVersion: 2 as const, learner: { level: "A1" } } as PluginSettings;
-    const remote = { schemaVersion: 2 as const, learner: { level: "C1" } } as PluginSettings;
-    expect(merge(data(local), data(remote)).settings).toEqual(local);
+  it("converges on the same copy when neither side has any stamp at all", () => {
+    const a = { schemaVersion: 2 as const, learner: { level: "A1" } } as PluginSettings;
+    const b = { schemaVersion: 2 as const, learner: { level: "C1" } } as PluginSettings;
+    const ab = merge(data(a), data(b)).settings;
+    expect(ab).toEqual(merge(data(b), data(a)).settings);
+    expect([a, b]).toContainEqual(ab);
   });
 });
 
@@ -99,6 +103,15 @@ describe("VocabStore.updateSettings per-section stamps", () => {
 
   const newStore = (settings?: PluginSettings) =>
     new VocabStore({ schemaVersion: 2, settings, entries: [] }, async () => {});
+
+  it("leaves every stamp alone, top-level included, when nothing changed", async () => {
+    const store = newStore();
+    await at(T1, () => store.updateSettings((s) => (s.ai.enabled = true)));
+    await at(T2, () => store.updateSettings((s) => (s.ai.enabled = true)));
+    await at(T2, () => store.updateSettings(() => {}));
+    expect(store.vocabData.settings?.ai?.updatedAt).toBe(T1);
+    expect(store.vocabData.settings?.updatedAt).toBe(T1);
+  });
 
   it("stamps only the section that changed (plus the top-level stamp)", async () => {
     const store = newStore();

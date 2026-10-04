@@ -51,14 +51,16 @@ export class VocabStore {
   // The only way UI code should change settings. Stamps updatedAt on just
   // the sections (ui/ai/learner/srs/wordlists) whose content actually
   // changed, so merge.ts can keep the newer copy of each section
-  // independently; the top-level updatedAt is bumped every time.
+  // independently. The top-level updatedAt gets the very same stamp, and
+  // only when some section changed — so it never exceeds the newest section
+  // stamp, which is how merge.ts recognises a copy last edited by an older
+  // plugin version (those bump only the top-level stamp).
   updateSettings(mutate: (s: ResolvedSettings) => void): Promise<void> {
     const s = this.settings;
     const before = snapshotSettingsSections(s);
     mutate(s);
     const stamp = nowIso();
-    stampChangedSections(s, before, stamp);
-    s.updatedAt = stamp;
+    if (stampChangedSections(s, before, stamp).length > 0) s.updatedAt = stamp;
     return this.save();
   }
 

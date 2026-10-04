@@ -64,10 +64,11 @@ export interface UiSettings extends SectionStamp {
 
 export interface PluginSettings {
   schemaVersion: 2;
-  // Bumped on every settings change. merge.ts goes by the per-section
-  // stamps; this one only breaks the case where both copies of a section
-  // are unstamped (written before per-section stamps existed — the old
-  // whole-object rule) and picks whose top-level/unknown keys to keep.
+  // Set to the same stamp as the section(s) an edit changed; never newer
+  // than the newest section stamp when this version wrote it. merge.ts goes
+  // by the per-section stamps and uses this one to spot copies edited by an
+  // older plugin version (top-level newer than every section — see
+  // legacyEdit in merge.ts) and to pick whose top-level/unknown keys to keep.
   updatedAt?: string;
   ui?: UiSettings;
   ai?: AiSettings;
@@ -143,7 +144,8 @@ export function withSettingsDefaults(raw: PluginSettings | undefined): ResolvedS
 // Key-order-independent JSON of a section, ignoring its own stamp — so a
 // section rebuilt with the same values (e.g. `s.srs = { ...resolved, ...patch }`)
 // doesn't count as changed just because its keys came out in another order.
-function sectionFingerprint(section: unknown): string {
+// Also what merge.ts compares to tell whether two copies really differ.
+export function sectionFingerprint(section: unknown): string {
   if (!section || typeof section !== "object") return String(section);
   return JSON.stringify({ ...section, updatedAt: undefined }, (_key, v: unknown) =>
     v && typeof v === "object" && !Array.isArray(v)

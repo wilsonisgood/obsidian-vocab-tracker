@@ -4,6 +4,7 @@ import { VocabStore } from "../../../src/core/store/VocabStore";
 import type { VocabData, VocabEntry } from "../../../src/core/model/entry";
 import { defaultAiSettings, defaultLearnerProfile, type PluginSettings } from "../../../src/core/model/settings";
 import { resolveSrsSettings } from "../../../src/core/model/srs";
+import { resolveWordlistSettings } from "../../../src/core/model/wordlists";
 
 function makeEntry(overrides: Partial<VocabEntry> = {}): VocabEntry {
   return {
@@ -133,24 +134,60 @@ describe("merge() settings, section by section", () => {
   });
 
   it("takes the newer copy when both devices changed the same section", () => {
-    const older: PluginSettings = { schemaVersion: 2, updatedAt: T3, learner: { ...defaultLearnerProfile(), level: "A2", updatedAt: T1 } };
+    // `older` changed ui last (T3), learner earlier (T1).
+    const older: PluginSettings = {
+      schemaVersion: 2,
+      updatedAt: T3,
+      ui: { locale: "en", updatedAt: T3 },
+      learner: { ...defaultLearnerProfile(), level: "A2", updatedAt: T1 },
+    };
     const newer: PluginSettings = { schemaVersion: 2, updatedAt: T2, learner: { ...defaultLearnerProfile(), level: "C1", updatedAt: T2 } };
     // Goes by the section's own stamp, not the top-level one.
     for (const s of both(older, newer)) expect(s?.learner?.level).toBe("C1");
   });
 
-  it("keeps local on an exact tie", () => {
-    const local: PluginSettings = { schemaVersion: 2, ui: { locale: "en", updatedAt: T1 } };
-    const remote: PluginSettings = { schemaVersion: 2, ui: { locale: "zh-TW", updatedAt: T1 } };
-    expect(merge(withSettings(local), withSettings(remote)).settings?.ui?.locale).toBe("en");
+  it("breaks an exact tie with different content the same way on both devices", () => {
+    const a: PluginSettings = { schemaVersion: 2, updatedAt: T1, ui: { locale: "en", updatedAt: T1 } };
+    const b: PluginSettings = { schemaVersion: 2, updatedAt: T1, ui: { locale: "zh-TW", updatedAt: T1 } };
+    const [ab, ba] = both(a, b);
+    expect(ab).toEqual(ba);
+    expect([a.ui, b.ui]).toContainEqual(ab?.ui);
   });
 
-  it("treats an unstamped (legacy) section as older than any stamped one", () => {
-    // The legacy side even has the newer top-level stamp; the section's own
-    // stamp still wins.
-    const legacy: PluginSettings = { schemaVersion: 2, updatedAt: T3, ai: { ...defaultAiSettings(), monthlyTokenBudget: 5 } };
+  it("keeps the newer stamp when both copies have the same content", () => {
+    const a: PluginSettings = { schemaVersion: 2, updatedAt: T1, ui: { locale: "en", updatedAt: T1 } };
+    const b: PluginSettings = { schemaVersion: 2, updatedAt: T2, ui: { updatedAt: T2, locale: "en" } };
+    for (const s of both(a, b)) expect(s?.ui).toEqual(b.ui);
+  });
+
+  it("treats an unstamped section as older than any stamped one", () => {
+    // `unstamped` was written by this version (its top-level stamp matches
+    // its srs stamp), so its unstamped ai section was simply never edited.
+    const unstamped: PluginSettings = {
+      schemaVersion: 2,
+      updatedAt: T3,
+      srs: { dailyNew: 1, updatedAt: T3 },
+      ai: { ...defaultAiSettings(), monthlyTokenBudget: 5 },
+    };
     const stamped: PluginSettings = { schemaVersion: 2, updatedAt: T1, ai: { ...defaultAiSettings(), monthlyTokenBudget: 9, updatedAt: T1 } };
-    for (const s of both(legacy, stamped)) expect(s?.ai?.monthlyTokenBudget).toBe(9);
+    for (const s of both(unstamped, stamped)) expect(s?.ai?.monthlyTokenBudget).toBe(9);
+  });
+
+  it("treats an unparseable stamp as the oldest", () => {
+    const garbled: PluginSettings = { schemaVersion: 2, updatedAt: "not a date", learner: { ...defaultLearnerProfile(), level: "A1", updatedAt: "not a date" } };
+    const valid: PluginSettings = { schemaVersion: 2, updatedAt: T1, learner: { ...defaultLearnerProfile(), level: "B2", updatedAt: T1 } };
+    for (const s of both(garbled, valid)) {
+      expect(s?.learner?.level).toBe("B2");
+      expect(s?.updatedAt).toBe(T1);
+    }
+  });
+
+  it("converges when the top-level stamps tie and no section is stamped", () => {
+    const a = { schemaVersion: 2, updatedAt: T1, futureField: "a", learner: { ...defaultLearnerProfile(), level: "A1" } } as PluginSettings;
+    const b = { schemaVersion: 2, updatedAt: T1, futureField: "b", learner: { ...defaultLearnerProfile(), level: "C1" } } as PluginSettings;
+    const [ab, ba] = both(a, b);
+    expect(ab).toEqual(ba);
+    expect(["A1", "C1"]).toContain(ab?.learner?.level);
   });
 
   it("falls back to the newer top-level stamp when neither copy of a section is stamped", () => {
@@ -199,6 +236,102 @@ describe("merge() settings, section by section", () => {
     expect(ab?.ui?.locale).toBe("en");
     expect(ab?.srs?.dailyNew).toBe(2);
     expect(merge(withSettings(ab!), withSettings(b)).settings).toEqual(ab);
+  });
+
+  describe("a device still on an older plugin version", () => {
+    const T4 = "2026-10-04T00:00:00.000Z";
+    // Written by this version: every section stamped, top-level = newest.
+    const shared: PluginSettings = {
+      schemaVersion: 2,
+      updatedAt: T1,
+      ai: { ...defaultAiSettings(), updatedAt: T1 },
+      srs: { retention: 0.9, dailyNew: 20, updatedAt: T1 },
+      wordlists: { ...resolveWordlistSettings(undefined), updatedAt: T1 },
+    };
+    // What the pre-section-stamp updateSettings did: mutate, bump the
+    // top-level stamp only.
+    const oldVersionEdit = (s: PluginSettings, at: string, mutate: (s: PluginSettings) => void) => {
+      const copy = structuredClone(s);
+      mutate(copy);
+      copy.updatedAt = at;
+      return copy;
+    };
+
+    it("keeps an in-place edit to a section that still carries an older stamp", () => {
+      const old = oldVersionEdit(shared, T3, (s) => (s.ai!.enabled = true));
+      for (const s of both(shared, old)) {
+        expect(s?.ai?.enabled).toBe(true);
+        expect(s?.ai?.updatedAt).toBe(T3);
+      }
+    });
+
+    it("keeps an srs edit rebuilt through resolveSrsSettings (stamp dropped)", () => {
+      const old = oldVersionEdit(shared, T3, (s) => (s.srs = { ...resolveSrsSettings(s.srs), dailyNew: 50 }));
+      expect(old.srs?.updatedAt).toBeUndefined();
+      for (const s of both(shared, old)) {
+        expect(s?.srs).toEqual({ retention: 0.9, dailyNew: 50, updatedAt: T3 });
+        expect(s?.ai).toEqual(shared.ai);
+      }
+    });
+
+    it("keeps a wordlists edit rebuilt through resolveWordlistSettings (stamp dropped)", () => {
+      const old = oldVersionEdit(shared, T3, (s) => (s.wordlists = { ...resolveWordlistSettings(s.wordlists), tags: { "exam/TOEFL": { enabled: false } } }));
+      for (const s of both(shared, old)) expect(s?.wordlists?.tags).toEqual({ "exam/TOEFL": { enabled: false } });
+    });
+
+    it("still lets a later edit on this version win, and keeps both sides' sections", () => {
+      const old = oldVersionEdit(shared, T3, (s) => (s.srs = { ...resolveSrsSettings(s.srs), dailyNew: 50 }));
+      const fresh: PluginSettings = { ...structuredClone(shared), updatedAt: T4, ai: { ...defaultAiSettings(), enabled: true, updatedAt: T4 } };
+      for (const s of both(old, fresh)) {
+        expect(s?.srs?.dailyNew).toBe(50);
+        expect(s?.ai?.enabled).toBe(true);
+        expect(s?.updatedAt).toBe(T4);
+      }
+    });
+
+    it("keeps the old version's edit newer after later merges", () => {
+      const old = oldVersionEdit(shared, T3, (s) => (s.srs = { ...resolveSrsSettings(s.srs), dailyNew: 50 }));
+      const merged = merge(withSettings(shared), withSettings(old)).settings!;
+      // A third copy whose srs edit (T2) happened before the old version's.
+      const third: PluginSettings = { ...structuredClone(shared), updatedAt: T2, srs: { retention: 0.9, dailyNew: 7, updatedAt: T2 } };
+      for (const s of both(merged, third)) expect(s?.srs?.dailyNew).toBe(50);
+    });
+
+    it("raises nothing whose content matches the other side", () => {
+      const noop = oldVersionEdit(shared, T3, () => {});
+      for (const s of both(noop, shared)) {
+        expect(s?.ai).toEqual(shared.ai);
+        expect(s?.srs).toEqual(shared.srs);
+        expect(s?.wordlists).toEqual(shared.wordlists);
+      }
+    });
+
+    it("falls back to the whole-object rule for sections it can't tell apart", () => {
+      // The old version can't say which section it edited, so every section
+      // that differs counts as written at T3 — including one this version
+      // edited at T2 that the old device hadn't seen yet (known trade-off).
+      const old = oldVersionEdit(shared, T3, (s) => (s.ai!.enabled = true));
+      const fresh: PluginSettings = { ...structuredClone(shared), updatedAt: T2, srs: { retention: 0.9, dailyNew: 7, updatedAt: T2 } };
+      for (const s of both(old, fresh)) {
+        expect(s?.ai?.enabled).toBe(true);
+        expect(s?.srs?.dailyNew).toBe(20);
+      }
+    });
+
+    it("is order-independent and idempotent", () => {
+      const old = oldVersionEdit(shared, T3, (s) => {
+        s.ai!.monthlyTokenBudget = 100;
+        s.srs = { ...resolveSrsSettings(s.srs), dailyNew: 50 };
+      });
+      const fresh: PluginSettings = { ...structuredClone(shared), updatedAt: T2, learner: { ...defaultLearnerProfile(), level: "B1", updatedAt: T2 } };
+      const [ab, ba] = both(old, fresh);
+      expect(ab).toEqual(ba);
+      expect(ab?.learner?.level).toBe("B1");
+      expect(ab?.ai?.monthlyTokenBudget).toBe(100);
+      expect(merge(withSettings(ab!), withSettings(old)).settings).toEqual(ab);
+      expect(merge(withSettings(ab!), withSettings(fresh)).settings).toEqual(ab);
+      expect(merge(withSettings(old), withSettings(ab!)).settings).toEqual(ab);
+    });
   });
 
   it("end to end: two VocabStores edit different sections, then sync both ways", async () => {
