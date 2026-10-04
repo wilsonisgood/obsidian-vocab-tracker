@@ -1,0 +1,39 @@
+import type { DictionaryResult } from "../../core/model/dictionary";
+import type { VocabEntry } from "../../core/model/entry";
+import type { Thread } from "../../core/model/thread";
+import type { AiService } from "../ai/AiService";
+import type { AskParams } from "../threads/ThreadService";
+
+// What the learning services need from the rest of the plugin, as narrow
+// structural interfaces so tests can fake them (規劃書 06 §3.1). The real
+// objects satisfy them as they are: VocabStore, DictionaryService,
+// AiService, ThreadService.
+
+// VocabStore.
+export interface LearnVocabPort {
+  // Live entries (no tombstones).
+  readonly entries: VocabEntry[];
+  addEntries(entries: VocabEntry[]): Promise<void>;
+  touch(entry: VocabEntry): Promise<void>;
+}
+
+// DictionaryService.
+export interface DictionaryLookupPort {
+  fetchDictionary(word: string): Promise<DictionaryResult>;
+}
+
+// AiService — structured tasks are one-shot runs, not threads.
+export type LearnAi = Pick<AiService, "run" | "cancel">;
+
+// ThreadService. `subjectEntryId` is stored on the new turns once
+// ThreadService.ask() supports it (M7 integration item); until then it is
+// ignored and favorites/selection fall back to what the turns carry.
+export type TriviaAskParams = AskParams & { subjectEntryId?: string };
+
+export interface TriviaThreadsPort {
+  ensureLoaded(): Promise<void>;
+  get(threadId: string): Thread | undefined;
+  ask(p: TriviaAskParams): Promise<void>;
+  isBusy(threadId: string): boolean;
+  stop(threadId: string): void;
+}
