@@ -10,6 +10,8 @@ import { defaultTaskRegistry, type TaskRegistry } from "./tasks/registry";
 import { FallbackTransport } from "./transport/fallbackTransport";
 import { FetchTransport } from "./transport/fetchTransport";
 import { RequestUrlTransport } from "./transport/requestUrlTransport";
+import { TracingTransport, type HttpTrace } from "./transport/tracing";
+import type { AiTransport } from "./transport/types";
 import type { UsageSummary, UsageTracker } from "./usage";
 
 // Facade the UI talks to (規劃書 06 §6.5): picks the configured provider,
@@ -114,22 +116,29 @@ export class AiService {
   }
 
   // Built per call so settings edits take effect immediately.
-  private provider(id: ProviderId): AiProvider {
+  private provider(id: ProviderId, transport: AiTransport = this.transport(id)): AiProvider {
     const ai = this.deps.settings().ai;
     return providerDef(id).create({
       config: ai.providers[id],
       apiKey: this.deps.keys.get(id),
-      transport: this.transport(id),
+      transport,
     });
   }
 
   // Works even with the master toggle off, so the user can verify their
   // setup before enabling AI. Clears the remembered transport fallback
-  // first so a fixed CORS setup gets streaming back.
-  async testConnection(provider: ProviderId = this.deps.settings().ai.provider, signal?: AbortSignal): Promise<TestConnectionResult> {
+  // first so a fixed CORS setup gets streaming back. `traces` (when given)
+  // collects every HTTP exchange, success or failure, for the settings page.
+  async testConnection(
+    provider: ProviderId = this.deps.settings().ai.provider,
+    signal?: AbortSignal,
+    traces?: HttpTrace[]
+  ): Promise<TestConnectionResult> {
     if (isMissingKey(provider, this.deps.keys.get(provider))) throw new AiError("no_key");
-    this.transport(provider).resetMemory();
-    return this.provider(provider).testConnection(signal ?? new AbortController().signal);
+    const transport = this.transport(provider);
+    transport.resetMemory();
+    const p = this.provider(provider, traces ? new TracingTransport(transport, traces) : transport);
+    return p.testConnection(signal ?? new AbortController().signal);
   }
 
   async run<I>(task: AiTask<I, unknown> | string, input: I, opt: RunOptions = {}): Promise<AiRunResult> {

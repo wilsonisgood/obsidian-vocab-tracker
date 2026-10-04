@@ -161,6 +161,34 @@ body.is-mobile .vt-empty-action button {
   color: var(--text-error);
 }
 
+.vt-settings-trace {
+  margin: -6px 0 12px;
+  font-size: var(--font-ui-small);
+}
+
+.vt-settings-trace summary {
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.vt-settings-trace-copy {
+  margin-left: 8px;
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-settings-trace pre {
+  max-height: 360px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-secondary);
+  font-size: var(--font-ui-smaller);
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}
+
 .vt-settings-muted {
   color: var(--text-faint);
 }

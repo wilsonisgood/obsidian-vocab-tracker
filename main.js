@@ -841,6 +841,13 @@ var en = {
   "settings.ai.test.fetch": "streaming",
   "settings.ai.test.requestUrl": "compatibility mode, no streaming",
   "settings.ai.test.noModel": "Fill in the model names first.",
+  "settings.ai.test.details": "Request and response ({n})",
+  "settings.ai.test.copy": "Copy",
+  "settings.ai.test.copied": "Copied",
+  "settings.ai.test.response": "\u2500\u2500 Response ({mode}, {ms} ms) \u2500\u2500",
+  "settings.ai.test.noResponse": "\u2500\u2500 No response ({ms} ms) \u2500\u2500",
+  "settings.ai.test.emptyBody": "(empty)",
+  "settings.ai.test.truncated": "\u2026 (only the first {n} characters kept)",
   "settings.ai.budget.name": "Monthly token budget",
   "settings.ai.budget.desc": "Requests stop once this month's usage reaches it (cache reads count 1/10). 0 = no limit.",
   "settings.ai.usage.name": "Usage",
@@ -1034,6 +1041,13 @@ var zhTW = {
   "settings.ai.test.fetch": "\u4E32\u6D41",
   "settings.ai.test.requestUrl": "\u76F8\u5BB9\u6A21\u5F0F\uFF0C\u4E0D\u4E32\u6D41",
   "settings.ai.test.noModel": "\u8ACB\u5148\u586B\u6A21\u578B\u540D\u7A31\u3002",
+  "settings.ai.test.details": "\u8ACB\u6C42\u8207\u56DE\u61C9\uFF08{n} \u6B21\uFF09",
+  "settings.ai.test.copy": "\u8907\u88FD",
+  "settings.ai.test.copied": "\u5DF2\u8907\u88FD",
+  "settings.ai.test.response": "\u2500\u2500 \u56DE\u61C9\uFF08{mode}\uFF0C{ms} ms\uFF09\u2500\u2500",
+  "settings.ai.test.noResponse": "\u2500\u2500 \u6C92\u6709\u6536\u5230\u56DE\u61C9\uFF08{ms} ms\uFF09\u2500\u2500",
+  "settings.ai.test.emptyBody": "\uFF08\u6C92\u6709\u5167\u5BB9\uFF09",
+  "settings.ai.test.truncated": "\u2026\uFF08\u53EA\u4FDD\u7559\u524D {n} \u5B57\u5143\uFF09",
   "settings.ai.budget.name": "\u6BCF\u6708 token \u4E0A\u9650",
   "settings.ai.budget.desc": "\u672C\u6708\u7528\u91CF\u5230\u9054\u4E0A\u9650\u5C31\u505C\u6B62\u9001\u51FA\uFF08\u5FEB\u53D6\u8B80\u53D6\u4EE5 1/10 \u8A08\uFF09\u30020 = \u4E0D\u9650\u3002",
   "settings.ai.usage.name": "\u7528\u91CF",
@@ -4867,6 +4881,7 @@ var BrowserFetch = class {
     return {
       status: res.status,
       header: (name) => res.headers.get(name),
+      headers: Object.fromEntries(res.headers.entries()),
       chunks: readChunks(res)
     };
   }
@@ -5342,6 +5357,19 @@ function isOfficialOpenAi(baseUrl) {
     return false;
   }
 }
+function normalizeBaseUrl(raw) {
+  var _a, _b;
+  const url = trimSlash(raw.trim()).replace(/\/chat\/completions$/i, "");
+  try {
+    const u = new URL(url);
+    if (u.hostname === "generativelanguage.googleapis.com" && !/\/openai$/i.test(u.pathname)) {
+      const version2 = (_b = (_a = /^\/(v1(?:alpha|beta)?)\b/i.exec(u.pathname)) == null ? void 0 : _a[1]) != null ? _b : "v1beta";
+      return `${u.origin}/${version2}/openai`;
+    }
+  } catch (e) {
+  }
+  return url;
+}
 var PROMPTED_JSON_INSTRUCTION = "\u53EA\u8F38\u51FA\u4E00\u500B\u7B26\u5408\u4E0B\u5217 JSON Schema \u7684 JSON \u503C\uFF0C\u4E0D\u8981\u52A0\u4EFB\u4F55\u8AAA\u660E\u6587\u5B57\uFF0C\u4E5F\u4E0D\u8981\u7528\u7A0B\u5F0F\u78BC\u5340\u584A\u5305\u8D77\u4F86\uFF1A\n";
 function buildOpenAiBody(req, model, baseUrl) {
   const official = isOfficialOpenAi(baseUrl);
@@ -5375,12 +5403,12 @@ function mapFinish(reason) {
   return "end";
 }
 function applyUsage2(target, u) {
-  var _a, _b, _c;
+  var _a, _b, _c, _d;
   if (!u || u.prompt_tokens === void 0) return false;
   const cached = (_b = (_a = u.prompt_tokens_details) == null ? void 0 : _a.cached_tokens) != null ? _b : 0;
   target.input = u.prompt_tokens - cached;
   target.cacheRead = cached;
-  target.output = (_c = u.completion_tokens) != null ? _c : 0;
+  target.output = Math.max((_c = u.completion_tokens) != null ? _c : 0, ((_d = u.total_tokens) != null ? _d : 0) - u.prompt_tokens);
   return true;
 }
 function streamErrorFromChunk(err) {
@@ -5444,7 +5472,7 @@ var OpenAiCompatProvider = class {
     };
   }
   get baseUrl() {
-    return trimSlash(this.deps.config.baseUrl);
+    return normalizeBaseUrl(this.deps.config.baseUrl);
   }
   request(body) {
     if (!this.baseUrl) throw new AiError("bad_request", "Base URL is empty");
@@ -5757,7 +5785,7 @@ var FetchTransport = class {
   }
   async send(req, signal) {
     const res = await this.port.fetch(req, signal);
-    return { status: res.status, header: (n) => res.header(n), chunks: res.chunks, mode: "fetch" };
+    return { status: res.status, header: (n) => res.header(n), headers: res.headers, chunks: res.chunks, mode: "fetch" };
   }
 };
 
@@ -5782,6 +5810,7 @@ var RequestUrlTransport = class {
           var _a;
           return (_a = headers[n.toLowerCase()]) != null ? _a : null;
         },
+        headers,
         chunks: once(res.text),
         mode: "requestUrl"
       };
@@ -5797,6 +5826,54 @@ function lowerKeys(h) {
 }
 async function* once(text) {
   yield text;
+}
+
+// src/services/ai/transport/tracing.ts
+var SECRET_HEADERS = /* @__PURE__ */ new Set(["authorization", "x-api-key", "x-goog-api-key", "api-key"]);
+var MAX_BODY_CHARS = 2e4;
+function maskSecret(value) {
+  var _a, _b;
+  const m = /^(Bearer\s+)?(.*)$/is.exec(value);
+  const prefix = (_a = m == null ? void 0 : m[1]) != null ? _a : "";
+  const secret = (_b = m == null ? void 0 : m[2]) != null ? _b : value;
+  const shown = secret.length <= 12 ? "\u2026" : `${secret.slice(0, 6)}\u2026${secret.slice(-4)}`;
+  return `${prefix}${shown} [${secret.length}]`;
+}
+function maskHeaders(headers) {
+  const out = {};
+  for (const [k, v] of Object.entries(headers)) out[k] = SECRET_HEADERS.has(k.toLowerCase()) ? maskSecret(v) : v;
+  return out;
+}
+var TracingTransport = class {
+  constructor(inner, traces, now = Date.now) {
+    this.inner = inner;
+    this.traces = traces;
+    this.now = now;
+  }
+  async send(req, signal) {
+    var _a;
+    const trace = { request: { ...req, headers: maskHeaders(req.headers) } };
+    this.traces.push(trace);
+    const started = this.now();
+    let res;
+    try {
+      res = await this.inner.send(req, signal);
+    } catch (e) {
+      trace.error = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+      trace.ms = this.now() - started;
+      throw e;
+    }
+    trace.ms = this.now() - started;
+    const recorded = { status: res.status, mode: res.mode, headers: (_a = res.headers) != null ? _a : {}, body: "" };
+    trace.response = recorded;
+    return { ...res, chunks: tee(res.chunks, recorded) };
+  }
+};
+async function* tee(chunks, into) {
+  for await (const c of chunks) {
+    if (into.body.length < MAX_BODY_CHARS) into.body += c.slice(0, MAX_BODY_CHARS - into.body.length);
+    yield c;
+  }
 }
 
 // src/services/ai/AiService.ts
@@ -5857,21 +5934,24 @@ var AiService = class {
     return t2;
   }
   // Built per call so settings edits take effect immediately.
-  provider(id) {
+  provider(id, transport = this.transport(id)) {
     const ai = this.deps.settings().ai;
     return providerDef(id).create({
       config: ai.providers[id],
       apiKey: this.deps.keys.get(id),
-      transport: this.transport(id)
+      transport
     });
   }
   // Works even with the master toggle off, so the user can verify their
   // setup before enabling AI. Clears the remembered transport fallback
-  // first so a fixed CORS setup gets streaming back.
-  async testConnection(provider = this.deps.settings().ai.provider, signal) {
+  // first so a fixed CORS setup gets streaming back. `traces` (when given)
+  // collects every HTTP exchange, success or failure, for the settings page.
+  async testConnection(provider = this.deps.settings().ai.provider, signal, traces) {
     if (isMissingKey(provider, this.deps.keys.get(provider))) throw new AiError("no_key");
-    this.transport(provider).resetMemory();
-    return this.provider(provider).testConnection(signal != null ? signal : new AbortController().signal);
+    const transport = this.transport(provider);
+    transport.resetMemory();
+    const p = this.provider(provider, traces ? new TracingTransport(transport, traces) : transport);
+    return p.testConnection(signal != null ? signal : new AbortController().signal);
   }
   async run(task, input, opt = {}) {
     const { task: t2, request } = this.prepare(task, input, opt.history);
@@ -6135,6 +6215,49 @@ function parseNonNegativeInt(value) {
 
 // src/ui/settings/sections/ai.ts
 var import_obsidian16 = require("obsidian");
+
+// src/ui/settings/traceView.ts
+function prettyBody(body) {
+  if (!body) return "";
+  try {
+    return JSON.stringify(JSON.parse(body), null, 2);
+  } catch (e) {
+    return body;
+  }
+}
+function formatTrace(trace) {
+  var _a, _b;
+  const { request: req, response: res } = trace;
+  const ms2 = (_a = trace.ms) != null ? _a : 0;
+  const lines = [`${req.method} ${req.url}`];
+  for (const [k, v] of Object.entries(req.headers)) lines.push(`${k}: ${v}`);
+  if (req.body) lines.push("", prettyBody(req.body));
+  lines.push("");
+  if (res) {
+    lines.push(t("settings.ai.test.response", { mode: res.mode, ms: ms2 }), `HTTP ${res.status}`);
+    for (const [k, v] of Object.entries(res.headers)) lines.push(`${k}: ${v}`);
+    lines.push("", prettyBody(res.body) || t("settings.ai.test.emptyBody"));
+    if (res.body.length >= MAX_BODY_CHARS) lines.push(t("settings.ai.test.truncated", { n: MAX_BODY_CHARS }));
+  } else {
+    lines.push(t("settings.ai.test.noResponse", { ms: ms2 }), (_b = trace.error) != null ? _b : "");
+  }
+  return lines.join("\n");
+}
+function renderTraces(parent, traces, open) {
+  if (traces.length === 0) return;
+  const text = traces.map(formatTrace).join("\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n");
+  const details = parent.createEl("details", { cls: "vt-settings-trace" });
+  details.open = open;
+  const summary = details.createEl("summary", { text: t("settings.ai.test.details", { n: traces.length }) });
+  const copy = summary.createEl("button", { cls: "vt-settings-trace-copy", text: t("settings.ai.test.copy") });
+  copy.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    void navigator.clipboard.writeText(text).then(() => copy.setText(t("settings.ai.test.copied")));
+  });
+  details.createEl("pre", { text });
+}
+
+// src/ui/settings/sections/ai.ts
 var fmt = (n) => n.toLocaleString();
 function renderProviderFields(el, ctx, id) {
   var _a;
@@ -6186,9 +6309,11 @@ function renderProviderFields(el, ctx, id) {
   modelSetting("fast");
   const testSetting = new import_obsidian16.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
   const result = el.createDiv({ cls: "vt-settings-test-result" });
+  const trace = el.createDiv();
   testSetting.addButton((b) => {
     b.setButtonText(t("settings.ai.test.button")).onClick(async () => {
       result.empty();
+      trace.empty();
       result.removeClass("is-ok", "is-error");
       if (!cfg().smartModel && !cfg().fastModel) {
         result.setText(t("settings.ai.test.noModel"));
@@ -6196,8 +6321,10 @@ function renderProviderFields(el, ctx, id) {
         return;
       }
       b.setDisabled(true).setButtonText(t("settings.ai.test.running"));
+      const traces = [];
+      let failed = false;
       try {
-        const r = await ctx.ai.testConnection(id);
+        const r = await ctx.ai.testConnection(id, void 0, traces);
         result.setText(
           t("settings.ai.test.ok", {
             models: r.models.join("\u3001"),
@@ -6207,9 +6334,11 @@ function renderProviderFields(el, ctx, id) {
         );
         result.addClass("is-ok");
       } catch (e) {
+        failed = true;
         result.setText(isAiError(e) ? aiErrorText(e) : String(e));
         result.addClass("is-error");
       } finally {
+        renderTraces(trace, traces, failed);
         b.setDisabled(false).setButtonText(t("settings.ai.test.button"));
       }
     });

@@ -45,6 +45,9 @@ export interface RawHttpRequest {
 export interface FetchResponse {
   readonly status: number;
   header(name: string): string | null;
+  // Every response header, only for the 測試連線 trace. Optional so test
+  // fakes can skip it.
+  readonly headers?: Record<string, string>;
   readonly chunks: AsyncIterable<string>;
 }
 

@@ -23,6 +23,7 @@ export class RequestUrlTransport implements AiTransport {
       return {
         status: res.status,
         header: (n) => headers[n.toLowerCase()] ?? null,
+        headers,
         chunks: once(res.text),
         mode: "requestUrl",
       };

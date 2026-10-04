@@ -9,6 +9,6 @@ export class FetchTransport implements AiTransport {
 
   async send(req: RawHttpRequest, signal: AbortSignal): Promise<TransportResponse> {
     const res = await this.port.fetch(req, signal);
-    return { status: res.status, header: (n) => res.header(n), chunks: res.chunks, mode: "fetch" };
+    return { status: res.status, header: (n) => res.header(n), headers: res.headers, chunks: res.chunks, mode: "fetch" };
   }
 }

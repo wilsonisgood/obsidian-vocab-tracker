@@ -3,9 +3,11 @@ import { t } from "../../../core/i18n";
 import type { ProviderId } from "../../../core/model/settings";
 import { isAiError } from "../../../services/ai/errors";
 import { PROVIDERS, providerDef } from "../../../services/ai/providers/registry";
+import type { HttpTrace } from "../../../services/ai/transport/tracing";
 import { aiErrorText } from "../../kit/aiState";
 import { inlineNote } from "../../kit/inlineNote";
 import { parseNonNegativeInt, type SettingsContext, type SettingsSection } from "../SettingsTab";
+import { renderTraces } from "../traceView";
 
 // AI settings (規劃書 06 §6.6, design D6): master toggle, provider, key,
 // models, 測試連線, monthly budget, usage. Provider-specific fields are
@@ -77,9 +79,11 @@ function renderProviderFields(el: HTMLElement, ctx: SettingsContext, id: Provide
   // 測試連線 — the M3 acceptance check (Claude and Ollama both succeed).
   const testSetting = new Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
   const result = el.createDiv({ cls: "vt-settings-test-result" });
+  const trace = el.createDiv();
   testSetting.addButton((b) => {
     b.setButtonText(t("settings.ai.test.button")).onClick(async () => {
       result.empty();
+      trace.empty();
       result.removeClass("is-ok", "is-error");
       if (!cfg().smartModel && !cfg().fastModel) {
         result.setText(t("settings.ai.test.noModel"));
@@ -87,8 +91,10 @@ function renderProviderFields(el: HTMLElement, ctx: SettingsContext, id: Provide
         return;
       }
       b.setDisabled(true).setButtonText(t("settings.ai.test.running"));
+      const traces: HttpTrace[] = [];
+      let failed = false;
       try {
-        const r = await ctx.ai.testConnection(id);
+        const r = await ctx.ai.testConnection(id, undefined, traces);
         result.setText(
           t("settings.ai.test.ok", {
             models: r.models.join("、"),
@@ -98,9 +104,12 @@ function renderProviderFields(el: HTMLElement, ctx: SettingsContext, id: Provide
         );
         result.addClass("is-ok");
       } catch (e) {
+        failed = true;
         result.setText(isAiError(e) ? aiErrorText(e) : String(e));
         result.addClass("is-error");
       } finally {
+        // Opened on failure: the response body is what explains the error.
+        renderTraces(trace, traces, failed);
         b.setDisabled(false).setButtonText(t("settings.ai.test.button"));
       }
     });
