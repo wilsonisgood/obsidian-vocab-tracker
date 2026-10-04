@@ -399,7 +399,7 @@ describe("word pages", () => {
     svc.dispose();
     svc = make({ folders: () => ({ words: "Vocab/Words", threads: "Vocab/Threads", triviaFile: "Vocab/Trivia.md" }) });
     expect(await svc.openWordPage(GLITTERY.id)).toBe("Vocab/Words/glittery.md");
-    expect(svc.aiNotePath("a/b/Speech.md")).toBe("Vocab/Threads/Speech.ai.md");
+    expect(svc.aiNoteNames("a/b/Speech.md")[0]).toBe("Vocab/Threads/Speech.ai.md");
   });
 
   it("links to other words' pages that exist", async () => {
@@ -444,7 +444,8 @@ describe("AI notes", () => {
     svc.threadChanged(GLITTERY_THREAD);
     await vi.advanceTimersByTimeAsync(1000);
     expect(vault.files.get(AI_NOTE)).toContain("glittery|glittery]] · 2 則討論");
-    expect(vault.files.get(AI_NOTE)!.startsWith("my header\n")).toBe(true);
+    // Claimed: a minimal frontmatter goes on top, the rest is kept.
+    expect(vault.files.get(AI_NOTE)!.startsWith(`---\nvocab-tracker: ai-note\nvocab-tracker-id: "${ARTICLE}"\n---\nmy header\n`)).toBe(true);
   });
 
   it("moves the .ai.md along when the article is renamed", async () => {
@@ -603,7 +604,7 @@ describe("AI notes: articles with the same name", () => {
     await vi.advanceTimersByTimeAsync(1000);
     expect(vault.files.size).toBe(2);
     expect(vault.files.get("Study/a 的討論.md")).toContain("Paragraph from a.");
-    expect(svc.aiNotePath(A)).toBe("Study/a 的討論.md");
+    expect(await svc.aiNotePath(A)).toBe("Study/a 的討論.md");
   });
 
   it("renaming updates only the id and source lines; the note is found under the new path", async () => {
@@ -655,6 +656,95 @@ describe("AI notes: articles with the same name", () => {
     await svc.renameArticle(A, "a/New.md");
     await vi.advanceTimersByTimeAsync(1000);
     expect(vault.files.size).toBe(0);
+  });
+
+  it("a note without frontmatter is claimed by the first writer, then left to it", async () => {
+    vault.files.set(NOTES, "my own header\n");
+    discuss(A, "Paragraph from a.");
+    svc.articleChanged(A);
+    await vi.advanceTimersByTimeAsync(1000);
+    const a = vault.files.get(NOTES)!;
+    expect(a.startsWith('---\nvocab-tracker: ai-note\nvocab-tracker-id: "a/Notes.md"\n---\nmy own header\n')).toBe(true);
+    expect(a).toContain("Paragraph from a.");
+
+    discuss(B, "Paragraph from b.");
+    svc.articleChanged(B);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.get(NOTES)).toBe(a);
+    expect(vault.files.get(NOTES_B)).toContain("Paragraph from b.");
+
+    // Also after a restart, with nothing remembered.
+    svc.dispose();
+    svc = make();
+    svc.articleChanged(B);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.get(NOTES)).toBe(a);
+  });
+
+  it("a byte order mark at the top is kept, and frontmatter after it is read", async () => {
+    vault.files.set(NOTES, "\ufeffmy own header\n");
+    discuss(A, "Paragraph from a.");
+    svc.articleChanged(A);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.get(NOTES)!.startsWith('\ufeff---\nvocab-tracker: ai-note\nvocab-tracker-id: "a/Notes.md"\n---\nmy own header\n')).toBe(true);
+
+  });
+
+  it("an older note saved with a byte order mark is still recognized as another article's", async () => {
+    const theirs = `\ufeff${aiNoteFile(B, "b's\n", null)}`;
+    vault.files.set(NOTES, theirs);
+    discuss(A, "Paragraph from a.");
+    svc.articleChanged(A);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.get(NOTES)).toBe(theirs);
+    expect(vault.files.get(`${THREADS}/Notes (a).ai.md`)).toContain("Paragraph from a.");
+  });
+
+  describe("while findManaged can't help (metadata cache not ready)", () => {
+    beforeEach(() => {
+      vi.spyOn(vault, "findManaged").mockReturnValue(null);
+    });
+
+    it("updates a note under a later name instead of creating a duplicate", async () => {
+      // b/Notes's note was deleted, a's sits under its second name.
+      const later = `${THREADS}/Notes (a).ai.md`;
+      vault.files.set(later, aiNoteFile(A, "mine\n"));
+      discuss(A, "Paragraph from a.");
+      svc.articleChanged(A);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect([...vault.files.keys()]).toEqual([later]);
+      expect(vault.files.get(later)).toContain("Paragraph from a.");
+    });
+
+    it("finds it past a gap, also when it may only be updated", async () => {
+      const later = `${THREADS}/Notes (a) 2.ai.md`;
+      vault.files.set(NOTES, aiNoteFile(B, "b's\n"));
+      vault.files.set(later, aiNoteFile(A, "mine\n"));
+      discuss(A, "Paragraph from a.");
+      svc.articleChanged(A, "never");
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(vault.files.get(later)).toContain("Paragraph from a.");
+      expect(vault.files.get(NOTES)).toBe(aiNoteFile(B, "b's\n"));
+      expect(vault.files.size).toBe(2);
+      expect(await svc.aiNotePath(A)).toBe(later);
+    });
+  });
+
+  it("aiNotePath gives only an existing note of this article, else null", async () => {
+    expect(await svc.aiNotePath(A)).toBeNull();
+    // Another article's note under a's first name isn't a's.
+    vault.files.set(NOTES, aiNoteFile(B, "b's\n"));
+    expect(await svc.aiNotePath(A)).toBeNull();
+    expect(vault.files.get(NOTES)).toBe(aiNoteFile(B, "b's\n"));
+    expect(await svc.aiNotePath(B)).toBe(NOTES);
+    // An older note found by its name: returned, and given its id.
+    vault.files.set(`${THREADS}/Notes (a).ai.md`, aiNoteFile(A, "old\n", null));
+    expect(await svc.aiNotePath(A)).toBe(`${THREADS}/Notes (a).ai.md`);
+    expect(vault.findManaged("ai-note", A)).toBe(`${THREADS}/Notes (a).ai.md`);
+    // Never creates one.
+    discuss("c/Other.md", "Paragraph.");
+    expect(await svc.aiNotePath("c/Other.md")).toBeNull();
+    expect(vault.files.size).toBe(2);
   });
 
   it("long names are shortened, never the suffix that tells them apart", () => {

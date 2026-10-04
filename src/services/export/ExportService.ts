@@ -162,13 +162,21 @@ export class ExportService {
     return names;
   }
 
-  // Where an article's note is when it was written in this session or has
-  // its id, else where a new one would go first.
-  aiNotePath(articlePath: string): string {
+  // The article's note, for opening it: a file that exists and belongs to
+  // this article, or null when it has none. Waits for writes to it that
+  // are in progress. Never creates a note; an older note without an id,
+  // found by its name, gets its id (claimAiNote) as on the next export.
+  async aiNotePath(articlePath: string): Promise<string | null> {
     const { vault } = this.deps;
+    const managed = vault.findManaged(AI_NOTE_KIND, articlePath);
+    if (managed) return managed;
     const known = this.notePaths.get(articlePath);
     if (known && vault.exists(known)) return known;
-    return vault.findManaged(AI_NOTE_KIND, articlePath) ?? this.aiNoteNames(articlePath)[0];
+    let path = null as string | null;
+    await this.enqueue(this.noteQueue(articlePath), async () => {
+      path = await this.resolveNote(articlePath, (text, owner) => (owner === "id" ? text : claimAiNote(text, articlePath)), null);
+    });
+    return path;
   }
 
   // Writes for one article's note wait in the queue of its first name, so
@@ -409,13 +417,19 @@ export class ExportService {
       return true;
     };
 
-    for (const known of [this.notePaths.get(articlePath), vault.findManaged(AI_NOTE_KIND, articlePath)]) {
-      if (known && !others.has(known) && vault.exists(known) && (await tryUpdate(known))) return known;
+    // First every note that exists under a name, so one further down the
+    // list (after a gap left by a deleted note) is still found when
+    // findManaged can't help yet (metadata cache not ready, older note).
+    const names = this.aiNoteNames(articlePath);
+    const known = [this.notePaths.get(articlePath), vault.findManaged(AI_NOTE_KIND, articlePath)];
+    for (const path of [...known, ...names]) {
+      if (path && !others.has(path) && vault.exists(path) && (await tryUpdate(path))) return path;
     }
-    for (const path of this.aiNoteNames(articlePath)) {
+    if (!create) return null;
+    // Then a new note under the first free name.
+    for (const path of names) {
       if (others.has(path)) continue;
       if (!vault.exists(path)) {
-        if (!create) return null;
         try {
           await vault.create(path, create());
           this.notePaths.set(articlePath, path);
