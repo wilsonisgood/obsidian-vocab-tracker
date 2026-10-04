@@ -23,10 +23,15 @@ export const WORD_BASE_PROMPT = `你是一位耐心、精準的英文單字家�
 - 追問時（前面的對話已經寫過「你問的是」），如果這次問的還是同一句，就不要再寫這一行，直接回答；換了句子才重新寫。
 - 真的無法判斷時，列出最可能的一到兩句請使用者確認，不要硬猜。`;
 
+// selectionMissesWord is set by buildWordContext only when the selection
+// doesn't contain the word; otherwise this renders exactly as before.
 const SELECTION_HEADER = `{{#selection}}〔選取的文字〕
 {{selection}}
 
-{{/selection}}`;
+{{/selection}}{{#selectionMissesWord}}〔注意〕上面〔選取的文字〕裡沒有 {{word}}，不要用它來判斷使用者在問哪一句。回答的第一行固定寫：{{#hasSource}}你選取的文字裡沒有 {{word}}，以下以出處段落為準。{{/hasSource}}{{^hasSource}}你選取的文字裡沒有 {{word}}，以下直接說明 {{word}}。{{/hasSource}}
+空一行後再回答{{#hasSource}}，照「判斷使用者在問哪一句」的其他線索（問題裡引用的英文片段，或〔出處段落〕中含有 {{word}} 的句子）決定是哪一句；需要寫「你問的是：…」那一行時，放在這句提醒之後{{/hasSource}}。
+
+{{/selectionMissesWord}}`;
 
 export const WORD_TEMPLATES = {
   usage: `${SELECTION_HEADER}任務：用法（{{word}}）
@@ -53,7 +58,11 @@ function wordTask(id: WordTaskId, opts: Pick<AiTask<WordInput>, "tier" | "maxTok
   return {
     id: `word.${id}`,
     // v2: follow-ups skip a repeated 「你問的是」 line (規劃書 06 §6.4.1 #3).
-    version: 2,
+    // v3: a selection that doesn't contain the word (checked in code by
+    //     wordContext.selectionHasWord) adds a 〔注意〕 block: first line
+    //     reminds the learner, then the source paragraph is used as before.
+    //     Unchanged output when the selection contains the word.
+    version: 3,
     surface: "word",
     ...opts,
     build(input: WordInput, ctx: TaskContext) {
