@@ -215,6 +215,56 @@ exports[`composed AiRequest snapshots > paragraph.vocab — skips known words 1`
 每個一行，格式：- **單字** 詞性：中文意思 — 在這段裡的用法"
 `;
 
+exports[`composed AiRequest snapshots > word.compare / sentence / mnemonic / custom — selection without the word > word.compare 1`] = `
+"〔選取的文字〕
+Someone read stories to you and taught you to dream and offered up some moral code of right and wrong for you to try and live by.
+
+〔注意〕上面〔選取的文字〕裡似乎沒有 glittery。如果它其實含有 glittery 的變化形（例如不規則的過去式或複數），就忽略這段注意，照一般規則以選取所在的句子為準。
+否則不要用〔選取的文字〕來判斷使用者在問哪一句，回答的第一行固定寫：你選取的文字裡似乎沒有 glittery，以下以出處段落為準。
+空一行後再回答，照「判斷使用者在問哪一句」的其他線索（問題裡引用的英文片段，或〔出處段落〕中含有 glittery 的句子）決定是哪一句；需要寫「你問的是：…」那一行時，放在這句提醒之後。
+
+任務：比較（glittery）
+先挑一到兩個學習者最容易和 glittery 混淆的近義字。從意思、語氣與正式程度、常見搭配三方面比較，各附一個例句。最後用一兩句說明〔出處段落〕為什麼用 glittery。"
+`;
+
+exports[`composed AiRequest snapshots > word.compare / sentence / mnemonic / custom — selection without the word > word.custom 1`] = `
+"〔選取的文字〕
+Someone read stories to you and taught you to dream and offered up some moral code of right and wrong for you to try and live by.
+
+〔注意〕上面〔選取的文字〕裡似乎沒有 glittery。如果它其實含有 glittery 的變化形（例如不規則的過去式或複數），就忽略這段注意，照一般規則以選取所在的句子為準。
+否則不要用〔選取的文字〕來判斷使用者在問哪一句，回答的第一行固定寫：你選取的文字裡似乎沒有 glittery，以下以出處段落為準。
+空一行後再回答，照「判斷使用者在問哪一句」的其他線索（問題裡引用的英文片段，或〔出處段落〕中含有 glittery 的句子）決定是哪一句；需要寫「你問的是：…」那一行時，放在這句提醒之後。
+
+〔使用者的問題〕（關於 glittery）
+這句裡它是什麼意思？
+
+如果問題牽涉原文裡的某一句，依「判斷使用者在問哪一句」的規則決定第一行要不要寫出那一句，再回答問題。"
+`;
+
+exports[`composed AiRequest snapshots > word.compare / sentence / mnemonic / custom — selection without the word > word.mnemonic 1`] = `
+"〔選取的文字〕
+Someone read stories to you and taught you to dream and offered up some moral code of right and wrong for you to try and live by.
+
+〔注意〕上面〔選取的文字〕裡似乎沒有 glittery。如果它其實含有 glittery 的變化形（例如不規則的過去式或複數），就忽略這段注意，照一般規則以選取所在的句子為準。
+否則不要用〔選取的文字〕來判斷使用者在問哪一句，回答的第一行固定寫：你選取的文字裡似乎沒有 glittery，以下以出處段落為準。
+空一行後再回答，照「判斷使用者在問哪一句」的其他線索（問題裡引用的英文片段，或〔出處段落〕中含有 glittery 的句子）決定是哪一句；需要寫「你問的是：…」那一行時，放在這句提醒之後。
+
+任務：記憶法（glittery）
+給 glittery 一到兩個好記的方法（字根字首、聯想、拆字擇一）。字根或字源不確定時直接說不確定，改用聯想法，不要編造。"
+`;
+
+exports[`composed AiRequest snapshots > word.compare / sentence / mnemonic / custom — selection without the word > word.sentence 1`] = `
+"〔選取的文字〕
+Someone read stories to you and taught you to dream and offered up some moral code of right and wrong for you to try and live by.
+
+〔注意〕上面〔選取的文字〕裡似乎沒有 glittery。如果它其實含有 glittery 的變化形（例如不規則的過去式或複數），就忽略這段注意，照一般規則以選取所在的句子為準。
+否則不要用〔選取的文字〕來判斷使用者在問哪一句，回答的第一行固定寫：你選取的文字裡似乎沒有 glittery，以下以出處段落為準。
+空一行後再回答，照「判斷使用者在問哪一句」的其他線索（問題裡引用的英文片段，或〔出處段落〕中含有 glittery 的句子）決定是哪一句；需要寫「你問的是：…」那一行時，放在這句提醒之後。
+
+任務：造句（glittery）
+用 glittery 造 3 個句子，難度符合〔學習者設定〕的程度，情境盡量貼近學習者的目標。其中一句沿用〔出處段落〕裡的意思。每句附中文翻譯。"
+`;
+
 exports[`composed AiRequest snapshots > word.compare — with and without a target word 1`] = `
 "任務：比較（glittery vs sparkly）
 從意思、語氣與正式程度、常見搭配三方面比較，各附一個例句。最後用一兩句說明〔出處段落〕為什麼用 glittery。"
@@ -229,7 +279,8 @@ exports[`composed AiRequest snapshots > word.custom — selection without the wo
 "〔選取的文字〕
 the cat sat
 
-〔注意〕上面〔選取的文字〕裡沒有 toil，不要用它來判斷使用者在問哪一句。回答的第一行固定寫：你選取的文字裡沒有 toil，以下直接說明 toil。
+〔注意〕上面〔選取的文字〕裡似乎沒有 toil。如果它其實含有 toil 的變化形（例如不規則的過去式或複數），就忽略這段注意，照一般規則以選取所在的句子為準。
+否則不要用〔選取的文字〕來判斷使用者在問哪一句，回答的第一行固定寫：你選取的文字裡似乎沒有 toil，以下直接說明 toil。
 空一行後再回答。
 
 〔使用者的問題〕（關於 toil）
@@ -311,6 +362,48 @@ exports[`composed AiRequest snapshots > word.mnemonic — no source paragraph 1`
 給 toil 一到兩個好記的方法（字根字首、聯想、拆字擇一）。字根或字源不確定時直接說不確定，改用聯想法，不要編造。"
 `;
 
+exports[`composed AiRequest snapshots > word.usage — selection that contains the word (full request, same as v2) 1`] = `
+"tier=fast maxTokens=2048
+
+── system[0] (cache) ──
+你是一位耐心、精準的英文單字家教，正在幫一位以中文為母語的學習者弄懂一個英文單字。〔單字〕是這個字的資料，〔出處段落〕是學習者遇到這個字的那一整段原文。
+
+回答規則：
+1. 預設用繁體中文（台灣用語）回答，英文單字與例句保留英文；〔學習者設定〕若指定了其他回答語言，以學習者設定為準。
+2. 只根據提供的資料和可靠、常見的語言知識回答。不確定就直接說「不確定」，不要編造字義、用法、字源或出處。
+3. 用 Markdown 排版：重點用粗體，條列最多 5 點，不要用標題（#）。
+4. 篇幅以〔學習者設定〕為準。
+5. 解釋字義時，以這個字在〔出處段落〕裡的意思為主，再補充其他常見意思。
+
+判斷使用者在問哪一句：
+- 使用者的問題可能很口語，例如「這句裡它是什麼意思」「我看不懂這句」，也可能直接貼上或引用原文的一小段（可能不完整、有錯字、大小寫不同）。
+- 依序用這些線索找出他指的那一句：有〔選取的文字〕時以包含它的句子為準；問題裡引用了英文片段時，在〔出處段落〕找包含這個片段的句子；都沒有線索時，以〔出處段落〕中含有這個單字的句子為準。
+- 只要回答牽涉原文裡的某一句，第一行固定寫：你問的是：「<那一句英文原文>」（原文照抄，不要翻譯），空一行再開始回答。問題和原文句子無關時（例如只問字根、造句），不用寫這一行。
+- 追問時（前面的對話已經寫過「你問的是」），如果這次問的還是同一句，就不要再寫這一行，直接回答；換了句子才重新寫。
+- 真的無法判斷時，列出最可能的一到兩句請使用者確認，不要硬猜。
+
+── system[1] ──
+〔單字〕glittery
+音標：/ˈɡlɪt.ər.i/
+詞性：adjective
+中文：閃亮的；帶亮片的
+學習者的筆記：形容詞，常放在名詞前
+
+〔出處段落〕出自《Taylor Swift NYU Commencement Speech》
+Last time I was in a stadium this size, I was dancing in heels and wearing a glittery leotard. This ensemble is much more my speed.
+
+── system[2] ──
+〔學習者設定〕
+我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要，盡量在 300 字以內完成說明（英文原文與例句不計入字數）。
+
+── user ──
+〔選取的文字〕
+wearing a glittery leotard
+
+任務：用法（glittery）
+說明 glittery 最常見的 2 到 3 種用法或搭配（collocation），每種附一個簡短例句和中文翻譯。如果〔出處段落〕裡的用法屬於其中一種，標出來。"
+`;
+
 exports[`composed AiRequest snapshots > word.usage — selection that doesn't contain the word (full request) 1`] = `
 "tier=fast maxTokens=2048
 
@@ -349,8 +442,51 @@ Last time I was in a stadium this size, I was dancing in heels and wearing a gli
 〔選取的文字〕
 Someone read stories to you and taught you to dream and offered up some moral code of right and wrong for you to try and live by.
 
-〔注意〕上面〔選取的文字〕裡沒有 glittery，不要用它來判斷使用者在問哪一句。回答的第一行固定寫：你選取的文字裡沒有 glittery，以下以出處段落為準。
+〔注意〕上面〔選取的文字〕裡似乎沒有 glittery。如果它其實含有 glittery 的變化形（例如不規則的過去式或複數），就忽略這段注意，照一般規則以選取所在的句子為準。
+否則不要用〔選取的文字〕來判斷使用者在問哪一句，回答的第一行固定寫：你選取的文字裡似乎沒有 glittery，以下以出處段落為準。
 空一行後再回答，照「判斷使用者在問哪一句」的其他線索（問題裡引用的英文片段，或〔出處段落〕中含有 glittery 的句子）決定是哪一句；需要寫「你問的是：…」那一行時，放在這句提醒之後。
+
+任務：用法（glittery）
+說明 glittery 最常見的 2 到 3 種用法或搭配（collocation），每種附一個簡短例句和中文翻譯。如果〔出處段落〕裡的用法屬於其中一種，標出來。"
+`;
+
+exports[`composed AiRequest snapshots > word.usage — selection without the word, captured sentence only (〔出處句子〕) 1`] = `
+"tier=fast maxTokens=2048
+
+── system[0] (cache) ──
+你是一位耐心、精準的英文單字家教，正在幫一位以中文為母語的學習者弄懂一個英文單字。〔單字〕是這個字的資料，〔出處段落〕是學習者遇到這個字的那一整段原文。
+
+回答規則：
+1. 預設用繁體中文（台灣用語）回答，英文單字與例句保留英文；〔學習者設定〕若指定了其他回答語言，以學習者設定為準。
+2. 只根據提供的資料和可靠、常見的語言知識回答。不確定就直接說「不確定」，不要編造字義、用法、字源或出處。
+3. 用 Markdown 排版：重點用粗體，條列最多 5 點，不要用標題（#）。
+4. 篇幅以〔學習者設定〕為準。
+5. 解釋字義時，以這個字在〔出處段落〕裡的意思為主，再補充其他常見意思。
+
+判斷使用者在問哪一句：
+- 使用者的問題可能很口語，例如「這句裡它是什麼意思」「我看不懂這句」，也可能直接貼上或引用原文的一小段（可能不完整、有錯字、大小寫不同）。
+- 依序用這些線索找出他指的那一句：有〔選取的文字〕時以包含它的句子為準；問題裡引用了英文片段時，在〔出處段落〕找包含這個片段的句子；都沒有線索時，以〔出處段落〕中含有這個單字的句子為準。
+- 只要回答牽涉原文裡的某一句，第一行固定寫：你問的是：「<那一句英文原文>」（原文照抄，不要翻譯），空一行再開始回答。問題和原文句子無關時（例如只問字根、造句），不用寫這一行。
+- 追問時（前面的對話已經寫過「你問的是」），如果這次問的還是同一句，就不要再寫這一行，直接回答；換了句子才重新寫。
+- 真的無法判斷時，列出最可能的一到兩句請使用者確認，不要硬猜。
+
+── system[1] ──
+〔單字〕glittery
+
+〔出處句子〕
+wearing a glittery leotard
+
+── system[2] ──
+〔學習者設定〕
+我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要，盡量在 300 字以內完成說明（英文原文與例句不計入字數）。
+
+── user ──
+〔選取的文字〕
+Someone read stories to you and taught you to dream and offered up some moral code of right and wrong for you to try and live by.
+
+〔注意〕上面〔選取的文字〕裡似乎沒有 glittery。如果它其實含有 glittery 的變化形（例如不規則的過去式或複數），就忽略這段注意，照一般規則以選取所在的句子為準。
+否則不要用〔選取的文字〕來判斷使用者在問哪一句，回答的第一行固定寫：你選取的文字裡似乎沒有 glittery，以下以出處句子為準。
+空一行後再回答，照「判斷使用者在問哪一句」的其他線索（問題裡引用的英文片段，或〔出處句子〕中含有 glittery 的句子）決定是哪一句；需要寫「你問的是：…」那一行時，放在這句提醒之後。
 
 任務：用法（glittery）
 說明 glittery 最常見的 2 到 3 種用法或搭配（collocation），每種附一個簡短例句和中文翻譯。如果〔出處段落〕裡的用法屬於其中一種，標出來。"

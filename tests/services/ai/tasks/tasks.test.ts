@@ -24,6 +24,7 @@ import {
   wordCompare,
   wordCustom,
   wordMnemonic,
+  wordSentence,
   wordUsage,
 } from "../../../../src/services/ai/tasks/word";
 
@@ -115,9 +116,28 @@ describe("composed AiRequest snapshots", () => {
     expect(render(wordUsage.build({ ...GLITTERY, selection: OFF_TOPIC }, ctx()))).toMatchSnapshot();
   });
 
+  it("word.usage — selection that contains the word (full request, same as v2)", () => {
+    expect(render(wordUsage.build({ ...GLITTERY, selection: "wearing a glittery leotard" }, ctx()))).toMatchSnapshot();
+  });
+
   it("word.custom — selection without the word, no source", () => {
     const req = wordCustom.build({ entry: { word: "toil" }, selection: "the cat sat", question: "這是什麼意思？" }, ctx());
     expect(req.messages.at(-1)?.content).toMatchSnapshot();
+  });
+
+  it("word.compare / sentence / mnemonic / custom — selection without the word", () => {
+    const input: WordInput = { ...GLITTERY, selection: OFF_TOPIC, question: "這句裡它是什麼意思？" };
+    for (const t of [wordCompare, wordSentence, wordMnemonic, wordCustom]) {
+      expect(t.build(input, ctx()).messages.at(-1)?.content).toMatchSnapshot(t.id);
+    }
+  });
+
+  it("word.usage — selection without the word, captured sentence only (〔出處句子〕)", () => {
+    const req = wordUsage.build(
+      { entry: { word: "glittery", example: "wearing a glittery leotard" }, selection: OFF_TOPIC },
+      ctx()
+    );
+    expect(render(req)).toMatchSnapshot();
   });
 });
 
@@ -128,9 +148,23 @@ describe("selection that doesn't contain the word (規劃書 06 §6.4)", () => {
   it("asks for a reminder on the first line, then the source paragraph as usual", () => {
     const msg = user({ ...GLITTERY, selection: OFF_TOPIC });
     expect(msg.startsWith(`〔選取的文字〕\n${OFF_TOPIC}\n\n${NOTICE}`)).toBe(true);
-    expect(msg).toContain("回答的第一行固定寫：你選取的文字裡沒有 glittery，以下以出處段落為準。");
+    expect(msg).toContain("回答的第一行固定寫：你選取的文字裡似乎沒有 glittery，以下以出處段落為準。");
     expect(msg).toContain("需要寫「你問的是：…」那一行時，放在這句提醒之後");
+    expect(msg).toContain("就忽略這段注意，照一般規則以選取所在的句子為準");
     expect(msg).toContain("任務：用法（glittery）");
+  });
+
+  it("names the block that is actually there: 段落, 句子, or none", () => {
+    const sentenceOnly = user({ entry: { word: "glittery", example: "a glittery leotard" }, selection: OFF_TOPIC });
+    expect(sentenceOnly).toContain("你選取的文字裡似乎沒有 glittery，以下以出處句子為準。");
+    expect(sentenceOnly).toContain("或〔出處句子〕中含有 glittery 的句子");
+    // Only the notice is checked: the v2 task lines after it still say
+    // 〔出處段落〕 for a sentence-only source (unchanged on purpose).
+    const notice = (msg: string) => msg.slice(msg.indexOf(NOTICE), msg.indexOf("任務："));
+    expect(notice(sentenceOnly)).not.toContain("出處段落");
+    const none = user({ entry: { word: "glittery" }, selection: OFF_TOPIC });
+    expect(none).toContain("你選取的文字裡似乎沒有 glittery，以下直接說明 glittery。");
+    expect(notice(none)).not.toContain("出處");
   });
 
   it("renders exactly as before when the selection contains the word", () => {
