@@ -6,13 +6,23 @@ export type I18nKey = keyof typeof en;
 
 const dictionaries: Record<Locale, Record<I18nKey, string>> = { en, "zh-TW": zhTW };
 
-// M0: always "en" — matches current behaviour exactly. Following Obsidian's
-// language, or a settings override, lands with the settings page in M3
-// (規劃書 06 §9.8).
+// "en" until main.ts applies the user's setting at load (規劃書 06 §9.8:
+// follow Obsidian's language by default, overridable in settings).
 let activeLocale: Locale = "en";
 
 export function setLocale(locale: Locale): void {
   activeLocale = locale;
+}
+
+export function getLocale(): Locale {
+  return activeLocale;
+}
+
+// Any Chinese Obsidian UI ("zh", "zh-TW", "zh-CN"…) gets the Traditional
+// Chinese strings — closer for a Simplified reader than English is.
+export function resolveLocale(setting: "auto" | Locale, appLanguage: string): Locale {
+  if (setting !== "auto") return setting;
+  return appLanguage.toLowerCase().startsWith("zh") ? "zh-TW" : "en";
 }
 
 export function t(key: I18nKey, params?: Record<string, string | number>): string {

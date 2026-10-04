@@ -1,0 +1,8 @@
+data: {"id":"chatcmpl-718","object":"chat.completion.chunk","created":1759500100,"model":"qwen2.5:7b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":"glittery"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-718","object":"chat.completion.chunk","created":1759500100,"model":"qwen2.5:7b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":" 意思是閃亮的"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-718","object":"chat.completion.chunk","created":1759500100,"model":"qwen2.5:7b","system_fingerprint":"fp_ollama","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"length"}]}
+
+data: [DONE]
+

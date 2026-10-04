@@ -1,0 +1,188 @@
+/* ── M3: AI kit pieces (design C1) and the settings tab ─────────────
+   Colours map to Obsidian variables (規劃書 06 §9.1), so light, dark and
+   community themes all work; the design's hex values are only reference. */
+
+/* Empty state — D6 「設定 AI 後才能討論」 */
+.vt-empty {
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  padding: 16px 14px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  line-height: 1.6;
+}
+
+.vt-empty-icon {
+  display: inline-flex;
+  color: var(--text-accent);
+}
+
+.vt-empty-title {
+  color: var(--text-normal);
+  font-weight: var(--font-medium);
+  margin: 6px 0 2px;
+}
+
+.vt-empty-action {
+  margin-top: 12px;
+}
+
+.vt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vt-btn-icon {
+  display: inline-flex;
+}
+
+/* Inline note — info, and D7's offline variant */
+.vt-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  border-radius: var(--radius-m);
+  padding: 10px 12px;
+  font-size: var(--font-ui-small);
+  line-height: 1.55;
+  color: var(--text-normal);
+}
+
+.vt-note-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+
+.vt-note.is-info .vt-note-icon {
+  color: var(--color-yellow);
+}
+
+.vt-note.is-offline .vt-note-icon {
+  color: var(--color-blue);
+}
+
+.vt-note.is-error .vt-note-icon {
+  color: var(--text-error);
+}
+
+/* Discussion bubbles */
+.vt-bubble {
+  border-radius: 12px;
+  padding: 8px 11px;
+  line-height: 1.6;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.vt-bubble.is-user {
+  align-self: flex-end;
+  max-width: 86%;
+  border-bottom-right-radius: 4px;
+  background: hsla(var(--interactive-accent-hsl), 0.22);
+  color: var(--text-normal);
+}
+
+.vt-bubble.is-assistant {
+  border-bottom-left-radius: 4px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.vt-bubble-body > :first-child {
+  margin-top: 0;
+}
+
+.vt-bubble-body > :last-child {
+  margin-bottom: 0;
+}
+
+.vt-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  vertical-align: text-bottom;
+  background: var(--text-muted);
+  animation: vt-blink 1s steps(1) infinite;
+}
+
+@keyframes vt-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.vt-bubble-error {
+  margin-top: 6px;
+  color: var(--text-error);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-bubble-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.vt-bubble-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+body.is-mobile .vt-bubble-action,
+body.is-mobile .vt-empty-action button {
+  min-height: 44px;
+}
+
+/* Settings tab */
+.vt-settings .vt-settings-wide {
+  width: 100%;
+  min-width: 240px;
+}
+
+.vt-settings-test-result {
+  margin: -6px 0 12px;
+  font-size: var(--font-ui-small);
+}
+
+.vt-settings-test-result.is-ok {
+  color: var(--text-success);
+}
+
+.vt-settings-test-result.is-error {
+  color: var(--text-error);
+}
+
+.vt-settings-muted {
+  color: var(--text-faint);
+}
+
+.vt-settings-intro {
+  margin-bottom: 8px;
+}
+
+.vt-settings-preview-row {
+  border-bottom: none;
+}
+
+.vt-settings-preview {
+  white-space: pre-wrap;
+  font-family: var(--font-text);
+  font-size: var(--font-ui-small);
+  background: var(--background-secondary);
+  border-radius: var(--radius-m);
+  padding: 10px 12px;
+  margin: 0 0 12px;
+}
+
+.vt-settings-ai .vt-note {
+  margin: 12px 0;
+}

@@ -26,7 +26,13 @@ import { renderDashboard } from "./src/ui/blocks/dashboard";
 import { SrsService } from "./src/services/srs/SrsService";
 import { renderFlashcards } from "./src/ui/blocks/flashcards";
 import { openFlashcardsFile } from "./src/ui/blocks/flashcardsFile";
-import { t } from "./src/core/i18n";
+import { resolveLocale, setLocale, t } from "./src/core/i18n";
+import { obsidianLanguage } from "./src/platform/obsidianLanguage";
+import { createAiPorts } from "./src/platform/aiPorts";
+import { createAiService } from "./src/services/ai/createAiService";
+import type { AiService } from "./src/services/ai/AiService";
+import { VocabSettingsTab } from "./src/ui/settings/SettingsTab";
+import { SETTINGS_SECTIONS } from "./src/ui/settings/sections";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -44,6 +50,7 @@ export default class VocabTrackerPlugin extends Plugin {
   dictionary!: DictionaryService;
   storage!: ObsidianStorage;
   srs!: SrsService;
+  ai!: AiService;
 
   async onload() {
     this.storage = new ObsidianStorage(this);
@@ -51,6 +58,13 @@ export default class VocabTrackerPlugin extends Plugin {
 
     this.store = new VocabStore(this.vocabData, (data) => this.storage.writeShard("data", data));
     this.dictionary = new DictionaryService(new ObsidianHttp());
+    this.applyLocale();
+
+    // AI (M3): service + settings tab. AI stays off until enabled in settings.
+    const { ai, keys } = createAiService(this.store, createAiPorts(this.app, this.storage));
+    this.ai = ai;
+    const settingsCtx = { app: this.app, store: this.store, ai, keys, applyLocale: () => this.applyLocale() };
+    this.addSettingTab(new VocabSettingsTab(this.app, this, settingsCtx, SETTINGS_SECTIONS));
     this.srs = new SrsService({ store: this.store, storage: this.storage });
 
     // Sidebar
@@ -117,7 +131,13 @@ export default class VocabTrackerPlugin extends Plugin {
   // So a debounced write (VocabStore's 500ms coalescing) isn't lost if
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
+    this.ai?.dispose();
     await Promise.all([this.store.flush(), this.srs.flush()]);
+  }
+
+  // Interface language: the user's setting, or Obsidian's language on "auto".
+  applyLocale() {
+    setLocale(resolveLocale(this.store.settings.ui.locale, obsidianLanguage()));
   }
 
   // Fires when the data.json on disk changed from outside this session —

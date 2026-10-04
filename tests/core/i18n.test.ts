@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { setLocale, t } from "../../src/core/i18n";
+import { resolveLocale, setLocale, t } from "../../src/core/i18n";
 
 describe("t", () => {
   afterEach(() => setLocale("en"));
@@ -19,5 +19,19 @@ describe("t", () => {
   it("switches locale via setLocale", () => {
     setLocale("zh-TW");
     expect(t("row.delete")).toBe("刪除");
+  });
+});
+
+describe("resolveLocale", () => {
+  it("follows Obsidian's language when set to auto", () => {
+    expect(resolveLocale("auto", "zh-TW")).toBe("zh-TW");
+    expect(resolveLocale("auto", "zh")).toBe("zh-TW");
+    expect(resolveLocale("auto", "en")).toBe("en");
+    expect(resolveLocale("auto", "ja")).toBe("en");
+  });
+
+  it("honours an explicit choice", () => {
+    expect(resolveLocale("en", "zh-TW")).toBe("en");
+    expect(resolveLocale("zh-TW", "en")).toBe("zh-TW");
   });
 });

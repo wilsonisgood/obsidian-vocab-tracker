@@ -1,4 +1,5 @@
-import type { SrsCard, SrsSettings } from "./srs";
+import type { SrsCard } from "./srs";
+import type { PluginSettings } from "./settings";
 
 export interface VocabSource {
   path: string;
@@ -52,12 +53,6 @@ export interface VocabEntry extends Record_ {
 
 export interface VocabData {
   schemaVersion?: 2;
-  settings?: {
-    schemaVersion: 2;
-    // Optional so existing data.json files stay valid; read through
-    // resolveSrsSettings() (core/model/srs.ts), which fills in
-    // DEFAULT_SRS_SETTINGS. No settings UI yet — that's M3's SettingsTab.
-    srs?: Partial<SrsSettings>;
-  };
+  settings?: PluginSettings;
   entries: VocabEntry[];
 }

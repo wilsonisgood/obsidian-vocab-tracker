@@ -1,0 +1,4 @@
+data: {"id":"c2","object":"chat.completion.chunk","model":"gpt-4.1-mini","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+
+data: {"error":{"message":"Rate limit reached for requests","type":"requests","code":"rate_limit_exceeded"}}
+

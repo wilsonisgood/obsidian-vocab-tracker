@@ -1,6 +1,7 @@
 import type { VocabData, VocabEntry } from "../model/entry";
 import { TypedEmitter } from "../events";
 import { nowIso } from "../nowIso";
+import { withSettingsDefaults, type ResolvedSettings } from "../model/settings";
 
 export interface VocabStoreEvents {
   // Coarse-grained for now: every save (add/edit/delete/enrich) fires this.
@@ -24,6 +25,31 @@ export class VocabStore {
 
   get vocabData(): VocabData {
     return this.data;
+  }
+
+  // Settings with every default filled in. Written back into this.data so
+  // later in-place edits (updateSettings) land on the persisted object;
+  // re-resolving after replace() (sync merge) picks up remote fields too.
+  get settings(): ResolvedSettings {
+    const current = this.data.settings;
+    if (current && this.resolvedSettings.has(current)) return current as ResolvedSettings;
+    const resolved = withSettingsDefaults(current);
+    this.data.settings = resolved;
+    this.resolvedSettings.add(resolved);
+    return resolved;
+  }
+
+  // Settings objects already passed through withSettingsDefaults, so the
+  // getter returns a stable object instead of re-resolving on every read.
+  private resolvedSettings = new WeakSet<object>();
+
+  // The only way UI code should change settings: stamps updatedAt so
+  // merge.ts can tell which device's settings are newer.
+  updateSettings(mutate: (s: ResolvedSettings) => void): Promise<void> {
+    const s = this.settings;
+    mutate(s);
+    s.updatedAt = nowIso();
+    return this.save();
   }
 
   // Live entries only — excludes soft-deleted (tombstoned) ones. UI code

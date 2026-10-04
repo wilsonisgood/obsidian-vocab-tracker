@@ -1,4 +1,16 @@
 import type { VocabData, VocabEntry } from "../model/entry";
+import type { PluginSettings } from "../model/settings";
+
+// Settings are one record (not a collection), so they merge whole: the
+// object stamped more recently wins. Ties and unstamped objects keep the
+// local side — the pre-M3 behaviour, when settings held nothing editable.
+function pickNewerSettings(local?: PluginSettings, remote?: PluginSettings): PluginSettings {
+  if (!local) return remote ?? { schemaVersion: 2 };
+  if (!remote) return local;
+  const l = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
+  const r = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
+  return r > l ? remote : local;
+}
 
 // Entries without updatedAt (shouldn't happen once everything goes through
 // VocabStore, but migrated/partial data might) sort as oldest so a properly
@@ -34,7 +46,7 @@ export function merge(local: VocabData, remote: VocabData): VocabData {
 
   return {
     schemaVersion: 2,
-    settings: local.settings ?? remote.settings ?? { schemaVersion: 2 },
+    settings: pickNewerSettings(local.settings, remote.settings),
     entries: order.map((id) => byId.get(id) as VocabEntry),
   };
 }
