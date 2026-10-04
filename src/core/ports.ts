@@ -134,7 +134,9 @@ export interface VaultPort {
   // vault.process): `fn` gets the current text and returns the new text.
   // Whatever `fn` throws rejects the call and leaves the file untouched
   // (ExportService relies on this to skip another article's .ai.md).
-  process(path: string, fn: (text: string) => string): Promise<void>;
+  // Resolves to whatever the implementation likes (ExportService ignores
+  // it), so one class can also be a ParagraphVaultPort.
+  process(path: string, fn: (text: string) => string): Promise<unknown>;
   // Moves a file, keeping links to it updated (fileManager.renameFile).
   rename(from: string, to: string): Promise<void>;
   // A note whose frontmatter has `vocab-tracker: <kind>` and
