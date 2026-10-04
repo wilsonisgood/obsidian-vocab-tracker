@@ -1,0 +1,62 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`conversation prompt cache across a word thread > the Anthropic body puts breakpoints on the base prompt and the last history message, with low effort 1`] = `
+{
+  "messages": [
+    {
+      "cache": false,
+      "role": "user",
+      "text": "〔使用者的問題〕（關於 glittery）
+第 1 個問題
+
+如",
+    },
+    {
+      "cache": false,
+      "role": "assistant",
+      "text": "回答 1",
+    },
+    {
+      "cache": false,
+      "role": "user",
+      "text": "〔使用者的問題〕（關於 glittery）
+第 2 個問題
+
+如",
+    },
+    {
+      "cache": true,
+      "role": "assistant",
+      "text": "回答 2",
+    },
+    {
+      "cache": false,
+      "role": "user",
+      "text": "〔使用者的問題〕（關於 glittery）
+第 3 個問題
+
+如",
+    },
+  ],
+  "model": "claude-sonnet-5",
+  "output_config": {
+    "effort": "low",
+  },
+  "system": [
+    {
+      "cache": true,
+      "text": "你是一位耐心、精準的英文單字家教",
+    },
+    {
+      "cache": false,
+      "text": "〔單字〕glittery
+詞性：",
+    },
+    {
+      "cache": false,
+      "text": "〔學習者設定〕
+我是一個以閱讀英",
+    },
+  ],
+}
+`;

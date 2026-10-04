@@ -17,6 +17,11 @@ export interface SystemBlock {
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  // Marks the end of a cacheable conversation prefix (Anthropic
+  // `cache_control` on this message). compose.ts puts it on the last
+  // history message so follow-ups in a thread reuse the earlier rounds;
+  // providers without cache markers ignore it.
+  cache?: boolean;
 }
 
 // Provider-neutral request (規劃書 06 §6.1). Tasks build these; providers

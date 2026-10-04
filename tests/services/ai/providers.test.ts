@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultAiSettings } from "../../../src/core/model/settings";
 import { AiError } from "../../../src/services/ai/errors";
-import { AnthropicProvider, buildAnthropicBody } from "../../../src/services/ai/providers/anthropic";
+import { AnthropicProvider, buildAnthropicBody, effortFor } from "../../../src/services/ai/providers/anthropic";
 import { buildOpenAiBody, normalizeBaseUrl, OpenAiCompatProvider } from "../../../src/services/ai/providers/openaiCompat";
 import type { AiRequest } from "../../../src/services/ai/providers/types";
 import { errorResponse, FakeTransport, fixture, response } from "./fakes";
@@ -57,6 +57,9 @@ describe("Anthropic request building", () => {
           },
         ],
         "model": "claude-sonnet-5",
+        "output_config": {
+          "effort": "low",
+        },
         "stream": true,
         "system": [
           {
@@ -95,6 +98,109 @@ describe("Anthropic request building", () => {
   it("uses output_config.format for structured output", () => {
     const body = buildAnthropicBody({ ...REQ, output: { name: "list", schema: { type: "object" } } }, "m");
     expect(body.output_config).toEqual({ format: { type: "json_schema", schema: { type: "object" } } });
+  });
+
+  it("puts a breakpoint on the marked history message and sends low effort to Sonnet", () => {
+    const req: AiRequest = {
+      ...REQ,
+      messages: [
+        { role: "user", content: "earlier q" },
+        { role: "assistant", content: "earlier a", cache: true },
+        { role: "user", content: "now" },
+      ],
+    };
+    expect(buildAnthropicBody(req, "claude-sonnet-5")).toMatchInlineSnapshot(`
+      {
+        "max_tokens": 1024,
+        "messages": [
+          {
+            "content": "earlier q",
+            "role": "user",
+          },
+          {
+            "content": [
+              {
+                "cache_control": {
+                  "type": "ephemeral",
+                },
+                "text": "earlier a",
+                "type": "text",
+              },
+            ],
+            "role": "assistant",
+          },
+          {
+            "content": "now",
+            "role": "user",
+          },
+        ],
+        "model": "claude-sonnet-5",
+        "output_config": {
+          "effort": "low",
+        },
+        "stream": true,
+        "system": [
+          {
+            "cache_control": {
+              "type": "ephemeral",
+            },
+            "text": "BASE",
+            "type": "text",
+          },
+          {
+            "cache_control": {
+              "type": "ephemeral",
+            },
+            "text": "ARTICLE",
+            "type": "text",
+          },
+          {
+            "text": "FOCUS",
+            "type": "text",
+          },
+          {
+            "text": "PROFILE",
+            "type": "text",
+          },
+        ],
+      }
+    `);
+  });
+
+  it("never sends effort to Haiku, and the same breakpoints otherwise", () => {
+    const req: AiRequest = { ...REQ, messages: [{ role: "user", content: "q" }, { role: "assistant", content: "a", cache: true }, { role: "user", content: "now" }] };
+    const haiku = buildAnthropicBody(req, "claude-haiku-4-5");
+    expect(haiku).not.toHaveProperty("output_config");
+    const sonnet = buildAnthropicBody(req, "claude-sonnet-5");
+    expect(sonnet.output_config).toEqual({ effort: "low" });
+    expect(sonnet.messages).toEqual(haiku.messages);
+    expect(sonnet.system).toEqual(haiku.system);
+  });
+
+  it("merges effort with structured output in one output_config", () => {
+    const body = buildAnthropicBody({ ...REQ, output: { name: "list", schema: { type: "object" } } }, "claude-sonnet-4-6");
+    expect(body.output_config).toEqual({ format: { type: "json_schema", schema: { type: "object" } }, effort: "low" });
+  });
+
+  it("keeps the total at 4 breakpoints when history takes one (system keeps its last 3)", () => {
+    const req: AiRequest = {
+      ...REQ,
+      system: Array.from({ length: 5 }, (_, i) => ({ text: `b${i}`, cache: true })),
+      messages: [{ role: "user", content: "q", cache: true }, { role: "assistant", content: "a", cache: true }, { role: "user", content: "now" }],
+    };
+    const body = buildAnthropicBody(req, "m");
+    const sys = body.system as { cache_control?: unknown }[];
+    expect(sys.map((b) => !!b.cache_control)).toEqual([false, false, true, true, true]);
+    // Only the last marked message gets one.
+    const marked = JSON.stringify(body.messages).match(/cache_control/g) ?? [];
+    expect(marked).toHaveLength(1);
+    expect((body.messages as { content: unknown }[])[0].content).toBe("q");
+    expect(JSON.stringify(body).match(/cache_control/g)).toHaveLength(4);
+  });
+
+  it("doesn't mark an empty message (the API rejects cache_control on empty text)", () => {
+    const body = buildAnthropicBody({ ...REQ, messages: [{ role: "assistant", content: "  ", cache: true }, { role: "user", content: "now" }] }, "m");
+    expect(JSON.stringify(body.messages)).not.toContain("cache_control");
   });
 
   it("sends the auth, version and browser-access headers", async () => {
@@ -196,6 +302,42 @@ describe("Anthropic response parsing", () => {
     const r = await anthropic(t).testConnection(signal());
     expect(r.models).toEqual(["claude-sonnet-5", "claude-haiku-4-5"]);
     expect(t.requests.map((q) => JSON.parse(q.body ?? "").max_tokens)).toEqual([256, 256]);
+    // Same effort as real requests: Sonnet gets it, Haiku doesn't.
+    expect(t.body(0).output_config).toEqual({ effort: "low" });
+    expect(t.body(1)).not.toHaveProperty("output_config");
+  });
+});
+
+describe("effortFor (規劃書 06 §6.4.1 #6)", () => {
+  it.each([
+    // Sonnet 4.6 and later, however the user typed it
+    ["claude-sonnet-5", "low"],
+    ["claude-sonnet-5-5", "low"],
+    ["claude-sonnet-4-6", "low"],
+    ["claude-sonnet-4.6", "low"],
+    ["  Claude-Sonnet-5 ", "low"],
+    ["us.anthropic.claude-sonnet-4-6-v1:0", "low"],
+    ["claude-sonnet-4-6@20260101", "low"],
+    ["claude-sonnet-5-20260801", "low"],
+    ["claude-sonnet-10", "low"],
+    // Sonnets that reject effort
+    ["claude-sonnet-4-5", undefined],
+    ["claude-sonnet-4-5-20250929", undefined],
+    ["claude-sonnet-4-20250514", undefined],
+    ["claude-sonnet-4", undefined],
+    ["claude-3-7-sonnet-20250219", undefined],
+    ["claude-3-5-sonnet-latest", undefined],
+    // Haiku never; Opus keeps its default; unknown names get nothing
+    ["claude-haiku-4-5", undefined],
+    ["claude-haiku-4-5-20251001", undefined],
+    ["claude-haiku-5", undefined],
+    ["claude-opus-5", undefined],
+    ["claude-opus-5-5", undefined],
+    ["my-proxy-model", undefined],
+    ["sonnet", undefined],
+    ["", undefined],
+  ])("%j → %j", (model, effort) => {
+    expect(effortFor(model)).toBe(effort);
   });
 });
 
@@ -280,6 +422,18 @@ describe("OpenAI-compatible request building", () => {
         },
       }
     `);
+  });
+
+  it("ignores the history cache flag and never sends effort (body unchanged)", () => {
+    const marked: AiRequest = { ...REQ, messages: REQ.messages.map((m, i) => (i === 1 ? { ...m, cache: true } : m)) };
+    for (const [model, base] of [
+      ["claude-sonnet-5", "http://localhost:11434/v1"],
+      ["gpt-4.1", "https://api.openai.com/v1"],
+    ]) {
+      const body = buildOpenAiBody(marked, model, base);
+      expect(body).toEqual(buildOpenAiBody(REQ, model, base));
+      expect(JSON.stringify(body)).not.toMatch(/cache|effort/);
+    }
   });
 
   it("uses max_completion_tokens and native json_schema on api.openai.com", () => {

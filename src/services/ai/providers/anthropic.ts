@@ -23,10 +23,24 @@ import {
 //   is a browser context (CORS). SSE events: message_start → content_block_*
 //   → message_delta (stop_reason, usage) → message_stop; `error` events can
 //   arrive mid-stream. Structured output is `output_config.format`.
+//
+// Prompt caching and effort (規劃書 06 §6.4.1 #5–6), checked against the
+// Claude API docs (2026-10):
+//   - At most 4 `cache_control` breakpoints per request, counted across
+//     tools, system and messages together; any content block can carry
+//     one. The cache key is the exact prefix up to the breakpoint, rendered
+//     in the order tools → system → messages.
+//   - `output_config.effort` (GA, no beta header) is accepted by Sonnet 4.6
+//     and later; Sonnet 4.5 and earlier and Haiku 4.5 reject it with a 400.
+//     Changing it invalidates the messages cache, so it's fixed per model
+//     rather than varied per request.
 
 const API_VERSION = "2023-06-01";
 // The API rejects more than 4 cache_control breakpoints per request.
 const MAX_CACHE_BREAKPOINTS = 4;
+const EPHEMERAL = { type: "ephemeral" } as const;
+
+export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
 
 interface AnthropicUsage {
   input_tokens?: number;
@@ -35,9 +49,49 @@ interface AnthropicUsage {
   cache_creation_input_tokens?: number;
 }
 
+// Sonnet version from a model ID, including IDs users type themselves:
+// "claude-sonnet-5", "claude-sonnet-4-6", "claude-sonnet-4-5-20250929",
+// "us.anthropic.claude-sonnet-4-6-v1:0", "Claude-Sonnet-4.6". A date
+// suffix is never read as a version number, and the legacy
+// "claude-3-7-sonnet-…" naming doesn't match at all.
+function sonnetVersion(model: string): { major: number; minor: number } | null {
+  const m = /(?:^|[^a-z0-9])sonnet-(\d{1,2})(?:[-.](\d{1,2}))?(?!\d)/.exec(model.trim().toLowerCase());
+  if (!m) return null;
+  return { major: Number(m[1]), minor: m[2] ? Number(m[2]) : 0 };
+}
+
+// Effort to send for a model, or undefined to leave the field out. Sonnet's
+// explanations hold up at "low", which is faster and spends fewer tokens;
+// Haiku rejects the parameter, and Opus keeps its own default (it's the
+// "best answer" choice). Anything not positively identified as Sonnet 4.6+
+// gets nothing — an unknown model never sees the field.
+export function effortFor(model: string): Effort | undefined {
+  const v = sonnetVersion(model);
+  if (!v) return undefined;
+  return v.major > 4 || (v.major === 4 && v.minor >= 6) ? "low" : undefined;
+}
+
+function outputConfig(model: string, output?: AiRequest["output"]): Record<string, unknown> | undefined {
+  const effort = effortFor(model);
+  if (!output && !effort) return undefined;
+  return {
+    ...(output ? { format: { type: "json_schema", schema: output.schema } } : {}),
+    ...(effort ? { effort } : {}),
+  };
+}
+
 export function buildAnthropicBody(req: AiRequest, model: string): Record<string, unknown> {
+  // One breakpoint on the last marked message — the end of the thread's
+  // history — so a follow-up reads every earlier round from cache. The
+  // system breakpoints share what's left of the budget, keeping the last.
+  // (Empty text blocks can't carry cache_control.)
+  let msgMark = -1;
+  req.messages.forEach((m, i) => {
+    if (m.cache && m.content.trim()) msgMark = i;
+  });
+  const systemBudget = MAX_CACHE_BREAKPOINTS - (msgMark >= 0 ? 1 : 0);
   const cacheIdx = req.system.map((b, i) => (b.cache ? i : -1)).filter((i) => i >= 0);
-  const keep = new Set(cacheIdx.slice(-MAX_CACHE_BREAKPOINTS));
+  const keep = new Set(cacheIdx.slice(Math.max(0, cacheIdx.length - systemBudget)));
   const body: Record<string, unknown> = {
     model,
     max_tokens: req.maxTokens,
@@ -45,13 +99,18 @@ export function buildAnthropicBody(req: AiRequest, model: string): Record<string
     system: req.system.map((b, i) => ({
       type: "text",
       text: b.text,
-      ...(keep.has(i) ? { cache_control: { type: "ephemeral" } } : {}),
+      ...(keep.has(i) ? { cache_control: EPHEMERAL } : {}),
     })),
-    messages: req.messages.map((m) => ({ role: m.role, content: m.content })),
+    // A string is shorthand for a single text block, so the marked message
+    // renders exactly like the plain string it is in the next request.
+    messages: req.messages.map((m, i) =>
+      i === msgMark
+        ? { role: m.role, content: [{ type: "text", text: m.content, cache_control: EPHEMERAL }] }
+        : { role: m.role, content: m.content }
+    ),
   };
-  if (req.output) {
-    body.output_config = { format: { type: "json_schema", schema: req.output.schema } };
-  }
+  const config = outputConfig(model, req.output);
+  if (config) body.output_config = config;
   return body;
 }
 
@@ -191,8 +250,17 @@ export class AnthropicProvider implements AiProvider {
     const models = [...new Set([this.deps.config.smartModel, this.deps.config.fastModel].filter(Boolean))];
     let transport: TestConnectionResult["transport"] = "fetch";
     for (const model of models) {
+      // Same effort setting as real requests, so a model that rejects it
+      // fails here instead of on the first question.
+      const config = outputConfig(model);
       const res = await this.deps.transport.send(
-        this.request({ model, max_tokens: TEST_MAX_TOKENS, stream: true, messages: [{ role: "user", content: "ping" }] }),
+        this.request({
+          model,
+          max_tokens: TEST_MAX_TOKENS,
+          stream: true,
+          messages: [{ role: "user", content: "ping" }],
+          ...(config ? { output_config: config } : {}),
+        }),
         signal
       );
       await throwIfHttpError(res);
