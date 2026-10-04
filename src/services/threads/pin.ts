@@ -1,11 +1,16 @@
 // 釘選到文法提示 (規劃書 06 M4): an answer pinned into the entry's grammar
-// note, minus the 「你問的是：…」 scope line — that line only makes sense
-// inside the conversation.
+// note, minus the lines that only make sense inside the conversation: the
+// 「你選取的文字裡（似乎）沒有 X，…」 reminder (word tasks v3, always first)
+// and then the 「你問的是：…」 scope line. Otherwise they'd be sent back as
+// 學習者的筆記 in every later word prompt. Leading Markdown emphasis or a
+// quote marker is tolerated; any wording after 你選取的文字 is.
 
-const SCOPE_LINE_RE = /^\s*你問的是[:：][^\n]*\n+/;
+const LEAD = String.raw`^\s*(?:[>*_]+\s*)?`;
+const SELECTION_NOTICE_RE = new RegExp(`${LEAD}你選取的文字[^\\n]*(?:\\n+|$)`);
+const SCOPE_LINE_RE = new RegExp(`${LEAD}你問的是[:：][^\\n]*\\n+`);
 
 export function pinText(answer: string): string {
-  return answer.replace(SCOPE_LINE_RE, "").trim();
+  return answer.replace(SELECTION_NOTICE_RE, "").replace(SCOPE_LINE_RE, "").trim();
 }
 
 export function addPin(grammar: string, text: string): string {

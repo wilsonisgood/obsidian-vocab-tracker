@@ -24,12 +24,16 @@ export const WORD_BASE_PROMPT = `你是一位耐心、精準的英文單字家�
 - 真的無法判斷時，列出最可能的一到兩句請使用者確認，不要硬猜。`;
 
 // selectionMissesWord is set by buildWordContext only when the selection
-// doesn't contain the word; otherwise this renders exactly as before.
+// doesn't seem to contain the word; otherwise this renders exactly as
+// before. The check can't see irregular forms (gave/give), hence the soft
+// wording and the "ignore this if…" sentence. pin.ts strips the reminder
+// line (any line starting with 你選取的文字) before pinning an answer.
 const SELECTION_HEADER = `{{#selection}}〔選取的文字〕
 {{selection}}
 
-{{/selection}}{{#selectionMissesWord}}〔注意〕上面〔選取的文字〕裡沒有 {{word}}，不要用它來判斷使用者在問哪一句。回答的第一行固定寫：{{#hasSource}}你選取的文字裡沒有 {{word}}，以下以出處段落為準。{{/hasSource}}{{^hasSource}}你選取的文字裡沒有 {{word}}，以下直接說明 {{word}}。{{/hasSource}}
-空一行後再回答{{#hasSource}}，照「判斷使用者在問哪一句」的其他線索（問題裡引用的英文片段，或〔出處段落〕中含有 {{word}} 的句子）決定是哪一句；需要寫「你問的是：…」那一行時，放在這句提醒之後{{/hasSource}}。
+{{/selection}}{{#selectionMissesWord}}〔注意〕上面〔選取的文字〕裡似乎沒有 {{word}}。如果它其實含有 {{word}} 的變化形（例如不規則的過去式或複數），就忽略這段注意，照一般規則以選取所在的句子為準。
+否則不要用〔選取的文字〕來判斷使用者在問哪一句，回答的第一行固定寫：你選取的文字裡似乎沒有 {{word}}，{{#sourceKind}}以下以出處{{sourceKind}}為準。{{/sourceKind}}{{^sourceKind}}以下直接說明 {{word}}。{{/sourceKind}}
+空一行後再回答{{#sourceKind}}，照「判斷使用者在問哪一句」的其他線索（問題裡引用的英文片段，或〔出處{{sourceKind}}〕中含有 {{word}} 的句子）決定是哪一句；需要寫「你問的是：…」那一行時，放在這句提醒之後{{/sourceKind}}。
 
 {{/selectionMissesWord}}`;
 
@@ -58,9 +62,11 @@ function wordTask(id: WordTaskId, opts: Pick<AiTask<WordInput>, "tier" | "maxTok
   return {
     id: `word.${id}`,
     // v2: follow-ups skip a repeated 「你問的是」 line (規劃書 06 §6.4.1 #3).
-    // v3: a selection that doesn't contain the word (checked in code by
-    //     wordContext.selectionHasWord) adds a 〔注意〕 block: first line
-    //     reminds the learner, then the source paragraph is used as before.
+    // v3: a selection that doesn't seem to contain the word (checked in code
+    //     by wordContext.selectionHasWord) adds a 〔注意〕 block: first line
+    //     reminds the learner (「你選取的文字裡似乎沒有 X，以下以出處段落／
+    //     句子為準。」), then the source is used as before; the model ignores
+    //     the notice if the selection holds an irregular form of the word.
     //     Unchanged output when the selection contains the word.
     version: 3,
     surface: "word",
