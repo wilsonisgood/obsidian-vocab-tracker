@@ -58,7 +58,7 @@ const ctx = (profile: LearnerProfile = defaultLearnerProfile(), history: ChatMes
 function render(req: AiRequest): string {
   // Human-readable dump so the snapshot reads like the actual prompt.
   const sys = req.system.map((b, i) => `── system[${i}]${b.cache ? " (cache)" : ""} ──\n${b.text}`);
-  const msgs = req.messages.map((m) => `── ${m.role} ──\n${m.content}`);
+  const msgs = req.messages.map((m) => `── ${m.role}${m.cache ? " (cache)" : ""} ──\n${m.content}`);
   return [`tier=${req.tier} maxTokens=${req.maxTokens}`, ...sys, ...msgs].join("\n\n");
 }
 
@@ -175,17 +175,62 @@ describe("prompt structure invariants", () => {
     }
   });
 
-  it("keeps the last 6 rounds of history and starts with a user turn", () => {
+  it("keeps at most 6 rounds of history and starts with a user turn", () => {
     const history: ChatMessage[] = [{ role: "assistant", content: "orphan" }];
-    for (let i = 1; i <= 8; i++) {
+    for (let i = 1; i <= 9; i++) {
       history.push({ role: "user", content: `q${i}` }, { role: "assistant", content: `a${i}` });
     }
     const trimmed = trimHistory(history);
     expect(trimmed).toHaveLength(12);
-    expect(trimmed[0]).toEqual({ role: "user", content: "q3" });
+    expect(trimmed[0]).toEqual({ role: "user", content: "q4" });
     const req = paragraphCustom.build({ ...input, question: "now" }, ctx(defaultLearnerProfile(), history));
     expect(req.messages).toHaveLength(13);
     expect(req.messages.at(-1)?.role).toBe("user");
+  });
+});
+
+describe("conversation cache breakpoint (規劃書 06 §6.4.1 #5)", () => {
+  const rounds = (n: number): ChatMessage[] =>
+    Array.from({ length: n }, (_, i) => [
+      { role: "user" as const, content: `q${i + 1}` },
+      { role: "assistant" as const, content: `a${i + 1}` },
+    ]).flat();
+
+  it("marks the last history message, never the new question", () => {
+    const history = rounds(2);
+    const req = wordCustom.build({ ...GLITTERY, question: "now" }, ctx(defaultLearnerProfile(), history));
+    expect(req.messages.map((m) => !!m.cache)).toEqual([false, false, false, true, false]);
+    expect(req.messages.at(-2)).toEqual({ role: "assistant", content: "a2", cache: true });
+    // The caller's history is left untouched.
+    expect(history.some((m) => "cache" in m)).toBe(false);
+  });
+
+  it("adds no message breakpoint on the first question", () => {
+    const req = wordCustom.build({ ...GLITTERY, question: "now" }, ctx());
+    expect(req.messages).toHaveLength(1);
+    expect(req.messages[0].cache).toBeUndefined();
+  });
+
+  it("ignores cache flags already on the history", () => {
+    const history = rounds(2).map((m) => ({ ...m, cache: true }));
+    const req = wordCustom.build(GLITTERY, ctx(defaultLearnerProfile(), history));
+    expect(req.messages.filter((m) => m.cache)).toHaveLength(1);
+  });
+
+  it("drops old rounds 3 at a time so the first message stays put across follow-ups", () => {
+    const firsts: string[] = [];
+    for (let n = 0; n <= 15; n++) {
+      const kept = trimHistory(rounds(n));
+      expect(kept.length / 2).toBeLessThanOrEqual(6);
+      if (n > 6) expect(kept.length / 2).toBeGreaterThanOrEqual(4);
+      firsts.push(kept[0]?.content ?? "-");
+    }
+    expect(firsts).toEqual([
+      "-", "q1", "q1", "q1", "q1", "q1", "q1", // up to 6 rounds: everything
+      "q4", "q4", "q4", // 7–9 rounds: drop the first 3
+      "q7", "q7", "q7", // 10–12: drop 6
+      "q10", "q10", "q10",
+    ]);
   });
 });
 
