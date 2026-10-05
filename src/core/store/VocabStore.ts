@@ -63,20 +63,41 @@ export class VocabStore {
   // the caller holds (not a copy) so later direct mutations on it — e.g.
   // enrichEntry filling in dictionary fields — land in this.data too.
   addEntry(entry: VocabEntry): Promise<void> {
+    return this.addEntries([entry]);
+  }
+
+  // One save (and one data:changed) for a whole batch, e.g. a note's exam
+  // words imported at once.
+  addEntries(entries: VocabEntry[]): Promise<void> {
     const stamp = nowIso();
-    entry.createdAt = entry.createdAt ?? stamp;
-    entry.updatedAt = stamp;
-    entry.rev = 0;
-    entry.lang = entry.lang ?? "en";
-    this.data.entries.push(entry);
+    for (const entry of entries) {
+      entry.createdAt = entry.createdAt ?? stamp;
+      entry.updatedAt = stamp;
+      entry.rev = 0;
+      entry.lang = entry.lang ?? "en";
+      this.data.entries.push(entry);
+    }
     return this.save();
+  }
+
+  // Raw entries including tombstones — for logic that must know a word was
+  // deleted (e.g. auto-import not re-adding it), not for display.
+  get allEntries(): readonly VocabEntry[] {
+    return this.data.entries;
   }
 
   // Call after directly mutating fields on an entry that's already in
   // this.data.entries, so its updatedAt/rev stay meaningful to merge.ts.
   touch(entry: VocabEntry): Promise<void> {
-    entry.updatedAt = nowIso();
-    entry.rev = (entry.rev ?? 0) + 1;
+    return this.touchMany([entry]);
+  }
+
+  touchMany(entries: VocabEntry[]): Promise<void> {
+    const stamp = nowIso();
+    for (const entry of entries) {
+      entry.updatedAt = stamp;
+      entry.rev = (entry.rev ?? 0) + 1;
+    }
     return this.save();
   }
 

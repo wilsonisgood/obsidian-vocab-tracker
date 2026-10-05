@@ -5,6 +5,7 @@ import { renderVocabRow } from "../word/WordRow";
 import { renderGroupedVocabList } from "../word/GroupedWordList";
 import { t } from "../../core/i18n";
 import { WordUi } from "../word/wordUi";
+import { renderExamStrip } from "./examStrip";
 
 export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 
@@ -21,6 +22,10 @@ export class VocabSidebarView extends ItemView {
   expandState: Map<string, ExpandState> = new Map();
   collapsedGroups: Set<string> = new Set();
   wordUi = new WordUi(this);
+  // Exam word stats for the active note; refreshed on its own (see
+  // refreshExamStrip) so a background scan never re-renders the word list
+  // — that would wipe a half-typed question in an open AI tab.
+  private examStripEl: HTMLElement | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: VocabTrackerPlugin) {
     super(leaf);
@@ -48,6 +53,12 @@ export class VocabSidebarView extends ItemView {
       this.pendingWord = word;
     }
     this.render();
+  }
+
+  refreshExamStrip() {
+    if (!this.examStripEl) return;
+    this.examStripEl.empty();
+    renderExamStrip(this.examStripEl, this.plugin, this.plugin.app.workspace.getActiveFile());
   }
 
   render() {
@@ -80,6 +91,8 @@ export class VocabSidebarView extends ItemView {
 
     // ── Scope: words from this note, or all words ────────────────
     const activeFile = this.plugin.app.workspace.getActiveFile();
+    this.examStripEl = root.createDiv();
+    this.refreshExamStrip();
     const canFilter = !!activeFile;
     if (this.filterMode === undefined) this.filterMode = "note";
 

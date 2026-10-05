@@ -1,8 +1,11 @@
 import {
+  debounce,
   MarkdownPostProcessorContext,
+  MarkdownView,
   Menu,
   Notice,
   Plugin,
+  TAbstractFile,
   TFile,
   WorkspaceLeaf,
 } from "obsidian";
@@ -36,6 +39,16 @@ import { SETTINGS_SECTIONS } from "./src/ui/settings/sections";
 import { ObsidianNotes } from "./src/platform/ObsidianNotes";
 import { ThreadService } from "./src/services/threads/ThreadService";
 import { SelectionTracker } from "./src/ui/chat/SelectionTracker";
+import { ObsidianWordlists, inFolder } from "./src/platform/ObsidianWordlists";
+import { WordlistService } from "./src/services/wordlists/WordlistService";
+import { resolveWordlistSettings, tagColor, tagEnabled, type WordlistSettings } from "./src/core/model/wordlists";
+import { EXAM_WORD_CLS, highlightExamWords } from "./src/ui/reading/examHighlight";
+import { NoteImports } from "./src/services/wordlists/NoteImports";
+import { mergeLevel, planImport } from "./src/core/wordlists/importPlan";
+import { tagLabel } from "./src/core/wordlists/parse";
+import type { ScanResult } from "./src/core/wordlists/scan";
+import { nowIso } from "./src/core/nowIso";
+import { entriesMissingDefinition } from "./src/core/store/needsEnrich";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -44,6 +57,13 @@ import { SelectionTracker } from "./src/ui/chat/SelectionTracker";
 const VOCAB_FOLDER = "vocab-list";
 const VOCAB_FILE = `${VOCAB_FOLDER}/vocab-list.md`;
 const VOCAB_FILE_LEGACY = "vocab-list.md";
+
+// Gap between background dictionary lookups for auto-imported words, so a
+// note with a hundred exam words doesn't fire a hundred requests at once.
+const ENRICH_GAP_MS = 400;
+// Wait after startup before retrying words with no definition, so the
+// fetches don't compete with Obsidian loading the workspace.
+const RESUME_ENRICH_DELAY_MS = 5000;
 
 // ─── Plugin ───────────────────────────────────────────────────────────────────
 
@@ -57,6 +77,12 @@ export default class VocabTrackerPlugin extends Plugin {
   notes!: ObsidianNotes;
   threads!: ThreadService;
   selection!: SelectionTracker;
+  wordlists!: WordlistService;
+  noteImports!: NoteImports;
+  private importing = new Set<string>();
+  private enrichQueue: VocabEntry[] = [];
+  private enriching = false;
+  private unloaded = false;
 
   async onload() {
     this.storage = new ObsidianStorage(this);
@@ -69,7 +95,25 @@ export default class VocabTrackerPlugin extends Plugin {
     // AI (M3): service + settings tab. AI stays off until enabled in settings.
     const { ai, keys } = createAiService(this.store, createAiPorts(this.app, this.storage));
     this.ai = ai;
-    const settingsCtx = { app: this.app, store: this.store, ai, keys, applyLocale: () => this.applyLocale() };
+    // Exam word lists: loaded from a vault folder once the layout is ready
+    // (see registerWordlistEvents), then every opened note is scanned in
+    // the background and list words are underlined in reading view.
+    this.wordlists = new WordlistService({
+      source: new ObsidianWordlists(this.app),
+      settings: () => this.wordlistSettings(),
+    });
+    this.noteImports = new NoteImports(this.storage);
+    await this.noteImports.load();
+
+    const settingsCtx = {
+      app: this.app,
+      store: this.store,
+      ai,
+      keys,
+      wordlists: this.wordlists,
+      applyLocale: () => this.applyLocale(),
+      onWordlistsChanged: (change: "display" | "scan" | "reload") => void this.onWordlistsChanged(change),
+    };
     this.addSettingTab(new VocabSettingsTab(this.app, this, settingsCtx, SETTINGS_SECTIONS));
     this.srs = new SrsService({ store: this.store, storage: this.storage });
 
@@ -88,6 +132,14 @@ export default class VocabTrackerPlugin extends Plugin {
 
     // Click handler for ==highlights== in reading mode
     this.registerMarkdownPostProcessor(this.processMarks.bind(this));
+
+    // Underline exam-list words in reading mode (view-only)
+    this.registerMarkdownPostProcessor((el) => {
+      const lookup = this.wordlists.highlightLookup();
+      if (!lookup) return;
+      const s = this.wordlistSettings();
+      highlightExamWords(el, lookup, (tag) => tagColor(s, tag));
+    });
 
     // Click any plain English word in reading mode
     this.registerDomEvent(document, "click", this.handleReadingClick.bind(this));
@@ -111,6 +163,27 @@ export default class VocabTrackerPlugin extends Plugin {
 
     // Command palette
     this.addCommand({
+      id: "toggle-exam-highlight",
+      name: t("command.toggleExamHighlight"),
+      callback: () => this.updateWordlistSettings({ highlight: !this.wordlistSettings().highlight }),
+    });
+    this.addCommand({
+      id: "import-exam-words",
+      name: t("command.importExamWords"),
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== "md" || this.wordlists.index.isEmpty) return false;
+        if (!checking) void this.importExamWords(file, { force: true });
+        return true;
+      },
+    });
+    this.addCommand({
+      id: "reload-wordlists",
+      name: t("command.reloadWordlists"),
+      callback: () => this.wordlists.reload(),
+    });
+
+    this.addCommand({
       id: "open-vocab-sidebar",
       name: "Open Vocab Sidebar",
       callback: () => this.activateSidebar(),
@@ -126,7 +199,12 @@ export default class VocabTrackerPlugin extends Plugin {
       this.app.workspace.on("active-leaf-change", () => this.refreshSidebar())
     );
     this.registerEvent(
-      this.app.workspace.on("file-open", () => this.refreshSidebar())
+      this.app.workspace.on("file-open", (file) => {
+        this.refreshSidebar();
+        // First time a note is opened (or since it last changed): count its
+        // exam words in the background so the sidebar has them ready.
+        if (file) void this.scanNote(file);
+      })
     );
 
     // Keep tracked entries pointed at their source note when it's moved/renamed
@@ -134,16 +212,29 @@ export default class VocabTrackerPlugin extends Plugin {
       this.app.vault.on("rename", async (file, oldPath) => {
         if (!(file instanceof TFile)) return;
         const changed = updateSourcePaths(this.vocabData.entries, oldPath, file.path);
-        for (const entry of changed) await this.store.touch(entry);
+        if (changed.length) await this.store.touchMany(changed);
+        await this.noteImports.rename(oldPath, file.path);
       })
     );
 
-    this.app.workspace.onLayoutReady(() => this.ensureVocabFile());
+    this.app.workspace.onLayoutReady(() => {
+      void this.ensureVocabFile();
+      this.registerWordlistEvents();
+      void this.wordlists.reload();
+      // Words whose dictionary fetch never finished (closed mid-queue,
+      // offline…) get another try every startup.
+      const timer = window.setTimeout(
+        () => this.enqueueEnrich(entriesMissingDefinition(this.store.entries)),
+        RESUME_ENRICH_DELAY_MS
+      );
+      this.register(() => window.clearTimeout(timer));
+    });
   }
 
   // So a debounced write (VocabStore's 500ms coalescing) isn't lost if
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
+    this.unloaded = true;
     // Threads first: it saves in-flight answers as stopped with their text
     // so far, before ai.dispose() aborts the requests.
     this.threads?.dispose();
@@ -165,9 +256,11 @@ export default class VocabTrackerPlugin extends Plugin {
     // device's reviews without waiting for our next write.
     void this.srs.reloadLogs();
     void this.threads.reload();
+    void this.noteImports.load();
 
     const disk = await this.storage.readShard<VocabData>("data");
     if (!disk) return;
+    const wordlistsBefore = JSON.stringify(this.wordlistSettings());
 
     const merged = merge(this.vocabData, disk);
     this.vocabData = merged;
@@ -181,6 +274,180 @@ export default class VocabTrackerPlugin extends Plugin {
     // redundant renders, but data actually changed here regardless of path.
     const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
     (leaf?.view as VocabSidebarView | undefined)?.render();
+    // Another device changed list colours / toggles / folder.
+    if (JSON.stringify(this.wordlistSettings()) !== wordlistsBefore) void this.onWordlistsChanged("reload");
+  }
+
+  // ── Exam word lists ────────────────────────────────────────────
+
+  wordlistSettings(): WordlistSettings {
+    return resolveWordlistSettings(this.store.settings.wordlists);
+  }
+
+  async updateWordlistSettings(patch: Partial<WordlistSettings>) {
+    await this.store.updateSettings((s) => (s.wordlists = { ...this.wordlistSettings(), ...patch }));
+    await this.onWordlistsChanged("display");
+  }
+
+  // Sidebar chip: turn one list's underlines on/off. If underlining is off
+  // altogether, a click means "show me this one", so it turns that on too.
+  async toggleExamTag(tag: string) {
+    const s = this.wordlistSettings();
+    const on = s.highlight && tagEnabled(s, tag);
+    await this.updateWordlistSettings({
+      highlight: s.highlight || !on,
+      tags: { ...s.tags, [tag]: { ...s.tags[tag], enabled: !on } },
+    });
+  }
+
+  async onWordlistsChanged(change: "display" | "scan" | "reload") {
+    // reload() emits "index-changed", which re-renders everything below.
+    if (change === "reload") return this.wordlists.reload();
+    if (change === "scan") this.wordlists.invalidateScans();
+    this.rerenderReadingViews();
+    this.refreshExamStrip();
+  }
+
+  // Scans a note in the background, then auto-imports its exam words if
+  // this note hasn't been imported before.
+  async scanNote(file: TFile) {
+    if (file.extension !== "md" || this.wordlists.index.isEmpty) return;
+    try {
+      const result = await this.wordlists.scan(file.path, file.stat.mtime, () => this.app.vault.cachedRead(file));
+      if (this.wordlistSettings().autoImport && !this.noteImports.has(file.path)) {
+        await this.importExamWords(file, { result });
+      }
+    } catch (e) {
+      console.error("Vocab Tracker: exam word scan failed", e);
+    }
+  }
+
+  // Notes whose words shouldn't become vocab entries: the lists themselves
+  // and the plugin's own vocab-list folder.
+  private isImportable(path: string): boolean {
+    return !inFolder(path, this.wordlistSettings().folder) && !inFolder(path, VOCAB_FOLDER);
+  }
+
+  // Exam labels for a word's list tags — enabled lists only ("TOEFL, IELTS").
+  examLabels(tags: readonly string[]): string[] {
+    const s = this.wordlistSettings();
+    return tags.filter((tag) => tagEnabled(s, tag)).map(tagLabel);
+  }
+
+  // Adds every exam-list word in the note to the vocab list (level = its
+  // exams), and adds the exam labels to words already tracked. Each note
+  // is imported once; `force` (the command) re-runs it, but words the user
+  // deleted still stay deleted.
+  async importExamWords(file: TFile, opts: { result?: ScanResult; force?: boolean } = {}) {
+    if (!this.isImportable(file.path) || this.importing.has(file.path)) return;
+    if (!opts.force && this.noteImports.has(file.path)) return;
+    this.importing.add(file.path);
+    try {
+      const result =
+        opts.result ??
+        (await this.wordlists.scan(file.path, file.stat.mtime, () => this.app.vault.cachedRead(file)));
+      const plan = planImport(result.hits, this.store.allEntries, (tags) => this.examLabels(tags));
+
+      const base = Date.now();
+      const created = plan.create.map((w, i) =>
+        this.newEntry(`${base}-${i}`, w.word, {
+          level: w.level,
+          example: w.example,
+          source: { path: file.path, line: w.line },
+          origin: "wordlist",
+        })
+      );
+      if (created.length) await this.store.addEntries(created);
+      for (const r of plan.retag) r.entry.level = r.level;
+      if (plan.retag.length) await this.store.touchMany(plan.retag.map((r) => r.entry));
+      await this.noteImports.mark(file.path, nowIso());
+
+      if (created.length || plan.retag.length) {
+        new Notice(
+          t("exam.import.done", { note: file.basename, added: created.length, tagged: plan.retag.length })
+        );
+        this.renderSidebar();
+      }
+      this.enqueueEnrich(created);
+    } finally {
+      this.importing.delete(file.path);
+    }
+  }
+
+  // Fills in dictionary data one word at a time: auto-imported words, and
+  // at startup every word still missing a definition.
+  enqueueEnrich(entries: VocabEntry[]) {
+    const queued = new Set(this.enrichQueue.map((e) => e.id));
+    this.enrichQueue.push(...entries.filter((e) => !queued.has(e.id)));
+    if (!this.enriching) void this.drainEnrichQueue();
+  }
+
+  private async drainEnrichQueue() {
+    this.enriching = true;
+    let done = 0;
+    while (this.enrichQueue.length && !this.unloaded) {
+      const entry = this.enrichQueue.shift()!;
+      // Deleted, or filled in some other way while it waited.
+      if (entriesMissingDefinition([entry]).length === 0) continue;
+      await this.enrichEntry(entry, { quiet: true });
+      // Re-render now and then rather than per word — a full sidebar
+      // render resets anything half-typed in it.
+      if (++done % 20 === 0) this.renderSidebar();
+      await new Promise((r) => setTimeout(r, ENRICH_GAP_MS));
+    }
+    this.enriching = false;
+    if (done) this.renderSidebar();
+  }
+
+  renderSidebar() {
+    const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
+    (leaf?.view as VocabSidebarView | undefined)?.render();
+  }
+
+  registerWordlistEvents() {
+    // Re-read the lists when a file inside the list folder changes. Editing
+    // a list fires modify on every keystroke-save, hence the debounce.
+    const reload = debounce(() => void this.wordlists.reload(), 800, true);
+    const inLists = (path: string) => inFolder(path, this.wordlistSettings().folder);
+    const onChange = (file: TAbstractFile, oldPath?: string) => {
+      if (inLists(file.path) || (oldPath && inLists(oldPath))) reload();
+    };
+    this.registerEvent(this.app.vault.on("create", (f) => onChange(f)));
+    this.registerEvent(this.app.vault.on("delete", (f) => onChange(f)));
+    this.registerEvent(this.app.vault.on("rename", (f, oldPath) => onChange(f, oldPath)));
+
+    // The open note was edited: refresh its counts once typing settles.
+    const rescanActive = debounce(() => this.refreshExamStrip(), 1500, true);
+    this.registerEvent(
+      this.app.vault.on("modify", (f) => {
+        if (inLists(f.path)) reload();
+        else if (f.path === this.app.workspace.getActiveFile()?.path) rescanActive();
+      })
+    );
+
+    this.wordlists.on("index-changed", () => {
+      this.rerenderReadingViews();
+      this.refreshExamStrip();
+      // The note open at startup was opened before the lists loaded.
+      const active = this.app.workspace.getActiveFile();
+      if (active) void this.scanNote(active);
+    });
+    this.wordlists.on("scanned", ({ path }) => {
+      if (path === this.app.workspace.getActiveFile()?.path) this.refreshExamStrip();
+    });
+  }
+
+  // Re-runs post-processors so underlines follow the current lists/settings.
+  rerenderReadingViews() {
+    for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+      const view = leaf.view;
+      if (view instanceof MarkdownView) view.previewMode?.rerender(true);
+    }
+  }
+
+  refreshExamStrip() {
+    const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
+    (leaf?.view as VocabSidebarView | undefined)?.refreshExamStrip();
   }
 
   async activateSidebar(): Promise<WorkspaceLeaf> {
@@ -293,6 +560,19 @@ export default class VocabTrackerPlugin extends Plugin {
     const word = text.slice(start, end).replace(/^[-']+|[-']+$/g, "");
     if (!/^[A-Za-z][A-Za-z'\-]*$/.test(word)) return { word: "", sentence: "" };
 
+    // An underlined exam word is its own text node (a span), so the
+    // sentence has to come from the enclosing block's full text.
+    const examSpan = node.parentElement?.closest(`.${EXAM_WORD_CLS}`);
+    const block = examSpan?.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
+    if (examSpan && block) {
+      const range = document.createRange();
+      range.setStart(block, 0);
+      range.setEnd(node, start);
+      const before = range.toString().length;
+      const blockText = block.textContent || "";
+      return { word, sentence: extractSentence(blockText, before, before + (end - start), null) };
+    }
+
     const sentence = extractSentence(text, start, end, node);
     return { word, sentence };
   }
@@ -314,35 +594,47 @@ export default class VocabTrackerPlugin extends Plugin {
       if (updated !== content) await this.app.vault.modify(file, updated);
     }
 
+    const labels = this.examLabels(this.wordlists.match(word)?.tags ?? []);
+
     if (!existing) {
-      const entry: VocabEntry = {
-        id: String(Date.now()),
-        word,
-        level: "",
-        synonyms: "",
-        antonyms: "",
+      const entry = this.newEntry(String(Date.now()), word, {
+        level: labels.join(", "),
         example: ctx.sentence || "",
-        definition: "",
-        definitionZh: "",
-        phonetic: "",
-        partOfSpeech: "",
-        grammar: "",
         source,
-        added: nowStamp(),
-        lastReviewed: nowStamp(),
-        reviews: 0,
-      };
+      });
       await this.store.addEntry(entry);
       this.enrichEntry(entry);
     } else {
       if (!existing.source && source) existing.source = source;
       if (!existing.example && ctx.sentence) existing.example = ctx.sentence;
+      existing.level = mergeLevel(existing.level, labels);
       await this.store.touch(existing);
     }
 
     const leaf = await this.activateSidebar();
     (leaf.view as VocabSidebarView).setWord(word);
     return existing == null;
+  }
+
+  newEntry(id: string, word: string, fields: Partial<VocabEntry>): VocabEntry {
+    return {
+      id,
+      word,
+      level: "",
+      synonyms: "",
+      antonyms: "",
+      example: "",
+      definition: "",
+      definitionZh: "",
+      phonetic: "",
+      partOfSpeech: "",
+      grammar: "",
+      source: null,
+      added: nowStamp(),
+      lastReviewed: nowStamp(),
+      reviews: 0,
+      ...fields,
+    };
   }
 
   async jumpToSource(entry: VocabEntry) {
@@ -380,7 +672,8 @@ export default class VocabTrackerPlugin extends Plugin {
 
   // ── Auto-fetch dictionary data (Wiktionary, falls back to Datamuse) ──
 
-  async enrichEntry(entry: VocabEntry, opts: { verbose?: boolean } = {}) {
+  // `quiet` (background queue): no notice on failure, no sidebar render.
+  async enrichEntry(entry: VocabEntry, opts: { verbose?: boolean; quiet?: boolean } = {}) {
     try {
       const data = await this.dictionary.fetchDictionary(entry.word);
 
@@ -393,12 +686,12 @@ export default class VocabTrackerPlugin extends Plugin {
       if (!entry.antonyms) entry.antonyms = data.antonyms.join(", ");
       await this.store.touch(entry);
 
-      const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
-      const view = leaf && (leaf.view as VocabSidebarView);
-      if (view) view.render();
+      if (opts.quiet) return;
+      this.renderSidebar();
       if (opts.verbose) new Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e: any) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
+      if (opts.quiet) return;
       new Notice(`Vocab Tracker: couldn't fetch "${entry.word}" — ${e?.message || e}`);
     }
   }

@@ -89,3 +89,16 @@ export interface NetworkPort {
 export interface NoteReaderPort {
   read(path: string): Promise<string | null>;
 }
+
+// Word list files in a vault folder (規劃書 03 §3.2). `list` returns the
+// files directly or nested under `folder`; `read` their text.
+export interface WordlistFile {
+  path: string;
+  // File name without extension — the default tag.
+  basename: string;
+}
+
+export interface WordlistSourcePort {
+  list(folder: string): WordlistFile[];
+  read(path: string): Promise<string | null>;
+}

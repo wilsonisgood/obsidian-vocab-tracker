@@ -35,7 +35,7 @@ __export(main_exports, {
   default: () => VocabTrackerPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian22 = require("obsidian");
+var import_obsidian26 = require("obsidian");
 
 // src/core/text/wordRe.ts
 function escapeRe(s) {
@@ -135,7 +135,7 @@ var ObsidianHttp = class {
 
 // src/platform/ObsidianStorage.ts
 var import_obsidian2 = require("obsidian");
-var FILE_SHARDS = /* @__PURE__ */ new Set(["reviews", "usage", "threads"]);
+var FILE_SHARDS = /* @__PURE__ */ new Set(["reviews", "usage", "threads", "imports"]);
 var UNSUPPORTED_SHARD = (name) => new Error(`ObsidianStorage: shard "${name}" is not implemented yet`);
 var ObsidianStorage = class {
   constructor(plugin) {
@@ -475,21 +475,39 @@ var VocabStore = class {
   // the caller holds (not a copy) so later direct mutations on it — e.g.
   // enrichEntry filling in dictionary fields — land in this.data too.
   addEntry(entry) {
+    return this.addEntries([entry]);
+  }
+  // One save (and one data:changed) for a whole batch, e.g. a note's exam
+  // words imported at once.
+  addEntries(entries) {
     var _a, _b;
     const stamp = nowIso();
-    entry.createdAt = (_a = entry.createdAt) != null ? _a : stamp;
-    entry.updatedAt = stamp;
-    entry.rev = 0;
-    entry.lang = (_b = entry.lang) != null ? _b : "en";
-    this.data.entries.push(entry);
+    for (const entry of entries) {
+      entry.createdAt = (_a = entry.createdAt) != null ? _a : stamp;
+      entry.updatedAt = stamp;
+      entry.rev = 0;
+      entry.lang = (_b = entry.lang) != null ? _b : "en";
+      this.data.entries.push(entry);
+    }
     return this.save();
+  }
+  // Raw entries including tombstones — for logic that must know a word was
+  // deleted (e.g. auto-import not re-adding it), not for display.
+  get allEntries() {
+    return this.data.entries;
   }
   // Call after directly mutating fields on an entry that's already in
   // this.data.entries, so its updatedAt/rev stay meaningful to merge.ts.
   touch(entry) {
+    return this.touchMany([entry]);
+  }
+  touchMany(entries) {
     var _a;
-    entry.updatedAt = nowIso();
-    entry.rev = ((_a = entry.rev) != null ? _a : 0) + 1;
+    const stamp = nowIso();
+    for (const entry of entries) {
+      entry.updatedAt = stamp;
+      entry.rev = ((_a = entry.rev) != null ? _a : 0) + 1;
+    }
     return this.save();
   }
   // Soft-delete: sets deletedAt instead of removing the entry, so a delete
@@ -650,7 +668,7 @@ function nowStamp(d = /* @__PURE__ */ new Date()) {
 }
 
 // src/ui/sidebar/VocabSidebarView.ts
-var import_obsidian10 = require("obsidian");
+var import_obsidian11 = require("obsidian");
 
 // src/ui/word/WordRow.ts
 var import_obsidian7 = require("obsidian");
@@ -879,7 +897,30 @@ var en = {
   "settings.srs.retention.name": "Target retention",
   "settings.srs.retention.desc": "Probability you still remember a card when it comes due. Higher = more frequent reviews. Default 0.9.",
   "settings.srs.dailyNew.name": "New cards per day",
-  "settings.srs.dailyNew.desc": "Max never-reviewed words introduced each day. Default 20."
+  "settings.srs.dailyNew.desc": "Max never-reviewed words introduced each day. Default 20.",
+  "settings.section.wordlists": "Exam word lists",
+  "settings.wordlists.desc": "Put word lists (TOEFL, IELTS, TOEIC\u2026) in a vault folder, one file per list. The file name becomes the tag: exam-TOEFL.md \u2192 TOEFL. One word per line; anything after the word (part of speech, meaning) is ignored. .md, .txt and .csv all work. Words from these lists are underlined in reading view.",
+  "settings.wordlists.folder.name": "Word list folder",
+  "settings.wordlists.folder.desc": "Vault folder holding the lists. Files starting with _ and README are skipped.",
+  "settings.wordlists.highlight.name": "Underline list words",
+  "settings.wordlists.highlight.desc": "Coloured dashed underline in reading view. Hover a word to see its lists. The note itself is never changed.",
+  "settings.wordlists.inflections.name": "Match inflected forms",
+  "settings.wordlists.inflections.desc": "analyzed / analyzing / analyzes also match analyze. Turn off for exact matches only.",
+  "settings.wordlists.loaded.name": "Loaded lists",
+  "settings.wordlists.loaded.none": "No lists found in {folder}/.",
+  "settings.wordlists.loaded.some": "{n} list(s). Edits to the files are picked up automatically.",
+  "settings.wordlists.reload": "Reload",
+  "settings.wordlists.list.desc": "{n} words \xB7 {paths}",
+  "exam.strip.scanning": "Scanning exam words\u2026",
+  "exam.strip.title": "Exam words in this note \xB7 {total} distinct words",
+  "exam.strip.hide": "Hide {tag} underlines",
+  "exam.strip.show": "Show {tag} underlines",
+  "command.toggleExamHighlight": "Toggle exam word underlines",
+  "command.reloadWordlists": "Reload exam word lists",
+  "exam.import.done": 'Vocab Tracker: added {added} exam word(s) from "{note}" ({tagged} existing word(s) tagged)',
+  "command.importExamWords": "Add this note's exam words to the vocab list",
+  "settings.wordlists.autoImport.name": "Auto-add exam words",
+  "settings.wordlists.autoImport.desc": "The first time a note is opened, add every list word in it to the vocab list, with its exams (TOEFL, IELTS\u2026) in the level field. Each note is imported once; words you delete aren't re-added. Dictionary data is fetched in the background."
 };
 
 // src/core/i18n/zh-TW.ts
@@ -1079,7 +1120,30 @@ var zhTW = {
   "settings.srs.retention.name": "\u76EE\u6A19\u8A18\u61B6\u7387",
   "settings.srs.retention.desc": "\u5361\u7247\u5230\u671F\u6642\u4ECD\u8A18\u5F97\u7684\u6A5F\u7387\u3002\u8D8A\u9AD8\u8907\u7FD2\u8D8A\u983B\u7E41\uFF0C\u9810\u8A2D 0.9\u3002",
   "settings.srs.dailyNew.name": "\u6BCF\u65E5\u65B0\u5361\u4E0A\u9650",
-  "settings.srs.dailyNew.desc": "\u6BCF\u5929\u6700\u591A\u5F15\u5165\u5E7E\u500B\u5F9E\u672A\u8907\u7FD2\u904E\u7684\u5B57\uFF0C\u9810\u8A2D 20\u3002"
+  "settings.srs.dailyNew.desc": "\u6BCF\u5929\u6700\u591A\u5F15\u5165\u5E7E\u500B\u5F9E\u672A\u8907\u7FD2\u904E\u7684\u5B57\uFF0C\u9810\u8A2D 20\u3002",
+  "settings.section.wordlists": "\u8003\u8A66\u5B57\u8868",
+  "settings.wordlists.desc": "\u628A\u5B57\u8868\uFF08\u6258\u798F\u3001\u96C5\u601D\u3001\u591A\u76CA\u2026\uFF09\u653E\u9032 vault \u7684\u4E00\u500B\u8CC7\u6599\u593E\uFF0C\u4E00\u500B\u6A94\u6848\u4E00\u4EFD\u5B57\u8868\uFF0C\u6A94\u540D\u5C31\u662F\u6A19\u7C64\uFF1Aexam-TOEFL.md \u2192 TOEFL\u3002\u4E00\u884C\u4E00\u500B\u5B57\uFF0C\u5B57\u5F8C\u9762\u7684\u8A5E\u6027\u3001\u4E2D\u6587\u89E3\u91CB\u6703\u88AB\u7565\u904E\uFF1B.md\u3001.txt\u3001.csv \u90FD\u53EF\u4EE5\u3002\u5B57\u8868\u88E1\u7684\u5B57\u6703\u5728\u95B1\u8B80\u6A21\u5F0F\u52A0\u4E0A\u5E95\u7DDA\u3002",
+  "settings.wordlists.folder.name": "\u5B57\u8868\u8CC7\u6599\u593E",
+  "settings.wordlists.folder.desc": "\u653E\u5B57\u8868\u7684 vault \u8CC7\u6599\u593E\u3002_ \u958B\u982D\u7684\u6A94\u6848\u8207 README \u6703\u7565\u904E\u3002",
+  "settings.wordlists.highlight.name": "\u6A19\u793A\u5B57\u8868\u55AE\u5B57",
+  "settings.wordlists.highlight.desc": "\u5728\u95B1\u8B80\u6A21\u5F0F\u52A0\u4E0A\u5F69\u8272\u865B\u7DDA\u5E95\u7DDA\uFF0C\u6ED1\u904E\u53EF\u770B\u5C6C\u65BC\u54EA\u4E9B\u5B57\u8868\u3002\u4E0D\u6703\u4FEE\u6539\u7B46\u8A18\u5167\u5BB9\u3002",
+  "settings.wordlists.inflections.name": "\u6BD4\u5C0D\u8A5E\u5F62\u8B8A\u5316",
+  "settings.wordlists.inflections.desc": "analyzed / analyzing / analyzes \u4E5F\u7B97 analyze\u3002\u95DC\u6389\u5247\u53EA\u6BD4\u5C0D\u5B8C\u5168\u76F8\u540C\u7684\u5B57\u3002",
+  "settings.wordlists.loaded.name": "\u5DF2\u8F09\u5165\u7684\u5B57\u8868",
+  "settings.wordlists.loaded.none": "{folder}/ \u88E1\u9084\u6C92\u6709\u5B57\u8868\u3002",
+  "settings.wordlists.loaded.some": "\u5171 {n} \u4EFD\u3002\u4FEE\u6539\u5B57\u8868\u6A94\u6848\u6703\u81EA\u52D5\u91CD\u65B0\u8F09\u5165\u3002",
+  "settings.wordlists.reload": "\u91CD\u65B0\u8F09\u5165",
+  "settings.wordlists.list.desc": "{n} \u5B57 \xB7 {paths}",
+  "exam.strip.scanning": "\u6B63\u5728\u6383\u63CF\u8003\u8A66\u5B57\u5F59\u2026",
+  "exam.strip.title": "\u672C\u7BC7\u8003\u8A66\u5B57\u5F59 \xB7 \u5168\u6587 {total} \u500B\u4E0D\u540C\u7684\u5B57",
+  "exam.strip.hide": "\u96B1\u85CF {tag} \u5E95\u7DDA",
+  "exam.strip.show": "\u986F\u793A {tag} \u5E95\u7DDA",
+  "command.toggleExamHighlight": "\u5207\u63DB\u8003\u8A66\u5B57\u5F59\u5E95\u7DDA",
+  "command.reloadWordlists": "\u91CD\u65B0\u8F09\u5165\u8003\u8A66\u5B57\u8868",
+  "exam.import.done": "Vocab Tracker\uFF1A\u5F9E\u300C{note}\u300D\u52A0\u5165 {added} \u500B\u8003\u8A66\u55AE\u5B57\uFF08\u53E6\u6709 {tagged} \u500B\u65E2\u6709\u55AE\u5B57\u88DC\u4E0A\u8003\u8A66\u6A19\u7C64\uFF09",
+  "command.importExamWords": "\u628A\u672C\u7BC7\u7684\u8003\u8A66\u5B57\u5F59\u52A0\u5165\u55AE\u5B57\u5EAB",
+  "settings.wordlists.autoImport.name": "\u81EA\u52D5\u52A0\u5165\u8003\u8A66\u5B57\u5F59",
+  "settings.wordlists.autoImport.desc": "\u7B2C\u4E00\u6B21\u6253\u958B\u7B46\u8A18\u6642\uFF0C\u628A\u88E1\u9762\u5C6C\u65BC\u5B57\u8868\u7684\u5B57\u5168\u90E8\u52A0\u5165\u55AE\u5B57\u5EAB\uFF0C\u4E26\u5728\u300C\u7B49\u7D1A\u300D\u6B04\u6A19\u4E0A\u8003\u8A66\uFF08TOEFL\u3001IELTS\u2026\uFF09\u3002\u6BCF\u7BC7\u53EA\u532F\u5165\u4E00\u6B21\uFF0C\u4F60\u522A\u6389\u7684\u5B57\u4E0D\u6703\u518D\u88AB\u52A0\u56DE\u4F86\u3002\u5B57\u5178\u8CC7\u6599\u6703\u5728\u80CC\u666F\u6162\u6162\u6293\u3002"
 };
 
 // src/core/i18n/index.ts
@@ -2114,9 +2178,155 @@ var WordUi = class {
   }
 };
 
+// src/ui/sidebar/examStrip.ts
+var import_obsidian10 = require("obsidian");
+
+// src/core/model/wordlists.ts
+var DEFAULT_WORDLIST_FOLDER = "vocab-wordlists";
+function resolveWordlistSettings(partial) {
+  var _a, _b, _c;
+  const folder = typeof (partial == null ? void 0 : partial.folder) === "string" ? partial.folder.trim().replace(/^\/+|\/+$/g, "") : "";
+  return {
+    folder: folder || DEFAULT_WORDLIST_FOLDER,
+    highlight: (_a = partial == null ? void 0 : partial.highlight) != null ? _a : true,
+    inflections: (_b = partial == null ? void 0 : partial.inflections) != null ? _b : true,
+    autoImport: (_c = partial == null ? void 0 : partial.autoImport) != null ? _c : true,
+    tags: (partial == null ? void 0 : partial.tags) && typeof partial.tags === "object" ? partial.tags : {}
+  };
+}
+var KNOWN = [
+  [/toefl/i, "#3b82f6"],
+  [/ielts/i, "#10b981"],
+  [/toeic/i, "#f59e0b"],
+  [/gept|全民/i, "#8b5cf6"],
+  [/\b(gre|gmat|sat)\b/i, "#ef4444"]
+];
+var PALETTE = ["#06b6d4", "#ec4899", "#84cc16", "#f97316", "#6366f1", "#14b8a6", "#e11d48", "#a855f7"];
+function defaultTagColor(tag) {
+  for (const [re, color] of KNOWN) if (re.test(tag)) return color;
+  let h = 0;
+  for (const c of tag) h = h * 31 + c.charCodeAt(0) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+function tagColor(s, tag) {
+  var _a;
+  return ((_a = s.tags[tag]) == null ? void 0 : _a.color) || defaultTagColor(tag);
+}
+function tagEnabled(s, tag) {
+  var _a;
+  return ((_a = s.tags[tag]) == null ? void 0 : _a.enabled) !== false;
+}
+
+// src/core/wordlists/parse.ts
+function tagFromBasename(basename2) {
+  const name = basename2.trim();
+  const i = name.indexOf("-");
+  return i > 0 && i < name.length - 1 ? `${name.slice(0, i)}/${name.slice(i + 1)}` : name;
+}
+function tagLabel(tag) {
+  return tag.slice(tag.lastIndexOf("/") + 1);
+}
+var POS = /* @__PURE__ */ new Set([
+  "n",
+  "v",
+  "vt",
+  "vi",
+  "adj",
+  "adv",
+  "a",
+  "ad",
+  "prep",
+  "conj",
+  "pron",
+  "int",
+  "interj",
+  "art",
+  "num",
+  "aux",
+  "pl",
+  "phr"
+]);
+var ENGLISH_RUN = /^[A-Za-z][A-Za-z'-]*(?:[ \t]+[A-Za-z][A-Za-z'-]*)*/;
+function headword(line) {
+  let s = line.trim();
+  if (!s || s.startsWith("#") || s.startsWith("//")) return null;
+  if (/^\|?[\s:|-]+$/.test(s)) return null;
+  s = s.replace(/^[-*+]\s+(\[.\]\s+)?/, "").replace(/^\d+[.)、]\s*/, "").replace(/^[|\s[*_`"']+/, "");
+  s = s.split(/[,\t|;]/)[0];
+  const m = ENGLISH_RUN.exec(s);
+  if (!m) return null;
+  const parts = m[0].split(/[ \t]+/);
+  if (parts.length > 1 && !POS.has(parts[1].toLowerCase())) return null;
+  const word = parts[0].replace(/^['-]+|['-]+$/g, "").toLowerCase();
+  return word.length > 1 || word === "a" || word === "i" ? word : null;
+}
+function parseWordlist(content) {
+  var _a;
+  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+  let i = 0;
+  let tag;
+  if (((_a = lines[0]) == null ? void 0 : _a.trim()) === "---") {
+    const close = lines.findIndex((l, j) => j > 0 && l.trim() === "---");
+    if (close > 0) {
+      for (const l of lines.slice(1, close)) {
+        const m = /^tag\s*:\s*["']?#?([^"']+?)["']?\s*$/.exec(l.trim());
+        if (m) tag = m[1];
+      }
+      i = close + 1;
+    }
+  }
+  const seen = /* @__PURE__ */ new Set();
+  const words = [];
+  let inFence = false;
+  for (; i < lines.length; i++) {
+    if (/^\s*(```|~~~)/.test(lines[i])) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    const w = headword(lines[i]);
+    if (w && !seen.has(w)) {
+      seen.add(w);
+      words.push(w);
+    }
+  }
+  return { tag, words };
+}
+
+// src/ui/sidebar/examStrip.ts
+function renderExamStrip(root, plugin, file) {
+  var _a;
+  const service = plugin.wordlists;
+  const index = service.index;
+  if (index.isEmpty || !(file instanceof import_obsidian10.TFile) || file.extension !== "md") return;
+  const strip = root.createDiv({ cls: "vt-exam-strip" });
+  const title = strip.createDiv({ cls: "vt-exam-strip-title" });
+  const result = service.cachedScan(file.path, file.stat.mtime);
+  if (!result) {
+    title.setText(t("exam.strip.scanning"));
+    void plugin.scanNote(file);
+    return;
+  }
+  title.setText(t("exam.strip.title", { total: result.uniqueWords }));
+  const settings = resolveWordlistSettings(plugin.store.settings.wordlists);
+  const chips = strip.createDiv({ cls: "vt-exam-chips" });
+  for (const tag of index.tags) {
+    const stats = result.byTag[tag];
+    const on = settings.highlight && tagEnabled(settings, tag);
+    const chip = chips.createSpan({ cls: "vt-exam-chip" });
+    chip.toggleClass("is-off", !on);
+    chip.style.setProperty("--vt-exam-color", tagColor(settings, tag));
+    chip.createSpan({ cls: "vt-exam-chip-dot" });
+    chip.createSpan({ text: tagLabel(tag) });
+    chip.createSpan({ cls: "vt-exam-chip-count", text: String((_a = stats == null ? void 0 : stats.unique) != null ? _a : 0) });
+    chip.title = t(on ? "exam.strip.hide" : "exam.strip.show", { tag: tagLabel(tag) });
+    chip.onclick = () => void plugin.toggleExamTag(tag);
+  }
+}
+
 // src/ui/sidebar/VocabSidebarView.ts
 var VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
-var VocabSidebarView = class extends import_obsidian10.ItemView {
+var VocabSidebarView = class extends import_obsidian11.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     // Word clicked via a plain ==mark== that isn't tracked yet — prompts an
@@ -2125,6 +2335,10 @@ var VocabSidebarView = class extends import_obsidian10.ItemView {
     this.expandState = /* @__PURE__ */ new Map();
     this.collapsedGroups = /* @__PURE__ */ new Set();
     this.wordUi = new WordUi(this);
+    // Exam word stats for the active note; refreshed on its own (see
+    // refreshExamStrip) so a background scan never re-renders the word list
+    // — that would wipe a half-typed question in an open AI tab.
+    this.examStripEl = null;
     this.plugin = plugin;
   }
   getViewType() {
@@ -2155,6 +2369,11 @@ var VocabSidebarView = class extends import_obsidian10.ItemView {
     }
     this.render();
   }
+  refreshExamStrip() {
+    if (!this.examStripEl) return;
+    this.examStripEl.empty();
+    renderExamStrip(this.examStripEl, this.plugin, this.plugin.app.workspace.getActiveFile());
+  }
   render() {
     var _a;
     const root = this.containerEl.children[1];
@@ -2164,7 +2383,7 @@ var VocabSidebarView = class extends import_obsidian10.ItemView {
     const header = root.createEl("div", { cls: "vocab-tracker-header" });
     header.createEl("h4", { text: t("sidebar.title") });
     const openList = header.createEl("span", { cls: "vocab-tracker-icon-btn" });
-    (0, import_obsidian10.setIcon)(openList, "file-text");
+    (0, import_obsidian11.setIcon)(openList, "file-text");
     openList.title = t("sidebar.openList");
     openList.onclick = () => this.plugin.openVocabFile();
     const entries = this.plugin.store.entries;
@@ -2176,13 +2395,15 @@ var VocabSidebarView = class extends import_obsidian10.ItemView {
         await this.plugin.addWordToVocab(this.pendingWord);
       };
       const dismiss = banner.createEl("span", { cls: "vocab-tracker-close-btn" });
-      (0, import_obsidian10.setIcon)(dismiss, "x");
+      (0, import_obsidian11.setIcon)(dismiss, "x");
       dismiss.onclick = () => {
         this.pendingWord = "";
         this.render();
       };
     }
     const activeFile = this.plugin.app.workspace.getActiveFile();
+    this.examStripEl = root.createDiv();
+    this.refreshExamStrip();
     const canFilter = !!activeFile;
     if (this.filterMode === void 0) this.filterMode = "note";
     let list = entries;
@@ -2244,7 +2465,7 @@ var VocabSidebarView = class extends import_obsidian10.ItemView {
 };
 
 // src/ui/blocks/dashboard.ts
-var import_obsidian11 = require("obsidian");
+var import_obsidian12 = require("obsidian");
 function renderDashboard(plugin, _source, el, ctx) {
   var _a;
   const entries = plugin.store.entries;
@@ -2277,7 +2498,7 @@ function renderDashboard(plugin, _source, el, ctx) {
   const search = el.createEl("input", { cls: ["vocab-tracker-search-input", "vocab-tracker-field-box"] });
   search.placeholder = t("dashboard.search");
   const listWrap = el.createEl("div", { cls: "vocab-tracker-list" });
-  const owner = new import_obsidian11.MarkdownRenderChild(listWrap);
+  const owner = new import_obsidian12.MarkdownRenderChild(listWrap);
   ctx.addChild(owner);
   const wordUi = new WordUi(owner);
   const expandState = /* @__PURE__ */ new Map();
@@ -2298,7 +2519,7 @@ function renderDashboard(plugin, _source, el, ctx) {
 }
 function renderReviewButton(plugin, el, ctx) {
   const btn = el.createEl("button", { cls: "vt-dash-review" });
-  (0, import_obsidian11.setIcon)(btn.createSpan({ cls: "vt-dash-review-icon" }), "layers");
+  (0, import_obsidian12.setIcon)(btn.createSpan({ cls: "vt-dash-review-icon" }), "layers");
   const label = btn.createSpan();
   btn.onclick = () => void plugin.openFlashcards();
   const update = () => {
@@ -2307,7 +2528,7 @@ function renderReviewButton(plugin, el, ctx) {
     btn.toggleClass("mod-cta", n > 0);
   };
   update();
-  const child = new import_obsidian11.MarkdownRenderChild(el);
+  const child = new import_obsidian12.MarkdownRenderChild(el);
   let alive = true;
   child.register(() => alive = false);
   child.register(plugin.store.events.on("data:changed", update));
@@ -4428,7 +4649,7 @@ var SrsService = class {
 };
 
 // src/ui/blocks/flashcards.ts
-var import_obsidian12 = require("obsidian");
+var import_obsidian13 = require("obsidian");
 
 // src/core/text/interval.ts
 var MIN = 60 * 1e3;
@@ -4489,7 +4710,7 @@ function formatInterval(ms2) {
   const { value, unit } = splitInterval(ms2);
   return t(`srs.interval.${unit}`, { n: value });
 }
-var FlashcardsBlock = class extends import_obsidian12.MarkdownRenderChild {
+var FlashcardsBlock = class extends import_obsidian13.MarkdownRenderChild {
   constructor(containerEl, plugin, params) {
     super(containerEl);
     this.plugin = plugin;
@@ -4651,7 +4872,7 @@ var FlashcardsBlock = class extends import_obsidian12.MarkdownRenderChild {
       };
     }
     const src = bar.createDiv({ cls: "vt-fc-source" });
-    (0, import_obsidian12.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "folder");
+    (0, import_obsidian13.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "folder");
     src.createSpan({ text: (_a = this.params.source) != null ? _a : t("flashcards.source.all") });
   }
   renderCard() {
@@ -4707,7 +4928,7 @@ var FlashcardsBlock = class extends import_obsidian12.MarkdownRenderChild {
     const meta = [entry.phonetic, entry.partOfSpeech].filter(Boolean).join(" \xB7 ");
     if (meta) sub.createSpan({ text: meta });
     const speak = sub.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
-    (0, import_obsidian12.setIcon)(speak, "volume-2");
+    (0, import_obsidian13.setIcon)(speak, "volume-2");
     speak.onclick = () => this.plugin.speakWord(entry);
   }
   // Cloze sentence with the word blanked ("blank") or revealed and
@@ -4729,7 +4950,7 @@ var FlashcardsBlock = class extends import_obsidian12.MarkdownRenderChild {
       cls: "vt-fc-listen",
       attr: { "aria-label": t("flashcards.listen.replay") }
     });
-    (0, import_obsidian12.setIcon)(play, "volume-2");
+    (0, import_obsidian13.setIcon)(play, "volume-2");
     play.onclick = () => this.plugin.speakWord(entry);
     if (!this.flipped) {
       const input = el.createEl("input", {
@@ -4748,7 +4969,7 @@ var FlashcardsBlock = class extends import_obsidian12.MarkdownRenderChild {
     }
     const ok = this.typed.trim().toLowerCase() === entry.word.trim().toLowerCase();
     const result = el.createDiv({ cls: ["vt-fc-result", ok ? "is-correct" : "is-wrong"] });
-    (0, import_obsidian12.setIcon)(result.createSpan({ cls: "vt-fc-icon" }), ok ? "check" : "x");
+    (0, import_obsidian13.setIcon)(result.createSpan({ cls: "vt-fc-icon" }), ok ? "check" : "x");
     result.createSpan({
       text: ok ? t("flashcards.listen.correct") : t("flashcards.listen.wrong", { answer: this.typed.trim() || "\u2014" })
     });
@@ -4761,7 +4982,7 @@ var FlashcardsBlock = class extends import_obsidian12.MarkdownRenderChild {
     if (entry.example && this.mode !== "cloze") this.renderSentence(el, entry, "answer");
     if ((_a = entry.source) == null ? void 0 : _a.path) {
       const src = el.createDiv({ cls: "vt-fc-origin" });
-      (0, import_obsidian12.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "file-text");
+      (0, import_obsidian13.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "file-text");
       src.createSpan({ text: entry.source.path.split("/").pop().replace(/\.md$/, "") });
       src.onclick = () => this.plugin.jumpToSource(entry);
     }
@@ -4779,7 +5000,7 @@ var FlashcardsBlock = class extends import_obsidian12.MarkdownRenderChild {
   }
   renderEmpty() {
     const box = this.root.createDiv({ cls: "vt-fc-empty" });
-    (0, import_obsidian12.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
+    (0, import_obsidian13.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
     box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.empty.title") });
     box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.empty.body") });
     if (this.mode === "cloze") {
@@ -4790,7 +5011,7 @@ var FlashcardsBlock = class extends import_obsidian12.MarkdownRenderChild {
   }
   renderDone() {
     const box = this.root.createDiv({ cls: ["vt-fc-empty", "vt-fc-done"] });
-    (0, import_obsidian12.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
+    (0, import_obsidian13.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
     box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.done.title") });
     box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.done.body") });
     const recalled = this.results.filter((r) => r.rating >= Rating.Good).length;
@@ -4809,14 +5030,14 @@ var FlashcardsBlock = class extends import_obsidian12.MarkdownRenderChild {
         row.createSpan({ cls: "vt-fc-forgotten-word", text: entry.word });
         row.createSpan({ cls: "vt-fc-forgotten-zh", text: entry.definitionZh });
         const speak = row.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
-        (0, import_obsidian12.setIcon)(speak, "volume-2");
+        (0, import_obsidian13.setIcon)(speak, "volume-2");
         speak.onclick = () => this.plugin.speakWord(entry);
       }
     }
     const actions = box.createDiv({ cls: "vt-fc-actions" });
     if (forgotten.length > 0) {
       const retry = actions.createEl("button", { cls: ["vt-fc-btn", "mod-cta"] });
-      (0, import_obsidian12.setIcon)(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
+      (0, import_obsidian13.setIcon)(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
       retry.createSpan({ text: t("flashcards.done.retryForgotten", { count: forgotten.length }) });
       retry.onclick = () => this.startSession(forgotten.map((e) => e.id), { speak: true });
     }
@@ -4843,7 +5064,7 @@ function tile(container, value, label) {
 }
 
 // src/ui/blocks/flashcardsFile.ts
-var import_obsidian13 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 var FLASHCARDS_FILE = "vocab-list/\u55AE\u5B57\u5361.md";
 var FLASHCARDS_CONTENT = "# \u55AE\u5B57\u5361\n\n```vocab-flashcards\n```\n";
 async function openFlashcardsFile(app) {
@@ -4853,7 +5074,7 @@ async function openFlashcardsFile(app) {
     if (!app.vault.getAbstractFileByPath(folder)) await app.vault.createFolder(folder);
     file = await app.vault.create(FLASHCARDS_FILE, FLASHCARDS_CONTENT);
   }
-  if (file instanceof import_obsidian13.TFile) await app.workspace.getLeaf(false).openFile(file);
+  if (file instanceof import_obsidian14.TFile) await app.workspace.getLeaf(false).openFile(file);
 }
 
 // src/platform/obsidianLanguage.ts
@@ -4960,11 +5181,11 @@ var BrowserNetwork = class {
 };
 
 // src/platform/ObsidianRequest.ts
-var import_obsidian14 = require("obsidian");
+var import_obsidian15 = require("obsidian");
 var ObsidianRequest = class {
   async request(req) {
     var _a;
-    const res = await (0, import_obsidian14.requestUrl)({
+    const res = await (0, import_obsidian15.requestUrl)({
       url: req.url,
       method: req.method,
       headers: req.headers,
@@ -6190,8 +6411,8 @@ function createAiService(store, ports) {
 }
 
 // src/ui/settings/SettingsTab.ts
-var import_obsidian15 = require("obsidian");
-var VocabSettingsTab = class extends import_obsidian15.PluginSettingTab {
+var import_obsidian16 = require("obsidian");
+var VocabSettingsTab = class extends import_obsidian16.PluginSettingTab {
   constructor(app, plugin, ctx, sections) {
     super(app, plugin);
     this.ctx = ctx;
@@ -6203,7 +6424,7 @@ var VocabSettingsTab = class extends import_obsidian15.PluginSettingTab {
     containerEl.addClass("vt-settings");
     const ctx = { ...this.ctx, redisplay: () => this.display() };
     for (const section of this.sections) {
-      new import_obsidian15.Setting(containerEl).setName(t(section.title)).setHeading();
+      new import_obsidian16.Setting(containerEl).setName(t(section.title)).setHeading();
       section.render(containerEl.createDiv({ cls: `vt-settings-section vt-settings-${section.id}` }), ctx);
     }
   }
@@ -6214,7 +6435,7 @@ function parseNonNegativeInt(value) {
 }
 
 // src/ui/settings/sections/ai.ts
-var import_obsidian16 = require("obsidian");
+var import_obsidian17 = require("obsidian");
 
 // src/ui/settings/traceView.ts
 function prettyBody(body) {
@@ -6266,14 +6487,14 @@ function renderProviderFields(el, ctx, id) {
   const update = (mutate) => ctx.store.updateSettings((s) => mutate(s.ai.providers[id]));
   const keyDesc = [t(ctx.keys.usesSecretStorage ? "settings.ai.key.descSecret" : "settings.ai.key.descData")];
   if (def.key === "optional") keyDesc.unshift(t("settings.ai.key.optional"));
-  new import_obsidian16.Setting(el).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
+  new import_obsidian17.Setting(el).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
     text.inputEl.type = "password";
     text.inputEl.autocomplete = "off";
     text.setPlaceholder(id === "anthropic" ? "sk-ant-\u2026" : "sk-\u2026").setValue(ctx.keys.get(id));
     text.onChange((v) => void ctx.keys.set(id, v));
   });
   if (def.editableBaseUrl) {
-    const baseUrl = new import_obsidian16.Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
+    const baseUrl = new import_obsidian17.Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
     baseUrl.addText((text) => {
       text.inputEl.addClass("vt-settings-wide");
       text.setPlaceholder("https://\u2026/v1").setValue(cfg().baseUrl);
@@ -6291,7 +6512,7 @@ function renderProviderFields(el, ctx, id) {
   const modelSetting = (tier) => {
     var _a2;
     const field = tier === "smart" ? "smartModel" : "fastModel";
-    const s = new import_obsidian16.Setting(el).setName(t(tier === "smart" ? "settings.ai.smartModel.name" : "settings.ai.fastModel.name")).setDesc(t(tier === "smart" ? "settings.ai.smartModel.desc" : "settings.ai.fastModel.desc"));
+    const s = new import_obsidian17.Setting(el).setName(t(tier === "smart" ? "settings.ai.smartModel.name" : "settings.ai.fastModel.name")).setDesc(t(tier === "smart" ? "settings.ai.smartModel.desc" : "settings.ai.fastModel.desc"));
     const options = (_a2 = def.models) == null ? void 0 : _a2[tier];
     if (options) {
       const all = options.includes(cfg()[field]) || !cfg()[field] ? options : [...options, cfg()[field]];
@@ -6307,7 +6528,7 @@ function renderProviderFields(el, ctx, id) {
   };
   modelSetting("smart");
   modelSetting("fast");
-  const testSetting = new import_obsidian16.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
+  const testSetting = new import_obsidian17.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
   const result = el.createDiv({ cls: "vt-settings-test-result" });
   const trace = el.createDiv();
   testSetting.addButton((b) => {
@@ -6349,8 +6570,8 @@ var aiSection = {
   title: "settings.section.ai",
   render(el, ctx) {
     const ai = () => ctx.store.settings.ai;
-    new import_obsidian16.Setting(el).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle((tg) => tg.setValue(ai().enabled).onChange((v) => void ctx.store.updateSettings((s) => s.ai.enabled = v)));
-    new import_obsidian16.Setting(el).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
+    new import_obsidian17.Setting(el).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle((tg) => tg.setValue(ai().enabled).onChange((v) => void ctx.store.updateSettings((s) => s.ai.enabled = v)));
+    new import_obsidian17.Setting(el).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
       for (const p of PROVIDERS) d.addOption(p.id, t(p.label));
       d.setValue(ai().provider).onChange(async (v) => {
         await ctx.store.updateSettings((s) => s.ai.provider = v);
@@ -6358,7 +6579,7 @@ var aiSection = {
       });
     });
     renderProviderFields(el, ctx, ai().provider);
-    new import_obsidian16.Setting(el).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
+    new import_obsidian17.Setting(el).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setPlaceholder("0").setValue(ai().monthlyTokenBudget ? String(ai().monthlyTokenBudget) : "");
       text.onChange((v) => {
@@ -6366,7 +6587,7 @@ var aiSection = {
         if (n !== null) void ctx.store.updateSettings((s) => s.ai.monthlyTokenBudget = n);
       });
     });
-    const usage = new import_obsidian16.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
+    const usage = new import_obsidian17.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
     ctx.ai.usageSummary().then((u) => {
       const desc = createFragment((f) => {
         f.createDiv({ text: t("settings.ai.usage.value", { month: fmt(u.monthWeighted), today: fmt(u.today.input + u.today.output) }) });
@@ -6388,12 +6609,12 @@ var aiSection = {
 };
 
 // src/ui/settings/sections/general.ts
-var import_obsidian17 = require("obsidian");
+var import_obsidian18 = require("obsidian");
 var generalSection = {
   id: "general",
   title: "settings.section.general",
   render(el, ctx) {
-    new import_obsidian17.Setting(el).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
+    new import_obsidian18.Setting(el).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
       (d) => d.addOptions({ auto: t("settings.general.locale.auto"), "zh-TW": "\u7E41\u9AD4\u4E2D\u6587", en: "English" }).setValue(ctx.store.settings.ui.locale).onChange(async (v) => {
         await ctx.store.updateSettings((s) => {
           s.ui.locale = v;
@@ -6406,7 +6627,7 @@ var generalSection = {
 };
 
 // src/ui/settings/sections/learner.ts
-var import_obsidian18 = require("obsidian");
+var import_obsidian19 = require("obsidian");
 var learnerSection = {
   id: "learner",
   title: "settings.section.learner",
@@ -6418,49 +6639,49 @@ var learnerSection = {
       await ctx.store.updateSettings((s) => mutate(s.learner));
       preview.setText(renderProfile(profile()));
     };
-    new import_obsidian18.Setting(el).setName(t("settings.learner.level.name")).addDropdown((d) => {
+    new import_obsidian19.Setting(el).setName(t("settings.learner.level.name")).addDropdown((d) => {
       d.addOption("", t("settings.learner.level.none"));
       for (const lv of CEFR_LEVELS) d.addOption(lv, lv);
       d.setValue(profile().level).onChange((v) => void update((p) => p.level = v));
     });
-    new import_obsidian18.Setting(el).setName(t("settings.learner.goal.name")).addDropdown((d) => {
+    new import_obsidian19.Setting(el).setName(t("settings.learner.goal.name")).addDropdown((d) => {
       for (const g of LEARNER_GOALS) d.addOption(g, t(`settings.learner.goal.${g}`));
       d.setValue(profile().goal).onChange((v) => void update((p) => p.goal = v));
     });
-    new import_obsidian18.Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
+    new import_obsidian19.Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
       for (const l of ANSWER_LANGUAGES) d.addOption(l, t(`settings.learner.language.${l}`));
       d.setValue(profile().answerLanguage).onChange((v) => void update((p) => p.answerLanguage = v));
     });
-    new import_obsidian18.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
+    new import_obsidian19.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setValue(String(profile().maxAnswerChars)).onChange((v) => {
         const n = parseNonNegativeInt(v);
         if (n !== null) void update((p) => p.maxAnswerChars = n);
       });
     });
-    new import_obsidian18.Setting(el).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
+    new import_obsidian19.Setting(el).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
       ta.inputEl.rows = 3;
       ta.inputEl.addClass("vt-settings-wide");
       ta.setValue(profile().extra).onChange((v) => void update((p) => p.extra = v));
     });
-    const previewSetting = new import_obsidian18.Setting(el).setName(t("settings.learner.preview.name"));
+    const previewSetting = new import_obsidian19.Setting(el).setName(t("settings.learner.preview.name"));
     previewSetting.settingEl.addClass("vt-settings-preview-row");
     el.appendChild(preview);
   }
 };
 
 // src/ui/settings/sections/srs.ts
-var import_obsidian19 = require("obsidian");
+var import_obsidian20 = require("obsidian");
 var srsSection = {
   id: "srs",
   title: "settings.section.srs",
   render(el, ctx) {
     const current = () => resolveSrsSettings(ctx.store.settings.srs);
     const update = (patch) => ctx.store.updateSettings((s) => s.srs = { ...current(), ...patch });
-    new import_obsidian19.Setting(el).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
+    new import_obsidian20.Setting(el).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
       (s) => s.setLimits(0.7, 0.99, 0.01).setValue(current().retention).setDynamicTooltip().onChange((v) => void update({ retention: v }))
     );
-    new import_obsidian19.Setting(el).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
+    new import_obsidian20.Setting(el).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setValue(String(current().dailyNew)).onChange((v) => {
         const n = parseNonNegativeInt(v);
@@ -6470,18 +6691,62 @@ var srsSection = {
   }
 };
 
+// src/ui/settings/sections/wordlists.ts
+var import_obsidian21 = require("obsidian");
+var wordlistsSection = {
+  id: "wordlists",
+  title: "settings.section.wordlists",
+  render(el, ctx) {
+    const current = () => resolveWordlistSettings(ctx.store.settings.wordlists);
+    const update = async (patch, change) => {
+      await ctx.store.updateSettings((s2) => s2.wordlists = { ...current(), ...patch });
+      ctx.onWordlistsChanged(change);
+    };
+    const updateTag = (tag, patch) => {
+      const tags = current().tags;
+      return update({ tags: { ...tags, [tag]: { ...tags[tag], ...patch } } }, "display");
+    };
+    el.createDiv({ cls: "setting-item-description", text: t("settings.wordlists.desc") });
+    new import_obsidian21.Setting(el).setName(t("settings.wordlists.folder.name")).setDesc(t("settings.wordlists.folder.desc")).addText((text) => {
+      text.setValue(current().folder);
+      text.inputEl.addEventListener("change", () => void update({ folder: text.getValue() }, "reload"));
+    });
+    new import_obsidian21.Setting(el).setName(t("settings.wordlists.highlight.name")).setDesc(t("settings.wordlists.highlight.desc")).addToggle((tg) => tg.setValue(current().highlight).onChange((v) => void update({ highlight: v }, "display")));
+    new import_obsidian21.Setting(el).setName(t("settings.wordlists.inflections.name")).setDesc(t("settings.wordlists.inflections.desc")).addToggle(
+      (tg) => tg.setValue(current().inflections).onChange((v) => void update({ inflections: v }, "scan"))
+    );
+    new import_obsidian21.Setting(el).setName(t("settings.wordlists.autoImport.name")).setDesc(t("settings.wordlists.autoImport.desc")).addToggle(
+      (tg) => tg.setValue(current().autoImport).onChange((v) => void update({ autoImport: v }, "display"))
+    );
+    const lists = ctx.wordlists.index.lists;
+    new import_obsidian21.Setting(el).setName(t("settings.wordlists.loaded.name")).setDesc(
+      lists.length === 0 ? t("settings.wordlists.loaded.none", { folder: current().folder }) : t("settings.wordlists.loaded.some", { n: lists.length })
+    ).addButton(
+      (b) => b.setButtonText(t("settings.wordlists.reload")).onClick(async () => {
+        await ctx.wordlists.reload();
+        ctx.redisplay();
+      })
+    );
+    const s = current();
+    for (const list of lists) {
+      const row = new import_obsidian21.Setting(el).setName(tagLabel(list.tag)).setDesc(t("settings.wordlists.list.desc", { n: list.words.toLocaleString(), paths: list.paths.join(", ") })).addColorPicker((c) => c.setValue(tagColor(s, list.tag)).onChange((v) => void updateTag(list.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list.tag)).onChange((v) => void updateTag(list.tag, { enabled: v })));
+      row.settingEl.addClass("vt-wordlist-row");
+    }
+  }
+};
+
 // src/ui/settings/sections/index.ts
-var SETTINGS_SECTIONS = [generalSection, srsSection, aiSection, learnerSection];
+var SETTINGS_SECTIONS = [generalSection, wordlistsSection, srsSection, aiSection, learnerSection];
 
 // src/platform/ObsidianNotes.ts
-var import_obsidian20 = require("obsidian");
+var import_obsidian22 = require("obsidian");
 var ObsidianNotes = class {
   constructor(app) {
     this.app = app;
   }
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian20.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian22.TFile ? this.app.vault.cachedRead(file) : null;
   }
 };
 
@@ -6819,7 +7084,7 @@ var ThreadService = class {
 };
 
 // src/ui/chat/SelectionTracker.ts
-var import_obsidian21 = require("obsidian");
+var import_obsidian23 = require("obsidian");
 var MAX_SELECTION_CHARS = 1500;
 var SelectionTracker = class {
   constructor(app) {
@@ -6843,7 +7108,7 @@ var SelectionTracker = class {
     if (!sel || !node) return;
     const el = node instanceof HTMLElement ? node : node.parentElement;
     if (!(el == null ? void 0 : el.closest('.workspace-leaf-content[data-type="markdown"]'))) return;
-    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian21.MarkdownView && v.containerEl.contains(el));
+    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian23.MarkdownView && v.containerEl.contains(el));
     const raw = (view == null ? void 0 : view.getMode()) === "source" ? view.editor.getSelection() : sel.toString();
     const text = raw.replace(/\s+/g, " ").trim().slice(0, MAX_SELECTION_CHARS);
     if (!text) {
@@ -6859,14 +7124,470 @@ var SelectionTracker = class {
   }
 };
 
+// src/platform/ObsidianWordlists.ts
+var import_obsidian24 = require("obsidian");
+var EXTENSIONS = /* @__PURE__ */ new Set(["md", "txt", "csv", "tsv"]);
+function inFolder(path, folder) {
+  return path.startsWith((0, import_obsidian24.normalizePath)(folder) + "/");
+}
+var ObsidianWordlists = class {
+  constructor(app) {
+    this.app = app;
+  }
+  list(folder) {
+    return this.app.vault.getFiles().filter((f) => EXTENSIONS.has(f.extension.toLowerCase()) && inFolder(f.path, folder)).filter((f) => !f.basename.startsWith("_") && f.basename.toLowerCase() !== "readme").sort((a, b) => a.path.localeCompare(b.path)).map((f) => ({ path: f.path, basename: f.basename }));
+  }
+  async read(path) {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    return file instanceof import_obsidian24.TFile ? this.app.vault.cachedRead(file) : null;
+  }
+};
+
+// src/core/wordlists/lemma.ts
+var MIN_BASE = 3;
+function isConsonant(c) {
+  return /[b-df-hj-np-tv-z]/.test(c);
+}
+function lemmaCandidates(lower) {
+  const w = lower.endsWith("'s") ? lower.slice(0, -2) : lower;
+  const out = w !== lower ? [w] : [];
+  const add2 = (base) => {
+    if (base.length >= MIN_BASE && base !== w && !out.includes(base)) out.push(base);
+  };
+  if (w.endsWith("ies") || w.endsWith("ied")) {
+    add2(w.slice(0, -3) + "y");
+  }
+  if (w.endsWith("s") && !w.endsWith("ss")) {
+    add2(w.slice(0, -1));
+    if (w.endsWith("es")) add2(w.slice(0, -2));
+  }
+  if (w.endsWith("ed") && !w.endsWith("eed")) {
+    add2(w.slice(0, -1));
+    const stem = w.slice(0, -2);
+    add2(stem);
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant(stem[stem.length - 1])) {
+      add2(stem.slice(0, -1));
+    }
+  }
+  if (w.endsWith("ing")) {
+    const stem = w.slice(0, -3);
+    add2(stem);
+    add2(stem + "e");
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant(stem[stem.length - 1])) {
+      add2(stem.slice(0, -1));
+    }
+    if (stem.endsWith("y")) add2(stem.slice(0, -1) + "ie");
+  }
+  if (w.endsWith("ily")) add2(w.slice(0, -3) + "y");
+  if (w.endsWith("ly") && w.length - 2 >= 4) add2(w.slice(0, -2));
+  return out;
+}
+
+// src/core/wordlists/WordlistIndex.ts
+var NONE = [];
+var WordlistIndex = class {
+  constructor(lists = []) {
+    this.byWord = /* @__PURE__ */ new Map();
+    this.info = /* @__PURE__ */ new Map();
+    // Lookups repeat a lot (the same "the", "data"… across every paragraph),
+    // and inflection fallback tries several candidates, so remember answers.
+    this.memo = /* @__PURE__ */ new Map();
+    var _a;
+    for (const list of lists) {
+      const info = (_a = this.info.get(list.tag)) != null ? _a : { tag: list.tag, words: 0, paths: [] };
+      if (list.path) info.paths.push(list.path);
+      this.info.set(list.tag, info);
+      for (const word of list.words) {
+        const tags = this.byWord.get(word);
+        if (!tags) {
+          this.byWord.set(word, [list.tag]);
+          info.words++;
+        } else if (!tags.includes(list.tag)) {
+          tags.push(list.tag);
+          info.words++;
+        }
+      }
+    }
+    const order = this.tags;
+    for (const tags of this.byWord.values()) tags.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  }
+  // Every tag, alphabetical — the order chips and settings rows appear in,
+  // and the priority when a word belongs to several (first one's colour).
+  get tags() {
+    return [...this.info.keys()].sort((a, b) => a.localeCompare(b));
+  }
+  get lists() {
+    return this.tags.map((t2) => this.info.get(t2));
+  }
+  get isEmpty() {
+    return this.byWord.size === 0;
+  }
+  // The list entry a word as it appears in text (any case, possibly
+  // inflected) belongs to, or null when it's in no list.
+  match(word, inflections = true) {
+    const lower = word.toLowerCase();
+    const key = inflections ? lower : `=${lower}`;
+    const memo = this.memo.get(key);
+    if (memo !== void 0) return memo;
+    let hit = null;
+    const exact = this.byWord.get(lower);
+    if (exact) hit = { base: lower, tags: exact };
+    else if (inflections) {
+      for (const base of lemmaCandidates(lower)) {
+        const tags = this.byWord.get(base);
+        if (tags) {
+          hit = { base, tags };
+          break;
+        }
+      }
+    }
+    this.memo.set(key, hit);
+    return hit;
+  }
+  // Just the tags; empty when the word is in no list.
+  lookup(word, inflections = true) {
+    var _a, _b;
+    return (_b = (_a = this.match(word, inflections)) == null ? void 0 : _a.tags) != null ? _b : NONE;
+  }
+};
+
+// src/core/wordlists/scan.ts
+var WORD_RE = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
+function segmentText(text, lookup) {
+  const out = [];
+  let last = 0;
+  for (const m of text.matchAll(WORD_RE)) {
+    const tags = lookup(m[0]);
+    if (tags.length === 0) continue;
+    const i = m.index;
+    if (i > last) out.push(text.slice(last, i));
+    out.push({ word: m[0], tags });
+    last = i + m[0].length;
+  }
+  if (out.length === 0) return null;
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+function proseLines(markdown) {
+  var _a;
+  const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
+  const out = [];
+  let i = 0;
+  if (((_a = lines[0]) == null ? void 0 : _a.trim()) === "---") {
+    const close = lines.findIndex((l, j) => j > 0 && l.trim() === "---");
+    if (close > 0) {
+      for (; i <= close; i++) out.push("");
+    }
+  }
+  let inFence = false;
+  let inComment = false;
+  for (; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence;
+      out.push("");
+      continue;
+    }
+    if (inFence) {
+      out.push("");
+      continue;
+    }
+    let s = line;
+    if (inComment) {
+      const end = s.indexOf("%%");
+      if (end < 0) {
+        out.push("");
+        continue;
+      }
+      s = s.slice(end + 2);
+      inComment = false;
+    }
+    s = s.replace(/%%.*?%%/g, " ");
+    const open = s.indexOf("%%");
+    if (open >= 0) {
+      s = s.slice(0, open);
+      inComment = true;
+    }
+    s = s.replace(/`[^`]*`/g, " ").replace(/!?\[\[([^\]|]*)\|?([^\]]*)\]\]/g, (_m, target, alias) => alias || target).replace(/\]\([^)]*\)/g, "]").replace(/\bhttps?:\/\/\S+/g, " ").replace(/<[^>]+>/g, " ");
+    out.push(s);
+  }
+  return out;
+}
+var ScanAccumulator = class {
+  constructor(match) {
+    this.match = match;
+    this.seen = /* @__PURE__ */ new Set();
+    this.seenByTag = /* @__PURE__ */ new Map();
+    this.counts = /* @__PURE__ */ new Map();
+    this.hits = /* @__PURE__ */ new Map();
+  }
+  // `line` is the text's line number in the note, recorded on each word's
+  // first occurrence.
+  add(text, line = 0) {
+    var _a;
+    for (const m of text.matchAll(WORD_RE)) {
+      this.seen.add(m[0].toLowerCase());
+      const hit = this.match(m[0]);
+      if (!hit) continue;
+      if (!this.hits.has(hit.base)) {
+        const start = m.index;
+        const sentence = extractSentence(text, start, start + m[0].length, null);
+        this.hits.set(hit.base, { word: hit.base, tags: hit.tags, line, sentence });
+      }
+      for (const tag of hit.tags) {
+        let set = this.seenByTag.get(tag);
+        if (!set) this.seenByTag.set(tag, set = /* @__PURE__ */ new Set());
+        set.add(hit.base);
+        this.counts.set(tag, ((_a = this.counts.get(tag)) != null ? _a : 0) + 1);
+      }
+    }
+  }
+  result() {
+    var _a;
+    const byTag = {};
+    for (const [tag, set] of this.seenByTag) {
+      byTag[tag] = { unique: set.size, count: (_a = this.counts.get(tag)) != null ? _a : 0 };
+    }
+    return { uniqueWords: this.seen.size, byTag, hits: [...this.hits.values()] };
+  }
+};
+
+// src/services/wordlists/WordlistService.ts
+var SLICE_LINES = 300;
+var MAX_CACHED_SCANS = 100;
+var WordlistService = class extends TypedEmitter {
+  constructor(deps) {
+    var _a;
+    super();
+    this.deps = deps;
+    this.index = new WordlistIndex();
+    this.generation = 0;
+    this.scans = /* @__PURE__ */ new Map();
+    this.inflight = /* @__PURE__ */ new Map();
+    this.match = (word) => this.index.match(word, this.deps.settings().inflections);
+    this.yieldToUi = (_a = deps.yieldToUi) != null ? _a : (() => new Promise((r) => setTimeout(r, 0)));
+  }
+  async reload() {
+    const gen = ++this.generation;
+    const { folder } = this.deps.settings();
+    const lists = [];
+    for (const file of this.deps.source.list(folder)) {
+      const content = await this.deps.source.read(file.path);
+      if (gen !== this.generation) return;
+      if (content == null) continue;
+      const parsed = parseWordlist(content);
+      if (parsed.words.length === 0) continue;
+      lists.push({ tag: parsed.tag || tagFromBasename(file.basename), words: parsed.words, path: file.path });
+    }
+    this.index = new WordlistIndex(lists);
+    this.invalidateScans();
+    this.emit("index-changed", this.index);
+  }
+  // Inflection matching or the index changed, so every cached count is stale.
+  invalidateScans() {
+    this.scans.clear();
+    this.inflight.clear();
+  }
+  // Tags to underline in reading view: enabled tags only. Null when
+  // highlighting is off or there's nothing loaded, so the post-processor
+  // can skip walking the DOM at all.
+  highlightLookup() {
+    const s = this.deps.settings();
+    if (!s.highlight || this.index.isEmpty) return null;
+    const enabled = new Set(this.index.tags.filter((t2) => tagEnabled(s, t2)));
+    if (enabled.size === 0) return null;
+    const memo = /* @__PURE__ */ new Map();
+    return (word) => {
+      const tags = this.index.lookup(word, s.inflections);
+      if (tags.length === 0) return tags;
+      let hit = memo.get(tags);
+      if (!hit) memo.set(tags, hit = tags.filter((t2) => enabled.has(t2)));
+      return hit;
+    };
+  }
+  cachedScan(path, mtime) {
+    const hit = this.scans.get(path);
+    return hit && hit.mtime === mtime ? hit.result : null;
+  }
+  // Scans a note unless this version was already scanned (or is being
+  // scanned right now). `read` is only called when a scan is needed.
+  scan(path, mtime, read) {
+    const cached = this.cachedScan(path, mtime);
+    if (cached) return Promise.resolve(cached);
+    const running = this.inflight.get(path);
+    if (running && running.mtime === mtime) return running.promise;
+    const gen = this.generation;
+    const token = { mtime, promise: null };
+    const run = async () => {
+      const lines = proseLines(await read());
+      const acc = new ScanAccumulator(this.match);
+      for (let i = 0; i < lines.length; i++) {
+        if (i > 0 && i % SLICE_LINES === 0) await this.yieldToUi();
+        acc.add(lines[i], i);
+      }
+      const result = acc.result();
+      if (gen === this.generation && this.inflight.get(path) === token) {
+        this.inflight.delete(path);
+        this.scans.delete(path);
+        this.scans.set(path, { mtime, result });
+        if (this.scans.size > MAX_CACHED_SCANS) this.scans.delete(this.scans.keys().next().value);
+        this.emit("scanned", { path, result });
+      }
+      return result;
+    };
+    token.promise = run();
+    this.inflight.set(path, token);
+    token.promise.catch(() => {
+      if (this.inflight.get(path) === token) this.inflight.delete(path);
+    });
+    return token.promise;
+  }
+};
+
+// src/ui/reading/examHighlight.ts
+var import_obsidian25 = require("obsidian");
+var EXAM_WORD_CLS = "vt-exam-word";
+var SKIP = [
+  "code",
+  "pre",
+  "a",
+  "mark",
+  "button",
+  "input",
+  "textarea",
+  "script",
+  "style",
+  ".math",
+  ".tag",
+  ".internal-link",
+  ".external-link",
+  ".frontmatter",
+  ".frontmatter-container",
+  ".metadata-container",
+  "[class*='block-language-']",
+  `.${EXAM_WORD_CLS}`
+].join(", ");
+function highlightExamWords(el, lookup, colorOf) {
+  var _a;
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => {
+      var _a2, _b;
+      return ((_a2 = n.parentElement) == null ? void 0 : _a2.closest(SKIP)) || !/[A-Za-z]/.test((_b = n.nodeValue) != null ? _b : "") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes = [];
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) nodes.push(n);
+  for (const node of nodes) {
+    const segments = segmentText((_a = node.nodeValue) != null ? _a : "", lookup);
+    if (!segments) continue;
+    const frag = document.createDocumentFragment();
+    for (const seg of segments) {
+      if (typeof seg === "string") {
+        frag.appendChild(document.createTextNode(seg));
+        continue;
+      }
+      const span = frag.createSpan({ cls: EXAM_WORD_CLS, text: seg.word });
+      span.dataset.vtTags = seg.tags.join(" ");
+      span.style.setProperty("--vt-exam-color", colorOf(seg.tags[0]));
+      (0, import_obsidian25.setTooltip)(span, seg.tags.map(tagLabel).join(" \xB7 "), { delay: 300 });
+    }
+    node.replaceWith(frag);
+  }
+}
+
+// src/services/wordlists/NoteImports.ts
+var NoteImports = class {
+  constructor(storage) {
+    this.storage = storage;
+    this.notes = {};
+  }
+  async load() {
+    var _a;
+    const disk = await this.storage.readShard("imports");
+    this.notes = { ...(_a = disk == null ? void 0 : disk.notes) != null ? _a : {}, ...this.notes };
+  }
+  has(path) {
+    return path in this.notes;
+  }
+  async mark(path, at) {
+    this.notes[path] = at;
+    await this.save();
+  }
+  async forget(path) {
+    if (!(path in this.notes)) return;
+    delete this.notes[path];
+    await this.save();
+  }
+  async rename(oldPath, newPath) {
+    if (!(oldPath in this.notes)) return;
+    this.notes[newPath] = this.notes[oldPath];
+    delete this.notes[oldPath];
+    await this.save();
+  }
+  save() {
+    return this.storage.writeShard("imports", { notes: this.notes });
+  }
+};
+
+// src/core/wordlists/importPlan.ts
+function mergeLevel(level, labels) {
+  const parts = level.split(",").map((t2) => t2.trim()).filter(Boolean);
+  const have = new Set(parts.map((p) => p.toLowerCase()));
+  for (const label of labels) {
+    if (!have.has(label.toLowerCase())) {
+      parts.push(label);
+      have.add(label.toLowerCase());
+    }
+  }
+  return parts.join(", ");
+}
+function cleanSentence(text) {
+  return text.replace(/^\s*(#{1,6}\s+|>\s*)+/, "").replace(/^\s*([-*+]\s+(\[.\]\s+)?|\d+[.)]\s+)/, "").replace(/(\*\*|__|==|~~|\*|_)(?=\S)|(?<=\S)(\*\*|__|==|~~|\*|_)/g, "").replace(/\s+/g, " ").trim();
+}
+function planImport(hits, entries, labelsOf) {
+  const byWord = /* @__PURE__ */ new Map();
+  for (const e of entries) {
+    const key = e.word.toLowerCase();
+    if (!byWord.has(key) || byWord.get(key).deletedAt) byWord.set(key, e);
+  }
+  const plan = { create: [], retag: [] };
+  for (const hit of hits) {
+    const labels = labelsOf(hit.tags);
+    if (labels.length === 0) continue;
+    const existing = byWord.get(hit.word);
+    if (!existing) {
+      plan.create.push({ word: hit.word, level: labels.join(", "), line: hit.line, example: cleanSentence(hit.sentence) });
+      continue;
+    }
+    if (existing.deletedAt) continue;
+    const level = mergeLevel(existing.level, labels);
+    if (level !== existing.level) plan.retag.push({ entry: existing, level });
+  }
+  return plan;
+}
+
+// src/core/store/needsEnrich.ts
+function entriesMissingDefinition(entries) {
+  return entries.filter((e) => {
+    var _a, _b;
+    return !e.deletedAt && !((_a = e.definition) == null ? void 0 : _a.trim()) && !((_b = e.definitionZh) == null ? void 0 : _b.trim());
+  });
+}
+
 // main.ts
 var VOCAB_FOLDER = "vocab-list";
 var VOCAB_FILE = `${VOCAB_FOLDER}/vocab-list.md`;
 var VOCAB_FILE_LEGACY = "vocab-list.md";
-var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
+var ENRICH_GAP_MS = 400;
+var RESUME_ENRICH_DELAY_MS = 5e3;
+var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
   constructor() {
     super(...arguments);
     this.vocabData = { entries: [] };
+    this.importing = /* @__PURE__ */ new Set();
+    this.enrichQueue = [];
+    this.enriching = false;
+    this.unloaded = false;
   }
   async onload() {
     this.storage = new ObsidianStorage(this);
@@ -6876,7 +7597,21 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
     this.applyLocale();
     const { ai, keys } = createAiService(this.store, createAiPorts(this.app, this.storage));
     this.ai = ai;
-    const settingsCtx = { app: this.app, store: this.store, ai, keys, applyLocale: () => this.applyLocale() };
+    this.wordlists = new WordlistService({
+      source: new ObsidianWordlists(this.app),
+      settings: () => this.wordlistSettings()
+    });
+    this.noteImports = new NoteImports(this.storage);
+    await this.noteImports.load();
+    const settingsCtx = {
+      app: this.app,
+      store: this.store,
+      ai,
+      keys,
+      wordlists: this.wordlists,
+      applyLocale: () => this.applyLocale(),
+      onWordlistsChanged: (change) => void this.onWordlistsChanged(change)
+    };
     this.addSettingTab(new VocabSettingsTab(this.app, this, settingsCtx, SETTINGS_SECTIONS));
     this.srs = new SrsService({ store: this.store, storage: this.storage });
     this.notes = new ObsidianNotes(this.app);
@@ -6888,6 +7623,12 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
       (leaf) => new VocabSidebarView(leaf, this)
     );
     this.registerMarkdownPostProcessor(this.processMarks.bind(this));
+    this.registerMarkdownPostProcessor((el) => {
+      const lookup = this.wordlists.highlightLookup();
+      if (!lookup) return;
+      const s = this.wordlistSettings();
+      highlightExamWords(el, lookup, (tag) => tagColor(s, tag));
+    });
     this.registerDomEvent(document, "click", this.handleReadingClick.bind(this));
     this.registerMarkdownCodeBlockProcessor(
       "vocab-dashboard",
@@ -6903,6 +7644,26 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
       callback: () => this.openFlashcards()
     });
     this.addCommand({
+      id: "toggle-exam-highlight",
+      name: t("command.toggleExamHighlight"),
+      callback: () => this.updateWordlistSettings({ highlight: !this.wordlistSettings().highlight })
+    });
+    this.addCommand({
+      id: "import-exam-words",
+      name: t("command.importExamWords"),
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== "md" || this.wordlists.index.isEmpty) return false;
+        if (!checking) void this.importExamWords(file, { force: true });
+        return true;
+      }
+    });
+    this.addCommand({
+      id: "reload-wordlists",
+      name: t("command.reloadWordlists"),
+      callback: () => this.wordlists.reload()
+    });
+    this.addCommand({
       id: "open-vocab-sidebar",
       name: "Open Vocab Sidebar",
       callback: () => this.activateSidebar()
@@ -6916,21 +7677,35 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
       this.app.workspace.on("active-leaf-change", () => this.refreshSidebar())
     );
     this.registerEvent(
-      this.app.workspace.on("file-open", () => this.refreshSidebar())
+      this.app.workspace.on("file-open", (file) => {
+        this.refreshSidebar();
+        if (file) void this.scanNote(file);
+      })
     );
     this.registerEvent(
       this.app.vault.on("rename", async (file, oldPath) => {
-        if (!(file instanceof import_obsidian22.TFile)) return;
+        if (!(file instanceof import_obsidian26.TFile)) return;
         const changed = updateSourcePaths(this.vocabData.entries, oldPath, file.path);
-        for (const entry of changed) await this.store.touch(entry);
+        if (changed.length) await this.store.touchMany(changed);
+        await this.noteImports.rename(oldPath, file.path);
       })
     );
-    this.app.workspace.onLayoutReady(() => this.ensureVocabFile());
+    this.app.workspace.onLayoutReady(() => {
+      void this.ensureVocabFile();
+      this.registerWordlistEvents();
+      void this.wordlists.reload();
+      const timer = window.setTimeout(
+        () => this.enqueueEnrich(entriesMissingDefinition(this.store.entries)),
+        RESUME_ENRICH_DELAY_MS
+      );
+      this.register(() => window.clearTimeout(timer));
+    });
   }
   // So a debounced write (VocabStore's 500ms coalescing) isn't lost if
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
     var _a, _b, _c;
+    this.unloaded = true;
     (_a = this.threads) == null ? void 0 : _a.dispose();
     (_b = this.ai) == null ? void 0 : _b.dispose();
     await Promise.all([this.store.flush(), this.srs.flush(), (_c = this.threads) == null ? void 0 : _c.flush()]);
@@ -6946,8 +7721,10 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
     var _a;
     void this.srs.reloadLogs();
     void this.threads.reload();
+    void this.noteImports.load();
     const disk = await this.storage.readShard("data");
     if (!disk) return;
+    const wordlistsBefore = JSON.stringify(this.wordlistSettings());
     const merged = merge(this.vocabData, disk);
     this.vocabData = merged;
     this.store.replace(merged);
@@ -6956,6 +7733,156 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
     }
     const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
     (_a = leaf == null ? void 0 : leaf.view) == null ? void 0 : _a.render();
+    if (JSON.stringify(this.wordlistSettings()) !== wordlistsBefore) void this.onWordlistsChanged("reload");
+  }
+  // ── Exam word lists ────────────────────────────────────────────
+  wordlistSettings() {
+    return resolveWordlistSettings(this.store.settings.wordlists);
+  }
+  async updateWordlistSettings(patch) {
+    await this.store.updateSettings((s) => s.wordlists = { ...this.wordlistSettings(), ...patch });
+    await this.onWordlistsChanged("display");
+  }
+  // Sidebar chip: turn one list's underlines on/off. If underlining is off
+  // altogether, a click means "show me this one", so it turns that on too.
+  async toggleExamTag(tag) {
+    const s = this.wordlistSettings();
+    const on = s.highlight && tagEnabled(s, tag);
+    await this.updateWordlistSettings({
+      highlight: s.highlight || !on,
+      tags: { ...s.tags, [tag]: { ...s.tags[tag], enabled: !on } }
+    });
+  }
+  async onWordlistsChanged(change) {
+    if (change === "reload") return this.wordlists.reload();
+    if (change === "scan") this.wordlists.invalidateScans();
+    this.rerenderReadingViews();
+    this.refreshExamStrip();
+  }
+  // Scans a note in the background, then auto-imports its exam words if
+  // this note hasn't been imported before.
+  async scanNote(file) {
+    if (file.extension !== "md" || this.wordlists.index.isEmpty) return;
+    try {
+      const result = await this.wordlists.scan(file.path, file.stat.mtime, () => this.app.vault.cachedRead(file));
+      if (this.wordlistSettings().autoImport && !this.noteImports.has(file.path)) {
+        await this.importExamWords(file, { result });
+      }
+    } catch (e) {
+      console.error("Vocab Tracker: exam word scan failed", e);
+    }
+  }
+  // Notes whose words shouldn't become vocab entries: the lists themselves
+  // and the plugin's own vocab-list folder.
+  isImportable(path) {
+    return !inFolder(path, this.wordlistSettings().folder) && !inFolder(path, VOCAB_FOLDER);
+  }
+  // Exam labels for a word's list tags — enabled lists only ("TOEFL, IELTS").
+  examLabels(tags) {
+    const s = this.wordlistSettings();
+    return tags.filter((tag) => tagEnabled(s, tag)).map(tagLabel);
+  }
+  // Adds every exam-list word in the note to the vocab list (level = its
+  // exams), and adds the exam labels to words already tracked. Each note
+  // is imported once; `force` (the command) re-runs it, but words the user
+  // deleted still stay deleted.
+  async importExamWords(file, opts = {}) {
+    var _a;
+    if (!this.isImportable(file.path) || this.importing.has(file.path)) return;
+    if (!opts.force && this.noteImports.has(file.path)) return;
+    this.importing.add(file.path);
+    try {
+      const result = (_a = opts.result) != null ? _a : await this.wordlists.scan(file.path, file.stat.mtime, () => this.app.vault.cachedRead(file));
+      const plan = planImport(result.hits, this.store.allEntries, (tags) => this.examLabels(tags));
+      const base = Date.now();
+      const created = plan.create.map(
+        (w, i) => this.newEntry(`${base}-${i}`, w.word, {
+          level: w.level,
+          example: w.example,
+          source: { path: file.path, line: w.line },
+          origin: "wordlist"
+        })
+      );
+      if (created.length) await this.store.addEntries(created);
+      for (const r of plan.retag) r.entry.level = r.level;
+      if (plan.retag.length) await this.store.touchMany(plan.retag.map((r) => r.entry));
+      await this.noteImports.mark(file.path, nowIso());
+      if (created.length || plan.retag.length) {
+        new import_obsidian26.Notice(
+          t("exam.import.done", { note: file.basename, added: created.length, tagged: plan.retag.length })
+        );
+        this.renderSidebar();
+      }
+      this.enqueueEnrich(created);
+    } finally {
+      this.importing.delete(file.path);
+    }
+  }
+  // Fills in dictionary data one word at a time: auto-imported words, and
+  // at startup every word still missing a definition.
+  enqueueEnrich(entries) {
+    const queued = new Set(this.enrichQueue.map((e) => e.id));
+    this.enrichQueue.push(...entries.filter((e) => !queued.has(e.id)));
+    if (!this.enriching) void this.drainEnrichQueue();
+  }
+  async drainEnrichQueue() {
+    this.enriching = true;
+    let done = 0;
+    while (this.enrichQueue.length && !this.unloaded) {
+      const entry = this.enrichQueue.shift();
+      if (entriesMissingDefinition([entry]).length === 0) continue;
+      await this.enrichEntry(entry, { quiet: true });
+      if (++done % 20 === 0) this.renderSidebar();
+      await new Promise((r) => setTimeout(r, ENRICH_GAP_MS));
+    }
+    this.enriching = false;
+    if (done) this.renderSidebar();
+  }
+  renderSidebar() {
+    var _a;
+    const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
+    (_a = leaf == null ? void 0 : leaf.view) == null ? void 0 : _a.render();
+  }
+  registerWordlistEvents() {
+    const reload = (0, import_obsidian26.debounce)(() => void this.wordlists.reload(), 800, true);
+    const inLists = (path) => inFolder(path, this.wordlistSettings().folder);
+    const onChange = (file, oldPath) => {
+      if (inLists(file.path) || oldPath && inLists(oldPath)) reload();
+    };
+    this.registerEvent(this.app.vault.on("create", (f) => onChange(f)));
+    this.registerEvent(this.app.vault.on("delete", (f) => onChange(f)));
+    this.registerEvent(this.app.vault.on("rename", (f, oldPath) => onChange(f, oldPath)));
+    const rescanActive = (0, import_obsidian26.debounce)(() => this.refreshExamStrip(), 1500, true);
+    this.registerEvent(
+      this.app.vault.on("modify", (f) => {
+        var _a;
+        if (inLists(f.path)) reload();
+        else if (f.path === ((_a = this.app.workspace.getActiveFile()) == null ? void 0 : _a.path)) rescanActive();
+      })
+    );
+    this.wordlists.on("index-changed", () => {
+      this.rerenderReadingViews();
+      this.refreshExamStrip();
+      const active = this.app.workspace.getActiveFile();
+      if (active) void this.scanNote(active);
+    });
+    this.wordlists.on("scanned", ({ path }) => {
+      var _a;
+      if (path === ((_a = this.app.workspace.getActiveFile()) == null ? void 0 : _a.path)) this.refreshExamStrip();
+    });
+  }
+  // Re-runs post-processors so underlines follow the current lists/settings.
+  rerenderReadingViews() {
+    var _a;
+    for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+      const view = leaf.view;
+      if (view instanceof import_obsidian26.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
+    }
+  }
+  refreshExamStrip() {
+    var _a;
+    const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
+    (_a = leaf == null ? void 0 : leaf.view) == null ? void 0 : _a.refreshExamStrip();
   }
   async activateSidebar() {
     var _a;
@@ -6983,7 +7910,7 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
       await this.app.vault.createFolder(VOCAB_FOLDER);
     }
     const legacy = this.app.vault.getAbstractFileByPath(VOCAB_FILE_LEGACY);
-    if (legacy instanceof import_obsidian22.TFile) {
+    if (legacy instanceof import_obsidian26.TFile) {
       await this.app.fileManager.renameFile(legacy, VOCAB_FILE);
       return;
     }
@@ -7008,7 +7935,7 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
     const exists = this.store.entries.some(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
-    const menu = new import_obsidian22.Menu();
+    const menu = new import_obsidian26.Menu();
     menu.addItem((item) => {
       item.setTitle(
         exists ? `Open "${word}" in Vocab Tracker` : `Add "${word}" to Vocab Tracker`
@@ -7016,12 +7943,13 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
       item.setIcon(exists ? "book-open" : "plus");
       item.onClick(async () => {
         const added = await this.addWordToVocab(word, ctx);
-        new import_obsidian22.Notice(added ? `Added "${word}" to vocab list` : `Opened "${word}"`);
+        new import_obsidian26.Notice(added ? `Added "${word}" to vocab list` : `Opened "${word}"`);
       });
     });
     menu.showAtMouseEvent(evt);
   }
   getWordContext(x, y) {
+    var _a;
     let node = null;
     let offset = 0;
     if (document.caretPositionFromPoint) {
@@ -7046,10 +7974,21 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
     while (end < text.length && isWordChar(text[end])) end++;
     const word = text.slice(start, end).replace(/^[-']+|[-']+$/g, "");
     if (!/^[A-Za-z][A-Za-z'\-]*$/.test(word)) return { word: "", sentence: "" };
+    const examSpan = (_a = node.parentElement) == null ? void 0 : _a.closest(`.${EXAM_WORD_CLS}`);
+    const block = examSpan == null ? void 0 : examSpan.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
+    if (examSpan && block) {
+      const range = document.createRange();
+      range.setStart(block, 0);
+      range.setEnd(node, start);
+      const before = range.toString().length;
+      const blockText = block.textContent || "";
+      return { word, sentence: extractSentence(blockText, before, before + (end - start), null) };
+    }
     const sentence = extractSentence(text, start, end, node);
     return { word, sentence };
   }
   async addWordToVocab(word, ctx = {}) {
+    var _a, _b;
     const existing = this.store.entries.find(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
@@ -7062,40 +8001,50 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
       const updated = wrapOutsideCode(content, buildWordRe(word));
       if (updated !== content) await this.app.vault.modify(file, updated);
     }
+    const labels = this.examLabels((_b = (_a = this.wordlists.match(word)) == null ? void 0 : _a.tags) != null ? _b : []);
     if (!existing) {
-      const entry = {
-        id: String(Date.now()),
-        word,
-        level: "",
-        synonyms: "",
-        antonyms: "",
+      const entry = this.newEntry(String(Date.now()), word, {
+        level: labels.join(", "),
         example: ctx.sentence || "",
-        definition: "",
-        definitionZh: "",
-        phonetic: "",
-        partOfSpeech: "",
-        grammar: "",
-        source,
-        added: nowStamp(),
-        lastReviewed: nowStamp(),
-        reviews: 0
-      };
+        source
+      });
       await this.store.addEntry(entry);
       this.enrichEntry(entry);
     } else {
       if (!existing.source && source) existing.source = source;
       if (!existing.example && ctx.sentence) existing.example = ctx.sentence;
+      existing.level = mergeLevel(existing.level, labels);
       await this.store.touch(existing);
     }
     const leaf = await this.activateSidebar();
     leaf.view.setWord(word);
     return existing == null;
   }
+  newEntry(id, word, fields) {
+    return {
+      id,
+      word,
+      level: "",
+      synonyms: "",
+      antonyms: "",
+      example: "",
+      definition: "",
+      definitionZh: "",
+      phonetic: "",
+      partOfSpeech: "",
+      grammar: "",
+      source: null,
+      added: nowStamp(),
+      lastReviewed: nowStamp(),
+      reviews: 0,
+      ...fields
+    };
+  }
   async jumpToSource(entry) {
     if (!entry.source || !entry.source.path) return;
     const file = this.app.vault.getAbstractFileByPath(entry.source.path);
     if (!file) {
-      new import_obsidian22.Notice("Source note not found: " + entry.source.path);
+      new import_obsidian26.Notice("Source note not found: " + entry.source.path);
       return;
     }
     const leaf = this.app.workspace.getLeaf(false);
@@ -7112,7 +8061,7 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
   }
   speakSynth(word) {
     if (!("speechSynthesis" in window)) {
-      new import_obsidian22.Notice("No pronunciation available on this device.");
+      new import_obsidian26.Notice("No pronunciation available on this device.");
       return;
     }
     const u = new SpeechSynthesisUtterance(word);
@@ -7121,6 +8070,7 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
     window.speechSynthesis.speak(u);
   }
   // ── Auto-fetch dictionary data (Wiktionary, falls back to Datamuse) ──
+  // `quiet` (background queue): no notice on failure, no sidebar render.
   async enrichEntry(entry, opts = {}) {
     try {
       const data = await this.dictionary.fetchDictionary(entry.word);
@@ -7132,13 +8082,13 @@ var VocabTrackerPlugin = class extends import_obsidian22.Plugin {
       if (!entry.synonyms) entry.synonyms = data.synonyms.join(", ");
       if (!entry.antonyms) entry.antonyms = data.antonyms.join(", ");
       await this.store.touch(entry);
-      const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
-      const view = leaf && leaf.view;
-      if (view) view.render();
-      if (opts.verbose) new import_obsidian22.Notice(`Vocab Tracker: fetched "${entry.word}"`);
+      if (opts.quiet) return;
+      this.renderSidebar();
+      if (opts.verbose) new import_obsidian26.Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
-      new import_obsidian22.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
+      if (opts.quiet) return;
+      new import_obsidian26.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
     }
   }
   refreshSidebar() {

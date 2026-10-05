@@ -223,10 +223,66 @@
   align-items: center;
   gap: 6px;
 }
+.vt-exam-strip {
+  margin: 4px 0 10px;
+}
+.vt-exam-strip-title {
+  font-size: 0.75em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.vt-exam-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.vt-exam-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 0.75em;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+}
+.vt-exam-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--vt-exam-color);
+}
+.vt-exam-chip-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.vt-exam-chip.is-off {
+  opacity: 0.45;
+}
+.vt-exam-chip.is-off .vt-exam-chip-dot {
+  background: transparent;
+  border: 1px solid var(--vt-exam-color);
+}
+.vt-settings-wordlists .vt-exam-chip-dot {
+  display: inline-block;
+  margin-right: 6px;
+}
 
 /* src/styles/reading.css */
 .vocab-tracker-tracked-mark {
   cursor: pointer;
+}
+.vt-exam-word {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-color: var(--vt-exam-color, var(--text-accent));
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  text-decoration-skip-ink: none;
+}
+.vt-exam-word:hover {
+  text-decoration-style: solid;
 }
 
 /* src/styles/blocks.css */

@@ -3,3 +3,18 @@
 .vocab-tracker-tracked-mark {
   cursor: pointer;
 }
+
+/* ── Exam word-list underlines (view-only, never written to the note) ── */
+
+.vt-exam-word {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-color: var(--vt-exam-color, var(--text-accent));
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  text-decoration-skip-ink: none;
+}
+
+.vt-exam-word:hover {
+  text-decoration-style: solid;
+}
