@@ -7,6 +7,7 @@ import { splitInterval } from "../../core/text/interval";
 import { t, type I18nKey } from "../../core/i18n";
 import type { SrsService } from "../../services/srs/SrsService";
 import { isNewCard, matchesFilter, type QueueFilter } from "../../services/srs/queue";
+import { bindPronounceButton, preloadPronunciation, pronounce, stopPronouncingIn } from "../kit/pronounce";
 import { buildBatchRows, type BatchRow } from "./flashcardsBatch";
 import { parseFlashcardParams, type FlashcardParams } from "./params";
 import { findTarget } from "./wordHeader";
@@ -23,6 +24,10 @@ import { nextReviewText, parseCardMode, timingText } from "./wordReviewModel";
 // word page's 「複習這個字」 runs it in a modal, wordReview.ts): same card
 // faces, keys and rating as the queue, plus when it's due and, after
 // rating, the next review date.
+//
+// 🔊 goes through the pronounce kit (ui/kit/pronounce.ts): a spinner while
+// the recording loads, the system voice when it's slow, and the next
+// card's recording preloaded while this one is on screen.
 
 // What the block needs from the plugin (VocabTrackerPlugin has all of it).
 export interface FlashcardsHost {
@@ -32,7 +37,6 @@ export interface FlashcardsHost {
     SrsService,
     "ensureLoaded" | "queue" | "rate" | "preview" | "dueTomorrow" | "reviewsToday" | "timing"
   >;
-  speakWord(entry: VocabEntry): void;
   jumpToSource(entry: VocabEntry): unknown;
   openVocabFile(): unknown;
 }
@@ -149,6 +153,9 @@ export class FlashcardsBlock extends MarkdownRenderChild {
 
   onunload() {
     this.disposed = true;
+    // A recording still loading would otherwise start after the block
+    // (or the 「複習這個字」 modal) is gone.
+    stopPronouncingIn(this.root);
   }
 
   // ── Session state ─────────────────────────────────────────────
@@ -246,7 +253,7 @@ export class FlashcardsBlock extends MarkdownRenderChild {
 
   private autoSpeak() {
     const entry = this.current();
-    if (this.mode === "listen" && this.phase === "card" && entry) this.plugin.speakWord(entry);
+    if (this.mode === "listen" && this.phase === "card" && entry) void pronounce(entry);
   }
 
   private onStoreChanged() {
@@ -316,6 +323,15 @@ export class FlashcardsBlock extends MarkdownRenderChild {
       const input = this.root.querySelector("input");
       (input ?? this.root).focus({ preventScroll: true });
     }
+    if (this.phase === "card") this.preloadAudio();
+  }
+
+  // This card's recording and the next one's, so 🔊 (and listen mode's
+  // auto-play after rating) doesn't wait on the network. Cached per URL:
+  // re-renders don't refetch.
+  private preloadAudio() {
+    preloadPronunciation(this.current());
+    preloadPronunciation(this.live(this.session[this.index + 1]));
   }
 
   private renderToolbar() {
@@ -411,7 +427,7 @@ export class FlashcardsBlock extends MarkdownRenderChild {
     if (meta) sub.createSpan({ text: meta });
     const speak = sub.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
     setIcon(speak, "volume-2");
-    speak.onclick = () => this.plugin.speakWord(entry);
+    bindPronounceButton(speak, entry);
   }
 
   // Cloze sentence with the word blanked ("blank") or revealed and
@@ -435,7 +451,7 @@ export class FlashcardsBlock extends MarkdownRenderChild {
       attr: { "aria-label": t("flashcards.listen.replay") },
     });
     setIcon(play, "volume-2");
-    play.onclick = () => this.plugin.speakWord(entry);
+    bindPronounceButton(play, entry);
 
     if (!this.flipped) {
       const input = el.createEl("input", {
@@ -583,7 +599,7 @@ export class FlashcardsBlock extends MarkdownRenderChild {
         row.createSpan({ cls: "vt-fc-forgotten-zh", text: entry.definitionZh });
         const speak = row.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
         setIcon(speak, "volume-2");
-        speak.onclick = () => this.plugin.speakWord(entry);
+        bindPronounceButton(speak, entry);
       }
     }
 
@@ -709,10 +725,7 @@ export class FlashcardsBlock extends MarkdownRenderChild {
       attr: { type: "button", "aria-label": t("row.pronounce") },
     });
     setIcon(speak, "volume-2");
-    speak.onclick = (e) => {
-      this.plugin.speakWord(entry);
-      this.keepCardKeys(e);
-    };
+    bindPronounceButton(speak, entry, { after: (e) => this.keepCardKeys(e) });
     if (phase === "done" && entry.source?.path) {
       const jump = meta.createEl("button", {
         cls: "vt-fc-icon-btn",

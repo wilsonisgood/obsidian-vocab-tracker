@@ -64,3 +64,36 @@ describe("Speaker", () => {
     err.mockRestore();
   });
 });
+
+describe("Speaker — events for the 🔊 button states", () => {
+  it("reports start and end through the utterance's handlers", () => {
+    const { synth, spoken } = fakeSynth();
+    const onStart = vi.fn();
+    const onEnd = vi.fn();
+    new Speaker(synth, utterance).speak("pertinent", { onStart, onEnd });
+    const u = spoken[0] as SynthUtterance & { onstart: () => void; onend: () => void };
+    u.onstart();
+    expect(onStart).toHaveBeenCalledTimes(1);
+    u.onend();
+    expect(onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it("an error (e.g. interrupted) also counts as the end", () => {
+    const { synth, spoken } = fakeSynth();
+    const onEnd = vi.fn();
+    new Speaker(synth, utterance).speak("pertinent", { onEnd });
+    (spoken[0] as SynthUtterance & { onerror: () => void }).onerror();
+    expect(onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancel() only cancels when something is speaking", () => {
+    const { synth } = fakeSynth();
+    const s = new Speaker(synth, utterance);
+    s.cancel();
+    expect(synth.cancel).not.toHaveBeenCalled();
+    synth.pending = true;
+    s.cancel();
+    expect(synth.cancel).toHaveBeenCalledTimes(1);
+    new Speaker(null, utterance).cancel(); // no synth: no throw
+  });
+});
