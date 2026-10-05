@@ -566,3 +566,832 @@ body.is-mobile .vt-fc-link {
   align-items: center;
   min-height: var(--vt-tap);
 }
+
+/* ── M7 learning blocks: vocab-families / vocab-verbs / vocab-trivia ──
+   (規劃書 06 §7.2–§7.4, §9.6; 設計稿 L5、L6、L7、W3、M4). Tokens map to
+   Obsidian variables (§9.1), scoped like .vt-flashcards above. */
+
+.vt-learn {
+  --vt-accent: var(--interactive-accent);
+  --vt-accent-text: var(--text-accent);
+  --vt-surface: var(--background-secondary);
+  --vt-card: var(--background-primary);
+  --vt-border: var(--background-modifier-border);
+  --vt-muted: var(--text-muted);
+  --vt-radius: var(--radius-m);
+  --vt-tap: 34px;
+  --vt-line: var(--background-modifier-border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: inherit;
+  font-size: var(--font-text-size);
+}
+
+body.is-mobile .vt-learn {
+  --vt-tap: 44px;
+}
+
+.vt-learn-loading {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-learn-btn {
+  min-height: var(--vt-tap);
+  cursor: pointer;
+}
+
+.vt-learn-btn.is-ghost {
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
+  color: var(--vt-accent-text);
+}
+
+.vt-learn-btn.is-ghost:hover:not(:disabled) {
+  background: var(--background-modifier-hover);
+}
+
+.vt-learn-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.vt-learn-btn .vt-btn-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* 「AI 正在整理…」 + 停止 */
+.vt-learn-busy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px dashed var(--vt-border);
+  border-radius: var(--vt-radius);
+  color: var(--vt-muted);
+}
+
+.vt-learn-busy-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vt-learn-busy-icon {
+  display: inline-flex;
+  color: var(--vt-accent-text);
+  animation: vt-learn-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes vt-learn-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.vt-learn-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.vt-learn-error .vt-note {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* ── vocab-families (L5 tree, W3 review) ─────────────────────────── */
+
+.vt-fam-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.vt-fam-tab {
+  min-height: var(--vt-tap);
+  padding: 0 12px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--vt-border);
+  background: var(--vt-card);
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+}
+
+.vt-fam-tab.is-active {
+  border-color: var(--vt-accent);
+  background: hsla(var(--interactive-accent-hsl), 0.12);
+  color: var(--vt-accent-text);
+}
+
+.vt-fam-toolbar-action {
+  margin-left: auto;
+}
+
+.vt-fam-regroup-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.vt-fam-regroup-note .vt-note {
+  flex: 1;
+  min-width: 200px;
+}
+
+.vt-fam-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.vt-fam-root {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 18px;
+  border-radius: var(--radius-m);
+  background: var(--vt-accent);
+  color: var(--text-on-accent);
+  font-size: 1.05em;
+  font-weight: 500;
+}
+
+.vt-fam-root-icon,
+.vt-fam-root-more {
+  display: inline-flex;
+}
+
+.vt-fam-root-more {
+  color: var(--text-on-accent);
+  opacity: 0.8;
+  min-width: var(--vt-tap);
+  min-height: var(--vt-tap);
+  justify-content: center;
+}
+
+.vt-fam-root-more:hover {
+  opacity: 1;
+  color: var(--text-on-accent);
+}
+
+.vt-fam-stem {
+  width: 2px;
+  height: 18px;
+  background: var(--vt-line);
+}
+
+.vt-fam-cols {
+  display: flex;
+  width: 100%;
+  min-width: min-content;
+}
+
+/* Each column draws its share of the horizontal bar, so the bar always
+   runs from the first column's centre to the last one's. */
+.vt-fam-col {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px;
+}
+
+.vt-fam-col::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--vt-line);
+}
+
+.vt-fam-col:first-child::before {
+  left: 50%;
+}
+
+.vt-fam-col:last-child::before {
+  right: 50%;
+}
+
+.vt-fam-col:only-child::before {
+  display: none;
+}
+
+.vt-fam-col-stem {
+  width: 2px;
+  height: 22px;
+  margin-bottom: -8px;
+  background: var(--vt-line);
+}
+
+.vt-fam-col-stem.is-short {
+  height: 14px;
+  margin: -8px 0;
+}
+
+.vt-fam-group {
+  padding: 3px 10px;
+  border-radius: var(--radius-s);
+  background: var(--vt-surface);
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-fam-chips {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.vt-fam-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--vt-tap);
+  height: auto;
+  padding: 0 11px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--vt-border);
+  background: var(--vt-card);
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  white-space: nowrap;
+}
+
+.vt-fam-chip.is-known {
+  border-color: var(--vt-accent);
+  background: hsla(var(--interactive-accent-hsl), 0.12);
+  color: var(--vt-accent-text);
+}
+
+.vt-fam-chip.is-suggested {
+  border-style: dashed;
+  color: var(--vt-muted);
+  cursor: pointer;
+}
+
+.vt-fam-chip.is-suggested:hover:not(:disabled) {
+  border-color: var(--vt-accent);
+  color: var(--text-normal);
+}
+
+.vt-fam-chip-zh {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-fam-chip-icon {
+  display: inline-flex;
+  color: var(--vt-accent-text);
+}
+
+.vt-fam-chip-icon svg,
+.vt-fam-chip.is-mini svg {
+  width: 13px;
+  height: 13px;
+}
+
+.vt-fam-chip.is-mini {
+  min-height: 20px;
+  padding: 0 6px;
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-fam-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-fam-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Phones: no room for side-by-side columns — stack the groups under the
+   root as an indented outline. */
+body.is-mobile .vt-fam-tree {
+  align-items: stretch;
+}
+
+body.is-mobile .vt-fam-root {
+  align-self: flex-start;
+}
+
+body.is-mobile .vt-fam-stem,
+body.is-mobile .vt-fam-col::before,
+body.is-mobile .vt-fam-col-stem {
+  display: none;
+}
+
+body.is-mobile .vt-fam-cols {
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  margin-top: 10px;
+  padding-left: 14px;
+  border-left: 2px solid var(--vt-line);
+}
+
+body.is-mobile .vt-fam-col {
+  align-items: flex-start;
+  min-width: 0;
+  padding: 0;
+}
+
+body.is-mobile .vt-fam-chips {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+body.is-mobile .vt-fam-legend {
+  justify-content: flex-start;
+}
+
+/* W3: candidates to review before saving */
+.vt-fam-review {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vt-fam-review-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--vt-accent-text);
+  font-size: var(--font-ui-small);
+}
+
+.vt-fam-review-icon {
+  display: inline-flex;
+}
+
+.vt-fam-card {
+  padding: 8px 14px 4px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-card);
+}
+
+.vt-fam-card-title {
+  padding: 4px 0 6px;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-fam-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--vt-tap);
+  padding: 4px;
+  border-top: 1px solid var(--vt-border);
+  cursor: pointer;
+}
+
+.vt-fam-row.is-known {
+  cursor: default;
+}
+
+.vt-fam-row-tag,
+.vt-fam-row-check {
+  flex: 0 0 44px;
+  margin: 0;
+}
+
+.vt-fam-row-tag {
+  color: var(--vt-accent-text);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-fam-row-word {
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+
+.vt-fam-row-zh {
+  flex: 1;
+  min-width: 0;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-fam-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.vt-fam-review-note {
+  color: var(--text-faint);
+  font-size: var(--font-ui-small);
+}
+
+body.is-mobile .vt-fam-review-actions {
+  flex-direction: column-reverse;
+  align-items: stretch;
+}
+
+/* ── vocab-verbs (L6) ────────────────────────────────────────────── */
+
+.vt-verbs-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 200px) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.vt-verbs-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.vt-verbs-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.vt-verbs-search-icon {
+  position: absolute;
+  left: 9px;
+  display: inline-flex;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.vt-verbs-search-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.vt-verbs-search .vt-verbs-filter {
+  width: 100%;
+  min-height: var(--vt-tap);
+  padding-left: 28px;
+}
+
+.vt-verbs-count {
+  margin-top: 4px;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.vt-verbs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.vt-verbs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: max(var(--vt-tap), 38px);
+  height: auto;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  text-align: left;
+  cursor: pointer;
+}
+
+.vt-verbs-row:hover {
+  background: var(--background-modifier-hover);
+}
+
+.vt-verbs-row.is-active {
+  background: var(--background-modifier-active-hover, var(--background-modifier-hover));
+  font-weight: 600;
+}
+
+.vt-verbs-row-icon {
+  display: inline-flex;
+  color: var(--text-faint);
+}
+
+.vt-verbs-row-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.vt-verbs-row-icon.is-busy {
+  color: var(--vt-accent-text);
+  animation: vt-learn-pulse 1.4s ease-in-out infinite;
+}
+
+.vt-verbs-nomatch {
+  padding: 6px 8px;
+  color: var(--text-faint);
+  font-size: var(--font-ui-small);
+}
+
+.vt-verb-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.vt-verb-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.vt-verb-word {
+  font-size: 1.8em;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.vt-verb-phon {
+  color: var(--vt-muted);
+}
+
+.vt-verb-speak {
+  margin-left: auto;
+  align-self: center;
+  min-width: var(--vt-tap);
+  min-height: var(--vt-tap);
+  justify-content: center;
+}
+
+.vt-verb-meta {
+  margin-top: -6px;
+  color: var(--text-faint);
+  font-size: var(--font-ui-small);
+}
+
+.vt-verb-pattern {
+  display: grid;
+  grid-template-columns: minmax(120px, 200px) minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--vt-border);
+}
+
+.vt-verb-pattern-p {
+  padding-top: 2px;
+  color: var(--vt-accent-text);
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+}
+
+.vt-verb-pattern-ex {
+  color: var(--vt-muted);
+  font-style: italic;
+}
+
+.vt-verb-section {
+  margin-top: 8px;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+
+.vt-verb-related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vt-verb-related-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-small);
+}
+
+.vt-verb-related-zh {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-verb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* Phones: list on top, detail below. */
+body.is-mobile .vt-verbs-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+body.is-mobile .vt-verbs-list {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 30vh;
+}
+
+body.is-mobile .vt-verbs-row {
+  border: 1px solid var(--vt-border);
+}
+
+body.is-mobile .vt-verb-pattern {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+
+/* ── vocab-trivia (L7, M4) ───────────────────────────────────────── */
+
+.vt-trivia-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--radius-l, 14px);
+  background: var(--vt-surface);
+}
+
+.vt-trivia-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.vt-trivia-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.vt-trivia-title-icon {
+  display: inline-flex;
+  color: var(--vt-accent-text);
+}
+
+.vt-trivia-subject {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  min-height: max(var(--vt-tap), 28px);
+  height: auto;
+  padding: 0 10px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--radius-s);
+  background: var(--vt-card);
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+}
+
+.vt-trivia-subject:disabled {
+  cursor: default;
+  opacity: 0.8;
+}
+
+.vt-trivia-subject-icon {
+  display: inline-flex;
+}
+
+.vt-trivia-subject-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.vt-trivia-chat .vt-chat {
+  font-size: var(--font-ui-medium);
+}
+
+/* Per-answer header 「冷知識 · apron」 (ChatPanel turnHeader, pending). */
+.vt-trivia .vt-bubble-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+  color: var(--vt-accent-text);
+  font-size: var(--font-ui-smaller);
+}
+
+/* 👍 👎 pressed state and icon-only buttons (bubble patch, pending). */
+.vt-trivia .vt-bubble-action.is-active {
+  color: var(--vt-accent-text);
+}
+
+.vt-trivia .vt-bubble-action.is-icon-only {
+  min-width: max(var(--vt-tap), 28px);
+  justify-content: center;
+}
+
+.vt-trivia-footer {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-trivia-favs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vt-trivia-favs-title {
+  margin-top: 10px;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.vt-trivia-favs-empty {
+  color: var(--text-faint);
+  font-size: var(--font-ui-small);
+}
+
+.vt-trivia-fav {
+  padding: 12px 14px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-card);
+}
+
+.vt-trivia-fav-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.vt-trivia-fav-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.vt-trivia-fav-remove {
+  min-width: var(--vt-tap);
+  min-height: var(--vt-tap);
+  margin: -6px -6px 0 0;
+  justify-content: center;
+  color: var(--text-faint);
+}
+
+.vt-trivia-fav-body {
+  line-height: 1.7;
+}
+
+.vt-trivia-fav-body > :first-child {
+  margin-top: 2px;
+}
+
+.vt-trivia-fav-body > :last-child {
+  margin-bottom: 0;
+}
+
+.vt-trivia-fav-meta {
+  margin-top: 6px;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+body.is-mobile .vt-trivia-card {
+  padding: 12px;
+}
