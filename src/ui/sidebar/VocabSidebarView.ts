@@ -3,18 +3,21 @@ import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import type { ExpandState, RowOptions } from "../word/WordRow";
 import { renderVocabRow } from "../word/WordRow";
-import { groupTitle, renderGroupedVocabList } from "../word/GroupedWordList";
+import { renderGroupedVocabList } from "../word/GroupedWordList";
+import { lt } from "../word/pendingStrings";
+import { sortByRecent } from "../word/wordOrder";
 import { t } from "../../core/i18n";
 import type { SectionRef } from "../../services/anchors/ParagraphAnchorService";
 import { WordUi, type WordTab } from "../word/wordUi";
 import { renderExamStrip } from "./examStrip";
 import { MissingNoteThreadList, ParagraphThreadList, type ParagraphListActions, type ParagraphListDeps } from "./ParagraphThreadList";
 import { ParagraphThreadPane, type ParagraphPaneNav } from "./ParagraphThreadPane";
+import { DiscussionList } from "./DiscussionList";
+import { discussionRows } from "./discussionRows";
+import { FLASH_MS, planReveal, SectionState, type FilterMode, type SectionId } from "./sections";
 import { LIST_ROUTE, REBINDING_BODY_CLS, SidebarRouter, routeForActiveNote, routeKey, sameRoute, type SidebarRoute } from "./routes";
 
 export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
-
-type FilterMode = "note" | "all";
 
 // Re-reading a note after an edit waits for typing to settle.
 const NOTE_REFRESH_MS = 400;
@@ -47,6 +50,10 @@ export class VocabSidebarView extends ItemView {
   collapsedGroups: Set<string> = new Set();
   wordUi = new WordUi(this);
   readonly router = new SidebarRouter();
+  // 單字 / AI 討論 folded or open — remembered per device (1005 回饋 2).
+  readonly sections: SectionState;
+  // The AI 討論 list's 「顯示全部」 (view memory, like expandState).
+  private discussionView = { showAll: false };
   // A discussion waiting for its new paragraph: the next ✦ clicked in
   // reading view rebinds it instead of opening that paragraph.
   rebindThreadId: string | null = null;
@@ -69,6 +76,7 @@ export class VocabSidebarView extends ItemView {
   constructor(leaf: WorkspaceLeaf, plugin: VocabTrackerPlugin) {
     super(leaf);
     this.plugin = plugin;
+    this.sections = new SectionState(this.app);
   }
 
   getViewType() { return VOCAB_VIEW_TYPE; }
@@ -105,44 +113,95 @@ export class VocabSidebarView extends ItemView {
     this.render();
   }
 
-  // Called when a tracked word is clicked (reading-mode word / ==mark==).
-  // Expands its row in place rather than opening a separate card.
+  // Called when a word is clicked (reading-mode word / ==mark==, through
+  // WordSurfaces.revealWord). A tracked word is brought into view (see
+  // revealEntry); an untracked one gets the 「加入單字庫」 banner.
   setWord(word: string) {
-    const entry = this.plugin.store.entries.find(
-      (e) => e.word.toLowerCase() === word.toLowerCase()
-    );
+    const entry = this.findEntry(word);
     if (entry) {
-      if (this.expandState.get(entry.id) === undefined) {
-        this.expandState.set(entry.id, "half");
-      }
-      this.pendingWord = "";
-    } else {
-      this.pendingWord = word;
+      this.revealEntry(entry);
+      return;
     }
+    this.pendingWord = word;
     // The word lives in the list.
     this.router.back();
     this.render();
+    this.scrollRoot()?.scrollTo?.({ top: 0 });
+  }
+
+  // A tracked word was clicked in reading view while the sidebar is open
+  // (tap action 「選單」, 1005 回饋 3): follow it here without bringing the
+  // sidebar to the front. False when the word isn't tracked.
+  locateWord(word: string): boolean {
+    const entry = this.findEntry(word);
+    if (!entry) return false;
+    this.revealEntry(entry);
+    return true;
   }
 
   // Shows one word's card, expanded and on the given tab (the word page's
-  // 「在側欄開啟」 opens it on "ai"). Switches to All when the word isn't
-  // from the note in front, and opens its group there.
+  // 「在側欄開啟」 opens it on "ai", so does the AI 討論 list).
   openWord(entryId: string, tab: WordTab): void {
     const entry = this.plugin.store.entries.find((e) => e.id === entryId);
-    if (!entry) return;
-    if (this.expandState.get(entry.id) === undefined || this.expandState.get(entry.id) === "collapsed") {
-      this.expandState.set(entry.id, "half");
-    }
-    this.wordUi.tabs.set(entry.id, tab);
+    if (entry) this.revealEntry(entry, tab);
+  }
+
+  private findEntry(word: string): VocabEntry | undefined {
+    const lower = word.toLowerCase();
+    return this.plugin.store.entries.find((e) => e.word.toLowerCase() === lower);
+  }
+
+  // Brings a word into view (1005 回饋 3): back to the list, the 單字
+  // section open, This note → All when the word is from another note (its
+  // group opened there), the card expanded — then scrolled to and briefly
+  // highlighted.
+  private revealEntry(entry: VocabEntry, tab?: WordTab): void {
+    const plan = planReveal({
+      filterMode: this.filterMode,
+      activePath: this.app.workspace.getActiveFile()?.path ?? null,
+      entry,
+    });
+    this.filterMode = plan.filterMode;
+    if (plan.openGroup) this.collapsedGroups.delete(plan.openGroup);
+    this.sections.set("words", false);
+    const state = this.expandState.get(entry.id);
+    if (state === undefined || state === "collapsed") this.expandState.set(entry.id, "half");
+    if (tab) this.wordUi.tabs.set(entry.id, tab);
     this.pendingWord = "";
-    const active = this.app.workspace.getActiveFile()?.path;
-    if (this.filterMode !== "all" && (!active || entry.source?.path !== active)) this.filterMode = "all";
-    if (this.filterMode === "all") this.collapsedGroups.delete(groupTitle(entry));
     this.router.back();
     this.draw();
-    const root = this.containerEl.children[1] as HTMLElement;
-    const row = root.querySelector<HTMLElement>(`.vt-row[data-entry-id="${CSS.escape(entry.id)}"]`);
+    this.flashRow(entry.id);
+  }
+
+  // A card redrew the list (an edit, a fold, ✓). An edit makes the word
+  // the most recent one, so it moves to the top: keep it in view there.
+  private renderKeeping(entryId?: string): void {
+    this.render();
+    if (!entryId) return;
+    const row = this.rowEl(entryId);
     row?.scrollIntoView({ block: "nearest" });
+  }
+
+  private rowEl(entryId: string): HTMLElement | null {
+    return this.scrollRoot()?.querySelector<HTMLElement>(`.vt-row[data-entry-id="${CSS.escape(entryId)}"]`) ?? null;
+  }
+
+  private scrollRoot(): HTMLElement | null {
+    return (this.containerEl.children[1] as HTMLElement | undefined) ?? null;
+  }
+
+  private flashRow(entryId: string): void {
+    const row = this.rowEl(entryId);
+    if (!row) return;
+    row.scrollIntoView({ block: "center" });
+    // Once more after layout: a sidebar that was just revealed has no size
+    // yet on the first pass.
+    window.setTimeout(() => {
+      if (row.isConnected) row.scrollIntoView({ block: "center" });
+    }, 60);
+    row.removeClass("vt-row-flash");
+    row.addClass("vt-row-flash");
+    window.setTimeout(() => row.removeClass("vt-row-flash"), FLASH_MS);
   }
 
   refreshExamStrip() {
@@ -331,8 +390,6 @@ export class VocabSidebarView extends ItemView {
   }
 
   private drawList(root: HTMLElement, scope: Component) {
-    const entries = this.plugin.store.entries;
-
     // ── Not-yet-tracked word banner ──────────────────────────────
     if (this.pendingWord) {
       const banner = root.createEl("div", { cls: "vt-sidebar-add-prompt" });
@@ -348,6 +405,77 @@ export class VocabSidebarView extends ItemView {
       setIcon(dismiss, "x");
       dismiss.onclick = () => { this.pendingWord = ""; this.render(); };
     }
+
+    // Two foldable sections (1005 回饋 2): 單字, then AI 討論.
+    const words = this.drawSection(root, "words", lt("sidebar.section.words"));
+    if (words) this.drawWords(words, scope);
+
+    const counter = { el: null as HTMLElement | null };
+    const ai = this.drawSection(root, "ai", lt("sidebar.section.ai", { n: "…" }), counter);
+    if (ai) {
+      const { threads } = this.plugin;
+      scope.addChild(
+        new DiscussionList(
+          ai,
+          { threads, entries: () => this.plugin.store.entries },
+          {
+            openWord: (entryId) => this.openWord(entryId, "ai"),
+            openParagraph: (threadId) => this.openThread(threadId),
+            counted: (n) => counter.el?.setText(lt("sidebar.section.ai", { n })),
+          },
+          this.discussionView
+        )
+      );
+    } else {
+      // Folded: the count still shows, and follows new discussions.
+      const { threads } = this.plugin;
+      const recount = () => {
+        if (!counter.el?.isConnected) return;
+        const n = discussionRows(threads, this.plugin.store.entries).length;
+        counter.el.setText(lt("sidebar.section.ai", { n }));
+      };
+      scope.register(threads.events.on("thread:upsert", recount));
+      scope.register(threads.events.on("threads:reloaded", recount));
+      void threads.ensureLoaded().then(recount);
+    }
+  }
+
+  // A section heading (click to fold); returns the body to fill, or null
+  // when the section is folded.
+  private drawSection(
+    root: HTMLElement,
+    id: SectionId,
+    title: string,
+    titleRef?: { el: HTMLElement | null }
+  ): HTMLElement | null {
+    const collapsed = this.sections.isCollapsed(id);
+    const section = root.createDiv({ cls: "vt-sb-section" });
+    section.setAttr("data-section", id);
+    section.toggleClass("is-collapsed", collapsed);
+    const head = section.createDiv({ cls: "vt-sb-section-head" });
+    head.setAttr("role", "button");
+    head.setAttr("tabindex", "0");
+    head.setAttr("aria-expanded", String(!collapsed));
+    setIcon(head.createSpan({ cls: "vt-sb-section-arrow" }), collapsed ? "chevron-right" : "chevron-down");
+    const label = head.createSpan({ cls: "vt-sb-section-title", text: title });
+    if (titleRef) titleRef.el = label;
+    const toggle = () => {
+      this.sections.toggle(id);
+      this.draw();
+    };
+    head.addEventListener("click", toggle);
+    head.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle();
+      }
+    });
+    if (collapsed) return null;
+    return section.createDiv({ cls: "vt-sb-section-body" });
+  }
+
+  private drawWords(root: HTMLElement, scope: Component) {
+    const entries = this.plugin.store.entries;
 
     // ── Scope: words from this note, or all words ────────────────
     const activeFile = this.plugin.app.workspace.getActiveFile();
@@ -405,19 +533,22 @@ export class VocabSidebarView extends ItemView {
         openWordPage: (entry: VocabEntry) => void this.plugin.openWordPage(entry.id),
       };
       if (this.filterMode === "all") {
-        // Grouped by source note, same as the vocab-list dashboard — "This
-        // note" stays flat since every row would be in the same group anyway.
+        // Grouped by source note (or where a word from no note came from),
+        // same as the vocab-list dashboard — "This note" stays flat since
+        // every row would be in the same group anyway. Most recently
+        // changed first, groups too (1005 回饋 1).
         renderGroupedVocabList(
           this.plugin,
           listEl,
           list,
           this.collapsedGroups,
           this.expandState,
-          () => this.render(),
-          rowOpts
+          (entryId) => this.renderKeeping(entryId),
+          rowOpts,
+          { order: "recent" }
         );
       } else {
-        for (const entry of list) {
+        for (const entry of sortByRecent(list)) {
           const state = this.expandState.get(entry.id) ?? "collapsed";
           renderVocabRow(
             this.plugin,
@@ -425,7 +556,7 @@ export class VocabSidebarView extends ItemView {
             entry,
             state,
             (s) => this.expandState.set(entry.id, s),
-            () => this.render(),
+            () => this.renderKeeping(entry.id),
             rowOpts
           );
         }

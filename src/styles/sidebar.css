@@ -514,3 +514,168 @@
     min-height: 44px;
   }
 }
+
+/* ── Foldable sections: 單字 / AI 討論 (1005 回饋 2) ─────────────────── */
+
+.vt-sb-section + .vt-sb-section {
+  margin-top: 14px;
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 10px;
+}
+
+.vt-sb-section-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--text-normal);
+  padding: 2px 0;
+  margin-bottom: 8px;
+  border-radius: var(--radius-s, 4px);
+}
+
+.vt-sb-section.is-collapsed .vt-sb-section-head {
+  margin-bottom: 0;
+  color: var(--text-muted);
+}
+
+.vt-sb-section-head:hover {
+  background: var(--background-modifier-hover);
+}
+
+.vt-sb-section-head:focus-visible {
+  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.vt-sb-section-arrow {
+  display: inline-flex;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.vt-sb-section-arrow svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── AI 討論 list ─────────────────────────────────────────────────── */
+
+.vt-dlist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vt-dlist-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 8px;
+  border-radius: var(--radius-m, 8px);
+  cursor: pointer;
+}
+
+.vt-dlist-row:hover,
+.vt-dlist-row:focus-visible {
+  background: var(--background-modifier-hover);
+}
+
+.vt-dlist-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.9em;
+  color: var(--text-normal);
+}
+
+.vt-dlist-icon {
+  display: inline-flex;
+  color: var(--text-accent);
+  flex-shrink: 0;
+}
+
+.vt-dlist-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.vt-dlist-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.vt-dlist-row.is-word .vt-dlist-text {
+  font-weight: 600;
+}
+
+.vt-dlist-meta {
+  font-size: 0.75em;
+  color: var(--text-muted);
+  padding-left: 19px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vt-dlist-more {
+  align-self: flex-start;
+  margin-top: 4px;
+  font-size: 0.8em;
+}
+
+/* ── Word groups from no note (1005 回饋 13) ─────────────────────── */
+
+.vt-group-title-link {
+  text-transform: none;
+  letter-spacing: 0;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.vt-group-title-link:hover {
+  color: var(--text-accent);
+}
+
+/* ── A word brought into view (1005 回饋 3) ──────────────────────── */
+
+@keyframes vt-row-flash {
+  0%,
+  35% {
+    box-shadow: inset 0 0 0 2px var(--interactive-accent);
+    background: var(--background-modifier-hover);
+  }
+  100% {
+    box-shadow: inset 0 0 0 2px transparent;
+  }
+}
+
+.vt-row.vt-row-flash {
+  animation: vt-row-flash 1.6s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-row.vt-row-flash {
+    animation: none;
+    box-shadow: inset 0 0 0 2px var(--interactive-accent);
+  }
+}
+
+/* ── 加入 / 更新 on the card (1005 回饋 14) ──────────────────────── */
+
+.vt-row-dates {
+  margin: 4px 0 0;
+}
+
+body.is-mobile .vt-sb-section-head,
+body.is-mobile .vt-dlist-row {
+  min-height: 44px;
+}
+
+body.is-mobile .vt-sb-section-head {
+  padding: 0 4px;
+}
