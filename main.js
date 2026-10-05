@@ -1214,11 +1214,107 @@ var WORD_TEMPLATE = `\u3014\u55AE\u5B57\u3015{{word}}
 {{/example}}{{/sourceParagraph}}
 {{#otherExamples}}\u3014\u5176\u4ED6\u7B46\u8A18\u88E1\u7684\u4F8B\u53E5\u3015
 {{otherExamples}}{{/otherExamples}}`;
+var TOKEN_RE = /[a-z0-9]+(?:['-][a-z0-9]+)*/g;
+var MAX_GAP = 3;
+function tokens(text) {
+  var _a;
+  return (_a = text.toLowerCase().replace(/[‘’]/g, "'").replace(/[‐‑]/g, "-").match(TOKEN_RE)) != null ? _a : [];
+}
+var isConsonant = (c) => /[b-df-hj-np-tv-z]/.test(c);
+var ACCIDENTAL = /* @__PURE__ */ new Set(["she", "the", "her"]);
+function wordForms(token, side) {
+  const w = token.endsWith("'s") ? token.slice(0, -2) : token;
+  const out = /* @__PURE__ */ new Set([token, w]);
+  const ends = (suf) => w.length > suf.length && w.endsWith(suf);
+  const add2 = (form) => {
+    if (!(side === "word" && ACCIDENTAL.has(form))) out.add(form);
+  };
+  const stem = (base, min2) => {
+    if (base.length < min2) return;
+    add2(base);
+    const last = base[base.length - 1];
+    if (last === base[base.length - 2] && isConsonant(last)) add2(base.slice(0, -1));
+  };
+  const rebuilt = (base, min2) => {
+    if (base.length >= min2) add2(base);
+  };
+  const min = side === "word" ? 4 : 3;
+  if (ends("ies") || ends("ied")) rebuilt(w.slice(0, -3) + "y", 3);
+  if (ends("s") && !ends("ss")) {
+    const base = w.slice(0, -1);
+    if (side === "word" && base.endsWith("e")) rebuilt(base, 3);
+    else stem(base, min);
+  }
+  if (ends("es")) {
+    const base = w.slice(0, -2);
+    if (side === "selection") stem(base, min);
+    else if (/(?:[sxzo]|ch|sh)$/.test(base)) rebuilt(base, 3);
+  }
+  if (ends("eed")) {
+    rebuilt(w.slice(0, -1), 4);
+  } else if (ends("ed")) {
+    stem(w.slice(0, -2), min);
+    rebuilt(w.slice(0, -1), 3);
+  }
+  if (ends("ing")) {
+    stem(w.slice(0, -3), min);
+    rebuilt(w.slice(0, -3) + "e", 3);
+  }
+  if (ends("ying")) rebuilt(w.slice(0, -4) + "ie", 3);
+  if (side === "word") {
+    if (ends("ier")) rebuilt(w.slice(0, -3) + "y", 4);
+    if (ends("iest")) rebuilt(w.slice(0, -4) + "y", 4);
+    return out;
+  }
+  if (ends("ier")) rebuilt(w.slice(0, -3) + "y", 4);
+  if (ends("iest")) rebuilt(w.slice(0, -4) + "y", 4);
+  if (ends("ily")) rebuilt(w.slice(0, -3) + "y", 4);
+  for (const suf of ["er", "est", "r", "st", "ly", "y"]) {
+    if (ends(suf)) stem(w.slice(0, -suf.length), 4);
+  }
+  return out;
+}
+function sameWord(a, b) {
+  for (const x of a) if (b.has(x)) return true;
+  return false;
+}
+function inOrder(want, have) {
+  const from = (wi, si) => {
+    if (wi === want.length) return true;
+    const end = wi === 0 ? have.length : Math.min(have.length, si + MAX_GAP + 1);
+    for (let i = si; i < end; i++) {
+      if (sameWord(want[wi], have[i]) && from(wi + 1, i + 1)) return true;
+    }
+    return false;
+  };
+  return from(0, 0);
+}
+function selectionHasWord(selection, word) {
+  const sel = selection.trim();
+  if (!sel) return false;
+  if (buildWordRe(word.trim()).test(sel)) return true;
+  const wordToks = tokens(word);
+  if (wordToks.length === 0) return true;
+  const selToks = tokens(sel);
+  const whole = wordToks.join(" ");
+  if (selToks.length === 1 && selToks[0] === sel.toLowerCase()) {
+    const s = selToks[0];
+    if (s.length >= 4 && s.length * 2 > whole.length && whole.startsWith(s)) return true;
+  }
+  const parts = (toks, side) => toks.flatMap((t2) => t2.split("-")).filter(Boolean).map((t2) => wordForms(t2, side));
+  if (inOrder(parts(wordToks, "word"), parts(selToks, "selection"))) return true;
+  if (wordToks.length === 1) {
+    const joined = wordForms(wordToks[0].replace(/-/g, ""), "word");
+    return selToks.some((t2) => sameWord(joined, wordForms(t2.replace(/-/g, ""), "selection")));
+  }
+  return false;
+}
 function buildWordContext(input) {
   var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
   const e = input.entry;
   const sourceParagraph = (_b = (_a = input.sourceParagraph) == null ? void 0 : _a.trim()) != null ? _b : "";
-  const example = (_d = (_c = e.example) == null ? void 0 : _c.trim()) != null ? _d : "";
+  const selection = (_d = (_c = input.selection) == null ? void 0 : _c.trim()) != null ? _d : "";
+  const example = (_f = (_e = e.example) == null ? void 0 : _e.trim()) != null ? _f : "";
   return {
     wordBlock: renderTemplate(WORD_TEMPLATE, {
       word: e.word,
@@ -1230,16 +1326,18 @@ function buildWordContext(input) {
       antonyms: e.antonyms,
       grammar: e.grammar,
       sourceParagraph,
-      sourceTitle: (_e = input.sourceTitle) == null ? void 0 : _e.trim(),
+      sourceTitle: (_g = input.sourceTitle) == null ? void 0 : _g.trim(),
       example,
-      otherExamples: ((_f = input.otherExamples) != null ? _f : []).map((s) => `- ${s.trim()}`).join("\n")
+      otherExamples: ((_h = input.otherExamples) != null ? _h : []).map((s) => `- ${s.trim()}`).join("\n")
     }),
     slots: {
       word: e.word,
-      selection: (_h = (_g = input.selection) == null ? void 0 : _g.trim()) != null ? _h : "",
+      selection,
       question: (_j = (_i = input.question) == null ? void 0 : _i.trim()) != null ? _j : "",
       compareWith: (_l = (_k = input.compareWith) == null ? void 0 : _k.trim()) != null ? _l : "",
-      hasSource: sourceParagraph || example ? "yes" : ""
+      hasSource: sourceParagraph || example ? "yes" : "",
+      selectionMissesWord: selection && !selectionHasWord(selection, e.word) ? "yes" : "",
+      sourceKind: sourceParagraph ? "\u6BB5\u843D" : example ? "\u53E5\u5B50" : ""
     }
   };
 }
@@ -1326,7 +1424,11 @@ var WORD_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u8010\u5FC3\u3001\u7CBE\u6E96\u
 var SELECTION_HEADER = `{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015
 {{selection}}
 
-{{/selection}}`;
+{{/selection}}{{#selectionMissesWord}}\u3014\u6CE8\u610F\u3015\u4E0A\u9762\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015\u88E1\u4F3C\u4E4E\u6C92\u6709 {{word}}\u3002\u5982\u679C\u5B83\u5176\u5BE6\u542B\u6709 {{word}} \u7684\u8B8A\u5316\u5F62\uFF08\u4F8B\u5982\u4E0D\u898F\u5247\u7684\u904E\u53BB\u5F0F\u6216\u8907\u6578\uFF09\uFF0C\u5C31\u5FFD\u7565\u9019\u6BB5\u6CE8\u610F\uFF0C\u7167\u4E00\u822C\u898F\u5247\u4EE5\u9078\u53D6\u6240\u5728\u7684\u53E5\u5B50\u70BA\u6E96\u3002
+\u5426\u5247\u4E0D\u8981\u7528\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015\u4F86\u5224\u65B7\u4F7F\u7528\u8005\u5728\u554F\u54EA\u4E00\u53E5\uFF0C\u56DE\u7B54\u7684\u7B2C\u4E00\u884C\u56FA\u5B9A\u5BEB\uFF1A\u4F60\u9078\u53D6\u7684\u6587\u5B57\u88E1\u4F3C\u4E4E\u6C92\u6709 {{word}}\uFF0C{{#sourceKind}}\u4EE5\u4E0B\u4EE5\u51FA\u8655{{sourceKind}}\u70BA\u6E96\u3002{{/sourceKind}}{{^sourceKind}}\u4EE5\u4E0B\u76F4\u63A5\u8AAA\u660E {{word}}\u3002{{/sourceKind}}
+\u7A7A\u4E00\u884C\u5F8C\u518D\u56DE\u7B54{{#sourceKind}}\uFF0C\u7167\u300C\u5224\u65B7\u4F7F\u7528\u8005\u5728\u554F\u54EA\u4E00\u53E5\u300D\u7684\u5176\u4ED6\u7DDA\u7D22\uFF08\u554F\u984C\u88E1\u5F15\u7528\u7684\u82F1\u6587\u7247\u6BB5\uFF0C\u6216\u3014\u51FA\u8655{{sourceKind}}\u3015\u4E2D\u542B\u6709 {{word}} \u7684\u53E5\u5B50\uFF09\u6C7A\u5B9A\u662F\u54EA\u4E00\u53E5\uFF1B\u9700\u8981\u5BEB\u300C\u4F60\u554F\u7684\u662F\uFF1A\u2026\u300D\u90A3\u4E00\u884C\u6642\uFF0C\u653E\u5728\u9019\u53E5\u63D0\u9192\u4E4B\u5F8C{{/sourceKind}}\u3002
+
+{{/selectionMissesWord}}`;
 var WORD_TEMPLATES = {
   usage: `${SELECTION_HEADER}\u4EFB\u52D9\uFF1A\u7528\u6CD5\uFF08{{word}}\uFF09
 \u8AAA\u660E {{word}} \u6700\u5E38\u898B\u7684 2 \u5230 3 \u7A2E\u7528\u6CD5\u6216\u642D\u914D\uFF08collocation\uFF09\uFF0C\u6BCF\u7A2E\u9644\u4E00\u500B\u7C21\u77ED\u4F8B\u53E5\u548C\u4E2D\u6587\u7FFB\u8B6F\u3002{{#hasSource}}\u5982\u679C\u3014\u51FA\u8655\u6BB5\u843D\u3015\u88E1\u7684\u7528\u6CD5\u5C6C\u65BC\u5176\u4E2D\u4E00\u7A2E\uFF0C\u6A19\u51FA\u4F86\u3002{{/hasSource}}`,
@@ -1345,7 +1447,13 @@ function wordTask(id, opts) {
   return {
     id: `word.${id}`,
     // v2: follow-ups skip a repeated 「你問的是」 line (規劃書 06 §6.4.1 #3).
-    version: 2,
+    // v3: a selection that doesn't seem to contain the word (checked in code
+    //     by wordContext.selectionHasWord) adds a 〔注意〕 block: first line
+    //     reminds the learner (「你選取的文字裡似乎沒有 X，以下以出處段落／
+    //     句子為準。」), then the source is used as before; the model ignores
+    //     the notice if the selection holds an irregular form of the word.
+    //     Unchanged output when the selection contains the word.
+    version: 3,
     surface: "word",
     ...opts,
     build(input, ctx) {
@@ -2538,7 +2646,7 @@ function renderReviewButton(plugin, el, ctx) {
   });
 }
 
-// node_modules/ts-fsrs/dist/index.mjs
+// ../../../node_modules/ts-fsrs/dist/index.mjs
 var FSRSError = class _FSRSError extends Error {
   constructor(message = "FSRS Error") {
     var _a;
@@ -6805,9 +6913,11 @@ function settleStaleTurns(threads) {
 }
 
 // src/services/threads/pin.ts
-var SCOPE_LINE_RE = /^\s*你問的是[:：][^\n]*\n+/;
+var LEAD = String.raw`^\s*(?:[>*_]+\s*)?`;
+var SELECTION_NOTICE_RE = new RegExp(`${LEAD}\u4F60\u9078\u53D6\u7684\u6587\u5B57[\u88E1\u91CC\u4E2D\u5167]?(?:\u4F3C\u4E4E|\u597D\u50CF)?\u6C92\u6709[^\\n]*(?:\\n+|$)`);
+var SCOPE_LINE_RE = new RegExp(`${LEAD}\u4F60\u554F\u7684\u662F[:\uFF1A][^\\n]*\\n+`);
 function pinText(answer) {
-  return answer.replace(SCOPE_LINE_RE, "").trim();
+  return answer.replace(SELECTION_NOTICE_RE, "").replace(SCOPE_LINE_RE, "").trim();
 }
 function addPin(grammar, text) {
   const current = grammar.trim();
@@ -7145,7 +7255,7 @@ var ObsidianWordlists = class {
 
 // src/core/wordlists/lemma.ts
 var MIN_BASE = 3;
-function isConsonant(c) {
+function isConsonant2(c) {
   return /[b-df-hj-np-tv-z]/.test(c);
 }
 function lemmaCandidates(lower) {
@@ -7165,7 +7275,7 @@ function lemmaCandidates(lower) {
     add2(w.slice(0, -1));
     const stem = w.slice(0, -2);
     add2(stem);
-    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant(stem[stem.length - 1])) {
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant2(stem[stem.length - 1])) {
       add2(stem.slice(0, -1));
     }
   }
@@ -7173,7 +7283,7 @@ function lemmaCandidates(lower) {
     const stem = w.slice(0, -3);
     add2(stem);
     add2(stem + "e");
-    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant(stem[stem.length - 1])) {
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant2(stem[stem.length - 1])) {
       add2(stem.slice(0, -1));
     }
     if (stem.endsWith("y")) add2(stem.slice(0, -1) + "ie");
