@@ -545,7 +545,7 @@ body.is-mobile .vt-fc-kbd {
   color: var(--color-red);
 }
 
-/* Rating buttons: one row on desktop; 2×2 on iPhone is in mobile.css (M2) */
+/* Rating buttons: one row on desktop; 2×2 on iPhone and narrow iPad is in mobile.css (M2) */
 .vt-fc-ratings {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

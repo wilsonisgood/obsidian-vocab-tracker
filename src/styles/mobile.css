@@ -305,19 +305,27 @@ body.is-mobile .vt-pbadge::after {
   inset: -14px -10px;
 }
 
-/* ── Flashcard ratings: 2×2 on iPhone (design M2), one row on a wide iPad ── */
+/* ── Flashcard ratings: 2×2 on iPhone (design M2) and on a narrow iPad
+   (Split View / Slide Over, < 600px); one row of four on a wide iPad ── */
 
-body.is-phone .vt-fc-ratings {
+body.is-phone .vt-fc-ratings,
+body.is-tablet .vt-fc-ratings {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
-body.is-phone .vt-fc-rate {
+body.is-phone .vt-fc-rate,
+body.is-tablet .vt-fc-rate {
   min-height: 64px;
 }
 
 @media (min-width: 600px) {
   body.is-tablet .vt-fc-ratings {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  body.is-tablet .vt-fc-rate {
+    min-height: 56px;
   }
 }
