@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AiError } from "../../../src/services/ai/errors";
 import { VerbUsageService, verbThreadId } from "../../../src/services/learn/VerbUsageService";
 import { entry, FakeLearnAi, FakeVocab, result } from "./fakes";
@@ -35,9 +35,12 @@ describe("VerbUsageService", () => {
     const { verbs, vocab, ai } = setup();
     const busy: boolean[] = [];
     verbs.events.on("verb:busy", (e) => busy.push(e.busy));
+    const saved: string[] = [];
+    verbs.events.on("verb:usage", (e) => saved.push(e.entryId));
     const e = vocab.entries[0];
 
     const block = await verbs.generate(e);
+    expect(saved).toEqual([e.id]);
     expect(block).toEqual({
       patterns: [USAGE.patterns[0]],
       related: USAGE.related,
@@ -67,7 +70,10 @@ describe("VerbUsageService", () => {
     const e = vocab.entries[0];
     const old = { patterns: [], related: [], generatedAt: "x", model: "m" };
     e.usage = old;
+    const saved = vi.fn();
+    verbs.events.on("verb:usage", saved);
     await expect(verbs.generate(e)).rejects.toMatchObject({ code: "bad_output" });
+    expect(saved).not.toHaveBeenCalled();
     expect(e.usage).toBe(old);
     expect(verbs.isBusy(e.id)).toBe(false);
   });

@@ -240,6 +240,20 @@ export class ExportService {
     this.track(source.on("thread:upsert", (thread) => this.threadChanged(thread)));
   }
 
+  // LearnStore: families and saved trivia (deletes arrive as upserts
+  // carrying deletedAt). A sync merge ("learn:reloaded") isn't followed:
+  // the device that made the change already exported it, and the files
+  // sync on their own.
+  watchLearn(source: Subscribable<{ "family:upsert": ExportFamily; "trivia:upsert": ExportTrivia }>): void {
+    this.track(source.on("family:upsert", (family) => this.familyChanged(family)));
+    this.track(source.on("trivia:upsert", (item) => this.triviaItemChanged(item)));
+  }
+
+  // VerbUsageService: a usage block was (re)generated.
+  watchUsage(source: Subscribable<{ "verb:usage": { entryId: string } }>): void {
+    this.track(source.on("verb:usage", ({ entryId }) => this.usageChanged(entryId)));
+  }
+
   // Keeps an unsubscribe function to call on dispose().
   track(unsubscribe: () => void): void {
     if (this.disposed) unsubscribe();

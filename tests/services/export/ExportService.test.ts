@@ -2,7 +2,11 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { TypedEmitter } from "../../../src/core/events";
 import { getLocale, setLocale, type Locale } from "../../../src/core/i18n";
 import type { VocabEntry } from "../../../src/core/model/entry";
+import type { Family } from "../../../src/core/model/family";
 import type { Thread } from "../../../src/core/model/thread";
+import type { TriviaItem } from "../../../src/core/model/trivia";
+import type { LearnEvents } from "../../../src/services/learn/LearnStore";
+import type { VerbUsageEvents } from "../../../src/services/learn/VerbUsageService";
 import { ExportService, shortDate } from "../../../src/services/export/ExportService";
 import { findManagedBlock } from "../../../src/services/export/managedBlock";
 import type { VaultPort } from "../../../src/core/ports";
@@ -792,6 +796,35 @@ describe("events, flush and dispose", () => {
     events.emit("thread:upsert", GLITTERY_THREAD);
     await vi.advanceTimersByTimeAsync(1000);
     expect(vault.exists(GLITTERY_PAGE)).toBe(true);
+  });
+
+  it("follows LearnStore's families / saved trivia and VerbUsageService's usage", () => {
+    const learn = new TypedEmitter<LearnEvents>();
+    const verbs = new TypedEmitter<VerbUsageEvents>();
+    svc.watchLearn(learn);
+    svc.watchUsage(verbs);
+    const family = vi.spyOn(svc, "familyChanged");
+    const trivia = vi.spyOn(svc, "triviaItemChanged");
+    const usage = vi.spyOn(svc, "usageChanged");
+    const f = { ...FAMILIES[0], source: "ai" } as Family;
+    const item = TRIVIA[0] as TriviaItem;
+    learn.emit("family:upsert", f);
+    learn.emit("trivia:upsert", item);
+    learn.emit("learn:reloaded", undefined);
+    verbs.emit("verb:usage", { entryId: GLITTERY.id });
+    verbs.emit("verb:busy", { entryId: GLITTERY.id, busy: true });
+    expect(family).toHaveBeenCalledWith(f);
+    expect(trivia).toHaveBeenCalledWith(item);
+    expect(usage).toHaveBeenCalledWith(GLITTERY.id);
+    expect(family).toHaveBeenCalledTimes(1);
+    expect(trivia).toHaveBeenCalledTimes(1);
+    expect(usage).toHaveBeenCalledTimes(1);
+
+    svc.dispose();
+    learn.emit("family:upsert", f);
+    verbs.emit("verb:usage", { entryId: GLITTERY.id });
+    expect(family).toHaveBeenCalledTimes(1);
+    expect(usage).toHaveBeenCalledTimes(1);
   });
 
   it("paragraph threads export the article's note; trivia sessions export nothing", async () => {

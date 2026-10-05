@@ -10,6 +10,8 @@ import type { LearnAi, LearnVocabPort } from "./ports";
 
 export interface VerbUsageEvents {
   "verb:busy": { entryId: string; busy: boolean };
+  // A new usage block was saved on the entry (the word page re-exports it).
+  "verb:usage": { entryId: string };
 }
 
 export interface VerbUsageServiceDeps {
@@ -70,6 +72,7 @@ export class VerbUsageService {
       const block: UsageBlock = { ...draft, generatedAt: this.clock().toISOString(), model: r.model };
       entry.usage = block;
       await this.deps.vocab.touch(entry);
+      this.events.emit("verb:usage", { entryId: entry.id });
       return block;
     } finally {
       this.setBusy(entry.id, false);
