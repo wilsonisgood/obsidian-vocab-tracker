@@ -9,9 +9,17 @@
 // The voice itself is left to the system (lang = en-US): Apple's voice list
 // also has novelty en-US voices, so "the first English voice" can't be
 // trusted to be a sensible one.
+// speak() reports start / end (onstart, onend / onerror) so the 🔊 button
+// can show loading and playing (1005 回饋第 12 項, services/speech).
+
+import type { SpeakEvents, SynthPort } from "../../services/speech/Pronouncer";
 
 export interface SynthUtterance {
   lang: string;
+  // `never` parameter: SpeechSynthesisUtterance's own handler types fit.
+  onstart?: ((ev: never) => unknown) | null;
+  onend?: ((ev: never) => unknown) | null;
+  onerror?: ((ev: never) => unknown) | null;
 }
 
 export interface Synth {
@@ -22,8 +30,11 @@ export interface Synth {
   speak(u: SynthUtterance): void;
 }
 
-export class Speaker {
+export class Speaker implements SynthPort {
   private warmed = false;
+  // Held so Chromium doesn't garbage-collect the utterance mid-speech
+  // (its onend would then never fire).
+  private utterance: SynthUtterance | null = null;
 
   constructor(
     private synth: Synth | null,
@@ -45,15 +56,30 @@ export class Speaker {
   }
 
   // false when the device has no speech synthesis at all.
-  speak(word: string): boolean {
+  speak(word: string, events: SpeakEvents = {}): boolean {
     const synth = this.synth;
     if (!synth) return false;
     this.warmUp();
     const u = this.makeUtterance(word);
     u.lang = "en-US";
+    const done = () => {
+      if (this.utterance === u) this.utterance = null;
+      events.onEnd?.();
+    };
+    if (events.onStart) u.onstart = () => events.onStart?.();
+    u.onend = done;
+    u.onerror = done;
     if (synth.speaking || synth.pending) synth.cancel();
+    this.utterance = u;
     synth.speak(u);
     return true;
+  }
+
+  // Stops the current utterance (only when something is playing — see
+  // the WebKit note above).
+  cancel(): void {
+    const synth = this.synth;
+    if (synth && (synth.speaking || synth.pending)) synth.cancel();
   }
 }
 
@@ -62,4 +88,12 @@ export function browserSpeaker(): Speaker {
   const w = typeof window !== "undefined" ? (window as unknown as { speechSynthesis?: Synth }) : undefined;
   const synth = w?.speechSynthesis ?? null;
   return new Speaker(synth, (text) => new SpeechSynthesisUtterance(text));
+}
+
+// One Speaker for the whole plugin: main.ts warms it up at load and the
+// pronounce kit (ui/kit/pronounce.ts) speaks through it.
+let shared: Speaker | null = null;
+export function sharedSpeaker(): Speaker {
+  shared ??= browserSpeaker();
+  return shared;
 }

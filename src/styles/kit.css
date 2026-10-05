@@ -110,3 +110,53 @@
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
+
+/* 🔊 pronounce buttons (ui/kit/pronounce.ts, 1005 回饋第 12 項):
+   a spinning ring while the recording / system voice gets ready, accent
+   colour while it speaks. */
+.vt-pronounce {
+  position: relative;
+}
+
+.vt-pronounce.is-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.7em;
+  height: 1.7em;
+  margin: -0.85em 0 0 -0.85em;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  opacity: 0.7;
+  pointer-events: none;
+  animation: vt-pronounce-spin 0.8s linear infinite;
+}
+
+.vt-pronounce.is-loading svg {
+  opacity: 0.55;
+}
+
+.vt-pronounce.is-playing {
+  color: var(--interactive-accent);
+}
+
+@keyframes vt-pronounce-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes vt-pronounce-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-pronounce.is-loading::after {
+    animation: vt-pronounce-pulse 1.2s ease-in-out infinite;
+  }
+}

@@ -523,6 +523,20 @@ body.is-mobile .vt-fc-kbd {
   height: 28px;
 }
 
+/* Loading ring sits just outside the round button; playing pulses it. */
+.vt-fc-listen.vt-pronounce.is-loading::after {
+  width: 76px;
+  height: 76px;
+  margin: -38px 0 0 -38px;
+  border-color: var(--vt-accent);
+  border-right-color: transparent;
+}
+
+.vt-fc-listen.vt-pronounce.is-playing {
+  color: var(--text-on-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--vt-accent) 30%, transparent);
+}
+
 .vt-fc-input {
   width: min(100%, 280px);
   min-height: var(--vt-tap);
