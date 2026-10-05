@@ -8,6 +8,11 @@ import type { ParagraphVaultPort, VaultPort } from "../core/ports";
 //   I — exists, create, rename, findManaged, ready
 // Methods still unimplemented throw, so a missing piece fails loudly.
 
+// Thrown inside vault.process to skip writing an unchanged note.
+class Unchanged {
+  constructor(readonly text: string) {}
+}
+
 const todo = (method: string, task: string): Error =>
   new Error(`ObsidianVault.${method} is not implemented yet (規劃書 07 task ${task})`);
 
@@ -28,13 +33,34 @@ export class ObsidianVault implements VaultPort, ParagraphVaultPort {
   // class. Skip the write when `fn` returns the text unchanged (no mtime
   // bump, no sync churn). Rejects when the file doesn't exist. Needs
   // minAppVersion ≥ 1.1.0 in manifest.json.
-  async process(_path: string, _fn: (text: string) => string): Promise<string> {
-    throw todo("process", "G");
+  async process(path: string, fn: (text: string) => string): Promise<string> {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) throw new Error(`File not found: ${path}`);
+    // vault.process writes whatever the callback returns; throwing is the
+    // only way to cancel the write from inside the atomic callback, so an
+    // unchanged result throws this module-private marker (fn can't throw
+    // one itself) and is caught below.
+    try {
+      return await this.app.vault.process(file, (text) => {
+        const next = fn(text);
+        if (next === text) throw new Unchanged(text);
+        return next;
+      });
+    } catch (e) {
+      if (e instanceof Unchanged) return e.text;
+      throw e;
+    }
   }
 
   // Any markdown file whose metadataCache blocks already have this id.
-  blockIdTaken(_id: string): boolean {
-    throw todo("blockIdTaken", "G");
+  // metadataCache keys block ids in lower case.
+  blockIdTaken(id: string): boolean {
+    const key = id.toLowerCase();
+    const { metadataCache, vault } = this.app;
+    return vault.getMarkdownFiles().some((f) => {
+      const blocks = metadataCache.getFileCache(f)?.blocks;
+      return !!blocks && (Object.prototype.hasOwnProperty.call(blocks, key) || Object.prototype.hasOwnProperty.call(blocks, id));
+    });
   }
 
   // ── task I ────────────────────────────────────────────────────────────
