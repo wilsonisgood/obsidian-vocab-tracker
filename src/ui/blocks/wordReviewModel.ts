@@ -1,7 +1,7 @@
 import type { VocabEntry } from "../../core/model/entry";
 import { CARD_MODES, type CardMode } from "../../core/model/srs";
 import { matchesFilter, type ReviewTiming } from "../../services/srs/queue";
-import { L } from "./leftoverStrings";
+import { t } from "../../core/i18n";
 import { shortDate } from "./verbsModel";
 
 // One-word review (「複習這個字」 on a word page): the pure parts, kept free
@@ -24,11 +24,11 @@ export function singleReviewMode(entry: VocabEntry, preferred: CardMode | null |
 export function timingText(timing: ReviewTiming): string {
   switch (timing.kind) {
     case "new":
-      return L("flashcards.single.new");
+      return t("flashcards.single.new");
     case "due":
-      return L("flashcards.single.due");
+      return t("flashcards.single.due");
     case "early":
-      return L("flashcards.single.early", { date: shortDate(timing.due.toISOString()) ?? "" });
+      return t("flashcards.single.early", { date: shortDate(timing.due.toISOString()) ?? "" });
   }
 }
 
@@ -38,6 +38,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // in its learning steps.
 export function nextReviewText(due: Date, now: Date, interval: (ms: number) => string): string {
   const ms = due.getTime() - now.getTime();
-  if (ms < DAY_MS) return L("flashcards.single.nextSoon", { interval: interval(ms) });
-  return L("flashcards.single.next", { date: shortDate(due.toISOString()) ?? "", interval: interval(ms) });
+  if (ms < DAY_MS) return t("flashcards.single.nextSoon", { interval: interval(ms) });
+  return t("flashcards.single.next", { date: shortDate(due.toISOString()) ?? "", interval: interval(ms) });
 }

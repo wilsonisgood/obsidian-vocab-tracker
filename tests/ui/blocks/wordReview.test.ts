@@ -3,7 +3,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 vi.mock("obsidian", () => ({ setIcon: () => undefined }));
 
 import { getLocale, setLocale, type Locale } from "../../../src/core/i18n";
-import { LEFTOVER_STRINGS } from "../../../src/ui/blocks/leftoverStrings";
+import { en } from "../../../src/core/i18n/en";
+import { zhTW } from "../../../src/core/i18n/zh-TW";
 import { wordOpener } from "../../../src/ui/blocks/learnUi";
 import {
   nextReviewText,
@@ -56,13 +57,28 @@ describe("one-word review (「複習這個字」)", () => {
   });
 });
 
-describe("leftover strings", () => {
-  it("has every key in both languages with the same placeholders", () => {
-    const zh = LEFTOVER_STRINGS["zh-TW"];
-    const en = LEFTOVER_STRINGS.en;
-    expect(Object.keys(en).sort()).toEqual(Object.keys(zh).sort());
+describe("one-word review strings", () => {
+  const KEYS = [
+    "flashcards.single.source",
+    "flashcards.single.new",
+    "flashcards.single.due",
+    "flashcards.single.early",
+    "flashcards.single.noCloze",
+    "flashcards.single.done",
+    "flashcards.single.next",
+    "flashcards.single.nextSoon",
+    "flashcards.single.again",
+    "flashcards.single.close",
+    "learn.openWord",
+  ] as const;
+
+  it("are in both dictionaries with the same placeholders", () => {
     const vars = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort();
-    for (const key of Object.keys(zh) as (keyof typeof zh)[]) expect(vars(en[key])).toEqual(vars(zh[key]));
+    for (const key of KEYS) {
+      expect(en[key]).toBeTruthy();
+      expect(zhTW[key]).toBeTruthy();
+      expect(vars(en[key])).toEqual(vars(zhTW[key]));
+    }
   });
 });
 

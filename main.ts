@@ -59,6 +59,8 @@ import { EntryFilesService } from "./src/services/files/EntryFilesService";
 import { SeedRecord } from "./src/services/files/SeedRecord";
 import type { EntryFileId } from "./src/services/files/entryFiles";
 import type { WordHeaderHost } from "./src/ui/blocks/wordHeader";
+import type { WordLinkHost } from "./src/ui/blocks/learnUi";
+import { openWordReview } from "./src/ui/blocks/wordReview";
 import { createWordPageDecorator } from "./src/ui/reading/WordPageDecorator";
 import { ParagraphAnchorService, type SectionRef } from "./src/services/anchors/ParagraphAnchorService";
 import { ParagraphIndex } from "./src/services/anchors/ParagraphIndex";
@@ -82,8 +84,9 @@ const RESUME_ENRICH_DELAY_MS = 5000;
 
 // ─── Plugin ───────────────────────────────────────────────────────────────────
 
-// The plugin is the vocab-word block's host (src/ui/blocks/registry.ts).
-export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost {
+// The plugin is the host of every vocab-* block (src/ui/blocks/registry.ts):
+// vocab-word's WordHeaderHost, the M7 blocks' WordLinkHost.
+export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost, WordLinkHost {
   vocabData: VocabData = { entries: [] };
   store!: VocabStore;
   dictionary!: DictionaryService;
@@ -660,9 +663,17 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     return this.notes.read(path);
   }
 
-  // 「複習這個字」: for now the flashcards entry file (not a one-word session).
-  reviewWord(_entry: VocabEntry) {
-    return this.openFlashcards();
+  // 「複習這個字」: a one-word review in a modal — the 單字卡 card and
+  // rating on just this word, due or not.
+  reviewWord(entry: VocabEntry) {
+    openWordReview(this, entry);
+  }
+
+  // 字族樹 / 動詞用法 / 冷知識 chips of learned words: the word's card in
+  // the sidebar, on its data tab.
+  async openWordCard(entry: VocabEntry) {
+    const leaf = await this.activateSidebar();
+    (leaf.view as VocabSidebarView).openWord(entry.id, "data");
   }
 
   async ensureVocabFile() {

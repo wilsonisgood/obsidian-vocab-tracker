@@ -8,7 +8,6 @@ import { t, type I18nKey } from "../../core/i18n";
 import type { SrsService } from "../../services/srs/SrsService";
 import { isNewCard, matchesFilter, type QueueFilter } from "../../services/srs/queue";
 import { buildBatchRows, type BatchRow } from "./flashcardsBatch";
-import { L } from "./leftoverStrings";
 import { parseFlashcardParams, type FlashcardParams } from "./params";
 import { findTarget } from "./wordHeader";
 import { nextReviewText, parseCardMode, timingText } from "./wordReviewModel";
@@ -340,7 +339,7 @@ export class FlashcardsBlock extends MarkdownRenderChild {
     // Never the word itself: in 中→英 / 聽音拼字 that's the answer.
     setIcon(src.createSpan({ cls: "vt-fc-icon" }), this.single ? "crosshair" : "folder");
     src.createSpan({
-      text: this.single ? L("flashcards.single.source") : (this.params.source ?? t("flashcards.source.all")),
+      text: this.single ? t("flashcards.single.source") : (this.params.source ?? t("flashcards.source.all")),
     });
   }
 
@@ -514,7 +513,7 @@ export class FlashcardsBlock extends MarkdownRenderChild {
     const missing = !this.target();
     box.createDiv({
       cls: "vt-fc-empty-body",
-      text: missing ? t("wordPage.missing") : L("flashcards.single.noCloze"),
+      text: missing ? t("wordPage.missing") : t("flashcards.single.noCloze"),
     });
     this.renderSingleActions(box, false);
   }
@@ -527,7 +526,7 @@ export class FlashcardsBlock extends MarkdownRenderChild {
     if (last) {
       box.createDiv({
         cls: "vt-fc-empty-title",
-        text: L("flashcards.single.done", { rating: t(`srs.rating.${last.rating}` as I18nKey) }),
+        text: t("flashcards.single.done", { rating: t(`srs.rating.${last.rating}` as I18nKey) }),
       });
     }
     const entry = this.live(last?.id);
@@ -545,13 +544,13 @@ export class FlashcardsBlock extends MarkdownRenderChild {
     if (again) {
       const retry = actions.createEl("button", { cls: "vt-fc-btn" });
       setIcon(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
-      retry.createSpan({ text: L("flashcards.single.again") });
+      retry.createSpan({ text: t("flashcards.single.again") });
       // render() keeps focus in the block (the clicked button had it).
       retry.onclick = () => this.startSession(undefined, { speak: true });
     }
     const close = this.opts.onClose;
     if (close) {
-      const done = actions.createEl("button", { cls: ["vt-fc-btn", "mod-cta"], text: L("flashcards.single.close") });
+      const done = actions.createEl("button", { cls: ["vt-fc-btn", "mod-cta"], text: t("flashcards.single.close") });
       done.onclick = () => close();
     }
   }

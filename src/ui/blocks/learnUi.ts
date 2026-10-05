@@ -2,7 +2,6 @@ import { setIcon, type Component } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
-import { L } from "./leftoverStrings";
 import { isAiError } from "../../services/ai/errors";
 import { aiErrorText } from "../kit/aiState";
 import { emptyState } from "../kit/emptyState";
@@ -79,7 +78,7 @@ export function wordChip(
 ): HTMLElement {
   const open = entry ? wordOpener(host) : undefined;
   if (!entry || !open) return parent.createSpan({ cls });
-  const el = parent.createEl("button", { cls, attr: { type: "button", title: L("learn.openWord", { word: entry.word }) } });
+  const el = parent.createEl("button", { cls, attr: { type: "button", title: t("learn.openWord", { word: entry.word }) } });
   el.addClass("is-link");
   el.addEventListener("click", () => open(entry));
   return el;
