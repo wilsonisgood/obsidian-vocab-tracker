@@ -2,6 +2,7 @@ import type { MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import { renderDashboard } from "./dashboard";
 import { renderFlashcards } from "./flashcards";
+import { renderWordHeader, WORD_BLOCK_LANG } from "./wordHeader";
 
 // Every vocab-* code block (規劃書 06 §9.6). The block body is its params
 // (`key: value`, one per line); each renderer owns a MarkdownRenderChild
@@ -15,6 +16,8 @@ export interface BlockDef {
 export const BLOCKS: readonly BlockDef[] = [
   { lang: "vocab-dashboard", render: renderDashboard },
   { lang: "vocab-flashcards", render: renderFlashcards },
+  // The plugin is the block's WordHeaderHost.
+  { lang: WORD_BLOCK_LANG, render: renderWordHeader },
 ];
 
 export function registerBlocks(plugin: VocabTrackerPlugin): void {

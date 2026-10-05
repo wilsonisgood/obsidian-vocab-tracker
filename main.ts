@@ -7,6 +7,7 @@ import {
   Plugin,
   TAbstractFile,
   TFile,
+  TFolder,
   WorkspaceLeaf,
 } from "obsidian";
 import type { VocabData, VocabEntry, VocabSource } from "./src/core/model/entry";
@@ -27,7 +28,6 @@ import { nowStamp } from "./src/core/nowStamp";
 import { VocabSidebarView, VOCAB_VIEW_TYPE } from "./src/ui/sidebar/VocabSidebarView";
 import { registerBlocks } from "./src/ui/blocks/registry";
 import { SrsService } from "./src/services/srs/SrsService";
-import { openFlashcardsFile } from "./src/ui/blocks/flashcardsFile";
 import { resolveLocale, setLocale, t } from "./src/core/i18n";
 import { obsidianLanguage } from "./src/platform/obsidianLanguage";
 import { createAiPorts } from "./src/platform/aiPorts";
@@ -52,6 +52,14 @@ import { tagLabel } from "./src/core/wordlists/parse";
 import type { ScanResult } from "./src/core/wordlists/scan";
 import { nowIso } from "./src/core/nowIso";
 import { entriesMissingDefinition } from "./src/core/store/needsEnrich";
+import { ObsidianVault } from "./src/platform/ObsidianVault";
+import { ExportService } from "./src/services/export/ExportService";
+import { createExportData } from "./src/services/export/exportData";
+import { EntryFilesService } from "./src/services/files/EntryFilesService";
+import { SeedRecord } from "./src/services/files/SeedRecord";
+import type { EntryFileId } from "./src/services/files/entryFiles";
+import type { WordHeaderHost } from "./src/ui/blocks/wordHeader";
+import { createWordPageDecorator } from "./src/ui/reading/WordPageDecorator";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -70,7 +78,8 @@ const RESUME_ENRICH_DELAY_MS = 5000;
 
 // ─── Plugin ───────────────────────────────────────────────────────────────────
 
-export default class VocabTrackerPlugin extends Plugin {
+// The plugin is the vocab-word block's host (src/ui/blocks/registry.ts).
+export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost {
   vocabData: VocabData = { entries: [] };
   store!: VocabStore;
   dictionary!: DictionaryService;
@@ -86,6 +95,9 @@ export default class VocabTrackerPlugin extends Plugin {
   selection!: SelectionTracker;
   wordlists!: WordlistService;
   noteImports!: NoteImports;
+  vault!: ObsidianVault;
+  exporter!: ExportService;
+  files!: EntryFilesService;
   private importing = new Set<string>();
   private enrichQueue: VocabEntry[] = [];
   private enriching = false;
@@ -138,6 +150,66 @@ export default class VocabTrackerPlugin extends Plugin {
     this.selection = new SelectionTracker(this.app);
     this.registerDomEvent(document, "selectionchange", () => this.selection.update());
 
+    // M6: the plugin's notes. ExportService keeps 單字/<word>.md,
+    // 討論串/<文章>.ai.md and 冷知識.md's saved list in step with the data;
+    // EntryFilesService owns the entry files (單字卡.md…) and follows
+    // article renames/deletes (規劃書 06 §4.6, §8). One ObsidianVault for
+    // both (and for the paragraph anchors); register() must run before the
+    // layout is ready so the metadata cache's first "resolved" isn't missed.
+    this.vault = new ObsidianVault(this.app);
+    this.vault.register(this);
+    this.exporter = new ExportService({
+      vault: this.vault,
+      data: createExportData({
+        entries: () => this.store.entries,
+        threads: this.threads,
+        learn: this.learn,
+        notes: this.notes,
+      }),
+      folders: () => this.files.exportFolders(),
+      taskLabel: (taskId) => {
+        const label = ai.tasks.get(taskId)?.label;
+        return label ? t(label) : undefined;
+      },
+    });
+    this.exporter.watchThreads(this.threads.events);
+    this.exporter.watchLearn(this.learn.events);
+    this.exporter.watchUsage(this.verbs.events);
+    this.files = new EntryFilesService({
+      vault: this.vault,
+      settings: () => this.store.settings.files,
+      seeds: new SeedRecord(this.storage),
+      export: this.exporter,
+      paragraphs: this.threads,
+      isArticle: (p) => /\.md$/i.test(p) && !/\.ai\.md$/i.test(p) && this.isImportable(p),
+    });
+    // handleRename moves the paragraph anchors itself (folders too), then
+    // the article's .ai.md; the source-path handler below stays as is.
+    this.registerEvent(
+      this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof TFolder))
+    );
+    this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof TFolder)));
+
+    // Word pages: buttons next to the managed section headings (the
+    // vocab-word header block itself is in registerBlocks below).
+    this.registerMarkdownPostProcessor(
+      createWordPageDecorator({
+        entry: (id) => this.store.entries.find((e) => e.id === id),
+        frontmatterOf: (p) => this.frontmatterOf(p),
+        families: this.families,
+        verbs: this.verbs,
+        trivia: this.trivia,
+        // A new tab, so the word page stays open behind it.
+        openTrivia: () => this.openEntryFile("trivia", "tab"),
+        // TODO(G): switch the card to its AI tab once the sidebar has an API for it.
+        openInSidebar: async (entry) => {
+          const leaf = await this.activateSidebar();
+          (leaf.view as VocabSidebarView).setWord(entry.word);
+        },
+        notify: (m) => new Notice(m),
+      })
+    );
+
     // Sidebar
     this.registerView(
       VOCAB_VIEW_TYPE,
@@ -158,12 +230,27 @@ export default class VocabTrackerPlugin extends Plugin {
     // Click any plain English word in reading mode
     this.registerDomEvent(document, "click", this.handleReadingClick.bind(this));
 
-    // vocab-* code blocks (dashboard, flashcards, …; §9.6)
+    // vocab-* code blocks (dashboard, flashcards, word header…; §9.6)
     registerBlocks(this);
     this.addCommand({
       id: "open-flashcards",
       name: t("command.openFlashcards"),
       callback: () => this.openFlashcards(),
+    });
+    this.addCommand({
+      id: "open-families",
+      name: t("command.openFamilies"),
+      callback: () => this.openEntryFile("families"),
+    });
+    this.addCommand({
+      id: "open-verbs",
+      name: t("command.openVerbs"),
+      callback: () => this.openEntryFile("verbs"),
+    });
+    this.addCommand({
+      id: "open-trivia",
+      name: t("command.openTrivia"),
+      callback: () => this.openEntryFile("trivia"),
     });
 
     // Command palette
@@ -224,6 +311,8 @@ export default class VocabTrackerPlugin extends Plugin {
 
     this.app.workspace.onLayoutReady(() => {
       void this.ensureVocabFile();
+      // Entry files never created before (one the user deleted stays deleted).
+      void this.files.ensureAll();
       this.registerWordlistEvents();
       void this.wordlists.reload();
       // Words whose dictionary fetch never finished (closed mid-queue,
@@ -245,6 +334,9 @@ export default class VocabTrackerPlugin extends Plugin {
     this.threads?.dispose();
     this.ai?.dispose();
     await Promise.all([this.store.flush(), this.srs.flush(), this.threads?.flush(), this.learn?.flush()]);
+    // Last: the steps above can still announce changes (stopped answers).
+    await this.exporter?.flush();
+    this.exporter?.dispose();
   }
 
   // Interface language: the user's setting, or Obsidian's language on "auto".
@@ -329,9 +421,15 @@ export default class VocabTrackerPlugin extends Plugin {
   }
 
   // Notes whose words shouldn't become vocab entries: the lists themselves
-  // and the plugin's own vocab-list folder.
+  // and the plugin's own folders (vocab-list, and the entry-file folder
+  // with the word pages and .ai.md notes if it was moved elsewhere).
   private isImportable(path: string): boolean {
-    return !inFolder(path, this.wordlistSettings().folder) && !inFolder(path, VOCAB_FOLDER);
+    const filesFolder = this.files?.paths().folder;
+    return (
+      !inFolder(path, this.wordlistSettings().folder) &&
+      !inFolder(path, VOCAB_FOLDER) &&
+      !(filesFolder && inFolder(path, filesFolder))
+    );
   }
 
   // Exam labels for a word's list tags — enabled lists only ("TOEFL, IELTS").
@@ -475,7 +573,56 @@ export default class VocabTrackerPlugin extends Plugin {
   }
 
   openFlashcards() {
-    return openFlashcardsFile(this.app);
+    return this.openEntryFile("flashcards");
+  }
+
+  // Opens an entry file (單字卡 / 字族樹 / 動詞用法 / 冷知識), creating it if
+  // it's missing — never overwriting one that's there.
+  async openEntryFile(id: EntryFileId, where: "current" | "tab" = "current") {
+    try {
+      await this.openNote(await this.files.ensure(id), where);
+    } catch (e) {
+      console.error(`Vocab Tracker: couldn't open the ${id} entry file`, e);
+      new Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+    }
+  }
+
+  // The 「單字頁」 button: the word's page, created now if it has none.
+  async openWordPage(entryId: string) {
+    const path = await this.files.openWordPage(entryId);
+    if (path) await this.openNote(path);
+  }
+
+  // "tab": a new tab, or the tab already showing the note.
+  async openNote(path: string, where: "current" | "tab" = "current") {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) return;
+    const { workspace } = this.app;
+    if (where === "tab") {
+      const open = workspace
+        .getLeavesOfType("markdown")
+        .find((leaf) => leaf.view instanceof MarkdownView && leaf.view.file?.path === path);
+      if (open) {
+        workspace.setActiveLeaf(open, { focus: true });
+        return;
+      }
+    }
+    await workspace.getLeaf(where === "tab" ? "tab" : false).openFile(file);
+  }
+
+  // ── vocab-word block host (WordHeaderHost) ──────────────────────
+
+  frontmatterOf(path: string): Record<string, unknown> | undefined {
+    return this.app.metadataCache.getCache(path)?.frontmatter;
+  }
+
+  readNote(path: string): Promise<string | null> {
+    return this.notes.read(path);
+  }
+
+  // 「複習這個字」: for now the flashcards entry file (not a one-word session).
+  reviewWord(_entry: VocabEntry) {
+    return this.openFlashcards();
   }
 
   async ensureVocabFile() {
