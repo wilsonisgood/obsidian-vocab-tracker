@@ -1,0 +1,117 @@
+# 推 tag 時建立 GitHub Release（draft），附上 BRAT / Obsidian 要的三個未壓縮檔案。
+#
+# 為什麼不在 CI 重新 build：
+#   package-lock.json 被 .gitignore 排除，CI 跑 `npm install` 會依 ^ 範圍裝到
+#   不同版本的 esbuild / typescript / ts-fsrs，build 出來的 main.js 跟本機測過、
+#   已 commit 的不一樣。所以這裡直接上傳 tag 指向的 commit 裡的 main.js、
+#   styles.css、manifest.json —— 也就是在本機跑過 `npm run check`、實際測過的
+#   那一份。發版前請在本機確認 build 產物已 commit（見 docs/plans/05-brat-release-guide.md）。
+#
+# 版號規則（BRAT 以 tag 為準，tag、release 名稱、manifest.json 的 version 要一字不差）：
+#   - tag 不加 v：2.0.0-beta.1，不是 v2.0.0-beta.1
+#   - 版號含 "-"（2.0.0-beta.1 這類）→ release 標成 prerelease
+#   - 一律建成 draft，到 GitHub 網頁確認後再按 Publish；draft 在發佈前 BRAT 看不到
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v5
+
+      - name: Check tag, versions and build artifacts
+        id: meta
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          manifest_version=$(jq -r '.version' manifest.json)
+          package_version=$(jq -r '.version' package.json)
+          min_app=$(jq -r '.minAppVersion' manifest.json)
+
+          echo "tag=$TAG manifest=$manifest_version package=$package_version minAppVersion=$min_app"
+
+          if [ "$TAG" != "$manifest_version" ]; then
+            echo "::error::tag ($TAG) 跟 manifest.json 的 version ($manifest_version) 不一致。BRAT 以 tag 為準，請刪掉這個 tag，改好版號後重打。"
+            exit 1
+          fi
+          if [ "$package_version" != "$manifest_version" ]; then
+            echo "::error::package.json 的 version ($package_version) 跟 manifest.json ($manifest_version) 不一致，請用 npm version 同步。"
+            exit 1
+          fi
+
+          # versions.json 只在 minAppVersion 改變時才新增一筆，所以檢查
+          # 「最後一筆的 minAppVersion 就是目前的 minAppVersion」。
+          latest_min=$(jq -r 'to_entries | last | .value' versions.json)
+          if [ "$latest_min" != "$min_app" ]; then
+            echo "::error::versions.json 最後一筆的 minAppVersion 是 $latest_min，但 manifest.json 是 $min_app。請在 versions.json 加一筆 \"$manifest_version\": \"$min_app\"（npm version 會自動加）。"
+            exit 1
+          fi
+
+          for f in main.js manifest.json styles.css; do
+            if [ ! -s "$f" ]; then
+              echo "::error::$f 不存在或是空的。"
+              exit 1
+            fi
+          done
+
+          # npm run dev 產生的 main.js 帶 inline source map，不能拿來發版。
+          if grep -q 'sourceMappingURL=data:' main.js; then
+            echo "::error::main.js 是開發版 build（含 inline source map）。請在本機 npm run build 後 commit，再重打 tag。"
+            exit 1
+          fi
+
+          if [[ "$manifest_version" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Extract release notes from CHANGELOG.md
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # 取 "## [<tag>]" 開頭的那一節，到下一個 "## [" 為止。
+          awk -v tag="$TAG" '
+            index($0, "## [" tag "]") == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md || true
+          if [ ! -s release-notes.md ]; then
+            echo "::warning::CHANGELOG.md 沒有 [$TAG] 這一節，release notes 先留一行說明，請在 draft 裡補上。"
+            echo "見 CHANGELOG.md。" > release-notes.md
+          fi
+          cat release-notes.md
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ steps.meta.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "::error::Release $TAG 已經存在。要重建請先在 GitHub 刪掉那個 release（和 tag），再重推 tag。"
+            exit 1
+          fi
+          flags=(--draft --verify-tag --title "$TAG" --notes-file release-notes.md)
+          if [ "$PRERELEASE" = "true" ]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "$TAG" "${flags[@]}" main.js manifest.json styles.css
+          echo "已建立 draft release $TAG（prerelease=$PRERELEASE）。請到 GitHub 的 Releases 頁確認後按 Publish。"
