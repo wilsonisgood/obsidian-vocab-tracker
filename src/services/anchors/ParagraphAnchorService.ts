@@ -1,8 +1,9 @@
 import type { Anchor } from "../../core/model/thread";
-import { blockIdsIn, findBlockLine, newBlockId, trailingBlockId, withBlockId } from "../../core/text/blockId";
+import { blockIdsIn, newBlockId, trailingBlockId, withBlockId } from "../../core/text/blockId";
 import { normalizeParagraph, paragraphHash } from "../../core/text/hash";
 import { plainParagraph } from "../../core/text/paragraphs";
 import type { AnchorMode, ParagraphVaultPort } from "../../core/ports";
+import { noteIndex } from "./noteIndex";
 import { isAnchorable, noteSections, sectionAt, sectionText, type NoteSection } from "./sections";
 
 // Paragraph anchors (規劃書 06 §5.1). The first question about a paragraph
@@ -72,22 +73,25 @@ export function locateSection(content: string, ref: Pick<SectionRef, "lineStart"
   return sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === hash) ?? null;
 }
 
-// Pure resolution against a note's text (blockId → hash → orphan).
+// Pure resolution against a note's text (blockId → hash → orphan). The
+// note's split / block-id lines / section hashes are shared across calls
+// on the same text (noteIndex.ts), so resolving every thread of a note is
+// one pass over it, not one per thread.
 export function resolveIn(content: string, anchor: ParagraphAnchor): AnchorResolution {
-  const sections = noteSections(content);
+  const index = noteIndex(content);
   const found = (via: "blockId" | "hash", section: NoteSection): AnchorResolution => ({
     status: "found",
     via,
-    section,
+    // A copy: the index's sections are shared.
+    section: { ...section },
     content,
     edited: normalizeParagraph(section.text) !== normalizeParagraph(anchor.snapshot),
   });
   if (anchor.blockId) {
-    const line = findBlockLine(content, anchor.blockId);
-    const section = line >= 0 ? sectionAt(sections, line) : undefined;
+    const section = index.sectionOfBlock(anchor.blockId);
     if (section) return found("blockId", section);
   }
-  const bySnapshot = sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === anchor.hash);
+  const bySnapshot = index.sectionOfHash(anchor.hash);
   if (bySnapshot) return found("hash", bySnapshot);
   return { status: "orphan", reason: "missing-paragraph" };
 }
