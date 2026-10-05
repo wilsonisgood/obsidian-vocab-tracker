@@ -6,8 +6,6 @@ exports[`entry file content > matches the snapshots 1`] = `
 vocab-tracker: entry
 vocab-tracker-id: families
 ---
-# 字族樹
-
 \`\`\`vocab-families
 \`\`\`
 ",
@@ -15,8 +13,6 @@ vocab-tracker-id: families
 vocab-tracker: entry
 vocab-tracker-id: flashcards
 ---
-# 單字卡
-
 \`\`\`vocab-flashcards
 \`\`\`
 ",
@@ -24,8 +20,6 @@ vocab-tracker-id: flashcards
 vocab-tracker: entry
 vocab-tracker-id: trivia
 ---
-# 冷知識
-
 \`\`\`vocab-trivia
 favorites: off
 \`\`\`
@@ -40,8 +34,6 @@ favorites: off
 vocab-tracker: entry
 vocab-tracker-id: verbs
 ---
-# 動詞用法
-
 \`\`\`vocab-verbs
 \`\`\`
 ",

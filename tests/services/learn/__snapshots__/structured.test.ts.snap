@@ -1,0 +1,47 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`formatAiRequest (debug box prompt) > prints every system block, message and the request settings 1`] = `
+"[system 1]
+你是一位英文字彙老師，幫一位以中文為母語的學習者把學過的單字整理成「字族」，並補上值得一起學的延伸字。
+
+分群規則：
+1. 字族可以依主題（例如 clothing 服裝）、字根字首或音組（例如 gl- 和光有關）、使用情境來分。每個字族底下再分 1 到 4 個小組，小組名稱用繁體中文。
+2. 每個字族至少要有 2 個〔已學單字〕裡的字；這些字的 word 照〔已學單字〕的原樣寫，不要改成原形或其他詞形。
+3. 每個字族可以補 2 到 5 個學習者還沒學、但和這個字族密切相關的常用延伸字，程度符合〔學習者設定〕；不要補罕見字。
+4. zh 用繁體中文（台灣用語），10 個字以內。
+5. 字根、字源只用可靠、常見的知識。不確定就不要用字根分群，改用主題分群，不要編造字源。
+6. topic 用英文小寫；label 用繁體中文，可以夾英文字根（例如「gl- 發光家族」）。
+7. 只輸出符合 schema 的 JSON。
+
+[system 2]
+〔已學單字〕（共 2 個）
+- glittery（adjective） 閃亮的
+- leotard
+
+[system 3]
+〔學習者設定〕
+我是一個 B1（中級）程度、以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要。
+
+[user]
+任務：重新分群
+把〔已學單字〕整理成 3 到 8 個字族。不一定每個字都要分進去，找不到合適字族的字可以略過；同一個字可以出現在不同字族。
+
+[request]
+tier: smart · max_tokens: 8192 · schema: word_families"
+`;
+
+exports[`withDebug > builds a copyable report 1`] = `
+"task: family.generate
+model: gemini-2.5-flash
+stop: end
+error: malformed group
+
+===== 送給 AI 的 prompt =====
+
+[user]
+Q
+
+===== AI 的原始輸出 =====
+
+（沒有內容）"
+`;

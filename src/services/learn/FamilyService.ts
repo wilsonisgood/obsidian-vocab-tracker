@@ -14,6 +14,7 @@ import { entryAddedMs } from "../ai/context/triviaContext";
 import { familyGenerate, type FamilyDraft, type FamilyWord } from "../ai/tasks/family";
 import type { LearnStore } from "./LearnStore";
 import type { DictionaryLookupPort, LearnAi, LearnVocabPort } from "./ports";
+import { runStructured } from "./structured";
 import { WordIndex } from "./wordIndex";
 
 // 字族 (規劃書 06 §7.2, screens W3/L5). generate() asks the AI and returns
@@ -109,7 +110,7 @@ export class FamilyService {
 
   // Asks the AI for families (around `seedEntryIds` for W3, the whole list
   // for L5). Returns candidates; AI errors propagate (bad_output when the
-  // JSON doesn't hold).
+  // JSON doesn't hold — carrying the prompt and the raw answer).
   async generate(opts: { seedEntryIds?: string[]; signal?: AbortSignal } = {}): Promise<FamilyCandidate[]> {
     await this.ensureLoaded();
     const entries = this.deps.vocab.entries;
@@ -119,7 +120,8 @@ export class FamilyService {
       .filter((e) => !seedIds.has(e.id))
       .sort((a, b) => entryAddedMs(b) - entryAddedMs(a))
       .slice(0, Math.max(0, MAX_FAMILY_CONTEXT - seeds.length));
-    const r = await this.deps.ai.run(
+    const { value: drafts } = await runStructured(
+      this.deps.ai,
       familyGenerate,
       {
         known: [...seeds, ...recent].map(toWord),
@@ -129,7 +131,7 @@ export class FamilyService {
       { threadId: FAMILY_THREAD_ID, signal: opts.signal }
     );
     const index = new WordIndex(entries);
-    return familyGenerate.parse!(r).map((d) => this.candidate(d, index, seeds.map((e) => e.id)));
+    return drafts.map((d) => this.candidate(d, index, seeds.map((e) => e.id)));
   }
 
   private candidate(d: FamilyDraft, index: WordIndex, seedEntryIds: string[]): FamilyCandidate {
@@ -165,11 +167,20 @@ export class FamilyService {
   // duplicating it.
   async save(candidates: FamilyCandidate[], opts: SaveOptions = {}): Promise<{ families: Family[]; added: VocabEntry[] }> {
     await this.ensureLoaded();
+    // 重新分群: a family whose topic comes back keeps its id (and 加入日期)
+    // with the new groups, so what points at it — a word's origin
+    // `family:<id>` (「來源：字族樹 …」), an open tree — still finds it.
+    // The rest of the old grouping is tombstoned.
+    const renewed = new Set<string>();
     if (opts.replace) {
-      for (const f of this.regroupable()) this.deps.learn.deleteFamily(f.id, "regroup");
+      const topics = new Set(candidates.map((c) => key(c.topic)));
+      for (const f of this.regroupable()) {
+        if (topics.has(key(f.topic))) renewed.add(f.id);
+        else this.deps.learn.deleteFamily(f.id, "regroup");
+      }
     }
     const count = this.deps.vocab.entries.length;
-    const families = candidates.map((c) => this.toFamily(c, count));
+    const families = candidates.map((c) => this.toFamily(c, count, renewed));
 
     const wanted = new Set((opts.addWords ?? []).map(key));
     const toAdd = new Map<string, { word: string; zh: string; familyId: string }>();
@@ -208,8 +219,20 @@ export class FamilyService {
     this.deps.learn.deleteFamily(familyId);
   }
 
-  private toFamily(c: FamilyCandidate, entryCount: number): Family {
+  private toFamily(c: FamilyCandidate, entryCount: number, renewed: Set<string> = new Set()): Family {
     const existing = this.families().find((f) => key(f.topic) === key(c.topic));
+    if (existing && renewed.has(existing.id)) {
+      // Same topic in a new grouping: new content under the old id.
+      renewed.delete(existing.id);
+      return {
+        ...existing,
+        label: c.label,
+        scope: candidateScope(c),
+        groups: c.groups.map((g) => ({ label: g.label, members: g.members.map((m) => ({ ...m })) })),
+        seedEntryIds: c.seedEntryIds,
+        entryCountAtGenerate: entryCount,
+      };
+    }
     if (existing) return mergeFamily(existing, c);
     return {
       id: this.newId(),

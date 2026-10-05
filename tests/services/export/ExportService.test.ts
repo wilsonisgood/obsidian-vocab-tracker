@@ -11,7 +11,7 @@ import { ExportService, shortDate } from "../../../src/services/export/ExportSer
 import { findManagedBlock } from "../../../src/services/export/managedBlock";
 import type { VaultPort } from "../../../src/core/ports";
 import type { ExportDataPort, ParagraphThread } from "../../../src/services/export/ports";
-import type { ExportFamily, ExportTrivia, ExportUsage } from "../../../src/services/export/types";
+import type { ExportFamily, ExportTrivia, ExportUsage, ExportVerbFavorite } from "../../../src/services/export/types";
 import { ARTICLE, entry, FAMILIES, GLITTERY, GLITTERY_THREAD, LEOTARD, TRIVIA, turn, USAGE, wordThread } from "./fixtures";
 
 // The expectations below are written against the Chinese labels.
@@ -118,6 +118,7 @@ class FakeData implements ExportDataPort {
   familiesList: ExportFamily[] = [];
   usages = new Map<string, ExportUsage>();
   triviaList: ExportTrivia[] = [];
+  verbFavoriteList: ExportVerbFavorite[] = [];
   readyCalls = 0;
 
   async ready(): Promise<void> {
@@ -143,6 +144,9 @@ class FakeData implements ExportDataPort {
   }
   trivia(): readonly ExportTrivia[] {
     return this.triviaList;
+  }
+  verbFavorites(): readonly ExportVerbFavorite[] {
+    return this.verbFavoriteList;
   }
 }
 
@@ -825,6 +829,46 @@ describe("events, flush and dispose", () => {
     verbs.emit("verb:usage", { entryId: GLITTERY.id });
     expect(family).toHaveBeenCalledTimes(1);
     expect(usage).toHaveBeenCalledTimes(1);
+  });
+
+  it("a renewed family also updates the pages of members it dropped (1005 #14)", () => {
+    const words = vi.spyOn(svc, "wordChanged");
+    const f = FAMILIES[0];
+    svc.familyChanged(f);
+    expect(words.mock.calls.map((c) => c[0]).sort()).toEqual([GLITTERY.id, LEOTARD.id].sort());
+    words.mockClear();
+    // 重新分群 kept the id but leotard is no longer in it.
+    svc.familyChanged({ ...f, groups: [{ label: "", members: [{ entryId: GLITTERY.id, word: "glittery", zh: "" }] }] });
+    expect(words.mock.calls.map((c) => c[0]).sort()).toEqual([GLITTERY.id, LEOTARD.id].sort());
+    words.mockClear();
+    svc.familyChanged({ ...f, groups: [{ label: "", members: [{ entryId: GLITTERY.id, word: "glittery", zh: "" }] }] });
+    expect(words.mock.calls.map((c) => c[0])).toEqual([GLITTERY.id]);
+  });
+
+  it("a saved verb usage (「寫入單字頁」) creates the word page; unsaving only updates it (1005 #4)", async () => {
+    const learn = new TypedEmitter<LearnEvents>();
+    svc.watchLearn(learn);
+    data.usages.set(GLITTERY.id, { ...USAGE, generatedAt: "2026-10-02T03:00:00.000Z" });
+    const fav = { id: `verb:${GLITTERY.id}`, entryId: GLITTERY.id, word: "glittery", createdAt: "2026-10-05T03:00:00.000Z" };
+    data.verbFavoriteList = [fav];
+    learn.emit("verbFavorite:upsert", fav);
+    await vi.advanceTimersByTimeAsync(1000);
+    const page = vault.files.get(GLITTERY_PAGE)!;
+    expect(page).toContain("glittery + 服裝 / 妝容");
+    expect(page).toContain("*已收藏 10/05 · AI 產生於 10/02*");
+
+    const gone = { ...fav, deletedAt: "2026-10-06T03:00:00.000Z" };
+    data.verbFavoriteList = [gone];
+    learn.emit("verbFavorite:upsert", gone);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.get(GLITTERY_PAGE)).toContain("*AI 產生於 10/02*");
+    expect(vault.files.get(GLITTERY_PAGE)).not.toContain("已收藏");
+
+    // Unsaving never creates a page.
+    vault.files.delete(GLITTERY_PAGE);
+    learn.emit("verbFavorite:upsert", gone);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.exists(GLITTERY_PAGE)).toBe(false);
   });
 
   it("paragraph threads export the article's note; trivia sessions export nothing", async () => {

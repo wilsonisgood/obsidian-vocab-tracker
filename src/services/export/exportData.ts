@@ -2,6 +2,7 @@ import type { VocabEntry } from "../../core/model/entry";
 import type { Family } from "../../core/model/family";
 import type { Thread } from "../../core/model/thread";
 import type { TriviaItem } from "../../core/model/trivia";
+import type { VerbFavorite } from "../../core/model/usage";
 import type { NoteReaderPort } from "../../core/ports";
 import { resolveIn, type ParagraphAnchor } from "../anchors/ParagraphAnchorService";
 import { paragraphNumber } from "../files/paragraphNumber";
@@ -23,6 +24,8 @@ export interface ExportDataSources {
     ensureLoaded(): Promise<void>;
     families(): Family[];
     trivia(): TriviaItem[];
+    // LearnStore has it; optional so older wiring still type-checks.
+    verbFavorites?(): VerbFavorite[];
   };
   notes: NoteReaderPort;
 }
@@ -62,5 +65,6 @@ export function createExportData(src: ExportDataSources): ExportDataPort {
     families: () => src.learn.families().filter((f) => !f.deletedAt),
     usage: (entryId) => entry(entryId)?.usage,
     trivia: () => src.learn.trivia().filter((t) => !t.deletedAt),
+    verbFavorites: () => (src.learn.verbFavorites?.() ?? []).filter((v) => !v.deletedAt),
   };
 }

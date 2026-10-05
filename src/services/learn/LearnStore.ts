@@ -1,6 +1,7 @@
 import { TypedEmitter } from "../../core/events";
 import type { Family } from "../../core/model/family";
 import type { TriviaItem } from "../../core/model/trivia";
+import { verbFavoriteId, type VerbFavorite } from "../../core/model/usage";
 import type { StoragePort } from "../../core/ports";
 import {
   dropOldTombstones,
@@ -11,7 +12,8 @@ import {
   type LearnShard,
 } from "./learnMerge";
 
-// store/learn.json — families and saved trivia (規劃書 06 §4.2). Managed
+// store/learn.json — families, saved trivia and saved verb usages
+// (規劃書 06 §4.2). Managed
 // the way ThreadService manages threads.json: read lazily the first time a
 // learning page opens, writes debounced 500 ms, and every write is a
 // read-merge-write so a copy synced in from another device is unioned in
@@ -24,6 +26,7 @@ export interface LearnEvents {
   // Also fired for deletes: the record then carries deletedAt.
   "family:upsert": Family;
   "trivia:upsert": TriviaItem;
+  "verbFavorite:upsert": VerbFavorite;
   // Families/trivia were replaced by a merge with the disk copy (sync).
   "learn:reloaded": void;
 }
@@ -135,13 +138,53 @@ export class LearnStore {
     this.putTrivia(item);
   }
 
+  // ── Saved verb usages (動詞用法收藏) ─────────────────────────────
+
+  private get verbList(): VerbFavorite[] {
+    return (this.data.verbs ??= []);
+  }
+
+  verbFavorites(): VerbFavorite[] {
+    return this.verbList.filter((v) => !v.deletedAt);
+  }
+
+  verbFavorite(entryId: string): VerbFavorite | undefined {
+    const id = verbFavoriteId(entryId);
+    return this.verbList.find((v) => v.id === id && !v.deletedAt);
+  }
+
+  // Saves the verb (idempotent). Saving again after an unsave revives the
+  // same id as a fresh record — a newer updatedAt than the tombstone, so
+  // the save wins the merge on every device.
+  favoriteVerb(entry: { id: string; word: string }): VerbFavorite {
+    const live = this.verbFavorite(entry.id);
+    if (live) return live;
+    const id = verbFavoriteId(entry.id);
+    const dead = this.verbList.find((v) => v.id === id);
+    const rec: VerbFavorite = { id, entryId: entry.id, word: entry.word, rev: dead?.rev };
+    this.stamp(rec);
+    this.upsert(this.verbList, rec);
+    this.events.emit("verbFavorite:upsert", rec);
+    this.scheduleWrite();
+    return rec;
+  }
+
+  unfavoriteVerb(entryId: string): void {
+    const rec = this.verbFavorite(entryId);
+    if (!rec) return;
+    rec.deletedAt = this.nowIso();
+    this.stamp(rec);
+    this.events.emit("verbFavorite:upsert", rec);
+    this.scheduleWrite();
+  }
+
   // ── Persistence ───────────────────────────────────────────────
 
   private nowIso(): string {
     return this.clock().toISOString();
   }
 
-  private stamp(rec: Family | TriviaItem): void {
+  private stamp(rec: Family | TriviaItem | VerbFavorite): void {
     const now = this.nowIso();
     rec.createdAt = rec.createdAt ?? now;
     rec.updatedAt = now;
@@ -171,6 +214,7 @@ export class LearnStore {
       this.data = {
         families: dropOldTombstones(merged.families, now),
         trivia: dropOldTombstones(merged.trivia, now),
+        verbs: dropOldTombstones(merged.verbs ?? [], now),
       };
       await this.deps.storage.writeShard<LearnShard>(LEARN_SHARD, this.data);
     } catch (e) {

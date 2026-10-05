@@ -22,8 +22,10 @@ export interface DictionaryLookupPort {
   fetchDictionary(word: string): Promise<DictionaryResult>;
 }
 
-// AiService — structured tasks are one-shot runs, not threads.
-export type LearnAi = Pick<AiService, "run" | "cancel">;
+// AiService — structured tasks are one-shot runs, not threads. prepare
+// (optional, so test fakes can skip it) rebuilds the request for the
+// debug box when an answer can't be read (structured.ts).
+export type LearnAi = Pick<AiService, "run" | "cancel"> & Partial<Pick<AiService, "prepare">>;
 
 // ThreadService.
 export type TriviaAskParams = AskParams;

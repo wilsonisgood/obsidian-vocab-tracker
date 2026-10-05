@@ -1,6 +1,7 @@
 import type { Record_ } from "../../core/model/entry";
 import { familyScope, type Family } from "../../core/model/family";
 import type { TriviaItem } from "../../core/model/trivia";
+import type { VerbFavorite } from "../../core/model/usage";
 
 // Multi-device merge for store/learn.json (規劃書 06 §4.3): records are
 // unioned by id; the same id keeps the copy with the newer updatedAt, and
@@ -11,6 +12,9 @@ import type { TriviaItem } from "../../core/model/trivia";
 export interface LearnShard {
   families: Family[];
   trivia: TriviaItem[];
+  // Saved verb usages (動詞用法收藏). Absent in files written before it
+  // existed (normalizeLearnShard fills it in).
+  verbs?: VerbFavorite[];
 }
 
 type Rec = Record_ & { id: string };
@@ -69,7 +73,7 @@ export function dropOldTombstones<T extends Rec>(records: readonly T[], now: num
 }
 
 export function emptyLearnShard(): LearnShard {
-  return { families: [], trivia: [] };
+  return { families: [], trivia: [], verbs: [] };
 }
 
 // A half-synced or hand-edited file may be missing either array.
@@ -78,6 +82,7 @@ export function normalizeLearnShard(raw: unknown): LearnShard {
   return {
     families: Array.isArray(s.families) ? s.families : [],
     trivia: Array.isArray(s.trivia) ? s.trivia : [],
+    verbs: Array.isArray(s.verbs) ? s.verbs : [],
   };
 }
 
@@ -88,12 +93,13 @@ export function normalizeLearnShard(raw: unknown): LearnShard {
 export function learnFingerprint(shard: LearnShard): string {
   const recs = (kind: string, list: readonly Rec[]) =>
     list.map((r) => `${kind}|${r.id}|${r.updatedAt ?? ""}|${r.rev ?? 0}|${r.deletedAt ?? ""}`);
-  return [...recs("f", shard.families), ...recs("t", shard.trivia)].sort().join("\n");
+  return [...recs("f", shard.families), ...recs("t", shard.trivia), ...recs("v", shard.verbs ?? [])].sort().join("\n");
 }
 
 export function mergeLearn(local: LearnShard, remote: LearnShard): LearnShard {
   return {
     families: mergeRecords(local.families, remote.families, pickFamily),
     trivia: mergeRecords(local.trivia, remote.trivia),
+    verbs: mergeRecords(local.verbs ?? [], remote.verbs ?? []),
   };
 }

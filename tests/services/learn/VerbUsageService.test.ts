@@ -44,6 +44,7 @@ describe("VerbUsageService", () => {
     expect(block).toEqual({
       patterns: [USAGE.patterns[0]],
       related: USAGE.related,
+      createdAt: NOW.toISOString(),
       generatedAt: NOW.toISOString(),
       model: "claude-sonnet-5-5",
     });
@@ -55,6 +56,21 @@ describe("VerbUsageService", () => {
     expect(ai.threadIds).toEqual([verbThreadId("v1")]);
     // The learner's own sentence goes into the prompt.
     expect(ai.requests[0].system[1].text).toContain("〔出處句子〕\nI'm not going to sugarcoat it.");
+  });
+
+  it("keeps the first generation's date as 加入日期 when regenerating (1005 #14)", async () => {
+    let now = new Date("2026-10-02T12:00:00Z");
+    const vocab = new FakeVocab([entry("v1", "sugarcoat", { partOfSpeech: "verb" })]);
+    const ai = new FakeLearnAi(() => result(JSON.stringify(USAGE), { json: USAGE }));
+    const verbs = new VerbUsageService({ ai, vocab, clock: () => now });
+    const e = vocab.entries[0];
+    await verbs.generate(e);
+    now = new Date("2026-10-05T12:00:00Z");
+    const again = await verbs.generate(e);
+    expect([again.createdAt, again.generatedAt]).toEqual(["2026-10-02T12:00:00.000Z", "2026-10-05T12:00:00.000Z"]);
+    // A block from before createdAt existed: its generation counts as the first.
+    e.usage = { patterns: [], related: [], generatedAt: "2026-09-30T00:00:00.000Z", model: "m" };
+    expect((await verbs.generate(e)).createdAt).toBe("2026-09-30T00:00:00.000Z");
   });
 
   it("refuses non-verbs", async () => {

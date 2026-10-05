@@ -95,8 +95,8 @@ describe("learn shard", () => {
   });
 
   it("normalizes a missing or partial file", () => {
-    expect(normalizeLearnShard(null)).toEqual({ families: [], trivia: [] });
-    expect(normalizeLearnShard({ families: "oops" })).toEqual({ families: [], trivia: [] });
+    expect(normalizeLearnShard(null)).toEqual({ families: [], trivia: [], verbs: [] });
+    expect(normalizeLearnShard({ families: "oops" })).toEqual({ families: [], trivia: [], verbs: [] });
   });
 
   it("drops tombstones older than 30 days only", () => {

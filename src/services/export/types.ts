@@ -32,6 +32,17 @@ export interface ExportFamily {
 export interface ExportUsage {
   patterns: { pattern: string; meaningZh: string; example: string }[];
   related: { phrase: string; zh: string }[];
+  // 加入 / 更新日期 (1005 回饋 #14).
+  createdAt?: string;
+  generatedAt?: string;
+}
+
+// ⊂ VerbFavorite: the verb's usage was saved (「寫入單字頁」).
+export interface ExportVerbFavorite {
+  id: string;
+  entryId: string;
+  createdAt?: string;
+  deletedAt?: string;
 }
 
 // ⊂ TriviaItem (a saved / favourited piece of trivia)
@@ -69,6 +80,10 @@ export interface ExportLabels {
   favorites: string;
   favoritesEmpty: string;
   aborted: string;
+  // 1005 回饋 (temporary strings in labels.ts until they move to i18n).
+  // "{date}" is replaced.
+  usageSaved: string;
+  usageGenerated: string;
 }
 
 // Everything a renderer needs besides its data, injected so the renderers
