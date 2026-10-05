@@ -415,6 +415,7 @@ export const en = {
   "learn.trivia.favorite": "Save",
   "learn.trivia.favoriteTo": "Save to {word}",
   "learn.trivia.favorited": "Saved",
+  "learn.trivia.savedTo": "Saved to {path}",
   "learn.trivia.unfavorite": "Remove",
   "learn.trivia.up": "Helpful",
   "learn.trivia.down": "Not helpful",

@@ -284,7 +284,13 @@ class TriviaBlock extends MarkdownRenderChild {
           return {
             ...base,
             onClick: () => {
-              if (!this.plugin.trivia.favorite(turn.id)) new Notice(t("learn.trivia.noWords"));
+              const item = this.plugin.trivia.favorite(turn.id);
+              if (!item) return void new Notice(t("learn.trivia.noWords"));
+              // Saving it puts it on the word's page (created if needed).
+              const entry = this.entryById(item.entryId);
+              if (!entry) return;
+              const page = this.plugin.exporter.wordPagePath(entry.id, entry.word);
+              new Notice(t("learn.trivia.savedTo", { path: page.split("/").slice(-2).join("/") }));
             },
           };
         case "unfavorite":

@@ -412,6 +412,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "learn.trivia.favorite": "收藏",
   "learn.trivia.favoriteTo": "收藏到 {word}",
   "learn.trivia.favorited": "已收藏",
+  "learn.trivia.savedTo": "已收藏，寫入 {path}",
   "learn.trivia.unfavorite": "取消收藏",
   "learn.trivia.up": "有幫助",
   "learn.trivia.down": "沒幫助",
