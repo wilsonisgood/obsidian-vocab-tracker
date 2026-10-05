@@ -6,7 +6,7 @@
 
 ## 主要功能
 
-- **點字收集**：在閱讀模式點任何英文字，從選單加入單字庫（點已經是 `==螢光標記==` 的字會打開側欄；還沒收錄的話，側欄有「＋ 加入單字庫」按鈕）。加入時，插件會把這篇筆記裡**每一處**出現的這個字改成 `==螢光標記==`，並記下出處（筆記與行號）和所在的句子。從單字庫刪除這個字時，會把標記拿掉。
+- **點字收集**：在閱讀模式點任何英文字，桌面版從選單加入單字庫，iPhone／iPad 預設直接加入（見〈行動版〉，可以在設定的「點字動作」調整）。點已經是 `==螢光標記==` 的字會打開它的單字卡（還沒收錄的話，有「＋ 加入單字庫」按鈕）。加入時，插件會把這篇筆記裡**每一處**出現的這個字改成 `==螢光標記==`，並記下出處（筆記與行號）和所在的句子。從單字庫刪除這個字時，會把標記拿掉。
 - **自動查字典**：加入單字後，背景會抓英文定義、詞性、中文翻譯，以及同義詞和反義詞（服務列在下面的〈隱私與資料流向〉）。
 - **側欄**：列出目前這篇筆記收集的單字、考試字彙的統計，展開單字可以看「資料」和「AI」兩個分頁。
 - **單字總表**：`vocab-list/vocab-list.md`（裡面是 `vocab-dashboard` 區塊），欄位可以直接編輯。
@@ -14,6 +14,43 @@
 - **考試字表**：把托福、雅思、多益等字表放進 vault，閱讀模式會在這些字底下加上彩色虛線，第一次打開筆記時會把字表裡的字自動加入單字庫（見〈考試字表〉）。
 - **AI 單字家教（選用）**：針對單字問「用法、比較、造句、記憶法」，或自由提問。支援 Anthropic（Claude）和任何 OpenAI 相容端點（OpenAI、Gemini、Ollama…）。
 - **多裝置同步**：單字庫、複習紀錄和 AI 對話放在插件資料夾，用 iCloud、Git 等方式同步時，會合併各裝置的修改，而不是由最後寫入的一方蓋掉另一方。
+
+各版本的改動見 [CHANGELOG.md](CHANGELOG.md)。
+
+## 安裝測試版（BRAT）
+
+插件還沒上架社群插件市集，目前用 [BRAT](https://github.com/TfTHacker/obsidian42-brat)（Obsidian42 - BRAT）安裝測試版。桌面版和 iPhone／iPad 的步驟相同，每一台裝置都要各自裝一次。
+
+**需求**：
+
+- Obsidian 1.5.7 以上（插件本身的最低版本）。BRAT 目前的版本需要 Obsidian 1.11.4 以上，**請先把 Obsidian 更新到最新版**再裝 BRAT。
+- iPhone／iPad 需要 iOS／iPadOS 16.4 以上。
+
+1. Obsidian：**設定 › 社群插件**，開啟社群插件（關閉限制模式）。
+2. **瀏覽**，搜尋 **BRAT**，安裝並啟用。
+3. **設定 › BRAT › Beta plugin list › Add beta plugin**。
+4. **Repository** 填 `wilsonisgood/obsidian-vocab-tracker`，版本選 **Latest version**，勾選 **Enable after installing the plugin**，按 **Add plugin**。
+5. 回到 **設定 › 社群插件**，確認 **Vocab Tracker** 已經啟用，版本是 `2.0.0-beta.1` 或更新。
+
+更新：
+
+- BRAT 的「Latest version」會包含測試版（GitHub 上標成 Pre-release 的版本），版號比較新就會更新，**不需要另外開啟 beta 選項**。
+- **Auto-update plugins at startup**（BRAT 設定，預設開啟）會在每次啟動 Obsidian 時檢查更新；也可以在 BRAT 的插件清單按 **Check and update plugin** 立刻更新。
+- 想固定在某一版不自動更新，在步驟 4 選那個版本號（frozen version）。
+
+BRAT 只會換掉插件的 `main.js`、`manifest.json`、`styles.css`，單字庫（`data.json`、`store/`）不受影響。
+
+> **升級前先看 [CHANGELOG.md](CHANGELOG.md) 的〈升級須知〉。** 2.0 第一次啟動時會升級資料格式（會自動備份到 `.obsidian/plugins/vocab-tracker/backup/`）；有好幾台裝置時，每一台都要升級，不要新舊版本混用。自訂 CSS snippet 用到舊的 `vocab-tracker-*` class 的話，要改成新的 `vt-*` 名稱（對照表在〈升級須知〉）。
+
+## 行動版（iPhone／iPad）
+
+- **要用閱讀模式**：Obsidian 手機版預設用即時預覽（Live Preview）開筆記，但點字只在**閱讀模式**有效（即時預覽和原始碼模式下點字沒有作用）。在即時預覽點字時，每次開啟 Obsidian 會提示一次，可以直接按「切換到閱讀模式」，或選「不再提示」（也可以在設定的「點字動作 › Live Preview 提示」關掉）。
+- **點字直接存**：iPhone／iPad 在閱讀模式點英文字，預設直接加入單字庫，不跳選單；畫面下方會出現「復原」，誤點可以馬上撤銷。再點一次已經加入（`==螢光標記==`）的字，會打開它的單字卡。
+- **iPhone：底部抽屜**：iPhone 上單字卡和段落討論從畫面底部的抽屜打開，不會蓋住全文；「資料」與「AI」分頁都在裡面。點背景、按關閉或往下拖可以關掉；往上拖或開始輸入時會變高，並避開鍵盤。iPad 和桌面一樣用側欄。
+- **段落 ✦ 常駐**：手機和平板沒有滑鼠游標可以懸停，段落右側的 ✦ 會一直顯示，點一下就能針對那一段提問。
+- **點字動作設定**：「設定 › Vocab Tracker › 點字動作」可以分別設定桌面與 iPhone／iPad 點字時要「跳出選單」「直接存成單字」或「打開單字卡（不儲存）」。
+- **觸控**：按鈕的觸控目標至少 44 pt。單字卡的評分鈕在 iPhone 排成 2×2；iPad 的分割畫面、Slide Over 等窄視窗也是 2×2，寬的時候排成一列四個。
+- **系統需求**：iOS／iPadOS 16.4 以上（插件用到的正規表示式語法，舊版 iOS 的 Safari 引擎不支援，插件會無法載入）。
 
 ## 隱私與資料流向
 
@@ -175,3 +212,7 @@ achieve,達成,v.
 - All data stays in your vault (`.obsidian/plugins/vocab-tracker/data.json` and `store/*.json`, plus `vocab-list/`).
 
 **Exam word lists:** put one file per list in `vocab-wordlists/` (`.md`/`.txt`/`.csv`/`.tsv`); the file name is the tag (`exam-TOEFL.md` → `exam/TOEFL`, shown as "TOEFL"; override with frontmatter `tag:`). Each line contributes its first English word; part of speech, phonetics and translations after it are ignored; multi-word phrases are skipped. Underlines appear in reading view only and never modify your notes. The first time a note is opened, its list words are added to your vocab list once; words you delete don't come back from that note (and for 30 days not from any note).
+
+**Install the beta (BRAT):** the plugin requires Obsidian 1.5.7+ (the current BRAT needs 1.11.4+, so update Obsidian first) and iOS/iPadOS 16.4+ on iPhone/iPad. Install the community plugin **BRAT**, then *Settings › BRAT › Add beta plugin*, enter `wilsonisgood/obsidian-vocab-tracker`, choose **Latest version** (this includes pre-releases) and tick *Enable after installing the plugin*. BRAT's *Latest version* follows new releases automatically (*Auto-update plugins at startup*). Read the upgrade notes in [CHANGELOG.md](CHANGELOG.md) first: 2.0 migrates your data on first launch (with an automatic backup), every synced device should be upgraded, and CSS snippets must use the new `vt-*` class names instead of `vocab-tracker-*`.
+
+**iPhone/iPad:** tapping words only works in reading view, not in Live Preview (a hint shows once per session, with *Switch to reading view* and *Don't show again*). On iPhone and iPad, tapping a word in reading view adds it right away (with an Undo); tapping a highlighted word opens its card — in a bottom sheet on iPhone, in the sidebar on iPad. The paragraph ✦ is always visible, touch targets are at least 44 pt, and the flashcard rating buttons are 2×2 on iPhone and narrow iPad windows. Change what a tap does (desktop and mobile separately) under *Settings › Vocab Tracker › Tapping words*.
