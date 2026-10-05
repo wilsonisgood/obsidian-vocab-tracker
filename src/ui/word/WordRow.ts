@@ -7,6 +7,8 @@ import { t } from "../../core/i18n";
 import { wordThreadId } from "../../core/model/thread";
 import { renderWordAiTab } from "./AiTab";
 import type { WordTab, WordUi } from "./wordUi";
+import { lt } from "./pendingStrings";
+import { displayDate, displayStamp, entryDates } from "./wordOrder";
 
 // Progressive-disclosure state for a single row: collapsed (one line),
 // half (synonyms-and-up visible), full (everything visible).
@@ -222,7 +224,12 @@ export function renderVocabRow(
       };
     }
 
-    body.createEl("div", { text: t("row.meta.added", { date: entry.added }), cls: "vt-meta" });
+    // 加入 / 更新 (1005 回饋 14): same "YYYY-MM-DD HH:mm:ss" as before.
+    const dates = entryDates(entry);
+    body.createEl("div", { text: t("row.meta.added", { date: displayStamp(dates.added) }), cls: "vt-meta" });
+    if (dates.updated) {
+      body.createEl("div", { text: lt("row.meta.updated", { date: displayStamp(dates.updated) }), cls: ["vt-meta", "vt-row-updated"] });
+    }
     body.createEl("div", {
       text: t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }),
       cls: "vt-meta",
@@ -238,6 +245,9 @@ export function renderVocabRow(
     // free-form tags (e.g. "多益中級, 托福高級"), same field style as everything else.
     mkField(t("row.field.level"), "level", { multiline: true });
   }
+
+  // Half: one short dates line (full shows them in detail above).
+  if (state === "half") renderDatesLine(body, entry);
 
   // ── Footer: more-info toggle · fetch · reviewed · speak ──────
   const footer = body.createEl("div", { cls: "vt-row-footer" });
@@ -309,6 +319,22 @@ export function renderVocabRow(
   }
 
   renderWordPageButton(body, entry, opts);
+}
+
+// 「加入 2026-07-25 · 更新 2026-10-05」 (1005 回饋 14).
+function renderDatesLine(body: HTMLElement, entry: VocabEntry): void {
+  const { added, updated } = entryDates(entry);
+  if (!added && !updated) return;
+  const text = updated
+    ? lt("row.meta.dates", { added: displayDate(added) || "—", updated: displayDate(updated) })
+    : lt("row.meta.addedOnly", { added: displayDate(added) });
+  const el = body.createEl("div", { text, cls: ["vt-meta", "vt-row-dates"] });
+  el.setAttr(
+    "aria-label",
+    [t("row.meta.added", { date: displayStamp(added) }), updated ? lt("row.meta.updated", { date: displayStamp(updated) }) : ""]
+      .filter(Boolean)
+      .join("\n")
+  );
 }
 
 function renderWordPageButton(body: HTMLElement, entry: VocabEntry, opts: RowOptions): void {
