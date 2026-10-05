@@ -1,6 +1,5 @@
 import { normalizePath, type Plugin } from "obsidian";
-import type { StoragePort } from "../core/ports";
-import type { BackupStoragePort } from "../services/backup/ports";
+import type { BackupStoragePort, StoragePort } from "../core/ports";
 
 // "data" is loadData/saveData's data.json (same file M0 already used).
 // Every other shard is `store/<name>.json` inside the plugin folder

@@ -54,9 +54,12 @@ export class RestoreModal extends Modal {
     if (text.extras) {
       el.createEl("h4", { text: t("backup.restore.extras.title") });
       el.createEl("p", { text: text.extras });
-      new Setting(el).setName(t("backup.restore.extras.remove")).addToggle((toggle) =>
+      const remove = new Setting(el).setName(t("backup.restore.extras.remove")).addToggle((toggle) =>
         toggle.setValue(this.removeExtras).onChange((v) => (this.removeExtras = v))
       );
+      // Undoing a restore: what it brought back counts as "added after"
+      // the before-restore backup, so only the toggle gets back exactly.
+      if (item.reason === "before-restore") remove.setDesc(t("backup.restore.extras.undoHint"));
     }
 
     el.createEl("p", { text: t("backup.restore.safety", { folder }) });

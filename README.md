@@ -127,10 +127,13 @@ BRAT 只會換掉插件的 `main.js`、`manifest.json`、`styles.css`，單字�
 | `.obsidian/plugins/vocab-tracker/store/reviews.json` | 單字卡複習紀錄 |
 | `.obsidian/plugins/vocab-tracker/store/usage.json` | AI 每日用量（依裝置） |
 | `.obsidian/plugins/vocab-tracker/store/imports.json` | 哪些筆記已經自動匯入過考試字彙 |
-| `.obsidian/plugins/vocab-tracker/backup/` | 資料格式升級前的備份 |
+| `.obsidian/plugins/vocab-tracker/backup/full-*.json` | 完整備份：`data.json` 加上全部 `store/` 分片。在設定頁按「立即備份」，或還原前自動產生 |
+| `.obsidian/plugins/vocab-tracker/backup/data-v1-*.json` | 資料格式升級前的備份（只有單字） |
 | `vocab-list/vocab-list.md`、`vocab-list/單字卡.md` | 單字總表與單字卡的入口筆記 |
 
 （`.obsidian` 是預設的設定資料夾名稱；如果你改過，就在你設定的那個資料夾裡。）
+
+**從備份還原**：設定 → 備份與還原 → 在清單裡選一份按「還原…」。確認視窗會先列出哪些資料會改回去；還原前會自動另存目前的資料，還原錯了可以從那一份再還原回來。設定和 AI 用量不會還原。
 
 ## 考試字表
 
@@ -209,7 +212,7 @@ achieve,達成,v.
 - **API key storage:** on Obsidian 1.11.4+ the key is kept in Obsidian's SecretStorage on that device only (not in `data.json`; enter it once per device). On older versions it is stored **in plain text** in the plugin's `data.json` and **syncs with your vault** if your sync includes the plugin folder.
 - **Recommended:** create a dedicated key for this plugin, set a spend limit in your provider's console, and set the plugin's *Monthly token limit* (Settings › AI; counted by the plugin, cache reads weighted 1/10, checked before each request).
 - Without a key, every non-AI feature keeps working.
-- All data stays in your vault (`.obsidian/plugins/vocab-tracker/data.json` and `store/*.json`, plus `vocab-list/`).
+- All data stays in your vault (`.obsidian/plugins/vocab-tracker/data.json` and `store/*.json`, plus `vocab-list/`). *Settings › Backup & restore* saves everything to `backup/full-*.json` and restores from it (your current data is saved first).
 
 **Exam word lists:** put one file per list in `vocab-wordlists/` (`.md`/`.txt`/`.csv`/`.tsv`); the file name is the tag (`exam-TOEFL.md` → `exam/TOEFL`, shown as "TOEFL"; override with frontmatter `tag:`). Each line contributes its first English word; part of speech, phonetics and translations after it are ignored; multi-word phrases are skipped. Underlines appear in reading view only and never modify your notes. The first time a note is opened, its list words are added to your vocab list once; words you delete don't come back from that note (and for 30 days not from any note).
 

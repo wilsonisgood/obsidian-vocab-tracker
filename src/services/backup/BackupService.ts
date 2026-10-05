@@ -11,7 +11,7 @@ import {
   type ParsedBackup,
 } from "./format";
 import { currentShard, planRestore, restoreStamp, type PlannedShard, type RestoreCounts, type RestorePlan } from "./restorePlan";
-import type { BackupHost, BackupStoragePort } from "./ports";
+import type { BackupHost, BackupStoragePort } from "../../core/ports";
 
 // 備份與還原 (規劃書 06 §4.5 第 6 點): lists the backup folder, writes
 // full backups (data.json + store/), and restores one — always saving the

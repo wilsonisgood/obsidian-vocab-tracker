@@ -517,6 +517,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "backup.restore.extras.desc":
     "目前有、但備份裡沒有的：{words} 個單字、{questions} 題討論、{learn} 個字族／收藏。不勾選的話會保留。",
   "backup.restore.extras.remove": "一併刪除這些（其他裝置同步後也會刪除）",
+  "backup.restore.extras.undoHint": "用「還原前自動備份」復原時，請打開這個開關，才會完全回到還原前的狀態。",
   "backup.restore.safety":
     "還原之前，會先把目前的全部資料（data.json 和整個 store/ 資料夾）另存到 {folder}，檔名是 full-<時間>-before-restore.json。還原錯了，可以再從這個檔案還原回來。",
   "backup.restore.devices.title": "其他裝置會怎樣",

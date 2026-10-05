@@ -6,7 +6,7 @@ import type { TriviaItem } from "../../core/model/trivia";
 import { mergeReviewLogs, pruneReviewLogs } from "../../core/store/reviewLogs";
 import type { LearnShard } from "../learn/learnMerge";
 import type { Snapshot } from "./format";
-import type { RestoreChanges } from "./ports";
+import type { RestoreChanges } from "../../core/ports";
 
 // What 從備份還原 writes, as a pure function of (current state, backup).
 //

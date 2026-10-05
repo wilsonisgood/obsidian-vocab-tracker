@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { VocabData } from "../../../src/core/model/entry";
 import { BackupError, BackupService } from "../../../src/services/backup/BackupService";
-import type { BackupHost, BackupStoragePort, RestoreChanges } from "../../../src/services/backup/ports";
+import type { BackupHost, BackupStoragePort, RestoreChanges } from "../../../src/core/ports";
 
 // In-memory plugin folder: shards (data + store/*) and backup/ files, with
 // a log of every write in order.

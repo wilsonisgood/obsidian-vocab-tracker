@@ -77,7 +77,7 @@ import { actionNotice } from "./src/ui/mobile/actionNotice";
 import { LivePreviewHint } from "./src/ui/mobile/livePreviewHint";
 import { browserSpeaker, type Speaker } from "./src/ui/mobile/speech";
 import { BackupService } from "./src/services/backup/BackupService";
-import type { RestoreChanges } from "./src/services/backup/ports";
+import type { RestoreChanges } from "./src/core/ports";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

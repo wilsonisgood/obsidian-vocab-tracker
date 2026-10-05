@@ -110,3 +110,8 @@
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
+
+/* 設定 → 備份與還原 */
+.vt-backup-last { color: var(--text-accent); }
+.vt-restore ul { padding-inline-start: 1.2em; }
+.vt-restore h4 { margin: 1em 0 0.3em; }

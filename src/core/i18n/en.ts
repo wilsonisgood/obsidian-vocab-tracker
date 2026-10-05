@@ -524,6 +524,7 @@ export const en = {
   "backup.restore.extras.desc":
     "You now have {words} words, {questions} discussion questions and {learn} families / saved trivia that aren’t in this backup. They are kept unless you tick the box.",
   "backup.restore.extras.remove": "Delete these too (other devices delete them after syncing)",
+  "backup.restore.extras.undoHint": "Undoing a restore with its “Saved automatically before a restore” backup? Turn this on to get back exactly to how things were.",
   "backup.restore.safety":
     "Before restoring, everything you have now (data.json and the whole store/ folder) is saved to {folder} as full-<time>-before-restore.json. If the restore was a mistake, restore that file.",
   "backup.restore.devices.title": "Your other devices",
