@@ -259,6 +259,26 @@ describe("merge() settings, section by section", () => {
     }
   });
 
+  it("merges the paragraph anchors section on its own stamp", () => {
+    // Mac turned on hash mode; the iPhone later changed its locale.
+    const mac: PluginSettings = {
+      schemaVersion: 2,
+      updatedAt: T2,
+      anchors: { mode: "hash", blockIdNoticeSeen: true, updatedAt: T2 },
+      ui: { locale: "en", updatedAt: T1 },
+    };
+    const iphone: PluginSettings = {
+      schemaVersion: 2,
+      updatedAt: T3,
+      anchors: { mode: "block", blockIdNoticeSeen: false, updatedAt: T1 },
+      ui: { locale: "zh-TW", updatedAt: T3 },
+    };
+    for (const s of both(mac, iphone)) {
+      expect(s?.anchors).toEqual(mac.anchors);
+      expect(s?.ui?.locale).toBe("zh-TW");
+    }
+  });
+
   it("takes keys outside the sections from the side with the newer top-level stamp", () => {
     const local = { schemaVersion: 2, updatedAt: T1, futureField: "old" } as PluginSettings;
     const remote = { schemaVersion: 2, updatedAt: T2, futureField: "new" } as PluginSettings;

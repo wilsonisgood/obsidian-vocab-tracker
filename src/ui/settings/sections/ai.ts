@@ -125,7 +125,13 @@ export const aiSection: SettingsSection = {
     new Setting(el)
       .setName(t("settings.ai.enabled.name"))
       .setDesc(t("settings.ai.enabled.desc"))
-      .addToggle((tg) => tg.setValue(ai().enabled).onChange((v) => void ctx.store.updateSettings((s) => (s.ai.enabled = v))));
+      .addToggle((tg) =>
+        tg.setValue(ai().enabled).onChange(async (v) => {
+          await ctx.store.updateSettings((s) => (s.ai.enabled = v));
+          // The reading-view ✦ only shows on hover while AI is on.
+          ctx.onAiEnabledChanged?.();
+        })
+      );
 
     new Setting(el)
       .setName(t("settings.ai.provider.name"))

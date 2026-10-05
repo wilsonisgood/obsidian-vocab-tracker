@@ -18,6 +18,8 @@ export interface SettingsContext {
   // After a word-list setting changed: "display" = colours/toggles only,
   // "scan" = cached note scans are stale too, "reload" = re-read the lists.
   onWordlistsChanged: (change: "display" | "scan" | "reload") => void;
+  // After AI was switched on or off (the paragraph ✦ badges follow it).
+  onAiEnabledChanged?: () => void;
   // Re-renders the whole tab (e.g. after switching provider, whose fields differ).
   redisplay: () => void;
 }

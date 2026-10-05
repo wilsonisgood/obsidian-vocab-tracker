@@ -448,3 +448,69 @@
 .vt-ppane-notice-actions button {
   font-size: 0.8em;
 }
+
+/* 「單字頁」 at the bottom of an expanded word card (design D2–D4) */
+.vt-word-page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 34px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--interactive-accent) 60%, transparent);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-accent);
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.vt-word-page-btn:hover {
+  background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+}
+
+.vt-word-page-btn-icon {
+  display: inline-flex;
+}
+
+.vt-word-page-btn-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* 「開啟 討論串/xxx.ai.md」 under a paragraph discussion (design D5) */
+.vt-ppane-ainote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 0.8em;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.vt-ppane-ainote:empty {
+  display: none;
+}
+
+.vt-ppane-ainote:hover {
+  color: var(--text-accent);
+}
+
+.vt-ppane-ainote-icon {
+  display: inline-flex;
+}
+
+.vt-ppane-ainote-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+@media (hover: none) {
+  .vt-word-page-btn,
+  .vt-ppane-ainote {
+    min-height: 44px;
+  }
+}

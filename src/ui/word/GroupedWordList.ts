@@ -4,6 +4,11 @@ import type { VocabEntry } from "../../core/model/entry";
 import type { ExpandState, RowOptions } from "./WordRow";
 import { renderVocabRow } from "./WordRow";
 
+// The group a word is listed under: its source note's name.
+export function groupTitle(entry: VocabEntry): string {
+  return entry.source?.path ? entry.source.path.split("/").pop()!.replace(/\.md$/, "") : "(no note)";
+}
+
 // ── Shared grouped list: dashboard + sidebar "All" tab both use this ──
 //
 // Groups rows by source note title into collapsible sections, each
@@ -20,9 +25,7 @@ export function renderGroupedVocabList(
 ) {
   const groups = new Map<string, VocabEntry[]>();
   for (const entry of rows) {
-    const title = entry.source?.path
-      ? entry.source.path.split("/").pop()!.replace(/\.md$/, "")
-      : "(no note)";
+    const title = groupTitle(entry);
     if (!groups.has(title)) groups.set(title, []);
     groups.get(title)!.push(entry);
   }

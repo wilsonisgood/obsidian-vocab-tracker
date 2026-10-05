@@ -1,16 +1,16 @@
 import { Component, ItemView, Notice, TFile, WorkspaceLeaf, debounce, setIcon } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
-import type { ExpandState } from "../word/WordRow";
+import type { VocabEntry } from "../../core/model/entry";
+import type { ExpandState, RowOptions } from "../word/WordRow";
 import { renderVocabRow } from "../word/WordRow";
-import { renderGroupedVocabList } from "../word/GroupedWordList";
+import { groupTitle, renderGroupedVocabList } from "../word/GroupedWordList";
 import { t } from "../../core/i18n";
 import type { SectionRef } from "../../services/anchors/ParagraphAnchorService";
-import { WordUi } from "../word/wordUi";
+import { WordUi, type WordTab } from "../word/wordUi";
 import { renderExamStrip } from "./examStrip";
 import { MissingNoteThreadList, ParagraphThreadList, type ParagraphListActions, type ParagraphListDeps } from "./ParagraphThreadList";
 import { ParagraphThreadPane, type ParagraphPaneNav } from "./ParagraphThreadPane";
 import { LIST_ROUTE, SidebarRouter, routeForActiveNote, routeKey, sameRoute, type SidebarRoute } from "./routes";
-import { L } from "./strings";
 
 export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 
@@ -59,7 +59,7 @@ export class VocabSidebarView extends ItemView {
   private pane: ParagraphThreadPane | null = null;
   private paragraphList: ParagraphThreadList | null = null;
   private missingList: MissingNoteThreadList | null = null;
-  // Word id → its ✦ n chip in the This note list.
+  // Word id → its ✦ n chip in the word list (either tab).
   private wordChips = new Map<string, HTMLElement>();
   private changedPaths = new Set<string>();
   private refreshChangedNotes = debounce(() => this.flushChangedNotes(), NOTE_REFRESH_MS, true);
@@ -122,6 +122,27 @@ export class VocabSidebarView extends ItemView {
     this.render();
   }
 
+  // Shows one word's card, expanded and on the given tab (the word page's
+  // 「在側欄開啟」 opens it on "ai"). Switches to All when the word isn't
+  // from the note in front, and opens its group there.
+  openWord(entryId: string, tab: WordTab): void {
+    const entry = this.plugin.store.entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    if (this.expandState.get(entry.id) === undefined || this.expandState.get(entry.id) === "collapsed") {
+      this.expandState.set(entry.id, "half");
+    }
+    this.wordUi.tabs.set(entry.id, tab);
+    this.pendingWord = "";
+    const active = this.app.workspace.getActiveFile()?.path;
+    if (this.filterMode !== "all" && (!active || entry.source?.path !== active)) this.filterMode = "all";
+    if (this.filterMode === "all") this.collapsedGroups.delete(groupTitle(entry));
+    this.router.back();
+    this.draw();
+    const root = this.containerEl.children[1] as HTMLElement;
+    const row = root.querySelector<HTMLElement>(`.vocab-tracker-row[data-entry-id="${CSS.escape(entry.id)}"]`);
+    row?.scrollIntoView({ block: "nearest" });
+  }
+
   refreshExamStrip() {
     if (!this.examStripEl) return;
     this.examStripEl.empty();
@@ -166,11 +187,11 @@ export class VocabSidebarView extends ItemView {
     this.cancelRebind();
     try {
       if (!(await this.plugin.threads.rebindParagraph(threadId, ref))) return;
-      new Notice(L("paragraph.rebind.done"));
+      new Notice(t("paragraph.rebind.done"));
       this.navigate({ name: "paragraph", threadId });
     } catch (e) {
       console.error("Vocab Tracker: rebind failed", e);
-      new Notice(L("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
 
@@ -181,8 +202,8 @@ export class VocabSidebarView extends ItemView {
     el.toggle(!!this.rebindThreadId);
     if (!this.rebindThreadId) return;
     setIcon(el.createSpan({ cls: "vt-rebind-icon" }), "link");
-    el.createSpan({ cls: "vt-rebind-text", text: L("paragraph.rebind.banner") });
-    const cancel = el.createEl("button", { text: L("paragraph.rebind.cancel") });
+    el.createSpan({ cls: "vt-rebind-text", text: t("paragraph.rebind.banner") });
+    const cancel = el.createEl("button", { text: t("paragraph.rebind.cancel") });
     cancel.addEventListener("click", () => this.cancelRebind());
   }
 
@@ -190,7 +211,7 @@ export class VocabSidebarView extends ItemView {
     return {
       open: (id) => this.openThread(id),
       rebind: (id) => this.startRebind(id),
-      remove: (id) => void this.plugin.threads.deleteThread(id).then(() => new Notice(L("paragraph.deleted"))),
+      remove: (id) => void this.plugin.threads.deleteThread(id).then(() => new Notice(t("paragraph.deleted"))),
     };
   }
 
@@ -250,7 +271,7 @@ export class VocabSidebarView extends ItemView {
     if (!n) return;
     setIcon(chip.createSpan({ cls: "vt-word-tc-icon" }), "sparkles");
     chip.createSpan({ text: String(n) });
-    chip.setAttr("aria-label", L("word.discussions", { n }));
+    chip.setAttr("aria-label", t("word.discussions", { n }));
   }
 
   private updateWordChip(entryId: string): void {
@@ -355,11 +376,10 @@ export class VocabSidebarView extends ItemView {
     mkToggle(t("sidebar.filter.note"), "note");
     mkToggle(t("sidebar.filter.all"), "all");
 
-    // Exam word stats sit at the top of the This note tab (規劃書 03).
-    if (noteMode) {
-      this.examStripEl = root.createDiv();
-      this.refreshExamStrip();
-    }
+    // Exam word stats for the note in front (規劃書 03), at the top of both
+    // tabs; its chips are the underline toggles. Redrawn on its own.
+    this.examStripEl = root.createDiv();
+    this.refreshExamStrip();
 
     if (list.length === 0) {
       root.createEl("div", {
@@ -368,6 +388,16 @@ export class VocabSidebarView extends ItemView {
       });
     } else {
       const listEl = root.createEl("div", { cls: "vocab-tracker-list" });
+      const rowOpts: RowOptions = {
+        ui: this.wordUi,
+        // ✦ n after the word (design D1); the dashboard doesn't pass this.
+        decorateWord: (wrap, entry) => {
+          const chip = wrap.createSpan({ cls: "vt-word-tc" });
+          this.wordChips.set(entry.id, chip);
+          this.drawWordChip(chip, entry.id);
+        },
+        openWordPage: (entry: VocabEntry) => void this.plugin.openWordPage(entry.id),
+      };
       if (this.filterMode === "all") {
         // Grouped by source note, same as the vocab-list dashboard — "This
         // note" stays flat since every row would be in the same group anyway.
@@ -378,7 +408,7 @@ export class VocabSidebarView extends ItemView {
           this.collapsedGroups,
           this.expandState,
           () => this.render(),
-          { ui: this.wordUi }
+          rowOpts
         );
       } else {
         for (const entry of list) {
@@ -390,16 +420,8 @@ export class VocabSidebarView extends ItemView {
             state,
             (s) => this.expandState.set(entry.id, s),
             () => this.render(),
-            { ui: this.wordUi }
+            rowOpts
           );
-          // ✦ n after the word (design D1) — added here so WordRow stays
-          // shared with the dashboard unchanged.
-          const wrap = listEl.lastElementChild?.querySelector<HTMLElement>(".vocab-tracker-row-wordwrap");
-          if (wrap) {
-            const chip = wrap.createSpan({ cls: "vt-word-tc" });
-            this.wordChips.set(entry.id, chip);
-            this.drawWordChip(chip, entry.id);
-          }
         }
       }
     }

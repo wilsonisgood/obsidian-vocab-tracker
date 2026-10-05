@@ -74,6 +74,15 @@ export interface FilesSettings extends SectionStamp {
   threadsFolder: string;
 }
 
+// Paragraph discussion anchors (規劃書 06 §5.1). Read through
+// resolveAnchorSettings() (ui/sidebar/anchorSettings.ts).
+export interface AnchorSettings extends SectionStamp {
+  // "hash" = 設定「不要修改我的筆記」: no ` ^vt-…` is written into notes.
+  mode: "block" | "hash";
+  // The one-time explanation before the first ` ^vt-…` is written.
+  blockIdNoticeSeen: boolean;
+}
+
 export interface PluginSettings {
   schemaVersion: 2;
   // Set to the same stamp as the section(s) an edit changed; never newer
@@ -93,10 +102,12 @@ export interface PluginSettings {
   wordlists?: Partial<WordlistSettings>;
   // Read through resolveFilesSettings() (services/files/settings.ts).
   files?: Partial<FilesSettings>;
+  // Read through resolveAnchorSettings() (ui/sidebar/anchorSettings.ts).
+  anchors?: Partial<AnchorSettings>;
 }
 
 // The sections merged independently, each with its own updatedAt.
-export const SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists", "files"] as const;
+export const SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists", "files", "anchors"] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 export type ResolvedSettings = PluginSettings & {

@@ -4,7 +4,6 @@ import type { NoteReaderPort } from "../../core/ports";
 import { t, type I18nKey } from "../../core/i18n";
 import type { ThreadService } from "../../services/threads/ThreadService";
 import { paragraphRows, shortDate, threadsWithMissingNote, type ParagraphRow } from "./paragraphRows";
-import { L } from "./strings";
 
 // The This note tab's 「段落討論（n）」 list (規劃書 06 §9.4, design D1),
 // and the All tab's list of discussions whose note is gone (§4.6). Each
@@ -27,7 +26,7 @@ export interface ParagraphListDeps {
 
 function rowMeta(row: ParagraphRow): string {
   const parts = row.labels.map((key) => t(key as I18nKey));
-  parts.push(L("paragraph.list.count", { n: row.count }));
+  parts.push(t("paragraph.list.count", { n: row.count }));
   const date = shortDate(row.lastAt);
   if (date) parts.push(date);
   return parts.join(" · ");
@@ -58,12 +57,12 @@ export function confirmButton(parent: HTMLElement, label: string, confirmLabel: 
 
 function orphanActions(parent: HTMLElement, threadId: string, actions: ParagraphListActions): void {
   const bar = parent.createDiv({ cls: "vt-plist-actions" });
-  const rebind = bar.createEl("button", { cls: "vt-plist-action", text: L("paragraph.action.rebind") });
+  const rebind = bar.createEl("button", { cls: "vt-plist-action", text: t("paragraph.action.rebind") });
   rebind.addEventListener("click", (e) => {
     e.stopPropagation();
     actions.rebind(threadId);
   });
-  confirmButton(bar, L("paragraph.action.delete"), L("paragraph.action.confirmDelete"), () => actions.remove(threadId));
+  confirmButton(bar, t("paragraph.action.delete"), t("paragraph.action.confirmDelete"), () => actions.remove(threadId));
 }
 
 function drawRow(parent: HTMLElement, row: ParagraphRow, actions: ParagraphListActions, current: boolean, note?: string): void {
@@ -85,8 +84,8 @@ function drawRow(parent: HTMLElement, row: ParagraphRow, actions: ParagraphListA
   const meta = el.createDiv({ cls: "vt-plist-meta" });
   setIcon(meta.createSpan({ cls: "vt-plist-meta-icon" }), "sparkles");
   meta.createSpan({ text: rowMeta(row) });
-  if (row.orphan) meta.createSpan({ cls: "vt-plist-flag is-orphan", text: L("paragraph.list.orphan") });
-  else if (row.edited) meta.createSpan({ cls: "vt-plist-flag", text: L("paragraph.list.edited") });
+  if (row.orphan) meta.createSpan({ cls: "vt-plist-flag is-orphan", text: t("paragraph.list.orphan") });
+  else if (row.edited) meta.createSpan({ cls: "vt-plist-flag", text: t("paragraph.list.edited") });
   if (note) el.createDiv({ cls: "vt-plist-path", text: note });
 
   if (row.orphan) orphanActions(el, row.threadId, actions);
@@ -153,9 +152,9 @@ export class ParagraphThreadList extends Component {
   private draw(rows: ParagraphRow[]): void {
     this.el.empty();
     const head = this.el.createDiv({ cls: "vt-plist-head" });
-    head.createSpan({ text: L("paragraph.list.title", { n: rows.length }) });
+    head.createSpan({ text: t("paragraph.list.title", { n: rows.length }) });
     if (!rows.length) {
-      this.el.createDiv({ cls: "vt-plist-hint", text: L("paragraph.list.hint") });
+      this.el.createDiv({ cls: "vt-plist-hint", text: t("paragraph.list.hint") });
       return;
     }
     const current = this.currentThreadId();
@@ -195,11 +194,11 @@ export class MissingNoteThreadList extends Component {
     const orphans: Thread[] = threadsWithMissingNote(this.deps.threads.paragraphThreads(), (p) => this.deps.exists(p));
     this.el.empty();
     if (!orphans.length) return;
-    this.el.createDiv({ cls: "vt-plist-head" }).createSpan({ text: L("paragraph.list.orphanTitle", { n: orphans.length }) });
+    this.el.createDiv({ cls: "vt-plist-head" }).createSpan({ text: t("paragraph.list.orphanTitle", { n: orphans.length }) });
     const rows = paragraphRows(orphans, null, (id) => this.deps.taskLabel(id));
     for (const row of rows) {
       const anchor = orphans.find((x) => x.id === row.threadId)?.anchor;
-      const note = anchor?.kind === "paragraph" ? L("paragraph.list.missingNote", { path: anchor.path }) : undefined;
+      const note = anchor?.kind === "paragraph" ? t("paragraph.list.missingNote", { path: anchor.path }) : undefined;
       drawRow(this.el, row, this.actions, false, note);
     }
   }

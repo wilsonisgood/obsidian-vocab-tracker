@@ -1,22 +1,16 @@
 import type { AnchorMode } from "../../core/ports";
+import type { AnchorSettings, PluginSettings } from "../../core/model/settings";
 import { trailingBlockId } from "../../core/text/blockId";
 
-// Paragraph anchor settings (規劃書 06 §5.1). Meant to become a settings
-// section `anchors` in core/model/settings.ts (with its own updatedAt, and
-// "anchors" added to SETTINGS_SECTIONS) at integration; until then it's
-// read here as an optional, untyped field so nothing else has to change.
+// Paragraph anchor settings (規劃書 06 §5.1): the settings section
+// `anchors` (core/model/settings.ts), merged across devices with its own
+// updatedAt like the other sections.
 
-export interface AnchorSettings {
-  // "hash" = 設定「不要修改我的筆記」.
-  mode: AnchorMode;
-  // The one-time explanation before the first ` ^vt-…` is written.
-  blockIdNoticeSeen: boolean;
-  updatedAt?: string;
-}
+export type { AnchorSettings };
 
 export const DEFAULT_ANCHOR_SETTINGS: AnchorSettings = { mode: "block", blockIdNoticeSeen: false };
 
-type WithAnchors = { anchors?: Partial<AnchorSettings> };
+type WithAnchors = Pick<PluginSettings, "anchors">;
 
 export function resolveAnchorSettings(settings: object | undefined): AnchorSettings {
   const raw = (settings as WithAnchors | undefined)?.anchors;

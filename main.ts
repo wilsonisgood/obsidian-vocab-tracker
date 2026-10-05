@@ -60,6 +60,10 @@ import { SeedRecord } from "./src/services/files/SeedRecord";
 import type { EntryFileId } from "./src/services/files/entryFiles";
 import type { WordHeaderHost } from "./src/ui/blocks/wordHeader";
 import { createWordPageDecorator } from "./src/ui/reading/WordPageDecorator";
+import { ParagraphAnchorService, type SectionRef } from "./src/services/anchors/ParagraphAnchorService";
+import { ParagraphIndex } from "./src/services/anchors/ParagraphIndex";
+import { ParagraphBadges } from "./src/ui/reading/ParagraphBadges";
+import { resolveAnchorSettings } from "./src/ui/sidebar/anchorSettings";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -98,6 +102,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   vault!: ObsidianVault;
   exporter!: ExportService;
   files!: EntryFilesService;
+  anchors!: ParagraphAnchorService;
+  paragraphIndex!: ParagraphIndex;
+  paragraphBadges!: ParagraphBadges;
   private importing = new Set<string>();
   private enrichQueue: VocabEntry[] = [];
   private enriching = false;
@@ -132,6 +139,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       wordlists: this.wordlists,
       applyLocale: () => this.applyLocale(),
       onWordlistsChanged: (change: "display" | "scan" | "reload") => void this.onWordlistsChanged(change),
+      onAiEnabledChanged: () => this.paragraphBadges?.refresh(),
     };
     this.addSettingTab(new VocabSettingsTab(this.app, this, settingsCtx, SETTINGS_SECTIONS));
     this.srs = new SrsService({ store: this.store, storage: this.storage });
@@ -139,7 +147,18 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // M4: word discussions. The selection tracker remembers the last text
     // highlighted in a note so the AI tab can attach it to the next question.
     this.notes = new ObsidianNotes(this.app);
-    this.threads = new ThreadService({ storage: this.storage, store: this.store, ai, notes: this.notes });
+    // One ObsidianVault for the paragraph anchors (M5) and the plugin's
+    // notes (M6, below); register() must run before the layout is ready so
+    // the metadata cache's first "resolved" isn't missed.
+    this.vault = new ObsidianVault(this.app);
+    this.vault.register(this);
+    // M5: paragraph discussions. Anchors are block ids (or text hashes in
+    // hash mode); the mode is read from the settings on every new anchor.
+    this.anchors = new ParagraphAnchorService({
+      vault: this.vault,
+      mode: () => resolveAnchorSettings(this.store.settings).mode,
+    });
+    this.threads = new ThreadService({ storage: this.storage, store: this.store, ai, notes: this.notes, anchors: this.anchors });
 
     // M7: word families, verb usage and trivia. learn.json loads lazily,
     // the first time one of them is used.
@@ -153,11 +172,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // M6: the plugin's notes. ExportService keeps 單字/<word>.md,
     // 討論串/<文章>.ai.md and 冷知識.md's saved list in step with the data;
     // EntryFilesService owns the entry files (單字卡.md…) and follows
-    // article renames/deletes (規劃書 06 §4.6, §8). One ObsidianVault for
-    // both (and for the paragraph anchors); register() must run before the
-    // layout is ready so the metadata cache's first "resolved" isn't missed.
-    this.vault = new ObsidianVault(this.app);
-    this.vault.register(this);
+    // article renames/deletes (規劃書 06 §4.6, §8). Both use this.vault.
     this.exporter = new ExportService({
       vault: this.vault,
       data: createExportData({
@@ -201,10 +216,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         trivia: this.trivia,
         // A new tab, so the word page stays open behind it.
         openTrivia: () => this.openEntryFile("trivia", "tab"),
-        // TODO(G): switch the card to its AI tab once the sidebar has an API for it.
         openInSidebar: async (entry) => {
           const leaf = await this.activateSidebar();
-          (leaf.view as VocabSidebarView).setWord(entry.word);
+          (leaf.view as VocabSidebarView).openWord(entry.id, "ai");
         },
         notify: (m) => new Notice(m),
       })
@@ -215,6 +229,18 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       VOCAB_VIEW_TYPE,
       (leaf) => new VocabSidebarView(leaf, this)
     );
+
+    // M5: the ✦ next to paragraphs in reading view (hover to ask; ✦ n once
+    // a paragraph has a discussion). The index follows the threads.
+    this.paragraphIndex = new ParagraphIndex();
+    this.register(this.paragraphIndex.attach(this.threads));
+    this.paragraphBadges = new ParagraphBadges({
+      index: this.paragraphIndex,
+      onOpen: (ref) => void this.openParagraph(ref),
+      showGhost: () => this.store.settings.ai.enabled,
+    });
+    this.register(this.paragraphBadges.attach());
+    this.registerMarkdownPostProcessor(this.paragraphBadges.process);
 
     // Click handler for ==highlights== in reading mode
     this.registerMarkdownPostProcessor(this.processMarks.bind(this));
@@ -359,6 +385,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     const disk = await this.storage.readShard<VocabData>("data");
     if (!disk) return;
     const wordlistsBefore = JSON.stringify(this.wordlistSettings());
+    const aiBefore = this.store.settings.ai.enabled;
 
     const merged = merge(this.vocabData, disk);
     this.vocabData = merged;
@@ -374,6 +401,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     (leaf?.view as VocabSidebarView | undefined)?.render();
     // Another device changed list colours / toggles / folder.
     if (JSON.stringify(this.wordlistSettings()) !== wordlistsBefore) void this.onWordlistsChanged("reload");
+    // Another device switched AI on/off: the ✦ hover badges follow.
+    if (this.store.settings.ai.enabled !== aiBefore) this.paragraphBadges.refresh();
   }
 
   // ── Exam word lists ────────────────────────────────────────────
@@ -565,6 +594,12 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     return leaf;
   }
 
+  // A reading-view ✦ was clicked: that paragraph's discussion in the sidebar.
+  async openParagraph(ref: SectionRef) {
+    const leaf = await this.activateSidebar();
+    await (leaf.view as VocabSidebarView).openParagraph(ref);
+  }
+
   async openVocabFile() {
     await this.ensureVocabFile();
     const file = this.app.vault.getAbstractFileByPath(VOCAB_FILE) as TFile;
@@ -589,8 +624,13 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
 
   // The 「單字頁」 button: the word's page, created now if it has none.
   async openWordPage(entryId: string) {
-    const path = await this.files.openWordPage(entryId);
-    if (path) await this.openNote(path);
+    try {
+      const path = await this.files.openWordPage(entryId);
+      if (path) await this.openNote(path);
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't open the word page", e);
+      new Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+    }
   }
 
   // "tab": a new tab, or the tab already showing the note.

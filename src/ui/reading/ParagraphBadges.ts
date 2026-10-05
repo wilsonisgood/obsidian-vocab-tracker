@@ -1,7 +1,7 @@
 import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext, type MarkdownSectionInformation } from "obsidian";
+import { t } from "../../core/i18n";
 import type { SectionRef } from "../../services/anchors/ParagraphAnchorService";
 import type { ParagraphIndex } from "../../services/anchors/ParagraphIndex";
-import { L } from "../sidebar/strings";
 
 // Reading-mode paragraph badges (規劃書 06 §9.5, design D1): `✦ n` beside
 // a paragraph that has discussions, a `✦` that only shows on hover beside
@@ -153,7 +153,7 @@ export class ParagraphBadges {
     badge.toggleClass("is-ghost", state.kind === "ghost");
     badge.toggleClass("is-quiet", state.kind === "ghost" && state.quiet);
     countEl?.setText(state.kind === "count" ? String(state.count) : "");
-    const label = state.kind === "count" ? L("paragraph.badge.count", { n: state.count }) : L("paragraph.badge.open");
+    const label = state.kind === "count" ? t("paragraph.badge.count", { n: state.count }) : t("paragraph.badge.open");
     badge.setAttr("aria-label", label);
   }
 }

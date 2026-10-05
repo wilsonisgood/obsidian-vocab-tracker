@@ -18,6 +18,11 @@ export interface RowOptions {
   showDue?: boolean;
   // Enables the 「資料 · ✦ AI」 tabs on expanded rows (規劃書 06 §9.4, M4).
   ui?: WordUi;
+  // Adds to the word's line (the sidebar's ✦ n discussion chip, design D1).
+  decorateWord?(wordWrap: HTMLElement, entry: VocabEntry): void;
+  // The 「單字頁」 button at the bottom of an expanded card (design D2–D4),
+  // on both tabs.
+  openWordPage?(entry: VocabEntry): void;
 }
 
 type EditableField = "synonyms" | "definition" | "definitionZh" | "antonyms" | "example" | "grammar" | "level";
@@ -47,6 +52,7 @@ export function renderVocabRow(
   opts: RowOptions = {}
 ) {
   const row = container.createEl("div", { cls: "vocab-tracker-row" });
+  row.setAttr("data-entry-id", entry.id);
   const due = plugin.srs.nextDue(entry);
   row.toggleClass("is-expanded", state !== "collapsed");
 
@@ -67,6 +73,7 @@ export function renderVocabRow(
   for (const tag of entry.level.split(",").map((t) => t.trim()).filter(Boolean)) {
     wordWrap.createEl("span", { text: tag, cls: "vocab-tracker-row-badge" });
   }
+  opts.decorateWord?.(wordWrap, entry);
 
   head.createEl("span", { cls: "vocab-tracker-row-spacer" });
 
@@ -114,6 +121,7 @@ export function renderVocabRow(
     const tab = renderTabs(plugin, body, entry, opts.ui, refresh);
     if (tab === "ai") {
       renderWordAiTab(plugin, body, entry, opts.ui);
+      renderWordPageButton(body, entry, opts);
       return;
     }
   }
@@ -243,6 +251,21 @@ export function renderVocabRow(
   speak.onclick = (e) => {
     e.stopPropagation();
     plugin.speakWord(entry);
+  };
+
+  renderWordPageButton(body, entry, opts);
+}
+
+function renderWordPageButton(body: HTMLElement, entry: VocabEntry, opts: RowOptions): void {
+  const open = opts.openWordPage;
+  if (!open) return;
+  const btn = body.createEl("button", { cls: "vt-word-page-btn" });
+  setIcon(btn.createSpan({ cls: "vt-word-page-btn-icon" }), "external-link");
+  btn.createSpan({ text: t("word.openPage") });
+  btn.setAttr("aria-label", t("word.openPageTitle"));
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    open(entry);
   };
 }
 

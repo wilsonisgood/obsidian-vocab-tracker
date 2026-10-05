@@ -5,6 +5,7 @@ import { learnerSection } from "./learner";
 import { srsSection } from "./srs";
 import { wordlistsSection } from "./wordlists";
 import { filesSection } from "./files";
+import { paragraphsSection } from "./paragraphs";
 
 // Order = order on the settings page. New sections (SRS, export…) go here.
 export const SETTINGS_SECTIONS: SettingsSection[] = [
@@ -13,5 +14,6 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
   srsSection,
   aiSection,
   learnerSection,
+  paragraphsSection,
   filesSection,
 ];

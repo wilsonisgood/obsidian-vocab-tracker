@@ -15,7 +15,6 @@ import { needsBlockIdNotice, patchAnchorSettings, resolveAnchorSettings } from "
 import { confirmButton } from "./ParagraphThreadList";
 import { paragraphNumberAt } from "./paragraphRows";
 import { routeKey, type SidebarRoute } from "./routes";
-import { L } from "./strings";
 
 // One paragraph's discussion in the sidebar (規劃書 06 §9.4, design D5):
 // back button, the paragraph quoted, status notes (原文已修改 / 孤立 /
@@ -35,6 +34,9 @@ export interface ParagraphPaneHost {
   notes: NoteReaderPort;
   store: VocabStore;
   manifest: { id: string };
+  // The article's 討論串/<文章>.ai.md, when it exists (M6 ExportService).
+  exporter: { aiNotePath(articlePath: string): Promise<string | null> };
+  openNote(path: string, where?: "current" | "tab"): Promise<void>;
 }
 
 export interface ParagraphPaneNav {
@@ -53,7 +55,9 @@ export class ParagraphThreadPane extends Component {
   private quoteEl!: HTMLElement;
   private notesEl!: HTMLElement;
   private noticeEl: HTMLElement | null = null;
+  private aiNoteEl!: HTMLElement;
   private seq = 0;
+  private aiNoteSeq = 0;
   private alive = false;
   // Where the quote jumps to.
   private target: { path: string; line: number } | null = null;
@@ -108,6 +112,16 @@ export class ParagraphThreadPane extends Component {
       );
     }
     void this.refreshStatus();
+
+    // The .ai.md is written a moment after an answer (debounced export),
+    // so the link also follows that note being created, renamed or deleted.
+    const { vault } = this.host.app;
+    const onNote = (path: string) => {
+      if (/\.ai\.md$/i.test(path)) void this.refreshAiNote();
+    };
+    this.registerEvent(vault.on("create", (f) => onNote(f.path)));
+    this.registerEvent(vault.on("rename", (f) => onNote(f.path)));
+    this.registerEvent(vault.on("delete", (f) => onNote(f.path)));
   }
 
   // ── Static parts ───────────────────────────────────────────────────────
@@ -115,7 +129,7 @@ export class ParagraphThreadPane extends Component {
     const back = this.root.createDiv({ cls: "vt-ppane-back" });
     back.setAttr("role", "button");
     back.setAttr("tabindex", "0");
-    back.setAttr("aria-label", L("paragraph.pane.back"));
+    back.setAttr("aria-label", t("paragraph.pane.back"));
     setIcon(back.createSpan({ cls: "vt-ppane-back-icon" }), "arrow-left");
     back.createSpan({ text: t("sidebar.filter.note") });
     back.addEventListener("click", () => this.nav.back());
@@ -124,32 +138,32 @@ export class ParagraphThreadPane extends Component {
     });
 
     const head = this.root.createDiv({ cls: "vt-ppane-head" });
-    this.titleEl = head.createSpan({ cls: "vt-ppane-title", text: L("paragraph.pane.titleNoNumber") });
+    this.titleEl = head.createSpan({ cls: "vt-ppane-title", text: t("paragraph.pane.titleNoNumber") });
     const id = this.threadId;
     if (id) {
       const del = head.createSpan({ cls: "vt-ppane-delete clickable-icon" });
       setIcon(del, "trash-2");
-      del.setAttr("aria-label", L("paragraph.pane.delete"));
+      del.setAttr("aria-label", t("paragraph.pane.delete"));
       // Same in-place confirmation as the list's delete button.
       let armed = false;
       del.addEventListener("click", () => {
         if (!armed) {
           armed = true;
           del.addClass("mod-warning");
-          del.setAttr("aria-label", L("paragraph.action.confirmDelete"));
+          del.setAttr("aria-label", t("paragraph.action.confirmDelete"));
           window.setTimeout(() => {
             armed = false;
             del.removeClass("mod-warning");
-            del.setAttr("aria-label", L("paragraph.pane.delete"));
+            del.setAttr("aria-label", t("paragraph.pane.delete"));
           }, 3000);
           return;
         }
-        void this.host.threads.deleteThread(id).then(() => new Notice(L("paragraph.deleted")));
+        void this.host.threads.deleteThread(id).then(() => new Notice(t("paragraph.deleted")));
       });
     }
 
     this.quoteEl = this.root.createDiv({ cls: "vt-ppane-quote" });
-    this.quoteEl.setAttr("aria-label", L("paragraph.pane.jump"));
+    this.quoteEl.setAttr("aria-label", t("paragraph.pane.jump"));
     this.quoteEl.addEventListener("click", () => void this.jump());
     if (this.route.name === "paragraph-draft") {
       this.quoteEl.setText(plainParagraph(this.route.section.text));
@@ -163,6 +177,37 @@ export class ParagraphThreadPane extends Component {
     if (this.route.name === "paragraph-draft") this.renderBlockIdNotice(this.route.section);
 
     this.renderChat(this.root.createDiv({ cls: "vt-ppane-chat" }));
+
+    this.aiNoteEl = this.root.createDiv({ cls: "vt-ppane-ainote" });
+    this.aiNoteEl.setAttr("role", "button");
+    this.aiNoteEl.setAttr("tabindex", "0");
+  }
+
+  // 「開啟 討論串/<文章>.ai.md」 under the chat (design D5): only when the
+  // article's note exists.
+  private async refreshAiNote(): Promise<void> {
+    const seq = ++this.aiNoteSeq;
+    const article = this.path;
+    let note: string | null = null;
+    if (article) {
+      try {
+        note = await this.host.exporter.aiNotePath(article);
+      } catch (e) {
+        console.error("Vocab Tracker: couldn't find the article's .ai.md", e);
+      }
+    }
+    if (!this.alive || seq !== this.aiNoteSeq) return;
+    const el = this.aiNoteEl;
+    el.empty();
+    if (!note) return;
+    const path = note;
+    setIcon(el.createSpan({ cls: "vt-ppane-ainote-icon" }), "file-text");
+    // "討論串/<文章>.ai.md": the folder it's in and its name.
+    el.createSpan({ text: t("paragraph.pane.openAiNote", { path: path.split("/").slice(-2).join("/") }) });
+    el.onclick = () => void this.host.openNote(path, "tab");
+    el.onkeydown = (e) => {
+      if (e.key === "Enter") void this.host.openNote(path, "tab");
+    };
   }
 
   private anchor(): ParagraphAnchor | null {
@@ -176,11 +221,11 @@ export class ParagraphThreadPane extends Component {
     const settings = resolveAnchorSettings(this.host.store.settings);
     if (!needsBlockIdNotice(settings, section.text)) return;
     const el = (this.noticeEl = this.root.createDiv({ cls: "vt-ppane-notice" }));
-    el.appendChild(inlineNote({ tone: "info", icon: "hash", text: L("paragraph.notice.blockId") }));
+    el.appendChild(inlineNote({ tone: "info", icon: "hash", text: t("paragraph.notice.blockId") }));
     const bar = el.createDiv({ cls: "vt-ppane-notice-actions" });
-    const ok = bar.createEl("button", { cls: "mod-cta", text: L("paragraph.notice.ok") });
+    const ok = bar.createEl("button", { cls: "mod-cta", text: t("paragraph.notice.ok") });
     ok.addEventListener("click", () => void this.dismissNotice(false));
-    const hash = bar.createEl("button", { text: L("paragraph.notice.useHash") });
+    const hash = bar.createEl("button", { text: t("paragraph.notice.useHash") });
     hash.addEventListener("click", () => void this.dismissNotice(true));
   }
 
@@ -190,7 +235,7 @@ export class ParagraphThreadPane extends Component {
     await this.host.store.updateSettings((s) =>
       patchAnchorSettings(s, useHash ? { mode: "hash", blockIdNoticeSeen: true } : { blockIdNoticeSeen: true })
     );
-    if (useHash) new Notice(L("paragraph.notice.hashOn"));
+    if (useHash) new Notice(t("paragraph.notice.hashOn"));
   }
 
   // ── Chat ───────────────────────────────────────────────────────────────
@@ -209,7 +254,7 @@ export class ParagraphThreadPane extends Component {
         surface: "paragraph",
         customTaskId: paragraphCustom.id,
         sourcePath,
-        placeholder: L("paragraph.pane.placeholder"),
+        placeholder: t("paragraph.pane.placeholder"),
         state: this.chatState,
         send: (req) => friendlyErrors(route.name === "paragraph-draft" ? this.sendDraft(route.section, req) : this.sendThread(threadId, req)),
         retry: (turnId) => friendlyErrors(threads.retryParagraph(threadId, turnId)),
@@ -259,13 +304,14 @@ export class ParagraphThreadPane extends Component {
 
   // ── Header, quote and notes from where the anchor resolves now ─────────
   async refreshStatus(): Promise<void> {
+    void this.refreshAiNote();
     const seq = ++this.seq;
     const route = this.route;
     if (route.name === "paragraph-draft") {
       const content = await this.readNote(route.section.path);
       if (!this.alive || seq !== this.seq || content === null) return;
       const n = paragraphNumberAt(splitParagraphSpans(content), route.section.lineStart);
-      this.titleEl.setText(L("paragraph.pane.title", { n }));
+      this.titleEl.setText(t("paragraph.pane.title", { n }));
       return;
     }
     let where: AnchorResolution | null = null;
@@ -280,27 +326,27 @@ export class ParagraphThreadPane extends Component {
     this.notesEl.empty();
     if (where?.status === "found") {
       const n = paragraphNumberAt(splitParagraphSpans(where.content), where.section.lineStart);
-      this.titleEl.setText(L("paragraph.pane.title", { n }));
+      this.titleEl.setText(t("paragraph.pane.title", { n }));
       this.quoteEl.setText(plainParagraph(where.section.text));
       this.quoteEl.removeClass("is-orphan");
       this.target = { path: anchor.path, line: where.section.lineStart };
-      if (where.edited) this.notesEl.appendChild(inlineNote({ tone: "info", icon: "file-diff", text: L("paragraph.pane.edited") }));
-      if (!anchor.blockId) this.notesEl.appendChild(inlineNote({ tone: "info", icon: "hash", text: L("paragraph.pane.hashAnchor") }));
+      if (where.edited) this.notesEl.appendChild(inlineNote({ tone: "info", icon: "file-diff", text: t("paragraph.pane.edited") }));
+      if (!anchor.blockId) this.notesEl.appendChild(inlineNote({ tone: "info", icon: "hash", text: t("paragraph.pane.hashAnchor") }));
       return;
     }
-    this.titleEl.setText(L("paragraph.pane.titleNoNumber"));
+    this.titleEl.setText(t("paragraph.pane.titleNoNumber"));
     this.quoteEl.setText(anchor.snapshot);
     this.quoteEl.addClass("is-orphan");
     this.target = null;
     const missingFile = where?.status === "orphan" && where.reason === "missing-file";
-    const note = inlineNote({ tone: "error", icon: "unlink", text: L(missingFile ? "paragraph.pane.orphanFile" : "paragraph.pane.orphanParagraph") });
+    const note = inlineNote({ tone: "error", icon: "unlink", text: t(missingFile ? "paragraph.pane.orphanFile" : "paragraph.pane.orphanParagraph") });
     this.notesEl.appendChild(note);
     const bar = this.notesEl.createDiv({ cls: "vt-plist-actions" });
-    const rebind = bar.createEl("button", { cls: "vt-plist-action", text: L("paragraph.action.rebind") });
+    const rebind = bar.createEl("button", { cls: "vt-plist-action", text: t("paragraph.action.rebind") });
     const id = route.threadId;
     rebind.addEventListener("click", () => this.nav.rebind(id));
-    confirmButton(bar, L("paragraph.action.delete"), L("paragraph.action.confirmDelete"), () => {
-      void this.host.threads.deleteThread(id).then(() => new Notice(L("paragraph.deleted")));
+    confirmButton(bar, t("paragraph.action.delete"), t("paragraph.action.confirmDelete"), () => {
+      void this.host.threads.deleteThread(id).then(() => new Notice(t("paragraph.deleted")));
     });
   }
 
@@ -333,7 +379,7 @@ async function friendlyErrors(p: Promise<void>): Promise<void> {
   try {
     await p;
   } catch (e) {
-    if (e instanceof AnchorError && e.code === "not-anchorable") throw new Error(L("paragraph.error.notAnchorable"), { cause: e });
+    if (e instanceof AnchorError && e.code === "not-anchorable") throw new Error(t("paragraph.error.notAnchorable"), { cause: e });
     throw e;
   }
 }
