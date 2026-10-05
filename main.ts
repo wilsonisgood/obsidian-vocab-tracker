@@ -75,6 +75,8 @@ import { quickSave } from "./src/ui/mobile/quickSave";
 import { actionNotice } from "./src/ui/mobile/actionNotice";
 import { LivePreviewHint } from "./src/ui/mobile/livePreviewHint";
 import { browserSpeaker, type Speaker } from "./src/ui/mobile/speech";
+import { BackupService } from "./src/services/backup/BackupService";
+import type { RestoreChanges } from "./src/services/backup/ports";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -122,6 +124,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   sheet!: WordSheet;
   surfaces!: WordSurfaces;
   speaker!: Speaker;
+  // 備份與還原 (settings). Restores go through the services below, which
+  // reload what it wrote (src/services/backup/restorePlan.ts).
+  backups!: BackupService;
   private livePreviewHint!: LivePreviewHint;
   private importing = new Set<string>();
   private enrichQueue: VocabEntry[] = [];
@@ -153,12 +158,32 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.noteImports = new NoteImports(this.storage);
     await this.noteImports.load();
 
+    // The host callbacks only run on a backup / restore, once onload has
+    // built every service they touch.
+    this.backups = new BackupService({
+      storage: this.storage,
+      host: {
+        flush: async () => {
+          await Promise.all([this.store.flush(), this.srs.flush(), this.threads.flush(), this.learn.flush()]);
+        },
+        reload: async () => {
+          await Promise.all([this.threads.reload(), this.learn.reload(), this.srs.reloadLogs(), this.noteImports.load()]);
+        },
+        applyData: (data) => {
+          this.vocabData = data;
+          this.store.replace(data);
+        },
+        restored: (changes) => this.afterRestore(changes),
+      },
+    });
+
     const settingsCtx = {
       app: this.app,
       store: this.store,
       ai,
       keys,
       wordlists: this.wordlists,
+      backups: this.backups,
       applyLocale: () => this.applyLocale(),
       onWordlistsChanged: (change: "display" | "scan" | "reload") => void this.onWordlistsChanged(change),
       onAiEnabledChanged: () => this.paragraphBadges?.refresh(),
@@ -456,6 +481,21 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     if (JSON.stringify(this.wordlistSettings()) !== wordlistsBefore) void this.onWordlistsChanged("reload");
     // Another device switched AI on/off: the ✦ hover badges follow.
     if (this.store.settings.ai.enabled !== aiBefore) this.paragraphBadges.refresh();
+  }
+
+  // After 從備份還原: the store and the shard services already hold the
+  // restored data (their events redrew the sidebar lists, chat panels and
+  // vocab-* blocks); this redraws what isn't subscribed and re-exports the
+  // notes of every record the restore changed.
+  private afterRestore(changes: RestoreChanges) {
+    this.renderSidebar();
+    this.refreshExamStrip();
+    this.rerenderReadingViews();
+    this.paragraphBadges?.refresh();
+    for (const id of changes.entryIds) this.exporter.wordChanged(id);
+    for (const thread of changes.threads) this.exporter.threadChanged(thread);
+    for (const family of changes.families) this.exporter.familyChanged(family);
+    for (const item of changes.trivia) this.exporter.triviaItemChanged(item);
   }
 
   // ── Exam word lists ────────────────────────────────────────────

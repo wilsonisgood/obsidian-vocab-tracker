@@ -4,6 +4,7 @@ import type { VocabStore } from "../../core/store/VocabStore";
 import type { AiService } from "../../services/ai/AiService";
 import type { ApiKeys } from "../../services/ai/keys";
 import type { WordlistService } from "../../services/wordlists/WordlistService";
+import type { BackupService } from "../../services/backup/BackupService";
 
 // Everything a settings section may need. Sections get services, never the
 // plugin instance, so they stay testable and don't reach into main.ts.
@@ -13,6 +14,8 @@ export interface SettingsContext {
   ai: AiService;
   keys: ApiKeys;
   wordlists: WordlistService;
+  // 備份與還原. Optional so a context built without it just skips the section.
+  backups?: BackupService;
   // Re-applies the interface language after the locale setting changes.
   applyLocale: () => void;
   // After a word-list setting changed: "display" = colours/toggles only,
