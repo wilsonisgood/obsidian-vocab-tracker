@@ -13,24 +13,24 @@ export function renderDashboard(
   ctx: MarkdownPostProcessorContext
 ) {
   const entries = plugin.store.entries;
-  el.addClass("vocab-tracker-dashboard");
+  el.addClass("vt-dash");
 
   if (entries.length === 0) {
     el.createEl("p", {
       text: t("dashboard.empty"),
-      cls: "vocab-tracker-empty-state",
+      cls: "vt-dash-empty",
     });
     return;
   }
 
   // Stats bar
-  const stats = el.createEl("div", { cls: "vocab-tracker-stats" });
+  const stats = el.createEl("div", { cls: "vt-dash-stats" });
   stats.createEl("span", {
     text:
       entries.length === 1
         ? t("dashboard.stat.word", { count: entries.length })
         : t("dashboard.stat.words", { count: entries.length }),
-    cls: "vocab-tracker-stat-pill",
+    cls: "vt-stat-pill",
   });
   const tagCounts = new Map<string, number>();
   for (const e of entries) {
@@ -41,7 +41,7 @@ export function renderDashboard(
   for (const [tag, n] of [...tagCounts.entries()].sort((a, b) => b[1] - a[1])) {
     stats.createEl("span", {
       text: `${tag}: ${n}`,
-      cls: ["vocab-tracker-stat-pill", "is-accent"],
+      cls: ["vt-stat-pill", "is-accent"],
     });
   }
 
@@ -49,10 +49,10 @@ export function renderDashboard(
   renderReviewButton(plugin, el, ctx);
 
   // Search
-  const search = el.createEl("input", { cls: ["vocab-tracker-search-input", "vocab-tracker-field-box"] });
+  const search = el.createEl("input", { cls: ["vt-dash-search", "vt-field-box"] });
   search.placeholder = t("dashboard.search");
 
-  const listWrap = el.createEl("div", { cls: "vocab-tracker-list" });
+  const listWrap = el.createEl("div", { cls: "vt-word-list" });
   // Owns the word cards' chat panels; unloaded with the block.
   const owner = new MarkdownRenderChild(listWrap);
   ctx.addChild(owner);

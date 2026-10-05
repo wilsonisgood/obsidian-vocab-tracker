@@ -50,9 +50,9 @@ describe("sidebar open with 1,000 words / 200 threads (§1.3 < 150 ms)", () => {
       const cold = await timedOpen(filter);
       const el = root(cold.view);
       if (filter === "all") {
-        expect(el.querySelectorAll(".vocab-tracker-row")).toHaveLength(1000);
+        expect(el.querySelectorAll(".vt-row")).toHaveLength(1000);
       } else {
-        expect(el.querySelectorAll(".vocab-tracker-row")).toHaveLength(fx.liveEntries.filter((e) => e.source?.path === fx.article.path).length);
+        expect(el.querySelectorAll(".vt-row")).toHaveLength(fx.liveEntries.filter((e) => e.source?.path === fx.article.path).length);
         // The 段落討論 list finished drawing (async: it reads the note).
         const articleThreads = fx.threads.filter((t) => t.anchor.kind === "paragraph" && t.anchor.path === fx.article.path);
         expect(el.querySelectorAll(".vt-plist-row")).toHaveLength(articleThreads.length);
@@ -86,7 +86,7 @@ describe("sidebar open with 1,000 words / 200 threads (§1.3 < 150 ms)", () => {
     for (let i = 0; i < RUNS; i++) {
       // Toggle order: This note, All.
       for (const idx of [1, 0]) {
-        const btn = root(view).querySelectorAll(".vocab-tracker-toggle-btn")[idx];
+        const btn = root(view).querySelectorAll(".vt-toggle-btn")[idx];
         const t0 = performance.now();
         btn.click();
         await flushMicrotasks();
