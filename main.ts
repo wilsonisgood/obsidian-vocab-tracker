@@ -25,9 +25,8 @@ import { merge } from "./src/core/store/merge";
 import { updateSourcePaths } from "./src/core/store/updateSourcePaths";
 import { nowStamp } from "./src/core/nowStamp";
 import { VocabSidebarView, VOCAB_VIEW_TYPE } from "./src/ui/sidebar/VocabSidebarView";
-import { renderDashboard } from "./src/ui/blocks/dashboard";
+import { registerBlocks } from "./src/ui/blocks/registry";
 import { SrsService } from "./src/services/srs/SrsService";
-import { renderFlashcards } from "./src/ui/blocks/flashcards";
 import { openFlashcardsFile } from "./src/ui/blocks/flashcardsFile";
 import { resolveLocale, setLocale, t } from "./src/core/i18n";
 import { obsidianLanguage } from "./src/platform/obsidianLanguage";
@@ -159,17 +158,8 @@ export default class VocabTrackerPlugin extends Plugin {
     // Click any plain English word in reading mode
     this.registerDomEvent(document, "click", this.handleReadingClick.bind(this));
 
-    // vocab-dashboard code block inside vocab-list.md
-    this.registerMarkdownCodeBlockProcessor(
-      "vocab-dashboard",
-      (source, el, ctx) => renderDashboard(this, source, el, ctx)
-    );
-
-    // M2: vocab-flashcards code block (FSRS review session)
-    this.registerMarkdownCodeBlockProcessor(
-      "vocab-flashcards",
-      (source, el, ctx) => renderFlashcards(this, source, el, ctx)
-    );
+    // vocab-* code blocks (dashboard, flashcards, …; §9.6)
+    registerBlocks(this);
     this.addCommand({
       id: "open-flashcards",
       name: t("command.openFlashcards"),
