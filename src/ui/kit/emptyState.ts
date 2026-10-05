@@ -4,6 +4,10 @@ export interface KitAction {
   label: string;
   icon?: string;
   onClick: () => void;
+  // Bubble actions only: a toggle's pressed state (👍 👎), and showing just
+  // the icon (the label becomes its aria-label).
+  active?: boolean;
+  iconOnly?: boolean;
 }
 
 // Design C1 「空白狀態」: one-line title, a sentence, optional primary action

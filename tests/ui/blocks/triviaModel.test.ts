@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Thread, Turn } from "../../../src/core/model/thread";
+import type { Turn } from "../../../src/core/model/thread";
 import type { TriviaItem } from "../../../src/core/model/trivia";
 import {
   favoriteViews,
@@ -7,17 +7,12 @@ import {
   parseTriviaParams,
   triviaCall,
   triviaKindOf,
-  triviaRetryCall,
   triviaTurnActions,
   triviaTurnHeader,
 } from "../../../src/ui/blocks/triviaModel";
 
 function turn(id: string, role: Turn["role"], extra: Partial<Turn> = {}): Turn {
   return { id, role, content: role === "assistant" ? "**標題**\n\n內容" : "再來一則", at: "2026-10-05T00:00:00Z", status: "done", ...extra };
-}
-
-function thread(turns: Turn[]): Thread {
-  return { id: "trivia-session", anchor: { kind: "trivia-session" }, turns };
 }
 
 describe("parseTriviaParams", () => {
@@ -59,34 +54,6 @@ describe("triviaCall", () => {
     });
     expect(triviaCall({ taskId: "trivia.followup", question: "  " })).toBeNull();
     expect(triviaCall({ taskId: "word.custom", question: "hi" })).toBeNull();
-  });
-});
-
-describe("triviaRetryCall", () => {
-  it("re-asks a failed round about the same word", () => {
-    const th = thread([
-      turn("q1", "user", { taskId: "trivia.quiz", subjectEntryId: "e1" }),
-      turn("a1", "assistant", { taskId: "trivia.quiz", subjectEntryId: "e1", status: "error", content: "" }),
-    ]);
-    expect(triviaRetryCall(th, "a1")).toEqual({ type: "ask", kind: "quiz", entryId: "e1" });
-  });
-
-  it("re-sends a failed follow-up with its question and selection", () => {
-    const th = thread([
-      turn("q0", "user", { taskId: "trivia.next", subjectEntryId: "e1" }),
-      turn("a0", "assistant", { taskId: "trivia.next", subjectEntryId: "e1" }),
-      turn("old", "user", { taskId: "trivia.followup", deletedAt: "x" }),
-      turn("q1", "user", { taskId: "trivia.followup", question: "why?", content: "why?", selection: "napron" }),
-      turn("a1", "assistant", { taskId: "trivia.followup", status: "error", content: "" }),
-    ]);
-    expect(triviaRetryCall(th, "a1")).toEqual({ type: "followup", question: "why?", selection: "napron" });
-  });
-
-  it("is null for unknown or non-answer turns", () => {
-    const th = thread([turn("q1", "user", { taskId: "trivia.next" }), turn("a1", "assistant", { taskId: "trivia.next" })]);
-    expect(triviaRetryCall(th, "q1")).toBeNull();
-    expect(triviaRetryCall(th, "zzz")).toBeNull();
-    expect(triviaRetryCall(undefined, "a1")).toBeNull();
   });
 });
 

@@ -1,4 +1,4 @@
-import type { Thread, Turn } from "../../core/model/thread";
+import type { Turn } from "../../core/model/thread";
 import type { TriviaItem } from "../../core/model/trivia";
 import { TRIVIA_TASK_BY_KIND, triviaFollowup, type TriviaKind } from "../../services/ai/tasks/trivia";
 import { parseBlockParams } from "./params";
@@ -50,22 +50,6 @@ export function triviaCall(
   const question = req.question?.trim();
   if (req.taskId !== triviaFollowup.id || !question) return null;
   return req.selection ? { type: "followup", question, selection: req.selection } : { type: "followup", question };
-}
-
-// 重試 on a failed answer: the same round again, about the same word.
-export function triviaRetryCall(thread: Thread | undefined, turnId: string): TriviaCall | null {
-  if (!thread) return null;
-  const live = thread.turns.filter((t) => !t.deletedAt);
-  const i = live.findIndex((t) => t.id === turnId);
-  if (i <= 0 || live[i].role !== "assistant") return null;
-  const q = live[i - 1];
-  if (q.role !== "user") return null;
-  const kind = triviaKindOf(q.taskId ?? live[i].taskId);
-  const entryId = live[i].subjectEntryId ?? q.subjectEntryId;
-  if (kind) return entryId ? { type: "ask", kind, entryId } : { type: "ask", kind };
-  const question = (q.question ?? q.content).trim();
-  if (!question) return null;
-  return q.selection ? { type: "followup", question, selection: q.selection } : { type: "followup", question };
 }
 
 // ── Turn actions: 👍 👎 and 收藏 (L7) ────────────────────────────

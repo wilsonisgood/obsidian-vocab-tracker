@@ -27,7 +27,6 @@ import {
   nextFeedback,
   parseTriviaParams,
   triviaCall,
-  triviaRetryCall,
   triviaTurnActions,
   triviaTurnHeader,
   type TriviaCall,
@@ -54,31 +53,6 @@ export function renderTrivia(
   ctx: MarkdownPostProcessorContext
 ): void {
   ctx.addChild(new TriviaBlock(el, plugin, parseTriviaParams(source), ctx.sourcePath));
-}
-
-// ── Pending integration (see the M7 PR2 report) ────────────────
-// ThreadService.setFeedback and TriviaService.retry don't exist yet. The
-// block uses them as soon as they do; until then 👍 👎 are hidden and 重試
-// re-asks the round itself (the failed bubble then stays in the thread).
-type SetFeedback = (threadId: string, turnId: string, feedback: Turn["feedback"]) => Promise<void>;
-type Retry = (turnId: string) => Promise<void>;
-
-function optionalMethod<F extends (...args: never[]) => unknown>(obj: object, name: string): F | undefined {
-  const fn = (obj as Record<string, unknown>)[name];
-  return typeof fn === "function" ? (fn.bind(obj) as F) : undefined;
-}
-
-// Extra ChatPanel options this block passes ahead of ChatPanel supporting
-// them (patch in the report): a per-answer header 「冷知識 · apron」. Unknown
-// options are ignored until then.
-interface ChatPanelExtras {
-  turnHeader?(turn: Turn): { text: string; icon?: string } | undefined;
-}
-
-// KitAction plus the fields the bubble patch reads (pressed state, icon-only).
-interface TriviaAction extends KitAction {
-  active?: boolean;
-  iconOnly?: boolean;
 }
 
 class WordPickModal extends FuzzySuggestModal<VocabEntry> {
@@ -136,9 +110,8 @@ class TriviaBlock extends MarkdownRenderChild {
       if (!this.ready) return;
       this.renderFavorites();
       // Turn actions read the favorites (收藏 ↔ 已收藏); ChatPanel only
-      // redraws on thread events, so remount it — drafts and focus survive
-      // through chatState.
-      this.mountChat();
+      // redraws on thread events, so redraw its turns.
+      this.chat?.refresh();
     };
     this.register(this.plugin.learn.events.on("trivia:upsert", favChanged));
     this.register(this.plugin.learn.events.on("learn:reloaded", favChanged));
@@ -237,7 +210,7 @@ class TriviaBlock extends MarkdownRenderChild {
     if (!host) return;
     if (this.chat) this.removeChild(this.chat);
     host.empty();
-    const opts: ChatPanelOptions & ChatPanelExtras = {
+    const opts: ChatPanelOptions = {
       app: this.plugin.app,
       threads: this.plugin.threads,
       ai: this.plugin.ai,
@@ -277,11 +250,8 @@ class TriviaBlock extends MarkdownRenderChild {
     if (c) await this.call(c);
   }
 
-  private async retry(turnId: string): Promise<void> {
-    const retry = optionalMethod<Retry>(this.plugin.trivia, "retry");
-    if (retry) return retry(turnId);
-    const c = triviaRetryCall(this.plugin.trivia.thread(), turnId);
-    if (c) await this.call(c);
+  private retry(turnId: string): Promise<void> {
+    return this.plugin.trivia.retry(turnId);
   }
 
   private subjectWord(turn: Turn): string | undefined {
@@ -296,10 +266,10 @@ class TriviaBlock extends MarkdownRenderChild {
   }
 
   private turnActions(turn: Turn): KitAction[] {
-    const setFeedback = optionalMethod<SetFeedback>(this.plugin.threads, "setFeedback");
-    const favorite = this.plugin.trivia.favoriteOf(turn.id);
-    const specs = triviaTurnActions(turn, { subjectWord: this.subjectWord(turn), favorite, feedback: !!setFeedback });
-    return specs.map((s): TriviaAction => {
+    const { threads, trivia } = this.plugin;
+    const favorite = trivia.favoriteOf(turn.id);
+    const specs = triviaTurnActions(turn, { subjectWord: this.subjectWord(turn), favorite, feedback: true });
+    return specs.map((s): KitAction => {
       const label = lt(s.label, s.params);
       const base = { label, icon: s.icon, active: s.active, iconOnly: s.iconOnly };
       switch (s.kind) {
@@ -308,7 +278,7 @@ class TriviaBlock extends MarkdownRenderChild {
           const kind = s.kind;
           return {
             ...base,
-            onClick: () => void setFeedback?.(TRIVIA_THREAD_ID, turn.id, nextFeedback(turn.feedback, kind)),
+            onClick: () => void threads.setFeedback(TRIVIA_THREAD_ID, turn.id, nextFeedback(turn.feedback, kind)),
           };
         }
         case "favorite":

@@ -32,7 +32,11 @@ export function bubble(opts: BubbleOptions): HTMLElement {
     for (const a of opts.actions) {
       const btn = bar.createEl("button", { cls: "vt-bubble-action clickable-icon" });
       if (a.icon) setIcon(btn.createSpan(), a.icon);
-      btn.createSpan({ text: a.label });
+      if (a.iconOnly && a.icon) btn.setAttr("aria-label", a.label);
+      else btn.createSpan({ text: a.label });
+      btn.toggleClass("is-active", !!a.active);
+      btn.toggleClass("is-icon-only", !!a.iconOnly && !!a.icon);
+      if (a.active !== undefined) btn.setAttr("aria-pressed", String(a.active));
       btn.addEventListener("click", a.onClick);
     }
   }

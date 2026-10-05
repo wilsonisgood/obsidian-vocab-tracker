@@ -53,6 +53,8 @@ export interface ChatPanelOptions {
   send(req: ChatSend): Promise<void>;
   retry(turnId: string): Promise<void>;
   turnActions?(turn: Turn): KitAction[];
+  // A line above an answer, e.g. 「冷知識 · apron」 (trivia, design L7).
+  turnHeader?(turn: Turn): { text: string; icon?: string } | undefined;
   // Extra meta-line text that needs I/O, e.g. 「出自 ¶12」.
   origin?: Promise<string | undefined>;
   onOpenSettings(): void;
@@ -167,6 +169,14 @@ export class ChatPanel extends Component {
   }
 
   // ── Turns ────────────────────────────────────────────────────────
+
+  // Redraws the turns when something outside the thread changed what
+  // turnActions / turnHeader return (e.g. a trivia favorite). The composer
+  // and its draft are left alone.
+  refresh(): void {
+    this.renderTurns();
+  }
+
   private renderTurns(): void {
     const thread = this.thread;
     this.renderMeta(thread);
@@ -211,7 +221,7 @@ export class ChatPanel extends Component {
       const el = bubble({ role: "assistant", text: "", streaming: true });
       this.streamBody = el.querySelector<HTMLElement>(".vt-bubble-body");
       this.paint();
-      return el;
+      return this.withHeader(el, turn);
     }
 
     const actions: KitAction[] = [];
@@ -235,6 +245,16 @@ export class ChatPanel extends Component {
     const el = bubble({ role: "assistant", text: turn.content, render, actions, error });
     el.toggleClass("is-muted-error", turn.status === "aborted");
     if (!turn.content.trim()) el.addClass("is-empty");
+    return this.withHeader(el, turn);
+  }
+
+  private withHeader(el: HTMLElement, turn: Turn): HTMLElement {
+    const h = this.opts.turnHeader?.(turn);
+    if (!h) return el;
+    const head = createDiv({ cls: "vt-bubble-head" });
+    if (h.icon) setIcon(head.createSpan({ cls: "vt-bubble-head-icon" }), h.icon);
+    head.createSpan({ text: h.text });
+    el.prepend(head);
     return el;
   }
 
