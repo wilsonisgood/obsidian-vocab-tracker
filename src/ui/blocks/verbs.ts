@@ -5,7 +5,8 @@ import { WordIndex } from "../../services/learn/wordIndex";
 import { aiErrorBox } from "../kit/aiDebug";
 import { emptyState } from "../kit/emptyState";
 import { inlineNote } from "../kit/inlineNote";
-import { getLocale, t } from "../../core/i18n";
+import { bindPronounceButton } from "../kit/pronounce";
+import { t } from "../../core/i18n";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate, wordChip } from "./learnUi";
 import {
   filterVerbs,
@@ -28,27 +29,10 @@ import {
 // (patterns, examples, similar expressions). Usage is generated once and
 // stored on the entry; 「重新產生」 replaces it.
 
-// Temporary strings until they move to core/i18n (`learn.verb.*`).
-const L = {
-  "zh-TW": {
-    favorite: "收藏（寫入單字頁）",
-    favorited: "已收藏",
-    unfavorite: "取消收藏（單字頁上的用法會保留）",
-    savedTo: "已收藏，寫入 {path}",
-    rowFavorited: "已收藏到單字頁",
-  },
-  en: {
-    favorite: "Save to word page",
-    favorited: "Saved",
-    unfavorite: "Unsave (the word page keeps the usage)",
-    savedTo: "Saved to {path}",
-    rowFavorited: "Saved to its word page",
-  },
-} as const;
+type FavoriteKey = "favorite" | "favorited" | "unfavorite" | "savedTo" | "rowFavorited";
 
-function l(key: keyof (typeof L)["en"], path?: string): string {
-  const text: string = (L[getLocale()] ?? L.en)[key];
-  return path === undefined ? text : text.replace("{path}", path);
+function l(key: FavoriteKey, path?: string): string {
+  return path === undefined ? t(`learn.verb.${key}`) : t(`learn.verb.${key}`, { path });
 }
 
 export function renderVerbs(
@@ -203,7 +187,7 @@ class VerbsBlock extends MarkdownRenderChild {
     const speak = head.createEl("button", { cls: "vt-verb-speak clickable-icon" });
     setIcon(speak, "volume-2");
     speak.setAttr("aria-label", t("learn.verb.speak"));
-    speak.addEventListener("click", () => this.plugin.speakWord(e));
+    bindPronounceButton(speak, e);
 
     const usage = this.plugin.verbs.usage(e);
     const meta = usageMeta(e, usage);

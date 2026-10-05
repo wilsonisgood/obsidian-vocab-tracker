@@ -1,18 +1,12 @@
-import { getLocale } from "../../core/i18n";
+import { t } from "../../core/i18n";
 
 // 加入日期 / 更新日期 on the learning pages (字族樹, 動詞用法, 冷知識;
 // 1005 回饋 #14). Pure — no "obsidian" import — so it's unit-tested.
 
-// Temporary strings until they move to core/i18n (`learn.dates.*`).
-const L = {
-  "zh-TW": { added: "加入 {date}", updated: "更新 {date}", saved: "收藏 {date}" },
-  en: { added: "Added {date}", updated: "Updated {date}", saved: "Saved {date}" },
-} as const;
-
-export type DateLabel = keyof (typeof L)["en"];
+export type DateLabel = "added" | "updated" | "saved";
 
 export function dateLabel(key: DateLabel, date: string): string {
-  return (L[getLocale()] ?? L.en)[key].replace("{date}", date);
+  return t(`learn.dates.${key}`, { date });
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");

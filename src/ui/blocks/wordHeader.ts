@@ -1,7 +1,7 @@
 import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { getLocale, t } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
-import type { Family } from "../../core/model/family";
+import { originFamilyId, type Family } from "../../core/model/family";
 import { noteBasename } from "../../core/text/slug";
 import { paragraphNumber } from "../../services/files/paragraphNumber";
 import { isNewCard, startOfLocalDay } from "../../services/srs/queue";
@@ -27,15 +27,8 @@ function l(key: Key, vars?: Record<string, string | number>): string {
   return t(`wordPage.${key}`, vars);
 }
 
-// Temporary strings until they move to core/i18n (`wordPage.origin*`).
-const L = {
-  "zh-TW": { origin: "來源：字族樹 {name}", originUnknown: "來源：字族樹", originTitle: "在字族樹打開" },
-  en: { origin: "From word families: {name}", originUnknown: "From word families", originTitle: "Open in word families" },
-} as const;
-
-function lo(key: keyof (typeof L)["en"], name?: string): string {
-  const text: string = (L[getLocale()] ?? L.en)[key];
-  return name === undefined ? text : text.replace("{name}", name);
+function lo(key: "origin" | "originUnknown" | "originTitle", name?: string): string {
+  return name === undefined ? t(`wordPage.${key}`) : t(`wordPage.${key}`, { name });
 }
 
 // What the block needs from the plugin. VocabTrackerPlugin has most of it
@@ -69,11 +62,7 @@ export interface WordHeaderHost {
 // ── 「來源：字族樹 …」 ──────────────────────────────────────────────
 
 // The family a word was added from: VocabEntry.origin "family:<id>".
-export function originFamilyId(origin: string | undefined): string | null {
-  if (!origin?.startsWith("family:")) return null;
-  const id = origin.slice("family:".length).trim();
-  return id || null;
-}
+export { originFamilyId };
 
 export interface OriginView {
   familyId: string;

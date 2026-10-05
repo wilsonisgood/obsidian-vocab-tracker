@@ -51,7 +51,7 @@ describe("parseBackup", () => {
     expect(file.shards).toMatchObject({ learn: null, reviews: null, imports: null, files: null });
     const parsed = parseBackup("full-x.json", JSON.parse(JSON.stringify(file)))!;
     expect(parsed).toMatchObject({ kind: "full", reason: "manual", createdAt: "2026-10-05T12:00:00.000Z" });
-    expect(parsed.snapshot.learn).toEqual({ families: [], trivia: [] });
+    expect(parsed.snapshot.learn).toEqual({ families: [], trivia: [], verbs: [] });
     expect(parsed.snapshot.reviews).toEqual([]);
   });
 

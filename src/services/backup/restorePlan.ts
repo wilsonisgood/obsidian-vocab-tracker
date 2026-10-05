@@ -3,6 +3,7 @@ import type { Family } from "../../core/model/family";
 import type { ReviewLog } from "../../core/model/srs";
 import type { Thread, Turn } from "../../core/model/thread";
 import type { TriviaItem } from "../../core/model/trivia";
+import type { VerbFavorite } from "../../core/model/usage";
 import { mergeReviewLogs, pruneReviewLogs } from "../../core/store/reviewLogs";
 import type { LearnShard } from "../learn/learnMerge";
 import type { Snapshot } from "./format";
@@ -289,7 +290,7 @@ export function currentShard(current: Snapshot, shard: PlannedShard): unknown {
     case "threads":
       return { threads: current.threads ?? [] };
     case "learn":
-      return current.learn ?? { families: [], trivia: [] };
+      return current.learn ?? { families: [], trivia: [], verbs: [] };
     case "reviews":
       return { logs: current.reviews ?? [] };
     case "imports":
@@ -313,6 +314,7 @@ export function restoreStamp(current: Snapshot, now: Date): string {
     ...(current.data?.entries ?? []),
     ...(current.learn?.families ?? []),
     ...(current.learn?.trivia ?? []),
+    ...(current.learn?.verbs ?? []),
     ...(current.threads ?? []),
   ];
   for (const r of recs) max = newest(r.deletedAt, newest(r.updatedAt, max));
@@ -358,10 +360,13 @@ export function planRestore(current: Snapshot, backup: Snapshot, opts: RestoreOp
   } else missing.push("threads");
 
   if (backup.learn) {
-    const cur: LearnShard = current.learn ?? { families: [], trivia: [] };
+    const cur: LearnShard = current.learn ?? { families: [], trivia: [], verbs: [] };
     shards.learn = {
       families: rebaseRecords<Family>(cur.families, backup.learn.families, opts, counts.families, changes.families),
       trivia: rebaseRecords<TriviaItem>(cur.trivia, backup.learn.trivia, opts, counts.trivia, changes.trivia),
+      // Saved verb usages (動詞用法收藏) go back too; not counted in the
+      // confirmation (the usage itself lives on the entry, restored above).
+      verbs: rebaseRecords<VerbFavorite>(cur.verbs ?? [], backup.learn.verbs ?? [], opts, zero(), []),
     } satisfies LearnShard;
   } else missing.push("learn");
 

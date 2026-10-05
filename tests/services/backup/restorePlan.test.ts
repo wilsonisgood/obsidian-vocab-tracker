@@ -7,6 +7,7 @@ import type { TriviaItem } from "../../../src/core/model/trivia";
 import { merge } from "../../../src/core/store/merge";
 import { mergeThreads } from "../../../src/core/store/threads";
 import { mergeLearn, type LearnShard } from "../../../src/services/learn/learnMerge";
+import type { VerbFavorite } from "../../../src/core/model/usage";
 import type { Snapshot } from "../../../src/services/backup/format";
 import { planRestore, restoreStamp } from "../../../src/services/backup/restorePlan";
 
@@ -175,6 +176,19 @@ describe("planRestore — what the restored state looks like", () => {
     expect(f2.deletedBy).toBeUndefined();
     expect(learn.trivia.find((t) => t.id === "t2")).toMatchObject({ deletedAt: NOW });
     expect(p.counts.families).toEqual({ changed: 0, revived: 1, extra: 1 });
+  });
+
+  it("restores saved verb usages too (learn.verbs); a deleted one comes back", () => {
+    const fav = (id: string, extra: Partial<VerbFavorite> = {}): VerbFavorite =>
+      ({ id, entryId: id.slice(5), word: id.slice(5), createdAt: T0, updatedAt: T0, rev: 0, ...extra }) as VerbFavorite;
+    const backup = backupSnapshot();
+    backup.learn = { ...backup.learn!, verbs: [fav("verb:a")] };
+    const current = currentSnapshot();
+    current.learn = { ...current.learn!, verbs: [fav("verb:a", { deletedAt: T1, updatedAt: T1, rev: 1 }), fav("verb:b")] };
+    const verbs = (plan(false, current, backup).shards.learn as LearnShard).verbs!;
+    expect(verbs.find((v) => v.id === "verb:a")).toMatchObject({ updatedAt: NOW });
+    expect(verbs.find((v) => v.id === "verb:a")!.deletedAt).toBeUndefined();
+    expect(verbs.find((v) => v.id === "verb:b")!.deletedAt).toBeUndefined();
   });
 
   it("unions review logs, imports and the files record (they only ever grow)", () => {

@@ -62,6 +62,7 @@ import type { WordHeaderHost } from "./src/ui/blocks/wordHeader";
 import type { WordLinkHost } from "./src/ui/blocks/learnUi";
 import { openWordReview } from "./src/ui/blocks/wordReview";
 import { createWordPageDecorator } from "./src/ui/reading/WordPageDecorator";
+import { PluginNoteChrome } from "./src/ui/reading/PluginNoteChrome";
 import { ParagraphAnchorService, type SectionRef } from "./src/services/anchors/ParagraphAnchorService";
 import { ParagraphIndex } from "./src/services/anchors/ParagraphIndex";
 import { ParagraphBadges } from "./src/ui/reading/ParagraphBadges";
@@ -76,7 +77,7 @@ import { quickSave } from "./src/ui/mobile/quickSave";
 import { actionNotice } from "./src/ui/mobile/actionNotice";
 import { LivePreviewHint } from "./src/ui/mobile/livePreviewHint";
 import { sharedSpeaker, type Speaker } from "./src/ui/mobile/speech";
-import { configurePronouncer, disposePronouncer, pronounce } from "./src/ui/kit/pronounce";
+import { configurePronouncer, disposePronouncer } from "./src/ui/kit/pronounce";
 import { ObsidianDeviceState } from "./src/platform/ObsidianDevice";
 import { BackupService } from "./src/services/backup/BackupService";
 import type { RestoreChanges } from "./src/core/ports";
@@ -290,6 +291,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         notify: (m) => new Notice(m),
       })
     );
+    // The plugin's own notes: 「屬性」 folded / small, no doubled title.
+    new PluginNoteChrome(this.app).attach(this);
 
     // Sidebar
     this.registerView(
@@ -1009,15 +1012,6 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     }
     const leaf = this.app.workspace.getLeaf(false);
     await leaf.openFile(file, { eState: { line: entry.source.line } });
-  }
-
-  // ── Pronounce a word ───────────────────────────────────────────
-
-  // The dictionary recording, or the system voice when it's slow / missing
-  // (services/speech/Pronouncer.ts). 🔊 buttons use bindPronounceButton()
-  // instead, which also shows the loading / playing state.
-  speakWord(entry: VocabEntry) {
-    void pronounce(entry);
   }
 
   // ── Auto-fetch dictionary data (Wiktionary, falls back to Datamuse) ──

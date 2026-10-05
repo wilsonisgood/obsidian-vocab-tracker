@@ -1,4 +1,5 @@
 import type { VocabEntry } from "../../core/model/entry";
+import { familyOrigin, originFamilyId } from "../../core/model/family";
 import { nowStamp } from "../../core/nowStamp";
 
 // Word list order and grouping (1005 回饋 1、13). Pure, so the order is
@@ -65,15 +66,12 @@ export interface GroupRef {
   familyId?: string;
 }
 
-const FAMILY_PREFIX = "family:";
-
 export function groupOf(e: Pick<VocabEntry, "source" | "origin">): GroupRef {
   const path = e.source?.path;
   if (path) return { key: `note:${path}`, kind: "note", path };
   const origin = e.origin;
-  if (origin?.startsWith(FAMILY_PREFIX)) {
-    return { key: origin, kind: "family", familyId: origin.slice(FAMILY_PREFIX.length) };
-  }
+  const familyId = originFamilyId(origin);
+  if (familyId) return { key: familyOrigin(familyId), kind: "family", familyId };
   if (origin === "wordlist") return { key: "wordlist", kind: "wordlist" };
   return { key: "none", kind: "none" };
 }

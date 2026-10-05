@@ -51,6 +51,15 @@ export function familyOrigin(familyId: string): FamilyOrigin {
   return `family:${familyId}`;
 }
 
+// The family a word was added from (the inverse of familyOrigin); null for
+// any other origin. Shared by the word page's 「來源：字族樹 …」 chip and the
+// sidebar's grouping (ui/word/wordOrder.ts).
+export function originFamilyId(origin: string | undefined): string | null {
+  if (!origin?.startsWith("family:")) return null;
+  const id = origin.slice("family:".length).trim();
+  return id || null;
+}
+
 // A family's scope, inferring it for families saved without the field:
 // 找字族 always grows a family from one seed word, the whole-list grouping
 // never sends seeds — so seeds mean "word". A manual family is never

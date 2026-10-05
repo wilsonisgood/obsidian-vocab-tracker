@@ -1,5 +1,5 @@
 import { Notice, setIcon } from "obsidian";
-import { getLocale } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import { aiDebugOf, aiDebugReport, type AiDebugInfo } from "../../services/ai/errors";
 import { inlineNote } from "./inlineNote";
 
@@ -10,34 +10,10 @@ import { inlineNote } from "./inlineNote";
 // appear: they're not part of the prompt, and the text went through
 // redactSecrets when the error was made (services/ai/errors.ts).
 
-// Temporary strings until they move to core/i18n (`ai.debug.*`).
-const L = {
-  "zh-TW": {
-    summary: "除錯資訊：送給 AI 的內容與 AI 的原始回答",
-    prompt: "送給 AI 的 prompt",
-    output: "AI 的原始輸出",
-    empty: "（沒有內容）",
-    copy: "複製",
-    copied: "已複製除錯資訊",
-    copyFailed: "無法複製，請直接選取文字",
-    hint: "回報問題時可以附上這段（不含 API key）。",
-  },
-  en: {
-    summary: "Debug info: what was sent to the AI and its raw answer",
-    prompt: "Prompt sent to the AI",
-    output: "Raw AI output",
-    empty: "(empty)",
-    copy: "Copy",
-    copied: "Debug info copied",
-    copyFailed: "Couldn't copy — select the text instead",
-    hint: "Attach this when reporting a problem (no API key in it).",
-  },
-} as const;
-
-export type AiDebugKey = keyof (typeof L)["en"];
+export type AiDebugKey = "summary" | "prompt" | "output" | "empty" | "copy" | "copied" | "copyFailed" | "hint";
 
 export function debugText(key: AiDebugKey): string {
-  return (L[getLocale()] ?? L.en)[key];
+  return t(`ai.debug.${key}`);
 }
 
 export function debugReportText(d: AiDebugInfo): string {

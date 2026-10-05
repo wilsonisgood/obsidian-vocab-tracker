@@ -26,7 +26,7 @@ import {
   type FamilyTreeView,
   type ReviewView,
 } from "./familiesModel";
-import { getLocale, joinWords, t } from "../../core/i18n";
+import { joinWords, t } from "../../core/i18n";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate, wordChip } from "./learnUi";
 
 // ── vocab-families code block (規劃書 06 §7.2, §9.6; 設計稿 L5、W3) ──
@@ -41,27 +41,10 @@ import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAi
 // nothing is stored until the learner saves, and ticked new words go
 // through the dictionary before entering the vocab list (FamilyService).
 
-// Temporary strings until they move to core/i18n (`learn.family.*`).
-const L = {
-  "zh-TW": {
-    reviewHint: "這是 AI 的分群建議。勾選想加入單字庫的新字再存下；按「捨棄」就什麼都不存。",
-    fromMore: "等 {n} 個",
-    noNew: "沒有新字。存下後會出現在字族樹。",
-    selectAll: "全選新字",
-    selectNone: "全不選",
-  },
-  en: {
-    reviewHint: "These are the AI's suggestions. Tick the new words to add, then save; Discard saves nothing.",
-    fromMore: "and {n} more",
-    noNew: "No new words. It shows in the tree once saved.",
-    selectAll: "Select all new words",
-    selectNone: "Select none",
-  },
-} as const;
+type ReviewKey = "reviewHint" | "fromMore" | "noNew" | "selectAll" | "selectNone";
 
-function l(key: keyof (typeof L)["en"], n?: number): string {
-  const text: string = (L[getLocale()] ?? L.en)[key];
-  return n === undefined ? text : text.replace("{n}", String(n));
+function l(key: ReviewKey, n?: number): string {
+  return n === undefined ? t(`learn.family.${key}`) : t(`learn.family.${key}`, { n });
 }
 
 export function renderFamilies(
