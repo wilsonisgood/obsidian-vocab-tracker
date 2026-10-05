@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { resolveLocale, setLocale, t } from "../../src/core/i18n";
+import { joinWords, resolveLocale, setLocale, t } from "../../src/core/i18n";
+import { en } from "../../src/core/i18n/en";
+import { zhTW } from "../../src/core/i18n/zh-TW";
 
 describe("t", () => {
   afterEach(() => setLocale("en"));
@@ -19,6 +21,37 @@ describe("t", () => {
   it("switches locale via setLocale", () => {
     setLocale("zh-TW");
     expect(t("row.delete")).toBe("刪除");
+  });
+});
+
+describe("dictionaries", () => {
+  it("fill every key in both languages, with the same placeholders", () => {
+    const vars = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+    for (const key of Object.keys(en) as (keyof typeof en)[]) {
+      expect(en[key].trim(), key).not.toBe("");
+      expect(zhTW[key].trim(), key).not.toBe("");
+      expect(vars(zhTW[key]), key).toEqual(vars(en[key]));
+    }
+  });
+
+  it("carry the M7 learning-block strings", () => {
+    setLocale("zh-TW");
+    expect(t("learn.family.saveAdd", { n: 3 })).toBe("存字族，並把 3 個字加入單字庫");
+    setLocale("en");
+    expect(t("learn.family.saveAdd", { n: 3 })).toBe("Save, and add 3 words");
+    expect(t("learn.trivia.random")).toBe("Random from your {n} words");
+  });
+});
+
+describe("joinWords", () => {
+  afterEach(() => setLocale("en"));
+
+  it("joins with 、 in Chinese and a comma in English", () => {
+    setLocale("zh-TW");
+    expect(joinWords(["aprons", "kitchenware"])).toBe("aprons、kitchenware");
+    setLocale("en");
+    expect(joinWords(["a", "b"])).toBe("a, b");
+    expect(joinWords([])).toBe("");
   });
 });
 

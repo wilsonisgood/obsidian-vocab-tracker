@@ -4,7 +4,7 @@ import type { VocabEntry } from "../../core/model/entry";
 import { WordIndex } from "../../services/learn/wordIndex";
 import { emptyState } from "../kit/emptyState";
 import { inlineNote } from "../kit/inlineNote";
-import { lt } from "./learnText";
+import { t } from "../../core/i18n";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate } from "./learnUi";
 import {
   filterVerbs,
@@ -79,7 +79,7 @@ class VerbsBlock extends MarkdownRenderChild {
     const search = side.createDiv({ cls: "vt-verbs-search" });
     setIcon(search.createSpan({ cls: "vt-verbs-search-icon" }), "search");
     const input = search.createEl("input", { cls: "vt-verbs-filter", type: "search" });
-    input.placeholder = lt("learn.verb.filter");
+    input.placeholder = t("learn.verb.filter");
     input.addEventListener("input", () => {
       this.query = input.value;
       this.render();
@@ -97,11 +97,11 @@ class VerbsBlock extends MarkdownRenderChild {
     this.selectedId = pickVerb(shown, this.selectedId);
     this.root.toggleClass("is-empty", !all.length);
 
-    if (this.countEl) this.countEl.setText(lt("learn.verb.count", { n: all.length }));
+    if (this.countEl) this.countEl.setText(t("learn.verb.count", { n: all.length }));
     const list = this.listEl;
     if (list) {
       list.empty();
-      if (all.length && !shown.length) list.createDiv({ cls: "vt-verbs-nomatch", text: lt("learn.verb.noMatch") });
+      if (all.length && !shown.length) list.createDiv({ cls: "vt-verbs-nomatch", text: t("learn.verb.noMatch") });
       for (const e of shown) {
         const row = list.createEl("button", { cls: "vt-verbs-row" });
         row.toggleClass("is-active", e.id === this.selectedId);
@@ -111,7 +111,7 @@ class VerbsBlock extends MarkdownRenderChild {
         else if (e.usage) {
           const icon = row.createSpan({ cls: "vt-verbs-row-icon" });
           setIcon(icon, "check");
-          icon.setAttr("aria-label", lt("learn.verb.hasUsage"));
+          icon.setAttr("aria-label", t("learn.verb.hasUsage"));
         }
         row.addEventListener("click", () => {
           this.selectedId = e.id;
@@ -123,7 +123,7 @@ class VerbsBlock extends MarkdownRenderChild {
     this.detailEl.empty();
     if (!all.length) {
       this.detailEl.appendChild(
-        emptyState({ icon: "list", title: lt("learn.verb.none.title"), body: lt("learn.verb.none.body") })
+        emptyState({ icon: "list", title: t("learn.verb.none.title"), body: t("learn.verb.none.body") })
       );
       return;
     }
@@ -135,11 +135,11 @@ class VerbsBlock extends MarkdownRenderChild {
     this.detailEl.empty();
     const entry = new WordIndex(this.plugin.store.entries).find(word);
     if (!entry) {
-      this.detailEl.appendChild(inlineNote({ text: lt("learn.notFound", { word }) }));
+      this.detailEl.appendChild(inlineNote({ text: t("learn.notFound", { word }) }));
       return;
     }
     if (!this.plugin.verbs.canGenerate(entry)) {
-      this.detailEl.appendChild(inlineNote({ text: lt("learn.verb.notVerb", { word: entry.word }) }));
+      this.detailEl.appendChild(inlineNote({ text: t("learn.verb.notVerb", { word: entry.word }) }));
       return;
     }
     this.renderDetail(entry);
@@ -155,14 +155,14 @@ class VerbsBlock extends MarkdownRenderChild {
     if (phon) head.createSpan({ cls: "vt-verb-phon", text: phon });
     const speak = head.createEl("button", { cls: "vt-verb-speak clickable-icon" });
     setIcon(speak, "volume-2");
-    speak.setAttr("aria-label", lt("learn.verb.speak"));
+    speak.setAttr("aria-label", t("learn.verb.speak"));
     speak.addEventListener("click", () => this.plugin.speakWord(e));
 
     const usage = this.plugin.verbs.usage(e);
     const meta = usageMeta(e, usage);
     const metaParts: string[] = [];
-    if (meta.source) metaParts.push(lt("learn.verb.meta.source", { source: meta.source }));
-    if (meta.date) metaParts.push(lt("learn.verb.meta.generated", { date: meta.date }));
+    if (meta.source) metaParts.push(t("learn.verb.meta.source", { source: meta.source }));
+    if (meta.date) metaParts.push(t("learn.verb.meta.generated", { date: meta.date }));
     if (metaParts.length) el.createDiv({ cls: "vt-verb-meta", text: metaParts.join(" · ") });
 
     const busy = this.plugin.verbs.isBusy(e.id);
@@ -170,8 +170,8 @@ class VerbsBlock extends MarkdownRenderChild {
       const box = el.createDiv({ cls: "vt-learn-busy" });
       const line = box.createDiv({ cls: "vt-learn-busy-text" });
       setIcon(line.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
-      line.createSpan({ text: lt("learn.verb.generating", { word: e.word }) });
-      learnButton(box, { label: lt("learn.stop"), icon: "square", onClick: () => this.plugin.verbs.stop(e.id) });
+      line.createSpan({ text: t("learn.verb.generating", { word: e.word }) });
+      learnButton(box, { label: t("learn.stop"), icon: "square", onClick: () => this.plugin.verbs.stop(e.id) });
     }
 
     const error = this.errors.get(e.id);
@@ -188,7 +188,7 @@ class VerbsBlock extends MarkdownRenderChild {
         if (p.example) right.createDiv({ cls: "vt-verb-pattern-ex", text: p.example });
       }
       if (related.length) {
-        el.createDiv({ cls: "vt-verb-section", text: lt("learn.verb.related") });
+        el.createDiv({ cls: "vt-verb-section", text: t("learn.verb.related") });
         const chips = el.createDiv({ cls: "vt-verb-related" });
         for (const r of related) {
           const chip = chips.createSpan({ cls: "vt-verb-related-chip" });
@@ -199,7 +199,7 @@ class VerbsBlock extends MarkdownRenderChild {
       if (!busy) {
         const actions = el.createDiv({ cls: "vt-verb-actions" });
         const regen = learnButton(actions, {
-          label: lt("learn.verb.regenerate"),
+          label: t("learn.verb.regenerate"),
           icon: "refresh-cw",
           onClick: () => void this.generate(e),
         });
@@ -208,7 +208,7 @@ class VerbsBlock extends MarkdownRenderChild {
           regen.disabled = true;
           const offline = status === "offline";
           actions.appendChild(
-            inlineNote({ tone: offline ? "offline" : "info", text: lt(offline ? "learn.ai.offline" : "learn.ai.body") })
+            inlineNote({ tone: offline ? "offline" : "info", text: t(offline ? "learn.ai.offline" : "learn.ai.body") })
           );
         }
       }
@@ -220,9 +220,9 @@ class VerbsBlock extends MarkdownRenderChild {
     el.appendChild(
       emptyState({
         icon: "sparkles",
-        title: lt("learn.verb.empty.title", { word: e.word }),
-        body: lt("learn.verb.empty.body"),
-        action: { label: lt("learn.verb.generate"), icon: "sparkles", onClick: () => void this.generate(e) },
+        title: t("learn.verb.empty.title", { word: e.word }),
+        body: t("learn.verb.empty.body"),
+        action: { label: t("learn.verb.generate"), icon: "sparkles", onClick: () => void this.generate(e) },
       })
     );
   }

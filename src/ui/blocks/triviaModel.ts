@@ -1,3 +1,4 @@
+import type { I18nKey } from "../../core/i18n";
 import type { Turn } from "../../core/model/thread";
 import type { TriviaItem } from "../../core/model/trivia";
 import { TRIVIA_TASK_BY_KIND, triviaFollowup, type TriviaKind } from "../../services/ai/tasks/trivia";
@@ -58,8 +59,8 @@ export type TriviaActionKind = "up" | "down" | "favorite" | "unfavorite";
 
 export interface TriviaActionSpec {
   kind: TriviaActionKind;
-  // learnText key + params, resolved by the block.
-  label: "learn.trivia.up" | "learn.trivia.down" | "learn.trivia.favorite" | "learn.trivia.favoriteTo" | "learn.trivia.favorited";
+  // i18n key + params, resolved by the block.
+  label: I18nKey;
   params?: Record<string, string>;
   icon: string;
   active: boolean;

@@ -6,7 +6,6 @@ import { aiErrorText } from "../kit/aiState";
 import { emptyState } from "../kit/emptyState";
 import { inlineNote } from "../kit/inlineNote";
 import { openPluginSettings } from "../kit/openSettings";
-import { lt } from "./learnText";
 
 // Shared bits of the M7 learning blocks (vocab-families / -verbs / -trivia).
 
@@ -35,14 +34,14 @@ export function renderLearnAiGate(parent: HTMLElement, plugin: VocabTrackerPlugi
   const status = plugin.ai.status();
   if (status === "ready") return false;
   if (status === "offline") {
-    parent.appendChild(inlineNote({ tone: "offline", text: lt("learn.ai.offline") }));
+    parent.appendChild(inlineNote({ tone: "offline", text: t("learn.ai.offline") }));
     return true;
   }
   parent.appendChild(
     emptyState({
       icon: status === "disabled" ? "sparkles" : "key-round",
-      title: lt(status === "disabled" ? "learn.ai.disabled.title" : "learn.ai.noKey.title"),
-      body: lt("learn.ai.body"),
+      title: t(status === "disabled" ? "learn.ai.disabled.title" : "learn.ai.noKey.title"),
+      body: t("learn.ai.body"),
       action: {
         label: t("ai.action.openSettings"),
         icon: "settings",

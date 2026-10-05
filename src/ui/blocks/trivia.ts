@@ -9,7 +9,7 @@ import {
   type MarkdownPostProcessorContext,
 } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
-import { t, type I18nKey } from "../../core/i18n";
+import { joinWords, t, type I18nKey } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import type { Turn } from "../../core/model/thread";
 import { TRIVIA_THREAD_ID } from "../../core/model/trivia";
@@ -20,7 +20,6 @@ import { ChatPanel, createChatUiState, type ChatPanelOptions, type ChatSend } fr
 import { emptyState } from "../kit/emptyState";
 import type { KitAction } from "../kit/emptyState";
 import { openPluginSettings } from "../kit/openSettings";
-import { joinWords, lt } from "./learnText";
 import { guardReadingClicks, learnErrorText } from "./learnUi";
 import {
   favoriteViews,
@@ -62,7 +61,7 @@ class WordPickModal extends FuzzySuggestModal<VocabEntry> {
     private onPick: (e: VocabEntry) => void
   ) {
     super(app);
-    this.setPlaceholder(lt("learn.trivia.pick.placeholder"));
+    this.setPlaceholder(t("learn.trivia.pick.placeholder"));
   }
 
   getItems(): VocabEntry[] {
@@ -103,7 +102,7 @@ class TriviaBlock extends MarkdownRenderChild {
     this.containerEl.empty();
     this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-trivia"] });
     guardReadingClicks(this, this.root);
-    this.root.createDiv({ cls: "vt-learn-loading", text: lt("learn.loading") });
+    this.root.createDiv({ cls: "vt-learn-loading", text: t("learn.loading") });
 
     this.register(this.plugin.store.events.on("data:changed", () => this.onStoreChanged()));
     const favChanged = () => {
@@ -156,24 +155,24 @@ class TriviaBlock extends MarkdownRenderChild {
     this.hasWords = this.entries.length > 0;
 
     if (this.params.word && !this.pinned()) {
-      root.appendChild(emptyState({ icon: "lightbulb", title: lt("learn.notFound", { word: this.params.word }) }));
+      root.appendChild(emptyState({ icon: "lightbulb", title: t("learn.notFound", { word: this.params.word }) }));
     } else if (!this.hasWords) {
       root.appendChild(
-        emptyState({ icon: "lightbulb", title: lt("learn.trivia.empty.title"), body: lt("learn.trivia.empty.body") })
+        emptyState({ icon: "lightbulb", title: t("learn.trivia.empty.title"), body: t("learn.trivia.empty.body") })
       );
     } else {
       const card = root.createDiv({ cls: "vt-trivia-card" });
       const head = card.createDiv({ cls: "vt-trivia-head" });
       const title = head.createSpan({ cls: "vt-trivia-title" });
       setIcon(title.createSpan({ cls: "vt-trivia-title-icon" }), "lightbulb");
-      title.createSpan({ text: lt("learn.trivia.title") });
+      title.createSpan({ text: t("learn.trivia.title") });
       this.chipEl = head.createEl("button", { cls: "vt-trivia-subject" });
       this.chipEl.addEventListener("click", () => this.pickWord());
       this.updateChip();
 
       this.chatHost = card.createDiv({ cls: "vt-trivia-chat" });
       this.mountChat();
-      card.createDiv({ cls: "vt-trivia-footer", text: lt("learn.trivia.footer") });
+      card.createDiv({ cls: "vt-trivia-footer", text: t("learn.trivia.footer") });
     }
 
     if (this.params.favorites) {
@@ -190,12 +189,12 @@ class TriviaBlock extends MarkdownRenderChild {
     const pinned = this.pinned();
     chip.createSpan({
       text: pinned
-        ? lt("learn.trivia.subject", { word: pinned.word })
-        : lt("learn.trivia.random", { n: this.entries.length }),
+        ? t("learn.trivia.subject", { word: pinned.word })
+        : t("learn.trivia.random", { n: this.entries.length }),
     });
     if (!pinned) setIcon(chip.createSpan({ cls: "vt-trivia-subject-icon" }), "chevron-down");
     chip.disabled = !!pinned || this.plugin.ai.status() !== "ready";
-    chip.title = pinned ? "" : lt("learn.trivia.pick");
+    chip.title = pinned ? "" : t("learn.trivia.pick");
   }
 
   private pickWord(): void {
@@ -219,7 +218,7 @@ class TriviaBlock extends MarkdownRenderChild {
       surface: "trivia",
       customTaskId: triviaFollowup.id,
       sourcePath: this.sourcePath,
-      placeholder: lt("learn.trivia.placeholder"),
+      placeholder: t("learn.trivia.placeholder"),
       state: this.chatState,
       send: (req) => this.send(req),
       retry: (turnId) => this.retry(turnId),
@@ -235,7 +234,7 @@ class TriviaBlock extends MarkdownRenderChild {
   private async call(c: TriviaCall): Promise<void> {
     if (c.type === "followup") return this.plugin.trivia.followup(c.question, c.selection);
     const subject = await this.plugin.trivia.ask(c.kind, c.entryId ? { entryId: c.entryId } : {});
-    if (!subject && !this.plugin.trivia.isBusy()) new Notice(lt("learn.trivia.noWords"));
+    if (!subject && !this.plugin.trivia.isBusy()) new Notice(t("learn.trivia.noWords"));
   }
 
   private run(c: TriviaCall): void {
@@ -260,7 +259,7 @@ class TriviaBlock extends MarkdownRenderChild {
 
   private turnHeader(turn: Turn): { text: string; icon: string } | undefined {
     const text = triviaTurnHeader(turn, this.subjectWord(turn), (kind) =>
-      kind === "next" ? lt("learn.trivia.turn.next") : t(`ai.task.trivia.${kind}` as I18nKey)
+      kind === "next" ? t("learn.trivia.turn.next") : t(`ai.task.trivia.${kind}` as I18nKey)
     );
     return text ? { text, icon: "lightbulb" } : undefined;
   }
@@ -270,7 +269,7 @@ class TriviaBlock extends MarkdownRenderChild {
     const favorite = trivia.favoriteOf(turn.id);
     const specs = triviaTurnActions(turn, { subjectWord: this.subjectWord(turn), favorite, feedback: true });
     return specs.map((s): KitAction => {
-      const label = lt(s.label, s.params);
+      const label = t(s.label, s.params);
       const base = { label, icon: s.icon, active: s.active, iconOnly: s.iconOnly };
       switch (s.kind) {
         case "up":
@@ -285,7 +284,7 @@ class TriviaBlock extends MarkdownRenderChild {
           return {
             ...base,
             onClick: () => {
-              if (!this.plugin.trivia.favorite(turn.id)) new Notice(lt("learn.trivia.noWords"));
+              if (!this.plugin.trivia.favorite(turn.id)) new Notice(t("learn.trivia.noWords"));
             },
           };
         case "unfavorite":
@@ -303,12 +302,12 @@ class TriviaBlock extends MarkdownRenderChild {
     if (this.favScope) this.removeChild(this.favScope);
     const scope = (this.favScope = this.addChild(new Component()));
 
-    el.createDiv({ cls: "vt-trivia-favs-title", text: lt("learn.trivia.favorites") });
+    el.createDiv({ cls: "vt-trivia-favs-title", text: t("learn.trivia.favorites") });
     const pinned = this.pinned();
     const items = this.plugin.trivia.favorites(pinned?.id);
     const views = favoriteViews(items, (id) => this.entryById(id)?.word, shortDate);
     if (!views.length) {
-      el.createDiv({ cls: "vt-trivia-favs-empty", text: lt("learn.trivia.favorites.empty") });
+      el.createDiv({ cls: "vt-trivia-favs-empty", text: t("learn.trivia.favorites.empty") });
       return;
     }
     for (const v of views) {
@@ -317,13 +316,13 @@ class TriviaBlock extends MarkdownRenderChild {
       head.createSpan({ cls: "vt-trivia-fav-title", text: v.heading });
       const remove = head.createEl("button", { cls: "vt-trivia-fav-remove clickable-icon" });
       setIcon(remove, "bookmark-minus");
-      remove.setAttr("aria-label", lt("learn.trivia.unfavorite"));
+      remove.setAttr("aria-label", t("learn.trivia.unfavorite"));
       remove.addEventListener("click", () => this.plugin.trivia.unfavorite(v.id));
       const body = card.createDiv({ cls: "vt-trivia-fav-body" });
       void MarkdownRenderer.render(this.plugin.app, v.body, body, this.sourcePath, scope);
       const meta: string[] = [];
       if (v.date) meta.push(v.date);
-      if (v.mentions.length) meta.push(lt("learn.trivia.mentions", { words: joinWords(v.mentions) }));
+      if (v.mentions.length) meta.push(t("learn.trivia.mentions", { words: joinWords(v.mentions) }));
       if (meta.length) card.createDiv({ cls: "vt-trivia-fav-meta", text: meta.join(" · ") });
     }
   }

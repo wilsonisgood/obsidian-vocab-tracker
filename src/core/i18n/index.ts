@@ -25,6 +25,11 @@ export function resolveLocale(setting: "auto" | Locale, appLanguage: string): Lo
   return appLanguage.toLowerCase().startsWith("zh") ? "zh-TW" : "en";
 }
 
+// A list of words in running text: 「aprons、kitchenware」 / "aprons, kitchenware".
+export function joinWords(words: readonly string[]): string {
+  return words.join(activeLocale === "zh-TW" ? "、" : ", ");
+}
+
 export function t(key: I18nKey, params?: Record<string, string | number>): string {
   const template = dictionaries[activeLocale][key] ?? dictionaries.en[key];
   if (!params) return template;

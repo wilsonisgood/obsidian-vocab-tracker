@@ -18,7 +18,7 @@ import {
   type FamilyTreeView,
   type ReviewView,
 } from "./familiesModel";
-import { joinWords, lt } from "./learnText";
+import { joinWords, t } from "../../core/i18n";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate } from "./learnUi";
 
 // ── vocab-families code block (規劃書 06 §7.2, §9.6; 設計稿 L5、W3) ──
@@ -119,7 +119,7 @@ class FamiliesBlock extends MarkdownRenderChild {
         signal: ctrl.signal,
       });
       if (this.disposed) return;
-      if (!candidates.length) this.error = lt("learn.family.noneFound");
+      if (!candidates.length) this.error = t("learn.family.noneFound");
       else this.review = { candidates, checked: new Set(), replace };
     } catch (e) {
       if (this.disposed) return;
@@ -151,7 +151,7 @@ class FamiliesBlock extends MarkdownRenderChild {
       if (this.disposed) return;
       this.review = null;
       this.selectedId = families[0]?.id ?? this.selectedId;
-      new Notice(lt("learn.family.saved", { families: families.length, words: added.length }));
+      new Notice(t("learn.family.saved", { families: families.length, words: added.length }));
     } catch (e) {
       console.error("Vocab Tracker: saving families failed", e);
       new Notice(learnErrorText(e));
@@ -168,7 +168,7 @@ class FamiliesBlock extends MarkdownRenderChild {
     this.render();
     try {
       const entry = await this.plugin.families.addSuggested(familyId, word);
-      if (entry) new Notice(lt("learn.family.added", { word: entry.word }));
+      if (entry) new Notice(t("learn.family.added", { word: entry.word }));
     } catch (e) {
       console.error("Vocab Tracker: adding a family word failed", e);
       new Notice(learnErrorText(e));
@@ -181,7 +181,7 @@ class FamiliesBlock extends MarkdownRenderChild {
   private remove(f: Family): void {
     this.plugin.families.remove(f.id);
     if (this.selectedId === f.id) this.selectedId = undefined;
-    new Notice(lt("learn.family.deleted", { name: f.label || f.topic }));
+    new Notice(t("learn.family.deleted", { name: f.label || f.topic }));
   }
 
   // ── Render ────────────────────────────────────────────────────
@@ -190,14 +190,14 @@ class FamiliesBlock extends MarkdownRenderChild {
     const root = this.root;
     root.empty();
     if (!this.loaded) {
-      root.createDiv({ cls: "vt-learn-loading", text: lt("learn.loading") });
+      root.createDiv({ cls: "vt-learn-loading", text: t("learn.loading") });
       return;
     }
 
     const lookup = new MemberLookup(this.plugin.store.entries);
     const entry = this.wordEntry(lookup);
     if (this.params.word && !entry) {
-      root.appendChild(emptyState({ icon: "git-fork", title: lt("learn.notFound", { word: this.params.word }) }));
+      root.appendChild(emptyState({ icon: "git-fork", title: t("learn.notFound", { word: this.params.word }) }));
       return;
     }
 
@@ -207,15 +207,15 @@ class FamiliesBlock extends MarkdownRenderChild {
     if (families.length && !this.review) this.renderToolbar(families, entry);
     if (!entry && !this.review && !this.generating && this.plugin.families.needsRegroup()) {
       const note = root.createDiv({ cls: "vt-fam-regroup-note" });
-      note.appendChild(inlineNote({ tone: "info", icon: "refresh-cw", text: lt("learn.family.regroup.hint") }));
-      learnButton(note, { label: lt("learn.family.regroup"), icon: "refresh-cw", onClick: () => void this.generate(true) });
+      note.appendChild(inlineNote({ tone: "info", icon: "refresh-cw", text: t("learn.family.regroup.hint") }));
+      learnButton(note, { label: t("learn.family.regroup"), icon: "refresh-cw", onClick: () => void this.generate(true) });
     }
 
     if (this.generating) return this.renderGenerating();
     if (this.error) {
       const box = root.createDiv({ cls: "vt-learn-error" });
       box.appendChild(inlineNote({ tone: "error", text: this.error }));
-      learnButton(box, { label: lt("learn.retry"), icon: "rotate-ccw", onClick: () => void this.generate(false, entry) });
+      learnButton(box, { label: t("learn.retry"), icon: "rotate-ccw", onClick: () => void this.generate(false, entry) });
     }
     if (this.review) return this.renderReview(this.review, lookup);
 
@@ -225,15 +225,15 @@ class FamiliesBlock extends MarkdownRenderChild {
     // No families yet.
     const empty = root.createDiv({ cls: "vt-fam-empty" });
     const title = entry
-      ? lt("learn.family.word.empty.title", { word: entry.word })
-      : lt("learn.family.empty.title");
+      ? t("learn.family.word.empty.title", { word: entry.word })
+      : t("learn.family.empty.title");
     if (renderLearnAiGate(empty, this.plugin)) return;
     empty.appendChild(
       emptyState({
         icon: "git-fork",
         title,
-        body: lt("learn.family.empty.body"),
-        action: { label: lt("learn.family.generate"), icon: "sparkles", onClick: () => void this.generate(false, entry) },
+        body: t("learn.family.empty.body"),
+        action: { label: t("learn.family.generate"), icon: "sparkles", onClick: () => void this.generate(false, entry) },
       })
     );
   }
@@ -253,22 +253,22 @@ class FamiliesBlock extends MarkdownRenderChild {
     }
     const ready = this.plugin.ai.status() === "ready";
     const btn = learnButton(bar, {
-      label: lt(entry ? "learn.family.generate" : "learn.family.regroup"),
+      label: t(entry ? "learn.family.generate" : "learn.family.regroup"),
       icon: entry ? "sparkles" : "refresh-cw",
       ghost: true,
       onClick: () => void this.generate(!entry, entry),
     });
     btn.addClass("vt-fam-toolbar-action");
     btn.disabled = !ready;
-    if (!ready) btn.title = lt(this.plugin.ai.status() === "offline" ? "learn.ai.offline" : "learn.ai.body");
+    if (!ready) btn.title = t(this.plugin.ai.status() === "offline" ? "learn.ai.offline" : "learn.ai.body");
   }
 
   private renderGenerating(): void {
     const box = this.root.createDiv({ cls: "vt-learn-busy" });
     const line = box.createDiv({ cls: "vt-learn-busy-text" });
     setIcon(line.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
-    line.createSpan({ text: lt("learn.family.generating") });
-    learnButton(box, { label: lt("learn.stop"), icon: "square", onClick: () => this.stop() });
+    line.createSpan({ text: t("learn.family.generating") });
+    learnButton(box, { label: t("learn.stop"), icon: "square", onClick: () => this.stop() });
   }
 
   // ── L5 tree ───────────────────────────────────────────────────
@@ -280,12 +280,12 @@ class FamiliesBlock extends MarkdownRenderChild {
     head.createSpan({ text: view.title });
     const more = head.createEl("button", { cls: "vt-fam-root-more clickable-icon" });
     setIcon(more, "more-horizontal");
-    more.setAttr("aria-label", lt("learn.family.more"));
+    more.setAttr("aria-label", t("learn.family.more"));
     more.addEventListener("click", (e) => {
       const menu = new Menu();
       menu.addItem((item) =>
         item
-          .setTitle(lt("learn.family.delete"))
+          .setTitle(t("learn.family.delete"))
           .setIcon("trash-2")
           .onClick(() => this.remove(f))
       );
@@ -313,22 +313,22 @@ class FamiliesBlock extends MarkdownRenderChild {
         if (chip.zh) el.createSpan({ cls: "vt-fam-chip-zh", text: chip.zh });
         setIcon(el.createSpan({ cls: "vt-fam-chip-icon" }), busy ? "loader" : "plus");
         el.disabled = busy;
-        el.setAttr("aria-label", lt("learn.family.add", { word: chip.word }));
+        el.setAttr("aria-label", t("learn.family.add", { word: chip.word }));
         el.addEventListener("click", () => void this.addSuggested(f.id, chip.word));
       }
     }
 
     const legend = this.root.createDiv({ cls: "vt-fam-legend" });
     const known = legend.createSpan({ cls: "vt-fam-legend-item" });
-    known.createSpan({ cls: "vt-fam-chip is-known is-mini", text: lt("learn.family.known") });
-    known.createSpan({ text: lt("learn.family.legend.known") });
+    known.createSpan({ cls: "vt-fam-chip is-known is-mini", text: t("learn.family.known") });
+    known.createSpan({ text: t("learn.family.legend.known") });
     if (view.suggestedCount) {
       const sug = legend.createSpan({ cls: "vt-fam-legend-item" });
       setIcon(sug.createSpan({ cls: "vt-fam-chip is-suggested is-mini" }), "plus");
-      sug.createSpan({ text: lt("learn.family.legend.suggested") });
+      sug.createSpan({ text: t("learn.family.legend.suggested") });
     }
     if (view.seeds.length) {
-      legend.createSpan({ cls: "vt-fam-legend-item", text: lt("learn.family.legend.seeds", { words: joinWords(view.seeds) }) });
+      legend.createSpan({ cls: "vt-fam-legend-item", text: t("learn.family.legend.seeds", { words: joinWords(view.seeds) }) });
     }
   }
 
@@ -339,19 +339,19 @@ class FamiliesBlock extends MarkdownRenderChild {
     const box = this.root.createDiv({ cls: "vt-fam-review" });
     const head = box.createDiv({ cls: "vt-fam-review-head" });
     setIcon(head.createSpan({ cls: "vt-fam-review-icon" }), "sparkles");
-    head.createSpan({ text: lt("learn.family.found", { families: view.familyCount, words: view.newWordCount }) });
+    head.createSpan({ text: t("learn.family.found", { families: view.familyCount, words: view.newWordCount }) });
 
     for (const card of view.cards) {
       const el = box.createDiv({ cls: "vt-fam-card" });
       const title = card.from.length
-        ? `${card.title} · ${lt("learn.family.from", { words: joinWords(card.from) })}`
+        ? `${card.title} · ${t("learn.family.from", { words: joinWords(card.from) })}`
         : card.title;
       el.createDiv({ cls: "vt-fam-card-title", text: title });
       for (const row of card.rows) {
         const line = el.createEl("label", { cls: "vt-fam-row" });
         if (row.known) {
           line.addClass("is-known");
-          line.createSpan({ cls: "vt-fam-row-tag", text: lt("learn.family.known") });
+          line.createSpan({ cls: "vt-fam-row-tag", text: t("learn.family.known") });
         } else {
           const cb = line.createEl("input", { cls: "vt-fam-row-check", type: "checkbox" });
           cb.checked = review.checked.has(row.key);
@@ -370,15 +370,15 @@ class FamiliesBlock extends MarkdownRenderChild {
     const toAdd = checkedNewWords(view, review.checked);
     const actions = box.createDiv({ cls: "vt-fam-review-actions" });
     const discard = learnButton(actions, {
-      label: lt("learn.family.discard"),
+      label: t("learn.family.discard"),
       onClick: () => {
         this.review = null;
         this.render();
       },
     });
-    const only = learnButton(actions, { label: lt("learn.family.saveOnly"), onClick: () => void this.save([]) });
+    const only = learnButton(actions, { label: t("learn.family.saveOnly"), onClick: () => void this.save([]) });
     const add = learnButton(actions, {
-      label: lt("learn.family.saveAdd", { n: toAdd.length }),
+      label: t("learn.family.saveAdd", { n: toAdd.length }),
       icon: "plus",
       cta: true,
       onClick: () => void this.save(toAdd),
@@ -386,11 +386,11 @@ class FamiliesBlock extends MarkdownRenderChild {
     for (const b of [discard, only, add]) b.disabled = this.saving;
     add.disabled = this.saving || !toAdd.length;
 
-    if (review.replace) box.createDiv({ cls: "vt-fam-review-note", text: lt("learn.family.regroup.note") });
+    if (review.replace) box.createDiv({ cls: "vt-fam-review-note", text: t("learn.family.regroup.note") });
     if (view.newWordCount) {
       box.createDiv({
         cls: "vt-fam-review-note",
-        text: lt("learn.family.addNote", { topics: joinWords(view.cards.map((c) => c.topic)) }),
+        text: t("learn.family.addNote", { topics: joinWords(view.cards.map((c) => c.topic)) }),
       });
     }
   }
