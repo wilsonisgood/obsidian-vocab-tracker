@@ -139,4 +139,17 @@ describe("favoriteViews", () => {
       { id: "t2", heading: "孤兒", body: "…", date: undefined, mentions: [] },
     ]);
   });
+
+  it("adds 更新日期 only when it's another day (1005 #14)", () => {
+    const base = { entryId: "e1", mentions: [], title: "t", body: "b" };
+    const items: TriviaItem[] = [
+      { id: "a", ...base, createdAt: "2026-10-03", updatedAt: "2026-10-05" },
+      { id: "b", ...base, createdAt: "2026-10-03", updatedAt: "2026-10-03" },
+    ];
+    const views = favoriteViews(items, () => "apron", (iso) => iso?.slice(5).replace("-", "/"));
+    expect(views.map((v) => [v.date, v.updated])).toEqual([
+      ["10/03", "10/05"],
+      ["10/03", undefined],
+    ]);
+  });
 });

@@ -1,16 +1,18 @@
-import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext } from "obsidian";
+import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import { WordIndex } from "../../services/learn/wordIndex";
+import { aiErrorBox } from "../kit/aiDebug";
 import { emptyState } from "../kit/emptyState";
 import { inlineNote } from "../kit/inlineNote";
-import { t } from "../../core/i18n";
+import { getLocale, t } from "../../core/i18n";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate, wordChip } from "./learnUi";
 import {
   filterVerbs,
   parseVerbsParams,
   phoneticLine,
   pickVerb,
+  usageDates,
   usageMeta,
   usageRows,
   type VerbsParams,
@@ -25,6 +27,29 @@ import {
 // Left: the learned verbs with a filter; right: the selected verb's usage
 // (patterns, examples, similar expressions). Usage is generated once and
 // stored on the entry; 「重新產生」 replaces it.
+
+// Temporary strings until they move to core/i18n (`learn.verb.*`).
+const L = {
+  "zh-TW": {
+    favorite: "收藏（寫入單字頁）",
+    favorited: "已收藏",
+    unfavorite: "取消收藏（單字頁上的用法會保留）",
+    savedTo: "已收藏，寫入 {path}",
+    rowFavorited: "已收藏到單字頁",
+  },
+  en: {
+    favorite: "Save to word page",
+    favorited: "Saved",
+    unfavorite: "Unsave (the word page keeps the usage)",
+    savedTo: "Saved to {path}",
+    rowFavorited: "Saved to its word page",
+  },
+} as const;
+
+function l(key: keyof (typeof L)["en"], path?: string): string {
+  const text: string = (L[getLocale()] ?? L.en)[key];
+  return path === undefined ? text : text.replace("{path}", path);
+}
 
 export function renderVerbs(
   plugin: VocabTrackerPlugin,
@@ -42,8 +67,9 @@ class VerbsBlock extends MarkdownRenderChild {
   private detailEl!: HTMLElement;
   private query = "";
   private selectedId: string | undefined;
-  // Last failure per entry, shown under its usage until the next try.
-  private errors = new Map<string, string>();
+  // Last failure per entry, shown under its usage until the next try
+  // (with what was thrown, for the debug box).
+  private errors = new Map<string, { text: string; cause: unknown }>();
 
   constructor(
     containerEl: HTMLElement,
@@ -70,7 +96,24 @@ class VerbsBlock extends MarkdownRenderChild {
     const redraw = () => this.render();
     this.register(this.plugin.store.events.on("data:changed", redraw));
     this.register(this.plugin.verbs.events.on("verb:busy", redraw));
+    // 收藏 (寫入單字頁) lives in learn.json.
+    this.register(this.plugin.learn.events.on("verbFavorite:upsert", redraw));
+    this.register(this.plugin.learn.events.on("learn:reloaded", redraw));
     this.render();
+    void this.plugin.learn.ensureLoaded().then(redraw);
+  }
+
+  private favorited(e: VocabEntry): boolean {
+    return this.plugin.learn.loaded && !!this.plugin.learn.verbFavorite(e.id);
+  }
+
+  private toggleFavorite(e: VocabEntry): void {
+    const learn = this.plugin.learn;
+    if (learn.verbFavorite(e.id)) return learn.unfavoriteVerb(e.id);
+    learn.favoriteVerb(e);
+    // Saving it puts the usage on the word's page (created if needed).
+    const page = this.plugin.exporter.wordPagePath(e.id, e.word);
+    new Notice(l("savedTo", page.split("/").slice(-2).join("/")));
   }
 
   private buildLayout(): void {
@@ -108,7 +151,11 @@ class VerbsBlock extends MarkdownRenderChild {
         row.setAttr("aria-pressed", String(e.id === this.selectedId));
         row.createSpan({ cls: "vt-verbs-row-word", text: e.word });
         if (this.plugin.verbs.isBusy(e.id)) setIcon(row.createSpan({ cls: "vt-verbs-row-icon is-busy" }), "loader");
-        else if (e.usage) {
+        else if (this.favorited(e)) {
+          const icon = row.createSpan({ cls: "vt-verbs-row-icon is-saved" });
+          setIcon(icon, "bookmark-check");
+          icon.setAttr("aria-label", l("rowFavorited"));
+        } else if (e.usage) {
           const icon = row.createSpan({ cls: "vt-verbs-row-icon" });
           setIcon(icon, "check");
           icon.setAttr("aria-label", t("learn.verb.hasUsage"));
@@ -162,7 +209,9 @@ class VerbsBlock extends MarkdownRenderChild {
     const meta = usageMeta(e, usage);
     const metaParts: string[] = [];
     if (meta.source) metaParts.push(t("learn.verb.meta.source", { source: meta.source }));
-    if (meta.date) metaParts.push(t("learn.verb.meta.generated", { date: meta.date }));
+    // 「加入 10/02 · 更新 10/05」 (1005 回饋 #14): first generated / last regenerated.
+    const dates = usageDates(usage);
+    if (dates) metaParts.push(dates);
     if (metaParts.length) el.createDiv({ cls: "vt-verb-meta", text: metaParts.join(" · ") });
 
     const busy = this.plugin.verbs.isBusy(e.id);
@@ -175,7 +224,7 @@ class VerbsBlock extends MarkdownRenderChild {
     }
 
     const error = this.errors.get(e.id);
-    if (error && !busy) el.appendChild(inlineNote({ tone: "error", text: error }));
+    if (error && !busy) el.appendChild(aiErrorBox({ text: error.text, error: error.cause }));
 
     if (usage) {
       const { patterns, related } = usageRows(usage);
@@ -201,6 +250,18 @@ class VerbsBlock extends MarkdownRenderChild {
       }
       if (!busy) {
         const actions = el.createDiv({ cls: "vt-verb-actions" });
+        // 收藏 = 寫入單字頁 (design L6; 1005 回饋 #4). Works offline.
+        const saved = this.favorited(e);
+        const fav = learnButton(actions, {
+          label: l(saved ? "favorited" : "favorite"),
+          icon: saved ? "bookmark-check" : "bookmark",
+          onClick: () => this.toggleFavorite(e),
+        });
+        fav.addClass("vt-verb-favorite");
+        fav.toggleClass("is-active", saved);
+        fav.setAttr("aria-pressed", String(saved));
+        if (saved) fav.title = l("unfavorite");
+        fav.disabled = !this.plugin.learn.loaded;
         const regen = learnButton(actions, {
           label: t("learn.verb.regenerate"),
           icon: "refresh-cw",
@@ -238,7 +299,7 @@ class VerbsBlock extends MarkdownRenderChild {
     } catch (err) {
       if (!isAbort(err)) {
         console.error("Vocab Tracker: verb usage failed", err);
-        this.errors.set(e.id, learnErrorText(err));
+        this.errors.set(e.id, { text: learnErrorText(err), cause: err });
       }
     }
     // verb:busy already redrew; draw once more for the error.

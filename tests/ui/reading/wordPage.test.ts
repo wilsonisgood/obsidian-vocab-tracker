@@ -11,7 +11,8 @@ import { getLocale, setLocale, type Locale } from "../../../src/core/i18n";
 import { renderWordPageFile } from "../../../src/services/export/renderers/wordPage";
 import { exportLabels } from "../../../src/services/export/labels";
 import { sectionAtHeading, sectionByTitle, wordPageEntryId } from "../../../src/ui/reading/WordPageDecorator";
-import { dueLabel, findTarget, sourceLabel, wordTarget } from "../../../src/ui/blocks/wordHeader";
+import { dueLabel, findTarget, originFamilyId, originLabel, originView, sourceLabel, wordTarget } from "../../../src/ui/blocks/wordHeader";
+import type { Family } from "../../../src/core/model/family";
 import { entry } from "../../services/export/fixtures";
 
 let previousLocale: Locale;
@@ -114,5 +115,44 @@ describe("vocab-word header", () => {
   it("labels the source with its paragraph number when known", () => {
     expect(sourceLabel("eng/Taylor_Swift_NYU.md", 12)).toBe("出自 Taylor_Swift_NYU ¶12");
     expect(sourceLabel("eng/Taylor_Swift_NYU.md", null)).toBe("出自 Taylor_Swift_NYU");
+  });
+});
+
+describe("word page origin chip (1005 #13)", () => {
+  const family: Family = {
+    id: "f9",
+    topic: "clothing",
+    label: "服裝",
+    source: "ai",
+    groups: [
+      { label: "配件", members: [{ word: "apron", zh: "圍裙" }] },
+      { label: "舞台", members: [{ entryId: "e-seq", word: "sequin", zh: "亮片" }] },
+    ],
+  };
+  const sequin = { ...entry("e-seq", "sequin"), origin: "family:f9" as const };
+
+  it("reads the family id from the entry's origin", () => {
+    expect(originFamilyId("family:f9")).toBe("f9");
+    expect(originFamilyId("family:")).toBeNull();
+    expect(originFamilyId("wordlist")).toBeNull();
+    expect(originFamilyId(undefined)).toBeNull();
+  });
+
+  it("names the family and the group the word sits in", () => {
+    const view = originView(sequin, family)!;
+    expect(view).toEqual({ familyId: "f9", name: "clothing 服裝 › 舞台" });
+    expect(originLabel(view)).toBe("來源：字族樹 clothing 服裝 › 舞台");
+    // Matched by spelling when the member has no entry id yet.
+    expect(originView({ id: "e-ap", word: "Apron", origin: "family:f9" }, family)?.name).toBe("clothing 服裝 › 配件");
+    // No longer a member (regrouped): just the family.
+    expect(originView({ id: "e-x", word: "tulle", origin: "family:f9" }, family)?.name).toBe("clothing 服裝");
+  });
+
+  it("still says where it came from when the family is gone", () => {
+    const view = originView(sequin, undefined)!;
+    expect(view).toEqual({ familyId: "f9" });
+    expect(originLabel(view)).toBe("來源：字族樹");
+    expect(originView(sequin, { ...family, deletedAt: "2026-10-05T00:00:00Z" })).toEqual({ familyId: "f9" });
+    expect(originView(entry("e1", "glittery"), family)).toBeNull();
   });
 });
