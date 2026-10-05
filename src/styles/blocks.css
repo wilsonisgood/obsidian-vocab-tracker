@@ -201,11 +201,173 @@ body.is-mobile .vt-flashcards {
   font-size: var(--font-ui-small);
 }
 
+/* Counter centred, "本批單字" toggle pinned to the right */
 .vt-fc-progress {
-  text-align: center;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
   color: var(--vt-muted);
   font-size: var(--font-ui-small);
   font-variant-numeric: tabular-nums;
+}
+
+.vt-fc-progress-n {
+  grid-column: 2;
+}
+
+.vt-fc-progress .vt-fc-batch-toggle {
+  grid-column: 3;
+  justify-self: end;
+}
+
+/* 本批單字: which words are in this session and how each went */
+.vt-fc-batch-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: calc(var(--vt-tap) - 8px);
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+body.is-mobile .vt-fc-batch-toggle {
+  min-height: var(--vt-tap);
+}
+
+.vt-fc-batch-toggle:hover,
+.vt-fc-batch-toggle.is-open {
+  background: var(--vt-surface);
+  color: var(--text-normal);
+}
+
+.vt-fc-batch-toggle:focus-visible {
+  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.vt-fc-batch-chevron {
+  transition: transform 120ms ease;
+}
+
+.vt-fc-batch-toggle.is-open .vt-fc-batch-chevron {
+  transform: rotate(180deg);
+}
+
+.vt-fc-batch {
+  position: relative; /* offsetParent for scrolling to the current row */
+  max-height: min(320px, 45vh);
+  overflow-y: auto;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-surface);
+}
+
+.vt-fc-batch[hidden] {
+  display: none;
+}
+
+.vt-fc-batch-list {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+}
+
+.vt-fc-batch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--vt-tap);
+  padding: 0 8px;
+  border-left: 2px solid transparent;
+  border-radius: var(--radius-s);
+  text-align: left;
+}
+
+.vt-fc-batch-row.is-current {
+  border-left-color: var(--vt-accent);
+  background: var(--vt-card);
+}
+
+.vt-fc-batch-row.is-pending {
+  color: var(--vt-muted);
+}
+
+.vt-fc-batch-text {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.vt-fc-batch-word {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.vt-fc-batch-word.is-hidden {
+  color: var(--text-faint);
+  letter-spacing: 0.15em;
+}
+
+.vt-fc-batch-zh {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-fc-batch-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-fc-batch-kind {
+  padding: 0 6px;
+  border-radius: var(--radius-s);
+  background: var(--background-modifier-hover);
+  color: var(--vt-muted);
+}
+
+.vt-fc-batch-kind.is-new {
+  color: var(--vt-accent-text);
+}
+
+.vt-fc-batch-state {
+  color: var(--text-faint);
+}
+
+.vt-fc-batch-row.is-current .vt-fc-batch-state {
+  color: var(--vt-accent-text);
+  font-weight: 600;
+}
+
+.vt-fc-batch-rating {
+  color: var(--vt-rate);
+  font-weight: 600;
+}
+
+/* On the done screen the list sits in the centred L4 box */
+.vt-fc-batch-head {
+  align-self: stretch;
+  display: flex;
+  margin-top: 12px;
+}
+
+.vt-fc-done .vt-fc-batch {
+  align-self: stretch;
 }
 
 /* Card */
@@ -415,10 +577,10 @@ body.is-mobile .vt-fc-ratings {
   border-color: var(--vt-rate);
 }
 
-.vt-fc-rate.is-r1 { --vt-rate: var(--color-red); }
-.vt-fc-rate.is-r2 { --vt-rate: var(--color-orange); }
-.vt-fc-rate.is-r3 { --vt-rate: var(--color-green); }
-.vt-fc-rate.is-r4 { --vt-rate: var(--color-blue); }
+.vt-fc-rate.is-r1, .vt-fc-batch-rating.is-r1 { --vt-rate: var(--color-red); }
+.vt-fc-rate.is-r2, .vt-fc-batch-rating.is-r2 { --vt-rate: var(--color-orange); }
+.vt-fc-rate.is-r3, .vt-fc-batch-rating.is-r3 { --vt-rate: var(--color-green); }
+.vt-fc-rate.is-r4, .vt-fc-batch-rating.is-r4 { --vt-rate: var(--color-blue); }
 
 .vt-fc-rate-label {
   color: var(--vt-rate);
