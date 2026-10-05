@@ -21,13 +21,17 @@ export interface EntryFileDef {
   name: string;
   // The code block the file is for.
   block: string;
+  // Block body (`key: value` lines), if any.
+  params?: string;
 }
 
 export const ENTRY_FILES: readonly EntryFileDef[] = [
   { id: "flashcards", name: "單字卡", block: "vocab-flashcards" },
   { id: "families", name: "字族樹", block: "vocab-families" },
   { id: "verbs", name: "動詞用法", block: "vocab-verbs" },
-  { id: "trivia", name: "冷知識", block: "vocab-trivia" },
+  // The saved list is the exported section under the block, so the block
+  // itself doesn't list favorites a second time.
+  { id: "trivia", name: "冷知識", block: "vocab-trivia", params: "favorites: off" },
 ];
 
 export const ENTRY_FILE_IDS: readonly EntryFileId[] = ENTRY_FILES.map((d) => d.id);
@@ -68,6 +72,7 @@ export function renderEntryFile(id: EntryFileId): string {
     `# ${def.name}`,
     "",
     "```" + def.block,
+    ...(def.params ? [def.params] : []),
     "```",
   ].join("\n");
   const sections = id === "trivia" ? renderTriviaFavoritesSections({ items: [] }, emptyContext()) : [];

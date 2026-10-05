@@ -27,6 +27,7 @@ vocab-tracker-id: trivia
 # 冷知識
 
 \`\`\`vocab-trivia
+favorites: off
 \`\`\`
 
 %% vt:begin trivia-favorites %%

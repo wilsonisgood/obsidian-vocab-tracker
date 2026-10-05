@@ -37,12 +37,16 @@ function fakeExport(log: string[]): FilesExportPort {
 }
 
 describe("entry file content", () => {
+  it("hides the block's own favorites list in 冷知識.md (the exported section lists them)", () => {
+    expect(renderEntryFile("trivia")).toContain("```vocab-trivia\nfavorites: off\n```");
+  });
+
   it("has the frontmatter id, a title and the code block", () => {
     for (const def of ENTRY_FILES) {
       const text = renderEntryFile(def.id);
       expect(text).toContain("vocab-tracker: entry\n");
       expect(text).toContain(`vocab-tracker-id: ${def.id}\n`);
-      expect(text).toContain("```" + def.block + "\n```");
+      expect(text).toContain("```" + def.block + "\n" + (def.params ? def.params + "\n" : "") + "```");
     }
   });
 
