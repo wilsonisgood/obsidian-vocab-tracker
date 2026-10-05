@@ -63,7 +63,7 @@ export function renderVocabRow(
   const sheet = opts.variant === "sheet";
   // The sheet card is never collapsed.
   if (sheet && state === "collapsed") state = "half";
-  const row = container.createEl("div", { cls: "vocab-tracker-row" });
+  const row = container.createEl("div", { cls: "vt-row" });
   row.setAttr("data-entry-id", entry.id);
   row.toggleClass("vt-sheet-card", sheet);
   const due = plugin.srs.nextDue(entry);
@@ -76,10 +76,10 @@ export function renderVocabRow(
   };
 
   // ── Header: always visible ───────────────────────────────────
-  const head = row.createEl("div", { cls: "vocab-tracker-row-header" });
+  const head = row.createEl("div", { cls: "vt-row-header" });
 
   if (!sheet) {
-    const del = head.createEl("span", { cls: "vocab-tracker-row-delete" });
+    const del = head.createEl("span", { cls: "vt-row-delete" });
     setIcon(del, "x");
     del.setAttr("aria-label", t("row.delete"));
     del.onclick = async (e) => {
@@ -88,14 +88,14 @@ export function renderVocabRow(
     };
   }
 
-  const wordWrap = head.createEl("span", { cls: "vocab-tracker-row-wordwrap" });
-  wordWrap.createEl("span", { text: entry.word, cls: "vocab-tracker-row-word" });
+  const wordWrap = head.createEl("span", { cls: "vt-row-wordwrap" });
+  wordWrap.createEl("span", { text: entry.word, cls: "vt-row-word" });
   for (const tag of entry.level.split(",").map((t) => t.trim()).filter(Boolean)) {
-    wordWrap.createEl("span", { text: tag, cls: "vocab-tracker-row-badge" });
+    wordWrap.createEl("span", { text: tag, cls: "vt-row-badge" });
   }
   opts.decorateWord?.(wordWrap, entry);
 
-  head.createEl("span", { cls: "vocab-tracker-row-spacer" });
+  head.createEl("span", { cls: "vt-row-spacer" });
 
   // Never-reviewed words get no chip: on an existing vault that's every
   // word, and a column of "new" labels says nothing.
@@ -110,7 +110,7 @@ export function renderVocabRow(
 
   const headSpeak = () => {
     const speak = head.createEl("span", {
-      cls: ["vocab-tracker-speak-icon", "vocab-tracker-row-speak"],
+      cls: ["vt-speak-icon", "vt-row-speak"],
     });
     setIcon(speak, "volume-2");
     speak.setAttr("aria-label", t("row.pronounce"));
@@ -124,7 +124,7 @@ export function renderVocabRow(
   if (sheet) {
     headSpeak();
   } else {
-    const arrow = head.createEl("span", { cls: "vocab-tracker-row-arrow" });
+    const arrow = head.createEl("span", { cls: "vt-row-arrow" });
     setIcon(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
     arrow.setAttr("aria-label", state === "collapsed" ? t("row.expand") : t("row.collapse"));
 
@@ -140,9 +140,9 @@ export function renderVocabRow(
   }
 
   // ── Body: half + full ────────────────────────────────────────
-  const body = row.createEl("div", { cls: "vocab-tracker-row-body" });
+  const body = row.createEl("div", { cls: "vt-row-body" });
 
-  const subText = body.createEl("div", { cls: "vocab-tracker-form-subtext" });
+  const subText = body.createEl("div", { cls: "vt-row-subtext" });
   subText.textContent =
     [entry.phonetic, entry.partOfSpeech].filter(Boolean).join("  ·  ") || entry.word;
 
@@ -169,10 +169,10 @@ export function renderVocabRow(
     const value = entry[key] ?? "";
     // No field-name labels — the placeholder alone says what belongs here,
     // and a filled field reads as plain text once the border drops away.
-    const wrap = body.createEl("div", { cls: "vocab-tracker-field" });
+    const wrap = body.createEl("div", { cls: "vt-field" });
     if (value) wrap.addClass("is-filled");
-    const cls = ["vocab-tracker-input", "vocab-tracker-field-box"];
-    if (opts.multiline) cls.push("vocab-tracker-textarea");
+    const cls = ["vt-input", "vt-field-box"];
+    if (opts.multiline) cls.push("vt-textarea");
 
     if (opts.multiline) {
       const inp = wrap.createEl("textarea", { cls });
@@ -211,7 +211,7 @@ export function renderVocabRow(
     mkField(t("row.field.grammar"), "grammar", { multiline: true });
 
     if (entry.source && entry.source.path) {
-      const src = body.createEl("div", { cls: "vocab-tracker-source-link" });
+      const src = body.createEl("div", { cls: "vt-row-source-link" });
       const name = entry.source.path.split("/").pop();
       src.textContent = `📍 ${name} : line ${entry.source.line + 1}`;
       src.setAttr("aria-label", t("row.jumpToSource"));
@@ -222,15 +222,15 @@ export function renderVocabRow(
       };
     }
 
-    body.createEl("div", { text: t("row.meta.added", { date: entry.added }), cls: "vocab-tracker-meta" });
+    body.createEl("div", { text: t("row.meta.added", { date: entry.added }), cls: "vt-meta" });
     body.createEl("div", {
       text: t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }),
-      cls: "vocab-tracker-meta",
+      cls: "vt-meta",
     });
     if (due) {
       body.createEl("div", {
         text: t("row.nextReview", { date: due.toLocaleString() }),
-        cls: "vocab-tracker-meta",
+        cls: "vt-meta",
       });
     }
 
@@ -240,10 +240,10 @@ export function renderVocabRow(
   }
 
   // ── Footer: more-info toggle · fetch · reviewed · speak ──────
-  const footer = body.createEl("div", { cls: "vocab-tracker-row-footer" });
+  const footer = body.createEl("div", { cls: "vt-row-footer" });
 
   const footerBtn = (parent: HTMLElement, icon: string, label: string) => {
-    const btn = parent.createEl("span", { cls: "vocab-tracker-footer-icon" });
+    const btn = parent.createEl("span", { cls: "vt-row-footer-icon" });
     setIcon(btn, icon);
     btn.setAttr("aria-label", label);
     btn.setAttr("role", "button");
@@ -257,7 +257,7 @@ export function renderVocabRow(
     refresh();
   };
 
-  const actions = footer.createEl("span", { cls: "vocab-tracker-row-footer-actions" });
+  const actions = footer.createEl("span", { cls: "vt-row-footer-actions" });
 
   const fetchBtn = footerBtn(actions, "refresh-cw", t("row.fetch"));
   fetchBtn.onclick = async (e) => {
@@ -298,7 +298,7 @@ export function renderVocabRow(
       await remove();
     };
   } else {
-    const speak = actions.createEl("span", { cls: "vocab-tracker-speak-icon" });
+    const speak = actions.createEl("span", { cls: "vt-speak-icon" });
     setIcon(speak, "volume-2");
     speak.setAttr("aria-label", t("row.pronounce"));
     speak.setAttr("role", "button");

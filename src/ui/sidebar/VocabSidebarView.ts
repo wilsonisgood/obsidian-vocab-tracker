@@ -141,7 +141,7 @@ export class VocabSidebarView extends ItemView {
     this.router.back();
     this.draw();
     const root = this.containerEl.children[1] as HTMLElement;
-    const row = root.querySelector<HTMLElement>(`.vocab-tracker-row[data-entry-id="${CSS.escape(entry.id)}"]`);
+    const row = root.querySelector<HTMLElement>(`.vt-row[data-entry-id="${CSS.escape(entry.id)}"]`);
     row?.scrollIntoView({ block: "nearest" });
   }
 
@@ -309,11 +309,11 @@ export class VocabSidebarView extends ItemView {
     this.examStripEl = null;
     this.wordChips.clear();
     root.empty();
-    root.addClass("vocab-tracker-sidebar");
+    root.addClass("vt-sidebar");
 
-    const header = root.createEl("div", { cls: "vocab-tracker-header" });
+    const header = root.createEl("div", { cls: "vt-sidebar-header" });
     header.createEl("h4", { text: t("sidebar.title") });
-    const openList = header.createEl("span", { cls: "vocab-tracker-icon-btn clickable-icon" });
+    const openList = header.createEl("span", { cls: "vt-icon-btn clickable-icon" });
     setIcon(openList, "file-text");
     openList.setAttr("role", "button");
     openList.setAttr("aria-label", t("sidebar.openList"));
@@ -335,16 +335,16 @@ export class VocabSidebarView extends ItemView {
 
     // ── Not-yet-tracked word banner ──────────────────────────────
     if (this.pendingWord) {
-      const banner = root.createEl("div", { cls: "vocab-tracker-add-prompt" });
-      banner.createEl("span", { text: `"${this.pendingWord}"`, cls: "vocab-tracker-add-prompt-word" });
-      const addBtn = banner.createEl("button", { text: t("sidebar.addPrompt.cta"), cls: "vocab-tracker-btn" });
+      const banner = root.createEl("div", { cls: "vt-sidebar-add-prompt" });
+      banner.createEl("span", { text: `"${this.pendingWord}"`, cls: "vt-sidebar-add-prompt-word" });
+      const addBtn = banner.createEl("button", { text: t("sidebar.addPrompt.cta"), cls: "vt-sidebar-add-btn" });
       addBtn.onclick = async () => {
         // Shown here, in the sidebar — even on iPhone, where it was opened by hand.
         const word = this.pendingWord;
         await this.plugin.addWordToVocab(word, {}, { reveal: false });
         this.setWord(word);
       };
-      const dismiss = banner.createEl("span", { cls: "vocab-tracker-close-btn" });
+      const dismiss = banner.createEl("span", { cls: "vt-close-btn" });
       setIcon(dismiss, "x");
       dismiss.onclick = () => { this.pendingWord = ""; this.render(); };
     }
@@ -364,15 +364,15 @@ export class VocabSidebarView extends ItemView {
       scopeLabel = t("sidebar.scope.note");
     }
 
-    const listHeader = root.createEl("div", { cls: "vocab-tracker-list-header" });
+    const listHeader = root.createEl("div", { cls: "vt-sidebar-list-header" });
 
-    const countLabel = listHeader.createEl("div", { cls: "vocab-tracker-count-label" });
+    const countLabel = listHeader.createEl("div", { cls: "vt-sidebar-count-label" });
     countLabel.textContent = `${scopeLabel} (${list.length})`;
 
-    const toggle = listHeader.createEl("div", { cls: "vocab-tracker-toggle-group" });
+    const toggle = listHeader.createEl("div", { cls: "vt-toggle-group" });
     const mkToggle = (label: string, mode: FilterMode) => {
       const on = this.filterMode === mode;
-      const b = toggle.createEl("span", { text: label, cls: "vocab-tracker-toggle-btn" });
+      const b = toggle.createEl("span", { text: label, cls: "vt-toggle-btn" });
       b.toggleClass("is-active", on);
       b.onclick = () => {
         this.filterMode = mode;
@@ -390,10 +390,10 @@ export class VocabSidebarView extends ItemView {
     if (list.length === 0) {
       root.createEl("div", {
         text: noteMode ? t("sidebar.hint.noteEmpty") : t("sidebar.hint.allEmpty"),
-        cls: "vocab-tracker-hint",
+        cls: "vt-sidebar-hint",
       });
     } else {
-      const listEl = root.createEl("div", { cls: "vocab-tracker-list" });
+      const listEl = root.createEl("div", { cls: "vt-word-list" });
       const rowOpts: RowOptions = {
         ui: this.wordUi,
         // ✦ n after the word (design D1); the dashboard doesn't pass this.

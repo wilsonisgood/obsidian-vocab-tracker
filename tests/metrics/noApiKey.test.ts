@@ -58,7 +58,7 @@ describe.each([
     for (const filter of ["all", "note"] as const) {
       const view = await openSidebar(b, filter);
       await flush();
-      expect(rootOf(view).querySelectorAll(".vocab-tracker-row").length).toBeGreaterThan(0);
+      expect(rootOf(view).querySelectorAll(".vt-row").length).toBeGreaterThan(0);
       closeSidebar(b, view);
     }
     const view = await openSidebar(b, "all");
@@ -66,10 +66,10 @@ describe.each([
     view.expandState.set(entry.id, "full");
     view.render();
     await flush();
-    const row = rootOf(view).querySelector(`.vocab-tracker-row[data-entry-id="${entry.id}"]`)!;
-    expect(row.querySelectorAll(".vocab-tracker-field").length).toBeGreaterThanOrEqual(5);
+    const row = rootOf(view).querySelector(`.vt-row[data-entry-id="${entry.id}"]`)!;
+    expect(row.querySelectorAll(".vt-field").length).toBeGreaterThanOrEqual(5);
     // The ✓ (= rate Good) on the card works without AI.
-    const check = row.querySelectorAll(".vocab-tracker-footer-icon")[2];
+    const check = row.querySelectorAll(".vt-row-footer-icon")[2];
     check.click();
     await flush();
     expect(b.plugin.store.entries.find((e) => e.id === entry.id)?.srs?.reps).toBeGreaterThan(0);
@@ -81,7 +81,7 @@ describe.each([
     const entry = fx.liveEntries[0];
     view.openWord(entry.id, "ai");
     await flush();
-    const row = rootOf(view).querySelector(`.vocab-tracker-row[data-entry-id="${entry.id}"]`)!;
+    const row = rootOf(view).querySelector(`.vt-row[data-entry-id="${entry.id}"]`)!;
     expect(row.querySelector(".vt-tab.is-active")).not.toBeNull();
     // 「設定 AI 後才能討論」 / 「AI 目前關閉」 with a button to the settings.
     expect(row.textContent).toContain(t(enabled ? "ai.gate.noKey.title" : "ai.gate.disabled.title"));

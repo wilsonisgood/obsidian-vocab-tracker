@@ -35,12 +35,12 @@ export function renderGroupedVocabList(
     const groupRows = groups.get(title)!;
     const isCollapsed = collapsedGroups.has(title);
 
-    const heading = container.createEl("div", { cls: "vocab-tracker-group-heading" });
-    const arrow = heading.createEl("span", { cls: "vocab-tracker-group-arrow" });
+    const heading = container.createEl("div", { cls: "vt-group-heading" });
+    const arrow = heading.createEl("span", { cls: "vt-group-arrow" });
     setIcon(arrow, isCollapsed ? "chevron-up" : "chevron-down");
-    heading.createEl("span", { text: title, cls: "vocab-tracker-group-title", attr: { "aria-label": title } });
-    heading.createEl("span", { cls: "vocab-tracker-group-spacer" });
-    heading.createEl("span", { text: String(groupRows.length), cls: "vocab-tracker-group-count" });
+    heading.createEl("span", { text: title, cls: "vt-group-title", attr: { "aria-label": title } });
+    heading.createEl("span", { cls: "vt-group-spacer" });
+    heading.createEl("span", { text: String(groupRows.length), cls: "vt-group-count" });
     heading.onclick = () => {
       if (isCollapsed) collapsedGroups.delete(title);
       else collapsedGroups.add(title);

@@ -135,7 +135,7 @@ describe("v1 → current schema with 1,000 words", () => {
     const view = await openSidebar(b, "all");
     for (let i = 0; i < 30; i++) await Promise.resolve();
     const root = view.containerEl.children[1] as unknown as FakeElement;
-    expect(root.querySelectorAll(".vocab-tracker-row")).toHaveLength(1000);
+    expect(root.querySelectorAll(".vt-row")).toHaveLength(1000);
 
     // No SRS state yet: every word is a new card; the daily cap applies.
     await b.plugin.srs.ensureLoaded();

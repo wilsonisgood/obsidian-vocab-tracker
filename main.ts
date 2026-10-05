@@ -1024,7 +1024,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     el.querySelectorAll<HTMLElement>("mark").forEach((mark) => {
       const word = mark.textContent?.trim() ?? "";
       if (!word) return;
-      mark.addClass("vocab-tracker-tracked-mark");
+      mark.addClass("vt-tracked-mark");
       // aria-label, not title: no hover on touch screens (規劃書 01 §2).
       mark.setAttr("aria-label", t("mobile.mark.label", { word }));
       mark.addEventListener("click", () => void this.surfaces.revealWord(word));

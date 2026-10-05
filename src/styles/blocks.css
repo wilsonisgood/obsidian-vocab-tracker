@@ -1,14 +1,14 @@
 /* ── vocab-dashboard code block ───────────────────────────────────── */
 
-.vocab-tracker-dashboard {
+.vt-dash {
   font-family: inherit;
 }
 
-.vocab-tracker-empty-state {
+.vt-dash-empty {
   color: var(--text-muted);
 }
 
-.vocab-tracker-stats {
+.vt-dash-stats {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
@@ -65,14 +65,14 @@ body.is-mobile .vt-dash-review {
   height: 12px;
 }
 
-.vocab-tracker-search-input {
+.vt-dash-search {
   width: 100%;
   padding: 6px;
   box-sizing: border-box;
   margin-bottom: 10px;
 }
 
-.vocab-tracker-group-heading {
+.vt-group-heading {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -83,16 +83,16 @@ body.is-mobile .vt-dash-review {
   margin: 14px 0 6px;
 }
 
-.vocab-tracker-group-heading:first-child {
+.vt-group-heading:first-child {
   margin-top: 0;
 }
 
-.vocab-tracker-group-arrow {
+.vt-group-arrow {
   font-size: 0.9em;
   flex-shrink: 0;
 }
 
-.vocab-tracker-group-title {
+.vt-group-title {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   overflow: hidden;
@@ -101,12 +101,12 @@ body.is-mobile .vt-dash-review {
   min-width: 0;
 }
 
-.vocab-tracker-group-spacer {
+.vt-group-spacer {
   flex: 1;
   min-width: 6px;
 }
 
-.vocab-tracker-group-count {
+.vt-group-count {
   font-weight: 400;
   opacity: 0.8;
   flex-shrink: 0;

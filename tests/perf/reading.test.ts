@@ -89,7 +89,7 @@ describe("reading-view post-processors (§1.3 < 2 ms per section)", () => {
     const counted = els.filter((el) => el.querySelector(".vt-pbadge.has-count"));
     const discussed = fx.threads.filter((t) => t.anchor.kind === "paragraph" && t.anchor.path === fx.article.path);
     expect(counted).toHaveLength(discussed.length);
-    expect(els.some((el) => el.querySelector("mark.vocab-tracker-tracked-mark"))).toBe(true);
+    expect(els.some((el) => el.querySelector("mark.vt-tracked-mark"))).toBe(true);
     expect(els.some((el) => el.querySelector(".vt-exam-word"))).toBe(true);
 
     expect(percentile(run.totals, 95)).toBeLessThan(BUDGET_MS * PERF_FACTOR);

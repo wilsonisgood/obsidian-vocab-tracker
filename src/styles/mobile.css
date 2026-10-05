@@ -134,38 +134,38 @@ body:not(.is-phone) .vt-sheet {
   overflow: visible;
 }
 
-.vt-sheet .vt-sheet-card .vocab-tracker-row-header {
+.vt-sheet .vt-sheet-card .vt-row-header {
   padding: 0;
   cursor: default;
 }
 
-.vt-sheet .vt-sheet-card .vocab-tracker-row-wordwrap {
+.vt-sheet .vt-sheet-card .vt-row-wordwrap {
   white-space: normal;
 }
 
-.vt-sheet .vt-sheet-card .vocab-tracker-row-word {
+.vt-sheet .vt-sheet-card .vt-row-word {
   font-size: 1.35em;
   font-weight: 700;
 }
 
-.vt-sheet .vt-sheet-card .vocab-tracker-row-body {
+.vt-sheet .vt-sheet-card .vt-row-body {
   padding: 0;
 }
 
 /* Footer: icon buttons get their label as visible text (no hover on
    touch screens), two per row */
-.vt-sheet .vt-sheet-card .vocab-tracker-row-footer {
+.vt-sheet .vt-sheet-card .vt-row-footer {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-top: 10px;
 }
 
-.vt-sheet .vt-sheet-card .vocab-tracker-row-footer-actions {
+.vt-sheet .vt-sheet-card .vt-row-footer-actions {
   display: contents;
 }
 
-.vt-sheet .vt-sheet-card .vocab-tracker-footer-icon {
+.vt-sheet .vt-sheet-card .vt-row-footer-icon {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -179,11 +179,11 @@ body:not(.is-phone) .vt-sheet {
   opacity: 1;
 }
 
-.vt-sheet .vt-sheet-card .vocab-tracker-footer-icon svg {
+.vt-sheet .vt-sheet-card .vt-row-footer-icon svg {
   flex: none;
 }
 
-.vt-sheet .vt-sheet-card .vocab-tracker-footer-icon::after {
+.vt-sheet .vt-sheet-card .vt-row-footer-icon::after {
   content: attr(aria-label);
   overflow: hidden;
   display: -webkit-box;
@@ -252,18 +252,18 @@ body.is-mobile .vt-action-notice-btn {
 
 /* ── Touch targets ≥ 44pt (規劃書 06 §9.1, 01 §3.5) ─────────────────── */
 
-body.is-mobile .vocab-tracker-row-header {
+body.is-mobile .vt-row-header {
   min-height: 44px;
   padding-top: 0;
   padding-bottom: 0;
 }
 
-body.is-mobile .vocab-tracker-row-delete,
-body.is-mobile .vocab-tracker-row-arrow,
-body.is-mobile .vocab-tracker-speak-icon,
-body.is-mobile .vocab-tracker-footer-icon,
-body.is-mobile .vocab-tracker-icon-btn,
-body.is-mobile .vocab-tracker-close-btn,
+body.is-mobile .vt-row-delete,
+body.is-mobile .vt-row-arrow,
+body.is-mobile .vt-speak-icon,
+body.is-mobile .vt-row-footer-icon,
+body.is-mobile .vt-icon-btn,
+body.is-mobile .vt-close-btn,
 body.is-mobile .vt-ppane-delete {
   display: inline-flex;
   align-items: center;
@@ -272,25 +272,25 @@ body.is-mobile .vt-ppane-delete {
   min-height: 44px;
 }
 
-body.is-mobile .vocab-tracker-toggle-btn {
+body.is-mobile .vt-toggle-btn {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
   padding: 0 14px;
 }
 
-body.is-mobile .vocab-tracker-btn,
+body.is-mobile .vt-sidebar-add-btn,
 body.is-mobile .vt-word-page-btn,
 body.is-mobile .vt-ppane-back,
 body.is-mobile .vt-plist-row,
 body.is-mobile .vt-plist-action,
 body.is-mobile .vt-exam-chip,
-body.is-mobile .vocab-tracker-group-heading,
+body.is-mobile .vt-group-heading,
 body.is-mobile .vt-rebind-banner button {
   min-height: 44px;
 }
 
-body.is-mobile .vocab-tracker-source-link {
+body.is-mobile .vt-row-source-link {
   display: flex;
   align-items: center;
   min-height: 44px;

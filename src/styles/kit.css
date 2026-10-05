@@ -1,22 +1,22 @@
 /* ── Small reusable pieces shared across sidebar, rows and dashboard ── */
 
-.vocab-tracker-icon-btn {
+.vt-icon-btn {
   cursor: pointer;
 }
 
-.vocab-tracker-close-btn {
+.vt-close-btn {
   cursor: pointer;
   color: var(--text-muted);
   font-size: 1.2em;
 }
 
-.vocab-tracker-toggle-group {
+.vt-toggle-group {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
 }
 
-.vocab-tracker-toggle-btn {
+.vt-toggle-btn {
   cursor: pointer;
   font-size: 0.72em;
   padding: 2px 8px;
@@ -25,19 +25,19 @@
   color: var(--text-muted);
 }
 
-.vocab-tracker-toggle-btn.is-active {
+.vt-toggle-btn.is-active {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
 
-.vocab-tracker-btn {
+.vt-sidebar-add-btn {
   padding: 6px 10px;
   cursor: pointer;
   border-radius: 5px;
   font-size: 0.88em;
 }
 
-.vocab-tracker-speak-icon {
+.vt-speak-icon {
   cursor: pointer;
   font-size: 0.95em;
   line-height: 1;
@@ -45,7 +45,7 @@
   flex-shrink: 0;
 }
 
-.vocab-tracker-footer-icon {
+.vt-row-footer-icon {
   cursor: pointer;
   font-size: 0.95em;
   line-height: 1;
@@ -53,11 +53,11 @@
   opacity: 0.8;
 }
 
-.vocab-tracker-footer-icon:hover {
+.vt-row-footer-icon:hover {
   opacity: 1;
 }
 
-.vocab-tracker-field-box {
+.vt-field-box {
   background: var(--background-primary);
   color: var(--text-normal);
   border: 1px solid var(--background-modifier-border);
@@ -66,26 +66,26 @@
 
 /* Filled fields drop their box — read as plain text, flush with the
    phonetic line, with the box chrome only appearing once you focus in. */
-.vocab-tracker-field.is-filled .vocab-tracker-field-box {
+.vt-field.is-filled .vt-field-box {
   background: transparent;
   border-color: transparent;
   padding: 0;
 }
 
-.vocab-tracker-field.is-filled .vocab-tracker-field-box:focus {
+.vt-field.is-filled .vt-field-box:focus {
   background: var(--background-primary);
   border-color: var(--background-modifier-border);
   padding: 5px;
 }
 
-.vocab-tracker-input {
+.vt-input {
   width: 100%;
   padding: 5px;
   box-sizing: border-box;
   font-size: 0.9em;
 }
 
-.vocab-tracker-textarea {
+.vt-textarea {
   resize: none;
   overflow: hidden;
   min-height: 1.4em;
@@ -93,20 +93,20 @@
   line-height: 1.4;
 }
 
-.vocab-tracker-meta {
+.vt-meta {
   font-size: 0.72em;
   color: var(--text-muted);
   margin: 6px 0;
 }
 
-.vocab-tracker-stat-pill {
+.vt-stat-pill {
   padding: 3px 10px;
   background: var(--background-secondary);
   border-radius: 12px;
   font-size: 0.82em;
 }
 
-.vocab-tracker-stat-pill.is-accent {
+.vt-stat-pill.is-accent {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
