@@ -18,3 +18,95 @@
 .vt-exam-word:hover {
   text-decoration-style: solid;
 }
+
+/* ── Paragraph discussion badges (規劃書 06 §9.5, design D1) ──────────
+   Appended to the section element beside its <p>/<ul>/<blockquote>, never
+   inside the text; sits in the right margin of the reading column. */
+
+.vt-pbadge-host {
+  position: relative;
+}
+
+.vt-pbadge {
+  position: absolute;
+  left: calc(100% + 6px);
+  top: 0.2em;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.vt-pbadge-icon {
+  display: inline-flex;
+}
+
+.vt-pbadge-icon svg {
+  width: 11px;
+  height: 11px;
+}
+
+.vt-pbadge.has-count {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.vt-pbadge.is-ghost {
+  padding: 0 5px;
+  color: var(--text-faint);
+  border: 1px dashed var(--background-modifier-border-hover, var(--background-modifier-border));
+  opacity: 0;
+  transition: opacity 120ms ease-in-out;
+}
+
+.vt-pbadge-host:hover > .vt-pbadge.is-ghost,
+.vt-pbadge.is-ghost:focus-visible {
+  opacity: 1;
+}
+
+.vt-pbadge.is-ghost:hover {
+  color: var(--text-accent);
+  border-color: var(--interactive-accent);
+}
+
+/* AI off: no hover ✦ — except while rebinding a discussion */
+.vt-pbadge.is-quiet {
+  display: none;
+}
+
+body.vt-rebinding .vt-pbadge.is-ghost {
+  display: inline-flex;
+  opacity: 1;
+  color: var(--text-accent);
+  border-color: var(--interactive-accent);
+}
+
+/* Mobile: always visible, smaller, tucked into the narrow margin */
+body.is-mobile .vt-pbadge {
+  left: auto;
+  right: -18px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
+}
+
+body.is-mobile .vt-pbadge.has-count {
+  right: -24px;
+}
+
+body.is-mobile .vt-pbadge.is-ghost {
+  opacity: 0.55;
+}
+
+/* Never inside the plugin's own rendered markdown (AI answers) */
+.vt-chat .vt-pbadge {
+  display: none;
+}

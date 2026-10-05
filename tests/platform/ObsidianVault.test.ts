@@ -43,12 +43,18 @@ class Emitter {
 }
 
 type Frontmatter = Record<string, unknown>;
+interface Cache {
+  frontmatter?: Frontmatter;
+  blocks?: Record<string, { id: string }>;
+}
 
 // Just enough of Obsidian's App for ObsidianVault.
 class FakeApp {
   entries = new Map<string, TFile | TFolder>();
   texts = new Map<string, string>();
-  caches = new Map<string, { frontmatter?: Frontmatter }>();
+  caches = new Map<string, Cache>();
+  // Paths vault.process wrote to, in order.
+  writes: string[] = [];
   log: string[] = [];
   metadataCache = Object.assign(new Emitter(), {
     getFileCache: (file: TFile) => this.caches.get(file.path) ?? null,
@@ -56,6 +62,15 @@ class FakeApp {
   vault = Object.assign(new Emitter(), {
     getAbstractFileByPath: (path: string) => this.entries.get(path) ?? null,
     getMarkdownFiles: () => [...this.entries.values()].filter((f): f is TFile => f instanceof TFile && f.path.endsWith(".md")),
+    cachedRead: async (file: TFile) => this.texts.get(file.path) ?? "",
+    // Like Obsidian's: writes whatever the callback returns, and writes
+    // nothing when the callback throws.
+    process: async (file: TFile, fn: (text: string) => string) => {
+      const next = fn(this.texts.get(file.path) ?? "");
+      this.texts.set(file.path, next);
+      this.writes.push(file.path);
+      return next;
+    },
     create: async (path: string, content: string) => {
       if (this.entries.has(path)) throw new Error("File already exists.");
       this.log.push(`create ${path}`);
@@ -85,6 +100,14 @@ class FakeApp {
     const file = newFile(path);
     this.entries.set(path, file);
     this.caches.set(path, frontmatter ? { frontmatter } : {});
+    return file;
+  }
+
+  // A note with this text (and, optionally, these cached block ids).
+  addNote(path: string, text: string, blocks: string[] = []): TFile {
+    const file = this.addFile(path);
+    this.texts.set(path, text);
+    if (blocks.length) this.caches.set(path, { blocks: Object.fromEntries(blocks.map((id) => [id, { id }])) });
     return file;
   }
 
@@ -151,6 +174,69 @@ function setup(opts: { register?: boolean; layoutReady?: boolean } = {}) {
 }
 
 const WORD = { "vocab-tracker": "word", "vocab-tracker-id": "1721900000000" };
+
+class OtherArticle extends Error {}
+
+describe("ObsidianVault.process", () => {
+  it("writes the new text and resolves to it", async () => {
+    const { app, vault } = setup();
+    app.addNote("a.md", "Hello.");
+    await expect(vault.process("a.md", (t) => `${t} ^vt-aaaaaa`)).resolves.toBe("Hello. ^vt-aaaaaa");
+    expect(app.texts.get("a.md")).toBe("Hello. ^vt-aaaaaa");
+    expect(app.writes).toEqual(["a.md"]);
+  });
+
+  it("doesn't write when the text comes back unchanged", async () => {
+    const { app, vault } = setup();
+    app.addNote("a.md", "Hello. ^mine");
+    await expect(vault.process("a.md", (t) => t)).resolves.toBe("Hello. ^mine");
+    expect(app.writes).toEqual([]);
+  });
+
+  it("rethrows the callback's own error unchanged and writes nothing", async () => {
+    const { app, vault } = setup();
+    app.addNote("a.md", "Hello.");
+    const err = new OtherArticle("not ours");
+    const p = vault.process("a.md", () => {
+      throw err;
+    });
+    await expect(p).rejects.toBe(err);
+    await expect(p).rejects.toBeInstanceOf(OtherArticle);
+    expect(app.texts.get("a.md")).toBe("Hello.");
+    expect(app.writes).toEqual([]);
+  });
+
+  it("rejects when the file doesn't exist", async () => {
+    const { vault } = setup();
+    const fn = vi.fn((t: string) => t);
+    await expect(vault.process("missing.md", fn)).rejects.toThrow("missing.md");
+    expect(fn).not.toHaveBeenCalled();
+  });
+});
+
+describe("ObsidianVault.blockIdTaken", () => {
+  it("checks every note's cached blocks", () => {
+    const { app, vault } = setup();
+    app.addNote("a.md", "");
+    app.addNote("b.md", "", ["vt-k3x9q2", "mine"]);
+    app.addNote("c.md", "");
+    expect(vault.blockIdTaken("vt-k3x9q2")).toBe(true);
+    expect(vault.blockIdTaken("mine")).toBe(true);
+    expect(vault.blockIdTaken("vt-zzzzzz")).toBe(false);
+  });
+
+  it("matches the cache's lower-cased keys", () => {
+    const { app, vault } = setup();
+    app.addNote("a.md", "", ["myblock"]);
+    expect(vault.blockIdTaken("MyBlock")).toBe(true);
+  });
+
+  it("is false in a vault without blocks", () => {
+    const { app, vault } = setup();
+    app.addNote("a.md", "");
+    expect(vault.blockIdTaken("vt-aaaaaa")).toBe(false);
+  });
+});
 
 describe("ObsidianVault.exists", () => {
   it("is true for files and folders", () => {
