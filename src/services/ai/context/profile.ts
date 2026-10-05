@@ -6,7 +6,7 @@ import { renderTemplate } from "../../../core/text/template";
 // never invalidates the (potentially 30k-token) article cache; see
 // tasks/compose.ts for the full ordering.
 export const PROFILE_TEMPLATE = `〔學習者設定〕
-我是{{who}}的英文學習者。請用{{language}}回答，簡明扼要{{#maxChars}}，盡量在 {{maxChars}} 字以內完成說明{{/maxChars}}。
+我是{{who}}的英文學習者。請用{{language}}回答，簡明扼要{{#maxChars}}，盡量在 {{maxChars}} 字以內完成說明（英文原文與例句不計入字數）{{/maxChars}}。
 {{#extra}}其他補充：{{extra}}{{/extra}}`;
 
 const LEVEL_LABEL: Record<CefrLevel, string> = {

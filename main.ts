@@ -33,6 +33,9 @@ import { createAiService } from "./src/services/ai/createAiService";
 import type { AiService } from "./src/services/ai/AiService";
 import { VocabSettingsTab } from "./src/ui/settings/SettingsTab";
 import { SETTINGS_SECTIONS } from "./src/ui/settings/sections";
+import { ObsidianNotes } from "./src/platform/ObsidianNotes";
+import { ThreadService } from "./src/services/threads/ThreadService";
+import { SelectionTracker } from "./src/ui/chat/SelectionTracker";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -51,6 +54,9 @@ export default class VocabTrackerPlugin extends Plugin {
   storage!: ObsidianStorage;
   srs!: SrsService;
   ai!: AiService;
+  notes!: ObsidianNotes;
+  threads!: ThreadService;
+  selection!: SelectionTracker;
 
   async onload() {
     this.storage = new ObsidianStorage(this);
@@ -66,6 +72,13 @@ export default class VocabTrackerPlugin extends Plugin {
     const settingsCtx = { app: this.app, store: this.store, ai, keys, applyLocale: () => this.applyLocale() };
     this.addSettingTab(new VocabSettingsTab(this.app, this, settingsCtx, SETTINGS_SECTIONS));
     this.srs = new SrsService({ store: this.store, storage: this.storage });
+
+    // M4: word discussions. The selection tracker remembers the last text
+    // highlighted in a note so the AI tab can attach it to the next question.
+    this.notes = new ObsidianNotes(this.app);
+    this.threads = new ThreadService({ storage: this.storage, store: this.store, ai, notes: this.notes });
+    this.selection = new SelectionTracker(this.app);
+    this.registerDomEvent(document, "selectionchange", () => this.selection.update());
 
     // Sidebar
     this.registerView(
@@ -131,8 +144,11 @@ export default class VocabTrackerPlugin extends Plugin {
   // So a debounced write (VocabStore's 500ms coalescing) isn't lost if
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
+    // Threads first: it saves in-flight answers as stopped with their text
+    // so far, before ai.dispose() aborts the requests.
+    this.threads?.dispose();
     this.ai?.dispose();
-    await Promise.all([this.store.flush(), this.srs.flush()]);
+    await Promise.all([this.store.flush(), this.srs.flush(), this.threads?.flush()]);
   }
 
   // Interface language: the user's setting, or Obsidian's language on "auto".
@@ -148,6 +164,7 @@ export default class VocabTrackerPlugin extends Plugin {
     // event; refresh it here too so the new-card cap sees the other
     // device's reviews without waiting for our next write.
     void this.srs.reloadLogs();
+    void this.threads.reload();
 
     const disk = await this.storage.readShard<VocabData>("data");
     if (!disk) return;

@@ -3,6 +3,7 @@ import type VocabTrackerPlugin from "../../../main";
 import type { ExpandState } from "../word/WordRow";
 import { renderGroupedVocabList } from "../word/GroupedWordList";
 import { t } from "../../core/i18n";
+import { WordUi } from "../word/wordUi";
 
 // ── vocab-dashboard renderer ───────────────────────────────────
 export function renderDashboard(
@@ -52,6 +53,10 @@ export function renderDashboard(
   search.placeholder = t("dashboard.search");
 
   const listWrap = el.createEl("div", { cls: "vocab-tracker-list" });
+  // Owns the word cards' chat panels; unloaded with the block.
+  const owner = new MarkdownRenderChild(listWrap);
+  ctx.addChild(owner);
+  const wordUi = new WordUi(owner);
   const expandState: Map<string, ExpandState> = new Map();
   const collapsedGroups: Set<string> = new Set();
 
@@ -59,12 +64,14 @@ export function renderDashboard(
   // vocab-dashboard block double as a per-note word list. Each group
   // heading is itself collapsible and shows its word count.
   const draw = (q: string) => {
+    wordUi.beginRender();
     listWrap.empty();
     const rows = entries.filter((e) =>
       e.word.toLowerCase().includes(q.toLowerCase())
     );
     renderGroupedVocabList(plugin, listWrap, rows, collapsedGroups, expandState, () => draw(search.value), {
       showDue: true,
+      ui: wordUi,
     });
   };
 

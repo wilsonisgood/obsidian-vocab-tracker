@@ -23,6 +23,10 @@ export interface AiTask<I, O = string> {
   label?: I18nKey;
   tier: Tier;
   maxTokens: number;
+  // Answer length target for this input, given the learner's own setting
+  // (規劃書 06 §6.4.1 #2). Omitted = use the setting as is. Only called when
+  // the setting is > 0 ("no limit" stays unlimited).
+  answerChars?(input: I, profileMax: number): number;
   build(input: I, ctx: TaskContext): AiRequest;
   parse?(r: AiResult): O;
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultAiSettings } from "../../../src/core/model/settings";
 import { AiError } from "../../../src/services/ai/errors";
 import { AnthropicProvider, buildAnthropicBody } from "../../../src/services/ai/providers/anthropic";
-import { buildOpenAiBody, OpenAiCompatProvider } from "../../../src/services/ai/providers/openaiCompat";
+import { buildOpenAiBody, normalizeBaseUrl, OpenAiCompatProvider } from "../../../src/services/ai/providers/openaiCompat";
 import type { AiRequest } from "../../../src/services/ai/providers/types";
 import { errorResponse, FakeTransport, fixture, response } from "./fakes";
 
@@ -196,6 +196,51 @@ describe("Anthropic response parsing", () => {
     const r = await anthropic(t).testConnection(signal());
     expect(r.models).toEqual(["claude-sonnet-5", "claude-haiku-4-5"]);
     expect(t.requests.map((q) => JSON.parse(q.body ?? "").max_tokens)).toEqual([256, 256]);
+  });
+});
+
+describe("normalizeBaseUrl", () => {
+  const gemini = "https://generativelanguage.googleapis.com/v1beta/openai";
+
+  it.each([
+    "https://generativelanguage.googleapis.com/v1beta/models",
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
+    "https://generativelanguage.googleapis.com/v1beta",
+    "https://generativelanguage.googleapis.com",
+    "https://generativelanguage.googleapis.com/v1beta/openai/",
+    "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    "  https://generativelanguage.googleapis.com/v1beta/models/chat/completions  ",
+  ])("maps the Gemini URL %s to the OpenAI-compatible root", (raw) => {
+    expect(normalizeBaseUrl(raw)).toBe(gemini);
+  });
+
+  it("strips a pasted /chat/completions and trailing slashes elsewhere", () => {
+    expect(normalizeBaseUrl("https://api.openai.com/v1/chat/completions")).toBe("https://api.openai.com/v1");
+    expect(normalizeBaseUrl("http://localhost:11434/v1/")).toBe("http://localhost:11434/v1");
+  });
+
+  it("leaves non-URLs alone", () => {
+    expect(normalizeBaseUrl("")).toBe("");
+    expect(normalizeBaseUrl("localhost:11434")).toBe("localhost:11434");
+  });
+});
+
+describe("OpenAI-compatible usage", () => {
+  it("counts Gemini thinking tokens that only show up in total_tokens", async () => {
+    const body = {
+      model: "gemini-3-flash-preview",
+      choices: [{ message: { content: "pong" }, finish_reason: "stop" }],
+      usage: { prompt_tokens: 2, completion_tokens: 9, total_tokens: 91 },
+    };
+    const transport = new FakeTransport(() => response(JSON.stringify(body), { headers: { "content-type": "application/json" } }));
+    const p = new OpenAiCompatProvider({
+      config: { ...defaultAiSettings().providers["openai-compatible"], baseUrl: "https://generativelanguage.googleapis.com/v1beta/models", smartModel: "gemini-3-flash-preview" },
+      apiKey: "k",
+      transport,
+    });
+    const r = await p.complete({ system: [], messages: [{ role: "user", content: "ping" }], maxTokens: 256, tier: "smart" }, { signal: new AbortController().signal });
+    expect(transport.requests[0].url).toBe("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions");
+    expect(r.usage).toMatchObject({ input: 2, output: 89 });
   });
 });
 

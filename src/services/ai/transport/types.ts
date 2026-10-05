@@ -5,6 +5,8 @@ export type TransportMode = "fetch" | "requestUrl";
 export interface TransportResponse {
   readonly status: number;
   header(name: string): string | null;
+  // Every response header, only for the 測試連線 trace (see tracing.ts).
+  readonly headers?: Record<string, string>;
   // Body text. fetch yields chunks as they arrive; requestUrl yields the
   // whole body once — providers parse both with the same SSE parser.
   readonly chunks: AsyncIterable<string>;

@@ -14,6 +14,7 @@ export class BrowserFetch implements FetchPort {
     return {
       status: res.status,
       header: (name) => res.headers.get(name),
+      headers: Object.fromEntries(res.headers.entries()),
       chunks: readChunks(res),
     };
   }

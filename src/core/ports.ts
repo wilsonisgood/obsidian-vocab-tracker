@@ -45,6 +45,9 @@ export interface RawHttpRequest {
 export interface FetchResponse {
   readonly status: number;
   header(name: string): string | null;
+  // Every response header, only for the 測試連線 trace. Optional so test
+  // fakes can skip it.
+  readonly headers?: Record<string, string>;
   readonly chunks: AsyncIterable<string>;
 }
 
@@ -79,4 +82,10 @@ export interface SecretPort {
 
 export interface NetworkPort {
   isOnline(): boolean;
+}
+
+// Read-only access to notes in the vault (source paragraphs for AI
+// context). Null when the note no longer exists.
+export interface NoteReaderPort {
+  read(path: string): Promise<string | null>;
 }

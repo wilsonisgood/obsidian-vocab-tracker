@@ -28,6 +28,7 @@ import {
 interface OpenAiUsage {
   prompt_tokens?: number;
   completion_tokens?: number;
+  total_tokens?: number;
   prompt_tokens_details?: { cached_tokens?: number };
 }
 
@@ -37,6 +38,25 @@ function isOfficialOpenAi(baseUrl: string): boolean {
   } catch {
     return false;
   }
+}
+
+// Turns what people actually paste into the base URL the provider appends
+// `/chat/completions` to: a full endpoint URL loses its `/chat/completions`,
+// and any Gemini URL (`…/v1beta`, `…/v1beta/models` from Google's curl
+// sample) maps to Gemini's OpenAI-compatible root `/v1beta/openai` — the
+// native API paths 404 with an empty body.
+export function normalizeBaseUrl(raw: string): string {
+  const url = trimSlash(raw.trim()).replace(/\/chat\/completions$/i, "");
+  try {
+    const u = new URL(url);
+    if (u.hostname === "generativelanguage.googleapis.com" && !/\/openai$/i.test(u.pathname)) {
+      const version = /^\/(v1(?:alpha|beta)?)\b/i.exec(u.pathname)?.[1] ?? "v1beta";
+      return `${u.origin}/${version}/openai`;
+    }
+  } catch {
+    // not a URL — left as typed; the request fails with a clear error
+  }
+  return url;
 }
 
 const PROMPTED_JSON_INSTRUCTION =
@@ -82,7 +102,9 @@ function applyUsage(target: Usage, u: OpenAiUsage | undefined | null): boolean {
   const cached = u.prompt_tokens_details?.cached_tokens ?? 0;
   target.input = u.prompt_tokens - cached;
   target.cacheRead = cached;
-  target.output = u.completion_tokens ?? 0;
+  // Gemini leaves thinking tokens out of completion_tokens but bills them
+  // (and counts them in total_tokens), so the budget would undercount.
+  target.output = Math.max(u.completion_tokens ?? 0, (u.total_tokens ?? 0) - u.prompt_tokens);
   return true;
 }
 
@@ -160,7 +182,7 @@ export class OpenAiCompatProvider implements AiProvider {
   }
 
   private get baseUrl(): string {
-    return trimSlash(this.deps.config.baseUrl);
+    return normalizeBaseUrl(this.deps.config.baseUrl);
   }
 
   private request(body: Record<string, unknown>): RawHttpRequest {
