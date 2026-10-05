@@ -19,7 +19,7 @@ import {
   type ReviewView,
 } from "./familiesModel";
 import { joinWords, t } from "../../core/i18n";
-import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate } from "./learnUi";
+import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate, wordChip } from "./learnUi";
 
 // ── vocab-families code block (規劃書 06 §7.2, §9.6; 設計稿 L5、W3) ──
 //
@@ -220,7 +220,7 @@ class FamiliesBlock extends MarkdownRenderChild {
     if (this.review) return this.renderReview(this.review, lookup);
 
     const selected = families.find((f) => f.id === this.selectedId);
-    if (selected) return this.renderTree(selected, familyTree(selected, lookup));
+    if (selected) return this.renderTree(selected, familyTree(selected, lookup), lookup);
 
     // No families yet.
     const empty = root.createDiv({ cls: "vt-fam-empty" });
@@ -273,7 +273,7 @@ class FamiliesBlock extends MarkdownRenderChild {
 
   // ── L5 tree ───────────────────────────────────────────────────
 
-  private renderTree(f: Family, view: FamilyTreeView): void {
+  private renderTree(f: Family, view: FamilyTreeView, lookup: MemberLookup): void {
     const tree = this.root.createDiv({ cls: "vt-fam-tree" });
     const head = tree.createDiv({ cls: "vt-fam-root" });
     setIcon(head.createSpan({ cls: "vt-fam-root-icon" }), "git-fork");
@@ -302,7 +302,9 @@ class FamiliesBlock extends MarkdownRenderChild {
       const list = c.createDiv({ cls: "vt-fam-chips" });
       for (const chip of col.chips) {
         if (chip.known) {
-          const el = list.createSpan({ cls: "vt-fam-chip is-known" });
+          // Opens the word's card in the sidebar.
+          const entry = chip.entryId ? lookup.byEntryId(chip.entryId) : undefined;
+          const el = wordChip(list, this.plugin, entry, ["vt-fam-chip", "is-known"]);
           el.createSpan({ cls: "vt-fam-chip-word", text: chip.word });
           if (chip.zh) el.createSpan({ cls: "vt-fam-chip-zh", text: chip.zh });
           continue;

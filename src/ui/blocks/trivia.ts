@@ -20,14 +20,16 @@ import { ChatPanel, createChatUiState, type ChatPanelOptions, type ChatSend } fr
 import { emptyState } from "../kit/emptyState";
 import type { KitAction } from "../kit/emptyState";
 import { openPluginSettings } from "../kit/openSettings";
-import { guardReadingClicks, learnErrorText } from "./learnUi";
+import { guardReadingClicks, learnErrorText, wordChip } from "./learnUi";
 import {
   favoriteViews,
   nextFeedback,
   parseTriviaParams,
+  splitAround,
   triviaCall,
   triviaTurnActions,
   triviaTurnHeader,
+  type FavoriteView,
   type TriviaCall,
   type TriviaParams,
 } from "./triviaModel";
@@ -326,10 +328,23 @@ class TriviaBlock extends MarkdownRenderChild {
       remove.addEventListener("click", () => this.plugin.trivia.unfavorite(v.id));
       const body = card.createDiv({ cls: "vt-trivia-fav-body" });
       void MarkdownRenderer.render(this.plugin.app, v.body, body, this.sourcePath, scope);
-      const meta: string[] = [];
-      if (v.date) meta.push(v.date);
-      if (v.mentions.length) meta.push(t("learn.trivia.mentions", { words: joinWords(v.mentions) }));
-      if (meta.length) card.createDiv({ cls: "vt-trivia-fav-meta", text: meta.join(" · ") });
+      if (v.date || v.mentions.length) this.renderFavoriteMeta(card.createDiv({ cls: "vt-trivia-fav-meta" }), v);
     }
+  }
+
+  // 「10/03 · 也提到 napkin、kitchenware」 — each mentioned word opens its card.
+  private renderFavoriteMeta(el: HTMLElement, v: FavoriteView): void {
+    if (v.date) el.appendText(v.date);
+    if (!v.mentions.length) return;
+    if (v.date) el.appendText(" · ");
+    const marker = "\u0000";
+    const [before, after] = splitAround(t("learn.trivia.mentions", { words: marker }), marker);
+    el.appendText(before);
+    const sep = joinWords(["", ""]);
+    v.mentions.forEach((m, i) => {
+      if (i) el.appendText(sep);
+      wordChip(el, this.plugin, this.entryById(m.entryId), "vt-trivia-fav-mention").setText(m.word);
+    });
+    el.appendText(after);
   }
 }

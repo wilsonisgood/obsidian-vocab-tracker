@@ -3,7 +3,7 @@ import { SrsService, REVIEWS_SHARD } from "../../../src/services/srs/SrsService"
 import { VocabStore } from "../../../src/core/store/VocabStore";
 import { RATINGS, Rating, type ReviewLog } from "../../../src/core/model/srs";
 import type { VocabData } from "../../../src/core/model/entry";
-import { MemoryStorage, makeEntry } from "./fixtures";
+import { MemoryStorage, makeEntry, reviewCard } from "./fixtures";
 
 function setup(entries = [makeEntry({ id: "e1", word: "leotard" })], settings?: VocabData["settings"]) {
   let now = new Date(2026, 9, 4, 12, 0, 0);
@@ -160,6 +160,57 @@ describe("SrsService", () => {
     expect(srs.nextDue(entry)).toBeNull();
     await srs.rate(entry, Rating.Easy, "en-zh");
     expect(srs.nextDue(entry)?.toISOString()).toBe(entry.srs?.due);
+  });
+
+  it("timing() tells a one-word review whether the card is new, due or early", async () => {
+    const { srs, data, advance, now } = setup();
+    const entry = data.entries[0];
+    expect(srs.timing(entry)).toEqual({ kind: "new" });
+    await srs.rate(entry, Rating.Easy, "en-zh");
+    const due = new Date(entry.srs!.due);
+    expect(srs.timing(entry)).toEqual({ kind: "early", due });
+    advance(due.getTime() - now().getTime());
+    expect(srs.timing(entry)).toEqual({ kind: "due", due });
+  });
+
+  describe("reviewing a word before it's due (「複習這個字」)", () => {
+    // Review card: last reviewed 5 days before `due`, stability 5.
+    const due = new Date(2026, 9, 10, 12, 0, 0);
+    const early = new Date(2026, 9, 7, 12, 0, 0); // 3 days early
+
+    function scheduled(at: Date) {
+      const s = setup([makeEntry({ id: "e1", word: "leotard", srs: reviewCard(due) })]);
+      s.advance(at.getTime() - s.now().getTime());
+      return { ...s, entry: s.data.entries[0] };
+    }
+
+    it("is allowed, logged and rescheduled from now", async () => {
+      const { srs, entry, now } = scheduled(early);
+      expect(srs.timing(entry)).toEqual({ kind: "early", due });
+      const p = srs.preview(entry);
+      const log = await srs.rate(entry, Rating.Good, "zh-en");
+      expect(log).toMatchObject({ entryId: "e1", rating: Rating.Good, mode: "zh-en", prevState: 2 });
+      expect(entry.srs!.due).toBe(p[Rating.Good].due);
+      expect(entry.srs!.lastReview).toBe(now().toISOString());
+      expect(entry.srs!.reps).toBe(4);
+      expect(new Date(entry.srs!.due).getTime()).toBeGreaterThan(due.getTime());
+    });
+
+    it("grows the interval less than the same answer on the due date", async () => {
+      const a = scheduled(early);
+      const b = scheduled(due);
+      await a.srs.rate(a.entry, Rating.Good, "en-zh");
+      await b.srs.rate(b.entry, Rating.Good, "en-zh");
+      expect(a.entry.srs!.stability).toBeLessThan(b.entry.srs!.stability);
+      expect(a.entry.srs!.scheduledDays).toBeLessThan(b.entry.srs!.scheduledDays);
+    });
+
+    it("Again still counts as a lapse", async () => {
+      const { srs, entry } = scheduled(early);
+      await srs.rate(entry, Rating.Again, "en-zh");
+      expect(entry.srs!.lapses).toBe(1);
+      expect(entry.srs!.state).toBe(3); // Relearning
+    });
   });
 
   it("reviewsToday() counts today's logs for words matching the source filter", async () => {

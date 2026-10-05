@@ -38,7 +38,9 @@ export interface WordHeaderHost {
   // Text of a note, for the ¶ number. Optional: without it the chip shows
   // just the note's name.
   readNote?(path: string): Promise<string | null>;
-  // 「複習這個字」. Optional: the button is left out without it.
+  // 「複習這個字」: a one-word review of `entry`, due or not — main.ts
+  // opens WordReviewModal (wordReview.ts). Optional: the button is left
+  // out without it.
   reviewWord?(entry: VocabEntry): unknown;
 }
 

@@ -1557,3 +1557,83 @@ body.is-mobile .vt-verb-pattern {
 body.is-mobile .vt-trivia-card {
   padding: 12px;
 }
+
+/* ── One-word review (「複習這個字」) ─────────────────────────────────
+   The vocab-flashcards block in a modal, on one word. */
+
+.vt-word-review-modal {
+  width: min(560px, 100%);
+}
+
+.vt-word-review-modal .vt-flashcards {
+  max-width: none;
+}
+
+/* Replaces 「1 / 8」: due / early / new, and what rating it now does. */
+.vt-fc-timing {
+  padding: 8px 10px;
+  border-radius: var(--radius-s);
+  background: var(--vt-surface);
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+  line-height: 1.5;
+}
+
+.vt-fc-timing.is-early {
+  border-left: 3px solid var(--color-orange);
+}
+
+.vt-fc-timing.is-new {
+  border-left: 3px solid var(--vt-accent);
+}
+
+/* ── Learned words open their card (字族樹 / 動詞用法 / 冷知識) ──────── */
+
+.vt-fam-chip.is-known.is-link {
+  cursor: pointer;
+}
+
+.vt-fam-chip.is-known.is-link:hover,
+.vt-fam-chip.is-known.is-link:focus-visible {
+  background: hsla(var(--interactive-accent-hsl), 0.22);
+}
+
+button.vt-verb-related-chip {
+  height: auto;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  font-weight: inherit;
+}
+
+.vt-verb-related-chip.is-link {
+  border-color: var(--vt-accent);
+  color: var(--vt-accent-text);
+  cursor: pointer;
+}
+
+.vt-verb-related-chip.is-link:hover,
+.vt-verb-related-chip.is-link:focus-visible {
+  background: hsla(var(--interactive-accent-hsl), 0.12);
+}
+
+button.vt-trivia-fav-mention {
+  display: inline;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  color: var(--text-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+button.vt-trivia-fav-mention:hover {
+  text-decoration: underline;
+}
+
+body.is-mobile button.vt-verb-related-chip {
+  min-height: 44px;
+}

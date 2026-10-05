@@ -43,4 +43,11 @@ describe("parseFlashcardParams", () => {
       limit: 30,
     });
   });
+
+  it("reads a one-word review target (id wins over word)", () => {
+    expect(parseFlashcardParams("word: Glittery\nmode: cloze")).toEqual({ mode: "cloze", word: "Glittery" });
+    expect(parseFlashcardParams('id: "1721900000000"')).toEqual({ mode: "en-zh", id: "1721900000000" });
+    expect(parseFlashcardParams("id: 17\nword: glittery")).toEqual({ mode: "en-zh", id: "17" });
+    expect(parseFlashcardParams("word:   ")).toEqual({ mode: "en-zh" });
+  });
 });

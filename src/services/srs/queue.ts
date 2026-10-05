@@ -92,6 +92,20 @@ export function buildQueue(
   return filter.limit !== undefined && filter.limit >= 0 ? queue.slice(0, filter.limit) : queue;
 }
 
+// Where a card stands when it's reviewed on its own (「複習這個字」 on a
+// word page), which ignores the queue: never scheduled, due now, or early.
+export type ReviewTiming =
+  | { kind: "new" }
+  | { kind: "due"; due: Date }
+  | { kind: "early"; due: Date };
+
+export function reviewTiming(entry: VocabEntry, now: Date): ReviewTiming {
+  if (isNewCard(entry) || !entry.srs) return { kind: "new" };
+  const due = new Date(entry.srs.due);
+  if (Number.isNaN(due.getTime())) return { kind: "new" };
+  return due.getTime() <= now.getTime() ? { kind: "due", due } : { kind: "early", due };
+}
+
 // Scheduled (non-new) cards whose due date falls in [from, to) — e.g.
 // "明天到期" on the done screen (L4).
 export function countDueBetween(

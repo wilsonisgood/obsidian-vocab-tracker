@@ -5,6 +5,7 @@ import {
   favoriteViews,
   nextFeedback,
   parseTriviaParams,
+  splitAround,
   triviaCall,
   triviaKindOf,
   triviaTurnActions,
@@ -117,6 +118,14 @@ describe("triviaTurnHeader", () => {
   });
 });
 
+describe("splitAround", () => {
+  it("splits a template where the mentioned words go", () => {
+    expect(splitAround("也提到 \u0000", "\u0000")).toEqual(["也提到 ", ""]);
+    expect(splitAround("Also mentions \u0000.", "\u0000")).toEqual(["Also mentions ", "."]);
+    expect(splitAround("no marker", "\u0000")).toEqual(["no marker", ""]);
+  });
+});
+
 describe("favoriteViews", () => {
   it("heads each favorite with its word and lists the other words it mentions", () => {
     const items: TriviaItem[] = [
@@ -126,7 +135,7 @@ describe("favoriteViews", () => {
     const words: Record<string, string> = { e1: "apron", e2: "napkin" };
     const views = favoriteViews(items, (id) => words[id], (iso) => (iso ? "10/03" : undefined));
     expect(views).toEqual([
-      { id: "t1", heading: "apron · a napron → an apron", body: "napron 和 napkin 同源。", date: "10/03", mentions: ["napkin"] },
+      { id: "t1", heading: "apron · a napron → an apron", body: "napron 和 napkin 同源。", date: "10/03", mentions: [{ entryId: "e2", word: "napkin" }] },
       { id: "t2", heading: "孤兒", body: "…", date: undefined, mentions: [] },
     ]);
   });

@@ -124,8 +124,17 @@ export interface FavoriteView {
   heading: string;
   body: string;
   date?: string;
-  // Other learned words the text brings up.
-  mentions: string[];
+  // Other learned words the text brings up (still in the list); each one
+  // opens the word's card.
+  mentions: { entryId: string; word: string }[];
+}
+
+// A translated template split at the spot a value goes, so the value can
+// be drawn as elements: splitAround("也提到 \0", "\0") → ["也提到 ", ""].
+// No marker: the whole text comes first.
+export function splitAround(text: string, marker: string): [string, string] {
+  const i = text.indexOf(marker);
+  return i < 0 ? [text, ""] : [text.slice(0, i), text.slice(i + marker.length)];
 }
 
 export function favoriteViews(
@@ -140,7 +149,10 @@ export function favoriteViews(
       heading: word ? `${word} · ${it.title}` : it.title,
       body: it.body,
       date: dateOf(it.createdAt),
-      mentions: it.mentions.map(wordOf).filter((w): w is string => !!w),
+      mentions: it.mentions.flatMap((entryId) => {
+        const w = wordOf(entryId);
+        return w ? [{ entryId, word: w }] : [];
+      }),
     };
   });
 }

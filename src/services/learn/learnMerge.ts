@@ -1,5 +1,5 @@
 import type { Record_ } from "../../core/model/entry";
-import type { Family } from "../../core/model/family";
+import { familyScope, type Family } from "../../core/model/family";
 import type { TriviaItem } from "../../core/model/trivia";
 
 // Multi-device merge for store/learn.json (規劃書 06 §4.3): records are
@@ -29,7 +29,11 @@ function pickNewer<T extends Rec>(local: T, remote: T): T {
   return (remote.rev ?? 0) > (local.rev ?? 0) ? remote : local;
 }
 
-export function mergeRecords<T extends Rec>(local: readonly T[], remote: readonly T[]): T[] {
+export function mergeRecords<T extends Rec>(
+  local: readonly T[],
+  remote: readonly T[],
+  pick: (local: T, remote: T) => T = pickNewer
+): T[] {
   const byId = new Map<string, T>();
   const order: string[] = [];
   for (const rec of local) {
@@ -39,9 +43,23 @@ export function mergeRecords<T extends Rec>(local: readonly T[], remote: readonl
   for (const rec of remote) {
     const mine = byId.get(rec.id);
     if (!mine) order.push(rec.id);
-    byId.set(rec.id, mine ? pickNewer(mine, rec) : rec);
+    byId.set(rec.id, mine ? pick(mine, rec) : rec);
   }
   return order.map((id) => byId.get(id) as T);
+}
+
+// Newer copy wins, with one exception: 重新分群 on one device only deletes
+// families it sees as whole-list groupings. If another device meanwhile
+// turned that family into a "word" family (a 找字族 result merged into
+// it), the regroup's tombstone loses to the live copy even when it's
+// newer — the regroup never meant to remove a word-page family.
+export function pickFamily(local: Family, remote: Family): Family {
+  const winner = pickNewer(local, remote);
+  const other = winner === local ? remote : local;
+  if (winner.deletedAt && winner.deletedBy === "regroup" && !other.deletedAt && familyScope(other) === "word") {
+    return other;
+  }
+  return winner;
 }
 
 // Tombstones are purged 30 days after the delete — by then every device
@@ -65,7 +83,7 @@ export function normalizeLearnShard(raw: unknown): LearnShard {
 
 export function mergeLearn(local: LearnShard, remote: LearnShard): LearnShard {
   return {
-    families: mergeRecords(local.families, remote.families),
+    families: mergeRecords(local.families, remote.families, pickFamily),
     trivia: mergeRecords(local.trivia, remote.trivia),
   };
 }
