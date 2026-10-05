@@ -1,4 +1,5 @@
 import type { VocabEntry } from "../../core/model/entry";
+import type { DeviceStatePort } from "../../core/ports";
 
 // Pronouncing a word (1005 回饋第 12 項): the dictionary recording when
 // there is one and it's quick, else the system voice.
@@ -16,7 +17,14 @@ import type { VocabEntry } from "../../core/model/entry";
 // - loaded recordings are cached (one element per URL, LRU) and the next
 //   flashcard's can be preloaded;
 // - every attempt reports idle → loading → playing → idle, so the button
-//   can show a spinner instead of looking unresponsive.
+//   can show a spinner instead of looking unresponsive;
+// - failed URLs are remembered per device (DeviceStatePort, not synced)
+//   for FAILED_TTL_MS, then tried again — a 522 can be temporary;
+// - on iPhone / iPad (`instantFallback`), auto mode never waits: iOS only
+//   lets speechSynthesis talk from inside the tap, and a fallback fired by
+//   a timer 1.5 s later can be silent. So a recording that isn't loaded
+//   yet is fetched in the background while the system voice speaks right
+//   away; once it's loaded, later taps play it.
 // One attempt at a time: a new one stops the previous one.
 
 export type PronounceSource = "auto" | "recording" | "synth";
@@ -70,12 +78,21 @@ export interface PronouncerDeps {
   online?: () => boolean;
   timeoutMs?: number;
   cacheSize?: number;
+  // Where failed URLs are remembered across restarts (this device only).
+  deviceState?: DeviceStatePort;
+  // Mobile: the system voice must start inside the tap (see above).
+  instantFallback?: () => boolean;
+  now?: () => number;
 }
 
 export type PronounceRequest = Pick<VocabEntry, "word" | "audio">;
 
 export const DEFAULT_TIMEOUT_MS = 1500;
 const DEFAULT_CACHE_SIZE = 40;
+export const FAILED_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+export const FAILED_KEY = "pronounce.failed";
+// Kept small: only a handful of words ever have a recording.
+const FAILED_MAX = 200;
 // Resets a "playing" that never reports its end (Chromium can drop an
 // utterance's onend; a stalled stream never fires `ended`).
 const WATCHDOG_MS = 8000;
@@ -125,11 +142,17 @@ interface Attempt {
 
 export class Pronouncer {
   private cache = new Map<string, Cached>();
-  private failed = new Set<string>();
+  // URL → when it failed (epoch ms); persisted, expires after FAILED_TTL_MS.
+  private failed: Map<string, number>;
+  // Formats this platform can't play: per device and permanent, so just
+  // recomputed each session rather than stored.
+  private unsupported = new Set<string>();
   private current: Attempt | null = null;
   private seq = 0;
 
-  constructor(private deps: PronouncerDeps) {}
+  constructor(private deps: PronouncerDeps) {
+    this.failed = this.loadFailed();
+  }
 
   get source(): PronounceSource {
     return this.deps.source?.() ?? "auto";
@@ -139,13 +162,13 @@ export class Pronouncer {
   // voice straight away.
   recordingFor(req: PronounceRequest): string | null {
     const url = req.audio?.trim();
-    if (!url || this.source === "synth" || this.failed.has(url)) return null;
+    if (!url || this.source === "synth" || this.hasFailed(url)) return null;
     if (!this.playable(url)) {
-      this.failed.add(url);
+      this.unsupported.add(url);
       return null;
     }
     const cached = this.cache.get(url);
-    if (cached?.ready) return url;
+    if (this.isCached(url)) return url;
     if (this.deps.online && !this.deps.online()) return null;
     // An earlier tap already waited on it; don't make this one wait again.
     if (cached?.timedOut && this.source === "auto") return null;
@@ -153,11 +176,19 @@ export class Pronouncer {
   }
 
   hasFailed(url: string): boolean {
-    return this.failed.has(url);
+    if (this.unsupported.has(url)) return true;
+    const at = this.failed.get(url);
+    if (at === undefined) return false;
+    if (this.now() - at < FAILED_TTL_MS) return true;
+    // Expired: give it another chance.
+    this.failed.delete(url);
+    this.saveFailed();
+    return false;
   }
 
   isCached(url: string): boolean {
-    return this.cache.get(url)?.ready ?? false;
+    const c = this.cache.get(url);
+    return !!c && (c.ready || c.clip.ready);
   }
 
   // Speaks the word. Resolves with how it was spoken once that's decided
@@ -179,7 +210,11 @@ export class Pronouncer {
       };
       this.current = a;
       const url = this.recordingFor(req);
-      if (url) this.playRecording(a, url, req.word);
+      if (url && this.source === "auto" && this.instant() && !this.isCached(url)) {
+        // Mobile: speak now, inside the tap; fetch the recording for later.
+        this.preload(req);
+        this.speakSynth(a, req.word);
+      } else if (url) this.playRecording(a, url, req.word);
       else this.speakSynth(a, req.word);
     });
   }
@@ -213,6 +248,53 @@ export class Pronouncer {
   }
 
   // ── Internals ─────────────────────────────────────────────────
+
+  private now(): number {
+    return this.deps.now?.() ?? Date.now();
+  }
+
+  private instant(): boolean {
+    try {
+      return this.deps.instantFallback?.() ?? false;
+    } catch {
+      return false;
+    }
+  }
+
+  private loadFailed(): Map<string, number> {
+    const out = new Map<string, number>();
+    const store = this.deps.deviceState;
+    if (!store) return out;
+    try {
+      const raw = store.get(FAILED_KEY);
+      if (!raw) return out;
+      const data: unknown = JSON.parse(raw);
+      if (!data || typeof data !== "object" || Array.isArray(data)) return out;
+      const now = this.now();
+      for (const [url, at] of Object.entries(data as Record<string, unknown>)) {
+        if (typeof at === "number" && now - at < FAILED_TTL_MS) out.set(url, at);
+      }
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't read failed pronunciations", e);
+    }
+    return out;
+  }
+
+  private saveFailed(): void {
+    const store = this.deps.deviceState;
+    if (!store) return;
+    // Oldest first out when over the cap (Map keeps insertion order).
+    while (this.failed.size > FAILED_MAX) {
+      const oldest = this.failed.keys().next().value;
+      if (oldest === undefined) break;
+      this.failed.delete(oldest);
+    }
+    try {
+      store.set(FAILED_KEY, this.failed.size ? JSON.stringify(Object.fromEntries(this.failed)) : null);
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't save failed pronunciations", e);
+    }
+  }
 
   private playable(url: string): boolean {
     const mime = audioMime(url);
@@ -263,7 +345,9 @@ export class Pronouncer {
   }
 
   private markFailed(url: string): void {
-    this.failed.add(url);
+    this.failed.delete(url);
+    this.failed.set(url, this.now());
+    this.saveFailed();
     const c = this.cache.get(url);
     if (c) {
       this.drop(c);
@@ -313,6 +397,7 @@ export class Pronouncer {
     const c = this.entry(url);
     const clip = c.clip;
     a.clip = clip;
+    if (clip.ready) c.ready = true;
     if (!c.ready) this.setState(a, "loading");
 
     let fellBack = false;

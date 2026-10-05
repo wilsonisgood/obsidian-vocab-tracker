@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   audioMime,
   DEFAULT_TIMEOUT_MS,
+  FAILED_KEY,
+  FAILED_TTL_MS,
   parsePronounceSource,
   Pronouncer,
   type PronounceSource,
 } from "../../../src/services/speech/Pronouncer";
-import { fakeDeps, stateLog } from "./fakes";
+import { fakeDeps, FakeDeviceState, stateLog } from "./fakes";
 
 const PERTINENT = {
   word: "pertinent",
@@ -392,5 +394,174 @@ describe("Pronouncer — preload and cache", () => {
       expect(c.pauses).toBeGreaterThan(0);
       expect(c.listenerCount("ready")).toBe(0);
     }
+  });
+});
+
+describe("Pronouncer — mobile (speak inside the tap)", () => {
+  it("auto: a recording that isn't loaded yet → system voice right away, recording fetched in the background", async () => {
+    const { deps, clips, synth } = fakeDeps({ instantFallback: () => true });
+    const p = new Pronouncer(deps);
+    const log = stateLog();
+    const via = p.pronounce(PERTINENT, log.on);
+    // Synchronously — still inside the click handler.
+    expect(synth.spoken).toEqual(["pertinent"]);
+    expect(clips).toHaveLength(1);
+    expect(clips[0].loads).toBe(1);
+    expect(clips[0].plays).toBe(0);
+    expect(await via).toBe("synth");
+    // No 1.5 s timer involved.
+    vi.advanceTimersByTime(DEFAULT_TIMEOUT_MS * 2);
+    expect(synth.spoken).toEqual(["pertinent"]);
+    synth.started();
+    synth.ended();
+    expect(log.states).toEqual(["loading", "playing", "idle"]);
+  });
+
+  it("auto: once the recording is loaded, the next tap plays it", async () => {
+    const { deps, clips, synth } = fakeDeps({ instantFallback: () => true });
+    const p = new Pronouncer(deps);
+    void p.pronounce(PERTINENT);
+    synth.ended();
+    clips[0].loaded();
+
+    const via = p.pronounce(PERTINENT);
+    expect(clips).toHaveLength(1);
+    expect(clips[0].plays).toBe(1);
+    clips[0].start();
+    expect(await via).toBe("recording");
+    expect(synth.spoken).toEqual(["pertinent"]);
+  });
+
+  it("auto: a tap while it's still loading speaks again without waiting or refetching", () => {
+    const { deps, clips, synth } = fakeDeps({ instantFallback: () => true });
+    const p = new Pronouncer(deps);
+    void p.pronounce(PERTINENT);
+    synth.ended();
+    void p.pronounce(PERTINENT);
+    expect(synth.spoken).toEqual(["pertinent", "pertinent"]);
+    expect(clips).toHaveLength(1);
+    expect(clips[0].loads).toBe(1);
+  });
+
+  it("auto: a preloaded (flashcard) recording that's ready plays right away", async () => {
+    const { deps, clips } = fakeDeps({ instantFallback: () => true });
+    const p = new Pronouncer(deps);
+    p.preload(LABOR);
+    clips[0].loaded();
+    const via = p.pronounce(LABOR);
+    clips[0].start();
+    expect(await via).toBe("recording");
+  });
+
+  it("recording: plays from inside the tap and waits; another tap plays it again (no timer)", () => {
+    const { deps, clips, synth } = fakeDeps({ instantFallback: () => true, source: () => "recording" });
+    const p = new Pronouncer(deps);
+    const log = stateLog();
+    void p.pronounce(PERTINENT, log.on);
+    expect(clips[0].plays).toBe(1);
+    vi.advanceTimersByTime(10_000);
+    expect(synth.spoken).toEqual([]);
+    void p.pronounce(PERTINENT);
+    expect(clips[0].plays).toBe(2);
+    expect(clips).toHaveLength(1);
+  });
+
+  it("is read on every tap (emulateMobile can flip it)", () => {
+    let mobile = false;
+    const { deps, clips, synth } = fakeDeps({ instantFallback: () => mobile });
+    const p = new Pronouncer(deps);
+    void p.pronounce(PERTINENT);
+    expect(clips[0].plays).toBe(1);
+    expect(synth.spoken).toEqual([]);
+    mobile = true;
+    void p.pronounce(LABOR);
+    expect(synth.spoken).toEqual(["labor"]);
+  });
+});
+
+describe("Pronouncer — failed URLs remembered on this device", () => {
+  const T0 = Date.UTC(2026, 9, 5);
+
+  it("saves a failure and skips the URL after a restart", () => {
+    const store = new FakeDeviceState();
+    let now = T0;
+    const first = fakeDeps({ deviceState: store, now: () => now });
+    const entry = { ...PERTINENT };
+    void new Pronouncer(first.deps).pronounce(entry);
+    first.clips[0].fail();
+    expect(JSON.parse(store.get(FAILED_KEY)!)).toEqual({ [PERTINENT.audio]: T0 });
+    expect(entry.audio).toBe(PERTINENT.audio); // the entry itself is untouched
+
+    now = T0 + 60_000;
+    const second = fakeDeps({ deviceState: store, now: () => now });
+    const p = new Pronouncer(second.deps);
+    expect(p.hasFailed(PERTINENT.audio)).toBe(true);
+    void p.pronounce(PERTINENT);
+    expect(second.clips).toHaveLength(0);
+    expect(second.synth.spoken).toEqual(["pertinent"]);
+  });
+
+  it("tries again after 7 days (a 522 can be temporary)", () => {
+    const store = new FakeDeviceState();
+    store.set(FAILED_KEY, JSON.stringify({ [PERTINENT.audio]: T0, [LABOR.audio]: T0 + FAILED_TTL_MS }));
+    let now = T0 + FAILED_TTL_MS - 1;
+    const { deps, clips } = fakeDeps({ deviceState: store, now: () => now });
+    const p = new Pronouncer(deps);
+    expect(p.hasFailed(PERTINENT.audio)).toBe(true);
+    now = T0 + FAILED_TTL_MS;
+    expect(p.hasFailed(PERTINENT.audio)).toBe(false);
+    expect(JSON.parse(store.get(FAILED_KEY)!)).toEqual({ [LABOR.audio]: T0 + FAILED_TTL_MS });
+    void p.pronounce(PERTINENT);
+    expect(clips).toHaveLength(1);
+  });
+
+  it("drops expired entries when loading", () => {
+    const store = new FakeDeviceState();
+    store.set(FAILED_KEY, JSON.stringify({ [PERTINENT.audio]: T0 - FAILED_TTL_MS, bogus: "x" }));
+    const { deps } = fakeDeps({ deviceState: store, now: () => T0 });
+    const p = new Pronouncer(deps);
+    expect(p.hasFailed(PERTINENT.audio)).toBe(false);
+    expect(p.hasFailed("bogus")).toBe(false);
+  });
+
+  it("stores every failed URL with its time", () => {
+    const store = new FakeDeviceState();
+    const { deps, clips } = fakeDeps({ deviceState: store, now: () => T0 });
+    const p = new Pronouncer(deps);
+    p.preload(PERTINENT);
+    p.preload(LABOR);
+    clips[0].fail();
+    clips[1].fail();
+    expect(Object.keys(JSON.parse(store.get(FAILED_KEY)!))).toEqual([PERTINENT.audio, LABOR.audio]);
+  });
+
+  it("formats the device can't play aren't stored (recomputed each session)", () => {
+    const store = new FakeDeviceState();
+    const { deps } = fakeDeps({ deviceState: store });
+    void new Pronouncer(deps).pronounce({ word: "tenure", audio: "https://x/tenure.ogg" });
+    expect(store.get(FAILED_KEY)).toBeNull();
+  });
+
+  it("corrupt or unavailable storage doesn't break pronouncing", () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const bad = new FakeDeviceState();
+    bad.set(FAILED_KEY, "{not json");
+    const a = fakeDeps({ deviceState: bad });
+    expect(() => new Pronouncer(a.deps)).not.toThrow();
+
+    const throwing = {
+      get: () => {
+        throw new Error("denied");
+      },
+      set: () => {
+        throw new Error("denied");
+      },
+    };
+    const b = fakeDeps({ deviceState: throwing });
+    const p = new Pronouncer(b.deps);
+    void p.pronounce(PERTINENT);
+    expect(() => b.clips[0].fail()).not.toThrow();
+    expect(b.synth.spoken).toEqual(["pertinent"]);
+    err.mockRestore();
   });
 });

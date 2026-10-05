@@ -14,12 +14,14 @@ import { Pronouncer } from "../../../src/services/speech/Pronouncer";
 import {
   applyPronounceState,
   bindPronounceButton,
+  configurePronouncer,
+  disposePronouncer,
   pronounce,
   preloadPronunciation,
   setPronouncerForTests,
   stopPronouncingIn,
 } from "../../../src/ui/kit/pronounce";
-import { fakeDeps } from "../../services/speech/fakes";
+import { fakeDeps, FakeDeviceState } from "../../services/speech/fakes";
 
 // Just what the kit touches on a button.
 class Btn {
@@ -189,5 +191,76 @@ describe("🔊 buttons", () => {
     preloadPronunciation(undefined);
     expect(fake.clips).toHaveLength(1);
     expect(fake.clips[0].loads).toBe(1);
+  });
+});
+
+describe("configurePronouncer — the real wiring (browser globals stubbed)", () => {
+  afterEach(() => {
+    disposePronouncer();
+    configurePronouncer({ mobile: undefined });
+    vi.unstubAllGlobals();
+  });
+
+  function stubBrowser() {
+    const audios: { src: string; loads: number; plays: number }[] = [];
+    class FakeAudio {
+      src = "";
+      preload = "";
+      readyState = 0;
+      currentTime = 0;
+      loads = 0;
+      plays = 0;
+      constructor() {
+        audios.push(this);
+      }
+      load() {
+        this.loads++;
+      }
+      play() {
+        this.plays++;
+        return new Promise<void>(() => {});
+      }
+      pause() {}
+      addEventListener() {}
+      removeEventListener() {}
+    }
+    const spoken: string[] = [];
+    vi.stubGlobal("Audio", FakeAudio);
+    vi.stubGlobal("document", { createElement: () => ({ canPlayType: () => "maybe" }) });
+    vi.stubGlobal("SpeechSynthesisUtterance", class {
+      constructor(public text: string) {}
+    });
+    vi.stubGlobal("window", {
+      speechSynthesis: {
+        speaking: false,
+        pending: false,
+        getVoices: () => [],
+        cancel: () => {},
+        speak: (u: { text: string }) => spoken.push(u.text),
+      },
+    });
+    return { audios, spoken };
+  }
+
+  it("mobile: speaks inside the tap and fetches the recording; failures go to device storage", () => {
+    setPronouncerForTests(null);
+    const { audios, spoken } = stubBrowser();
+    const store = new FakeDeviceState();
+    configurePronouncer({ mobile: () => true, deviceState: store });
+    void pronounce(PERTINENT);
+    expect(spoken).toEqual(["pertinent"]);
+    expect(audios).toHaveLength(1);
+    expect(audios[0].src).toBe(PERTINENT.audio);
+    expect(audios[0].loads).toBe(1);
+    expect(audios[0].plays).toBe(0);
+  });
+
+  it("desktop: tries the recording first", () => {
+    setPronouncerForTests(null);
+    const { audios, spoken } = stubBrowser();
+    configurePronouncer({ mobile: () => false });
+    void pronounce(PERTINENT);
+    expect(spoken).toEqual([]);
+    expect(audios[0].plays).toBe(1);
   });
 });

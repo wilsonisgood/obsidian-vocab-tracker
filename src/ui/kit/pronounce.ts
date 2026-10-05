@@ -1,6 +1,7 @@
 import { Notice } from "obsidian";
 import { getLocale } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
+import type { DeviceStatePort } from "../../core/ports";
 import {
   Pronouncer,
   type AudioClip,
@@ -9,6 +10,8 @@ import {
   type PronounceState,
   type PronounceVia,
 } from "../../services/speech/Pronouncer";
+import { isMobileForm } from "../mobile/formFactor";
+import { currentFormFactor } from "../mobile/platform";
 import { sharedSpeaker } from "../mobile/speech";
 
 // 🔊 buttons (1005 回饋第 12 項): one shared Pronouncer for the plugin, and
@@ -76,6 +79,19 @@ function canPlayType(mime: string): string {
 interface Config {
   source?: () => PronounceSource;
   timeoutMs?: number;
+  // Failed recording URLs, remembered on this device for 7 days
+  // (main.ts: new ObsidianDeviceState(this.app)).
+  deviceState?: DeviceStatePort;
+  // Defaults to "iPhone / iPad" (incl. emulateMobile).
+  mobile?: () => boolean;
+}
+
+function isMobileNow(): boolean {
+  try {
+    return isMobileForm(currentFormFactor());
+  } catch {
+    return false;
+  }
 }
 
 let config: Config = {};
@@ -89,6 +105,8 @@ export function pronouncer(): Pronouncer {
     source: () => config.source?.() ?? "auto",
     online: () => (typeof navigator === "undefined" ? true : navigator.onLine !== false),
     timeoutMs: config.timeoutMs,
+    deviceState: config.deviceState,
+    instantFallback: () => (config.mobile ?? isMobileNow)(),
   });
   return shared;
 }
@@ -96,7 +114,8 @@ export function pronouncer(): Pronouncer {
 // main.ts: where the 「發音來源」 setting lives.
 export function configurePronouncer(next: Config): void {
   config = { ...config, ...next };
-  if (next.timeoutMs !== undefined && shared) {
+  // Both are read when the Pronouncer is built: rebuild it.
+  if ((next.timeoutMs !== undefined || next.deviceState !== undefined) && shared) {
     shared.dispose();
     shared = null;
   }

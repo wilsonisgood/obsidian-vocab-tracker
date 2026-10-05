@@ -157,3 +157,15 @@ export function stateLog() {
 }
 
 export const flush = () => new Promise<void>((r) => queueMicrotask(r)).then(() => undefined);
+
+// app.loadLocalStorage / saveLocalStorage (ObsidianDeviceState).
+export class FakeDeviceState {
+  data = new Map<string, string>();
+  get(key: string): string | null {
+    return this.data.get(key) ?? null;
+  }
+  set(key: string, value: string | null): void {
+    if (value === null) this.data.delete(key);
+    else this.data.set(key, value);
+  }
+}
