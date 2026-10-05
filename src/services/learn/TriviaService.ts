@@ -164,6 +164,21 @@ export class TriviaService {
     });
   }
 
+  // 重試: the failed answer and its question are tombstoned, then the same
+  // round is asked again — a quick action about the same word, or the same
+  // follow-up question.
+  async retry(turnId: string): Promise<void> {
+    await this.ensureLoaded();
+    const th = this.thread();
+    const answer = th?.turns.find((x) => x.id === turnId);
+    const entryId = answer ? subjectOf(th, answer) : undefined;
+    const q = this.deps.threads.dropFailedRound(th, turnId);
+    if (!q) return;
+    const kind = (Object.keys(TRIVIA_TASK_BY_KIND) as TriviaKind[]).find((k) => TRIVIA_TASK_BY_KIND[k].id === q.taskId);
+    if (kind) await this.ask(kind, { entryId });
+    else if (q.question) await this.followup(q.question, q.selection);
+  }
+
   // ── Favorites (收藏) ─────────────────────────────────────────
 
   private answerTurn(turnId: string): Turn | undefined {

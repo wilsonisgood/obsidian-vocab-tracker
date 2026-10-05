@@ -298,7 +298,8 @@ export class ThreadService {
   }
 
   // Tombstones an answer and the question before it; returns the question.
-  private dropFailedRound(thread: Thread | undefined, turnId: string): Turn | null {
+  // Public for TriviaService.retry, which re-asks the round its own way.
+  dropFailedRound(thread: Thread | undefined, turnId: string): Turn | null {
     if (!thread || this.isBusy(thread.id)) return null;
     const turns = liveTurns(thread);
     const i = turns.findIndex((turn) => turn.id === turnId);
@@ -485,6 +486,18 @@ export class ThreadService {
     turn.updatedAt = this.nowIso();
     this.changed(thread);
     await this.deps.store.touch(entry);
+  }
+
+  // 👍 👎 on an answer (冷知識 L7). undefined clears it.
+  async setFeedback(threadId: string, turnId: string, feedback: Turn["feedback"]): Promise<void> {
+    await this.ensureLoaded();
+    const thread = this.get(threadId);
+    const turn = thread?.turns.find((x) => x.id === turnId && !x.deletedAt);
+    if (!thread || !turn || turn.role !== "assistant" || turn.feedback === feedback) return;
+    if (feedback) turn.feedback = feedback;
+    else delete turn.feedback;
+    turn.updatedAt = this.nowIso();
+    this.changed(thread);
   }
 
   private nowIso(): string {

@@ -280,3 +280,55 @@ describe("pin to grammar", () => {
     expect(removePin("edited", "x")).toBe("edited");
   });
 });
+
+describe("answer feedback (👍 👎)", () => {
+  it("sets, switches and clears feedback on an answer, bumping its stamp", async () => {
+    const { threads, entry } = setup(async () => result("ok"));
+    await threads.askWord(entry, { taskId: "word.usage" });
+    const id = threads.wordThread("e1")?.id as string;
+    const answer = () => threads.wordThread("e1")?.turns[1];
+    const upserts: Thread[] = [];
+    threads.events.on("thread:upsert", (th) => upserts.push(th));
+
+    await threads.setFeedback(id, answer()?.id as string, "up");
+    expect(answer()?.feedback).toBe("up");
+    const stamp = answer()?.updatedAt;
+    expect(stamp).toBeTruthy();
+
+    await threads.setFeedback(id, answer()?.id as string, "down");
+    expect(answer()?.feedback).toBe("down");
+    expect(answer()?.updatedAt && stamp && answer()!.updatedAt! > stamp).toBe(true);
+
+    await threads.setFeedback(id, answer()?.id as string, undefined);
+    expect(answer()).not.toHaveProperty("feedback");
+    expect(upserts).toHaveLength(3);
+  });
+
+  it("ignores questions, unknown turns and no-op changes", async () => {
+    const { threads, entry } = setup(async () => result("ok"));
+    await threads.askWord(entry, { taskId: "word.usage" });
+    const th = threads.wordThread("e1") as Thread;
+    const upserts: Thread[] = [];
+    threads.events.on("thread:upsert", (x) => upserts.push(x));
+
+    await threads.setFeedback(th.id, th.turns[0].id, "up");
+    await threads.setFeedback(th.id, "nope", "up");
+    await threads.setFeedback("nope", th.turns[1].id, "up");
+    await threads.setFeedback(th.id, th.turns[1].id, undefined);
+    expect(th.turns[0]).not.toHaveProperty("feedback");
+    expect(th.turns[1]).not.toHaveProperty("feedback");
+    expect(upserts).toHaveLength(0);
+  });
+
+  it("survives a save and reload", async () => {
+    const { storage, store, ai, threads, entry } = setup(async () => result("ok"));
+    await threads.askWord(entry, { taskId: "word.usage" });
+    const th = threads.wordThread("e1") as Thread;
+    await threads.setFeedback(th.id, th.turns[1].id, "up");
+    await threads.flush();
+
+    const again = new ThreadService({ storage, store, ai, notes: { read: async () => null } });
+    await again.ensureLoaded();
+    expect(again.wordThread("e1")?.turns[1].feedback).toBe("up");
+  });
+});

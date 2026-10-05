@@ -183,3 +183,52 @@ describe("ThreadService compatibility", () => {
     expect(typeof asPort).toBe("function");
   });
 });
+
+describe("TriviaService.retry", () => {
+  const live = (threads: FakeThreads) => threads.get(TRIVIA_THREAD_ID)!.turns.filter((t) => !t.deletedAt);
+
+  it("tombstones a failed quick action and asks the same kind about the same word", async () => {
+    const { trivia, threads } = setup();
+    await trivia.ask("etymology", { entryId: "glittery" });
+    const failed = threads.get(TRIVIA_THREAD_ID)!.turns[1];
+    failed.status = "error";
+
+    await trivia.retry(failed.id);
+    expect(threads.asked).toHaveLength(2);
+    expect(threads.asked[1]).toMatchObject({ taskId: "trivia.etymology", subjectEntryId: "glittery" });
+    expect(failed.deletedAt).toBeDefined();
+    expect(live(threads)).toHaveLength(2);
+  });
+
+  it("keeps 「再來一則」 on the word of the failed round instead of picking a new one", async () => {
+    const { trivia, threads } = setup();
+    await trivia.ask("next", { entryId: "napkin" });
+    const failed = threads.get(TRIVIA_THREAD_ID)!.turns[1];
+    await trivia.retry(failed.id);
+    expect(threads.asked[1]).toMatchObject({ taskId: "trivia.next", subjectEntryId: "napkin" });
+  });
+
+  it("asks a failed follow-up again with the same question", async () => {
+    const { trivia, threads } = setup();
+    await trivia.ask("next");
+    await trivia.followup("還有類似的例子嗎？");
+    const failed = threads.get(TRIVIA_THREAD_ID)!.turns[3];
+
+    await trivia.retry(failed.id);
+    expect(threads.asked).toHaveLength(3);
+    expect(threads.asked[2]).toMatchObject({ taskId: "trivia.followup", question: "還有類似的例子嗎？", subjectEntryId: "apron" });
+    expect(live(threads).map((t) => t.id)).toEqual(["t1", "t2", "t5", "t6"]);
+  });
+
+  it("does nothing for a user turn, an unknown turn, or while busy", async () => {
+    const { trivia, threads } = setup();
+    await trivia.ask("next");
+    const [q, a] = threads.get(TRIVIA_THREAD_ID)!.turns;
+    await trivia.retry(q.id);
+    await trivia.retry("nope");
+    threads.busy = true;
+    await trivia.retry(a.id);
+    expect(threads.asked).toHaveLength(1);
+    expect(a.deletedAt).toBeUndefined();
+  });
+});

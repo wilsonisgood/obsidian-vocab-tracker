@@ -36,6 +36,16 @@ describe("mergeTurns", () => {
     expect(mergeTurns([pinned], [done])[0].pinnedToGrammar).toBe(true);
   });
 
+  it("keeps the newer feedback, including a cleared one", () => {
+    const answer = turn("x", "2026-10-01T10:00:00Z", { role: "assistant" });
+    const up = { ...answer, feedback: "up" as const, updatedAt: "2026-10-02T00:00:00Z" };
+    const cleared = { ...answer, updatedAt: "2026-10-03T00:00:00Z" };
+    expect(mergeTurns([answer], [up])[0].feedback).toBe("up");
+    expect(mergeTurns([up], [answer])[0].feedback).toBe("up");
+    expect(mergeTurns([up], [cleared])[0].feedback).toBeUndefined();
+    expect(mergeTurns([cleared], [up])[0].feedback).toBeUndefined();
+  });
+
   it("keeps a tombstone that is newer than the live copy", () => {
     const live = turn("x", "2026-10-01T10:00:00Z");
     const dead = { ...live, deletedAt: "2026-10-02T00:00:00Z", updatedAt: "2026-10-02T00:00:00Z" };

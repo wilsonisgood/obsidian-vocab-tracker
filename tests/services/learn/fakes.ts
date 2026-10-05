@@ -122,6 +122,19 @@ export class FakeThreads implements TriviaThreadsPort {
     this.stopped.push(threadId);
   }
 
+  // As ThreadService's: tombstones the answer and the question before it.
+  dropFailedRound(thread: Thread | undefined, turnId: string): Turn | null {
+    if (!thread || this.busy) return null;
+    const live = thread.turns.filter((t) => !t.deletedAt);
+    const i = live.findIndex((t) => t.id === turnId);
+    if (i < 1) return null;
+    const question = live[i - 1];
+    if (question.role !== "user" || !question.taskId) return null;
+    const now = new Date(this.clock).toISOString();
+    for (const t of [question, live[i]]) t.deletedAt = t.updatedAt = now;
+    return question;
+  }
+
   async ask(p: TriviaAskParams): Promise<void> {
     this.asked.push(p);
     let th = this.threads.get(p.threadId);

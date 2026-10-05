@@ -1,6 +1,6 @@
 import type { DictionaryResult } from "../../core/model/dictionary";
 import type { VocabEntry } from "../../core/model/entry";
-import type { Thread } from "../../core/model/thread";
+import type { Thread, Turn } from "../../core/model/thread";
 import type { AiService } from "../ai/AiService";
 import type { AskParams } from "../threads/ThreadService";
 
@@ -34,4 +34,6 @@ export interface TriviaThreadsPort {
   ask(p: TriviaAskParams): Promise<void>;
   isBusy(threadId: string): boolean;
   stop(threadId: string): void;
+  // Tombstones a failed answer and its question; returns the question.
+  dropFailedRound(thread: Thread | undefined, turnId: string): Turn | null;
 }
