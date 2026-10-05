@@ -21,7 +21,7 @@ import {
 } from "../../core/model/srs";
 import type { StoragePort } from "../../core/ports";
 import type { VocabStore } from "../../core/store/VocabStore";
-import { mergeReviewLogs, pruneReviewLogs } from "../../core/store/reviewLogs";
+import { mergeReviewLogs, pruneReviewLogs, reviewLogsFingerprint } from "../../core/store/reviewLogs";
 import { nowStamp } from "../../core/nowStamp";
 import {
   addDays,
@@ -131,12 +131,24 @@ export class SrsService {
 
   // Unions what's on disk into memory — another device may have synced
   // new reviews in. Never drops in-memory logs that haven't been written.
+  // §4.3: when memory has reviews the synced copy lacks (the other
+  // device's file overwrote ours), the union is written back.
   async reloadLogs(): Promise<void> {
+    if (await this.mergeDiskLogs()) this.enqueueLogWrite();
+  }
+
+  // true when the merged logs differ from what's on disk (age pruning
+  // aside, so expiring old logs alone never triggers a write).
+  private async mergeDiskLogs(): Promise<boolean> {
     try {
       const disk = await this.deps.storage.readShard<ReviewsShard>(REVIEWS_SHARD);
-      this.logs = pruneReviewLogs(mergeReviewLogs(this.logs, disk?.logs ?? []), this.clock());
+      const now = this.clock();
+      const onDisk = Array.isArray(disk?.logs) ? disk.logs : [];
+      this.logs = pruneReviewLogs(mergeReviewLogs(this.logs, onDisk), now);
+      return reviewLogsFingerprint(this.logs) !== reviewLogsFingerprint(pruneReviewLogs(onDisk, now));
     } catch (e) {
       console.error("Vocab Tracker: couldn't read review logs", e);
+      return false;
     }
   }
 
@@ -281,7 +293,7 @@ export class SrsService {
   private enqueueLogWrite(): void {
     this.pendingWrite = this.pendingWrite.then(async () => {
       try {
-        await this.reloadLogs();
+        await this.mergeDiskLogs();
         await this.deps.storage.writeShard<ReviewsShard>(REVIEWS_SHARD, { logs: this.logs });
       } catch (e) {
         console.error("Vocab Tracker: couldn't save review logs", e);

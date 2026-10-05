@@ -190,6 +190,17 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.trivia = new TriviaService({ threads: this.threads, vocab: this.store, learn: this.learn });
     this.selection = new SelectionTracker(this.app);
     this.registerDomEvent(document, "selectionchange", () => this.selection.update());
+    // §4.3: back in the foreground (iOS resumes the app instead of
+    // restarting it), pick up threads / learn / reviews another device
+    // synced meanwhile — that sync doesn't fire onExternalSettingsChange
+    // unless data.json changed too. Each reload writes the union back if
+    // this device has something the synced copy lacks.
+    this.registerDomEvent(document, "visibilitychange", () => {
+      if (document.visibilityState !== "visible") return;
+      void this.threads.reload();
+      void this.learn.reload();
+      void this.srs.reloadLogs();
+    });
 
     // M6: the plugin's notes. ExportService keeps 單字/<word>.md,
     // 討論串/<文章>.ai.md and 冷知識.md's saved list in step with the data;

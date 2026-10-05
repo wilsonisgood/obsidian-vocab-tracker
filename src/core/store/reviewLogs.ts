@@ -23,3 +23,13 @@ export function pruneReviewLogs(
   const cutoff = now.getTime() - days * 24 * 60 * 60 * 1000;
   return logs.filter((log) => new Date(log.at).getTime() >= cutoff);
 }
+
+// Logs never change once written, so which ones exist is all a merge can
+// change. SrsService.reloadLogs() writes back only when this differs from
+// the synced copy's.
+export function reviewLogsFingerprint(logs: readonly ReviewLog[]): string {
+  return logs
+    .map((l) => l.id)
+    .sort()
+    .join("\n");
+}

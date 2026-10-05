@@ -2,7 +2,14 @@ import { TypedEmitter } from "../../core/events";
 import type { Family } from "../../core/model/family";
 import type { TriviaItem } from "../../core/model/trivia";
 import type { StoragePort } from "../../core/ports";
-import { dropOldTombstones, emptyLearnShard, mergeLearn, normalizeLearnShard, type LearnShard } from "./learnMerge";
+import {
+  dropOldTombstones,
+  emptyLearnShard,
+  learnFingerprint,
+  mergeLearn,
+  normalizeLearnShard,
+  type LearnShard,
+} from "./learnMerge";
 
 // store/learn.json — families and saved trivia (規劃書 06 §4.2). Managed
 // the way ThreadService manages threads.json: read lazily the first time a
@@ -57,8 +64,12 @@ export class LearnStore {
   async reload(): Promise<void> {
     if (!this.loading) return;
     await this.loading;
-    this.data = mergeLearn(this.data, await this.readDisk());
+    const disk = await this.readDisk();
+    this.data = mergeLearn(this.data, disk);
     this.events.emit("learn:reloaded", undefined);
+    // §4.3: when this device has records the synced copy lacks (it was
+    // overwritten by the other device's file), write the union back.
+    if (learnFingerprint(this.data) !== learnFingerprint(disk)) this.scheduleWrite();
   }
 
   private async readDisk(): Promise<LearnShard> {

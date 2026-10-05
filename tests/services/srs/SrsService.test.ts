@@ -126,6 +126,34 @@ describe("SrsService", () => {
     expect(storage.writes).toHaveLength(1);
   });
 
+  it("reloadLogs() writes the union back when the synced copy lacks this device's reviews (§4.3)", async () => {
+    const { srs, data, storage } = setup();
+    await srs.rate(data.entries[0], Rating.Good, "en-zh");
+    await srs.flush();
+    // The other device's reviews.json overwrote ours: its review, not ours.
+    const remote: ReviewLog = { id: "remote-1", entryId: "other", at: new Date(2026, 9, 4, 8).toISOString(), rating: 3, mode: "en-zh", elapsedMs: 0 };
+    storage.shards.set(REVIEWS_SHARD, { logs: [remote] });
+    const before = storage.writes.length;
+    await srs.reloadLogs();
+    await srs.flush();
+    expect(storage.writes).toHaveLength(before + 1);
+    const shard = storage.shards.get(REVIEWS_SHARD) as { logs: ReviewLog[] };
+    expect(shard.logs.map((l) => l.id)).toEqual(["remote-1", "log-1"]);
+  });
+
+  it("reloadLogs() doesn't write when the synced copy already has every review, whatever its order", async () => {
+    const { srs, data, storage } = setup();
+    await srs.rate(data.entries[0], Rating.Good, "en-zh");
+    await srs.rate(data.entries[0], Rating.Easy, "cloze");
+    await srs.flush();
+    const shard = storage.shards.get(REVIEWS_SHARD) as { logs: ReviewLog[] };
+    storage.shards.set(REVIEWS_SHARD, { logs: [...shard.logs].reverse() });
+    const before = storage.writes.length;
+    await srs.reloadLogs();
+    await srs.flush();
+    expect(storage.writes).toHaveLength(before);
+  });
+
   it("ensureLoaded() reads the shard once and prunes logs past 90 days", async () => {
     const { srs, storage } = setup();
     const old: ReviewLog = { id: "old", entryId: "e1", at: "2026-01-01T00:00:00.000Z", rating: 3, mode: "en-zh", elapsedMs: 0 };

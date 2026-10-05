@@ -2,7 +2,7 @@ import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { liveTurns, wordThreadId, type Anchor, type Thread, type Turn } from "../../core/model/thread";
 import type { NoteReaderPort, StoragePort } from "../../core/ports";
-import { mergeThreads, settleStaleTurns } from "../../core/store/threads";
+import { mergeThreads, settleStaleTurns, threadsFingerprint } from "../../core/store/threads";
 import { TypedEmitter } from "../../core/events";
 import type { VocabStore } from "../../core/store/VocabStore";
 import type { AiService } from "../ai/AiService";
@@ -149,8 +149,13 @@ export class ThreadService {
   async reload(): Promise<void> {
     if (!this.loading) return;
     await this.loading;
-    this.threads = mergeThreads(this.threads, await this.readDisk());
+    const disk = await this.readDisk();
+    this.threads = mergeThreads(this.threads, disk);
     this.events.emit("threads:reloaded", undefined);
+    // §4.3: when this device has turns the synced copy lacks, write the
+    // union back, so the other device gets them and a restart doesn't
+    // lose them. Order-insensitive, so devices that agree never ping-pong.
+    if (!this.disposed && threadsFingerprint(this.threads) !== threadsFingerprint(disk)) this.scheduleWrite();
   }
 
   private async readDisk(): Promise<Thread[]> {

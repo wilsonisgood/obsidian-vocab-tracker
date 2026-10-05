@@ -922,7 +922,9 @@ export function installDom(): FakeDocument {
     addEventListener() {},
     removeEventListener() {},
     fetch: fakeFetch,
-    speechSynthesis: { cancel() {}, speak() {} },
+    // speaking/pending/getVoices: the Speaker warms the voice list up at
+    // load (src/ui/mobile/speech.ts).
+    speechSynthesis: { speaking: false, pending: false, getVoices: () => [], cancel() {}, speak() {} },
     devicePixelRatio: 1,
     innerWidth: 1280,
     innerHeight: 800,

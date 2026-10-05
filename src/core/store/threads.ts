@@ -59,6 +59,25 @@ export function mergeThreads(local: readonly Thread[], remote: readonly Thread[]
   return order.map((id) => byId.get(id) as Thread);
 }
 
+// What a merge can change: which threads and turns exist, and their
+// versions — not array or key order. ThreadService.reload() compares the
+// merged result with the synced copy this way to decide whether to write
+// the union back (§4.3), so two devices that agree never ping-pong.
+export function threadsFingerprint(threads: readonly Thread[]): string {
+  return threads
+    .map((th) =>
+      [
+        th.id,
+        th.updatedAt ?? "",
+        th.rev ?? 0,
+        th.deletedAt ?? "",
+        ...th.turns.map((t) => `${t.id}|${t.updatedAt ?? ""}|${t.deletedAt ?? ""}|${t.status}`).sort(),
+      ].join(",")
+    )
+    .sort()
+    .join("\n");
+}
+
 // A turn still marked "streaming" on disk was cut off by a crash or a
 // closed app — nothing will ever finish it, so show it as stopped.
 export function settleStaleTurns(threads: Thread[]): Thread[] {

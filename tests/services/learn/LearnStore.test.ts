@@ -96,6 +96,36 @@ describe("LearnStore", () => {
     expect(learn.family("synced")).toBeDefined();
   });
 
+  it("reload writes the union back when the synced copy lacks this device's records (§4.3)", async () => {
+    const { storage, learn } = setup();
+    await learn.ensureLoaded();
+    learn.putFamily(fam("mine"));
+    await learn.flush();
+    // The other device's learn.json overwrote ours: it has its own family
+    // but not "mine".
+    storage.shards.set(LEARN_SHARD, { families: [fam("theirs", { updatedAt: "2026-10-03T00:00:00Z", rev: 1 })], trivia: [] });
+    const before = storage.writes;
+    await learn.reload();
+    await learn.flush();
+    expect(storage.writes).toBe(before + 1);
+    expect(saved(storage).families.map((f) => f.id).sort()).toEqual(["mine", "theirs"]);
+  });
+
+  it("reload doesn't write when the synced copy already has everything, whatever its order", async () => {
+    const { storage, learn } = setup();
+    await learn.ensureLoaded();
+    learn.putFamily(fam("a"));
+    learn.putFamily(fam("b"));
+    await learn.flush();
+    // The same records, in another order (the other device's merge).
+    const disk = saved(storage);
+    storage.shards.set(LEARN_SHARD, { families: [...disk.families].reverse(), trivia: [] });
+    const before = storage.writes;
+    await learn.reload();
+    await learn.flush();
+    expect(storage.writes).toBe(before);
+  });
+
   it("purges tombstones older than 30 days on write", async () => {
     const { storage, learn } = setup();
     storage.shards.set(LEARN_SHARD, {

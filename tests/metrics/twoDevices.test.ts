@@ -183,16 +183,13 @@ describe("Mac and iPhone each add a word and ask a question at the same time", (
   });
 });
 
-// The other direction. ThreadService.reload() merges the synced copy into
-// memory but doesn't write the union back (data.json does: main.ts
-// onExternalSettingsChange rewrites it when the merge differs). So after
-// the conflict the Mac's question lives only in the Mac's memory: the
-// iPhone never gets it, and the Mac itself loses it on restart — unless it
-// changes some thread again first (its next save is a read-merge-write).
-// Integration item K-1 in the task K report is the fix; turn these into
-// plain `it` once it's in (they then pass; `it.fails` will flag it).
+// The other direction. After the conflict the Mac's question was only in
+// the Mac's memory; ThreadService.reload() now writes the union back when
+// it differs from the synced copy (K-1, the way main.ts
+// onExternalSettingsChange already did for data.json), so the iPhone gets
+// it and the Mac keeps it across a restart.
 describe("…and the question reaches the other device too (threads.json)", () => {
-  it.fails("each asks about their new word: the iPhone gets the Mac's question (needs K-1)", async () => {
+  it("each asks about their new word: the iPhone gets the Mac's question", async () => {
     const mac = await device();
     const iphone = await device();
     await mac.plugin.addWordToVocab("glimmerous");
@@ -205,7 +202,7 @@ describe("…and the question reaches the other device too (threads.json)", () =
     expect(questions(disk<{ threads: Thread[] }>(iphone, "store/threads.json").threads, wordThreadId(macWord.id))).toHaveLength(1);
   });
 
-  it.fails("same thread: the iPhone ends up with both questions (needs K-1)", async () => {
+  it("same thread: the iPhone ends up with both questions", async () => {
     const mac = await device();
     const iphone = await device();
     const shared = fx.threads.find((t) => t.anchor.kind === "word")!;
@@ -217,7 +214,7 @@ describe("…and the question reaches the other device too (threads.json)", () =
     expect(iphone.plugin.threads.wordQuestionCount(entryId)).toBe(before + 2);
   });
 
-  it.fails("the Mac keeps its own question across a restart (needs K-1)", async () => {
+  it("the Mac keeps its own question across a restart", async () => {
     const mac = await device();
     const iphone = await device();
     const word = fx.liveEntries.find((e) => !mac.plugin.threads.wordThread(e.id))!;

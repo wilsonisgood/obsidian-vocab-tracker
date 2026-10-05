@@ -320,6 +320,35 @@ describe("answer feedback (👍 👎)", () => {
     expect(upserts).toHaveLength(0);
   });
 
+  it("reload writes the union back when the synced copy lacks this device's turns (§4.3)", async () => {
+    const { storage, threads, entry } = setup(async () => result("ok"));
+    await threads.askWord(entry, { taskId: "word.usage" });
+    await threads.flush();
+    // The other device's threads.json overwrote ours, without our question.
+    const theirs: Thread = { id: "word:other", anchor: { kind: "word", entryId: "other" }, turns: [], updatedAt: "2026-10-03T00:00:00.000Z", rev: 1 };
+    storage.shards.set(THREADS_SHARD, { threads: [theirs] });
+    const before = storage.writes;
+    await threads.reload();
+    await threads.flush();
+    expect(storage.writes).toBe(before + 1);
+    const ids = (storage.shards.get(THREADS_SHARD) as { threads: Thread[] }).threads.map((th) => th.id).sort();
+    expect(ids).toEqual(["word:e1", "word:other"]);
+  });
+
+  it("reload doesn't write when the synced copy already has every turn, whatever its order", async () => {
+    const { storage, threads, entry } = setup(async () => result("ok"));
+    await threads.askWord(entry, { taskId: "word.usage" });
+    await threads.askWord(entry, { taskId: "word.mnemonic" });
+    await threads.flush();
+    const disk = storage.shards.get(THREADS_SHARD) as { threads: Thread[] };
+    const shuffled = disk.threads.map((th) => ({ ...th, turns: [...th.turns].reverse() })).reverse();
+    storage.shards.set(THREADS_SHARD, { threads: shuffled });
+    const before = storage.writes;
+    await threads.reload();
+    await threads.flush();
+    expect(storage.writes).toBe(before);
+  });
+
   it("survives a save and reload", async () => {
     const { storage, store, ai, threads, entry } = setup(async () => result("ok"));
     await threads.askWord(entry, { taskId: "word.usage" });

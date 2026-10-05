@@ -81,6 +81,16 @@ export function normalizeLearnShard(raw: unknown): LearnShard {
   };
 }
 
+// What a merge can change: which families / trivia exist and their
+// versions — not array order. LearnStore.reload() writes the union back
+// only when this differs from the synced copy, so devices that agree
+// never ping-pong.
+export function learnFingerprint(shard: LearnShard): string {
+  const recs = (kind: string, list: readonly Rec[]) =>
+    list.map((r) => `${kind}|${r.id}|${r.updatedAt ?? ""}|${r.rev ?? 0}|${r.deletedAt ?? ""}`);
+  return [...recs("f", shard.families), ...recs("t", shard.trivia)].sort().join("\n");
+}
+
 export function mergeLearn(local: LearnShard, remote: LearnShard): LearnShard {
   return {
     families: mergeRecords(local.families, remote.families, pickFamily),
