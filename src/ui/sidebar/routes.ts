@@ -17,6 +17,11 @@ export type SidebarRoute =
 
 export const LIST_ROUTE: SidebarRoute = { name: "list" };
 
+// On <body> while a discussion waits for its new paragraph (any ✦ shows).
+export const REBINDING_BODY_CLS = "vt-rebinding";
+
+export type ParagraphRoute = Extract<SidebarRoute, { name: "paragraph" | "paragraph-draft" }>;
+
 // Stable identity of a route: two routes with the same key show the same
 // thing, so navigating between them needn't redraw anything.
 export function routeKey(route: SidebarRoute): string {

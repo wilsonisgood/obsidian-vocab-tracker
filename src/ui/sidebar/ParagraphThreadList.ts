@@ -79,7 +79,7 @@ function drawRow(parent: HTMLElement, row: ParagraphRow, actions: ParagraphListA
   const title = el.createDiv({ cls: "vt-plist-text" });
   if (row.number !== null) title.createSpan({ cls: "vt-plist-num", text: `¶${row.number}` });
   title.createSpan({ text: row.preview });
-  title.title = row.preview;
+  title.setAttr("aria-label", row.preview);
 
   const meta = el.createDiv({ cls: "vt-plist-meta" });
   setIcon(meta.createSpan({ cls: "vt-plist-meta-icon" }), "sparkles");

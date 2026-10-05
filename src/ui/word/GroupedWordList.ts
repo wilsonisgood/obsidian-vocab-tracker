@@ -38,7 +38,7 @@ export function renderGroupedVocabList(
     const heading = container.createEl("div", { cls: "vocab-tracker-group-heading" });
     const arrow = heading.createEl("span", { cls: "vocab-tracker-group-arrow" });
     setIcon(arrow, isCollapsed ? "chevron-up" : "chevron-down");
-    heading.createEl("span", { text: title, cls: "vocab-tracker-group-title", title });
+    heading.createEl("span", { text: title, cls: "vocab-tracker-group-title", attr: { "aria-label": title } });
     heading.createEl("span", { cls: "vocab-tracker-group-spacer" });
     heading.createEl("span", { text: String(groupRows.length), cls: "vocab-tracker-group-count" });
     heading.onclick = () => {
