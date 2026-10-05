@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { VocabEntry } from "../../../src/core/model/entry";
-import { setLocale } from "../../../src/core/i18n";
+import { setLocale, t } from "../../../src/core/i18n";
 import {
   displayDate,
   displayStamp,
@@ -12,7 +12,6 @@ import {
   sortByRecent,
   stampMs,
 } from "../../../src/ui/word/wordOrder";
-import { lt, PENDING_STRINGS } from "../../../src/ui/word/pendingStrings";
 
 function entry(id: string, over: Partial<VocabEntry> = {}): VocabEntry {
   return {
@@ -152,22 +151,13 @@ describe("card dates (1005 回饋 14)", () => {
   });
 });
 
-describe("pending strings", () => {
+describe("sidebar strings", () => {
   afterEach(() => setLocale("en"));
-
-  it("has both languages for every key, with the same placeholders", () => {
-    for (const [key, v] of Object.entries(PENDING_STRINGS)) {
-      const ph = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort();
-      expect(v.en, key).toBeTruthy();
-      expect(v["zh-TW"], key).toBeTruthy();
-      expect(ph(v.en), key).toEqual(ph(v["zh-TW"]));
-    }
-  });
 
   it("follows the active locale", () => {
     setLocale("zh-TW");
-    expect(lt("sidebar.group.family", { name: "服裝" })).toBe("字族樹：服裝");
+    expect(t("sidebar.group.family", { name: "服裝" })).toBe("字族樹：服裝");
     setLocale("en");
-    expect(lt("sidebar.group.wordlist")).toBe("Exam word lists");
+    expect(t("sidebar.group.wordlist")).toBe("Exam word lists");
   });
 });

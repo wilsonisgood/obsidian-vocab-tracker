@@ -7,7 +7,6 @@ import { t } from "../../core/i18n";
 import { wordThreadId } from "../../core/model/thread";
 import { renderWordAiTab } from "./AiTab";
 import type { WordTab, WordUi } from "./wordUi";
-import { lt } from "./pendingStrings";
 import { displayDate, displayStamp, entryDates } from "./wordOrder";
 
 // Progressive-disclosure state for a single row: collapsed (one line),
@@ -228,7 +227,7 @@ export function renderVocabRow(
     const dates = entryDates(entry);
     body.createEl("div", { text: t("row.meta.added", { date: displayStamp(dates.added) }), cls: "vt-meta" });
     if (dates.updated) {
-      body.createEl("div", { text: lt("row.meta.updated", { date: displayStamp(dates.updated) }), cls: ["vt-meta", "vt-row-updated"] });
+      body.createEl("div", { text: t("row.meta.updated", { date: displayStamp(dates.updated) }), cls: ["vt-meta", "vt-row-updated"] });
     }
     body.createEl("div", {
       text: t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }),
@@ -326,12 +325,12 @@ function renderDatesLine(body: HTMLElement, entry: VocabEntry): void {
   const { added, updated } = entryDates(entry);
   if (!added && !updated) return;
   const text = updated
-    ? lt("row.meta.dates", { added: displayDate(added) || "—", updated: displayDate(updated) })
-    : lt("row.meta.addedOnly", { added: displayDate(added) });
+    ? t("row.meta.dates", { added: displayDate(added) || "—", updated: displayDate(updated) })
+    : t("row.meta.addedOnly", { added: displayDate(added) });
   const el = body.createEl("div", { text, cls: ["vt-meta", "vt-row-dates"] });
   el.setAttr(
     "aria-label",
-    [t("row.meta.added", { date: displayStamp(added) }), updated ? lt("row.meta.updated", { date: displayStamp(updated) }) : ""]
+    [t("row.meta.added", { date: displayStamp(added) }), updated ? t("row.meta.updated", { date: displayStamp(updated) }) : ""]
       .filter(Boolean)
       .join("\n")
   );

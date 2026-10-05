@@ -3,7 +3,7 @@ import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import type { ExpandState, RowOptions } from "./WordRow";
 import { renderVocabRow } from "./WordRow";
-import { lt } from "./pendingStrings";
+import { t } from "../../core/i18n";
 import { groupEntries, groupOf, noteTitle, type GroupOrder, type GroupRef } from "./wordOrder";
 
 // The key of the group a word is listed under (its collapsed state is
@@ -24,13 +24,13 @@ export function groupTitle(g: GroupRef, learn?: Pick<FamilyLookup, "family">, se
       return noteTitle(g.path as string);
     case "family": {
       const f = learn?.family(g.familyId as string);
-      if (f) return lt("sidebar.group.family", { name: f.label || f.topic });
-      return settled ? lt("sidebar.group.familyGone") : lt("sidebar.group.family", { name: "…" });
+      if (f) return t("sidebar.group.family", { name: f.label || f.topic });
+      return settled ? t("sidebar.group.familyGone") : t("sidebar.group.family", { name: "…" });
     }
     case "wordlist":
-      return lt("sidebar.group.wordlist");
+      return t("sidebar.group.wordlist");
     case "none":
-      return lt("sidebar.group.none");
+      return t("sidebar.group.none");
   }
 }
 
@@ -77,7 +77,7 @@ export function renderGroupedVocabList(
     if (group.kind === "family") {
       // The family's name opens 字族樹.md.
       titleEl.addClass("vt-group-title-link");
-      titleEl.setAttr("aria-label", lt("sidebar.group.familyOpen"));
+      titleEl.setAttr("aria-label", t("sidebar.group.familyOpen"));
       titleEl.setAttr("role", "link");
       titleEl.onclick = (e) => {
         e.stopPropagation();

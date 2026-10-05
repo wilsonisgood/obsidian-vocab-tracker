@@ -6,7 +6,7 @@ import type { VocabEntry } from "../../../src/core/model/entry";
 import type { VocabSidebarView } from "../../../src/ui/sidebar/VocabSidebarView";
 import { discussionRows } from "../../../src/ui/sidebar/discussionRows";
 import { SECTIONS_STORAGE_KEY } from "../../../src/ui/sidebar/sections";
-import { lt } from "../../../src/ui/word/pendingStrings";
+import { t } from "../../../src/core/i18n";
 import { entryRecency, groupOf } from "../../../src/ui/word/wordOrder";
 import { buildStressFixture } from "../../fixtures/stress";
 import type { FakeElement } from "../../perf/support/dom";
@@ -105,7 +105,7 @@ describe("groups of words from no note (1005 回饋 13)", () => {
       await b.plugin.learn.ensureLoaded();
       await flushMicrotasks();
       const title = heading.querySelector(".vt-group-title")!;
-      expect(title.textContent).toBe(lt("sidebar.group.family", { name: fam.label }));
+      expect(title.textContent).toBe(t("sidebar.group.family", { name: fam.label }));
       title.click();
       expect(openEntry).toHaveBeenCalledWith("families");
       // The click on the name didn't fold the group.
@@ -182,7 +182,7 @@ describe("sections (1005 回饋 2)", () => {
     const expected = discussionRows(b.plugin.threads, entries());
     expect(expected.length).toBeGreaterThan(20);
     const head = root(v).querySelector('.vt-sb-section[data-section="ai"] .vt-sb-section-title')!;
-    expect(head.textContent).toBe(lt("sidebar.section.ai", { n: expected.length }));
+    expect(head.textContent).toBe(t("sidebar.section.ai", { n: expected.length }));
     const rows = root(v).querySelectorAll(".vt-dlist-row");
     expect(rows.map((r) => r.getAttribute("data-thread-id"))).toEqual(expected.slice(0, 20).map((r) => r.threadId));
 
@@ -209,7 +209,7 @@ describe("sections (1005 回饋 2)", () => {
     expect(root(v).querySelectorAll(".vt-dlist-row")).toHaveLength(0);
     const n = discussionRows(b.plugin.threads, entries()).length;
     expect(root(v).querySelector('.vt-sb-section[data-section="ai"] .vt-sb-section-title')!.textContent).toBe(
-      lt("sidebar.section.ai", { n })
+      t("sidebar.section.ai", { n })
     );
   });
 });

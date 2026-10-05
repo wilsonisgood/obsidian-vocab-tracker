@@ -2,7 +2,6 @@ import { Component, setIcon } from "obsidian";
 import type { VocabEntry } from "../../core/model/entry";
 import { t } from "../../core/i18n";
 import type { ThreadService } from "../../services/threads/ThreadService";
-import { lt } from "../word/pendingStrings";
 import { noteTitle } from "../word/wordOrder";
 import { discussionRows, RECENT_DISCUSSIONS, type DiscussionRow } from "./discussionRows";
 import { shortDate } from "./paragraphRows";
@@ -59,7 +58,7 @@ export class DiscussionList extends Component {
   private draw(rows: DiscussionRow[]): void {
     this.el.empty();
     if (!rows.length) {
-      this.el.createDiv({ cls: "vt-plist-hint", text: lt("sidebar.ai.empty") });
+      this.el.createDiv({ cls: "vt-plist-hint", text: t("sidebar.ai.empty") });
       return;
     }
     const shown = this.view.showAll ? rows : rows.slice(0, RECENT_DISCUSSIONS);
@@ -67,7 +66,7 @@ export class DiscussionList extends Component {
     if (rows.length > RECENT_DISCUSSIONS) {
       const more = this.el.createEl("button", {
         cls: "vt-dlist-more",
-        text: this.view.showAll ? lt("sidebar.ai.showLess") : lt("sidebar.ai.showAll", { n: rows.length }),
+        text: this.view.showAll ? t("sidebar.ai.showLess") : t("sidebar.ai.showAll", { n: rows.length }),
       });
       more.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -97,7 +96,7 @@ export class DiscussionList extends Component {
     title.createSpan({ cls: "vt-dlist-text", text: row.title });
     title.setAttr("aria-label", row.title);
 
-    const parts = [lt(row.kind === "word" ? "sidebar.ai.kind.word" : "sidebar.ai.kind.paragraph")];
+    const parts = [t(row.kind === "word" ? "sidebar.ai.kind.word" : "sidebar.ai.kind.paragraph")];
     if (row.path) parts.push(noteTitle(row.path));
     parts.push(t("paragraph.list.count", { n: row.count }));
     const date = shortDate(row.lastAt);

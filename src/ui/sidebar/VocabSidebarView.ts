@@ -4,7 +4,6 @@ import type { VocabEntry } from "../../core/model/entry";
 import type { ExpandState, RowOptions } from "../word/WordRow";
 import { renderVocabRow } from "../word/WordRow";
 import { renderGroupedVocabList } from "../word/GroupedWordList";
-import { lt } from "../word/pendingStrings";
 import { sortByRecent } from "../word/wordOrder";
 import { t } from "../../core/i18n";
 import type { SectionRef } from "../../services/anchors/ParagraphAnchorService";
@@ -407,11 +406,11 @@ export class VocabSidebarView extends ItemView {
     }
 
     // Two foldable sections (1005 回饋 2): 單字, then AI 討論.
-    const words = this.drawSection(root, "words", lt("sidebar.section.words"));
+    const words = this.drawSection(root, "words", t("sidebar.section.words"));
     if (words) this.drawWords(words, scope);
 
     const counter = { el: null as HTMLElement | null };
-    const ai = this.drawSection(root, "ai", lt("sidebar.section.ai", { n: "…" }), counter);
+    const ai = this.drawSection(root, "ai", t("sidebar.section.ai", { n: "…" }), counter);
     if (ai) {
       const { threads } = this.plugin;
       scope.addChild(
@@ -421,7 +420,7 @@ export class VocabSidebarView extends ItemView {
           {
             openWord: (entryId) => this.openWord(entryId, "ai"),
             openParagraph: (threadId) => this.openThread(threadId),
-            counted: (n) => counter.el?.setText(lt("sidebar.section.ai", { n })),
+            counted: (n) => counter.el?.setText(t("sidebar.section.ai", { n })),
           },
           this.discussionView
         )
@@ -432,7 +431,7 @@ export class VocabSidebarView extends ItemView {
       const recount = () => {
         if (!counter.el?.isConnected) return;
         const n = discussionRows(threads, this.plugin.store.entries).length;
-        counter.el.setText(lt("sidebar.section.ai", { n }));
+        counter.el.setText(t("sidebar.section.ai", { n }));
       };
       scope.register(threads.events.on("thread:upsert", recount));
       scope.register(threads.events.on("threads:reloaded", recount));

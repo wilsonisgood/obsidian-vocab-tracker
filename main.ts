@@ -68,6 +68,7 @@ import { ParagraphBadges } from "./src/ui/reading/ParagraphBadges";
 import { resolveAnchorSettings } from "./src/ui/sidebar/anchorSettings";
 import { resolveUiPrefs } from "./src/core/model/settings";
 import { currentFormFactor } from "./src/ui/mobile/platform";
+import { wordSurface } from "./src/ui/mobile/formFactor";
 import { planTap, tapActionFor } from "./src/ui/mobile/tapAction";
 import { WordSheet } from "./src/ui/mobile/WordSheet";
 import { WordSurfaces } from "./src/ui/mobile/WordSurfaces";
@@ -268,9 +269,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       form: currentFormFactor,
       sheet: this.sheet,
       revealSidebar: async () => (await this.activateSidebar()).view as VocabSidebarView,
-      // A deferred (not yet loaded) view has no rebindThreadId: that's fine.
-      existingSidebar: () =>
-        (this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0]?.view as VocabSidebarView | undefined) ?? null,
+      existingSidebar: () => this.sidebarView(),
     });
     this.livePreviewHint = new LivePreviewHint({
       form: currentFormFactor,
@@ -450,8 +449,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
 
     // Not refreshSidebar(): that gates on the active file path to skip
     // redundant renders, but data actually changed here regardless of path.
-    const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
-    (leaf?.view as VocabSidebarView | undefined)?.render();
+    this.sidebarView()?.render();
     // Another device changed list colours / toggles / folder.
     if (JSON.stringify(this.wordlistSettings()) !== wordlistsBefore) void this.onWordlistsChanged("reload");
     // Another device switched AI on/off: the ✦ hover badges follow.
@@ -586,8 +584,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   }
 
   renderSidebar() {
-    const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
-    (leaf?.view as VocabSidebarView | undefined)?.render();
+    this.sidebarView()?.render();
   }
 
   registerWordlistEvents() {
@@ -632,8 +629,14 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   }
 
   refreshExamStrip() {
-    const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
-    (leaf?.view as VocabSidebarView | undefined)?.refreshExamStrip();
+    this.sidebarView()?.refreshExamStrip();
+  }
+
+  // The sidebar view if it's open and loaded — never opens it. A tab not
+  // shown since startup is a DeferredView (Obsidian 1.7.2+) and gives null.
+  sidebarView(): VocabSidebarView | null {
+    const view = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0]?.view;
+    return view instanceof VocabSidebarView ? view : null;
   }
 
   async activateSidebar(): Promise<WorkspaceLeaf> {
@@ -643,7 +646,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf("split");
       await leaf.setViewState({ type: VOCAB_VIEW_TYPE, active: true });
     }
-    workspace.revealLeaf(leaf);
+    // Obsidian 1.7.2+: a sidebar tab not shown since startup is a DeferredView
+    // until revealed — without the await, leaf.view has no setWord/openWord.
+    await workspace.revealLeaf(leaf);
     return leaf;
   }
 
@@ -790,6 +795,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         void this.surfaces.revealWord(word, ctx);
         return;
       case "menu":
+        // 1005 回饋 3: an open sidebar follows a tracked word (a menu tap never opens it).
+        if (exists && wordSurface(currentFormFactor()) !== "sheet") this.sidebarView()?.locateWord(word);
         this.showWordMenu(evt, word, ctx, exists);
     }
   }
@@ -823,6 +830,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         notify: (text, actions) => (actions?.length ? actionNotice(text, actions) : new Notice(text)),
       });
       this.renderSidebar();
+      this.sidebarView()?.locateWord(word);
     } catch (e) {
       console.error("Vocab Tracker: couldn't save the word", e);
       new Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
@@ -907,10 +915,12 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       await this.store.addEntry(entry);
       this.enrichEntry(entry);
     } else {
+      const before = JSON.stringify([existing.source, existing.example, existing.level]);
       if (!existing.source && source) existing.source = source;
       if (!existing.example && ctx.sentence) existing.example = ctx.sentence;
       existing.level = mergeLevel(existing.level, labels);
-      await this.store.touch(existing);
+      // Only a real change counts: the sidebar orders words by updatedAt (1005 回饋 1).
+      if (JSON.stringify([existing.source, existing.example, existing.level]) !== before) await this.store.touch(existing);
     }
 
     if (opts.reveal !== false) await this.surfaces.revealWord(word, ctx);
@@ -991,10 +1001,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   }
 
   refreshSidebar() {
-    const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
-    if (!leaf) return;
+    const view = this.sidebarView() as any;
+    if (!view) return;
     const path = this.app.workspace.getActiveFile()?.path || "";
-    const view = leaf.view as any;
     if (view._lastFilePath === path) return;
     view._lastFilePath = path;
     view.render();
