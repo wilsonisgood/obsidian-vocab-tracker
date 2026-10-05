@@ -19,8 +19,8 @@ const T3 = "2026-10-03T00:00:00.000Z";
 const data = (settings: PluginSettings) => ({ schemaVersion: 2 as const, settings, entries: [] });
 
 describe("resolveUiPrefs", () => {
-  it("defaults: menu on desktop, save at once on mobile, Live Preview hint on", () => {
-    expect(DEFAULT_UI_PREFS).toEqual({ tapAction: "menu", tapActionMobile: "save", livePreviewHint: true });
+  it("defaults: menu on desktop, save at once on mobile, Live Preview hint on, automatic pronunciation", () => {
+    expect(DEFAULT_UI_PREFS).toEqual({ tapAction: "menu", tapActionMobile: "save", livePreviewHint: true, pronounceSource: "auto" });
     expect(resolveUiPrefs(undefined)).toEqual(DEFAULT_UI_PREFS);
   });
 
@@ -29,15 +29,25 @@ describe("resolveUiPrefs", () => {
   });
 
   it("keeps stored values", () => {
-    expect(resolveUiPrefs({ locale: "auto", tapAction: "open", tapActionMobile: "menu", livePreviewHint: false })).toEqual({
+    expect(
+      resolveUiPrefs({ locale: "auto", tapAction: "open", tapActionMobile: "menu", livePreviewHint: false, pronounceSource: "synth" })
+    ).toEqual({
       tapAction: "open",
       tapActionMobile: "menu",
       livePreviewHint: false,
+      pronounceSource: "synth",
     });
+    expect(resolveUiPrefs({ locale: "auto", pronounceSource: "recording" }).pronounceSource).toBe("recording");
   });
 
   it("reads values it doesn't know (a newer version's) as the default", () => {
-    const ui = { locale: "auto", tapAction: "long-press", tapActionMobile: 3, livePreviewHint: "no" } as unknown as UiSettings;
+    const ui = {
+      locale: "auto",
+      tapAction: "long-press",
+      tapActionMobile: 3,
+      livePreviewHint: "no",
+      pronounceSource: "neural",
+    } as unknown as UiSettings;
     expect(resolveUiPrefs(ui)).toEqual(DEFAULT_UI_PREFS);
   });
 });

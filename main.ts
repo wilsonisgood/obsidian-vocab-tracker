@@ -75,7 +75,9 @@ import { WordSurfaces } from "./src/ui/mobile/WordSurfaces";
 import { quickSave } from "./src/ui/mobile/quickSave";
 import { actionNotice } from "./src/ui/mobile/actionNotice";
 import { LivePreviewHint } from "./src/ui/mobile/livePreviewHint";
-import { browserSpeaker, type Speaker } from "./src/ui/mobile/speech";
+import { sharedSpeaker, type Speaker } from "./src/ui/mobile/speech";
+import { configurePronouncer, disposePronouncer, pronounce } from "./src/ui/kit/pronounce";
+import { ObsidianDeviceState } from "./src/platform/ObsidianDevice";
 import { BackupService } from "./src/services/backup/BackupService";
 import type { RestoreChanges } from "./src/core/ports";
 
@@ -142,9 +144,17 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.dictionary = new DictionaryService(new ObsidianHttp());
     this.applyLocale();
     // iOS: the first speechSynthesis call can be silent unless the voice
-    // list was asked for once beforehand.
-    this.speaker = browserSpeaker();
+    // list was asked for once beforehand. The same Speaker is the
+    // Pronouncer's system voice (ui/kit/pronounce.ts).
+    this.speaker = sharedSpeaker();
     this.speaker.warmUp();
+    // 🔊 (1005 回饋第 12 項): before anything can pronounce a word — the
+    // shared Pronouncer is built on first use with this config.
+    configurePronouncer({
+      source: () => resolveUiPrefs(this.store.settings.ui).pronounceSource,
+      // Failed recording URLs, remembered on this device for 7 days.
+      deviceState: new ObsidianDeviceState(this.app),
+    });
 
     // AI (M3): service + settings tab. AI stays off until enabled in settings.
     const { ai, keys } = createAiService(this.store, createAiPorts(this.app, this.storage));
@@ -431,6 +441,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   // So a debounced write (VocabStore's 500ms coalescing) isn't lost if
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
+    // Stop any 🔊 playback and release cached recordings.
+    disposePronouncer();
     this.unloaded = true;
     // Threads first: it saves in-flight answers as stopped with their text
     // so far, before ai.dispose() aborts the requests.
@@ -1001,17 +1013,11 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
 
   // ── Pronounce a word ───────────────────────────────────────────
 
+  // The dictionary recording, or the system voice when it's slow / missing
+  // (services/speech/Pronouncer.ts). 🔊 buttons use bindPronounceButton()
+  // instead, which also shows the loading / playing state.
   speakWord(entry: VocabEntry) {
-    if (entry.audio) {
-      const a = new Audio(entry.audio);
-      a.play().catch(() => this.speakSynth(entry.word));
-      return;
-    }
-    this.speakSynth(entry.word);
-  }
-
-  speakSynth(word: string) {
-    if (!this.speaker.speak(word)) new Notice("No pronunciation available on this device.");
+    void pronounce(entry);
   }
 
   // ── Auto-fetch dictionary data (Wiktionary, falls back to Datamuse) ──

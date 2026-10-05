@@ -64,7 +64,7 @@ describe("confirmation wording", () => {
       "這個備份裡沒有字族和冷知識收藏，這些會維持現在的樣子。",
       "設定（AI、單字卡、考試字表…）和 AI 用量統計不會變。",
     ]);
-    expect(text.extras).toBe("目前有、但備份裡沒有的：3 個單字、4 題討論、0 個字族／收藏。不勾選的話會保留。");
+    expect(text.extras).toBe("目前有、但備份裡沒有的：3 個單字、4 題討論、0 個字族／收藏。沒打開下面的開關就會保留。");
   });
 
   it("says when nothing would change, and hides the extras choice when there are none", () => {

@@ -27,6 +27,8 @@ export const en = {
   "row.expand": "Expand",
   "row.collapse": "Collapse",
   "row.pronounce": "Pronounce",
+  "pronounce.noVoice": "No pronunciation available on this device.",
+  "pronounce.loading": "Loading pronunciation…",
   "row.jumpToSource": "Jump to where this word was captured",
   "row.showMore": "Show more",
   "row.showLess": "Show less",
@@ -475,6 +477,12 @@ export const en = {
   "settings.reading.tap.menu": "Show a menu",
   "settings.reading.tap.save": "Save it right away",
   "settings.reading.tap.open": "Open its card (don’t save)",
+  "settings.reading.pronounceSource.name": "Pronunciation",
+  "settings.reading.pronounceSource.desc":
+    "Which voice 🔊 uses. Dictionary recordings are downloaded; when that’s slow, “Automatic” switches to the system voice after 1.5 s.",
+  "settings.reading.pronounceSource.auto": "Automatic (recording, system voice if slow)",
+  "settings.reading.pronounceSource.recording": "Prefer recording (wait for it)",
+  "settings.reading.pronounceSource.synth": "System voice only",
   "settings.reading.livePreviewHint.name": "Live Preview hint",
   "settings.reading.livePreviewHint.desc":
     "On mobile, tell me once per session when I tap a word in Live Preview, where tapping can’t save words.",
@@ -522,7 +530,7 @@ export const en = {
   "backup.restore.settings": "Settings (AI, flashcards, exam lists…) and AI usage stats are not changed.",
   "backup.restore.extras.title": "Added after the backup",
   "backup.restore.extras.desc":
-    "You now have {words} words, {questions} discussion questions and {learn} families / saved trivia that aren’t in this backup. They are kept unless you tick the box.",
+    "You now have {words} words, {questions} discussion questions and {learn} families / saved trivia that aren’t in this backup. They are kept unless you turn on the switch below.",
   "backup.restore.extras.remove": "Delete these too (other devices delete them after syncing)",
   "backup.restore.extras.undoHint": "Undoing a restore with its “Saved automatically before a restore” backup? Turn this on to get back exactly to how things were.",
   "backup.restore.safety":

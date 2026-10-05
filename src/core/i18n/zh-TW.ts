@@ -28,6 +28,8 @@ export const zhTW: Record<keyof typeof en, string> = {
   "row.expand": "展開",
   "row.collapse": "收合",
   "row.pronounce": "發音",
+  "pronounce.noVoice": "這台裝置沒有可用的發音。",
+  "pronounce.loading": "讀取發音中…",
   "row.jumpToSource": "跳到這個字出現的地方",
   "row.showMore": "顯示更多",
   "row.showLess": "顯示較少",
@@ -470,6 +472,12 @@ export const zhTW: Record<keyof typeof en, string> = {
   "settings.reading.tap.menu": "跳出選單",
   "settings.reading.tap.save": "直接存成單字",
   "settings.reading.tap.open": "打開單字卡（不儲存）",
+  "settings.reading.pronounceSource.name": "發音來源",
+  "settings.reading.pronounceSource.desc":
+    "🔊 要用哪種讀音。字典音檔要從網路下載，網路慢或伺服器沒回應時，「自動」會在 1.5 秒後改用系統語音。",
+  "settings.reading.pronounceSource.auto": "自動（字典音檔，太慢就改用系統語音）",
+  "settings.reading.pronounceSource.recording": "優先字典音檔（等它載完）",
+  "settings.reading.pronounceSource.synth": "只用系統語音",
   "settings.reading.livePreviewHint.name": "Live Preview 提示",
   "settings.reading.livePreviewHint.desc": "在行動裝置的 Live Preview（即時預覽）點字時，每次開啟提醒一次：點字只在閱讀模式有效。",
   // ── 備份與還原 (services/backup) ──
@@ -515,7 +523,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "backup.restore.settings": "設定（AI、單字卡、考試字表…）和 AI 用量統計不會變。",
   "backup.restore.extras.title": "備份之後新增的",
   "backup.restore.extras.desc":
-    "目前有、但備份裡沒有的：{words} 個單字、{questions} 題討論、{learn} 個字族／收藏。不勾選的話會保留。",
+    "目前有、但備份裡沒有的：{words} 個單字、{questions} 題討論、{learn} 個字族／收藏。沒打開下面的開關就會保留。",
   "backup.restore.extras.remove": "一併刪除這些（其他裝置同步後也會刪除）",
   "backup.restore.extras.undoHint": "用「還原前自動備份」復原時，請打開這個開關，才會完全回到還原前的狀態。",
   "backup.restore.safety":

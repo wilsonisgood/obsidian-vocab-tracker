@@ -5,6 +5,7 @@ import { noteBasename } from "../../core/text/slug";
 import { paragraphNumber } from "../../services/files/paragraphNumber";
 import { isNewCard, startOfLocalDay } from "../../services/srs/queue";
 import { inlineNote } from "../kit/inlineNote";
+import { bindPronounceButton } from "../kit/pronounce";
 import { parseBlockParams } from "./params";
 
 // ── vocab-word code block: the header of a word page (規劃書 06 §8.2, W1/W2) ──
@@ -33,7 +34,6 @@ export interface WordHeaderHost {
   };
   // Frontmatter of a note, when ctx.frontmatter isn't there (metadataCache).
   frontmatterOf(path: string): Record<string, unknown> | null | undefined;
-  speakWord(entry: VocabEntry): void;
   jumpToSource(entry: VocabEntry): unknown;
   // Text of a note, for the ¶ number. Optional: without it the chip shows
   // just the note's name.
@@ -146,7 +146,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
     if (meta) top.createSpan({ cls: "vt-wh-meta", text: meta });
     const speak = top.createEl("button", { cls: ["clickable-icon", "vt-wh-speak"], attr: { "aria-label": l("speak") } });
     setIcon(speak, "volume-2");
-    speak.addEventListener("click", () => this.host.speakWord(entry));
+    bindPronounceButton(speak, entry);
 
     const def = entry.definitionZh?.trim() || entry.definition?.trim();
     if (def) root.createDiv({ cls: "vt-wh-def", text: def });

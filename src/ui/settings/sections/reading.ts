@@ -1,5 +1,12 @@
 import { Setting } from "obsidian";
-import { resolveUiPrefs, TAP_ACTIONS, type TapAction, type UiPrefs } from "../../../core/model/settings";
+import {
+  PRONOUNCE_SOURCES,
+  resolveUiPrefs,
+  TAP_ACTIONS,
+  type PronounceSource,
+  type TapAction,
+  type UiPrefs,
+} from "../../../core/model/settings";
 import { t, type I18nKey } from "../../../core/i18n";
 import type { SettingsContext, SettingsSection } from "../SettingsTab";
 
@@ -10,6 +17,13 @@ import type { SettingsContext, SettingsSection } from "../SettingsTab";
 function tapOptions(): Record<TapAction, string> {
   const out = {} as Record<TapAction, string>;
   for (const a of TAP_ACTIONS) out[a] = t(`settings.reading.tap.${a}` as I18nKey);
+  return out;
+}
+
+// 「發音來源」 (1005 回饋第 12 項): which voice 🔊 uses.
+function pronounceOptions(): Record<PronounceSource, string> {
+  const out = {} as Record<PronounceSource, string>;
+  for (const s of PRONOUNCE_SOURCES) out[s] = t(`settings.reading.pronounceSource.${s}` as I18nKey);
   return out;
 }
 
@@ -42,6 +56,15 @@ export const readingSection: SettingsSection = {
           .addOptions(tapOptions())
           .setValue(prefs.tapActionMobile)
           .onChange((v) => setPref(ctx, "tapActionMobile", v as TapAction))
+      );
+    new Setting(el)
+      .setName(t("settings.reading.pronounceSource.name"))
+      .setDesc(t("settings.reading.pronounceSource.desc"))
+      .addDropdown((d) =>
+        d
+          .addOptions(pronounceOptions())
+          .setValue(prefs.pronounceSource)
+          .onChange((v) => setPref(ctx, "pronounceSource", v as PronounceSource))
       );
     new Setting(el)
       .setName(t("settings.reading.livePreviewHint.name"))

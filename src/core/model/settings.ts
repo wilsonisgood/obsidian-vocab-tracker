@@ -67,6 +67,14 @@ export type UiLocaleSetting = "auto" | "en" | "zh-TW";
 export const TAP_ACTIONS = ["menu", "save", "open"] as const;
 export type TapAction = (typeof TAP_ACTIONS)[number];
 
+// Which voice 🔊 uses (1005 回饋第 12 項, services/speech/Pronouncer.ts):
+//   auto      — the dictionary recording, or the system voice when it's
+//               slow (1.5 s) or this is an iPhone / iPad
+//   recording — wait for the recording
+//   synth     — always the system voice
+export const PRONOUNCE_SOURCES = ["auto", "recording", "synth"] as const;
+export type PronounceSource = (typeof PRONOUNCE_SOURCES)[number];
+
 export interface UiSettings extends SectionStamp {
   locale: UiLocaleSetting;
   // Read through resolveUiPrefs() below. Optional on disk: data written
@@ -79,22 +87,30 @@ export interface UiSettings extends SectionStamp {
   // The one-time 「Live Preview 不能點字」 hint on mobile; false once the
   // user picked 「不再提示」.
   livePreviewHint?: boolean;
+  // 🔊 用哪種讀音（1005 回饋第 12 項）.
+  pronounceSource?: PronounceSource;
 }
 
 export interface UiPrefs {
   tapAction: TapAction;
   tapActionMobile: TapAction;
   livePreviewHint: boolean;
+  pronounceSource: PronounceSource;
 }
 
 export const DEFAULT_UI_PREFS: Readonly<UiPrefs> = {
   tapAction: "menu",
   tapActionMobile: "save",
   livePreviewHint: true,
+  pronounceSource: "auto",
 };
 
 function isTapAction(v: unknown): v is TapAction {
   return typeof v === "string" && (TAP_ACTIONS as readonly string[]).includes(v);
+}
+
+function isPronounceSource(v: unknown): v is PronounceSource {
+  return typeof v === "string" && (PRONOUNCE_SOURCES as readonly string[]).includes(v);
 }
 
 // The ui section's M8 fields with defaults filled in. A value this version
@@ -105,6 +121,7 @@ export function resolveUiPrefs(ui: Partial<UiSettings> | undefined): UiPrefs {
     tapAction: isTapAction(ui?.tapAction) ? ui.tapAction : DEFAULT_UI_PREFS.tapAction,
     tapActionMobile: isTapAction(ui?.tapActionMobile) ? ui.tapActionMobile : DEFAULT_UI_PREFS.tapActionMobile,
     livePreviewHint: typeof ui?.livePreviewHint === "boolean" ? ui.livePreviewHint : DEFAULT_UI_PREFS.livePreviewHint,
+    pronounceSource: isPronounceSource(ui?.pronounceSource) ? ui.pronounceSource : DEFAULT_UI_PREFS.pronounceSource,
   };
 }
 

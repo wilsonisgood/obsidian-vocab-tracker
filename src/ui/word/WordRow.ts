@@ -5,6 +5,7 @@ import { Rating } from "../../core/model/srs";
 import { dueLabel } from "../../core/text/dueLabel";
 import { t } from "../../core/i18n";
 import { wordThreadId } from "../../core/model/thread";
+import { bindPronounceButton } from "../kit/pronounce";
 import { renderWordAiTab } from "./AiTab";
 import type { WordTab, WordUi } from "./wordUi";
 import { displayDate, displayStamp, entryDates } from "./wordOrder";
@@ -116,10 +117,7 @@ export function renderVocabRow(
     setIcon(speak, "volume-2");
     speak.setAttr("aria-label", t("row.pronounce"));
     speak.setAttr("role", "button");
-    speak.onclick = (e) => {
-      e.stopPropagation();
-      plugin.speakWord(entry);
-    };
+    bindPronounceButton(speak, entry, { stopPropagation: true });
   };
 
   if (sheet) {
@@ -311,10 +309,7 @@ export function renderVocabRow(
     setIcon(speak, "volume-2");
     speak.setAttr("aria-label", t("row.pronounce"));
     speak.setAttr("role", "button");
-    speak.onclick = (e) => {
-      e.stopPropagation();
-      plugin.speakWord(entry);
-    };
+    bindPronounceButton(speak, entry, { stopPropagation: true });
   }
 
   renderWordPageButton(body, entry, opts);

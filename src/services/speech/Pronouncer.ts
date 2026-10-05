@@ -1,4 +1,5 @@
 import type { VocabEntry } from "../../core/model/entry";
+import { PRONOUNCE_SOURCES, type PronounceSource } from "../../core/model/settings";
 import type { DeviceStatePort } from "../../core/ports";
 
 // Pronouncing a word (1005 回饋第 12 項): the dictionary recording when
@@ -27,13 +28,12 @@ import type { DeviceStatePort } from "../../core/ports";
 //   away; once it's loaded, later taps play it.
 // One attempt at a time: a new one stops the previous one.
 
-export type PronounceSource = "auto" | "recording" | "synth";
+// The setting lives in core/model/settings.ts (ui.pronounceSource).
+export { PRONOUNCE_SOURCES, type PronounceSource };
 export type PronounceState = "idle" | "loading" | "playing";
 // How the word ended up being spoken; "none" = no voice at all,
 // "stopped" = stopped (or replaced by a newer attempt) before either began.
 export type PronounceVia = "recording" | "synth" | "none" | "stopped";
-
-export const PRONOUNCE_SOURCES: readonly PronounceSource[] = ["auto", "recording", "synth"];
 
 export function parsePronounceSource(raw: unknown): PronounceSource {
   return PRONOUNCE_SOURCES.find((s) => s === raw) ?? "auto";

@@ -1,5 +1,5 @@
 import { Notice } from "obsidian";
-import { getLocale } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import type { DeviceStatePort } from "../../core/ports";
 import {
@@ -19,23 +19,6 @@ import { sharedSpeaker } from "../mobile/speech";
 // system voice is getting ready, `is-playing` while it speaks. State is
 // tracked per word, not per element: a flashcard re-renders on flip, and
 // the 🔊 it draws then still shows that the word is loading.
-
-// TODO(i18n): move into the dictionaries as pronounce.noVoice /
-// pronounce.loading.
-const L = {
-  noVoice: {
-    "zh-TW": "這台裝置沒有可用的發音。",
-    en: "No pronunciation available on this device.",
-  },
-  loading: {
-    "zh-TW": "讀取發音中…",
-    en: "Loading pronunciation…",
-  },
-} as const;
-
-function l(key: keyof typeof L): string {
-  return getLocale() === "zh-TW" ? L[key]["zh-TW"] : L[key].en;
-}
 
 // ── The browser side of the ports ───────────────────────────────
 
@@ -159,7 +142,7 @@ export function applyPronounceState(el: HTMLElement, state: PronounceState): voi
   el.toggleClass("is-playing", state === "playing");
   if (state === "loading") {
     el.setAttr("aria-busy", "true");
-    el.setAttr("title", l("loading"));
+    el.setAttr("title", t("pronounce.loading"));
   } else {
     el.removeAttribute("aria-busy");
     el.removeAttribute("title");
@@ -198,7 +181,7 @@ export function pronounce(entry: Target): Promise<PronounceVia> {
       paint();
     })
     .then((via) => {
-      if (via === "none") new Notice(l("noVoice"));
+      if (via === "none") new Notice(t("pronounce.noVoice"));
       return via;
     });
 }
