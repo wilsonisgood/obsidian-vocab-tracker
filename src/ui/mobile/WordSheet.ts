@@ -10,7 +10,6 @@ import { renderVocabRow, type ExpandState } from "../word/WordRow";
 import { WordUi, type WordTab } from "../word/wordUi";
 import { actionNotice } from "./actionNotice";
 import { BottomSheet, type SheetWindow } from "./BottomSheet";
-import { lm } from "./strings";
 import type { SheetTarget } from "./WordSurfaces";
 
 // iPhone: the word card and paragraph discussions in a bottom sheet
@@ -116,8 +115,8 @@ export class WordSheet extends Component implements SheetTarget {
   private ensureSheet(): BottomSheet {
     if (!this.sheet) {
       this.sheet = new BottomSheet({
-        label: lm("mobile.sheet.label.paragraph"),
-        closeLabel: lm("mobile.sheet.close"),
+        label: t("mobile.sheet.label.paragraph"),
+        closeLabel: t("mobile.sheet.close"),
         host: this.opts.host,
         win: this.opts.win,
         // Unload the card's ChatPanel etc. (their subscriptions) now; the
@@ -155,7 +154,7 @@ export class WordSheet extends Component implements SheetTarget {
 
   private drawWord(sheet: BottomSheet, view: Extract<SheetView, { kind: "word" }>): void {
     const entry = (view.entryId && this.plugin.store.entries.find((e) => e.id === view.entryId)) || this.findEntry(view.word);
-    sheet.setLabel(lm("mobile.sheet.label.word", { word: entry?.word ?? view.word }));
+    sheet.setLabel(t("mobile.sheet.label.word", { word: entry?.word ?? view.word }));
     if (!entry) {
       view.entryId = undefined;
       this.drawAddPrompt(sheet.content, view);
@@ -185,7 +184,7 @@ export class WordSheet extends Component implements SheetTarget {
   private drawAddPrompt(el: HTMLElement, view: Extract<SheetView, { kind: "word" }>): void {
     const box = el.createDiv({ cls: "vt-sheet-add" });
     box.createDiv({ cls: "vt-sheet-add-word", text: view.word });
-    box.createDiv({ cls: "vt-sheet-add-hint", text: lm("mobile.sheet.notTracked") });
+    box.createDiv({ cls: "vt-sheet-add-hint", text: t("mobile.sheet.notTracked") });
     const btn = box.createEl("button", { cls: "mod-cta vt-sheet-add-btn", text: t("sidebar.addPrompt.cta") });
     btn.addEventListener("click", () => {
       btn.disabled = true;
@@ -200,7 +199,7 @@ export class WordSheet extends Component implements SheetTarget {
   }
 
   private drawParagraph(sheet: BottomSheet, route: ParagraphRoute): void {
-    sheet.setLabel(lm("mobile.sheet.label.paragraph"));
+    sheet.setLabel(t("mobile.sheet.label.paragraph"));
     this.wordUi.component.addChild(new ParagraphThreadPane(sheet.content, route, this.plugin, this.wordUi.chat, this.paneNav()));
   }
 
@@ -249,7 +248,7 @@ export class WordSheet extends Component implements SheetTarget {
     this.cancelRebind();
     this.rebindThreadId = threadId;
     document.body.addClass(REBINDING_BODY_CLS);
-    this.rebindNotice = actionNotice(lm("mobile.rebind.pick"), [{ label: t("paragraph.rebind.cancel"), run: () => this.cancelRebind() }], 0);
+    this.rebindNotice = actionNotice(t("mobile.rebind.pick"), [{ label: t("paragraph.rebind.cancel"), run: () => this.cancelRebind() }], 0);
   }
 
   private cancelRebind(): void {

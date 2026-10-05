@@ -1,6 +1,6 @@
 import type { VocabEntry } from "../../core/model/entry";
 import type { NoticeAction } from "./actionNotice";
-import { lm } from "./strings";
+import { t } from "../../core/i18n";
 
 // Tap action "save" (規劃書 01 §3.2): the word is added at once — no
 // sidebar, no sheet — and a Notice confirms it with 「復原」, which deletes
@@ -18,14 +18,14 @@ export async function quickSave(word: string, deps: QuickSaveDeps): Promise<Voca
   const entry = await deps.add();
   if (!entry) return null;
   let undone = false;
-  deps.notify(lm("mobile.save.added", { word: entry.word }), [
+  deps.notify(t("mobile.save.added", { word: entry.word }), [
     {
-      label: lm("mobile.save.undo"),
+      label: t("mobile.save.undo"),
       run: () => {
         if (undone) return;
         undone = true;
         void deps.remove(entry).then(
-          () => deps.notify(lm("mobile.save.undone", { word })),
+          () => deps.notify(t("mobile.save.undone", { word })),
           (e) => console.error("Vocab Tracker: undo failed", e)
         );
       },

@@ -1,5 +1,5 @@
 import { isMobileForm, type FormFactor } from "./formFactor";
-import { lm } from "./strings";
+import { t } from "../../core/i18n";
 
 // Obsidian mobile opens notes in Live Preview, where tapping a word does
 // nothing — saving words only works in reading view (規劃書 01 §3.4, the
@@ -44,9 +44,9 @@ export class LivePreviewHint {
     if (this.shownThisSession || !isMobileForm(this.deps.form()) || !this.deps.enabled()) return false;
     if (!isLivePreviewText(target) || !hasWord()) return false;
     this.shownThisSession = true;
-    this.deps.notify(lm("mobile.livePreview.text"), [
-      { label: lm("mobile.livePreview.switch"), run: () => this.deps.switchToReading() },
-      { label: lm("mobile.livePreview.never"), run: () => this.deps.disable() },
+    this.deps.notify(t("mobile.livePreview.text"), [
+      { label: t("mobile.livePreview.switch"), run: () => this.deps.switchToReading() },
+      { label: t("mobile.livePreview.never"), run: () => this.deps.disable() },
     ]);
     return true;
   }

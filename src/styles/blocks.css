@@ -545,15 +545,11 @@ body.is-mobile .vt-fc-kbd {
   color: var(--color-red);
 }
 
-/* Rating buttons: one row on desktop, 2×2 on phones (M2) */
+/* Rating buttons: one row on desktop; 2×2 on iPhone is in mobile.css (M2) */
 .vt-fc-ratings {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-}
-
-body.is-mobile .vt-fc-ratings {
-  grid-template-columns: repeat(2, 1fr);
 }
 
 .vt-fc-rate {

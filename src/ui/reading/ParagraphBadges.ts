@@ -6,7 +6,8 @@ import type { ParagraphIndex } from "../../services/anchors/ParagraphIndex";
 // Reading-mode paragraph badges (規劃書 06 §9.5, design D1): `✦ n` beside
 // a paragraph that has discussions, a `✦` that only shows on hover beside
 // one that doesn't (always shown, smaller, on mobile). Clicking opens the
-// paragraph's discussion in the sidebar.
+// paragraph's discussion in the sidebar — on iPhone it's the bottom sheet
+// instead (main.ts routes it through WordSurfaces).
 //
 // The post-processor only does an O(1) ParagraphIndex lookup — no vault
 // reads. The badge is appended to the section's own element, next to its
@@ -47,7 +48,8 @@ export class SectionLines {
 
 export interface ParagraphBadgeDeps {
   index: Pick<ParagraphIndex, "count" | "events">;
-  // Open (or start) this paragraph's discussion in the sidebar.
+  // Open (or start) this paragraph's discussion in the sidebar (on iPhone
+  // the bottom sheet).
   onOpen(ref: SectionRef): void;
   // Show the hover-only `✦` on paragraphs without discussions. main.ts
   // passes "AI is enabled", so users who don't use AI see no new chrome.

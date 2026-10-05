@@ -75,7 +75,6 @@ import { quickSave } from "./src/ui/mobile/quickSave";
 import { actionNotice } from "./src/ui/mobile/actionNotice";
 import { LivePreviewHint } from "./src/ui/mobile/livePreviewHint";
 import { browserSpeaker, type Speaker } from "./src/ui/mobile/speech";
-import { lm } from "./src/ui/mobile/strings";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -716,11 +715,10 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     openWordReview(this, entry);
   }
 
-  // 字族樹 / 動詞用法 / 冷知識 chips of learned words: the word's card in
-  // the sidebar, on its data tab.
+  // 字族樹 / 動詞用法 / 冷知識 chips of learned words: the word's card on
+  // its data tab — the bottom sheet on iPhone, the sidebar elsewhere.
   async openWordCard(entry: VocabEntry) {
-    const leaf = await this.activateSidebar();
-    (leaf.view as VocabSidebarView).openWord(entry.id, "data");
+    await this.surfaces.openWordCard(entry.id, "data");
   }
 
   async ensureVocabFile() {
@@ -788,11 +786,11 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   showWordMenu(evt: MouseEvent, word: string, ctx: WordContext, exists: boolean) {
     const menu = new Menu();
     menu.addItem((item) => {
-      item.setTitle(lm(exists ? "mobile.menu.open" : "mobile.menu.add", { word }));
+      item.setTitle(t(exists ? "mobile.menu.open" : "mobile.menu.add", { word }));
       item.setIcon(exists ? "book-open" : "plus");
       item.onClick(async () => {
         const added = await this.addWordToVocab(word, ctx);
-        if (added) new Notice(lm("mobile.menu.added", { word }));
+        if (added) new Notice(t("mobile.menu.added", { word }));
       });
     });
     menu.showAtMouseEvent(evt);
@@ -1017,7 +1015,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       if (!word) return;
       mark.addClass("vocab-tracker-tracked-mark");
       // aria-label, not title: no hover on touch screens (規劃書 01 §2).
-      mark.setAttr("aria-label", lm("mobile.mark.label", { word }));
+      mark.setAttr("aria-label", t("mobile.mark.label", { word }));
       mark.addEventListener("click", () => void this.surfaces.revealWord(word));
     });
   }

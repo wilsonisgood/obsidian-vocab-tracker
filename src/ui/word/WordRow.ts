@@ -7,7 +7,6 @@ import { t } from "../../core/i18n";
 import { wordThreadId } from "../../core/model/thread";
 import { renderWordAiTab } from "./AiTab";
 import type { WordTab, WordUi } from "./wordUi";
-import { lm } from "../mobile/strings";
 
 // Progressive-disclosure state for a single row: collapsed (one line),
 // half (synonyms-and-up visible), full (everything visible).
@@ -288,7 +287,7 @@ export function renderVocabRow(
       if (!armed) {
         armed = true;
         del.addClass("mod-warning");
-        del.setAttr("aria-label", lm("mobile.row.confirmDelete"));
+        del.setAttr("aria-label", t("mobile.row.confirmDelete"));
         window.setTimeout(() => {
           armed = false;
           del.removeClass("mod-warning");

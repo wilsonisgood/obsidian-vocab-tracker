@@ -1,6 +1,6 @@
 import { Setting } from "obsidian";
 import { resolveUiPrefs, TAP_ACTIONS, type TapAction, type UiPrefs } from "../../../core/model/settings";
-import { lm } from "../../mobile/strings";
+import { t, type I18nKey } from "../../../core/i18n";
 import type { SettingsContext, SettingsSection } from "../SettingsTab";
 
 // 「點字動作」 (規劃書 01 §3.2): what tapping a word in reading view does —
@@ -9,7 +9,7 @@ import type { SettingsContext, SettingsSection } from "../SettingsTab";
 
 function tapOptions(): Record<TapAction, string> {
   const out = {} as Record<TapAction, string>;
-  for (const a of TAP_ACTIONS) out[a] = lm(`settings.reading.tap.${a}`);
+  for (const a of TAP_ACTIONS) out[a] = t(`settings.reading.tap.${a}` as I18nKey);
   return out;
 }
 
@@ -22,12 +22,12 @@ async function setPref<K extends keyof UiPrefs>(ctx: SettingsContext, key: K, va
 
 export const readingSection: SettingsSection = {
   id: "reading",
-  title: () => lm("settings.section.reading"),
+  title: "settings.section.reading",
   render(el, ctx) {
     const prefs = resolveUiPrefs(ctx.store.settings.ui);
     new Setting(el)
-      .setName(lm("settings.reading.tapAction.name"))
-      .setDesc(lm("settings.reading.tapAction.desc"))
+      .setName(t("settings.reading.tapAction.name"))
+      .setDesc(t("settings.reading.tapAction.desc"))
       .addDropdown((d) =>
         d
           .addOptions(tapOptions())
@@ -35,8 +35,8 @@ export const readingSection: SettingsSection = {
           .onChange((v) => setPref(ctx, "tapAction", v as TapAction))
       );
     new Setting(el)
-      .setName(lm("settings.reading.tapActionMobile.name"))
-      .setDesc(lm("settings.reading.tapActionMobile.desc"))
+      .setName(t("settings.reading.tapActionMobile.name"))
+      .setDesc(t("settings.reading.tapActionMobile.desc"))
       .addDropdown((d) =>
         d
           .addOptions(tapOptions())
@@ -44,8 +44,8 @@ export const readingSection: SettingsSection = {
           .onChange((v) => setPref(ctx, "tapActionMobile", v as TapAction))
       );
     new Setting(el)
-      .setName(lm("settings.reading.livePreviewHint.name"))
-      .setDesc(lm("settings.reading.livePreviewHint.desc"))
+      .setName(t("settings.reading.livePreviewHint.name"))
+      .setDesc(t("settings.reading.livePreviewHint.desc"))
       .addToggle((tg) => tg.setValue(prefs.livePreviewHint).onChange((on) => setPref(ctx, "livePreviewHint", on)));
   },
 };
