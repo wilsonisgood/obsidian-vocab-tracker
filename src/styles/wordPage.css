@@ -1,0 +1,135 @@
+/* ── Word pages (規劃書 06 §8.2; design W1, W2) ──
+   The vocab-word header block, and the buttons WordPageDecorator puts next
+   to the managed section headings. Obsidian variables only, so light,
+   dark and community themes all work. */
+
+.vt-word-header {
+  margin: 0 0 1.2em;
+  padding: 14px 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+}
+
+.vt-wh-top {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.vt-wh-word {
+  font-size: 1.6em;
+  font-weight: var(--font-semibold);
+  color: var(--text-normal);
+  line-height: 1.2;
+}
+
+.vt-wh-meta {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-wh-speak {
+  margin-left: auto;
+  align-self: center;
+}
+
+.vt-wh-def {
+  margin: 4px 0 12px;
+  color: var(--text-normal);
+}
+
+.vt-wh-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vt-wh-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  line-height: 1.6;
+}
+
+.vt-wh-chip.is-link {
+  cursor: pointer;
+}
+
+.vt-wh-chip.is-link:hover,
+.vt-wh-chip.is-link:focus-visible {
+  color: var(--text-accent);
+  border-color: var(--interactive-accent);
+}
+
+.vt-chip-icon,
+.vt-wh-btn-icon,
+.vt-wp-btn-icon {
+  display: inline-flex;
+}
+
+.vt-chip-icon svg,
+.vt-wh-btn-icon svg,
+.vt-wp-btn-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.vt-wh-review {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Heading buttons (「＋ 找字族 / 產生 / 來一則」) */
+
+.vt-wp-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vt-wp-actions {
+  margin-left: auto;
+  display: inline-flex;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-normal);
+}
+
+.vt-wp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  height: auto;
+  background: transparent;
+  box-shadow: none;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.vt-wp-btn:hover {
+  color: var(--text-accent);
+  border-color: var(--interactive-accent);
+}
+
+.vt-wp-btn.is-busy {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+body.is-mobile .vt-wp-btn,
+body.is-mobile .vt-wh-review,
+body.is-mobile .vt-wh-speak {
+  min-height: 44px;
+}
