@@ -5,16 +5,16 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __defNormalProp = (obj, key3, value) => key3 in obj ? __defProp(obj, key3, { enumerable: true, configurable: true, writable: true, value }) : obj[key3] = value;
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    for (let key3 of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key3) && key3 !== except)
+        __defProp(to, key3, { get: () => from[key3], enumerable: !(desc = __getOwnPropDesc(from, key3)) || desc.enumerable });
   }
   return to;
 };
@@ -27,7 +27,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+var __publicField = (obj, key3, value) => __defNormalProp(obj, typeof key3 !== "symbol" ? key3 + "" : key3, value);
 
 // main.ts
 var main_exports = {};
@@ -35,7 +35,7 @@ __export(main_exports, {
   default: () => VocabTrackerPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian26 = require("obsidian");
+var import_obsidian37 = require("obsidian");
 
 // src/core/text/wordRe.ts
 function escapeRe(s) {
@@ -50,20 +50,20 @@ function buildWordRe(word) {
 
 // src/core/text/outsideCode.ts
 function replaceOutsideCode(content, re, repl) {
-  const lines = content.split("\n");
+  const lines4 = content.split("\n");
   let inFence = false;
-  for (let i = 0; i < lines.length; i++) {
-    if (/^\s*(```|~~~)/.test(lines[i])) {
+  for (let i = 0; i < lines4.length; i++) {
+    if (/^\s*(```|~~~)/.test(lines4[i])) {
       inFence = !inFence;
       continue;
     }
     if (inFence) continue;
-    lines[i] = lines[i].replace(
+    lines4[i] = lines4[i].replace(
       /(`[^`]*`)|([^`]+)/g,
       (_m, code, text) => code != null ? code : text.replace(re, repl)
     );
   }
-  return lines.join("\n");
+  return lines4.join("\n");
 }
 function wrapOutsideCode(content, re) {
   return replaceOutsideCode(content, re, "==$&==");
@@ -90,14 +90,14 @@ function extractSentence(text, start, end, node) {
 
 // src/core/text/sourceLine.ts
 function findSourceLine(content, word, sentence) {
-  const lines = content.split("\n");
+  const lines4 = content.split("\n");
   const wordRe = new RegExp(
     `(?<![A-Za-z0-9'\\-])${escapeRe(word)}(?![A-Za-z0-9'\\-])`,
     "i"
   );
   const candidates = [];
-  for (let i = 0; i < lines.length; i++) {
-    if (wordRe.test(lines[i])) candidates.push(i);
+  for (let i = 0; i < lines4.length; i++) {
+    if (wordRe.test(lines4[i])) candidates.push(i);
   }
   if (candidates.length === 0) return -1;
   if (candidates.length === 1 || !sentence) return candidates[0];
@@ -105,7 +105,7 @@ function findSourceLine(content, word, sentence) {
   let best = candidates[0];
   let bestScore = -1;
   for (const i of candidates) {
-    const lw = lines[i].toLowerCase().match(/[a-z']+/g) || [];
+    const lw = lines4[i].toLowerCase().match(/[a-z']+/g) || [];
     let score = 0;
     for (const w of lw) if (sentWords.has(w)) score++;
     if (score > bestScore) {
@@ -135,7 +135,7 @@ var ObsidianHttp = class {
 
 // src/platform/ObsidianStorage.ts
 var import_obsidian2 = require("obsidian");
-var FILE_SHARDS = /* @__PURE__ */ new Set(["reviews", "usage", "threads", "imports"]);
+var FILE_SHARDS = /* @__PURE__ */ new Set(["reviews", "usage", "threads", "imports", "learn", "files"]);
 var UNSUPPORTED_SHARD = (name) => new Error(`ObsidianStorage: shard "${name}" is not implemented yet`);
 var ObsidianStorage = class {
   constructor(plugin) {
@@ -386,6 +386,28 @@ function nowIso() {
 var CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 var LEARNER_GOALS = ["general", "toefl", "toeic", "ielts", "gept", "school"];
 var ANSWER_LANGUAGES = ["zh-TW", "en", "bilingual"];
+var SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists", "files", "anchors"];
+function stampMs(iso) {
+  if (typeof iso !== "string" || !iso) return 0;
+  const ms3 = new Date(iso).getTime();
+  return Number.isNaN(ms3) ? 0 : ms3;
+}
+function legacyStamp(s) {
+  const ms3 = stampMs(s.updatedAt);
+  let newest = 0;
+  for (const v of Object.values(s)) {
+    if (v && typeof v === "object") newest = Math.max(newest, stampMs(v.updatedAt));
+  }
+  return ms3 > newest ? { ms: ms3, iso: s.updatedAt } : null;
+}
+function carryLegacyStamp(s) {
+  const legacy = legacyStamp(s);
+  if (!legacy) return;
+  for (const key3 of SETTINGS_SECTIONS) {
+    const section2 = s[key3];
+    if (section2 && typeof section2 === "object" && stampMs(section2.updatedAt) < legacy.ms) section2.updatedAt = legacy.iso;
+  }
+}
 var DEFAULT_ANTHROPIC_SMART_MODEL = "claude-sonnet-5";
 var DEFAULT_ANTHROPIC_FAST_MODEL = "claude-haiku-4-5";
 function defaultAiSettings() {
@@ -429,6 +451,39 @@ function withSettingsDefaults(raw) {
     learner: { ...defaultLearnerProfile(), ...(_f = base.learner) != null ? _f : {} }
   };
 }
+function sectionFingerprint(section2) {
+  if (!section2 || typeof section2 !== "object") return String(section2);
+  return JSON.stringify(
+    { ...section2, updatedAt: void 0 },
+    (_key, v) => v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(
+      Object.keys(v).sort().map((k) => [k, v[k]])
+    ) : v
+  );
+}
+function snapshotSettingsSections(s) {
+  const out = {};
+  for (const key3 of SETTINGS_SECTIONS) {
+    const section2 = s[key3];
+    out[key3] = { fingerprint: sectionFingerprint(section2), updatedAt: section2 == null ? void 0 : section2.updatedAt };
+  }
+  return out;
+}
+function stampChangedSections(s, before, stamp) {
+  const changed = [];
+  for (const key3 of SETTINGS_SECTIONS) {
+    const section2 = s[key3];
+    if (!section2 || typeof section2 !== "object") continue;
+    if (sectionFingerprint(section2) !== before[key3].fingerprint) {
+      section2.updatedAt = stamp;
+      changed.push(key3);
+    } else if (before[key3].updatedAt !== void 0) {
+      section2.updatedAt = before[key3].updatedAt;
+    } else {
+      delete section2.updatedAt;
+    }
+  }
+  return changed;
+}
 
 // src/core/store/VocabStore.ts
 var WRITE_DEBOUNCE_MS = 500;
@@ -457,12 +512,22 @@ var VocabStore = class {
     this.resolvedSettings.add(resolved);
     return resolved;
   }
-  // The only way UI code should change settings: stamps updatedAt so
-  // merge.ts can tell which device's settings are newer.
+  // The only way UI code should change settings. Stamps updatedAt on just
+  // the sections (ui/ai/learner/srs/wordlists) whose content actually
+  // changed, so merge.ts can keep the newer copy of each section
+  // independently. The top-level updatedAt gets the very same stamp, and
+  // only when some section changed — so it never exceeds the newest section
+  // stamp, which is how merge.ts recognises a copy last edited by an older
+  // plugin version (those bump only the top-level stamp). Such a copy first
+  // hands that old-version time down to its sections (carryLegacyStamp),
+  // since bumping the top-level stamp here would hide it from merge.ts.
   updateSettings(mutate) {
     const s = this.settings;
+    carryLegacyStamp(s);
+    const before = snapshotSettingsSections(s);
     mutate(s);
-    s.updatedAt = nowIso();
+    const stamp = nowIso();
+    if (stampChangedSections(s, before, stamp).length > 0) s.updatedAt = stamp;
     return this.save();
   }
   // Live entries only — excludes soft-deleted (tombstoned) ones. UI code
@@ -613,12 +678,42 @@ function cleanupTombstones(data, now = Date.now()) {
 }
 
 // src/core/store/merge.ts
-function pickNewerSettings(local, remote) {
+function pickSection(local, remote, localLegacy, remoteLegacy, lTop, rTop) {
+  const lOwn = stampMs(local == null ? void 0 : local.updatedAt);
+  const rOwn = stampMs(remote == null ? void 0 : remote.updatedAt);
+  const lf = sectionFingerprint(local);
+  const rf = sectionFingerprint(remote);
+  if (lf === rf) return rOwn > lOwn ? remote : local;
+  const effective = (section2, own2, legacy2) => {
+    var _a;
+    return section2 === void 0 ? -1 : Math.max(own2, (_a = legacy2 == null ? void 0 : legacy2.ms) != null ? _a : 0);
+  };
+  const l3 = effective(local, lOwn, localLegacy);
+  const r = effective(remote, rOwn, remoteLegacy);
+  const remoteWins = l3 !== r ? r > l3 : lTop !== rTop ? rTop > lTop : rf > lf;
+  const [winner, eff, own, legacy] = remoteWins ? [remote, r, rOwn, remoteLegacy] : [local, l3, lOwn, localLegacy];
+  return legacy && eff > own ? { ...winner, updatedAt: legacy.iso } : winner;
+}
+function restFingerprint(s) {
+  const rest = { ...s };
+  for (const key3 of SETTINGS_SECTIONS) delete rest[key3];
+  return sectionFingerprint(rest);
+}
+function mergeSettings(local, remote) {
   if (!local) return remote != null ? remote : { schemaVersion: 2 };
   if (!remote) return local;
-  const l = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
-  const r = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
-  return r > l ? remote : local;
+  const l3 = stampMs(local.updatedAt);
+  const r = stampMs(remote.updatedAt);
+  const remoteNewer = l3 !== r ? r > l3 : restFingerprint(remote) > restFingerprint(local);
+  const out = { ...remoteNewer ? remote : local };
+  const localLegacy = legacyStamp(local);
+  const remoteLegacy = legacyStamp(remote);
+  for (const key3 of SETTINGS_SECTIONS) {
+    const picked = pickSection(local[key3], remote[key3], localLegacy, remoteLegacy, l3, r);
+    if (picked === void 0) delete out[key3];
+    else out[key3] = picked;
+  }
+  return out;
 }
 function updatedAtMs(entry) {
   return entry.updatedAt ? new Date(entry.updatedAt).getTime() : 0;
@@ -644,7 +739,7 @@ function merge(local, remote) {
   }
   return {
     schemaVersion: 2,
-    settings: pickNewerSettings(local.settings, remote.settings),
+    settings: mergeSettings(local.settings, remote.settings),
     entries: order.map((id) => byId.get(id))
   };
 }
@@ -668,7 +763,7 @@ function nowStamp(d = /* @__PURE__ */ new Date()) {
 }
 
 // src/ui/sidebar/VocabSidebarView.ts
-var import_obsidian11 = require("obsidian");
+var import_obsidian13 = require("obsidian");
 
 // src/ui/word/WordRow.ts
 var import_obsidian7 = require("obsidian");
@@ -780,6 +875,13 @@ var en = {
   "flashcards.done.retryForgotten": "Practice forgotten words again ({count})",
   "flashcards.done.continue": "Keep reviewing ({count} due)",
   "flashcards.done.backToList": "Back to word list",
+  "flashcards.batch.toggle": "This batch ({n})",
+  "flashcards.batch.current": "Now",
+  "flashcards.batch.pending": "Up next",
+  "flashcards.batch.new": "New",
+  "flashcards.batch.due": "Due",
+  "flashcards.batch.hidden": "Shown after you answer",
+  "flashcards.batch.openSource": "Open source note",
   "command.openFlashcards": "Open flashcards",
   // ── M3: AI foundation + settings ──────────────────────────────────
   "ai.provider.anthropic": "Claude (Anthropic)",
@@ -792,6 +894,12 @@ var en = {
   "ai.task.word.compare": "Compare",
   "ai.task.word.sentence": "Sentences",
   "ai.task.word.mnemonic": "Mnemonic",
+  "ai.task.family.generate": "Find families",
+  "ai.task.verb.usage": "Generate usage",
+  "ai.task.trivia.next": "Another one",
+  "ai.task.trivia.quiz": "Quiz me",
+  "ai.task.trivia.etymology": "Etymology",
+  "ai.task.trivia.joke": "Joke",
   "ai.error.disabled": "AI is turned off. Enable it in Settings \u203A Vocab Tracker.",
   "ai.error.no_key": "No API key yet. Add one in Settings \u203A Vocab Tracker.",
   "ai.error.auth": "The API key was rejected. Check it in Settings \u203A Vocab Tracker.",
@@ -920,7 +1028,168 @@ var en = {
   "exam.import.done": 'Vocab Tracker: added {added} exam word(s) from "{note}" ({tagged} existing word(s) tagged)',
   "command.importExamWords": "Add this note's exam words to the vocab list",
   "settings.wordlists.autoImport.name": "Auto-add exam words",
-  "settings.wordlists.autoImport.desc": "The first time a note is opened, add every list word in it to the vocab list, with its exams (TOEFL, IELTS\u2026) in the level field. Each note is imported once; words you delete aren't re-added. Dictionary data is fetched in the background."
+  "settings.wordlists.autoImport.desc": "The first time a note is opened, add every list word in it to the vocab list, with its exams (TOEFL, IELTS\u2026) in the level field. Each note is imported once; words you delete aren't re-added. Dictionary data is fetched in the background.",
+  "export.families": "Word families",
+  "export.familiesEmpty": "No word families yet.",
+  "export.usage": "Usage",
+  "export.usageEmpty": "No usage notes yet.",
+  "export.usageRelated": "Related phrases",
+  "export.trivia": "Saved trivia",
+  "export.triviaEmpty": "Nothing saved yet.",
+  "export.triviaMentionedIn": "Also mentioned in",
+  "export.discussion": "AI discussion",
+  "export.discussionEmpty": "No discussion yet.",
+  "export.userNotesHint": "Your notes below \u2014 the plugin never changes them",
+  "export.paragraphsEmpty": "No paragraph discussions yet.",
+  "export.paragraphOrphaned": "Paragraph no longer found in the note",
+  "export.wordsLearned": "Words from this note",
+  "export.wordsEmpty": "No words added from this note yet.",
+  "export.wordQuestions": "{n} questions",
+  "export.favorites": "Saved",
+  "export.favoritesEmpty": "Nothing saved yet.",
+  "export.aborted": "(stopped)",
+  // ── M6 word pages (vocab-word block, heading buttons) ──
+  "wordPage.missing": "This word isn't in your vocab list (it may have been deleted).",
+  "wordPage.speak": "Pronounce",
+  "wordPage.source": "From {source}",
+  "wordPage.sourceTitle": "Open the source note",
+  "wordPage.dueNew": "Not reviewed yet",
+  "wordPage.dueToday": "Due today",
+  "wordPage.dueOn": "Next review {date}",
+  "wordPage.reviewed": "Reviewed {n}\xD7",
+  "wordPage.review": "Review this word",
+  "wordPage.findFamilies": "Find families",
+  "wordPage.generateUsage": "Generate",
+  "wordPage.regenerateUsage": "Regenerate",
+  "wordPage.trivia": "Tell me one",
+  "wordPage.openSidebar": "Open in sidebar",
+  "wordPage.familiesNone": "No new word families found.",
+  "wordPage.familiesSaved": "Added {n} word families.",
+  "wordPage.usageSaved": "Usage updated.",
+  "wordPage.failed": "Failed: {error}",
+  // ── M6 entry files and the Files settings section ──
+  "command.openFamilies": "Open word families",
+  "command.openVerbs": "Open verb usage",
+  "command.openTrivia": "Open trivia",
+  "settings.section.files": "Files",
+  "settings.files.desc": "Where the plugin's notes go. Changing a folder doesn't move files that already exist: entry files and word pages are found by their frontmatter, wherever you move them. Only new files use the new folder.",
+  "settings.files.folder.name": "Entry files folder",
+  "settings.files.folder.desc": "Holds the four entry files (flashcards, word families, verb usage, trivia) and the two folders below. Default: vocab-list",
+  "settings.files.wordsFolder.name": "Word pages folder",
+  "settings.files.wordsFolder.desc": "Inside the entry files folder. One page per word: <word>.md. Default: \u55AE\u5B57",
+  "settings.files.threadsFolder.name": "Discussions folder",
+  "settings.files.threadsFolder.desc": "Inside the entry files folder. Each article's paragraph discussions: <article>.ai.md. Default: \u8A0E\u8AD6\u4E32",
+  // ── M5 paragraph discussions ──
+  "paragraph.list.title": "Paragraph discussions ({n})",
+  "paragraph.list.hint": "In reading view, hover a paragraph and click the \u2726 on its right to ask about it.",
+  "paragraph.list.count": "{n} questions",
+  "paragraph.list.orphan": "Paragraph not found",
+  "paragraph.list.edited": "Text changed",
+  "paragraph.list.orphanTitle": "Orphaned paragraph discussions ({n})",
+  "paragraph.list.missingNote": "Note deleted or moved: {path}",
+  "paragraph.action.rebind": "Rebind",
+  "paragraph.action.delete": "Delete",
+  "paragraph.action.confirmDelete": "Delete for good?",
+  "paragraph.pane.back": "Back",
+  "paragraph.pane.title": "Paragraph \xB7 \xB6{n}",
+  "paragraph.pane.titleNoNumber": "Paragraph discussion",
+  "paragraph.pane.jump": "Jump to the paragraph",
+  "paragraph.pane.delete": "Delete this discussion",
+  "paragraph.pane.placeholder": "Ask about this paragraph\u2026",
+  "paragraph.pane.edited": "The text has changed since this discussion started.",
+  "paragraph.pane.orphanParagraph": "This paragraph can't be found any more (deleted, or edited while in hash mode). Rebind the discussion to another paragraph, or delete it.",
+  "paragraph.pane.orphanFile": "The note this discussion belongs to is gone (deleted or moved). Rebind the discussion to another paragraph, or delete it.",
+  "paragraph.pane.hashAnchor": "Found by matching its text (hash mode): editing the paragraph will lose it.",
+  "paragraph.notice.blockId": "The first question about a paragraph adds a small marker at its end (e.g. ^vt-k3x9q2), so the discussion still finds the paragraph after it moves. If you'd rather not have your notes changed, use hash mode: paragraphs are matched by their text and nothing is written, but editing a paragraph loses its discussion.",
+  "paragraph.notice.ok": "Got it",
+  "paragraph.notice.useHash": "Use hash mode (don't change notes)",
+  "paragraph.notice.hashOn": "Hash mode is on \u2014 your notes won't be changed.",
+  "paragraph.rebind.banner": "Click the \u2726 next to a paragraph in reading view to attach this discussion to it.",
+  "paragraph.rebind.cancel": "Cancel",
+  "paragraph.rebind.done": "Discussion moved to the new paragraph",
+  "paragraph.rebind.failed": "Couldn't attach to that paragraph: {error}",
+  "paragraph.deleted": "Paragraph discussion deleted",
+  "paragraph.badge.open": "Discuss this paragraph",
+  "paragraph.badge.count": "{n} questions about this paragraph",
+  "paragraph.error.notAnchorable": "Headings, code, tables and callouts can't be discussed yet.",
+  "word.discussions": "{n} questions",
+  "paragraph.pane.openAiNote": "Open {path}",
+  "word.openPage": "Word page",
+  "word.openPageTitle": "Open this word's page",
+  "settings.section.paragraphs": "Paragraph discussions",
+  "settings.paragraphs.hashMode.name": "Don't modify my notes (hash mode)",
+  "settings.paragraphs.hashMode.desc": "Paragraphs are found by their text instead of a ^vt-xxxxxx marker; editing a paragraph orphans its discussion.",
+  // ── M7 word families, verb usage, trivia ──
+  "learn.loading": "Loading\u2026",
+  "learn.stop": "Stop",
+  "learn.retry": "Retry",
+  "learn.ai.offline": "You're offline. Saved content still shows; AI needs a connection.",
+  "learn.ai.disabled.title": "AI is turned off",
+  "learn.ai.noKey.title": "Set up AI to use this",
+  "learn.ai.body": "Set up AI in Settings \u203A Vocab Tracker. Saved content still shows.",
+  "learn.notFound": `"{word}" isn't in your vocab list.`,
+  "learn.family.empty.title": "No word families yet",
+  "learn.family.empty.body": "Let AI group the words you've learned into families, then pick new words to add.",
+  "learn.family.word.empty.title": `"{word}" isn't in a family yet`,
+  "learn.family.generate": "Find families",
+  "learn.family.regroup": "Regroup",
+  "learn.family.regroup.hint": "Your list has grown by 20% or more since the last grouping. Regroup?",
+  "learn.family.regroup.note": "Saving replaces the families AI grouped before.",
+  "learn.family.generating": "Grouping your words\u2026",
+  "learn.family.found": "Found {families} families and {words} new words",
+  "learn.family.noneFound": "No families this time. Try again later.",
+  "learn.family.from": "grown from {words}",
+  "learn.family.known": "Learned",
+  "learn.family.discard": "Discard",
+  "learn.family.saveOnly": "Save families only",
+  "learn.family.saveAdd": "Save, and add {n} words",
+  "learn.family.addNote": 'Added words are looked up in the dictionary and marked as from "family: {topics}".',
+  "learn.family.saved": "Saved {families} families and added {words} words.",
+  "learn.family.added": 'Added "{word}"',
+  "learn.family.add": 'Add "{word}"',
+  "learn.family.legend.known": "In your list",
+  "learn.family.legend.suggested": "Suggested by AI \u2014 tap to add",
+  "learn.family.legend.seeds": "Started from {words}",
+  "learn.family.more": "More",
+  "learn.family.delete": "Delete this family",
+  "learn.family.deleted": 'Deleted family "{name}"',
+  "learn.verb.filter": "Filter verbs\u2026",
+  "learn.verb.count": "Learned verbs ({n})",
+  "learn.verb.none.title": "No verbs in your list yet",
+  "learn.verb.none.body": 'Words whose part of speech includes "verb" show up here.',
+  "learn.verb.noMatch": "No matching verbs",
+  "learn.verb.notVerb": `"{word}" isn't a verb, so there's no usage to generate.`,
+  "learn.verb.generate": "Generate usage",
+  "learn.verb.regenerate": "Regenerate",
+  "learn.verb.generating": "Working out how {word} is used\u2026",
+  "learn.verb.empty.title": "No usage for {word} yet",
+  "learn.verb.empty.body": "Let AI list common patterns, examples and similar expressions. It's saved once generated.",
+  "learn.verb.related": "Similar expressions",
+  "learn.verb.meta.source": "From {source}",
+  "learn.verb.meta.generated": "Generated by AI on {date}",
+  "learn.verb.speak": "Pronounce",
+  "learn.verb.hasUsage": "Usage generated",
+  "learn.trivia.title": "Word trivia",
+  "learn.trivia.random": "Random from your {n} words",
+  "learn.trivia.subject": "About: {word}",
+  "learn.trivia.pick": "Pick a word to talk about",
+  "learn.trivia.pick.placeholder": "Which word?",
+  "learn.trivia.placeholder": "Ask a follow-up\u2026",
+  "learn.trivia.footer": "50\u2013200 characters each. What's been told is remembered, so it won't repeat.",
+  "learn.trivia.empty.title": "Your vocab list is empty",
+  "learn.trivia.empty.body": "Add a few words, then come back for trivia about them.",
+  "learn.trivia.noWords": "No words to talk about.",
+  "learn.trivia.turn.next": "Trivia",
+  "learn.trivia.favorites": "Saved trivia",
+  "learn.trivia.favorites.empty": 'Nothing saved yet. Tap "Save" under an answer to keep it here.',
+  "learn.trivia.favorite": "Save",
+  "learn.trivia.favoriteTo": "Save to {word}",
+  "learn.trivia.favorited": "Saved",
+  "learn.trivia.savedTo": "Saved to {path}",
+  "learn.trivia.unfavorite": "Remove",
+  "learn.trivia.up": "Helpful",
+  "learn.trivia.down": "Not helpful",
+  "learn.trivia.mentions": "Also mentions {words}"
 };
 
 // src/core/i18n/zh-TW.ts
@@ -1003,6 +1272,13 @@ var zhTW = {
   "flashcards.done.retryForgotten": "\u518D\u7DF4\u4E00\u6B21\u5FD8\u8A18\u7684\u5B57\uFF08{count}\uFF09",
   "flashcards.done.continue": "\u7E7C\u7E8C\u8907\u7FD2\uFF08{count} \u5F35\u5230\u671F\uFF09",
   "flashcards.done.backToList": "\u56DE\u5230\u55AE\u5B57\u5217\u8868",
+  "flashcards.batch.toggle": "\u672C\u6279\u55AE\u5B57\uFF08{n}\uFF09",
+  "flashcards.batch.current": "\u76EE\u524D",
+  "flashcards.batch.pending": "\u9084\u6C92\u5230",
+  "flashcards.batch.new": "\u65B0\u5B57",
+  "flashcards.batch.due": "\u5230\u671F",
+  "flashcards.batch.hidden": "\u4F5C\u7B54\u5F8C\u986F\u793A",
+  "flashcards.batch.openSource": "\u958B\u555F\u51FA\u8655",
   "command.openFlashcards": "\u958B\u555F\u55AE\u5B57\u5361",
   // ── M3: AI foundation + settings ──────────────────────────────────
   "ai.provider.anthropic": "Claude\uFF08Anthropic\uFF09",
@@ -1015,6 +1291,12 @@ var zhTW = {
   "ai.task.word.compare": "\u6BD4\u8F03",
   "ai.task.word.sentence": "\u9020\u53E5",
   "ai.task.word.mnemonic": "\u8A18\u61B6\u6CD5",
+  "ai.task.family.generate": "\u627E\u5B57\u65CF",
+  "ai.task.verb.usage": "\u7522\u751F\u7528\u6CD5",
+  "ai.task.trivia.next": "\u518D\u4F86\u4E00\u5247",
+  "ai.task.trivia.quiz": "\u8003\u6211\u4E00\u984C",
+  "ai.task.trivia.etymology": "\u5B57\u6E90",
+  "ai.task.trivia.joke": "\u7B11\u8A71",
   "ai.error.disabled": "AI \u76EE\u524D\u95DC\u9589\u3002\u5230\u300C\u8A2D\u5B9A \u203A Vocab Tracker\u300D\u958B\u555F\u3002",
   "ai.error.no_key": "\u9084\u6C92\u6709 API key\u3002\u5230\u300C\u8A2D\u5B9A \u203A Vocab Tracker\u300D\u586B\u5165\u3002",
   "ai.error.auth": "API key \u7121\u6548\u6216\u6C92\u6709\u6B0A\u9650\uFF0C\u8ACB\u5230\u300C\u8A2D\u5B9A \u203A Vocab Tracker\u300D\u6AA2\u67E5\u3002",
@@ -1143,7 +1425,168 @@ var zhTW = {
   "exam.import.done": "Vocab Tracker\uFF1A\u5F9E\u300C{note}\u300D\u52A0\u5165 {added} \u500B\u8003\u8A66\u55AE\u5B57\uFF08\u53E6\u6709 {tagged} \u500B\u65E2\u6709\u55AE\u5B57\u88DC\u4E0A\u8003\u8A66\u6A19\u7C64\uFF09",
   "command.importExamWords": "\u628A\u672C\u7BC7\u7684\u8003\u8A66\u5B57\u5F59\u52A0\u5165\u55AE\u5B57\u5EAB",
   "settings.wordlists.autoImport.name": "\u81EA\u52D5\u52A0\u5165\u8003\u8A66\u5B57\u5F59",
-  "settings.wordlists.autoImport.desc": "\u7B2C\u4E00\u6B21\u6253\u958B\u7B46\u8A18\u6642\uFF0C\u628A\u88E1\u9762\u5C6C\u65BC\u5B57\u8868\u7684\u5B57\u5168\u90E8\u52A0\u5165\u55AE\u5B57\u5EAB\uFF0C\u4E26\u5728\u300C\u7B49\u7D1A\u300D\u6B04\u6A19\u4E0A\u8003\u8A66\uFF08TOEFL\u3001IELTS\u2026\uFF09\u3002\u6BCF\u7BC7\u53EA\u532F\u5165\u4E00\u6B21\uFF0C\u4F60\u522A\u6389\u7684\u5B57\u4E0D\u6703\u518D\u88AB\u52A0\u56DE\u4F86\u3002\u5B57\u5178\u8CC7\u6599\u6703\u5728\u80CC\u666F\u6162\u6162\u6293\u3002"
+  "settings.wordlists.autoImport.desc": "\u7B2C\u4E00\u6B21\u6253\u958B\u7B46\u8A18\u6642\uFF0C\u628A\u88E1\u9762\u5C6C\u65BC\u5B57\u8868\u7684\u5B57\u5168\u90E8\u52A0\u5165\u55AE\u5B57\u5EAB\uFF0C\u4E26\u5728\u300C\u7B49\u7D1A\u300D\u6B04\u6A19\u4E0A\u8003\u8A66\uFF08TOEFL\u3001IELTS\u2026\uFF09\u3002\u6BCF\u7BC7\u53EA\u532F\u5165\u4E00\u6B21\uFF0C\u4F60\u522A\u6389\u7684\u5B57\u4E0D\u6703\u518D\u88AB\u52A0\u56DE\u4F86\u3002\u5B57\u5178\u8CC7\u6599\u6703\u5728\u80CC\u666F\u6162\u6162\u6293\u3002",
+  "export.families": "\u5B57\u65CF",
+  "export.familiesEmpty": "\u9084\u6C92\u6709\u5B57\u65CF\u3002",
+  "export.usage": "\u7528\u6CD5",
+  "export.usageEmpty": "\u9084\u6C92\u6709\u7528\u6CD5\u3002",
+  "export.usageRelated": "\u76F8\u95DC\u7247\u8A9E",
+  "export.trivia": "\u51B7\u77E5\u8B58\u6536\u85CF",
+  "export.triviaEmpty": "\u9084\u6C92\u6709\u6536\u85CF\u3002",
+  "export.triviaMentionedIn": "\u4E5F\u63D0\u5230\u9019\u500B\u5B57",
+  "export.discussion": "AI \u8A0E\u8AD6",
+  "export.discussionEmpty": "\u9084\u6C92\u6709\u8A0E\u8AD6\u3002",
+  "export.userNotesHint": "\u4EE5\u4E0B\u662F\u4F60\u7684\u7B46\u8A18\uFF0C\u63D2\u4EF6\u4E0D\u6703\u6539\u52D5",
+  "export.paragraphsEmpty": "\u9084\u6C92\u6709\u6BB5\u843D\u8A0E\u8AD6\u3002",
+  "export.paragraphOrphaned": "\u539F\u6587\u4E2D\u627E\u4E0D\u5230\u9019\u6BB5",
+  "export.wordsLearned": "\u9019\u7BC7\u5B78\u5230\u7684\u55AE\u5B57",
+  "export.wordsEmpty": "\u9019\u7BC7\u9084\u6C92\u6709\u52A0\u5165\u55AE\u5B57\u3002",
+  "export.wordQuestions": "{n} \u5247\u8A0E\u8AD6",
+  "export.favorites": "\u6536\u85CF",
+  "export.favoritesEmpty": "\u9084\u6C92\u6709\u6536\u85CF\u3002",
+  "export.aborted": "\uFF08\u5DF2\u505C\u6B62\uFF09",
+  // ── M6 單字頁（vocab-word 區塊、區段標題按鈕）──
+  "wordPage.missing": "\u55AE\u5B57\u5EAB\u88E1\u627E\u4E0D\u5230\u9019\u500B\u5B57\uFF08\u53EF\u80FD\u5DF2\u7D93\u522A\u9664\uFF09\u3002",
+  "wordPage.speak": "\u767C\u97F3",
+  "wordPage.source": "\u51FA\u81EA {source}",
+  "wordPage.sourceTitle": "\u958B\u555F\u51FA\u8655",
+  "wordPage.dueNew": "\u9084\u6C92\u958B\u59CB\u8907\u7FD2",
+  "wordPage.dueToday": "\u4ECA\u5929\u5230\u671F",
+  "wordPage.dueOn": "\u4E0B\u6B21\u8907\u7FD2 {date}",
+  "wordPage.reviewed": "\u5DF2\u8907\u7FD2 {n} \u6B21",
+  "wordPage.review": "\u8907\u7FD2\u9019\u500B\u5B57",
+  "wordPage.findFamilies": "\u627E\u5B57\u65CF",
+  "wordPage.generateUsage": "\u7522\u751F",
+  "wordPage.regenerateUsage": "\u91CD\u65B0\u7522\u751F",
+  "wordPage.trivia": "\u4F86\u4E00\u5247",
+  "wordPage.openSidebar": "\u5728\u5074\u6B04\u958B\u555F",
+  "wordPage.familiesNone": "\u6C92\u6709\u627E\u5230\u65B0\u7684\u5B57\u65CF\u3002",
+  "wordPage.familiesSaved": "\u5DF2\u52A0\u5165 {n} \u500B\u5B57\u65CF\u3002",
+  "wordPage.usageSaved": "\u7528\u6CD5\u5DF2\u66F4\u65B0\u3002",
+  "wordPage.failed": "\u5931\u6557\uFF1A{error}",
+  // ── M6 入口檔與「檔案」設定 ──
+  "command.openFamilies": "\u958B\u555F\u5B57\u65CF\u6A39",
+  "command.openVerbs": "\u958B\u555F\u52D5\u8A5E\u7528\u6CD5",
+  "command.openTrivia": "\u958B\u555F\u51B7\u77E5\u8B58",
+  "settings.section.files": "\u6A94\u6848",
+  "settings.files.desc": "\u5916\u639B\u5EFA\u7ACB\u7684\u7B46\u8A18\u653E\u5728\u54EA\u88E1\u3002\u6539\u8CC7\u6599\u593E\u4E0D\u6703\u642C\u52D5\u5DF2\u7D93\u5B58\u5728\u7684\u6A94\u6848\uFF1A\u5165\u53E3\u6A94\u548C\u55AE\u5B57\u9801\u9760 frontmatter \u627E\u56DE\uFF0C\u642C\u5230\u54EA\u88E1\u90FD\u53EF\u4EE5\uFF1B\u53EA\u6709\u65B0\u5EFA\u7684\u6A94\u6848\u6703\u653E\u5230\u65B0\u8CC7\u6599\u593E\u3002",
+  "settings.files.folder.name": "\u5165\u53E3\u6A94\u8CC7\u6599\u593E",
+  "settings.files.folder.desc": "\u55AE\u5B57\u5361\u3001\u5B57\u65CF\u6A39\u3001\u52D5\u8A5E\u7528\u6CD5\u3001\u51B7\u77E5\u8B58\u56DB\u500B\u5165\u53E3\u6A94\u653E\u9019\u88E1\uFF0C\u4E0B\u9762\u5169\u500B\u8CC7\u6599\u593E\u4E5F\u5728\u9019\u88E1\u9762\u3002\u9810\u8A2D\uFF1Avocab-list",
+  "settings.files.wordsFolder.name": "\u55AE\u5B57\u9801\u8CC7\u6599\u593E",
+  "settings.files.wordsFolder.desc": "\u5728\u5165\u53E3\u6A94\u8CC7\u6599\u593E\u5E95\u4E0B\u3002\u6BCF\u500B\u5B57\u4E00\u9801\uFF1A<\u5B57>.md\u3002\u9810\u8A2D\uFF1A\u55AE\u5B57",
+  "settings.files.threadsFolder.name": "\u8A0E\u8AD6\u4E32\u8CC7\u6599\u593E",
+  "settings.files.threadsFolder.desc": "\u5728\u5165\u53E3\u6A94\u8CC7\u6599\u593E\u5E95\u4E0B\u3002\u6BCF\u7BC7\u6587\u7AE0\u7684\u6BB5\u843D\u8A0E\u8AD6\uFF1A<\u6587\u7AE0>.ai.md\u3002\u9810\u8A2D\uFF1A\u8A0E\u8AD6\u4E32",
+  // ── M5 段落討論 ──
+  "paragraph.list.title": "\u6BB5\u843D\u8A0E\u8AD6\uFF08{n}\uFF09",
+  "paragraph.list.hint": "\u5728\u95B1\u8B80\u6A21\u5F0F\u4E2D\uFF0C\u628A\u6E38\u6A19\u79FB\u5230\u6BB5\u843D\u53F3\u5074\u7684 \u2726 \u5C31\u80FD\u91DD\u5C0D\u90A3\u4E00\u6BB5\u63D0\u554F\u3002",
+  "paragraph.list.count": "{n} \u5247",
+  "paragraph.list.orphan": "\u539F\u6587\u4E2D\u627E\u4E0D\u5230\u9019\u6BB5",
+  "paragraph.list.edited": "\u539F\u6587\u5DF2\u4FEE\u6539",
+  "paragraph.list.orphanTitle": "\u5B64\u7ACB\u7684\u6BB5\u843D\u8A0E\u8AD6\uFF08{n}\uFF09",
+  "paragraph.list.missingNote": "\u7B46\u8A18\u5DF2\u522A\u9664\u6216\u79FB\u8D70\uFF1A{path}",
+  "paragraph.action.rebind": "\u91CD\u65B0\u7D81\u5B9A",
+  "paragraph.action.delete": "\u522A\u9664",
+  "paragraph.action.confirmDelete": "\u78BA\u5B9A\u522A\u9664\uFF1F",
+  "paragraph.pane.back": "\u8FD4\u56DE",
+  "paragraph.pane.title": "\u6BB5\u843D\u8A0E\u8AD6 \xB7 \xB6{n}",
+  "paragraph.pane.titleNoNumber": "\u6BB5\u843D\u8A0E\u8AD6",
+  "paragraph.pane.jump": "\u8DF3\u5230\u539F\u6587",
+  "paragraph.pane.delete": "\u522A\u9664\u9019\u4E32\u8A0E\u8AD6",
+  "paragraph.pane.placeholder": "\u8FFD\u554F\u9019\u4E00\u6BB5\u2026",
+  "paragraph.pane.edited": "\u539F\u6587\u5DF2\u4FEE\u6539\uFF1A\u9019\u4E32\u8A0E\u8AD6\u662F\u91DD\u5C0D\u4FEE\u6539\u524D\u7684\u6587\u5B57\u958B\u59CB\u7684\u3002",
+  "paragraph.pane.orphanParagraph": "\u539F\u6587\u4E2D\u627E\u4E0D\u5230\u9019\u6BB5\u4E86\uFF08\u6BB5\u843D\u88AB\u522A\u9664\uFF0C\u6216\u5728 hash \u6A21\u5F0F\u4E0B\u6587\u5B57\u88AB\u4FEE\u6539\uFF09\u3002\u53EF\u4EE5\u91CD\u65B0\u7D81\u5B9A\u5230\u53E6\u4E00\u6BB5\uFF0C\u6216\u522A\u9664\u9019\u4E32\u8A0E\u8AD6\u3002",
+  "paragraph.pane.orphanFile": "\u627E\u4E0D\u5230\u539F\u672C\u7684\u7B46\u8A18\u4E86\uFF08\u5DF2\u522A\u9664\u6216\u79FB\u8D70\uFF09\u3002\u53EF\u4EE5\u91CD\u65B0\u7D81\u5B9A\u5230\u53E6\u4E00\u6BB5\uFF0C\u6216\u522A\u9664\u9019\u4E32\u8A0E\u8AD6\u3002",
+  "paragraph.pane.hashAnchor": "\u9019\u6BB5\u8A0E\u8AD6\u7528\u6587\u5B57\u6BD4\u5C0D\u5B9A\u4F4D\uFF08hash \u6A21\u5F0F\uFF09\uFF1B\u6BB5\u843D\u6587\u5B57\u4E00\u6539\u5C31\u6703\u627E\u4E0D\u5230\u3002",
+  "paragraph.notice.blockId": "\u7B2C\u4E00\u6B21\u5C0D\u4E00\u6BB5\u63D0\u554F\u6642\uFF0C\u6703\u5728\u9019\u6BB5\u6700\u5F8C\u52A0\u4E0A\u4E00\u500B\u770B\u4E0D\u898B\u7684\u6A19\u8A18\uFF08\u4F8B\u5982 ^vt-k3x9q2\uFF09\uFF0C\u8B93\u6BB5\u843D\u642C\u79FB\u5F8C\u8A0E\u8AD6\u9084\u627E\u5F97\u5230\u5B83\u3002\u4E0D\u60F3\u4FEE\u6539\u7B46\u8A18\u7684\u8A71\uFF0C\u53EF\u4EE5\u6539\u7528 hash \u6A21\u5F0F\uFF1A\u7528\u6587\u5B57\u6BD4\u5C0D\u5B9A\u4F4D\uFF0C\u4E0D\u5BEB\u5165\u7B46\u8A18\uFF0C\u4F46\u6BB5\u843D\u6587\u5B57\u4E00\u6539\u5C31\u6703\u627E\u4E0D\u5230\u3002",
+  "paragraph.notice.ok": "\u77E5\u9053\u4E86",
+  "paragraph.notice.useHash": "\u6539\u7528 hash \u6A21\u5F0F\uFF08\u4E0D\u4FEE\u6539\u7B46\u8A18\uFF09",
+  "paragraph.notice.hashOn": "\u5DF2\u6539\u7528 hash \u6A21\u5F0F\uFF0C\u4E4B\u5F8C\u4E0D\u6703\u4FEE\u6539\u4F60\u7684\u7B46\u8A18\u3002",
+  "paragraph.rebind.banner": "\u9EDE\u9078\u95B1\u8B80\u6A21\u5F0F\u4E2D\u6BB5\u843D\u53F3\u5074\u7684 \u2726\uFF0C\u628A\u9019\u4E32\u8A0E\u8AD6\u7D81\u5B9A\u5230\u90A3\u4E00\u6BB5\u3002",
+  "paragraph.rebind.cancel": "\u53D6\u6D88",
+  "paragraph.rebind.done": "\u5DF2\u91CD\u65B0\u7D81\u5B9A\u5230\u65B0\u7684\u6BB5\u843D",
+  "paragraph.rebind.failed": "\u7121\u6CD5\u7D81\u5B9A\u5230\u9019\u4E00\u6BB5\uFF1A{error}",
+  "paragraph.deleted": "\u5DF2\u522A\u9664\u6BB5\u843D\u8A0E\u8AD6",
+  "paragraph.badge.open": "\u8A0E\u8AD6\u9019\u4E00\u6BB5",
+  "paragraph.badge.count": "\u9019\u4E00\u6BB5\u6709 {n} \u5247\u8A0E\u8AD6",
+  "paragraph.error.notAnchorable": "\u9019\u7A2E\u5340\u584A\uFF08\u6A19\u984C\u3001\u7A0B\u5F0F\u78BC\u3001\u8868\u683C\u3001callout\uFF09\u9084\u4E0D\u80FD\u8A0E\u8AD6\u3002",
+  "word.discussions": "{n} \u5247\u8A0E\u8AD6",
+  "paragraph.pane.openAiNote": "\u958B\u555F {path}",
+  "word.openPage": "\u55AE\u5B57\u9801",
+  "word.openPageTitle": "\u958B\u555F\u9019\u500B\u5B57\u7684\u55AE\u5B57\u9801",
+  "settings.section.paragraphs": "\u6BB5\u843D\u8A0E\u8AD6",
+  "settings.paragraphs.hashMode.name": "\u4E0D\u8981\u4FEE\u6539\u6211\u7684\u7B46\u8A18\uFF08hash \u6A21\u5F0F\uFF09",
+  "settings.paragraphs.hashMode.desc": "\u958B\u555F\u5F8C\u4E0D\u6703\u5728\u6BB5\u843D\u672B\u5C3E\u52A0\u4E0A ^vt-xxxxxx\uFF0C\u6539\u7528\u6587\u5B57\u6BD4\u5C0D\u5B9A\u4F4D\uFF1B\u6BB5\u843D\u6587\u5B57\u4E00\u6539\uFF0C\u8A0E\u8AD6\u5C31\u6703\u8B8A\u6210\u5B64\u7ACB\u3002",
+  // ── M7 字族樹、動詞用法、冷知識 ──
+  "learn.loading": "\u8F09\u5165\u4E2D\u2026",
+  "learn.stop": "\u505C\u6B62",
+  "learn.retry": "\u91CD\u8A66",
+  "learn.ai.offline": "\u76EE\u524D\u96E2\u7DDA\uFF0C\u9023\u7DDA\u5F8C\u624D\u80FD\u4F7F\u7528 AI\u3002\u5DF2\u5B58\u7684\u5167\u5BB9\u7167\u5E38\u986F\u793A\u3002",
+  "learn.ai.disabled.title": "AI \u76EE\u524D\u95DC\u9589",
+  "learn.ai.noKey.title": "\u8A2D\u5B9A AI \u5F8C\u624D\u80FD\u4F7F\u7528",
+  "learn.ai.body": "\u5230\u300C\u8A2D\u5B9A \u203A Vocab Tracker\u300D\u8A2D\u5B9A AI\u3002\u5DF2\u5B58\u7684\u5167\u5BB9\u7167\u5E38\u986F\u793A\u3002",
+  "learn.notFound": "\u55AE\u5B57\u5EAB\u88E1\u6C92\u6709\u300C{word}\u300D\u3002",
+  "learn.family.empty.title": "\u9084\u6C92\u6709\u5B57\u65CF",
+  "learn.family.empty.body": "\u8B93 AI \u5F9E\u4F60\u5B78\u904E\u7684\u55AE\u5B57\u6574\u7406\u51FA\u5B57\u65CF\uFF0C\u518D\u6311\u60F3\u5B78\u7684\u65B0\u5B57\u52A0\u5165\u55AE\u5B57\u5EAB\u3002",
+  "learn.family.word.empty.title": "\u300C{word}\u300D\u9084\u6C92\u6709\u5B57\u65CF",
+  "learn.family.generate": "\u627E\u5B57\u65CF",
+  "learn.family.regroup": "\u91CD\u65B0\u5206\u7FA4",
+  "learn.family.regroup.hint": "\u55AE\u5B57\u5EAB\u6BD4\u4E0A\u6B21\u5206\u7FA4\u6642\u591A\u4E86 20% \u4EE5\u4E0A\uFF0C\u8981\u91CD\u65B0\u5206\u7FA4\u55CE\uFF1F",
+  "learn.family.regroup.note": "\u5B58\u4E0B\u5F8C\u6703\u53D6\u4EE3\u76EE\u524D\u7531 AI \u6574\u7406\u7684\u5B57\u65CF\u3002",
+  "learn.family.generating": "AI \u6B63\u5728\u6574\u7406\u5B57\u65CF\u2026",
+  "learn.family.found": "AI \u627E\u5230 {families} \u500B\u5B57\u65CF\u3001{words} \u500B\u65B0\u5B57",
+  "learn.family.noneFound": "AI \u6C92\u6709\u627E\u5230\u53EF\u4EE5\u6210\u70BA\u5B57\u65CF\u7684\u5B57\uFF0C\u63DB\u500B\u6642\u9593\u518D\u8A66\u8A66\u3002",
+  "learn.family.from": "\u5F9E\u4F60\u5B78\u904E\u7684 {words} \u5EF6\u4F38",
+  "learn.family.known": "\u5DF2\u5B78",
+  "learn.family.discard": "\u6368\u68C4",
+  "learn.family.saveOnly": "\u53EA\u5B58\u5B57\u65CF",
+  "learn.family.saveAdd": "\u5B58\u5B57\u65CF\uFF0C\u4E26\u628A {n} \u500B\u5B57\u52A0\u5165\u55AE\u5B57\u5EAB",
+  "learn.family.addNote": "\u52A0\u5165\u7684\u5B57\u6703\u81EA\u52D5\u67E5\u5B57\u5178\u88DC\u8CC7\u6599\uFF0C\u4F86\u6E90\u6A19\u8A18\u70BA\u300C\u5B57\u65CF\uFF1A{topics}\u300D\u3002",
+  "learn.family.saved": "\u5DF2\u5B58 {families} \u500B\u5B57\u65CF\uFF0C\u52A0\u5165 {words} \u500B\u5B57\u3002",
+  "learn.family.added": "\u5DF2\u52A0\u5165\u300C{word}\u300D",
+  "learn.family.add": "\u52A0\u5165\u300C{word}\u300D",
+  "learn.family.legend.known": "\u5DF2\u5728\u55AE\u5B57\u5EAB",
+  "learn.family.legend.suggested": "AI \u88DC\u7684\u5EF6\u4F38\u5B57\uFF0C\u9EDE\u4E00\u4E0B\u52A0\u5165",
+  "learn.family.legend.seeds": "\u8D77\u9EDE\uFF1A\u4F60\u5B78\u904E\u7684 {words}",
+  "learn.family.more": "\u66F4\u591A",
+  "learn.family.delete": "\u522A\u9664\u9019\u500B\u5B57\u65CF",
+  "learn.family.deleted": "\u5DF2\u522A\u9664\u5B57\u65CF\u300C{name}\u300D",
+  "learn.verb.filter": "\u7BE9\u9078\u52D5\u8A5E\u2026",
+  "learn.verb.count": "\u5DF2\u5B78\u52D5\u8A5E\uFF08{n}\uFF09",
+  "learn.verb.none.title": "\u55AE\u5B57\u5EAB\u88E1\u9084\u6C92\u6709\u52D5\u8A5E",
+  "learn.verb.none.body": "\u8A5E\u6027\u542B verb \u7684\u55AE\u5B57\u6703\u51FA\u73FE\u5728\u9019\u88E1\u3002",
+  "learn.verb.noMatch": "\u6C92\u6709\u7B26\u5408\u7684\u52D5\u8A5E",
+  "learn.verb.notVerb": "\u300C{word}\u300D\u4E0D\u662F\u52D5\u8A5E\uFF0C\u6C92\u6709\u7528\u6CD5\u53EF\u4EE5\u7522\u751F\u3002",
+  "learn.verb.generate": "\u7522\u751F\u7528\u6CD5",
+  "learn.verb.regenerate": "\u91CD\u65B0\u7522\u751F",
+  "learn.verb.generating": "AI \u6B63\u5728\u6574\u7406 {word} \u7684\u7528\u6CD5\u2026",
+  "learn.verb.empty.title": "\u9084\u6C92\u6709 {word} \u7684\u7528\u6CD5",
+  "learn.verb.empty.body": "\u8B93 AI \u6574\u7406\u5E38\u898B\u53E5\u578B\u3001\u4F8B\u53E5\u548C\u76F8\u8FD1\u8AAA\u6CD5\u3002\u7522\u751F\u4E00\u6B21\u5C31\u6703\u5B58\u8D77\u4F86\u3002",
+  "learn.verb.related": "\u76F8\u8FD1\u8AAA\u6CD5",
+  "learn.verb.meta.source": "\u51FA\u81EA {source}",
+  "learn.verb.meta.generated": "{date} \u7531 AI \u7522\u751F",
+  "learn.verb.speak": "\u767C\u97F3",
+  "learn.verb.hasUsage": "\u5DF2\u7522\u751F\u7528\u6CD5",
+  "learn.trivia.title": "\u55AE\u5B57\u51B7\u77E5\u8B58",
+  "learn.trivia.random": "\u5F9E\u5DF2\u5B78\u7684 {n} \u500B\u5B57\u96A8\u6A5F",
+  "learn.trivia.subject": "\u4E3B\u89D2\uFF1A{word}",
+  "learn.trivia.pick": "\u6307\u5B9A\u4E00\u500B\u5B57\u4F86\u804A",
+  "learn.trivia.pick.placeholder": "\u60F3\u804A\u54EA\u500B\u5B57\uFF1F",
+  "learn.trivia.placeholder": "\u8FFD\u554F\u9019\u5247\u51B7\u77E5\u8B58\u2026",
+  "learn.trivia.footer": "\u6BCF\u5247 50\u2013200 \u5B57\uFF1B\u540C\u4E00\u500B\u5B57\u8B1B\u904E\u7684\u5167\u5BB9\u6703\u8A18\u4E0B\u4F86\uFF0C\u4E0D\u6703\u91CD\u8907\u3002",
+  "learn.trivia.empty.title": "\u55AE\u5B57\u5EAB\u9084\u662F\u7A7A\u7684",
+  "learn.trivia.empty.body": "\u52A0\u5165\u5E7E\u500B\u55AE\u5B57\u5F8C\uFF0C\u5C31\u80FD\u807D\u5B83\u5011\u7684\u51B7\u77E5\u8B58\u3002",
+  "learn.trivia.noWords": "\u6C92\u6709\u53EF\u4EE5\u804A\u7684\u55AE\u5B57\u3002",
+  "learn.trivia.turn.next": "\u51B7\u77E5\u8B58",
+  "learn.trivia.favorites": "\u6536\u85CF\u7684\u51B7\u77E5\u8B58",
+  "learn.trivia.favorites.empty": "\u9084\u6C92\u6709\u6536\u85CF\u3002\u5728\u56DE\u7B54\u4E0B\u9762\u9EDE\u300C\u6536\u85CF\u300D\uFF0C\u5C31\u6703\u51FA\u73FE\u5728\u9019\u88E1\u3002",
+  "learn.trivia.favorite": "\u6536\u85CF",
+  "learn.trivia.favoriteTo": "\u6536\u85CF\u5230 {word}",
+  "learn.trivia.favorited": "\u5DF2\u6536\u85CF",
+  "learn.trivia.savedTo": "\u5DF2\u6536\u85CF\uFF0C\u5BEB\u5165 {path}",
+  "learn.trivia.unfavorite": "\u53D6\u6D88\u6536\u85CF",
+  "learn.trivia.up": "\u6709\u5E6B\u52A9",
+  "learn.trivia.down": "\u6C92\u5E6B\u52A9",
+  "learn.trivia.mentions": "\u4E5F\u63D0\u5230 {words}"
 };
 
 // src/core/i18n/index.ts
@@ -1156,9 +1599,12 @@ function resolveLocale(setting, appLanguage) {
   if (setting !== "auto") return setting;
   return appLanguage.toLowerCase().startsWith("zh") ? "zh-TW" : "en";
 }
-function t(key, params) {
+function joinWords(words) {
+  return words.join(activeLocale === "zh-TW" ? "\u3001" : ", ");
+}
+function t(key3, params) {
   var _a;
-  const template = (_a = dictionaries[activeLocale][key]) != null ? _a : dictionaries.en[key];
+  const template = (_a = dictionaries[activeLocale][key3]) != null ? _a : dictionaries.en[key3];
   if (!params) return template;
   return template.replace(
     /\{(\w+)\}/g,
@@ -1382,10 +1828,20 @@ function renderProfile(p) {
 
 // src/services/ai/tasks/compose.ts
 var HISTORY_ROUNDS = 6;
-function trimHistory(history, rounds = HISTORY_ROUNDS) {
-  const recent = history.filter((m) => m.content.trim() !== "").slice(-rounds * 2);
-  while (recent.length && recent[0].role !== "user") recent.shift();
-  return recent;
+var HISTORY_DROP_ROUNDS = 3;
+function dropLeadingNonUser(msgs) {
+  let i = 0;
+  while (i < msgs.length && msgs[i].role !== "user") i++;
+  return msgs.slice(i);
+}
+function trimHistory(history, rounds = HISTORY_ROUNDS, dropRounds = HISTORY_DROP_ROUNDS) {
+  const all = dropLeadingNonUser(
+    history.filter((m) => m.content.trim() !== "").map((m) => ({ role: m.role, content: m.content }))
+  );
+  const over = all.length - rounds * 2;
+  if (over <= 0) return all;
+  const step = Math.max(1, dropRounds) * 2;
+  return dropLeadingNonUser(all.slice(Math.ceil(over / step) * step));
 }
 function composeRequest(p) {
   var _a, _b;
@@ -1395,9 +1851,11 @@ function composeRequest(p) {
     ...((_b = p.context) != null ? _b : []).filter(Boolean).map((text) => ({ text })),
     { text: renderProfile(p.profile) }
   ];
+  const history = trimHistory(p.history);
+  if (history.length) history[history.length - 1].cache = true;
   const req = {
     system,
-    messages: [...trimHistory(p.history), { role: "user", content: p.user }],
+    messages: [...history, { role: "user", content: p.user }],
     maxTokens: p.maxTokens,
     tier: p.tier
   };
@@ -1479,10 +1937,10 @@ var WORD_TASKS = [wordUsage, wordCompare, wordSentence, wordMnemonic, wordCustom
 
 // src/core/text/paragraphs.ts
 function splitParagraphSpans(markdown) {
-  const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
+  const lines4 = markdown.replace(/\r\n?/g, "\n").split("\n");
   let i = 0;
-  if (lines[0] === "---") {
-    const close = lines.indexOf("---", 1);
+  if (lines4[0] === "---") {
+    const close = lines4.indexOf("---", 1);
     if (close > 0) i = close + 1;
   }
   const out = [];
@@ -1490,12 +1948,12 @@ function splitParagraphSpans(markdown) {
   let inFence = false;
   const flush = (end) => {
     if (start < 0) return;
-    const text = lines.slice(start, end + 1).join("\n").trim();
+    const text = lines4.slice(start, end + 1).join("\n").trim();
     if (text) out.push({ text, lineStart: start, lineEnd: end });
     start = -1;
   };
-  for (; i < lines.length; i++) {
-    const line = lines[i];
+  for (; i < lines4.length; i++) {
+    const line = lines4[i];
     if (/^\s*(```|~~~)/.test(line)) inFence = !inFence;
     if (!inFence && line.trim() === "") {
       flush(i - 1);
@@ -1503,7 +1961,7 @@ function splitParagraphSpans(markdown) {
     }
     if (start < 0) start = i;
   }
-  flush(lines.length - 1);
+  flush(lines4.length - 1);
   return out;
 }
 function paragraphAtLine(markdown, line) {
@@ -1687,7 +2145,11 @@ function bubble(opts) {
     for (const a of opts.actions) {
       const btn = bar.createEl("button", { cls: "vt-bubble-action clickable-icon" });
       if (a.icon) (0, import_obsidian5.setIcon)(btn.createSpan(), a.icon);
-      btn.createSpan({ text: a.label });
+      if (a.iconOnly && a.icon) btn.setAttr("aria-label", a.label);
+      else btn.createSpan({ text: a.label });
+      btn.toggleClass("is-active", !!a.active);
+      btn.toggleClass("is-icon-only", !!a.iconOnly && !!a.icon);
+      if (a.active !== void 0) btn.setAttr("aria-pressed", String(a.active));
       btn.addEventListener("click", a.onClick);
     }
   }
@@ -1794,6 +2256,12 @@ var ChatPanel = class extends import_obsidian6.Component {
     this.metaEl.createSpan({ text: parts.join(" \xB7 ") });
   }
   // ── Turns ────────────────────────────────────────────────────────
+  // Redraws the turns when something outside the thread changed what
+  // turnActions / turnHeader return (e.g. a trivia favorite). The composer
+  // and its draft are left alone.
+  refresh() {
+    this.renderTurns();
+  }
   renderTurns() {
     var _a;
     const thread = this.thread;
@@ -1835,7 +2303,7 @@ var ChatPanel = class extends import_obsidian6.Component {
       const el2 = bubble({ role: "assistant", text: "", streaming: true });
       this.streamBody = el2.querySelector(".vt-bubble-body");
       this.paint();
-      return el2;
+      return this.withHeader(el2, turn);
     }
     const actions = [];
     if (turn.status === "error") {
@@ -1856,6 +2324,16 @@ var ChatPanel = class extends import_obsidian6.Component {
     const el = bubble({ role: "assistant", text: turn.content, render, actions, error });
     el.toggleClass("is-muted-error", turn.status === "aborted");
     if (!turn.content.trim()) el.addClass("is-empty");
+    return this.withHeader(el, turn);
+  }
+  withHeader(el, turn) {
+    var _a, _b;
+    const h = (_b = (_a = this.opts).turnHeader) == null ? void 0 : _b.call(_a, turn);
+    if (!h) return el;
+    const head = createDiv({ cls: "vt-bubble-head" });
+    if (h.icon) (0, import_obsidian6.setIcon)(head.createSpan({ cls: "vt-bubble-head-icon" }), h.icon);
+    head.createSpan({ text: h.text });
+    el.prepend(head);
     return el;
   }
   schedulePaint() {
@@ -1908,11 +2386,11 @@ var ChatPanel = class extends import_obsidian6.Component {
     input.rows = 1;
     input.placeholder = this.opts.placeholder;
     input.disabled = offline;
-    const key = this.opts.threadId;
-    input.value = (_a = this.opts.state.drafts.get(key)) != null ? _a : "";
+    const key3 = this.opts.threadId;
+    input.value = (_a = this.opts.state.drafts.get(key3)) != null ? _a : "";
     autoGrow(input);
     input.addEventListener("input", () => {
-      this.opts.state.drafts.set(key, input.value);
+      this.opts.state.drafts.set(key3, input.value);
       autoGrow(input);
     });
     input.addEventListener("keydown", (e) => {
@@ -1920,7 +2398,7 @@ var ChatPanel = class extends import_obsidian6.Component {
       e.preventDefault();
       if (!this.busy) this.submit(this.opts.customTaskId, input.value);
     });
-    input.addEventListener("focus", () => this.opts.state.focused = key);
+    input.addEventListener("focus", () => this.opts.state.focused = key3);
     input.addEventListener("blur", () => {
       if (input.isConnected) this.opts.state.focused = null;
     });
@@ -1930,7 +2408,7 @@ var ChatPanel = class extends import_obsidian6.Component {
       if (this.busy) this.opts.threads.stop(this.opts.threadId);
       else this.submit(this.opts.customTaskId, input.value);
     });
-    if (this.opts.state.focused === key && !offline) {
+    if (this.opts.state.focused === key3 && !offline) {
       input.focus();
       input.setSelectionRange(input.value.length, input.value.length);
     }
@@ -2039,7 +2517,9 @@ function autoGrowTextarea(el) {
   el.style.height = `${el.scrollHeight}px`;
 }
 function renderVocabRow(plugin, container, entry, state, setState, refresh, opts = {}) {
+  var _a;
   const row = container.createEl("div", { cls: "vocab-tracker-row" });
+  row.setAttr("data-entry-id", entry.id);
   const due = plugin.srs.nextDue(entry);
   row.toggleClass("is-expanded", state !== "collapsed");
   const head = row.createEl("div", { cls: "vocab-tracker-row-header" });
@@ -2056,14 +2536,15 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh, opts
   for (const tag of entry.level.split(",").map((t2) => t2.trim()).filter(Boolean)) {
     wordWrap.createEl("span", { text: tag, cls: "vocab-tracker-row-badge" });
   }
+  (_a = opts.decorateWord) == null ? void 0 : _a.call(opts, wordWrap, entry);
   head.createEl("span", { cls: "vocab-tracker-row-spacer" });
   if (opts.showDue && due) {
     const label = dueLabel(due, /* @__PURE__ */ new Date());
-    const chip = head.createEl("span", { cls: "vt-row-due" });
-    chip.toggleClass("is-today", label.kind === "today");
-    (0, import_obsidian7.setIcon)(chip.createSpan({ cls: "vt-row-due-icon" }), "calendar");
-    chip.createSpan({ text: label.kind === "today" ? t("row.due.today") : label.text });
-    chip.title = t("row.nextReview", { date: due.toLocaleString() });
+    const chip2 = head.createEl("span", { cls: "vt-row-due" });
+    chip2.toggleClass("is-today", label.kind === "today");
+    (0, import_obsidian7.setIcon)(chip2.createSpan({ cls: "vt-row-due-icon" }), "calendar");
+    chip2.createSpan({ text: label.kind === "today" ? t("row.due.today") : label.text });
+    chip2.title = t("row.nextReview", { date: due.toLocaleString() });
   }
   const arrow = head.createEl("span", { cls: "vocab-tracker-row-arrow" });
   (0, import_obsidian7.setIcon)(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
@@ -2091,17 +2572,18 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh, opts
     const tab = renderTabs(plugin, body, entry, opts.ui, refresh);
     if (tab === "ai") {
       renderWordAiTab(plugin, body, entry, opts.ui);
+      renderWordPageButton(body, entry, opts);
       return;
     }
   }
-  const commitField = async (key, value) => {
-    entry[key] = value;
+  const commitField = async (key3, value) => {
+    entry[key3] = value;
     await plugin.store.touch(entry);
     refresh();
   };
-  const mkField = (label, key, opts2 = {}) => {
-    var _a;
-    const value = (_a = entry[key]) != null ? _a : "";
+  const mkField = (label, key3, opts2 = {}) => {
+    var _a2;
+    const value = (_a2 = entry[key3]) != null ? _a2 : "";
     const wrap = body.createEl("div", { cls: "vocab-tracker-field" });
     if (value) wrap.addClass("is-filled");
     const cls = ["vocab-tracker-input", "vocab-tracker-field-box"];
@@ -2114,14 +2596,14 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh, opts
       inp.onclick = (e) => e.stopPropagation();
       autoGrowTextarea(inp);
       inp.addEventListener("input", () => autoGrowTextarea(inp));
-      inp.onchange = () => commitField(key, inp.value);
+      inp.onchange = () => commitField(key3, inp.value);
     } else {
       const inp = wrap.createEl("input", { cls });
       inp.type = "text";
       inp.value = value;
       inp.placeholder = t("row.field.placeholder", { label: label.toLowerCase() });
       inp.onclick = (e) => e.stopPropagation();
-      inp.onchange = () => commitField(key, inp.value);
+      inp.onchange = () => commitField(key3, inp.value);
     }
   };
   mkField(t("row.field.synonyms"), "synonyms", { multiline: true });
@@ -2188,6 +2670,19 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh, opts
     e.stopPropagation();
     plugin.speakWord(entry);
   };
+  renderWordPageButton(body, entry, opts);
+}
+function renderWordPageButton(body, entry, opts) {
+  const open = opts.openWordPage;
+  if (!open) return;
+  const btn = body.createEl("button", { cls: "vt-word-page-btn" });
+  (0, import_obsidian7.setIcon)(btn.createSpan({ cls: "vt-word-page-btn-icon" }), "external-link");
+  btn.createSpan({ text: t("word.openPage") });
+  btn.setAttr("aria-label", t("word.openPageTitle"));
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    open(entry);
+  };
 }
 function renderTabs(plugin, body, entry, ui, refresh) {
   var _a;
@@ -2225,11 +2720,15 @@ function renderTabs(plugin, body, entry, ui, refresh) {
 
 // src/ui/word/GroupedWordList.ts
 var import_obsidian8 = require("obsidian");
+function groupTitle(entry) {
+  var _a;
+  return ((_a = entry.source) == null ? void 0 : _a.path) ? entry.source.path.split("/").pop().replace(/\.md$/, "") : "(no note)";
+}
 function renderGroupedVocabList(plugin, container, rows, collapsedGroups, expandState, refresh, rowOpts = {}) {
-  var _a, _b;
+  var _a;
   const groups = /* @__PURE__ */ new Map();
   for (const entry of rows) {
-    const title = ((_a = entry.source) == null ? void 0 : _a.path) ? entry.source.path.split("/").pop().replace(/\.md$/, "") : "(no note)";
+    const title = groupTitle(entry);
     if (!groups.has(title)) groups.set(title, []);
     groups.get(title).push(entry);
   }
@@ -2250,7 +2749,7 @@ function renderGroupedVocabList(plugin, container, rows, collapsedGroups, expand
     };
     if (isCollapsed) continue;
     for (const entry of groupRows) {
-      const state = (_b = expandState.get(entry.id)) != null ? _b : "collapsed";
+      const state = (_a = expandState.get(entry.id)) != null ? _a : "collapsed";
       renderVocabRow(
         plugin,
         container,
@@ -2370,14 +2869,14 @@ function headword(line) {
 }
 function parseWordlist(content) {
   var _a;
-  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+  const lines4 = content.replace(/\r\n?/g, "\n").split("\n");
   let i = 0;
   let tag;
-  if (((_a = lines[0]) == null ? void 0 : _a.trim()) === "---") {
-    const close = lines.findIndex((l, j) => j > 0 && l.trim() === "---");
+  if (((_a = lines4[0]) == null ? void 0 : _a.trim()) === "---") {
+    const close = lines4.findIndex((l3, j) => j > 0 && l3.trim() === "---");
     if (close > 0) {
-      for (const l of lines.slice(1, close)) {
-        const m = /^tag\s*:\s*["']?#?([^"']+?)["']?\s*$/.exec(l.trim());
+      for (const l3 of lines4.slice(1, close)) {
+        const m = /^tag\s*:\s*["']?#?([^"']+?)["']?\s*$/.exec(l3.trim());
         if (m) tag = m[1];
       }
       i = close + 1;
@@ -2386,13 +2885,13 @@ function parseWordlist(content) {
   const seen = /* @__PURE__ */ new Set();
   const words = [];
   let inFence = false;
-  for (; i < lines.length; i++) {
-    if (/^\s*(```|~~~)/.test(lines[i])) {
+  for (; i < lines4.length; i++) {
+    if (/^\s*(```|~~~)/.test(lines4[i])) {
       inFence = !inFence;
       continue;
     }
     if (inFence) continue;
-    const w = headword(lines[i]);
+    const w = headword(lines4[i]);
     if (w && !seen.has(w)) {
       seen.add(w);
       words.push(w);
@@ -2421,20 +2920,1169 @@ function renderExamStrip(root, plugin, file) {
   for (const tag of index.tags) {
     const stats = result.byTag[tag];
     const on = settings.highlight && tagEnabled(settings, tag);
-    const chip = chips.createSpan({ cls: "vt-exam-chip" });
-    chip.toggleClass("is-off", !on);
-    chip.style.setProperty("--vt-exam-color", tagColor(settings, tag));
-    chip.createSpan({ cls: "vt-exam-chip-dot" });
-    chip.createSpan({ text: tagLabel(tag) });
-    chip.createSpan({ cls: "vt-exam-chip-count", text: String((_a = stats == null ? void 0 : stats.unique) != null ? _a : 0) });
-    chip.title = t(on ? "exam.strip.hide" : "exam.strip.show", { tag: tagLabel(tag) });
-    chip.onclick = () => void plugin.toggleExamTag(tag);
+    const chip2 = chips.createSpan({ cls: "vt-exam-chip" });
+    chip2.toggleClass("is-off", !on);
+    chip2.style.setProperty("--vt-exam-color", tagColor(settings, tag));
+    chip2.createSpan({ cls: "vt-exam-chip-dot" });
+    chip2.createSpan({ text: tagLabel(tag) });
+    chip2.createSpan({ cls: "vt-exam-chip-count", text: String((_a = stats == null ? void 0 : stats.unique) != null ? _a : 0) });
+    chip2.title = t(on ? "exam.strip.hide" : "exam.strip.show", { tag: tagLabel(tag) });
+    chip2.onclick = () => void plugin.toggleExamTag(tag);
+  }
+}
+
+// src/ui/sidebar/ParagraphThreadList.ts
+var import_obsidian11 = require("obsidian");
+
+// src/core/text/blockId.ts
+var VT_BLOCK_PREFIX = "vt-";
+var TRAILING_RE = /(?:^|\s)\^([A-Za-z0-9-]+)[ \t]*\r?$/;
+function lines(markdown) {
+  return markdown.split("\n");
+}
+function trailingBlockId(text) {
+  const last = text.replace(/\s+$/, "");
+  const m = TRAILING_RE.exec(last);
+  return m ? m[1] : null;
+}
+function blockIdsIn(markdown) {
+  const out = /* @__PURE__ */ new Set();
+  for (const line of lines(markdown)) {
+    const id = trailingBlockId(line);
+    if (id) out.add(id);
+  }
+  return out;
+}
+function findBlockLine(markdown, id) {
+  const all = lines(markdown);
+  for (let i = 0; i < all.length; i++) if (trailingBlockId(all[i]) === id) return i;
+  return -1;
+}
+function newBlockId(taken, random = Math.random, maxTries = 100) {
+  for (let attempt = 0; attempt < maxTries; attempt++) {
+    let id = VT_BLOCK_PREFIX;
+    for (let i = 0; i < 6; i++) id += Math.min(35, Math.floor(random() * 36)).toString(36);
+    if (!taken(id)) return id;
+  }
+  throw new Error("Couldn't find an unused block id");
+}
+function withBlockId(markdown, line, id) {
+  const all = lines(markdown);
+  if (line < 0 || line >= all.length) throw new RangeError(`line ${line} out of range (0..${all.length - 1})`);
+  const cr = all[line].endsWith("\r");
+  const body = (cr ? all[line].slice(0, -1) : all[line]).replace(/[ \t]+$/, "");
+  all[line] = `${body} ^${id}${cr ? "\r" : ""}`;
+  return all.join("\n");
+}
+
+// src/core/text/hash.ts
+var PARAGRAPH_HASH_LENGTH = 12;
+function utf8Bytes(s) {
+  const out = [];
+  for (let i = 0; i < s.length; i++) {
+    let c = s.charCodeAt(i);
+    if (c >= 55296 && c <= 56319) {
+      const d = i + 1 < s.length ? s.charCodeAt(i + 1) : 0;
+      if (d >= 56320 && d <= 57343) {
+        c = 65536 + (c - 55296 << 10) + (d - 56320);
+        i++;
+      } else {
+        c = 65533;
+      }
+    } else if (c >= 56320 && c <= 57343) {
+      c = 65533;
+    }
+    if (c < 128) out.push(c);
+    else if (c < 2048) out.push(192 | c >> 6, 128 | c & 63);
+    else if (c < 65536) out.push(224 | c >> 12, 128 | c >> 6 & 63, 128 | c & 63);
+    else out.push(240 | c >> 18, 128 | c >> 12 & 63, 128 | c >> 6 & 63, 128 | c & 63);
+  }
+  return out;
+}
+function sha1(text) {
+  const bytes = utf8Bytes(text);
+  const bitLen = bytes.length * 8;
+  bytes.push(128);
+  while (bytes.length % 64 !== 56) bytes.push(0);
+  const hi = Math.floor(bitLen / 4294967296);
+  for (let s = 24; s >= 0; s -= 8) bytes.push(hi >>> s & 255);
+  for (let s = 24; s >= 0; s -= 8) bytes.push(bitLen >>> s & 255);
+  let h0 = 1732584193;
+  let h1 = 4023233417;
+  let h2 = 2562383102;
+  let h3 = 271733878;
+  let h4 = 3285377520;
+  const w = new Int32Array(80);
+  for (let off = 0; off < bytes.length; off += 64) {
+    for (let i = 0; i < 16; i++) {
+      const j = off + i * 4;
+      w[i] = bytes[j] << 24 | bytes[j + 1] << 16 | bytes[j + 2] << 8 | bytes[j + 3];
+    }
+    for (let i = 16; i < 80; i++) {
+      const x = w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16];
+      w[i] = x << 1 | x >>> 31;
+    }
+    let a = h0;
+    let b = h1;
+    let c = h2;
+    let d = h3;
+    let e = h4;
+    for (let i = 0; i < 80; i++) {
+      let f;
+      let k;
+      if (i < 20) {
+        f = b & c | ~b & d;
+        k = 1518500249;
+      } else if (i < 40) {
+        f = b ^ c ^ d;
+        k = 1859775393;
+      } else if (i < 60) {
+        f = b & c | b & d | c & d;
+        k = 2400959708;
+      } else {
+        f = b ^ c ^ d;
+        k = 3395469782;
+      }
+      const t2 = (a << 5 | a >>> 27) + f + e + k + w[i] | 0;
+      e = d;
+      d = c;
+      c = b << 30 | b >>> 2;
+      b = a;
+      a = t2;
+    }
+    h0 = h0 + a | 0;
+    h1 = h1 + b | 0;
+    h2 = h2 + c | 0;
+    h3 = h3 + d | 0;
+    h4 = h4 + e | 0;
+  }
+  return [h0, h1, h2, h3, h4].map((h) => (h >>> 0).toString(16).padStart(8, "0")).join("");
+}
+function normalizeParagraph(text) {
+  return text.replace(/\r\n?/g, "\n").replace(/(^|\s)\^[A-Za-z0-9-]+\s*$/, "").replace(/==([^=\n]+)==/g, "$1").normalize("NFC").replace(/\s+/g, " ").trim();
+}
+function paragraphHash(text) {
+  return sha1(normalizeParagraph(text)).slice(0, PARAGRAPH_HASH_LENGTH);
+}
+
+// src/services/anchors/sections.ts
+var ANCHORABLE = /* @__PURE__ */ new Set(["paragraph", "list", "blockquote"]);
+function isAnchorable(type) {
+  return ANCHORABLE.has(type);
+}
+var FENCE_RE = /^\s*(`{3,}|~{3,})/;
+var HEADING_RE = /^#{1,6}(\s|$)/;
+var LIST_RE = /^\s*([-*+]|\d+[.)])\s/;
+var BREAK_RE = /^\s*([-*_])(\s*\1){2,}\s*$/;
+function classify(lines4) {
+  const first = lines4[0];
+  if (/^\s*>\s*\[!/.test(first)) return "callout";
+  if (/^\s*>/.test(first)) return "blockquote";
+  if (LIST_RE.test(first)) return "list";
+  if (lines4.length === 1 && BREAK_RE.test(first)) return "thematicBreak";
+  if (lines4.length >= 2 && /^\s*\|/.test(first) && /^\s*\|?\s*:?-+/.test(lines4[1])) return "table";
+  return "paragraph";
+}
+function noteSections(markdown) {
+  const lines4 = markdown.replace(/\r\n?/g, "\n").split("\n");
+  const out = [];
+  let i = 0;
+  if (lines4[0] === "---") {
+    const close = lines4.indexOf("---", 1);
+    if (close > 0) i = close + 1;
+  }
+  let start = -1;
+  const flush = (end) => {
+    if (start < 0) return;
+    const block = lines4.slice(start, end + 1);
+    out.push({ type: classify(block), lineStart: start, lineEnd: end, text: block.join("\n") });
+    start = -1;
+  };
+  for (; i < lines4.length; i++) {
+    const line = lines4[i];
+    const fence = FENCE_RE.exec(line);
+    if (fence) {
+      flush(i - 1);
+      const marker = fence[1];
+      let end = i + 1;
+      while (end < lines4.length && !lines4[end].trimStart().startsWith(marker)) end++;
+      end = Math.min(end, lines4.length - 1);
+      out.push({ type: "code", lineStart: i, lineEnd: end, text: lines4.slice(i, end + 1).join("\n") });
+      i = end;
+      continue;
+    }
+    if (line.trim() === "") {
+      flush(i - 1);
+      continue;
+    }
+    if (HEADING_RE.test(line)) {
+      flush(i - 1);
+      out.push({ type: "heading", lineStart: i, lineEnd: i, text: line });
+      continue;
+    }
+    if (start < 0) start = i;
+  }
+  flush(lines4.length - 1);
+  return out;
+}
+function sectionText(markdown, lineStart, lineEnd) {
+  return markdown.replace(/\r\n?/g, "\n").split("\n").slice(lineStart, lineEnd + 1).join("\n");
+}
+function sectionAt(sections, line) {
+  return sections.find((s) => line >= s.lineStart && line <= s.lineEnd);
+}
+
+// src/services/anchors/ParagraphAnchorService.ts
+var AnchorError = class extends Error {
+  constructor(code, message) {
+    super(message != null ? message : code);
+    this.code = code;
+    this.name = "AnchorError";
+  }
+};
+function locateSection(content, ref) {
+  var _a, _b;
+  const sections = noteSections(content);
+  const want = normalizeParagraph(ref.text);
+  const atRange = sectionText(content, ref.lineStart, ref.lineEnd);
+  if (normalizeParagraph(atRange) === want) {
+    const s = sectionAt(sections, ref.lineEnd);
+    if (s && s.lineStart === ref.lineStart && s.lineEnd === ref.lineEnd) return s;
+    return { type: (_a = s == null ? void 0 : s.type) != null ? _a : "paragraph", lineStart: ref.lineStart, lineEnd: ref.lineEnd, text: atRange };
+  }
+  const hash = paragraphHash(ref.text);
+  return (_b = sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === hash)) != null ? _b : null;
+}
+function resolveIn(content, anchor) {
+  const sections = noteSections(content);
+  const found = (via, section2) => ({
+    status: "found",
+    via,
+    section: section2,
+    content,
+    edited: normalizeParagraph(section2.text) !== normalizeParagraph(anchor.snapshot)
+  });
+  if (anchor.blockId) {
+    const line = findBlockLine(content, anchor.blockId);
+    const section2 = line >= 0 ? sectionAt(sections, line) : void 0;
+    if (section2) return found("blockId", section2);
+  }
+  const bySnapshot = sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === anchor.hash);
+  if (bySnapshot) return found("hash", bySnapshot);
+  return { status: "orphan", reason: "missing-paragraph" };
+}
+var ParagraphAnchorService = class {
+  constructor(deps) {
+    this.deps = deps;
+    var _a;
+    this.random = (_a = deps.random) != null ? _a : Math.random;
+  }
+  // Anchors a paragraph for a new discussion. In block mode this writes
+  // ` ^vt-xxxxxx` at the end of the paragraph's last line through
+  // vault.process (atomic). A paragraph that already ends in a block id
+  // (the user's own, or one we wrote earlier) reuses it and writes
+  // nothing. If the write can't be done — the paragraph moved or vanished
+  // between render and write, or the vault refused — the anchor falls back
+  // to hash mode rather than failing the question.
+  async create(ref) {
+    const content = await this.deps.vault.read(ref.path);
+    if (content === null) throw new AnchorError("missing-file", `Note not found: ${ref.path}`);
+    const section2 = locateSection(content, ref);
+    if (!section2) throw new AnchorError("missing-paragraph");
+    if (!isAnchorable(section2.type)) throw new AnchorError("not-anchorable", `Can't anchor a ${section2.type}`);
+    const base = {
+      kind: "paragraph",
+      path: ref.path,
+      hash: paragraphHash(section2.text),
+      snapshot: plainParagraph(section2.text)
+    };
+    const existing = trailingBlockId(section2.text);
+    if (existing) return { ...base, blockId: existing };
+    if (this.deps.mode() === "hash") return base;
+    try {
+      const blockId = await this.writeBlockId(ref.path, section2);
+      return { ...base, blockId };
+    } catch (e) {
+      console.warn("Vocab Tracker: couldn't write a block id, using a text hash instead", e);
+      return base;
+    }
+  }
+  async writeBlockId(path, section2) {
+    let id = "";
+    await this.deps.vault.process(path, (current) => {
+      const target = locateSection(current, section2);
+      if (!target) throw new AnchorError("missing-paragraph");
+      const already = trailingBlockId(target.text);
+      if (already) {
+        id = already;
+        return current;
+      }
+      const inNote = blockIdsIn(current);
+      id = newBlockId((x) => inNote.has(x) || this.deps.vault.blockIdTaken(x), this.random);
+      return withBlockId(current, target.lineEnd, id);
+    });
+    return id;
+  }
+  // Where the anchored paragraph is now, or why it can't be found.
+  async resolve(anchor) {
+    let content;
+    try {
+      content = await this.deps.vault.read(anchor.path);
+    } catch (e) {
+      content = null;
+    }
+    if (content === null) return { status: "orphan", reason: "missing-file" };
+    return resolveIn(content, anchor);
+  }
+};
+
+// src/services/anchors/ParagraphIndex.ts
+function paragraphKey(anchor) {
+  return anchor.blockId ? `b:${anchor.blockId}` : `h:${anchor.hash}`;
+}
+function questionCount(thread) {
+  return liveTurns(thread).filter((t2) => t2.role === "user").length;
+}
+var ParagraphIndex = class {
+  constructor() {
+    this.events = new TypedEmitter();
+    this.byPath = /* @__PURE__ */ new Map();
+    this.byThread = /* @__PURE__ */ new Map();
+  }
+  // Subscribes to a ThreadService and fills the index once threads.json is
+  // loaded. Returns the unsubscribe function.
+  attach(source) {
+    const offs = [
+      source.events.on("thread:upsert", (th) => this.upsert(th)),
+      source.events.on("threads:reloaded", () => this.rebuild(source.paragraphThreads()))
+    ];
+    void source.ensureLoaded().then(() => this.rebuild(source.paragraphThreads()));
+    return () => offs.forEach((off) => off());
+  }
+  rebuild(threads) {
+    const touched = new Set(this.byPath.keys());
+    this.byPath.clear();
+    this.byThread.clear();
+    for (const th of threads) this.add(th);
+    for (const p of this.byPath.keys()) touched.add(p);
+    if (touched.size) this.events.emit("paragraph-index:change", { paths: [...touched] });
+  }
+  upsert(thread) {
+    const before = this.byThread.get(thread.id);
+    if (before) this.remove(thread.id);
+    const after = this.add(thread);
+    if ((before == null ? void 0 : before.path) === (after == null ? void 0 : after.path) && (before == null ? void 0 : before.key) === (after == null ? void 0 : after.key) && (before == null ? void 0 : before.count) === (after == null ? void 0 : after.count)) return;
+    const paths = /* @__PURE__ */ new Set();
+    if (before) paths.add(before.path);
+    if (after) paths.add(after.path);
+    this.events.emit("paragraph-index:change", { paths: [...paths] });
+  }
+  // Badge count for a reading-mode section (its raw text, as
+  // getSectionInfo covers it). Notes without paragraph discussions return
+  // before any hashing.
+  count(path, sectionText2) {
+    var _a;
+    const keys = this.byPath.get(path);
+    if (!keys) return 0;
+    const id = trailingBlockId(sectionText2);
+    if (id) {
+      const n = keys.get(`b:${id}`);
+      if (n) return n;
+    }
+    return (_a = keys.get(`h:${paragraphHash(sectionText2)}`)) != null ? _a : 0;
+  }
+  hasPath(path) {
+    return this.byPath.has(path);
+  }
+  add(thread) {
+    var _a;
+    if (thread.deletedAt || thread.anchor.kind !== "paragraph") return void 0;
+    const count = questionCount(thread);
+    if (!count) return void 0;
+    const c = { path: thread.anchor.path, key: paragraphKey(thread.anchor), count };
+    let keys = this.byPath.get(c.path);
+    if (!keys) {
+      keys = /* @__PURE__ */ new Map();
+      this.byPath.set(c.path, keys);
+    }
+    keys.set(c.key, ((_a = keys.get(c.key)) != null ? _a : 0) + count);
+    this.byThread.set(thread.id, c);
+    return c;
+  }
+  remove(threadId) {
+    var _a;
+    const c = this.byThread.get(threadId);
+    if (!c) return;
+    this.byThread.delete(threadId);
+    const keys = this.byPath.get(c.path);
+    if (!keys) return;
+    const left = ((_a = keys.get(c.key)) != null ? _a : 0) - c.count;
+    if (left > 0) keys.set(c.key, left);
+    else keys.delete(c.key);
+    if (!keys.size) this.byPath.delete(c.path);
+  }
+};
+
+// src/ui/sidebar/paragraphRows.ts
+function paragraphNumberAt(spans, lineStart) {
+  return spans.filter((s) => s.lineEnd < lineStart).length + 1;
+}
+function lastTurnAt(thread) {
+  const turns = liveTurns(thread);
+  return turns.length ? turns[turns.length - 1].at : thread.createdAt;
+}
+function taskLabelKeys(thread, labelOf) {
+  const out = [];
+  for (const turn of liveTurns(thread)) {
+    if (turn.role !== "user" || !turn.taskId) continue;
+    const label = labelOf(turn.taskId);
+    if (label && !out.includes(label)) out.push(label);
+  }
+  return out;
+}
+function paragraphRows(threads, content, labelOf) {
+  const spans = content === null ? [] : splitParagraphSpans(content);
+  const rows = [];
+  for (const thread of threads) {
+    if (thread.deletedAt || thread.anchor.kind !== "paragraph") continue;
+    const anchor = thread.anchor;
+    const where = content === null ? null : resolveIn(content, anchor);
+    const base = {
+      threadId: thread.id,
+      labels: taskLabelKeys(thread, labelOf),
+      count: questionCount(thread),
+      lastAt: lastTurnAt(thread),
+      createdAt: thread.createdAt,
+      hashOnly: !anchor.blockId
+    };
+    if ((where == null ? void 0 : where.status) === "found") {
+      rows.push({
+        ...base,
+        number: paragraphNumberAt(spans, where.section.lineStart),
+        preview: plainParagraph(where.section.text),
+        orphan: false,
+        edited: where.edited,
+        line: where.section.lineStart
+      });
+    } else {
+      rows.push({ ...base, number: null, preview: anchor.snapshot, orphan: true, edited: false, line: -1 });
+    }
+  }
+  return rows.sort(compareRows);
+}
+function compareRows(a, b) {
+  var _a, _b, _c, _d;
+  if (a.orphan !== b.orphan) return a.orphan ? 1 : -1;
+  if (!a.orphan && a.line !== b.line) return a.line - b.line;
+  if (a.orphan) return ((_a = b.lastAt) != null ? _a : "").localeCompare((_b = a.lastAt) != null ? _b : "");
+  return ((_c = a.createdAt) != null ? _c : "").localeCompare((_d = b.createdAt) != null ? _d : "") || a.threadId.localeCompare(b.threadId);
+}
+function threadsWithMissingNote(threads, exists) {
+  return threads.filter((th) => !th.deletedAt && th.anchor.kind === "paragraph" && !exists(th.anchor.path)).sort((a, b) => {
+    var _a, _b;
+    return ((_a = lastTurnAt(b)) != null ? _a : "").localeCompare((_b = lastTurnAt(a)) != null ? _b : "");
+  });
+}
+function shortDate2(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// src/ui/sidebar/ParagraphThreadList.ts
+function rowMeta(row) {
+  const parts = row.labels.map((key3) => t(key3));
+  parts.push(t("paragraph.list.count", { n: row.count }));
+  const date = shortDate2(row.lastAt);
+  if (date) parts.push(date);
+  return parts.join(" \xB7 ");
+}
+function confirmButton(parent, label, confirmLabel, onConfirm) {
+  const btn = parent.createEl("button", { cls: "vt-plist-action", text: label });
+  let armed = false;
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!armed) {
+      armed = true;
+      btn.setText(confirmLabel);
+      btn.addClass("mod-warning");
+      return;
+    }
+    onConfirm();
+  });
+  btn.addEventListener("blur", () => {
+    armed = false;
+    btn.setText(label);
+    btn.removeClass("mod-warning");
+  });
+  return btn;
+}
+function orphanActions(parent, threadId, actions) {
+  const bar = parent.createDiv({ cls: "vt-plist-actions" });
+  const rebind = bar.createEl("button", { cls: "vt-plist-action", text: t("paragraph.action.rebind") });
+  rebind.addEventListener("click", (e) => {
+    e.stopPropagation();
+    actions.rebind(threadId);
+  });
+  confirmButton(bar, t("paragraph.action.delete"), t("paragraph.action.confirmDelete"), () => actions.remove(threadId));
+}
+function drawRow(parent, row, actions, current, note) {
+  const el = parent.createDiv({ cls: "vt-plist-row" });
+  el.toggleClass("is-current", current);
+  el.toggleClass("is-orphan", row.orphan);
+  el.setAttr("role", "button");
+  el.setAttr("tabindex", "0");
+  el.addEventListener("click", () => actions.open(row.threadId));
+  el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") actions.open(row.threadId);
+  });
+  const title = el.createDiv({ cls: "vt-plist-text" });
+  if (row.number !== null) title.createSpan({ cls: "vt-plist-num", text: `\xB6${row.number}` });
+  title.createSpan({ text: row.preview });
+  title.title = row.preview;
+  const meta = el.createDiv({ cls: "vt-plist-meta" });
+  (0, import_obsidian11.setIcon)(meta.createSpan({ cls: "vt-plist-meta-icon" }), "sparkles");
+  meta.createSpan({ text: rowMeta(row) });
+  if (row.orphan) meta.createSpan({ cls: "vt-plist-flag is-orphan", text: t("paragraph.list.orphan") });
+  else if (row.edited) meta.createSpan({ cls: "vt-plist-flag", text: t("paragraph.list.edited") });
+  if (note) el.createDiv({ cls: "vt-plist-path", text: note });
+  if (row.orphan) orphanActions(el, row.threadId, actions);
+}
+var ParagraphThreadList = class extends import_obsidian11.Component {
+  constructor(parent, path, deps, actions, currentThreadId = () => null) {
+    super();
+    this.path = path;
+    this.deps = deps;
+    this.actions = actions;
+    this.currentThreadId = currentThreadId;
+    this.seq = 0;
+    this.alive = false;
+    // Threads drawn last time.
+    this.mine = /* @__PURE__ */ new Set();
+    this.el = parent.createDiv({ cls: "vt-plist" });
+  }
+  get notePath() {
+    return this.path;
+  }
+  onload() {
+    this.alive = true;
+    this.register(() => this.alive = false);
+    const { threads } = this.deps;
+    this.register(
+      threads.events.on("thread:upsert", (th) => {
+        if (th.anchor.kind !== "paragraph") return;
+        if (th.anchor.path === this.path || this.mine.has(th.id)) void this.refresh();
+      })
+    );
+    this.register(threads.events.on("threads:reloaded", () => void this.refresh()));
+    void threads.ensureLoaded().then(() => this.refresh());
+  }
+  // Re-reads the note (paragraph positions, edits) and redraws the list.
+  // Called by the sidebar when the note is modified.
+  async refresh() {
+    const seq = ++this.seq;
+    const threads = this.deps.threads.paragraphThreads(this.path);
+    let content = null;
+    if (threads.length) {
+      try {
+        content = await this.deps.notes.read(this.path);
+      } catch (e) {
+        content = null;
+      }
+    }
+    if (!this.alive || seq !== this.seq) return;
+    this.mine.clear();
+    for (const th of threads) this.mine.add(th.id);
+    this.draw(paragraphRows(threads, content, (id) => this.deps.taskLabel(id)));
+  }
+  draw(rows) {
+    this.el.empty();
+    const head = this.el.createDiv({ cls: "vt-plist-head" });
+    head.createSpan({ text: t("paragraph.list.title", { n: rows.length }) });
+    if (!rows.length) {
+      this.el.createDiv({ cls: "vt-plist-hint", text: t("paragraph.list.hint") });
+      return;
+    }
+    const current = this.currentThreadId();
+    for (const row of rows) drawRow(this.el, row, this.actions, row.threadId === current);
+  }
+};
+var MissingNoteThreadList = class extends import_obsidian11.Component {
+  constructor(parent, deps, actions) {
+    super();
+    this.deps = deps;
+    this.actions = actions;
+    this.alive = false;
+    this.el = parent.createDiv({ cls: "vt-plist" });
+  }
+  onload() {
+    this.alive = true;
+    this.register(() => this.alive = false);
+    const { threads } = this.deps;
+    this.register(
+      threads.events.on("thread:upsert", (th) => {
+        if (th.anchor.kind === "paragraph") this.refresh();
+      })
+    );
+    this.register(threads.events.on("threads:reloaded", () => this.refresh()));
+    void threads.ensureLoaded().then(() => this.refresh());
+  }
+  refresh() {
+    var _a;
+    if (!this.alive) return;
+    const orphans = threadsWithMissingNote(this.deps.threads.paragraphThreads(), (p) => this.deps.exists(p));
+    this.el.empty();
+    if (!orphans.length) return;
+    this.el.createDiv({ cls: "vt-plist-head" }).createSpan({ text: t("paragraph.list.orphanTitle", { n: orphans.length }) });
+    const rows = paragraphRows(orphans, null, (id) => this.deps.taskLabel(id));
+    for (const row of rows) {
+      const anchor = (_a = orphans.find((x) => x.id === row.threadId)) == null ? void 0 : _a.anchor;
+      const note = (anchor == null ? void 0 : anchor.kind) === "paragraph" ? t("paragraph.list.missingNote", { path: anchor.path }) : void 0;
+      drawRow(this.el, row, this.actions, false, note);
+    }
+  }
+};
+
+// src/ui/sidebar/ParagraphThreadPane.ts
+var import_obsidian12 = require("obsidian");
+
+// src/core/text/tokens.ts
+var CJK_RE = /[\u3000-\u303f\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/g;
+function estimateTokens(text) {
+  var _a, _b;
+  if (!text) return 0;
+  const cjk = (_b = (_a = text.match(CJK_RE)) == null ? void 0 : _a.length) != null ? _b : 0;
+  const rest = text.length - cjk;
+  return cjk + Math.ceil(rest / 4);
+}
+
+// src/services/ai/context/paragraphContext.ts
+var MAX_ARTICLE_TOKENS = 3e4;
+var TRUNCATE_WINDOW = 3;
+var ARTICLE_TEMPLATE = `\u3014\u6587\u7AE0\u3015{{#title}}\u300A{{title}}\u300B{{/title}}
+{{#truncated}}\uFF08\u5168\u6587\u592A\u9577\uFF0C\u9019\u88E1\u53EA\u9644\u4E0A\u3014\u76EE\u524D\u6BB5\u843D\u3015\u524D\u5F8C\u5404 {{window}} \u6BB5\uFF1B\u6BB5\u843D\u7DE8\u865F\u4ECD\u662F\u539F\u6587\u7684\u7DE8\u865F\u3002\uFF09{{/truncated}}
+
+{{body}}`;
+var FOCUS_TEMPLATE = `\u3014\u76EE\u524D\u6BB5\u843D\u3015\xB6{{paragraphNumber}}
+{{paragraph}}`;
+function buildParagraphContext(input, opts = {}) {
+  var _a, _b, _c, _d, _e, _f, _g, _h;
+  const { paragraphs } = input.article;
+  if (input.paragraphIndex < 0 || input.paragraphIndex >= paragraphs.length) {
+    throw new RangeError(`paragraphIndex ${input.paragraphIndex} out of range (0..${paragraphs.length - 1})`);
+  }
+  const maxTokens = (_a = opts.maxArticleTokens) != null ? _a : MAX_ARTICLE_TOKENS;
+  const window2 = (_b = opts.window) != null ? _b : TRUNCATE_WINDOW;
+  const numbered = paragraphs.map((p, i) => `\xB6${i + 1} ${p.trim()}`);
+  const truncated = estimateTokens(numbered.join("\n\n")) > maxTokens;
+  const from = truncated ? Math.max(0, input.paragraphIndex - window2) : 0;
+  const to = truncated ? Math.min(paragraphs.length, input.paragraphIndex + window2 + 1) : paragraphs.length;
+  const articleBlock = renderTemplate(ARTICLE_TEMPLATE, {
+    title: (_c = input.article.title) == null ? void 0 : _c.trim(),
+    truncated: truncated ? "yes" : "",
+    window: window2,
+    body: numbered.slice(from, to).join("\n\n")
+  });
+  const paragraph = paragraphs[input.paragraphIndex].trim();
+  const paragraphNumber2 = input.paragraphIndex + 1;
+  return {
+    articleBlock,
+    focusBlock: renderTemplate(FOCUS_TEMPLATE, { paragraph, paragraphNumber: paragraphNumber2 }),
+    truncated,
+    slots: {
+      paragraph,
+      paragraphNumber: paragraphNumber2,
+      selection: (_e = (_d = input.selection) == null ? void 0 : _d.trim()) != null ? _e : "",
+      question: (_g = (_f = input.question) == null ? void 0 : _f.trim()) != null ? _g : "",
+      knownWords: ((_h = input.knownWords) != null ? _h : []).join(", ")
+    }
+  };
+}
+
+// src/services/ai/tasks/length.ts
+function scaledChars(profileMax, sourceChars2, ratio) {
+  if (profileMax <= 0) return 0;
+  return Math.ceil((profileMax + sourceChars2 * ratio) / 50) * 50;
+}
+function profileForTask(profile, task, input) {
+  if (!task.answerChars || profile.maxAnswerChars <= 0) return profile;
+  return { ...profile, maxAnswerChars: task.answerChars(input, profile.maxAnswerChars) };
+}
+
+// src/services/ai/tasks/paragraph.ts
+var PARAGRAPH_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u8010\u5FC3\u3001\u7CBE\u6E96\u7684\u82F1\u6587\u95B1\u8B80\u5BB6\u6559\uFF0C\u6B63\u5728\u966A\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u8B80\u4E00\u7BC7\u82F1\u6587\u6587\u7AE0\u3002\u3014\u6587\u7AE0\u3015\u662F\u5168\u6587\uFF0C\u3014\u76EE\u524D\u6BB5\u843D\u3015\u662F\u5B78\u7FD2\u8005\u6B63\u5728\u8B80\u7684\u90A3\u4E00\u6BB5\u3002
+
+\u56DE\u7B54\u898F\u5247\uFF1A
+1. \u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u56DE\u7B54\uFF0C\u5F15\u7528\u82F1\u6587\u539F\u6587\u6642\u4FDD\u7559\u82F1\u6587\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u82E5\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\uFF0C\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
+2. \u53EA\u6839\u64DA\u63D0\u4F9B\u7684\u6587\u7AE0\u548C\u53EF\u9760\u3001\u5E38\u898B\u7684\u8A9E\u8A00\u77E5\u8B58\u56DE\u7B54\u3002\u4E0D\u78BA\u5B9A\u5C31\u76F4\u63A5\u8AAA\u300C\u4E0D\u78BA\u5B9A\u300D\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u7FA9\u3001\u6587\u6CD5\u898F\u5247\u3001\u5B57\u6E90\u6216\u51FA\u8655\u3002
+3. \u7528 Markdown \u6392\u7248\uFF1A\u91CD\u9EDE\u7528\u7C97\u9AD4\uFF0C\u689D\u5217\u6700\u591A 5 \u9EDE\uFF0C\u4E0D\u8981\u7528\u6A19\u984C\uFF08#\uFF09\u3002
+4. \u7BC7\u5E45\u4EE5\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u70BA\u6E96\u3002
+
+\u5224\u65B7\u4F7F\u7528\u8005\u5728\u554F\u54EA\u4E00\u53E5\uFF1A
+- \u4F7F\u7528\u8005\u7684\u554F\u984C\u5E38\u5E38\u5F88\u53E3\u8A9E\uFF0C\u4F8B\u5982\u300C\u6211\u770B\u4E0D\u61C2\u9019\u53E5\u300D\u300C\u9019\u88E1\u70BA\u4EC0\u9EBC\u9019\u6A23\u5BEB\u300D\uFF0C\u4E5F\u53EF\u80FD\u76F4\u63A5\u8CBC\u4E0A\u6216\u5F15\u7528\u6587\u7AE0\u88E1\u7684\u4E00\u5C0F\u6BB5\u6587\u5B57\uFF08\u53EF\u80FD\u4E0D\u5B8C\u6574\u3001\u6709\u932F\u5B57\u3001\u5927\u5C0F\u5BEB\u4E0D\u540C\uFF09\u3002
+- \u4F9D\u5E8F\u7528\u9019\u4E9B\u7DDA\u7D22\u627E\u51FA\u4ED6\u6307\u7684\u90A3\u4E00\u53E5\uFF1A
+  1. \u6709\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015\u6642\uFF0C\u4EE5\u5305\u542B\u9078\u53D6\u6587\u5B57\u7684\u90A3\u4E00\u53E5\u70BA\u6E96\u3002
+  2. \u554F\u984C\u88E1\u5F15\u7528\u4E86\u82F1\u6587\u7247\u6BB5\u6642\uFF0C\u5728\u3014\u76EE\u524D\u6BB5\u843D\u3015\u627E\u5305\u542B\u9019\u500B\u7247\u6BB5\u7684\u53E5\u5B50\uFF1B\u627E\u4E0D\u5230\u518D\u5230\u3014\u6587\u7AE0\u3015\u5176\u4ED6\u6BB5\u843D\u627E\u3002
+  3. \u90FD\u6C92\u6709\u7DDA\u7D22\u6642\uFF1A\u554F\u984C\u662F\u91DD\u5C0D\u6574\u6BB5\uFF08\u4F8B\u5982\u300C\u9019\u6BB5\u5728\u8B1B\u4EC0\u9EBC\u300D\uFF09\uFF0C\u7BC4\u570D\u5C31\u662F\u6574\u6BB5\uFF1B\u554F\u984C\u8AAA\u7684\u662F\u300C\u9019\u53E5\u300D\u4F46\u3014\u76EE\u524D\u6BB5\u843D\u3015\u6709\u597D\u5E7E\u53E5\uFF0C\u5C31\u6311\u6700\u53EF\u80FD\u8B93\u5B78\u7FD2\u8005\u5361\u4F4F\u7684\u90A3\u4E00\u53E5\uFF0C\u4E26\u5728\u56DE\u7B54\u6700\u5F8C\u63D0\u9192\uFF1A\u300C\u5982\u679C\u4E0D\u662F\u9019\u53E5\uFF0C\u9078\u53D6\u6216\u8CBC\u4E0A\u4F60\u60F3\u554F\u7684\u53E5\u5B50\u518D\u554F\u4E00\u6B21\u3002\u300D
+- \u56DE\u7B54\u7684\u7B2C\u4E00\u884C\u56FA\u5B9A\u5BEB\u51FA\u7BC4\u570D\uFF0C\u539F\u6587\u7167\u6284\u3001\u4E0D\u8981\u7FFB\u8B6F\uFF1A
+  - \u91DD\u5C0D\u67D0\u4E00\u53E5\uFF1A\u4F60\u554F\u7684\u662F\uFF1A\u300C<\u90A3\u4E00\u53E5\u82F1\u6587\u539F\u6587>\u300D
+  - \u91DD\u5C0D\u6574\u6BB5\uFF1A\u4F60\u554F\u7684\u662F\uFF1A\u6574\u6BB5\uFF08\xB6<\u6BB5\u843D\u7DE8\u865F>\uFF09
+- \u8FFD\u554F\u6642\uFF08\u524D\u9762\u7684\u5C0D\u8A71\u5DF2\u7D93\u5BEB\u904E\u300C\u4F60\u554F\u7684\u662F\u300D\uFF09\uFF0C\u5982\u679C\u9019\u6B21\u554F\u7684\u9084\u662F\u540C\u4E00\u53E5\u6216\u540C\u4E00\u500B\u7BC4\u570D\uFF0C\u5C31\u4E0D\u8981\u518D\u5BEB\u9019\u4E00\u884C\uFF0C\u76F4\u63A5\u56DE\u7B54\uFF1B\u63DB\u4E86\u53E5\u5B50\u6216\u7BC4\u570D\u624D\u91CD\u65B0\u5BEB\u3002
+- \u771F\u7684\u7121\u6CD5\u5224\u65B7\u6642\uFF0C\u5217\u51FA\u6700\u53EF\u80FD\u7684\u4E00\u5230\u5169\u53E5\u8ACB\u4F7F\u7528\u8005\u78BA\u8A8D\uFF0C\u4E0D\u8981\u786C\u731C\u3002
+- \u7B2C\u4E00\u884C\u4E4B\u5F8C\u7A7A\u4E00\u884C\uFF0C\u518D\u958B\u59CB\u56DE\u7B54\u3002`;
+var SELECTION_HEADER2 = `{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015
+{{selection}}
+
+{{/selection}}`;
+var PARAGRAPH_TEMPLATES = {
+  grammar: `${SELECTION_HEADER2}\u4EFB\u52D9\uFF1A\u6587\u6CD5\u89E3\u6790\uFF08\xB6{{paragraphNumber}}\uFF09
+\u7BC4\u570D\uFF1A{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015\u6240\u5728\u7684\u90A3\u4E00\u53E5\u3002{{/selection}}{{^selection}}\u3014\u76EE\u524D\u6BB5\u843D\u3015\u88E1\u7D50\u69CB\u6700\u503C\u5F97\u5B78\u7684\u4E00\u53E5\uFF1B\u6BB5\u843D\u53EA\u6709\u4E00\u53E5\u6642\u5C31\u662F\u90A3\u4E00\u53E5\u3002{{/selection}}
+\u8ACB\u62C6\u89E3\u53E5\u5B50\u7D50\u69CB\uFF08\u4E3B\u8981\u5B50\u53E5\u3001\u5F9E\u5C6C\u5B50\u53E5\u3001\u7247\u8A9E\u5404\u81EA\u4FEE\u98FE\u8AB0\uFF09\uFF0C\u9EDE\u51FA\u95DC\u9375\u6587\u6CD5\uFF08\u6642\u614B\u3001\u8A9E\u614B\u3001\u5047\u8A2D\u8A9E\u6C23\u3001\u5012\u88DD\u3001\u7701\u7565\u7B49\uFF09\u5728\u9019\u88E1\u7684\u4F5C\u7528\uFF0C\u6700\u5F8C\u7528\u4E00\u53E5\u8A71\u8AAA\u660E\u9019\u53E5\u7684\u610F\u601D\u3002`,
+  translate: `${SELECTION_HEADER2}\u4EFB\u52D9\uFF1A\u7FFB\u8B6F\uFF08\xB6{{paragraphNumber}}\uFF09
+\u7BC4\u570D\uFF1A{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015\u6240\u5728\u7684\u53E5\u5B50\u3002{{/selection}}{{^selection}}\u6574\u6BB5\u3002{{/selection}}
+\u5148\u7D66\u901A\u9806\u3001\u81EA\u7136\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F\uFF1B\u518D\u6311\u4E00\u5230\u4E09\u500B\u76F4\u8B6F\u5BB9\u6613\u51FA\u932F\u7684\u5730\u65B9\uFF08\u7247\u8A9E\u3001\u6163\u7528\u8A9E\u3001\u6587\u5316\u80CC\u666F\uFF09\u7C21\u77ED\u8AAA\u660E\u3002`,
+  vocab: `${SELECTION_HEADER2}\u4EFB\u52D9\uFF1A\u751F\u5B57\u6574\u7406\uFF08\xB6{{paragraphNumber}}\uFF09
+\u7BC4\u570D\uFF1A\u6574\u6BB5\u3002
+\u4F9D\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF0C\u6311\u51FA\u3014\u76EE\u524D\u6BB5\u843D\u3015\u88E1\u6700\u503C\u5F97\u5B78\u7684 3 \u5230 6 \u500B\u55AE\u5B57\u6216\u7247\u8A9E\u3002{{#knownWords}}\u5B78\u7FD2\u8005\u5DF2\u7D93\u6536\u9304\u7684\u5B57\u4E0D\u8981\u518D\u5217\uFF1A{{knownWords}}\u3002{{/knownWords}}
+\u6BCF\u500B\u4E00\u884C\uFF0C\u683C\u5F0F\uFF1A- **\u55AE\u5B57** \u8A5E\u6027\uFF1A\u4E2D\u6587\u610F\u601D \u2014 \u5728\u9019\u6BB5\u88E1\u7684\u7528\u6CD5`,
+  paraphrase: `${SELECTION_HEADER2}\u4EFB\u52D9\uFF1A\u63DB\u53E5\u8A71\u8AAA\uFF08\xB6{{paragraphNumber}}\uFF09
+\u7BC4\u570D\uFF1A{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015\u6240\u5728\u7684\u90A3\u4E00\u53E5\u3002{{/selection}}{{^selection}}\u3014\u76EE\u524D\u6BB5\u843D\u3015\u88E1\u6700\u96E3\u61C2\u7684\u4E00\u53E5\u3002{{/selection}}
+\u7D66\u5169\u7A2E\u82F1\u6587\u6539\u5BEB\uFF1A\u4E00\u7A2E\u66F4\u7C21\u55AE\u3001\u9069\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF1B\u4E00\u7A2E\u66F4\u81EA\u7136\u9053\u5730\u3002\u6BCF\u7A2E\u90FD\u9644\u4E2D\u6587\u8AAA\u660E\uFF0C\u8B1B\u6E05\u695A\u548C\u539F\u53E5\u5DEE\u5728\u54EA\u88E1\u3002`,
+  custom: `${SELECTION_HEADER2}\u3014\u4F7F\u7528\u8005\u7684\u554F\u984C\u3015\uFF08\xB6{{paragraphNumber}}\uFF09
+{{question}}
+
+\u8ACB\u4F9D\u300C\u5224\u65B7\u4F7F\u7528\u8005\u5728\u554F\u54EA\u4E00\u53E5\u300D\u7684\u898F\u5247\u6C7A\u5B9A\u7B2C\u4E00\u884C\u8981\u4E0D\u8981\u5BEB\u51FA\u7BC4\u570D\uFF0C\u518D\u56DE\u7B54\u554F\u984C\u3002`
+};
+function paragraphTask(id, opts) {
+  const task = {
+    id: `paragraph.${id}`,
+    // v2: follow-ups skip a repeated 「你問的是」 line (規劃書 06 §6.4.1 #3).
+    version: 2,
+    surface: "paragraph",
+    ...opts,
+    build(input, ctx) {
+      const c = buildParagraphContext(input);
+      return composeRequest({
+        base: PARAGRAPH_BASE_PROMPT,
+        cached: [c.articleBlock],
+        context: [c.focusBlock],
+        profile: profileForTask(ctx.profile, task, input),
+        history: ctx.history,
+        user: renderTemplate(PARAGRAPH_TEMPLATES[id], c.slots),
+        tier: opts.tier,
+        maxTokens: opts.maxTokens
+      });
+    }
+  };
+  return task;
+}
+function sourceChars(input) {
+  var _a;
+  const selection = (_a = input.selection) == null ? void 0 : _a.trim();
+  return (selection || input.article.paragraphs[input.paragraphIndex] || "").trim().length;
+}
+var paragraphGrammar = paragraphTask("grammar", { tier: "smart", maxTokens: 4096, label: "ai.task.paragraph.grammar" });
+var paragraphTranslate = paragraphTask("translate", {
+  tier: "fast",
+  maxTokens: 2048,
+  label: "ai.task.paragraph.translate",
+  answerChars: (input, max) => scaledChars(max, sourceChars(input), 0.6)
+});
+var paragraphVocab = paragraphTask("vocab", { tier: "fast", maxTokens: 2048, label: "ai.task.paragraph.vocab" });
+var paragraphParaphrase = paragraphTask("paraphrase", {
+  tier: "smart",
+  maxTokens: 4096,
+  label: "ai.task.paragraph.paraphrase",
+  answerChars: (input, max) => scaledChars(max, sourceChars(input), 0.3)
+});
+var paragraphCustom = paragraphTask("custom", { tier: "smart", maxTokens: 4096 });
+var PARAGRAPH_TASKS = [paragraphGrammar, paragraphTranslate, paragraphVocab, paragraphParaphrase, paragraphCustom];
+
+// src/ui/sidebar/anchorSettings.ts
+function resolveAnchorSettings(settings) {
+  const raw = settings == null ? void 0 : settings.anchors;
+  const mode = (raw == null ? void 0 : raw.mode) === "hash" ? "hash" : "block";
+  const out = { mode, blockIdNoticeSeen: (raw == null ? void 0 : raw.blockIdNoticeSeen) === true };
+  if (typeof (raw == null ? void 0 : raw.updatedAt) === "string") out.updatedAt = raw.updatedAt;
+  return out;
+}
+function patchAnchorSettings(settings, patch) {
+  var _a;
+  const s = settings;
+  s.anchors = { ...(_a = s.anchors) != null ? _a : {}, ...resolveAnchorSettings(settings), ...patch };
+}
+function needsBlockIdNotice(s, sectionText2) {
+  return s.mode === "block" && !s.blockIdNoticeSeen && !trailingBlockId(sectionText2);
+}
+
+// src/ui/sidebar/routes.ts
+var LIST_ROUTE = { name: "list" };
+function routeKey(route) {
+  switch (route.name) {
+    case "list":
+      return "list";
+    case "paragraph":
+      return `paragraph:${route.threadId}`;
+    case "paragraph-draft":
+      return `draft:${route.section.path}:${route.section.lineStart}`;
+  }
+}
+function sameRoute(a, b) {
+  return routeKey(a) === routeKey(b);
+}
+function routePath(route, threadPath) {
+  switch (route.name) {
+    case "list":
+      return null;
+    case "paragraph":
+      return threadPath(route.threadId);
+    case "paragraph-draft":
+      return route.section.path;
+  }
+}
+function routeForActiveNote(route, activePath, threadPath) {
+  if (route.name === "list" || activePath === null) return route;
+  const path = routePath(route, threadPath);
+  if (path === null) return route.name === "paragraph-draft" ? LIST_ROUTE : route;
+  return path === activePath ? route : LIST_ROUTE;
+}
+var SidebarRouter = class {
+  constructor() {
+    this.route = LIST_ROUTE;
+  }
+  get current() {
+    return this.route;
+  }
+  get canGoBack() {
+    return this.route.name !== "list";
+  }
+  // Returns false when already there (nothing to redraw).
+  go(route) {
+    if (sameRoute(route, this.route)) return false;
+    this.route = route;
+    return true;
+  }
+  back() {
+    return this.go(LIST_ROUTE);
+  }
+  // The draft's first question created thread `threadId`. Ignored unless
+  // the draft for that same section is still showing (the user may have
+  // gone back, or opened another paragraph, while the anchor was written).
+  promoteDraft(section2, threadId) {
+    const r = this.route;
+    if (r.name !== "paragraph-draft" || r.section.path !== section2.path || r.section.lineStart !== section2.lineStart) return false;
+    this.route = { name: "paragraph", threadId };
+    return true;
+  }
+};
+
+// src/ui/sidebar/ParagraphThreadPane.ts
+var ParagraphThreadPane = class extends import_obsidian12.Component {
+  constructor(parent, route, host, chatState, nav) {
+    super();
+    this.route = route;
+    this.host = host;
+    this.chatState = chatState;
+    this.nav = nav;
+    this.noticeEl = null;
+    this.seq = 0;
+    this.aiNoteSeq = 0;
+    this.alive = false;
+    // Where the quote jumps to.
+    this.target = null;
+    this.root = parent.createDiv({ cls: "vt-ppane" });
+  }
+  get key() {
+    return routeKey(this.route);
+  }
+  get threadId() {
+    return this.route.name === "paragraph" ? this.route.threadId : null;
+  }
+  // The note this pane is about (for the sidebar's modify listener).
+  get path() {
+    if (this.route.name === "paragraph-draft") return this.route.section.path;
+    const th = this.host.threads.get(this.route.threadId);
+    return (th == null ? void 0 : th.anchor.kind) === "paragraph" ? th.anchor.path : null;
+  }
+  onload() {
+    this.alive = true;
+    this.register(() => this.alive = false);
+    this.renderShell();
+    const id = this.threadId;
+    if (id) {
+      const { threads } = this.host;
+      this.register(
+        threads.events.on("thread:upsert", (th) => {
+          if (th.id !== id) return;
+          if (th.deletedAt) return this.nav.removed(id);
+          void this.refreshStatus();
+        })
+      );
+      this.register(
+        threads.events.on("threads:reloaded", () => {
+          if (!threads.get(id)) return this.nav.removed(id);
+          void this.refreshStatus();
+        })
+      );
+    }
+    void this.refreshStatus();
+    const { vault } = this.host.app;
+    const onNote = (path) => {
+      if (/\.ai\.md$/i.test(path)) void this.refreshAiNote();
+    };
+    this.registerEvent(vault.on("create", (f) => onNote(f.path)));
+    this.registerEvent(vault.on("rename", (f) => onNote(f.path)));
+    this.registerEvent(vault.on("delete", (f) => onNote(f.path)));
+  }
+  // ── Static parts ───────────────────────────────────────────────────────
+  renderShell() {
+    const back = this.root.createDiv({ cls: "vt-ppane-back" });
+    back.setAttr("role", "button");
+    back.setAttr("tabindex", "0");
+    back.setAttr("aria-label", t("paragraph.pane.back"));
+    (0, import_obsidian12.setIcon)(back.createSpan({ cls: "vt-ppane-back-icon" }), "arrow-left");
+    back.createSpan({ text: t("sidebar.filter.note") });
+    back.addEventListener("click", () => this.nav.back());
+    back.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") this.nav.back();
+    });
+    const head = this.root.createDiv({ cls: "vt-ppane-head" });
+    this.titleEl = head.createSpan({ cls: "vt-ppane-title", text: t("paragraph.pane.titleNoNumber") });
+    const id = this.threadId;
+    if (id) {
+      const del = head.createSpan({ cls: "vt-ppane-delete clickable-icon" });
+      (0, import_obsidian12.setIcon)(del, "trash-2");
+      del.setAttr("aria-label", t("paragraph.pane.delete"));
+      let armed = false;
+      del.addEventListener("click", () => {
+        if (!armed) {
+          armed = true;
+          del.addClass("mod-warning");
+          del.setAttr("aria-label", t("paragraph.action.confirmDelete"));
+          window.setTimeout(() => {
+            armed = false;
+            del.removeClass("mod-warning");
+            del.setAttr("aria-label", t("paragraph.pane.delete"));
+          }, 3e3);
+          return;
+        }
+        void this.host.threads.deleteThread(id).then(() => new import_obsidian12.Notice(t("paragraph.deleted")));
+      });
+    }
+    this.quoteEl = this.root.createDiv({ cls: "vt-ppane-quote" });
+    this.quoteEl.setAttr("aria-label", t("paragraph.pane.jump"));
+    this.quoteEl.addEventListener("click", () => void this.jump());
+    if (this.route.name === "paragraph-draft") {
+      this.quoteEl.setText(plainParagraph(this.route.section.text));
+      this.target = { path: this.route.section.path, line: this.route.section.lineStart };
+    } else {
+      const anchor = this.anchor();
+      if (anchor) this.quoteEl.setText(anchor.snapshot);
+    }
+    this.notesEl = this.root.createDiv({ cls: "vt-ppane-notes" });
+    if (this.route.name === "paragraph-draft") this.renderBlockIdNotice(this.route.section);
+    this.renderChat(this.root.createDiv({ cls: "vt-ppane-chat" }));
+    this.aiNoteEl = this.root.createDiv({ cls: "vt-ppane-ainote" });
+    this.aiNoteEl.setAttr("role", "button");
+    this.aiNoteEl.setAttr("tabindex", "0");
+  }
+  // 「開啟 討論串/<文章>.ai.md」 under the chat (design D5): only when the
+  // article's note exists.
+  async refreshAiNote() {
+    const seq = ++this.aiNoteSeq;
+    const article = this.path;
+    let note = null;
+    if (article) {
+      try {
+        note = await this.host.exporter.aiNotePath(article);
+      } catch (e) {
+        console.error("Vocab Tracker: couldn't find the article's .ai.md", e);
+      }
+    }
+    if (!this.alive || seq !== this.aiNoteSeq) return;
+    const el = this.aiNoteEl;
+    el.empty();
+    if (!note) return;
+    const path = note;
+    (0, import_obsidian12.setIcon)(el.createSpan({ cls: "vt-ppane-ainote-icon" }), "file-text");
+    el.createSpan({ text: t("paragraph.pane.openAiNote", { path: path.split("/").slice(-2).join("/") }) });
+    el.onclick = () => void this.host.openNote(path, "tab");
+    el.onkeydown = (e) => {
+      if (e.key === "Enter") void this.host.openNote(path, "tab");
+    };
+  }
+  anchor() {
+    const id = this.threadId;
+    const th = id ? this.host.threads.get(id) : void 0;
+    return (th == null ? void 0 : th.anchor.kind) === "paragraph" ? th.anchor : null;
+  }
+  // ── First block id write: one-time explanation (§5.1) ─────────────────
+  renderBlockIdNotice(section2) {
+    const settings = resolveAnchorSettings(this.host.store.settings);
+    if (!needsBlockIdNotice(settings, section2.text)) return;
+    const el = this.noticeEl = this.root.createDiv({ cls: "vt-ppane-notice" });
+    el.appendChild(inlineNote({ tone: "info", icon: "hash", text: t("paragraph.notice.blockId") }));
+    const bar = el.createDiv({ cls: "vt-ppane-notice-actions" });
+    const ok = bar.createEl("button", { cls: "mod-cta", text: t("paragraph.notice.ok") });
+    ok.addEventListener("click", () => void this.dismissNotice(false));
+    const hash = bar.createEl("button", { text: t("paragraph.notice.useHash") });
+    hash.addEventListener("click", () => void this.dismissNotice(true));
+  }
+  async dismissNotice(useHash) {
+    var _a;
+    (_a = this.noticeEl) == null ? void 0 : _a.remove();
+    this.noticeEl = null;
+    await this.host.store.updateSettings(
+      (s) => patchAnchorSettings(s, useHash ? { mode: "hash", blockIdNoticeSeen: true } : { blockIdNoticeSeen: true })
+    );
+    if (useHash) new import_obsidian12.Notice(t("paragraph.notice.hashOn"));
+  }
+  // ── Chat ───────────────────────────────────────────────────────────────
+  renderChat(el) {
+    var _a, _b;
+    const { app, threads, ai, selection, manifest } = this.host;
+    const route = this.route;
+    const threadId = route.name === "paragraph" ? route.threadId : this.key;
+    const sourcePath = route.name === "paragraph-draft" ? route.section.path : (_b = (_a = this.anchor()) == null ? void 0 : _a.path) != null ? _b : "";
+    this.addChild(
+      new ChatPanel(el, {
+        app,
+        threads,
+        ai,
+        selection,
+        threadId,
+        surface: "paragraph",
+        customTaskId: paragraphCustom.id,
+        sourcePath,
+        placeholder: t("paragraph.pane.placeholder"),
+        state: this.chatState,
+        send: (req) => friendlyErrors(route.name === "paragraph-draft" ? this.sendDraft(route.section, req) : this.sendThread(threadId, req)),
+        retry: (turnId) => friendlyErrors(threads.retryParagraph(threadId, turnId)),
+        onOpenSettings: () => openPluginSettings(app, manifest.id)
+      })
+    );
+  }
+  async sendThread(threadId, req) {
+    await this.host.threads.askParagraph({ threadId }, req);
+  }
+  // The first question about a paragraph: askParagraph writes the anchor
+  // and creates the thread, then streams the answer — and only resolves
+  // once the answer is done. The thread id is needed as soon as the
+  // thread exists, so the pane listens for the new thread's first upsert
+  // (it's marked busy before that event fires) and hands over to the real
+  // thread's pane, which picks up the stream mid-way.
+  async sendDraft(section2, req) {
+    const { threads, store } = this.host;
+    if (this.noticeEl) {
+      this.noticeEl.remove();
+      this.noticeEl = null;
+      await store.updateSettings((s) => patchAnchorSettings(s, { blockIdNoticeSeen: true }));
+    }
+    const busyBefore = new Set(threads.paragraphThreads(section2.path).filter((th) => threads.isBusy(th.id)).map((th) => th.id));
+    let started = false;
+    const start = (id) => {
+      if (started) return;
+      started = true;
+      off();
+      window.setTimeout(() => this.nav.threadStarted(section2, id), 0);
+    };
+    const off = threads.events.on("thread:upsert", (th) => {
+      if (th.anchor.kind !== "paragraph" || th.anchor.path !== section2.path) return;
+      if (threads.isBusy(th.id) && !busyBefore.has(th.id)) start(th.id);
+    });
+    try {
+      const id = await threads.askParagraph(section2, req);
+      if (id) start(id);
+    } finally {
+      off();
+    }
+  }
+  // ── Header, quote and notes from where the anchor resolves now ─────────
+  async refreshStatus() {
+    void this.refreshAiNote();
+    const seq = ++this.seq;
+    const route = this.route;
+    if (route.name === "paragraph-draft") {
+      const content = await this.readNote(route.section.path);
+      if (!this.alive || seq !== this.seq || content === null) return;
+      const n = paragraphNumberAt(splitParagraphSpans(content), route.section.lineStart);
+      this.titleEl.setText(t("paragraph.pane.title", { n }));
+      return;
+    }
+    let where = null;
+    try {
+      where = await this.host.threads.paragraphStatus(route.threadId);
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't resolve a paragraph anchor", e);
+    }
+    if (!this.alive || seq !== this.seq) return;
+    const anchor = this.anchor();
+    if (!anchor) return;
+    this.notesEl.empty();
+    if ((where == null ? void 0 : where.status) === "found") {
+      const n = paragraphNumberAt(splitParagraphSpans(where.content), where.section.lineStart);
+      this.titleEl.setText(t("paragraph.pane.title", { n }));
+      this.quoteEl.setText(plainParagraph(where.section.text));
+      this.quoteEl.removeClass("is-orphan");
+      this.target = { path: anchor.path, line: where.section.lineStart };
+      if (where.edited) this.notesEl.appendChild(inlineNote({ tone: "info", icon: "file-diff", text: t("paragraph.pane.edited") }));
+      if (!anchor.blockId) this.notesEl.appendChild(inlineNote({ tone: "info", icon: "hash", text: t("paragraph.pane.hashAnchor") }));
+      return;
+    }
+    this.titleEl.setText(t("paragraph.pane.titleNoNumber"));
+    this.quoteEl.setText(anchor.snapshot);
+    this.quoteEl.addClass("is-orphan");
+    this.target = null;
+    const missingFile = (where == null ? void 0 : where.status) === "orphan" && where.reason === "missing-file";
+    const note = inlineNote({ tone: "error", icon: "unlink", text: t(missingFile ? "paragraph.pane.orphanFile" : "paragraph.pane.orphanParagraph") });
+    this.notesEl.appendChild(note);
+    const bar = this.notesEl.createDiv({ cls: "vt-plist-actions" });
+    const rebind = bar.createEl("button", { cls: "vt-plist-action", text: t("paragraph.action.rebind") });
+    const id = route.threadId;
+    rebind.addEventListener("click", () => this.nav.rebind(id));
+    confirmButton(bar, t("paragraph.action.delete"), t("paragraph.action.confirmDelete"), () => {
+      void this.host.threads.deleteThread(id).then(() => new import_obsidian12.Notice(t("paragraph.deleted")));
+    });
+  }
+  async readNote(path) {
+    try {
+      return await this.host.notes.read(path);
+    } catch (e) {
+      return null;
+    }
+  }
+  // Opens the note at the paragraph — in the pane that already shows it,
+  // if there is one.
+  async jump() {
+    var _a;
+    const target = this.target;
+    if (!target) return;
+    const { workspace, vault } = this.host.app;
+    const file = vault.getAbstractFileByPath(target.path);
+    if (!(file instanceof import_obsidian12.TFile)) return;
+    const leaf = (_a = workspace.getLeavesOfType("markdown").find((l3) => {
+      var _a2;
+      return ((_a2 = l3.view.file) == null ? void 0 : _a2.path) === target.path;
+    })) != null ? _a : workspace.getLeaf(false);
+    await leaf.openFile(file, { eState: { line: target.line } });
+    workspace.revealLeaf(leaf);
+  }
+};
+async function friendlyErrors(p) {
+  try {
+    await p;
+  } catch (e) {
+    if (e instanceof AnchorError && e.code === "not-anchorable") throw new Error(t("paragraph.error.notAnchorable"), { cause: e });
+    throw e;
   }
 }
 
 // src/ui/sidebar/VocabSidebarView.ts
 var VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
-var VocabSidebarView = class extends import_obsidian11.ItemView {
+var NOTE_REFRESH_MS = 400;
+var REBINDING_BODY_CLS = "vt-rebinding";
+var VocabSidebarView = class extends import_obsidian13.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     // Word clicked via a plain ==mark== that isn't tracked yet — prompts an
@@ -2443,10 +4091,31 @@ var VocabSidebarView = class extends import_obsidian11.ItemView {
     this.expandState = /* @__PURE__ */ new Map();
     this.collapsedGroups = /* @__PURE__ */ new Set();
     this.wordUi = new WordUi(this);
+    this.router = new SidebarRouter();
+    // A discussion waiting for its new paragraph: the next ✦ clicked in
+    // reading view rebinds it instead of opening that paragraph.
+    this.rebindThreadId = null;
     // Exam word stats for the active note; refreshed on its own (see
     // refreshExamStrip) so a background scan never re-renders the word list
     // — that would wipe a half-typed question in an open AI tab.
     this.examStripEl = null;
+    this.rebindEl = null;
+    // Owner of the current draw's paragraph list / pane (their event
+    // subscriptions end with the draw).
+    this.drawScope = null;
+    this.pane = null;
+    this.paragraphList = null;
+    this.missingList = null;
+    // Word id → its ✦ n chip in the word list (either tab).
+    this.wordChips = /* @__PURE__ */ new Map();
+    this.changedPaths = /* @__PURE__ */ new Set();
+    this.refreshChangedNotes = (0, import_obsidian13.debounce)(() => this.flushChangedNotes(), NOTE_REFRESH_MS, true);
+    // The note a paragraph thread belongs to, if that note still exists.
+    this.threadPath = (threadId) => {
+      const th = this.plugin.threads.get(threadId);
+      if ((th == null ? void 0 : th.anchor.kind) !== "paragraph") return null;
+      return this.app.vault.getAbstractFileByPath(th.anchor.path) ? th.anchor.path : null;
+    };
     this.plugin = plugin;
   }
   getViewType() {
@@ -2459,6 +4128,29 @@ var VocabSidebarView = class extends import_obsidian11.ItemView {
     return "book-open";
   }
   async onOpen() {
+    const { threads } = this.plugin;
+    this.register(
+      threads.events.on("thread:upsert", (th) => {
+        if (th.anchor.kind === "word") this.updateWordChip(th.anchor.entryId);
+      })
+    );
+    this.register(threads.events.on("threads:reloaded", () => this.updateWordChips()));
+    void threads.ensureLoaded().then(() => this.updateWordChips());
+    const { vault } = this.app;
+    this.registerEvent(vault.on("modify", (f) => this.noteChanged(f.path)));
+    this.registerEvent(vault.on("delete", (f) => this.noteChanged(f.path, true)));
+    this.registerEvent(
+      vault.on("rename", (f, oldPath) => {
+        var _a;
+        if (((_a = this.paragraphList) == null ? void 0 : _a.notePath) === oldPath) {
+          window.setTimeout(() => this.render(), 0);
+          return;
+        }
+        this.noteChanged(oldPath, true);
+        this.noteChanged(f.path, true);
+      })
+    );
+    this.register(() => document.body.removeClass(REBINDING_BODY_CLS));
     this.render();
   }
   // Called when a tracked word is clicked (reading-mode word / ==mark==).
@@ -2475,25 +4167,190 @@ var VocabSidebarView = class extends import_obsidian11.ItemView {
     } else {
       this.pendingWord = word;
     }
+    this.router.back();
     this.render();
+  }
+  // Shows one word's card, expanded and on the given tab (the word page's
+  // 「在側欄開啟」 opens it on "ai"). Switches to All when the word isn't
+  // from the note in front, and opens its group there.
+  openWord(entryId, tab) {
+    var _a, _b;
+    const entry = this.plugin.store.entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    if (this.expandState.get(entry.id) === void 0 || this.expandState.get(entry.id) === "collapsed") {
+      this.expandState.set(entry.id, "half");
+    }
+    this.wordUi.tabs.set(entry.id, tab);
+    this.pendingWord = "";
+    const active = (_a = this.app.workspace.getActiveFile()) == null ? void 0 : _a.path;
+    if (this.filterMode !== "all" && (!active || ((_b = entry.source) == null ? void 0 : _b.path) !== active)) this.filterMode = "all";
+    if (this.filterMode === "all") this.collapsedGroups.delete(groupTitle(entry));
+    this.router.back();
+    this.draw();
+    const root = this.containerEl.children[1];
+    const row = root.querySelector(`.vocab-tracker-row[data-entry-id="${CSS.escape(entry.id)}"]`);
+    row == null ? void 0 : row.scrollIntoView({ block: "nearest" });
   }
   refreshExamStrip() {
     if (!this.examStripEl) return;
     this.examStripEl.empty();
     renderExamStrip(this.examStripEl, this.plugin, this.plugin.app.workspace.getActiveFile());
   }
+  // ── Paragraph discussions ───────────────────────────────────────────────
+  // A reading-mode ✦ was clicked (ParagraphBadges → main.ts). Opens that
+  // paragraph's discussion, or a new one; while rebinding, the paragraph
+  // becomes the waiting discussion's new anchor instead.
+  async openParagraph(ref) {
+    if (this.rebindThreadId) return this.finishRebind(ref);
+    const { threads } = this.plugin;
+    await threads.ensureLoaded();
+    const thread = threads.paragraphThread(ref.path, ref.text);
+    this.navigate(thread ? { name: "paragraph", threadId: thread.id } : { name: "paragraph-draft", section: ref });
+  }
+  openThread(threadId) {
+    this.navigate({ name: "paragraph", threadId });
+  }
+  navigate(route) {
+    if (this.router.go(route)) this.draw();
+  }
+  startRebind(threadId) {
+    this.rebindThreadId = threadId;
+    document.body.addClass(REBINDING_BODY_CLS);
+    this.drawRebindBanner();
+  }
+  cancelRebind() {
+    this.rebindThreadId = null;
+    document.body.removeClass(REBINDING_BODY_CLS);
+    this.drawRebindBanner();
+  }
+  async finishRebind(ref) {
+    const threadId = this.rebindThreadId;
+    this.cancelRebind();
+    try {
+      if (!await this.plugin.threads.rebindParagraph(threadId, ref)) return;
+      new import_obsidian13.Notice(t("paragraph.rebind.done"));
+      this.navigate({ name: "paragraph", threadId });
+    } catch (e) {
+      console.error("Vocab Tracker: rebind failed", e);
+      new import_obsidian13.Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
+    }
+  }
+  drawRebindBanner() {
+    const el = this.rebindEl;
+    if (!el) return;
+    el.empty();
+    el.toggle(!!this.rebindThreadId);
+    if (!this.rebindThreadId) return;
+    (0, import_obsidian13.setIcon)(el.createSpan({ cls: "vt-rebind-icon" }), "link");
+    el.createSpan({ cls: "vt-rebind-text", text: t("paragraph.rebind.banner") });
+    const cancel = el.createEl("button", { text: t("paragraph.rebind.cancel") });
+    cancel.addEventListener("click", () => this.cancelRebind());
+  }
+  listActions() {
+    return {
+      open: (id) => this.openThread(id),
+      rebind: (id) => this.startRebind(id),
+      remove: (id) => void this.plugin.threads.deleteThread(id).then(() => new import_obsidian13.Notice(t("paragraph.deleted")))
+    };
+  }
+  paneNav() {
+    return {
+      back: () => this.navigate(LIST_ROUTE),
+      threadStarted: (section2, threadId) => {
+        const draftKey = routeKey({ name: "paragraph-draft", section: section2 });
+        if (!this.router.promoteDraft(section2, threadId)) return;
+        const chat = this.wordUi.chat;
+        if (chat.focused === draftKey) chat.focused = threadId;
+        this.draw();
+      },
+      rebind: (id) => this.startRebind(id),
+      removed: (id) => {
+        const r = this.router.current;
+        if (r.name === "paragraph" && r.threadId === id) this.navigate(LIST_ROUTE);
+      }
+    };
+  }
+  listDeps() {
+    const { threads, notes, ai } = this.plugin;
+    return { threads, notes, taskLabel: (id) => {
+      var _a;
+      return (_a = ai.tasks.get(id)) == null ? void 0 : _a.label;
+    } };
+  }
+  noteChanged(path, structural = false) {
+    var _a, _b;
+    const watched = ((_a = this.paragraphList) == null ? void 0 : _a.notePath) === path || ((_b = this.pane) == null ? void 0 : _b.path) === path;
+    if (!watched && !(structural && this.missingList)) return;
+    this.changedPaths.add(path);
+    this.refreshChangedNotes();
+  }
+  flushChangedNotes() {
+    var _a, _b;
+    const paths = this.changedPaths;
+    this.changedPaths = /* @__PURE__ */ new Set();
+    if (this.paragraphList && paths.has(this.paragraphList.notePath)) void this.paragraphList.refresh();
+    const panePath = (_a = this.pane) == null ? void 0 : _a.path;
+    if (this.pane && panePath && paths.has(panePath)) void this.pane.refreshStatus();
+    (_b = this.missingList) == null ? void 0 : _b.refresh();
+  }
+  // ── ✦ n on words with discussions ───────────────────────────────────────
+  drawWordChip(chip2, entryId) {
+    const n = this.plugin.threads.wordQuestionCount(entryId);
+    chip2.empty();
+    chip2.toggle(n > 0);
+    if (!n) return;
+    (0, import_obsidian13.setIcon)(chip2.createSpan({ cls: "vt-word-tc-icon" }), "sparkles");
+    chip2.createSpan({ text: String(n) });
+    chip2.setAttr("aria-label", t("word.discussions", { n }));
+  }
+  updateWordChip(entryId) {
+    const chip2 = this.wordChips.get(entryId);
+    if (chip2 == null ? void 0 : chip2.isConnected) this.drawWordChip(chip2, entryId);
+  }
+  updateWordChips() {
+    for (const id of this.wordChips.keys()) this.updateWordChip(id);
+  }
+  // ── Drawing ─────────────────────────────────────────────────────────────
+  // Public entry point (main.ts calls it on note switches and after word
+  // edits). Closes a paragraph pane that belongs to another note; keeps an
+  // open pane as is when its route didn't change.
   render() {
-    var _a;
+    var _a, _b;
+    const active = (_b = (_a = this.app.workspace.getActiveFile()) == null ? void 0 : _a.path) != null ? _b : null;
+    const route = routeForActiveNote(this.router.current, active, this.threadPath);
+    this.router.go(route);
+    if (this.pane && sameRoute(this.pane.route, this.router.current)) return;
+    this.draw();
+  }
+  draw() {
     const root = this.containerEl.children[1];
     this.wordUi.beginRender();
+    if (this.drawScope) this.removeChild(this.drawScope);
+    const scope = this.drawScope = this.addChild(new import_obsidian13.Component());
+    this.pane = null;
+    this.paragraphList = null;
+    this.missingList = null;
+    this.examStripEl = null;
+    this.wordChips.clear();
     root.empty();
     root.addClass("vocab-tracker-sidebar");
     const header = root.createEl("div", { cls: "vocab-tracker-header" });
     header.createEl("h4", { text: t("sidebar.title") });
     const openList = header.createEl("span", { cls: "vocab-tracker-icon-btn" });
-    (0, import_obsidian11.setIcon)(openList, "file-text");
+    (0, import_obsidian13.setIcon)(openList, "file-text");
     openList.title = t("sidebar.openList");
     openList.onclick = () => this.plugin.openVocabFile();
+    this.rebindEl = root.createDiv({ cls: "vt-rebind-banner" });
+    this.drawRebindBanner();
+    const route = this.router.current;
+    if (route.name === "list") {
+      this.drawList(root, scope);
+    } else {
+      this.pane = scope.addChild(new ParagraphThreadPane(root, route, this.plugin, this.wordUi.chat, this.paneNav()));
+    }
+  }
+  drawList(root, scope) {
+    var _a;
     const entries = this.plugin.store.entries;
     if (this.pendingWord) {
       const banner = root.createEl("div", { cls: "vocab-tracker-add-prompt" });
@@ -2503,20 +4360,19 @@ var VocabSidebarView = class extends import_obsidian11.ItemView {
         await this.plugin.addWordToVocab(this.pendingWord);
       };
       const dismiss = banner.createEl("span", { cls: "vocab-tracker-close-btn" });
-      (0, import_obsidian11.setIcon)(dismiss, "x");
+      (0, import_obsidian13.setIcon)(dismiss, "x");
       dismiss.onclick = () => {
         this.pendingWord = "";
         this.render();
       };
     }
     const activeFile = this.plugin.app.workspace.getActiveFile();
-    this.examStripEl = root.createDiv();
-    this.refreshExamStrip();
     const canFilter = !!activeFile;
     if (this.filterMode === void 0) this.filterMode = "note";
+    const noteMode = this.filterMode === "note" && canFilter;
     let list = entries;
     let scopeLabel = t("sidebar.scope.all");
-    if (this.filterMode === "note" && canFilter) {
+    if (noteMode) {
       list = entries.filter(
         (e) => e.source && e.source.path === activeFile.path
       );
@@ -2532,48 +4388,73 @@ var VocabSidebarView = class extends import_obsidian11.ItemView {
       b.toggleClass("is-active", on);
       b.onclick = () => {
         this.filterMode = mode;
-        this.render();
+        this.draw();
       };
     };
     mkToggle(t("sidebar.filter.note"), "note");
     mkToggle(t("sidebar.filter.all"), "all");
+    this.examStripEl = root.createDiv();
+    this.refreshExamStrip();
     if (list.length === 0) {
       root.createEl("div", {
-        text: this.filterMode === "note" && canFilter ? t("sidebar.hint.noteEmpty") : t("sidebar.hint.allEmpty"),
+        text: noteMode ? t("sidebar.hint.noteEmpty") : t("sidebar.hint.allEmpty"),
         cls: "vocab-tracker-hint"
       });
-      return;
-    }
-    const listEl = root.createEl("div", { cls: "vocab-tracker-list" });
-    if (this.filterMode === "all") {
-      renderGroupedVocabList(
-        this.plugin,
-        listEl,
-        list,
-        this.collapsedGroups,
-        this.expandState,
-        () => this.render(),
-        { ui: this.wordUi }
-      );
     } else {
-      for (const entry of list) {
-        const state = (_a = this.expandState.get(entry.id)) != null ? _a : "collapsed";
-        renderVocabRow(
+      const listEl = root.createEl("div", { cls: "vocab-tracker-list" });
+      const rowOpts = {
+        ui: this.wordUi,
+        // ✦ n after the word (design D1); the dashboard doesn't pass this.
+        decorateWord: (wrap, entry) => {
+          const chip2 = wrap.createSpan({ cls: "vt-word-tc" });
+          this.wordChips.set(entry.id, chip2);
+          this.drawWordChip(chip2, entry.id);
+        },
+        openWordPage: (entry) => void this.plugin.openWordPage(entry.id)
+      };
+      if (this.filterMode === "all") {
+        renderGroupedVocabList(
           this.plugin,
           listEl,
-          entry,
-          state,
-          (s) => this.expandState.set(entry.id, s),
+          list,
+          this.collapsedGroups,
+          this.expandState,
           () => this.render(),
-          { ui: this.wordUi }
+          rowOpts
         );
+      } else {
+        for (const entry of list) {
+          const state = (_a = this.expandState.get(entry.id)) != null ? _a : "collapsed";
+          renderVocabRow(
+            this.plugin,
+            listEl,
+            entry,
+            state,
+            (s) => this.expandState.set(entry.id, s),
+            () => this.render(),
+            rowOpts
+          );
+        }
       }
+    }
+    if (noteMode && activeFile instanceof import_obsidian13.TFile && activeFile.extension === "md") {
+      this.paragraphList = scope.addChild(
+        new ParagraphThreadList(root, activeFile.path, this.listDeps(), this.listActions())
+      );
+    } else if (this.filterMode === "all") {
+      this.missingList = scope.addChild(
+        new MissingNoteThreadList(
+          root,
+          { ...this.listDeps(), exists: (p) => !!this.app.vault.getAbstractFileByPath(p) },
+          this.listActions()
+        )
+      );
     }
   }
 };
 
 // src/ui/blocks/dashboard.ts
-var import_obsidian12 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 function renderDashboard(plugin, _source, el, ctx) {
   var _a;
   const entries = plugin.store.entries;
@@ -2606,7 +4487,7 @@ function renderDashboard(plugin, _source, el, ctx) {
   const search = el.createEl("input", { cls: ["vocab-tracker-search-input", "vocab-tracker-field-box"] });
   search.placeholder = t("dashboard.search");
   const listWrap = el.createEl("div", { cls: "vocab-tracker-list" });
-  const owner = new import_obsidian12.MarkdownRenderChild(listWrap);
+  const owner = new import_obsidian14.MarkdownRenderChild(listWrap);
   ctx.addChild(owner);
   const wordUi = new WordUi(owner);
   const expandState = /* @__PURE__ */ new Map();
@@ -2627,7 +4508,7 @@ function renderDashboard(plugin, _source, el, ctx) {
 }
 function renderReviewButton(plugin, el, ctx) {
   const btn = el.createEl("button", { cls: "vt-dash-review" });
-  (0, import_obsidian12.setIcon)(btn.createSpan({ cls: "vt-dash-review-icon" }), "layers");
+  (0, import_obsidian14.setIcon)(btn.createSpan({ cls: "vt-dash-review-icon" }), "layers");
   const label = btn.createSpan();
   btn.onclick = () => void plugin.openFlashcards();
   const update = () => {
@@ -2636,7 +4517,7 @@ function renderReviewButton(plugin, el, ctx) {
     btn.toggleClass("mod-cta", n > 0);
   };
   update();
-  const child = new import_obsidian12.MarkdownRenderChild(el);
+  const child = new import_obsidian14.MarkdownRenderChild(el);
   let alive = true;
   child.register(() => alive = false);
   child.register(plugin.store.events.on("data:changed", update));
@@ -2644,6 +4525,2198 @@ function renderReviewButton(plugin, el, ctx) {
   void plugin.srs.ensureLoaded().then(() => {
     if (alive) update();
   });
+}
+
+// src/ui/blocks/families.ts
+var import_obsidian16 = require("obsidian");
+
+// src/core/model/family.ts
+function familyOrigin(familyId) {
+  return `family:${familyId}`;
+}
+function familyMembers(f) {
+  return f.groups.flatMap((g) => g.members);
+}
+
+// src/core/wordlists/lemma.ts
+var MIN_BASE = 3;
+function isConsonant2(c) {
+  return /[b-df-hj-np-tv-z]/.test(c);
+}
+function lemmaCandidates(lower) {
+  const w = lower.endsWith("'s") ? lower.slice(0, -2) : lower;
+  const out = w !== lower ? [w] : [];
+  const add2 = (base) => {
+    if (base.length >= MIN_BASE && base !== w && !out.includes(base)) out.push(base);
+  };
+  if (w.endsWith("ies") || w.endsWith("ied")) {
+    add2(w.slice(0, -3) + "y");
+  }
+  if (w.endsWith("s") && !w.endsWith("ss")) {
+    add2(w.slice(0, -1));
+    if (w.endsWith("es")) add2(w.slice(0, -2));
+  }
+  if (w.endsWith("ed") && !w.endsWith("eed")) {
+    add2(w.slice(0, -1));
+    const stem = w.slice(0, -2);
+    add2(stem);
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant2(stem[stem.length - 1])) {
+      add2(stem.slice(0, -1));
+    }
+  }
+  if (w.endsWith("ing")) {
+    const stem = w.slice(0, -3);
+    add2(stem);
+    add2(stem + "e");
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant2(stem[stem.length - 1])) {
+      add2(stem.slice(0, -1));
+    }
+    if (stem.endsWith("y")) add2(stem.slice(0, -1) + "ie");
+  }
+  if (w.endsWith("ily")) add2(w.slice(0, -3) + "y");
+  if (w.endsWith("ly") && w.length - 2 >= 4) add2(w.slice(0, -2));
+  return out;
+}
+
+// src/services/learn/wordIndex.ts
+var TOKEN_RE2 = /[A-Za-z][A-Za-z'-]*/g;
+var STOP = /* @__PURE__ */ new Set(["the", "she", "new", "even", "like", "use", "her", "his", "one"]);
+function pluralBases(w) {
+  if (w.length > 4 && w.endsWith("ies")) return [w.slice(0, -3) + "y"];
+  if (/(?:s|x|z|ch|sh)es$/.test(w)) return [w.slice(0, -2)];
+  if (w.length > 3 && w.endsWith("s") && !/(?:ss|us|is)$/.test(w)) return [w.slice(0, -1)];
+  return [];
+}
+var WordIndex = class {
+  constructor(entries) {
+    this.exact = /* @__PURE__ */ new Map();
+    // Base forms of the entries' own words ("aprons" → "apron").
+    this.base = /* @__PURE__ */ new Map();
+    // Multi-word entries ("paring knife", "gloss over") are matched as phrases.
+    this.phrases = [];
+    for (const e of entries) {
+      if (e.deletedAt) continue;
+      const w = e.word.trim().toLowerCase();
+      if (!w) continue;
+      if (/\s/.test(w)) {
+        this.phrases.push(e);
+        continue;
+      }
+      if (!this.exact.has(w)) this.exact.set(w, e);
+    }
+    for (const [w, e] of this.exact) {
+      for (const b of pluralBases(w)) if (!STOP.has(b) && !this.exact.has(b) && !this.base.has(b)) this.base.set(b, e);
+    }
+  }
+  // The entry for a single word or phrase, if it's in the list.
+  find(word) {
+    var _a;
+    const w = word.trim().toLowerCase();
+    if (!w) return void 0;
+    if (/\s/.test(w)) return this.phrases.find((e) => e.word.trim().toLowerCase() === w);
+    const hit = (_a = this.exact.get(w)) != null ? _a : this.base.get(w);
+    if (hit) return hit;
+    for (const b of lemmaCandidates(w)) {
+      const e = this.exact.get(b);
+      if (e) return e;
+    }
+    return void 0;
+  }
+  // Ids of the learned words appearing in `text`, in order of first
+  // appearance (phrases after single words), minus `exclude`.
+  mentions(text, exclude = /* @__PURE__ */ new Set()) {
+    var _a;
+    const out = [];
+    const add2 = (e) => {
+      if (e && !exclude.has(e.id) && !out.includes(e.id)) out.push(e.id);
+    };
+    for (const token of (_a = text.match(TOKEN_RE2)) != null ? _a : []) add2(this.find(token.replace(/^['-]+|['-]+$/g, "")));
+    for (const e of this.phrases) if (buildWordRe(e.word.trim()).test(text)) add2(e);
+    return out;
+  }
+};
+
+// src/ui/blocks/params.ts
+function parseBlockParams(source) {
+  const out = {};
+  for (const raw of source.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#") || line.startsWith("//")) continue;
+    const i = line.indexOf(":");
+    if (i <= 0) continue;
+    const key3 = line.slice(0, i).trim().toLowerCase();
+    const value = line.slice(i + 1).trim();
+    if (key3) out[key3] = value;
+  }
+  return out;
+}
+var MODE_ALIASES = {
+  "en-zh": "en-zh",
+  "en\u2192zh": "en-zh",
+  "\u82F1\u2192\u4E2D": "en-zh",
+  "zh-en": "zh-en",
+  "zh\u2192en": "zh-en",
+  "\u4E2D\u2192\u82F1": "zh-en",
+  cloze: "cloze",
+  "\u4F8B\u53E5\u586B\u7A7A": "cloze",
+  listen: "listen",
+  "\u807D\u97F3\u62FC\u5B57": "listen"
+};
+function parseFlashcardParams(source) {
+  var _a, _b, _c;
+  const p = parseBlockParams(source);
+  const mode = (_b = MODE_ALIASES[((_a = p.mode) != null ? _a : "").toLowerCase()]) != null ? _b : CARD_MODES[0];
+  const out = { mode };
+  const src = ((_c = p.source) != null ? _c : "").replace(/^["']|["']$/g, "").replace(/^\/+/, "");
+  if (src) out.source = src;
+  const limit = Number(p.limit);
+  if (p.limit !== void 0 && Number.isInteger(limit) && limit > 0) out.limit = limit;
+  return out;
+}
+
+// src/ui/blocks/familiesModel.ts
+var unquote = (s) => (s != null ? s : "").trim().replace(/^["']|["']$/g, "").trim();
+function parseFamiliesParams(source) {
+  var _a;
+  const p = parseBlockParams(source);
+  const out = {};
+  const topic = unquote((_a = p.topic) != null ? _a : p.family);
+  if (topic) out.topic = topic;
+  const word = unquote(p.word);
+  if (word) out.word = word;
+  return out;
+}
+var key = (w) => w.trim().toLowerCase();
+function familyTitle(f) {
+  const topic = f.topic.trim();
+  const label = f.label.trim();
+  if (!label) return topic;
+  if (!topic || key(label).includes(key(topic))) return label;
+  return `${topic} ${label}`;
+}
+function findFamily(families, topic) {
+  if (!topic) return void 0;
+  const k = key(topic);
+  return families.find((f) => key(f.topic) === k || key(f.label) === k || key(familyTitle(f)) === k);
+}
+var MemberLookup = class {
+  constructor(entries) {
+    const live = entries.filter((e) => !e.deletedAt);
+    this.byId = new Map(live.map((e) => [e.id, e]));
+    this.index = new WordIndex(live);
+  }
+  entry(m) {
+    var _a;
+    return (_a = m.entryId ? this.byId.get(m.entryId) : void 0) != null ? _a : this.index.find(m.word);
+  }
+  byEntryId(id) {
+    return this.byId.get(id);
+  }
+};
+function familyTree(f, lookup) {
+  var _a;
+  let knownCount = 0;
+  let suggestedCount = 0;
+  const columns = [];
+  for (const g of f.groups) {
+    const chips = [];
+    for (const m of g.members) {
+      if (!m.word.trim()) continue;
+      const e = lookup.entry(m);
+      if (e) knownCount++;
+      else suggestedCount++;
+      chips.push(e ? { word: m.word, zh: m.zh, known: true, entryId: e.id } : { word: m.word, zh: m.zh, known: false });
+    }
+    if (chips.length) columns.push({ label: g.label, chips });
+  }
+  const seeds = ((_a = f.seedEntryIds) != null ? _a : []).map((id) => {
+    var _a2;
+    return (_a2 = lookup.byEntryId(id)) == null ? void 0 : _a2.word;
+  }).filter((w) => !!w);
+  return { id: f.id, title: familyTitle(f), columns, seeds, knownCount, suggestedCount };
+}
+function familiesWith(families, entry) {
+  const word = key(entry.word);
+  return families.filter(
+    (f) => familyMembers(f).some((m) => m.entryId === entry.id || key(m.word) === word)
+  );
+}
+function reviewView(candidates, lookup) {
+  const newWords = /* @__PURE__ */ new Set();
+  const cards = candidates.map((c) => {
+    const rows = [];
+    const from = [];
+    for (const m of c.groups.flatMap((g) => g.members)) {
+      if (!m.word.trim() || rows.some((r) => r.key === key(m.word))) continue;
+      const known = !!lookup.entry(m);
+      rows.push({ word: m.word, zh: m.zh, known, key: key(m.word) });
+      if (known) from.push(m.word);
+      else newWords.add(key(m.word));
+    }
+    return { topic: c.topic, title: familyTitle(c), from, rows };
+  });
+  return { cards, familyCount: candidates.length, newWordCount: newWords.size };
+}
+function checkedNewWords(view, checked) {
+  const out = [];
+  for (const card of view.cards) {
+    for (const r of card.rows) if (!r.known && checked.has(r.key) && !out.includes(r.key)) out.push(r.key);
+  }
+  return out;
+}
+function pickSelected(families, current, preferTopic) {
+  var _a, _b;
+  if (current && families.some((f) => f.id === current)) return current;
+  return (_b = (_a = findFamily(families, preferTopic)) != null ? _a : families[0]) == null ? void 0 : _b.id;
+}
+
+// src/ui/blocks/learnUi.ts
+var import_obsidian15 = require("obsidian");
+function guardReadingClicks(owner, root) {
+  owner.registerDomEvent(root, "click", (e) => {
+    if (e.target instanceof HTMLElement && e.target.closest("a")) return;
+    e.stopPropagation();
+  });
+}
+function learnErrorText(e) {
+  if (isAiError(e)) return aiErrorText(e);
+  return e instanceof Error ? e.message : String(e);
+}
+var isAbort = (e) => isAiError(e) && e.code === "aborted";
+function renderLearnAiGate(parent, plugin) {
+  const status = plugin.ai.status();
+  if (status === "ready") return false;
+  if (status === "offline") {
+    parent.appendChild(inlineNote({ tone: "offline", text: t("learn.ai.offline") }));
+    return true;
+  }
+  parent.appendChild(
+    emptyState({
+      icon: status === "disabled" ? "sparkles" : "key-round",
+      title: t(status === "disabled" ? "learn.ai.disabled.title" : "learn.ai.noKey.title"),
+      body: t("learn.ai.body"),
+      action: {
+        label: t("ai.action.openSettings"),
+        icon: "settings",
+        onClick: () => openPluginSettings(plugin.app, plugin.manifest.id)
+      }
+    })
+  );
+  return true;
+}
+function learnButton(parent, opts) {
+  const btn = parent.createEl("button", { cls: "vt-btn vt-learn-btn" });
+  if (opts.cta) btn.addClass("mod-cta");
+  if (opts.ghost) btn.addClass("is-ghost");
+  if (opts.icon) (0, import_obsidian15.setIcon)(btn.createSpan({ cls: "vt-btn-icon" }), opts.icon);
+  btn.createSpan({ text: opts.label });
+  btn.addEventListener("click", opts.onClick);
+  return btn;
+}
+
+// src/ui/blocks/families.ts
+function renderFamilies(plugin, source, el, ctx) {
+  ctx.addChild(new FamiliesBlock(el, plugin, parseFamiliesParams(source)));
+}
+var FamiliesBlock = class extends import_obsidian16.MarkdownRenderChild {
+  constructor(containerEl, plugin, params) {
+    super(containerEl);
+    this.plugin = plugin;
+    this.params = params;
+    this.loaded = false;
+    this.disposed = false;
+    this.review = null;
+    this.generating = null;
+    this.saving = false;
+    this.error = null;
+    // Suggested words being added (「點一下加入」), so a double tap adds once.
+    this.adding = /* @__PURE__ */ new Set();
+  }
+  onload() {
+    this.containerEl.empty();
+    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-families"] });
+    guardReadingClicks(this, this.root);
+    const redraw = () => this.render();
+    this.register(this.plugin.learn.events.on("family:upsert", redraw));
+    this.register(this.plugin.learn.events.on("learn:reloaded", redraw));
+    this.register(this.plugin.store.events.on("data:changed", redraw));
+    this.render();
+    void this.plugin.families.ensureLoaded().then(() => {
+      if (this.disposed) return;
+      this.loaded = true;
+      this.render();
+    });
+  }
+  onunload() {
+    this.disposed = true;
+    if (this.generating) this.plugin.families.stop();
+  }
+  // ── Data ──────────────────────────────────────────────────────
+  wordEntry(lookup) {
+    return this.params.word ? lookup.entry({ word: this.params.word }) : void 0;
+  }
+  shownFamilies(entry) {
+    const all = this.plugin.families.families();
+    return entry ? familiesWith(all, entry) : all;
+  }
+  // ── Actions ───────────────────────────────────────────────────
+  async generate(replace, seed) {
+    if (this.generating) return;
+    const ctrl = this.generating = new AbortController();
+    this.error = null;
+    this.review = null;
+    this.render();
+    try {
+      const candidates = await this.plugin.families.generate({
+        seedEntryIds: seed ? [seed.id] : void 0,
+        signal: ctrl.signal
+      });
+      if (this.disposed) return;
+      if (!candidates.length) this.error = t("learn.family.noneFound");
+      else this.review = { candidates, checked: /* @__PURE__ */ new Set(), replace };
+    } catch (e) {
+      if (this.disposed) return;
+      if (!isAbort(e)) {
+        console.error("Vocab Tracker: family generation failed", e);
+        this.error = learnErrorText(e);
+      }
+    } finally {
+      if (this.generating === ctrl) this.generating = null;
+      if (!this.disposed) this.render();
+    }
+  }
+  stop() {
+    var _a;
+    (_a = this.generating) == null ? void 0 : _a.abort();
+    this.plugin.families.stop();
+  }
+  async save(addWords) {
+    var _a, _b;
+    const review = this.review;
+    if (!review || this.saving) return;
+    this.saving = true;
+    this.render();
+    try {
+      const { families, added } = await this.plugin.families.save(review.candidates, {
+        addWords,
+        replace: review.replace
+      });
+      if (this.disposed) return;
+      this.review = null;
+      this.selectedId = (_b = (_a = families[0]) == null ? void 0 : _a.id) != null ? _b : this.selectedId;
+      new import_obsidian16.Notice(t("learn.family.saved", { families: families.length, words: added.length }));
+    } catch (e) {
+      console.error("Vocab Tracker: saving families failed", e);
+      new import_obsidian16.Notice(learnErrorText(e));
+    } finally {
+      this.saving = false;
+      if (!this.disposed) this.render();
+    }
+  }
+  async addSuggested(familyId, word) {
+    const k = `${familyId}\0${word.toLowerCase()}`;
+    if (this.adding.has(k)) return;
+    this.adding.add(k);
+    this.render();
+    try {
+      const entry = await this.plugin.families.addSuggested(familyId, word);
+      if (entry) new import_obsidian16.Notice(t("learn.family.added", { word: entry.word }));
+    } catch (e) {
+      console.error("Vocab Tracker: adding a family word failed", e);
+      new import_obsidian16.Notice(learnErrorText(e));
+    } finally {
+      this.adding.delete(k);
+      if (!this.disposed) this.render();
+    }
+  }
+  remove(f) {
+    this.plugin.families.remove(f.id);
+    if (this.selectedId === f.id) this.selectedId = void 0;
+    new import_obsidian16.Notice(t("learn.family.deleted", { name: f.label || f.topic }));
+  }
+  // ── Render ────────────────────────────────────────────────────
+  render() {
+    const root = this.root;
+    root.empty();
+    if (!this.loaded) {
+      root.createDiv({ cls: "vt-learn-loading", text: t("learn.loading") });
+      return;
+    }
+    const lookup = new MemberLookup(this.plugin.store.entries);
+    const entry = this.wordEntry(lookup);
+    if (this.params.word && !entry) {
+      root.appendChild(emptyState({ icon: "git-fork", title: t("learn.notFound", { word: this.params.word }) }));
+      return;
+    }
+    const families = this.shownFamilies(entry);
+    this.selectedId = pickSelected(families, this.selectedId, this.params.topic);
+    if (families.length && !this.review) this.renderToolbar(families, entry);
+    if (!entry && !this.review && !this.generating && this.plugin.families.needsRegroup()) {
+      const note = root.createDiv({ cls: "vt-fam-regroup-note" });
+      note.appendChild(inlineNote({ tone: "info", icon: "refresh-cw", text: t("learn.family.regroup.hint") }));
+      learnButton(note, { label: t("learn.family.regroup"), icon: "refresh-cw", onClick: () => void this.generate(true) });
+    }
+    if (this.generating) return this.renderGenerating();
+    if (this.error) {
+      const box = root.createDiv({ cls: "vt-learn-error" });
+      box.appendChild(inlineNote({ tone: "error", text: this.error }));
+      learnButton(box, { label: t("learn.retry"), icon: "rotate-ccw", onClick: () => void this.generate(false, entry) });
+    }
+    if (this.review) return this.renderReview(this.review, lookup);
+    const selected = families.find((f) => f.id === this.selectedId);
+    if (selected) return this.renderTree(selected, familyTree(selected, lookup));
+    const empty = root.createDiv({ cls: "vt-fam-empty" });
+    const title = entry ? t("learn.family.word.empty.title", { word: entry.word }) : t("learn.family.empty.title");
+    if (renderLearnAiGate(empty, this.plugin)) return;
+    empty.appendChild(
+      emptyState({
+        icon: "git-fork",
+        title,
+        body: t("learn.family.empty.body"),
+        action: { label: t("learn.family.generate"), icon: "sparkles", onClick: () => void this.generate(false, entry) }
+      })
+    );
+  }
+  // Family chips + 重新分群 (L5) / 找字族 (word page).
+  renderToolbar(families, entry) {
+    const bar = this.root.createDiv({ cls: "vt-fam-toolbar" });
+    for (const f of families) {
+      const chip2 = bar.createEl("button", { cls: "vt-fam-tab", text: familyTitle(f) });
+      chip2.toggleClass("is-active", f.id === this.selectedId);
+      chip2.setAttr("aria-pressed", String(f.id === this.selectedId));
+      chip2.addEventListener("click", () => {
+        this.selectedId = f.id;
+        this.error = null;
+        this.render();
+      });
+    }
+    const ready = this.plugin.ai.status() === "ready";
+    const btn = learnButton(bar, {
+      label: t(entry ? "learn.family.generate" : "learn.family.regroup"),
+      icon: entry ? "sparkles" : "refresh-cw",
+      ghost: true,
+      onClick: () => void this.generate(!entry, entry)
+    });
+    btn.addClass("vt-fam-toolbar-action");
+    btn.disabled = !ready;
+    if (!ready) btn.title = t(this.plugin.ai.status() === "offline" ? "learn.ai.offline" : "learn.ai.body");
+  }
+  renderGenerating() {
+    const box = this.root.createDiv({ cls: "vt-learn-busy" });
+    const line = box.createDiv({ cls: "vt-learn-busy-text" });
+    (0, import_obsidian16.setIcon)(line.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
+    line.createSpan({ text: t("learn.family.generating") });
+    learnButton(box, { label: t("learn.stop"), icon: "square", onClick: () => this.stop() });
+  }
+  // ── L5 tree ───────────────────────────────────────────────────
+  renderTree(f, view) {
+    const tree = this.root.createDiv({ cls: "vt-fam-tree" });
+    const head = tree.createDiv({ cls: "vt-fam-root" });
+    (0, import_obsidian16.setIcon)(head.createSpan({ cls: "vt-fam-root-icon" }), "git-fork");
+    head.createSpan({ text: view.title });
+    const more = head.createEl("button", { cls: "vt-fam-root-more clickable-icon" });
+    (0, import_obsidian16.setIcon)(more, "more-horizontal");
+    more.setAttr("aria-label", t("learn.family.more"));
+    more.addEventListener("click", (e) => {
+      const menu = new import_obsidian16.Menu();
+      menu.addItem(
+        (item) => item.setTitle(t("learn.family.delete")).setIcon("trash-2").onClick(() => this.remove(f))
+      );
+      menu.showAtMouseEvent(e);
+    });
+    tree.createDiv({ cls: "vt-fam-stem" });
+    const cols = tree.createDiv({ cls: "vt-fam-cols" });
+    for (const col of view.columns) {
+      const c = cols.createDiv({ cls: "vt-fam-col" });
+      c.createDiv({ cls: "vt-fam-col-stem" });
+      c.createDiv({ cls: "vt-fam-group", text: col.label });
+      c.createDiv({ cls: "vt-fam-col-stem is-short" });
+      const list = c.createDiv({ cls: "vt-fam-chips" });
+      for (const chip2 of col.chips) {
+        if (chip2.known) {
+          const el2 = list.createSpan({ cls: "vt-fam-chip is-known" });
+          el2.createSpan({ cls: "vt-fam-chip-word", text: chip2.word });
+          if (chip2.zh) el2.createSpan({ cls: "vt-fam-chip-zh", text: chip2.zh });
+          continue;
+        }
+        const busy = this.adding.has(`${f.id}\0${chip2.word.toLowerCase()}`);
+        const el = list.createEl("button", { cls: "vt-fam-chip is-suggested" });
+        el.createSpan({ cls: "vt-fam-chip-word", text: chip2.word });
+        if (chip2.zh) el.createSpan({ cls: "vt-fam-chip-zh", text: chip2.zh });
+        (0, import_obsidian16.setIcon)(el.createSpan({ cls: "vt-fam-chip-icon" }), busy ? "loader" : "plus");
+        el.disabled = busy;
+        el.setAttr("aria-label", t("learn.family.add", { word: chip2.word }));
+        el.addEventListener("click", () => void this.addSuggested(f.id, chip2.word));
+      }
+    }
+    const legend = this.root.createDiv({ cls: "vt-fam-legend" });
+    const known = legend.createSpan({ cls: "vt-fam-legend-item" });
+    known.createSpan({ cls: "vt-fam-chip is-known is-mini", text: t("learn.family.known") });
+    known.createSpan({ text: t("learn.family.legend.known") });
+    if (view.suggestedCount) {
+      const sug = legend.createSpan({ cls: "vt-fam-legend-item" });
+      (0, import_obsidian16.setIcon)(sug.createSpan({ cls: "vt-fam-chip is-suggested is-mini" }), "plus");
+      sug.createSpan({ text: t("learn.family.legend.suggested") });
+    }
+    if (view.seeds.length) {
+      legend.createSpan({ cls: "vt-fam-legend-item", text: t("learn.family.legend.seeds", { words: joinWords(view.seeds) }) });
+    }
+  }
+  // ── W3 review ─────────────────────────────────────────────────
+  renderReview(review, lookup) {
+    const view = reviewView(review.candidates, lookup);
+    const box = this.root.createDiv({ cls: "vt-fam-review" });
+    const head = box.createDiv({ cls: "vt-fam-review-head" });
+    (0, import_obsidian16.setIcon)(head.createSpan({ cls: "vt-fam-review-icon" }), "sparkles");
+    head.createSpan({ text: t("learn.family.found", { families: view.familyCount, words: view.newWordCount }) });
+    for (const card of view.cards) {
+      const el = box.createDiv({ cls: "vt-fam-card" });
+      const title = card.from.length ? `${card.title} \xB7 ${t("learn.family.from", { words: joinWords(card.from) })}` : card.title;
+      el.createDiv({ cls: "vt-fam-card-title", text: title });
+      for (const row of card.rows) {
+        const line = el.createEl("label", { cls: "vt-fam-row" });
+        if (row.known) {
+          line.addClass("is-known");
+          line.createSpan({ cls: "vt-fam-row-tag", text: t("learn.family.known") });
+        } else {
+          const cb = line.createEl("input", { cls: "vt-fam-row-check", type: "checkbox" });
+          cb.checked = review.checked.has(row.key);
+          cb.disabled = this.saving;
+          cb.addEventListener("change", () => {
+            if (cb.checked) review.checked.add(row.key);
+            else review.checked.delete(row.key);
+            this.render();
+          });
+        }
+        line.createSpan({ cls: "vt-fam-row-word", text: row.word });
+        line.createSpan({ cls: "vt-fam-row-zh", text: row.zh });
+      }
+    }
+    const toAdd = checkedNewWords(view, review.checked);
+    const actions = box.createDiv({ cls: "vt-fam-review-actions" });
+    const discard = learnButton(actions, {
+      label: t("learn.family.discard"),
+      onClick: () => {
+        this.review = null;
+        this.render();
+      }
+    });
+    const only = learnButton(actions, { label: t("learn.family.saveOnly"), onClick: () => void this.save([]) });
+    const add2 = learnButton(actions, {
+      label: t("learn.family.saveAdd", { n: toAdd.length }),
+      icon: "plus",
+      cta: true,
+      onClick: () => void this.save(toAdd)
+    });
+    for (const b of [discard, only, add2]) b.disabled = this.saving;
+    add2.disabled = this.saving || !toAdd.length;
+    if (review.replace) box.createDiv({ cls: "vt-fam-review-note", text: t("learn.family.regroup.note") });
+    if (view.newWordCount) {
+      box.createDiv({
+        cls: "vt-fam-review-note",
+        text: t("learn.family.addNote", { topics: joinWords(view.cards.map((c) => c.topic)) })
+      });
+    }
+  }
+};
+
+// src/ui/blocks/flashcards.ts
+var import_obsidian17 = require("obsidian");
+
+// src/core/text/cloze.ts
+var SUFFIXES = "(?:s|es|ed|d|ing|er|est|ly)?";
+function clozeParts(sentence, word) {
+  const w = word.trim();
+  if (!sentence || !w) return null;
+  const re = new RegExp(
+    `(?<![A-Za-z0-9'\\-])${escapeRe(w)}${SUFFIXES}(?![A-Za-z0-9'\\-])`,
+    "i"
+  );
+  const m = re.exec(sentence);
+  if (!m) return null;
+  return {
+    before: sentence.slice(0, m.index),
+    answer: m[0],
+    after: sentence.slice(m.index + m[0].length)
+  };
+}
+
+// src/core/text/interval.ts
+var MIN = 60 * 1e3;
+var HOUR = 60 * MIN;
+var DAY = 24 * HOUR;
+function splitInterval(ms3) {
+  const round = (n) => Math.max(1, Math.round(n));
+  if (ms3 < HOUR) return { value: round(ms3 / MIN), unit: "m" };
+  if (ms3 < DAY) return { value: round(ms3 / HOUR), unit: "h" };
+  if (ms3 < 30 * DAY) return { value: round(ms3 / DAY), unit: "d" };
+  if (ms3 < 365 * DAY) return { value: round(ms3 / (30 * DAY)), unit: "mo" };
+  return { value: Math.max(1, Math.round(ms3 / (365 * DAY) * 10) / 10), unit: "y" };
+}
+
+// src/services/srs/queue.ts
+function isNewCard(entry) {
+  return !entry.srs || entry.srs.state === SrsState.New;
+}
+function startOfLocalDay(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function addDays(d, n) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+}
+function newIntroducedToday(logs, now) {
+  const dayStart = startOfLocalDay(now).getTime();
+  const ids = /* @__PURE__ */ new Set();
+  for (const log of logs) {
+    if (log.prevState !== SrsState.New) continue;
+    if (new Date(log.at).getTime() >= dayStart) ids.add(log.entryId);
+  }
+  return ids.size;
+}
+function matchesFilter(entry, filter) {
+  var _a, _b;
+  if (entry.deletedAt) return false;
+  if (filter.source && !((_b = (_a = entry.source) == null ? void 0 : _a.path) != null ? _b : "").startsWith(filter.source)) return false;
+  if (filter.mode === "cloze" && !clozeParts(entry.example, entry.word)) return false;
+  return true;
+}
+function dueMs(entry) {
+  return entry.srs ? new Date(entry.srs.due).getTime() : 0;
+}
+function addedKey(entry) {
+  var _a, _b;
+  return (_b = (_a = entry.createdAt) != null ? _a : entry.added) != null ? _b : "";
+}
+function buildQueue(entries, filter, ctx) {
+  const nowMs = ctx.now.getTime();
+  const candidates = entries.filter((e) => matchesFilter(e, filter));
+  const due = candidates.filter((e) => !isNewCard(e) && dueMs(e) <= nowMs).sort((a, b) => dueMs(a) - dueMs(b));
+  const allowance = Math.max(0, ctx.dailyNew - newIntroducedToday(ctx.logs, ctx.now));
+  const fresh = candidates.filter(isNewCard).sort((a, b) => addedKey(a) < addedKey(b) ? -1 : addedKey(a) > addedKey(b) ? 1 : 0).slice(0, allowance);
+  const queue = [...due, ...fresh];
+  return filter.limit !== void 0 && filter.limit >= 0 ? queue.slice(0, filter.limit) : queue;
+}
+function countDueBetween(entries, filter, from, to) {
+  const a = from.getTime();
+  const b = to.getTime();
+  return entries.filter((e) => {
+    if (!matchesFilter(e, filter) || isNewCard(e)) return false;
+    const ms3 = dueMs(e);
+    return ms3 >= a && ms3 < b;
+  }).length;
+}
+
+// src/ui/blocks/flashcardsBatch.ts
+function hiddenFields(mode) {
+  switch (mode) {
+    case "en-zh":
+      return { word: false, zh: true };
+    case "zh-en":
+    case "cloze":
+      return { word: true, zh: false };
+    case "listen":
+      return { word: true, zh: true };
+  }
+}
+function briefMeaning(text) {
+  return (text != null ? text : "").split(/\r?\n/)[0].trim();
+}
+function buildBatchRows(state, lookup) {
+  const ratings = /* @__PURE__ */ new Map();
+  for (const r of state.results) ratings.set(r.id, r.rating);
+  const hide = hiddenFields(state.mode);
+  const rows = [];
+  state.session.forEach((id, i) => {
+    const w = lookup(id);
+    if (!w) return;
+    const rating = ratings.get(id);
+    const isCurrent = state.phase === "card" && i === state.index;
+    const status = rating !== void 0 ? "rated" : isCurrent ? "current" : "pending";
+    const revealed = status === "rated" || status === "current" && state.flipped;
+    const zh = briefMeaning(w.zh);
+    rows.push({
+      id,
+      status,
+      isNew: state.newIds.has(id),
+      ...rating !== void 0 ? { rating } : {},
+      word: revealed || !hide.word ? w.word : null,
+      zh: revealed || !hide.zh ? zh || null : null
+    });
+  });
+  return rows;
+}
+
+// src/ui/blocks/flashcards.ts
+function renderFlashcards(plugin, source, el, ctx) {
+  ctx.addChild(new FlashcardsBlock(el, plugin, parseFlashcardParams(source)));
+}
+function formatInterval(ms3) {
+  const { value, unit } = splitInterval(ms3);
+  return t(`srs.interval.${unit}`, { n: value });
+}
+var batchSeq = 0;
+var FlashcardsBlock = class extends import_obsidian17.MarkdownRenderChild {
+  constructor(containerEl, plugin, params) {
+    super(containerEl);
+    this.plugin = plugin;
+    this.params = params;
+    this.phase = "loading";
+    this.session = [];
+    this.index = 0;
+    this.flipped = false;
+    this.shownAt = 0;
+    this.typed = "";
+    this.results = [];
+    this.initialDue = 0;
+    this.initialNew = 0;
+    // Ids that were new when the session started (rating changes the state).
+    this.newIds = /* @__PURE__ */ new Set();
+    // "本批單字" panel: closed while reviewing, open on the done screen.
+    // Kept in memory only, per phase.
+    this.batchOpen = { card: false, done: true };
+    this.batchId = `vt-fc-batch-${++batchSeq}`;
+    // Set while rate() is in flight: rate() fires data:changed itself, and
+    // reacting to our own write would double-render mid-transition.
+    this.busy = false;
+    this.disposed = false;
+    this.mode = params.mode;
+  }
+  onload() {
+    this.containerEl.empty();
+    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-flashcards"] });
+    this.root.tabIndex = 0;
+    this.registerDomEvent(this.root, "keydown", (e) => this.onKey(e));
+    this.registerDomEvent(this.root, "click", (e) => e.stopPropagation());
+    this.register(this.plugin.store.events.on("data:changed", () => this.onStoreChanged()));
+    this.render();
+    void this.plugin.srs.ensureLoaded().then(() => {
+      if (!this.disposed) this.startSession();
+    });
+  }
+  onunload() {
+    this.disposed = true;
+  }
+  // ── Session state ─────────────────────────────────────────────
+  filter() {
+    return { source: this.params.source, mode: this.mode, limit: this.params.limit };
+  }
+  live(id) {
+    if (!id) return void 0;
+    return this.plugin.store.entries.find((e) => e.id === id);
+  }
+  current() {
+    return this.live(this.session[this.index]);
+  }
+  // `ids` replays a specific set (e.g. "practice forgotten words") instead
+  // of the due queue; they're still filtered by mode so cloze never shows
+  // a card it can't blank out.
+  startSession(ids, opts = {}) {
+    const cards = ids ? ids.map((id) => this.live(id)).filter((e) => !!e && matchesFilter(e, { mode: this.mode })) : this.plugin.srs.queue(this.filter());
+    this.session = cards.map((e) => e.id);
+    this.newIds = new Set(cards.filter(isNewCard).map((e) => e.id));
+    this.initialNew = this.newIds.size;
+    this.initialDue = cards.length - this.initialNew;
+    this.index = 0;
+    this.results = [];
+    this.resetCard();
+    this.phase = "card";
+    this.skipMissing();
+    this.render();
+    if (opts.speak) this.autoSpeak();
+  }
+  resetCard() {
+    this.flipped = false;
+    this.typed = "";
+    this.shownAt = Date.now();
+  }
+  // Skips cards deleted (or synced away) since the session started; ends
+  // the session when nothing's left.
+  skipMissing() {
+    while (this.index < this.session.length && !this.current()) this.index++;
+    if (this.index >= this.session.length) {
+      this.phase = this.results.length > 0 ? "done" : "empty";
+    }
+  }
+  flip() {
+    if (this.phase !== "card" || this.flipped) return;
+    this.flipped = true;
+    this.render();
+  }
+  async rate(rating) {
+    const entry = this.current();
+    if (this.phase !== "card" || !this.flipped || this.busy || !entry) return;
+    this.busy = true;
+    try {
+      await this.plugin.srs.rate(entry, rating, this.mode, Date.now() - this.shownAt);
+      this.results.push({ id: entry.id, rating });
+      this.index++;
+      this.resetCard();
+      this.skipMissing();
+    } catch (err) {
+      console.error("Vocab Tracker: rating failed", err);
+    } finally {
+      this.busy = false;
+    }
+    this.render();
+    this.autoSpeak();
+  }
+  autoSpeak() {
+    const entry = this.current();
+    if (this.mode === "listen" && this.phase === "card" && entry) this.plugin.speakWord(entry);
+  }
+  onStoreChanged() {
+    if (this.busy || this.disposed) return;
+    if (this.phase === "card" && !this.current()) {
+      this.skipMissing();
+      this.render();
+    } else if (this.phase === "empty") {
+      if (this.plugin.srs.queue(this.filter()).length > 0) this.startSession();
+    }
+  }
+  onKey(e) {
+    if (e.isComposing || e.metaKey || e.ctrlKey || e.altKey || this.phase !== "card") return;
+    const target = e.target;
+    if ((e.key === " " || e.key === "Enter") && (target == null ? void 0 : target.tagName) === "BUTTON" && target.closest(".vt-fc-batch, .vt-fc-batch-toggle")) {
+      return;
+    }
+    if (e.target instanceof HTMLInputElement) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        this.flip();
+      }
+      return;
+    }
+    if ((e.key === " " || e.key === "Enter") && !this.flipped) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.flip();
+    } else if (this.flipped && /^[1-4]$/.test(e.key)) {
+      e.preventDefault();
+      e.stopPropagation();
+      void this.rate(Number(e.key));
+    }
+  }
+  // ── Rendering ─────────────────────────────────────────────────
+  render() {
+    const hadFocus = this.root.contains(document.activeElement);
+    this.root.empty();
+    this.root.toggleClass("is-flipped", this.flipped);
+    this.renderToolbar();
+    if (this.phase === "card") this.renderCard();
+    else if (this.phase === "empty") this.renderEmpty();
+    else if (this.phase === "done") this.renderDone();
+    if (hadFocus) {
+      const input = this.root.querySelector("input");
+      (input != null ? input : this.root).focus({ preventScroll: true });
+    }
+  }
+  renderToolbar() {
+    var _a;
+    const bar = this.root.createDiv({ cls: "vt-fc-toolbar" });
+    const modes = bar.createDiv({ cls: "vt-fc-modes" });
+    for (const mode of CARD_MODES) {
+      const b = modes.createEl("button", {
+        text: t(`flashcards.mode.${mode}`),
+        cls: "vt-fc-mode"
+      });
+      b.toggleClass("is-active", mode === this.mode);
+      b.onclick = () => {
+        if (mode === this.mode || this.phase === "loading") return;
+        this.mode = mode;
+        this.startSession(void 0, { speak: true });
+      };
+    }
+    const src = bar.createDiv({ cls: "vt-fc-source" });
+    (0, import_obsidian17.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "folder");
+    src.createSpan({ text: (_a = this.params.source) != null ? _a : t("flashcards.source.all") });
+  }
+  renderCard() {
+    const entry = this.current();
+    if (!entry) return;
+    const progress = this.root.createDiv({ cls: "vt-fc-progress" });
+    progress.createSpan({
+      cls: "vt-fc-progress-n",
+      text: `${this.index + 1} / ${this.session.length}`
+    });
+    this.renderBatch(progress, this.root, "card");
+    const card = this.root.createDiv({ cls: "vt-fc-card" });
+    const front = card.createDiv({ cls: "vt-fc-front" });
+    switch (this.mode) {
+      case "en-zh":
+        this.renderWordHead(front, entry);
+        break;
+      case "zh-en":
+        front.createDiv({ cls: "vt-fc-prompt", text: zhOf(entry) });
+        if (entry.partOfSpeech) front.createDiv({ cls: "vt-fc-sub", text: entry.partOfSpeech });
+        break;
+      case "cloze":
+        this.renderSentence(front, entry, this.flipped ? "answer" : "blank");
+        if (!this.flipped && entry.definitionZh) {
+          front.createDiv({ cls: "vt-fc-sub", text: entry.definitionZh });
+        }
+        break;
+      case "listen":
+        this.renderListenFront(front, entry);
+        break;
+    }
+    if (!this.flipped) {
+      card.createDiv({ cls: "vt-fc-hint", text: t(`flashcards.hint.${this.mode}`) });
+      const flip = card.createEl("button", { cls: ["vt-fc-btn", "vt-fc-flip"] });
+      flip.createSpan({ text: t("flashcards.flip") });
+      flip.createEl("kbd", { cls: "vt-fc-kbd", text: t("flashcards.flipKey") });
+      flip.onclick = () => this.flip();
+    } else {
+      this.renderBack(card.createDiv({ cls: "vt-fc-back" }), entry);
+      this.renderRatings(entry);
+    }
+    const stats = this.root.createDiv({ cls: "vt-fc-stats" });
+    const stat = (label, n) => {
+      const s = stats.createSpan({ cls: "vt-fc-stat" });
+      s.createSpan({ text: label });
+      s.createSpan({ cls: "vt-fc-stat-n", text: String(n) });
+    };
+    stat(t("flashcards.stat.due"), this.initialDue);
+    stat(t("flashcards.stat.new"), this.initialNew);
+    stat(t("flashcards.stat.done"), this.results.length);
+  }
+  renderWordHead(el, entry) {
+    el.createDiv({ cls: "vt-fc-word", text: entry.word });
+    const sub = el.createDiv({ cls: "vt-fc-sub" });
+    const meta = [entry.phonetic, entry.partOfSpeech].filter(Boolean).join(" \xB7 ");
+    if (meta) sub.createSpan({ text: meta });
+    const speak = sub.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
+    (0, import_obsidian17.setIcon)(speak, "volume-2");
+    speak.onclick = () => this.plugin.speakWord(entry);
+  }
+  // Cloze sentence with the word blanked ("blank") or revealed and
+  // highlighted ("answer"); also used for the example on the back.
+  renderSentence(el, entry, as) {
+    const parts = clozeParts(entry.example, entry.word);
+    const line = el.createDiv({ cls: "vt-fc-sentence" });
+    if (!parts) {
+      line.setText(entry.example);
+      return;
+    }
+    line.appendText(parts.before);
+    if (as === "blank") line.createSpan({ cls: "vt-fc-blank", text: "_____" });
+    else line.createEl("mark", { cls: "vt-fc-mark", text: parts.answer });
+    line.appendText(parts.after);
+  }
+  renderListenFront(el, entry) {
+    const play = el.createEl("button", {
+      cls: "vt-fc-listen",
+      attr: { "aria-label": t("flashcards.listen.replay") }
+    });
+    (0, import_obsidian17.setIcon)(play, "volume-2");
+    play.onclick = () => this.plugin.speakWord(entry);
+    if (!this.flipped) {
+      const input = el.createEl("input", {
+        cls: "vt-fc-input",
+        type: "text",
+        attr: {
+          placeholder: t("flashcards.listen.placeholder"),
+          autocomplete: "off",
+          autocapitalize: "off",
+          spellcheck: "false"
+        }
+      });
+      input.value = this.typed;
+      input.oninput = () => this.typed = input.value;
+      return;
+    }
+    const ok = this.typed.trim().toLowerCase() === entry.word.trim().toLowerCase();
+    const result = el.createDiv({ cls: ["vt-fc-result", ok ? "is-correct" : "is-wrong"] });
+    (0, import_obsidian17.setIcon)(result.createSpan({ cls: "vt-fc-icon" }), ok ? "check" : "x");
+    result.createSpan({
+      text: ok ? t("flashcards.listen.correct") : t("flashcards.listen.wrong", { answer: this.typed.trim() || "\u2014" })
+    });
+  }
+  renderBack(el, entry) {
+    var _a;
+    if (this.mode !== "en-zh") this.renderWordHead(el, entry);
+    if (this.mode !== "zh-en") el.createDiv({ cls: "vt-fc-answer", text: zhOf(entry) });
+    if (entry.definition) el.createDiv({ cls: "vt-fc-def", text: entry.definition });
+    if (entry.example && this.mode !== "cloze") this.renderSentence(el, entry, "answer");
+    if ((_a = entry.source) == null ? void 0 : _a.path) {
+      const src = el.createDiv({ cls: "vt-fc-origin" });
+      (0, import_obsidian17.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "file-text");
+      src.createSpan({ text: entry.source.path.split("/").pop().replace(/\.md$/, "") });
+      src.onclick = () => this.plugin.jumpToSource(entry);
+    }
+  }
+  renderRatings(entry) {
+    const preview2 = this.plugin.srs.preview(entry);
+    const grid = this.root.createDiv({ cls: "vt-fc-ratings" });
+    for (const rating of RATINGS) {
+      const b = grid.createEl("button", { cls: ["vt-fc-rate", `is-r${rating}`] });
+      b.createEl("kbd", { cls: ["vt-fc-kbd", "vt-fc-rate-key"], text: String(rating) });
+      b.createSpan({ cls: "vt-fc-rate-label", text: t(`srs.rating.${rating}`) });
+      b.createSpan({ cls: "vt-fc-rate-interval", text: formatInterval(preview2[rating].intervalMs) });
+      b.onclick = () => void this.rate(rating);
+    }
+  }
+  renderEmpty() {
+    const box = this.root.createDiv({ cls: "vt-fc-empty" });
+    (0, import_obsidian17.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
+    box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.empty.title") });
+    box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.empty.body") });
+    if (this.mode === "cloze") {
+      box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.empty.cloze") });
+    }
+    const tiles = box.createDiv({ cls: "vt-fc-tiles" });
+    tile(tiles, String(this.plugin.srs.dueTomorrow(this.filter())), t("flashcards.done.dueTomorrow"));
+  }
+  renderDone() {
+    const box = this.root.createDiv({ cls: ["vt-fc-empty", "vt-fc-done"] });
+    (0, import_obsidian17.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
+    box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.done.title") });
+    box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.done.body") });
+    const recalled = this.results.filter((r) => r.rating >= Rating.Good).length;
+    const tiles = box.createDiv({ cls: "vt-fc-tiles" });
+    tile(tiles, String(this.plugin.srs.reviewsToday(this.filter())), t("flashcards.done.reviewedToday"));
+    tile(tiles, `${recalled} / ${this.results.length}`, t("flashcards.done.recalled"));
+    tile(tiles, String(this.plugin.srs.dueTomorrow(this.filter())), t("flashcards.done.dueTomorrow"));
+    const forgotten = [
+      ...new Set(this.results.filter((r) => r.rating === Rating.Again).map((r) => r.id))
+    ].map((id) => this.live(id)).filter((e) => !!e);
+    if (forgotten.length > 0) {
+      box.createDiv({ cls: "vt-fc-section-title", text: t("flashcards.done.forgotten") });
+      const list = box.createDiv({ cls: "vt-fc-forgotten" });
+      for (const entry of forgotten) {
+        const row = list.createDiv({ cls: "vt-fc-forgotten-row" });
+        row.createSpan({ cls: "vt-fc-forgotten-word", text: entry.word });
+        row.createSpan({ cls: "vt-fc-forgotten-zh", text: entry.definitionZh });
+        const speak = row.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
+        (0, import_obsidian17.setIcon)(speak, "volume-2");
+        speak.onclick = () => this.plugin.speakWord(entry);
+      }
+    }
+    const actions = box.createDiv({ cls: "vt-fc-actions" });
+    if (forgotten.length > 0) {
+      const retry = actions.createEl("button", { cls: ["vt-fc-btn", "mod-cta"] });
+      (0, import_obsidian17.setIcon)(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
+      retry.createSpan({ text: t("flashcards.done.retryForgotten", { count: forgotten.length }) });
+      retry.onclick = () => this.startSession(forgotten.map((e) => e.id), { speak: true });
+    }
+    const dueNow = this.plugin.srs.queue(this.filter()).length;
+    if (dueNow > 0) {
+      const more = actions.createEl("button", { cls: "vt-fc-btn" });
+      more.setText(t("flashcards.done.continue", { count: dueNow }));
+      more.onclick = () => this.startSession(void 0, { speak: true });
+    }
+    const back = actions.createEl("a", { cls: "vt-fc-link", text: t("flashcards.done.backToList") });
+    back.onclick = (e) => {
+      e.preventDefault();
+      void this.plugin.openVocabFile();
+    };
+    this.renderBatch(box.createDiv({ cls: "vt-fc-batch-head" }), box, "done");
+  }
+  // ── 本批單字 list ─────────────────────────────────────────────
+  // Toggle goes in `toggleHost`, the (collapsible) list in `panelHost`.
+  // Opening/closing only flips `hidden` instead of re-rendering, so the
+  // card underneath — a half-typed spelling, the flip state — is untouched.
+  renderBatch(toggleHost, panelHost, phase) {
+    const entries = new Map(this.plugin.store.entries.map((e) => [e.id, e]));
+    const rows = buildBatchRows(
+      {
+        mode: this.mode,
+        session: this.session,
+        results: this.results,
+        index: this.index,
+        flipped: this.flipped,
+        phase,
+        newIds: this.newIds
+      },
+      (id) => {
+        const e = entries.get(id);
+        return e && { word: e.word, zh: e.definitionZh || e.definition };
+      }
+    );
+    if (rows.length === 0) return;
+    const open = this.batchOpen[phase];
+    const toggle = toggleHost.createEl("button", {
+      cls: "vt-fc-batch-toggle",
+      attr: { type: "button", "aria-expanded": String(open), "aria-controls": this.batchId }
+    });
+    toggle.toggleClass("is-open", open);
+    (0, import_obsidian17.setIcon)(toggle.createSpan({ cls: "vt-fc-icon" }), "list");
+    toggle.createSpan({ text: t("flashcards.batch.toggle", { n: rows.length }) });
+    (0, import_obsidian17.setIcon)(toggle.createSpan({ cls: ["vt-fc-icon", "vt-fc-batch-chevron"] }), "chevron-down");
+    const panel = panelHost.createDiv({ cls: "vt-fc-batch", attr: { id: this.batchId } });
+    panel.hidden = !open;
+    const list = panel.createEl("ol", { cls: "vt-fc-batch-list" });
+    for (const row of rows) this.renderBatchRow(list, row, entries.get(row.id), phase);
+    if (open) scrollToCurrent(panel);
+    toggle.onclick = (e) => {
+      const next = !this.batchOpen[phase];
+      this.batchOpen[phase] = next;
+      toggle.setAttr("aria-expanded", String(next));
+      toggle.toggleClass("is-open", next);
+      panel.hidden = !next;
+      if (next) scrollToCurrent(panel);
+      this.keepCardKeys(e);
+    };
+  }
+  renderBatchRow(list, row, entry, phase) {
+    var _a;
+    const li = list.createEl("li", { cls: ["vt-fc-batch-row", `is-${row.status}`] });
+    if (row.status === "current") li.setAttr("aria-current", "step");
+    const text = li.createDiv({ cls: "vt-fc-batch-text" });
+    if (row.word === null) {
+      text.createSpan({
+        cls: ["vt-fc-batch-word", "is-hidden"],
+        text: "\u2022\u2022\u2022",
+        attr: { "aria-label": t("flashcards.batch.hidden"), title: t("flashcards.batch.hidden") }
+      });
+    } else {
+      text.createSpan({ cls: "vt-fc-batch-word", text: row.word });
+    }
+    if (row.zh) text.createSpan({ cls: "vt-fc-batch-zh", text: row.zh });
+    const meta = li.createDiv({ cls: "vt-fc-batch-meta" });
+    meta.createSpan({
+      cls: ["vt-fc-batch-kind", row.isNew ? "is-new" : "is-due"],
+      text: row.isNew ? t("flashcards.batch.new") : t("flashcards.batch.due")
+    });
+    if (row.rating !== void 0) {
+      meta.createSpan({
+        cls: ["vt-fc-batch-rating", `is-r${row.rating}`],
+        text: t(`srs.rating.${row.rating}`)
+      });
+    } else {
+      meta.createSpan({
+        cls: "vt-fc-batch-state",
+        text: row.status === "current" ? t("flashcards.batch.current") : t("flashcards.batch.pending")
+      });
+    }
+    if (!entry || row.status !== "rated") return;
+    const speak = meta.createEl("button", {
+      cls: "vt-fc-icon-btn",
+      attr: { type: "button", "aria-label": t("row.pronounce") }
+    });
+    (0, import_obsidian17.setIcon)(speak, "volume-2");
+    speak.onclick = (e) => {
+      this.plugin.speakWord(entry);
+      this.keepCardKeys(e);
+    };
+    if (phase === "done" && ((_a = entry.source) == null ? void 0 : _a.path)) {
+      const jump = meta.createEl("button", {
+        cls: "vt-fc-icon-btn",
+        attr: { type: "button", "aria-label": t("flashcards.batch.openSource"), title: entry.source.path }
+      });
+      (0, import_obsidian17.setIcon)(jump, "file-text");
+      jump.onclick = () => void this.plugin.jumpToSource(entry);
+    }
+  }
+  // After a mouse/touch click on a list control, hand focus back to the
+  // block so Space / 1–4 keep acting on the card. Keyboard activation
+  // (detail 0) leaves focus where the user put it.
+  keepCardKeys(e) {
+    if (e.detail > 0 && this.phase === "card") this.root.focus({ preventScroll: true });
+  }
+};
+function scrollToCurrent(panel) {
+  const row = panel.querySelector(".vt-fc-batch-row.is-current");
+  if (row) panel.scrollTop = Math.max(0, row.offsetTop - panel.clientHeight / 2);
+}
+function zhOf(entry) {
+  return entry.definitionZh || entry.definition || t("flashcards.noTranslation");
+}
+function tile(container, value, label) {
+  const el = container.createDiv({ cls: "vt-fc-tile" });
+  el.createDiv({ cls: "vt-fc-tile-value", text: value });
+  el.createDiv({ cls: "vt-fc-tile-label", text: label });
+}
+
+// src/ui/blocks/trivia.ts
+var import_obsidian18 = require("obsidian");
+
+// src/core/model/trivia.ts
+var TRIVIA_THREAD_ID = "trivia-session";
+
+// src/services/ai/context/triviaContext.ts
+var MAX_KNOWN_WORDS = 200;
+var MAX_TOLD = 40;
+var KNOWN_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015{{#capped}}\uFF08\u5171 {{total}} \u500B\uFF0C\u4EE5\u4E0B\u662F\u6700\u8FD1\u5B78\u7684 {{count}} \u500B\uFF09{{/capped}}
+{{words}}`;
+var SUBJECT_TEMPLATE = `\u3014\u9019\u6B21\u7684\u4E3B\u89D2\u3015{{word}}
+{{#phonetic}}\u97F3\u6A19\uFF1A{{phonetic}}
+{{/phonetic}}{{#partOfSpeech}}\u8A5E\u6027\uFF1A{{partOfSpeech}}
+{{/partOfSpeech}}{{#definitionZh}}\u4E2D\u6587\uFF1A{{definitionZh}}
+{{/definitionZh}}{{#definition}}\u82F1\u6587\u5B9A\u7FA9\uFF1A{{definition}}
+{{/definition}}{{#example}}\u5B78\u7FD2\u8005\u9047\u5230\u5B83\u7684\u53E5\u5B50\uFF1A{{example}}
+{{/example}}`;
+var TOLD_TEMPLATE = `\u3014\u5DF2\u8B1B\u904E\u7684\u51B7\u77E5\u8B58\u3015\uFF08\u4E0D\u8981\u91CD\u8907\u9019\u4E9B\u5167\u5BB9\uFF1B\u540C\u4E00\u500B\u5B57\u8981\u63DB\u4E00\u500B\u89D2\u5EA6\uFF09
+{{told}}`;
+function entryAddedMs(e) {
+  const iso = e.createdAt ? Date.parse(e.createdAt) : NaN;
+  if (!Number.isNaN(iso)) return iso;
+  const legacy = e.added ? Date.parse(e.added.replace(" ", "T")) : NaN;
+  return Number.isNaN(legacy) ? 0 : legacy;
+}
+function knownWordList(entries, max = MAX_KNOWN_WORDS) {
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  const sorted = entries.filter((e) => !e.deletedAt).sort((a, b) => entryAddedMs(b) - entryAddedMs(a));
+  for (const e of sorted) {
+    const key3 = e.word.trim().toLowerCase();
+    if (!key3 || seen.has(key3)) continue;
+    seen.add(key3);
+    out.push(e.word.trim());
+    if (out.length >= max) break;
+  }
+  return out;
+}
+function buildTriviaContext(input) {
+  var _a, _b, _c, _d, _e, _f, _g, _h;
+  const s = input.subject;
+  const total = Math.max((_a = input.knownTotal) != null ? _a : 0, input.knownWords.length);
+  const told = ((_b = input.told) != null ? _b : []).slice(0, MAX_TOLD);
+  return {
+    knownBlock: renderTemplate(KNOWN_TEMPLATE, {
+      capped: total > input.knownWords.length ? "yes" : "",
+      total,
+      count: input.knownWords.length,
+      words: input.knownWords.join(", ")
+    }),
+    subjectBlock: s ? renderTemplate(SUBJECT_TEMPLATE, {
+      word: s.word,
+      phonetic: s.phonetic,
+      partOfSpeech: s.partOfSpeech,
+      definitionZh: s.definitionZh,
+      definition: s.definition,
+      example: (_c = s.example) == null ? void 0 : _c.trim()
+    }) : "",
+    toldBlock: told.length ? renderTemplate(TOLD_TEMPLATE, { told: told.map((t2) => `- ${t2.word}\uFF1A${t2.title}`).join("\n") }) : "",
+    slots: {
+      word: (_d = s == null ? void 0 : s.word) != null ? _d : "",
+      question: (_f = (_e = input.question) == null ? void 0 : _e.trim()) != null ? _f : "",
+      selection: (_h = (_g = input.selection) == null ? void 0 : _g.trim()) != null ? _h : ""
+    }
+  };
+}
+
+// src/services/ai/tasks/trivia.ts
+var TRIVIA_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u98A8\u8DA3\u3001\u56B4\u8B39\u7684\u82F1\u6587\u55AE\u5B57\u8AAA\u66F8\u4EBA\uFF0C\u7528\u300C\u51B7\u77E5\u8B58\u300D\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u8A18\u4F4F\u4ED6\u5B78\u904E\u7684\u55AE\u5B57\u3002\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u662F\u4ED6\u5B78\u904E\u7684\u5B57\uFF0C\u3014\u9019\u6B21\u7684\u4E3B\u89D2\u3015\u662F\u9019\u4E00\u5247\u8981\u8B1B\u7684\u5B57\u3002
+
+\u56DE\u7B54\u898F\u5247\uFF1A
+1. \u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u56DE\u7B54\uFF0C\u82F1\u6587\u55AE\u5B57\u8207\u4F8B\u53E5\u4FDD\u7559\u82F1\u6587\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u82E5\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\uFF0C\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
+2. \u53EA\u8B1B\u53EF\u9760\u3001\u6709\u6839\u64DA\u7684\u77E5\u8B58\u3002\u4E0D\u78BA\u5B9A\u5C31\u76F4\u63A5\u8AAA\u300C\u4E0D\u78BA\u5B9A\u300D\u6216\u300C\u8AAA\u6CD5\u4E0D\u4E00\u300D\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3001\u5E74\u4EE3\u3001\u4EBA\u540D\u3001\u6578\u64DA\u6216\u51FA\u8655\uFF1B\u6C92\u6709\u53EF\u9760\u7684\u5B57\u6E90\u6545\u4E8B\u6642\uFF0C\u6539\u8B1B\u7528\u6CD5\u3001\u642D\u914D\u6216\u5BB9\u6613\u6DF7\u6DC6\u7684\u5B57\uFF0C\u4E0D\u8981\u786C\u6E4A\u3002
+3. \u65B0\u7684\u4E00\u5247\uFF08\u4E0D\u662F\u8FFD\u554F\uFF09\u7B2C\u4E00\u884C\u56FA\u5B9A\u5BEB\u6A19\u984C\uFF0C\u683C\u5F0F\u662F\u300C**<\u6A19\u984C>**\u300D\uFF0C\u6A19\u984C 20 \u5B57\u4EE5\u5167\uFF1B\u7A7A\u4E00\u884C\u518D\u5BEB\u5167\u5BB9\u3002\u8FFD\u554F\u76F4\u63A5\u56DE\u7B54\uFF0C\u4E0D\u7528\u6A19\u984C\u3002
+4. \u6BCF\u5247\u5167\u5BB9 50 \u5230 200 \u5B57\uFF0C\u7528 Markdown\uFF0C\u91CD\u9EDE\u7528\u7C97\u9AD4\uFF0C\u4E0D\u8981\u7528\u6A19\u984C\uFF08#\uFF09\u3002
+5. \u53EF\u4EE5\u7684\u8A71\uFF0C\u81EA\u7136\u5730\u5E36\u5230 1 \u5230 2 \u500B\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u88E1\u7684\u5176\u4ED6\u5B57\uFF0C\u5E6B\u5B78\u7FD2\u8005\u8907\u7FD2\uFF1B\u4E0D\u8981\u786C\u585E\uFF0C\u4E5F\u4E0D\u8981\u5217\u6E05\u55AE\u3002
+6. \u4E0D\u8981\u91CD\u8907\u3014\u5DF2\u8B1B\u904E\u7684\u51B7\u77E5\u8B58\u3015\u88E1\u7684\u5167\u5BB9\uFF1B\u540C\u4E00\u500B\u5B57\u8B1B\u904E\u4E86\uFF0C\u5C31\u63DB\u4E00\u500B\u89D2\u5EA6\u3002`;
+var SELECTION_HEADER3 = `{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015
+{{selection}}
+
+{{/selection}}`;
+var TRIVIA_TEMPLATES = {
+  next: `\u4EFB\u52D9\uFF1A\u518D\u4F86\u4E00\u5247\u51B7\u77E5\u8B58\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
+\u8B1B\u4E00\u5247\u548C {{word}} \u6709\u95DC\u7684\u51B7\u77E5\u8B58\uFF0C\u5F9E\u5B57\u6E90\u3001\u7528\u6CD5\u7684\u6F14\u8B8A\u3001\u6587\u5316\u80CC\u666F\u3001\u5BB9\u6613\u6DF7\u6DC6\u7684\u5B57\u3001\u6709\u8DA3\u7684\u642D\u914D\u88E1\u6311\u4E00\u500B\u6700\u6709\u8A18\u61B6\u9EDE\u7684\u89D2\u5EA6\u3002`,
+  quiz: `\u4EFB\u52D9\uFF1A\u8003\u6211\u4E00\u984C\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
+\u51FA\u4E00\u984C\u95DC\u65BC {{word}} \u7684\u5C0F\u984C\u76EE\uFF1A\u9078\u64C7\u984C\uFF08\u6700\u591A\u56DB\u500B\u9078\u9805\uFF09\u6216\u586B\u7A7A\u984C\uFF0C\u7528\u82F1\u6587\u4F8B\u53E5\u6216\u60C5\u5883\u51FA\u984C\uFF0C\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u3002\u5148\u4E0D\u8981\u516C\u5E03\u7B54\u6848\uFF0C\u6700\u5F8C\u4E00\u884C\u5BEB\uFF1A\u300C\u56DE\u8986\u4F60\u7684\u7B54\u6848\uFF0C\u6211\u518D\u544A\u8A34\u4F60\u5C0D\u4E0D\u5C0D\u3002\u300D`,
+  etymology: `\u4EFB\u52D9\uFF1A\u5B57\u6E90\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
+\u8B1B {{word}} \u7684\u5B57\u6E90\u6216\u5B57\u6839\u5B57\u9996\uFF0C\u4EE5\u53CA\u5B83\u548C\u54EA\u4E9B\u5E38\u898B\u7684\u5B57\u6709\u95DC\u4FC2\u3002\u5B57\u6E90\u4E0D\u78BA\u5B9A\u3001\u6216\u5404\u5BB6\u8AAA\u6CD5\u4E0D\u4E00\u6642\uFF0C\u76F4\u63A5\u8AAA\u660E\uFF0C\u518D\u6539\u8B1B\u53EF\u9760\u7684\u69CB\u8A5E\u6216\u7528\u6CD5\uFF0C\u4E0D\u8981\u7DE8\u9020\u3002`,
+  joke: `\u4EFB\u52D9\uFF1A\u7B11\u8A71\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
+\u7528 {{word}} \u8AAA\u4E00\u500B\u7C21\u77ED\u7684\u7B11\u8A71\u3001\u96D9\u95DC\u6216\u6587\u5B57\u904A\u6232\uFF0C\u6700\u5F8C\u7528\u4E00\u5169\u53E5\u8AAA\u660E\u7B11\u9EDE\uFF0C\u4EE5\u53CA {{word}} \u5728\u9019\u88E1\u7684\u610F\u601D\u3002`,
+  followup: `${SELECTION_HEADER3}\u3014\u4F7F\u7528\u8005\u7684\u8FFD\u554F\u3015{{#word}}\uFF08\u76EE\u524D\u7684\u4E3B\u89D2\uFF1A{{word}}\uFF09{{/word}}
+{{question}}
+
+\u63A5\u8457\u524D\u9762\u7684\u5C0D\u8A71\u56DE\u7B54\uFF0C\u4E0D\u7528\u5BEB\u6A19\u984C\u3002\u5982\u679C\u662F\u5728\u56DE\u7B54\u524D\u9762\u51FA\u7684\u984C\u76EE\uFF0C\u5148\u8AAA\u5C0D\u6216\u4E0D\u5C0D\uFF0C\u518D\u89E3\u91CB\u3002`
+};
+var TITLE_MAX = 40;
+var BOLD_LINE_RE = /^\s*(?:#+\s*)?\*\*(.+?)\*\*\s*[:：]?\s*$/;
+var LABEL_LINE_RE = /^\s*(?:標題|title)\s*[:：]\s*(.+)$/i;
+function clip(s, max) {
+  return s.length > max ? `${s.slice(0, max - 1)}\u2026` : s;
+}
+function splitTrivia(text) {
+  var _a, _b, _c;
+  const trimmed = text.trim();
+  const nl = trimmed.indexOf("\n");
+  const first = nl === -1 ? trimmed : trimmed.slice(0, nl);
+  const rest = nl === -1 ? "" : trimmed.slice(nl + 1).trim();
+  const titled = (_a = BOLD_LINE_RE.exec(first)) != null ? _a : LABEL_LINE_RE.exec(first);
+  if (titled && rest) return { title: clip(titled[1].trim(), TITLE_MAX), body: rest };
+  const plain = trimmed.replace(/\*\*|__|`/g, "");
+  const sentence = (_c = (_b = /^[^。！？!?\n]+[。！？!?]?/.exec(plain)) == null ? void 0 : _b[0]) != null ? _c : plain;
+  return { title: clip(sentence.trim(), TITLE_MAX), body: trimmed };
+}
+function triviaTask(id, opts) {
+  const task = {
+    id: `trivia.${id}`,
+    version: 2,
+    surface: "trivia",
+    tier: "smart",
+    // Headroom for adaptive thinking on Sonnet 5; the visible answer is
+    // kept to 50–200 字 by the prompt.
+    maxTokens: 4096,
+    ...opts,
+    build(input, ctx) {
+      const c = buildTriviaContext(input);
+      return composeRequest({
+        base: TRIVIA_BASE_PROMPT,
+        cached: [c.knownBlock],
+        profile: profileForTask(ctx.profile, task, input),
+        history: ctx.history,
+        // The subject and the told list change every round, so they ride
+        // in this round's message: kept in the system prompt they would
+        // break the history cache on every request (規劃書 06 §6.4.1 #5).
+        user: [c.subjectBlock, c.toldBlock, renderTemplate(TRIVIA_TEMPLATES[id], c.slots)].filter(Boolean).join("\n\n"),
+        tier: task.tier,
+        maxTokens: task.maxTokens
+      });
+    },
+    parse(r) {
+      return splitTrivia(r.text);
+    }
+  };
+  return task;
+}
+var TRIVIA_CHARS = 200;
+var capped = (_input, max) => Math.min(max, TRIVIA_CHARS);
+var triviaNext = triviaTask("next", { label: "ai.task.trivia.next", answerChars: capped });
+var triviaQuiz = triviaTask("quiz", { label: "ai.task.trivia.quiz", answerChars: capped });
+var triviaEtymology = triviaTask("etymology", { label: "ai.task.trivia.etymology", answerChars: capped });
+var triviaJoke = triviaTask("joke", { label: "ai.task.trivia.joke", answerChars: capped });
+var triviaFollowup = triviaTask("followup", {});
+var TRIVIA_TASKS = [triviaNext, triviaQuiz, triviaEtymology, triviaJoke, triviaFollowup];
+var TRIVIA_TASK_BY_KIND = {
+  next: triviaNext,
+  quiz: triviaQuiz,
+  etymology: triviaEtymology,
+  joke: triviaJoke
+};
+
+// src/services/learn/triviaPick.ts
+var RECENT_DAYS = 14;
+var EXCLUDE_LAST = 30;
+var RECENT_WEIGHT = 0.7;
+var DAY_MS = 24 * 60 * 60 * 1e3;
+function triviaRounds(thread) {
+  var _a;
+  if (!thread) return [];
+  const live = thread.turns.filter((t2) => !t2.deletedAt);
+  const out = [];
+  for (let i = live.length - 1; i >= 0; i--) {
+    const t2 = live[i];
+    if (t2.role !== "assistant" || t2.status === "error") continue;
+    if (!((_a = t2.taskId) == null ? void 0 : _a.startsWith("trivia.")) || t2.taskId === "trivia.followup") continue;
+    const q = live[i - 1];
+    out.push({ answer: t2, question: (q == null ? void 0 : q.role) === "user" ? q : void 0 });
+  }
+  return out;
+}
+function subjectOf(thread, turn) {
+  if (turn.subjectEntryId) return turn.subjectEntryId;
+  if (!thread) return void 0;
+  const i = thread.turns.indexOf(turn);
+  for (let j = i - 1; j >= 0; j--) {
+    const prev = thread.turns[j];
+    if (prev.deletedAt) continue;
+    return prev.role === "user" ? prev.subjectEntryId : void 0;
+  }
+  return void 0;
+}
+function recentSubjects(thread, n = EXCLUDE_LAST) {
+  var _a, _b;
+  const out = [];
+  for (const r of triviaRounds(thread).slice(0, n)) {
+    const id = (_b = r.answer.subjectEntryId) != null ? _b : (_a = r.question) == null ? void 0 : _a.subjectEntryId;
+    if (id) out.push(id);
+  }
+  return out;
+}
+function pickSubject(entries, recent, opts) {
+  var _a, _b, _c;
+  const live = entries.filter((e) => !e.deletedAt && e.word.trim());
+  if (!live.length) return void 0;
+  const excluded = new Set(recent.slice(0, (_a = opts.excludeLast) != null ? _a : EXCLUDE_LAST));
+  const candidates = live.filter((e) => !excluded.has(e.id));
+  if (!candidates.length) {
+    const lastTold = (e) => recent.indexOf(e.id);
+    return [...live].sort((a, b) => lastTold(b) - lastTold(a))[0];
+  }
+  const since = opts.now.getTime() - ((_b = opts.recentDays) != null ? _b : RECENT_DAYS) * DAY_MS;
+  const fresh = candidates.filter((e) => entryAddedMs(e) >= since);
+  const older = candidates.filter((e) => entryAddedMs(e) < since);
+  let pool;
+  if (!fresh.length) pool = older;
+  else if (!older.length) pool = fresh;
+  else pool = opts.random() < ((_c = opts.recentWeight) != null ? _c : RECENT_WEIGHT) ? fresh : older;
+  const i = Math.min(pool.length - 1, Math.floor(opts.random() * pool.length));
+  return pool[i];
+}
+
+// src/ui/blocks/triviaModel.ts
+var OFF = /* @__PURE__ */ new Set(["off", "false", "no", "0", "hide", "\u95DC", "\u5426"]);
+function parseTriviaParams(source) {
+  var _a, _b;
+  const p = parseBlockParams(source);
+  const out = { favorites: !OFF.has(((_a = p.favorites) != null ? _a : "").trim().toLowerCase()) };
+  const word = ((_b = p.word) != null ? _b : "").trim().replace(/^["']|["']$/g, "").trim();
+  if (word) out.word = word;
+  return out;
+}
+var KIND_BY_TASK = new Map(
+  Object.entries(TRIVIA_TASK_BY_KIND).map(([kind, task]) => [task.id, kind])
+);
+function triviaKindOf(taskId) {
+  return taskId ? KIND_BY_TASK.get(taskId) : void 0;
+}
+function triviaCall(req, pinnedEntryId) {
+  var _a;
+  const kind = triviaKindOf(req.taskId);
+  if (kind) return pinnedEntryId ? { type: "ask", kind, entryId: pinnedEntryId } : { type: "ask", kind };
+  const question = (_a = req.question) == null ? void 0 : _a.trim();
+  if (req.taskId !== triviaFollowup.id || !question) return null;
+  return req.selection ? { type: "followup", question, selection: req.selection } : { type: "followup", question };
+}
+function triviaTurnActions(turn, ctx) {
+  if (turn.role !== "assistant" || turn.status !== "done" || !turn.content.trim()) return [];
+  const out = [];
+  if (ctx.feedback) {
+    out.push({ kind: "up", label: "learn.trivia.up", icon: "thumbs-up", active: turn.feedback === "up", iconOnly: true });
+    out.push({ kind: "down", label: "learn.trivia.down", icon: "thumbs-down", active: turn.feedback === "down", iconOnly: true });
+  }
+  if (ctx.favorite) {
+    out.push({ kind: "unfavorite", label: "learn.trivia.favorited", icon: "bookmark-check", active: true, iconOnly: false });
+  } else if (ctx.subjectWord) {
+    const round = !!triviaKindOf(turn.taskId);
+    out.push(
+      round ? { kind: "favorite", label: "learn.trivia.favoriteTo", params: { word: ctx.subjectWord }, icon: "bookmark", active: false, iconOnly: false } : { kind: "favorite", label: "learn.trivia.favorite", icon: "bookmark", active: false, iconOnly: false }
+    );
+  }
+  return out;
+}
+function nextFeedback(current, clicked) {
+  return current === clicked ? void 0 : clicked;
+}
+function triviaTurnHeader(turn, subjectWord, labelOf) {
+  if (turn.role !== "assistant" || !subjectWord) return void 0;
+  const kind = triviaKindOf(turn.taskId);
+  return kind ? `${labelOf(kind)} \xB7 ${subjectWord}` : void 0;
+}
+function favoriteViews(items, wordOf, dateOf) {
+  return items.map((it) => {
+    const word = wordOf(it.entryId);
+    return {
+      id: it.id,
+      heading: word ? `${word} \xB7 ${it.title}` : it.title,
+      body: it.body,
+      date: dateOf(it.createdAt),
+      mentions: it.mentions.map(wordOf).filter((w) => !!w)
+    };
+  });
+}
+
+// src/ui/blocks/verbsModel.ts
+function parseVerbsParams(source) {
+  var _a, _b;
+  const p = parseBlockParams(source);
+  const word = ((_b = (_a = p.word) != null ? _a : p.verb) != null ? _b : "").trim().replace(/^["']|["']$/g, "").trim();
+  return word ? { word } : {};
+}
+function filterVerbs(verbs, query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [...verbs];
+  return verbs.filter((e) => {
+    var _a;
+    return e.word.toLowerCase().includes(q) || ((_a = e.definitionZh) != null ? _a : "").toLowerCase().includes(q);
+  });
+}
+function pickVerb(verbs, current) {
+  var _a, _b;
+  if (current && verbs.some((e) => e.id === current)) return current;
+  return (_b = (_a = verbs.find((e) => e.usage)) != null ? _a : verbs[0]) == null ? void 0 : _b.id;
+}
+function noteName(path) {
+  var _a;
+  if (!path) return void 0;
+  const base = (_a = path.split("/").pop()) != null ? _a : path;
+  return base.replace(/\.md$/i, "") || void 0;
+}
+function shortDate3(iso) {
+  if (!iso) return void 0;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return void 0;
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+function phoneticLine(e) {
+  var _a, _b;
+  const parts = [];
+  const ph = ((_a = e.phonetic) != null ? _a : "").trim();
+  if (ph) parts.push(/^[/[]/.test(ph) ? ph : `/${ph}/`);
+  const pos = ((_b = e.partOfSpeech) != null ? _b : "").trim();
+  if (pos) parts.push(pos);
+  return parts.join(" \xB7 ");
+}
+function usageMeta(e, usage) {
+  var _a;
+  const out = {};
+  const source = noteName((_a = e.source) == null ? void 0 : _a.path);
+  if (source) out.source = source;
+  const date = shortDate3(usage == null ? void 0 : usage.generatedAt);
+  if (date) out.date = date;
+  return out;
+}
+function usageRows(usage) {
+  var _a, _b;
+  return {
+    patterns: ((_a = usage.patterns) != null ? _a : []).filter((p) => {
+      var _a2, _b2, _c;
+      return ((_a2 = p.pattern) == null ? void 0 : _a2.trim()) || ((_b2 = p.meaningZh) == null ? void 0 : _b2.trim()) || ((_c = p.example) == null ? void 0 : _c.trim());
+    }),
+    related: ((_b = usage.related) != null ? _b : []).filter((r) => {
+      var _a2;
+      return (_a2 = r.phrase) == null ? void 0 : _a2.trim();
+    })
+  };
+}
+
+// src/ui/blocks/trivia.ts
+function renderTrivia(plugin, source, el, ctx) {
+  ctx.addChild(new TriviaBlock(el, plugin, parseTriviaParams(source), ctx.sourcePath));
+}
+var WordPickModal = class extends import_obsidian18.FuzzySuggestModal {
+  constructor(app, entries, onPick) {
+    super(app);
+    this.entries = entries;
+    this.onPick = onPick;
+    this.setPlaceholder(t("learn.trivia.pick.placeholder"));
+  }
+  getItems() {
+    return this.entries;
+  }
+  getItemText(e) {
+    return e.definitionZh ? `${e.word}  ${e.definitionZh}` : e.word;
+  }
+  onChooseItem(e) {
+    this.onPick(e);
+  }
+};
+var TriviaBlock = class extends import_obsidian18.MarkdownRenderChild {
+  constructor(containerEl, plugin, params, sourcePath) {
+    super(containerEl);
+    this.plugin = plugin;
+    this.params = params;
+    this.sourcePath = sourcePath;
+    this.chipEl = null;
+    this.chatHost = null;
+    this.chat = null;
+    this.favEl = null;
+    this.favScope = null;
+    this.chatState = createChatUiState();
+    this.hasWords = false;
+    this.ready = false;
+    this.disposed = false;
+  }
+  onload() {
+    this.containerEl.empty();
+    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-trivia"] });
+    guardReadingClicks(this, this.root);
+    this.root.createDiv({ cls: "vt-learn-loading", text: t("learn.loading") });
+    this.register(this.plugin.store.events.on("data:changed", () => this.onStoreChanged()));
+    const favChanged = () => {
+      var _a;
+      if (!this.ready) return;
+      this.renderFavorites();
+      (_a = this.chat) == null ? void 0 : _a.refresh();
+    };
+    this.register(this.plugin.learn.events.on("trivia:upsert", favChanged));
+    this.register(this.plugin.learn.events.on("learn:reloaded", favChanged));
+    this.register(() => this.disposed = true);
+    void this.plugin.trivia.ensureLoaded().then(() => {
+      if (this.disposed) return;
+      this.ready = true;
+      this.build();
+    });
+  }
+  get entries() {
+    return this.plugin.store.entries;
+  }
+  pinned() {
+    return this.params.word ? new WordIndex(this.entries).find(this.params.word) : void 0;
+  }
+  entryById(id) {
+    return id ? this.entries.find((e) => e.id === id) : void 0;
+  }
+  onStoreChanged() {
+    if (!this.ready) return;
+    if (this.entries.length > 0 !== this.hasWords) return this.build();
+    this.updateChip();
+    this.renderFavorites();
+  }
+  // ── Layout ────────────────────────────────────────────────────
+  build() {
+    const root = this.root;
+    root.empty();
+    this.chipEl = null;
+    this.chatHost = null;
+    this.favEl = null;
+    if (this.chat) this.removeChild(this.chat);
+    this.chat = null;
+    this.hasWords = this.entries.length > 0;
+    if (this.params.word && !this.pinned()) {
+      root.appendChild(emptyState({ icon: "lightbulb", title: t("learn.notFound", { word: this.params.word }) }));
+    } else if (!this.hasWords) {
+      root.appendChild(
+        emptyState({ icon: "lightbulb", title: t("learn.trivia.empty.title"), body: t("learn.trivia.empty.body") })
+      );
+    } else {
+      const card = root.createDiv({ cls: "vt-trivia-card" });
+      const head = card.createDiv({ cls: "vt-trivia-head" });
+      const title = head.createSpan({ cls: "vt-trivia-title" });
+      (0, import_obsidian18.setIcon)(title.createSpan({ cls: "vt-trivia-title-icon" }), "lightbulb");
+      title.createSpan({ text: t("learn.trivia.title") });
+      this.chipEl = head.createEl("button", { cls: "vt-trivia-subject" });
+      this.chipEl.addEventListener("click", () => this.pickWord());
+      this.updateChip();
+      this.chatHost = card.createDiv({ cls: "vt-trivia-chat" });
+      this.mountChat();
+      card.createDiv({ cls: "vt-trivia-footer", text: t("learn.trivia.footer") });
+    }
+    if (this.params.favorites) {
+      this.favEl = root.createDiv({ cls: "vt-trivia-favs" });
+      this.renderFavorites();
+    }
+  }
+  // 「從已學的 24 個字隨機 ⌄」 — a click picks the word for the next round.
+  updateChip() {
+    const chip2 = this.chipEl;
+    if (!chip2) return;
+    chip2.empty();
+    const pinned = this.pinned();
+    chip2.createSpan({
+      text: pinned ? t("learn.trivia.subject", { word: pinned.word }) : t("learn.trivia.random", { n: this.entries.length })
+    });
+    if (!pinned) (0, import_obsidian18.setIcon)(chip2.createSpan({ cls: "vt-trivia-subject-icon" }), "chevron-down");
+    chip2.disabled = !!pinned || this.plugin.ai.status() !== "ready";
+    chip2.title = pinned ? "" : t("learn.trivia.pick");
+  }
+  pickWord() {
+    if (this.pinned() || this.plugin.trivia.isBusy()) return;
+    new WordPickModal(this.plugin.app, [...this.entries], (e) => {
+      this.run({ type: "ask", kind: "next", entryId: e.id });
+    }).open();
+  }
+  mountChat() {
+    const host = this.chatHost;
+    if (!host) return;
+    if (this.chat) this.removeChild(this.chat);
+    host.empty();
+    const opts = {
+      app: this.plugin.app,
+      threads: this.plugin.threads,
+      ai: this.plugin.ai,
+      selection: this.plugin.selection,
+      threadId: TRIVIA_THREAD_ID,
+      surface: "trivia",
+      customTaskId: triviaFollowup.id,
+      sourcePath: this.sourcePath,
+      placeholder: t("learn.trivia.placeholder"),
+      state: this.chatState,
+      send: (req) => this.send(req),
+      retry: (turnId) => this.retry(turnId),
+      turnActions: (turn) => this.turnActions(turn),
+      turnHeader: (turn) => this.turnHeader(turn),
+      onOpenSettings: () => openPluginSettings(this.plugin.app, this.plugin.manifest.id)
+    };
+    this.chat = this.addChild(new ChatPanel(host, opts));
+  }
+  // ── Conversation ──────────────────────────────────────────────
+  async call(c) {
+    if (c.type === "followup") return this.plugin.trivia.followup(c.question, c.selection);
+    const subject = await this.plugin.trivia.ask(c.kind, c.entryId ? { entryId: c.entryId } : {});
+    if (!subject && !this.plugin.trivia.isBusy()) new import_obsidian18.Notice(t("learn.trivia.noWords"));
+  }
+  run(c) {
+    this.call(c).catch((e) => {
+      console.error("Vocab Tracker: trivia request failed", e);
+      new import_obsidian18.Notice(learnErrorText(e));
+    });
+  }
+  async send(req) {
+    var _a;
+    const c = triviaCall(req, (_a = this.pinned()) == null ? void 0 : _a.id);
+    if (c) await this.call(c);
+  }
+  retry(turnId) {
+    return this.plugin.trivia.retry(turnId);
+  }
+  subjectWord(turn) {
+    var _a;
+    return (_a = this.entryById(subjectOf(this.plugin.trivia.thread(), turn))) == null ? void 0 : _a.word;
+  }
+  turnHeader(turn) {
+    const text = triviaTurnHeader(
+      turn,
+      this.subjectWord(turn),
+      (kind) => kind === "next" ? t("learn.trivia.turn.next") : t(`ai.task.trivia.${kind}`)
+    );
+    return text ? { text, icon: "lightbulb" } : void 0;
+  }
+  turnActions(turn) {
+    const { threads, trivia } = this.plugin;
+    const favorite = trivia.favoriteOf(turn.id);
+    const specs = triviaTurnActions(turn, { subjectWord: this.subjectWord(turn), favorite, feedback: true });
+    return specs.map((s) => {
+      const label = t(s.label, s.params);
+      const base = { label, icon: s.icon, active: s.active, iconOnly: s.iconOnly };
+      switch (s.kind) {
+        case "up":
+        case "down": {
+          const kind = s.kind;
+          return {
+            ...base,
+            onClick: () => void threads.setFeedback(TRIVIA_THREAD_ID, turn.id, nextFeedback(turn.feedback, kind))
+          };
+        }
+        case "favorite":
+          return {
+            ...base,
+            onClick: () => {
+              const item = this.plugin.trivia.favorite(turn.id);
+              if (!item) return void new import_obsidian18.Notice(t("learn.trivia.noWords"));
+              const entry = this.entryById(item.entryId);
+              if (!entry) return;
+              const page = this.plugin.exporter.wordPagePath(entry.id, entry.word);
+              new import_obsidian18.Notice(t("learn.trivia.savedTo", { path: page.split("/").slice(-2).join("/") }));
+            }
+          };
+        case "unfavorite":
+          return { ...base, onClick: () => favorite && this.plugin.trivia.unfavorite(favorite.id) };
+      }
+    });
+  }
+  // ── 收藏的冷知識 ───────────────────────────────────────────────
+  renderFavorites() {
+    const el = this.favEl;
+    if (!el) return;
+    el.empty();
+    if (this.favScope) this.removeChild(this.favScope);
+    const scope = this.favScope = this.addChild(new import_obsidian18.Component());
+    el.createDiv({ cls: "vt-trivia-favs-title", text: t("learn.trivia.favorites") });
+    const pinned = this.pinned();
+    const items = this.plugin.trivia.favorites(pinned == null ? void 0 : pinned.id);
+    const views = favoriteViews(items, (id) => {
+      var _a;
+      return (_a = this.entryById(id)) == null ? void 0 : _a.word;
+    }, shortDate3);
+    if (!views.length) {
+      el.createDiv({ cls: "vt-trivia-favs-empty", text: t("learn.trivia.favorites.empty") });
+      return;
+    }
+    for (const v of views) {
+      const card = el.createDiv({ cls: "vt-trivia-fav" });
+      const head = card.createDiv({ cls: "vt-trivia-fav-head" });
+      head.createSpan({ cls: "vt-trivia-fav-title", text: v.heading });
+      const remove = head.createEl("button", { cls: "vt-trivia-fav-remove clickable-icon" });
+      (0, import_obsidian18.setIcon)(remove, "bookmark-minus");
+      remove.setAttr("aria-label", t("learn.trivia.unfavorite"));
+      remove.addEventListener("click", () => this.plugin.trivia.unfavorite(v.id));
+      const body = card.createDiv({ cls: "vt-trivia-fav-body" });
+      void import_obsidian18.MarkdownRenderer.render(this.plugin.app, v.body, body, this.sourcePath, scope);
+      const meta = [];
+      if (v.date) meta.push(v.date);
+      if (v.mentions.length) meta.push(t("learn.trivia.mentions", { words: joinWords(v.mentions) }));
+      if (meta.length) card.createDiv({ cls: "vt-trivia-fav-meta", text: meta.join(" \xB7 ") });
+    }
+  }
+};
+
+// src/ui/blocks/verbs.ts
+var import_obsidian19 = require("obsidian");
+function renderVerbs(plugin, source, el, ctx) {
+  ctx.addChild(new VerbsBlock(el, plugin, parseVerbsParams(source)));
+}
+var VerbsBlock = class extends import_obsidian19.MarkdownRenderChild {
+  constructor(containerEl, plugin, params) {
+    super(containerEl);
+    this.plugin = plugin;
+    this.params = params;
+    this.listEl = null;
+    this.countEl = null;
+    this.query = "";
+    // Last failure per entry, shown under its usage until the next try.
+    this.errors = /* @__PURE__ */ new Map();
+  }
+  onload() {
+    this.containerEl.empty();
+    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-verbs"] });
+    guardReadingClicks(this, this.root);
+    if (this.params.word) {
+      this.root.addClass("is-single");
+      this.detailEl = this.root.createDiv({ cls: "vt-verb-detail" });
+    } else {
+      this.buildLayout();
+    }
+    const redraw = () => this.render();
+    this.register(this.plugin.store.events.on("data:changed", redraw));
+    this.register(this.plugin.verbs.events.on("verb:busy", redraw));
+    this.render();
+  }
+  buildLayout() {
+    const grid = this.root.createDiv({ cls: "vt-verbs-grid" });
+    const side = grid.createDiv({ cls: "vt-verbs-side" });
+    const search = side.createDiv({ cls: "vt-verbs-search" });
+    (0, import_obsidian19.setIcon)(search.createSpan({ cls: "vt-verbs-search-icon" }), "search");
+    const input = search.createEl("input", { cls: "vt-verbs-filter", type: "search" });
+    input.placeholder = t("learn.verb.filter");
+    input.addEventListener("input", () => {
+      this.query = input.value;
+      this.render();
+    });
+    this.countEl = side.createDiv({ cls: "vt-verbs-count" });
+    this.listEl = side.createDiv({ cls: "vt-verbs-list" });
+    this.detailEl = grid.createDiv({ cls: "vt-verb-detail" });
+  }
+  render() {
+    if (this.params.word) return this.renderSingle(this.params.word);
+    const all = this.plugin.verbs.verbs();
+    const shown = filterVerbs(all, this.query);
+    this.selectedId = pickVerb(shown, this.selectedId);
+    this.root.toggleClass("is-empty", !all.length);
+    if (this.countEl) this.countEl.setText(t("learn.verb.count", { n: all.length }));
+    const list = this.listEl;
+    if (list) {
+      list.empty();
+      if (all.length && !shown.length) list.createDiv({ cls: "vt-verbs-nomatch", text: t("learn.verb.noMatch") });
+      for (const e of shown) {
+        const row = list.createEl("button", { cls: "vt-verbs-row" });
+        row.toggleClass("is-active", e.id === this.selectedId);
+        row.setAttr("aria-pressed", String(e.id === this.selectedId));
+        row.createSpan({ cls: "vt-verbs-row-word", text: e.word });
+        if (this.plugin.verbs.isBusy(e.id)) (0, import_obsidian19.setIcon)(row.createSpan({ cls: "vt-verbs-row-icon is-busy" }), "loader");
+        else if (e.usage) {
+          const icon = row.createSpan({ cls: "vt-verbs-row-icon" });
+          (0, import_obsidian19.setIcon)(icon, "check");
+          icon.setAttr("aria-label", t("learn.verb.hasUsage"));
+        }
+        row.addEventListener("click", () => {
+          this.selectedId = e.id;
+          this.render();
+        });
+      }
+    }
+    this.detailEl.empty();
+    if (!all.length) {
+      this.detailEl.appendChild(
+        emptyState({ icon: "list", title: t("learn.verb.none.title"), body: t("learn.verb.none.body") })
+      );
+      return;
+    }
+    const selected = shown.find((e) => e.id === this.selectedId);
+    if (selected) this.renderDetail(selected);
+  }
+  renderSingle(word) {
+    this.detailEl.empty();
+    const entry = new WordIndex(this.plugin.store.entries).find(word);
+    if (!entry) {
+      this.detailEl.appendChild(inlineNote({ text: t("learn.notFound", { word }) }));
+      return;
+    }
+    if (!this.plugin.verbs.canGenerate(entry)) {
+      this.detailEl.appendChild(inlineNote({ text: t("learn.verb.notVerb", { word: entry.word }) }));
+      return;
+    }
+    this.renderDetail(entry);
+  }
+  // ── Right pane ────────────────────────────────────────────────
+  renderDetail(e) {
+    const el = this.detailEl;
+    const head = el.createDiv({ cls: "vt-verb-head" });
+    head.createSpan({ cls: "vt-verb-word", text: e.word });
+    const phon = phoneticLine(e);
+    if (phon) head.createSpan({ cls: "vt-verb-phon", text: phon });
+    const speak = head.createEl("button", { cls: "vt-verb-speak clickable-icon" });
+    (0, import_obsidian19.setIcon)(speak, "volume-2");
+    speak.setAttr("aria-label", t("learn.verb.speak"));
+    speak.addEventListener("click", () => this.plugin.speakWord(e));
+    const usage = this.plugin.verbs.usage(e);
+    const meta = usageMeta(e, usage);
+    const metaParts = [];
+    if (meta.source) metaParts.push(t("learn.verb.meta.source", { source: meta.source }));
+    if (meta.date) metaParts.push(t("learn.verb.meta.generated", { date: meta.date }));
+    if (metaParts.length) el.createDiv({ cls: "vt-verb-meta", text: metaParts.join(" \xB7 ") });
+    const busy = this.plugin.verbs.isBusy(e.id);
+    if (busy) {
+      const box = el.createDiv({ cls: "vt-learn-busy" });
+      const line = box.createDiv({ cls: "vt-learn-busy-text" });
+      (0, import_obsidian19.setIcon)(line.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
+      line.createSpan({ text: t("learn.verb.generating", { word: e.word }) });
+      learnButton(box, { label: t("learn.stop"), icon: "square", onClick: () => this.plugin.verbs.stop(e.id) });
+    }
+    const error = this.errors.get(e.id);
+    if (error && !busy) el.appendChild(inlineNote({ tone: "error", text: error }));
+    if (usage) {
+      const { patterns, related } = usageRows(usage);
+      const list = el.createDiv({ cls: "vt-verb-patterns" });
+      for (const p of patterns) {
+        const row = list.createDiv({ cls: "vt-verb-pattern" });
+        row.createSpan({ cls: "vt-verb-pattern-p", text: p.pattern });
+        const right = row.createDiv({ cls: "vt-verb-pattern-body" });
+        if (p.meaningZh) right.createDiv({ cls: "vt-verb-pattern-zh", text: p.meaningZh });
+        if (p.example) right.createDiv({ cls: "vt-verb-pattern-ex", text: p.example });
+      }
+      if (related.length) {
+        el.createDiv({ cls: "vt-verb-section", text: t("learn.verb.related") });
+        const chips = el.createDiv({ cls: "vt-verb-related" });
+        for (const r of related) {
+          const chip2 = chips.createSpan({ cls: "vt-verb-related-chip" });
+          chip2.createSpan({ text: r.phrase });
+          if (r.zh) chip2.createSpan({ cls: "vt-verb-related-zh", text: r.zh });
+        }
+      }
+      if (!busy) {
+        const actions = el.createDiv({ cls: "vt-verb-actions" });
+        const regen = learnButton(actions, {
+          label: t("learn.verb.regenerate"),
+          icon: "refresh-cw",
+          onClick: () => void this.generate(e)
+        });
+        const status = this.plugin.ai.status();
+        if (status !== "ready") {
+          regen.disabled = true;
+          const offline = status === "offline";
+          actions.appendChild(
+            inlineNote({ tone: offline ? "offline" : "info", text: t(offline ? "learn.ai.offline" : "learn.ai.body") })
+          );
+        }
+      }
+      return;
+    }
+    if (busy) return;
+    if (renderLearnAiGate(el, this.plugin)) return;
+    el.appendChild(
+      emptyState({
+        icon: "sparkles",
+        title: t("learn.verb.empty.title", { word: e.word }),
+        body: t("learn.verb.empty.body"),
+        action: { label: t("learn.verb.generate"), icon: "sparkles", onClick: () => void this.generate(e) }
+      })
+    );
+  }
+  async generate(e) {
+    if (this.plugin.verbs.isBusy(e.id)) return;
+    this.errors.delete(e.id);
+    try {
+      await this.plugin.verbs.generate(e);
+    } catch (err) {
+      if (!isAbort(err)) {
+        console.error("Vocab Tracker: verb usage failed", err);
+        this.errors.set(e.id, learnErrorText(err));
+      }
+    }
+    this.render();
+  }
+};
+
+// src/ui/blocks/wordHeader.ts
+var import_obsidian20 = require("obsidian");
+
+// src/core/text/slug.ts
+var FORBIDDEN = /[/\\:*?"<>|#^[\]]/g;
+var CONTROL = /[\u0000-\u001f\u007f]/g;
+var MAX_NAME_BYTES = 200;
+function utf8Bytes2(s) {
+  var _a;
+  let n = 0;
+  for (const ch of s) {
+    const cp = (_a = ch.codePointAt(0)) != null ? _a : 0;
+    n += cp < 128 ? 1 : cp < 2048 ? 2 : cp < 65536 ? 3 : 4;
+  }
+  return n;
+}
+function truncateBytes(s, maxBytes) {
+  if (utf8Bytes2(s) <= maxBytes) return s;
+  let out = "";
+  let n = 0;
+  for (const ch of Array.from(s)) {
+    const size = utf8Bytes2(ch);
+    if (n + size > maxBytes) break;
+    out += ch;
+    n += size;
+  }
+  return out.replace(/\u200d+$/, "");
+}
+function slugify(name, fallback = "untitled", maxBytes = MAX_NAME_BYTES) {
+  let s = name.normalize("NFC").replace(CONTROL, "").replace(FORBIDDEN, "-");
+  s = s.replace(/\s+/g, " ").trim();
+  s = s.replace(/-{2,}/g, "-");
+  s = s.replace(/^[.\s]+/, "").replace(/[.\s]+$/, "");
+  s = truncateBytes(s, Math.max(0, maxBytes)).replace(/[.\s]+$/, "");
+  return s || fallback;
+}
+function wordSlug(word) {
+  return slugify(word.toLocaleLowerCase("en"), "word", MAX_NAME_BYTES - utf8Bytes2(".md"));
+}
+function joinPath(...parts) {
+  return parts.map((p) => p.replace(/^\/+|\/+$/g, "")).filter((p) => p !== "").join("/");
+}
+function noteBasename(path) {
+  const name = path.slice(path.lastIndexOf("/") + 1);
+  const dot = name.lastIndexOf(".");
+  return dot > 0 ? name.slice(0, dot) : name;
+}
+function linkTarget(path) {
+  return path.replace(/\.md$/i, "");
+}
+
+// src/services/files/paragraphNumber.ts
+function paragraphNumber(markdown, line) {
+  let n = 0;
+  for (const s of noteSections(markdown)) {
+    if (!isAnchorable(s.type)) continue;
+    n++;
+    if (line >= s.lineStart && line <= s.lineEnd) return n;
+    if (s.lineStart > line) return null;
+  }
+  return null;
+}
+
+// src/ui/blocks/wordHeader.ts
+var WORD_BLOCK_LANG = "vocab-word";
+function l(key3, vars) {
+  return t(`wordPage.${key3}`, vars);
+}
+function wordTarget(params, frontmatter2, sourcePath) {
+  if (params.id) return { id: params.id };
+  if (params.word) return { word: params.word };
+  const fmId = frontmatter2 == null ? void 0 : frontmatter2["vocab-tracker-id"];
+  if ((frontmatter2 == null ? void 0 : frontmatter2["vocab-tracker"]) === "word" && (typeof fmId === "string" || typeof fmId === "number")) {
+    return { id: String(fmId) };
+  }
+  return { word: noteBasename(sourcePath) };
+}
+function findTarget(entries, target) {
+  var _a;
+  const live = entries.filter((e) => !e.deletedAt);
+  if (target.id) return live.find((e) => e.id === target.id);
+  const word = (_a = target.word) == null ? void 0 : _a.trim().toLowerCase();
+  return word ? live.find((e) => e.word.toLowerCase() === word) : void 0;
+}
+function shortDay(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+}
+function dueLabel2(entry, now = /* @__PURE__ */ new Date()) {
+  if (isNewCard(entry) || !entry.srs) return l("dueNew");
+  const due = new Date(entry.srs.due);
+  if (Number.isNaN(due.getTime())) return l("dueNew");
+  const tomorrow = startOfLocalDay(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return due.getTime() < tomorrow.getTime() ? l("dueToday") : l("dueOn", { date: shortDay(due) });
+}
+function sourceLabel(path, paragraph) {
+  const name = noteBasename(path);
+  return l("source", { source: paragraph ? `${name} \xB6${paragraph}` : name });
+}
+function renderWordHeader(host, source, el, ctx) {
+  var _a;
+  const frontmatter2 = (_a = ctx.frontmatter) != null ? _a : host.frontmatterOf(ctx.sourcePath);
+  const target = wordTarget(parseBlockParams(source), frontmatter2, ctx.sourcePath);
+  ctx.addChild(new WordHeaderBlock(el, host, target));
+}
+var WordHeaderBlock = class extends import_obsidian20.MarkdownRenderChild {
+  constructor(containerEl, host, target) {
+    super(containerEl);
+    this.host = host;
+    this.target = target;
+    // "path\nline" → ¶ number, so a redraw doesn't re-read the note.
+    this.paragraphs = /* @__PURE__ */ new Map();
+    this.disposed = false;
+  }
+  onload() {
+    this.registerDomEvent(this.containerEl, "click", (e) => e.stopPropagation());
+    this.register(this.host.store.events.on("data:changed", () => this.render()));
+    this.render();
+  }
+  onunload() {
+    this.disposed = true;
+  }
+  render() {
+    var _a, _b, _c, _d, _e;
+    if (this.disposed) return;
+    const el = this.containerEl;
+    el.empty();
+    const root = el.createDiv({ cls: ["vt", "vt-word-header"] });
+    const entry = findTarget(this.host.store.entries, this.target);
+    if (!entry) {
+      root.appendChild(inlineNote({ text: l("missing") }));
+      return;
+    }
+    const top = root.createDiv({ cls: "vt-wh-top" });
+    top.createSpan({ cls: "vt-wh-word", text: entry.word });
+    const meta = [entry.phonetic, entry.partOfSpeech].map((s) => s == null ? void 0 : s.trim()).filter(Boolean).join(" \xB7 ");
+    if (meta) top.createSpan({ cls: "vt-wh-meta", text: meta });
+    const speak = top.createEl("button", { cls: ["clickable-icon", "vt-wh-speak"], attr: { "aria-label": l("speak") } });
+    (0, import_obsidian20.setIcon)(speak, "volume-2");
+    speak.addEventListener("click", () => this.host.speakWord(entry));
+    const def = ((_a = entry.definitionZh) == null ? void 0 : _a.trim()) || ((_b = entry.definition) == null ? void 0 : _b.trim());
+    if (def) root.createDiv({ cls: "vt-wh-def", text: def });
+    const chips = root.createDiv({ cls: "vt-wh-chips" });
+    if ((_c = entry.source) == null ? void 0 : _c.path) this.renderSource(chips, entry, entry.source.path, entry.source.line);
+    chip(chips, "calendar", dueLabel2(entry));
+    const reps = (_e = (_d = entry.srs) == null ? void 0 : _d.reps) != null ? _e : 0;
+    if (reps > 0) chip(chips, "rotate-ccw", l("reviewed", { n: reps }));
+    const review = this.host.reviewWord;
+    if (review) {
+      const btn = chips.createEl("button", { cls: ["mod-cta", "vt-wh-review"] });
+      (0, import_obsidian20.setIcon)(btn.createSpan({ cls: "vt-wh-btn-icon" }), "layers");
+      btn.createSpan({ text: l("review") });
+      btn.addEventListener("click", () => void review.call(this.host, entry));
+    }
+  }
+  renderSource(parent, entry, path, line) {
+    const key3 = `${path}
+${line}`;
+    const known = this.paragraphs.get(key3);
+    const el = chip(parent, "file-text", sourceLabel(path, known != null ? known : null));
+    el.addClass("is-link");
+    el.setAttr("title", l("sourceTitle"));
+    el.setAttr("role", "link");
+    el.tabIndex = 0;
+    el.addEventListener("click", () => void this.host.jumpToSource(entry));
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") void this.host.jumpToSource(entry);
+    });
+    const read = this.host.readNote;
+    if (known !== void 0 || !read || line < 0) return;
+    this.paragraphs.set(key3, null);
+    void read.call(this.host, path).then((text) => {
+      var _a;
+      const n = text === null ? null : paragraphNumber(text, line);
+      this.paragraphs.set(key3, n);
+      if (n !== null && !this.disposed) (_a = el.querySelector(".vt-chip-text")) == null ? void 0 : _a.setText(sourceLabel(path, n));
+    }).catch(() => void 0);
+  }
+};
+function chip(parent, icon, text) {
+  const el = parent.createSpan({ cls: "vt-wh-chip" });
+  (0, import_obsidian20.setIcon)(el.createSpan({ cls: "vt-chip-icon" }), icon);
+  el.createSpan({ cls: "vt-chip-text", text });
+  return el;
+}
+
+// src/ui/blocks/registry.ts
+var BLOCKS = [
+  { lang: "vocab-dashboard", render: renderDashboard },
+  { lang: "vocab-flashcards", render: renderFlashcards },
+  // The plugin is the block's WordHeaderHost.
+  { lang: WORD_BLOCK_LANG, render: renderWordHeader },
+  // M7 (規劃書 06 §7): 字族樹, 動詞用法, 冷知識.
+  { lang: "vocab-families", render: renderFamilies },
+  { lang: "vocab-verbs", render: renderVerbs },
+  { lang: "vocab-trivia", render: renderTrivia }
+];
+function registerBlocks(plugin) {
+  for (const def of BLOCKS) {
+    plugin.registerMarkdownCodeBlockProcessor(
+      def.lang,
+      (source, el, ctx) => def.render(plugin, source, el, ctx)
+    );
+  }
 }
 
 // ../../../node_modules/ts-fsrs/dist/index.mjs
@@ -3185,24 +7258,24 @@ var CLAMP_PARAMETERS = (w17_w18_ceiling, enable_short_term = default_enable_shor
   [0.1, 0.8]
 ];
 var clipParameters = (parameters, numRelearningSteps, enableShortTerm = default_enable_short_term) => {
-  const clip = CLAMP_PARAMETERS(W17_W18_Ceiling, enableShortTerm).slice(
+  const clip2 = CLAMP_PARAMETERS(W17_W18_Ceiling, enableShortTerm).slice(
     0,
     parameters.length
   );
   if (Math.max(0, numRelearningSteps) > 1) {
-    const w11 = clamp(parameters[11] || 0, clip[11][0], clip[11][1]);
-    const w13 = clamp(parameters[13] || 0, clip[13][0], clip[13][1]);
-    const w14 = clamp(parameters[14] || 0, clip[14][0], clip[14][1]);
+    const w11 = clamp(parameters[11] || 0, clip2[11][0], clip2[11][1]);
+    const w13 = clamp(parameters[13] || 0, clip2[13][0], clip2[13][1]);
+    const w14 = clamp(parameters[14] || 0, clip2[14][0], clip2[14][1]);
     const value = -(Math.log(w11) + Math.log(Math.pow(2, w13) - 1) + w14 * 0.3) / numRelearningSteps;
     const w17_w18_ceiling = clamp(
       roundTo(Math.sqrt(Math.max(value, 0)), 8),
       0.01,
       W17_W18_Ceiling
     );
-    if (clip[17]) clip[17] = [clip[17][0], w17_w18_ceiling];
-    if (clip[18]) clip[18] = [clip[18][0], w17_w18_ceiling];
+    if (clip2[17]) clip2[17] = [clip2[17][0], w17_w18_ceiling];
+    if (clip2[18]) clip2[18] = [clip2[18][0], w17_w18_ceiling];
   }
-  return clip.map(
+  return clip2.map(
     ([min, max], index) => clamp(parameters[index] || 0, min, max)
   );
 };
@@ -3386,8 +7459,8 @@ var FSRSAlgorithm = class {
   }
   update_parameters(params) {
     const _params = this.prepare_parameters(params);
-    for (const key in _params) {
-      const paramKey = key;
+    for (const key3 in _params) {
+      const paramKey = key3;
       this.param[paramKey] = _params[paramKey];
     }
   }
@@ -4497,76 +8570,6 @@ function pruneReviewLogs(logs, now, days = REVIEW_LOG_RETENTION_DAYS) {
   return logs.filter((log) => new Date(log.at).getTime() >= cutoff);
 }
 
-// src/core/text/cloze.ts
-var SUFFIXES = "(?:s|es|ed|d|ing|er|est|ly)?";
-function clozeParts(sentence, word) {
-  const w = word.trim();
-  if (!sentence || !w) return null;
-  const re = new RegExp(
-    `(?<![A-Za-z0-9'\\-])${escapeRe(w)}${SUFFIXES}(?![A-Za-z0-9'\\-])`,
-    "i"
-  );
-  const m = re.exec(sentence);
-  if (!m) return null;
-  return {
-    before: sentence.slice(0, m.index),
-    answer: m[0],
-    after: sentence.slice(m.index + m[0].length)
-  };
-}
-
-// src/services/srs/queue.ts
-function isNewCard(entry) {
-  return !entry.srs || entry.srs.state === SrsState.New;
-}
-function startOfLocalDay(d) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-function addDays(d, n) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-}
-function newIntroducedToday(logs, now) {
-  const dayStart = startOfLocalDay(now).getTime();
-  const ids = /* @__PURE__ */ new Set();
-  for (const log of logs) {
-    if (log.prevState !== SrsState.New) continue;
-    if (new Date(log.at).getTime() >= dayStart) ids.add(log.entryId);
-  }
-  return ids.size;
-}
-function matchesFilter(entry, filter) {
-  var _a, _b;
-  if (entry.deletedAt) return false;
-  if (filter.source && !((_b = (_a = entry.source) == null ? void 0 : _a.path) != null ? _b : "").startsWith(filter.source)) return false;
-  if (filter.mode === "cloze" && !clozeParts(entry.example, entry.word)) return false;
-  return true;
-}
-function dueMs(entry) {
-  return entry.srs ? new Date(entry.srs.due).getTime() : 0;
-}
-function addedKey(entry) {
-  var _a, _b;
-  return (_b = (_a = entry.createdAt) != null ? _a : entry.added) != null ? _b : "";
-}
-function buildQueue(entries, filter, ctx) {
-  const nowMs = ctx.now.getTime();
-  const candidates = entries.filter((e) => matchesFilter(e, filter));
-  const due = candidates.filter((e) => !isNewCard(e) && dueMs(e) <= nowMs).sort((a, b) => dueMs(a) - dueMs(b));
-  const allowance = Math.max(0, ctx.dailyNew - newIntroducedToday(ctx.logs, ctx.now));
-  const fresh = candidates.filter(isNewCard).sort((a, b) => addedKey(a) < addedKey(b) ? -1 : addedKey(a) > addedKey(b) ? 1 : 0).slice(0, allowance);
-  const queue = [...due, ...fresh];
-  return filter.limit !== void 0 && filter.limit >= 0 ? queue.slice(0, filter.limit) : queue;
-}
-function countDueBetween(entries, filter, from, to) {
-  const a = from.getTime();
-  const b = to.getTime();
-  return entries.filter((e) => {
-    if (!matchesFilter(e, filter) || isNewCard(e)) return false;
-    const ms2 = dueMs(e);
-    return ms2 >= a && ms2 < b;
-  }).length;
-}
-
 // src/services/srs/SrsService.ts
 var REVIEWS_SHARD = "reviews";
 var WRITE_DEBOUNCE_MS2 = 500;
@@ -4666,7 +8669,7 @@ var SrsService = class {
     const ids = new Set(
       this.deps.store.vocabData.entries.filter((e) => matchesFilter(e, { source: filter.source })).map((e) => e.id)
     );
-    return this.logs.filter((l) => ids.has(l.entryId) && new Date(l.at).getTime() >= dayStart).length;
+    return this.logs.filter((l3) => ids.has(l3.entryId) && new Date(l3.at).getTime() >= dayStart).length;
   }
   // When this entry is next due, or null for a card that's never been
   // scheduled (shown as "new" rather than a date).
@@ -4756,435 +8759,6 @@ var SrsService = class {
   }
 };
 
-// src/ui/blocks/flashcards.ts
-var import_obsidian13 = require("obsidian");
-
-// src/core/text/interval.ts
-var MIN = 60 * 1e3;
-var HOUR = 60 * MIN;
-var DAY = 24 * HOUR;
-function splitInterval(ms2) {
-  const round = (n) => Math.max(1, Math.round(n));
-  if (ms2 < HOUR) return { value: round(ms2 / MIN), unit: "m" };
-  if (ms2 < DAY) return { value: round(ms2 / HOUR), unit: "h" };
-  if (ms2 < 30 * DAY) return { value: round(ms2 / DAY), unit: "d" };
-  if (ms2 < 365 * DAY) return { value: round(ms2 / (30 * DAY)), unit: "mo" };
-  return { value: Math.max(1, Math.round(ms2 / (365 * DAY) * 10) / 10), unit: "y" };
-}
-
-// src/ui/blocks/params.ts
-function parseBlockParams(source) {
-  const out = {};
-  for (const raw of source.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line || line.startsWith("#") || line.startsWith("//")) continue;
-    const i = line.indexOf(":");
-    if (i <= 0) continue;
-    const key = line.slice(0, i).trim().toLowerCase();
-    const value = line.slice(i + 1).trim();
-    if (key) out[key] = value;
-  }
-  return out;
-}
-var MODE_ALIASES = {
-  "en-zh": "en-zh",
-  "en\u2192zh": "en-zh",
-  "\u82F1\u2192\u4E2D": "en-zh",
-  "zh-en": "zh-en",
-  "zh\u2192en": "zh-en",
-  "\u4E2D\u2192\u82F1": "zh-en",
-  cloze: "cloze",
-  "\u4F8B\u53E5\u586B\u7A7A": "cloze",
-  listen: "listen",
-  "\u807D\u97F3\u62FC\u5B57": "listen"
-};
-function parseFlashcardParams(source) {
-  var _a, _b, _c;
-  const p = parseBlockParams(source);
-  const mode = (_b = MODE_ALIASES[((_a = p.mode) != null ? _a : "").toLowerCase()]) != null ? _b : CARD_MODES[0];
-  const out = { mode };
-  const src = ((_c = p.source) != null ? _c : "").replace(/^["']|["']$/g, "").replace(/^\/+/, "");
-  if (src) out.source = src;
-  const limit = Number(p.limit);
-  if (p.limit !== void 0 && Number.isInteger(limit) && limit > 0) out.limit = limit;
-  return out;
-}
-
-// src/ui/blocks/flashcards.ts
-function renderFlashcards(plugin, source, el, ctx) {
-  ctx.addChild(new FlashcardsBlock(el, plugin, parseFlashcardParams(source)));
-}
-function formatInterval(ms2) {
-  const { value, unit } = splitInterval(ms2);
-  return t(`srs.interval.${unit}`, { n: value });
-}
-var FlashcardsBlock = class extends import_obsidian13.MarkdownRenderChild {
-  constructor(containerEl, plugin, params) {
-    super(containerEl);
-    this.plugin = plugin;
-    this.params = params;
-    this.phase = "loading";
-    this.session = [];
-    this.index = 0;
-    this.flipped = false;
-    this.shownAt = 0;
-    this.typed = "";
-    this.results = [];
-    this.initialDue = 0;
-    this.initialNew = 0;
-    // Set while rate() is in flight: rate() fires data:changed itself, and
-    // reacting to our own write would double-render mid-transition.
-    this.busy = false;
-    this.disposed = false;
-    this.mode = params.mode;
-  }
-  onload() {
-    this.containerEl.empty();
-    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-flashcards"] });
-    this.root.tabIndex = 0;
-    this.registerDomEvent(this.root, "keydown", (e) => this.onKey(e));
-    this.registerDomEvent(this.root, "click", (e) => e.stopPropagation());
-    this.register(this.plugin.store.events.on("data:changed", () => this.onStoreChanged()));
-    this.render();
-    void this.plugin.srs.ensureLoaded().then(() => {
-      if (!this.disposed) this.startSession();
-    });
-  }
-  onunload() {
-    this.disposed = true;
-  }
-  // ── Session state ─────────────────────────────────────────────
-  filter() {
-    return { source: this.params.source, mode: this.mode, limit: this.params.limit };
-  }
-  live(id) {
-    if (!id) return void 0;
-    return this.plugin.store.entries.find((e) => e.id === id);
-  }
-  current() {
-    return this.live(this.session[this.index]);
-  }
-  // `ids` replays a specific set (e.g. "practice forgotten words") instead
-  // of the due queue; they're still filtered by mode so cloze never shows
-  // a card it can't blank out.
-  startSession(ids, opts = {}) {
-    const cards = ids ? ids.map((id) => this.live(id)).filter((e) => !!e && matchesFilter(e, { mode: this.mode })) : this.plugin.srs.queue(this.filter());
-    this.session = cards.map((e) => e.id);
-    this.initialNew = cards.filter(isNewCard).length;
-    this.initialDue = cards.length - this.initialNew;
-    this.index = 0;
-    this.results = [];
-    this.resetCard();
-    this.phase = "card";
-    this.skipMissing();
-    this.render();
-    if (opts.speak) this.autoSpeak();
-  }
-  resetCard() {
-    this.flipped = false;
-    this.typed = "";
-    this.shownAt = Date.now();
-  }
-  // Skips cards deleted (or synced away) since the session started; ends
-  // the session when nothing's left.
-  skipMissing() {
-    while (this.index < this.session.length && !this.current()) this.index++;
-    if (this.index >= this.session.length) {
-      this.phase = this.results.length > 0 ? "done" : "empty";
-    }
-  }
-  flip() {
-    if (this.phase !== "card" || this.flipped) return;
-    this.flipped = true;
-    this.render();
-  }
-  async rate(rating) {
-    const entry = this.current();
-    if (this.phase !== "card" || !this.flipped || this.busy || !entry) return;
-    this.busy = true;
-    try {
-      await this.plugin.srs.rate(entry, rating, this.mode, Date.now() - this.shownAt);
-      this.results.push({ id: entry.id, rating });
-      this.index++;
-      this.resetCard();
-      this.skipMissing();
-    } catch (err) {
-      console.error("Vocab Tracker: rating failed", err);
-    } finally {
-      this.busy = false;
-    }
-    this.render();
-    this.autoSpeak();
-  }
-  autoSpeak() {
-    const entry = this.current();
-    if (this.mode === "listen" && this.phase === "card" && entry) this.plugin.speakWord(entry);
-  }
-  onStoreChanged() {
-    if (this.busy || this.disposed) return;
-    if (this.phase === "card" && !this.current()) {
-      this.skipMissing();
-      this.render();
-    } else if (this.phase === "empty") {
-      if (this.plugin.srs.queue(this.filter()).length > 0) this.startSession();
-    }
-  }
-  onKey(e) {
-    if (e.isComposing || e.metaKey || e.ctrlKey || e.altKey || this.phase !== "card") return;
-    if (e.target instanceof HTMLInputElement) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        e.stopPropagation();
-        this.flip();
-      }
-      return;
-    }
-    if ((e.key === " " || e.key === "Enter") && !this.flipped) {
-      e.preventDefault();
-      e.stopPropagation();
-      this.flip();
-    } else if (this.flipped && /^[1-4]$/.test(e.key)) {
-      e.preventDefault();
-      e.stopPropagation();
-      void this.rate(Number(e.key));
-    }
-  }
-  // ── Rendering ─────────────────────────────────────────────────
-  render() {
-    const hadFocus = this.root.contains(document.activeElement);
-    this.root.empty();
-    this.root.toggleClass("is-flipped", this.flipped);
-    this.renderToolbar();
-    if (this.phase === "card") this.renderCard();
-    else if (this.phase === "empty") this.renderEmpty();
-    else if (this.phase === "done") this.renderDone();
-    if (hadFocus) {
-      const input = this.root.querySelector("input");
-      (input != null ? input : this.root).focus({ preventScroll: true });
-    }
-  }
-  renderToolbar() {
-    var _a;
-    const bar = this.root.createDiv({ cls: "vt-fc-toolbar" });
-    const modes = bar.createDiv({ cls: "vt-fc-modes" });
-    for (const mode of CARD_MODES) {
-      const b = modes.createEl("button", {
-        text: t(`flashcards.mode.${mode}`),
-        cls: "vt-fc-mode"
-      });
-      b.toggleClass("is-active", mode === this.mode);
-      b.onclick = () => {
-        if (mode === this.mode || this.phase === "loading") return;
-        this.mode = mode;
-        this.startSession(void 0, { speak: true });
-      };
-    }
-    const src = bar.createDiv({ cls: "vt-fc-source" });
-    (0, import_obsidian13.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "folder");
-    src.createSpan({ text: (_a = this.params.source) != null ? _a : t("flashcards.source.all") });
-  }
-  renderCard() {
-    const entry = this.current();
-    if (!entry) return;
-    this.root.createDiv({
-      cls: "vt-fc-progress",
-      text: `${this.index + 1} / ${this.session.length}`
-    });
-    const card = this.root.createDiv({ cls: "vt-fc-card" });
-    const front = card.createDiv({ cls: "vt-fc-front" });
-    switch (this.mode) {
-      case "en-zh":
-        this.renderWordHead(front, entry);
-        break;
-      case "zh-en":
-        front.createDiv({ cls: "vt-fc-prompt", text: zhOf(entry) });
-        if (entry.partOfSpeech) front.createDiv({ cls: "vt-fc-sub", text: entry.partOfSpeech });
-        break;
-      case "cloze":
-        this.renderSentence(front, entry, this.flipped ? "answer" : "blank");
-        if (!this.flipped && entry.definitionZh) {
-          front.createDiv({ cls: "vt-fc-sub", text: entry.definitionZh });
-        }
-        break;
-      case "listen":
-        this.renderListenFront(front, entry);
-        break;
-    }
-    if (!this.flipped) {
-      card.createDiv({ cls: "vt-fc-hint", text: t(`flashcards.hint.${this.mode}`) });
-      const flip = card.createEl("button", { cls: ["vt-fc-btn", "vt-fc-flip"] });
-      flip.createSpan({ text: t("flashcards.flip") });
-      flip.createEl("kbd", { cls: "vt-fc-kbd", text: t("flashcards.flipKey") });
-      flip.onclick = () => this.flip();
-    } else {
-      this.renderBack(card.createDiv({ cls: "vt-fc-back" }), entry);
-      this.renderRatings(entry);
-    }
-    const stats = this.root.createDiv({ cls: "vt-fc-stats" });
-    const stat = (label, n) => {
-      const s = stats.createSpan({ cls: "vt-fc-stat" });
-      s.createSpan({ text: label });
-      s.createSpan({ cls: "vt-fc-stat-n", text: String(n) });
-    };
-    stat(t("flashcards.stat.due"), this.initialDue);
-    stat(t("flashcards.stat.new"), this.initialNew);
-    stat(t("flashcards.stat.done"), this.results.length);
-  }
-  renderWordHead(el, entry) {
-    el.createDiv({ cls: "vt-fc-word", text: entry.word });
-    const sub = el.createDiv({ cls: "vt-fc-sub" });
-    const meta = [entry.phonetic, entry.partOfSpeech].filter(Boolean).join(" \xB7 ");
-    if (meta) sub.createSpan({ text: meta });
-    const speak = sub.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
-    (0, import_obsidian13.setIcon)(speak, "volume-2");
-    speak.onclick = () => this.plugin.speakWord(entry);
-  }
-  // Cloze sentence with the word blanked ("blank") or revealed and
-  // highlighted ("answer"); also used for the example on the back.
-  renderSentence(el, entry, as) {
-    const parts = clozeParts(entry.example, entry.word);
-    const line = el.createDiv({ cls: "vt-fc-sentence" });
-    if (!parts) {
-      line.setText(entry.example);
-      return;
-    }
-    line.appendText(parts.before);
-    if (as === "blank") line.createSpan({ cls: "vt-fc-blank", text: "_____" });
-    else line.createEl("mark", { cls: "vt-fc-mark", text: parts.answer });
-    line.appendText(parts.after);
-  }
-  renderListenFront(el, entry) {
-    const play = el.createEl("button", {
-      cls: "vt-fc-listen",
-      attr: { "aria-label": t("flashcards.listen.replay") }
-    });
-    (0, import_obsidian13.setIcon)(play, "volume-2");
-    play.onclick = () => this.plugin.speakWord(entry);
-    if (!this.flipped) {
-      const input = el.createEl("input", {
-        cls: "vt-fc-input",
-        type: "text",
-        attr: {
-          placeholder: t("flashcards.listen.placeholder"),
-          autocomplete: "off",
-          autocapitalize: "off",
-          spellcheck: "false"
-        }
-      });
-      input.value = this.typed;
-      input.oninput = () => this.typed = input.value;
-      return;
-    }
-    const ok = this.typed.trim().toLowerCase() === entry.word.trim().toLowerCase();
-    const result = el.createDiv({ cls: ["vt-fc-result", ok ? "is-correct" : "is-wrong"] });
-    (0, import_obsidian13.setIcon)(result.createSpan({ cls: "vt-fc-icon" }), ok ? "check" : "x");
-    result.createSpan({
-      text: ok ? t("flashcards.listen.correct") : t("flashcards.listen.wrong", { answer: this.typed.trim() || "\u2014" })
-    });
-  }
-  renderBack(el, entry) {
-    var _a;
-    if (this.mode !== "en-zh") this.renderWordHead(el, entry);
-    if (this.mode !== "zh-en") el.createDiv({ cls: "vt-fc-answer", text: zhOf(entry) });
-    if (entry.definition) el.createDiv({ cls: "vt-fc-def", text: entry.definition });
-    if (entry.example && this.mode !== "cloze") this.renderSentence(el, entry, "answer");
-    if ((_a = entry.source) == null ? void 0 : _a.path) {
-      const src = el.createDiv({ cls: "vt-fc-origin" });
-      (0, import_obsidian13.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "file-text");
-      src.createSpan({ text: entry.source.path.split("/").pop().replace(/\.md$/, "") });
-      src.onclick = () => this.plugin.jumpToSource(entry);
-    }
-  }
-  renderRatings(entry) {
-    const preview = this.plugin.srs.preview(entry);
-    const grid = this.root.createDiv({ cls: "vt-fc-ratings" });
-    for (const rating of RATINGS) {
-      const b = grid.createEl("button", { cls: ["vt-fc-rate", `is-r${rating}`] });
-      b.createEl("kbd", { cls: ["vt-fc-kbd", "vt-fc-rate-key"], text: String(rating) });
-      b.createSpan({ cls: "vt-fc-rate-label", text: t(`srs.rating.${rating}`) });
-      b.createSpan({ cls: "vt-fc-rate-interval", text: formatInterval(preview[rating].intervalMs) });
-      b.onclick = () => void this.rate(rating);
-    }
-  }
-  renderEmpty() {
-    const box = this.root.createDiv({ cls: "vt-fc-empty" });
-    (0, import_obsidian13.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
-    box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.empty.title") });
-    box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.empty.body") });
-    if (this.mode === "cloze") {
-      box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.empty.cloze") });
-    }
-    const tiles = box.createDiv({ cls: "vt-fc-tiles" });
-    tile(tiles, String(this.plugin.srs.dueTomorrow(this.filter())), t("flashcards.done.dueTomorrow"));
-  }
-  renderDone() {
-    const box = this.root.createDiv({ cls: ["vt-fc-empty", "vt-fc-done"] });
-    (0, import_obsidian13.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
-    box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.done.title") });
-    box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.done.body") });
-    const recalled = this.results.filter((r) => r.rating >= Rating.Good).length;
-    const tiles = box.createDiv({ cls: "vt-fc-tiles" });
-    tile(tiles, String(this.plugin.srs.reviewsToday(this.filter())), t("flashcards.done.reviewedToday"));
-    tile(tiles, `${recalled} / ${this.results.length}`, t("flashcards.done.recalled"));
-    tile(tiles, String(this.plugin.srs.dueTomorrow(this.filter())), t("flashcards.done.dueTomorrow"));
-    const forgotten = [
-      ...new Set(this.results.filter((r) => r.rating === Rating.Again).map((r) => r.id))
-    ].map((id) => this.live(id)).filter((e) => !!e);
-    if (forgotten.length > 0) {
-      box.createDiv({ cls: "vt-fc-section-title", text: t("flashcards.done.forgotten") });
-      const list = box.createDiv({ cls: "vt-fc-forgotten" });
-      for (const entry of forgotten) {
-        const row = list.createDiv({ cls: "vt-fc-forgotten-row" });
-        row.createSpan({ cls: "vt-fc-forgotten-word", text: entry.word });
-        row.createSpan({ cls: "vt-fc-forgotten-zh", text: entry.definitionZh });
-        const speak = row.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
-        (0, import_obsidian13.setIcon)(speak, "volume-2");
-        speak.onclick = () => this.plugin.speakWord(entry);
-      }
-    }
-    const actions = box.createDiv({ cls: "vt-fc-actions" });
-    if (forgotten.length > 0) {
-      const retry = actions.createEl("button", { cls: ["vt-fc-btn", "mod-cta"] });
-      (0, import_obsidian13.setIcon)(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
-      retry.createSpan({ text: t("flashcards.done.retryForgotten", { count: forgotten.length }) });
-      retry.onclick = () => this.startSession(forgotten.map((e) => e.id), { speak: true });
-    }
-    const dueNow = this.plugin.srs.queue(this.filter()).length;
-    if (dueNow > 0) {
-      const more = actions.createEl("button", { cls: "vt-fc-btn" });
-      more.setText(t("flashcards.done.continue", { count: dueNow }));
-      more.onclick = () => this.startSession(void 0, { speak: true });
-    }
-    const back = actions.createEl("a", { cls: "vt-fc-link", text: t("flashcards.done.backToList") });
-    back.onclick = (e) => {
-      e.preventDefault();
-      void this.plugin.openVocabFile();
-    };
-  }
-};
-function zhOf(entry) {
-  return entry.definitionZh || entry.definition || t("flashcards.noTranslation");
-}
-function tile(container, value, label) {
-  const el = container.createDiv({ cls: "vt-fc-tile" });
-  el.createDiv({ cls: "vt-fc-tile-value", text: value });
-  el.createDiv({ cls: "vt-fc-tile-label", text: label });
-}
-
-// src/ui/blocks/flashcardsFile.ts
-var import_obsidian14 = require("obsidian");
-var FLASHCARDS_FILE = "vocab-list/\u55AE\u5B57\u5361.md";
-var FLASHCARDS_CONTENT = "# \u55AE\u5B57\u5361\n\n```vocab-flashcards\n```\n";
-async function openFlashcardsFile(app) {
-  let file = app.vault.getAbstractFileByPath(FLASHCARDS_FILE);
-  if (!file) {
-    const folder = FLASHCARDS_FILE.slice(0, FLASHCARDS_FILE.lastIndexOf("/"));
-    if (!app.vault.getAbstractFileByPath(folder)) await app.vault.createFolder(folder);
-    file = await app.vault.create(FLASHCARDS_FILE, FLASHCARDS_CONTENT);
-  }
-  if (file instanceof import_obsidian14.TFile) await app.workspace.getLeaf(false).openFile(file);
-}
-
 // src/platform/obsidianLanguage.ts
 var obsidian = __toESM(require("obsidian"), 1);
 function obsidianLanguage() {
@@ -5244,25 +8818,25 @@ var ObsidianDeviceState = class {
   }
   // app.loadLocalStorage/saveLocalStorage (1.8.7+) scope keys per vault;
   // older apps fall back to plain localStorage with a plugin prefix.
-  get(key) {
+  get(key3) {
     if (typeof this.app.loadLocalStorage === "function") {
-      const v = this.app.loadLocalStorage(LS_PREFIX + key);
+      const v = this.app.loadLocalStorage(LS_PREFIX + key3);
       return typeof v === "string" ? v : null;
     }
     try {
-      return window.localStorage.getItem(LS_PREFIX + key);
+      return window.localStorage.getItem(LS_PREFIX + key3);
     } catch (e) {
       return null;
     }
   }
-  set(key, value) {
+  set(key3, value) {
     if (typeof this.app.saveLocalStorage === "function") {
-      this.app.saveLocalStorage(LS_PREFIX + key, value);
+      this.app.saveLocalStorage(LS_PREFIX + key3, value);
       return;
     }
     try {
-      if (value === null) window.localStorage.removeItem(LS_PREFIX + key);
-      else window.localStorage.setItem(LS_PREFIX + key, value);
+      if (value === null) window.localStorage.removeItem(LS_PREFIX + key3);
+      else window.localStorage.setItem(LS_PREFIX + key3, value);
     } catch (e) {
     }
   }
@@ -5289,11 +8863,11 @@ var BrowserNetwork = class {
 };
 
 // src/platform/ObsidianRequest.ts
-var import_obsidian15 = require("obsidian");
+var import_obsidian21 = require("obsidian");
 var ObsidianRequest = class {
   async request(req) {
     var _a;
-    const res = await (0, import_obsidian15.requestUrl)({
+    const res = await (0, import_obsidian21.requestUrl)({
       url: req.url,
       method: req.method,
       headers: req.headers,
@@ -5511,9 +9085,33 @@ function emptyUsage() {
 // src/services/ai/providers/anthropic.ts
 var API_VERSION = "2023-06-01";
 var MAX_CACHE_BREAKPOINTS = 4;
+var EPHEMERAL = { type: "ephemeral" };
+function sonnetVersion(model) {
+  const m = /(?:^|[^a-z0-9])sonnet-(\d{1,2})(?:[-.](\d{1,2}))?(?!\d)/.exec(model.trim().toLowerCase());
+  if (!m) return null;
+  return { major: Number(m[1]), minor: m[2] ? Number(m[2]) : 0 };
+}
+function effortFor(model) {
+  const v = sonnetVersion(model);
+  if (!v) return void 0;
+  return v.major > 4 || v.major === 4 && v.minor >= 6 ? "low" : void 0;
+}
+function outputConfig(model, output) {
+  const effort = effortFor(model);
+  if (!output && !effort) return void 0;
+  return {
+    ...output ? { format: { type: "json_schema", schema: output.schema } } : {},
+    ...effort ? { effort } : {}
+  };
+}
 function buildAnthropicBody(req, model) {
+  let msgMark = -1;
+  req.messages.forEach((m, i) => {
+    if (m.cache && m.content.trim()) msgMark = i;
+  });
+  const systemBudget = MAX_CACHE_BREAKPOINTS - (msgMark >= 0 ? 1 : 0);
   const cacheIdx = req.system.map((b, i) => b.cache ? i : -1).filter((i) => i >= 0);
-  const keep = new Set(cacheIdx.slice(-MAX_CACHE_BREAKPOINTS));
+  const keep = new Set(cacheIdx.slice(Math.max(0, cacheIdx.length - systemBudget)));
   const body = {
     model,
     max_tokens: req.maxTokens,
@@ -5521,13 +9119,16 @@ function buildAnthropicBody(req, model) {
     system: req.system.map((b, i) => ({
       type: "text",
       text: b.text,
-      ...keep.has(i) ? { cache_control: { type: "ephemeral" } } : {}
+      ...keep.has(i) ? { cache_control: EPHEMERAL } : {}
     })),
-    messages: req.messages.map((m) => ({ role: m.role, content: m.content }))
+    // A string is shorthand for a single text block, so the marked message
+    // renders exactly like the plain string it is in the next request.
+    messages: req.messages.map(
+      (m, i) => i === msgMark ? { role: m.role, content: [{ type: "text", text: m.content, cache_control: EPHEMERAL }] } : { role: m.role, content: m.content }
+    )
   };
-  if (req.output) {
-    body.output_config = { format: { type: "json_schema", schema: req.output.schema } };
-  }
+  const config = outputConfig(model, req.output);
+  if (config) body.output_config = config;
   return body;
 }
 function mapStop(reason) {
@@ -5655,8 +9256,15 @@ var AnthropicProvider = class {
     const models = [...new Set([this.deps.config.smartModel, this.deps.config.fastModel].filter(Boolean))];
     let transport = "fetch";
     for (const model of models) {
+      const config = outputConfig(model);
       const res = await this.deps.transport.send(
-        this.request({ model, max_tokens: TEST_MAX_TOKENS, stream: true, messages: [{ role: "user", content: "ping" }] }),
+        this.request({
+          model,
+          max_tokens: TEST_MAX_TOKENS,
+          stream: true,
+          messages: [{ role: "user", content: "ping" }],
+          ...config ? { output_config: config } : {}
+        }),
         signal
       );
       await throwIfHttpError(res);
@@ -5667,16 +9275,6 @@ var AnthropicProvider = class {
     return { models, transport, latencyMs: now() - started };
   }
 };
-
-// src/core/text/tokens.ts
-var CJK_RE = /[\u3000-\u303f\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/g;
-function estimateTokens(text) {
-  var _a, _b;
-  if (!text) return 0;
-  const cjk = (_b = (_a = text.match(CJK_RE)) == null ? void 0 : _a.length) != null ? _b : 0;
-  const rest = text.length - cjk;
-  return cjk + Math.ceil(rest / 4);
-}
 
 // src/services/ai/providers/openaiCompat.ts
 function isOfficialOpenAi(baseUrl) {
@@ -5888,151 +9486,250 @@ function providerDef(id) {
   var _a;
   return (_a = PROVIDERS.find((p) => p.id === id)) != null ? _a : PROVIDERS[0];
 }
-function isMissingKey(id, key) {
-  return providerDef(id).key === "required" && !key;
+function isMissingKey(id, key3) {
+  return providerDef(id).key === "required" && !key3;
 }
 
-// src/services/ai/context/paragraphContext.ts
-var MAX_ARTICLE_TOKENS = 3e4;
-var TRUNCATE_WINDOW = 3;
-var ARTICLE_TEMPLATE = `\u3014\u6587\u7AE0\u3015{{#title}}\u300A{{title}}\u300B{{/title}}
-{{#truncated}}\uFF08\u5168\u6587\u592A\u9577\uFF0C\u9019\u88E1\u53EA\u9644\u4E0A\u3014\u76EE\u524D\u6BB5\u843D\u3015\u524D\u5F8C\u5404 {{window}} \u6BB5\uFF1B\u6BB5\u843D\u7DE8\u865F\u4ECD\u662F\u539F\u6587\u7684\u7DE8\u865F\u3002\uFF09{{/truncated}}
-
-{{body}}`;
-var FOCUS_TEMPLATE = `\u3014\u76EE\u524D\u6BB5\u843D\u3015\xB6{{paragraphNumber}}
-{{paragraph}}`;
-function buildParagraphContext(input, opts = {}) {
-  var _a, _b, _c, _d, _e, _f, _g, _h;
-  const { paragraphs } = input.article;
-  if (input.paragraphIndex < 0 || input.paragraphIndex >= paragraphs.length) {
-    throw new RangeError(`paragraphIndex ${input.paragraphIndex} out of range (0..${paragraphs.length - 1})`);
+// src/services/ai/tasks/family.ts
+var FAMILY_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["families"],
+  properties: {
+    families: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["topic", "label", "groups"],
+        properties: {
+          topic: { type: "string", description: "English key, lowercase, e.g. clothing or gl-" },
+          label: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\u540D\u7A31\uFF0C\u4F8B\u5982\u300C\u670D\u88DD\u300D\u300Cgl- \u767C\u5149\u5BB6\u65CF\u300D" },
+          groups: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["label", "members"],
+              properties: {
+                label: { type: "string" },
+                members: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["word", "zh"],
+                    properties: {
+                      word: { type: "string" },
+                      zh: { type: "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
-  const maxTokens = (_a = opts.maxArticleTokens) != null ? _a : MAX_ARTICLE_TOKENS;
-  const window2 = (_b = opts.window) != null ? _b : TRUNCATE_WINDOW;
-  const numbered = paragraphs.map((p, i) => `\xB6${i + 1} ${p.trim()}`);
-  const truncated = estimateTokens(numbered.join("\n\n")) > maxTokens;
-  const from = truncated ? Math.max(0, input.paragraphIndex - window2) : 0;
-  const to = truncated ? Math.min(paragraphs.length, input.paragraphIndex + window2 + 1) : paragraphs.length;
-  const articleBlock = renderTemplate(ARTICLE_TEMPLATE, {
-    title: (_c = input.article.title) == null ? void 0 : _c.trim(),
-    truncated: truncated ? "yes" : "",
-    window: window2,
-    body: numbered.slice(from, to).join("\n\n")
-  });
-  const paragraph = paragraphs[input.paragraphIndex].trim();
-  const paragraphNumber = input.paragraphIndex + 1;
-  return {
-    articleBlock,
-    focusBlock: renderTemplate(FOCUS_TEMPLATE, { paragraph, paragraphNumber }),
-    truncated,
-    slots: {
-      paragraph,
-      paragraphNumber,
-      selection: (_e = (_d = input.selection) == null ? void 0 : _d.trim()) != null ? _e : "",
-      question: (_g = (_f = input.question) == null ? void 0 : _f.trim()) != null ? _g : "",
-      knownWords: ((_h = input.knownWords) != null ? _h : []).join(", ")
-    }
-  };
-}
-
-// src/services/ai/tasks/length.ts
-function scaledChars(profileMax, sourceChars2, ratio) {
-  if (profileMax <= 0) return 0;
-  return Math.ceil((profileMax + sourceChars2 * ratio) / 50) * 50;
-}
-function profileForTask(profile, task, input) {
-  if (!task.answerChars || profile.maxAnswerChars <= 0) return profile;
-  return { ...profile, maxAnswerChars: task.answerChars(input, profile.maxAnswerChars) };
-}
-
-// src/services/ai/tasks/paragraph.ts
-var PARAGRAPH_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u8010\u5FC3\u3001\u7CBE\u6E96\u7684\u82F1\u6587\u95B1\u8B80\u5BB6\u6559\uFF0C\u6B63\u5728\u966A\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u8B80\u4E00\u7BC7\u82F1\u6587\u6587\u7AE0\u3002\u3014\u6587\u7AE0\u3015\u662F\u5168\u6587\uFF0C\u3014\u76EE\u524D\u6BB5\u843D\u3015\u662F\u5B78\u7FD2\u8005\u6B63\u5728\u8B80\u7684\u90A3\u4E00\u6BB5\u3002
-
-\u56DE\u7B54\u898F\u5247\uFF1A
-1. \u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u56DE\u7B54\uFF0C\u5F15\u7528\u82F1\u6587\u539F\u6587\u6642\u4FDD\u7559\u82F1\u6587\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u82E5\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\uFF0C\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
-2. \u53EA\u6839\u64DA\u63D0\u4F9B\u7684\u6587\u7AE0\u548C\u53EF\u9760\u3001\u5E38\u898B\u7684\u8A9E\u8A00\u77E5\u8B58\u56DE\u7B54\u3002\u4E0D\u78BA\u5B9A\u5C31\u76F4\u63A5\u8AAA\u300C\u4E0D\u78BA\u5B9A\u300D\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u7FA9\u3001\u6587\u6CD5\u898F\u5247\u3001\u5B57\u6E90\u6216\u51FA\u8655\u3002
-3. \u7528 Markdown \u6392\u7248\uFF1A\u91CD\u9EDE\u7528\u7C97\u9AD4\uFF0C\u689D\u5217\u6700\u591A 5 \u9EDE\uFF0C\u4E0D\u8981\u7528\u6A19\u984C\uFF08#\uFF09\u3002
-4. \u7BC7\u5E45\u4EE5\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u70BA\u6E96\u3002
-
-\u5224\u65B7\u4F7F\u7528\u8005\u5728\u554F\u54EA\u4E00\u53E5\uFF1A
-- \u4F7F\u7528\u8005\u7684\u554F\u984C\u5E38\u5E38\u5F88\u53E3\u8A9E\uFF0C\u4F8B\u5982\u300C\u6211\u770B\u4E0D\u61C2\u9019\u53E5\u300D\u300C\u9019\u88E1\u70BA\u4EC0\u9EBC\u9019\u6A23\u5BEB\u300D\uFF0C\u4E5F\u53EF\u80FD\u76F4\u63A5\u8CBC\u4E0A\u6216\u5F15\u7528\u6587\u7AE0\u88E1\u7684\u4E00\u5C0F\u6BB5\u6587\u5B57\uFF08\u53EF\u80FD\u4E0D\u5B8C\u6574\u3001\u6709\u932F\u5B57\u3001\u5927\u5C0F\u5BEB\u4E0D\u540C\uFF09\u3002
-- \u4F9D\u5E8F\u7528\u9019\u4E9B\u7DDA\u7D22\u627E\u51FA\u4ED6\u6307\u7684\u90A3\u4E00\u53E5\uFF1A
-  1. \u6709\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015\u6642\uFF0C\u4EE5\u5305\u542B\u9078\u53D6\u6587\u5B57\u7684\u90A3\u4E00\u53E5\u70BA\u6E96\u3002
-  2. \u554F\u984C\u88E1\u5F15\u7528\u4E86\u82F1\u6587\u7247\u6BB5\u6642\uFF0C\u5728\u3014\u76EE\u524D\u6BB5\u843D\u3015\u627E\u5305\u542B\u9019\u500B\u7247\u6BB5\u7684\u53E5\u5B50\uFF1B\u627E\u4E0D\u5230\u518D\u5230\u3014\u6587\u7AE0\u3015\u5176\u4ED6\u6BB5\u843D\u627E\u3002
-  3. \u90FD\u6C92\u6709\u7DDA\u7D22\u6642\uFF1A\u554F\u984C\u662F\u91DD\u5C0D\u6574\u6BB5\uFF08\u4F8B\u5982\u300C\u9019\u6BB5\u5728\u8B1B\u4EC0\u9EBC\u300D\uFF09\uFF0C\u7BC4\u570D\u5C31\u662F\u6574\u6BB5\uFF1B\u554F\u984C\u8AAA\u7684\u662F\u300C\u9019\u53E5\u300D\u4F46\u3014\u76EE\u524D\u6BB5\u843D\u3015\u6709\u597D\u5E7E\u53E5\uFF0C\u5C31\u6311\u6700\u53EF\u80FD\u8B93\u5B78\u7FD2\u8005\u5361\u4F4F\u7684\u90A3\u4E00\u53E5\uFF0C\u4E26\u5728\u56DE\u7B54\u6700\u5F8C\u63D0\u9192\uFF1A\u300C\u5982\u679C\u4E0D\u662F\u9019\u53E5\uFF0C\u9078\u53D6\u6216\u8CBC\u4E0A\u4F60\u60F3\u554F\u7684\u53E5\u5B50\u518D\u554F\u4E00\u6B21\u3002\u300D
-- \u56DE\u7B54\u7684\u7B2C\u4E00\u884C\u56FA\u5B9A\u5BEB\u51FA\u7BC4\u570D\uFF0C\u539F\u6587\u7167\u6284\u3001\u4E0D\u8981\u7FFB\u8B6F\uFF1A
-  - \u91DD\u5C0D\u67D0\u4E00\u53E5\uFF1A\u4F60\u554F\u7684\u662F\uFF1A\u300C<\u90A3\u4E00\u53E5\u82F1\u6587\u539F\u6587>\u300D
-  - \u91DD\u5C0D\u6574\u6BB5\uFF1A\u4F60\u554F\u7684\u662F\uFF1A\u6574\u6BB5\uFF08\xB6<\u6BB5\u843D\u7DE8\u865F>\uFF09
-- \u8FFD\u554F\u6642\uFF08\u524D\u9762\u7684\u5C0D\u8A71\u5DF2\u7D93\u5BEB\u904E\u300C\u4F60\u554F\u7684\u662F\u300D\uFF09\uFF0C\u5982\u679C\u9019\u6B21\u554F\u7684\u9084\u662F\u540C\u4E00\u53E5\u6216\u540C\u4E00\u500B\u7BC4\u570D\uFF0C\u5C31\u4E0D\u8981\u518D\u5BEB\u9019\u4E00\u884C\uFF0C\u76F4\u63A5\u56DE\u7B54\uFF1B\u63DB\u4E86\u53E5\u5B50\u6216\u7BC4\u570D\u624D\u91CD\u65B0\u5BEB\u3002
-- \u771F\u7684\u7121\u6CD5\u5224\u65B7\u6642\uFF0C\u5217\u51FA\u6700\u53EF\u80FD\u7684\u4E00\u5230\u5169\u53E5\u8ACB\u4F7F\u7528\u8005\u78BA\u8A8D\uFF0C\u4E0D\u8981\u786C\u731C\u3002
-- \u7B2C\u4E00\u884C\u4E4B\u5F8C\u7A7A\u4E00\u884C\uFF0C\u518D\u958B\u59CB\u56DE\u7B54\u3002`;
-var SELECTION_HEADER2 = `{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015
-{{selection}}
-
-{{/selection}}`;
-var PARAGRAPH_TEMPLATES = {
-  grammar: `${SELECTION_HEADER2}\u4EFB\u52D9\uFF1A\u6587\u6CD5\u89E3\u6790\uFF08\xB6{{paragraphNumber}}\uFF09
-\u7BC4\u570D\uFF1A{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015\u6240\u5728\u7684\u90A3\u4E00\u53E5\u3002{{/selection}}{{^selection}}\u3014\u76EE\u524D\u6BB5\u843D\u3015\u88E1\u7D50\u69CB\u6700\u503C\u5F97\u5B78\u7684\u4E00\u53E5\uFF1B\u6BB5\u843D\u53EA\u6709\u4E00\u53E5\u6642\u5C31\u662F\u90A3\u4E00\u53E5\u3002{{/selection}}
-\u8ACB\u62C6\u89E3\u53E5\u5B50\u7D50\u69CB\uFF08\u4E3B\u8981\u5B50\u53E5\u3001\u5F9E\u5C6C\u5B50\u53E5\u3001\u7247\u8A9E\u5404\u81EA\u4FEE\u98FE\u8AB0\uFF09\uFF0C\u9EDE\u51FA\u95DC\u9375\u6587\u6CD5\uFF08\u6642\u614B\u3001\u8A9E\u614B\u3001\u5047\u8A2D\u8A9E\u6C23\u3001\u5012\u88DD\u3001\u7701\u7565\u7B49\uFF09\u5728\u9019\u88E1\u7684\u4F5C\u7528\uFF0C\u6700\u5F8C\u7528\u4E00\u53E5\u8A71\u8AAA\u660E\u9019\u53E5\u7684\u610F\u601D\u3002`,
-  translate: `${SELECTION_HEADER2}\u4EFB\u52D9\uFF1A\u7FFB\u8B6F\uFF08\xB6{{paragraphNumber}}\uFF09
-\u7BC4\u570D\uFF1A{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015\u6240\u5728\u7684\u53E5\u5B50\u3002{{/selection}}{{^selection}}\u6574\u6BB5\u3002{{/selection}}
-\u5148\u7D66\u901A\u9806\u3001\u81EA\u7136\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F\uFF1B\u518D\u6311\u4E00\u5230\u4E09\u500B\u76F4\u8B6F\u5BB9\u6613\u51FA\u932F\u7684\u5730\u65B9\uFF08\u7247\u8A9E\u3001\u6163\u7528\u8A9E\u3001\u6587\u5316\u80CC\u666F\uFF09\u7C21\u77ED\u8AAA\u660E\u3002`,
-  vocab: `${SELECTION_HEADER2}\u4EFB\u52D9\uFF1A\u751F\u5B57\u6574\u7406\uFF08\xB6{{paragraphNumber}}\uFF09
-\u7BC4\u570D\uFF1A\u6574\u6BB5\u3002
-\u4F9D\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF0C\u6311\u51FA\u3014\u76EE\u524D\u6BB5\u843D\u3015\u88E1\u6700\u503C\u5F97\u5B78\u7684 3 \u5230 6 \u500B\u55AE\u5B57\u6216\u7247\u8A9E\u3002{{#knownWords}}\u5B78\u7FD2\u8005\u5DF2\u7D93\u6536\u9304\u7684\u5B57\u4E0D\u8981\u518D\u5217\uFF1A{{knownWords}}\u3002{{/knownWords}}
-\u6BCF\u500B\u4E00\u884C\uFF0C\u683C\u5F0F\uFF1A- **\u55AE\u5B57** \u8A5E\u6027\uFF1A\u4E2D\u6587\u610F\u601D \u2014 \u5728\u9019\u6BB5\u88E1\u7684\u7528\u6CD5`,
-  paraphrase: `${SELECTION_HEADER2}\u4EFB\u52D9\uFF1A\u63DB\u53E5\u8A71\u8AAA\uFF08\xB6{{paragraphNumber}}\uFF09
-\u7BC4\u570D\uFF1A{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015\u6240\u5728\u7684\u90A3\u4E00\u53E5\u3002{{/selection}}{{^selection}}\u3014\u76EE\u524D\u6BB5\u843D\u3015\u88E1\u6700\u96E3\u61C2\u7684\u4E00\u53E5\u3002{{/selection}}
-\u7D66\u5169\u7A2E\u82F1\u6587\u6539\u5BEB\uFF1A\u4E00\u7A2E\u66F4\u7C21\u55AE\u3001\u9069\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF1B\u4E00\u7A2E\u66F4\u81EA\u7136\u9053\u5730\u3002\u6BCF\u7A2E\u90FD\u9644\u4E2D\u6587\u8AAA\u660E\uFF0C\u8B1B\u6E05\u695A\u548C\u539F\u53E5\u5DEE\u5728\u54EA\u88E1\u3002`,
-  custom: `${SELECTION_HEADER2}\u3014\u4F7F\u7528\u8005\u7684\u554F\u984C\u3015\uFF08\xB6{{paragraphNumber}}\uFF09
-{{question}}
-
-\u8ACB\u4F9D\u300C\u5224\u65B7\u4F7F\u7528\u8005\u5728\u554F\u54EA\u4E00\u53E5\u300D\u7684\u898F\u5247\u6C7A\u5B9A\u7B2C\u4E00\u884C\u8981\u4E0D\u8981\u5BEB\u51FA\u7BC4\u570D\uFF0C\u518D\u56DE\u7B54\u554F\u984C\u3002`
 };
-function paragraphTask(id, opts) {
-  const task = {
-    id: `paragraph.${id}`,
-    // v2: follow-ups skip a repeated 「你問的是」 line (規劃書 06 §6.4.1 #3).
-    version: 2,
-    surface: "paragraph",
-    ...opts,
-    build(input, ctx) {
-      const c = buildParagraphContext(input);
-      return composeRequest({
-        base: PARAGRAPH_BASE_PROMPT,
-        cached: [c.articleBlock],
-        context: [c.focusBlock],
-        profile: profileForTask(ctx.profile, task, input),
-        history: ctx.history,
-        user: renderTemplate(PARAGRAPH_TEMPLATES[id], c.slots),
-        tier: opts.tier,
-        maxTokens: opts.maxTokens
-      });
+var FAMILY_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u5E2B\uFF0C\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u628A\u5B78\u904E\u7684\u55AE\u5B57\u6574\u7406\u6210\u300C\u5B57\u65CF\u300D\uFF0C\u4E26\u88DC\u4E0A\u503C\u5F97\u4E00\u8D77\u5B78\u7684\u5EF6\u4F38\u5B57\u3002
+
+\u5206\u7FA4\u898F\u5247\uFF1A
+1. \u5B57\u65CF\u53EF\u4EE5\u4F9D\u4E3B\u984C\uFF08\u4F8B\u5982 clothing \u670D\u88DD\uFF09\u3001\u5B57\u6839\u5B57\u9996\u6216\u97F3\u7D44\uFF08\u4F8B\u5982 gl- \u548C\u5149\u6709\u95DC\uFF09\u3001\u4F7F\u7528\u60C5\u5883\u4F86\u5206\u3002\u6BCF\u500B\u5B57\u65CF\u5E95\u4E0B\u518D\u5206 1 \u5230 4 \u500B\u5C0F\u7D44\uFF0C\u5C0F\u7D44\u540D\u7A31\u7528\u7E41\u9AD4\u4E2D\u6587\u3002
+2. \u6BCF\u500B\u5B57\u65CF\u81F3\u5C11\u8981\u6709 2 \u500B\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u88E1\u7684\u5B57\uFF1B\u9019\u4E9B\u5B57\u7684 word \u7167\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u7684\u539F\u6A23\u5BEB\uFF0C\u4E0D\u8981\u6539\u6210\u539F\u5F62\u6216\u5176\u4ED6\u8A5E\u5F62\u3002
+3. \u6BCF\u500B\u5B57\u65CF\u53EF\u4EE5\u88DC 2 \u5230 5 \u500B\u5B78\u7FD2\u8005\u9084\u6C92\u5B78\u3001\u4F46\u548C\u9019\u500B\u5B57\u65CF\u5BC6\u5207\u76F8\u95DC\u7684\u5E38\u7528\u5EF6\u4F38\u5B57\uFF0C\u7A0B\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\uFF1B\u4E0D\u8981\u88DC\u7F55\u898B\u5B57\u3002
+4. zh \u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C10 \u500B\u5B57\u4EE5\u5167\u3002
+5. \u5B57\u6839\u3001\u5B57\u6E90\u53EA\u7528\u53EF\u9760\u3001\u5E38\u898B\u7684\u77E5\u8B58\u3002\u4E0D\u78BA\u5B9A\u5C31\u4E0D\u8981\u7528\u5B57\u6839\u5206\u7FA4\uFF0C\u6539\u7528\u4E3B\u984C\u5206\u7FA4\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3002
+6. topic \u7528\u82F1\u6587\u5C0F\u5BEB\uFF1Blabel \u7528\u7E41\u9AD4\u4E2D\u6587\uFF0C\u53EF\u4EE5\u593E\u82F1\u6587\u5B57\u6839\uFF08\u4F8B\u5982\u300Cgl- \u767C\u5149\u5BB6\u65CF\u300D\uFF09\u3002
+7. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
+var FAMILY_TEMPLATES = {
+  seeded: `\u4EFB\u52D9\uFF1A\u627E\u5B57\u65CF
+\u4EE5\u3014\u8D77\u9EDE\u55AE\u5B57\u3015\u70BA\u4E2D\u5FC3\u627E\u51FA 1 \u5230 3 \u500B\u5B57\u65CF\uFF0C\u6BCF\u500B\u5B57\u65CF\u90FD\u8981\u5305\u542B\u81F3\u5C11\u4E00\u500B\u8D77\u9EDE\u55AE\u5B57\u3002
+\u3014\u8D77\u9EDE\u55AE\u5B57\u3015
+{{seeds}}{{#existingTopics}}
+
+\u5DF2\u7D93\u6709\u7684\u5B57\u65CF\uFF08\u4E0D\u8981\u91CD\u8907\uFF09\uFF1A{{existingTopics}}{{/existingTopics}}`,
+  regroup: `\u4EFB\u52D9\uFF1A\u91CD\u65B0\u5206\u7FA4
+\u628A\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6574\u7406\u6210 3 \u5230 8 \u500B\u5B57\u65CF\u3002\u4E0D\u4E00\u5B9A\u6BCF\u500B\u5B57\u90FD\u8981\u5206\u9032\u53BB\uFF0C\u627E\u4E0D\u5230\u5408\u9069\u5B57\u65CF\u7684\u5B57\u53EF\u4EE5\u7565\u904E\uFF1B\u540C\u4E00\u500B\u5B57\u53EF\u4EE5\u51FA\u73FE\u5728\u4E0D\u540C\u5B57\u65CF\u3002`
+};
+var KNOWN_FAMILY_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\uFF08\u5171 {{count}} \u500B\uFF09
+{{words}}`;
+function wordLine(w) {
+  var _a, _b;
+  const pos = (_a = w.partOfSpeech) == null ? void 0 : _a.trim();
+  const zh = (_b = w.zh) == null ? void 0 : _b.trim();
+  return `- ${w.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
+}
+function isObj(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+function str(v) {
+  return typeof v === "string" ? v.trim() : "";
+}
+function structuredJson(r) {
+  if (r.json !== void 0) return r.json;
+  if (r.stop === "max_tokens") throw new AiError("bad_output", "Structured answer was cut off (max_tokens)");
+  return extractJson(r.text);
+}
+function parseFamilies(json) {
+  if (!isObj(json) || !Array.isArray(json.families)) {
+    throw new AiError("bad_output", "family.generate: expected { families: [...] }");
+  }
+  const out = [];
+  for (const f of json.families) {
+    if (!isObj(f) || !Array.isArray(f.groups)) throw new AiError("bad_output", "family.generate: malformed family");
+    const groups = [];
+    for (const g of f.groups) {
+      if (!isObj(g) || !Array.isArray(g.members)) throw new AiError("bad_output", "family.generate: malformed group");
+      const seen = /* @__PURE__ */ new Set();
+      const members = [];
+      for (const m of g.members) {
+        if (!isObj(m)) throw new AiError("bad_output", "family.generate: malformed member");
+        const word = str(m.word);
+        const key3 = word.toLowerCase();
+        if (!word || seen.has(key3)) continue;
+        seen.add(key3);
+        members.push({ word, zh: str(m.zh) });
+      }
+      if (members.length) groups.push({ label: str(g.label), members });
     }
-  };
-  return task;
+    const topic = str(f.topic);
+    if (!groups.length || !(topic || str(f.label))) continue;
+    out.push({ topic: topic || str(f.label), label: str(f.label) || topic, groups });
+  }
+  return out;
 }
-function sourceChars(input) {
-  var _a;
-  const selection = (_a = input.selection) == null ? void 0 : _a.trim();
-  return (selection || input.article.paragraphs[input.paragraphIndex] || "").trim().length;
+var familyGenerate = {
+  id: "family.generate",
+  version: 1,
+  surface: "family",
+  label: "ai.task.family.generate",
+  tier: "smart",
+  // A full regroup lists many members; leave room for thinking too.
+  maxTokens: 8192,
+  // The learner's answer-length limit is for prose, not a JSON list.
+  answerChars: () => 0,
+  build(input, ctx) {
+    var _a, _b;
+    const seeds = (_a = input.seeds) != null ? _a : [];
+    const user = seeds.length ? renderTemplate(FAMILY_TEMPLATES.seeded, {
+      seeds: seeds.map(wordLine).join("\n"),
+      existingTopics: ((_b = input.existingTopics) != null ? _b : []).join("\u3001")
+    }) : renderTemplate(FAMILY_TEMPLATES.regroup, {});
+    return composeRequest({
+      base: FAMILY_BASE_PROMPT,
+      context: [renderTemplate(KNOWN_FAMILY_TEMPLATE, { count: input.known.length, words: input.known.map(wordLine).join("\n") })],
+      profile: profileForTask(ctx.profile, familyGenerate, input),
+      // Each generation stands alone.
+      history: [],
+      user,
+      tier: familyGenerate.tier,
+      maxTokens: familyGenerate.maxTokens,
+      output: { name: "word_families", schema: FAMILY_SCHEMA }
+    });
+  },
+  parse(r) {
+    return parseFamilies(structuredJson(r));
+  }
+};
+var FAMILY_TASKS = [familyGenerate];
+
+// src/services/ai/tasks/verbUsage.ts
+var VERB_USAGE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["patterns", "related"],
+  properties: {
+    patterns: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["pattern", "meaningZh", "example"],
+        properties: {
+          pattern: { type: "string", description: "e.g. sugarcoat + \u540D\u8A5E / sugarcoat it" },
+          meaningZh: { type: "string" },
+          example: { type: "string", description: "One natural English sentence" }
+        }
+      }
+    },
+    related: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["phrase", "zh"],
+        properties: {
+          phrase: { type: "string" },
+          zh: { type: "string" }
+        }
+      }
+    }
+  }
+};
+var VERB_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u5E2B\uFF0C\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u6574\u7406\u4E00\u500B\u82F1\u6587\u52D5\u8A5E\u7684\u5E38\u898B\u7528\u6CD5\u3002\u3014\u55AE\u5B57\u3015\u662F\u9019\u500B\u5B57\u7684\u8CC7\u6599\u3002
+
+\u898F\u5247\uFF1A
+1. patterns \u5217 3 \u5230 5 \u500B\u6700\u5E38\u898B\u7684\u53E5\u578B\u6216\u642D\u914D\uFF0C\u4F9D\u5E38\u898B\u7A0B\u5EA6\u6392\u5E8F\u3002pattern \u7528\u300C\u52D5\u8A5E + \u540D\u8A5E\u300D\u300C\u52D5\u8A5E + to V\u300D\u300C\u52D5\u8A5E + that \u5B50\u53E5\u300D\u300Cbe + p.p.\u300D\u9019\u985E\u5BEB\u6CD5\uFF0C\u6216\u76F4\u63A5\u5BEB\u56FA\u5B9A\u642D\u914D\uFF08\u4F8B\u5982 sugarcoat it\uFF09\uFF1B\u5E38\u898B\u7684\u884D\u751F\u5F62\u5BB9\u8A5E\u4E5F\u53EF\u4EE5\u5217\u4E00\u500B\uFF08\u4F8B\u5982 sugarcoated (adj.)\uFF09\u3002
+2. meaningZh \u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u8AAA\u660E\u9019\u500B\u53E5\u578B\u7684\u610F\u601D\u548C\u4F7F\u7528\u6642\u6A5F\uFF0C25 \u5B57\u4EE5\u5167\u3002
+3. example \u662F\u4E00\u500B\u81EA\u7136\u3001\u5B8C\u6574\u7684\u82F1\u6587\u4F8B\u53E5\uFF0C\u7A0B\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u3002
+4. related \u5217 2 \u5230 4 \u500B\u610F\u601D\u76F8\u8FD1\u6216\u5E38\u4E00\u8D77\u51FA\u73FE\u7684\u7247\u8A9E\uFF0Czh \u7528\u7E41\u9AD4\u4E2D\u6587 10 \u5B57\u4EE5\u5167\u3002
+5. \u53EA\u5BEB\u53EF\u9760\u3001\u5E38\u898B\u7684\u7528\u6CD5\uFF0C\u4E0D\u78BA\u5B9A\u7684\u4E0D\u8981\u5217\uFF0C\u4E0D\u8981\u7DE8\u9020\u3002
+6. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
+var VERB_TEMPLATE = `\u4EFB\u52D9\uFF1A\u52D5\u8A5E\u7528\u6CD5\uFF08{{word}}\uFF09
+\u6574\u7406 {{word}} \u7684\u5E38\u898B\u53E5\u578B\u8207\u76F8\u8FD1\u8AAA\u6CD5\u3002{{#hasSource}}\u3014\u51FA\u8655\u6BB5\u843D\u3015\u6216\u3014\u51FA\u8655\u53E5\u5B50\u3015\u88E1\u7684\u7528\u6CD5\u5982\u679C\u5C6C\u65BC\u5176\u4E2D\u4E00\u7A2E\uFF0C\u628A\u90A3\u500B\u53E5\u578B\u6392\u5728\u7B2C\u4E00\u500B\u3002{{/hasSource}}`;
+function isObj2(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
 }
-var paragraphGrammar = paragraphTask("grammar", { tier: "smart", maxTokens: 4096, label: "ai.task.paragraph.grammar" });
-var paragraphTranslate = paragraphTask("translate", {
-  tier: "fast",
-  maxTokens: 2048,
-  label: "ai.task.paragraph.translate",
-  answerChars: (input, max) => scaledChars(max, sourceChars(input), 0.6)
-});
-var paragraphVocab = paragraphTask("vocab", { tier: "fast", maxTokens: 2048, label: "ai.task.paragraph.vocab" });
-var paragraphParaphrase = paragraphTask("paraphrase", {
+function str2(v) {
+  return typeof v === "string" ? v.trim() : "";
+}
+function parseVerbUsage(json) {
+  if (!isObj2(json) || !Array.isArray(json.patterns)) {
+    throw new AiError("bad_output", "verb.usage: expected { patterns: [...], related: [...] }");
+  }
+  const patterns = [];
+  for (const p of json.patterns) {
+    if (!isObj2(p)) throw new AiError("bad_output", "verb.usage: malformed pattern");
+    const pattern = str2(p.pattern);
+    if (pattern) patterns.push({ pattern, meaningZh: str2(p.meaningZh), example: str2(p.example) });
+  }
+  if (!patterns.length) throw new AiError("bad_output", "verb.usage: no patterns");
+  const related = [];
+  for (const r of Array.isArray(json.related) ? json.related : []) {
+    if (!isObj2(r)) continue;
+    const phrase = str2(r.phrase);
+    if (phrase) related.push({ phrase, zh: str2(r.zh) });
+  }
+  return { patterns, related };
+}
+var verbUsage = {
+  id: "verb.usage",
+  version: 1,
+  surface: "verb",
+  label: "ai.task.verb.usage",
   tier: "smart",
   maxTokens: 4096,
-  label: "ai.task.paragraph.paraphrase",
-  answerChars: (input, max) => scaledChars(max, sourceChars(input), 0.3)
-});
-var paragraphCustom = paragraphTask("custom", { tier: "smart", maxTokens: 4096 });
-var PARAGRAPH_TASKS = [paragraphGrammar, paragraphTranslate, paragraphVocab, paragraphParaphrase, paragraphCustom];
+  answerChars: () => 0,
+  build(input, ctx) {
+    const c = buildWordContext(input);
+    return composeRequest({
+      base: VERB_BASE_PROMPT,
+      context: [c.wordBlock],
+      profile: profileForTask(ctx.profile, verbUsage, input),
+      history: [],
+      user: renderTemplate(VERB_TEMPLATE, c.slots),
+      tier: verbUsage.tier,
+      maxTokens: verbUsage.maxTokens,
+      output: { name: "verb_usage", schema: VERB_USAGE_SCHEMA }
+    });
+  },
+  parse(r) {
+    return parseVerbUsage(structuredJson(r));
+  }
+};
+var VERB_TASKS = [verbUsage];
 
 // src/services/ai/tasks/registry.ts
 var TaskRegistry = class {
@@ -6055,7 +9752,7 @@ var TaskRegistry = class {
   }
 };
 function defaultTaskRegistry() {
-  return new TaskRegistry([...PARAGRAPH_TASKS, ...WORD_TASKS]);
+  return new TaskRegistry([...PARAGRAPH_TASKS, ...WORD_TASKS, ...FAMILY_TASKS, ...VERB_TASKS, ...TRIVIA_TASKS]);
 }
 
 // src/services/ai/transport/fallbackTransport.ts
@@ -6210,7 +9907,7 @@ var MAX_CONCURRENT = 2;
 var MAX_RETRIES = 2;
 var BASE_BACKOFF_MS = 1e3;
 var MAX_RETRY_WAIT_MS = 3e4;
-function abortableSleep(ms2, signal) {
+function abortableSleep(ms3, signal) {
   return new Promise((resolve, reject) => {
     if (signal.aborted) return reject(new AiError("aborted"));
     const onAbort = () => {
@@ -6220,7 +9917,7 @@ function abortableSleep(ms2, signal) {
     const timer = setTimeout(() => {
       signal.removeEventListener("abort", onAbort);
       resolve();
-    }, ms2);
+    }, ms3);
     signal.addEventListener("abort", onAbort, { once: true });
   });
 }
@@ -6388,8 +10085,8 @@ var ApiKeys = class _ApiKeys {
     }
     return this.settings().ai.providers[provider].apiKey;
   }
-  async set(provider, key) {
-    const trimmed = key.trim();
+  async set(provider, key3) {
+    const trimmed = key3.trim();
     if (this.secrets.available) {
       this.secrets.set(_ApiKeys.secretId(provider), trimmed);
       if (this.settings().ai.providers[provider].apiKey) {
@@ -6453,8 +10150,8 @@ var UsageTracker = class {
       const shard = await this.load();
       const id = this.deviceId();
       const days = (_b = (_a = shard.devices)[id]) != null ? _b : _a[id] = {};
-      const key = localDayKey(this.now());
-      days[key] = add((_c = days[key]) != null ? _c : emptyDay(), {
+      const key3 = localDayKey(this.now());
+      days[key3] = add((_c = days[key3]) != null ? _c : emptyDay(), {
         input: u.input,
         output: u.output,
         cacheRead: u.cacheRead,
@@ -6519,8 +10216,8 @@ function createAiService(store, ports) {
 }
 
 // src/ui/settings/SettingsTab.ts
-var import_obsidian16 = require("obsidian");
-var VocabSettingsTab = class extends import_obsidian16.PluginSettingTab {
+var import_obsidian22 = require("obsidian");
+var VocabSettingsTab = class extends import_obsidian22.PluginSettingTab {
   constructor(app, plugin, ctx, sections) {
     super(app, plugin);
     this.ctx = ctx;
@@ -6531,9 +10228,9 @@ var VocabSettingsTab = class extends import_obsidian16.PluginSettingTab {
     containerEl.empty();
     containerEl.addClass("vt-settings");
     const ctx = { ...this.ctx, redisplay: () => this.display() };
-    for (const section of this.sections) {
-      new import_obsidian16.Setting(containerEl).setName(t(section.title)).setHeading();
-      section.render(containerEl.createDiv({ cls: `vt-settings-section vt-settings-${section.id}` }), ctx);
+    for (const section2 of this.sections) {
+      new import_obsidian22.Setting(containerEl).setName(t(section2.title)).setHeading();
+      section2.render(containerEl.createDiv({ cls: `vt-settings-section vt-settings-${section2.id}` }), ctx);
     }
   }
 };
@@ -6543,7 +10240,7 @@ function parseNonNegativeInt(value) {
 }
 
 // src/ui/settings/sections/ai.ts
-var import_obsidian17 = require("obsidian");
+var import_obsidian23 = require("obsidian");
 
 // src/ui/settings/traceView.ts
 function prettyBody(body) {
@@ -6557,20 +10254,20 @@ function prettyBody(body) {
 function formatTrace(trace) {
   var _a, _b;
   const { request: req, response: res } = trace;
-  const ms2 = (_a = trace.ms) != null ? _a : 0;
-  const lines = [`${req.method} ${req.url}`];
-  for (const [k, v] of Object.entries(req.headers)) lines.push(`${k}: ${v}`);
-  if (req.body) lines.push("", prettyBody(req.body));
-  lines.push("");
+  const ms3 = (_a = trace.ms) != null ? _a : 0;
+  const lines4 = [`${req.method} ${req.url}`];
+  for (const [k, v] of Object.entries(req.headers)) lines4.push(`${k}: ${v}`);
+  if (req.body) lines4.push("", prettyBody(req.body));
+  lines4.push("");
   if (res) {
-    lines.push(t("settings.ai.test.response", { mode: res.mode, ms: ms2 }), `HTTP ${res.status}`);
-    for (const [k, v] of Object.entries(res.headers)) lines.push(`${k}: ${v}`);
-    lines.push("", prettyBody(res.body) || t("settings.ai.test.emptyBody"));
-    if (res.body.length >= MAX_BODY_CHARS) lines.push(t("settings.ai.test.truncated", { n: MAX_BODY_CHARS }));
+    lines4.push(t("settings.ai.test.response", { mode: res.mode, ms: ms3 }), `HTTP ${res.status}`);
+    for (const [k, v] of Object.entries(res.headers)) lines4.push(`${k}: ${v}`);
+    lines4.push("", prettyBody(res.body) || t("settings.ai.test.emptyBody"));
+    if (res.body.length >= MAX_BODY_CHARS) lines4.push(t("settings.ai.test.truncated", { n: MAX_BODY_CHARS }));
   } else {
-    lines.push(t("settings.ai.test.noResponse", { ms: ms2 }), (_b = trace.error) != null ? _b : "");
+    lines4.push(t("settings.ai.test.noResponse", { ms: ms3 }), (_b = trace.error) != null ? _b : "");
   }
-  return lines.join("\n");
+  return lines4.join("\n");
 }
 function renderTraces(parent, traces, open) {
   if (traces.length === 0) return;
@@ -6595,14 +10292,14 @@ function renderProviderFields(el, ctx, id) {
   const update = (mutate) => ctx.store.updateSettings((s) => mutate(s.ai.providers[id]));
   const keyDesc = [t(ctx.keys.usesSecretStorage ? "settings.ai.key.descSecret" : "settings.ai.key.descData")];
   if (def.key === "optional") keyDesc.unshift(t("settings.ai.key.optional"));
-  new import_obsidian17.Setting(el).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
+  new import_obsidian23.Setting(el).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
     text.inputEl.type = "password";
     text.inputEl.autocomplete = "off";
     text.setPlaceholder(id === "anthropic" ? "sk-ant-\u2026" : "sk-\u2026").setValue(ctx.keys.get(id));
     text.onChange((v) => void ctx.keys.set(id, v));
   });
   if (def.editableBaseUrl) {
-    const baseUrl = new import_obsidian17.Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
+    const baseUrl = new import_obsidian23.Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
     baseUrl.addText((text) => {
       text.inputEl.addClass("vt-settings-wide");
       text.setPlaceholder("https://\u2026/v1").setValue(cfg().baseUrl);
@@ -6620,7 +10317,7 @@ function renderProviderFields(el, ctx, id) {
   const modelSetting = (tier) => {
     var _a2;
     const field = tier === "smart" ? "smartModel" : "fastModel";
-    const s = new import_obsidian17.Setting(el).setName(t(tier === "smart" ? "settings.ai.smartModel.name" : "settings.ai.fastModel.name")).setDesc(t(tier === "smart" ? "settings.ai.smartModel.desc" : "settings.ai.fastModel.desc"));
+    const s = new import_obsidian23.Setting(el).setName(t(tier === "smart" ? "settings.ai.smartModel.name" : "settings.ai.fastModel.name")).setDesc(t(tier === "smart" ? "settings.ai.smartModel.desc" : "settings.ai.fastModel.desc"));
     const options = (_a2 = def.models) == null ? void 0 : _a2[tier];
     if (options) {
       const all = options.includes(cfg()[field]) || !cfg()[field] ? options : [...options, cfg()[field]];
@@ -6636,7 +10333,7 @@ function renderProviderFields(el, ctx, id) {
   };
   modelSetting("smart");
   modelSetting("fast");
-  const testSetting = new import_obsidian17.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
+  const testSetting = new import_obsidian23.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
   const result = el.createDiv({ cls: "vt-settings-test-result" });
   const trace = el.createDiv();
   testSetting.addButton((b) => {
@@ -6678,8 +10375,14 @@ var aiSection = {
   title: "settings.section.ai",
   render(el, ctx) {
     const ai = () => ctx.store.settings.ai;
-    new import_obsidian17.Setting(el).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle((tg) => tg.setValue(ai().enabled).onChange((v) => void ctx.store.updateSettings((s) => s.ai.enabled = v)));
-    new import_obsidian17.Setting(el).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
+    new import_obsidian23.Setting(el).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle(
+      (tg) => tg.setValue(ai().enabled).onChange(async (v) => {
+        var _a;
+        await ctx.store.updateSettings((s) => s.ai.enabled = v);
+        (_a = ctx.onAiEnabledChanged) == null ? void 0 : _a.call(ctx);
+      })
+    );
+    new import_obsidian23.Setting(el).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
       for (const p of PROVIDERS) d.addOption(p.id, t(p.label));
       d.setValue(ai().provider).onChange(async (v) => {
         await ctx.store.updateSettings((s) => s.ai.provider = v);
@@ -6687,7 +10390,7 @@ var aiSection = {
       });
     });
     renderProviderFields(el, ctx, ai().provider);
-    new import_obsidian17.Setting(el).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
+    new import_obsidian23.Setting(el).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setPlaceholder("0").setValue(ai().monthlyTokenBudget ? String(ai().monthlyTokenBudget) : "");
       text.onChange((v) => {
@@ -6695,7 +10398,7 @@ var aiSection = {
         if (n !== null) void ctx.store.updateSettings((s) => s.ai.monthlyTokenBudget = n);
       });
     });
-    const usage = new import_obsidian17.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
+    const usage = new import_obsidian23.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
     ctx.ai.usageSummary().then((u) => {
       const desc = createFragment((f) => {
         f.createDiv({ text: t("settings.ai.usage.value", { month: fmt(u.monthWeighted), today: fmt(u.today.input + u.today.output) }) });
@@ -6717,12 +10420,12 @@ var aiSection = {
 };
 
 // src/ui/settings/sections/general.ts
-var import_obsidian18 = require("obsidian");
+var import_obsidian24 = require("obsidian");
 var generalSection = {
   id: "general",
   title: "settings.section.general",
   render(el, ctx) {
-    new import_obsidian18.Setting(el).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
+    new import_obsidian24.Setting(el).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
       (d) => d.addOptions({ auto: t("settings.general.locale.auto"), "zh-TW": "\u7E41\u9AD4\u4E2D\u6587", en: "English" }).setValue(ctx.store.settings.ui.locale).onChange(async (v) => {
         await ctx.store.updateSettings((s) => {
           s.ui.locale = v;
@@ -6735,61 +10438,61 @@ var generalSection = {
 };
 
 // src/ui/settings/sections/learner.ts
-var import_obsidian19 = require("obsidian");
+var import_obsidian25 = require("obsidian");
 var learnerSection = {
   id: "learner",
   title: "settings.section.learner",
   render(el, ctx) {
     const profile = () => ctx.store.settings.learner;
     el.createDiv({ cls: "setting-item-description vt-settings-intro", text: t("settings.learner.desc") });
-    const preview = createEl("pre", { cls: "vt-settings-preview", text: renderProfile(profile()) });
+    const preview2 = createEl("pre", { cls: "vt-settings-preview", text: renderProfile(profile()) });
     const update = async (mutate) => {
       await ctx.store.updateSettings((s) => mutate(s.learner));
-      preview.setText(renderProfile(profile()));
+      preview2.setText(renderProfile(profile()));
     };
-    new import_obsidian19.Setting(el).setName(t("settings.learner.level.name")).addDropdown((d) => {
+    new import_obsidian25.Setting(el).setName(t("settings.learner.level.name")).addDropdown((d) => {
       d.addOption("", t("settings.learner.level.none"));
       for (const lv of CEFR_LEVELS) d.addOption(lv, lv);
       d.setValue(profile().level).onChange((v) => void update((p) => p.level = v));
     });
-    new import_obsidian19.Setting(el).setName(t("settings.learner.goal.name")).addDropdown((d) => {
+    new import_obsidian25.Setting(el).setName(t("settings.learner.goal.name")).addDropdown((d) => {
       for (const g of LEARNER_GOALS) d.addOption(g, t(`settings.learner.goal.${g}`));
       d.setValue(profile().goal).onChange((v) => void update((p) => p.goal = v));
     });
-    new import_obsidian19.Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
-      for (const l of ANSWER_LANGUAGES) d.addOption(l, t(`settings.learner.language.${l}`));
+    new import_obsidian25.Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
+      for (const l3 of ANSWER_LANGUAGES) d.addOption(l3, t(`settings.learner.language.${l3}`));
       d.setValue(profile().answerLanguage).onChange((v) => void update((p) => p.answerLanguage = v));
     });
-    new import_obsidian19.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
+    new import_obsidian25.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setValue(String(profile().maxAnswerChars)).onChange((v) => {
         const n = parseNonNegativeInt(v);
         if (n !== null) void update((p) => p.maxAnswerChars = n);
       });
     });
-    new import_obsidian19.Setting(el).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
+    new import_obsidian25.Setting(el).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
       ta.inputEl.rows = 3;
       ta.inputEl.addClass("vt-settings-wide");
       ta.setValue(profile().extra).onChange((v) => void update((p) => p.extra = v));
     });
-    const previewSetting = new import_obsidian19.Setting(el).setName(t("settings.learner.preview.name"));
+    const previewSetting = new import_obsidian25.Setting(el).setName(t("settings.learner.preview.name"));
     previewSetting.settingEl.addClass("vt-settings-preview-row");
-    el.appendChild(preview);
+    el.appendChild(preview2);
   }
 };
 
 // src/ui/settings/sections/srs.ts
-var import_obsidian20 = require("obsidian");
+var import_obsidian26 = require("obsidian");
 var srsSection = {
   id: "srs",
   title: "settings.section.srs",
   render(el, ctx) {
     const current = () => resolveSrsSettings(ctx.store.settings.srs);
     const update = (patch) => ctx.store.updateSettings((s) => s.srs = { ...current(), ...patch });
-    new import_obsidian20.Setting(el).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
+    new import_obsidian26.Setting(el).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
       (s) => s.setLimits(0.7, 0.99, 0.01).setValue(current().retention).setDynamicTooltip().onChange((v) => void update({ retention: v }))
     );
-    new import_obsidian20.Setting(el).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
+    new import_obsidian26.Setting(el).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setValue(String(current().dailyNew)).onChange((v) => {
         const n = parseNonNegativeInt(v);
@@ -6800,7 +10503,7 @@ var srsSection = {
 };
 
 // src/ui/settings/sections/wordlists.ts
-var import_obsidian21 = require("obsidian");
+var import_obsidian27 = require("obsidian");
 var wordlistsSection = {
   id: "wordlists",
   title: "settings.section.wordlists",
@@ -6815,19 +10518,19 @@ var wordlistsSection = {
       return update({ tags: { ...tags, [tag]: { ...tags[tag], ...patch } } }, "display");
     };
     el.createDiv({ cls: "setting-item-description", text: t("settings.wordlists.desc") });
-    new import_obsidian21.Setting(el).setName(t("settings.wordlists.folder.name")).setDesc(t("settings.wordlists.folder.desc")).addText((text) => {
+    new import_obsidian27.Setting(el).setName(t("settings.wordlists.folder.name")).setDesc(t("settings.wordlists.folder.desc")).addText((text) => {
       text.setValue(current().folder);
       text.inputEl.addEventListener("change", () => void update({ folder: text.getValue() }, "reload"));
     });
-    new import_obsidian21.Setting(el).setName(t("settings.wordlists.highlight.name")).setDesc(t("settings.wordlists.highlight.desc")).addToggle((tg) => tg.setValue(current().highlight).onChange((v) => void update({ highlight: v }, "display")));
-    new import_obsidian21.Setting(el).setName(t("settings.wordlists.inflections.name")).setDesc(t("settings.wordlists.inflections.desc")).addToggle(
+    new import_obsidian27.Setting(el).setName(t("settings.wordlists.highlight.name")).setDesc(t("settings.wordlists.highlight.desc")).addToggle((tg) => tg.setValue(current().highlight).onChange((v) => void update({ highlight: v }, "display")));
+    new import_obsidian27.Setting(el).setName(t("settings.wordlists.inflections.name")).setDesc(t("settings.wordlists.inflections.desc")).addToggle(
       (tg) => tg.setValue(current().inflections).onChange((v) => void update({ inflections: v }, "scan"))
     );
-    new import_obsidian21.Setting(el).setName(t("settings.wordlists.autoImport.name")).setDesc(t("settings.wordlists.autoImport.desc")).addToggle(
+    new import_obsidian27.Setting(el).setName(t("settings.wordlists.autoImport.name")).setDesc(t("settings.wordlists.autoImport.desc")).addToggle(
       (tg) => tg.setValue(current().autoImport).onChange((v) => void update({ autoImport: v }, "display"))
     );
     const lists = ctx.wordlists.index.lists;
-    new import_obsidian21.Setting(el).setName(t("settings.wordlists.loaded.name")).setDesc(
+    new import_obsidian27.Setting(el).setName(t("settings.wordlists.loaded.name")).setDesc(
       lists.length === 0 ? t("settings.wordlists.loaded.none", { folder: current().folder }) : t("settings.wordlists.loaded.some", { n: lists.length })
     ).addButton(
       (b) => b.setButtonText(t("settings.wordlists.reload")).onClick(async () => {
@@ -6837,24 +10540,104 @@ var wordlistsSection = {
     );
     const s = current();
     for (const list of lists) {
-      const row = new import_obsidian21.Setting(el).setName(tagLabel(list.tag)).setDesc(t("settings.wordlists.list.desc", { n: list.words.toLocaleString(), paths: list.paths.join(", ") })).addColorPicker((c) => c.setValue(tagColor(s, list.tag)).onChange((v) => void updateTag(list.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list.tag)).onChange((v) => void updateTag(list.tag, { enabled: v })));
+      const row = new import_obsidian27.Setting(el).setName(tagLabel(list.tag)).setDesc(t("settings.wordlists.list.desc", { n: list.words.toLocaleString(), paths: list.paths.join(", ") })).addColorPicker((c) => c.setValue(tagColor(s, list.tag)).onChange((v) => void updateTag(list.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list.tag)).onChange((v) => void updateTag(list.tag, { enabled: v })));
       row.settingEl.addClass("vt-wordlist-row");
     }
   }
 };
 
+// src/ui/settings/sections/files.ts
+var import_obsidian28 = require("obsidian");
+
+// src/services/files/settings.ts
+var DEFAULT_FILES_SETTINGS = {
+  folder: "vocab-list",
+  wordsFolder: "\u55AE\u5B57",
+  threadsFolder: "\u8A0E\u8AD6\u4E32"
+};
+function cleanFolder(raw) {
+  if (typeof raw !== "string") return null;
+  const parts = raw.replace(/\\/g, "/").split("/").map((p) => p.trim()).filter((p) => p !== "" && p !== "." && p !== "..");
+  return parts.length ? parts.join("/") : null;
+}
+function resolveFilesSettings(raw) {
+  var _a, _b, _c;
+  return {
+    folder: (_a = cleanFolder(raw == null ? void 0 : raw.folder)) != null ? _a : DEFAULT_FILES_SETTINGS.folder,
+    wordsFolder: (_b = cleanFolder(raw == null ? void 0 : raw.wordsFolder)) != null ? _b : DEFAULT_FILES_SETTINGS.wordsFolder,
+    threadsFolder: (_c = cleanFolder(raw == null ? void 0 : raw.threadsFolder)) != null ? _c : DEFAULT_FILES_SETTINGS.threadsFolder
+  };
+}
+function filesPaths(s) {
+  return {
+    folder: s.folder,
+    words: joinPath(s.folder, s.wordsFolder),
+    threads: joinPath(s.folder, s.threadsFolder)
+  };
+}
+function inFolderPath(path, folder) {
+  return path === folder || path.startsWith(`${folder}/`);
+}
+
+// src/ui/settings/sections/files.ts
+var FIELDS = [
+  { key: "folder", name: "settings.files.folder.name", desc: "settings.files.folder.desc" },
+  { key: "wordsFolder", name: "settings.files.wordsFolder.name", desc: "settings.files.wordsFolder.desc" },
+  { key: "threadsFolder", name: "settings.files.threadsFolder.name", desc: "settings.files.threadsFolder.desc" }
+];
+var filesSection = {
+  id: "files",
+  title: "settings.section.files",
+  render(el, ctx) {
+    const current = () => resolveFilesSettings(ctx.store.settings.files);
+    const update = (patch) => ctx.store.updateSettings((s) => s.files = { ...current(), ...patch });
+    el.createDiv({ cls: "setting-item-description", text: t("settings.files.desc") });
+    for (const field of FIELDS) {
+      new import_obsidian28.Setting(el).setName(t(field.name)).setDesc(t(field.desc)).addText((text) => {
+        text.setValue(current()[field.key]);
+        text.inputEl.addEventListener("change", async () => {
+          await update({ [field.key]: text.getValue() });
+          text.setValue(current()[field.key]);
+        });
+      });
+    }
+  }
+};
+
+// src/ui/settings/sections/paragraphs.ts
+var import_obsidian29 = require("obsidian");
+var paragraphsSection = {
+  id: "paragraphs",
+  title: "settings.section.paragraphs",
+  render(el, ctx) {
+    new import_obsidian29.Setting(el).setName(t("settings.paragraphs.hashMode.name")).setDesc(t("settings.paragraphs.hashMode.desc")).addToggle(
+      (tg) => tg.setValue(resolveAnchorSettings(ctx.store.settings).mode === "hash").onChange(
+        (on) => ctx.store.updateSettings((s) => patchAnchorSettings(s, { mode: on ? "hash" : "block", blockIdNoticeSeen: true }))
+      )
+    );
+  }
+};
+
 // src/ui/settings/sections/index.ts
-var SETTINGS_SECTIONS = [generalSection, wordlistsSection, srsSection, aiSection, learnerSection];
+var SETTINGS_SECTIONS2 = [
+  generalSection,
+  wordlistsSection,
+  srsSection,
+  aiSection,
+  learnerSection,
+  paragraphsSection,
+  filesSection
+];
 
 // src/platform/ObsidianNotes.ts
-var import_obsidian22 = require("obsidian");
+var import_obsidian30 = require("obsidian");
 var ObsidianNotes = class {
   constructor(app) {
     this.app = app;
   }
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian22.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian30.TFile ? this.app.vault.cachedRead(file) : null;
   }
 };
 
@@ -6912,6 +10695,49 @@ function settleStaleTurns(threads) {
   return threads;
 }
 
+// src/services/anchors/paragraphInput.ts
+function noteTitle(path) {
+  var _a;
+  return ((_a = path.split("/").pop()) != null ? _a : path).replace(/\.md$/i, "");
+}
+function knownWordsIn(paragraph, words) {
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  for (const w of words) {
+    const word = w.trim();
+    const key3 = word.toLowerCase();
+    if (!word || seen.has(key3)) continue;
+    if (buildWordRe(word).test(paragraph)) {
+      seen.add(key3);
+      out.push(word);
+    }
+  }
+  return out;
+}
+function paragraphInput(anchor, where, extra = {}) {
+  var _a;
+  let paragraphs;
+  let paragraphIndex;
+  if (where.status === "found") {
+    const { section: section2, content } = where;
+    const spans = splitParagraphSpans(content);
+    const before = spans.filter((s) => s.lineEnd < section2.lineStart).map((s) => plainParagraph(s.text));
+    const after = spans.filter((s) => s.lineStart > section2.lineEnd).map((s) => plainParagraph(s.text));
+    paragraphs = [...before, plainParagraph(section2.text), ...after];
+    paragraphIndex = before.length;
+  } else {
+    paragraphs = [anchor.snapshot];
+    paragraphIndex = 0;
+  }
+  const focus = paragraphs[paragraphIndex];
+  const input = { article: { title: noteTitle(anchor.path), paragraphs }, paragraphIndex };
+  if (extra.selection) input.selection = extra.selection;
+  if (extra.question) input.question = extra.question;
+  const known = knownWordsIn(focus, (_a = extra.knownWords) != null ? _a : []);
+  if (known.length) input.knownWords = known;
+  return input;
+}
+
 // src/services/threads/pin.ts
 var LEAD = String.raw`^\s*(?:[>*_]+\s*)?`;
 var SELECTION_NOTICE_RE = new RegExp(`${LEAD}\u4F60\u9078\u53D6\u7684\u6587\u5B57[\u88E1\u91CC\u4E2D\u5167]?(?:\u4F3C\u4E4E|\u597D\u50CF)?\u6C92\u6709[^\\n]*(?:\\n+|$)`);
@@ -6935,6 +10761,7 @@ function removePin(grammar, text) {
 // src/services/threads/ThreadService.ts
 var THREADS_SHARD = "threads";
 var WRITE_DEBOUNCE_MS3 = 500;
+var PARAGRAPH_THREAD_PREFIX = "paragraph:";
 function defaultId2(now) {
   return `${now.getTime().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -6966,6 +10793,9 @@ var ThreadService = class {
     // threadId → the assistant turn currently streaming.
     this.active = /* @__PURE__ */ new Map();
     this.partial = /* @__PURE__ */ new Map();
+    // Sections whose anchor is being created (path + line), so a double
+    // click can't write two block ids into the same paragraph.
+    this.creating = /* @__PURE__ */ new Set();
     this.disposed = false;
     var _a, _b;
     this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
@@ -7040,6 +10870,7 @@ var ThreadService = class {
     };
     if (p.question) user.question = p.question;
     if (p.selection) user.selection = p.selection;
+    if (p.subjectEntryId) user.subjectEntryId = p.subjectEntryId;
     const answer = {
       id: this.newId(),
       role: "assistant",
@@ -7049,6 +10880,7 @@ var ThreadService = class {
       taskVersion: task.version,
       status: "streaming"
     };
+    if (p.subjectEntryId) answer.subjectEntryId = p.subjectEntryId;
     thread.turns.push(user, answer);
     this.active.set(thread.id, answer);
     this.partial.set(answer.id, "");
@@ -7092,13 +10924,18 @@ var ThreadService = class {
       }
     }
   }
-  async askWord(entry, req) {
-    var _a, _b, _c;
-    const source = await findWordSource(entry, this.deps.notes);
+  // What the user bubble shows: the question, else the quick action's label.
+  displayFor(req) {
+    var _a, _b;
     const label = (_a = this.deps.ai.tasks.get(req.taskId)) == null ? void 0 : _a.label;
-    const display = ((_b = req.question) == null ? void 0 : _b.trim()) || (label ? t(label) : req.taskId);
+    return ((_b = req.question) == null ? void 0 : _b.trim()) || (label ? t(label) : req.taskId);
+  }
+  async askWord(entry, req) {
+    var _a;
+    const source = await findWordSource(entry, this.deps.notes);
+    const display = this.displayFor(req);
     const anchor = { kind: "word", entryId: entry.id };
-    if ((_c = entry.source) == null ? void 0 : _c.path) anchor.origin = { path: entry.source.path };
+    if ((_a = entry.source) == null ? void 0 : _a.path) anchor.origin = { path: entry.source.path };
     await this.ask({
       threadId: wordThreadId(entry.id),
       anchor,
@@ -7112,20 +10949,169 @@ var ThreadService = class {
   // 重試: the failed answer and its question are tombstoned (not removed —
   // see Turn.deletedAt) and the same question is asked again.
   async retryWord(entry, turnId) {
-    const thread = this.wordThread(entry.id);
-    if (!thread || this.isBusy(thread.id)) return;
+    const question = this.dropFailedRound(this.wordThread(entry.id), turnId);
+    if (!(question == null ? void 0 : question.taskId)) return;
+    await this.askWord(entry, { taskId: question.taskId, question: question.question, selection: question.selection });
+  }
+  // Tombstones an answer and the question before it; returns the question.
+  // Public for TriviaService.retry, which re-asks the round its own way.
+  dropFailedRound(thread, turnId) {
+    if (!thread || this.isBusy(thread.id)) return null;
     const turns = liveTurns(thread);
     const i = turns.findIndex((turn) => turn.id === turnId);
-    if (i < 1) return;
+    if (i < 1) return null;
     const question = turns[i - 1];
-    if (question.role !== "user" || !question.taskId) return;
+    if (question.role !== "user" || !question.taskId) return null;
     const now = this.nowIso();
     for (const turn of [question, turns[i]]) {
       turn.deletedAt = now;
       turn.updatedAt = now;
     }
     this.changed(thread);
-    await this.askWord(entry, { taskId: question.taskId, question: question.question, selection: question.selection });
+    return question;
+  }
+  // ─── Paragraph discussions (規劃書 06 §5.1, M5) ──────────────────────────
+  // Live paragraph threads, optionally only those of one note — the
+  // sidebar's 「段落討論（n）」 list and the badge index's source.
+  paragraphThreads(path) {
+    return this.threads.filter(
+      (th) => !th.deletedAt && th.anchor.kind === "paragraph" && (path === void 0 || th.anchor.path === path)
+    );
+  }
+  // The discussion of a reading-mode section (its raw text), matched the
+  // same way the badge index is: a block anchor by its block id, a hash
+  // anchor by the text hash. If two devices each started one, a block-id
+  // match wins, then the most recently updated.
+  paragraphThread(path, sectionText2) {
+    var _a;
+    const candidates = this.paragraphThreads(path);
+    if (!candidates.length) return void 0;
+    const id = trailingBlockId(sectionText2);
+    const keys = /* @__PURE__ */ new Set([`h:${paragraphHash(sectionText2)}`]);
+    if (id) keys.add(`b:${id}`);
+    const hits = candidates.filter((th) => keys.has(paragraphKey(th.anchor)));
+    hits.sort((a, b) => {
+      var _a2, _b;
+      return ((_a2 = b.updatedAt) != null ? _a2 : "").localeCompare((_b = a.updatedAt) != null ? _b : "");
+    });
+    return (_a = hits.find((th) => id && th.anchor.blockId === id)) != null ? _a : hits[0];
+  }
+  paragraphQuestionCount(threadId) {
+    return questionCount(this.get(threadId));
+  }
+  // 孤立判斷: where the thread's paragraph is now (block id → hash), or
+  // why it's orphaned (note deleted, paragraph gone). `edited` drives the
+  // 「原文已修改」 banner. Null for unknown / non-paragraph threads.
+  async paragraphStatus(threadId) {
+    await this.ensureLoaded();
+    const thread = this.get(threadId);
+    if (!thread || thread.anchor.kind !== "paragraph") return null;
+    return this.requireAnchors().resolve(thread.anchor);
+  }
+  // Asks about a paragraph. The first question about a section creates
+  // its anchor (block mode writes ` ^vt-xxxxxx` into the note) and the
+  // thread; later ones reuse them. Resolves to the thread id, or null when
+  // nothing was sent (unknown thread, the thread is busy, or the same
+  // section's anchor is still being created by another call).
+  async askParagraph(target, req) {
+    var _a;
+    const anchors = this.requireAnchors();
+    await this.ensureLoaded();
+    if (this.disposed) return null;
+    let thread = "threadId" in target ? this.get(target.threadId) : this.paragraphThread(target.path, target.text);
+    if ("threadId" in target && !thread) return null;
+    if (thread && thread.anchor.kind !== "paragraph") return null;
+    let lock = null;
+    let anchor;
+    if ((thread == null ? void 0 : thread.anchor.kind) === "paragraph") {
+      anchor = thread.anchor;
+    } else {
+      const ref = target;
+      lock = `${ref.path}
+${ref.lineStart}`;
+      if (this.creating.has(lock)) return null;
+      this.creating.add(lock);
+      try {
+        anchor = await anchors.create(ref);
+      } catch (e) {
+        this.creating.delete(lock);
+        throw e;
+      }
+      const blockId = anchor.blockId;
+      thread = blockId ? this.paragraphThreads(ref.path).find((th) => th.anchor.kind === "paragraph" && th.anchor.blockId === blockId) : void 0;
+      if ((thread == null ? void 0 : thread.anchor.kind) === "paragraph") anchor = thread.anchor;
+    }
+    let threadId;
+    try {
+      if (thread && this.isBusy(thread.id)) return null;
+      threadId = (_a = thread == null ? void 0 : thread.id) != null ? _a : PARAGRAPH_THREAD_PREFIX + this.newId();
+      const where = await anchors.resolve(anchor);
+      const input = paragraphInput(anchor, where, {
+        question: req.question,
+        selection: req.selection,
+        // Auto-imported exam words aren't learned yet: still explain them.
+        knownWords: this.deps.store.entries.filter((e) => e.origin !== "wordlist").map((e) => e.word)
+      });
+      await this.ask({
+        threadId,
+        anchor,
+        taskId: req.taskId,
+        input,
+        display: this.displayFor(req),
+        question: req.question,
+        selection: req.selection
+      });
+    } finally {
+      if (lock) this.creating.delete(lock);
+    }
+    return threadId;
+  }
+  async retryParagraph(threadId, turnId) {
+    const question = this.dropFailedRound(this.get(threadId), turnId);
+    if (!(question == null ? void 0 : question.taskId)) return;
+    await this.askParagraph({ threadId }, { taskId: question.taskId, question: question.question, selection: question.selection });
+  }
+  // 文章改名 (規劃書 06 §4.6): paragraph anchors follow the note; a folder
+  // rename moves every note under it. Returns how many threads moved.
+  async renameParagraphPath(oldPath, newPath) {
+    await this.ensureLoaded();
+    let moved = 0;
+    for (const th of this.paragraphThreads()) {
+      const a = th.anchor;
+      let next = null;
+      if (a.path === oldPath) next = newPath;
+      else if (a.path.startsWith(`${oldPath}/`)) next = newPath + a.path.slice(oldPath.length);
+      if (next === null) continue;
+      th.anchor = { ...a, path: next };
+      this.changed(th);
+      moved++;
+    }
+    return moved;
+  }
+  // 重新綁定: points a discussion (typically an orphaned one) at another
+  // section, anchoring it the way a first question would. The turns stay.
+  async rebindParagraph(threadId, ref) {
+    await this.ensureLoaded();
+    const thread = this.get(threadId);
+    if (!thread || thread.anchor.kind !== "paragraph" || this.isBusy(threadId)) return false;
+    thread.anchor = await this.requireAnchors().create(ref);
+    this.changed(thread);
+    return true;
+  }
+  // 刪除: tombstones the whole thread (kept on disk so a merge with another
+  // device's copy can't bring it back). Note deletion itself never calls
+  // this — orphaned discussions stay until the user decides (§4.6).
+  async deleteThread(threadId) {
+    await this.ensureLoaded();
+    const thread = this.get(threadId);
+    if (!thread) return;
+    if (this.isBusy(threadId)) this.stop(threadId);
+    thread.deletedAt = this.nowIso();
+    this.changed(thread);
+  }
+  requireAnchors() {
+    if (!this.deps.anchors) throw new Error("ThreadService: paragraph anchors are not configured");
+    return this.deps.anchors;
   }
   // 釘選到文法提示: appends the answer (minus its 「你問的是」 line) to the
   // entry's grammar note; unpinning removes that same text again if the
@@ -7142,6 +11128,17 @@ var ThreadService = class {
     turn.updatedAt = this.nowIso();
     this.changed(thread);
     await this.deps.store.touch(entry);
+  }
+  // 👍 👎 on an answer (冷知識 L7). undefined clears it.
+  async setFeedback(threadId, turnId, feedback) {
+    await this.ensureLoaded();
+    const thread = this.get(threadId);
+    const turn = thread == null ? void 0 : thread.turns.find((x) => x.id === turnId && !x.deletedAt);
+    if (!thread || !turn || turn.role !== "assistant" || turn.feedback === feedback) return;
+    if (feedback) turn.feedback = feedback;
+    else delete turn.feedback;
+    turn.updatedAt = this.nowIso();
+    this.changed(thread);
   }
   nowIso() {
     return this.clock().toISOString();
@@ -7193,8 +11190,626 @@ var ThreadService = class {
   }
 };
 
+// src/services/learn/learnMerge.ts
+var TOMBSTONE_TTL_MS = 30 * 24 * 60 * 60 * 1e3;
+function ms2(iso) {
+  const t2 = iso ? new Date(iso).getTime() : 0;
+  return Number.isNaN(t2) ? 0 : t2;
+}
+function pickNewer2(local, remote) {
+  var _a, _b;
+  const l3 = ms2(local.updatedAt);
+  const r = ms2(remote.updatedAt);
+  if (l3 !== r) return r > l3 ? remote : local;
+  return ((_a = remote.rev) != null ? _a : 0) > ((_b = local.rev) != null ? _b : 0) ? remote : local;
+}
+function mergeRecords(local, remote) {
+  const byId = /* @__PURE__ */ new Map();
+  const order = [];
+  for (const rec of local) {
+    if (!byId.has(rec.id)) order.push(rec.id);
+    byId.set(rec.id, rec);
+  }
+  for (const rec of remote) {
+    const mine = byId.get(rec.id);
+    if (!mine) order.push(rec.id);
+    byId.set(rec.id, mine ? pickNewer2(mine, rec) : rec);
+  }
+  return order.map((id) => byId.get(id));
+}
+function dropOldTombstones(records, now) {
+  return records.filter((r) => !r.deletedAt || now - ms2(r.deletedAt) < TOMBSTONE_TTL_MS);
+}
+function emptyLearnShard() {
+  return { families: [], trivia: [] };
+}
+function normalizeLearnShard(raw) {
+  const s = raw != null ? raw : {};
+  return {
+    families: Array.isArray(s.families) ? s.families : [],
+    trivia: Array.isArray(s.trivia) ? s.trivia : []
+  };
+}
+function mergeLearn(local, remote) {
+  return {
+    families: mergeRecords(local.families, remote.families),
+    trivia: mergeRecords(local.trivia, remote.trivia)
+  };
+}
+
+// src/services/learn/LearnStore.ts
+var LEARN_SHARD = "learn";
+var WRITE_DEBOUNCE_MS4 = 500;
+var LearnStore = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.events = new TypedEmitter();
+    this.data = emptyLearnShard();
+    this.loading = null;
+    this.writeTimer = null;
+    this.pendingWrite = Promise.resolve();
+    var _a;
+    this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
+  }
+  // Memoized, so callers can await it freely.
+  ensureLoaded() {
+    if (!this.loading) {
+      this.loading = this.readDisk().then((disk) => {
+        this.data = mergeLearn(this.data, disk);
+      });
+    }
+    return this.loading;
+  }
+  get loaded() {
+    return this.loading !== null;
+  }
+  // Unions a synced copy from disk into memory. A no-op until something
+  // has opened a learning page — the first load reads the latest file anyway.
+  async reload() {
+    if (!this.loading) return;
+    await this.loading;
+    this.data = mergeLearn(this.data, await this.readDisk());
+    this.events.emit("learn:reloaded", void 0);
+  }
+  async readDisk() {
+    try {
+      return normalizeLearnShard(await this.deps.storage.readShard(LEARN_SHARD));
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't read learn data", e);
+      return emptyLearnShard();
+    }
+  }
+  // ── Families ──────────────────────────────────────────────────
+  families() {
+    return this.data.families.filter((f) => !f.deletedAt);
+  }
+  family(id) {
+    return this.data.families.find((f) => f.id === id && !f.deletedAt);
+  }
+  // Inserts a new family or replaces the stored copy with the same id.
+  putFamily(f) {
+    this.stamp(f);
+    this.upsert(this.data.families, f);
+    this.events.emit("family:upsert", f);
+    this.scheduleWrite();
+    return f;
+  }
+  deleteFamily(id) {
+    const f = this.family(id);
+    if (!f) return;
+    f.deletedAt = this.nowIso();
+    this.putFamily(f);
+  }
+  // ── Trivia favorites ──────────────────────────────────────────
+  trivia() {
+    return this.data.trivia.filter((t2) => !t2.deletedAt);
+  }
+  triviaItem(id) {
+    return this.data.trivia.find((t2) => t2.id === id && !t2.deletedAt);
+  }
+  putTrivia(item) {
+    this.stamp(item);
+    this.upsert(this.data.trivia, item);
+    this.events.emit("trivia:upsert", item);
+    this.scheduleWrite();
+    return item;
+  }
+  deleteTrivia(id) {
+    const item = this.triviaItem(id);
+    if (!item) return;
+    item.deletedAt = this.nowIso();
+    this.putTrivia(item);
+  }
+  // ── Persistence ───────────────────────────────────────────────
+  nowIso() {
+    return this.clock().toISOString();
+  }
+  stamp(rec) {
+    var _a, _b;
+    const now = this.nowIso();
+    rec.createdAt = (_a = rec.createdAt) != null ? _a : now;
+    rec.updatedAt = now;
+    rec.rev = ((_b = rec.rev) != null ? _b : 0) + 1;
+  }
+  upsert(list, rec) {
+    const i = list.findIndex((x) => x.id === rec.id);
+    if (i === -1) list.push(rec);
+    else list[i] = rec;
+  }
+  scheduleWrite() {
+    if (this.writeTimer) clearTimeout(this.writeTimer);
+    this.writeTimer = setTimeout(() => {
+      this.writeTimer = null;
+      this.pendingWrite = this.write();
+    }, WRITE_DEBOUNCE_MS4);
+  }
+  async write() {
+    try {
+      const merged = mergeLearn(this.data, await this.readDisk());
+      const now = this.clock().getTime();
+      this.data = {
+        families: dropOldTombstones(merged.families, now),
+        trivia: dropOldTombstones(merged.trivia, now)
+      };
+      await this.deps.storage.writeShard(LEARN_SHARD, this.data);
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't save learn data", e);
+    }
+  }
+  async flush() {
+    if (this.writeTimer) {
+      clearTimeout(this.writeTimer);
+      this.writeTimer = null;
+      this.pendingWrite = this.write();
+    }
+    await this.pendingWrite;
+  }
+};
+
+// src/services/learn/FamilyService.ts
+var FAMILY_THREAD_ID = "family";
+var MAX_FAMILY_CONTEXT = 300;
+var REGROUP_GROWTH = 1.2;
+function toWord(e) {
+  return { word: e.word, partOfSpeech: e.partOfSpeech, zh: e.definitionZh };
+}
+var key2 = (w) => w.trim().toLowerCase();
+var FamilyService = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.seq = 0;
+    var _a, _b;
+    this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
+    this.newId = (_b = deps.newId) != null ? _b : (() => `${this.clock().getTime()}-f${++this.seq}`);
+  }
+  ensureLoaded() {
+    return this.deps.learn.ensureLoaded();
+  }
+  families() {
+    return this.deps.learn.families();
+  }
+  // Families a word belongs to (word page 「字族」 section).
+  familiesOf(entryId) {
+    return this.families().filter((f) => familyMembers(f).some((m) => m.entryId === entryId));
+  }
+  // L5: 「有新單字，要重新分群嗎」 once the list has grown 20% since the
+  // newest AI grouping.
+  needsRegroup() {
+    var _a;
+    const ai = this.families().filter((f) => f.source === "ai" && f.entryCountAtGenerate);
+    if (!ai.length) return false;
+    const newest = ai.reduce((a, b) => {
+      var _a2, _b;
+      return ((_a2 = b.createdAt) != null ? _a2 : "") > ((_b = a.createdAt) != null ? _b : "") ? b : a;
+    });
+    const base = (_a = newest.entryCountAtGenerate) != null ? _a : 0;
+    return this.deps.vocab.entries.length >= base * REGROUP_GROWTH && this.deps.vocab.entries.length > base;
+  }
+  stop() {
+    this.deps.ai.cancel(FAMILY_THREAD_ID);
+  }
+  // Asks the AI for families (around `seedEntryIds` for W3, the whole list
+  // for L5). Returns candidates; AI errors propagate (bad_output when the
+  // JSON doesn't hold).
+  async generate(opts = {}) {
+    var _a;
+    await this.ensureLoaded();
+    const entries = this.deps.vocab.entries;
+    const seedIds = new Set((_a = opts.seedEntryIds) != null ? _a : []);
+    const seeds = entries.filter((e) => seedIds.has(e.id));
+    const recent = entries.filter((e) => !seedIds.has(e.id)).sort((a, b) => entryAddedMs(b) - entryAddedMs(a)).slice(0, Math.max(0, MAX_FAMILY_CONTEXT - seeds.length));
+    const r = await this.deps.ai.run(
+      familyGenerate,
+      {
+        known: [...seeds, ...recent].map(toWord),
+        seeds: seeds.map(toWord),
+        existingTopics: seeds.length ? this.families().map((f) => f.topic) : []
+      },
+      { threadId: FAMILY_THREAD_ID, signal: opts.signal }
+    );
+    const index = new WordIndex(entries);
+    return familyGenerate.parse(r).map((d) => this.candidate(d, index, seeds.map((e) => e.id)));
+  }
+  candidate(d, index, seedEntryIds) {
+    return {
+      topic: d.topic,
+      label: d.label,
+      seedEntryIds,
+      groups: d.groups.map((g) => ({ label: g.label, members: g.members.map((m) => this.member(m.word, m.zh, index)) }))
+    };
+  }
+  member(word, zh, index) {
+    const e = index.find(word);
+    return e ? { entryId: e.id, word, zh } : { word, zh };
+  }
+  // Suggested words across the candidates (「把 3 個字加入單字庫」), once each.
+  newWords(candidates) {
+    const seen = /* @__PURE__ */ new Set();
+    const out = [];
+    for (const c of candidates) {
+      for (const m of c.groups.flatMap((g) => g.members)) {
+        if (m.entryId || seen.has(key2(m.word))) continue;
+        seen.add(key2(m.word));
+        out.push(m);
+      }
+    }
+    return out;
+  }
+  // Stores the confirmed candidates (只存字族 / 存字族並加字). A candidate
+  // whose topic already exists is merged into that family instead of
+  // duplicating it.
+  async save(candidates, opts = {}) {
+    var _a;
+    await this.ensureLoaded();
+    if (opts.replace) {
+      for (const f of this.families()) if (f.source === "ai") this.deps.learn.deleteFamily(f.id);
+    }
+    const count = this.deps.vocab.entries.length;
+    const families = candidates.map((c) => this.toFamily(c, count));
+    const wanted = new Set(((_a = opts.addWords) != null ? _a : []).map(key2));
+    const toAdd = /* @__PURE__ */ new Map();
+    for (const f of families) {
+      for (const m of familyMembers(f)) {
+        if (!m.entryId && wanted.has(key2(m.word)) && !toAdd.has(key2(m.word))) {
+          toAdd.set(key2(m.word), { word: m.word, zh: m.zh, familyId: f.id });
+        }
+      }
+    }
+    const added = await this.addWords([...toAdd.values()]);
+    const index = new WordIndex(this.deps.vocab.entries);
+    for (const f of families) {
+      this.link(f, index);
+      this.deps.learn.putFamily(f);
+    }
+    return { families, added };
+  }
+  // L5 「點一下加入」: adds one suggested word of a saved family.
+  async addSuggested(familyId, word) {
+    await this.ensureLoaded();
+    const f = this.deps.learn.family(familyId);
+    const m = f && familyMembers(f).find((x) => key2(x.word) === key2(word));
+    if (!f || !m) return void 0;
+    const index = new WordIndex(this.deps.vocab.entries);
+    const existing = index.find(m.word);
+    const [entry] = existing ? [existing] : await this.addWords([{ word: m.word, zh: m.zh, familyId: f.id }]);
+    this.link(f, new WordIndex(this.deps.vocab.entries));
+    this.deps.learn.putFamily(f);
+    return entry;
+  }
+  remove(familyId) {
+    this.deps.learn.deleteFamily(familyId);
+  }
+  toFamily(c, entryCount) {
+    const existing = this.families().find((f) => key2(f.topic) === key2(c.topic));
+    if (existing) return mergeFamily(existing, c);
+    return {
+      id: this.newId(),
+      topic: c.topic,
+      label: c.label,
+      source: "ai",
+      groups: c.groups.map((g) => ({ label: g.label, members: g.members.map((m) => ({ ...m })) })),
+      seedEntryIds: c.seedEntryIds,
+      entryCountAtGenerate: entryCount
+    };
+  }
+  // Points members at entries (newly added words, or words learned since).
+  link(f, index) {
+    for (const m of familyMembers(f)) {
+      const e = m.entryId ? void 0 : index.find(m.word);
+      if (e) m.entryId = e.id;
+    }
+  }
+  // Dictionary first, then one batch into the vocab list. A failed lookup
+  // still adds the word with the AI's Chinese gloss; the startup enrich
+  // pass retries words without a definition.
+  async addWords(words) {
+    var _a, _b, _c, _d, _e;
+    if (!words.length) return [];
+    const now = this.clock();
+    const entries = [];
+    for (const w of words) {
+      let d;
+      try {
+        d = await this.deps.dictionary.fetchDictionary(w.word);
+      } catch (e) {
+        console.error(`Vocab Tracker: dictionary lookup failed for "${w.word}"`, e);
+      }
+      const entry = {
+        id: this.newId(),
+        word: w.word,
+        level: "",
+        synonyms: (_a = d == null ? void 0 : d.synonyms.join(", ")) != null ? _a : "",
+        antonyms: (_b = d == null ? void 0 : d.antonyms.join(", ")) != null ? _b : "",
+        example: "",
+        definition: (_c = d == null ? void 0 : d.definition) != null ? _c : "",
+        definitionZh: (d == null ? void 0 : d.definitionZh) || w.zh,
+        phonetic: (_d = d == null ? void 0 : d.phonetic) != null ? _d : "",
+        partOfSpeech: (_e = d == null ? void 0 : d.partOfSpeech) != null ? _e : "",
+        grammar: "",
+        source: null,
+        added: nowStamp(now),
+        lastReviewed: nowStamp(now),
+        reviews: 0
+      };
+      if (d == null ? void 0 : d.audio) entry.audio = d.audio;
+      entry.origin = familyOrigin(w.familyId);
+      entries.push(entry);
+    }
+    await this.deps.vocab.addEntries(entries);
+    return entries;
+  }
+};
+function mergeFamily(f, c) {
+  var _a;
+  const groups = f.groups.map((g) => ({ label: g.label, members: [...g.members] }));
+  for (const cg of c.groups) {
+    let g = groups.find((x) => key2(x.label) === key2(cg.label));
+    if (!g) {
+      g = { label: cg.label, members: [] };
+      groups.push(g);
+    }
+    for (const m of cg.members) if (!g.members.some((x) => key2(x.word) === key2(m.word))) g.members.push({ ...m });
+  }
+  const seeds = [.../* @__PURE__ */ new Set([...(_a = f.seedEntryIds) != null ? _a : [], ...c.seedEntryIds])];
+  return { ...f, groups, seedEntryIds: seeds };
+}
+
+// src/core/model/usage.ts
+var VERB_RE = /(?<![a-z])verb\b|(?<![a-z])v\.(?![a-z])|動詞/i;
+function isVerb(partOfSpeech) {
+  return !!partOfSpeech && VERB_RE.test(partOfSpeech);
+}
+
+// src/services/learn/VerbUsageService.ts
+function verbThreadId(entryId) {
+  return `verb:${entryId}`;
+}
+var VerbUsageService = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.events = new TypedEmitter();
+    this.busy = /* @__PURE__ */ new Set();
+    var _a;
+    this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
+  }
+  canGenerate(entry) {
+    return isVerb(entry.partOfSpeech);
+  }
+  // The L6 list: learned verbs, alphabetical.
+  verbs() {
+    return this.deps.vocab.entries.filter((e) => this.canGenerate(e)).sort((a, b) => a.word.localeCompare(b.word, "en", { sensitivity: "base" }));
+  }
+  usage(entry) {
+    return entry.usage;
+  }
+  isBusy(entryId) {
+    return this.busy.has(entryId);
+  }
+  stop(entryId) {
+    this.deps.ai.cancel(verbThreadId(entryId));
+  }
+  // Generates (or regenerates) the usage block and saves it on the entry.
+  // AI errors propagate (bad_output when the JSON doesn't hold); the old
+  // block is kept on failure. Refuses non-verbs.
+  async generate(entry, opts = {}) {
+    if (!this.canGenerate(entry)) throw new Error(`"${entry.word}" is not a verb`);
+    this.setBusy(entry.id, true);
+    try {
+      const r = await this.deps.ai.run(
+        verbUsage,
+        { entry },
+        { threadId: verbThreadId(entry.id), signal: opts.signal }
+      );
+      const draft = verbUsage.parse(r);
+      const block = { ...draft, generatedAt: this.clock().toISOString(), model: r.model };
+      entry.usage = block;
+      await this.deps.vocab.touch(entry);
+      this.events.emit("verb:usage", { entryId: entry.id });
+      return block;
+    } finally {
+      this.setBusy(entry.id, false);
+    }
+  }
+  setBusy(entryId, busy) {
+    if (busy) this.busy.add(entryId);
+    else this.busy.delete(entryId);
+    this.events.emit("verb:busy", { entryId, busy });
+  }
+};
+
+// src/services/learn/TriviaService.ts
+var ANCHOR = { kind: "trivia-session" };
+function facts(e) {
+  return {
+    word: e.word,
+    phonetic: e.phonetic,
+    partOfSpeech: e.partOfSpeech,
+    definitionZh: e.definitionZh,
+    definition: e.definition,
+    example: e.example
+  };
+}
+var TriviaService = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.threadId = TRIVIA_THREAD_ID;
+    var _a, _b, _c;
+    this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
+    this.random = (_b = deps.random) != null ? _b : Math.random;
+    this.newId = (_c = deps.newId) != null ? _c : (() => `${this.clock().getTime().toString(36)}-${Math.random().toString(36).slice(2, 8)}`);
+  }
+  async ensureLoaded() {
+    await Promise.all([this.deps.threads.ensureLoaded(), this.deps.learn.ensureLoaded()]);
+  }
+  thread() {
+    return this.deps.threads.get(TRIVIA_THREAD_ID);
+  }
+  isBusy() {
+    return this.deps.threads.isBusy(TRIVIA_THREAD_ID);
+  }
+  stop() {
+    this.deps.threads.stop(TRIVIA_THREAD_ID);
+  }
+  entry(id) {
+    return id ? this.deps.vocab.entries.find((e) => e.id === id && !e.deletedAt) : void 0;
+  }
+  // The word the conversation is currently about: the newest answer that
+  // has a subject still in the vocab list.
+  currentSubject() {
+    const th = this.thread();
+    if (!th) return void 0;
+    for (let i = th.turns.length - 1; i >= 0; i--) {
+      const t2 = th.turns[i];
+      if (t2.deletedAt || t2.role !== "assistant") continue;
+      const e = this.entry(subjectOf(th, t2));
+      if (e) return e;
+    }
+    return void 0;
+  }
+  // The subject for a new round of `next`, per the §7.4 selection rules.
+  pick() {
+    return pickSubject(this.deps.vocab.entries, recentSubjects(this.thread()), {
+      now: this.clock(),
+      random: this.random
+    });
+  }
+  // Titles already told, newest first, for the prompt's no-repeat list.
+  told() {
+    var _a, _b;
+    const th = this.thread();
+    const out = [];
+    for (const r of triviaRounds(th)) {
+      if (!r.answer.content.trim()) continue;
+      const word = (_b = (_a = this.entry(subjectOf(th, r.answer))) == null ? void 0 : _a.word) != null ? _b : "";
+      out.push({ word, title: splitTrivia(r.answer.content).title });
+      if (out.length >= MAX_TOLD) break;
+    }
+    return out;
+  }
+  input(subject, extra = {}) {
+    const entries = this.deps.vocab.entries;
+    return {
+      subject: subject ? facts(subject) : void 0,
+      knownWords: knownWordList(entries),
+      knownTotal: entries.length,
+      told: this.told(),
+      ...extra
+    };
+  }
+  // A quick action. Resolves with the subject word once the answer has
+  // finished (or failed — the turn then carries the error); undefined when
+  // there are no words to talk about.
+  async ask(kind, opts = {}) {
+    var _a, _b;
+    await this.ensureLoaded();
+    if (this.isBusy()) return void 0;
+    const subject = (_b = (_a = this.entry(opts.entryId)) != null ? _a : kind === "next" ? void 0 : this.currentSubject()) != null ? _b : this.pick();
+    if (!subject) return void 0;
+    const task = TRIVIA_TASK_BY_KIND[kind];
+    await this.deps.threads.ask({
+      threadId: TRIVIA_THREAD_ID,
+      anchor: ANCHOR,
+      taskId: task.id,
+      input: this.input(subject),
+      display: t(`ai.task.trivia.${kind}`),
+      subjectEntryId: subject.id
+    });
+    return subject;
+  }
+  // Free-form follow-up from the composer, about the current subject.
+  async followup(question, selection) {
+    const q = question.trim();
+    if (!q) return;
+    await this.ensureLoaded();
+    if (this.isBusy()) return;
+    const subject = this.currentSubject();
+    await this.deps.threads.ask({
+      threadId: TRIVIA_THREAD_ID,
+      anchor: ANCHOR,
+      taskId: triviaFollowup.id,
+      input: this.input(subject, { question: q, selection }),
+      display: q,
+      question: q,
+      selection,
+      subjectEntryId: subject == null ? void 0 : subject.id
+    });
+  }
+  // 重試: the failed answer and its question are tombstoned, then the same
+  // round is asked again — a quick action about the same word, or the same
+  // follow-up question.
+  async retry(turnId) {
+    await this.ensureLoaded();
+    const th = this.thread();
+    const answer = th == null ? void 0 : th.turns.find((x) => x.id === turnId);
+    const entryId = answer ? subjectOf(th, answer) : void 0;
+    const q = this.deps.threads.dropFailedRound(th, turnId);
+    if (!q) return;
+    const kind = Object.keys(TRIVIA_TASK_BY_KIND).find((k) => TRIVIA_TASK_BY_KIND[k].id === q.taskId);
+    if (kind) await this.ask(kind, { entryId });
+    else if (q.question) await this.followup(q.question, q.selection);
+  }
+  // ── Favorites (收藏) ─────────────────────────────────────────
+  answerTurn(turnId) {
+    var _a;
+    const t2 = (_a = this.thread()) == null ? void 0 : _a.turns.find((x) => x.id === turnId && !x.deletedAt);
+    return t2 && t2.role === "assistant" && t2.status !== "streaming" && t2.content.trim() ? t2 : void 0;
+  }
+  favoriteOf(turnId) {
+    return this.deps.learn.trivia().find((it) => it.fromTurnId === turnId);
+  }
+  // Saves an answer as a TriviaItem on its subject word. Idempotent per
+  // turn. Undefined when the turn can't be saved (still streaming, empty,
+  // or no subject word to hang it on).
+  favorite(turnId) {
+    const existing = this.favoriteOf(turnId);
+    if (existing) return existing;
+    const turn = this.answerTurn(turnId);
+    if (!turn) return void 0;
+    const subject = this.entry(subjectOf(this.thread(), turn));
+    if (!subject) return void 0;
+    const { title, body } = splitTrivia(turn.content);
+    const mentions = new WordIndex(this.deps.vocab.entries).mentions(`${title}
+${body}`, /* @__PURE__ */ new Set([subject.id]));
+    return this.deps.learn.putTrivia({ id: this.newId(), entryId: subject.id, mentions, title, body, fromTurnId: turnId });
+  }
+  unfavorite(itemId) {
+    this.deps.learn.deleteTrivia(itemId);
+  }
+  // Favorites, newest first; only those hung on `entryId` when given.
+  favorites(entryId) {
+    return this.deps.learn.trivia().filter((it) => !entryId || it.entryId === entryId).sort((a, b) => {
+      var _a, _b;
+      return ((_a = b.createdAt) != null ? _a : "").localeCompare((_b = a.createdAt) != null ? _b : "");
+    });
+  }
+  // Favorites about other words that mention `entryId` (反向連結).
+  mentioning(entryId) {
+    return this.favorites().filter((it) => it.entryId !== entryId && it.mentions.includes(entryId));
+  }
+};
+
 // src/ui/chat/SelectionTracker.ts
-var import_obsidian23 = require("obsidian");
+var import_obsidian31 = require("obsidian");
 var MAX_SELECTION_CHARS = 1500;
 var SelectionTracker = class {
   constructor(app) {
@@ -7218,7 +11833,7 @@ var SelectionTracker = class {
     if (!sel || !node) return;
     const el = node instanceof HTMLElement ? node : node.parentElement;
     if (!(el == null ? void 0 : el.closest('.workspace-leaf-content[data-type="markdown"]'))) return;
-    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian23.MarkdownView && v.containerEl.contains(el));
+    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian31.MarkdownView && v.containerEl.contains(el));
     const raw = (view == null ? void 0 : view.getMode()) === "source" ? view.editor.getSelection() : sel.toString();
     const text = raw.replace(/\s+/g, " ").trim().slice(0, MAX_SELECTION_CHARS);
     if (!text) {
@@ -7235,10 +11850,10 @@ var SelectionTracker = class {
 };
 
 // src/platform/ObsidianWordlists.ts
-var import_obsidian24 = require("obsidian");
+var import_obsidian32 = require("obsidian");
 var EXTENSIONS = /* @__PURE__ */ new Set(["md", "txt", "csv", "tsv"]);
 function inFolder(path, folder) {
-  return path.startsWith((0, import_obsidian24.normalizePath)(folder) + "/");
+  return path.startsWith((0, import_obsidian32.normalizePath)(folder) + "/");
 }
 var ObsidianWordlists = class {
   constructor(app) {
@@ -7249,49 +11864,9 @@ var ObsidianWordlists = class {
   }
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian24.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian32.TFile ? this.app.vault.cachedRead(file) : null;
   }
 };
-
-// src/core/wordlists/lemma.ts
-var MIN_BASE = 3;
-function isConsonant2(c) {
-  return /[b-df-hj-np-tv-z]/.test(c);
-}
-function lemmaCandidates(lower) {
-  const w = lower.endsWith("'s") ? lower.slice(0, -2) : lower;
-  const out = w !== lower ? [w] : [];
-  const add2 = (base) => {
-    if (base.length >= MIN_BASE && base !== w && !out.includes(base)) out.push(base);
-  };
-  if (w.endsWith("ies") || w.endsWith("ied")) {
-    add2(w.slice(0, -3) + "y");
-  }
-  if (w.endsWith("s") && !w.endsWith("ss")) {
-    add2(w.slice(0, -1));
-    if (w.endsWith("es")) add2(w.slice(0, -2));
-  }
-  if (w.endsWith("ed") && !w.endsWith("eed")) {
-    add2(w.slice(0, -1));
-    const stem = w.slice(0, -2);
-    add2(stem);
-    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant2(stem[stem.length - 1])) {
-      add2(stem.slice(0, -1));
-    }
-  }
-  if (w.endsWith("ing")) {
-    const stem = w.slice(0, -3);
-    add2(stem);
-    add2(stem + "e");
-    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant2(stem[stem.length - 1])) {
-      add2(stem.slice(0, -1));
-    }
-    if (stem.endsWith("y")) add2(stem.slice(0, -1) + "ie");
-  }
-  if (w.endsWith("ily")) add2(w.slice(0, -3) + "y");
-  if (w.endsWith("ly") && w.length - 2 >= 4) add2(w.slice(0, -2));
-  return out;
-}
 
 // src/core/wordlists/WordlistIndex.ts
 var NONE = [];
@@ -7336,8 +11911,8 @@ var WordlistIndex = class {
   // inflected) belongs to, or null when it's in no list.
   match(word, inflections = true) {
     const lower = word.toLowerCase();
-    const key = inflections ? lower : `=${lower}`;
-    const memo = this.memo.get(key);
+    const key3 = inflections ? lower : `=${lower}`;
+    const memo = this.memo.get(key3);
     if (memo !== void 0) return memo;
     let hit = null;
     const exact = this.byWord.get(lower);
@@ -7351,7 +11926,7 @@ var WordlistIndex = class {
         }
       }
     }
-    this.memo.set(key, hit);
+    this.memo.set(key3, hit);
     return hit;
   }
   // Just the tags; empty when the word is in no list.
@@ -7380,19 +11955,19 @@ function segmentText(text, lookup) {
 }
 function proseLines(markdown) {
   var _a;
-  const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
+  const lines4 = markdown.replace(/\r\n?/g, "\n").split("\n");
   const out = [];
   let i = 0;
-  if (((_a = lines[0]) == null ? void 0 : _a.trim()) === "---") {
-    const close = lines.findIndex((l, j) => j > 0 && l.trim() === "---");
+  if (((_a = lines4[0]) == null ? void 0 : _a.trim()) === "---") {
+    const close = lines4.findIndex((l3, j) => j > 0 && l3.trim() === "---");
     if (close > 0) {
       for (; i <= close; i++) out.push("");
     }
   }
   let inFence = false;
   let inComment = false;
-  for (; i < lines.length; i++) {
-    const line = lines[i];
+  for (; i < lines4.length; i++) {
+    const line = lines4[i];
     if (/^\s*(```|~~~)/.test(line)) {
       inFence = !inFence;
       out.push("");
@@ -7524,16 +12099,16 @@ var WordlistService = class extends TypedEmitter {
   scan(path, mtime, read) {
     const cached = this.cachedScan(path, mtime);
     if (cached) return Promise.resolve(cached);
-    const running = this.inflight.get(path);
-    if (running && running.mtime === mtime) return running.promise;
+    const running2 = this.inflight.get(path);
+    if (running2 && running2.mtime === mtime) return running2.promise;
     const gen = this.generation;
     const token = { mtime, promise: null };
     const run = async () => {
-      const lines = proseLines(await read());
+      const lines4 = proseLines(await read());
       const acc = new ScanAccumulator(this.match);
-      for (let i = 0; i < lines.length; i++) {
+      for (let i = 0; i < lines4.length; i++) {
         if (i > 0 && i % SLICE_LINES === 0) await this.yieldToUi();
-        acc.add(lines[i], i);
+        acc.add(lines4[i], i);
       }
       const result = acc.result();
       if (gen === this.generation && this.inflight.get(path) === token) {
@@ -7555,7 +12130,7 @@ var WordlistService = class extends TypedEmitter {
 };
 
 // src/ui/reading/examHighlight.ts
-var import_obsidian25 = require("obsidian");
+var import_obsidian33 = require("obsidian");
 var EXAM_WORD_CLS = "vt-exam-word";
 var SKIP = [
   "code",
@@ -7599,7 +12174,7 @@ function highlightExamWords(el, lookup, colorOf) {
       const span = frag.createSpan({ cls: EXAM_WORD_CLS, text: seg.word });
       span.dataset.vtTags = seg.tags.join(" ");
       span.style.setProperty("--vt-exam-color", colorOf(seg.tags[0]));
-      (0, import_obsidian25.setTooltip)(span, seg.tags.map(tagLabel).join(" \xB7 "), { delay: 300 });
+      (0, import_obsidian33.setTooltip)(span, seg.tags.map(tagLabel).join(" \xB7 "), { delay: 300 });
     }
     node.replaceWith(frag);
   }
@@ -7657,8 +12232,8 @@ function cleanSentence(text) {
 function planImport(hits, entries, labelsOf) {
   const byWord = /* @__PURE__ */ new Map();
   for (const e of entries) {
-    const key = e.word.toLowerCase();
-    if (!byWord.has(key) || byWord.get(key).deletedAt) byWord.set(key, e);
+    const key3 = e.word.toLowerCase();
+    if (!byWord.has(key3) || byWord.get(key3).deletedAt) byWord.set(key3, e);
   }
   const plan = { create: [], retag: [] };
   for (const hit of hits) {
@@ -7684,13 +12259,1661 @@ function entriesMissingDefinition(entries) {
   });
 }
 
+// src/platform/ObsidianVault.ts
+var import_obsidian34 = require("obsidian");
+var Unchanged = class {
+  constructor(text) {
+    this.text = text;
+  }
+};
+var ObsidianVault = class {
+  constructor(app) {
+    this.app = app;
+    // ── task I ────────────────────────────────────────────────────────────
+    // Index of managed notes for findManaged, built from the metadata cache
+    // on first use and kept current by the events register() subscribes to.
+    // Null = not built yet (or dropped by the first "resolved", to rebuild
+    // from the complete cache).
+    this.managed = null;
+    this.watching = false;
+    this.cacheResolved = false;
+    this.readyWaiters = [];
+    // ready() gives up waiting after this long, so a vault where "resolved"
+    // never fires (or fired before register) can't hang its callers.
+    this.readyTimeoutMs = 1e4;
+  }
+  // ── shared ────────────────────────────────────────────────────────────
+  async read(path) {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    return file instanceof import_obsidian34.TFile ? this.app.vault.cachedRead(file) : null;
+  }
+  // ── task G ────────────────────────────────────────────────────────────
+  // vault.process(file, fn). Rethrow whatever `fn` throws unchanged:
+  // ExportService tells another article's .ai.md apart by the error's
+  // class. Skip the write when `fn` returns the text unchanged (no mtime
+  // bump, no sync churn). Rejects when the file doesn't exist. Needs
+  // minAppVersion ≥ 1.1.0 in manifest.json.
+  async process(path, fn) {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof import_obsidian34.TFile)) throw new Error(`File not found: ${path}`);
+    try {
+      return await this.app.vault.process(file, (text) => {
+        const next = fn(text);
+        if (next === text) throw new Unchanged(text);
+        return next;
+      });
+    } catch (e) {
+      if (e instanceof Unchanged) return e.text;
+      throw e;
+    }
+  }
+  // Any markdown file whose metadataCache blocks already have this id.
+  // metadataCache keys block ids in lower case.
+  blockIdTaken(id) {
+    const key3 = id.toLowerCase();
+    const { metadataCache, vault } = this.app;
+    return vault.getMarkdownFiles().some((f) => {
+      var _a;
+      const blocks = (_a = metadataCache.getFileCache(f)) == null ? void 0 : _a.blocks;
+      return !!blocks && (Object.prototype.hasOwnProperty.call(blocks, key3) || Object.prototype.hasOwnProperty.call(blocks, id));
+    });
+  }
+  // Subscribes the managed-note index to the vault and metadata cache.
+  // Call once from Plugin.onload (before the layout is ready, so the first
+  // "resolved" isn't missed): `vault.register(this)`. The plugin
+  // unregisters the events on unload.
+  register(component) {
+    if (this.watching) return;
+    this.watching = true;
+    const { vault, metadataCache, workspace } = this.app;
+    component.registerEvent(
+      metadataCache.on("changed", (file, _data, cache) => {
+        var _a;
+        return (_a = this.managed) == null ? void 0 : _a.set(file.path, managedRefOf(cache == null ? void 0 : cache.frontmatter));
+      })
+    );
+    component.registerEvent(metadataCache.on("deleted", (file) => {
+      var _a;
+      return (_a = this.managed) == null ? void 0 : _a.delete(file.path);
+    }));
+    component.registerEvent(metadataCache.on("resolved", () => this.onResolved()));
+    component.registerEvent(vault.on("rename", (file, oldPath) => this.onRenamed(file, oldPath)));
+    component.registerEvent(
+      vault.on("delete", (file) => {
+        var _a, _b;
+        if (file instanceof import_obsidian34.TFolder) (_a = this.managed) == null ? void 0 : _a.deleteUnder(file.path);
+        else (_b = this.managed) == null ? void 0 : _b.delete(file.path);
+      })
+    );
+    if (workspace.layoutReady) this.markResolved();
+  }
+  exists(path) {
+    return this.app.vault.getAbstractFileByPath((0, import_obsidian34.normalizePath)(path)) !== null;
+  }
+  // Creates missing parent folders; rejects when the file already exists.
+  async create(path, content) {
+    var _a;
+    const target = (0, import_obsidian34.normalizePath)(path);
+    if (this.app.vault.getAbstractFileByPath(target)) throw new Error(`File already exists: ${target}`);
+    await this.ensureFolder(parentOf(target));
+    const file = await this.app.vault.create(target, content);
+    (_a = this.managed) == null ? void 0 : _a.set(file.path, managedRefOf(parseFrontmatter(content)));
+  }
+  // fileManager.renameFile, so links to the file follow it. Creates the
+  // target's missing folders; rejects when the source is missing or the
+  // target exists (never overwrites).
+  async rename(from, to) {
+    var _a;
+    const source = (0, import_obsidian34.normalizePath)(from);
+    const target = (0, import_obsidian34.normalizePath)(to);
+    const file = this.app.vault.getAbstractFileByPath(source);
+    if (!file) throw new Error(`File not found: ${source}`);
+    if (source === target) return;
+    if (this.app.vault.getAbstractFileByPath(target)) throw new Error(`File already exists: ${target}`);
+    await this.ensureFolder(parentOf(target));
+    await this.app.fileManager.renameFile(file, target);
+    (_a = this.managed) == null ? void 0 : _a.move(source, target);
+  }
+  // Frontmatter `vocab-tracker: <kind>` + `vocab-tracker-id: <id>`, the id
+  // compared as a string (also article paths for "ai-note"). Keep an index
+  // updated from metadataCache changed / rename / delete rather than
+  // scanning every file per call.
+  findManaged(kind, id) {
+    var _a;
+    if (!this.watching) return this.scan().find(kind, id);
+    (_a = this.managed) != null ? _a : this.managed = this.scan();
+    return this.managed.find(kind, id);
+  }
+  // Resolves once metadataCache has finished its initial index, so
+  // findManaged doesn't miss a moved word page or .ai.md at startup.
+  ready() {
+    if (this.cacheResolved || cacheLooksResolved(this.app)) {
+      this.cacheResolved = true;
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        if (ref) this.app.metadataCache.offref(ref);
+        resolve();
+      };
+      const timer = setTimeout(() => {
+        this.readyWaiters = this.readyWaiters.filter((w) => w !== finish);
+        finish();
+      }, this.readyTimeoutMs);
+      this.readyWaiters.push(finish);
+      const ref = this.watching ? null : this.app.metadataCache.on("resolved", () => this.onResolved());
+    });
+  }
+  onResolved() {
+    if (this.cacheResolved) return;
+    this.managed = null;
+    this.markResolved();
+  }
+  markResolved() {
+    this.cacheResolved = true;
+    for (const finish of this.readyWaiters.splice(0)) finish();
+  }
+  onRenamed(file, oldPath) {
+    var _a;
+    const index = this.managed;
+    if (!index) return;
+    if (file instanceof import_obsidian34.TFolder) {
+      index.moveUnder(oldPath, file.path);
+    } else if (index.has(oldPath)) {
+      index.move(oldPath, file.path);
+    } else if (file instanceof import_obsidian34.TFile) {
+      index.set(file.path, managedRefOf((_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter));
+    }
+  }
+  scan() {
+    var _a;
+    const index = new ManagedIndex();
+    const { vault, metadataCache } = this.app;
+    for (const file of vault.getMarkdownFiles()) {
+      index.set(file.path, managedRefOf((_a = metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter));
+    }
+    return index;
+  }
+  // Creates `dir` and its missing parents, one level at a time. A folder
+  // that appears meanwhile (another call, sync) is fine; a file in the
+  // way is an error.
+  async ensureFolder(dir) {
+    if (!dir) return;
+    const parts = dir.split("/");
+    for (let i = 1; i <= parts.length; i++) {
+      const path = parts.slice(0, i).join("/");
+      const existing = this.app.vault.getAbstractFileByPath(path);
+      if (existing instanceof import_obsidian34.TFolder) continue;
+      if (existing) throw new Error(`Not a folder: ${path}`);
+      try {
+        await this.app.vault.createFolder(path);
+      } catch (e) {
+        if (!(this.app.vault.getAbstractFileByPath(path) instanceof import_obsidian34.TFolder)) throw e;
+      }
+    }
+  }
+};
+var KIND_KEY = "vocab-tracker";
+var ID_KEY = "vocab-tracker-id";
+function scalar(v) {
+  if (typeof v === "string") return v.trim() || null;
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  return null;
+}
+function managedRefOf(frontmatter2) {
+  if (!frontmatter2 || typeof frontmatter2 !== "object") return null;
+  const fm = frontmatter2;
+  const kind = scalar(fm[KIND_KEY]);
+  const id = scalar(fm[ID_KEY]);
+  return kind && id ? { kind, id } : null;
+}
+function parseFrontmatter(text) {
+  const m = /^\ufeff?---[ \t]*\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)[ \t]*(?:\r?\n|$)/.exec(text);
+  if (!m) return null;
+  const out = {};
+  for (const line of m[1].split(/\r?\n/)) {
+    const kv = /^([\w-]+):[ \t]*(.*?)[ \t]*$/.exec(line);
+    if (!kv) continue;
+    let value = kv[2];
+    if (value.startsWith('"')) {
+      try {
+        const parsed = JSON.parse(value);
+        if (typeof parsed === "string") value = parsed;
+      } catch (e) {
+      }
+    } else if (value.length >= 2 && value.startsWith("'") && value.endsWith("'")) {
+      value = value.slice(1, -1).replace(/''/g, "'");
+    }
+    out[kv[1]] = value;
+  }
+  return out;
+}
+var refKey = (kind, id) => `${kind}
+${id}`;
+var ManagedIndex = class {
+  constructor() {
+    this.byPath = /* @__PURE__ */ new Map();
+    this.byRef = /* @__PURE__ */ new Map();
+  }
+  has(path) {
+    return this.byPath.has(path);
+  }
+  set(path, ref) {
+    this.delete(path);
+    if (!ref) return;
+    const key3 = refKey(ref.kind, ref.id);
+    this.byPath.set(path, key3);
+    let paths = this.byRef.get(key3);
+    if (!paths) this.byRef.set(key3, paths = /* @__PURE__ */ new Set());
+    paths.add(path);
+  }
+  delete(path) {
+    const key3 = this.byPath.get(path);
+    if (key3 === void 0) return;
+    this.byPath.delete(path);
+    const paths = this.byRef.get(key3);
+    paths == null ? void 0 : paths.delete(path);
+    if (paths && !paths.size) this.byRef.delete(key3);
+  }
+  move(from, to) {
+    const key3 = this.byPath.get(from);
+    if (key3 === void 0) return;
+    const [kind, id] = splitKey(key3);
+    this.delete(from);
+    this.set(to, { kind, id });
+  }
+  moveUnder(fromDir, toDir) {
+    for (const path of [...this.byPath.keys()]) {
+      if (path.startsWith(`${fromDir}/`)) this.move(path, toDir + path.slice(fromDir.length));
+    }
+  }
+  deleteUnder(dir) {
+    for (const path of [...this.byPath.keys()]) {
+      if (path.startsWith(`${dir}/`)) this.delete(path);
+    }
+  }
+  // With several (a sync conflict copy), the same one every time.
+  find(kind, id) {
+    const paths = this.byRef.get(refKey(kind, id));
+    if (!(paths == null ? void 0 : paths.size)) return null;
+    return [...paths].sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0))[0];
+  }
+};
+function splitKey(key3) {
+  const i = key3.indexOf("\n");
+  return [key3.slice(0, i), key3.slice(i + 1)];
+}
+function parentOf(path) {
+  const i = path.lastIndexOf("/");
+  return i > 0 ? path.slice(0, i) : "";
+}
+function cacheLooksResolved(app) {
+  return app.metadataCache.resolved === true;
+}
+
+// src/services/export/labels.ts
+var KEYS = [
+  "families",
+  "familiesEmpty",
+  "usage",
+  "usageEmpty",
+  "usageRelated",
+  "trivia",
+  "triviaEmpty",
+  "triviaMentionedIn",
+  "discussion",
+  "discussionEmpty",
+  "userNotesHint",
+  "paragraphsEmpty",
+  "paragraphOrphaned",
+  "wordsLearned",
+  "wordsEmpty",
+  "wordQuestions",
+  "favorites",
+  "favoritesEmpty",
+  "aborted"
+];
+function exportLabels() {
+  const labels = {};
+  for (const key3 of KEYS) labels[key3] = t(`export.${key3}`);
+  return labels;
+}
+
+// src/services/export/managedBlock.ts
+var NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
+function checkName(name) {
+  if (!NAME_RE.test(name)) throw new Error(`Invalid managed block name: ${JSON.stringify(name)}`);
+}
+function beginMarker(name) {
+  checkName(name);
+  return `%% vt:begin ${name} %%`;
+}
+function endMarker(name) {
+  checkName(name);
+  return `%% vt:end ${name} %%`;
+}
+var MARKER_LINE = /^[ \t]*%%[ \t]*vt:(begin|end)[ \t]+([a-z0-9][a-z0-9-]*)[ \t]*%%[ \t]*$/;
+function lines2(text) {
+  const out = [];
+  let start = 0;
+  while (start <= text.length) {
+    const nl = text.indexOf("\n", start);
+    if (nl < 0) {
+      out.push({ start, textEnd: text.length, end: text.length, eol: "" });
+      break;
+    }
+    const cr = nl > start && text[nl - 1] === "\r";
+    out.push({ start, textEnd: cr ? nl - 1 : nl, end: nl + 1, eol: cr ? "\r\n" : "\n" });
+    start = nl + 1;
+  }
+  return out;
+}
+function markerOf(text, line) {
+  const m = MARKER_LINE.exec(text.slice(line.start, line.textEnd).replace(/^\uFEFF/, ""));
+  return m ? { kind: m[1], name: m[2] } : null;
+}
+function findManagedBlock(text, name) {
+  checkName(name);
+  const all = lines2(text);
+  let open = null;
+  for (const line of all) {
+    const marker = markerOf(text, line);
+    if (!marker || marker.name !== name) continue;
+    if (marker.kind === "begin") {
+      open = line;
+    } else if (open) {
+      return { contentStart: open.end, contentEnd: line.start, eol: open.eol };
+    }
+  }
+  return null;
+}
+function bodyLines(body) {
+  if (body === "") return [];
+  return body.replace(/\r\n?/g, "\n").split("\n").map((l3) => MARKER_LINE.test(l3) ? l3.replace("%%", "\\%%") : l3);
+}
+function detectEol(text) {
+  const nl = text.indexOf("\n");
+  return nl > 0 && text[nl - 1] === "\r" ? "\r\n" : "\n";
+}
+function renderSection(section2, eol = "\n") {
+  return [beginMarker(section2.name), ...bodyLines(section2.body), endMarker(section2.name)].join(eol);
+}
+function replaceManagedBlock(text, section2) {
+  const range = findManagedBlock(text, section2.name);
+  if (range) {
+    const body = bodyLines(section2.body);
+    const content = body.length ? body.join(range.eol) + range.eol : "";
+    if (text.slice(range.contentStart, range.contentEnd) === content) return text;
+    return text.slice(0, range.contentStart) + content + text.slice(range.contentEnd);
+  }
+  return appendSection(text, section2);
+}
+function appendSection(text, section2) {
+  const eol = detectEol(text);
+  let sep = "";
+  if (text !== "") {
+    if (!text.endsWith("\n")) sep = eol + eol;
+    else if (!/(\r?\n)[ \t]*\r?\n$/.test(text)) sep = eol;
+  }
+  return text + sep + renderSection(section2, eol) + eol;
+}
+function applyManagedBlocks(text, sections) {
+  let out = text;
+  for (const section2 of sections) out = replaceManagedBlock(out, section2);
+  return out;
+}
+function buildManagedFile(head, sections, tail = "") {
+  const parts = [head.replace(/\n+$/, ""), ...sections.map((s) => renderSection(s)), tail.replace(/\n+$/, "")];
+  return parts.filter((p) => p !== "").join("\n\n") + "\n";
+}
+
+// src/services/export/ports.ts
+var DEFAULT_EXPORT_FOLDERS = {
+  words: "vocab-list/\u55AE\u5B57",
+  threads: "vocab-list/\u8A0E\u8AD6\u4E32",
+  triviaFile: "vocab-list/\u51B7\u77E5\u8B58.md"
+};
+
+// src/services/export/renderers/common.ts
+function roundsOf(turns) {
+  const out = [];
+  let pending = null;
+  for (const turn of turns) {
+    if (turn.deletedAt) continue;
+    if (turn.role === "user") {
+      pending = turn;
+      continue;
+    }
+    if (pending && turn.content.trim() && (turn.status === "done" || turn.status === "aborted")) {
+      out.push({ question: pending, answer: turn });
+    }
+    pending = null;
+  }
+  return out;
+}
+function threadRounds(thread) {
+  return thread && !thread.deletedAt ? roundsOf(liveTurns(thread)) : [];
+}
+var FENCE = /^[ \t]*(`{3,}|~{3,})/;
+function balanceFences(markdown) {
+  let open = null;
+  for (const line of markdown.split("\n")) {
+    const m = FENCE.exec(line);
+    if (!m) continue;
+    const fence = m[1];
+    if (open === null) open = fence;
+    else if (fence[0] === open[0] && fence.length >= open.length && line.trim() === fence) open = null;
+  }
+  return open === null ? markdown : `${markdown.replace(/\n*$/, "")}
+${open}`;
+}
+function normalizeNewlines(text) {
+  return text.replace(/\r\n?/g, "\n");
+}
+function blockquote(text) {
+  return normalizeNewlines(text.trim()).split("\n").map((l3) => l3.trim() ? `> ${l3}` : ">").join("\n");
+}
+function oneLine(text) {
+  return normalizeNewlines(text).replace(/\s*\n\s*/g, " ").trim();
+}
+function inlineCode(text) {
+  const s = oneLine(text);
+  return s.includes("`") ? `\`\` ${s} \`\`` : `\`${s}\``;
+}
+function italic(text) {
+  return `*${text}*`;
+}
+function wordRef(ctx, word, entryId) {
+  const target = ctx.pageLink(word, entryId);
+  return target ? `[[${target}|${word}]]` : word;
+}
+function renderRound(round, ctx, heading) {
+  var _a;
+  const { question, answer } = round;
+  const label = question.taskId ? ctx.taskLabel(question.taskId) : void 0;
+  const title = [ctx.formatDate(question.at), label].filter(Boolean).join(" \xB7 ");
+  const quote = [];
+  if ((_a = question.selection) == null ? void 0 : _a.trim()) quote.push(`\u300C${oneLine(question.selection)}\u300D`);
+  quote.push(`**Q** ${normalizeNewlines(question.content).trim()}`);
+  const parts = [`${heading} ${title}`, blockquote(quote.join("\n")), "", balanceFences(normalizeNewlines(answer.content).trim())];
+  if (answer.status === "aborted") parts.push("", italic(ctx.labels.aborted));
+  return parts.join("\n");
+}
+function renderRounds(rounds, ctx, heading) {
+  return rounds.map((r) => renderRound(r, ctx, heading)).join("\n\n");
+}
+function fill(template, vars) {
+  return template.replace(/\{(\w+)\}/g, (m, k) => k in vars ? String(vars[k]) : m);
+}
+var YAML_KEYWORDS = /^(true|false|yes|no|on|off|null|~)$/i;
+function yamlValue(v) {
+  return /^[a-z][\w-]*$/i.test(v) && !YAML_KEYWORDS.test(v) ? v : JSON.stringify(v);
+}
+function frontmatter(fields) {
+  return ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${yamlValue(v)}`), "---"].join("\n");
+}
+
+// src/services/export/frontmatter.ts
+var BOM = "\uFEFF";
+function bomLength(text) {
+  return text.startsWith(BOM) ? BOM.length : 0;
+}
+function locate(text) {
+  const bom = bomLength(text);
+  const open = /^---[ \t]*\r?\n/.exec(text.slice(bom));
+  if (!open) return null;
+  const close = /^(?:---|\.\.\.)[ \t]*$/gm;
+  close.lastIndex = bom + open[0].length;
+  const m = close.exec(text);
+  return m ? { start: bom + open[0].length, end: m.index } : null;
+}
+var LINE = /^([\w-]+):[ \t]*(.*?)[ \t]*$/;
+function unquote2(raw) {
+  if (raw.startsWith('"')) {
+    try {
+      const v = JSON.parse(raw);
+      if (typeof v === "string") return v;
+    } catch (e) {
+    }
+    return raw;
+  }
+  if (raw.length >= 2 && raw.startsWith("'") && raw.endsWith("'")) return raw.slice(1, -1).replace(/''/g, "'");
+  return raw;
+}
+function lines3(text) {
+  return text.split(/(?<=\n)/).filter((l3) => l3 !== "");
+}
+function readFrontmatter(text) {
+  const at = locate(text);
+  if (!at) return null;
+  const out = {};
+  for (const line of lines3(text.slice(at.start, at.end))) {
+    const m = LINE.exec(line.replace(/\r?\n$/, ""));
+    if (m) out[m[1]] = unquote2(m[2]);
+  }
+  return out;
+}
+function editFrontmatter(text, fields, opts = {}) {
+  var _a, _b, _c, _d, _e;
+  const at = locate(text);
+  if (!at) {
+    if (!opts.add || !opts.create) return text;
+    const eol2 = (_b = (_a = /\r\n/.exec(text)) == null ? void 0 : _a[0]) != null ? _b : "\n";
+    const head = ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${yamlValue(v)}`), "---", ""].join(eol2);
+    const bom = bomLength(text);
+    return text.slice(0, bom) + head + text.slice(bom);
+  }
+  const body = lines3(text.slice(at.start, at.end));
+  const eol = /\r\n/.test(text.slice(0, at.start)) ? "\r\n" : "\n";
+  const done = /* @__PURE__ */ new Set();
+  const out = [];
+  let insertAt = -1;
+  for (let i = 0; i < body.length; i++) {
+    const line = body[i];
+    const key3 = (_c = LINE.exec(line.replace(/\r?\n$/, ""))) == null ? void 0 : _c[1];
+    if (key3 !== void 0 && key3 in fields && !done.has(key3)) {
+      done.add(key3);
+      out.push(`${key3}: ${yamlValue(fields[key3])}${(_e = (_d = /\r?\n$/.exec(line)) == null ? void 0 : _d[0]) != null ? _e : eol}`);
+      while (i + 1 < body.length && /^([ \t]|- )/.test(body[i + 1])) i++;
+    } else {
+      out.push(line);
+    }
+    if (key3 !== void 0 && key3 === opts.after) insertAt = out.length;
+  }
+  if (opts.add) {
+    const added = Object.keys(fields).filter((k) => !done.has(k)).map((k) => `${k}: ${yamlValue(fields[k])}${eol}`);
+    out.splice(insertAt < 0 ? out.length : insertAt, 0, ...added);
+  }
+  return text.slice(0, at.start) + out.join("") + text.slice(at.end);
+}
+
+// src/services/export/renderers/aiNote.ts
+var AI_NOTE_KIND = "ai-note";
+var HEADING_PREVIEW = 40;
+function preview(text) {
+  const line = oneLine(text);
+  return line.length > HEADING_PREVIEW ? `${line.slice(0, HEADING_PREVIEW).trimEnd()}\u2026` : line;
+}
+function byOrder(a, b) {
+  var _a, _b;
+  if (a.index !== b.index) {
+    if (a.index === null) return 1;
+    if (b.index === null) return -1;
+    return a.index - b.index;
+  }
+  return ((_a = a.createdAt) != null ? _a : "").localeCompare((_b = b.createdAt) != null ? _b : "");
+}
+function renderParagraph(p, article, ctx) {
+  const rounds = roundsOf(p.turns);
+  if (!rounds.length) return null;
+  const heading = p.index === null ? `## ${ctx.labels.paragraphOrphaned}` : `## \xB6${p.index + 1} ${preview(p.text)}`;
+  const quote = p.index !== null && p.blockId ? `![[${article}#^${p.blockId}]]` : blockquote(p.text);
+  return [heading, "", quote, "", renderRounds(rounds, ctx, "###")].join("\n");
+}
+function renderParagraphs(input, ctx) {
+  const article = linkTarget(input.articlePath);
+  const parts = [...input.paragraphs].sort(byOrder).map((p) => renderParagraph(p, article, ctx)).filter((p) => p !== null);
+  return parts.length ? parts.join("\n\n") : italic(ctx.labels.paragraphsEmpty);
+}
+function renderWords(input, ctx) {
+  const list = input.words.map((w) => {
+    const ref = wordRef(ctx, w.word, w.entryId);
+    return w.questions > 0 ? `- ${ref} \xB7 ${fill(ctx.labels.wordQuestions, { n: w.questions })}` : `- ${ref}`;
+  });
+  return [`## ${ctx.labels.wordsLearned}`, "", list.length ? list.join("\n") : italic(ctx.labels.wordsEmpty)].join("\n");
+}
+function hasAiNoteContent(input) {
+  return input.paragraphs.some((p) => roundsOf(p.turns).length > 0);
+}
+function renderAiNoteSections(input, ctx) {
+  return [
+    { name: "paragraphs", body: renderParagraphs(input, ctx) },
+    { name: "words", body: renderWords(input, ctx) }
+  ];
+}
+function renderAiNoteFile(input, ctx) {
+  const head = frontmatter({
+    "vocab-tracker": AI_NOTE_KIND,
+    "vocab-tracker-id": input.articlePath,
+    source: `[[${linkTarget(input.articlePath)}]]`
+  });
+  return buildManagedFile(head, renderAiNoteSections(input, ctx), `%% ${ctx.labels.userNotesHint} %%
+`);
+}
+function sourceTarget(source) {
+  const m = /^\[\[([^\]|#]*)/.exec(source.trim());
+  return (m ? m[1] : source).trim().replace(/\.md$/i, "");
+}
+function aiNoteOwner(text, articlePath, renamedTo) {
+  const fm = readFrontmatter(text);
+  if (!fm) return "unclaimed";
+  const kind = fm["vocab-tracker"];
+  if (kind !== void 0 && kind !== AI_NOTE_KIND) return "other";
+  const paths = renamedTo === void 0 ? [articlePath] : [articlePath, renamedTo];
+  const id = fm["vocab-tracker-id"];
+  if (id) return paths.includes(id) ? "id" : "other";
+  if (!fm.source) return "unclaimed";
+  const target = sourceTarget(fm.source);
+  if (paths.some((p) => linkTarget(p) === target)) return "source";
+  if (renamedTo !== void 0 && target === noteBasename(renamedTo)) return "source";
+  return "other";
+}
+function claimAiNote(text, articlePath) {
+  var _a;
+  const fields = {};
+  if (((_a = readFrontmatter(text)) == null ? void 0 : _a["vocab-tracker"]) === void 0) fields["vocab-tracker"] = AI_NOTE_KIND;
+  fields["vocab-tracker-id"] = articlePath;
+  return editFrontmatter(text, fields, { add: true, after: "vocab-tracker", create: true });
+}
+function retargetAiNote(text, newPath) {
+  return editFrontmatter(claimAiNote(text, newPath), { source: `[[${linkTarget(newPath)}]]` });
+}
+
+// src/services/export/renderers/triviaFavorites.ts
+function renderItem(item, ctx) {
+  const meta = [];
+  const subject = ctx.entryWord(item.entryId);
+  if (subject) meta.push(wordRef(ctx, subject, item.entryId));
+  if (item.createdAt) meta.push(ctx.formatDate(item.createdAt));
+  const lines4 = [`### ${oneLine(item.title)}`, "", normalizeNewlines(item.body).trim()];
+  if (meta.length) lines4.push("", italic(meta.join(" \xB7 ")));
+  return lines4.join("\n");
+}
+function renderTriviaFavoritesSections(input, ctx) {
+  const items = input.items.filter((t2) => !t2.deletedAt).sort((a, b) => {
+    var _a, _b;
+    return ((_a = b.createdAt) != null ? _a : "").localeCompare((_b = a.createdAt) != null ? _b : "");
+  });
+  const body = items.length ? items.map((t2) => renderItem(t2, ctx)).join("\n\n") : italic(ctx.labels.favoritesEmpty);
+  return [{ name: "trivia-favorites", body: `## ${ctx.labels.favorites}
+
+${body}` }];
+}
+function renderTriviaFavoritesFile(input, ctx) {
+  return buildManagedFile("```vocab-trivia\n```", renderTriviaFavoritesSections(input, ctx));
+}
+
+// src/services/export/renderers/wordPage.ts
+var WORD_PAGE_KIND = "word";
+function familiesOf(families, entry) {
+  const word = entry.word.toLowerCase();
+  return families.filter(
+    (f) => !f.deletedAt && f.groups.some((g) => g.members.some((m) => m.entryId === entry.id || !m.entryId && m.word.toLowerCase() === word))
+  );
+}
+function liveTrivia(items) {
+  return items.filter((t2) => !t2.deletedAt).sort((a, b) => {
+    var _a, _b;
+    return ((_a = b.createdAt) != null ? _a : "").localeCompare((_b = a.createdAt) != null ? _b : "");
+  });
+}
+function triviaAbout(items, entryId) {
+  return liveTrivia(items).filter((t2) => t2.entryId === entryId);
+}
+function mentionsEntry(item, entry) {
+  const word = entry.word.toLowerCase();
+  return item.entryId !== entry.id && item.mentions.some((m) => m === entry.id || m.toLowerCase() === word);
+}
+function triviaMentioning(items, entry) {
+  return liveTrivia(items).filter((t2) => mentionsEntry(t2, entry));
+}
+function hasWordPageContent(input) {
+  return threadRounds(input.thread).length > 0 || triviaAbout(input.trivia, input.entry.id).length > 0;
+}
+function section(name, heading, body) {
+  return { name, body: `## ${heading}
+
+${body}` };
+}
+function renderFamilies2(input, ctx) {
+  const families = familiesOf(input.families, input.entry);
+  if (!families.length) return italic(ctx.labels.familiesEmpty);
+  const self = input.entry.word.toLowerCase();
+  return families.map((f) => {
+    const heading = `### ${[...new Set([f.topic, f.label].map(oneLine).filter(Boolean))].join(" \xB7 ")}`;
+    const groups = f.groups.filter((g) => g.members.length).map((g) => {
+      const members = g.members.map((m) => {
+        const isSelf = m.entryId === input.entry.id || m.word.toLowerCase() === self;
+        const word = isSelf ? `**${m.word}**` : wordRef(ctx, m.word, m.entryId);
+        return [word, isSelf ? "" : oneLine(m.zh)].filter(Boolean).join(" ");
+      }).join(" \xB7 ");
+      return g.label.trim() ? `- **${oneLine(g.label)}**\uFF1A${members}` : `- ${members}`;
+    });
+    return [heading, "", ...groups].join("\n");
+  }).join("\n\n");
+}
+function renderUsage(usage, ctx) {
+  if (!usage || !usage.patterns.length && !usage.related.length) return italic(ctx.labels.usageEmpty);
+  const lines4 = usage.patterns.map((p) => {
+    const item = [`- ${inlineCode(p.pattern)}`, oneLine(p.meaningZh)].filter(Boolean).join(" ");
+    return p.example.trim() ? `${item}
+  - ${italic(oneLine(p.example))}` : item;
+  });
+  if (usage.related.length) {
+    if (lines4.length) lines4.push("");
+    const related = usage.related.map((r) => r.zh.trim() ? `${oneLine(r.phrase)}\uFF08${oneLine(r.zh)}\uFF09` : oneLine(r.phrase));
+    lines4.push(`**${ctx.labels.usageRelated}**\uFF1A${related.join(" \xB7 ")}`);
+  }
+  return lines4.join("\n");
+}
+function renderTrivia2(input, ctx) {
+  const own = triviaAbout(input.trivia, input.entry.id);
+  const mentioned = triviaMentioning(input.trivia, input.entry);
+  const parts = [];
+  if (!own.length) parts.push(italic(ctx.labels.triviaEmpty));
+  for (const item of own) {
+    const lines4 = [`### ${oneLine(item.title)}`, "", normalizeNewlines(item.body).trim()];
+    if (item.createdAt) lines4.push("", italic(ctx.formatDate(item.createdAt)));
+    parts.push(lines4.join("\n"));
+  }
+  if (mentioned.length) {
+    const list = mentioned.map((t2) => {
+      const subject = ctx.entryWord(t2.entryId);
+      return subject ? `- ${oneLine(t2.title)}\uFF08${wordRef(ctx, subject, t2.entryId)}\uFF09` : `- ${oneLine(t2.title)}`;
+    });
+    parts.push([`**${ctx.labels.triviaMentionedIn}**`, "", ...list].join("\n"));
+  }
+  return parts.join("\n\n");
+}
+function renderDiscussion(input, ctx) {
+  const rounds = threadRounds(input.thread);
+  return rounds.length ? renderRounds(rounds, ctx, "###") : italic(ctx.labels.discussionEmpty);
+}
+function renderWordPageSections(input, ctx) {
+  return [
+    section("families", ctx.labels.families, renderFamilies2(input, ctx)),
+    section("usage", ctx.labels.usage, renderUsage(input.usage, ctx)),
+    section("trivia", ctx.labels.trivia, renderTrivia2(input, ctx)),
+    section("discussion", ctx.labels.discussion, renderDiscussion(input, ctx))
+  ];
+}
+function renderWordPageFile(input, ctx) {
+  const head = [
+    frontmatter({ "vocab-tracker": WORD_PAGE_KIND, "vocab-tracker-id": input.entry.id }),
+    "```vocab-word",
+    "```"
+  ].join("\n");
+  return buildManagedFile(head, renderWordPageSections(input, ctx), `%% ${ctx.labels.userNotesHint} %%
+`);
+}
+
+// src/services/export/ExportService.ts
+var EXPORT_DEBOUNCE_MS = 1e3;
+var CREATE_RANK = { never: 0, ifContent: 1, always: 2 };
+var AI_NOTE_EXT = ".ai.md";
+var MAX_NOTE_NAMES = 20;
+var FOLDER_LABEL_BYTES = 60;
+var NotThisArticle = class extends Error {
+};
+function shortDate4(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+}
+function jobKey(job) {
+  switch (job.kind) {
+    case "word":
+      return `word:${job.entryId}`;
+    case "note":
+      return `note:${job.articlePath}`;
+    case "trivia":
+      return "trivia";
+  }
+}
+function mergeJobs(a, b) {
+  if (a.kind === "word" && b.kind === "word" || a.kind === "note" && b.kind === "note") {
+    return CREATE_RANK[a.create] >= CREATE_RANK[b.create] ? a : { ...a, create: b.create };
+  }
+  return a;
+}
+var ExportService = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.timers = /* @__PURE__ */ new Map();
+    // File path → the latest write queued for it (each waits for the last).
+    // An article's note queues under its first name (noteQueue).
+    this.queues = /* @__PURE__ */ new Map();
+    // Article path → its note, as last found or created.
+    this.notePaths = /* @__PURE__ */ new Map();
+    this.subscriptions = [];
+    this.disposed = false;
+    var _a;
+    this.debounceMs = (_a = deps.debounceMs) != null ? _a : EXPORT_DEBOUNCE_MS;
+  }
+  // ── Paths ────────────────────────────────────────────────────────────
+  folders() {
+    var _a, _b, _c;
+    return (_c = (_b = (_a = this.deps).folders) == null ? void 0 : _b.call(_a)) != null ? _c : DEFAULT_EXPORT_FOLDERS;
+  }
+  // Where a word's page goes when it doesn't exist yet.
+  defaultWordPagePath(word) {
+    return joinPath(this.folders().words, `${wordSlug(word)}.md`);
+  }
+  // The word's page: found by its frontmatter id first (survives the user
+  // renaming or moving it), else the default path.
+  wordPagePath(entryId, word) {
+    var _a;
+    return (_a = this.deps.vault.findManaged(WORD_PAGE_KIND, entryId)) != null ? _a : this.defaultWordPagePath(word);
+  }
+  // The names an article's note can have, in the order they're tried:
+  // "Notes", "Notes (b)", "Notes (b) 2"… for "a/b/Notes.md" ("Notes 2"…
+  // for an article at the vault root). The name is shortened, never the
+  // suffix, so long names still differ.
+  aiNoteNames(articlePath) {
+    const folder = this.folders().threads;
+    const budget = MAX_NAME_BYTES - utf8Bytes2(AI_NOTE_EXT);
+    const base = noteBasename(articlePath);
+    const name = (suffix) => joinPath(folder, `${slugify(base, "untitled", budget - utf8Bytes2(suffix))}${suffix}${AI_NOTE_EXT}`);
+    const dir = articlePath.slice(0, Math.max(0, articlePath.lastIndexOf("/")));
+    const label = slugify(dir.slice(dir.lastIndexOf("/") + 1), "", FOLDER_LABEL_BYTES);
+    const tag = label ? ` (${label})` : "";
+    const names = [name("")];
+    if (tag) names.push(name(tag));
+    for (let n = 2; names.length < MAX_NOTE_NAMES; n++) names.push(name(`${tag} ${n}`));
+    return names;
+  }
+  // The article's note, for opening it: a file that exists and belongs to
+  // this article, or null when it has none. Waits for writes to it that
+  // are in progress. Never creates a note; an older note without an id,
+  // found by its name, gets its id (claimAiNote) as on the next export.
+  async aiNotePath(articlePath) {
+    const { vault } = this.deps;
+    const managed = vault.findManaged(AI_NOTE_KIND, articlePath);
+    if (managed) return managed;
+    const known = this.notePaths.get(articlePath);
+    if (known && vault.exists(known)) return known;
+    let path = null;
+    await this.enqueue(this.noteQueue(articlePath), async () => {
+      path = await this.resolveNote(articlePath, (text, owner) => owner === "id" ? text : claimAiNote(text, articlePath), null);
+    });
+    return path;
+  }
+  // Writes for one article's note wait in the queue of its first name, so
+  // same-name articles (which compete for it) also take turns.
+  noteQueue(articlePath) {
+    return this.aiNoteNames(articlePath)[0];
+  }
+  // ── Announcing changes ───────────────────────────────────────────────
+  // A word's page content changed (its thread, families, usage, trivia).
+  // `create: "ifContent"` lets this change create the page when it now has
+  // a discussion or saved trivia; the default only updates an existing page.
+  wordChanged(entryId, create = "never") {
+    this.schedule({ kind: "word", entryId, create });
+  }
+  articleChanged(articlePath, create = "ifContent") {
+    this.schedule({ kind: "note", articlePath, create });
+  }
+  triviaChanged() {
+    this.schedule({ kind: "trivia" });
+  }
+  threadChanged(thread) {
+    var _a, _b;
+    const anchor = thread.anchor;
+    if (anchor.kind === "paragraph") {
+      this.articleChanged(anchor.path);
+    } else if (anchor.kind === "word") {
+      this.wordChanged(anchor.entryId, "ifContent");
+      const source = (_b = (_a = this.deps.data.entry(anchor.entryId)) == null ? void 0 : _a.source) == null ? void 0 : _b.path;
+      if (source) this.articleChanged(source, "never");
+    }
+  }
+  // Every word in the family (learned members) shows it on its page.
+  familyChanged(family) {
+    for (const group of family.groups) {
+      for (const m of group.members) if (m.entryId) this.wordChanged(m.entryId);
+    }
+  }
+  // A trivia item was saved, edited or unsaved.
+  triviaItemChanged(item) {
+    this.triviaChanged();
+    this.wordChanged(item.entryId, "ifContent");
+    for (const entry of this.deps.data.entries()) {
+      if (mentionsEntry(item, entry)) this.wordChanged(entry.id);
+    }
+  }
+  usageChanged(entryId) {
+    this.wordChanged(entryId);
+  }
+  // ── Event wiring ─────────────────────────────────────────────────────
+  watchThreads(source) {
+    this.track(source.on("thread:upsert", (thread) => this.threadChanged(thread)));
+  }
+  // LearnStore: families and saved trivia (deletes arrive as upserts
+  // carrying deletedAt). A sync merge ("learn:reloaded") isn't followed:
+  // the device that made the change already exported it, and the files
+  // sync on their own.
+  watchLearn(source) {
+    this.track(source.on("family:upsert", (family) => this.familyChanged(family)));
+    this.track(source.on("trivia:upsert", (item) => this.triviaItemChanged(item)));
+  }
+  // VerbUsageService: a usage block was (re)generated.
+  watchUsage(source) {
+    this.track(source.on("verb:usage", ({ entryId }) => this.usageChanged(entryId)));
+  }
+  // Keeps an unsubscribe function to call on dispose().
+  track(unsubscribe) {
+    if (this.disposed) unsubscribe();
+    else this.subscriptions.push(unsubscribe);
+  }
+  // ── Immediate actions ────────────────────────────────────────────────
+  // The 「單字頁」 button: creates the page now if needed (no debounce) and
+  // returns its path, or null when the entry doesn't exist.
+  async openWordPage(entryId) {
+    const key3 = jobKey({ kind: "word", entryId, create: "always" });
+    const pending = this.timers.get(key3);
+    if (pending) {
+      clearTimeout(pending.timer);
+      this.timers.delete(key3);
+    }
+    return this.run({ kind: "word", entryId, create: "always" });
+  }
+  // An article was renamed or moved (規劃書 06 §4.6): its .ai.md's id and
+  // source follow, and so does its name unless the user renamed or moved
+  // the note themselves. The paragraph anchors are updated by their owner
+  // first. An export still pending for the old path moves to the new one
+  // with its create mode, so a note due to be created still is.
+  async renameArticle(oldPath, newPath) {
+    const oldKey = jobKey({ kind: "note", articlePath: oldPath, create: "never" });
+    const pending = this.timers.get(oldKey);
+    let create = "never";
+    if (pending) {
+      clearTimeout(pending.timer);
+      this.timers.delete(oldKey);
+      if (pending.job.kind === "note") create = pending.job.create;
+    }
+    if (oldPath !== newPath) await this.enqueue(this.noteQueue(oldPath), () => this.moveNote(oldPath, newPath));
+    this.articleChanged(newPath, create);
+  }
+  // Runs every pending export now and waits for all writes to land.
+  async flush() {
+    for (const [key3, { timer }] of [...this.timers]) {
+      clearTimeout(timer);
+      this.fire(key3);
+    }
+    await Promise.all([...this.queues.values()]);
+  }
+  // Unsubscribes and drops pending (not yet started) exports. Call flush()
+  // first to write them instead.
+  dispose() {
+    this.disposed = true;
+    for (const unsubscribe of this.subscriptions.splice(0)) unsubscribe();
+    for (const { timer } of this.timers.values()) clearTimeout(timer);
+    this.timers.clear();
+  }
+  // ── Scheduling ───────────────────────────────────────────────────────
+  schedule(job) {
+    if (this.disposed) return;
+    if (this.deps.enabled && !this.deps.enabled(job.kind)) return;
+    const key3 = jobKey(job);
+    const pending = this.timers.get(key3);
+    if (pending) clearTimeout(pending.timer);
+    const merged = pending ? mergeJobs(pending.job, job) : job;
+    this.timers.set(key3, { timer: setTimeout(() => this.fire(key3), this.debounceMs), job: merged });
+  }
+  fire(key3) {
+    const pending = this.timers.get(key3);
+    if (!pending) return;
+    this.timers.delete(key3);
+    void this.run(pending.job);
+  }
+  enqueue(path, task) {
+    var _a;
+    const prev = (_a = this.queues.get(path)) != null ? _a : Promise.resolve();
+    const next = prev.then(task).catch((e) => console.error(`Vocab Tracker: couldn't export ${path}`, e));
+    this.queues.set(path, next);
+    void next.then(() => {
+      if (this.queues.get(path) === next) this.queues.delete(path);
+    });
+    return next;
+  }
+  // Resolves to the file's path once its write has finished (or failed).
+  async run(job) {
+    switch (job.kind) {
+      case "word": {
+        const entry = this.deps.data.entry(job.entryId);
+        if (!entry) return null;
+        const path = this.wordPagePath(entry.id, entry.word);
+        await this.enqueue(path, () => this.writeWord(path, job.entryId, job.create));
+        return path;
+      }
+      case "note": {
+        let path = null;
+        await this.enqueue(this.noteQueue(job.articlePath), async () => {
+          path = await this.writeNote(job.articlePath, job.create);
+        });
+        return path;
+      }
+      case "trivia": {
+        const path = this.folders().triviaFile;
+        await this.enqueue(path, () => this.writeTrivia(path));
+        return path;
+      }
+    }
+  }
+  // ── Writing ──────────────────────────────────────────────────────────
+  // Updates the managed sections of an existing file, or creates the file
+  // when allowed. If the file appears between the check and the create
+  // (another device's sync, the user), falls back to updating it.
+  async write(path, sections, create) {
+    const { vault } = this.deps;
+    if (!vault.exists(path)) {
+      if (!create) return;
+      try {
+        await vault.create(path, create());
+        return;
+      } catch (e) {
+        if (!vault.exists(path)) throw e;
+      }
+    }
+    await vault.process(path, (text) => applyManagedBlocks(text, sections));
+  }
+  async writeWord(path, entryId, create) {
+    var _a, _b;
+    await ((_b = (_a = this.deps.data).ready) == null ? void 0 : _b.call(_a));
+    const { data } = this.deps;
+    const entry = data.entry(entryId);
+    if (!entry) return;
+    const input = {
+      entry,
+      families: data.families(),
+      usage: data.usage(entryId),
+      trivia: data.trivia(),
+      thread: data.wordThread(entryId)
+    };
+    const ctx = this.context();
+    const allowed = create === "always" || create === "ifContent" && hasWordPageContent(input);
+    await this.write(path, renderWordPageSections(input, ctx), allowed ? () => renderWordPageFile(input, ctx) : null);
+  }
+  // Finds the article's note — where it was last seen, by its frontmatter
+  // id, then under each of its names in turn — and, once process() has
+  // confirmed it really is this article's note, runs `update` on it. The
+  // first free name is where a new note goes, if `create` is given.
+  // Resolves to the note's path, or null when there's none.
+  async resolveNote(articlePath, update, create, renamedTo) {
+    const { vault } = this.deps;
+    const others = /* @__PURE__ */ new Set();
+    const tryUpdate = async (path) => {
+      try {
+        await vault.process(path, (text) => {
+          const owner = aiNoteOwner(text, articlePath, renamedTo);
+          if (owner === "other") throw new NotThisArticle();
+          return update(text, owner);
+        });
+      } catch (e) {
+        if (!(e instanceof NotThisArticle)) throw e;
+        others.add(path);
+        return false;
+      }
+      this.notePaths.set(articlePath, path);
+      return true;
+    };
+    const names = this.aiNoteNames(articlePath);
+    const known = [this.notePaths.get(articlePath), vault.findManaged(AI_NOTE_KIND, articlePath)];
+    for (const path of [...known, ...names]) {
+      if (path && !others.has(path) && vault.exists(path) && await tryUpdate(path)) return path;
+    }
+    if (!create) return null;
+    for (const path of names) {
+      if (others.has(path)) continue;
+      if (!vault.exists(path)) {
+        try {
+          await vault.create(path, create());
+          this.notePaths.set(articlePath, path);
+          return path;
+        } catch (e) {
+          if (!vault.exists(path)) throw e;
+        }
+      }
+      if (await tryUpdate(path)) return path;
+    }
+    return null;
+  }
+  async moveNote(oldPath, newPath) {
+    const found = await this.resolveNote(oldPath, (text) => retargetAiNote(text, newPath), null, newPath);
+    this.notePaths.delete(oldPath);
+    if (!found) return;
+    this.notePaths.set(newPath, found);
+    if (!this.aiNoteNames(oldPath).includes(found)) return;
+    const { vault } = this.deps;
+    for (const to of this.aiNoteNames(newPath)) {
+      if (to === found) return;
+      if (vault.exists(to)) continue;
+      await vault.rename(found, to);
+      this.notePaths.set(newPath, to);
+      return;
+    }
+  }
+  async writeNote(articlePath, create) {
+    var _a, _b;
+    await ((_b = (_a = this.deps.data).ready) == null ? void 0 : _b.call(_a));
+    const { data } = this.deps;
+    const paragraphs = (await data.paragraphThreads(articlePath)).flatMap(({ thread, index }) => {
+      const anchor = thread.anchor;
+      if (thread.deletedAt || anchor.kind !== "paragraph") return [];
+      return [{ index, text: anchor.snapshot, blockId: anchor.blockId, turns: thread.turns, createdAt: thread.createdAt }];
+    });
+    const words = data.entries().filter((e) => {
+      var _a2;
+      return ((_a2 = e.source) == null ? void 0 : _a2.path) === articlePath;
+    }).sort((a, b) => {
+      var _a2, _b2, _c, _d;
+      return ((_b2 = (_a2 = a.source) == null ? void 0 : _a2.line) != null ? _b2 : 0) - ((_d = (_c = b.source) == null ? void 0 : _c.line) != null ? _d : 0) || a.word.localeCompare(b.word);
+    }).map((e) => ({
+      word: e.word,
+      entryId: e.id,
+      // Rounds shown on the word page (failed / streaming ones excluded).
+      questions: threadRounds(data.wordThread(e.id)).length
+    }));
+    const input = { articlePath, paragraphs, words };
+    const ctx = this.context();
+    const sections = renderAiNoteSections(input, ctx);
+    const allowed = create === "always" || create === "ifContent" && hasAiNoteContent(input);
+    return this.resolveNote(
+      articlePath,
+      (text, owner) => {
+        const updated = applyManagedBlocks(text, sections);
+        return owner === "id" ? updated : claimAiNote(updated, articlePath);
+      },
+      allowed ? () => renderAiNoteFile(input, ctx) : null
+    );
+  }
+  async writeTrivia(path) {
+    var _a, _b;
+    await ((_b = (_a = this.deps.data).ready) == null ? void 0 : _b.call(_a));
+    const input = { items: this.deps.data.trivia() };
+    const ctx = this.context();
+    const hasItems = input.items.some((t2) => !t2.deletedAt);
+    await this.write(path, renderTriviaFavoritesSections(input, ctx), hasItems ? () => renderTriviaFavoritesFile(input, ctx) : null);
+  }
+  context() {
+    var _a, _b, _c, _d, _e;
+    const { data, vault } = this.deps;
+    return {
+      labels: (_c = (_b = (_a = this.deps).labels) == null ? void 0 : _b.call(_a)) != null ? _c : exportLabels(),
+      formatDate: (_d = this.deps.formatDate) != null ? _d : shortDate4,
+      taskLabel: (_e = this.deps.taskLabel) != null ? _e : (() => void 0),
+      entryWord: (id) => {
+        var _a2;
+        return (_a2 = data.entry(id)) == null ? void 0 : _a2.word;
+      },
+      pageLink: (word, entryId) => {
+        const found = entryId ? vault.findManaged(WORD_PAGE_KIND, entryId) : null;
+        if (found) return linkTarget(found);
+        const fallback = this.defaultWordPagePath(word);
+        return vault.exists(fallback) ? linkTarget(fallback) : null;
+      }
+    };
+  }
+};
+
+// src/services/export/exportData.ts
+function paragraphIndexOf(content, anchor) {
+  if (content === null) return null;
+  const found = resolveIn(content, anchor);
+  if (found.status !== "found") return null;
+  const n = paragraphNumber(content, found.section.lineStart);
+  return n === null ? null : n - 1;
+}
+function createExportData(src) {
+  const entry = (id) => src.entries().find((e) => e.id === id && !e.deletedAt);
+  return {
+    async ready() {
+      await Promise.all([src.threads.ensureLoaded(), src.learn.ensureLoaded()]);
+    },
+    entry,
+    entries: () => src.entries().filter((e) => !e.deletedAt),
+    wordThread: (entryId) => src.threads.wordThread(entryId),
+    async paragraphThreads(path) {
+      const threads = src.threads.paragraphThreads(path).filter((th) => !th.deletedAt && th.anchor.kind === "paragraph");
+      if (!threads.length) return [];
+      let content;
+      try {
+        content = await src.notes.read(path);
+      } catch (e) {
+        content = null;
+      }
+      return threads.map((thread) => ({ thread, index: paragraphIndexOf(content, thread.anchor) }));
+    },
+    families: () => src.learn.families().filter((f) => !f.deletedAt),
+    usage: (entryId) => {
+      var _a;
+      return (_a = entry(entryId)) == null ? void 0 : _a.usage;
+    },
+    trivia: () => src.learn.trivia().filter((t2) => !t2.deletedAt)
+  };
+}
+
+// src/services/files/entryFiles.ts
+var ENTRY_FILE_KIND = "entry";
+var ENTRY_FILES = [
+  { id: "flashcards", name: "\u55AE\u5B57\u5361", block: "vocab-flashcards" },
+  { id: "families", name: "\u5B57\u65CF\u6A39", block: "vocab-families" },
+  { id: "verbs", name: "\u52D5\u8A5E\u7528\u6CD5", block: "vocab-verbs" },
+  // The saved list is the exported section under the block, so the block
+  // itself doesn't list favorites a second time.
+  { id: "trivia", name: "\u51B7\u77E5\u8B58", block: "vocab-trivia", params: "favorites: off" }
+];
+var ENTRY_FILE_IDS = ENTRY_FILES.map((d) => d.id);
+function entryFileDef(id) {
+  const def = ENTRY_FILES.find((d) => d.id === id);
+  if (!def) throw new Error(`Unknown entry file: ${id}`);
+  return def;
+}
+function entryFilePath(folder, id) {
+  return joinPath(folder, `${entryFileDef(id).name}.md`);
+}
+function emptyContext() {
+  return {
+    labels: exportLabels(),
+    formatDate: (iso) => iso.slice(0, 10),
+    taskLabel: () => void 0,
+    entryWord: () => void 0,
+    pageLink: () => null
+  };
+}
+function renderEntryFile(id) {
+  const def = entryFileDef(id);
+  const head = [
+    frontmatter({ "vocab-tracker": ENTRY_FILE_KIND, "vocab-tracker-id": def.id }),
+    `# ${def.name}`,
+    "",
+    "```" + def.block,
+    ...def.params ? [def.params] : [],
+    "```"
+  ].join("\n");
+  const sections = id === "trivia" ? renderTriviaFavoritesSections({ items: [] }, emptyContext()) : [];
+  return buildManagedFile(head, sections);
+}
+
+// src/services/files/EntryFilesService.ts
+var LEGACY_FOLDER = "vocab-list";
+var EntryFilesService = class {
+  constructor(deps) {
+    this.deps = deps;
+    // Entry file id → the ensure() in progress, so two quick calls create once.
+    this.pending = /* @__PURE__ */ new Map();
+  }
+  // ── Paths ────────────────────────────────────────────────────────────
+  settings() {
+    var _a, _b;
+    return resolveFilesSettings((_b = (_a = this.deps).settings) == null ? void 0 : _b.call(_a));
+  }
+  paths() {
+    return filesPaths(this.settings());
+  }
+  // The folders ExportService writes to. 冷知識.md is wherever the trivia
+  // entry file is now, so the saved list lands in the file the user kept.
+  exportFolders() {
+    const p = this.paths();
+    return { words: p.words, threads: p.threads, triviaFile: this.entryFilePath("trivia") };
+  }
+  // The entry file as it is now: found by id, else where a new one goes.
+  entryFilePath(id) {
+    var _a;
+    return (_a = this.deps.vault.findManaged(ENTRY_FILE_KIND, id)) != null ? _a : entryFilePath(this.paths().folder, id);
+  }
+  isArticle(path) {
+    if (this.deps.isArticle) return this.deps.isArticle(path);
+    return /\.md$/i.test(path) && !/\.ai\.md$/i.test(path) && !inFolderPath(path, this.paths().folder);
+  }
+  // ── Entry files ──────────────────────────────────────────────────────
+  // The entry file's path, creating the file if there is none. Never
+  // overwrites: a file at the path (with or without our id) is used as is.
+  ensure(id) {
+    const running2 = this.pending.get(id);
+    if (running2) return running2;
+    const job = this.doEnsure(id).finally(() => this.pending.delete(id));
+    this.pending.set(id, job);
+    return job;
+  }
+  async doEnsure(id) {
+    var _a, _b, _c;
+    const { vault } = this.deps;
+    await ((_a = vault.ready) == null ? void 0 : _a.call(vault));
+    const found = vault.findManaged(ENTRY_FILE_KIND, id);
+    if (found) return this.seeded(id, found);
+    const path = entryFilePath(this.paths().folder, id);
+    if (vault.exists(path)) return this.seeded(id, path);
+    const legacy = entryFilePath(LEGACY_FOLDER, id);
+    if (legacy !== path && vault.exists(legacy)) {
+      await vault.rename(legacy, path);
+      return this.seeded(id, path);
+    }
+    try {
+      await vault.create(path, renderEntryFile(id));
+    } catch (e) {
+      if (!vault.exists(path)) throw e;
+      return this.seeded(id, path);
+    }
+    if (id === "trivia") (_c = (_b = this.deps.export) == null ? void 0 : _b.triviaChanged) == null ? void 0 : _c.call(_b);
+    return this.seeded(id, path);
+  }
+  async seeded(id, path) {
+    var _a;
+    try {
+      await ((_a = this.deps.seeds) == null ? void 0 : _a.markSeeded([id]));
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't record the entry file", e);
+    }
+    return path;
+  }
+  // Startup: creates the entry files that were never created before.
+  // Resolves to the paths created (or adopted) this time.
+  async ensureAll() {
+    var _a, _b;
+    const done = (_b = await ((_a = this.deps.seeds) == null ? void 0 : _a.seeded())) != null ? _b : /* @__PURE__ */ new Set();
+    const out = [];
+    for (const def of ENTRY_FILES) {
+      if (done.has(def.id)) continue;
+      try {
+        out.push(await this.ensure(def.id));
+      } catch (e) {
+        console.error(`Vocab Tracker: couldn't create ${entryFileDef(def.id).name}.md`, e);
+      }
+    }
+    return out;
+  }
+  // ── Word pages ───────────────────────────────────────────────────────
+  // The 「單字頁」 button: the word's page, created now if needed.
+  async openWordPage(entryId) {
+    var _a, _b;
+    const exp = this.deps.export;
+    if (!exp) return null;
+    await ((_b = (_a = this.deps.vault).ready) == null ? void 0 : _b.call(_a));
+    return exp.openWordPage(entryId);
+  }
+  // ── Renames and deletes (§4.6) ───────────────────────────────────────
+  // Call from the vault's "rename" event. A folder rename moves the
+  // paragraph anchors of every note under it; each note's .ai.md follows
+  // on that note's own rename event (Obsidian fires one per file).
+  async handleRename(oldPath, newPath, isFolder = false) {
+    var _a, _b, _c;
+    if (oldPath === newPath) return;
+    if (isFolder) {
+      await ((_a = this.deps.paragraphs) == null ? void 0 : _a.renameParagraphPath(oldPath, newPath));
+      return;
+    }
+    if (!this.isArticle(oldPath)) return;
+    await ((_b = this.deps.paragraphs) == null ? void 0 : _b.renameParagraphPath(oldPath, newPath));
+    await ((_c = this.deps.export) == null ? void 0 : _c.renameArticle(oldPath, newPath));
+  }
+  // Call from the vault's "delete" event. Discussions are kept: the
+  // article's .ai.md is re-rendered so its paragraphs show as orphaned,
+  // and the sidebar offers 重新綁定 / 刪除 (§4.6). Nothing is deleted.
+  handleDelete(path, isFolder = false) {
+    var _a;
+    if (isFolder || !this.isArticle(path)) return;
+    (_a = this.deps.export) == null ? void 0 : _a.articleChanged(path, "never");
+  }
+};
+
+// src/services/files/SeedRecord.ts
+var FILES_SHARD = "files";
+var SeedRecord = class {
+  constructor(storage, now = () => (/* @__PURE__ */ new Date()).toISOString()) {
+    this.storage = storage;
+    this.now = now;
+    this.record = {};
+  }
+  async load() {
+    let disk = null;
+    try {
+      disk = await this.storage.readShard(FILES_SHARD);
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't read the files record", e);
+    }
+    const seeded = disk && typeof disk.seeded === "object" && disk.seeded ? disk.seeded : {};
+    this.record = { ...seeded, ...this.record };
+  }
+  async seeded() {
+    await this.load();
+    return new Set(Object.keys(this.record));
+  }
+  async markSeeded(ids) {
+    var _a, _b;
+    const fresh = ids.filter((id) => !(id in this.record));
+    if (!fresh.length) return;
+    await this.load();
+    const at = this.now();
+    for (const id of fresh) (_b = (_a = this.record)[id]) != null ? _b : _a[id] = at;
+    await this.storage.writeShard(FILES_SHARD, { seeded: this.record });
+  }
+};
+
+// src/ui/reading/WordPageDecorator.ts
+var import_obsidian35 = require("obsidian");
+function l2(key3, vars) {
+  return t(`wordPage.${key3}`, vars);
+}
+var SECTIONS = ["families", "usage", "trivia", "discussion"];
+function wordPageEntryId(frontmatter2) {
+  if (!frontmatter2 || frontmatter2["vocab-tracker"] !== "word") return null;
+  const id = frontmatter2["vocab-tracker-id"];
+  if (typeof id === "string" && id.trim()) return id.trim();
+  if (typeof id === "number" && Number.isFinite(id)) return String(id);
+  return null;
+}
+var BEGIN = /^[ \t]*%%[ \t]*vt:begin[ \t]+([a-z0-9][a-z0-9-]*)[ \t]*%%[ \t]*$/;
+function sectionAtHeading(text, line) {
+  const lines4 = text.split(/\r?\n/);
+  for (let i = line - 1; i >= 0; i--) {
+    if (lines4[i].trim() === "") continue;
+    const m = BEGIN.exec(lines4[i]);
+    const name = m == null ? void 0 : m[1];
+    return name && SECTIONS.includes(name) ? name : null;
+  }
+  return null;
+}
+function sectionByTitle(title) {
+  var _a;
+  const labels = exportLabels();
+  const text = title.trim();
+  return (_a = SECTIONS.find((s) => labels[s] === text)) != null ? _a : null;
+}
+var running = /* @__PURE__ */ new Set();
+function createWordPageDecorator(deps) {
+  return (el, ctx) => {
+    var _a, _b;
+    const fm = (_a = ctx.frontmatter) != null ? _a : deps.frontmatterOf(ctx.sourcePath);
+    const entryId = wordPageEntryId(fm);
+    if (!entryId) return;
+    const headings = [...el.matches("h2") ? [el] : [], ...Array.from(el.querySelectorAll("h2"))];
+    if (!headings.length) return;
+    const info = ctx.getSectionInfo(el);
+    for (const h of headings) {
+      if (h.querySelector(".vt-wp-actions")) continue;
+      const section2 = info ? sectionAtHeading(info.text, info.lineStart) : sectionByTitle((_b = h.textContent) != null ? _b : "");
+      if (!section2) continue;
+      const entry = deps.entry(entryId);
+      if (!entry) continue;
+      decorate(h, section2, entry, deps);
+    }
+  };
+}
+function actionFor(section2, entry, deps) {
+  switch (section2) {
+    case "families":
+      return {
+        icon: "git-fork",
+        label: l2("findFamilies"),
+        run: async () => {
+          const candidates = await deps.families.generate({ seedEntryIds: [entry.id] });
+          if (!candidates.length) return deps.notify(l2("familiesNone"));
+          const { families } = await deps.families.save(candidates);
+          deps.notify(l2("familiesSaved", { n: families.length }));
+        }
+      };
+    case "usage":
+      if (!deps.verbs.canGenerate(entry)) return null;
+      return {
+        icon: "sparkles",
+        label: entry.usage ? l2("regenerateUsage") : l2("generateUsage"),
+        run: async () => {
+          await deps.verbs.generate(entry);
+          deps.notify(l2("usageSaved"));
+        }
+      };
+    case "trivia":
+      return {
+        icon: "lightbulb",
+        label: l2("trivia"),
+        run: async () => {
+          await deps.openTrivia();
+          await deps.trivia.ask("next", { entryId: entry.id });
+        }
+      };
+    case "discussion":
+      return { icon: "panel-right", label: l2("openSidebar"), run: () => deps.openInSidebar(entry, "ai") };
+  }
+}
+function decorate(h, section2, entry, deps) {
+  const action = actionFor(section2, entry, deps);
+  if (!action) return;
+  h.addClass("vt-wp-heading");
+  const box = h.createSpan({ cls: ["vt", "vt-wp-actions"] });
+  const btn = box.createEl("button", { cls: "vt-wp-btn" });
+  (0, import_obsidian35.setIcon)(btn.createSpan({ cls: "vt-wp-btn-icon" }), action.icon);
+  btn.createSpan({ text: action.label });
+  const key3 = `${entry.id}:${section2}`;
+  const setBusy = (busy) => {
+    btn.toggleClass("is-busy", busy);
+    btn.disabled = busy;
+  };
+  setBusy(running.has(key3));
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (running.has(key3)) return;
+    running.add(key3);
+    setBusy(true);
+    void Promise.resolve().then(action.run).catch((err) => {
+      const message = isAiError(err) ? aiErrorText(err) : err instanceof Error ? err.message : String(err);
+      deps.notify(l2("failed", { error: message }));
+    }).finally(() => {
+      running.delete(key3);
+      if (btn.isConnected) setBusy(false);
+    });
+  });
+}
+
+// src/ui/reading/ParagraphBadges.ts
+var import_obsidian36 = require("obsidian");
+var BADGE_CLS = "vt-pbadge";
+var BADGE_HOST_CLS = "vt-pbadge-host";
+var ANCHORABLE_TAGS = /* @__PURE__ */ new Set(["P", "UL", "OL", "BLOCKQUOTE"]);
+function isAnchorableTag(tagName) {
+  return !!tagName && ANCHORABLE_TAGS.has(tagName.toUpperCase());
+}
+var SectionLines = class {
+  constructor() {
+    this.text = null;
+    this.lines = [];
+  }
+  slice(info) {
+    if (info.text !== this.text) {
+      this.text = info.text;
+      this.lines = info.text.replace(/\r\n?/g, "\n").split("\n");
+    }
+    return this.lines.slice(info.lineStart, info.lineEnd + 1).join("\n");
+  }
+};
+function badgeState(count, showGhost) {
+  return count > 0 ? { kind: "count", count } : { kind: "ghost", quiet: !showGhost };
+}
+var ParagraphBadges = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.live = /* @__PURE__ */ new Map();
+    this.lines = new SectionLines();
+    // registerMarkdownPostProcessor(badges.process)
+    this.process = (el, ctx) => {
+      var _a;
+      if (!isAnchorableTag((_a = el.firstElementChild) == null ? void 0 : _a.tagName)) return;
+      const info = ctx.getSectionInfo(el);
+      if (!info) return;
+      const ref = {
+        path: ctx.sourcePath,
+        lineStart: info.lineStart,
+        lineEnd: info.lineEnd,
+        text: this.lines.slice(info)
+      };
+      const handle = { ref, host: el, badge: null };
+      this.draw(handle);
+      this.track(handle);
+      const child = new import_obsidian36.MarkdownRenderChild(el);
+      child.register(() => this.untrack(handle));
+      ctx.addChild(child);
+    };
+  }
+  // Keeps live badges in sync with the index. Returns the unsubscribe.
+  attach() {
+    return this.deps.index.events.on("paragraph-index:change", ({ paths }) => this.refresh(paths));
+  }
+  // Re-draws the live badges of these notes (all notes when omitted), e.g.
+  // after the AI on/off switch changes whether ghosts show.
+  refresh(paths) {
+    var _a;
+    const targets = paths != null ? paths : [...this.live.keys()];
+    for (const path of targets) {
+      for (const h of (_a = this.live.get(path)) != null ? _a : []) this.draw(h);
+    }
+  }
+  track(h) {
+    let set = this.live.get(h.ref.path);
+    if (!set) {
+      set = /* @__PURE__ */ new Set();
+      this.live.set(h.ref.path, set);
+    }
+    set.add(h);
+  }
+  untrack(h) {
+    const set = this.live.get(h.ref.path);
+    if (!set) return;
+    set.delete(h);
+    if (!set.size) this.live.delete(h.ref.path);
+  }
+  draw(h) {
+    const state = badgeState(this.deps.index.count(h.ref.path, h.ref.text), this.deps.showGhost());
+    let badge = h.badge;
+    if (!badge) {
+      h.host.addClass(BADGE_HOST_CLS);
+      badge = h.badge = h.host.createSpan({ cls: BADGE_CLS });
+      badge.setAttr("role", "button");
+      badge.setAttr("tabindex", "0");
+      const open = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.deps.onOpen(h.ref);
+      };
+      badge.addEventListener("click", open);
+      badge.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") open(e);
+      });
+      (0, import_obsidian36.setIcon)(badge.createSpan({ cls: "vt-pbadge-icon" }), "sparkles");
+      badge.createSpan({ cls: "vt-pbadge-count" });
+    }
+    const countEl = badge.querySelector(".vt-pbadge-count");
+    badge.toggleClass("has-count", state.kind === "count");
+    badge.toggleClass("is-ghost", state.kind === "ghost");
+    badge.toggleClass("is-quiet", state.kind === "ghost" && state.quiet);
+    countEl == null ? void 0 : countEl.setText(state.kind === "count" ? String(state.count) : "");
+    const label = state.kind === "count" ? t("paragraph.badge.count", { n: state.count }) : t("paragraph.badge.open");
+    badge.setAttr("aria-label", label);
+  }
+};
+
 // main.ts
 var VOCAB_FOLDER = "vocab-list";
 var VOCAB_FILE = `${VOCAB_FOLDER}/vocab-list.md`;
 var VOCAB_FILE_LEGACY = "vocab-list.md";
 var ENRICH_GAP_MS = 400;
 var RESUME_ENRICH_DELAY_MS = 5e3;
-var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
+var VocabTrackerPlugin = class extends import_obsidian37.Plugin {
   constructor() {
     super(...arguments);
     this.vocabData = { entries: [] };
@@ -7720,18 +13943,87 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
       keys,
       wordlists: this.wordlists,
       applyLocale: () => this.applyLocale(),
-      onWordlistsChanged: (change) => void this.onWordlistsChanged(change)
+      onWordlistsChanged: (change) => void this.onWordlistsChanged(change),
+      onAiEnabledChanged: () => {
+        var _a;
+        return (_a = this.paragraphBadges) == null ? void 0 : _a.refresh();
+      }
     };
-    this.addSettingTab(new VocabSettingsTab(this.app, this, settingsCtx, SETTINGS_SECTIONS));
+    this.addSettingTab(new VocabSettingsTab(this.app, this, settingsCtx, SETTINGS_SECTIONS2));
     this.srs = new SrsService({ store: this.store, storage: this.storage });
     this.notes = new ObsidianNotes(this.app);
-    this.threads = new ThreadService({ storage: this.storage, store: this.store, ai, notes: this.notes });
+    this.vault = new ObsidianVault(this.app);
+    this.vault.register(this);
+    this.anchors = new ParagraphAnchorService({
+      vault: this.vault,
+      mode: () => resolveAnchorSettings(this.store.settings).mode
+    });
+    this.threads = new ThreadService({ storage: this.storage, store: this.store, ai, notes: this.notes, anchors: this.anchors });
+    this.learn = new LearnStore({ storage: this.storage });
+    this.families = new FamilyService({ ai, vocab: this.store, learn: this.learn, dictionary: this.dictionary });
+    this.verbs = new VerbUsageService({ ai, vocab: this.store });
+    this.trivia = new TriviaService({ threads: this.threads, vocab: this.store, learn: this.learn });
     this.selection = new SelectionTracker(this.app);
     this.registerDomEvent(document, "selectionchange", () => this.selection.update());
+    this.exporter = new ExportService({
+      vault: this.vault,
+      data: createExportData({
+        entries: () => this.store.entries,
+        threads: this.threads,
+        learn: this.learn,
+        notes: this.notes
+      }),
+      folders: () => this.files.exportFolders(),
+      taskLabel: (taskId) => {
+        var _a;
+        const label = (_a = ai.tasks.get(taskId)) == null ? void 0 : _a.label;
+        return label ? t(label) : void 0;
+      }
+    });
+    this.exporter.watchThreads(this.threads.events);
+    this.exporter.watchLearn(this.learn.events);
+    this.exporter.watchUsage(this.verbs.events);
+    this.files = new EntryFilesService({
+      vault: this.vault,
+      settings: () => this.store.settings.files,
+      seeds: new SeedRecord(this.storage),
+      export: this.exporter,
+      paragraphs: this.threads,
+      isArticle: (p) => /\.md$/i.test(p) && !/\.ai\.md$/i.test(p) && this.isImportable(p)
+    });
+    this.registerEvent(
+      this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof import_obsidian37.TFolder))
+    );
+    this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof import_obsidian37.TFolder)));
+    this.registerMarkdownPostProcessor(
+      createWordPageDecorator({
+        entry: (id) => this.store.entries.find((e) => e.id === id),
+        frontmatterOf: (p) => this.frontmatterOf(p),
+        families: this.families,
+        verbs: this.verbs,
+        trivia: this.trivia,
+        // A new tab, so the word page stays open behind it.
+        openTrivia: () => this.openEntryFile("trivia", "tab"),
+        openInSidebar: async (entry) => {
+          const leaf = await this.activateSidebar();
+          leaf.view.openWord(entry.id, "ai");
+        },
+        notify: (m) => new import_obsidian37.Notice(m)
+      })
+    );
     this.registerView(
       VOCAB_VIEW_TYPE,
       (leaf) => new VocabSidebarView(leaf, this)
     );
+    this.paragraphIndex = new ParagraphIndex();
+    this.register(this.paragraphIndex.attach(this.threads));
+    this.paragraphBadges = new ParagraphBadges({
+      index: this.paragraphIndex,
+      onOpen: (ref) => void this.openParagraph(ref),
+      showGhost: () => this.store.settings.ai.enabled
+    });
+    this.register(this.paragraphBadges.attach());
+    this.registerMarkdownPostProcessor(this.paragraphBadges.process);
     this.registerMarkdownPostProcessor(this.processMarks.bind(this));
     this.registerMarkdownPostProcessor((el) => {
       const lookup = this.wordlists.highlightLookup();
@@ -7740,18 +14032,26 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
       highlightExamWords(el, lookup, (tag) => tagColor(s, tag));
     });
     this.registerDomEvent(document, "click", this.handleReadingClick.bind(this));
-    this.registerMarkdownCodeBlockProcessor(
-      "vocab-dashboard",
-      (source, el, ctx) => renderDashboard(this, source, el, ctx)
-    );
-    this.registerMarkdownCodeBlockProcessor(
-      "vocab-flashcards",
-      (source, el, ctx) => renderFlashcards(this, source, el, ctx)
-    );
+    registerBlocks(this);
     this.addCommand({
       id: "open-flashcards",
       name: t("command.openFlashcards"),
       callback: () => this.openFlashcards()
+    });
+    this.addCommand({
+      id: "open-families",
+      name: t("command.openFamilies"),
+      callback: () => this.openEntryFile("families")
+    });
+    this.addCommand({
+      id: "open-verbs",
+      name: t("command.openVerbs"),
+      callback: () => this.openEntryFile("verbs")
+    });
+    this.addCommand({
+      id: "open-trivia",
+      name: t("command.openTrivia"),
+      callback: () => this.openEntryFile("trivia")
     });
     this.addCommand({
       id: "toggle-exam-highlight",
@@ -7794,7 +14094,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     );
     this.registerEvent(
       this.app.vault.on("rename", async (file, oldPath) => {
-        if (!(file instanceof import_obsidian26.TFile)) return;
+        if (!(file instanceof import_obsidian37.TFile)) return;
         const changed = updateSourcePaths(this.vocabData.entries, oldPath, file.path);
         if (changed.length) await this.store.touchMany(changed);
         await this.noteImports.rename(oldPath, file.path);
@@ -7802,6 +14102,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     );
     this.app.workspace.onLayoutReady(() => {
       void this.ensureVocabFile();
+      void this.files.ensureAll();
       this.registerWordlistEvents();
       void this.wordlists.reload();
       const timer = window.setTimeout(
@@ -7814,11 +14115,13 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
   // So a debounced write (VocabStore's 500ms coalescing) isn't lost if
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e, _f;
     this.unloaded = true;
     (_a = this.threads) == null ? void 0 : _a.dispose();
     (_b = this.ai) == null ? void 0 : _b.dispose();
-    await Promise.all([this.store.flush(), this.srs.flush(), (_c = this.threads) == null ? void 0 : _c.flush()]);
+    await Promise.all([this.store.flush(), this.srs.flush(), (_c = this.threads) == null ? void 0 : _c.flush(), (_d = this.learn) == null ? void 0 : _d.flush()]);
+    await ((_e = this.exporter) == null ? void 0 : _e.flush());
+    (_f = this.exporter) == null ? void 0 : _f.dispose();
   }
   // Interface language: the user's setting, or Obsidian's language on "auto".
   applyLocale() {
@@ -7831,10 +14134,12 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     var _a;
     void this.srs.reloadLogs();
     void this.threads.reload();
+    void this.learn.reload();
     void this.noteImports.load();
     const disk = await this.storage.readShard("data");
     if (!disk) return;
     const wordlistsBefore = JSON.stringify(this.wordlistSettings());
+    const aiBefore = this.store.settings.ai.enabled;
     const merged = merge(this.vocabData, disk);
     this.vocabData = merged;
     this.store.replace(merged);
@@ -7844,6 +14149,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     const leaf = this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
     (_a = leaf == null ? void 0 : leaf.view) == null ? void 0 : _a.render();
     if (JSON.stringify(this.wordlistSettings()) !== wordlistsBefore) void this.onWordlistsChanged("reload");
+    if (this.store.settings.ai.enabled !== aiBefore) this.paragraphBadges.refresh();
   }
   // ── Exam word lists ────────────────────────────────────────────
   wordlistSettings() {
@@ -7883,9 +14189,12 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     }
   }
   // Notes whose words shouldn't become vocab entries: the lists themselves
-  // and the plugin's own vocab-list folder.
+  // and the plugin's own folders (vocab-list, and the entry-file folder
+  // with the word pages and .ai.md notes if it was moved elsewhere).
   isImportable(path) {
-    return !inFolder(path, this.wordlistSettings().folder) && !inFolder(path, VOCAB_FOLDER);
+    var _a;
+    const filesFolder = (_a = this.files) == null ? void 0 : _a.paths().folder;
+    return !inFolder(path, this.wordlistSettings().folder) && !inFolder(path, VOCAB_FOLDER) && !(filesFolder && inFolder(path, filesFolder));
   }
   // Exam labels for a word's list tags — enabled lists only ("TOEFL, IELTS").
   examLabels(tags) {
@@ -7918,7 +14227,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
       if (plan.retag.length) await this.store.touchMany(plan.retag.map((r) => r.entry));
       await this.noteImports.mark(file.path, nowIso());
       if (created.length || plan.retag.length) {
-        new import_obsidian26.Notice(
+        new import_obsidian37.Notice(
           t("exam.import.done", { note: file.basename, added: created.length, tagged: plan.retag.length })
         );
         this.renderSidebar();
@@ -7954,7 +14263,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     (_a = leaf == null ? void 0 : leaf.view) == null ? void 0 : _a.render();
   }
   registerWordlistEvents() {
-    const reload = (0, import_obsidian26.debounce)(() => void this.wordlists.reload(), 800, true);
+    const reload = (0, import_obsidian37.debounce)(() => void this.wordlists.reload(), 800, true);
     const inLists = (path) => inFolder(path, this.wordlistSettings().folder);
     const onChange = (file, oldPath) => {
       if (inLists(file.path) || oldPath && inLists(oldPath)) reload();
@@ -7962,7 +14271,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     this.registerEvent(this.app.vault.on("create", (f) => onChange(f)));
     this.registerEvent(this.app.vault.on("delete", (f) => onChange(f)));
     this.registerEvent(this.app.vault.on("rename", (f, oldPath) => onChange(f, oldPath)));
-    const rescanActive = (0, import_obsidian26.debounce)(() => this.refreshExamStrip(), 1500, true);
+    const rescanActive = (0, import_obsidian37.debounce)(() => this.refreshExamStrip(), 1500, true);
     this.registerEvent(
       this.app.vault.on("modify", (f) => {
         var _a;
@@ -7986,7 +14295,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     var _a;
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
       const view = leaf.view;
-      if (view instanceof import_obsidian26.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
+      if (view instanceof import_obsidian37.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
     }
   }
   refreshExamStrip() {
@@ -8005,6 +14314,11 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     workspace.revealLeaf(leaf);
     return leaf;
   }
+  // A reading-view ✦ was clicked: that paragraph's discussion in the sidebar.
+  async openParagraph(ref) {
+    const leaf = await this.activateSidebar();
+    await leaf.view.openParagraph(ref);
+  }
   async openVocabFile() {
     await this.ensureVocabFile();
     const file = this.app.vault.getAbstractFileByPath(VOCAB_FILE);
@@ -8012,7 +14326,56 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     await leaf.openFile(file);
   }
   openFlashcards() {
-    return openFlashcardsFile(this.app);
+    return this.openEntryFile("flashcards");
+  }
+  // Opens an entry file (單字卡 / 字族樹 / 動詞用法 / 冷知識), creating it if
+  // it's missing — never overwriting one that's there.
+  async openEntryFile(id, where = "current") {
+    try {
+      await this.openNote(await this.files.ensure(id), where);
+    } catch (e) {
+      console.error(`Vocab Tracker: couldn't open the ${id} entry file`, e);
+      new import_obsidian37.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+    }
+  }
+  // The 「單字頁」 button: the word's page, created now if it has none.
+  async openWordPage(entryId) {
+    try {
+      const path = await this.files.openWordPage(entryId);
+      if (path) await this.openNote(path);
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't open the word page", e);
+      new import_obsidian37.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+    }
+  }
+  // "tab": a new tab, or the tab already showing the note.
+  async openNote(path, where = "current") {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof import_obsidian37.TFile)) return;
+    const { workspace } = this.app;
+    if (where === "tab") {
+      const open = workspace.getLeavesOfType("markdown").find((leaf) => {
+        var _a;
+        return leaf.view instanceof import_obsidian37.MarkdownView && ((_a = leaf.view.file) == null ? void 0 : _a.path) === path;
+      });
+      if (open) {
+        workspace.setActiveLeaf(open, { focus: true });
+        return;
+      }
+    }
+    await workspace.getLeaf(where === "tab" ? "tab" : false).openFile(file);
+  }
+  // ── vocab-word block host (WordHeaderHost) ──────────────────────
+  frontmatterOf(path) {
+    var _a;
+    return (_a = this.app.metadataCache.getCache(path)) == null ? void 0 : _a.frontmatter;
+  }
+  readNote(path) {
+    return this.notes.read(path);
+  }
+  // 「複習這個字」: for now the flashcards entry file (not a one-word session).
+  reviewWord(_entry) {
+    return this.openFlashcards();
   }
   async ensureVocabFile() {
     if (this.app.vault.getAbstractFileByPath(VOCAB_FILE)) return;
@@ -8020,7 +14383,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
       await this.app.vault.createFolder(VOCAB_FOLDER);
     }
     const legacy = this.app.vault.getAbstractFileByPath(VOCAB_FILE_LEGACY);
-    if (legacy instanceof import_obsidian26.TFile) {
+    if (legacy instanceof import_obsidian37.TFile) {
       await this.app.fileManager.renameFile(legacy, VOCAB_FILE);
       return;
     }
@@ -8033,8 +14396,8 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
   handleReadingClick(evt) {
     const target = evt.target;
     if (!(target instanceof HTMLElement)) return;
-    const preview = target.closest(".markdown-preview-view, .markdown-rendered");
-    if (!preview) return;
+    const preview2 = target.closest(".markdown-preview-view, .markdown-rendered");
+    if (!preview2) return;
     if (target.closest("a, mark, button, input, select, textarea, code, .internal-link, .external-link"))
       return;
     const selection = window.getSelection();
@@ -8045,7 +14408,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     const exists = this.store.entries.some(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
-    const menu = new import_obsidian26.Menu();
+    const menu = new import_obsidian37.Menu();
     menu.addItem((item) => {
       item.setTitle(
         exists ? `Open "${word}" in Vocab Tracker` : `Add "${word}" to Vocab Tracker`
@@ -8053,7 +14416,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
       item.setIcon(exists ? "book-open" : "plus");
       item.onClick(async () => {
         const added = await this.addWordToVocab(word, ctx);
-        new import_obsidian26.Notice(added ? `Added "${word}" to vocab list` : `Opened "${word}"`);
+        new import_obsidian37.Notice(added ? `Added "${word}" to vocab list` : `Opened "${word}"`);
       });
     });
     menu.showAtMouseEvent(evt);
@@ -8154,7 +14517,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
     if (!entry.source || !entry.source.path) return;
     const file = this.app.vault.getAbstractFileByPath(entry.source.path);
     if (!file) {
-      new import_obsidian26.Notice("Source note not found: " + entry.source.path);
+      new import_obsidian37.Notice("Source note not found: " + entry.source.path);
       return;
     }
     const leaf = this.app.workspace.getLeaf(false);
@@ -8171,7 +14534,7 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
   }
   speakSynth(word) {
     if (!("speechSynthesis" in window)) {
-      new import_obsidian26.Notice("No pronunciation available on this device.");
+      new import_obsidian37.Notice("No pronunciation available on this device.");
       return;
     }
     const u = new SpeechSynthesisUtterance(word);
@@ -8194,11 +14557,11 @@ var VocabTrackerPlugin = class extends import_obsidian26.Plugin {
       await this.store.touch(entry);
       if (opts.quiet) return;
       this.renderSidebar();
-      if (opts.verbose) new import_obsidian26.Notice(`Vocab Tracker: fetched "${entry.word}"`);
+      if (opts.verbose) new import_obsidian37.Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
       if (opts.quiet) return;
-      new import_obsidian26.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
+      new import_obsidian37.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
     }
   }
   refreshSidebar() {
