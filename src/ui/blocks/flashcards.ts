@@ -4,7 +4,7 @@ import type { VocabEntry } from "../../core/model/entry";
 import { CARD_MODES, RATINGS, Rating, type CardMode } from "../../core/model/srs";
 import { clozeParts } from "../../core/text/cloze";
 import { splitInterval } from "../../core/text/interval";
-import { getLocale, t, type I18nKey } from "../../core/i18n";
+import { t, type I18nKey } from "../../core/i18n";
 import { isNewCard, matchesFilter, type QueueFilter } from "../../services/srs/queue";
 import { buildBatchRows, type BatchRow } from "./flashcardsBatch";
 import { parseFlashcardParams, type FlashcardParams } from "./params";
@@ -31,33 +31,6 @@ export function formatInterval(ms: number): string {
 }
 
 type Phase = "loading" | "card" | "empty" | "done";
-
-// Temporary strings for the "本批單字" list; move into core/i18n as
-// flashcards.batch.* when integrating.
-const BATCH_L = {
-  "zh-TW": {
-    toggle: "本批單字（{n}）",
-    current: "目前",
-    pending: "還沒到",
-    new: "新字",
-    due: "到期",
-    hidden: "作答後顯示",
-    openSource: "開啟出處",
-  },
-  en: {
-    toggle: "This batch ({n})",
-    current: "Now",
-    pending: "Up next",
-    new: "New",
-    due: "Due",
-    hidden: "Shown after you answer",
-    openSource: "Open source note",
-  },
-} as const;
-
-function batchL() {
-  return BATCH_L[getLocale()] ?? BATCH_L.en;
-}
 
 let batchSeq = 0;
 
@@ -522,7 +495,6 @@ class FlashcardsBlock extends MarkdownRenderChild {
     );
     if (rows.length === 0) return;
 
-    const L = batchL();
     const open = this.batchOpen[phase];
     const toggle = toggleHost.createEl("button", {
       cls: "vt-fc-batch-toggle",
@@ -530,7 +502,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
     });
     toggle.toggleClass("is-open", open);
     setIcon(toggle.createSpan({ cls: "vt-fc-icon" }), "list");
-    toggle.createSpan({ text: L.toggle.replace("{n}", String(rows.length)) });
+    toggle.createSpan({ text: t("flashcards.batch.toggle", { n: rows.length }) });
     setIcon(toggle.createSpan({ cls: ["vt-fc-icon", "vt-fc-batch-chevron"] }), "chevron-down");
 
     const panel = panelHost.createDiv({ cls: "vt-fc-batch", attr: { id: this.batchId } });
@@ -556,7 +528,6 @@ class FlashcardsBlock extends MarkdownRenderChild {
     entry: VocabEntry | undefined,
     phase: "card" | "done"
   ) {
-    const L = batchL();
     const li = list.createEl("li", { cls: ["vt-fc-batch-row", `is-${row.status}`] });
     if (row.status === "current") li.setAttr("aria-current", "step");
 
@@ -565,7 +536,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
       text.createSpan({
         cls: ["vt-fc-batch-word", "is-hidden"],
         text: "•••",
-        attr: { "aria-label": L.hidden, title: L.hidden },
+        attr: { "aria-label": t("flashcards.batch.hidden"), title: t("flashcards.batch.hidden") },
       });
     } else {
       text.createSpan({ cls: "vt-fc-batch-word", text: row.word });
@@ -575,7 +546,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
     const meta = li.createDiv({ cls: "vt-fc-batch-meta" });
     meta.createSpan({
       cls: ["vt-fc-batch-kind", row.isNew ? "is-new" : "is-due"],
-      text: row.isNew ? L.new : L.due,
+      text: row.isNew ? t("flashcards.batch.new") : t("flashcards.batch.due"),
     });
     if (row.rating !== undefined) {
       meta.createSpan({
@@ -585,7 +556,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
     } else {
       meta.createSpan({
         cls: "vt-fc-batch-state",
-        text: row.status === "current" ? L.current : L.pending,
+        text: row.status === "current" ? t("flashcards.batch.current") : t("flashcards.batch.pending"),
       });
     }
 
@@ -606,7 +577,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
     if (phase === "done" && entry.source?.path) {
       const jump = meta.createEl("button", {
         cls: "vt-fc-icon-btn",
-        attr: { type: "button", "aria-label": L.openSource, title: entry.source.path },
+        attr: { type: "button", "aria-label": t("flashcards.batch.openSource"), title: entry.source.path },
       });
       setIcon(jump, "file-text");
       jump.onclick = () => void this.plugin.jumpToSource(entry);

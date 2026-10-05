@@ -84,6 +84,13 @@ export const zhTW: Record<keyof typeof en, string> = {
   "flashcards.done.retryForgotten": "再練一次忘記的字（{count}）",
   "flashcards.done.continue": "繼續複習（{count} 張到期）",
   "flashcards.done.backToList": "回到單字列表",
+  "flashcards.batch.toggle": "本批單字（{n}）",
+  "flashcards.batch.current": "目前",
+  "flashcards.batch.pending": "還沒到",
+  "flashcards.batch.new": "新字",
+  "flashcards.batch.due": "到期",
+  "flashcards.batch.hidden": "作答後顯示",
+  "flashcards.batch.openSource": "開啟出處",
   "command.openFlashcards": "開啟單字卡",
 
   // ── M3: AI foundation + settings ──────────────────────────────────

@@ -83,6 +83,13 @@ export const en = {
   "flashcards.done.retryForgotten": "Practice forgotten words again ({count})",
   "flashcards.done.continue": "Keep reviewing ({count} due)",
   "flashcards.done.backToList": "Back to word list",
+  "flashcards.batch.toggle": "This batch ({n})",
+  "flashcards.batch.current": "Now",
+  "flashcards.batch.pending": "Up next",
+  "flashcards.batch.new": "New",
+  "flashcards.batch.due": "Due",
+  "flashcards.batch.hidden": "Shown after you answer",
+  "flashcards.batch.openSource": "Open source note",
   "command.openFlashcards": "Open flashcards",
 
   // ── M3: AI foundation + settings ──────────────────────────────────
