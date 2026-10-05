@@ -123,7 +123,9 @@ export interface FavoriteView {
   // 「apron · a napron → an apron」
   heading: string;
   body: string;
+  // 收藏日期, and 更新日期 when it's another day (1005 回饋 #14).
   date?: string;
+  updated?: string;
   // Other learned words the text brings up (still in the list); each one
   // opens the word's card.
   mentions: { entryId: string; word: string }[];
@@ -144,11 +146,14 @@ export function favoriteViews(
 ): FavoriteView[] {
   return items.map((it) => {
     const word = wordOf(it.entryId);
+    const date = dateOf(it.createdAt);
+    const updated = dateOf(it.updatedAt);
     return {
       id: it.id,
       heading: word ? `${word} · ${it.title}` : it.title,
       body: it.body,
-      date: dateOf(it.createdAt),
+      date,
+      ...(updated && updated !== date ? { updated } : {}),
       mentions: it.mentions.flatMap((entryId) => {
         const w = wordOf(entryId);
         return w ? [{ entryId, word: w }] : [];

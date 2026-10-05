@@ -174,10 +174,10 @@ describe("FamilyService.save", () => {
     });
     await families.save([(await families.generate())[1]], { replace: true });
     expect(families.families().map((f) => f.topic).sort()).toEqual(["gl-", "kitchen", "old"]);
-    // Regroup tombstones say who deleted them (for the merge).
+    // Regroup tombstones say who deleted them (for the merge). gl- comes
+    // back in the new grouping, so it's renewed under its id instead.
     expect(deleted.map((f) => [f.topic, f.deletedBy])).toEqual([
       ["clothing", "regroup"],
-      ["gl-", "regroup"],
       ["older", "regroup"],
     ]);
   });
@@ -225,6 +225,51 @@ describe("FamilyService.save", () => {
     expect(vocab.entries.map((x) => x.word)).toContain("tulle");
     expect(families.familiesOf(e!.id)).toHaveLength(1);
     expect(await families.addSuggested(saved.id, "unknown")).toBeUndefined();
+  });
+
+  it("重新分群 keeps the id and 加入日期 of a family whose topic comes back (1005 #13)", async () => {
+    const storage = new MemoryStorage();
+    let clock = Date.parse("2026-10-01T08:00:00Z");
+    const learn = new LearnStore({ storage, clock: () => new Date(clock) });
+    const vocab = new FakeVocab([entry("e1", "glittery"), entry("e2", "leotard")]);
+    let json: unknown = { families: [CLOTHING, GL] };
+    const ai = new FakeLearnAi(() => result(JSON.stringify(json), { json }));
+    let n = 0;
+    const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), newId: () => `id${++n}` });
+
+    const { families: first, added } = await families.save(await families.generate(), { addWords: ["sequin"] });
+    const clothing = first.find((f) => f.topic === "clothing")!;
+    expect(added[0].origin).toBe(`family:${clothing.id}`);
+
+    // Days later: 重新分群 brings clothing back with other groups, drops gl-.
+    clock = Date.parse("2026-10-05T08:00:00Z");
+    json = { families: [{ ...CLOTHING, label: "服裝與配件", groups: [{ label: "配件", members: [{ word: "glittery", zh: "亮" }, { word: "sequin", zh: "亮片" }] }] }] };
+    await families.save(await families.generate(), { replace: true });
+
+    const renewed = families.families();
+    expect(renewed.map((f) => [f.id, f.topic, f.label])).toEqual([[clothing.id, "clothing", "服裝與配件"]]);
+    // New content, not merged with the old groups.
+    expect(renewed[0].groups.map((g) => g.label)).toEqual(["配件"]);
+    expect(renewed[0].createdAt).toBe("2026-10-01T08:00:00.000Z");
+    expect(renewed[0].updatedAt).toBe("2026-10-05T08:00:00.000Z");
+    // The word added from it still finds its family — and its group.
+    expect(learn.family(added[0].origin!.slice("family:".length))?.groups[0].members.some((m) => m.entryId === added[0].id)).toBe(true);
+    // gl- didn't come back: tombstoned by the regroup.
+    expect(learn.family(first.find((f) => f.topic === "gl-")!.id)).toBeUndefined();
+  });
+
+  it("stamps 加入 / 更新日期 on save and on later changes", async () => {
+    const storage = new MemoryStorage();
+    let clock = Date.parse("2026-10-01T08:00:00Z");
+    const learn = new LearnStore({ storage, clock: () => new Date(clock) });
+    const vocab = new FakeVocab([entry("e1", "glittery"), entry("e2", "leotard")]);
+    const ai = new FakeLearnAi(() => result("", { json: { families: [CLOTHING] } }));
+    const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), clock: () => new Date(clock) });
+    const [f] = (await families.save(await families.generate())).families;
+    expect([f.createdAt, f.updatedAt]).toEqual(["2026-10-01T08:00:00.000Z", "2026-10-01T08:00:00.000Z"]);
+    clock = Date.parse("2026-10-03T08:00:00Z");
+    await families.addSuggested(f.id, "tulle");
+    expect(learn.family(f.id)).toMatchObject({ createdAt: "2026-10-01T08:00:00.000Z", updatedAt: "2026-10-03T08:00:00.000Z" });
   });
 
   it("remove tombstones a family", async () => {

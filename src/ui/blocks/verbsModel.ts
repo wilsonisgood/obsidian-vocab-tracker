@@ -1,5 +1,6 @@
 import type { VocabEntry } from "../../core/model/entry";
 import type { UsageBlock } from "../../core/model/usage";
+import { datesText, recordDates } from "../kit/dates";
 import { parseBlockParams } from "./params";
 
 // View-models for the vocab-verbs block (規劃書 06 §7.3, screen L6). Pure —
@@ -77,4 +78,11 @@ export function usageRows(usage: UsageBlock): { patterns: UsageBlock["patterns"]
     patterns: (usage.patterns ?? []).filter((p) => p.pattern?.trim() || p.meaningZh?.trim() || p.example?.trim()),
     related: (usage.related ?? []).filter((r) => r.phrase?.trim()),
   };
+}
+
+// 「加入 10/02 · 更新 10/05」: when the verb first got usage, and the latest
+// 重新產生 (only when it's another day). "" without usage.
+export function usageDates(usage: Pick<UsageBlock, "createdAt" | "generatedAt"> | undefined, now: Date = new Date()): string {
+  if (!usage) return "";
+  return datesText(recordDates({ createdAt: usage.createdAt ?? usage.generatedAt, updatedAt: usage.generatedAt }, now));
 }

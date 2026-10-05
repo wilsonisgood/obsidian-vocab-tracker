@@ -5,7 +5,7 @@ import type { Thread } from "../../../src/core/model/thread";
 import { ExportService } from "../../../src/services/export/ExportService";
 import type { ExportDataPort } from "../../../src/services/export/ports";
 import { EntryFilesService, type EntryFilesDeps } from "../../../src/services/files/EntryFilesService";
-import { ENTRY_FILES, renderEntryFile } from "../../../src/services/files/entryFiles";
+import { ENTRY_FILES, legacyTitleHeading, renderEntryFile } from "../../../src/services/files/entryFiles";
 import type { FilesExportPort } from "../../../src/core/ports";
 import { cleanFolder, resolveFilesSettings } from "../../../src/services/files/settings";
 import { MemorySeeds, MemoryVault } from "./fakes";
@@ -41,9 +41,11 @@ describe("entry file content", () => {
     expect(renderEntryFile("trivia")).toContain("```vocab-trivia\nfavorites: off\n```");
   });
 
-  it("has the frontmatter id, a title and the code block", () => {
+  it("has the frontmatter id and the code block, without a heading repeating the inline title (1005 #4)", () => {
     for (const def of ENTRY_FILES) {
       const text = renderEntryFile(def.id);
+      expect(text).not.toMatch(/^# /m);
+      expect(text).toMatch(new RegExp("^---\\n[^]*?\\n---\\n```" + def.block));
       expect(text).toContain("vocab-tracker: entry\n");
       expect(text).toContain(`vocab-tracker-id: ${def.id}\n`);
       expect(text).toContain("```" + def.block + "\n" + (def.params ? def.params + "\n" : "") + "```");
@@ -52,6 +54,22 @@ describe("entry file content", () => {
 
   it("matches the snapshots", () => {
     expect(Object.fromEntries(ENTRY_FILES.map((d) => [d.id, renderEntryFile(d.id)]))).toMatchSnapshot();
+  });
+
+  it("recognizes the 「# 字族樹」 an older entry file starts with", () => {
+    const h = (heading: string, line: number, level = 1) => ({ heading, level, position: { start: { line } } });
+    // Frontmatter on lines 0–3, heading right after (the old template).
+    expect(legacyTitleHeading("字族樹", [h("字族樹", 4)], 3)).toBe(true);
+    // A blank line or two in between is fine.
+    expect(legacyTitleHeading("字族樹", [h("字族樹", 6)], 3)).toBe(true);
+    expect(legacyTitleHeading("字族樹", [h("字族樹", 7)], 3)).toBe(false);
+    // No frontmatter: first line.
+    expect(legacyTitleHeading("字族樹", [h("字族樹", 0)], undefined)).toBe(true);
+    // Renamed file, an H2, a heading the user wrote further down, none.
+    expect(legacyTitleHeading("我的字族", [h("字族樹", 4)], 3)).toBe(false);
+    expect(legacyTitleHeading("字族樹", [h("字族樹", 4, 2)], 3)).toBe(false);
+    expect(legacyTitleHeading("字族樹", [h("筆記", 4), h("字族樹", 9)], 3)).toBe(false);
+    expect(legacyTitleHeading("字族樹", undefined, 3)).toBe(false);
   });
 
   it("puts an empty saved-trivia section under 冷知識's block", () => {

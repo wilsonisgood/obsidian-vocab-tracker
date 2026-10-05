@@ -120,6 +120,21 @@ describe("word page renderer", () => {
     expect(hasWordPageContent({ entry: GLITTERY, families: [], trivia: [], thread: failed })).toBe(false);
   });
 
+  it("a saved verb usage creates the page and is dated in 用法 (1005 #4, #14; snapshot)", () => {
+    const saved = { id: `verb:${GLITTERY.id}`, entryId: GLITTERY.id, createdAt: "2026-10-05T03:00:00.000Z" };
+    const usage = { ...USAGE, createdAt: "2026-10-01T03:00:00.000Z", generatedAt: "2026-10-02T03:00:00.000Z" };
+    const input: WordPageInput = { entry: GLITTERY, families: [], trivia: [], usage, verbFavorites: [saved] };
+    expect(hasWordPageContent(input)).toBe(true);
+    // Another word's save, or an unsave, doesn't count.
+    expect(hasWordPageContent({ ...input, verbFavorites: [{ ...saved, entryId: LEOTARD.id }] })).toBe(false);
+    expect(hasWordPageContent({ ...input, verbFavorites: [{ ...saved, deletedAt: "2026-10-06T00:00:00.000Z" }] })).toBe(false);
+    const body = (i: WordPageInput, l = ctx()) => renderWordPageSections(i, l).find((s) => s.name === "usage")!.body;
+    expect(body(input)).toMatchSnapshot();
+    expect(body(input, { ...ctx(), labels: labelsIn("en") })).toMatchSnapshot();
+    // Not saved: only the generation date.
+    expect(body({ ...input, verbFavorites: [] }).split("\n").at(-1)).toBe("*AI 產生於 10/02*");
+  });
+
   it("picks families by entry id, or by word for plain members", () => {
     expect(familiesOf(FAMILIES, GLITTERY).map((f) => f.id)).toEqual(["f1", "f2"]);
     expect(familiesOf(FAMILIES, LEOTARD).map((f) => f.id)).toEqual(["f1", "f3"]);

@@ -1,6 +1,6 @@
 import type { VocabEntry } from "../../core/model/entry";
 import type { Thread } from "../../core/model/thread";
-import type { ExportFamily, ExportTrivia, ExportUsage } from "./types";
+import type { ExportFamily, ExportTrivia, ExportUsage, ExportVerbFavorite } from "./types";
 
 // Data ExportService reads; the vault itself is VaultPort in core/ports.ts.
 
@@ -28,6 +28,9 @@ export interface ExportDataPort {
   usage(entryId: string): ExportUsage | undefined;
   // Saved (favourited) trivia.
   trivia(): readonly ExportTrivia[];
+  // Saved verb usages (動詞用法收藏). Optional: without it no page
+  // shows a usage as saved.
+  verbFavorites?(): readonly ExportVerbFavorite[];
 }
 
 // Where exports go. Folders are vault paths without a trailing slash.

@@ -33,7 +33,7 @@ import {
   type TriviaCall,
   type TriviaParams,
 } from "./triviaModel";
-import { shortDate } from "./verbsModel";
+import { datesText, dayLabel } from "../kit/dates";
 
 // ── vocab-trivia code block (規劃書 06 §7.4, §9.3, §9.6; 設計稿 L7、M4) ──
 //
@@ -313,7 +313,8 @@ class TriviaBlock extends MarkdownRenderChild {
     el.createDiv({ cls: "vt-trivia-favs-title", text: t("learn.trivia.favorites") });
     const pinned = this.pinned();
     const items = this.plugin.trivia.favorites(pinned?.id);
-    const views = favoriteViews(items, (id) => this.entryById(id)?.word, shortDate);
+    const now = new Date();
+    const views = favoriteViews(items, (id) => this.entryById(id)?.word, (iso) => dayLabel(iso, now));
     if (!views.length) {
       el.createDiv({ cls: "vt-trivia-favs-empty", text: t("learn.trivia.favorites.empty") });
       return;
@@ -332,11 +333,12 @@ class TriviaBlock extends MarkdownRenderChild {
     }
   }
 
-  // 「10/03 · 也提到 napkin、kitchenware」 — each mentioned word opens its card.
+  // 「收藏 10/03 · 也提到 napkin、kitchenware」 — each mentioned word opens its card.
   private renderFavoriteMeta(el: HTMLElement, v: FavoriteView): void {
-    if (v.date) el.appendText(v.date);
+    const dates = datesText({ added: v.date, updated: v.updated }, "saved");
+    if (dates) el.appendText(dates);
     if (!v.mentions.length) return;
-    if (v.date) el.appendText(" · ");
+    if (dates) el.appendText(" · ");
     const marker = "\u0000";
     const [before, after] = splitAround(t("learn.trivia.mentions", { words: marker }), marker);
     el.appendText(before);

@@ -65,16 +65,45 @@ function emptyContext(): RenderContext {
 // A new entry file. 冷知識.md also gets the (empty) saved-trivia section
 // right under its block, so ExportService fills it in place instead of
 // appending it after whatever the user writes below.
+//
+// No 「# 字族樹」 heading: Obsidian already shows the file name as the
+// inline title right above, so the heading only repeated it (1005 回饋 #4).
+// Files created before keep theirs — the plugin never edits an existing
+// entry file; PluginNoteChrome hides the inline title on those instead
+// (legacyTitleHeading below tells it when).
 export function renderEntryFile(id: EntryFileId): string {
   const def = entryFileDef(id);
   const head = [
     frontmatter({ "vocab-tracker": ENTRY_FILE_KIND, "vocab-tracker-id": def.id }),
-    `# ${def.name}`,
-    "",
     "```" + def.block,
     ...(def.params ? [def.params] : []),
     "```",
   ].join("\n");
   const sections = id === "trivia" ? renderTriviaFavoritesSections({ items: [] }, emptyContext()) : [];
   return buildManagedFile(head, sections);
+}
+
+// The 「# 字族樹」 an entry file made before 1005 starts with: the note's
+// first heading, an H1 repeating the file name, right after the
+// frontmatter (a blank line or two in between is fine). False for a new
+// file, a renamed one (the heading no longer repeats the inline title) or
+// a heading further down. Takes Obsidian's metadata cache shapes.
+export interface HeadingCacheLike {
+  heading: string;
+  level: number;
+  position: { start: { line: number } };
+}
+
+const LEGACY_HEADING_SLACK = 3;
+
+export function legacyTitleHeading(
+  basename: string,
+  headings: readonly HeadingCacheLike[] | undefined,
+  // 0-based line of the frontmatter's closing "---"; undefined without one.
+  frontmatterEndLine: number | undefined
+): boolean {
+  const h = headings?.[0];
+  if (!h || h.level !== 1 || h.heading.trim() !== basename.trim()) return false;
+  const first = frontmatterEndLine === undefined ? 0 : frontmatterEndLine + 1;
+  return h.position.start.line >= first && h.position.start.line < first + LEGACY_HEADING_SLACK;
 }

@@ -1,11 +1,13 @@
 import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { t } from "../../core/i18n";
+import { getLocale, t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
+import type { Family } from "../../core/model/family";
 import { noteBasename } from "../../core/text/slug";
 import { paragraphNumber } from "../../services/files/paragraphNumber";
 import { isNewCard, startOfLocalDay } from "../../services/srs/queue";
 import { inlineNote } from "../kit/inlineNote";
 import { bindPronounceButton } from "../kit/pronounce";
+import { familyTitle, focusFamily } from "./familiesModel";
 import { parseBlockParams } from "./params";
 
 // ── vocab-word code block: the header of a word page (規劃書 06 §8.2, W1/W2) ──
@@ -25,6 +27,17 @@ function l(key: Key, vars?: Record<string, string | number>): string {
   return t(`wordPage.${key}`, vars);
 }
 
+// Temporary strings until they move to core/i18n (`wordPage.origin*`).
+const L = {
+  "zh-TW": { origin: "來源：字族樹 {name}", originUnknown: "來源：字族樹", originTitle: "在字族樹打開" },
+  en: { origin: "From word families: {name}", originUnknown: "From word families", originTitle: "Open in word families" },
+} as const;
+
+function lo(key: keyof (typeof L)["en"], name?: string): string {
+  const text: string = (L[getLocale()] ?? L.en)[key];
+  return name === undefined ? text : text.replace("{name}", name);
+}
+
 // What the block needs from the plugin. VocabTrackerPlugin has most of it
 // already; the rest is wired in main.ts.
 export interface WordHeaderHost {
@@ -42,6 +55,48 @@ export interface WordHeaderHost {
   // opens WordReviewModal (wordReview.ts). Optional: the button is left
   // out without it.
   reviewWord?(entry: VocabEntry): unknown;
+  // Families (LearnStore), for 「來源：字族樹 …」 on a word added from one
+  // (origin "family:<id>"; 1005 回饋 #13). Optional: without it the chip
+  // still shows, without the family's name.
+  learn?: {
+    ensureLoaded(): Promise<void>;
+    family(id: string): Family | undefined;
+  };
+  // Opens 字族樹.md (the chip's click); main.ts has it.
+  openEntryFile?(id: "families", where?: "current" | "tab"): unknown;
+}
+
+// ── 「來源：字族樹 …」 ──────────────────────────────────────────────
+
+// The family a word was added from: VocabEntry.origin "family:<id>".
+export function originFamilyId(origin: string | undefined): string | null {
+  if (!origin?.startsWith("family:")) return null;
+  const id = origin.slice("family:".length).trim();
+  return id || null;
+}
+
+export interface OriginView {
+  familyId: string;
+  // 「clothing 服裝 › 舞台」: the family, and the group the word sits in.
+  // Absent when the family is gone (deleted, or replaced by 重新分群
+  // under another topic).
+  name?: string;
+}
+
+export function originView(entry: Pick<VocabEntry, "id" | "word" | "origin">, family: Family | undefined): OriginView | null {
+  const familyId = originFamilyId(entry.origin);
+  if (!familyId) return null;
+  if (!family || family.deletedAt) return { familyId };
+  const word = entry.word.toLowerCase();
+  const group = family.groups.find((g) =>
+    g.members.some((m) => m.entryId === entry.id || (!m.entryId && m.word.toLowerCase() === word))
+  );
+  const title = familyTitle(family);
+  return { familyId, name: group?.label.trim() ? `${title} › ${group.label.trim()}` : title };
+}
+
+export function originLabel(v: OriginView): string {
+  return v.name ? lo("origin", v.name) : lo("originUnknown");
 }
 
 export interface WordTarget {
@@ -123,6 +178,11 @@ class WordHeaderBlock extends MarkdownRenderChild {
     this.registerDomEvent(this.containerEl, "click", (e) => e.stopPropagation());
     this.register(this.host.store.events.on("data:changed", () => this.render()));
     this.render();
+    // The origin chip names the family once learn.json is in.
+    const entry = findTarget(this.host.store.entries, this.target);
+    if (this.host.learn && originFamilyId(entry?.origin)) {
+      void this.host.learn.ensureLoaded().then(() => this.render(), () => undefined);
+    }
   }
 
   onunload(): void {
@@ -153,6 +213,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
 
     const chips = root.createDiv({ cls: "vt-wh-chips" });
     if (entry.source?.path) this.renderSource(chips, entry, entry.source.path, entry.source.line);
+    this.renderOrigin(chips, entry);
     chip(chips, "calendar", dueLabel(entry));
     const reps = entry.srs?.reps ?? 0;
     if (reps > 0) chip(chips, "rotate-ccw", l("reviewed", { n: reps }));
@@ -164,6 +225,31 @@ class WordHeaderBlock extends MarkdownRenderChild {
       btn.createSpan({ text: l("review") });
       btn.addEventListener("click", () => void review.call(this.host, entry));
     }
+  }
+
+  // 「來源：字族樹 clothing 服裝 › 舞台」 — a word added from a family; a
+  // click opens 字族樹.md on that family with the word highlighted.
+  private renderOrigin(parent: HTMLElement, entry: VocabEntry): void {
+    const familyId = originFamilyId(entry.origin);
+    if (!familyId) return;
+    const view = originView(entry, this.host.learn?.family(familyId));
+    if (!view) return;
+    const el = chip(parent, "git-fork", originLabel(view));
+    el.addClass("vt-wh-origin");
+    const open = this.host.openEntryFile;
+    if (!open) return;
+    el.addClass("is-link");
+    el.setAttr("title", lo("originTitle"));
+    el.setAttr("role", "link");
+    el.tabIndex = 0;
+    const go = () => {
+      if (view.name) focusFamily({ familyId, entryId: entry.id });
+      void open.call(this.host, "families", "tab");
+    };
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") go();
+    });
   }
 
   private renderSource(parent: HTMLElement, entry: VocabEntry, path: string, line: number): void {

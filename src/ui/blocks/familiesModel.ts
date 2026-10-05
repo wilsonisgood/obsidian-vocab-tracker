@@ -2,6 +2,7 @@ import type { VocabEntry } from "../../core/model/entry";
 import { familyMembers, type Family, type FamilyMember } from "../../core/model/family";
 import type { FamilyCandidate } from "../../services/learn/FamilyService";
 import { WordIndex } from "../../services/learn/wordIndex";
+import { recordDates, type DatesView } from "../kit/dates";
 import { parseBlockParams } from "./params";
 
 // View-models for the vocab-families block (規劃書 06 §7.2, screens L5 字族樹
@@ -74,6 +75,8 @@ export interface TreeChip {
   zh: string;
   known: boolean;
   entryId?: string;
+  // The word the learner came from (「來源：字族樹 …」 on its word page).
+  focus?: boolean;
 }
 
 export interface TreeColumn {
@@ -89,9 +92,11 @@ export interface FamilyTreeView {
   seeds: string[];
   knownCount: number;
   suggestedCount: number;
+  // 加入 / 更新日期 (1005 回饋 #14).
+  dates: DatesView;
 }
 
-export function familyTree(f: Family, lookup: MemberLookup): FamilyTreeView {
+export function familyTree(f: Family, lookup: MemberLookup, opts: { focusEntryId?: string; now?: Date } = {}): FamilyTreeView {
   let knownCount = 0;
   let suggestedCount = 0;
   const columns: TreeColumn[] = [];
@@ -102,14 +107,16 @@ export function familyTree(f: Family, lookup: MemberLookup): FamilyTreeView {
       const e = lookup.entry(m);
       if (e) knownCount++;
       else suggestedCount++;
-      chips.push(e ? { word: m.word, zh: m.zh, known: true, entryId: e.id } : { word: m.word, zh: m.zh, known: false });
+      const chip: TreeChip = e ? { word: m.word, zh: m.zh, known: true, entryId: e.id } : { word: m.word, zh: m.zh, known: false };
+      if (e && opts.focusEntryId && e.id === opts.focusEntryId) chip.focus = true;
+      chips.push(chip);
     }
     if (chips.length) columns.push({ label: g.label, chips });
   }
   const seeds = (f.seedEntryIds ?? [])
     .map((id) => lookup.byEntryId(id)?.word)
     .filter((w): w is string => !!w);
-  return { id: f.id, title: familyTitle(f), columns, seeds, knownCount, suggestedCount };
+  return { id: f.id, title: familyTitle(f), columns, seeds, knownCount, suggestedCount, dates: recordDates(f, opts.now) };
 }
 
 // Word-page mode: the families a word belongs to, by entry or by spelling.
@@ -163,12 +170,33 @@ export function reviewView(candidates: readonly FamilyCandidate[], lookup: Membe
   return { cards, familyCount: candidates.length, newWordCount: newWords.size };
 }
 
+// The review lists only the new words to tick (1005 回饋 #4-1): the learned
+// members are already named in the card's title (「從你學過的 … 延伸」) and
+// show up in the tree once saved, so listing them again row by row only
+// made a long list after 重新分群. A long 「從」 list is cut short:
+// ["a", "b", "c"], 2 → { shown: ["a", "b"], more: 1 }.
+export function clipWords(words: readonly string[], max: number): { shown: string[]; more: number } {
+  if (words.length <= max) return { shown: [...words], more: 0 };
+  return { shown: words.slice(0, max), more: words.length - max };
+}
+
+export function newRows(card: ReviewCard): ReviewRow[] {
+  return card.rows.filter((r) => !r.known);
+}
+
 // How many ticked words would actually be added (ticked and still new).
 export function checkedNewWords(view: ReviewView, checked: ReadonlySet<string>): string[] {
   const out: string[] = [];
   for (const card of view.cards) {
     for (const r of card.rows) if (!r.known && checked.has(r.key) && !out.includes(r.key)) out.push(r.key);
   }
+  return out;
+}
+
+// Every new word in the review, for 「全選」.
+export function allNewWords(view: ReviewView): string[] {
+  const out: string[] = [];
+  for (const card of view.cards) for (const r of newRows(card)) if (!out.includes(r.key)) out.push(r.key);
   return out;
 }
 
@@ -180,4 +208,36 @@ export function pickSelected(
 ): string | undefined {
   if (current && families.some((f) => f.id === current)) return current;
   return (findFamily(families, preferTopic) ?? families[0])?.id;
+}
+
+// ── 「來源：字族樹 …」 → the tree on that family ─────────────────────
+//
+// The word page's origin chip (wordHeader.ts) asks for a family and opens
+// 字族樹.md. A tree block already on screen jumps to it (onFamilyFocus);
+// one that's about to open takes the request when it loads
+// (takeFamilyFocus). Module state, so the two never import each other.
+
+export interface FamilyFocus {
+  familyId: string;
+  // The member to highlight: the word the learner came from.
+  entryId?: string;
+}
+
+let pendingFocus: FamilyFocus | null = null;
+const focusListeners = new Set<(f: FamilyFocus) => void>();
+
+export function focusFamily(focus: FamilyFocus): void {
+  pendingFocus = focus;
+  for (const fn of focusListeners) fn(focus);
+}
+
+export function takeFamilyFocus(): FamilyFocus | null {
+  const f = pendingFocus;
+  pendingFocus = null;
+  return f;
+}
+
+export function onFamilyFocus(fn: (f: FamilyFocus) => void): () => void {
+  focusListeners.add(fn);
+  return () => focusListeners.delete(fn);
 }

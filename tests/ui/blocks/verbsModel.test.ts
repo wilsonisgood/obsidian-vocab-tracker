@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { getLocale, setLocale, type Locale } from "../../../src/core/i18n";
 import type { UsageBlock } from "../../../src/core/model/usage";
 import {
   filterVerbs,
@@ -7,6 +8,7 @@ import {
   phoneticLine,
   pickVerb,
   shortDate,
+  usageDates,
   usageMeta,
   usageRows,
 } from "../../../src/ui/blocks/verbsModel";
@@ -91,5 +93,23 @@ describe("usageRows", () => {
   it("tolerates missing arrays from older output", () => {
     const partial = { generatedAt: "", model: "" } as unknown as UsageBlock;
     expect(usageRows(partial)).toEqual({ patterns: [], related: [] });
+  });
+});
+
+describe("usageDates (1005 #14)", () => {
+  let previous: Locale;
+  beforeAll(() => {
+    previous = getLocale();
+    setLocale("zh-TW");
+  });
+  afterAll(() => setLocale(previous));
+  const NOW = new Date(2026, 9, 5, 12);
+  const at = (d: number) => new Date(2026, 9, d, 12).toISOString();
+  it("reads 加入 (first generation) and 更新 (latest 重新產生)", () => {
+    expect(usageDates({ createdAt: at(2), generatedAt: at(5) }, NOW)).toBe("加入 10/02 · 更新 10/05");
+    expect(usageDates({ createdAt: at(2), generatedAt: at(2) }, NOW)).toBe("加入 10/02");
+    // Older blocks without createdAt.
+    expect(usageDates({ generatedAt: at(4) }, NOW)).toBe("加入 10/04");
+    expect(usageDates(undefined, NOW)).toBe("");
   });
 });

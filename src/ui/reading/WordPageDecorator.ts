@@ -1,11 +1,12 @@
 import { setIcon, type MarkdownPostProcessorContext } from "obsidian";
 import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
-import { isAiError } from "../../services/ai/errors";
+import { aiDebugOf, isAiError } from "../../services/ai/errors";
 import { exportLabels } from "../../services/export/labels";
 import type { FamilyService } from "../../services/learn/FamilyService";
 import type { TriviaService } from "../../services/learn/TriviaService";
 import type { VerbUsageService } from "../../services/learn/VerbUsageService";
+import { debugReportText } from "../kit/aiDebug";
 import { aiErrorText } from "../kit/aiState";
 
 // ── Word page heading buttons (規劃書 06 §8.2, W1/W2) ──
@@ -175,6 +176,11 @@ function decorate(h: HTMLElement, section: WordSection, entry: VocabEntry, deps:
       .then(action.run)
       .catch((err: unknown) => {
         const message = isAiError(err) ? aiErrorText(err) : err instanceof Error ? err.message : String(err);
+        // An unreadable answer: the prompt and the raw output go to the
+        // console (a Notice can't hold them; 字族樹 / 動詞用法 show them
+        // in a folded box).
+        const debug = aiDebugOf(err);
+        if (debug) console.error(`Vocab Tracker: unreadable AI answer\n\n${debugReportText(debug)}`);
         deps.notify(l("failed", { error: message }));
       })
       .finally(() => {

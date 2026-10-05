@@ -1647,3 +1647,136 @@ button.vt-trivia-fav-mention:hover {
 body.is-mobile button.vt-verb-related-chip {
   min-height: 44px;
 }
+
+/* ── 1005 回饋: failure debug box, dates, review hint, verb 收藏 ───── */
+
+/* Error line + folded 「除錯資訊」 (kit/aiDebug.ts). */
+.vt-ai-error-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.vt-learn-error .vt-ai-error-box {
+  flex: 1;
+  min-width: 200px;
+}
+
+.vt-verb-detail > .vt-ai-error-box {
+  margin: 6px 0;
+}
+
+.vt-ai-debug {
+  border: 1px solid var(--vt-border);
+  border-radius: var(--radius-s);
+  background: var(--vt-surface);
+  font-size: var(--font-ui-small);
+}
+
+.vt-ai-debug-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  color: var(--vt-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.vt-ai-debug-icon {
+  display: inline-flex;
+}
+
+.vt-ai-debug-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.vt-ai-debug[open] > .vt-ai-debug-summary {
+  border-bottom: 1px solid var(--vt-border);
+}
+
+.vt-ai-debug-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px 0;
+}
+
+.vt-ai-debug-hint,
+.vt-ai-debug-meta {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-ai-debug-meta {
+  padding: 4px 10px 0;
+  font-family: var(--font-monospace);
+  word-break: break-all;
+}
+
+.vt-ai-debug-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vt-ai-debug-label {
+  padding: 8px 10px 2px;
+  color: var(--vt-muted);
+  font-weight: var(--font-medium);
+}
+
+.vt-ai-debug-pre {
+  margin: 0 10px 10px;
+  padding: 8px;
+  max-height: 260px;
+  overflow: auto;
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+}
+
+/* 「加入 10/03 · 更新 10/05」 under the family's root. */
+.vt-fam-dates {
+  margin-top: 6px;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+/* The word the learner came from (「來源：字族樹 …」). */
+.vt-fam-chip.is-known.is-focus {
+  box-shadow: 0 0 0 2px var(--vt-accent);
+  font-weight: var(--font-medium);
+}
+
+.vt-fam-review-hint,
+.vt-fam-card-empty {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-fam-card-empty {
+  padding: 4px 2px;
+}
+
+.vt-fam-review-toggle {
+  margin-right: auto;
+}
+
+/* Verb 收藏 (寫入單字頁). */
+.vt-verb-favorite.is-active {
+  border-color: var(--vt-accent);
+  color: var(--vt-accent-text);
+}
+
+.vt-verbs-row-icon.is-saved {
+  color: var(--vt-accent-text);
+}

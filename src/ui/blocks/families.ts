@@ -3,10 +3,16 @@ import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import type { Family } from "../../core/model/family";
 import type { FamilyCandidate } from "../../services/learn/FamilyService";
+import { aiErrorBox } from "../kit/aiDebug";
+import { datesText } from "../kit/dates";
 import { emptyState } from "../kit/emptyState";
 import { inlineNote } from "../kit/inlineNote";
 import {
+  allNewWords,
   checkedNewWords,
+  clipWords,
+  newRows,
+  onFamilyFocus,
   familiesWith,
   familyTitle,
   familyTree,
@@ -14,11 +20,13 @@ import {
   parseFamiliesParams,
   pickSelected,
   reviewView,
+  takeFamilyFocus,
   type FamiliesParams,
+  type FamilyFocus,
   type FamilyTreeView,
   type ReviewView,
 } from "./familiesModel";
-import { joinWords, t } from "../../core/i18n";
+import { getLocale, joinWords, t } from "../../core/i18n";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate, wordChip } from "./learnUi";
 
 // ── vocab-families code block (規劃書 06 §7.2, §9.6; 設計稿 L5、W3) ──
@@ -32,6 +40,29 @@ import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAi
 // 「重新分群」 ask the AI for candidates and show them for review (W3);
 // nothing is stored until the learner saves, and ticked new words go
 // through the dictionary before entering the vocab list (FamilyService).
+
+// Temporary strings until they move to core/i18n (`learn.family.*`).
+const L = {
+  "zh-TW": {
+    reviewHint: "這是 AI 的分群建議。勾選想加入單字庫的新字再存下；按「捨棄」就什麼都不存。",
+    fromMore: "等 {n} 個",
+    noNew: "沒有新字。存下後會出現在字族樹。",
+    selectAll: "全選新字",
+    selectNone: "全不選",
+  },
+  en: {
+    reviewHint: "These are the AI's suggestions. Tick the new words to add, then save; Discard saves nothing.",
+    fromMore: "and {n} more",
+    noNew: "No new words. It shows in the tree once saved.",
+    selectAll: "Select all new words",
+    selectNone: "Select none",
+  },
+} as const;
+
+function l(key: keyof (typeof L)["en"], n?: number): string {
+  const text: string = (L[getLocale()] ?? L.en)[key];
+  return n === undefined ? text : text.replace("{n}", String(n));
+}
 
 export function renderFamilies(
   plugin: VocabTrackerPlugin,
@@ -58,7 +89,11 @@ class FamiliesBlock extends MarkdownRenderChild {
   private review: Review | null = null;
   private generating: AbortController | null = null;
   private saving = false;
-  private error: string | null = null;
+  // The failure and what was thrown (an unreadable answer carries the
+  // prompt and raw output for the debug box).
+  private error: { text: string; cause?: unknown } | null = null;
+  // The member to highlight (came from its word page).
+  private focusEntryId: string | undefined;
   // Suggested words being added (「點一下加入」), so a double tap adds once.
   private adding = new Set<string>();
 
@@ -74,6 +109,16 @@ class FamiliesBlock extends MarkdownRenderChild {
     this.containerEl.empty();
     this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-families"] });
     guardReadingClicks(this, this.root);
+    // 「來源：字族樹 …」 from a word page (whole-tree blocks only: a
+    // word-page block shows that word's families anyway).
+    if (!this.params.word) {
+      const focus = takeFamilyFocus();
+      if (focus) {
+        this.selectedId = focus.familyId;
+        this.focusEntryId = focus.entryId;
+      }
+      this.register(onFamilyFocus((f) => this.focus(f)));
+    }
 
     const redraw = () => this.render();
     this.register(this.plugin.learn.events.on("family:upsert", redraw));
@@ -92,6 +137,15 @@ class FamiliesBlock extends MarkdownRenderChild {
   onunload(): void {
     this.disposed = true;
     if (this.generating) this.plugin.families.stop();
+  }
+
+  private focus(focus: FamilyFocus): void {
+    if (this.disposed) return;
+    takeFamilyFocus();
+    this.selectedId = focus.familyId;
+    this.focusEntryId = focus.entryId;
+    this.render();
+    this.root.scrollIntoView({ block: "start", behavior: "smooth" });
   }
 
   // ── Data ──────────────────────────────────────────────────────
@@ -119,13 +173,13 @@ class FamiliesBlock extends MarkdownRenderChild {
         signal: ctrl.signal,
       });
       if (this.disposed) return;
-      if (!candidates.length) this.error = t("learn.family.noneFound");
+      if (!candidates.length) this.error = { text: t("learn.family.noneFound") };
       else this.review = { candidates, checked: new Set(), replace };
     } catch (e) {
       if (this.disposed) return;
       if (!isAbort(e)) {
         console.error("Vocab Tracker: family generation failed", e);
-        this.error = learnErrorText(e);
+        this.error = { text: learnErrorText(e), cause: e };
       }
     } finally {
       if (this.generating === ctrl) this.generating = null;
@@ -214,13 +268,13 @@ class FamiliesBlock extends MarkdownRenderChild {
     if (this.generating) return this.renderGenerating();
     if (this.error) {
       const box = root.createDiv({ cls: "vt-learn-error" });
-      box.appendChild(inlineNote({ tone: "error", text: this.error }));
+      box.appendChild(aiErrorBox({ text: this.error.text, error: this.error.cause }));
       learnButton(box, { label: t("learn.retry"), icon: "rotate-ccw", onClick: () => void this.generate(false, entry) });
     }
     if (this.review) return this.renderReview(this.review, lookup);
 
     const selected = families.find((f) => f.id === this.selectedId);
-    if (selected) return this.renderTree(selected, familyTree(selected, lookup), lookup);
+    if (selected) return this.renderTree(selected, familyTree(selected, lookup, { focusEntryId: this.focusEntryId }), lookup);
 
     // No families yet.
     const empty = root.createDiv({ cls: "vt-fam-empty" });
@@ -247,6 +301,7 @@ class FamiliesBlock extends MarkdownRenderChild {
       chip.setAttr("aria-pressed", String(f.id === this.selectedId));
       chip.addEventListener("click", () => {
         this.selectedId = f.id;
+        this.focusEntryId = undefined;
         this.error = null;
         this.render();
       });
@@ -292,6 +347,8 @@ class FamiliesBlock extends MarkdownRenderChild {
       menu.showAtMouseEvent(e);
     });
 
+    const dates = datesText(view.dates);
+    if (dates) tree.createDiv({ cls: "vt-fam-dates", text: dates });
     tree.createDiv({ cls: "vt-fam-stem" });
     const cols = tree.createDiv({ cls: "vt-fam-cols" });
     for (const col of view.columns) {
@@ -304,7 +361,7 @@ class FamiliesBlock extends MarkdownRenderChild {
         if (chip.known) {
           // Opens the word's card in the sidebar.
           const entry = chip.entryId ? lookup.byEntryId(chip.entryId) : undefined;
-          const el = wordChip(list, this.plugin, entry, ["vt-fam-chip", "is-known"]);
+          const el = wordChip(list, this.plugin, entry, ["vt-fam-chip", "is-known", ...(chip.focus ? ["is-focus"] : [])]);
           el.createSpan({ cls: "vt-fam-chip-word", text: chip.word });
           if (chip.zh) el.createSpan({ cls: "vt-fam-chip-zh", text: chip.zh });
           continue;
@@ -342,35 +399,50 @@ class FamiliesBlock extends MarkdownRenderChild {
     const head = box.createDiv({ cls: "vt-fam-review-head" });
     setIcon(head.createSpan({ cls: "vt-fam-review-icon" }), "sparkles");
     head.createSpan({ text: t("learn.family.found", { families: view.familyCount, words: view.newWordCount }) });
+    box.createDiv({ cls: "vt-fam-review-hint", text: l("reviewHint") });
 
+    // Only the new words get a row; the learned members the family grew
+    // from are named in the title (1005 回饋 #4-1).
     for (const card of view.cards) {
       const el = box.createDiv({ cls: "vt-fam-card" });
-      const title = card.from.length
-        ? `${card.title} · ${t("learn.family.from", { words: joinWords(card.from) })}`
-        : card.title;
+      const from = clipWords(card.from, 6);
+      const fromWords = from.more ? `${joinWords(from.shown)} ${l("fromMore", from.more)}` : joinWords(from.shown);
+      const title = card.from.length ? `${card.title} · ${t("learn.family.from", { words: fromWords })}` : card.title;
       el.createDiv({ cls: "vt-fam-card-title", text: title });
-      for (const row of card.rows) {
+      const rows = newRows(card);
+      if (!rows.length) el.createDiv({ cls: "vt-fam-card-empty", text: l("noNew") });
+      for (const row of rows) {
         const line = el.createEl("label", { cls: "vt-fam-row" });
-        if (row.known) {
-          line.addClass("is-known");
-          line.createSpan({ cls: "vt-fam-row-tag", text: t("learn.family.known") });
-        } else {
-          const cb = line.createEl("input", { cls: "vt-fam-row-check", type: "checkbox" });
-          cb.checked = review.checked.has(row.key);
-          cb.disabled = this.saving;
-          cb.addEventListener("change", () => {
-            if (cb.checked) review.checked.add(row.key);
-            else review.checked.delete(row.key);
-            this.render();
-          });
-        }
+        const cb = line.createEl("input", { cls: "vt-fam-row-check", type: "checkbox" });
+        cb.checked = review.checked.has(row.key);
+        cb.disabled = this.saving;
+        cb.addEventListener("change", () => {
+          if (cb.checked) review.checked.add(row.key);
+          else review.checked.delete(row.key);
+          this.render();
+        });
         line.createSpan({ cls: "vt-fam-row-word", text: row.word });
         line.createSpan({ cls: "vt-fam-row-zh", text: row.zh });
       }
     }
 
     const toAdd = checkedNewWords(view, review.checked);
+    const all = allNewWords(view);
     const actions = box.createDiv({ cls: "vt-fam-review-actions" });
+    if (all.length) {
+      const everything = toAdd.length === all.length;
+      const toggle = learnButton(actions, {
+        label: l(everything ? "selectNone" : "selectAll"),
+        icon: everything ? "square" : "check-square",
+        ghost: true,
+        onClick: () => {
+          review.checked = new Set(everything ? [] : all);
+          this.render();
+        },
+      });
+      toggle.addClass("vt-fam-review-toggle");
+      toggle.disabled = this.saving;
+    }
     const discard = learnButton(actions, {
       label: t("learn.family.discard"),
       onClick: () => {

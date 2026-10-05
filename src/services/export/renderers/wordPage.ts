@@ -1,7 +1,7 @@
 import type { Thread } from "../../../core/model/thread";
 import { buildManagedFile, type ManagedSection } from "../managedBlock";
-import type { ExportFamily, ExportTrivia, ExportUsage, RenderContext } from "../types";
-import { frontmatter, inlineCode, italic, normalizeNewlines, oneLine, renderRounds, threadRounds, wordRef } from "./common";
+import type { ExportFamily, ExportTrivia, ExportUsage, ExportVerbFavorite, RenderContext } from "../types";
+import { fill, frontmatter, inlineCode, italic, normalizeNewlines, oneLine, renderRounds, threadRounds, wordRef } from "./common";
 
 // 單字/<word>.md (規劃書 06 §8.1–§8.2, screen W1): a `vocab-word` header
 // block (rendered live by the plugin), then four managed sections, then
@@ -14,6 +14,8 @@ export interface WordPageInput {
   // Every family; the ones this word belongs to are picked here.
   families: readonly ExportFamily[];
   usage?: ExportUsage;
+  // Every saved verb usage (動詞用法收藏); this word's is picked here.
+  verbFavorites?: readonly ExportVerbFavorite[];
   // Every saved trivia item; this word's own and the ones mentioning it
   // are picked here.
   trivia: readonly ExportTrivia[];
@@ -44,10 +46,19 @@ export function triviaMentioning(items: readonly ExportTrivia[], entry: { id: st
   return liveTrivia(items).filter((t) => mentionsEntry(t, entry));
 }
 
-// Only pages with a discussion or saved trivia are created on their own
-// (§8.2); otherwise the page waits until the user opens it.
+export function verbFavoriteOf(input: Pick<WordPageInput, "verbFavorites" | "entry">): ExportVerbFavorite | undefined {
+  return input.verbFavorites?.find((v) => v.entryId === input.entry.id && !v.deletedAt);
+}
+
+// Only pages with a discussion or something saved (trivia, the verb's
+// usage) are created on their own (§8.2); otherwise the page waits until
+// the user opens it.
 export function hasWordPageContent(input: WordPageInput): boolean {
-  return threadRounds(input.thread).length > 0 || triviaAbout(input.trivia, input.entry.id).length > 0;
+  return (
+    threadRounds(input.thread).length > 0 ||
+    triviaAbout(input.trivia, input.entry.id).length > 0 ||
+    !!verbFavoriteOf(input)
+  );
 }
 
 function section(name: string, heading: string, body: string): ManagedSection {
@@ -78,7 +89,16 @@ function renderFamilies(input: WordPageInput, ctx: RenderContext): string {
     .join("\n\n");
 }
 
-function renderUsage(usage: ExportUsage | undefined, ctx: RenderContext): string {
+// 「已收藏 10/05 · AI 產生於 10/02」 under the usage (1005 回饋 #4, #14).
+function usageMeta(usage: ExportUsage, saved: ExportVerbFavorite | undefined, ctx: RenderContext): string | null {
+  const parts: string[] = [];
+  if (saved?.createdAt) parts.push(fill(ctx.labels.usageSaved, { date: ctx.formatDate(saved.createdAt) }));
+  if (usage.generatedAt) parts.push(fill(ctx.labels.usageGenerated, { date: ctx.formatDate(usage.generatedAt) }));
+  return parts.length ? italic(parts.join(" · ")) : null;
+}
+
+function renderUsage(input: WordPageInput, ctx: RenderContext): string {
+  const usage = input.usage;
   if (!usage || (!usage.patterns.length && !usage.related.length)) return italic(ctx.labels.usageEmpty);
   const lines = usage.patterns.map((p) => {
     const item = [`- ${inlineCode(p.pattern)}`, oneLine(p.meaningZh)].filter(Boolean).join(" ");
@@ -89,6 +109,8 @@ function renderUsage(usage: ExportUsage | undefined, ctx: RenderContext): string
     const related = usage.related.map((r) => (r.zh.trim() ? `${oneLine(r.phrase)}（${oneLine(r.zh)}）` : oneLine(r.phrase)));
     lines.push(`**${ctx.labels.usageRelated}**：${related.join(" · ")}`);
   }
+  const meta = usageMeta(usage, verbFavoriteOf(input), ctx);
+  if (meta) lines.push("", meta);
   return lines.join("\n");
 }
 
@@ -120,7 +142,7 @@ function renderDiscussion(input: WordPageInput, ctx: RenderContext): string {
 export function renderWordPageSections(input: WordPageInput, ctx: RenderContext): ManagedSection[] {
   return [
     section("families", ctx.labels.families, renderFamilies(input, ctx)),
-    section("usage", ctx.labels.usage, renderUsage(input.usage, ctx)),
+    section("usage", ctx.labels.usage, renderUsage(input, ctx)),
     section("trivia", ctx.labels.trivia, renderTrivia(input, ctx)),
     section("discussion", ctx.labels.discussion, renderDiscussion(input, ctx)),
   ];

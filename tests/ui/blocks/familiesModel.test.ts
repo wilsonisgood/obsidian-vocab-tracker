@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import type { Family } from "../../../src/core/model/family";
 import type { FamilyCandidate } from "../../../src/services/learn/FamilyService";
 import {
+  allNewWords,
   checkedNewWords,
+  clipWords,
+  focusFamily,
+  newRows,
+  onFamilyFocus,
+  takeFamilyFocus,
   familiesWith,
   familyTitle,
   familyTree,
@@ -171,5 +177,70 @@ describe("pickSelected", () => {
     expect(pickSelected([kitchen, glow], "gone", "gl-")).toBe("f2");
     expect(pickSelected([kitchen, glow], undefined)).toBe("f1");
     expect(pickSelected([], "f1")).toBeUndefined();
+  });
+});
+
+describe("1005 回饋: review rows, dates, focus", () => {
+  const lookup = new MemberLookup([entry("g", "glittery"), entry("l", "leotard")]);
+  const cands: FamilyCandidate[] = [
+    {
+      topic: "clothing",
+      label: "服裝",
+      seedEntryIds: [],
+      groups: [
+        {
+          label: "舞台",
+          members: [
+            { entryId: "g", word: "glittery", zh: "" },
+            { entryId: "l", word: "leotard", zh: "" },
+            { word: "sequin", zh: "亮片" },
+          ],
+        },
+      ],
+    },
+    { topic: "x", label: "X", seedEntryIds: [], groups: [{ label: "", members: [{ entryId: "g", word: "glittery", zh: "" }] }] },
+    { topic: "y", label: "Y", seedEntryIds: [], groups: [{ label: "", members: [{ word: "Sequin", zh: "" }, { word: "tulle", zh: "" }] }] },
+  ];
+
+  it("lists only the new words to tick; learned ones are named in the title", () => {
+    const view = reviewView(cands, lookup);
+    expect(newRows(view.cards[0]).map((r) => r.word)).toEqual(["sequin"]);
+    expect(view.cards[0].from).toEqual(["glittery", "leotard"]);
+    expect(newRows(view.cards[1])).toEqual([]);
+    expect(allNewWords(view)).toEqual(["sequin", "tulle"]);
+    expect(checkedNewWords(view, new Set(allNewWords(view)))).toEqual(["sequin", "tulle"]);
+  });
+
+  it("cuts a long 「從你學過的」 list", () => {
+    expect(clipWords(["a", "b", "c"], 2)).toEqual({ shown: ["a", "b"], more: 1 });
+    expect(clipWords(["a"], 2)).toEqual({ shown: ["a"], more: 0 });
+  });
+
+  it("dates the tree and highlights the word the learner came from", () => {
+    const f: Family = {
+      ...kitchen,
+      createdAt: new Date(2026, 9, 1, 12).toISOString(),
+      updatedAt: new Date(2026, 9, 4, 12).toISOString(),
+    };
+    const lk = new MemberLookup([entry("e-apron", "apron"), entry("e-pan", "pan")]);
+    const view = familyTree(f, lk, { focusEntryId: "e-apron", now: new Date(2026, 9, 5, 12) });
+    expect(view.dates).toEqual({ added: "10/01", updated: "10/04" });
+    const chips = view.columns.flatMap((c) => c.chips);
+    expect(chips.filter((c) => c.focus).map((c) => c.word)).toEqual(["apron"]);
+    expect(familyTree(f, lk).columns.flatMap((c) => c.chips).some((c) => c.focus)).toBe(false);
+  });
+
+  it("hands a focus request to an open tree, or to the next one that opens", () => {
+    takeFamilyFocus();
+    const seen: string[] = [];
+    const off = onFamilyFocus((x) => seen.push(x.familyId));
+    focusFamily({ familyId: "f1", entryId: "e-apron" });
+    expect(seen).toEqual(["f1"]);
+    expect(takeFamilyFocus()).toEqual({ familyId: "f1", entryId: "e-apron" });
+    expect(takeFamilyFocus()).toBeNull();
+    off();
+    focusFamily({ familyId: "f2" });
+    expect(seen).toEqual(["f1"]);
+    expect(takeFamilyFocus()).toEqual({ familyId: "f2" });
   });
 });

@@ -3,6 +3,7 @@ import { isVerb, type UsageBlock } from "../../core/model/usage";
 import { TypedEmitter } from "../../core/events";
 import { verbUsage } from "../ai/tasks/verbUsage";
 import type { LearnAi, LearnVocabPort } from "./ports";
+import { runStructured } from "./structured";
 
 // 動詞用法 (規劃書 06 §7.3, screen L6): only verbs get 「產生」. The result is
 // stored on the entry (VocabEntry.usage), generated once, and replaced only
@@ -57,19 +58,25 @@ export class VerbUsageService {
   }
 
   // Generates (or regenerates) the usage block and saves it on the entry.
-  // AI errors propagate (bad_output when the JSON doesn't hold); the old
+  // AI errors propagate (bad_output when the JSON doesn't hold, carrying
+  // the prompt and the raw answer); the old
   // block is kept on failure. Refuses non-verbs.
   async generate(entry: VocabEntry, opts: { signal?: AbortSignal } = {}): Promise<UsageBlock> {
     if (!this.canGenerate(entry)) throw new Error(`"${entry.word}" is not a verb`);
     this.setBusy(entry.id, true);
     try {
-      const r = await this.deps.ai.run(
+      const { result: r, value: draft } = await runStructured(
+        this.deps.ai,
         verbUsage,
         { entry },
         { threadId: verbThreadId(entry.id), signal: opts.signal }
       );
-      const draft = verbUsage.parse!(r);
-      const block: UsageBlock = { ...draft, generatedAt: this.clock().toISOString(), model: r.model };
+      const now = this.clock().toISOString();
+      // createdAt: when the verb first got usage (加入日期); generatedAt:
+      // the latest 重新產生 (更新日期). Blocks made before createdAt
+      // existed count their last generation as the first.
+      const createdAt = entry.usage?.createdAt ?? entry.usage?.generatedAt ?? now;
+      const block: UsageBlock = { ...draft, createdAt, generatedAt: now, model: r.model };
       entry.usage = block;
       await this.deps.vocab.touch(entry);
       this.events.emit("verb:usage", { entryId: entry.id });

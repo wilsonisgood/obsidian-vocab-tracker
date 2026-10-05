@@ -95,6 +95,16 @@ export class FakeLearnAi implements LearnAi {
   }
 }
 
+// FakeLearnAi plus AiService.prepare, for the debug box (structured.ts).
+export class FakePreparingAi extends FakeLearnAi {
+  prepare: NonNullable<LearnAi["prepare"]> = (task, input) => {
+    const t = task as AiTask<unknown, unknown>;
+    return { task: t, request: t.build(input, { profile: defaultLearnerProfile(), history: [] }) } as ReturnType<
+      NonNullable<LearnAi["prepare"]>
+    >;
+  };
+}
+
 // ThreadService.ask as it behaves once it stores subjectEntryId (the M7
 // integration item): appends a question/answer pair built with the real
 // trivia tasks, answer text scripted.

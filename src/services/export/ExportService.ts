@@ -25,7 +25,7 @@ import {
   renderWordPageSections,
   type WordPageInput,
 } from "./renderers/wordPage";
-import type { ExportFamily, ExportLabels, ExportTrivia, RenderContext } from "./types";
+import type { ExportFamily, ExportLabels, ExportTrivia, ExportVerbFavorite, RenderContext } from "./types";
 
 // Keeps the exported Markdown notes (規劃書 06 §8) in step with the data:
 // 單字/<word>.md, 討論串/<文章>.ai.md and the saved list in 冷知識.md.
@@ -118,6 +118,8 @@ export class ExportService {
   private queues = new Map<string, Promise<void>>();
   // Article path → its note, as last found or created.
   private notePaths = new Map<string, string>();
+  // Family id → its learned members as last announced (familyChanged).
+  private familyMemberIds = new Map<string, Set<string>>();
   private subscriptions: (() => void)[] = [];
   private disposed = false;
   private readonly debounceMs: number;
@@ -213,11 +215,18 @@ export class ExportService {
     }
   }
 
-  // Every word in the family (learned members) shows it on its page.
+  // Every word in the family (learned members) shows it on its page — and
+  // so did the words it had last time: a family 重新分群 renewed under its
+  // id may have dropped some, and their pages must lose it.
   familyChanged(family: ExportFamily): void {
+    const now = new Set<string>();
     for (const group of family.groups) {
-      for (const m of group.members) if (m.entryId) this.wordChanged(m.entryId);
+      for (const m of group.members) if (m.entryId) now.add(m.entryId);
     }
+    const before = this.familyMemberIds.get(family.id);
+    for (const id of new Set([...(before ?? []), ...now])) this.wordChanged(id);
+    if (family.deletedAt) this.familyMemberIds.delete(family.id);
+    else this.familyMemberIds.set(family.id, now);
   }
 
   // A trivia item was saved, edited or unsaved.
@@ -234,19 +243,32 @@ export class ExportService {
     this.wordChanged(entryId);
   }
 
+  // A verb's usage was saved (「寫入單字頁」) or unsaved: saving creates
+  // the word page when it has none yet.
+  verbFavoriteChanged(fav: ExportVerbFavorite): void {
+    this.wordChanged(fav.entryId, fav.deletedAt ? "never" : "ifContent");
+  }
+
   // ── Event wiring ─────────────────────────────────────────────────────
 
   watchThreads(source: Subscribable<{ "thread:upsert": Thread }>): void {
     this.track(source.on("thread:upsert", (thread) => this.threadChanged(thread)));
   }
 
-  // LearnStore: families and saved trivia (deletes arrive as upserts
+  // LearnStore: families, saved trivia and saved verb usages (deletes arrive as upserts
   // carrying deletedAt). A sync merge ("learn:reloaded") isn't followed:
   // the device that made the change already exported it, and the files
   // sync on their own.
-  watchLearn(source: Subscribable<{ "family:upsert": ExportFamily; "trivia:upsert": ExportTrivia }>): void {
+  watchLearn(
+    source: Subscribable<{
+      "family:upsert": ExportFamily;
+      "trivia:upsert": ExportTrivia;
+      "verbFavorite:upsert": ExportVerbFavorite;
+    }>
+  ): void {
     this.track(source.on("family:upsert", (family) => this.familyChanged(family)));
     this.track(source.on("trivia:upsert", (item) => this.triviaItemChanged(item)));
+    this.track(source.on("verbFavorite:upsert", (fav) => this.verbFavoriteChanged(fav)));
   }
 
   // VerbUsageService: a usage block was (re)generated.
@@ -393,6 +415,7 @@ export class ExportService {
       entry,
       families: data.families(),
       usage: data.usage(entryId),
+      verbFavorites: data.verbFavorites?.() ?? [],
       trivia: data.trivia(),
       thread: data.wordThread(entryId),
     };
