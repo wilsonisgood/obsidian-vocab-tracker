@@ -45,6 +45,9 @@ export interface ParagraphPaneNav {
   threadStarted(section: SectionRef, threadId: string): void;
   rebind(threadId: string): void;
   removed(threadId: string): void;
+  // After the quote jumped to the paragraph in the note (the iPhone sheet
+  // closes so the note shows).
+  jumped?(): void;
 }
 
 type PaneRoute = Extract<SidebarRoute, { name: "paragraph" | "paragraph-draft" }>;
@@ -371,6 +374,7 @@ export class ParagraphThreadPane extends Component {
       workspace.getLeaf(false);
     await leaf.openFile(file, { eState: { line: target.line } });
     workspace.revealLeaf(leaf);
+    this.nav.jumped?.();
   }
 }
 

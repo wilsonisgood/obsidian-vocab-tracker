@@ -10,7 +10,7 @@ import { WordUi, type WordTab } from "../word/wordUi";
 import { renderExamStrip } from "./examStrip";
 import { MissingNoteThreadList, ParagraphThreadList, type ParagraphListActions, type ParagraphListDeps } from "./ParagraphThreadList";
 import { ParagraphThreadPane, type ParagraphPaneNav } from "./ParagraphThreadPane";
-import { LIST_ROUTE, SidebarRouter, routeForActiveNote, routeKey, sameRoute, type SidebarRoute } from "./routes";
+import { LIST_ROUTE, REBINDING_BODY_CLS, SidebarRouter, routeForActiveNote, routeKey, sameRoute, type SidebarRoute } from "./routes";
 
 export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 
@@ -19,7 +19,9 @@ type FilterMode = "note" | "all";
 // Re-reading a note after an edit waits for typing to settle.
 const NOTE_REFRESH_MS = 400;
 
-export const REBINDING_BODY_CLS = "vt-rebinding";
+// Lives in routes.ts so the iPhone sheet (ui/mobile/WordSheet.ts) can use
+// it without loading this view.
+export { REBINDING_BODY_CLS };
 
 // ─── Sidebar View ─────────────────────────────────────────────────────────────
 //
@@ -311,9 +313,10 @@ export class VocabSidebarView extends ItemView {
 
     const header = root.createEl("div", { cls: "vocab-tracker-header" });
     header.createEl("h4", { text: t("sidebar.title") });
-    const openList = header.createEl("span", { cls: "vocab-tracker-icon-btn" });
+    const openList = header.createEl("span", { cls: "vocab-tracker-icon-btn clickable-icon" });
     setIcon(openList, "file-text");
-    openList.title = t("sidebar.openList");
+    openList.setAttr("role", "button");
+    openList.setAttr("aria-label", t("sidebar.openList"));
     openList.onclick = () => this.plugin.openVocabFile();
 
     this.rebindEl = root.createDiv({ cls: "vt-rebind-banner" });
@@ -336,7 +339,10 @@ export class VocabSidebarView extends ItemView {
       banner.createEl("span", { text: `"${this.pendingWord}"`, cls: "vocab-tracker-add-prompt-word" });
       const addBtn = banner.createEl("button", { text: t("sidebar.addPrompt.cta"), cls: "vocab-tracker-btn" });
       addBtn.onclick = async () => {
-        await this.plugin.addWordToVocab(this.pendingWord);
+        // Shown here, in the sidebar — even on iPhone, where it was opened by hand.
+        const word = this.pendingWord;
+        await this.plugin.addWordToVocab(word, {}, { reveal: false });
+        this.setWord(word);
       };
       const dismiss = banner.createEl("span", { cls: "vocab-tracker-close-btn" });
       setIcon(dismiss, "x");

@@ -28,7 +28,9 @@ export interface SettingsContext {
 // a new file under sections/ plus one entry in main.ts's list.
 export interface SettingsSection {
   id: string;
-  title: I18nKey;
+  // A dictionary key, or a function for a section whose strings aren't in
+  // the dictionary yet (ui/mobile/strings.ts, until integration).
+  title: I18nKey | (() => string);
   render(el: HTMLElement, ctx: SettingsContext): void;
 }
 
@@ -48,7 +50,8 @@ export class VocabSettingsTab extends PluginSettingTab {
     containerEl.addClass("vt-settings");
     const ctx: SettingsContext = { ...this.ctx, redisplay: () => this.display() };
     for (const section of this.sections) {
-      new Setting(containerEl).setName(t(section.title)).setHeading();
+      const title = typeof section.title === "function" ? section.title() : t(section.title);
+      new Setting(containerEl).setName(title).setHeading();
       section.render(containerEl.createDiv({ cls: `vt-settings-section vt-settings-${section.id}` }), ctx);
     }
   }

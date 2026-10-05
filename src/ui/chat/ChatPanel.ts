@@ -204,7 +204,7 @@ export class ChatPanel extends Component {
     const el = bubble({ role: "user", text: turn.content });
     if (turn.selection) {
       const quote = createDiv({ cls: "vt-bubble-quote", text: turn.selection });
-      quote.title = turn.selection;
+      quote.setAttr("aria-label", turn.selection);
       el.prepend(quote);
     }
     return el;
@@ -310,6 +310,8 @@ export class ChatPanel extends Component {
     const composer = controls.createDiv({ cls: "vt-chat-composer" });
     const input = (this.input = composer.createEl("textarea", { cls: "vt-chat-input" }));
     input.rows = 1;
+    // Enter sends: the on-screen keyboard labels its return key 「傳送」.
+    input.setAttr("enterkeyhint", "send");
     input.placeholder = this.opts.placeholder;
     input.disabled = offline;
     const key = this.opts.threadId;
@@ -352,7 +354,7 @@ export class ChatPanel extends Component {
     const sel = this.opts.selection.get();
     el.toggle(!!sel);
     if (!sel) return;
-    el.title = t("chat.selection.hint");
+    el.setAttr("aria-label", t("chat.selection.hint"));
     setIcon(el.createSpan({ cls: "vt-chat-selection-icon" }), "text-cursor");
     el.createSpan({ cls: "vt-chat-selection-text", text: t("chat.selection", { text: sel.text }) });
     const remove = el.createSpan({ cls: "vt-chat-selection-remove clickable-icon" });

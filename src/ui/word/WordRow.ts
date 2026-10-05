@@ -7,6 +7,7 @@ import { t } from "../../core/i18n";
 import { wordThreadId } from "../../core/model/thread";
 import { renderWordAiTab } from "./AiTab";
 import type { WordTab, WordUi } from "./wordUi";
+import { lm } from "../mobile/strings";
 
 // Progressive-disclosure state for a single row: collapsed (one line),
 // half (synonyms-and-up visible), full (everything visible).
@@ -23,6 +24,15 @@ export interface RowOptions {
   // The 「單字頁」 button at the bottom of an expanded card (design D2–D4),
   // on both tabs.
   openWordPage?(entry: VocabEntry): void;
+  // "sheet": the card alone in the iPhone bottom sheet (design M1) — always
+  // open (no collapse arrow, the header isn't a toggle), 🔊 next to the
+  // word, and delete moves to the footer behind a second tap, away from
+  // where a thumb lands.
+  variant?: "row" | "sheet";
+  // After the entry was deleted from this card.
+  onDeleted?(entry: VocabEntry): void;
+  // After 📍 opened the note at the word (the iPhone sheet closes).
+  onJump?(entry: VocabEntry): void;
 }
 
 type EditableField = "synonyms" | "definition" | "definitionZh" | "antonyms" | "example" | "grammar" | "level";
@@ -51,22 +61,33 @@ export function renderVocabRow(
   refresh: () => void,
   opts: RowOptions = {}
 ) {
+  const sheet = opts.variant === "sheet";
+  // The sheet card is never collapsed.
+  if (sheet && state === "collapsed") state = "half";
   const row = container.createEl("div", { cls: "vocab-tracker-row" });
   row.setAttr("data-entry-id", entry.id);
+  row.toggleClass("vt-sheet-card", sheet);
   const due = plugin.srs.nextDue(entry);
   row.toggleClass("is-expanded", state !== "collapsed");
+
+  const remove = async () => {
+    await plugin.deleteEntry(entry);
+    opts.onDeleted?.(entry);
+    refresh();
+  };
 
   // ── Header: always visible ───────────────────────────────────
   const head = row.createEl("div", { cls: "vocab-tracker-row-header" });
 
-  const del = head.createEl("span", { cls: "vocab-tracker-row-delete" });
-  setIcon(del, "x");
-  del.title = t("row.delete");
-  del.onclick = async (e) => {
-    e.stopPropagation();
-    await plugin.deleteEntry(entry);
-    refresh();
-  };
+  if (!sheet) {
+    const del = head.createEl("span", { cls: "vocab-tracker-row-delete" });
+    setIcon(del, "x");
+    del.setAttr("aria-label", t("row.delete"));
+    del.onclick = async (e) => {
+      e.stopPropagation();
+      await remove();
+    };
+  }
 
   const wordWrap = head.createEl("span", { cls: "vocab-tracker-row-wordwrap" });
   wordWrap.createEl("span", { text: entry.word, cls: "vocab-tracker-row-word" });
@@ -85,28 +106,37 @@ export function renderVocabRow(
     chip.toggleClass("is-today", label.kind === "today");
     setIcon(chip.createSpan({ cls: "vt-row-due-icon" }), "calendar");
     chip.createSpan({ text: label.kind === "today" ? t("row.due.today") : label.text });
-    chip.title = t("row.nextReview", { date: due.toLocaleString() });
+    chip.setAttr("aria-label", t("row.nextReview", { date: due.toLocaleString() }));
   }
 
-  const arrow = head.createEl("span", { cls: "vocab-tracker-row-arrow" });
-  setIcon(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
-  arrow.title = state === "collapsed" ? t("row.expand") : t("row.collapse");
-
-  head.onclick = () => {
-    setState(state === "collapsed" ? "half" : "collapsed");
-    refresh();
-  };
-
-  if (state === "collapsed") {
+  const headSpeak = () => {
     const speak = head.createEl("span", {
       cls: ["vocab-tracker-speak-icon", "vocab-tracker-row-speak"],
     });
     setIcon(speak, "volume-2");
-    speak.title = t("row.pronounce");
+    speak.setAttr("aria-label", t("row.pronounce"));
+    speak.setAttr("role", "button");
     speak.onclick = (e) => {
       e.stopPropagation();
       plugin.speakWord(entry);
     };
+  };
+
+  if (sheet) {
+    headSpeak();
+  } else {
+    const arrow = head.createEl("span", { cls: "vocab-tracker-row-arrow" });
+    setIcon(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
+    arrow.setAttr("aria-label", state === "collapsed" ? t("row.expand") : t("row.collapse"));
+
+    head.onclick = () => {
+      setState(state === "collapsed" ? "half" : "collapsed");
+      refresh();
+    };
+  }
+
+  if (state === "collapsed") {
+    headSpeak();
     return;
   }
 
@@ -185,10 +215,11 @@ export function renderVocabRow(
       const src = body.createEl("div", { cls: "vocab-tracker-source-link" });
       const name = entry.source.path.split("/").pop();
       src.textContent = `📍 ${name} : line ${entry.source.line + 1}`;
-      src.title = t("row.jumpToSource");
-      src.onclick = (e) => {
+      src.setAttr("aria-label", t("row.jumpToSource"));
+      src.onclick = async (e) => {
         e.stopPropagation();
-        plugin.jumpToSource(entry);
+        await plugin.jumpToSource(entry);
+        opts.onJump?.(entry);
       };
     }
 
@@ -212,9 +243,15 @@ export function renderVocabRow(
   // ── Footer: more-info toggle · fetch · reviewed · speak ──────
   const footer = body.createEl("div", { cls: "vocab-tracker-row-footer" });
 
-  const moreBtn = footer.createEl("span", { cls: "vocab-tracker-footer-icon" });
-  setIcon(moreBtn, state === "full" ? "chevron-down" : "info");
-  moreBtn.title = state === "full" ? t("row.showLess") : t("row.showMore");
+  const footerBtn = (parent: HTMLElement, icon: string, label: string) => {
+    const btn = parent.createEl("span", { cls: "vocab-tracker-footer-icon" });
+    setIcon(btn, icon);
+    btn.setAttr("aria-label", label);
+    btn.setAttr("role", "button");
+    return btn;
+  };
+
+  const moreBtn = footerBtn(footer, state === "full" ? "chevron-down" : "info", state === "full" ? t("row.showLess") : t("row.showMore"));
   moreBtn.onclick = (e) => {
     e.stopPropagation();
     setState(state === "full" ? "half" : "full");
@@ -223,9 +260,7 @@ export function renderVocabRow(
 
   const actions = footer.createEl("span", { cls: "vocab-tracker-row-footer-actions" });
 
-  const fetchBtn = actions.createEl("span", { cls: "vocab-tracker-footer-icon" });
-  setIcon(fetchBtn, "refresh-cw");
-  fetchBtn.title = t("row.fetch");
+  const fetchBtn = footerBtn(actions, "refresh-cw", t("row.fetch"));
   fetchBtn.onclick = async (e) => {
     e.stopPropagation();
     fetchBtn.textContent = "…";
@@ -233,9 +268,7 @@ export function renderVocabRow(
     refresh();
   };
 
-  const reviewBtn = actions.createEl("span", { cls: "vocab-tracker-footer-icon" });
-  setIcon(reviewBtn, "check");
-  reviewBtn.title = t("row.markReviewed");
+  const reviewBtn = footerBtn(actions, "check", t("row.markReviewed"));
   // "I know this one" from the list = a Good rating (規劃書 06 §7.1), so it
   // reschedules the card instead of just bumping the legacy counters
   // (SrsService.rate still updates lastReviewed/reviews too).
@@ -245,13 +278,36 @@ export function renderVocabRow(
     refresh();
   };
 
-  const speak = actions.createEl("span", { cls: "vocab-tracker-speak-icon" });
-  setIcon(speak, "volume-2");
-  speak.title = t("row.pronounce");
-  speak.onclick = (e) => {
-    e.stopPropagation();
-    plugin.speakWord(entry);
-  };
+  if (sheet) {
+    // 🔊 is in the header already; delete asks for a second tap.
+    const del = footerBtn(actions, "trash-2", t("row.delete"));
+    del.addClass("vt-sheet-delete");
+    let armed = false;
+    del.onclick = async (e) => {
+      e.stopPropagation();
+      if (!armed) {
+        armed = true;
+        del.addClass("mod-warning");
+        del.setAttr("aria-label", lm("mobile.row.confirmDelete"));
+        window.setTimeout(() => {
+          armed = false;
+          del.removeClass("mod-warning");
+          del.setAttr("aria-label", t("row.delete"));
+        }, 3000);
+        return;
+      }
+      await remove();
+    };
+  } else {
+    const speak = actions.createEl("span", { cls: "vocab-tracker-speak-icon" });
+    setIcon(speak, "volume-2");
+    speak.setAttr("aria-label", t("row.pronounce"));
+    speak.setAttr("role", "button");
+    speak.onclick = (e) => {
+      e.stopPropagation();
+      plugin.speakWord(entry);
+    };
+  }
 
   renderWordPageButton(body, entry, opts);
 }

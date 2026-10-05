@@ -58,8 +58,54 @@ export interface LearnerProfile extends SectionStamp {
 
 export type UiLocaleSetting = "auto" | "en" | "zh-TW";
 
+// What tapping a word in reading view does (規劃書 01 §3.2, 06 §9.7):
+//   menu — a menu with 「加入／開啟」 (the desktop default)
+//   save — saves it at once, with a Notice that can undo it; tapping a word
+//          that's already saved opens its card instead (the mobile default)
+//   open — opens the word's card without saving it: the sidebar, or the
+//          bottom sheet (WordSheet) on iPhone
+export const TAP_ACTIONS = ["menu", "save", "open"] as const;
+export type TapAction = (typeof TAP_ACTIONS)[number];
+
 export interface UiSettings extends SectionStamp {
   locale: UiLocaleSetting;
+  // Read through resolveUiPrefs() below. Optional on disk: data written
+  // before M8 has none of them, and a copy that only gained defaults must
+  // not look edited to merge.ts.
+  // Desktop (and anything that isn't Obsidian mobile).
+  tapAction?: TapAction;
+  // iPhone and iPad (Platform.isMobile).
+  tapActionMobile?: TapAction;
+  // The one-time 「Live Preview 不能點字」 hint on mobile; false once the
+  // user picked 「不再提示」.
+  livePreviewHint?: boolean;
+}
+
+export interface UiPrefs {
+  tapAction: TapAction;
+  tapActionMobile: TapAction;
+  livePreviewHint: boolean;
+}
+
+export const DEFAULT_UI_PREFS: Readonly<UiPrefs> = {
+  tapAction: "menu",
+  tapActionMobile: "save",
+  livePreviewHint: true,
+};
+
+function isTapAction(v: unknown): v is TapAction {
+  return typeof v === "string" && (TAP_ACTIONS as readonly string[]).includes(v);
+}
+
+// The ui section's M8 fields with defaults filled in. A value this version
+// doesn't know (written by a newer version on another device) reads as the
+// default, but stays on disk untouched.
+export function resolveUiPrefs(ui: Partial<UiSettings> | undefined): UiPrefs {
+  return {
+    tapAction: isTapAction(ui?.tapAction) ? ui.tapAction : DEFAULT_UI_PREFS.tapAction,
+    tapActionMobile: isTapAction(ui?.tapActionMobile) ? ui.tapActionMobile : DEFAULT_UI_PREFS.tapActionMobile,
+    livePreviewHint: typeof ui?.livePreviewHint === "boolean" ? ui.livePreviewHint : DEFAULT_UI_PREFS.livePreviewHint,
+  };
 }
 
 // Where the plugin's notes go (規劃書 06 §8.3). Read through

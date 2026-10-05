@@ -6,10 +6,12 @@ import { srsSection } from "./srs";
 import { wordlistsSection } from "./wordlists";
 import { filesSection } from "./files";
 import { paragraphsSection } from "./paragraphs";
+import { readingSection } from "./reading";
 
 // Order = order on the settings page. New sections (SRS, export…) go here.
 export const SETTINGS_SECTIONS: SettingsSection[] = [
   generalSection,
+  readingSection,
   wordlistsSection,
   srsSection,
   aiSection,

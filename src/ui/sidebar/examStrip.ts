@@ -35,7 +35,8 @@ export function renderExamStrip(root: HTMLElement, plugin: VocabTrackerPlugin, f
     chip.createSpan({ cls: "vt-exam-chip-dot" });
     chip.createSpan({ text: tagLabel(tag) });
     chip.createSpan({ cls: "vt-exam-chip-count", text: String(stats?.unique ?? 0) });
-    chip.title = t(on ? "exam.strip.hide" : "exam.strip.show", { tag: tagLabel(tag) });
+    chip.setAttr("role", "button");
+    chip.setAttr("aria-label", t(on ? "exam.strip.hide" : "exam.strip.show", { tag: tagLabel(tag) }));
     chip.onclick = () => void plugin.toggleExamTag(tag);
   }
 }

@@ -66,6 +66,16 @@ import { ParagraphAnchorService, type SectionRef } from "./src/services/anchors/
 import { ParagraphIndex } from "./src/services/anchors/ParagraphIndex";
 import { ParagraphBadges } from "./src/ui/reading/ParagraphBadges";
 import { resolveAnchorSettings } from "./src/ui/sidebar/anchorSettings";
+import { resolveUiPrefs } from "./src/core/model/settings";
+import { currentFormFactor } from "./src/ui/mobile/platform";
+import { planTap, tapActionFor } from "./src/ui/mobile/tapAction";
+import { WordSheet } from "./src/ui/mobile/WordSheet";
+import { WordSurfaces } from "./src/ui/mobile/WordSurfaces";
+import { quickSave } from "./src/ui/mobile/quickSave";
+import { actionNotice } from "./src/ui/mobile/actionNotice";
+import { LivePreviewHint } from "./src/ui/mobile/livePreviewHint";
+import { browserSpeaker, type Speaker } from "./src/ui/mobile/speech";
+import { lm } from "./src/ui/mobile/strings";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -108,6 +118,12 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   anchors!: ParagraphAnchorService;
   paragraphIndex!: ParagraphIndex;
   paragraphBadges!: ParagraphBadges;
+  // M8 (規劃書 06 §9.7, 01): the iPhone bottom sheet, and the switch that
+  // sends word cards / paragraph discussions there or to the sidebar.
+  sheet!: WordSheet;
+  surfaces!: WordSurfaces;
+  speaker!: Speaker;
+  private livePreviewHint!: LivePreviewHint;
   private importing = new Set<string>();
   private enrichQueue: VocabEntry[] = [];
   private enriching = false;
@@ -120,6 +136,10 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.store = new VocabStore(this.vocabData, (data) => this.storage.writeShard("data", data));
     this.dictionary = new DictionaryService(new ObsidianHttp());
     this.applyLocale();
+    // iOS: the first speechSynthesis call can be silent unless the voice
+    // list was asked for once beforehand.
+    this.speaker = browserSpeaker();
+    this.speaker.warmUp();
 
     // AI (M3): service + settings tab. AI stays off until enabled in settings.
     const { ai, keys } = createAiService(this.store, createAiPorts(this.app, this.storage));
@@ -219,10 +239,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         trivia: this.trivia,
         // A new tab, so the word page stays open behind it.
         openTrivia: () => this.openEntryFile("trivia", "tab"),
-        openInSidebar: async (entry) => {
-          const leaf = await this.activateSidebar();
-          (leaf.view as VocabSidebarView).openWord(entry.id, "ai");
-        },
+        // The bottom sheet on iPhone.
+        openInSidebar: (entry) => this.surfaces.openWordCard(entry.id, "ai"),
         notify: (m) => new Notice(m),
       })
     );
@@ -232,6 +250,28 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       VOCAB_VIEW_TYPE,
       (leaf) => new VocabSidebarView(leaf, this)
     );
+
+    // iPhone: word cards and paragraph discussions open in a bottom sheet
+    // instead (WordSurfaces decides per call; iPad/desktop keep the sidebar).
+    this.sheet = this.addChild(new WordSheet(this));
+    this.surfaces = new WordSurfaces({
+      form: currentFormFactor,
+      sheet: this.sheet,
+      revealSidebar: async () => (await this.activateSidebar()).view as VocabSidebarView,
+      // A deferred (not yet loaded) view has no rebindThreadId: that's fine.
+      existingSidebar: () =>
+        (this.app.workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0]?.view as VocabSidebarView | undefined) ?? null,
+    });
+    this.livePreviewHint = new LivePreviewHint({
+      form: currentFormFactor,
+      enabled: () => resolveUiPrefs(this.store.settings.ui).livePreviewHint,
+      notify: (text, actions) => actionNotice(text, actions, 8000),
+      switchToReading: () => void this.switchToReadingView(),
+      disable: () =>
+        void this.store.updateSettings((s) => {
+          s.ui.livePreviewHint = false;
+        }),
+    });
 
     // M5: the ✦ next to paragraphs in reading view (hover to ask; ✦ n once
     // a paragraph has a discussion). The index follows the threads.
@@ -597,10 +637,17 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     return leaf;
   }
 
-  // A reading-view ✦ was clicked: that paragraph's discussion in the sidebar.
+  // A reading-view ✦ was clicked: that paragraph's discussion in the
+  // sidebar (the bottom sheet on iPhone).
   async openParagraph(ref: SectionRef) {
-    const leaf = await this.activateSidebar();
-    await (leaf.view as VocabSidebarView).openParagraph(ref);
+    await this.surfaces.openParagraph(ref);
+  }
+
+  // Live Preview hint's 「切換到閱讀模式」.
+  async switchToReadingView() {
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (!view) return;
+    await view.setState({ ...view.getState(), mode: "preview" }, { history: false });
   }
 
   async openVocabFile() {
@@ -699,12 +746,19 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
 
   // ── Click any English word in reading mode ─────────────────────
 
+  // What a tap does is the tap-action setting (規劃書 01 §3.2) — desktop
+  // and mobile set separately: a menu, save at once, or open the card.
   handleReadingClick(evt: MouseEvent) {
     const target = evt.target;
     if (!(target instanceof HTMLElement)) return;
 
     const preview = target.closest(".markdown-preview-view, .markdown-rendered");
-    if (!preview) return;
+    if (!preview) {
+      // Mobile opens notes in Live Preview, where tapping does nothing:
+      // say so, once per session.
+      this.livePreviewHint.maybeShow(target, () => !!this.getWordContext(evt.clientX, evt.clientY).word);
+      return;
+    }
     if (target.closest("a, mark, button, input, select, textarea, code, .internal-link, .external-link"))
       return;
 
@@ -719,18 +773,51 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
 
+    switch (planTap(tapActionFor(this.store.settings.ui, currentFormFactor()), exists)) {
+      case "save":
+        void this.quickSaveWord(word, ctx);
+        return;
+      case "show":
+        void this.surfaces.revealWord(word, ctx);
+        return;
+      case "menu":
+        this.showWordMenu(evt, word, ctx, exists);
+    }
+  }
+
+  showWordMenu(evt: MouseEvent, word: string, ctx: WordContext, exists: boolean) {
     const menu = new Menu();
     menu.addItem((item) => {
-      item.setTitle(
-        exists ? `Open "${word}" in Vocab Tracker` : `Add "${word}" to Vocab Tracker`
-      );
+      item.setTitle(lm(exists ? "mobile.menu.open" : "mobile.menu.add", { word }));
       item.setIcon(exists ? "book-open" : "plus");
       item.onClick(async () => {
         const added = await this.addWordToVocab(word, ctx);
-        new Notice(added ? `Added "${word}" to vocab list` : `Opened "${word}"`);
+        if (added) new Notice(lm("mobile.menu.added", { word }));
       });
     });
     menu.showAtMouseEvent(evt);
+  }
+
+  // Tap action "save": no sidebar, no sheet — a Notice with 復原.
+  async quickSaveWord(word: string, ctx: WordContext) {
+    try {
+      await quickSave(word, {
+        add: async () => {
+          const added = await this.addWordToVocab(word, ctx, { reveal: false });
+          if (!added) return null;
+          return this.store.entries.find((e) => e.word.toLowerCase() === word.toLowerCase()) ?? null;
+        },
+        remove: async (entry) => {
+          await this.deleteEntry(entry);
+          this.renderSidebar();
+        },
+        notify: (text, actions) => (actions?.length ? actionNotice(text, actions) : new Notice(text)),
+      });
+      this.renderSidebar();
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't save the word", e);
+      new Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+    }
   }
 
   getWordContext(x: number, y: number): WordContext {
@@ -781,7 +868,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     return { word, sentence };
   }
 
-  async addWordToVocab(word: string, ctx: Partial<WordContext> = {}): Promise<boolean> {
+  // `reveal` (default): show the word afterwards — sidebar, or the bottom
+  // sheet on iPhone. Quick save and the sheet's own 「加入」 pass false.
+  async addWordToVocab(word: string, ctx: Partial<WordContext> = {}, opts: { reveal?: boolean } = {}): Promise<boolean> {
     const existing = this.store.entries.find(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
@@ -815,8 +904,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       await this.store.touch(existing);
     }
 
-    const leaf = await this.activateSidebar();
-    (leaf.view as VocabSidebarView).setWord(word);
+    if (opts.reveal !== false) await this.surfaces.revealWord(word, ctx);
     return existing == null;
   }
 
@@ -864,14 +952,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   }
 
   speakSynth(word: string) {
-    if (!("speechSynthesis" in window)) {
-      new Notice("No pronunciation available on this device.");
-      return;
-    }
-    const u = new SpeechSynthesisUtterance(word);
-    u.lang = "en-US";
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
+    if (!this.speaker.speak(word)) new Notice("No pronunciation available on this device.");
   }
 
   // ── Auto-fetch dictionary data (Wiktionary, falls back to Datamuse) ──
@@ -935,11 +1016,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       const word = mark.textContent?.trim() ?? "";
       if (!word) return;
       mark.addClass("vocab-tracker-tracked-mark");
-      mark.title = `Track "${word}" in Vocab Tracker`;
-      mark.addEventListener("click", async () => {
-        const leaf = await this.activateSidebar();
-        (leaf.view as VocabSidebarView).setWord(word);
-      });
+      // aria-label, not title: no hover on touch screens (規劃書 01 §2).
+      mark.setAttr("aria-label", lm("mobile.mark.label", { word }));
+      mark.addEventListener("click", () => void this.surfaces.revealWord(word));
     });
   }
 }
