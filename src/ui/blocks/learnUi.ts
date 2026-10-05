@@ -1,6 +1,8 @@
 import { setIcon, type Component } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import { t } from "../../core/i18n";
+import type { VocabEntry } from "../../core/model/entry";
+import { L } from "./leftoverStrings";
 import { isAiError } from "../../services/ai/errors";
 import { aiErrorText } from "../kit/aiState";
 import { emptyState } from "../kit/emptyState";
@@ -50,6 +52,37 @@ export function renderLearnAiGate(parent: HTMLElement, plugin: VocabTrackerPlugi
     })
   );
   return true;
+}
+
+// ── Learned words → their card ────────────────────────────────────
+
+// A chip for a word that's in the vocab list (字族樹, 動詞用法, 冷知識)
+// opens the word's card in the sidebar. The host (main.ts) provides it;
+// the blocks never reach into the plugin for it.
+export interface WordLinkHost {
+  openWordCard?(entry: VocabEntry): unknown;
+}
+
+// The host's opener, if it has one (until it does, chips stay plain).
+export function wordOpener(host: object): ((entry: VocabEntry) => void) | undefined {
+  const open = (host as WordLinkHost).openWordCard;
+  return typeof open === "function" ? (entry) => void open.call(host, entry) : undefined;
+}
+
+// `entry` set and an opener there: a <button> that opens the word;
+// otherwise the plain <span> it always was.
+export function wordChip(
+  parent: HTMLElement,
+  host: object,
+  entry: VocabEntry | undefined,
+  cls: string | string[]
+): HTMLElement {
+  const open = entry ? wordOpener(host) : undefined;
+  if (!entry || !open) return parent.createSpan({ cls });
+  const el = parent.createEl("button", { cls, attr: { type: "button", title: L("learn.openWord", { word: entry.word }) } });
+  el.addClass("is-link");
+  el.addEventListener("click", () => open(entry));
+  return el;
 }
 
 // A button with an optional lucide icon; `cta` for the primary action.

@@ -34,6 +34,10 @@ export interface FlashcardParams {
   mode: CardMode;
   source?: string;
   limit?: number;
+  // One-word review: just this word (entry id, or the word itself),
+  // whether or not it's due. 「複習這個字」 opens the block this way.
+  id?: string;
+  word?: string;
 }
 
 // Friendlier spellings people are likely to type, mapped to CardMode.
@@ -64,5 +68,11 @@ export function parseFlashcardParams(source: string): FlashcardParams {
 
   const limit = Number(p.limit);
   if (p.limit !== undefined && Number.isInteger(limit) && limit > 0) out.limit = limit;
+
+  const unquote = (s: string | undefined) => (s ?? "").replace(/^["']|["']$/g, "").trim();
+  const id = unquote(p.id);
+  const word = unquote(p.word);
+  if (id) out.id = id;
+  else if (word) out.word = word;
   return out;
 }

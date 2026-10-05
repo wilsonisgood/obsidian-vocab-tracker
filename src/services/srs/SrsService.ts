@@ -29,8 +29,10 @@ import {
   countDueBetween,
   isNewCard,
   matchesFilter,
+  reviewTiming,
   startOfLocalDay,
   type QueueFilter,
+  type ReviewTiming,
 } from "./queue";
 
 export const REVIEWS_SHARD = "reviews";
@@ -173,6 +175,18 @@ export class SrsService {
   // scheduled (shown as "new" rather than a date).
   nextDue(entry: VocabEntry): Date | null {
     return isNewCard(entry) || !entry.srs ? null : new Date(entry.srs.due);
+  }
+
+  // A one-word review (「複習這個字」) rates whatever the word's state —
+  // even before it's due. Nothing special happens to an early review:
+  // rate() hands FSRS the real time since the last review, and FSRS gives
+  // a card recalled sooner than planned a smaller stability gain (it was
+  // easier to remember), so the next interval grows less than it would on
+  // the due date; Again still counts as a lapse. preview() shows exactly
+  // that. A new word rated here starts its schedule and takes one of
+  // today's new-card slots, like in the queue.
+  timing(entry: VocabEntry): ReviewTiming {
+    return reviewTiming(entry, this.clock());
   }
 
   // The four candidate outcomes for the rating buttons (L3). Uses the same

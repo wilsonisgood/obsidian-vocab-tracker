@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { familyMembers, familyOrigin, type Family } from "../../../src/core/model/family";
+import { familyMembers, familyOrigin, familyScope, type Family } from "../../../src/core/model/family";
 import { TRIVIA_THREAD_ID } from "../../../src/core/model/trivia";
 import { isVerb } from "../../../src/core/model/usage";
 
@@ -27,6 +27,20 @@ describe("family helpers", () => {
     };
     expect(familyMembers(f).map((m) => m.word)).toEqual(["glittery", "sequin"]);
     expect(familyOrigin("f1")).toBe("family:f1");
+  });
+
+  it("familyScope reads the field, and infers it for families saved without one", () => {
+    const base = { source: "ai" as const };
+    expect(familyScope({ ...base, scope: "word" })).toBe("word");
+    expect(familyScope({ ...base, scope: "list", seedEntryIds: ["e1"] })).toBe("list");
+    // Old data: 找字族 always had a seed word, the whole-list grouping never.
+    expect(familyScope({ ...base, seedEntryIds: ["e1"] })).toBe("word");
+    expect(familyScope({ ...base, seedEntryIds: [] })).toBe("list");
+    expect(familyScope(base)).toBe("list");
+    // Never replaced by 重新分群 either.
+    expect(familyScope({ source: "manual" })).toBe("word");
+    // A hand-edited bogus value falls back to the inference.
+    expect(familyScope({ ...base, scope: "x" as never, seedEntryIds: ["e1"] })).toBe("word");
   });
 
   it("trivia lives in one fixed-id thread", () => {

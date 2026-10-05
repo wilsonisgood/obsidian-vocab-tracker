@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { Family } from "../../../src/core/model/family";
 import type { VocabStore } from "../../../src/core/store/VocabStore";
 import type { AiService } from "../../../src/services/ai/AiService";
 import { AiError } from "../../../src/services/ai/errors";
@@ -144,6 +145,78 @@ describe("FamilyService.save", () => {
     expect(families.families().map((f) => f.topic).sort()).toEqual(["gl-", "mine"]);
   });
 
+  it("marks each family with where it came from", async () => {
+    const { families } = setup();
+    const [list] = (await families.save(await families.generate())).families;
+    expect(list.scope).toBe("list");
+    const { families: found } = await families.save([
+      { topic: "kitchen", label: "廚房", seedEntryIds: ["e3"], groups: [{ label: "x", members: [{ word: "ladle", zh: "勺" }] }] },
+    ]);
+    expect(found[0].scope).toBe("word");
+  });
+
+  it("重新分群 keeps the families 找字族 saved from a word page", async () => {
+    const { families, learn } = setup();
+    // 字族樹: whole-list grouping (clothing, gl-).
+    await families.save(await families.generate());
+    // Word page 找字族 for apron: a new topic.
+    await families.save([
+      { topic: "kitchen", label: "廚房", seedEntryIds: ["e3"], groups: [{ label: "x", members: [{ word: "ladle", zh: "勺" }] }] },
+    ]);
+    // A family saved before `scope` existed, from a word page (has a seed).
+    learn.putFamily({ id: "old-word", topic: "old", label: "舊", source: "ai", seedEntryIds: ["e2"], groups: [] });
+    // …and one from an old whole-list grouping (no seeds).
+    learn.putFamily({ id: "old-list", topic: "older", label: "更舊", source: "ai", seedEntryIds: [], groups: [] });
+
+    const deleted: Family[] = [];
+    learn.events.on("family:upsert", (f) => {
+      if (f.deletedAt) deleted.push(f);
+    });
+    await families.save([(await families.generate())[1]], { replace: true });
+    expect(families.families().map((f) => f.topic).sort()).toEqual(["gl-", "kitchen", "old"]);
+    // Regroup tombstones say who deleted them (for the merge).
+    expect(deleted.map((f) => [f.topic, f.deletedBy])).toEqual([
+      ["clothing", "regroup"],
+      ["gl-", "regroup"],
+      ["older", "regroup"],
+    ]);
+  });
+
+  it("a delete by the user isn't marked as a regroup", async () => {
+    const { families, learn } = setup();
+    const [f] = (await families.save(await families.generate())).families;
+    let tomb: Family | undefined;
+    learn.events.on("family:upsert", (x) => (tomb = x));
+    families.remove(f.id);
+    expect(tomb?.deletedAt).toBeTruthy();
+    expect(tomb?.deletedBy).toBeUndefined();
+  });
+
+  it("a 找字族 result merged into a grouped family protects it from 重新分群", async () => {
+    const { families } = setup();
+    await families.save(await families.generate());
+    // Word page 找字族 for leotard returns clothing again: merged, now "word".
+    await families.save([(await families.generate({ seedEntryIds: ["e2"] }))[0]]);
+    const clothing = families.families().find((f) => f.topic === "clothing")!;
+    expect(clothing.scope).toBe("word");
+
+    await families.save([(await families.generate())[1]], { replace: true });
+    const after = families.families();
+    expect(after.map((f) => f.topic).sort()).toEqual(["clothing", "gl-"]);
+    // 重新分群's gl- is a fresh whole-list family; clothing kept its id.
+    expect(after.find((f) => f.topic === "clothing")!.id).toBe(clothing.id);
+    expect(after.find((f) => f.topic === "gl-")!.scope).toBe("list");
+  });
+
+  it("重新分群 merging into a kept word family leaves it a word family", async () => {
+    const { families } = setup();
+    await families.save([(await families.generate({ seedEntryIds: ["e1"] }))[0]]);
+    await families.save(await families.generate(), { replace: true });
+    const clothing = families.families().find((f) => f.topic === "clothing")!;
+    expect(clothing.scope).toBe("word");
+    expect(families.families()).toHaveLength(2);
+  });
+
   it("addSuggested adds one word of a saved family", async () => {
     const { families, vocab } = setup();
     const [saved] = (await families.save(await families.generate())).families;
@@ -176,6 +249,24 @@ describe("regroup suggestion (+20%)", () => {
     expect(families.needsRegroup()).toBe(false);
     vocab.all.push(entry("n1", "one"));
     expect(families.needsRegroup()).toBe(true); // 4 ≥ 3 × 1.2
+  });
+
+  it("measures growth from the last whole-list grouping, not a word page's 找字族", async () => {
+    const { families, vocab } = setup();
+    await families.save(await families.generate());
+    vocab.all.push(entry("n1", "one"));
+    // 找字族 on a word page right now must not reset the count.
+    await families.save([
+      { topic: "kitchen", label: "廚房", seedEntryIds: ["e3"], groups: [{ label: "x", members: [{ word: "ladle", zh: "勺" }] }] },
+    ]);
+    expect(families.needsRegroup()).toBe(true);
+  });
+
+  it("never suggests regrouping when there are only word-page families", async () => {
+    const { families, vocab } = setup();
+    await families.save(await families.generate({ seedEntryIds: ["e1"] }));
+    vocab.all.push(entry("n1", "one"), entry("n2", "two"));
+    expect(families.needsRegroup()).toBe(false);
   });
 });
 

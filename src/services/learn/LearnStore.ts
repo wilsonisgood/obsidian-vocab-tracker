@@ -89,10 +89,13 @@ export class LearnStore {
     return f;
   }
 
-  deleteFamily(id: string): void {
+  // `by: "regroup"` marks a tombstone 重新分群 wrote rather than the user
+  // (see pickFamily in learnMerge.ts).
+  deleteFamily(id: string, by?: "regroup"): void {
     const f = this.family(id);
     if (!f) return;
     f.deletedAt = this.nowIso();
+    if (by) f.deletedBy = by;
     this.putFamily(f);
   }
 

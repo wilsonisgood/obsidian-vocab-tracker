@@ -1,13 +1,17 @@
-import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import type VocabTrackerPlugin from "../../../main";
+import { MarkdownRenderChild, setIcon, type App, type MarkdownPostProcessorContext } from "obsidian";
 import type { VocabEntry } from "../../core/model/entry";
 import { CARD_MODES, RATINGS, Rating, type CardMode } from "../../core/model/srs";
+import type { VocabStore } from "../../core/store/VocabStore";
 import { clozeParts } from "../../core/text/cloze";
 import { splitInterval } from "../../core/text/interval";
 import { t, type I18nKey } from "../../core/i18n";
+import type { SrsService } from "../../services/srs/SrsService";
 import { isNewCard, matchesFilter, type QueueFilter } from "../../services/srs/queue";
 import { buildBatchRows, type BatchRow } from "./flashcardsBatch";
+import { L } from "./leftoverStrings";
 import { parseFlashcardParams, type FlashcardParams } from "./params";
+import { findTarget } from "./wordHeader";
+import { nextReviewText, parseCardMode, timingText } from "./wordReviewModel";
 
 // ── vocab-flashcards code block (規劃書 06 §7.1, §9.6; 設計稿 L2–L4, M2) ──
 //
@@ -15,9 +19,35 @@ import { parseFlashcardParams, type FlashcardParams } from "./params";
 // session starts (so the "3 / 8" progress stays stable) and each card is
 // re-resolved by id from the store when shown/rated — a sync merge can
 // swap entry objects underneath us, and rating a stale copy would be lost.
+//
+// With `id:` / `word:` the block reviews just that word, due or not (the
+// word page's 「複習這個字」 runs it in a modal, wordReview.ts): same card
+// faces, keys and rating as the queue, plus when it's due and, after
+// rating, the next review date.
+
+// What the block needs from the plugin (VocabTrackerPlugin has all of it).
+export interface FlashcardsHost {
+  app: App;
+  store: Pick<VocabStore, "entries" | "events">;
+  srs: Pick<
+    SrsService,
+    "ensureLoaded" | "queue" | "rate" | "preview" | "dueTomorrow" | "reviewsToday" | "timing"
+  >;
+  speakWord(entry: VocabEntry): void;
+  jumpToSource(entry: VocabEntry): unknown;
+  openVocabFile(): unknown;
+}
+
+export interface FlashcardsOptions {
+  // Shown as 「完成」 after a one-word review (the modal closes itself).
+  onClose?: () => void;
+  // Take keyboard focus once the first card is up (a modal; never a block
+  // in a note — that would steal focus from the editor).
+  autoFocus?: boolean;
+}
 
 export function renderFlashcards(
-  plugin: VocabTrackerPlugin,
+  plugin: FlashcardsHost,
   source: string,
   el: HTMLElement,
   ctx: MarkdownPostProcessorContext
@@ -30,11 +60,29 @@ export function formatInterval(ms: number): string {
   return t(`srs.interval.${unit}` as I18nKey, { n: value });
 }
 
+// 「目前設定的模式」 for a one-word review: the mode last used in a
+// flashcards block (opened with, or switched to), remembered per vault and
+// device — a reading preference, not data, so it doesn't sync.
+const MODE_KEY = "vocab-tracker:flashcards.mode";
+let lastMode: CardMode | null = null;
+
+export function rememberedMode(app: App): CardMode | null {
+  if (lastMode) return lastMode;
+  if (typeof app.loadLocalStorage !== "function") return null;
+  const raw: unknown = app.loadLocalStorage(MODE_KEY);
+  return parseCardMode(typeof raw === "string" ? raw : null);
+}
+
+function rememberMode(app: App, mode: CardMode): void {
+  lastMode = mode;
+  if (typeof app.saveLocalStorage === "function") app.saveLocalStorage(MODE_KEY, mode);
+}
+
 type Phase = "loading" | "card" | "empty" | "done";
 
 let batchSeq = 0;
 
-class FlashcardsBlock extends MarkdownRenderChild {
+export class FlashcardsBlock extends MarkdownRenderChild {
   private root!: HTMLElement;
   private mode: CardMode;
   private phase: Phase = "loading";
@@ -56,14 +104,18 @@ class FlashcardsBlock extends MarkdownRenderChild {
   // reacting to our own write would double-render mid-transition.
   private busy = false;
   private disposed = false;
+  // One-word review (`id:` / `word:`).
+  private readonly single: boolean;
 
   constructor(
     containerEl: HTMLElement,
-    private plugin: VocabTrackerPlugin,
-    private params: FlashcardParams
+    private plugin: FlashcardsHost,
+    private params: FlashcardParams,
+    private opts: FlashcardsOptions = {}
   ) {
     super(containerEl);
     this.mode = params.mode;
+    this.single = !!(params.id || params.word);
   }
 
   onload() {
@@ -83,10 +135,16 @@ class FlashcardsBlock extends MarkdownRenderChild {
     this.register(this.plugin.store.events.on("data:changed", () => this.onStoreChanged()));
 
     this.render();
+    // The block the learner reviews in sets the mode a one-word review
+    // opens in; a one-word review only records a mode switched to by hand.
+    if (!this.single) rememberMode(this.plugin.app, this.mode);
     // Review logs feed the daily new-card cap, so wait for them before
     // building the first queue.
     void this.plugin.srs.ensureLoaded().then(() => {
-      if (!this.disposed) this.startSession();
+      if (this.disposed) return;
+      this.startSession(undefined, { speak: this.single });
+      // The spelling input in 聽音拼字, else the block (Space / 1–4).
+      if (this.opts.autoFocus) (this.root.querySelector("input") ?? this.root).focus({ preventScroll: true });
     });
   }
 
@@ -109,6 +167,19 @@ class FlashcardsBlock extends MarkdownRenderChild {
     return this.live(this.session[this.index]);
   }
 
+  // The word of a one-word review, if it's (still) in the vocab list.
+  private target(): VocabEntry | undefined {
+    return findTarget(this.plugin.store.entries, { id: this.params.id, word: this.params.word });
+  }
+
+  // What a session starts with when no ids are given: the due queue, or
+  // the one word — due or not.
+  private defaultCards(): VocabEntry[] {
+    if (!this.single) return this.plugin.srs.queue(this.filter());
+    const entry = this.target();
+    return entry && matchesFilter(entry, { mode: this.mode }) ? [entry] : [];
+  }
+
   // `ids` replays a specific set (e.g. "practice forgotten words") instead
   // of the due queue; they're still filtered by mode so cloze never shows
   // a card it can't blank out.
@@ -117,7 +188,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
       ? ids
           .map((id) => this.live(id))
           .filter((e): e is VocabEntry => !!e && matchesFilter(e, { mode: this.mode }))
-      : this.plugin.srs.queue(this.filter());
+      : this.defaultCards();
 
     this.session = cards.map((e) => e.id);
     this.newIds = new Set(cards.filter(isNewCard).map((e) => e.id));
@@ -186,7 +257,8 @@ class FlashcardsBlock extends MarkdownRenderChild {
       this.render();
     } else if (this.phase === "empty") {
       // A word just added (or synced in) may be reviewable right away.
-      if (this.plugin.srs.queue(this.filter()).length > 0) this.startSession();
+      if (this.defaultCards().length > 0) this.startSession();
+      else if (this.single) this.render(); // e.g. the word was deleted
     }
   }
 
@@ -259,25 +331,35 @@ class FlashcardsBlock extends MarkdownRenderChild {
       b.onclick = () => {
         if (mode === this.mode || this.phase === "loading") return;
         this.mode = mode;
+        rememberMode(this.plugin.app, mode);
         this.startSession(undefined, { speak: true });
       };
     }
 
     const src = bar.createDiv({ cls: "vt-fc-source" });
-    setIcon(src.createSpan({ cls: "vt-fc-icon" }), "folder");
-    src.createSpan({ text: this.params.source ?? t("flashcards.source.all") });
+    // Never the word itself: in 中→英 / 聽音拼字 that's the answer.
+    setIcon(src.createSpan({ cls: "vt-fc-icon" }), this.single ? "crosshair" : "folder");
+    src.createSpan({
+      text: this.single ? L("flashcards.single.source") : (this.params.source ?? t("flashcards.source.all")),
+    });
   }
 
   private renderCard() {
     const entry = this.current();
     if (!entry) return;
 
-    const progress = this.root.createDiv({ cls: "vt-fc-progress" });
-    progress.createSpan({
-      cls: "vt-fc-progress-n",
-      text: `${this.index + 1} / ${this.session.length}`,
-    });
-    this.renderBatch(progress, this.root, "card");
+    if (this.single) {
+      // Instead of 「1 / 1」: whether it's due, and what rating it early does.
+      const timing = this.plugin.srs.timing(entry);
+      this.root.createDiv({ cls: ["vt-fc-timing", `is-${timing.kind}`], text: timingText(timing) });
+    } else {
+      const progress = this.root.createDiv({ cls: "vt-fc-progress" });
+      progress.createSpan({
+        cls: "vt-fc-progress-n",
+        text: `${this.index + 1} / ${this.session.length}`,
+      });
+      this.renderBatch(progress, this.root, "card");
+    }
 
     const card = this.root.createDiv({ cls: "vt-fc-card" });
     const front = card.createDiv({ cls: "vt-fc-front" });
@@ -311,6 +393,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
       this.renderRatings(entry);
     }
 
+    if (this.single) return;
     const stats = this.root.createDiv({ cls: "vt-fc-stats" });
     const stat = (label: string, n: number) => {
       const s = stats.createSpan({ cls: "vt-fc-stat" });
@@ -389,7 +472,11 @@ class FlashcardsBlock extends MarkdownRenderChild {
       const src = el.createDiv({ cls: "vt-fc-origin" });
       setIcon(src.createSpan({ cls: "vt-fc-icon" }), "file-text");
       src.createSpan({ text: entry.source.path.split("/").pop()!.replace(/\.md$/, "") });
-      src.onclick = () => this.plugin.jumpToSource(entry);
+      src.onclick = () => {
+        // A modal would stay on top of the note it just opened.
+        this.opts.onClose?.();
+        void this.plugin.jumpToSource(entry);
+      };
     }
   }
 
@@ -406,6 +493,7 @@ class FlashcardsBlock extends MarkdownRenderChild {
   }
 
   private renderEmpty() {
+    if (this.single) return this.renderSingleEmpty();
     const box = this.root.createDiv({ cls: "vt-fc-empty" });
     setIcon(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
     box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.empty.title") });
@@ -417,7 +505,59 @@ class FlashcardsBlock extends MarkdownRenderChild {
     tile(tiles, String(this.plugin.srs.dueTomorrow(this.filter())), t("flashcards.done.dueTomorrow"));
   }
 
+  // ── One-word review ───────────────────────────────────────────
+
+  // The word is gone, or the mode can't show it (cloze without an example).
+  private renderSingleEmpty() {
+    const box = this.root.createDiv({ cls: "vt-fc-empty" });
+    setIcon(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
+    const missing = !this.target();
+    box.createDiv({
+      cls: "vt-fc-empty-body",
+      text: missing ? t("wordPage.missing") : L("flashcards.single.noCloze"),
+    });
+    this.renderSingleActions(box, false);
+  }
+
+  // After rating: what was recorded and when the word comes back.
+  private renderSingleDone() {
+    const box = this.root.createDiv({ cls: ["vt-fc-empty", "vt-fc-done", "vt-fc-single-done"] });
+    setIcon(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
+    const last = this.results[this.results.length - 1];
+    if (last) {
+      box.createDiv({
+        cls: "vt-fc-empty-title",
+        text: L("flashcards.single.done", { rating: t(`srs.rating.${last.rating}` as I18nKey) }),
+      });
+    }
+    const entry = this.live(last?.id);
+    if (entry?.srs) {
+      const due = new Date(entry.srs.due);
+      if (!Number.isNaN(due.getTime())) {
+        box.createDiv({ cls: "vt-fc-empty-body", text: nextReviewText(due, new Date(), formatInterval) });
+      }
+    }
+    this.renderSingleActions(box, !!entry);
+  }
+
+  private renderSingleActions(box: HTMLElement, again: boolean) {
+    const actions = box.createDiv({ cls: "vt-fc-actions" });
+    if (again) {
+      const retry = actions.createEl("button", { cls: "vt-fc-btn" });
+      setIcon(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
+      retry.createSpan({ text: L("flashcards.single.again") });
+      // render() keeps focus in the block (the clicked button had it).
+      retry.onclick = () => this.startSession(undefined, { speak: true });
+    }
+    const close = this.opts.onClose;
+    if (close) {
+      const done = actions.createEl("button", { cls: ["vt-fc-btn", "mod-cta"], text: L("flashcards.single.close") });
+      done.onclick = () => close();
+    }
+  }
+
   private renderDone() {
+    if (this.single) return this.renderSingleDone();
     const box = this.root.createDiv({ cls: ["vt-fc-empty", "vt-fc-done"] });
     setIcon(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
     box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.done.title") });

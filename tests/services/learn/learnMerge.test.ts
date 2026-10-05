@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { Family } from "../../../src/core/model/family";
 import type { TriviaItem } from "../../../src/core/model/trivia";
-import { dropOldTombstones, mergeLearn, mergeRecords, normalizeLearnShard } from "../../../src/services/learn/learnMerge";
+import {
+  dropOldTombstones,
+  mergeLearn,
+  mergeRecords,
+  normalizeLearnShard,
+  pickFamily,
+} from "../../../src/services/learn/learnMerge";
 
 function fam(id: string, updatedAt: string, extra: Partial<Family> = {}): Family {
   return { id, topic: id, label: id, source: "ai", groups: [], updatedAt, rev: 1, ...extra };
@@ -54,6 +60,38 @@ describe("learn shard", () => {
     expect(out.families.map((f) => f.id)).toEqual(["f1", "f2"]);
     expect(out.trivia).toHaveLength(1);
     expect(out.trivia[0].title).toBe("phone");
+  });
+
+  it("a 重新分群 tombstone never removes a family another device made a word family", () => {
+    // Device A: 找字族 merged into family f (now scope "word") on 10-02.
+    const word = fam("f", "2026-10-02T00:00:00Z", { scope: "word", seedEntryIds: ["e1"] });
+    // Device B still saw f as a grouping and regrouped on 10-03.
+    const regrouped = fam("f", "2026-10-03T00:00:00Z", {
+      scope: "list",
+      deletedAt: "2026-10-03T00:00:00Z",
+      deletedBy: "regroup",
+    });
+    expect(mergeLearn({ families: [word], trivia: [] }, { families: [regrouped], trivia: [] }).families[0]).toBe(word);
+    expect(mergeLearn({ families: [regrouped], trivia: [] }, { families: [word], trivia: [] }).families[0]).toBe(word);
+    expect(pickFamily(regrouped, word)).toBe(word);
+  });
+
+  it("an old device's word family (no scope field, but a seed) is protected the same way", () => {
+    const word = fam("f", "2026-10-02T00:00:00Z", { seedEntryIds: ["e1"] });
+    const regrouped = fam("f", "2026-10-03T00:00:00Z", { deletedAt: "2026-10-03T00:00:00Z", deletedBy: "regroup" });
+    expect(pickFamily(word, regrouped)).toBe(word);
+  });
+
+  it("a newer regroup tombstone still wins over a whole-list family, and a user's delete over anything", () => {
+    const list = fam("f", "2026-10-02T00:00:00Z", { scope: "list" });
+    const regrouped = fam("f", "2026-10-03T00:00:00Z", { deletedAt: "2026-10-03T00:00:00Z", deletedBy: "regroup" });
+    expect(pickFamily(list, regrouped)).toBe(regrouped);
+    const word = fam("f", "2026-10-02T00:00:00Z", { scope: "word" });
+    const userDeleted = fam("f", "2026-10-03T00:00:00Z", { scope: "word", deletedAt: "2026-10-03T00:00:00Z" });
+    expect(pickFamily(word, userDeleted)).toBe(userDeleted);
+    // An edit made after the regroup wins as usual.
+    const edited = fam("f", "2026-10-04T00:00:00Z", { scope: "list", label: "edited" });
+    expect(pickFamily(regrouped, edited)).toBe(edited);
   });
 
   it("normalizes a missing or partial file", () => {

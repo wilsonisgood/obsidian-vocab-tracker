@@ -19,6 +19,11 @@ export interface FamilyGroup {
   members: FamilyMember[];
 }
 
+// Which AI run made a family (§7.2). "list": the 字族樹's grouping of the
+// whole vocab list — 重新分群 replaces these. "word": 找字族 around one
+// word (word page, or a `word:` families block) — 重新分群 keeps these.
+export type FamilyScope = "list" | "word";
+
 export interface Family extends Record_ {
   id: string;
   // English key, e.g. "clothing", "gl-".
@@ -26,6 +31,11 @@ export interface Family extends Record_ {
   // Chinese display name, e.g. 「服裝」「gl- 發光家族」.
   label: string;
   source: "ai" | "manual";
+  // Absent on families saved before it existed: see familyScope().
+  scope?: FamilyScope;
+  // Set on the tombstone when 重新分群 (not the user) removed the family,
+  // so a merge can tell it from a delete the user meant (learnMerge.ts).
+  deletedBy?: "regroup";
   groups: FamilyGroup[];
   // Learned words the family grew from (「起點：你學過的 aprons、kitchenware」).
   seedEntryIds?: string[];
@@ -39,6 +49,16 @@ export type FamilyOrigin = `family:${string}`;
 
 export function familyOrigin(familyId: string): FamilyOrigin {
   return `family:${familyId}`;
+}
+
+// A family's scope, inferring it for families saved without the field:
+// 找字族 always grows a family from one seed word, the whole-list grouping
+// never sends seeds — so seeds mean "word". A manual family is never
+// replaced by 重新分群 either, so it counts as "word" too.
+export function familyScope(f: Pick<Family, "scope" | "seedEntryIds" | "source">): FamilyScope {
+  if (f.scope === "list" || f.scope === "word") return f.scope;
+  if (f.source === "manual") return "word";
+  return f.seedEntryIds?.length ? "word" : "list";
 }
 
 export function familyMembers(f: Family): FamilyMember[] {

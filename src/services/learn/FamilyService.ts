@@ -1,6 +1,14 @@
 import type { DictionaryResult } from "../../core/model/dictionary";
 import type { VocabEntry } from "../../core/model/entry";
-import { familyMembers, familyOrigin, type Family, type FamilyGroup, type FamilyMember } from "../../core/model/family";
+import {
+  familyMembers,
+  familyOrigin,
+  familyScope,
+  type Family,
+  type FamilyGroup,
+  type FamilyMember,
+  type FamilyScope,
+} from "../../core/model/family";
 import { nowStamp } from "../../core/nowStamp";
 import { entryAddedMs } from "../ai/context/triviaContext";
 import { familyGenerate, type FamilyDraft, type FamilyWord } from "../ai/tasks/family";
@@ -30,8 +38,15 @@ export interface FamilyCandidate {
 export interface SaveOptions {
   // New words (any case) to add to the vocab list along with the families.
   addWords?: string[];
-  // 重新分群: tombstone the existing AI families first.
+  // 重新分群: tombstone the families of the previous whole-list grouping
+  // first. Families found from a word (找字族, scope "word") stay.
   replace?: boolean;
+}
+
+// A candidate grown from seed words came from 找字族; one without seeds
+// from grouping the whole list.
+export function candidateScope(c: Pick<FamilyCandidate, "seedEntryIds">): FamilyScope {
+  return c.seedEntryIds.length ? "word" : "list";
 }
 
 export interface FamilyServiceDeps {
@@ -72,10 +87,16 @@ export class FamilyService {
     return this.families().filter((f) => familyMembers(f).some((m) => m.entryId === entryId));
   }
 
+  // The families 重新分群 replaces: AI groupings of the whole list.
+  private regroupable(): Family[] {
+    return this.families().filter((f) => f.source === "ai" && familyScope(f) === "list");
+  }
+
   // L5: 「有新單字，要重新分群嗎」 once the list has grown 20% since the
-  // newest AI grouping.
+  // newest whole-list grouping (a 找字族 on a word page doesn't count:
+  // it only looked at one word).
   needsRegroup(): boolean {
-    const ai = this.families().filter((f) => f.source === "ai" && f.entryCountAtGenerate);
+    const ai = this.regroupable().filter((f) => f.entryCountAtGenerate);
     if (!ai.length) return false;
     const newest = ai.reduce((a, b) => ((b.createdAt ?? "") > (a.createdAt ?? "") ? b : a));
     const base = newest.entryCountAtGenerate ?? 0;
@@ -145,7 +166,7 @@ export class FamilyService {
   async save(candidates: FamilyCandidate[], opts: SaveOptions = {}): Promise<{ families: Family[]; added: VocabEntry[] }> {
     await this.ensureLoaded();
     if (opts.replace) {
-      for (const f of this.families()) if (f.source === "ai") this.deps.learn.deleteFamily(f.id);
+      for (const f of this.regroupable()) this.deps.learn.deleteFamily(f.id, "regroup");
     }
     const count = this.deps.vocab.entries.length;
     const families = candidates.map((c) => this.toFamily(c, count));
@@ -195,6 +216,7 @@ export class FamilyService {
       topic: c.topic,
       label: c.label,
       source: "ai",
+      scope: candidateScope(c),
       groups: c.groups.map((g) => ({ label: g.label, members: g.members.map((m) => ({ ...m })) })),
       seedEntryIds: c.seedEntryIds,
       entryCountAtGenerate: entryCount,
@@ -250,7 +272,9 @@ export class FamilyService {
 }
 
 // Union of an existing family and a new candidate for the same topic:
-// groups by label, members by word; existing members win.
+// groups by label, members by word; existing members win. Once a 找字族
+// result is merged in, the family is a "word" family: 重新分群 would
+// otherwise throw away what the learner found from the word page.
 export function mergeFamily(f: Family, c: FamilyCandidate): Family {
   const groups = f.groups.map((g) => ({ label: g.label, members: [...g.members] }));
   for (const cg of c.groups) {
@@ -262,5 +286,6 @@ export function mergeFamily(f: Family, c: FamilyCandidate): Family {
     for (const m of cg.members) if (!g.members.some((x) => key(x.word) === key(m.word))) g.members.push({ ...m });
   }
   const seeds = [...new Set([...(f.seedEntryIds ?? []), ...c.seedEntryIds])];
-  return { ...f, groups, seedEntryIds: seeds };
+  const scope: FamilyScope = familyScope(f) === "word" || candidateScope(c) === "word" ? "word" : "list";
+  return { ...f, groups, seedEntryIds: seeds, scope };
 }

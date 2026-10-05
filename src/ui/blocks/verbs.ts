@@ -5,7 +5,7 @@ import { WordIndex } from "../../services/learn/wordIndex";
 import { emptyState } from "../kit/emptyState";
 import { inlineNote } from "../kit/inlineNote";
 import { t } from "../../core/i18n";
-import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate } from "./learnUi";
+import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate, wordChip } from "./learnUi";
 import {
   filterVerbs,
   parseVerbsParams,
@@ -190,8 +190,11 @@ class VerbsBlock extends MarkdownRenderChild {
       if (related.length) {
         el.createDiv({ cls: "vt-verb-section", text: t("learn.verb.related") });
         const chips = el.createDiv({ cls: "vt-verb-related" });
+        const index = new WordIndex(this.plugin.store.entries);
         for (const r of related) {
-          const chip = chips.createSpan({ cls: "vt-verb-related-chip" });
+          // A similar expression that's already in the list opens its card.
+          const known = index.find(r.phrase);
+          const chip = wordChip(chips, this.plugin, known && known.id !== e.id ? known : undefined, "vt-verb-related-chip");
           chip.createSpan({ text: r.phrase });
           if (r.zh) chip.createSpan({ cls: "vt-verb-related-zh", text: r.zh });
         }
