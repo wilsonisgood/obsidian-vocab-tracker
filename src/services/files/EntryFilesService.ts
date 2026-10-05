@@ -7,7 +7,7 @@ import {
   renderEntryFile,
   type EntryFileId,
 } from "./entryFiles";
-import type { FilesExportPort, FilesVaultPort, ParagraphPathsPort, SeedRecordPort } from "./ports";
+import type { FilesExportPort, FilesVaultPort, ParagraphPathsPort, SeedRecordPort } from "../../core/ports";
 import { filesPaths, inFolderPath, resolveFilesSettings, type FilesPaths, type FilesSettings } from "./settings";
 
 // The plugin's notes as files (規劃書 06 §8.3, §4.6):

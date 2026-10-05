@@ -6,7 +6,7 @@ import { ExportService } from "../../../src/services/export/ExportService";
 import type { ExportDataPort } from "../../../src/services/export/ports";
 import { EntryFilesService, type EntryFilesDeps } from "../../../src/services/files/EntryFilesService";
 import { ENTRY_FILES, renderEntryFile } from "../../../src/services/files/entryFiles";
-import type { FilesExportPort } from "../../../src/services/files/ports";
+import type { FilesExportPort } from "../../../src/core/ports";
 import { cleanFolder, resolveFilesSettings } from "../../../src/services/files/settings";
 import { MemorySeeds, MemoryVault } from "./fakes";
 

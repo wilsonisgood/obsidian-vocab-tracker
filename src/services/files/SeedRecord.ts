@@ -1,5 +1,5 @@
 import type { StoragePort } from "../../core/ports";
-import type { SeedRecordPort } from "./ports";
+import type { SeedRecordPort } from "../../core/ports";
 
 // SeedRecordPort on a storage shard (store/files.json). Like NoteImports,
 // the record only grows: what's on disk (another device's sync) is unioned

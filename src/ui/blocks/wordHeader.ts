@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { getLocale } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { noteBasename } from "../../core/text/slug";
 import { paragraphNumber } from "../../services/files/paragraphNumber";
@@ -18,37 +18,10 @@ import { parseBlockParams } from "./params";
 
 export const WORD_BLOCK_LANG = "vocab-word";
 
-// Temporary strings until they move into core/i18n (`wordPage.*`).
-const L = {
-  "zh-TW": {
-    missing: "單字庫裡找不到這個字（可能已經刪除）。",
-    speak: "發音",
-    source: "出自 {source}",
-    sourceTitle: "開啟出處",
-    dueNew: "還沒開始複習",
-    dueToday: "今天到期",
-    dueOn: "下次複習 {date}",
-    reviewed: "已複習 {n} 次",
-    review: "複習這個字",
-  },
-  en: {
-    missing: "This word isn't in your vocab list (it may have been deleted).",
-    speak: "Pronounce",
-    source: "From {source}",
-    sourceTitle: "Open the source note",
-    dueNew: "Not reviewed yet",
-    dueToday: "Due today",
-    dueOn: "Next review {date}",
-    reviewed: "Reviewed {n}×",
-    review: "Review this word",
-  },
-};
+type Key = "missing" | "speak" | "source" | "sourceTitle" | "dueNew" | "dueToday" | "dueOn" | "reviewed" | "review";
 
-type Key = keyof (typeof L)["en"];
-
-function l(key: Key, vars: Record<string, string | number> = {}): string {
-  const dict = L[getLocale()] ?? L.en;
-  return dict[key].replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+function l(key: Key, vars?: Record<string, string | number>): string {
+  return t(`wordPage.${key}`, vars);
 }
 
 // What the block needs from the plugin. VocabTrackerPlugin has most of it

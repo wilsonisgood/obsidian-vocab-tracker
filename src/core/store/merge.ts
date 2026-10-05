@@ -54,7 +54,7 @@ function restFingerprint(s: PluginSettings): string {
   return sectionFingerprint(rest);
 }
 
-// Settings merge section by section (ui, ai, learner, srs, wordlists), so a
+// Settings merge section by section (ui, ai, learner, srs, wordlists, files), so a
 // Mac editing flashcard settings and an iPhone editing AI settings both
 // survive. Everything outside those sections (schemaVersion, keys from a
 // newer plugin version) comes from whichever side has the newer top-level

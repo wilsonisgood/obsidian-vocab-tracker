@@ -145,4 +145,44 @@ export interface VaultPort {
   // (規劃書 06 §4.6). Null when there's none. Compare the id as a string:
   // YAML may have parsed an unquoted numeric id as a number.
   findManaged(kind: string, id: string): string | null;
+  // Resolves once the metadata cache has finished its first index, so
+  // findManaged is reliable (ObsidianVault.ready). Optional so test fakes
+  // can skip it.
+  ready?(): Promise<void>;
+}
+
+// ── Entry files and word pages (規劃書 06 §8.3, §4.6) ──
+
+// When an export may create its file. "never": only update a file that
+// already exists. "ifContent": create it when there's something to put in
+// it. "always": the user asked for it.
+export type CreateMode = "never" | "ifContent" | "always";
+
+// The vault as EntryFilesService uses it.
+export type FilesVaultPort = Pick<VaultPort, "exists" | "create" | "rename" | "findManaged" | "ready">;
+
+// Remembers which entry files were already created once, so one the user
+// deleted on purpose isn't brought back at the next startup. Shared
+// between devices (it travels with the plugin's data).
+export interface SeedRecordPort {
+  seeded(): Promise<ReadonlySet<string>>;
+  markSeeded(ids: readonly string[]): Promise<void>;
+}
+
+// The parts of ExportService the file bookkeeping drives.
+export interface FilesExportPort {
+  // The article's .ai.md follows it (id, source and name).
+  renameArticle(oldPath: string, newPath: string): Promise<void>;
+  // Re-render the article's .ai.md (e.g. its paragraphs are orphaned now).
+  articleChanged(articlePath: string, create?: CreateMode): void;
+  // Creates the word page if needed and returns its path.
+  openWordPage(entryId: string): Promise<string | null>;
+  // Re-render the saved list in 冷知識.md.
+  triviaChanged?(): void;
+}
+
+// Paragraph anchors' note paths (ThreadService.renameParagraphPath), which
+// must move before the .ai.md is re-rendered for the new path.
+export interface ParagraphPathsPort {
+  renameParagraphPath(oldPath: string, newPath: string): Promise<number>;
 }

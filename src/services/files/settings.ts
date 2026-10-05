@@ -1,18 +1,13 @@
+import type { FilesSettings } from "../../core/model/settings";
 import { joinPath } from "../../core/text/slug";
 
-// Where the plugin's notes go (規劃書 06 §8.3「資料夾名稱可在設定改」).
-// Stored as `settings.files` in data.json once core/model/settings.ts has
-// the field; read here through resolveFilesSettings, which fills in the
-// defaults, so a missing or half-filled object is fine.
+export type { FilesSettings };
 
-export interface FilesSettings {
-  // Vault folder of the entry files (單字卡.md…) and the two folders below.
-  folder: string;
-  // Word pages, under `folder`.
-  wordsFolder: string;
-  // Paragraph discussions (<文章>.ai.md), under `folder`.
-  threadsFolder: string;
-}
+// Where the plugin's notes go (規劃書 06 §8.3「資料夾名稱可在設定改」).
+// Stored as `settings.files` in data.json and merged section by section
+// like the other settings; read here through resolveFilesSettings, which
+// fills in the defaults, so a missing or half-filled object is fine. The
+// section stamp isn't copied (as with resolveWordlistSettings).
 
 export const DEFAULT_FILES_SETTINGS: FilesSettings = {
   folder: "vocab-list",

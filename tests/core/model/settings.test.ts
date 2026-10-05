@@ -12,6 +12,7 @@ import { resolveSrsSettings } from "../../../src/core/model/srs";
 import { resolveWordlistSettings, type WordlistSettings } from "../../../src/core/model/wordlists";
 import { merge } from "../../../src/core/store/merge";
 import { VocabStore } from "../../../src/core/store/VocabStore";
+import { resolveFilesSettings } from "../../../src/services/files/settings";
 
 describe("withSettingsDefaults", () => {
   it("fills everything for pre-M3 settings, with AI off", () => {
@@ -169,6 +170,23 @@ describe("VocabStore.updateSettings per-section stamps", () => {
     // main.ts compares resolved wordlist settings as JSON to decide whether
     // to reload lists — the stamp must not leak into that.
     expect(resolveWordlistSettings(store.vocabData.settings?.wordlists)).not.toHaveProperty("updatedAt");
+  });
+
+  it("stamps the files section on its own, as ui/settings/sections/files.ts writes it", async () => {
+    const store = newStore();
+    const patch = (folder: string) =>
+      store.updateSettings((s) => (s.files = { ...resolveFilesSettings(s.files), folder }));
+    await at(T1, () => patch("英文/vocab"));
+    expect(store.vocabData.settings?.files?.updatedAt).toBe(T1);
+    expect(store.vocabData.settings?.ai?.updatedAt).toBeUndefined();
+    // Same value again: not a change.
+    await at(T2, () => patch("英文/vocab"));
+    expect(store.vocabData.settings?.files?.updatedAt).toBe(T1);
+    expect(resolveFilesSettings(store.vocabData.settings?.files)).toEqual({
+      folder: "英文/vocab",
+      wordsFolder: "單字",
+      threadsFolder: "討論串",
+    });
   });
 });
 

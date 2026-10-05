@@ -62,6 +62,18 @@ export interface UiSettings extends SectionStamp {
   locale: UiLocaleSetting;
 }
 
+// Where the plugin's notes go (規劃書 06 §8.3). Read through
+// resolveFilesSettings() (services/files/settings.ts), which cleans the
+// folder names and fills in the defaults (vocab-list / 單字 / 討論串).
+export interface FilesSettings extends SectionStamp {
+  // Vault folder of the entry files (單字卡.md…) and the two folders below.
+  folder: string;
+  // Word pages, under `folder`.
+  wordsFolder: string;
+  // Paragraph discussions (<文章>.ai.md), under `folder`.
+  threadsFolder: string;
+}
+
 export interface PluginSettings {
   schemaVersion: 2;
   // Set to the same stamp as the section(s) an edit changed; never newer
@@ -79,10 +91,12 @@ export interface PluginSettings {
   srs?: Partial<SrsSettings> & SectionStamp;
   // Read through resolveWordlistSettings() (core/model/wordlists.ts).
   wordlists?: Partial<WordlistSettings>;
+  // Read through resolveFilesSettings() (services/files/settings.ts).
+  files?: Partial<FilesSettings>;
 }
 
 // The sections merged independently, each with its own updatedAt.
-export const SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists"] as const;
+export const SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists", "files"] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 export type ResolvedSettings = PluginSettings & {

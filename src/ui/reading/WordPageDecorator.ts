@@ -1,5 +1,5 @@
 import { setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { getLocale } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { isAiError } from "../../services/ai/errors";
 import { exportLabels } from "../../services/export/labels";
@@ -17,37 +17,19 @@ import { aiErrorText } from "../kit/aiState";
 // Only adds elements to the rendered view; the note itself is never
 // touched (the generated content reaches the page via ExportService).
 
-// Temporary strings until they move into core/i18n (`wordPage.*`).
-const L = {
-  "zh-TW": {
-    findFamilies: "找字族",
-    generateUsage: "產生",
-    regenerateUsage: "重新產生",
-    trivia: "來一則",
-    openSidebar: "在側欄開啟",
-    familiesNone: "沒有找到新的字族。",
-    familiesSaved: "已加入 {n} 個字族。",
-    usageSaved: "用法已更新。",
-    failed: "失敗：{error}",
-  },
-  en: {
-    findFamilies: "Find families",
-    generateUsage: "Generate",
-    regenerateUsage: "Regenerate",
-    trivia: "Tell me one",
-    openSidebar: "Open in sidebar",
-    familiesNone: "No new word families found.",
-    familiesSaved: "Added {n} word families.",
-    usageSaved: "Usage updated.",
-    failed: "Failed: {error}",
-  },
-};
+type Key =
+  | "findFamilies"
+  | "generateUsage"
+  | "regenerateUsage"
+  | "trivia"
+  | "openSidebar"
+  | "familiesNone"
+  | "familiesSaved"
+  | "usageSaved"
+  | "failed";
 
-type Key = keyof (typeof L)["en"];
-
-function l(key: Key, vars: Record<string, string | number> = {}): string {
-  const dict = L[getLocale()] ?? L.en;
-  return dict[key].replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+function l(key: Key, vars?: Record<string, string | number>): string {
+  return t(`wordPage.${key}`, vars);
 }
 
 export type WordSection = "families" | "usage" | "trivia" | "discussion";
@@ -97,8 +79,8 @@ export function sectionAtHeading(text: string, line: number): WordSection | null
 // current language (what the export wrote, unless the language changed).
 export function sectionByTitle(title: string): WordSection | null {
   const labels = exportLabels();
-  const t = title.trim();
-  return SECTIONS.find((s) => labels[s] === t) ?? null;
+  const text = title.trim();
+  return SECTIONS.find((s) => labels[s] === text) ?? null;
 }
 
 // entryId:section → the action running, so buttons drawn again meanwhile

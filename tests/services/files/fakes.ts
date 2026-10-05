@@ -1,5 +1,5 @@
 import type { VaultPort } from "../../../src/core/ports";
-import type { SeedRecordPort } from "../../../src/services/files/ports";
+import type { SeedRecordPort } from "../../../src/core/ports";
 
 // In-memory vault whose findManaged reads the files' frontmatter, like
 // ObsidianVault's index does. `log` records every write.

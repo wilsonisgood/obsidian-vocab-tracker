@@ -2,7 +2,7 @@ import type { Thread } from "../../core/model/thread";
 import { joinPath, linkTarget, MAX_NAME_BYTES, noteBasename, slugify, utf8Bytes, wordSlug } from "../../core/text/slug";
 import { exportLabels } from "./labels";
 import { applyManagedBlocks, type ManagedSection } from "./managedBlock";
-import type { VaultPort } from "../../core/ports";
+import type { CreateMode, VaultPort } from "../../core/ports";
 import { DEFAULT_EXPORT_FOLDERS, type ExportDataPort, type ExportFolders } from "./ports";
 import {
   AI_NOTE_KIND,
@@ -47,9 +47,8 @@ import type { ExportFamily, ExportLabels, ExportTrivia, RenderContext } from "./
 
 export const EXPORT_DEBOUNCE_MS = 1000;
 
-// "never": only update a file that already exists. "ifContent": create it
-// when there's something to put in it. "always": the user asked for it.
-export type CreateMode = "never" | "ifContent" | "always";
+// Defined in core/ports.ts (FilesExportPort uses it too).
+export type { CreateMode };
 const CREATE_RANK: Record<CreateMode, number> = { never: 0, ifContent: 1, always: 2 };
 
 type Job =
