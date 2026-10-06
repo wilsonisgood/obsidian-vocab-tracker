@@ -12,7 +12,7 @@ import type { RenderContext } from "../export/types";
 
 export const ENTRY_FILE_KIND = "entry";
 
-export type EntryFileId = "flashcards" | "families" | "verbs" | "trivia";
+export type EntryFileId = "flashcards" | "families" | "verbs" | "trivia" | "dna";
 
 export interface EntryFileDef {
   id: EntryFileId;
@@ -32,6 +32,8 @@ export const ENTRY_FILES: readonly EntryFileDef[] = [
   // The saved list is the exported section under the block, so the block
   // itself doesn't list favorites a second time.
   { id: "trivia", name: "冷知識", block: "vocab-trivia", params: "favorites: off" },
+  // Word DNA (規劃書 09 §7).
+  { id: "dna", name: "Word DNA", block: "vocab-dna" },
 ];
 
 export const ENTRY_FILE_IDS: readonly EntryFileId[] = ENTRY_FILES.map((d) => d.id);

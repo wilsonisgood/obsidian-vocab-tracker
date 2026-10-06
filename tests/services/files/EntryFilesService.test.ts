@@ -179,7 +179,13 @@ describe("EntryFilesService.ensureAll", () => {
   it("creates every missing entry file the first time", async () => {
     const { vault, files } = setup();
     const created = await files.ensureAll();
-    expect(created).toEqual(["vocab-list/單字卡.md", "vocab-list/字族樹.md", "vocab-list/動詞用法.md", "vocab-list/冷知識.md"]);
+    expect(created).toEqual([
+      "vocab-list/單字卡.md",
+      "vocab-list/字族樹.md",
+      "vocab-list/動詞用法.md",
+      "vocab-list/冷知識.md",
+      "vocab-list/Word DNA.md",
+    ]);
     expect([...vault.files.keys()].sort()).toEqual([...created].sort());
   });
 
@@ -211,7 +217,7 @@ describe("EntryFilesService.ensureAll", () => {
       return create(path, content);
     };
     const err = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    expect(await files.ensureAll()).toHaveLength(3);
+    expect(await files.ensureAll()).toHaveLength(4);
     err.mockRestore();
   });
 });
