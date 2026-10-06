@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, MarkdownRenderer, setIcon, type App, type MarkdownPostProcessorContext } from "obsidian";
-import { getLocale, t } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { AiError, aiDebugOf, isAiError, type AiErrorCode } from "../../services/ai/errors";
 import { exportLabels } from "../../services/export/labels";
@@ -105,23 +105,6 @@ interface PendingTrivia {
 }
 const pendingTrivia = new Map<string, PendingTrivia>();
 
-// Temporary strings for 1006 #1 — not yet in src/core/i18n/{zh-TW,en}.ts
-// (see the 整合事項 in the wave report); getLocale() so they still follow
-// the user's language setting meanwhile.
-function triviaPendingText() {
-  return getLocale() === "zh-TW"
-    ? {
-        fetched: (word: string) => `已拿到 ${word} 的冷知識`,
-        badge: "未收藏",
-        hint: "離開頁面後只會留在冷知識紀錄裡。",
-      }
-    : {
-        fetched: (word: string) => `Got a trivia fact about ${word}.`,
-        badge: "Not saved",
-        hint: "Leaves the page without being saved — it only stays in the trivia log.",
-      };
-}
-
 // Draws (or clears) the pending-round card right after `h`, from the
 // current map state. Called once while decorating the heading (so a
 // re-render — switching tabs back to this note — shows what's pending)
@@ -132,11 +115,10 @@ function syncTriviaCard(h: HTMLElement, entry: VocabEntry, deps: WordPageDeps, c
   if (next instanceof HTMLElement && next.hasClass("vt-wp-trivia-pending")) next.remove();
   const pending = pendingTrivia.get(entry.id);
   if (!pending) return;
-  const L = triviaPendingText();
 
   const card = createDiv({ cls: ["vt", "vt-wp-trivia-pending"] });
   const head = card.createDiv({ cls: "vt-wp-trivia-pending-head" });
-  head.createSpan({ cls: "vt-wp-trivia-pending-badge", text: L.badge });
+  head.createSpan({ cls: "vt-wp-trivia-pending-badge", text: t("wordPage.trivia.pending.badge") });
   const save = head.createEl("button", { cls: "vt-wp-btn" });
   setIcon(save.createSpan({ cls: "vt-wp-btn-icon" }), "bookmark");
   save.createSpan({ text: t("learn.trivia.favorite") });
@@ -155,7 +137,7 @@ function syncTriviaCard(h: HTMLElement, entry: VocabEntry, deps: WordPageDeps, c
   ctx.addChild(scope);
   void MarkdownRenderer.render(deps.app, pending.body, body, ctx.sourcePath, scope);
 
-  card.createDiv({ cls: "vt-wp-trivia-pending-hint", text: L.hint });
+  card.createDiv({ cls: "vt-wp-trivia-pending-hint", text: t("wordPage.trivia.pending.hint") });
   h.insertAdjacentElement("afterend", card);
 }
 
@@ -222,7 +204,7 @@ function actionFor(
           const result = await deps.trivia.ask("next", { entryId: entry.id });
           if (result?.turnId) {
             pendingTrivia.set(entry.id, { turnId: result.turnId, title: result.title ?? "", body: result.body ?? "" });
-            deps.notify(triviaPendingText().fetched(entry.word));
+            deps.notify(t("wordPage.trivia.fetched", { word: entry.word }));
           } else if (result?.error || result?.errorMessage) {
             const message = aiErrorText(new AiError((result.error ?? "network") as AiErrorCode, result.errorMessage));
             deps.notify(l("failed", { error: message }));
