@@ -36,9 +36,11 @@ const GL = {
 
 function setup(json: unknown = { families: [CLOTHING, GL] }, dict = new FakeDictionary()) {
   const vocab = new FakeVocab([
-    entry("e1", "glittery", { partOfSpeech: "adjective", definitionZh: "閃亮的", createdAt: "2026-10-01T00:00:00Z" }),
-    entry("e2", "leotard", { partOfSpeech: "noun", createdAt: "2026-10-02T00:00:00Z" }),
-    entry("e3", "apron", { createdAt: "2026-09-01T00:00:00Z" }),
+    // liked: true — 整體分群 (無 seed) 只看 like 的字 (1006report.md #24);
+    // these three are the ones several tests expect in the "known" list.
+    entry("e1", "glittery", { partOfSpeech: "adjective", definitionZh: "閃亮的", createdAt: "2026-10-01T00:00:00Z", liked: true }),
+    entry("e2", "leotard", { partOfSpeech: "noun", createdAt: "2026-10-02T00:00:00Z", liked: true }),
+    entry("e3", "apron", { createdAt: "2026-09-01T00:00:00Z", liked: true }),
   ]);
   const ai = new FakeLearnAi(() => result(JSON.stringify(json), { json }));
   const learn = new LearnStore({ storage: new MemoryStorage(), clock: () => NOW });
@@ -79,6 +81,20 @@ describe("FamilyService.generate", () => {
     expect(ai.requests[0].system[1].text).toContain("- leotard（noun）\n- glittery（adjective） 閃亮的\n- apron");
   });
 
+  it("整體分群只看 like 的字 (1006report.md #24): an unliked word is left out of the known list", async () => {
+    const { families, ai, vocab } = setup();
+    vocab.all.push(entry("e4", "unliked-word", { createdAt: "2026-10-03T00:00:00Z", liked: false }));
+    await families.generate();
+    expect(ai.requests[0].system[1].text).not.toContain("unliked-word");
+  });
+
+  it("找字族 from a specific word always includes that seed, liked or not", async () => {
+    const { families, ai, vocab } = setup();
+    vocab.all[0].liked = false; // e1 "glittery", the seed below
+    await families.generate({ seedEntryIds: ["e1"] });
+    expect(ai.requests[0].system[1].text).toContain("glittery");
+  });
+
   it("propagates bad_output when the JSON doesn't hold", async () => {
     const { families } = setup({ nope: true });
     await expect(families.generate()).rejects.toMatchObject({ code: "bad_output" });
@@ -116,6 +132,20 @@ describe("FamilyService.save", () => {
     expect(members.find((m) => m.word === "sequin")?.entryId).toBe(added[0].id);
     expect(members.find((m) => m.word === "tulle")?.entryId).toBe(added[1].id);
     expect(families.familiesOf("e1").map((f) => f.topic)).toEqual(["clothing"]);
+  });
+
+  it("emits family:saved with only the seed entry ids, for AutoLike (1006report.md #15)", async () => {
+    const { families } = setup();
+    const savedWord = vi.fn();
+    families.events.on("family:saved", savedWord);
+
+    await families.save(await families.generate({ seedEntryIds: ["e1", "e2"] }));
+    expect(savedWord).toHaveBeenLastCalledWith({ seedEntryIds: ["e1", "e2"] });
+
+    // 整體分群 (無 seed) doesn't like anything: the new words it suggests
+    // adding aren't seeds either.
+    await families.save(await families.generate(), { addWords: ["sequin"] });
+    expect(savedWord).toHaveBeenLastCalledWith({ seedEntryIds: [] });
   });
 
   it("只存字族: saves without adding words", async () => {

@@ -10,6 +10,7 @@ import {
   type FamilyScope,
 } from "../../core/model/family";
 import { nowStamp } from "../../core/nowStamp";
+import { TypedEmitter } from "../../core/events";
 import { entryAddedMs } from "../ai/context/triviaContext";
 import { familyGenerate, type FamilyDraft, type FamilyWord } from "../ai/tasks/family";
 import type { LearnStore } from "./LearnStore";
@@ -59,6 +60,14 @@ export interface FamilyServiceDeps {
   newId?: () => string;
 }
 
+// Wave 7 Y — 自動 like 的掛鉤 (1006report.md #15)：save() 存檔成功後，AutoLike
+// 訂閱這個事件，把找字族用到的 seed 字（不含被建議加入的新字——那些不是「對
+// 這個字做了動作」）標成已 like。整體分群（scope "list"）沒有 seed，事件會帶
+// 空陣列，AutoLike 收到空陣列什麼都不做。
+export interface FamilyServiceEvents {
+  "family:saved": { seedEntryIds: string[] };
+}
+
 function toWord(e: VocabEntry): FamilyWord {
   return { word: e.word, partOfSpeech: e.partOfSpeech, zh: e.definitionZh };
 }
@@ -66,6 +75,7 @@ function toWord(e: VocabEntry): FamilyWord {
 const key = (w: string) => w.trim().toLowerCase();
 
 export class FamilyService {
+  readonly events = new TypedEmitter<FamilyServiceEvents>();
   private clock: () => Date;
   private newId: () => string;
   private seq = 0;
@@ -115,8 +125,13 @@ export class FamilyService {
     await this.ensureLoaded();
     const entries = this.deps.vocab.entries;
     const seedIds = new Set(opts.seedEntryIds ?? []);
-    const seeds = entries.filter((e) => seedIds.has(e.id));
-    const recent = entries
+    // 整體分群 (無 seed, scope "list") 只用 like 的字 (1006report.md #24)：
+    // 不然考試字表匯進來的幾百個還沒學的字會被硬湊成「家族」。找字族
+    // (有 seed) 本身就是對那個字的動作，seed 字不管有沒有 like 都要找——點
+    // 下去找字族這個動作本身就會讓它自動 like (#15)。
+    const pool = seedIds.size ? entries : entries.filter((e) => e.liked === true);
+    const seeds = pool.filter((e) => seedIds.has(e.id));
+    const recent = pool
       .filter((e) => !seedIds.has(e.id))
       .sort((a, b) => entryAddedMs(b) - entryAddedMs(a))
       .slice(0, Math.max(0, MAX_FAMILY_CONTEXT - seeds.length));
@@ -130,6 +145,9 @@ export class FamilyService {
       },
       { threadId: FAMILY_THREAD_ID, signal: opts.signal }
     );
+    // Member → entry resolution still searches every entry (liked or not):
+    // a family can surface an already-tracked but unliked word as a known
+    // member without that changing anything about #24's grouping pool.
     const index = new WordIndex(entries);
     return drafts.map((d) => this.candidate(d, index, seeds.map((e) => e.id)));
   }
@@ -198,6 +216,10 @@ export class FamilyService {
       this.link(f, index);
       this.deps.learn.putFamily(f);
     }
+    // 只有「找字族」(scope "word") 帶種子字；重新分群 (scope "list") 的
+    // candidate 沒有 seedEntryIds，不會讓任何字被自動 like (1006report.md #15)。
+    const seedEntryIds = [...new Set(candidates.flatMap((c) => c.seedEntryIds))];
+    this.events.emit("family:saved", { seedEntryIds });
     return { families, added };
   }
 

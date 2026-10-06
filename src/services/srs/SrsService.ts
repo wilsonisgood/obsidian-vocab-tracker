@@ -21,6 +21,7 @@ import {
 } from "../../core/model/srs";
 import type { StoragePort } from "../../core/ports";
 import type { VocabStore } from "../../core/store/VocabStore";
+import { TypedEmitter } from "../../core/events";
 import { mergeReviewLogs, pruneReviewLogs, reviewLogsFingerprint } from "../../core/store/reviewLogs";
 import { nowStamp } from "../../core/nowStamp";
 import {
@@ -47,6 +48,12 @@ interface ReviewsShard {
 export interface RatingPreview {
   due: string;
   intervalMs: number;
+}
+
+// Wave 7 Y — 自動 like 的掛鉤 (1006report.md #15)：rate() 完成之後觸發，
+// AutoLike 訂閱後把這個字標成已 like（已經是 like 的話不會重複寫入）。
+export interface SrsServiceEvents {
+  "srs:rated": { entryId: string };
 }
 
 export interface SrsServiceDeps {
@@ -104,6 +111,7 @@ function defaultId(now: Date): string {
 // store. All "now"s come from the injected clock so preview() and rate()
 // agree exactly when called at the same moment.
 export class SrsService {
+  readonly events = new TypedEmitter<SrsServiceEvents>();
   private logs: ReviewLog[] = [];
   private loading: Promise<void> | null = null;
   private writeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -156,8 +164,12 @@ export class SrsService {
     return this.logs;
   }
 
+  // 規格 #24: the review queue only ever offers liked words — a caller
+  // that wants an explicit single-word review (`word:`/`id:` block mode)
+  // bypasses queue() entirely (it checks matchesFilter() on one entry
+  // directly, without requireLiked — see ui/blocks/flashcards.ts).
   queue(filter: QueueFilter = {}): VocabEntry[] {
-    return buildQueue(this.deps.store.vocabData.entries, filter, {
+    return buildQueue(this.deps.store.vocabData.entries, { ...filter, requireLiked: true }, {
       now: this.clock(),
       dailyNew: this.settings().dailyNew,
       logs: this.logs,
@@ -167,7 +179,7 @@ export class SrsService {
   // Cards due tomorrow (local calendar day) — the done screen's "明天到期".
   dueTomorrow(filter: QueueFilter = {}): number {
     const today = startOfLocalDay(this.clock());
-    return countDueBetween(this.deps.store.vocabData.entries, filter, addDays(today, 1), addDays(today, 2));
+    return countDueBetween(this.deps.store.vocabData.entries, { ...filter, requireLiked: true }, addDays(today, 1), addDays(today, 2));
   }
 
   // Reviews logged today (local calendar day) for words matching the
@@ -177,7 +189,7 @@ export class SrsService {
     const dayStart = startOfLocalDay(this.clock()).getTime();
     const ids = new Set(
       this.deps.store.vocabData.entries
-        .filter((e) => matchesFilter(e, { source: filter.source }))
+        .filter((e) => matchesFilter(e, { source: filter.source, requireLiked: true }))
         .map((e) => e.id)
     );
     return this.logs.filter((l) => ids.has(l.entryId) && new Date(l.at).getTime() >= dayStart).length;
@@ -244,6 +256,7 @@ export class SrsService {
     this.logs = mergeReviewLogs(this.logs, [log]);
     this.scheduleLogWrite();
     await this.deps.store.touch(entry);
+    this.events.emit("srs:rated", { entryId: entry.id });
     return log;
   }
 

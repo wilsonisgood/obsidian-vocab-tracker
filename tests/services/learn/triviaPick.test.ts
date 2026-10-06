@@ -12,12 +12,15 @@ function seq(...values: number[]): () => number {
   return () => values[i++ % values.length];
 }
 
-const FRESH = [entry("f1", "glittery", { createdAt: daysAgo(1) }), entry("f2", "leotard", { createdAt: daysAgo(13) })];
+const FRESH = [
+  entry("f1", "glittery", { createdAt: daysAgo(1), liked: true }),
+  entry("f2", "leotard", { createdAt: daysAgo(13), liked: true }),
+];
 const OLD = [
-  entry("o1", "apron", { createdAt: daysAgo(30) }),
-  entry("o2", "toil", { createdAt: daysAgo(15) }),
+  entry("o1", "apron", { createdAt: daysAgo(30), liked: true }),
+  entry("o2", "toil", { createdAt: daysAgo(15), liked: true }),
   // Pre-migration entry: only the legacy local-time stamp.
-  entry("o3", "ethos", { added: "2026-01-02 10:00:00" }),
+  entry("o3", "ethos", { added: "2026-01-02 10:00:00", liked: true }),
 ];
 const ALL = [...FRESH, ...OLD];
 
@@ -46,13 +49,20 @@ describe("pickSubject", () => {
   });
 
   it("skips deleted entries and returns undefined for an empty list", () => {
-    const deleted = entry("d", "gone", { createdAt: daysAgo(1), deletedAt: daysAgo(0) });
+    const deleted = entry("d", "gone", { createdAt: daysAgo(1), deletedAt: daysAgo(0), liked: true });
     expect(pickSubject([deleted], [], { now: NOW, random: seq(0) })).toBeUndefined();
     expect(pickSubject([], [], { now: NOW, random: seq(0) })).toBeUndefined();
   });
 
+  it("only picks liked words (1006report.md #24): unliked or never-backfilled words are excluded", () => {
+    const unliked = entry("u1", "unliked", { createdAt: daysAgo(1), liked: false });
+    const unset = entry("u2", "unset", { createdAt: daysAgo(1) });
+    expect(pickSubject([unliked, unset], [], { now: NOW, random: seq(0) })).toBeUndefined();
+    expect(pickSubject([unliked, unset, FRESH[0]], [], { now: NOW, random: seq(0.5, 0) })?.id).toBe("f1");
+  });
+
   it("never repeats a word across 10 rounds when there are enough words (M7 驗收)", () => {
-    const many = Array.from({ length: 12 }, (_, i) => entry(`w${i}`, `word${i}`, { createdAt: daysAgo(i * 3) }));
+    const many = Array.from({ length: 12 }, (_, i) => entry(`w${i}`, `word${i}`, { createdAt: daysAgo(i * 3), liked: true }));
     let r = 0.37;
     const random = () => (r = (r * 9301 + 0.49297) % 1);
     const told: string[] = [];

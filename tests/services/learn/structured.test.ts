@@ -152,7 +152,8 @@ describe("runStructured", () => {
 
 describe("services carry the debug info", () => {
   it("FamilyService.generate", async () => {
-    const vocab = new FakeVocab([entry("e1", "glittery")]);
+    // liked: true — 整體分群 (無 seed) 只看 like 的字 (1006report.md #24).
+    const vocab = new FakeVocab([entry("e1", "glittery", { liked: true })]);
     const ai = new FakePreparingAi(() => result("I can't group these."));
     const learn = new LearnStore({ storage: new MemoryStorage(), clock: () => NOW });
     const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), clock: () => NOW });
