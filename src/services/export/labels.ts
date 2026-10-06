@@ -58,7 +58,11 @@ export function posOfUsageHeading(title: string): PosKey | null {
   return null;
 }
 
-const KEYS: (keyof ExportLabels)[] = [
+// "usagePosHeading" is set separately below (it's a Record<PosKey,
+// string>, not a plain string like the rest) — excluded here so the loop
+// assignment below stays a plain string→string write instead of widening
+// to the intersection of every ExportLabels value type.
+const KEYS: Exclude<keyof ExportLabels, "usagePosHeading">[] = [
   "families",
   "familiesEmpty",
   "usage",

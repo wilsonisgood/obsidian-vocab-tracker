@@ -73,6 +73,25 @@ describe("WordPageDecorator", () => {
   });
 });
 
+describe("usage pos headings (1006-2 #19)", () => {
+  it("round-trips every part of speech's heading back to its pos key, in the current language", () => {
+    const headings = usagePosHeadings();
+    for (const pos of POS_KEYS) expect(posOfUsageHeading(headings[pos])).toBe(pos);
+  });
+
+  it("also recognises the other language's heading — a note written before a locale switch", () => {
+    setLocale("en");
+    const enHeadings = usagePosHeadings();
+    setLocale("zh-TW");
+    for (const pos of POS_KEYS) expect(posOfUsageHeading(enHeadings[pos])).toBe(pos);
+  });
+
+  it("returns null for a heading that isn't a pos subheading", () => {
+    expect(posOfUsageHeading("我的筆記")).toBeNull();
+    expect(posOfUsageHeading("")).toBeNull();
+  });
+});
+
 describe("vocab-word header", () => {
   const GLITTERY = entry("1721900000000", "glittery");
   const OTHER = entry("2", "Leotard");

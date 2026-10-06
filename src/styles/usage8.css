@@ -1,0 +1,53 @@
+/* Wave 8 U2 — usage-by-part-of-speech additions to the L6 vocab-verbs
+   block (1006-2 #18 #19 #22). blocks.css already has the rest of L6's
+   styling (.vt-verb-patterns, .vt-verb-related, .vt-verb-actions, …); this
+   file only covers what's new: each part of speech's own subsection and
+   the usage table's part-of-speech filter chips. Needs a line in
+   src/styles/index.css to load (shared file, see integration notes). */
+
+/* One `<詞性>用法` subsection per part of speech (#19): same spacing
+   rhythm as the single-pos layout it replaces (.vt-verb-detail's own
+   `gap: 10px` used to separate head/meta/patterns/actions). */
+.vt-verb-pos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--vt-border);
+}
+
+.vt-verb-pos:first-of-type {
+  padding-top: 0;
+  border-top: none;
+}
+
+.vt-verb-pos-title {
+  font-size: var(--font-ui-medium);
+  font-weight: 700;
+}
+
+/* 「n. v. adj. adv. …」 pos filter chips, above the usage table's word
+   list (#22) — same pill look as the shared exam/like chips
+   (.vt-exam-chip in sidebar.css), kept as its own class since it toggles
+   per-block dim state instead of the shared wordlist settings. */
+.vt-verbs-pos-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.vt-verbs-pos-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  font-size: 0.75em;
+  cursor: pointer;
+}
+
+.vt-verbs-pos-chip.is-dim {
+  opacity: 0.45;
+}

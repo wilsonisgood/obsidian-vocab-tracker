@@ -3,7 +3,7 @@ import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import { isListed, type IsListedContext } from "../../core/model/like";
 import { POS_KEYS, type PosKey, type UsageBlock } from "../../core/model/usage";
-import { resolveWordlistSettings, tagEnabled } from "../../core/model/wordlists";
+import { likeChipOn, resolveWordlistSettings, tagEnabled } from "../../core/model/wordlists";
 import { usagePosHeadings } from "../../services/export/labels";
 import { WordIndex } from "../../services/learn/wordIndex";
 import { aiErrorBox } from "../kit/aiDebug";
@@ -12,6 +12,7 @@ import { inlineNote } from "../kit/inlineNote";
 import { bindPronounceButton } from "../kit/pronounce";
 import { t } from "../../core/i18n";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate, wordChip } from "./learnUi";
+import { likeChipSpec, renderFilterChips, tagChipSpecs, tagCountInLibrary, likeCountInLibrary } from "../sidebar/examStrip";
 import {
   entriesWithUsage,
   filterByActivePos,
@@ -133,13 +134,15 @@ class VerbsBlock extends MarkdownRenderChild {
     void this.plugin.learn.ensureLoaded().then(redraw);
   }
 
-  // 跟側欄一樣的 isListed 篩選 (dashboard.ts 的 isListedCtx 同款)；Like 開
-  // 關和標籤 chip 列還沒接上 S 的共用元件，見整合事項。
+  // 跟側欄一樣的 isListed 篩選 (dashboard.ts 的 isListedCtx 同款：標籤 chip
+  // ＋ Like chip，共用同一份設定 (1006-2 #5))。
   private isListedCtx(): IsListedContext {
     const knownTags = this.plugin.wordlists.index.tags;
+    const settings = resolveWordlistSettings(this.plugin.store.settings.wordlists);
     return {
       knownTags,
-      isTagOn: (tag) => tagEnabled(resolveWordlistSettings(this.plugin.store.settings.wordlists), tag),
+      isTagOn: (tag) => tagEnabled(settings, tag),
+      likeOn: likeChipOn(settings),
     };
   }
 
@@ -159,8 +162,16 @@ class VerbsBlock extends MarkdownRenderChild {
   private buildLayout(): void {
     const grid = this.root.createDiv({ cls: "vt-verbs-grid" });
     const side = grid.createDiv({ cls: "vt-verbs-side" });
-    // 標籤＋Like 的 chip 列：容器先留著，等 S 的共用元件接進來（整合事項）。
+    // 標籤＋Like 的 chip 列：跟側欄／vocab-list dashboard 共用同一份元件和
+    // 設定 (1006-2 #5, dashboard.ts 73-76 同款)。toggle 最終都走
+    // plugin.updateWordlistSettings()，會 rerenderReadingViews() 讓整個
+    // block 重新跑一次，不用自己再畫一次。
     this.filterEl = side.createDiv({ cls: "vt-verbs-tag-chips" });
+    const wlSettings = resolveWordlistSettings(this.plugin.store.settings.wordlists);
+    renderFilterChips(this.filterEl, [
+      ...tagChipSpecs(this.plugin, this.plugin.wordlists.index.tags, wlSettings, (tag) => tagCountInLibrary(this.plugin, tag)),
+      likeChipSpec(this.plugin, wlSettings, likeCountInLibrary(this.plugin)),
+    ]);
     this.posChipsEl = side.createDiv({ cls: "vt-verbs-pos-chips" });
     const search = side.createDiv({ cls: "vt-verbs-search" });
     setIcon(search.createSpan({ cls: "vt-verbs-search-icon" }), "search");

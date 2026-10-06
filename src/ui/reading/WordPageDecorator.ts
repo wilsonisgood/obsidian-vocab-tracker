@@ -151,7 +151,7 @@ export function createWordPageDecorator(deps: WordPageDeps) {
     // h3: the per-part-of-speech 「<詞性>用法」 subheadings under 用法
     // (1006-2 #19) — only usage has any, but checking every h3's text is
     // cheap and keeps this generic.
-    const headings = [...(el.matches("h2, h3") ? [el] : []), ...Array.from(el.querySelectorAll("h2, h3"))];
+    const headings = [...(el.matches("h2, h3") ? [el] : []), ...Array.from(el.querySelectorAll<HTMLElement>("h2, h3"))];
     if (!headings.length) return;
     const info = ctx.getSectionInfo(el);
     for (const h of headings) {
