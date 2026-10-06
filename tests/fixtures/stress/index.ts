@@ -24,6 +24,7 @@
 
 import type { VocabData, VocabEntry } from "../../../src/core/model/entry";
 import type { Family } from "../../../src/core/model/family";
+import { initialLiked } from "../../../src/core/model/like";
 import type { TriviaItem } from "../../../src/core/model/trivia";
 import { defaultAiSettings, type PluginSettings } from "../../../src/core/model/settings";
 import type { SrsCard } from "../../../src/core/model/srs";
@@ -366,6 +367,19 @@ export function buildStressFixture(options: StressOptions = {}): StressFixture {
       };
     }
     if (chance(rng, 0.3)) e.origin = "wordlist";
+    // Wave 7 Y (1006report.md #23): this fixture predates the `liked`
+    // field, so approximate what a one-time backfill would have computed
+    // — real signals already on the entry (usage/reviews/srs/grammar),
+    // minus word-thread activity (the threads below are built from `live`
+    // words, after this map, so that signal isn't available here yet;
+    // leaving it out only undercounts a few wordlist-origin entries as
+    // unliked, which doesn't matter for perf/migration fixtures).
+    e.liked = initialLiked(e, {
+      hasWordThread: false,
+      hasUsage: !!e.usage,
+      hasReviewed: (e.reviews ?? 0) > 0 || e.srs !== undefined,
+      hasEditedContent: !!e.grammar?.trim(),
+    });
     if (i >= o.words) {
       e.deletedAt = iso(now - int(rng, 1, 20) * DAY);
       e.updatedAt = e.deletedAt;

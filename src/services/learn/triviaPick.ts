@@ -62,12 +62,16 @@ export function recentSubjects(thread: Thread | undefined, n = EXCLUDE_LAST): st
   return out;
 }
 
+// 規格 #24: 隨機挑字只從 like 的字挑 — 否則一個考試字表匯進幾百個還沒學的
+// 字，大多數時候都在講使用者根本沒在學的字。`ask(kind, { entryId })` 明確
+// 指定某個字時不經過這裡（見 TriviaService.ask），所以「從單字頁來一則」
+// 不受影響。
 export function pickSubject(
   entries: readonly VocabEntry[],
   recent: readonly string[],
   opts: PickOptions
 ): VocabEntry | undefined {
-  const live = entries.filter((e) => !e.deletedAt && e.word.trim());
+  const live = entries.filter((e) => !e.deletedAt && e.word.trim() && e.liked === true);
   if (!live.length) return undefined;
 
   const excluded = new Set(recent.slice(0, opts.excludeLast ?? EXCLUDE_LAST));

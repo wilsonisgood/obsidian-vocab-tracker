@@ -14,6 +14,12 @@ export interface QueueFilter {
   mode?: CardMode;
   // Max cards in the returned queue (after due/new ordering).
   limit?: number;
+  // Wave 7 Y (1006report.md #24): only liked === true cards. SrsService
+  // sets this for the queue/stat methods (the daily queue, batch lists);
+  // it's left off for an explicit one-word review (`word:`/`id:` block
+  // mode) — reviewing a word you typed in by name should always work,
+  // liked or not.
+  requireLiked?: boolean;
 }
 
 export interface QueueContext {
@@ -51,6 +57,7 @@ export function newIntroducedToday(logs: readonly ReviewLog[], now: Date): numbe
 
 export function matchesFilter(entry: VocabEntry, filter: QueueFilter): boolean {
   if (entry.deletedAt) return false;
+  if (filter.requireLiked && entry.liked !== true) return false;
   if (filter.source && !(entry.source?.path ?? "").startsWith(filter.source)) return false;
   if (filter.mode === "cloze" && !clozeParts(entry.example, entry.word)) return false;
   return true;

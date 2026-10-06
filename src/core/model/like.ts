@@ -67,14 +67,18 @@ export interface InitialLikeSignals {
   // 規格 #15 把「單字卡複習」算進會自動 like 的動作之一。
   hasReviewed: boolean;
   // 對「改過內容」的近似值（規格 #23：手動改過資料頁籤任何欄位才算）。沒有
-  // 編輯歷史可查，只能用「純粹的考試字表匯入不會寫入的欄位」來猜：
-  // definition / definitionZh / synonyms / antonyms / grammar / phonetic /
-  // partOfSpeech 任一非空，就當作改過內容（匯入只會寫 level / example /
-  // source / origin，見 main.ts newEntry() 的呼叫處）。
-  // 限制：字典重抓（規格 #15 明講不算自動 like 的理由）填的也是同一批欄
-  // 位，所以「只被字典重抓過、從沒手動編輯過」的字會被這裡誤判成「改過內
-  // 容」而回填成已 like。這是一次性回填能做到的最佳近似；回填之後字典重抓
-  // 不會再呼叫 setLiked()，所以這個誤判不會重複發生（見整合事項）。
+  // 編輯歷史可查，只能用「哪個欄位絕對不會被自動流程寫入」來猜，所以只看
+  // entry.grammar 有沒有值（Wave 7 Y 實作，src/services/like/backfill.ts）：
+  // - 字典重抓（dictionary enrich）只會補 phonetic / audio / partOfSpeech /
+  //   definition / definitionZh / synonyms / antonyms（main.ts
+  //   enrichEntry()），從不碰 grammar——用那些欄位判斷會把每個考試字表自動
+  //   匯入、背景補完字典的字都誤判成「已 like」，幾乎失去篩選效果。
+  // - entry.example 同樣不能用：加字（main.ts addWordToVocab()，約行 985）
+  //   和考試字匯入（importExamWords()，約行 612）都會把筆記裡的原句自動填
+  //   進 example，不是使用者手打的內容。
+  // - grammar 只有兩條路徑會寫：使用者在資料頁籤手動編輯，或把一則 AI 回答
+  //   釘選到文法提示（ThreadService.setPinned() → addPin()）。兩者都是真
+  //   正「對這個字做了動作」，沒有已知的自動流程會動到它。
   hasEditedContent: boolean;
 }
 

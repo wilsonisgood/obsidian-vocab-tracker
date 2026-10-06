@@ -241,6 +241,29 @@ describe("SrsService", () => {
     });
   });
 
+  it("queue()/dueTomorrow()/reviewsToday() only count liked words (1006report.md #24)", async () => {
+    const entries = [
+      makeEntry({ id: "liked", liked: true, createdAt: "2026-09-01T00:00:00.000Z" }),
+      makeEntry({ id: "unliked", liked: false, createdAt: "2026-09-01T00:00:00.000Z" }),
+      makeEntry({ id: "unset", liked: undefined, createdAt: "2026-09-01T00:00:00.000Z" }),
+    ];
+    const { srs } = setup(entries);
+    expect(srs.queue().map((e) => e.id)).toEqual(["liked"]);
+
+    const tomorrow = new Date(2026, 9, 5, 9);
+    entries[0].srs = reviewCard(tomorrow);
+    entries[1].srs = reviewCard(tomorrow);
+    expect(srs.dueTomorrow()).toBe(1);
+  });
+
+  it("emits srs:rated after rate() so AutoLike can like a reviewed word (1006report.md #15)", async () => {
+    const { srs, data } = setup();
+    const rated = vi.fn();
+    srs.events.on("srs:rated", rated);
+    await srs.rate(data.entries[0], Rating.Good, "en-zh");
+    expect(rated).toHaveBeenCalledWith({ entryId: "e1" });
+  });
+
   it("reviewsToday() counts today's logs for words matching the source filter", async () => {
     const entries = [
       makeEntry({ id: "a", source: { path: "eng/a.md", line: 0 } }),

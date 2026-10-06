@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildQueue,
   countDueBetween,
+  matchesFilter,
   newIntroducedToday,
 } from "../../../src/services/srs/queue";
 import type { ReviewLog } from "../../../src/core/model/srs";
@@ -72,6 +73,22 @@ describe("buildQueue", () => {
     const ctx = { now: NOW, dailyNew: 20, logs: [] };
     expect(buildQueue(entries, { mode: "cloze" }, ctx).map((e) => e.id)).toEqual(["a"]);
     expect(buildQueue(entries, { mode: "en-zh" }, ctx)).toHaveLength(3);
+  });
+});
+
+describe("matchesFilter requireLiked (1006report.md #24)", () => {
+  it("is off by default — a single explicit word review ignores liked state", () => {
+    const unliked = makeEntry({ id: "a", liked: false });
+    expect(matchesFilter(unliked, {})).toBe(true);
+  });
+
+  it("excludes unliked (and never-backfilled) words when set — the queue/batch-list path", () => {
+    const liked = makeEntry({ id: "a", liked: true });
+    const unliked = makeEntry({ id: "b", liked: false });
+    const unset = makeEntry({ id: "c", liked: undefined });
+    expect(matchesFilter(liked, { requireLiked: true })).toBe(true);
+    expect(matchesFilter(unliked, { requireLiked: true })).toBe(false);
+    expect(matchesFilter(unset, { requireLiked: true })).toBe(false);
   });
 });
 
