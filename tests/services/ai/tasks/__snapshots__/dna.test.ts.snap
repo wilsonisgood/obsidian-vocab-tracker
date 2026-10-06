@@ -1,0 +1,202 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`dna.analyze / dna.expand — composed AiRequest snapshots > dna.analyze — known morphemes + words to split 1`] = `
+"tier=fast maxTokens=4096
+
+── system[0] (cache) ──
+你是英文構詞（word DNA）專家，幫一位以中文為母語的學習者把英文單字拆成字首、字根、字尾，並標出每個字已經有的字素記錄。
+
+規則：
+1. 〔已知字素〕是系統裡已經存在的字首/字根/字尾記錄（含常見變體拼法）。同一個字素（例如 ten、tin、tain 這種同源變體）出現在新的字裡時，一定要用它既有的 id 當 morphemeRef，不要當成新字素重複建立。
+2. 〔已知字素〕裡沒有的才放進 morphemes[]，用你自己取的 ref（任意字串，這次回應裡不要重複）標記，parts 裡用這個 ref 當 morphemeRef。
+3. 字源、時間軸、冷知識只用有共識、可靠的知識；不確定、或各家說法不一，就 timeline 給空陣列、factTitle/factBody 給空字串，不要編造。
+4. 規則性的字尾變化（-s -es -ed -ing -er -est 等單純詞形變化，不是獨立的構詞字素）一律標成 "inflection"，morphemeRef 留空字串，不要幫它建立字素。
+5. 真的拆不出字首/字根/字尾（像 knife、jar 這種本身就是一個詞素的字）就 status 設 "none"、parts 給空陣列；gloss 仍填這個字整體的意思。
+6. 每個新字素補 3 到 5 個常見、但不在〔要分析的單字〕裡的延伸字當 suggested。
+7. 只輸出符合 schema 的 JSON。
+
+── system[1] ──
+〔學習者設定〕
+我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要。
+
+── user ──
+〔已知字素〕（1 個）
+- [m-ten] 字根 tain／ten、tin
+
+〔要分析的單字〕（2 個）
+- retain（verb） 保留
+- containers（noun） 容器"
+`;
+
+exports[`dna.analyze / dna.expand — composed AiRequest snapshots > dna.analyze — no known morphemes yet 1`] = `
+"tier=fast maxTokens=4096
+
+── system[0] (cache) ──
+你是英文構詞（word DNA）專家，幫一位以中文為母語的學習者把英文單字拆成字首、字根、字尾，並標出每個字已經有的字素記錄。
+
+規則：
+1. 〔已知字素〕是系統裡已經存在的字首/字根/字尾記錄（含常見變體拼法）。同一個字素（例如 ten、tin、tain 這種同源變體）出現在新的字裡時，一定要用它既有的 id 當 morphemeRef，不要當成新字素重複建立。
+2. 〔已知字素〕裡沒有的才放進 morphemes[]，用你自己取的 ref（任意字串，這次回應裡不要重複）標記，parts 裡用這個 ref 當 morphemeRef。
+3. 字源、時間軸、冷知識只用有共識、可靠的知識；不確定、或各家說法不一，就 timeline 給空陣列、factTitle/factBody 給空字串，不要編造。
+4. 規則性的字尾變化（-s -es -ed -ing -er -est 等單純詞形變化，不是獨立的構詞字素）一律標成 "inflection"，morphemeRef 留空字串，不要幫它建立字素。
+5. 真的拆不出字首/字根/字尾（像 knife、jar 這種本身就是一個詞素的字）就 status 設 "none"、parts 給空陣列；gloss 仍填這個字整體的意思。
+6. 每個新字素補 3 到 5 個常見、但不在〔要分析的單字〕裡的延伸字當 suggested。
+7. 只輸出符合 schema 的 JSON。
+
+── system[1] ──
+〔學習者設定〕
+我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要。
+
+── user ──
+〔已知字素〕（0 個）
+（無）
+
+〔要分析的單字〕（2 個）
+- retain（verb） 保留
+- containers（noun） 容器"
+`;
+
+exports[`dna.analyze / dna.expand — composed AiRequest snapshots > dna.expand — no variants, nothing to exclude yet 1`] = `
+"tier=fast maxTokens=1024
+
+── system[0] (cache) ──
+你是英文構詞（word DNA）專家，根據一個字首/字根/字尾，幫學習者推薦幾個用到它、但他還沒學過的常見字。
+
+規則：
+1. 字要常見、實用，符合〔學習者設定〕的程度；不要補罕見字或生造字。
+2. 不要推薦〔已經有的字〕裡列出的字。
+3. 建議 3 到 5 個字，zh 用繁體中文（台灣用語），10 個字以內。
+4. emoji 給一個最能代表這個字意思的 emoji。
+5. 只輸出符合 schema 的 JSON。
+
+── system[1] ──
+〔學習者設定〕
+我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要。
+
+── user ──
+任務：延伸字
+〔這個字素〕un（字首）：不、否定"
+`;
+
+exports[`dna.analyze / dna.expand — composed AiRequest snapshots > dna.expand — with variants and an exclude list 1`] = `
+"tier=fast maxTokens=1024
+
+── system[0] (cache) ──
+你是英文構詞（word DNA）專家，根據一個字首/字根/字尾，幫學習者推薦幾個用到它、但他還沒學過的常見字。
+
+規則：
+1. 字要常見、實用，符合〔學習者設定〕的程度；不要補罕見字或生造字。
+2. 不要推薦〔已經有的字〕裡列出的字。
+3. 建議 3 到 5 個字，zh 用繁體中文（台灣用語），10 個字以內。
+4. emoji 給一個最能代表這個字意思的 emoji。
+5. 只輸出符合 schema 的 JSON。
+
+── system[1] ──
+〔學習者設定〕
+我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要。
+
+── user ──
+任務：延伸字
+〔這個字素〕tain（字根）：握、持有
+變體：ten、tin
+
+〔已經有的字〕（不要重複）：retain、contain"
+`;
+
+exports[`dna.examples / dna.compare / dna.followup — composed AiRequest snapshots > dna.compare — full request 1`] = `
+"tier=smart maxTokens=2048
+
+── system[0] (cache) ──
+你是一位英文構詞（word DNA）老師，幫一位以中文為母語的學習者理解一個字首/字根/字尾，並且只用他已經學過的字來說明。〔這個字素〕是現在討論的字素，〔已學單字〕是用到這個字素、他已經學過的字。
+
+回答規則：
+1. 預設用繁體中文（台灣用語）回答，英文單字與例句保留英文。
+2. 只講可靠、有根據的知識。不確定就直接說「不確定」或「說法不一」，不要編造字源、年代或出處。
+3. 回答直接進入內容，不用標題（不要用 #），用 Markdown，重點用粗體。
+4. 只用〔已學單字〕列出的字舉例，不要混入他還沒學過的字。
+
+── system[1] (cache) ──
+〔這個字素〕tain（字根）：握、持有
+
+── system[2] ──
+〔已學單字〕
+- retain（verb） 保留
+- container（noun） 容器
+
+── system[3] ──
+〔學習者設定〕
+我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要，盡量在 300 字以內完成說明（英文原文與例句不計入字數）。
+
+── user ──
+任務：用法比較
+比較〔已學單字〕裡這幾個字的用法差異：意思、語氣、常見搭配哪裡不一樣。"
+`;
+
+exports[`dna.examples / dna.compare / dna.followup — composed AiRequest snapshots > dna.examples — full request 1`] = `
+"tier=smart maxTokens=2048
+
+── system[0] (cache) ──
+你是一位英文構詞（word DNA）老師，幫一位以中文為母語的學習者理解一個字首/字根/字尾，並且只用他已經學過的字來說明。〔這個字素〕是現在討論的字素，〔已學單字〕是用到這個字素、他已經學過的字。
+
+回答規則：
+1. 預設用繁體中文（台灣用語）回答，英文單字與例句保留英文。
+2. 只講可靠、有根據的知識。不確定就直接說「不確定」或「說法不一」，不要編造字源、年代或出處。
+3. 回答直接進入內容，不用標題（不要用 #），用 Markdown，重點用粗體。
+4. 只用〔已學單字〕列出的字舉例，不要混入他還沒學過的字。
+
+── system[1] (cache) ──
+〔這個字素〕tain（字根）：握、持有
+
+── system[2] ──
+〔已學單字〕
+- retain（verb） 保留
+- container（noun） 容器
+
+── system[3] ──
+〔學習者設定〕
+我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要，盡量在 300 字以內完成說明（英文原文與例句不計入字數）。
+
+── user ──
+任務：造句
+用〔已學單字〕裡的每個字各造一句例句（最多 5 句），把這個字素在句子裡對應的部分用粗體標出來。"
+`;
+
+exports[`dna.examples / dna.compare / dna.followup — composed AiRequest snapshots > dna.followup — with selection and history 1`] = `
+"tier=smart maxTokens=2048
+
+── system[0] (cache) ──
+你是一位英文構詞（word DNA）老師，幫一位以中文為母語的學習者理解一個字首/字根/字尾，並且只用他已經學過的字來說明。〔這個字素〕是現在討論的字素，〔已學單字〕是用到這個字素、他已經學過的字。
+
+回答規則：
+1. 預設用繁體中文（台灣用語）回答，英文單字與例句保留英文。
+2. 只講可靠、有根據的知識。不確定就直接說「不確定」或「說法不一」，不要編造字源、年代或出處。
+3. 回答直接進入內容，不用標題（不要用 #），用 Markdown，重點用粗體。
+4. 只用〔已學單字〕列出的字舉例，不要混入他還沒學過的字。
+
+── system[1] (cache) ──
+〔這個字素〕tain（字根）：握、持有
+
+── system[2] ──
+〔已學單字〕
+- retain（verb） 保留
+- container（noun） 容器
+
+── system[3] ──
+〔學習者設定〕
+我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要，盡量在 300 字以內完成說明（英文原文與例句不計入字數）。
+
+── user ──
+造句
+
+── assistant (cache) ──
+**retain**: She retained her composure.
+
+── user ──
+〔選取的文字〕
+retained
+
+〔使用者的追問〕
+這是什麼時態？
+
+接著前面的對話回答，不用寫標題。"
+`;

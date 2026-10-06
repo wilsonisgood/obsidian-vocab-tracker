@@ -1,6 +1,7 @@
 import type { VocabEntry } from "../../core/model/entry";
 import { familyMembers, type Family } from "../../core/model/family";
 import type { TriviaItem } from "../../core/model/trivia";
+import type { WordMeta } from "../../core/model/wordMeta";
 import { WordIndex } from "./wordIndex";
 
 // What deleting (or editing) a word touches elsewhere in learn.json
@@ -114,4 +115,15 @@ export function addMentionForNewEntry(item: TriviaItem, entry: VocabEntry, index
   if (item.entryId === entry.id || item.mentions.includes(entry.id)) return item;
   const found = index.mentions(`${item.title}\n${item.body}`, new Set([item.entryId])).includes(entry.id);
   return found ? { ...item, mentions: [...item.mentions, entry.id] } : item;
+}
+
+// ── Edit: a spelling change invalidates DNA's word breakdown ────────
+// (規劃書 09 §5.3/§5.4). A breakdown was generated for the old spelling
+// (its own `word` field records that); it's cleared outright rather than
+// patched in place — MorphemeService.queue()'s re-analysis rebuilds it
+// from scratch. The emoji is kept: it isn't spelling-dependent, and the
+// learner (or EmojiService) may already have picked it by hand.
+export function clearBreakdownOnRename(meta: WordMeta): WordMeta {
+  if (!meta.breakdown) return meta;
+  return { ...meta, breakdown: undefined };
 }

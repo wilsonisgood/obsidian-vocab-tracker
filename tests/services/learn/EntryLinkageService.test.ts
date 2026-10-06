@@ -98,6 +98,18 @@ describe("EntryLinkageService.impact / unlink", () => {
     expect(linkage.impact("e1", "pan")).toMatchObject({ verbFavorite: false });
   });
 
+  it("deletes wordMeta too (決定 1: it's outside the entry itself)", async () => {
+    const { learn, vocab, linkage } = setup();
+    await learn.ensureLoaded();
+    learn.putWordMeta({ id: "e1", emoji: "📘", breakdown: { status: "ok", parts: [], gloss: "g", word: "pan", generatedAt: "t", model: "m" } });
+    vocab.all.push(entry("e1", "pan"));
+    linkage.init();
+
+    expect(learn.wordMeta("e1")).toBeDefined();
+    linkage.unlink("e1");
+    expect(learn.wordMeta("e1")).toBeUndefined();
+  });
+
   it("a delete isn't merged back in by a stale copy from another device", async () => {
     const { storage, learn, vocab, linkage } = setup();
     await learn.ensureLoaded();
@@ -122,5 +134,70 @@ describe("EntryLinkageService.impact / unlink", () => {
     // bring entryId or the live favorite back.
     expect(learn.family("f1")?.groups[0].members[0]).toEqual({ word: "pan", zh: "鍋" });
     expect(learn.verbFavorite("e1")).toBeUndefined();
+  });
+});
+
+describe("EntryLinkageService.sync — spelling change invalidates DNA (Wave 9 DS, 規劃書 09 §5.3)", () => {
+  function setupWithMorphemes() {
+    const storage = new MemoryStorage();
+    let clock = Date.parse("2026-10-04T08:00:00Z");
+    const learn = new LearnStore({ storage, clock: () => new Date((clock += 1000)) });
+    const vocab = new FakeVocab();
+    const queued: string[][] = [];
+    const linkage = new EntryLinkageService({ learn, vocab, morphemes: { queue: (ids) => queued.push(ids) } });
+    return { learn, vocab, linkage, queued };
+  }
+
+  it("clears the breakdown (keeping the emoji) and queues a re-analysis for a liked word", async () => {
+    const { learn, vocab, linkage, queued } = setupWithMorphemes();
+    await learn.ensureLoaded();
+    learn.putWordMeta({ id: "e1", emoji: "📘", emojiSource: "ai", breakdown: { status: "ok", parts: [], gloss: "g", word: "colour", generatedAt: "t", model: "m" } });
+    vocab.all.push(entry("e1", "colour", { liked: true }));
+    linkage.init();
+
+    vocab.all[0] = { ...vocab.all[0], word: "color" };
+    await linkage.sync();
+
+    const meta = learn.wordMeta("e1");
+    expect(meta?.breakdown).toBeUndefined();
+    expect(meta).toMatchObject({ emoji: "📘", emojiSource: "ai" });
+    expect(queued).toEqual([["e1"]]);
+  });
+
+  it("doesn't queue a re-analysis for a word that isn't liked", async () => {
+    const { learn, vocab, linkage, queued } = setupWithMorphemes();
+    await learn.ensureLoaded();
+    learn.putWordMeta({ id: "e1", breakdown: { status: "ok", parts: [], gloss: "g", word: "colour", generatedAt: "t", model: "m" } });
+    vocab.all.push(entry("e1", "colour", { liked: false }));
+    linkage.init();
+
+    vocab.all[0] = { ...vocab.all[0], word: "color" };
+    await linkage.sync();
+
+    expect(learn.wordMeta("e1")?.breakdown).toBeUndefined(); // still cleared regardless of liked
+    expect(queued).toEqual([]);
+  });
+
+  it("does nothing when only definitionZh changes, not the spelling", async () => {
+    const { learn, vocab, linkage, queued } = setupWithMorphemes();
+    await learn.ensureLoaded();
+    learn.putWordMeta({ id: "e1", breakdown: { status: "ok", parts: [], gloss: "g", word: "pan", generatedAt: "t", model: "m" } });
+    vocab.all.push(entry("e1", "pan", { definitionZh: "鍋", liked: true }));
+    linkage.init();
+
+    vocab.all[0] = { ...vocab.all[0], definitionZh: "平底鍋" };
+    await linkage.sync();
+
+    expect(learn.wordMeta("e1")?.breakdown).toBeDefined(); // untouched
+    expect(queued).toEqual([]);
+  });
+
+  it("is a no-op when there's no morphemes dep wired up (optional)", async () => {
+    const { learn, vocab, linkage } = setup(); // the plain setup(), no `morphemes` dep
+    await learn.ensureLoaded();
+    vocab.all.push(entry("e1", "colour", { liked: true }));
+    linkage.init();
+    vocab.all[0] = { ...vocab.all[0], word: "color" };
+    await expect(linkage.sync()).resolves.not.toThrow();
   });
 });
