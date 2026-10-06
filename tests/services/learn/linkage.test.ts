@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Family } from "../../../src/core/model/family";
 import type { TriviaItem } from "../../../src/core/model/trivia";
+import type { WordMeta } from "../../../src/core/model/wordMeta";
 import {
   addMentionForNewEntry,
+  clearBreakdownOnRename,
   clearFamilyMemberEntry,
   clearTriviaMention,
   deletionImpact,
@@ -13,6 +15,10 @@ import {
 } from "../../../src/services/learn/linkage";
 import { WordIndex } from "../../../src/services/learn/wordIndex";
 import { entry } from "./fakes";
+
+function wordMeta(id: string, extra: Partial<WordMeta> = {}): WordMeta {
+  return { id, ...extra };
+}
 
 function fam(id: string, members: { entryId?: string; word: string; zh: string }[]): Family {
   return { id, topic: id, label: id, source: "ai", groups: [{ label: "g", members }] };
@@ -141,3 +147,22 @@ describe("familiesContaining / triviaMentioning / deletionImpact", () => {
     expect(hasNoLinks(impact)).toBe(true);
   });
 });
+
+describe("clearBreakdownOnRename", () => {
+  it("drops the breakdown but keeps the emoji", () => {
+    const meta = wordMeta("e1", {
+      emoji: "📘",
+      emojiSource: "user",
+      breakdown: { status: "ok", parts: [], gloss: "g", word: "colour", generatedAt: "t", model: "m" },
+    });
+    const updated = clearBreakdownOnRename(meta);
+    expect(updated.breakdown).toBeUndefined();
+    expect(updated).toMatchObject({ id: "e1", emoji: "📘", emojiSource: "user" });
+  });
+
+  it("is a no-op (same reference) when there's no breakdown to clear", () => {
+    const meta = wordMeta("e1", { emoji: "📘" });
+    expect(clearBreakdownOnRename(meta)).toBe(meta);
+  });
+});
+

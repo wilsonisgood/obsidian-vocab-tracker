@@ -2,6 +2,7 @@ import type { VocabEntry } from "../../core/model/entry";
 import type { LearnStore } from "./LearnStore";
 import {
   addMentionForNewEntry,
+  clearBreakdownOnRename,
   clearFamilyMemberEntry,
   clearTriviaMention,
   deletionImpact,
@@ -26,6 +27,11 @@ export interface EntryLinkageDeps {
   // Outside learn.json, so they're injected rather than read off LearnStore.
   wordPageExists?(entryId: string, word: string): boolean;
   threadCount?(entryId: string): number;
+  // Wave 9 DS (規劃書 09 §5.3): re-拆 a word whose spelling just changed —
+  // its old breakdown no longer matches. startAuto() would eventually
+  // notice the mismatch too, but this skips the daily-batch wait. Only
+  // called for a liked word (A8: 自動拆字只拆 like 的字).
+  morphemes?: { queue(entryIds: string[]): void };
 }
 
 export class EntryLinkageService {
@@ -58,7 +64,10 @@ export class EntryLinkageService {
       const now = snapshot(e);
       this.last.set(e.id, now);
       if (!before) this.onNewEntry(e);
-      else if (before.word !== now.word || before.definitionZh !== now.definitionZh) this.onRenamed(e);
+      else {
+        if (before.word !== now.word || before.definitionZh !== now.definitionZh) this.onRenamed(e);
+        if (before.word !== now.word) this.onSpellingChanged(e);
+      }
     }
   }
 
@@ -88,6 +97,9 @@ export class EntryLinkageService {
     }
     // Wave 8 U1 (1006-2 #21): clears every pos's favorite, not just "v".
     this.deps.learn.unfavoriteAllUsages(entryId);
+    // Wave 9 DS (決定 1): wordMeta (emoji/breakdown) lives outside the
+    // entry itself, so a delete has to drop it explicitly too.
+    this.deps.learn.deleteWordMeta(entryId);
     this.last.delete(entryId);
   }
 
@@ -96,6 +108,15 @@ export class EntryLinkageService {
       const updated = syncFamilyMemberText(f, entry);
       if (updated !== f) this.deps.learn.putFamily(updated);
     }
+  }
+
+  private onSpellingChanged(entry: VocabEntry): void {
+    const meta = this.deps.learn.wordMeta(entry.id);
+    if (meta) {
+      const cleared = clearBreakdownOnRename(meta);
+      if (cleared !== meta) this.deps.learn.putWordMeta(cleared);
+    }
+    if (entry.liked === true) this.deps.morphemes?.queue([entry.id]);
   }
 
   private onNewEntry(entry: VocabEntry): void {
