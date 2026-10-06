@@ -1,0 +1,10 @@
+/* 第八波 R2 — 在筆記裡定位單字，閱讀模式的三秒高亮 (1006-2 #7 #8 #16)。
+   locateWord.ts 動態包一個 <span class="vt-locate-flash">，三秒後自己拆
+   掉，所以這裡只管「亮著的時候長什麼樣子」，淡出交給 transition。
+   整合時接進 src/styles/index.css（@import "./locate.css";）。 */
+
+.vt-locate-flash {
+  background-color: var(--text-selection);
+  border-radius: 3px;
+  transition: background-color 2.4s ease-out 0.6s;
+}
