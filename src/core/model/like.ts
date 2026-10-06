@@ -42,13 +42,19 @@ export interface IsListedContext {
   // 對應 core/model/wordlists.ts 的 tagEnabled(settings, tag)：這個 tag
   // 有沒有被使用者按亮。
   isTagOn: (tag: string) => boolean;
+  // Wave 8 S (1006-2 #4)：Like chip 有沒有被按亮（對應
+  // core/model/wordlists.ts 的 likeChipOn(settings)）。按淡時，單靠 liked
+  // 撐著、本身沒有任何亮著標籤的字就不算 listed 了——有亮著標籤的字不受
+  // 影響（liked 與否都一樣算 listed）。
+  likeOn: boolean;
 }
 
-// 側欄「單字」列表的篩選規則（規格 #7）：liked 的字，或者有任一亮著的考試
-// 標籤的字。一個字有多個標籤時，只要一個亮著就算（some）。liked 是
-// undefined（尚未回填）時不算 like，但仍可能靠亮著的標籤被列出。
+// 側欄「單字」列表的篩選規則（規格 #7, 1006-2 #4）：liked 的字且 Like chip
+// 亮著，或者有任一亮著的考試標籤的字。一個字有多個標籤時，只要一個亮著就
+// 算（some）。liked 是 undefined（尚未回填）時不算 like，但仍可能靠亮著的
+// 標籤被列出。
 export function isListed(entry: Pick<VocabEntry, "level" | "liked">, ctx: IsListedContext): boolean {
-  if (entry.liked) return true;
+  if (entry.liked && ctx.likeOn) return true;
   return examTags(entry, ctx.knownTags).some(ctx.isTagOn);
 }
 

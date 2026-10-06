@@ -6,15 +6,18 @@ import { renderGroupedVocabList } from "../word/GroupedWordList";
 import { t } from "../../core/i18n";
 import { WordUi } from "../word/wordUi";
 import { isListed, type IsListedContext } from "../../core/model/like";
-import { resolveWordlistSettings, tagEnabled } from "../../core/model/wordlists";
+import { likeChipOn, resolveWordlistSettings, tagEnabled } from "../../core/model/wordlists";
+import { likeChipSpec, renderFilterChips, tagChipSpecs, tagCountInLibrary, likeCountInLibrary } from "../sidebar/examStrip";
 
 // ── vocab-dashboard renderer ───────────────────────────────────
 //
-// 1006report.md #26: the same 單字追蹤 filter as the sidebar — isListed
-// (亮著的考試標籤，或 like 過的字) — plus a 「只看 Like」 switch that
-// narrows it further to liked === true. The stats bar (word count, per-tag
-// counts) follows the filtered set, not the raw search box query (同現狀：
-// search 只是再篩一層顯示，不影響統計).
+// 1006-2 #6 (取代 1006report.md #26 的「只看 Like」切換): the same isListed
+// filter as the sidebar (亮著的考試標籤，或 Like chip 亮著且 liked 的字),
+// shown and toggled through the same chip row component the sidebar uses
+// (examStrip.ts) — one shared on/off state (#5), not a dashboard-local
+// switch. The stats bar (word count, per-tag counts) follows the filtered
+// set, not the raw search box query (同現狀：search 只是再篩一層顯示，不
+// 影響統計).
 export function renderDashboard(
   plugin: VocabTrackerPlugin,
   _source: string,
@@ -38,29 +41,39 @@ export function renderDashboard(
   const expandState: Map<string, ExpandState> = new Map();
   const collapsedGroups: Set<string> = new Set();
 
-  let onlyLiked = false;
   let query = "";
 
   const isListedCtx = (): IsListedContext => {
     const knownTags = plugin.wordlists.index.tags;
+    const settings = resolveWordlistSettings(plugin.store.settings.wordlists);
     return {
       knownTags,
-      isTagOn: (tag) => tagEnabled(resolveWordlistSettings(plugin.store.settings.wordlists), tag),
+      isTagOn: (tag) => tagEnabled(settings, tag),
+      likeOn: likeChipOn(settings),
     };
   };
 
-  // #26 的篩選依據：跟側欄一樣的 isListed，再疊上「只看 Like」。
+  // #6 的篩選依據：跟側欄一樣的 isListed（標籤 chip ＋ Like chip）。
   const filteredEntries = (): VocabEntry[] => {
     const ctx2 = isListedCtx();
-    let list = allEntries.filter((e) => isListed(e, ctx2));
-    if (onlyLiked) list = list.filter((e) => e.liked === true);
-    return list;
+    return allEntries.filter((e) => isListed(e, ctx2));
   };
 
   // "開始複習 · 今日 n 張" (設計稿 L1) — its own live-updating button, drawn
   // once (not inside drawStats/drawList, which redraw on every toggle).
   const reviewSlot = el.createDiv();
   renderReviewButton(plugin, reviewSlot, ctx);
+
+  // #6: 跟側欄共用的 chip 列（標籤＋Like）取代舊的「只看 Like」切換。
+  // updateWordlistSettings()（chip 的 onClick 最終都走到這）會
+  // rerenderReadingViews()，整個 dashboard block 會被重新跑一次 —— 不用
+  // 自己再掛 data:changed 監聽、也不用手動重畫，這個 div 畫一次就好。
+  const chipsEl = el.createDiv();
+  const wlSettings = resolveWordlistSettings(plugin.store.settings.wordlists);
+  renderFilterChips(chipsEl, [
+    ...tagChipSpecs(plugin, plugin.wordlists.index.tags, wlSettings, (tag) => tagCountInLibrary(plugin, tag)),
+    likeChipSpec(plugin, wlSettings, likeCountInLibrary(plugin)),
+  ]);
 
   const statsEl = el.createDiv();
   const search = el.createEl("input", { cls: ["vt-dash-search", "vt-field-box"] });
@@ -90,20 +103,6 @@ export function renderDashboard(
         cls: ["vt-stat-pill", "is-accent"],
       });
     }
-
-    const likeToggle = stats.createEl("span", {
-      text: t("like.filter.onlyLiked"),
-      cls: ["vt-stat-pill", "vt-dash-like-toggle"],
-    });
-    likeToggle.toggleClass("is-accent", onlyLiked);
-    likeToggle.style.cursor = "pointer";
-    likeToggle.setAttr("role", "button");
-    likeToggle.setAttr("aria-pressed", String(onlyLiked));
-    likeToggle.onclick = () => {
-      onlyLiked = !onlyLiked;
-      drawStats();
-      drawList();
-    };
   };
 
   // Grouped by source note title — lets a note that only holds a
