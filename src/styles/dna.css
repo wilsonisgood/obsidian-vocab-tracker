@@ -1,0 +1,492 @@
+/* vocab-dna code block (規劃書 09 §7). Scoped like the other M7 learning
+   blocks: `.vt-dna` sits alongside `.vt-learn` (blocks.css), which already
+   supplies --vt-accent/--vt-surface/--vt-card/--vt-border/--vt-tap etc. and
+   bumps --vt-tap to 44px under body.is-mobile — nothing here redefines
+   those tokens. Prefix: vt-dna-. */
+
+.vt-dna {
+  container-type: inline-size;
+  --vt-dna-prefix: var(--color-blue);
+  --vt-dna-prefix-soft: color-mix(in srgb, var(--color-blue) 16%, transparent);
+  --vt-dna-root: var(--color-orange);
+  --vt-dna-root-soft: color-mix(in srgb, var(--color-orange) 16%, transparent);
+  --vt-dna-suffix: var(--color-green);
+  --vt-dna-suffix-soft: color-mix(in srgb, var(--color-green) 16%, transparent);
+}
+
+/* ── Segmented tabs (ui/kit/segmented.ts) — generic, first used here ── */
+
+.vt-seg {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.vt-seg-btn {
+  border: 0;
+  background: transparent;
+  color: var(--vt-muted);
+  font: inherit;
+  font-size: var(--font-ui-smaller);
+  padding: 6px 12px;
+  min-height: var(--vt-tap);
+  border-radius: var(--vt-radius);
+  cursor: pointer;
+}
+
+.vt-seg-btn.is-active {
+  background: var(--vt-surface);
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+/* ── Chips (「-ee 接受動作的人 · 已學 2」) ───────────────────────── */
+
+.vt-dna-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+@container (max-width: 640px) {
+  .vt-dna-chips {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .vt-dna-chip {
+    min-width: 150px;
+  }
+}
+
+.vt-dna-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border: 1px solid var(--vt-border);
+  background: var(--vt-card);
+  color: var(--text-normal);
+  font: inherit;
+  padding: 8px 12px;
+  min-height: var(--vt-tap);
+  border-radius: var(--vt-radius);
+  cursor: pointer;
+  text-align: left;
+}
+
+.vt-dna-chip.is-active {
+  border-color: var(--vt-accent);
+  background: color-mix(in srgb, var(--vt-accent) 16%, var(--vt-card));
+}
+
+.vt-dna-chip-form {
+  font-family: var(--font-monospace);
+  font-weight: 500;
+}
+
+.vt-dna-chip-meaning {
+  font-size: var(--font-ui-smaller);
+  color: var(--vt-muted);
+}
+
+.vt-dna-tab-empty {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+/* ── Layout: main + side, stacks under 640px ─────────────────────── */
+
+.vt-dna-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@container (max-width: 640px) {
+  .vt-dna-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.vt-dna-main,
+.vt-dna-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-card);
+}
+
+/* ── Main panel ───────────────────────────────────────────────── */
+
+.vt-dna-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+}
+
+.vt-dna-form {
+  font-family: var(--font-monospace);
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 8px 16px;
+  border-radius: 12px;
+}
+
+.vt-dna-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-ui-smaller);
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.vt-dna-form.t-prefix,
+.vt-dna-tag.t-prefix {
+  background: var(--vt-dna-prefix-soft);
+  color: var(--vt-dna-prefix);
+}
+
+.vt-dna-form.t-root,
+.vt-dna-tag.t-root {
+  background: var(--vt-dna-root-soft);
+  color: var(--vt-dna-root);
+}
+
+.vt-dna-form.t-suffix,
+.vt-dna-tag.t-suffix {
+  background: var(--vt-dna-suffix-soft);
+  color: var(--vt-dna-suffix);
+}
+
+.vt-dna-meaning {
+  font-size: var(--font-ui-medium);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.vt-dna-note {
+  font-size: var(--font-ui-smaller);
+  color: var(--vt-muted);
+}
+
+.vt-dna-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vt-dna-label {
+  font-size: var(--font-ui-smaller);
+  letter-spacing: 0.04em;
+  color: var(--vt-muted);
+  font-weight: 500;
+}
+
+.vt-dna-word.is-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--vt-accent-text);
+  cursor: pointer;
+}
+
+/* Strand (ui/dna/strand.ts) — shared with Galaxy detail / word page. */
+
+.vt-dna-strand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.vt-dna-base {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 12px;
+  min-width: 56px;
+  min-height: var(--vt-tap);
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  cursor: default;
+}
+
+button.vt-dna-base {
+  cursor: pointer;
+}
+
+.vt-dna-base-text {
+  font-family: var(--font-monospace);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.vt-dna-base-meaning {
+  font-size: var(--font-ui-smaller);
+  opacity: 0.9;
+}
+
+.vt-dna-base.t-prefix {
+  background: var(--vt-dna-prefix-soft);
+  color: var(--vt-dna-prefix);
+}
+
+.vt-dna-base.t-root {
+  background: var(--vt-dna-root-soft);
+  color: var(--vt-dna-root);
+}
+
+.vt-dna-base.t-suffix {
+  background: var(--vt-dna-suffix-soft);
+  color: var(--vt-dna-suffix);
+}
+
+.vt-dna-base.t-inflection {
+  background: var(--vt-surface);
+  color: var(--text-faint);
+}
+
+.vt-dna-strand-empty {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+/* Timeline (「演變路線」). */
+
+.vt-dna-tl {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 22px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vt-dna-tl::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--vt-border);
+}
+
+.vt-dna-tl li {
+  position: relative;
+}
+
+.vt-dna-tl li::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--vt-card);
+  border: 2px solid var(--vt-accent);
+}
+
+.vt-dna-tl li:last-child::before {
+  background: var(--vt-accent);
+}
+
+.vt-dna-tl-stage {
+  font-size: var(--font-ui-smaller);
+  color: var(--vt-muted);
+  letter-spacing: 0.03em;
+}
+
+.vt-dna-tl-form {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-medium);
+}
+
+.vt-dna-fact {
+  background: var(--vt-surface);
+  border-radius: var(--vt-radius);
+  padding: 12px 14px;
+  font-size: var(--font-ui-small);
+}
+
+.vt-dna-fact-head {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.vt-dna-wiki {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-size: var(--font-ui-smaller);
+  color: var(--vt-muted);
+}
+
+.vt-dna-wiki-icon {
+  display: inline-flex;
+  margin-right: 4px;
+}
+
+.vt-dna-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vt-dna-verify,
+.vt-dna-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--vt-tap);
+  padding: 0 12px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-surface);
+  color: var(--text-normal);
+  font: inherit;
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+}
+
+.vt-dna-verify.is-active {
+  border-color: var(--vt-accent);
+  color: var(--vt-accent-text);
+}
+
+/* ── Side panel ───────────────────────────────────────────────── */
+
+.vt-dna-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-ui-smaller);
+  color: var(--vt-muted);
+}
+
+.vt-dna-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--vt-surface);
+  overflow: hidden;
+}
+
+.vt-dna-bar span {
+  display: block;
+  height: 100%;
+  background: var(--vt-accent);
+}
+
+.vt-dna-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.vt-dna-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  min-height: var(--vt-tap);
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-normal);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.vt-dna-row:hover {
+  background: var(--vt-surface);
+}
+
+.vt-dna-row.is-active {
+  background: color-mix(in srgb, var(--vt-accent) 14%, transparent);
+}
+
+.vt-dna-row-emoji {
+  width: 22px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.vt-dna-row-word {
+  font-weight: 500;
+}
+
+.vt-dna-row-tag {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--vt-dna-suffix-soft);
+  color: var(--vt-dna-suffix);
+}
+
+.vt-dna-row-zh {
+  margin-left: auto;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-dna-row-add {
+  flex-shrink: 0;
+}
+
+.vt-dna-tutor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vt-dna-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--vt-border);
+  background: var(--vt-surface);
+  color: var(--text-normal);
+  font: inherit;
+  font-size: var(--font-ui-smaller);
+  padding: 0 12px;
+  min-height: var(--vt-tap);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.vt-dna-pill:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.vt-dna-chat {
+  margin-top: 4px;
+  border-top: 1px solid var(--vt-border);
+  padding-top: 10px;
+}
+
+/* Edit modal (MorphemeEditModal.ts). */
+
+.vt-dna-edit .setting-item-control textarea {
+  width: 100%;
+}
