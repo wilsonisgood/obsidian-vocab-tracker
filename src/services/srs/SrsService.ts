@@ -185,11 +185,14 @@ export class SrsService {
   // Reviews logged today (local calendar day) for words matching the
   // source filter — the done screen's "今天複習". Counts every rating, so
   // a card failed and retried counts twice, same as the effort it took.
+  // No requireLiked (整合 D2, 主 session 決定): this is a log of reviews
+  // that already happened, not the queue offering more — a word reviewed
+  // today still counts even if it was un-liked again since.
   reviewsToday(filter: QueueFilter = {}): number {
     const dayStart = startOfLocalDay(this.clock()).getTime();
     const ids = new Set(
       this.deps.store.vocabData.entries
-        .filter((e) => matchesFilter(e, { source: filter.source, requireLiked: true }))
+        .filter((e) => matchesFilter(e, { source: filter.source }))
         .map((e) => e.id)
     );
     return this.logs.filter((l) => ids.has(l.entryId) && new Date(l.at).getTime() >= dayStart).length;

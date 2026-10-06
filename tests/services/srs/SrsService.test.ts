@@ -241,7 +241,7 @@ describe("SrsService", () => {
     });
   });
 
-  it("queue()/dueTomorrow()/reviewsToday() only count liked words (1006report.md #24)", async () => {
+  it("queue()/dueTomorrow() only count liked words (1006report.md #24)", async () => {
     const entries = [
       makeEntry({ id: "liked", liked: true, createdAt: "2026-09-01T00:00:00.000Z" }),
       makeEntry({ id: "unliked", liked: false, createdAt: "2026-09-01T00:00:00.000Z" }),
@@ -279,5 +279,17 @@ describe("SrsService", () => {
     await srs.rate(entries[1], Rating.Good, "en-zh");
     expect(srs.reviewsToday()).toBe(3);
     expect(srs.reviewsToday({ source: "eng/" })).toBe(2);
+  });
+
+  // 整合 D2（主 session 決定）: unlike queue()/dueTomorrow(), this is a log
+  // of reviews that already happened — a word rated today still counts
+  // even if it's unliked again since (e.g. the user unliked it right
+  // after reviewing).
+  it("reviewsToday() counts a review today even for a word that's since been unliked", async () => {
+    const entries = [makeEntry({ id: "a", liked: true })];
+    const { srs } = setup(entries);
+    await srs.rate(entries[0], Rating.Good, "en-zh");
+    entries[0].liked = false;
+    expect(srs.reviewsToday()).toBe(1);
   });
 });

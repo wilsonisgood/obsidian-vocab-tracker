@@ -19,10 +19,10 @@ export function makeEntry(overrides: Partial<VocabEntry> = {}): VocabEntry {
     added: "2026-01-01 00:00:00",
     lastReviewed: "2026-01-01 00:00:00",
     reviews: 0,
-    // SrsService.queue()/dueTomorrow()/reviewsToday() only count liked
-    // words (1006report.md #24); default to liked so existing scheduling
-    // tests don't need to care about it. Tests of the liked filter itself
-    // override this.
+    // SrsService.queue()/dueTomorrow() only count liked words
+    // (1006report.md #24; reviewsToday() doesn't — 整合 D2); default to
+    // liked so existing scheduling tests don't need to care about it.
+    // Tests of the liked filter itself override this.
     liked: true,
     ...overrides,
   };
