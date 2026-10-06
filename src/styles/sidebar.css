@@ -33,7 +33,7 @@
   flex: 1;
 }
 
-/* 本篁／全部（1006report.md #5）: now shared, right under the sidebar's
+/* 本篇／全部（1006report.md #5）: now shared, right under the sidebar's
    own title, instead of living inside the 單字 section. */
 .vt-sidebar-filter {
   margin-bottom: 12px;
@@ -148,7 +148,7 @@
   margin: 4px 0 10px;
 }
 
-/* The "本篁考試字彙 · 全文 N 個不同的字" title line is gone (1006report.md
+/* The "本篇考試字彙 · 全文 N 個不同的字" title line is gone (1006report.md
    #5) — only this scanning placeholder remains, shown until the
    background scan's first result lands. */
 .vt-exam-strip-scanning {

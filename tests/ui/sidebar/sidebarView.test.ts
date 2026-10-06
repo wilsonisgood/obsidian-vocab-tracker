@@ -21,7 +21,7 @@ import { flushMicrotasks } from "../../perf/support/report";
 // The sidebar on the real plugin over the fake DOM (the perf harness):
 // 1005 回饋 1 (order), 2 (sections, AI 討論), 3 (bringing a word into
 // view), 13 (groups of words from no note), 14 (dates on the card); Wave 7
-// Z: #5-#9 (本篁／全部 shared filter, isListed, 本篁 scope), #10 (row edits
+// Z: #5-#9 (本篇／全部 shared filter, isListed, 本篇 scope), #10 (row edits
 // don't reorder / redraw the whole sidebar).
 //
 // Fixture words' `liked` is always undefined (regulation 06's fixture
@@ -127,7 +127,7 @@ describe("order (1005 回饋 1)", () => {
     await b.plugin.store.touch(byId(last));
     // No render()/draw() call here on purpose: a row's own edit must not
     // reorder the list by itself — only the next normal redraw (note
-    // switch, 本篁／全部, a chip) re-sorts.
+    // switch, 本篇／全部, a chip) re-sorts.
     expect(rowIds(root(v))).toEqual(before);
   });
 });

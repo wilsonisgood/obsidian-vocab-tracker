@@ -43,7 +43,7 @@ function root(view: VocabSidebarView): FakeElement {
 }
 
 // 1006report.md #7/#6: the sidebar now filters by isListed (亮著的考試標
-// 籤，或 like 過) and, 本篁模式下, by 「這篇有出現」 — mirrors
+// 籤，或 like 過) and, 本篇模式下, by 「這篇有出現」 — mirrors
 // VocabSidebarView.scopedEntries()/noteScopeFor() so the perf budget is
 // still measured against a realistic row count, not the raw entry count.
 function isListedCtx(): IsListedContext {

@@ -302,7 +302,7 @@ export class VocabSidebarView extends ItemView {
   }
 
   // Something that only changes which words are allowed (a chip toggled,
-  // 本篁 scope resolved) — redraw just the 單字 section's body and refresh
+  // 本篇 scope resolved) — redraw just the 單字 section's body and refresh
   // the AI 討論 / 文法 sections' own elements. Never the whole sidebar, so
   // scroll position and every other section's state stay put (#10).
   private refreshFiltered(): void {
@@ -521,7 +521,7 @@ export class VocabSidebarView extends ItemView {
     openList.setAttr("aria-label", t("sidebar.openList"));
     openList.onclick = () => this.plugin.openVocabFile();
 
-    // 本篁／全部（1006report.md #5）: moved up here, shared by every
+    // 本篇／全部（1006report.md #5）: moved up here, shared by every
     // section below (words/段落討論/AI 討論/文法) instead of living inside
     // the 單字 section.
     this.drawFilterToggle(root);
@@ -767,15 +767,15 @@ export class VocabSidebarView extends ItemView {
     return section.createDiv({ cls: "vt-sb-section-body" });
   }
 
-  // 本篁／全部已經移到側欄頂端共用（#5）；這裡只決定「哪些字」：isListed
-  // 的字（#7），本篁模式再疊上「這篇有出現」的 scope（#6）—— scopedEntries()
+  // 本篇／全部已經移到側欄頂端共用（#5）；這裡只決定「哪些字」：isListed
+  // 的字（#7），本篇模式再疊上「這篇有出現」的 scope（#6）—— scopedEntries()
   // 是兩邊唯一的篩選依據，跟 AI討論／文法共用。
   private drawWords(root: HTMLElement) {
     const activeFile = this.plugin.app.workspace.getActiveFile();
     const noteMode = (this.filterMode ?? "note") === "note" && !!activeFile;
     const list = this.scopedEntries();
 
-    // Exam-tag chips (規劃書 03；1006report.md #5: the "本篁考試字彙 · 全文
+    // Exam-tag chips (規劃書 03；1006report.md #5: the "本篇考試字彙 · 全文
     // N 個不同的字" title and the old "(99)" count label above this are
     // both gone — just the chips now, at the top of this section). Drawn
     // directly here (not through refreshExamStrip(), which redraws this
