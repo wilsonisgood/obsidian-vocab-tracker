@@ -1,6 +1,6 @@
 import { trailingBlockId } from "../../core/text/blockId";
 import { paragraphHash } from "../../core/text/hash";
-import { isAnchorable, noteSections, sectionAt, type NoteSection } from "./sections";
+import { isAnchorable, mergedListSections, noteSections, sectionAt, type NoteSection } from "./sections";
 
 // One note's sections plus lookup tables for resolving many anchors
 // against the same text (規劃書 06 M8 perf): the sidebar's 「段落討論」
@@ -23,6 +23,7 @@ class Index implements NoteIndex {
   readonly sections: readonly NoteSection[];
   private blockLines: Map<string, number> | null = null;
   private hashes: Map<string, NoteSection> | null = null;
+  private groupHashes: Map<string, NoteSection> | null = null;
 
   constructor(readonly content: string) {
     this.sections = noteSections(content);
@@ -54,7 +55,21 @@ class Index implements NoteIndex {
       }
       this.hashes = map;
     }
-    return this.hashes.get(hash);
+    const hit = this.hashes.get(hash);
+    if (hit) return hit;
+    // Compatibility fallback (§5.1 feedback point 5): a hash anchor made
+    // when a long list was still one section (before this split) no
+    // longer matches any single item — try the merged group it came from,
+    // reported against its first item, before calling it missing.
+    if (!this.groupHashes) {
+      const map = new Map<string, NoteSection>();
+      for (const g of mergedListSections(this.sections)) {
+        const h = paragraphHash(g.text);
+        if (!map.has(h)) map.set(h, g.section);
+      }
+      this.groupHashes = map;
+    }
+    return this.groupHashes.get(hash);
   }
 }
 

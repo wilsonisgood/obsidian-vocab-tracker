@@ -1,7 +1,16 @@
-// Splits a markdown note into paragraphs for AI context (規劃書 06 §6.4).
-// Blank lines separate paragraphs, except inside fenced code blocks; YAML
-// frontmatter is dropped (it's metadata, not article text). Headings stay
-// as their own paragraph so ¶ numbers line up with what the reader sees.
+// Splits a markdown note into paragraphs for AI context (規劃書 06 §6.4) and
+// for ¶ numbering (paragraphInput.ts, paragraphRows.ts). Blank lines
+// separate paragraphs; YAML frontmatter is dropped (it's metadata, not
+// article text). Headings and fenced code are always their own span, even
+// without a blank line before them, so a heading immediately followed by
+// a list doesn't merge into it (使用者回饋: a real article has
+// `### 1. 標題\n* item…` with no blank line between). A long list splits
+// into one span per top-level item, same rule and same line math as
+// services/anchors/sections.ts's noteSections — core/text/listItems.ts is
+// shared by both so a discussion's anchor and this module's ¶ numbers
+// agree on exactly where one list item ends and the next begins.
+
+import { LIST_MARKER_RE, shouldSplitList, splitListItems } from "./listItems";
 
 export interface ParagraphSpan {
   text: string;
@@ -10,6 +19,9 @@ export interface ParagraphSpan {
   lineStart: number;
   lineEnd: number;
 }
+
+const HEADING_RE = /^#{1,6}(\s|$)/;
+const FENCE_RE = /^\s*(`{3,}|~{3,})/;
 
 export function splitParagraphSpans(markdown: string): ParagraphSpan[] {
   const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
@@ -21,19 +33,37 @@ export function splitParagraphSpans(markdown: string): ParagraphSpan[] {
 
   const out: ParagraphSpan[] = [];
   let start = -1;
-  let inFence = false;
   const flush = (end: number) => {
     if (start < 0) return;
-    const text = lines.slice(start, end + 1).join("\n").trim();
-    if (text) out.push({ text, lineStart: start, lineEnd: end });
+    const block = lines.slice(start, end + 1);
+    if (LIST_MARKER_RE.test(block[0]) && shouldSplitList(block)) {
+      for (const item of splitListItems(block, start)) out.push(item);
+    } else {
+      out.push({ text: block.join("\n"), lineStart: start, lineEnd: end });
+    }
     start = -1;
   };
 
   for (; i < lines.length; i++) {
     const line = lines[i];
-    if (/^\s*(```|~~~)/.test(line)) inFence = !inFence;
-    if (!inFence && line.trim() === "") {
+    const fence = FENCE_RE.exec(line);
+    if (fence) {
       flush(i - 1);
+      const marker = fence[1];
+      let end = i + 1;
+      while (end < lines.length && !lines[end].trimStart().startsWith(marker)) end++;
+      end = Math.min(end, lines.length - 1);
+      out.push({ text: lines.slice(i, end + 1).join("\n"), lineStart: i, lineEnd: end });
+      i = end;
+      continue;
+    }
+    if (line.trim() === "") {
+      flush(i - 1);
+      continue;
+    }
+    if (HEADING_RE.test(line)) {
+      flush(i - 1);
+      out.push({ text: line, lineStart: i, lineEnd: i });
       continue;
     }
     if (start < 0) start = i;

@@ -4,7 +4,7 @@ import { normalizeParagraph, paragraphHash } from "../../core/text/hash";
 import { plainParagraph } from "../../core/text/paragraphs";
 import type { AnchorMode, ParagraphVaultPort } from "../../core/ports";
 import { noteIndex } from "./noteIndex";
-import { isAnchorable, noteSections, sectionAt, sectionText, type NoteSection } from "./sections";
+import { isAnchorable, noteSections, ownBlockIdLine, ownBlockIdText, sectionAt, sectionText, type NoteSection } from "./sections";
 
 // Paragraph anchors (規劃書 06 §5.1). The first question about a paragraph
 // pins it with a block id written at the end of its last line (` ^vt-…`);
@@ -123,7 +123,7 @@ export class ParagraphAnchorService {
       hash: paragraphHash(section.text),
       snapshot: plainParagraph(section.text),
     };
-    const existing = trailingBlockId(section.text);
+    const existing = trailingBlockId(ownBlockIdText(section));
     if (existing) return { ...base, blockId: existing };
     if (this.deps.mode() === "hash") return base;
 
@@ -143,14 +143,14 @@ export class ParagraphAnchorService {
       // written over, which may differ from what create() read.
       const target = locateSection(current, section);
       if (!target) throw new AnchorError("missing-paragraph");
-      const already = trailingBlockId(target.text);
+      const already = trailingBlockId(ownBlockIdText(target));
       if (already) {
         id = already;
         return current;
       }
       const inNote = blockIdsIn(current);
       id = newBlockId((x) => inNote.has(x) || this.deps.vault.blockIdTaken(x), this.random);
-      return withBlockId(current, target.lineEnd, id);
+      return withBlockId(current, ownBlockIdLine(target), id);
     });
     return id;
   }

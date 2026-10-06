@@ -163,6 +163,78 @@ describe("ParagraphBadges", () => {
   });
 });
 
+describe("ParagraphBadges — split lists (§5.1 feedback)", () => {
+  const ITEM1 = `* ${"x".repeat(130)} item one`;
+  const ITEM2 = `* ${"y".repeat(130)} item two`;
+  const LIST_NOTE = [ITEM1, ITEM2].join("\n");
+
+  // A <ul> with one <li> per top-level item, as Obsidian would render it.
+  function listSection(lineStart: number, lineEnd: number, liCount: number) {
+    const el = new FakeEl();
+    const ul = new FakeEl("UL");
+    el.children.push(ul);
+    for (let i = 0; i < liCount; i++) ul.children.push(new FakeEl("LI"));
+    const children: { unload(): void }[] = [];
+    const ctx = {
+      sourcePath: "a.md",
+      getSectionInfo: () => ({ text: LIST_NOTE, lineStart, lineEnd }),
+      addChild: (c: { unload(): void }) => children.push(c),
+    } as unknown as MarkdownPostProcessorContext;
+    return { el, ul, ctx, unload: () => children.forEach((c) => c.unload()) };
+  }
+
+  it("draws one badge per top-level <li>, each opening with just that item's lines", () => {
+    const { badges, opened } = setup({ [ITEM1]: 2 });
+    const s = listSection(0, 1, 2);
+    badges.process(s.el as unknown as HTMLElement, s.ctx);
+
+    // The badge host is the <li>, not the whole <ul> wrapper.
+    expect(s.el.badge()).toBeNull();
+    const li0 = s.ul.children[0];
+    const li1 = s.ul.children[1];
+    expect(li0.classes.has("vt-pbadge-host")).toBe(true);
+    expect(li0.badge()?.classes.has("has-count")).toBe(true);
+    expect(li1.badge()?.classes.has("is-ghost")).toBe(true);
+
+    li0.badge()?.listeners.click[0]({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
+    expect(opened).toEqual([{ path: "a.md", lineStart: 0, lineEnd: 0, text: ITEM1 }]);
+    li1.badge()?.listeners.click[0]({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
+    expect(opened[1]).toEqual({ path: "a.md", lineStart: 1, lineEnd: 1, text: ITEM2 });
+  });
+
+  it("falls back to one badge for the whole list when the <li> count doesn't match the split", () => {
+    const { badges } = setup({});
+    const s = listSection(0, 1, 1); // only one <li>, but the list splits into two items
+    badges.process(s.el as unknown as HTMLElement, s.ctx);
+    expect(s.el.badge()).not.toBeNull();
+    expect(s.ul.children[0].badge()).toBeNull();
+  });
+
+  it("stays one badge for a short list that doesn't split", () => {
+    const { badges } = setup({});
+    const note = "- one\n- two";
+    const s = listSection(0, 1, 2);
+    (s.ctx as unknown as { getSectionInfo: () => { text: string; lineStart: number; lineEnd: number } }).getSectionInfo = () => ({
+      text: note,
+      lineStart: 0,
+      lineEnd: 1,
+    });
+    badges.process(s.el as unknown as HTMLElement, s.ctx);
+    expect(s.el.badge()).not.toBeNull();
+    expect(s.ul.children[0].badge()).toBeNull();
+  });
+
+  it("untracks every <li> handle when the section unloads", () => {
+    const { badges, events } = setup({ [ITEM1]: 1 });
+    const s = listSection(0, 1, 2);
+    badges.process(s.el as unknown as HTMLElement, s.ctx);
+    s.unload();
+    // After unload, re-emitting a change for this note touches nothing —
+    // no error, and badges created fresh by a later process() call still work.
+    expect(() => events.emit("paragraph-index:change", { paths: ["a.md"] })).not.toThrow();
+  });
+});
+
 describe("helpers", () => {
   it("accepts paragraphs, lists and quotes only", () => {
     expect(["P", "ul", "OL", "BLOCKQUOTE"].every(isAnchorableTag)).toBe(true);

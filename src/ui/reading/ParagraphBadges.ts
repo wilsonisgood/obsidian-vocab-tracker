@@ -1,5 +1,6 @@
 import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext, type MarkdownSectionInformation } from "obsidian";
 import { t } from "../../core/i18n";
+import { shouldSplitList, splitListItems } from "../../core/text/listItems";
 import type { SectionRef } from "../../services/anchors/ParagraphAnchorService";
 import type { ParagraphIndex } from "../../services/anchors/ParagraphIndex";
 
@@ -17,6 +18,15 @@ import type { ParagraphIndex } from "../../services/anchors/ParagraphIndex";
 //
 // Live badges are tracked per note so a count change (a question asked,
 // a sync) updates them in place, without re-rendering the reading view.
+//
+// Obsidian's reading mode renders a whole list as one section — one
+// post-processor call, one `getSectionInfo(el)` spanning every item — even
+// after a long list is split into separate discussion anchors
+// (services/anchors/sections.ts, §5.1 feedback). So when that split
+// applies here too, this draws one badge per top-level `<li>` instead of
+// one for the whole `<ul>`/`<ol>`, using the section's own line math
+// (core/text/listItems.ts, the same rule noteSections uses) to work out
+// which lines — and which SectionRef to open — each `<li>` corresponds to.
 
 export const BADGE_CLS = "vt-pbadge";
 export const BADGE_HOST_CLS = "vt-pbadge-host";
@@ -93,24 +103,50 @@ export class ParagraphBadges {
 
   // registerMarkdownPostProcessor(badges.process)
   readonly process = (el: HTMLElement, ctx: MarkdownPostProcessorContext): void => {
-    if (!isAnchorableTag(el.firstElementChild?.tagName)) return;
+    const first = el.firstElementChild;
+    if (!isAnchorableTag(first?.tagName)) return;
     const info = ctx.getSectionInfo(el);
     if (!info) return;
-    const ref: SectionRef = {
-      path: ctx.sourcePath,
-      lineStart: info.lineStart,
-      lineEnd: info.lineEnd,
-      text: this.lines.slice(info),
-    };
-    const handle: BadgeHandle = { ref, host: el, badge: null };
-    this.draw(handle);
-    this.track(handle);
+    const text = this.lines.slice(info);
+    const handles = this.handlesFor(ctx.sourcePath, el, first, info.lineStart, info.lineEnd, text);
+    for (const handle of handles) {
+      this.draw(handle);
+      this.track(handle);
+    }
 
     // Unloaded when reading view drops or re-renders this section.
     const child = new MarkdownRenderChild(el);
-    child.register(() => this.untrack(handle));
+    child.register(() => handles.forEach((h) => this.untrack(h)));
     ctx.addChild(child);
   };
+
+  // One handle per top-level `<li>` when this list was split (see class
+  // comment); otherwise the usual single handle for the whole section
+  // element. Falls back to the whole list if the DOM's `<li>` count
+  // doesn't match the split — e.g. a task-list item rendered with extra
+  // wrapper elements — rather than guessing at a mismatched mapping.
+  private handlesFor(
+    path: string,
+    el: HTMLElement,
+    first: Element | null | undefined,
+    lineStart: number,
+    lineEnd: number,
+    text: string
+  ): BadgeHandle[] {
+    const whole = (): BadgeHandle[] => [{ ref: { path, lineStart, lineEnd, text }, host: el, badge: null }];
+    const tag = first?.tagName?.toUpperCase();
+    if (tag !== "UL" && tag !== "OL") return whole();
+    const lines = text.split("\n");
+    if (!shouldSplitList(lines)) return whole();
+    const items = splitListItems(lines, lineStart);
+    const lis = Array.from(first?.children ?? []).filter((c) => c.tagName?.toUpperCase() === "LI");
+    if (lis.length !== items.length) return whole();
+    return items.map((item, i) => ({
+      ref: { path, lineStart: item.lineStart, lineEnd: item.lineEnd, text: item.text },
+      host: lis[i] as unknown as HTMLElement,
+      badge: null,
+    }));
+  }
 
   private track(h: BadgeHandle): void {
     let set = this.live.get(h.ref.path);

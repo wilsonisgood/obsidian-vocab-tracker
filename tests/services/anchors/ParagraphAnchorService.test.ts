@@ -98,6 +98,65 @@ describe("ParagraphAnchorService.create — block mode", () => {
   });
 });
 
+describe("ParagraphAnchorService.create — list items (§5.1 feedback)", () => {
+  const LIST_NOTE = [
+    "# Speech", // 0
+    "", // 1
+    `* ${"x".repeat(130)}`, // 2 — long item, item 0
+    `  - a nested detail`, // 3 — sub-item of item 0
+    `* ${"y".repeat(130)}`, // 4 — long item, item 1
+  ].join("\n");
+
+  it("writes the block id on the item's own line, not a nested sub-item", async () => {
+    const { vault, anchors } = setup("block", { [PATH]: LIST_NOTE });
+    const a = await anchors.create(ref(LIST_NOTE, 2, 3));
+    const lines = vault.files.get(PATH)?.split("\n") ?? [];
+    // Line 2 (the item itself) gets the id, line 3 (its sub-item) doesn't.
+    expect(lines[2]).toBe(`* ${"x".repeat(130)} ^vt-k3x9q2`);
+    expect(lines[3]).toBe("  - a nested detail");
+    expect(a.blockId).toBe("vt-k3x9q2");
+  });
+
+  it("doesn't re-anchor an item that already ends in a block id before its sub-item", async () => {
+    const note = LIST_NOTE.replace(`* ${"x".repeat(130)}`, `* ${"x".repeat(130)} ^mine`);
+    const { anchors, vault } = setup("block", { [PATH]: note });
+    const a = await anchors.create(ref(note, 2, 3));
+    expect(a.blockId).toBe("mine");
+    expect(vault.writes).toEqual([]);
+  });
+});
+
+describe("ParagraphAnchorService — backward compatibility with a pre-split whole-list anchor (§5.1 feedback point 5)", () => {
+  const items = [`* ${"a".repeat(130)}`, `* ${"b".repeat(130)}`, `* ${"c".repeat(130)}`];
+  const NOTE_LIST = ["# Speech", "", ...items].join("\n");
+
+  it("a block id once written at the whole list's last line now lands on the last item (reasonable, not missing)", async () => {
+    const withId = NOTE_LIST + " ^vt-old001";
+    const anchor: ParagraphAnchor = {
+      kind: "paragraph",
+      path: PATH,
+      blockId: "vt-old001",
+      hash: paragraphHash(items.join("\n")), // the hash the old (unsplit) anchor was made with
+      snapshot: items.join("\n"),
+    };
+    const r = resolveIn(withId, anchor);
+    expect(r).toMatchObject({ status: "found", via: "blockId" });
+    if (r.status === "found") expect(r.section.lineStart).toBe(4); // the last item, not the whole list
+  });
+
+  it("a hash anchor made against the whole (unsplit) list still resolves, against the first item", () => {
+    const anchor: ParagraphAnchor = {
+      kind: "paragraph",
+      path: PATH,
+      hash: paragraphHash(items.join("\n")),
+      snapshot: items.join("\n"),
+    };
+    const r = resolveIn(NOTE_LIST, anchor);
+    expect(r).toMatchObject({ status: "found", via: "hash" });
+    if (r.status === "found") expect(r.section.lineStart).toBe(2); // the first item
+  });
+});
+
 describe("ParagraphAnchorService.create — hash mode", () => {
   it("never touches the note", async () => {
     const { anchors, vault } = setup("hash");
