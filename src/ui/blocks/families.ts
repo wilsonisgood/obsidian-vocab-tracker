@@ -2,11 +2,27 @@ import { Component, MarkdownRenderChild, MarkdownRenderer, Menu, Notice, setIcon
 import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import type { Family } from "../../core/model/family";
+import { defaultEmoji } from "../../core/model/wordMeta";
 import type { FamilyCandidate } from "../../services/learn/FamilyService";
+import { GalaxyDetail, type GalaxyDetailActions, type GalaxyDetailModel } from "../galaxy/GalaxyDetail";
+import { GalaxyGraph } from "../galaxy/GalaxyGraph";
+import { buildGalaxyModel, galaxyNodeId, type GalaxyLookup, type GalaxyModel } from "../galaxy/galaxyModel";
+import { GALAXY_VIEW_TYPE } from "../galaxy/GalaxyView";
+import {
+  buildGalaxyCard,
+  buildTopics,
+  detailRows,
+  L,
+  resolveAddWord,
+  type GalaxyCardData,
+  type GalaxyTopic,
+  type GalaxyViewMode,
+} from "../galaxy/galaxyView.model";
 import { aiErrorBox } from "../kit/aiDebug";
 import { datesText } from "../kit/dates";
 import { emptyState } from "../kit/emptyState";
 import { inlineNote } from "../kit/inlineNote";
+import { segmented } from "../kit/segmented";
 import {
   onFamilyFocus,
   familiesWith,
@@ -23,19 +39,39 @@ import {
 import { joinWords, t } from "../../core/i18n";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate, wordChip } from "./learnUi";
 
-// ── vocab-families code block (規劃書 06 §7.2, §9.6; 設計稿 L5、W3) ──
+// ── vocab-families code block (規劃書 06 §7.2, §9.6, 09 §6.2; 設計稿 L5、W3、
+// Galaxy) ──
 //
 //   ```vocab-families
 //   topic: kitchenware      # family to open first (optional)
 //   word: glittery          # word-page mode: only its families (optional)
 //   ```
 //
-// Saved families draw as a tree (L5) without needing AI. 「找字族」 /
-// 「重新分群」 ask the AI for candidates and save them straight away — no
-// review screen (1005 回饋: 「審核清單沒什麼用處」); a candidate's
-// not-yet-learned members become text-only chips in the tree itself,
-// each with a ＋ (or the whole chip is the tap target) that adds just
-// that one word to the vocab list when the learner wants it.
+// Saved families draw as a force-graph 「星系」 by default (A1) — a topic
+// list, a small toolbar (✨ AI 還有哪些／只看已學／重新置中／展開／檢視切換)
+// and a graph｜detail split (GalaxyGraph + GalaxyDetail, both GA/GB's own
+// files). 「清單」 switches to the original tree (renderTree, below —
+// unchanged). 「找字族」/「重新分群」 move into the galaxy toolbar's ⋯ menu;
+// everything about how a candidate gets saved (no review screen, 1005 回饋:
+// 「審核清單沒什麼用處」) is unchanged either way.
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// Obsidian's own `createSvg()` DOM extension isn't polyfilled by this
+// repo's fake-DOM test harness (tests/perf/support/dom.ts) — plain
+// createElementNS works the same in both the real app and vitest.
+function svgNode<K extends keyof SVGElementTagNameMap>(
+  parent: Element,
+  tag: K,
+  attrs: Record<string, string>,
+  cls?: string
+): SVGElementTagNameMap[K] {
+  const el = document.createElementNS(SVG_NS, tag) as SVGElementTagNameMap[K];
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  if (cls) el.setAttribute("class", cls);
+  parent.appendChild(el);
+  return el;
+}
 
 export function renderFamilies(
   plugin: VocabTrackerPlugin,
@@ -58,11 +94,36 @@ class FamiliesBlock extends MarkdownRenderChild {
   // The member to highlight (came from its word page).
   private focusEntryId: string | undefined;
   // Suggested words being added (「點一下加入」), so a double tap adds once.
+  // Shared key scheme (`${familyId}\u0000${word.toLowerCase()}`) between the
+  // tree's chips and the galaxy's ＋ nodes.
   private adding = new Set<string>();
   // Each member's zh gloss is AI text, rendered as Markdown (1006 #22); a
   // fresh scope per tree render drops the previous one's listeners (same
   // lifecycle as trivia.ts's favorites list / verbs.ts's patterns).
   private markdownScope: Component | null = null;
+
+  // ── Galaxy (09 §6.1/§6.2, A1/A3-A7) ─────────────────────────────
+  // View mode is block-instance memory only (not persisted) — A1 defaults
+  // every fresh block to 星系.
+  private viewMode: GalaxyViewMode = "galaxy";
+  private onlyKnown = false;
+  // Selected node id (entryId, or `w:<word>` for a suggestion) — null means
+  // the detail panel shows the topic's learned-word list instead of a card.
+  private galaxySelected: string | null = null;
+  private galaxyInitialized = false;
+  private galaxyFresh = new Set<string>();
+  private galaxyExpandCtrl = new Map<string, AbortController>();
+  // The live graph/detail instance (and the family it belongs to) — kept
+  // across re-renders of the *same* topic so an unrelated redraw (a
+  // background wordMeta write, another word's like toggle…) never resets
+  // pan/zoom/node positions. A topic switch or leaving galaxy mode tears it
+  // down and the next render starts fresh.
+  private galaxyGraph: GalaxyGraph | null = null;
+  private galaxyDetail: GalaxyDetail | null = null;
+  private galaxySvgEl: SVGSVGElement | null = null;
+  private galaxyDetailHost: HTMLElement | null = null;
+  private galaxyGraphFamilyId: string | null = null;
+  private lastGalaxyModel: GalaxyModel | null = null;
 
   constructor(
     containerEl: HTMLElement,
@@ -84,6 +145,10 @@ class FamiliesBlock extends MarkdownRenderChild {
       if (focus) {
         this.selectedId = focus.familyId;
         this.focusEntryId = focus.entryId;
+        if (focus.entryId) {
+          this.galaxySelected = focus.entryId;
+          this.galaxyInitialized = true;
+        }
       }
       this.register(onFamilyFocus((f) => this.focus(f)));
     }
@@ -105,6 +170,8 @@ class FamiliesBlock extends MarkdownRenderChild {
   onunload(): void {
     this.disposed = true;
     if (this.generating) this.plugin.families.stop();
+    for (const ctrl of this.galaxyExpandCtrl.values()) ctrl.abort();
+    this.destroyGalaxyGraph();
   }
 
   private focus(focus: FamilyFocus): void {
@@ -112,6 +179,10 @@ class FamiliesBlock extends MarkdownRenderChild {
     takeFamilyFocus();
     this.selectedId = focus.familyId;
     this.focusEntryId = focus.entryId;
+    if (focus.entryId) {
+      this.galaxySelected = focus.entryId;
+      this.galaxyInitialized = true;
+    }
     this.render();
     this.root.scrollIntoView({ block: "start", behavior: "smooth" });
   }
@@ -202,6 +273,17 @@ class FamiliesBlock extends MarkdownRenderChild {
 
   private render(): void {
     const root = this.root;
+    // Detach (not destroy) the live galaxy graph/detail before wiping the
+    // DOM below, so re-rendering the *same* topic in galaxy mode (an
+    // unrelated store event, toggling 只看已學, an expand finishing…) can
+    // re-attach them instead of tearing down the force simulation.
+    const keepGalaxy = this.viewMode === "galaxy" && !!this.galaxyGraph && !!this.galaxySvgEl && !!this.galaxyDetailHost;
+    if (keepGalaxy) {
+      this.galaxySvgEl!.remove();
+      this.galaxyDetailHost!.remove();
+    } else {
+      this.destroyGalaxyGraph();
+    }
     root.empty();
     if (this.markdownScope) {
       this.removeChild(this.markdownScope);
@@ -221,8 +303,14 @@ class FamiliesBlock extends MarkdownRenderChild {
 
     const families = this.shownFamilies(entry);
     this.selectedId = pickSelected(families, this.selectedId, this.params.topic);
+    // word: 模式預設選取那個字 (09 §6.2) — only once, so collapsing the
+    // card later doesn't keep snapping back to it.
+    if (!this.galaxyInitialized) {
+      this.galaxyInitialized = true;
+      if (entry) this.galaxySelected = entry.id;
+    }
 
-    if (families.length) this.renderToolbar(families, entry);
+    if (families.length && this.viewMode === "list") this.renderToolbar(families, entry);
     if (!entry && !this.generating && this.plugin.families.needsRegroup()) {
       const note = root.createDiv({ cls: "vt-fam-regroup-note" });
       note.appendChild(inlineNote({ tone: "info", icon: "refresh-cw", text: t("learn.family.regroup.hint") }));
@@ -237,7 +325,10 @@ class FamiliesBlock extends MarkdownRenderChild {
     }
 
     const selected = families.find((f) => f.id === this.selectedId);
-    if (selected) return this.renderTree(selected, familyTree(selected, lookup, { focusEntryId: this.focusEntryId }), lookup);
+    if (selected) {
+      if (this.viewMode === "list") return this.renderTree(selected, familyTree(selected, lookup, { focusEntryId: this.focusEntryId }), lookup);
+      return this.renderGalaxySection(selected, families, entry, lookup);
+    }
 
     // No families yet.
     const empty = root.createDiv({ cls: "vt-fam-empty" });
@@ -255,7 +346,8 @@ class FamiliesBlock extends MarkdownRenderChild {
     );
   }
 
-  // Family chips + 重新分群 (L5) / 找字族 (word page).
+  // Family chips + 重新分群 (L5) / 找字族 (word page) — 清單模式專用，不變；
+  // 星系模式用主題清單＋⋯選單取代這一排 (renderGalaxyToolbar 下方)。
   private renderToolbar(families: Family[], entry: VocabEntry | undefined): void {
     const bar = this.root.createDiv({ cls: "vt-fam-toolbar" });
     for (const f of families) {
@@ -279,6 +371,23 @@ class FamiliesBlock extends MarkdownRenderChild {
     btn.addClass("vt-fam-toolbar-action");
     btn.disabled = !ready;
     if (!ready) btn.title = t(this.plugin.ai.status() === "offline" ? "learn.ai.offline" : "learn.ai.body");
+    this.renderModeSwitch(bar);
+  }
+
+  private renderModeSwitch(bar: HTMLElement): void {
+    segmented<GalaxyViewMode>(bar, {
+      ariaLabel: L.viewAria,
+      value: this.viewMode,
+      options: [
+        { value: "galaxy", label: L.galaxyMode },
+        { value: "list", label: L.listMode },
+      ],
+      onChange: (v) => {
+        if (v === this.viewMode) return;
+        this.viewMode = v;
+        this.render();
+      },
+    });
   }
 
   private renderGenerating(): void {
@@ -289,7 +398,7 @@ class FamiliesBlock extends MarkdownRenderChild {
     learnButton(box, { label: t("learn.stop"), icon: "square", onClick: () => this.stop() });
   }
 
-  // ── L5 tree ───────────────────────────────────────────────────
+  // ── L5 tree (清單模式 — 不變) ─────────────────────────────────────
 
   private renderTree(f: Family, view: FamilyTreeView, lookup: MemberLookup): void {
     const scope = (this.markdownScope = this.addChild(new Component()));
@@ -359,5 +468,230 @@ class FamiliesBlock extends MarkdownRenderChild {
     if (view.seeds.length) {
       legend.createSpan({ cls: "vt-fam-legend-item", text: t("learn.family.legend.seeds", { words: joinWords(view.seeds) }) });
     }
+  }
+
+  // ── Galaxy (星系模式, 09 §6.1/§6.2) ───────────────────────────────
+
+  private galaxyLookup(lookup: MemberLookup): GalaxyLookup {
+    return {
+      entry: (m) => lookup.entry(m),
+      emoji: (m, e) => (e ? this.plugin.emoji.emojiOf(e) : m.emoji || defaultEmoji("")),
+      isKnown: (e) => this.plugin.families.isKnown(e),
+    };
+  }
+
+  private renderGalaxySection(selected: Family, families: Family[], entry: VocabEntry | undefined, lookup: MemberLookup): void {
+    const gxLookup = this.galaxyLookup(lookup);
+    const shell = this.root.createDiv({ cls: "vt-gx-shell" });
+    const bench = shell.createDiv({ cls: "vt-gx-bench" });
+
+    const topicsEl = bench.createDiv({ cls: "vt-gx-topics" });
+    for (const topic of buildTopics(families, gxLookup)) this.renderTopicButton(topicsEl, topic, topic.id === selected.id);
+
+    const stage = bench.createDiv({ cls: "vt-gx-stage" });
+    this.renderGalaxyToolbar(stage, selected, entry);
+    const graphHost = stage.createDiv({ cls: "vt-gx-graph" });
+
+    const detailParent = bench.createDiv({ cls: "vt-gx-detail-host" });
+
+    const sameFamily = this.galaxyGraphFamilyId === selected.id && this.galaxyGraph && this.galaxySvgEl && this.galaxyDetailHost;
+    if (sameFamily) {
+      graphHost.appendChild(this.galaxySvgEl!);
+      detailParent.appendChild(this.galaxyDetailHost!);
+      const model = buildGalaxyModel(selected, gxLookup, { onlyKnown: this.onlyKnown, fresh: this.galaxyFresh });
+      this.lastGalaxyModel = model;
+      this.galaxyGraph!.setData(model, { recenter: false });
+      if (this.galaxySelected) this.galaxyGraph!.select(this.galaxySelected);
+      else this.renderGalaxyDetail(model);
+      return;
+    }
+
+    // Different (or first) topic for this block instance: a fresh graph +
+    // detail bound to the new elements (any previous instance was already
+    // destroyed above, in render()).
+    const svgEl = svgNode(graphHost, "svg", { role: "group", "aria-label": L.graphAriaLabel(familyTitle(selected)) }, "vt-gx-svg");
+    this.galaxyDetail = new GalaxyDetail(detailParent);
+    const mobile = document.body.hasClass("is-mobile");
+    const graph = new GalaxyGraph(svgEl, {
+      embedded: true,
+      mobile,
+      onSelect: (id) => {
+        this.galaxySelected = id;
+        if (this.lastGalaxyModel) this.renderGalaxyDetail(this.lastGalaxyModel);
+      },
+      onAdd: (id) => void this.galaxyAdd(selected.id, id),
+    });
+    this.galaxyGraph = graph;
+    this.galaxySvgEl = svgEl;
+    this.galaxyDetailHost = detailParent;
+    this.galaxyGraphFamilyId = selected.id;
+
+    const model = buildGalaxyModel(selected, gxLookup, { onlyKnown: this.onlyKnown, fresh: this.galaxyFresh });
+    this.lastGalaxyModel = model;
+    graph.setData(model, { recenter: true });
+    if (this.galaxySelected) graph.select(this.galaxySelected);
+    else this.renderGalaxyDetail(model);
+  }
+
+  private renderGalaxyDetail(model: GalaxyModel): void {
+    const detail = this.galaxyDetail;
+    if (!detail) return;
+    const rows = detailRows(model);
+    let card: GalaxyCardData | null = null;
+    if (this.galaxySelected) {
+      const entry = this.plugin.store.entries.find((e) => e.id === this.galaxySelected);
+      if (entry) {
+        const emoji = this.plugin.emoji.emojiOf(entry);
+        const breakdown = this.plugin.learn.wordMeta(entry.id)?.breakdown;
+        card = buildGalaxyCard(entry, emoji, breakdown);
+      }
+    }
+    const detailModel: GalaxyDetailModel = { counts: model.counts, rows, selected: card };
+    const actions: GalaxyDetailActions = {
+      onSelectRow: (entryId) => this.galaxyGraph?.select(entryId),
+      onCollapse: () => this.galaxyGraph?.select(null),
+      onReview: (entryId) => {
+        const e = this.plugin.store.entries.find((x) => x.id === entryId);
+        if (e) this.plugin.reviewWord(e);
+      },
+      onOpenWordPage: (entryId) => void this.plugin.openWordPage(entryId),
+      onOpenAi: (entryId) => void this.plugin.surfaces.openWordCard(entryId, "ai"),
+    };
+    detail.render(detailModel, actions);
+  }
+
+  private renderTopicButton(container: HTMLElement, topic: GalaxyTopic, active: boolean): void {
+    const btn = container.createEl("button", { cls: "vt-gx-topic", attr: { type: "button" } });
+    btn.setAttr("aria-pressed", String(active));
+    btn.toggleClass("is-active", active);
+    btn.createSpan({ cls: "vt-gx-topic-em", text: topic.emoji });
+    const info = btn.createDiv({ cls: "vt-gx-topic-info" });
+    info.createDiv({ cls: "vt-gx-topic-name", text: topic.topic });
+    info.createDiv({ cls: "vt-gx-topic-zh", text: topic.label });
+    const ct = btn.createDiv({ cls: "vt-gx-topic-ct" });
+    ct.createSpan({ text: L.topicCounts(topic.known, topic.unknown) });
+    const svg = svgNode(ct, "svg", { viewBox: "0 0 74 30", "aria-hidden": "true" }, "vt-gx-topic-thumb");
+    for (const p of topic.points) {
+      svgNode(svg, "line", { x1: "37", y1: "15", x2: String(p.x), y2: String(p.y) }, "vt-gx-topic-line");
+    }
+    for (const p of topic.points) {
+      svgNode(svg, "circle", { cx: String(p.x), cy: String(p.y), r: "3" }, p.known ? "vt-gx-topic-dot is-known" : "vt-gx-topic-dot");
+    }
+    svgNode(svg, "circle", { cx: "37", cy: "15", r: "4.5" }, "vt-gx-topic-hub");
+    btn.addEventListener("click", () => {
+      if (active) return;
+      this.selectedId = topic.id;
+      this.galaxySelected = null;
+      this.focusEntryId = undefined;
+      this.render();
+    });
+  }
+
+  private renderGalaxyToolbar(stage: HTMLElement, selected: Family, entry: VocabEntry | undefined): void {
+    const bar = stage.createDiv({ cls: "vt-gx-toolbar" });
+    const expanding = this.galaxyExpandCtrl.has(selected.id);
+    const aiBtn = bar.createEl("button", { cls: ["vt-gx-pill", "is-ai"], attr: { type: "button" }, text: expanding ? L.stop : L.aiExpand(selected.topic) });
+    aiBtn.disabled = !expanding && this.plugin.ai.status() !== "ready";
+    aiBtn.addEventListener("click", () => this.toggleExpand(selected));
+
+    const knownBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: L.onlyKnown });
+    knownBtn.setAttr("aria-pressed", String(this.onlyKnown));
+    knownBtn.toggleClass("is-active", this.onlyKnown);
+    knownBtn.addEventListener("click", () => {
+      this.onlyKnown = !this.onlyKnown;
+      this.render();
+    });
+
+    const recenterBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: L.recenter });
+    recenterBtn.addEventListener("click", () => this.galaxyGraph?.recenter());
+
+    const expandFullBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: L.expandFull });
+    expandFullBtn.addEventListener("click", () => {
+      void this.plugin.app.workspace.getLeaf("tab").setViewState({
+        type: GALAXY_VIEW_TYPE,
+        active: true,
+        state: { familyId: selected.id },
+      });
+    });
+
+    this.renderModeSwitch(bar);
+
+    const more = bar.createEl("button", { cls: "vt-gx-pill clickable-icon", attr: { type: "button", "aria-label": L.more } });
+    setIcon(more, "more-horizontal");
+    more.addEventListener("click", (e) => {
+      const menu = new Menu();
+      menu.addItem((item) =>
+        item
+          .setTitle(t(entry ? "learn.family.generate" : "learn.family.regroup"))
+          .setIcon(entry ? "sparkles" : "refresh-cw")
+          .onClick(() => void this.generate(!entry, entry))
+      );
+      menu.showAtMouseEvent(e);
+    });
+  }
+
+  private toggleExpand(family: Family): void {
+    const existing = this.galaxyExpandCtrl.get(family.id);
+    if (existing) {
+      this.plugin.families.stopExpand(family.id);
+      return;
+    }
+    const ctrl = new AbortController();
+    this.galaxyExpandCtrl.set(family.id, ctrl);
+    this.render();
+    this.plugin.families
+      .expand(family.id, ctrl.signal)
+      .then((added) => {
+        if (this.disposed) return;
+        if (!added.length) {
+          new Notice(L.noMoreSuggestions);
+          return;
+        }
+        if (this.onlyKnown) this.onlyKnown = false;
+        for (const m of added) this.galaxyFresh.add(galaxyNodeId(m));
+        new Notice(L.expandFound(added.map((m) => m.word)));
+      })
+      .catch((e) => {
+        if (this.disposed || isAbort(e)) return;
+        console.error("Vocab Tracker: galaxy expand failed", e);
+        new Notice(learnErrorText(e));
+      })
+      .finally(() => {
+        this.galaxyExpandCtrl.delete(family.id);
+        if (!this.disposed) this.render();
+      });
+  }
+
+  private async galaxyAdd(familyId: string, nodeId: string): Promise<void> {
+    const family = this.plugin.families.families().find((f) => f.id === familyId);
+    const word = family && resolveAddWord(nodeId, family);
+    if (!word) return;
+    const key = `${familyId}\u0000${word.toLowerCase()}`;
+    if (this.adding.has(key)) return;
+    this.adding.add(key);
+    try {
+      const entry = await this.plugin.families.addSuggested(familyId, word);
+      if (entry) {
+        new Notice(L.addedWord(entry.word));
+        this.galaxySelected = entry.id;
+        this.galaxyFresh.delete(nodeId);
+      }
+    } catch (e) {
+      console.error("Vocab Tracker: adding a galaxy word failed", e);
+      new Notice(learnErrorText(e));
+    } finally {
+      this.adding.delete(key);
+      if (!this.disposed) this.render();
+    }
+  }
+
+  private destroyGalaxyGraph(): void {
+    this.galaxyGraph?.destroy();
+    this.galaxyGraph = null;
+    this.galaxyDetail = null;
+    this.galaxySvgEl = null;
+    this.galaxyDetailHost = null;
+    this.galaxyGraphFamilyId = null;
+    this.lastGalaxyModel = null;
   }
 }

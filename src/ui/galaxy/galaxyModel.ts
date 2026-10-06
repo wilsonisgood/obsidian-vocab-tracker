@@ -60,14 +60,18 @@ export interface GalaxyOpts {
 
 const wordKey = (w: string): string => w.trim().toLowerCase();
 
-function wordNodeId(m: FamilyMember): string {
+// A word's node id (entryId when it's in the vocab list, `w:<lowercase
+// word>` for a plain suggestion) — exported so callers outside this file
+// (families.ts's topic list, GalaxyView) can resolve an onAdd(id) back to
+// the FamilyMember it came from (09 整合事項 GB: resolveAddWord).
+export function galaxyNodeId(m: FamilyMember): string {
   return m.entryId ?? `w:${wordKey(m.word)}`;
 }
 
 function buildWordNode(m: FamilyMember, lookup: GalaxyLookup, fresh: ReadonlySet<string> | undefined): GalaxyNode {
   const entry = lookup.entry(m);
   const known = lookup.isKnown(entry);
-  const id = wordNodeId(m);
+  const id = galaxyNodeId(m);
   const word = m.word.trim();
   return {
     id,
@@ -95,7 +99,9 @@ export function buildGalaxyModel(family: Family, lookup: GalaxyLookup, opts: Gal
     kind: "hub",
     word: family.topic,
     zh: family.label,
-    emoji: family.emoji ?? "",
+    // 字族沒設 emoji 時的預設 (09 整合事項 GB 小修 — 原本是 ""，規格要求
+    // 🌌；同一個值也餵給主題清單的星系 icon，見 galaxyView.model.ts)。
+    emoji: family.emoji ?? "🌌",
     fresh: false,
     ariaLabel: [family.topic, family.label].filter(Boolean).join(" "),
   };

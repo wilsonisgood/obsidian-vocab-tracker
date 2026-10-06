@@ -60,7 +60,12 @@ export class GalaxyGraph {
   private readonly gLinks: Selection<SVGGElement, unknown, null, undefined>;
   private readonly gNodes: Selection<SVGGElement, unknown, null, undefined>;
   private readonly zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
-  private readonly resizeObserver: ResizeObserver;
+  // Absent in environments without ResizeObserver (09 整合事項 GB 小修 —
+  // this repo's fake-DOM smoke test, tests/metrics/noApiKey.test.ts,
+  // exercises every non-AI block including vocab-families and has no
+  // polyfill for it). Resize-triggered recenter() just doesn't happen
+  // there; everything else about the graph still works.
+  private readonly resizeObserver: ResizeObserver | null;
   private readonly reduceMotion: boolean;
   private readonly opts: GalaxyGraphOpts;
 
@@ -89,6 +94,16 @@ export class GalaxyGraph {
 
     this.zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.45, 2.6])
+      // An explicit extent (09 整合事項 GB 小修): our <svg> never carries a
+      // `viewBox` or SVG width/height attributes (it's sized by CSS), so
+      // d3-zoom's own defaultExtent() would have to introspect
+      // width.baseVal/viewBox.baseVal — which plain DOM (and this repo's
+      // fake-DOM smoke test, tests/metrics/noApiKey.test.ts) doesn't give
+      // it. measure() keeps width/height current.
+      .extent(() => [
+        [0, 0],
+        [this.width, this.height],
+      ])
       .filter((ev: Event) => zoomFilter(ev as unknown as { type: string; ctrlKey: boolean; metaKey: boolean; touches?: number; button?: number }, { embedded: opts.embedded, mobile: opts.mobile }))
       .on("zoom", (ev) => this.root.attr("transform", ev.transform.toString()));
     this.svg.call(this.zoomBehavior).on("dblclick.zoom", null);
@@ -97,11 +112,14 @@ export class GalaxyGraph {
       if (ev.target === svg) this.select(null);
     });
 
-    this.resizeObserver = new ResizeObserver(() => {
-      const w = svg.getBoundingClientRect().width;
-      if (Math.abs(w - this.width) > RESIZE_THRESHOLD) this.recenter();
-    });
-    this.resizeObserver.observe(svg);
+    this.resizeObserver =
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(() => {
+            const w = svg.getBoundingClientRect().width;
+            if (Math.abs(w - this.width) > RESIZE_THRESHOLD) this.recenter();
+          })
+        : null;
+    this.resizeObserver?.observe(svg);
   }
 
   private measure(): void {
@@ -318,6 +336,6 @@ export class GalaxyGraph {
   destroy(): void {
     this.sim?.stop();
     this.sim = null;
-    this.resizeObserver.disconnect();
+    this.resizeObserver?.disconnect();
   }
 }
