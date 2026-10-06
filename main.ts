@@ -1024,6 +1024,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         level: labels.join(", "),
         example: ctx.sentence || "",
         source,
+        liked: true, // 1006-2 #1：手動加字＝自動 like
       });
       await this.store.addEntry(entry);
       this.enrichEntry(entry);
@@ -1034,6 +1035,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       existing.level = mergeLevel(existing.level, labels);
       // Only a real change counts: the sidebar orders words by updatedAt (1005 回饋 1).
       if (JSON.stringify([existing.source, existing.example, existing.level]) !== before) await this.store.touch(existing);
+      if (!existing.liked) await this.store.setLiked(existing, true); // 1006-2 #1
     }
 
     if (opts.reveal !== false) await this.surfaces.revealWord(word, ctx);
