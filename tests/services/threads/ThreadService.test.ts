@@ -220,6 +220,116 @@ describe("ThreadService persistence", () => {
   });
 });
 
+describe("deleteTurnPair / restoreTurnPair (1006 #20)", () => {
+  it("tombstones a question and its answer, dropping them from live turns and the question count", async () => {
+    const { threads, entry } = setup(async () => result("ok"));
+    await threads.askWord(entry, { taskId: "word.usage" });
+    const th = threads.wordThread("e1") as Thread;
+    const [q, a] = th.turns;
+    const upserts: Thread[] = [];
+    threads.events.on("thread:upsert", (x) => upserts.push(x));
+
+    await threads.deleteTurnPair(th.id, q.id);
+
+    expect(q.deletedAt).toBeDefined();
+    expect(a.deletedAt).toBeDefined();
+    expect(q.updatedAt).toBeDefined();
+    expect(a.updatedAt).toBeDefined();
+    // The thread itself isn't tombstoned — only its two turns are — so
+    // it still shows up, just with no live turns left.
+    expect(threads.wordThread("e1")?.id).toBe(th.id);
+    expect(threads.get(th.id)?.turns.filter((t) => !t.deletedAt)).toHaveLength(0);
+    expect(threads.wordQuestionCount("e1")).toBe(0);
+    expect(upserts).toHaveLength(1);
+  });
+
+  it("accepts the answer's id too, and restore brings the pair back", async () => {
+    const { threads, entry } = setup(async () => result("ok"));
+    await threads.askWord(entry, { taskId: "word.usage" });
+    const th = threads.wordThread("e1") as Thread;
+    const [q, a] = th.turns;
+
+    await threads.deleteTurnPair(th.id, a.id);
+    expect(q.deletedAt).toBeDefined();
+
+    await threads.restoreTurnPair(th.id, q.id);
+    expect(q.deletedAt).toBeUndefined();
+    expect(a.deletedAt).toBeUndefined();
+    expect(threads.wordQuestionCount("e1")).toBe(1);
+  });
+
+  it("deletes a question with no answer (or one a retry already tombstoned) by itself", async () => {
+    let fail = true;
+    const { threads, entry } = setup(async () => {
+      if (fail) throw new AiError("overloaded");
+      return result("ok");
+    });
+    await threads.askWord(entry, { taskId: "word.custom", question: "why?" });
+    fail = false;
+    const th = threads.wordThread("e1") as Thread;
+    const failedAnswer = th.turns[1].id;
+    await threads.retryWord(entry, failedAnswer); // tombstones round 1, asks round 2
+
+    const q2 = th.turns[2];
+    await threads.deleteTurnPair(th.id, q2.id);
+    expect(th.turns.filter((t) => !t.deletedAt)).toHaveLength(0);
+  });
+
+  it("removes a pinned answer from the grammar note on delete, and puts it back on restore", async () => {
+    const { threads, entry } = setup(async () => result("**亮片感**的形容詞"));
+    entry.grammar = "形容詞";
+    await threads.askWord(entry, { taskId: "word.usage" });
+    const th = threads.wordThread("e1") as Thread;
+    const [q, a] = th.turns;
+    await threads.setPinned(entry, a.id, true);
+    expect(entry.grammar).toBe("形容詞\n\n**亮片感**的形容詞");
+
+    await threads.deleteTurnPair(th.id, q.id);
+    expect(entry.grammar).toBe("形容詞");
+    expect(a.pinnedToGrammar).toBe(true); // flag stays — restore knows to re-add it
+
+    await threads.restoreTurnPair(th.id, q.id);
+    expect(entry.grammar).toBe("形容詞\n\n**亮片感**的形容詞");
+  });
+
+  it("is a no-op for an unknown thread, an unknown turn, or restoring a pair that isn't deleted", async () => {
+    const { threads, entry } = setup(async () => result("ok"));
+    await threads.askWord(entry, { taskId: "word.usage" });
+    const th = threads.wordThread("e1") as Thread;
+    const upserts: Thread[] = [];
+    threads.events.on("thread:upsert", (x) => upserts.push(x));
+
+    await threads.deleteTurnPair("nope", th.turns[0].id);
+    await threads.deleteTurnPair(th.id, "nope");
+    await threads.restoreTurnPair(th.id, th.turns[0].id); // not deleted yet
+    expect(upserts).toHaveLength(0);
+  });
+
+  it("leaves the still-streaming pair alone", async () => {
+    const { threads, entry } = setup(() => new Promise(() => {}));
+    void threads.askWord(entry, { taskId: "word.usage" });
+    await new Promise((r) => setTimeout(r, 0));
+    const th = threads.wordThread("e1") as Thread;
+    const [q] = th.turns;
+
+    await threads.deleteTurnPair(th.id, q.id);
+    expect(q.deletedAt).toBeUndefined();
+  });
+
+  it("persists the tombstone and survives a reload", async () => {
+    const { threads, storage, store, ai, entry } = setup(async () => result("ok"));
+    await threads.askWord(entry, { taskId: "word.usage" });
+    const th = threads.wordThread("e1") as Thread;
+    await threads.deleteTurnPair(th.id, th.turns[0].id);
+    await threads.flush();
+
+    const again = new ThreadService({ storage, store, ai, notes: { read: async () => null } });
+    await again.ensureLoaded();
+    expect(again.wordQuestionCount("e1")).toBe(0);
+    expect(again.get(th.id)?.turns.every((t) => t.deletedAt)).toBe(true);
+  });
+});
+
 describe("pin to grammar", () => {
   it("strips the scope line and appends / removes the answer", async () => {
     const { threads, entry } = setup(async () => result("你問的是：「I was wearing a glittery leotard.」\n\n**亮片感**的形容詞"));

@@ -1,5 +1,5 @@
 import { Component, MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
-import { t } from "../../core/i18n";
+import { getLocale, t } from "../../core/i18n";
 import { liveTurns, type Thread, type Turn } from "../../core/model/thread";
 import type { AiService } from "../../services/ai/AiService";
 import { AiError, type AiErrorCode } from "../../services/ai/errors";
@@ -8,7 +8,17 @@ import type { ThreadService } from "../../services/threads/ThreadService";
 import { aiErrorText, renderAiGate } from "../kit/aiState";
 import { bubble } from "../kit/bubble";
 import type { KitAction } from "../kit/emptyState";
+import { runUndoable } from "../kit/undoable";
 import type { SelectionTracker } from "./SelectionTracker";
+
+// 整合事項: "chat.action.delete" isn't in src/core/i18n/{zh-TW,en}.ts yet
+// (shared files this wave doesn't touch) — add it next to the other
+// chat.action.* keys ("刪除這組問答" / "Delete this Q&A") and switch
+// deleteQaLabel() below to t("chat.action.delete").
+const DELETE_QA_LABEL: Record<"zh-TW" | "en", string> = { "zh-TW": "刪除這組問答", en: "Delete this Q&A" };
+function deleteQaLabel(): string {
+  return DELETE_QA_LABEL[getLocale()] ?? DELETE_QA_LABEL.en;
+}
 
 // Discussion panel shared by word (A2, M4), paragraph (A1, M5) and trivia
 // (L7, M7) threads — 規劃書 06 §9.3, design D3/D4.
@@ -190,8 +200,18 @@ export class ChatPanel extends Component {
     if (!turns.length) {
       this.turnsEl.createDiv({ cls: "vt-chat-empty", text: t("chat.empty") });
     }
-    for (const turn of turns) {
-      this.turnsEl.appendChild(turn.role === "user" ? this.userBubble(turn) : this.answerBubble(turn));
+    for (let i = 0; i < turns.length; i++) {
+      const turn = turns[i];
+      if (turn.role !== "user") {
+        this.turnsEl.appendChild(this.answerBubble(turn));
+        continue;
+      }
+      // The pair this question starts is still streaming (or about to
+      // retry) when its answer is the very next turn and hasn't settled
+      // yet — not deletable until it does.
+      const next = turns[i + 1];
+      const pairBusy = !!next && next.role === "assistant" && next.status === "streaming";
+      this.turnsEl.appendChild(this.userBubble(turn, pairBusy));
     }
     this.updateBusy();
     if (this.scrollOnNextRender) {
@@ -200,14 +220,49 @@ export class ChatPanel extends Component {
     }
   }
 
-  private userBubble(turn: Turn): HTMLElement {
-    const el = bubble({ role: "user", text: turn.content });
+  // Delete sits on the question bubble rather than the answer's action
+  // bar (where pin/copy/retry live): that bar only exists for a finished
+  // answer, but a pair must stay deletable with no answer yet or a
+  // failed one too, and the question is the one part every pair always
+  // has (1006 #20). It's also the one action bar a user bubble gets, so
+  // it never competes with anything else for room.
+  private userBubble(turn: Turn, pairBusy: boolean): HTMLElement {
+    const actions: KitAction[] = pairBusy
+      ? []
+      : [{ label: deleteQaLabel(), icon: "trash-2", iconOnly: true, onClick: () => this.deleteTurnPair(turn) }];
+    const el = bubble({ role: "user", text: turn.content, actions });
     if (turn.selection) {
       const quote = createDiv({ cls: "vt-bubble-quote", text: turn.selection });
       quote.setAttr("aria-label", turn.selection);
       el.prepend(quote);
     }
     return el;
+  }
+
+  // 整組刪除 (1006 #20): no confirmation — apply the tombstone right
+  // away (the pair disappears as soon as the resulting "thread:upsert"
+  // repaints) and offer "復原" for a few seconds. deleteTurnPair /
+  // restoreTurnPair are async (they may await a grammar-note save), but
+  // their first await is on an already-settled ensureLoaded() — calling
+  // one without awaiting still runs its synchronous tombstone/untombstone
+  // work before the other can observe it, so apply-then-restore (even
+  // back to back) can't race.
+  private deleteTurnPair(turn: Turn): void {
+    const threadId = this.opts.threadId;
+    const threads = this.opts.threads;
+    runUndoable({
+      message: t("undo.deletedQa"),
+      apply: () => {
+        threads.deleteTurnPair(threadId, turn.id).catch((e) => console.error("Vocab Tracker: delete Q&A failed", e));
+      },
+      restore: () => {
+        threads.restoreTurnPair(threadId, turn.id).catch((e) => console.error("Vocab Tracker: restore Q&A failed", e));
+      },
+      // The tombstone deleteTurnPair wrote is already the final state on
+      // disk (same as dropFailedRound's retry tombstone) — nothing left
+      // to commit.
+      commit: () => {},
+    });
   }
 
   private answerBubble(turn: Turn): HTMLElement {

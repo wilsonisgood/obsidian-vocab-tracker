@@ -1,6 +1,6 @@
 import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
-import { liveTurns, wordThreadId, type Anchor, type Thread, type Turn } from "../../core/model/thread";
+import { findTurnPair, liveTurns, wordThreadId, type Anchor, type Thread, type Turn } from "../../core/model/thread";
 import type { NoteReaderPort, StoragePort } from "../../core/ports";
 import { mergeThreads, settleStaleTurns, threadsFingerprint } from "../../core/store/threads";
 import { TypedEmitter } from "../../core/events";
@@ -470,6 +470,90 @@ export class ThreadService {
     if (this.isBusy(threadId)) this.stop(threadId);
     thread.deletedAt = this.nowIso();
     this.changed(thread);
+  }
+
+  // 刪除一問一答 (1006 #20): tombstones the user turn and the assistant
+  // turn right after it — the same two-turn tombstone dropFailedRound
+  // uses for a retry, so a merge with another device treats it exactly
+  // like that one (deletedAt + a bumped updatedAt beats an older live
+  // copy, store/threads §4.3). `turnId` may name either half of the
+  // pair; a question with no answer yet (or one a retry already
+  // tombstoned) is tombstoned alone. If the answer had been pinned to
+  // the grammar note, the pinned text is removed too — restoreTurnPair
+  // puts it back.
+  //
+  // This still fires "thread:upsert" like every other edit here
+  // (dropFailedRound, setFeedback…) — it is not a new question. A
+  // listener that only cares about new questions (Y's auto-like) should
+  // compare the live user-turn count before vs. after
+  // (liveTurns(thread).filter(t => t.role === "user").length) rather
+  // than treat every upsert as one.
+  async deleteTurnPair(threadId: string, turnId: string): Promise<void> {
+    await this.ensureLoaded();
+    const thread = this.get(threadId);
+    if (!thread) return;
+    const pair = findTurnPair(liveTurns(thread), turnId);
+    if (!pair) return;
+    const active = this.active.get(threadId);
+    if (active && pair.assistant?.id === active.id) return; // still streaming — nothing to delete yet
+
+    const now = this.nowIso();
+    pair.user.deletedAt = now;
+    pair.user.updatedAt = now;
+    if (pair.assistant) {
+      pair.assistant.deletedAt = now;
+      pair.assistant.updatedAt = now;
+    }
+
+    const entry = pair.assistant?.pinnedToGrammar ? this.wordEntryOf(thread) : undefined;
+    if (entry && pair.assistant) {
+      const text = pinText(pair.assistant.content);
+      if (text) entry.grammar = removePin(entry.grammar ?? "", text);
+    }
+    this.changed(thread);
+    if (entry) await this.deps.store.touch(entry);
+  }
+
+  // 復原 (undo.deletedQa): clears the tombstone deleteTurnPair set.
+  // Bumping updatedAt — not just clearing deletedAt — matters for the
+  // merge: a copy of this pair still tombstoned on another, not-yet-
+  // synced device would otherwise look "just as new" as the restore, and
+  // on the next sync the tombstone could win back over the restore
+  // (store/threads.ts §4.3 — see its tests for the merge-direction check
+  // this depends on). If the pinned answer's text is still missing from
+  // the grammar note, it's added back (addPin is a no-op if the user has
+  // since edited it in by hand).
+  async restoreTurnPair(threadId: string, turnId: string): Promise<void> {
+    await this.ensureLoaded();
+    const thread = this.get(threadId);
+    if (!thread) return;
+    const pair = findTurnPair(thread.turns, turnId);
+    if (!pair?.user.deletedAt) return; // not actually deleted — nothing to undo
+
+    const now = this.nowIso();
+    delete pair.user.deletedAt;
+    pair.user.updatedAt = now;
+    if (pair.assistant) {
+      delete pair.assistant.deletedAt;
+      pair.assistant.updatedAt = now;
+    }
+
+    const entry = pair.assistant?.pinnedToGrammar ? this.wordEntryOf(thread) : undefined;
+    if (entry && pair.assistant) {
+      const text = pinText(pair.assistant.content);
+      if (text) entry.grammar = addPin(entry.grammar ?? "", text);
+    }
+    this.changed(thread);
+    if (entry) await this.deps.store.touch(entry);
+  }
+
+  // Shared by deleteTurnPair/restoreTurnPair: only word threads carry a
+  // VocabEntry to edit (anchor.kind === "word") — paragraph and trivia
+  // answers are never pinned, so there's nothing to look up there.
+  private wordEntryOf(thread: Thread): VocabEntry | undefined {
+    const { anchor } = thread;
+    if (anchor.kind !== "word") return undefined;
+    return this.deps.store.entries.find((e) => e.id === anchor.entryId);
   }
 
   private requireAnchors(): NonNullable<ThreadServiceDeps["anchors"]> {

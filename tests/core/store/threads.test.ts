@@ -51,6 +51,30 @@ describe("mergeTurns", () => {
     const dead = { ...live, deletedAt: "2026-10-02T00:00:00Z", updatedAt: "2026-10-02T00:00:00Z" };
     expect(mergeTurns([live], [dead])[0].deletedAt).toBeDefined();
   });
+
+  // restoreTurnPair's direction (1006 #20): a device that deleted a Q&A
+  // and then hit "復原" must win over another device that only ever saw
+  // the (now stale) tombstone — otherwise undo would get silently
+  // reverted by the next sync. This only holds because restoreTurnPair
+  // bumps updatedAt past the tombstone's own stamp; mergeTurns itself
+  // just picks whichever copy has the newer stamp.
+  it("keeps a restore that is newer than the tombstone it undoes", () => {
+    const deletedAt = "2026-10-02T00:00:00Z";
+    const dead = turn("x", "2026-10-01T10:00:00Z", { deletedAt, updatedAt: deletedAt });
+    const restored = { ...turn("x", "2026-10-01T10:00:00Z"), updatedAt: "2026-10-02T00:00:05Z" };
+    expect(mergeTurns([dead], [restored])[0].deletedAt).toBeUndefined();
+    expect(mergeTurns([restored], [dead])[0].deletedAt).toBeUndefined();
+  });
+
+  // The mirror image: a device that hasn't synced the restore yet must
+  // not win just because it tombstoned first — staleness, not which side
+  // of the delete it's on, decides.
+  it("still prefers the tombstone when it is the newer edit", () => {
+    const restored = { ...turn("x", "2026-10-01T10:00:00Z"), updatedAt: "2026-10-01T11:00:00Z" };
+    const deletedAt = "2026-10-01T12:00:00Z";
+    const dead = turn("x", "2026-10-01T10:00:00Z", { deletedAt, updatedAt: deletedAt });
+    expect(mergeTurns([restored], [dead])[0].deletedAt).toBe(deletedAt);
+  });
 });
 
 describe("mergeThreads", () => {
