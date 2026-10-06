@@ -4,6 +4,12 @@
 // mode's `ctx.getSectionInfo(el)` covers. Used to find an anchor's
 // paragraph again (規劃書 06 §5.1); the metadataCache itself isn't used
 // because it lags behind a `vault.process` write.
+//
+// A long list (§5.1 feedback — core/text/listItems.ts) splits into one
+// "list" section per top-level item instead of staying one block, so a
+// discussion anchors to a single item, not everything under its heading.
+
+import { LIST_MARKER_RE, listItemOwnEndIndex, shouldSplitList, splitListItems } from "../../core/text/listItems";
 
 export type SectionType = "paragraph" | "list" | "blockquote" | "callout" | "heading" | "code" | "table" | "thematicBreak";
 
@@ -25,7 +31,7 @@ export function isAnchorable(type: SectionType | string): boolean {
 
 const FENCE_RE = /^\s*(`{3,}|~{3,})/;
 const HEADING_RE = /^#{1,6}(\s|$)/;
-const LIST_RE = /^\s*([-*+]|\d+[.)])\s/;
+const LIST_RE = LIST_MARKER_RE;
 const BREAK_RE = /^\s*([-*_])(\s*\1){2,}\s*$/;
 
 function classify(lines: string[]): SectionType {
@@ -51,7 +57,12 @@ export function noteSections(markdown: string): NoteSection[] {
   const flush = (end: number) => {
     if (start < 0) return;
     const block = lines.slice(start, end + 1);
-    out.push({ type: classify(block), lineStart: start, lineEnd: end, text: block.join("\n") });
+    const type = classify(block);
+    if (type === "list" && shouldSplitList(block)) {
+      for (const item of splitListItems(block, start)) out.push({ type: "list", ...item });
+    } else {
+      out.push({ type, lineStart: start, lineEnd: end, text: block.join("\n") });
+    }
     start = -1;
   };
 
@@ -91,4 +102,43 @@ export function sectionText(markdown: string, lineStart: number, lineEnd: number
 
 export function sectionAt(sections: readonly NoteSection[], line: number): NoteSection | undefined {
   return sections.find((s) => line >= s.lineStart && line <= s.lineEnd);
+}
+
+// Where a list item's own `^id` belongs, and the text to check for one it
+// already has: the item's own leading line(s), never a nested sub-item
+// under it (listItemOwnEndIndex — §5.1 feedback point 3). Any other
+// section type keeps using its last line, as before.
+export function ownBlockIdLine(section: Pick<NoteSection, "type" | "text" | "lineStart" | "lineEnd">): number {
+  if (section.type !== "list") return section.lineEnd;
+  return section.lineStart + listItemOwnEndIndex(section.text.split("\n"));
+}
+
+export function ownBlockIdText(section: Pick<NoteSection, "type" | "text" | "lineStart">): string {
+  if (section.type !== "list") return section.text;
+  const lines = section.text.split("\n");
+  return lines.slice(0, listItemOwnEndIndex(lines) + 1).join("\n");
+}
+
+// Groups adjacent "list" sections that are contiguous in the note (no gap
+// between one item's lineEnd and the next item's lineStart) back into the
+// single block they were split from — the shape a pre-split discussion's
+// anchor (block id or hash) was made against. Compatibility fallback for
+// §5.1 feedback point 5: a hash anchor made when a long list was still one
+// section no longer matches any single post-split item, so a lookup falls
+// back to this before giving up on the paragraph. Each group is reported
+// against its first item (`對到 list 的第一個...項`, not "missing-paragraph").
+export function mergedListSections(sections: readonly NoteSection[]): { section: NoteSection; text: string }[] {
+  const out: { section: NoteSection; text: string }[] = [];
+  let i = 0;
+  while (i < sections.length) {
+    if (sections[i].type !== "list") {
+      i++;
+      continue;
+    }
+    let j = i;
+    while (j + 1 < sections.length && sections[j + 1].type === "list" && sections[j + 1].lineStart === sections[j].lineEnd + 1) j++;
+    if (j > i) out.push({ section: sections[i], text: sections.slice(i, j + 1).map((s) => s.text).join("\n") });
+    i = j + 1;
+  }
+  return out;
 }

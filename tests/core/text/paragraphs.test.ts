@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { paragraphAtLine, plainParagraph, splitParagraphSpans } from "../../../src/core/text/paragraphs";
+import { TAYLOR_SWIFT_EXCERPT } from "../../fixtures/taylorSwiftExcerpt";
 
 const NOTE = [
   "---", // 0
@@ -46,5 +47,30 @@ describe("paragraphAtLine", () => {
 describe("plainParagraph", () => {
   it("drops highlight marks and a trailing block id", () => {
     expect(plainParagraph("I was wearing a ==glittery== leotard. ^vt-abc123")).toBe("I was wearing a glittery leotard.");
+  });
+});
+
+describe("splitParagraphSpans — heading separation and long-list splitting (§5.1 feedback)", () => {
+  it("doesn't merge a heading into the list right under it (no blank line between)", () => {
+    const note = "### 1. 開場與感謝\n* item one\n* item two";
+    const spans = splitParagraphSpans(note);
+    expect(spans[0]).toMatchObject({ text: "### 1. 開場與感謝", lineStart: 0, lineEnd: 0 });
+    expect(spans[1].text).not.toContain("開場與感謝");
+  });
+
+  it("matches noteSections exactly on the Taylor Swift excerpt: heading alone, each long item its own span, the short opener merged", () => {
+    const spans = splitParagraphSpans(TAYLOR_SWIFT_EXCERPT);
+    const heading1 = spans.find((s) => s.lineStart === 10);
+    expect(heading1).toMatchObject({ text: "### 1. 開場與感謝 (Introduction & ==Acknowledgments==)", lineStart: 10, lineEnd: 10 });
+
+    const items = spans.filter((s) => s.lineStart >= 11 && s.lineStart <= 13);
+    expect(items.map((s) => [s.lineStart, s.lineEnd])).toEqual([
+      [11, 11],
+      [12, 12],
+      [13, 13],
+    ]);
+
+    const opener = spans.find((s) => s.lineStart === 6);
+    expect(opener).toMatchObject({ lineStart: 6, lineEnd: 8 });
   });
 });

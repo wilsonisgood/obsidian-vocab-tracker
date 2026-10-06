@@ -3,7 +3,7 @@ import { findBlockLine } from "../../../src/core/text/blockId";
 import { normalizeParagraph, paragraphHash } from "../../../src/core/text/hash";
 import { resolveIn, type AnchorResolution, type ParagraphAnchor } from "../../../src/services/anchors/ParagraphAnchorService";
 import { noteIndex } from "../../../src/services/anchors/noteIndex";
-import { isAnchorable, noteSections, sectionAt } from "../../../src/services/anchors/sections";
+import { isAnchorable, mergedListSections, noteSections, sectionAt } from "../../../src/services/anchors/sections";
 import { buildStressFixture } from "../../fixtures/stress";
 
 // resolveIn now shares one index per note text (M8 perf, task K). It must
@@ -25,6 +25,8 @@ function reference(content: string, anchor: ParagraphAnchor): AnchorResolution {
   }
   const bySnapshot = sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === anchor.hash);
   if (bySnapshot) return found("hash", bySnapshot);
+  const byGroup = mergedListSections(sections).find((g) => paragraphHash(g.text) === anchor.hash);
+  if (byGroup) return found("hash", byGroup.section);
   return { status: "orphan", reason: "missing-paragraph" };
 }
 
@@ -61,6 +63,15 @@ describe("resolveIn with the shared note index", () => {
     expect(resolveIn("Hello. ^vt-aaaaaa", anchor)).toMatchObject({ status: "found", via: "blockId" });
     expect(resolveIn("Intro.\n\nHello.", anchor)).toMatchObject({ status: "found", via: "hash", section: { lineStart: 2 } });
     expect(resolveIn("Bye.", anchor)).toEqual({ status: "orphan", reason: "missing-paragraph" });
+  });
+
+  it("falls back to a merged list group's hash when an old whole-list anchor no longer matches any single item (§5.1 feedback point 5)", () => {
+    const items = [`* ${"a".repeat(130)}`, `* ${"b".repeat(130)}`, `* ${"c".repeat(130)}`];
+    const content = ["# Speech", "", ...items].join("\n");
+    const anchor: ParagraphAnchor = { kind: "paragraph", path: "a.md", hash: paragraphHash(items.join("\n")), snapshot: items.join("\n") };
+    expect(resolveIn(content, anchor)).toEqual(reference(content, anchor));
+    const r = resolveIn(content, anchor);
+    expect(r).toMatchObject({ status: "found", via: "hash", section: { lineStart: 2 } });
   });
 
   it("hands out copies, so a caller can't change the shared index", () => {
