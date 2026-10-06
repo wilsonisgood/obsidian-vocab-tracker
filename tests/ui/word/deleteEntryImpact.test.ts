@@ -31,7 +31,7 @@ describe("deletionImpactLines", () => {
     expect(lines).toEqual([
       "在 2 個字族裡（文字會保留，之後可再加回）",
       "被 1 則冷知識提及",
-      "已收藏動詞用法",
+      "已收藏用法",
       "有單字頁",
       "單字頁有 5 則討論",
     ]);
@@ -39,6 +39,6 @@ describe("deletionImpactLines", () => {
 
   it("skips zero counts and false flags individually", () => {
     expect(deletionImpactLines(impact({ families: 1 }))).toEqual(["在 1 個字族裡（文字會保留，之後可再加回）"]);
-    expect(deletionImpactLines(impact({ verbFavorite: true }))).toEqual(["已收藏動詞用法"]);
+    expect(deletionImpactLines(impact({ verbFavorite: true }))).toEqual(["已收藏用法"]);
   });
 });

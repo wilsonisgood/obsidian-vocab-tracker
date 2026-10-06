@@ -46,20 +46,6 @@ function l(key: FavoriteKey, path?: string): string {
   return path === undefined ? t(`learn.verb.${key}`) : t(`learn.verb.${key}`, { path });
 }
 
-// 1006-2 #22 — 總表不再只列動詞，下面這些字串還沒接上 core/i18n（整合事
-// 項：改寫 src/core/i18n/{zh-TW,en}.ts 既有的 "learn.verb.*" key，見檔尾
-// 清單），先用暫時的 const（locateWord.ts 已有這個先例）。
-const L = {
-  count: (n: number) => `已產生用法（${n}）`,
-  filter: "篩選…",
-  noMatch: "沒有符合的字",
-  noneTitle: "還沒有字產生過用法",
-  noneBody: "在單字卡的「用法」按下「產生」，就會出現在這裡。",
-  emptyTitle: (word: string) => `還沒有 ${word} 的用法`,
-  emptyBody: "讓 AI 整理常見句型、例句和相近說法。產生一次就會存起來，每個詞性可以分開重新產生。",
-  hasUsage: "已產生用法",
-};
-
 // 「n. v. adj. adv. …」 — language-neutral, same abbreviation regardless of
 // the plugin's locale (1006-2 #22).
 const POS_ABBR: Record<PosKey, string> = {
@@ -176,7 +162,7 @@ class VerbsBlock extends MarkdownRenderChild {
     const search = side.createDiv({ cls: "vt-verbs-search" });
     setIcon(search.createSpan({ cls: "vt-verbs-search-icon" }), "search");
     const input = search.createEl("input", { cls: "vt-verbs-filter", type: "search" });
-    input.placeholder = L.filter;
+    input.placeholder = t("learn.verb.filter");
     input.addEventListener("input", () => {
       this.query = input.value;
       this.render();
@@ -223,11 +209,11 @@ class VerbsBlock extends MarkdownRenderChild {
     this.selectedId = pickVerb(shown, this.selectedId);
     this.root.toggleClass("is-empty", !learned.length);
 
-    if (this.countEl) this.countEl.setText(L.count(learned.length));
+    if (this.countEl) this.countEl.setText(t("learn.verb.count", { n: learned.length }));
     const list = this.listEl;
     if (list) {
       list.empty();
-      if (learned.length && !shown.length) list.createDiv({ cls: "vt-verbs-nomatch", text: L.noMatch });
+      if (learned.length && !shown.length) list.createDiv({ cls: "vt-verbs-nomatch", text: t("learn.verb.noMatch") });
       for (const e of shown) {
         const row = list.createEl("button", { cls: "vt-verbs-row" });
         row.toggleClass("is-active", e.id === this.selectedId);
@@ -241,7 +227,7 @@ class VerbsBlock extends MarkdownRenderChild {
         } else {
           const icon = row.createSpan({ cls: "vt-verbs-row-icon" });
           setIcon(icon, "check");
-          icon.setAttr("aria-label", L.hasUsage);
+          icon.setAttr("aria-label", t("learn.verb.hasUsage"));
         }
         row.addEventListener("click", () => {
           this.selectedId = e.id;
@@ -252,7 +238,7 @@ class VerbsBlock extends MarkdownRenderChild {
 
     this.detailEl.empty();
     if (!learned.length) {
-      this.detailEl.appendChild(emptyState({ icon: "list", title: L.noneTitle, body: L.noneBody }));
+      this.detailEl.appendChild(emptyState({ icon: "list", title: t("learn.verb.none.title"), body: t("learn.verb.none.body") }));
       return;
     }
     const selected = shown.find((e) => e.id === this.selectedId);
@@ -320,8 +306,8 @@ class VerbsBlock extends MarkdownRenderChild {
     el.appendChild(
       emptyState({
         icon: "sparkles",
-        title: L.emptyTitle(e.word),
-        body: L.emptyBody,
+        title: t("learn.verb.empty.title", { word: e.word }),
+        body: t("learn.verb.empty.body"),
         action: { label: t("learn.verb.generate"), icon: "sparkles", onClick: () => void this.generate(e) },
       })
     );
