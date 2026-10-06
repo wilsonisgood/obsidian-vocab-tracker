@@ -71,8 +71,13 @@ export function renderVocabRow(
   const due = plugin.srs.nextDue(entry);
   row.toggleClass("is-expanded", state !== "collapsed");
 
+  // Every delete entry point (the row's ✕, the iPhone sheet's 🗑) goes
+  // through plugin.confirmDeleteEntry: it shows what the word is linked to
+  // (families, saved trivia, verb favorite, word page, discussion) and
+  // only deletes — and unlinks those — once the learner confirms.
   const remove = async () => {
-    await plugin.deleteEntry(entry);
+    const deleted = await plugin.confirmDeleteEntry(entry);
+    if (!deleted) return;
     opts.onDeleted?.(entry);
     refresh();
   };
@@ -285,23 +290,13 @@ export function renderVocabRow(
   };
 
   if (sheet) {
-    // 🔊 is in the header already; delete asks for a second tap.
+    // 🔊 is in the header already; the confirm dialog itself (remove())
+    // is the safeguard against an accidental tap, so no second-tap arming
+    // is needed here any more.
     const del = footerBtn(actions, "trash-2", t("row.delete"));
     del.addClass("vt-sheet-delete");
-    let armed = false;
     del.onclick = async (e) => {
       e.stopPropagation();
-      if (!armed) {
-        armed = true;
-        del.addClass("mod-warning");
-        del.setAttr("aria-label", t("mobile.row.confirmDelete"));
-        window.setTimeout(() => {
-          armed = false;
-          del.removeClass("mod-warning");
-          del.setAttr("aria-label", t("row.delete"));
-        }, 3000);
-        return;
-      }
       await remove();
     };
   } else {

@@ -116,6 +116,9 @@
 .vt-restore ul { padding-inline-start: 1.2em; }
 .vt-restore h4 { margin: 1em 0 0.3em; }
 
+/* 刪除單字前的確認視窗 (DeleteEntryModal) */
+.vt-delete-entry-impact { padding-inline-start: 1.2em; }
+
 /* 🔊 pronounce buttons (ui/kit/pronounce.ts, 1005 回饋第 12 項):
    a spinning ring while the recording / system voice gets ready, accent
    colour while it speaks. */

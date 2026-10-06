@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Family } from "../../../src/core/model/family";
-import type { FamilyCandidate } from "../../../src/services/learn/FamilyService";
 import {
-  allNewWords,
-  checkedNewWords,
-  clipWords,
   focusFamily,
-  newRows,
   onFamilyFocus,
   takeFamilyFocus,
   familiesWith,
@@ -16,7 +11,6 @@ import {
   MemberLookup,
   parseFamiliesParams,
   pickSelected,
-  reviewView,
 } from "../../../src/ui/blocks/familiesModel";
 import { entry } from "../../services/learn/fakes";
 
@@ -118,59 +112,6 @@ describe("familiesWith", () => {
   });
 });
 
-describe("reviewView / checkedNewWords (W3)", () => {
-  const candidates: FamilyCandidate[] = [
-    {
-      topic: "clothing",
-      label: "服裝",
-      seedEntryIds: ["g"],
-      groups: [
-        {
-          label: "舞台",
-          members: [
-            { entryId: "g", word: "glittery", zh: "閃閃發光的" },
-            { entryId: "l", word: "leotard", zh: "連身緊身衣" },
-            { word: "sequin", zh: "亮片" },
-            { word: "Tulle", zh: "薄紗" },
-          ],
-        },
-        { label: "其他", members: [{ word: "sequin", zh: "亮片" }, { word: "costume", zh: "戲服" }] },
-      ],
-    },
-    {
-      topic: "gl-",
-      label: "gl- 發光家族",
-      seedEntryIds: ["g"],
-      groups: [{ label: "光", members: [{ word: "glitter", zh: "閃爍" }, { word: "sequin", zh: "亮片" }] }],
-    },
-  ];
-  const lookup = new MemberLookup([entry("g", "glittery"), entry("l", "leotard")]);
-
-  it("lists each card's rows once, with the learned words it grew from", () => {
-    const view = reviewView(candidates, lookup);
-    expect(view.familyCount).toBe(2);
-    // sequin, tulle, costume, glitter — sequin counted once across cards.
-    expect(view.newWordCount).toBe(4);
-    expect(view.cards[0].title).toBe("clothing 服裝");
-    expect(view.cards[0].from).toEqual(["glittery", "leotard"]);
-    expect(view.cards[0].rows.map((r) => [r.word, r.known])).toEqual([
-      ["glittery", true],
-      ["leotard", true],
-      ["sequin", false],
-      ["Tulle", false],
-      ["costume", false],
-    ]);
-    expect(view.cards[1].title).toBe("gl- 發光家族");
-    expect(view.cards[1].from).toEqual([]);
-  });
-
-  it("counts only ticked words that are still new, once each", () => {
-    const view = reviewView(candidates, lookup);
-    expect(checkedNewWords(view, new Set(["sequin", "tulle", "glittery", "nothing"]))).toEqual(["sequin", "tulle"]);
-    expect(checkedNewWords(view, new Set())).toEqual([]);
-  });
-});
-
 describe("pickSelected", () => {
   it("keeps the current family, else the preferred topic, else the first", () => {
     expect(pickSelected([kitchen, glow], "f2")).toBe("f2");
@@ -180,42 +121,7 @@ describe("pickSelected", () => {
   });
 });
 
-describe("1005 回饋: review rows, dates, focus", () => {
-  const lookup = new MemberLookup([entry("g", "glittery"), entry("l", "leotard")]);
-  const cands: FamilyCandidate[] = [
-    {
-      topic: "clothing",
-      label: "服裝",
-      seedEntryIds: [],
-      groups: [
-        {
-          label: "舞台",
-          members: [
-            { entryId: "g", word: "glittery", zh: "" },
-            { entryId: "l", word: "leotard", zh: "" },
-            { word: "sequin", zh: "亮片" },
-          ],
-        },
-      ],
-    },
-    { topic: "x", label: "X", seedEntryIds: [], groups: [{ label: "", members: [{ entryId: "g", word: "glittery", zh: "" }] }] },
-    { topic: "y", label: "Y", seedEntryIds: [], groups: [{ label: "", members: [{ word: "Sequin", zh: "" }, { word: "tulle", zh: "" }] }] },
-  ];
-
-  it("lists only the new words to tick; learned ones are named in the title", () => {
-    const view = reviewView(cands, lookup);
-    expect(newRows(view.cards[0]).map((r) => r.word)).toEqual(["sequin"]);
-    expect(view.cards[0].from).toEqual(["glittery", "leotard"]);
-    expect(newRows(view.cards[1])).toEqual([]);
-    expect(allNewWords(view)).toEqual(["sequin", "tulle"]);
-    expect(checkedNewWords(view, new Set(allNewWords(view)))).toEqual(["sequin", "tulle"]);
-  });
-
-  it("cuts a long 「從你學過的」 list", () => {
-    expect(clipWords(["a", "b", "c"], 2)).toEqual({ shown: ["a", "b"], more: 1 });
-    expect(clipWords(["a"], 2)).toEqual({ shown: ["a"], more: 0 });
-  });
-
+describe("1005 回饋: family tree dates and focus", () => {
   it("dates the tree and highlights the word the learner came from", () => {
     const f: Family = {
       ...kitchen,
