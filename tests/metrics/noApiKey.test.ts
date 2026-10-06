@@ -77,11 +77,15 @@ describe.each([
     }
     const view = await openSidebar(b, "all");
     const entry = isListedEntry((e) => !!e.antonyms && !!e.source);
-    view.expandState.set(entry.id, "full");
+    // 1006-2 #10/#12: a sidebar row can only reach "half" now (顯示更多/底部
+    // 收合 are gone) and only shows 英文定義／中文翻译 — the rest (incl.
+    // antonyms/source) moved to the word page, so this only checks those
+    // two fields render without an API key, not the now-removed full set.
+    view.expandState.set(entry.id, "half");
     view.render();
     await flush();
     const row = rootOf(view).querySelector(`.vt-row[data-entry-id="${entry.id}"]`)!;
-    expect(row.querySelectorAll(".vt-field").length).toBeGreaterThanOrEqual(5);
+    expect(row.querySelectorAll(".vt-field").length).toBe(2);
     closeSidebar(b, view);
   });
 

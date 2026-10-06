@@ -395,24 +395,26 @@ describe("文法 (Wave 6 W: 動詞用法 subsection)", () => {
   });
 });
 
-describe("row meta (1006report.md 定案規格 #18)", () => {
-  it("half and full both show only 複習時間 — 加入/更新/下次複習 moved to the word page", async () => {
+describe("row meta (1006report.md 定案規格 #18, 1006-2 #10/#12)", () => {
+  it("a sidebar row has no 加入/更新/下次複習/複習時間 — all moved to the word page, and 'full' no longer reaches anything more", async () => {
     const v = await open("note");
     const id = rowIds(root(v))[0];
-    const entry = byId(id);
 
     v.expandState.set(id, "half");
     v.render();
     const rowHalf = root(v).querySelector(`.vt-row[data-entry-id="${id}"]`)!;
     expect(rowHalf.querySelector(".vt-row-dates")).toBeNull();
     expect(rowHalf.querySelector(".vt-row-updated")).toBeNull();
-    expect(rowHalf.textContent).toContain(t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }));
+    // 複習時間 (#18) moved off the row entirely now too (#12) — unlike
+    // 1006report.md's #18, there's no 「vt-meta」 line left on the row at
+    // all, half or (nominally) full.
+    expect(rowHalf.querySelector(".vt-meta")).toBeNull();
 
+    // A stale persisted "full" (e.g. from before #10) renders exactly the
+    // same as "half" — a sidebar row has no way to reach anything more.
     v.expandState.set(id, "full");
     v.render();
     const rowFull = root(v).querySelector(`.vt-row[data-entry-id="${id}"]`)!;
-    expect(rowFull.querySelector(".vt-row-dates")).toBeNull();
-    expect(rowFull.querySelector(".vt-row-updated")).toBeNull();
-    expect(rowFull.textContent).toContain(t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }));
+    expect(rowFull.innerHTML).toBe(rowHalf.innerHTML);
   });
 });
