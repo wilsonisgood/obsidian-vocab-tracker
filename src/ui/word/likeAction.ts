@@ -42,6 +42,14 @@ export function unlikeEntry(plugin: VocabTrackerPlugin, entry: VocabEntry): bool
     },
     restore: () => {
       void plugin.store.restoreEntry(id);
+      // 1006-2 #3: the row this undo brings back was already removed from
+      // the sidebar's DOM (handleWordRowChanged/removeWordRow ran when it
+      // got deleted) — nothing else redraws the 單字 section on a bare
+      // restoreEntry(), so without this the row stays missing until some
+      // unrelated redraw happens. refreshExamStrip() is the sidebar's
+      // existing "re-filter without a full render()" hook (chip toggles,
+      // 本篇 scope resolving); scroll position is untouched the same way.
+      plugin.refreshExamStrip();
     },
     commit: () => {
       plugin.linkage.unlink(id);

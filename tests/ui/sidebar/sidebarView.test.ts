@@ -9,8 +9,8 @@ import { discussionRows } from "../../../src/ui/sidebar/discussionRows";
 import { verbUsageRows } from "../../../src/ui/sidebar/grammarRows";
 import { computeNoteScope } from "../../../src/ui/sidebar/noteScope";
 import { SECTIONS_STORAGE_KEY } from "../../../src/ui/sidebar/sections";
-import { isListed, type IsListedContext } from "../../../src/core/model/like";
-import { resolveWordlistSettings, tagEnabled } from "../../../src/core/model/wordlists";
+import { hasExamTag, isListed, type IsListedContext } from "../../../src/core/model/like";
+import { likeChipOn, resolveWordlistSettings, tagEnabled } from "../../../src/core/model/wordlists";
 import { t } from "../../../src/core/i18n";
 import { entryRecency, groupOf } from "../../../src/ui/word/wordOrder";
 import { buildStressFixture } from "../../fixtures/stress";
@@ -39,6 +39,7 @@ function isListedCtx(): IsListedContext {
   return {
     knownTags,
     isTagOn: (tag) => tagEnabled(resolveWordlistSettings(b.plugin.store.settings.wordlists), tag),
+    likeOn: likeChipOn(resolveWordlistSettings(b.plugin.store.settings.wordlists)),
   };
 }
 
@@ -392,6 +393,32 @@ describe("文法 (Wave 6 W: 動詞用法 subsection)", () => {
     expect(root(v).querySelector('.vt-sb-section[data-section="grammar"] .vt-sb-section-title')!.textContent).toBe(
       t("sidebar.section.grammar", { n })
     );
+  });
+});
+
+// Wave 8 S (1006-2 #2): 本篇 scope's cache was keyed on path+mtime alone, so
+// a word added/liked after the cache was built (without the note's mtime
+// changing) stayed invisible forever — the sidebar now invalidates it on
+// any store "data:changed".
+describe("本篇 scope cache invalidation (1006-2 #2)", () => {
+  it("a word liked while the sidebar is open appears in 本篇 without a note edit or a manual re-render", async () => {
+    const v = await open("note");
+    const before = new Set(rowIds(root(v)));
+    // An existing word sourced from this note that isn't currently listed
+    // (no exam tag, not liked) — its text is already in the article (the
+    // fixture marks every article-sourced word in the note itself), so
+    // liking it should make 本篇's own text-matching recognise it too.
+    const knownTags = b.plugin.wordlists.index.tags;
+    const candidate = entries().find(
+      (e) => e.source?.path === fx.article.path && !e.liked && !hasExamTag(e, knownTags)
+    )!;
+    expect(candidate).toBeTruthy();
+    expect(before.has(candidate.id)).toBe(false);
+
+    await b.plugin.store.setLiked(candidate, true);
+    // No v.render()/v.draw() call here on purpose — only the data:changed
+    // listener's cache invalidation + refreshFiltered() should surface it.
+    expect(root(v).querySelector(`.vt-row[data-entry-id="${candidate.id}"]`)).not.toBeNull();
   });
 });
 

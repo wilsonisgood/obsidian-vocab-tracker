@@ -275,6 +275,7 @@ describe("resolveWordlistSettings", () => {
       inflections: true,
       autoImport: true,
       tags: {},
+      likeEnabled: true, // 1006-2 #4
     });
     expect(resolveWordlistSettings({ folder: "/lists/exams/" }).folder).toBe("lists/exams");
     expect(resolveWordlistSettings({ folder: "  " }).folder).toBe("vocab-wordlists");

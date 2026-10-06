@@ -4,7 +4,7 @@ vi.mock("obsidian", () => import("../../perf/support/obsidian"));
 
 import type { Component } from "../../perf/support/obsidian";
 import { isListed, type IsListedContext } from "../../../src/core/model/like";
-import { resolveWordlistSettings, tagEnabled } from "../../../src/core/model/wordlists";
+import { likeChipOn, resolveWordlistSettings, tagEnabled } from "../../../src/core/model/wordlists";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import { buildStressFixture } from "../../fixtures/stress";
 import type { FakeElement } from "../../perf/support/dom";
@@ -29,6 +29,7 @@ function isListedCtx(): IsListedContext {
   return {
     knownTags,
     isTagOn: (tag) => tagEnabled(resolveWordlistSettings(b.plugin.store.settings.wordlists), tag),
+    likeOn: likeChipOn(resolveWordlistSettings(b.plugin.store.settings.wordlists)),
   };
 }
 
@@ -78,26 +79,41 @@ describe("vocab-dashboard (1006report.md #26)", () => {
     expect(pill.textContent).toContain(String(expected.length));
   });
 
-  it("「只看 Like」 narrows the list to liked === true", () => {
-    const likedIds = new Set(listedEntries().slice(0, 3).map((e) => e.id));
-    // The stress fixture bakes `liked` from real usage/review signals
-    // (Wave 7 Y, 1006 #23), so most entries already come up liked — this
-    // only tests the toggle's own filtering, so flip every entry to
-    // unliked first and restore the original values after.
-    const original = new Map(b.plugin.store.entries.map((e) => [e.id, e.liked]));
-    for (const e of b.plugin.store.entries) e.liked = likedIds.has(e.id);
+  // 1006-2 #6: the dashboard-local 「只看 Like」 switch is gone — the Like
+  // chip (part of the same shared chip row the sidebar uses, #5) does its
+  // job now, through the shared WordlistSettings.likeEnabled setting. This
+  // only checks the wiring (click → setting → re-filtered render) — the
+  // filter's own logic (liked-but-no-tag hidden, tag-driven words kept) is
+  // isListed()'s job and is covered by tests/core/model/like.test.ts.
+  it("the shared Like chip narrows the list via isListed's likeOn (replaces 1006 #26's 「只看 Like」)", () => {
+    const likeEnabledBefore = b.plugin.store.settings.wordlists?.likeEnabled;
     try {
-      const el = render();
-      expect(el.querySelector(".vt-dash-like-toggle")!.getAttribute("aria-pressed")).toBe("false");
-      // drawStats() rebuilds the toggle on every click, so re-query rather
-      // than reuse the (now detached) element clicked.
-      el.querySelector(".vt-dash-like-toggle")!.click();
-      expect(el.querySelector(".vt-dash-like-toggle")!.getAttribute("aria-pressed")).toBe("true");
-      const rows = el.querySelectorAll(".vt-row");
-      expect(rows.length).toBe(likedIds.size);
-      expect(rows.every((r) => likedIds.has(r.getAttribute("data-entry-id")!))).toBe(true);
+      const before = render();
+      expect(before.querySelector(".vt-exam-chip-like")!.classList.contains("is-off")).toBe(false);
+      before.querySelector(".vt-exam-chip-like")!.click();
+      // Clicking writes WordlistSettings.likeEnabled synchronously (same
+      // tick); in real Obsidian, the resulting rerenderReadingViews() is
+      // what re-runs this code block — this harness has no workspace
+      // leaves to rerender, so a fresh render() stands in for that.
+      const after = render();
+      expect(after.querySelector(".vt-exam-chip-like")!.classList.contains("is-off")).toBe(true);
+      const expected = b.plugin.store.entries.filter((e) => isListed(e, isListedCtx()));
+      expect(expected.length).toBeGreaterThan(0);
+      expect(expected.length).toBeLessThan(b.plugin.store.entries.length);
+      const rows = after.querySelectorAll(".vt-row");
+      expect(new Set(rows.map((r) => r.getAttribute("data-entry-id")))).toEqual(new Set(expected.map((e) => e.id)));
     } finally {
-      for (const e of b.plugin.store.entries) e.liked = original.get(e.id);
+      restoreLikeEnabled(likeEnabledBefore);
     }
   });
 });
+
+// Undoes the chip's setting write so later tests (in this file or any
+// other sharing this plugin instance) see the same default they started
+// with — updateWordlistSettings() is async overall, but the mutation
+// itself lands synchronously (VocabStore.updateSettings mutates before
+// its first await), so a bare call (not awaited) already restores it in
+// time for the next synchronous `render()`.
+function restoreLikeEnabled(likeEnabled: boolean | undefined): void {
+  void b.plugin.updateWordlistSettings({ likeEnabled: likeEnabled ?? true });
+}
