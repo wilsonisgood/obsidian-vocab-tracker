@@ -23,6 +23,11 @@ export interface WordlistSettings {
   autoImport: boolean;
   // Per-tag overrides; a tag missing here is enabled with its default colour.
   tags: Record<string, WordlistTagSettings>;
+  // Wave 8 S (1006-2 #4, #5)：側欄／dashboard／用法總表共用的「Like」chip
+  // 開關——跟 tags[tag].enabled 同一類，但不綁某個 tag，獨立一個布林。預設
+  // 開（跟現有「liked 的字一律列出」的行為一致），按淡後只隱藏「靠 liked
+  // 撐著、沒有任何亮著標籤」的字（見 core/model/like.ts 的 isListed()）。
+  likeEnabled?: boolean;
 }
 
 export const DEFAULT_WORDLIST_FOLDER = "vocab-wordlists";
@@ -35,6 +40,7 @@ export function resolveWordlistSettings(partial: Partial<WordlistSettings> | und
     inflections: partial?.inflections ?? true,
     autoImport: partial?.autoImport ?? true,
     tags: partial?.tags && typeof partial.tags === "object" ? partial.tags : {},
+    likeEnabled: partial?.likeEnabled ?? true,
   };
 }
 
@@ -63,4 +69,10 @@ export function tagColor(s: WordlistSettings, tag: string): string {
 
 export function tagEnabled(s: WordlistSettings, tag: string): boolean {
   return s.tags[tag]?.enabled !== false;
+}
+
+// Wave 8 S (1006-2 #4)：Like chip 亮不亮，跟 tagEnabled() 同一種「預設開、
+// 顯式 false 才關」語意，餵給 core/model/like.ts 的 IsListedContext.likeOn。
+export function likeChipOn(s: WordlistSettings): boolean {
+  return s.likeEnabled !== false;
 }

@@ -47,13 +47,15 @@ export const zhTW: Record<keyof typeof en, string> = {
   "row.meta.dates": "加入 {added} · 更新 {updated}",
   "row.meta.addedOnly": "加入 {added}",
   "row.field.synonyms": "同義詞",
-  "row.field.definition": "定義",
-  "row.field.definitionZh": "中文翻译",
+  "row.field.definition": "英文定義",
+  "row.field.definitionZh": "中文定義",
   "row.field.antonyms": "反義詞",
   "row.field.example": "例句（來自筆記）",
   "row.field.grammar": "文法提示",
   "row.field.level": "程度",
   "row.field.placeholder": "新增{label}…",
+  "row.field.phonetic": "音標",
+  "row.field.partOfSpeech": "詞性",
 
   // 刪除單字前的確認視窗：列出關聯內容，確認後才刪 (W6)
   "deleteEntry.title": "刪除「{word}」？",
@@ -582,8 +584,10 @@ export const zhTW: Record<keyof typeof en, string> = {
   // 頁的意思）是不同的概念，維持原名不變。
   "like.like": "Like",
   "like.unlike": "取消 Like",
-  // 側欄／dashboard 的「只看 like 的字」切換。
-  "like.filter.onlyLiked": "只看 Like",
+  // 側欄／dashboard／用法總表共用的 Like 篩選 chip（第八波 S，1006-2 #1）。
+  "like.filter.chip": "Like",
+  "like.filter.hide": "隱藏「Like」篩選",
+  "like.filter.show": "顯示「Like」篩選",
   // 側欄「單字」分區標題，之後會帶上數字（規格 #5, #9）。
   "sidebar.section.words.counted": "單字（{n}）",
 
@@ -593,4 +597,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "undo.deletedWord": "已刪除 {word}",
   "undo.deletedQa": "已刪除這組問答",
   "undo.deletedThread": "已刪除這串討論",
+
+  // 第八波 R2：側欄點單字字串，在這篇筆記裡定位（1006-2 #7-9）。
+  "locate.notInNote": "這篇沒有出現",
 };

@@ -5,7 +5,7 @@ vi.mock("obsidian", () => import("./support/obsidian"));
 import type { VocabSidebarView } from "../../src/ui/sidebar/VocabSidebarView";
 import { isListed, type IsListedContext } from "../../src/core/model/like";
 import { computeNoteScope } from "../../src/ui/sidebar/noteScope";
-import { resolveWordlistSettings, tagEnabled } from "../../src/core/model/wordlists";
+import { likeChipOn, resolveWordlistSettings, tagEnabled } from "../../src/core/model/wordlists";
 import { buildStressFixture } from "../fixtures/stress";
 import type { FakeElement } from "./support/dom";
 import { bootPlugin, closeSidebar, ms, openSidebar, PERF_FACTOR, settle, type Booted } from "./support/harness";
@@ -51,6 +51,7 @@ function isListedCtx(): IsListedContext {
   return {
     knownTags,
     isTagOn: (tag) => tagEnabled(resolveWordlistSettings(b.plugin.store.settings.wordlists), tag),
+    likeOn: likeChipOn(resolveWordlistSettings(b.plugin.store.settings.wordlists)),
   };
 }
 

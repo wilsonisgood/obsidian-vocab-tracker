@@ -6,7 +6,7 @@ import type { VocabEntry } from "../../src/core/model/entry";
 import type { VocabDataV1 } from "../../src/core/model/schemaV1";
 import { DEFAULT_SRS_SETTINGS } from "../../src/core/model/srs";
 import { isListed, type IsListedContext } from "../../src/core/model/like";
-import { resolveWordlistSettings, tagEnabled } from "../../src/core/model/wordlists";
+import { likeChipOn, resolveWordlistSettings, tagEnabled } from "../../src/core/model/wordlists";
 import { buildStressFixture } from "../fixtures/stress";
 import { PLUGIN_DIR, pluginFile, type FakeApp } from "../perf/support/app";
 import type { FakeElement } from "../perf/support/dom";
@@ -157,6 +157,7 @@ describe("v1 → current schema with 1,000 words", () => {
     const ctx: IsListedContext = {
       knownTags,
       isTagOn: (tag) => tagEnabled(resolveWordlistSettings(b.plugin.store.settings.wordlists), tag),
+    likeOn: likeChipOn(resolveWordlistSettings(b.plugin.store.settings.wordlists)),
     };
     const listed = b.plugin.store.entries.filter((e) => isListed(e, ctx));
     expect(root.querySelectorAll(".vt-row")).toHaveLength(listed.length);

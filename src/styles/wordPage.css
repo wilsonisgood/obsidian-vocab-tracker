@@ -25,19 +25,9 @@
   line-height: 1.2;
 }
 
-.vt-wh-meta {
-  color: var(--text-muted);
-  font-size: var(--font-ui-small);
-}
-
 .vt-wh-speak {
   margin-left: auto;
   align-self: center;
-}
-
-.vt-wh-def {
-  margin: 4px 0 12px;
-  color: var(--text-normal);
 }
 
 .vt-wh-chips {

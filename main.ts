@@ -29,6 +29,8 @@ import { VocabSidebarView, VOCAB_VIEW_TYPE } from "./src/ui/sidebar/VocabSidebar
 import { registerBlocks } from "./src/ui/blocks/registry";
 import { SrsService } from "./src/services/srs/SrsService";
 import { resolveLocale, setLocale, t } from "./src/core/i18n";
+import { createWordLocator, type WordLocator } from "./src/ui/reading/locateWord";
+import { createReturnNav, type ReturnNav } from "./src/ui/reading/returnNav";
 import { obsidianLanguage } from "./src/platform/obsidianLanguage";
 import { createAiPorts } from "./src/platform/aiPorts";
 import { createAiService } from "./src/services/ai/createAiService";
@@ -125,6 +127,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   noteImports!: NoteImports;
   examWordIndex!: EntryWordIndex;
   autoLike!: AutoLike;
+  locator!: WordLocator;
+  returnNav!: ReturnNav;
   vault!: ObsidianVault;
   exporter!: ExportService;
   files!: EntryFilesService;
@@ -261,6 +265,12 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     const likeMigrated = await this.store.backfillLiked(likeBackfillDecider({ threads: this.threads }));
     if (likeMigrated) console.log(`Vocab Tracker: backfilled liked for ${likeMigrated} entries`);
     await this.autoLike.init();
+
+    // 第八波 R2 — 側欄點單字 → 捲到筆記裡的位置；單字頁返回時還原 (1006-2 #7-9 #15-16)。
+    this.locator = createWordLocator(this.app, {
+      inflections: () => resolveWordlistSettings(this.store.settings.wordlists).inflections,
+    });
+    this.returnNav = createReturnNav(this.app, this.locator);
 
     this.selection = new SelectionTracker(this.app);
     this.registerDomEvent(document, "selectionchange", () => this.selection.update());
@@ -501,6 +511,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     flushUndoables();
     this.autoLike?.dispose();
     this.examWordIndex?.dispose();
+    this.returnNav?.dispose();
     // Threads first: it saves in-flight answers as stopped with their text
     // so far, before ai.dispose() aborts the requests.
     this.threads?.dispose();
@@ -803,6 +814,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   // The 「單字頁」 button: the word's page, created now if it has none.
   async openWordPage(entryId: string) {
     try {
+      const entry = this.store.entries.find((e) => e.id === entryId);
+      if (entry) this.returnNav.remember(entry);
       const path = await this.files.openWordPage(entryId);
       if (path) await this.openNote(path);
     } catch (e) {
@@ -1024,6 +1037,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         level: labels.join(", "),
         example: ctx.sentence || "",
         source,
+        liked: true, // 1006-2 #1：手動加字＝自動 like
       });
       await this.store.addEntry(entry);
       this.enrichEntry(entry);
@@ -1034,6 +1048,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       existing.level = mergeLevel(existing.level, labels);
       // Only a real change counts: the sidebar orders words by updatedAt (1005 回饋 1).
       if (JSON.stringify([existing.source, existing.example, existing.level]) !== before) await this.store.touch(existing);
+      if (!existing.liked) await this.store.setLiked(existing, true); // 1006-2 #1
     }
 
     if (opts.reveal !== false) await this.surfaces.revealWord(word, ctx);

@@ -1,46 +1,100 @@
-import { TFile } from "obsidian";
+import { setIcon, TFile } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import { t } from "../../core/i18n";
-import { resolveWordlistSettings, tagColor, tagEnabled } from "../../core/model/wordlists";
+import { likeChipOn, resolveWordlistSettings, tagColor, tagEnabled, type WordlistSettings } from "../../core/model/wordlists";
 import { tagLabel } from "../../core/wordlists/parse";
 import { examTags } from "../../core/model/like";
 import type { FilterMode } from "./sections";
 
-// Exam-tag chips, now living at the top of the 單字 section (1006report.md
-// #5): the "本篇考試字彙 · 全文 N 個不同的字" title line is gone, and so is
-// the per-note "(99)" count label — only the chips (the underline toggles)
-// stay. Clicking a chip turns that list's underlines on/off (unchanged).
+// ── Shared chip-row component (1006-2 #4, #5, #6) ──────────────────────
 //
-// The chip's own number changes meaning with the top-level 本篇／全部
-// switch (#9): 本篇 counts how many of this note's words carry the tag
-// (the background scan's per-note stats, same as before); 全部 counts how
-// many words in the whole (non-deleted) vocab library carry it.
-export function renderExamStrip(root: HTMLElement, plugin: VocabTrackerPlugin, file: TFile | null, mode: FilterMode): void {
-  const service = plugin.wordlists;
-  const index = service.index;
-  if (index.isEmpty) return;
-
-  const settings = resolveWordlistSettings(plugin.store.settings.wordlists);
-
-  // 全部模式，或本篇模式但沒開筆記（規格 #11：沒開筆記的行為不變——這裡沒
-  // 有「這篇」可以掃，一律退到庫存計數，而不是整條不顯示）：不需要掃描這
-  // 篇筆記，直接用單字庫裡每個 tag 的字數。
-  if (mode === "all" || !(file instanceof TFile) || file.extension !== "md") {
-    drawChips(root, plugin, index.tags, settings, (tag) => countTagInLibrary(plugin, tag));
-    return;
-  }
-
-  const result = service.cachedScan(file.path, file.stat.mtime);
-  if (!result) {
-    root.createDiv({ cls: "vt-exam-strip-scanning", text: t("exam.strip.scanning") });
-    // The sidebar re-renders on the "scanned" event (main.ts → refreshExamStrip).
-    void plugin.scanNote(file);
-    return;
-  }
-  drawChips(root, plugin, index.tags, settings, (tag) => result.byTag[tag]?.unique ?? 0);
+// Reused by the sidebar (renderExamStrip below), the vocab-list dashboard
+// (src/ui/blocks/dashboard.ts) and U2's usage table. Pure rendering only —
+// every caller supplies the chips' counts and on/off state, because that
+// differs by context (本篇 scan hits vs library-wide counts; the Like
+// chip's 本篇 count needs a note scope only the sidebar caches — see
+// VocabSidebarView.noteScopeFor/likeCountFor, recomputing it here would
+// reintroduce the full-text rescan perf regression Wave 7 fixed).
+export interface FilterChipSpec {
+  key: string;
+  label: string;
+  count: number;
+  on: boolean;
+  // Tag chips get a colour dot (defaultTagColor/tagColor); the Like chip
+  // gets a heart icon instead (set `icon`, not `color`).
+  color?: string;
+  icon?: string;
+  // Full aria-label text for each state — the builder picks the wording
+  // (tag chips talk about underlines, the Like chip doesn't), so this
+  // component stays generic and never calls t() itself.
+  ariaOn: string;
+  ariaOff: string;
+  onClick: () => void;
 }
 
-function countTagInLibrary(plugin: VocabTrackerPlugin, tag: string): number {
+export function renderFilterChips(root: HTMLElement, chips: readonly FilterChipSpec[]): void {
+  const strip = root.createDiv({ cls: "vt-exam-strip" });
+  const chipsEl = strip.createDiv({ cls: "vt-exam-chips" });
+  for (const spec of chips) {
+    const chip = chipsEl.createSpan({ cls: "vt-exam-chip" });
+    chip.toggleClass("is-off", !spec.on);
+    if (spec.icon) {
+      chip.addClass("vt-exam-chip-like");
+      setIcon(chip.createSpan({ cls: "vt-exam-chip-dot" }), spec.icon);
+    } else {
+      chip.style.setProperty("--vt-exam-color", spec.color ?? "");
+      chip.createSpan({ cls: "vt-exam-chip-dot" });
+    }
+    chip.createSpan({ text: spec.label });
+    chip.createSpan({ cls: "vt-exam-chip-count", text: String(spec.count) });
+    chip.setAttr("role", "button");
+    chip.setAttr("aria-label", spec.on ? spec.ariaOn : spec.ariaOff);
+    chip.onclick = spec.onClick;
+  }
+}
+
+// Builds the exam-tag chips' specs — same settings, same toggle action
+// (plugin.toggleExamTag) regardless of who's drawing them.
+export function tagChipSpecs(
+  plugin: VocabTrackerPlugin,
+  tags: readonly string[],
+  settings: WordlistSettings,
+  countOf: (tag: string) => number
+): FilterChipSpec[] {
+  return tags.map((tag) => {
+    const on = settings.highlight && tagEnabled(settings, tag);
+    const label = tagLabel(tag);
+    return {
+      key: tag,
+      label,
+      count: countOf(tag),
+      on,
+      color: tagColor(settings, tag),
+      ariaOn: t("exam.strip.hide", { tag: label }),
+      ariaOff: t("exam.strip.show", { tag: label }),
+      onClick: () => void plugin.toggleExamTag(tag),
+    };
+  });
+}
+
+// Builds the Like chip's spec — writes WordlistSettings.likeEnabled through
+// the same plugin.updateWordlistSettings() path the tag chips use (#5: one
+// shared setting, one shared sync/redraw path).
+export function likeChipSpec(plugin: VocabTrackerPlugin, settings: WordlistSettings, count: number): FilterChipSpec {
+  const on = likeChipOn(settings);
+  return {
+    key: "like",
+    label: t("like.filter.chip"),
+    count,
+    on,
+    icon: "heart",
+    ariaOn: t("like.filter.hide"),
+    ariaOff: t("like.filter.show"),
+    onClick: () => void plugin.updateWordlistSettings({ likeEnabled: !on }),
+  };
+}
+
+export function tagCountInLibrary(plugin: VocabTrackerPlugin, tag: string): number {
   let n = 0;
   for (const e of plugin.store.entries) {
     if (examTags(e, [tag]).length > 0) n++;
@@ -48,25 +102,57 @@ function countTagInLibrary(plugin: VocabTrackerPlugin, tag: string): number {
   return n;
 }
 
-function drawChips(
+export function likeCountInLibrary(plugin: VocabTrackerPlugin): number {
+  let n = 0;
+  for (const e of plugin.store.entries) if (e.liked === true) n++;
+  return n;
+}
+
+// ── Sidebar's own strip (規劃書 03；1006report.md #5, 1006-2 #4) ─────────
+//
+// Exam-tag chips, at the top of the 單字 section, now with a trailing Like
+// chip. The chips' own numbers change meaning with the top-level 本篇／全部
+// switch (#9): 本篇 counts how many of this note's words carry the
+// tag/are liked (the background scan's per-note stats for tags; for Like,
+// whatever scope the caller resolved — see `likeCount`); 全部 counts the
+// whole (non-deleted) vocab library.
+//
+// `likeCount` is a callback instead of a number so this function can tell
+// the caller which scope it actually used (it may fall back to "all" even
+// in 本篇 mode — no active note, a non-md file, …) without the two of them
+// duplicating that branch.
+export function renderExamStrip(
   root: HTMLElement,
   plugin: VocabTrackerPlugin,
-  tags: readonly string[],
-  settings: ReturnType<typeof resolveWordlistSettings>,
-  countOf: (tag: string) => number
+  file: TFile | null,
+  mode: FilterMode,
+  likeCount: (scope: "note" | "all") => number
 ): void {
-  const strip = root.createDiv({ cls: "vt-exam-strip" });
-  const chips = strip.createDiv({ cls: "vt-exam-chips" });
-  for (const tag of tags) {
-    const on = settings.highlight && tagEnabled(settings, tag);
-    const chip = chips.createSpan({ cls: "vt-exam-chip" });
-    chip.toggleClass("is-off", !on);
-    chip.style.setProperty("--vt-exam-color", tagColor(settings, tag));
-    chip.createSpan({ cls: "vt-exam-chip-dot" });
-    chip.createSpan({ text: tagLabel(tag) });
-    chip.createSpan({ cls: "vt-exam-chip-count", text: String(countOf(tag)) });
-    chip.setAttr("role", "button");
-    chip.setAttr("aria-label", t(on ? "exam.strip.hide" : "exam.strip.show", { tag: tagLabel(tag) }));
-    chip.onclick = () => void plugin.toggleExamTag(tag);
+  const service = plugin.wordlists;
+  const index = service.index;
+  const settings = resolveWordlistSettings(plugin.store.settings.wordlists);
+  const isNoteFile = file instanceof TFile && file.extension === "md";
+  const scope: "note" | "all" = mode === "all" || !isNoteFile ? "all" : "note";
+  const likeSpec = () => likeChipSpec(plugin, settings, likeCount(scope));
+
+  // Like chip shows even with no exam wordlist loaded at all (#4 made it a
+  // general like-filter, independent of the exam-word feature).
+  if (index.isEmpty) {
+    renderFilterChips(root, [likeSpec()]);
+    return;
   }
+
+  if (scope === "all") {
+    renderFilterChips(root, [...tagChipSpecs(plugin, index.tags, settings, (tag) => tagCountInLibrary(plugin, tag)), likeSpec()]);
+    return;
+  }
+
+  const result = service.cachedScan(file!.path, file!.stat.mtime);
+  if (!result) {
+    root.createDiv({ cls: "vt-exam-strip-scanning", text: t("exam.strip.scanning") });
+    // The sidebar re-renders on the "scanned" event (main.ts → refreshExamStrip).
+    void plugin.scanNote(file!);
+    return;
+  }
+  renderFilterChips(root, [...tagChipSpecs(plugin, index.tags, settings, (tag) => result.byTag[tag]?.unique ?? 0), likeSpec()]);
 }

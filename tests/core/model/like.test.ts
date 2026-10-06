@@ -42,28 +42,51 @@ describe("hasExamTag", () => {
 describe("isListed", () => {
   const on = (enabled: Set<string>) => (tag: string) => enabled.has(tag);
 
-  it("is true when liked, regardless of tags", () => {
-    expect(isListed({ level: "", liked: true }, { knownTags: KNOWN, isTagOn: on(new Set()) })).toBe(true);
+  it("is true when liked and the Like chip is on, regardless of tags", () => {
+    expect(isListed({ level: "", liked: true }, { knownTags: KNOWN, isTagOn: on(new Set()), likeOn: true })).toBe(true);
   });
 
   it("is true when any of its tags is on", () => {
-    const ctx = { knownTags: KNOWN, isTagOn: on(new Set(["exam/TOEFL"])) };
+    const ctx = { knownTags: KNOWN, isTagOn: on(new Set(["exam/TOEFL"])), likeOn: true };
     expect(isListed({ level: "TOEFL", liked: false }, ctx)).toBe(true);
   });
 
   it("is true when one of several tags is on even if another is off", () => {
-    const ctx = { knownTags: KNOWN, isTagOn: on(new Set(["exam/IELTS"])) };
+    const ctx = { knownTags: KNOWN, isTagOn: on(new Set(["exam/IELTS"])), likeOn: true };
     expect(isListed({ level: "TOEFL, IELTS", liked: undefined }, ctx)).toBe(true);
   });
 
   it("is false when not liked and every tag is off", () => {
-    const ctx = { knownTags: KNOWN, isTagOn: on(new Set()) };
+    const ctx = { knownTags: KNOWN, isTagOn: on(new Set()), likeOn: true };
     expect(isListed({ level: "TOEFL", liked: false }, ctx)).toBe(false);
   });
 
   it("is false when not liked and has no tag at all", () => {
-    const ctx = { knownTags: KNOWN, isTagOn: on(new Set(KNOWN)) };
+    const ctx = { knownTags: KNOWN, isTagOn: on(new Set(KNOWN)), likeOn: true };
     expect(isListed({ level: "", liked: undefined }, ctx)).toBe(false);
+  });
+
+  // Wave 8 S (1006-2 #4): the Like chip's own on/off, independent of tags.
+  describe("likeOn (1006-2 #4)", () => {
+    it("liked + likeOn: listed", () => {
+      const ctx = { knownTags: KNOWN, isTagOn: on(new Set()), likeOn: true };
+      expect(isListed({ level: "", liked: true }, ctx)).toBe(true);
+    });
+
+    it("liked + !likeOn, no tag: not listed (the Like chip dimmed hides it)", () => {
+      const ctx = { knownTags: KNOWN, isTagOn: on(new Set()), likeOn: false };
+      expect(isListed({ level: "", liked: true }, ctx)).toBe(false);
+    });
+
+    it("liked + !likeOn, but a tag is on: still listed (the tag keeps it)", () => {
+      const ctx = { knownTags: KNOWN, isTagOn: on(new Set(["exam/TOEFL"])), likeOn: false };
+      expect(isListed({ level: "TOEFL", liked: true }, ctx)).toBe(true);
+    });
+
+    it("!liked + !likeOn, no tag: not listed", () => {
+      const ctx = { knownTags: KNOWN, isTagOn: on(new Set()), likeOn: false };
+      expect(isListed({ level: "", liked: false }, ctx)).toBe(false);
+    });
   });
 });
 

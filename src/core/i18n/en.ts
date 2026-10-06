@@ -47,12 +47,14 @@ export const en = {
   "row.meta.addedOnly": "Added {added}",
   "row.field.synonyms": "Synonyms",
   "row.field.definition": "Definition",
-  "row.field.definitionZh": "中文翻译",
+  "row.field.definitionZh": "Chinese definition",
   "row.field.antonyms": "Antonyms",
   "row.field.example": "Example sentence (from note)",
   "row.field.grammar": "Grammar tips",
   "row.field.level": "Level",
   "row.field.placeholder": "Add {label}…",
+  "row.field.phonetic": "Phonetic",
+  "row.field.partOfSpeech": "Part of speech",
 
   // Confirm dialog before deleting a word: what it's linked to (W6).
   "deleteEntry.title": "Delete \"{word}\"?",
@@ -591,8 +593,10 @@ export const en = {
   // and keeps its old name.
   "like.like": "Like",
   "like.unlike": "Unlike",
-  // Sidebar/dashboard toggle that only shows liked words.
-  "like.filter.onlyLiked": "Only liked",
+  // Like filter chip shared by the sidebar, dashboard, and usage table (Wave 8 S, 1006-2 #1).
+  "like.filter.chip": "Like",
+  "like.filter.hide": "Hide the Like filter",
+  "like.filter.show": "Show the Like filter",
   // Sidebar "單字" section heading once it carries a count (規格 #5, #9).
   "sidebar.section.words.counted": "Words ({n})",
 
@@ -602,4 +606,7 @@ export const en = {
   "undo.deletedWord": "Deleted \"{word}\"",
   "undo.deletedQa": "Deleted this Q&A",
   "undo.deletedThread": "Deleted this discussion",
+
+  // Wave 8 R2: clicking a word in the sidebar locates it in this note (1006-2 #7-9).
+  "locate.notInNote": "Not in this note",
 } as const;

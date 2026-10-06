@@ -1,0 +1,26 @@
+/* Wave 8 S (1006-2 #4, #5, #6) — the shared chip row's Like chip.
+   `.vt-exam-chip`/`.vt-exam-chips`/`.vt-exam-strip` are already defined in
+   sidebar.css and apply everywhere (sidebar, vocab-list dashboard, later
+   U2's usage table — none of those selectors are scoped to the sidebar).
+   This file only adds the Like chip's own look (a heart icon instead of a
+   colour dot) so sidebar.css (a shared file) doesn't need editing — fold
+   this into index.css's @import list at integration time. */
+
+.vt-exam-chip-like .vt-exam-chip-dot {
+  width: 14px;
+  height: 14px;
+  background: none;
+  border: none;
+  color: #ef4444;
+}
+
+.vt-exam-chip-like .vt-exam-chip-dot svg {
+  width: 100%;
+  height: 100%;
+}
+
+.vt-exam-chip-like.is-off .vt-exam-chip-dot {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+}

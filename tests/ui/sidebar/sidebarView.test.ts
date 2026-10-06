@@ -9,8 +9,8 @@ import { discussionRows } from "../../../src/ui/sidebar/discussionRows";
 import { verbUsageRows } from "../../../src/ui/sidebar/grammarRows";
 import { computeNoteScope } from "../../../src/ui/sidebar/noteScope";
 import { SECTIONS_STORAGE_KEY } from "../../../src/ui/sidebar/sections";
-import { isListed, type IsListedContext } from "../../../src/core/model/like";
-import { resolveWordlistSettings, tagEnabled } from "../../../src/core/model/wordlists";
+import { hasExamTag, isListed, type IsListedContext } from "../../../src/core/model/like";
+import { likeChipOn, resolveWordlistSettings, tagEnabled } from "../../../src/core/model/wordlists";
 import { t } from "../../../src/core/i18n";
 import { entryRecency, groupOf } from "../../../src/ui/word/wordOrder";
 import { buildStressFixture } from "../../fixtures/stress";
@@ -39,6 +39,7 @@ function isListedCtx(): IsListedContext {
   return {
     knownTags,
     isTagOn: (tag) => tagEnabled(resolveWordlistSettings(b.plugin.store.settings.wordlists), tag),
+    likeOn: likeChipOn(resolveWordlistSettings(b.plugin.store.settings.wordlists)),
   };
 }
 
@@ -395,24 +396,52 @@ describe("文法 (Wave 6 W: 動詞用法 subsection)", () => {
   });
 });
 
-describe("row meta (1006report.md 定案規格 #18)", () => {
-  it("half and full both show only 複習時間 — 加入/更新/下次複習 moved to the word page", async () => {
+// Wave 8 S (1006-2 #2): 本篇 scope's cache was keyed on path+mtime alone, so
+// a word added/liked after the cache was built (without the note's mtime
+// changing) stayed invisible forever — the sidebar now invalidates it on
+// any store "data:changed".
+describe("本篇 scope cache invalidation (1006-2 #2)", () => {
+  it("a word liked while the sidebar is open appears in 本篇 without a note edit or a manual re-render", async () => {
+    const v = await open("note");
+    const before = new Set(rowIds(root(v)));
+    // An existing word sourced from this note that isn't currently listed
+    // (no exam tag, not liked) — its text is already in the article (the
+    // fixture marks every article-sourced word in the note itself), so
+    // liking it should make 本篇's own text-matching recognise it too.
+    const knownTags = b.plugin.wordlists.index.tags;
+    const candidate = entries().find(
+      (e) => e.source?.path === fx.article.path && !e.liked && !hasExamTag(e, knownTags)
+    )!;
+    expect(candidate).toBeTruthy();
+    expect(before.has(candidate.id)).toBe(false);
+
+    await b.plugin.store.setLiked(candidate, true);
+    // No v.render()/v.draw() call here on purpose — only the data:changed
+    // listener's cache invalidation + refreshFiltered() should surface it.
+    expect(root(v).querySelector(`.vt-row[data-entry-id="${candidate.id}"]`)).not.toBeNull();
+  });
+});
+
+describe("row meta (1006report.md 定案規格 #18, 1006-2 #10/#12)", () => {
+  it("a sidebar row has no 加入/更新/下次複習/複習時間 — all moved to the word page, and 'full' no longer reaches anything more", async () => {
     const v = await open("note");
     const id = rowIds(root(v))[0];
-    const entry = byId(id);
 
     v.expandState.set(id, "half");
     v.render();
     const rowHalf = root(v).querySelector(`.vt-row[data-entry-id="${id}"]`)!;
     expect(rowHalf.querySelector(".vt-row-dates")).toBeNull();
     expect(rowHalf.querySelector(".vt-row-updated")).toBeNull();
-    expect(rowHalf.textContent).toContain(t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }));
+    // 複習時間 (#18) moved off the row entirely now too (#12) — unlike
+    // 1006report.md's #18, there's no 「vt-meta」 line left on the row at
+    // all, half or (nominally) full.
+    expect(rowHalf.querySelector(".vt-meta")).toBeNull();
 
+    // A stale persisted "full" (e.g. from before #10) renders exactly the
+    // same as "half" — a sidebar row has no way to reach anything more.
     v.expandState.set(id, "full");
     v.render();
     const rowFull = root(v).querySelector(`.vt-row[data-entry-id="${id}"]`)!;
-    expect(rowFull.querySelector(".vt-row-dates")).toBeNull();
-    expect(rowFull.querySelector(".vt-row-updated")).toBeNull();
-    expect(rowFull.textContent).toContain(t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }));
+    expect(rowFull.innerHTML).toBe(rowHalf.innerHTML);
   });
 });

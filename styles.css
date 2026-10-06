@@ -2770,17 +2770,9 @@ body.is-mobile .vt-chat-send {
   color: var(--text-normal);
   line-height: 1.2;
 }
-.vt-wh-meta {
-  color: var(--text-muted);
-  font-size: var(--font-ui-small);
-}
 .vt-wh-speak {
   margin-left: auto;
   align-self: center;
-}
-.vt-wh-def {
-  margin: 4px 0 12px;
-  color: var(--text-normal);
 }
 .vt-wh-chips {
   display: flex;
@@ -2913,6 +2905,63 @@ body.is-mobile .vt-wh-speak {
 .vt-hide-first-heading .markdown-preview-section > div:first-child > h1,
 .vt-hide-first-heading .cm-content > .cm-line:first-child {
   display: none;
+}
+
+/* src/styles/wordRow8.css */
+.vt-row-level-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 2px 0 6px;
+}
+.vt-row-level-chip {
+  font-size: 0.78em;
+  padding: 1px 7px;
+  border-radius: var(--radius-s, 4px);
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+.vt-wh-metafields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 2px 0 10px;
+  max-width: 320px;
+}
+.vt-wh-metafields .vt-field {
+  flex: 1 1 120px;
+  margin-bottom: 0;
+}
+.vt-wh-fields {
+  margin: 4px 0 14px;
+}
+.vt-wh-fields .vt-field {
+  margin-bottom: 8px;
+}
+
+/* src/styles/chips.css */
+.vt-exam-chip-like .vt-exam-chip-dot {
+  width: 14px;
+  height: 14px;
+  background: none;
+  border: none;
+  color: #ef4444;
+}
+.vt-exam-chip-like .vt-exam-chip-dot svg {
+  width: 100%;
+  height: 100%;
+}
+.vt-exam-chip-like.is-off .vt-exam-chip-dot {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+}
+
+/* src/styles/locate.css */
+.vt-locate-flash {
+  background-color: var(--text-selection);
+  border-radius: 3px;
+  transition: background-color 2.4s ease-out 0.6s;
 }
 
 /* src/styles/mobile.css */

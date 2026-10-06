@@ -24,8 +24,8 @@ import { verbUsageRows } from "./grammarRows";
 import { FLASH_MS, planReveal, SectionState, type FilterMode, type SectionId } from "./sections";
 import { LIST_ROUTE, REBINDING_BODY_CLS, SidebarRouter, routeForActiveNote, routeKey, sameRoute, type SidebarRoute } from "./routes";
 import { isListed, type IsListedContext } from "../../core/model/like";
-import { resolveWordlistSettings, tagEnabled } from "../../core/model/wordlists";
-import { computeNoteScope } from "./noteScope";
+import { likeChipOn, resolveWordlistSettings, tagEnabled } from "../../core/model/wordlists";
+import { computeNoteScope, likeCountInScope, noteScopeSig } from "./noteScope";
 
 export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 
@@ -99,7 +99,7 @@ export class VocabSidebarView extends ItemView {
   // note's own text (computeNoteScope, src/ui/sidebar/noteScope.ts). The
   // async part (reading the note) resolves later and redraws only the
   // filtered sections (words/AI 討論/文法), never the whole sidebar.
-  private noteScopeCache: { path: string; mtime: number; ids: Set<string> } | null = null;
+  private noteScopeCache: { path: string; mtime: number; sig: string; ids: Set<string> } | null = null;
   private noteScopeSeq = 0;
   // The 單字 section's own elements, kept so a filter-only change (chip
   // toggle, scope resolving) can redraw just this section (#10).
@@ -143,6 +143,24 @@ export class VocabSidebarView extends ItemView {
       })
     );
     this.register(() => document.body.removeClass(REBINDING_BODY_CLS));
+    // Wave 8 S (1006-2 #2): 本篇 scope's cache was keyed on path+mtime alone
+    // — a race with store.addEntry/deleteEntry/restoreEntry/setLiked (none
+    // of which touch the note's mtime, or touch it on a different tick
+    // than main.ts's own vault.modify for highlighting) could leave it
+    // serving a stale set once the word landed in the store. Only redraw
+    // when noteScopeSig() says something that could actually change
+    // computeNoteScope()'s output changed (count of live entries, or which
+    // ones are liked) — a plain field edit (store.touch()) leaves the
+    // signature alone, so it still doesn't reorder/redraw the list (#10).
+    this.register(
+      this.plugin.store.events.on("data:changed", () => {
+        const cache = this.noteScopeCache;
+        if (!cache) return;
+        if (noteScopeSig(this.plugin.store.entries) === cache.sig) return;
+        this.noteScopeCache = null;
+        if ((this.filterMode ?? "note") === "note") this.refreshFiltered();
+      })
+    );
     this.render();
   }
 
@@ -247,10 +265,30 @@ export class VocabSidebarView extends ItemView {
 
   private isListedCtx(): IsListedContext {
     const knownTags = this.plugin.wordlists.index.tags;
+    const settings = resolveWordlistSettings(this.plugin.store.settings.wordlists);
     return {
       knownTags,
-      isTagOn: (tag) => tagEnabled(resolveWordlistSettings(this.plugin.store.settings.wordlists), tag),
+      isTagOn: (tag) => tagEnabled(settings, tag),
+      likeOn: likeChipOn(settings),
     };
+  }
+
+  // Wave 8 S (1006-2 #4): the Like chip's own number — 本篇＝liked words in
+  // `scope`'s note-scope set (noteScopeFor's cache, or its source-note
+  // fallback while that's still loading — same two cases scopedEntries()
+  // already juggles); 全部＝every liked word in the library. Pure counting
+  // lives in noteScope.ts's likeCountInScope(); this just resolves which
+  // ids Set (or null for 全部) that function should use.
+  private likeCountFor(scope: "note" | "all", activeFile: TFile | null): number {
+    if (scope === "all" || !(activeFile instanceof TFile)) {
+      return likeCountInScope(this.plugin.store.entries, null);
+    }
+    const noteScope = this.noteScopeFor(activeFile);
+    if (noteScope) return likeCountInScope(this.plugin.store.entries, noteScope);
+    const fallback = new Set(
+      this.plugin.store.entries.filter((e) => e.source?.path === activeFile.path).map((e) => e.id)
+    );
+    return likeCountInScope(this.plugin.store.entries, fallback);
   }
 
   // Cached "this note has this word" set; null while it's still loading
@@ -274,7 +312,7 @@ export class VocabSidebarView extends ItemView {
     if (seq !== this.noteScopeSeq) return; // superseded by a newer note/scope load
     const inflections = resolveWordlistSettings(this.plugin.store.settings.wordlists).inflections;
     const ids = computeNoteScope(this.plugin.store.entries, hits, text, inflections);
-    this.noteScopeCache = { path: file.path, mtime: file.stat.mtime, ids };
+    this.noteScopeCache = { path: file.path, mtime: file.stat.mtime, sig: noteScopeSig(this.plugin.store.entries), ids };
     if (this.app.workspace.getActiveFile()?.path !== file.path) return;
     if ((this.filterMode ?? "note") !== "note") return;
     this.refreshFiltered();
@@ -781,7 +819,9 @@ export class VocabSidebarView extends ItemView {
     // directly here (not through refreshExamStrip(), which redraws this
     // whole section — calling it from inside itself would recurse).
     this.examStripEl = root.createDiv();
-    renderExamStrip(this.examStripEl, this.plugin, activeFile, this.filterMode ?? "note");
+    renderExamStrip(this.examStripEl, this.plugin, activeFile, this.filterMode ?? "note", (scope) =>
+      this.likeCountFor(scope, activeFile)
+    );
 
     if (list.length === 0) {
       root.createEl("div", {
@@ -799,6 +839,7 @@ export class VocabSidebarView extends ItemView {
           this.drawWordChip(chip, entry.id);
         },
         openWordPage: (entry: VocabEntry) => void this.plugin.openWordPage(entry.id),
+        locate: (entry: VocabEntry) => void this.plugin.locator.locate(entry),
       };
       if (this.filterMode === "all") {
         // Grouped by source note (or where a word from no note came from),

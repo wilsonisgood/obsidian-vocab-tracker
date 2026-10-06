@@ -8,6 +8,7 @@ import { bindPronounceButton } from "../kit/pronounce";
 import { renderWordAiTab } from "./AiTab";
 import { unlikeEntry } from "./likeAction";
 import { abbreviatePartOfSpeech } from "./partOfSpeech";
+import { autoGrowTextarea, commitEntryField, levelTags, normalizeExpand, type EditableField } from "./rowModel";
 import type { WordTab, WordUi } from "./wordUi";
 
 // Progressive-disclosure state for a single row: collapsed (one line),
@@ -36,25 +37,28 @@ export interface RowOptions {
   onDeleted?(entry: VocabEntry): void;
   // After 📍 opened the note at the word (the iPhone sheet closes).
   onJump?(entry: VocabEntry): void;
-}
-
-type EditableField = "synonyms" | "definition" | "definitionZh" | "antonyms" | "example" | "level";
-
-// Grows a textarea to fit its content instead of showing a scrollbar/resize
-// handle — called once on render and again on every keystroke.
-function autoGrowTextarea(el: HTMLTextAreaElement) {
-  el.style.height = "auto";
-  el.style.height = `${el.scrollHeight}px`;
+  // 規格 #7 (1006-2): clicking the word itself locates it in the note in
+  // front instead of expanding/collapsing the row — R2's hook, wired by
+  // the sidebar. When given, a click on `.vt-row-word` calls this and
+  // stops there (no toggle); when absent (dashboard, the iPhone sheet),
+  // the word has no click handler of its own and a click falls through to
+  // the row's usual expand/collapse.
+  locate?(entry: VocabEntry): void;
 }
 
 // ── Shared row renderer: sidebar list + dashboard both use this ──
 //
-// Three progressive-disclosure states:
+// Progressive-disclosure state, now variant-dependent (1006-2 #10/#14):
 //   collapsed — one line: like · word+pos · expand toggle · speak
-//   half      — + phonetic (data tab only), synonyms, definition, 中文翻译;
-//               footer: more toggle · fetch · speak
-//   full      — + antonyms (if any), example, grammar (render ↔ edit),
-//               source, reviewed, level; a bottom collapse button
+//   half      — 展開, the only expanded state a non-sheet row can reach:
+//               definition, definitionZh (editable), level (read-only
+//               chips); footer: 單字頁 · 字典重抓 icons (#12/#13). Synonyms,
+//               antonyms, example, grammar, source and 複習時間 moved to
+//               the word page (wordHeader.ts).
+//   full      — sheet (iPhone drawer) only, unchanged from before: + the
+//               fields above plus antonyms (if any), example, grammar
+//               (render ↔ edit), source, reviewed, level as an editable
+//               field; footer keeps its old more/fetch/like row.
 //
 // 規格 #10: everything this function's own clicks trigger (tab switch,
 // expand/collapse, field edits, like) redraws only this row's own DOM —
@@ -107,6 +111,9 @@ export function renderVocabRow(
   function build(): HTMLElement {
     // The sheet card is never collapsed.
     if (sheet && state === "collapsed") state = "half";
+    // 規格 #10: a non-sheet row can't reach "full" any more (顯示更多/底部
+    // 收合 are gone) — coerce a stale persisted "full" down to "half".
+    state = normalizeExpand(state, sheet);
     const rowEl = document.createElement("div");
     rowEl.addClass("vt-row");
     rowEl.setAttr("data-entry-id", entry.id);
@@ -127,7 +134,14 @@ export function renderVocabRow(
     }
 
     const wordWrap = head.createEl("span", { cls: "vt-row-wordwrap" });
-    wordWrap.createEl("span", { text: entry.word, cls: "vt-row-word" });
+    const wordEl = wordWrap.createEl("span", { text: entry.word, cls: "vt-row-word" });
+    if (opts.locate) {
+      wordEl.setAttr("role", "button");
+      wordEl.onclick = (e) => {
+        e.stopPropagation();
+        opts.locate?.(entry);
+      };
+    }
     for (const pos of abbreviatePartOfSpeech(entry.partOfSpeech)) {
       wordWrap.createEl("span", { text: pos, cls: "vt-row-badge" });
     }
@@ -156,9 +170,7 @@ export function renderVocabRow(
       bindPronounceButton(speak, entry, { stopPropagation: true });
     };
 
-    if (sheet) {
-      headSpeak();
-    } else {
+    if (!sheet) {
       const arrow = head.createEl("span", { cls: "vt-row-arrow" });
       setIcon(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
       arrow.setAttr("aria-label", state === "collapsed" ? t("row.expand") : t("row.collapse"));
@@ -166,8 +178,10 @@ export function renderVocabRow(
       head.onclick = () => redraw(state === "collapsed" ? "half" : "collapsed");
     }
 
+    // 規格 #11: 喇叭留在標題列右上角 — 收合或展開都一樣，不搬到底部 footer。
+    headSpeak();
+
     if (state === "collapsed") {
-      headSpeak();
       return rowEl;
     }
 
@@ -185,26 +199,23 @@ export function renderVocabRow(
 
     if (tab === "ai") {
       renderWordAiTab(plugin, body, entry, opts.ui as WordUi, scope);
-      renderWordPageButton(body, entry, opts);
-      addCollapseButton(body);
+      if (sheet) {
+        renderWordPageButton(body, entry, opts);
+        addCollapseButton(body);
+      } else {
+        // 規格 #13: 資料、AI 兩個頁籤都只剩「字典重抓」「單字頁」兩個 icon。
+        renderMinimalFooter(body, plugin, entry, opts, () => redraw());
+      }
       return rowEl;
     }
 
     // ── Data tab ───────────────────────────────────────────────────
 
-    // 音標 first line (規格 #17) — 詞性 already sits in the header above,
-    // and the AI tab doesn't show this line at all.
-    if (entry.phonetic) {
-      body.createEl("div", { text: entry.phonetic, cls: "vt-row-subtext" });
-    }
-
-    // 規格 #15: editing any data-tab field counts as using the word — like
-    // it the first time this happens, same as any other auto-like trigger.
+    // 規格 #15: editing any field counts as using the word — like it the
+    // first time this happens, same as any other auto-like trigger.
     // (字典重抓 goes through enrichEntry()/touch() directly, never this.)
     const commitField = async (key: EditableField, value: string) => {
-      entry[key] = value;
-      if (!entry.liked) await plugin.store.setLiked(entry, true);
-      else await plugin.store.touch(entry);
+      await commitEntryField(plugin.store, entry, key, value);
       redraw();
     };
 
@@ -240,97 +251,100 @@ export function renderVocabRow(
       }
     };
 
-    // Synonyms shares the exact same auto-growing textarea treatment as
-    // Definition/中文翻译, so a long list wraps flush-left instead of
-    // truncating in a single-line input.
-    mkField(t("row.field.synonyms"), "synonyms", { multiline: true });
-    mkField(t("row.field.definition"), "definition", { multiline: true });
-    mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
-
-    // 複習時間（n 次）— the only time info left on the row in either half
-    // or full (規格 #18); added/updated/next-review moved to the word page.
-    body.createEl("div", {
-      text: t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }),
-      cls: "vt-meta",
-    });
-
-    if (state === "full") {
-      // Antonyms is hidden entirely when empty rather than showing an
-      // empty prompt box — unlike the other fields, it's not something
-      // most words have.
-      if (entry.antonyms) mkField(t("row.field.antonyms"), "antonyms");
-
-      mkField(t("row.field.example"), "example", { multiline: true });
-
-      // 文法提示 (規格 #22): renders as Markdown when there's content and
-      // it isn't being edited right now; a click swaps it for the same
-      // auto-growing textarea every other field uses, and losing focus (or
-      // a commit) swaps it back. Empty stays the plain placeholder input.
-      renderGrammarField(body, scope);
-
-      if (entry.source && entry.source.path) {
-        const src = body.createEl("div", { cls: "vt-row-source-link" });
-        const name = entry.source.path.split("/").pop();
-        src.textContent = `📍 ${name} : line ${entry.source.line + 1}`;
-        src.setAttr("aria-label", t("row.jumpToSource"));
-        src.onclick = async (e) => {
-          e.stopPropagation();
-          await plugin.jumpToSource(entry);
-          opts.onJump?.(entry);
-        };
+    if (sheet) {
+      // 音標 first line (規格 #17) — 詞性 already sits in the header above,
+      // and the AI tab doesn't show this line at all. Unchanged: #14 keeps
+      // the iPhone sheet's card as it was.
+      if (entry.phonetic) {
+        body.createEl("div", { text: entry.phonetic, cls: "vt-row-subtext" });
       }
 
-      // Level — last. Comma-separated free-form tags (e.g. "多益中級, 托福
-      // 高級"), same field style as everything else. The only place level
-      // still shows at all once it's not the collapsed badge any more
-      // (that's part-of-speech now — 規格 #12).
-      mkField(t("row.field.level"), "level", { multiline: true });
-    }
+      // Synonyms shares the exact same auto-growing textarea treatment as
+      // Definition/中文定義, so a long list wraps flush-left instead of
+      // truncating in a single-line input.
+      mkField(t("row.field.synonyms"), "synonyms", { multiline: true });
+      mkField(t("row.field.definition"), "definition", { multiline: true });
+      mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
 
-    // ── Footer: more-info toggle · fetch · speak ─────────────────
-    const footer = body.createEl("div", { cls: "vt-row-footer" });
+      // 複習時間（n 次）— the only time info left on the sheet card in
+      // either half or full (規格 #18); added/updated/next-review moved to
+      // the word page.
+      body.createEl("div", {
+        text: t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }),
+        cls: "vt-meta",
+      });
 
-    const footerBtn = (parent: HTMLElement, icon: string, label: string) => {
-      const btn = parent.createEl("span", { cls: "vt-row-footer-icon" });
-      setIcon(btn, icon);
-      btn.setAttr("aria-label", label);
-      btn.setAttr("role", "button");
-      return btn;
-    };
+      if (state === "full") {
+        // Antonyms is hidden entirely when empty rather than showing an
+        // empty prompt box — unlike the other fields, it's not something
+        // most words have.
+        if (entry.antonyms) mkField(t("row.field.antonyms"), "antonyms");
 
-    const moreBtn = footerBtn(footer, state === "full" ? "chevron-down" : "info", state === "full" ? t("row.showLess") : t("row.showMore"));
-    moreBtn.onclick = (e) => {
-      e.stopPropagation();
-      redraw(state === "full" ? "half" : "full");
-    };
+        mkField(t("row.field.example"), "example", { multiline: true });
 
-    const actions = footer.createEl("span", { cls: "vt-row-footer-actions" });
+        // 文法提示 (規格 #22): renders as Markdown when there's content and
+        // it isn't being edited right now; a click swaps it for the same
+        // auto-growing textarea every other field uses, and losing focus (or
+        // a commit) swaps it back. Empty stays the plain placeholder input.
+        renderGrammarField(body, scope);
 
-    const fetchBtn = footerBtn(actions, "refresh-cw", t("row.fetch"));
-    fetchBtn.onclick = async (e) => {
-      e.stopPropagation();
-      fetchBtn.textContent = "…";
-      await plugin.enrichEntry(entry, { verbose: true });
-      redraw();
-    };
+        if (entry.source && entry.source.path) {
+          const src = body.createEl("div", { cls: "vt-row-source-link" });
+          const name = entry.source.path.split("/").pop();
+          src.textContent = `📍 ${name} : line ${entry.source.line + 1}`;
+          src.setAttr("aria-label", t("row.jumpToSource"));
+          src.onclick = async (e) => {
+            e.stopPropagation();
+            await plugin.jumpToSource(entry);
+            opts.onJump?.(entry);
+          };
+        }
 
-    if (sheet) {
+        // Level — last. Comma-separated free-form tags (e.g. "多益中級, 托福
+        // 高級"), same field style as everything else.
+        mkField(t("row.field.level"), "level", { multiline: true });
+      }
+
+      // ── Footer (unchanged — #14): more-info toggle · fetch · like ──
+      const footer = body.createEl("div", { cls: "vt-row-footer" });
+
+      const moreBtn = footerBtn(footer, state === "full" ? "chevron-down" : "info", state === "full" ? t("row.showLess") : t("row.showMore"));
+      moreBtn.onclick = (e) => {
+        e.stopPropagation();
+        redraw(state === "full" ? "half" : "full");
+      };
+
+      const actions = footer.createEl("span", { cls: "vt-row-footer-actions" });
+
+      const fetchBtn = footerBtn(actions, "refresh-cw", t("row.fetch"));
+      fetchBtn.onclick = async (e) => {
+        e.stopPropagation();
+        fetchBtn.textContent = "…";
+        await plugin.enrichEntry(entry, { verbose: true });
+        redraw();
+      };
+
       // 🔊 is in the header already; like moves here, away from where a
       // thumb lands on a touch-screen row (規格 #13).
       const likeBtn = footerBtn(actions, "heart", t(entry.liked ? "like.unlike" : "like.like"));
       likeBtn.addClass("vt-row-like");
       likeBtn.toggleClass("is-liked", !!entry.liked);
       likeBtn.onclick = like;
+
+      renderWordPageButton(body, entry, opts);
+      addCollapseButton(body);
     } else {
-      const speak = actions.createEl("span", { cls: "vt-speak-icon" });
-      setIcon(speak, "volume-2");
-      speak.setAttr("aria-label", t("row.pronounce"));
-      speak.setAttr("role", "button");
-      bindPronounceButton(speak, entry, { stopPropagation: true });
+      // 規格 #12: 資料頁籤只留英文定義、中文定義（可編輯），下面是程度標籤
+      // （唯讀 chip）。音標、同義字、反義字、例句、文法提示、出處、複習時間
+      // 都拿掉，到單字頁看（src/ui/blocks/wordHeader.ts）。
+      mkField(t("row.field.definition"), "definition", { multiline: true });
+      mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
+      renderLevelChips(body, entry);
+
+      // 規格 #13: 底部按鈕列只剩「字典重抓」「單字頁」，都只有 icon。
+      renderMinimalFooter(body, plugin, entry, opts, () => redraw());
     }
 
-    renderWordPageButton(body, entry, opts);
-    addCollapseButton(body);
     return rowEl;
   }
 
@@ -374,9 +388,7 @@ export function renderVocabRow(
           return;
         }
         void (async () => {
-          entry.grammar = inp.value;
-          if (!entry.liked) await plugin.store.setLiked(entry, true);
-          else await plugin.store.touch(entry);
+          await commitEntryField(plugin.store, entry, "grammar", inp.value);
           redraw();
         })();
       };
@@ -398,6 +410,58 @@ export function renderVocabRow(
   row = build();
   container.appendChild(row);
   return row;
+}
+
+// Icon-only footer button shared by the sheet's own footer (still its old
+// moreBtn/fetch/like row — #14 leaves it alone) and `renderMinimalFooter`
+// below (the new non-sheet footer, 規格 #13).
+function footerBtn(parent: HTMLElement, icon: string, label: string): HTMLElement {
+  const btn = parent.createEl("span", { cls: "vt-row-footer-icon" });
+  setIcon(btn, icon);
+  btn.setAttr("aria-label", label);
+  btn.setAttr("role", "button");
+  return btn;
+}
+
+// 規格 #13: a non-sheet expanded row's whole footer is now just two icons
+// — 單字頁 where 顯示更多 used to sit (that button is gone, #10), and
+// 字典重抓 on the right. Both the 資料 and AI tabs use this, so it isn't
+// re-typed per tab.
+function renderMinimalFooter(
+  body: HTMLElement,
+  plugin: VocabTrackerPlugin,
+  entry: VocabEntry,
+  opts: RowOptions,
+  redraw: () => void
+): void {
+  const footer = body.createEl("div", { cls: "vt-row-footer" });
+
+  if (opts.openWordPage) {
+    const wordPageBtn = footerBtn(footer, "external-link", t("word.openPageTitle"));
+    wordPageBtn.onclick = (e) => {
+      e.stopPropagation();
+      opts.openWordPage?.(entry);
+    };
+  }
+
+  const actions = footer.createEl("span", { cls: "vt-row-footer-actions" });
+  const fetchBtn = footerBtn(actions, "refresh-cw", t("row.fetch"));
+  fetchBtn.onclick = async (e) => {
+    e.stopPropagation();
+    fetchBtn.textContent = "…";
+    await plugin.enrichEntry(entry, { verbose: true });
+    redraw();
+  };
+}
+
+// 規格 #12: 程度在非 sheet 的列上變成唯讀 chip（單字頁上仍是可編輯欄位）。
+function renderLevelChips(body: HTMLElement, entry: VocabEntry): void {
+  const tags = levelTags(entry.level);
+  if (!tags.length) return;
+  const wrap = body.createEl("div", { cls: "vt-row-level-chips" });
+  for (const tagText of tags) {
+    wrap.createEl("span", { text: tagText, cls: "vt-row-level-chip" });
+  }
 }
 
 function renderWordPageButton(body: HTMLElement, entry: VocabEntry, opts: RowOptions): void {

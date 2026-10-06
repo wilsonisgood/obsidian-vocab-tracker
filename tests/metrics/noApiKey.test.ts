@@ -6,7 +6,7 @@ import type { VocabData, VocabEntry } from "../../src/core/model/entry";
 import { t } from "../../src/core/i18n";
 import { Rating } from "../../src/core/model/srs";
 import { isListed, type IsListedContext } from "../../src/core/model/like";
-import { resolveWordlistSettings, tagEnabled } from "../../src/core/model/wordlists";
+import { likeChipOn, resolveWordlistSettings, tagEnabled } from "../../src/core/model/wordlists";
 import type { VocabSidebarView } from "../../src/ui/sidebar/VocabSidebarView";
 import { buildStressFixture } from "../fixtures/stress";
 import { networkLog, type FakeElement } from "../perf/support/dom";
@@ -46,6 +46,7 @@ describe.each([
     const ctx: IsListedContext = {
       knownTags,
       isTagOn: (tag) => tagEnabled(resolveWordlistSettings(b.plugin.store.settings.wordlists), tag),
+    likeOn: likeChipOn(resolveWordlistSettings(b.plugin.store.settings.wordlists)),
     };
     return fx.liveEntries.find((e) => isListed(e, ctx) && pred(e))!;
   }
@@ -77,11 +78,15 @@ describe.each([
     }
     const view = await openSidebar(b, "all");
     const entry = isListedEntry((e) => !!e.antonyms && !!e.source);
-    view.expandState.set(entry.id, "full");
+    // 1006-2 #10/#12: a sidebar row can only reach "half" now (顯示更多/底部
+    // 收合 are gone) and only shows 英文定義／中文定義 — the rest (incl.
+    // antonyms/source) moved to the word page, so this only checks those
+    // two fields render without an API key, not the now-removed full set.
+    view.expandState.set(entry.id, "half");
     view.render();
     await flush();
     const row = rootOf(view).querySelector(`.vt-row[data-entry-id="${entry.id}"]`)!;
-    expect(row.querySelectorAll(".vt-field").length).toBeGreaterThanOrEqual(5);
+    expect(row.querySelectorAll(".vt-field").length).toBe(2);
     closeSidebar(b, view);
   });
 
