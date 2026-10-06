@@ -1,6 +1,7 @@
 import { Component, MarkdownRenderChild, MarkdownRenderer, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
+import { isVerb } from "../../core/model/usage";
 import { WordIndex } from "../../services/learn/wordIndex";
 import { aiErrorBox } from "../kit/aiDebug";
 import { emptyState } from "../kit/emptyState";
@@ -144,7 +145,7 @@ class VerbsBlock extends MarkdownRenderChild {
           const icon = row.createSpan({ cls: "vt-verbs-row-icon is-saved" });
           setIcon(icon, "bookmark-check");
           icon.setAttr("aria-label", l("rowFavorited"));
-        } else if (e.usage) {
+        } else if (this.plugin.verbs.usage(e)) {
           const icon = row.createSpan({ cls: "vt-verbs-row-icon" });
           setIcon(icon, "check");
           icon.setAttr("aria-label", t("learn.verb.hasUsage"));
@@ -174,7 +175,10 @@ class VerbsBlock extends MarkdownRenderChild {
       this.detailEl.appendChild(inlineNote({ text: t("learn.notFound", { word }) }));
       return;
     }
-    if (!this.plugin.verbs.canGenerate(entry)) {
+    // Wave 8 U1 (1006-2 #17): VerbUsageService.canGenerate() now allows
+    // every part of speech; this single-verb block (word pages) still
+    // only ever shows verbs, so it checks isVerb() directly instead.
+    if (!isVerb(entry.partOfSpeech)) {
       this.detailEl.appendChild(inlineNote({ text: t("learn.verb.notVerb", { word: entry.word }) }));
       return;
     }

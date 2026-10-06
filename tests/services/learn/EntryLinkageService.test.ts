@@ -83,6 +83,21 @@ describe("EntryLinkageService.impact / unlink", () => {
     expect(after).toMatchObject({ families: 0, triviaMentions: 0, verbFavorite: false });
   });
 
+  it("clears every favorited part of speech, not just verb (1006-2 #21)", async () => {
+    const { learn, vocab, linkage } = setup();
+    await learn.ensureLoaded();
+    learn.favoriteVerb({ id: "e1", word: "pan" });
+    learn.favoriteUsage({ id: "e1", word: "pan" }, "n");
+    vocab.all.push(entry("e1", "pan"));
+    linkage.init();
+
+    expect(linkage.impact("e1", "pan")).toMatchObject({ verbFavorite: true });
+    linkage.unlink("e1");
+    expect(learn.verbFavorite("e1")).toBeUndefined();
+    expect(learn.usageFavorite("e1", "n")).toBeUndefined();
+    expect(linkage.impact("e1", "pan")).toMatchObject({ verbFavorite: false });
+  });
+
   it("a delete isn't merged back in by a stale copy from another device", async () => {
     const { storage, learn, vocab, linkage } = setup();
     await learn.ensureLoaded();

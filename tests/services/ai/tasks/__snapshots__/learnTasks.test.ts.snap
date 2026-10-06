@@ -198,15 +198,17 @@ exports[`M7 AiRequest snapshots > verb.usage 1`] = `
 output=verb_usage
 
 ── system[0] (cache) ──
-你是一位英文字彙老師，幫一位以中文為母語的學習者整理一個英文動詞的常見用法。〔單字〕是這個字的資料。
+你是一位英文字彙老師，幫一位以中文為母語的學習者整理一個英文單字的常見用法。〔單字〕是這個字的資料。
 
 規則：
-1. patterns 列 3 到 5 個最常見的句型或搭配，依常見程度排序。pattern 用「動詞 + 名詞」「動詞 + to V」「動詞 + that 子句」「be + p.p.」這類寫法，或直接寫固定搭配（例如 sugarcoat it）；常見的衍生形容詞也可以列一個（例如 sugarcoated (adj.)）。
-2. meaningZh 用繁體中文（台灣用語）說明這個句型的意思和使用時機，25 字以內。
-3. example 是一個自然、完整的英文例句，程度符合〔學習者設定〕。
-4. related 列 2 到 4 個意思相近或常一起出現的片語，zh 用繁體中文 10 字以內。
-5. 只寫可靠、常見的用法，不確定的不要列，不要編造。
-6. 只輸出符合 schema 的 JSON。
+1. 先判斷這個字常見的詞性，可能不只一種——字典資料（詞性欄）就算已經有詞性，也請你自己重新判斷一次，不要只照抄；常見的詞性都列出來，用 n/v/adj/adv/prep/conj/pron/interj 這組代碼表示（noun/verb/adjective/adverb/preposition/conjunction/pronoun/interjection）。
+2. entries 裡每個詞性各佔一項，pos 填代碼。
+3. patterns 列 3 到 5 個最常見的句型或搭配，依常見程度排序。pattern 用「動詞 + 名詞」「動詞 + to V」「動詞 + that 子句」「be + p.p.」這類寫法，或直接寫固定搭配（例如 sugarcoat it）；常見的衍生形容詞也可以列一個（例如 sugarcoated (adj.)）。名詞/形容詞等其他詞性也照樣列出最常見的搭配或句型。
+4. meaningZh 用繁體中文（台灣用語）說明這個句型的意思和使用時機，25 字以內。
+5. example 是一個自然、完整的英文例句，程度符合〔學習者設定〕。
+6. related 列 2 到 4 個意思相近或常一起出現的片語，zh 用繁體中文 10 字以內。
+7. 只寫可靠、常見的用法，不確定的不要列，不要編造。
+8. 只輸出符合 schema 的 JSON。
 
 ── system[1] ──
 〔單字〕sugarcoat
@@ -222,6 +224,6 @@ I'm not going to sugarcoat it.
 我是一個 A1（入門）程度、正在準備托福（TOEFL）的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要。
 
 ── user ──
-任務：動詞用法（sugarcoat）
-整理 sugarcoat 的常見句型與相近說法。〔出處段落〕或〔出處句子〕裡的用法如果屬於其中一種，把那個句型排在第一個。"
+任務：用法（sugarcoat）
+列出 sugarcoat 常見的詞性，整理每個詞性的常見句型與相近說法。〔出處段落〕或〔出處句子〕裡的用法如果屬於其中一種，把那個句型排在第一個。"
 `;

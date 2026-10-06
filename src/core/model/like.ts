@@ -60,8 +60,9 @@ export interface InitialLikeSignals {
   // 用法、拿冷知識都會走 services/threads 的討論串機制。可靠：討論串只有
   // 真的用過 AI 才會存在。
   hasWordThread: boolean;
-  // entry.usage（動詞用法 block）已經有內容。可靠：只有 AI 產生會寫這個
-  // 欄位，沒有其他路徑會填它。
+  // 這個字至少有一個詞性的用法（entry.usages，或舊格式 entry.usage——見
+  // core/model/usage.ts 的 usagesOf()）。可靠：只有 AI 產生會寫這些欄
+  // 位，沒有其他路徑會填它。
   hasUsage: boolean;
   // entry.reviews > 0，或者已經有 entry.srs（排進單字卡複習過至少一次）。
   // 規格 #15 把「單字卡複習」算進會自動 like 的動作之一。

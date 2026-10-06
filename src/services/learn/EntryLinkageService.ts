@@ -67,7 +67,8 @@ export class EntryLinkageService {
     return deletionImpact(entryId, {
       families: this.deps.learn.families(),
       trivia: this.deps.learn.trivia(),
-      hasVerbFavorite: !!this.deps.learn.verbFavorite(entryId),
+      // Wave 8 U1 (1006-2 #21): any pos counts, not just "v".
+      hasVerbFavorite: this.deps.learn.usageFavoritesFor(entryId).length > 0,
       wordPageExists: this.deps.wordPageExists?.(entryId, word) ?? false,
       threadCount: this.deps.threadCount?.(entryId) ?? 0,
     });
@@ -85,7 +86,8 @@ export class EntryLinkageService {
       const updated = clearTriviaMention(item, entryId);
       if (updated !== item) this.deps.learn.putTrivia(updated);
     }
-    if (this.deps.learn.verbFavorite(entryId)) this.deps.learn.unfavoriteVerb(entryId);
+    // Wave 8 U1 (1006-2 #21): clears every pos's favorite, not just "v".
+    this.deps.learn.unfavoriteAllUsages(entryId);
     this.last.delete(entryId);
   }
 

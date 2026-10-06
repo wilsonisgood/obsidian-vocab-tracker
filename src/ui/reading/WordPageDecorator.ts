@@ -13,8 +13,9 @@ import { aiErrorText } from "../kit/aiState";
 //
 // A reading-mode post-processor. On notes whose frontmatter says
 // `vocab-tracker: word`, it puts a button next to the heading of each
-// managed section: 字族 →「找字族」, 用法 →「產生 / 重新產生」(verbs only),
-// 冷知識收藏 →「來一則」, AI 討論 →「在側欄開啟」. Other notes are left alone.
+// managed section: 字族 →「找字族」, 用法 →「產生 / 重新產生」(any part of
+// speech — 1006-2 #17; one AI call lists every pos, U1), 冷知識收藏 →
+// 「來一則」, AI 討論 →「在側欄開啟」. Other notes are left alone.
 // Only adds elements to the rendered view; the note itself is never
 // touched (the generated content reaches the page via ExportService).
 
@@ -44,7 +45,7 @@ export interface WordPageDeps {
   // Frontmatter of a note, when ctx.frontmatter isn't there (metadataCache).
   frontmatterOf(path: string): Record<string, unknown> | null | undefined;
   families: Pick<FamilyService, "generate" | "save">;
-  verbs: Pick<VerbUsageService, "canGenerate" | "generate">;
+  verbs: Pick<VerbUsageService, "canGenerate" | "generateAll" | "usages">;
   // 「來一則」 asks in the background — no more opening 冷知識.md (1006 #1).
   // The round shows right under the heading, 未收藏, until `favorite`
   // writes it into the file (the same flow 冷知識.md's own 收藏 uses).
@@ -187,12 +188,16 @@ function actionFor(
         },
       };
     case "usage":
+      // 1006-2 #17: not verb-only any more — canGenerate() now only
+      // excludes deleted entries. #18: one button, one AI call, every
+      // part of speech this word has; U2 owns the per-pos UI (#19/#22),
+      // this button just calls the new generateAll().
       if (!deps.verbs.canGenerate(entry)) return null;
       return {
         icon: "sparkles",
-        label: entry.usage ? l("regenerateUsage") : l("generateUsage"),
+        label: Object.keys(deps.verbs.usages(entry)).length ? l("regenerateUsage") : l("generateUsage"),
         run: async () => {
-          await deps.verbs.generate(entry);
+          await deps.verbs.generateAll(entry);
           deps.notify(l("usageSaved"));
         },
       };

@@ -1,5 +1,5 @@
 import type { VocabEntry } from "../../core/model/entry";
-import type { UsageBlock } from "../../core/model/usage";
+import { usagesOf, type UsageBlock } from "../../core/model/usage";
 import { datesText, recordDates } from "../kit/dates";
 import { parseBlockParams } from "./params";
 
@@ -28,7 +28,10 @@ export function filterVerbs(verbs: readonly VocabEntry[], query: string): VocabE
 // with usage (so the page opens on something to read), else the first.
 export function pickVerb(verbs: readonly VocabEntry[], current: string | undefined): string | undefined {
   if (current && verbs.some((e) => e.id === current)) return current;
-  return (verbs.find((e) => e.usage) ?? verbs[0])?.id;
+  // Wave 8 U1 (1006-2 #21): usage is per pos now; this block only ever
+  // shows verbs, so "has usage" still means pos "v" (usagesOf() merges
+  // the legacy entry.usage field in).
+  return (verbs.find((e) => usagesOf(e).v) ?? verbs[0])?.id;
 }
 
 // "eng/Cadence_Gao_School_Speech_Transcript.md" → "Cadence_Gao_School_Speech_Transcript".

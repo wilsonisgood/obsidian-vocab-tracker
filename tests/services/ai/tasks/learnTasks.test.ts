@@ -150,7 +150,10 @@ describe("M7 prompt invariants", () => {
     for (const [id, tpl] of Object.entries(TRIVIA_TEMPLATES)) {
       expect({ id, missing: templateSlots(tpl).filter((s) => !tSlots.includes(s)) }).toEqual({ id, missing: [] });
     }
-    const wSlots = Object.keys(buildWordContext(SUGARCOAT).slots);
+    // VERB_TEMPLATE also takes `onlyPos` (VerbUsageService.regenerate /
+    // U2's per-pos 重新產生), which the shared word context doesn't
+    // provide — callers add it to the slots themselves (verbUsage.build()).
+    const wSlots = [...Object.keys(buildWordContext(SUGARCOAT).slots), "onlyPos"];
     expect(templateSlots(VERB_TEMPLATE).filter((s) => !wSlots.includes(s))).toEqual([]);
     expect(templateSlots(FAMILY_TEMPLATES.seeded).sort()).toEqual(["existingTopics", "seeds"]);
   });
@@ -210,14 +213,42 @@ describe("family.generate parse", () => {
   });
 });
 
-describe("verb.usage parse", () => {
-  it("keeps patterns with text and tolerates a missing related list", () => {
-    const json = { patterns: [{ pattern: "sugarcoat it", meaningZh: "直說", example: "Don't sugarcoat it." }] };
-    expect(verbUsage.parse!(aiResult("", { json }))).toEqual({ patterns: json.patterns, related: [] });
+describe("verb.usage parse (1006-2 #18 — every part of speech, one answer)", () => {
+  it("reads an entry per part of speech, resolving pos codes and words alike", () => {
+    const json = {
+      entries: [
+        { pos: "v", patterns: [{ pattern: "sugarcoat it", meaningZh: "直說", example: "Don't sugarcoat it." }], related: [{ phrase: "gloss over", zh: "輕描淡寫" }] },
+        { pos: "noun", patterns: [{ pattern: "a sugarcoated pill", meaningZh: "包裝過的壞消息", example: "" }] },
+      ],
+    };
+    expect(verbUsage.parse!(aiResult("", { json }))).toEqual({
+      entries: [
+        { pos: "v", patterns: json.entries[0].patterns, related: json.entries[0].related },
+        { pos: "n", patterns: json.entries[1].patterns, related: [] },
+      ],
+    });
   });
 
-  it("throws bad_output without any pattern", () => {
-    for (const json of [{ patterns: [] }, { patterns: [{ pattern: "" }] }, { related: [] }, { patterns: ["x"] }]) {
+  it("drops an entry with an unknown pos or no usable patterns, tolerates a missing related list", () => {
+    const json = {
+      entries: [
+        { pos: "xyz", patterns: [{ pattern: "whatever" }] },
+        { pos: "adj", patterns: [{ pattern: "  " }] },
+        { pos: "adv", patterns: [{ pattern: "quickly" }] },
+      ],
+    };
+    expect(verbUsage.parse!(aiResult("", { json }))).toEqual({
+      entries: [{ pos: "adv", patterns: [{ pattern: "quickly", meaningZh: "", example: "" }], related: [] }],
+    });
+  });
+
+  it("throws bad_output on the wrong shape or when every entry is dropped", () => {
+    for (const json of [
+      { patterns: [] },
+      { entries: "no" },
+      { entries: [{ pos: "v", patterns: [] }] },
+      { entries: [{ pos: "???", patterns: [{ pattern: "x" }] }] },
+    ]) {
       expect(() => verbUsage.parse!(aiResult("", { json }))).toThrow(expect.objectContaining({ code: "bad_output" }));
     }
   });

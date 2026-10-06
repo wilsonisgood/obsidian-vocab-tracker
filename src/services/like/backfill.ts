@@ -1,5 +1,6 @@
 import type { VocabEntry } from "../../core/model/entry";
 import { initialLiked } from "../../core/model/like";
+import { usagesOf } from "../../core/model/usage";
 
 // Wave 7 Y — 一次性回填 (1006report.md #23) 需要的訊號組裝。
 //
@@ -25,7 +26,9 @@ export function likeBackfillDecider(deps: LikeBackfillDeps): (entry: VocabEntry)
   return (entry) =>
     initialLiked(entry, {
       hasWordThread: deps.threads.wordQuestionCount(entry.id) > 0,
-      hasUsage: !!entry.usage,
+      // Wave 8 U1 (1006-2 #21): usage is per pos now (entry.usages), with
+      // the legacy entry.usage folded in by usagesOf() — any pos counts.
+      hasUsage: Object.keys(usagesOf(entry)).length > 0,
       // 規格 #15 把「單字卡複習」列進自動 like 的動作；reviews 是每次
       // SrsService.rate() 都會累加的舊欄位，srs 則是「排進過複習、至少被
       // FSRS 評分一次」才會出現（SrsService.rate()）——両者任一就算複習
