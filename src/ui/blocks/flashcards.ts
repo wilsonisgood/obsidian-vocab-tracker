@@ -193,7 +193,7 @@ export class FlashcardsBlock extends MarkdownRenderChild {
     const cards = ids
       ? ids
           .map((id) => this.live(id))
-          .filter((e): e is VocabEntry => !!e && matchesFilter(e, { mode: this.mode }))
+          .filter((e): e is VocabEntry => !!e && matchesFilter(e, { mode: this.mode, requireLiked: !this.single }))
       : this.defaultCards();
 
     this.session = cards.map((e) => e.id);
