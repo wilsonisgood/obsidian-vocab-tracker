@@ -47,7 +47,10 @@ import { WordlistService } from "./src/services/wordlists/WordlistService";
 import { resolveWordlistSettings, tagColor, tagEnabled, type WordlistSettings } from "./src/core/model/wordlists";
 import { EXAM_WORD_CLS, highlightExamWords } from "./src/ui/reading/examHighlight";
 import { NoteImports } from "./src/services/wordlists/NoteImports";
+import { EntryWordIndex } from "./src/services/wordlists/EntryWordIndex";
 import { mergeLevel, planImport } from "./src/core/wordlists/importPlan";
+import { AutoLike } from "./src/services/like/AutoLike";
+import { likeBackfillDecider } from "./src/services/like/backfill";
 import { tagLabel } from "./src/core/wordlists/parse";
 import type { ScanResult } from "./src/core/wordlists/scan";
 import { nowIso } from "./src/core/nowIso";
@@ -120,6 +123,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   selection!: SelectionTracker;
   wordlists!: WordlistService;
   noteImports!: NoteImports;
+  examWordIndex!: EntryWordIndex;
+  autoLike!: AutoLike;
   vault!: ObsidianVault;
   exporter!: ExportService;
   files!: EntryFilesService;
@@ -175,6 +180,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     });
     this.noteImports = new NoteImports(this.storage);
     await this.noteImports.load();
+    this.examWordIndex = new EntryWordIndex(this.store);
 
     // The host callbacks only run on a backup / restore, once onload has
     // built every service they touch.
@@ -231,6 +237,24 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.families = new FamilyService({ ai, vocab: this.store, learn: this.learn, dictionary: this.dictionary });
     this.verbs = new VerbUsageService({ ai, vocab: this.store });
     this.trivia = new TriviaService({ threads: this.threads, vocab: this.store, learn: this.learn });
+
+    // Wave 7 Y — 自動 like (1006 #15)：單字討論、找字族、產生用法、複習、
+    // 冷知識指定字 都算「真的用到」，補 like 回去。見 AutoLike 開頭註解。
+    this.autoLike = new AutoLike({
+      store: this.store,
+      threads: this.threads,
+      family: this.families,
+      verbs: this.verbs,
+      srs: this.srs,
+    });
+    // 必須在任何 UI 有機會呼叫 ask()/setPinned() 之前 await，見 AutoLike.init() 註解。
+    await this.threads.ensureLoaded();
+    // Wave 7 Y — 一次性回填 (1006 #23)：舊資料的 liked 欄位全是 undefined，
+    // 用既有訊號（討論串、複習、用法…）決定哪些字算已經 like 過。
+    const likeMigrated = await this.store.backfillLiked(likeBackfillDecider({ threads: this.threads }));
+    if (likeMigrated) console.log(`Vocab Tracker: backfilled liked for ${likeMigrated} entries`);
+    await this.autoLike.init();
+
     this.selection = new SelectionTracker(this.app);
     this.registerDomEvent(document, "selectionchange", () => this.selection.update());
     // §4.3: back in the foreground (iOS resumes the app instead of
@@ -399,7 +423,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
         if (!file || file.extension !== "md" || this.wordlists.index.isEmpty) return false;
-        if (!checking) void this.importExamWords(file, { force: true });
+        if (!checking) void this.importExamWords(file);
         return true;
       },
     });
@@ -468,6 +492,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // Any pending undoable delete (row.ts's 10 秒復原窗) sends now, before
     // the services it would write to go away.
     flushUndoables();
+    this.autoLike?.dispose();
+    this.examWordIndex?.dispose();
     // Threads first: it saves in-flight answers as stopped with their text
     // so far, before ai.dispose() aborts the requests.
     this.threads?.dispose();
@@ -562,13 +588,15 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.refreshExamStrip();
   }
 
-  // Scans a note in the background, then auto-imports its exam words if
-  // this note hasn't been imported before.
+  // Scans a note in the background, then auto-imports its exam words.
   async scanNote(file: TFile) {
     if (file.extension !== "md" || this.wordlists.index.isEmpty) return;
     try {
       const result = await this.wordlists.scan(file.path, file.stat.mtime, () => this.app.vault.cachedRead(file));
-      if (this.wordlistSettings().autoImport && !this.noteImports.has(file.path)) {
+      // Wave 7 Y (1006 #25): every scan — not just the first one — checks
+      // for exam words the note has but the vocab list lost (deleted, or
+      // never imported).
+      if (this.wordlistSettings().autoImport) {
         await this.importExamWords(file, { result });
       }
     } catch (e) {
@@ -595,18 +623,18 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   }
 
   // Adds every exam-list word in the note to the vocab list (level = its
-  // exams), and adds the exam labels to words already tracked. Each note
-  // is imported once; `force` (the command) re-runs it, but words the user
-  // deleted still stay deleted.
-  async importExamWords(file: TFile, opts: { result?: ScanResult; force?: boolean } = {}) {
+  // exams, liked:false — 1006 #25), and adds the exam labels to words
+  // already tracked. Runs on every scan now, so a word the user deleted
+  // and the note still has gets re-added (under a new id, unliked) once
+  // the 10 秒 undo window has passed — see EntryWordIndex / planImport.
+  async importExamWords(file: TFile, opts: { result?: ScanResult } = {}) {
     if (!this.isImportable(file.path) || this.importing.has(file.path)) return;
-    if (!opts.force && this.noteImports.has(file.path)) return;
     this.importing.add(file.path);
     try {
       const result =
         opts.result ??
         (await this.wordlists.scan(file.path, file.stat.mtime, () => this.app.vault.cachedRead(file)));
-      const plan = planImport(result.hits, this.store.allEntries, (tags) => this.examLabels(tags));
+      const plan = planImport(result.hits, this.examWordIndex, (tags) => this.examLabels(tags), { now: Date.now() });
 
       const base = Date.now();
       const created = plan.create.map((w, i) =>
@@ -615,11 +643,13 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
           example: w.example,
           source: { path: file.path, line: w.line },
           origin: "wordlist",
+          liked: false,
         })
       );
       if (created.length) await this.store.addEntries(created);
       for (const r of plan.retag) r.entry.level = r.level;
       if (plan.retag.length) await this.store.touchMany(plan.retag.map((r) => r.entry));
+      // 不再是 gate，只留做「最後匯入時間」紀錄。
       await this.noteImports.mark(file.path, nowIso());
 
       if (created.length || plan.retag.length) {

@@ -81,9 +81,14 @@ describe("v1 → current schema with 1,000 words", () => {
     for (const e of b.plugin.store.vocabData.entries) {
       const old = byId.get(e.id)!;
       expect(e.lang).toBe("en");
-      expect(e.rev).toBe(0);
+      // rev 1 / updatedAt > createdAt, not 0 / equal: onload's one-time
+      // backfillLiked (Wave 7 Y, 1006 #23) touches every migrated entry
+      // right after migration to fill in `liked`, which is itself a v2
+      // field from old data (a v1 library has no like concept at all).
+      expect(e.rev).toBe(1);
+      expect(typeof e.liked).toBe("boolean");
       expect(e.createdAt).toBe(new Date(old.added.replace(" ", "T")).toISOString());
-      expect(e.updatedAt).toBe(e.createdAt);
+      expect(new Date(e.updatedAt!).getTime()).toBeGreaterThanOrEqual(new Date(e.createdAt!).getTime());
       expect(e.deletedAt).toBeUndefined();
     }
     expect(b.plugin.store.vocabData.schemaVersion).toBe(2);
@@ -123,13 +128,21 @@ describe("v1 → current schema with 1,000 words", () => {
   });
 
   it("restoring the backup over data.json gives the same library back", async () => {
+    // Drops the one stamp onload's backfillLiked (Wave 7 Y) sets from the
+    // real wall clock — updatedAt/rev — so this only compares what a
+    // restore actually promises to reproduce: the same words, same
+    // decided `liked`. Two separate boots of the same v1 backup land
+    // milliseconds apart in real time, so those two fields never match
+    // byte-for-byte between them even though nothing meaningful differs.
+    const stable = (entries: VocabEntry[]) => entries.map(({ updatedAt: _updatedAt, rev: _rev, ...rest }) => rest);
+
     const first = await boot(v1File());
-    const migrated = structuredClone(first.plugin.store.vocabData.entries);
+    const migrated = stable(structuredClone(first.plugin.store.vocabData.entries));
     const [, backupText] = backups(first.app)[0];
 
     // The manual restore: the backup file copied over data.json.
     const restored = await boot(JSON.parse(backupText));
-    expect(restored.plugin.store.vocabData.entries).toEqual(migrated);
+    expect(stable(restored.plugin.store.vocabData.entries)).toEqual(migrated);
   });
 
   it("migrated words are usable right away: listed and in the flashcard queue", async () => {

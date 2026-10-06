@@ -482,7 +482,14 @@ export function buildStressFixture(options: StressOptions = {}): StressFixture {
     // paragraph (the heavier reading-view case), and §1.3's "no key" check
     // runs against the same data.
     ai: { ...defaultAiSettings(), enabled: true, updatedAt: iso(now - 10 * DAY) },
-    wordlists: { highlight: true, inflections: true, autoImport: true, tags: {} },
+    // autoImport off: the wordlists above intentionally also cover filler
+    // words no entry tracks (for examHighlight's underline, not import).
+    // Wave 7 Y (1006 #25) made every note-open re-check for exam words the
+    // vocab list lost, so with this on every boot would auto-import those
+    // filler overlaps and enrich them (real network calls) — noise no
+    // test here is about. highlight/inflections (the underline itself)
+    // don't read this flag, so it's unaffected.
+    wordlists: { highlight: true, inflections: true, autoImport: false, tags: {} },
   };
 
   const clone = <T>(x: T): T => structuredClone(x);
