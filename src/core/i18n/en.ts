@@ -579,4 +579,23 @@ export const en = {
   "backup.restore.done": "Restored from the backup. Your data from before is saved in {path}",
   "backup.restore.failed": "Restore failed: {error}",
   "backup.restore.safetyFailed": "Couldn’t back up your current data first, so nothing was restored or changed: {error}",
+
+  // ── Wave 7 F: like 地基（1006report.md 定案規格 #13-#28）──────────
+  // The cross/trash icon on a word row is replaced by a like toggle (♡/♥).
+  // The word itself is always called "like", even in the Chinese UI —
+  // trivia/verb-usage "收藏" (save to the word page) is a different concept
+  // and keeps its old name.
+  "like.like": "Like",
+  "like.unlike": "Unlike",
+  // Sidebar/dashboard toggle that only shows liked words.
+  "like.filter.onlyLiked": "Only liked",
+  // Sidebar "單字" section heading once it carries a count (規格 #5, #9).
+  "sidebar.section.words.counted": "Words ({n})",
+
+  // Delayed-commit "undo" toast, shared by unlike-and-delete (規格 #14) and
+  // deleting a Q&A pair / a whole discussion thread (規格 #20, #21).
+  "undo.action": "Undo",
+  "undo.deletedWord": "Deleted \"{word}\"",
+  "undo.deletedQa": "Deleted this Q&A",
+  "undo.deletedThread": "Deleted this discussion",
 } as const;
