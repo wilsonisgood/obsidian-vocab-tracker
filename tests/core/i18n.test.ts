@@ -36,9 +36,13 @@ describe("dictionaries", () => {
 
   it("carry the M7 learning-block strings", () => {
     setLocale("zh-TW");
-    expect(t("learn.family.saveAdd", { n: 3 })).toBe("存字族，並把 3 個字加入單字庫");
+    expect(t("learn.family.saved", { families: 3 })).toBe(
+      "已存 3 個字族。新字以文字成員存在字族樹裡，點一下（或旁邊的 ＋）就能加入單字庫。"
+    );
     setLocale("en");
-    expect(t("learn.family.saveAdd", { n: 3 })).toBe("Save, and add 3 words");
+    expect(t("learn.family.saved", { families: 3 })).toBe(
+      "Saved 3 families. New words sit in the tree as text — tap one (or its ＋) to add it."
+    );
     expect(t("learn.trivia.random")).toBe("Random from your {n} words");
   });
 });

@@ -81,6 +81,8 @@ import { configurePronouncer, disposePronouncer } from "./src/ui/kit/pronounce";
 import { ObsidianDeviceState } from "./src/platform/ObsidianDevice";
 import { BackupService } from "./src/services/backup/BackupService";
 import type { RestoreChanges } from "./src/core/ports";
+import { EntryLinkageService } from "./src/services/learn/EntryLinkageService";
+import { DeleteEntryModal, type DeleteEntryResult } from "./src/ui/word/DeleteEntryModal";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -120,6 +122,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   vault!: ObsidianVault;
   exporter!: ExportService;
   files!: EntryFilesService;
+  // Keeps families / saved trivia / saved verb usages in step with a word
+  // deleted, renamed or just learned (規劃書 06 §4.1, W6).
+  linkage!: EntryLinkageService;
   anchors!: ParagraphAnchorService;
   paragraphIndex!: ParagraphIndex;
   paragraphBadges!: ParagraphBadges;
@@ -274,6 +279,19 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof TFolder))
     );
     this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof TFolder)));
+
+    // Keeps families / saved trivia / saved verb usages in step with a
+    // word deleted, renamed or just learned (規劃書 06 §4.1, W6).
+    // init() seeds the baseline before the listener below runs, so every
+    // word already in the list isn't treated as "just added".
+    this.linkage = new EntryLinkageService({
+      learn: this.learn,
+      vocab: this.store,
+      wordPageExists: (id, word) => this.vault.exists(this.exporter.wordPagePath(id, word)),
+      threadCount: (id) => this.threads.wordQuestionCount(id),
+    });
+    this.linkage.init();
+    this.register(this.store.events.on("data:changed", () => void this.linkage.sync()));
 
     // Word pages: buttons next to the managed section headings (the
     // vocab-word header block itself is in registerBlocks below).
@@ -1055,6 +1073,35 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     await this.store.deleteEntry(entry.id);
     if (entry.source && entry.source.path) {
       await this.unhighlightWord(entry.word, entry.source.path);
+    }
+  }
+
+  // Every delete entry point (WordRow.ts's remove()) calls this instead of
+  // deleteEntry directly: shows what the word is linked to (families,
+  // saved trivia, verb favorite, word page, discussion), and only deletes
+  // — then unlinks those — once the learner confirms. Resolves to whether
+  // it was actually deleted, so the caller knows whether to refresh.
+  async confirmDeleteEntry(entry: VocabEntry): Promise<boolean> {
+    await Promise.all([this.learn.ensureLoaded(), this.threads.ensureLoaded()]);
+    const impact = this.linkage.impact(entry.id, entry.word);
+    return new Promise<boolean>((resolve) => {
+      new DeleteEntryModal(this.app, entry.word, impact, (result) => {
+        if (!result) {
+          resolve(false);
+          return;
+        }
+        void this.deleteEntryConfirmed(entry, result).then(() => resolve(true));
+      }).open();
+    });
+  }
+
+  private async deleteEntryConfirmed(entry: VocabEntry, result: DeleteEntryResult): Promise<void> {
+    await this.deleteEntry(entry);
+    this.linkage.unlink(entry.id);
+    if (result.trashWordPage) {
+      const path = this.exporter.wordPagePath(entry.id, entry.word);
+      const file = this.app.vault.getAbstractFileByPath(path);
+      if (file) await this.app.fileManager.trashFile(file);
     }
   }
 
