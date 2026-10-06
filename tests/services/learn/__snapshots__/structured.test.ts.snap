@@ -11,7 +11,8 @@ exports[`formatAiRequest (debug box prompt) > prints every system block, message
 4. zh 用繁體中文（台灣用語），10 個字以內。
 5. 字根、字源只用可靠、常見的知識。不確定就不要用字根分群，改用主題分群，不要編造字源。
 6. topic 用英文小寫；label 用繁體中文，可以夾英文字根（例如「gl- 發光家族」）。
-7. 只輸出符合 schema 的 JSON。
+7. emoji 每個字族、每個成員都只給一個最能代表它的 emoji；沒有完全對應的意思就挑最接近的，不要留空。
+8. 只輸出符合 schema 的 JSON。
 
 [system 2]
 〔已學單字〕（共 2 個）

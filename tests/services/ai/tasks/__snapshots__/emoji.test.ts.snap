@@ -1,0 +1,22 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`word.emoji build > is fast-tier, structured JSON, no quick-action label 1`] = `
+"你是一位幫英文單字挑選 emoji 的助理，讓一位以中文為母語的學習者能一眼認出這個字。
+
+規則：
+1. 每個字只給一個最能代表它意思的 emoji；平台常見、沒有爭議的優先。
+2. 找不到完全對應的意思時，挑最接近、最相關的 emoji，不要留空、不要用問號或其他佔位符號代替。
+3. 詞性和中文意思只是輔助判斷字義的線索，不要輸出它們，也不要編造字義。
+4. word 欄位照〔單字清單〕的原樣寫，不要改成原形或其他詞形。
+5. 只輸出符合 schema 的 JSON。
+
+〔單字清單〕（共 3 個，幫每個字挑一個 emoji）
+- apron（noun） 圍裙
+- glitter（verb）
+- toil
+
+〔學習者設定〕
+我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要。"
+`;
+
+exports[`word.emoji build > is fast-tier, structured JSON, no quick-action label 2`] = `"任務：幫〔單字清單〕裡的每個字挑一個 emoji"`;

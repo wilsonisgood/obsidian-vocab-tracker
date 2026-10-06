@@ -15,6 +15,10 @@ export interface LearnVocabPort {
   readonly entries: VocabEntry[];
   addEntries(entries: VocabEntry[]): Promise<void>;
   touch(entry: VocabEntry): Promise<void>;
+  // FamilyService.addSuggested (A3): liking a word already in the list
+  // instead of adding a duplicate entry. Same signature as
+  // VocabStore.setLiked (core/store/VocabStore.ts).
+  setLiked(entry: VocabEntry, liked: boolean): Promise<void>;
 }
 
 // DictionaryService.

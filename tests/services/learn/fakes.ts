@@ -50,6 +50,7 @@ export function result(text: string, extra: Partial<AiRunResult> = {}): AiRunRes
 
 export class FakeVocab implements LearnVocabPort {
   touched: VocabEntry[] = [];
+  liked: { entry: VocabEntry; liked: boolean }[] = [];
   constructor(public all: VocabEntry[] = []) {}
   get entries(): VocabEntry[] {
     return this.all.filter((e) => !e.deletedAt);
@@ -59,6 +60,10 @@ export class FakeVocab implements LearnVocabPort {
   }
   async touch(e: VocabEntry): Promise<void> {
     this.touched.push(e);
+  }
+  async setLiked(entry: VocabEntry, liked: boolean): Promise<void> {
+    entry.liked = liked;
+    this.liked.push({ entry, liked });
   }
 }
 

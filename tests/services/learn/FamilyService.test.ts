@@ -3,8 +3,9 @@ import type { Family } from "../../../src/core/model/family";
 import type { VocabStore } from "../../../src/core/store/VocabStore";
 import type { AiService } from "../../../src/services/ai/AiService";
 import { AiError } from "../../../src/services/ai/errors";
+import type { AiRequest } from "../../../src/services/ai/providers/types";
 import type { DictionaryService } from "../../../src/services/dictionary/DictionaryService";
-import { FAMILY_THREAD_ID, FamilyService, mergeFamily } from "../../../src/services/learn/FamilyService";
+import { FAMILY_THREAD_ID, FamilyService, familyExpandThreadId, mergeFamily } from "../../../src/services/learn/FamilyService";
 import { LearnStore } from "../../../src/services/learn/LearnStore";
 import type { DictionaryLookupPort, LearnAi, LearnVocabPort } from "../../../src/services/learn/ports";
 import { MemoryStorage } from "../ai/fakes";
@@ -15,15 +16,16 @@ const NOW = new Date("2026-10-04T12:00:00Z");
 const CLOTHING = {
   topic: "clothing",
   label: "服裝",
+  emoji: "👗",
   groups: [
     {
       label: "舞台服裝",
       members: [
-        { word: "glittery", zh: "閃閃發光的" },
-        { word: "Leotard", zh: "連身緊身衣" },
-        { word: "sequin", zh: "亮片" },
-        { word: "tulle", zh: "薄紗" },
-        { word: "sequin", zh: "重複" },
+        { word: "glittery", zh: "閃閃發光的", emoji: "✨" },
+        { word: "Leotard", zh: "連身緊身衣", emoji: "🩱" },
+        { word: "sequin", zh: "亮片", emoji: "✨" },
+        { word: "tulle", zh: "薄紗", emoji: "🎀" },
+        { word: "sequin", zh: "重複", emoji: "✨" },
       ],
     },
   ],
@@ -31,7 +33,8 @@ const CLOTHING = {
 const GL = {
   topic: "gl-",
   label: "gl- 發光家族",
-  groups: [{ label: "光", members: [{ word: "glitter", zh: "閃爍" }, { word: "gleam", zh: "光澤" }] }],
+  emoji: "💡",
+  groups: [{ label: "光", members: [{ word: "glitter", zh: "閃爍", emoji: "✨" }, { word: "gleam", zh: "光澤", emoji: "🌟" }] }],
 };
 
 function setup(json: unknown = { families: [CLOTHING, GL] }, dict = new FakeDictionary()) {
@@ -56,12 +59,12 @@ describe("FamilyService.generate", () => {
 
     expect(ai.threadIds).toEqual([FAMILY_THREAD_ID]);
     expect(cands).toHaveLength(2);
-    expect(cands[0]).toMatchObject({ topic: "clothing", label: "服裝", seedEntryIds: ["e1"] });
+    expect(cands[0]).toMatchObject({ topic: "clothing", label: "服裝", emoji: "👗", seedEntryIds: ["e1"] });
     expect(cands[0].groups[0].members).toEqual([
-      { entryId: "e1", word: "glittery", zh: "閃閃發光的" },
-      { entryId: "e2", word: "Leotard", zh: "連身緊身衣" },
-      { word: "sequin", zh: "亮片" },
-      { word: "tulle", zh: "薄紗" },
+      { entryId: "e1", word: "glittery", zh: "閃閃發光的", emoji: "✨" },
+      { entryId: "e2", word: "Leotard", zh: "連身緊身衣", emoji: "🩱" },
+      { word: "sequin", zh: "亮片", emoji: "✨" },
+      { word: "tulle", zh: "薄紗", emoji: "🎀" },
     ]);
     expect(families.newWords(cands).map((m) => m.word)).toEqual(["sequin", "tulle", "glitter", "gleam"]);
     expect(learn.families()).toEqual([]);
@@ -132,6 +135,12 @@ describe("FamilyService.save", () => {
     expect(members.find((m) => m.word === "sequin")?.entryId).toBe(added[0].id);
     expect(members.find((m) => m.word === "tulle")?.entryId).toBe(added[1].id);
     expect(families.familiesOf("e1").map((f) => f.topic)).toEqual(["clothing"]);
+
+    // A newly added word's member emoji rides into wordMeta (決定 1), not
+    // onto the entry.
+    expect(learn.wordMeta(added[0].id)).toMatchObject({ emoji: "✨", emojiSource: "ai" });
+    expect(learn.wordMeta(added[1].id)).toMatchObject({ emoji: "🎀", emojiSource: "ai" });
+    expect(added[0]).not.toHaveProperty("emoji");
   });
 
   it("emits family:saved with only the seed entry ids, for AutoLike (1006report.md #15)", async () => {
@@ -180,7 +189,7 @@ describe("FamilyService.save", () => {
     const [list] = (await families.save(await families.generate())).families;
     expect(list.scope).toBe("list");
     const { families: found } = await families.save([
-      { topic: "kitchen", label: "廚房", seedEntryIds: ["e3"], groups: [{ label: "x", members: [{ word: "ladle", zh: "勺" }] }] },
+      { topic: "kitchen", label: "廚房", emoji: "", seedEntryIds: ["e3"], groups: [{ label: "x", members: [{ word: "ladle", zh: "勺" }] }] },
     ]);
     expect(found[0].scope).toBe("word");
   });
@@ -191,7 +200,7 @@ describe("FamilyService.save", () => {
     await families.save(await families.generate());
     // Word page 找字族 for apron: a new topic.
     await families.save([
-      { topic: "kitchen", label: "廚房", seedEntryIds: ["e3"], groups: [{ label: "x", members: [{ word: "ladle", zh: "勺" }] }] },
+      { topic: "kitchen", label: "廚房", emoji: "", seedEntryIds: ["e3"], groups: [{ label: "x", members: [{ word: "ladle", zh: "勺" }] }] },
     ]);
     // A family saved before `scope` existed, from a word page (has a seed).
     learn.putFamily({ id: "old-word", topic: "old", label: "舊", source: "ai", seedEntryIds: ["e2"], groups: [] });
@@ -247,14 +256,39 @@ describe("FamilyService.save", () => {
     expect(families.families()).toHaveLength(2);
   });
 
-  it("addSuggested adds one word of a saved family", async () => {
-    const { families, vocab } = setup();
+  it("addSuggested adds one word of a saved family, and writes its emoji into wordMeta", async () => {
+    const { families, vocab, learn } = setup();
     const [saved] = (await families.save(await families.generate())).families;
     const e = await families.addSuggested(saved.id, "tulle");
     expect(e).toMatchObject({ word: "tulle", origin: `family:${saved.id}` });
     expect(vocab.entries.map((x) => x.word)).toContain("tulle");
     expect(families.familiesOf(e!.id)).toHaveLength(1);
     expect(await families.addSuggested(saved.id, "unknown")).toBeUndefined();
+    expect(learn.wordMeta(e!.id)).toMatchObject({ emoji: "🎀", emojiSource: "ai" });
+  });
+
+  it("addSuggested on a word already in the vocab list just likes it (A3) instead of duplicating it", async () => {
+    const { families, vocab } = setup();
+    // e3 "apron" is already tracked (but unliked); put it in a saved
+    // family's suggestion list the way a merged-in member would be.
+    vocab.all[2].liked = false;
+    const [saved] = (
+      await families.save([
+        { topic: "kitchen", label: "廚房", emoji: "", seedEntryIds: [], groups: [{ label: "x", members: [{ word: "apron", zh: "圍裙", emoji: "👝" }] }] },
+      ])
+    ).families;
+
+    const e = await families.addSuggested(saved.id, "apron");
+    expect(e?.id).toBe("e3");
+    expect(e?.liked).toBe(true);
+    expect(vocab.liked).toEqual([{ entry: vocab.all[2], liked: true }]);
+    // No duplicate entry, and no wordMeta written — apron wasn't newly added.
+    expect(vocab.entries.filter((x) => x.word === "apron")).toHaveLength(1);
+
+    // Already-liked words don't get a redundant setLiked call.
+    vocab.liked.length = 0;
+    await families.addSuggested(saved.id, "apron");
+    expect(vocab.liked).toEqual([]);
   });
 
   it("重新分群 keeps the id and 加入日期 of a family whose topic comes back (1005 #13)", async () => {
@@ -316,6 +350,100 @@ describe("FamilyService.save", () => {
   });
 });
 
+describe("FamilyService.isKnown (A3)", () => {
+  it("is true only for liked entries", () => {
+    const { families } = setup();
+    expect(families.isKnown(entry("x", "x", { liked: true }))).toBe(true);
+    expect(families.isKnown(entry("x", "x", { liked: false }))).toBe(false);
+    expect(families.isKnown(undefined)).toBe(false);
+  });
+});
+
+describe("FamilyService.expand", () => {
+  function expandSetup() {
+    const vocab = new FakeVocab([
+      entry("e1", "glittery", { partOfSpeech: "adjective", definitionZh: "閃亮的", liked: true }),
+      entry("e2", "leotard", { partOfSpeech: "noun", liked: true }),
+      // Tracked but not liked: still linkable, but excluded from 〔已學單字〕.
+      entry("e3", "apron", { liked: false }),
+    ]);
+    const learn = new LearnStore({ storage: new MemoryStorage(), clock: () => NOW });
+    learn.putFamily({
+      id: "fam1",
+      topic: "clothing",
+      label: "服裝",
+      emoji: "👗",
+      source: "ai",
+      groups: [
+        {
+          label: "舞台服裝",
+          members: [
+            { entryId: "e1", word: "glittery", zh: "閃亮的", emoji: "✨" },
+            { entryId: "e2", word: "Leotard", zh: "連身緊身衣", emoji: "🩱" },
+          ],
+        },
+      ],
+    });
+    const expandJson = {
+      members: [
+        // Matches the existing group case/trim-insensitively.
+        { group: " 舞台服裝 ", word: "sequin", zh: "亮片", emoji: "✨" },
+        // No matching group: falls into a fresh "AI 新建議" group. Word is
+        // already tracked (unliked) — gets linked, not duplicated.
+        { group: "飾品", word: "apron", zh: "圍裙", emoji: "👝" },
+        // Already a member of the family: excluded.
+        { group: "舞台服裝", word: "glittery", zh: "閃亮的", emoji: "✨" },
+      ],
+    };
+    let lastReq: AiRequest | undefined;
+    const ai = new FakeLearnAi((req) => {
+      lastReq = req;
+      return result("", { json: expandJson });
+    });
+    const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), clock: () => NOW });
+    return { families, ai, learn, vocab, getReq: () => lastReq! };
+  }
+
+  it("merges new members into a matching group, falls back to a new group, excludes existing members", async () => {
+    const { families, learn, ai } = expandSetup();
+    const added = await families.expand("fam1");
+
+    expect(added.map((m) => m.word)).toEqual(["sequin", "apron"]);
+    expect(ai.threadIds).toEqual([familyExpandThreadId("fam1")]);
+
+    const fam = learn.family("fam1")!;
+    const stage = fam.groups.find((g) => g.label === "舞台服裝")!;
+    expect(stage.members.map((m) => m.word)).toEqual(["glittery", "Leotard", "sequin"]);
+    expect(stage.members.find((m) => m.word === "sequin")).toMatchObject({ zh: "亮片", emoji: "✨" });
+
+    const newGroup = fam.groups.find((g) => g.label === "AI 新建議")!;
+    expect(newGroup.members.map((m) => m.word)).toEqual(["apron"]);
+    // Already tracked (just unliked): linked to its entry, not duplicated.
+    expect(newGroup.members[0].entryId).toBe("e3");
+    expect(families.families().flatMap((f) => f.groups.flatMap((g) => g.members)).filter((m) => m.word === "apron")).toHaveLength(1);
+  });
+
+  it("sends only liked known words, capped and excluding the family's own members", async () => {
+    const { families, getReq } = expandSetup();
+    await families.expand("fam1");
+    const sys = getReq().system.map((b) => b.text).join("\n");
+    expect(sys).toContain("glittery");
+    expect(sys).not.toContain("apron"); // unliked — not sent as 〔已學單字〕
+  });
+
+  it("returns [] for an unknown family without calling the AI", async () => {
+    const { families, ai } = expandSetup();
+    expect(await families.expand("nope")).toEqual([]);
+    expect(ai.requests).toHaveLength(0);
+  });
+
+  it("stopExpand cancels that family's in-flight request", () => {
+    const { families, ai } = expandSetup();
+    families.stopExpand("fam1");
+    expect(ai.cancelled).toEqual([familyExpandThreadId("fam1")]);
+  });
+});
+
 describe("regroup suggestion (+20%)", () => {
   it("suggests regrouping once the list has grown by 20%", async () => {
     const { families, vocab } = setup();
@@ -332,7 +460,7 @@ describe("regroup suggestion (+20%)", () => {
     vocab.all.push(entry("n1", "one"));
     // 找字族 on a word page right now must not reset the count.
     await families.save([
-      { topic: "kitchen", label: "廚房", seedEntryIds: ["e3"], groups: [{ label: "x", members: [{ word: "ladle", zh: "勺" }] }] },
+      { topic: "kitchen", label: "廚房", emoji: "", seedEntryIds: ["e3"], groups: [{ label: "x", members: [{ word: "ladle", zh: "勺" }] }] },
     ]);
     expect(families.needsRegroup()).toBe(true);
   });
@@ -348,14 +476,24 @@ describe("regroup suggestion (+20%)", () => {
 describe("mergeFamily", () => {
   it("unions groups by label and members by word", () => {
     const merged = mergeFamily(
-      { id: "f", topic: "t", label: "T", source: "ai", groups: [{ label: "A", members: [{ word: "x", zh: "舊" }] }], seedEntryIds: ["s1"] },
-      { topic: "t", label: "T", seedEntryIds: ["s1", "s2"], groups: [{ label: "a", members: [{ word: "X", zh: "新" }, { word: "y", zh: "" }] }, { label: "B", members: [{ word: "z", zh: "" }] }] }
+      { id: "f", topic: "t", label: "T", emoji: "🧵", source: "ai", groups: [{ label: "A", members: [{ word: "x", zh: "舊" }] }], seedEntryIds: ["s1"] },
+      { topic: "t", label: "T", emoji: "🪡", seedEntryIds: ["s1", "s2"], groups: [{ label: "a", members: [{ word: "X", zh: "新" }, { word: "y", zh: "" }] }, { label: "B", members: [{ word: "z", zh: "" }] }] }
     );
     expect(merged.groups).toEqual([
       { label: "A", members: [{ word: "x", zh: "舊" }, { word: "y", zh: "" }] },
       { label: "B", members: [{ word: "z", zh: "" }] },
     ]);
     expect(merged.seedEntryIds).toEqual(["s1", "s2"]);
+    // Existing emoji wins over the new candidate's, same as label/groups.
+    expect(merged.emoji).toBe("🧵");
+  });
+
+  it("falls back to the candidate's emoji when the existing family has none", () => {
+    const merged = mergeFamily(
+      { id: "f", topic: "t", label: "T", source: "ai", groups: [], seedEntryIds: [] },
+      { topic: "t", label: "T", emoji: "🪡", seedEntryIds: [], groups: [] }
+    );
+    expect(merged.emoji).toBe("🪡");
   });
 });
 
