@@ -9,14 +9,23 @@ import { t } from "../../core/i18n";
 import type { SectionRef } from "../../services/anchors/ParagraphAnchorService";
 import { WordUi, type WordTab } from "../word/wordUi";
 import { renderExamStrip } from "./examStrip";
-import { MissingNoteThreadList, ParagraphThreadList, type ParagraphListActions, type ParagraphListDeps } from "./ParagraphThreadList";
+import {
+  AllNotesThreadList,
+  MissingNoteThreadList,
+  ParagraphThreadList,
+  type ParagraphListActions,
+  type ParagraphListDeps,
+} from "./ParagraphThreadList";
 import { ParagraphThreadPane, type ParagraphPaneNav } from "./ParagraphThreadPane";
 import { DiscussionList } from "./DiscussionList";
 import { discussionRows } from "./discussionRows";
-import { GrammarSection } from "./GrammarSection";
+import { GrammarSection, type GrammarSectionDeps } from "./GrammarSection";
 import { verbUsageRows } from "./grammarRows";
 import { FLASH_MS, planReveal, SectionState, type FilterMode, type SectionId } from "./sections";
 import { LIST_ROUTE, REBINDING_BODY_CLS, SidebarRouter, routeForActiveNote, routeKey, sameRoute, type SidebarRoute } from "./routes";
+import { isListed, type IsListedContext } from "../../core/model/like";
+import { resolveWordlistSettings, tagEnabled } from "../../core/model/wordlists";
+import { computeNoteScope } from "./noteScope";
 
 export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 
@@ -68,11 +77,34 @@ export class VocabSidebarView extends ItemView {
   private drawScope: Component | null = null;
   private pane: ParagraphThreadPane | null = null;
   private paragraphList: ParagraphThreadList | null = null;
+  private allNotesList: AllNotesThreadList | null = null;
   private missingList: MissingNoteThreadList | null = null;
+  private discussionList: DiscussionList | null = null;
+  private grammarSection: GrammarSection | null = null;
+  // Folded AI討論／文法 keep showing a live count (existing behaviour) —
+  // when noteScope resolves or a chip toggles while they're folded, there's
+  // no DiscussionList/GrammarSection instance to call .refresh() on, so
+  // refreshFiltered() calls these instead.
+  private aiRecount: (() => void) | null = null;
+  private grammarRecount: (() => void) | null = null;
   // Word id → its ✦ n chip in the word list (either tab).
   private wordChips = new Map<string, HTMLElement>();
   private changedPaths = new Set<string>();
   private refreshChangedNotes = debounce(() => this.flushChangedNotes(), NOTE_REFRESH_MS, true);
+
+  // ── 本篇 scope (1006report.md #6) ───────────────────────────────────────
+  // Cache of "this note contains this word", kept until the note's mtime
+  // changes: exam words come from the background scan's hits
+  // (plugin.wordlists.cachedScan), liked words are matched against the
+  // note's own text (computeNoteScope, src/ui/sidebar/noteScope.ts). The
+  // async part (reading the note) resolves later and redraws only the
+  // filtered sections (words/AI 討論/文法), never the whole sidebar.
+  private noteScopeCache: { path: string; mtime: number; ids: Set<string> } | null = null;
+  private noteScopeSeq = 0;
+  // The 單字 section's own elements, kept so a filter-only change (chip
+  // toggle, scope resolving) can redraw just this section (#10).
+  private wordsCountEl: HTMLElement | null = null;
+  private wordsBodyEl: HTMLElement | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: VocabTrackerPlugin) {
     super(leaf);
@@ -174,15 +206,6 @@ export class VocabSidebarView extends ItemView {
     this.flashRow(entry.id);
   }
 
-  // A card redrew the list (an edit, a fold, ✓). An edit makes the word
-  // the most recent one, so it moves to the top: keep it in view there.
-  private renderKeeping(entryId?: string): void {
-    this.render();
-    if (!entryId) return;
-    const row = this.rowEl(entryId);
-    row?.scrollIntoView({ block: "nearest" });
-  }
-
   private rowEl(entryId: string): HTMLElement | null {
     return this.scrollRoot()?.querySelector<HTMLElement>(`.vt-row[data-entry-id="${CSS.escape(entryId)}"]`) ?? null;
   }
@@ -205,10 +228,120 @@ export class VocabSidebarView extends ItemView {
     window.setTimeout(() => row.removeClass("vt-row-flash"), FLASH_MS);
   }
 
+  // Called by main.ts whenever something that affects the exam chips
+  // changed (a scan finished, a chip was toggled, the note was edited).
+  // Since those are exactly the things the 單字／AI 討論／文法 filter also
+  // depends on now (#6, #7, #9), this also recomputes 本篇 scope and
+  // redraws the filtered sections — surgically (redrawWords() etc.), never
+  // the whole sidebar (#10).
   refreshExamStrip() {
-    if (!this.examStripEl) return;
-    this.examStripEl.empty();
-    renderExamStrip(this.examStripEl, this.plugin, this.plugin.app.workspace.getActiveFile());
+    // redrawWords() (inside refreshFiltered) rebuilds the chips too — it
+    // owns examStripEl and recreates it fresh each time, so there's no
+    // separate "just redraw the strip" step here (that would recurse:
+    // drawWords() already calls renderExamStrip() directly, not through
+    // this method).
+    this.refreshFiltered();
+  }
+
+  // ── isListed / 本篇 scope (#6, #7, #9) ───────────────────────────────────
+
+  private isListedCtx(): IsListedContext {
+    const knownTags = this.plugin.wordlists.index.tags;
+    return {
+      knownTags,
+      isTagOn: (tag) => tagEnabled(resolveWordlistSettings(this.plugin.store.settings.wordlists), tag),
+    };
+  }
+
+  // Cached "this note has this word" set; null while it's still loading
+  // (the caller should fall back to a provisional guess, see scopedEntries).
+  private noteScopeFor(file: TFile): Set<string> | null {
+    const cache = this.noteScopeCache;
+    if (cache && cache.path === file.path && cache.mtime === file.stat.mtime) return cache.ids;
+    void this.loadNoteScope(file);
+    return null;
+  }
+
+  private async loadNoteScope(file: TFile): Promise<void> {
+    const seq = ++this.noteScopeSeq;
+    const hits = this.plugin.wordlists.cachedScan(file.path, file.stat.mtime)?.hits ?? [];
+    let text: string | null;
+    try {
+      text = await this.plugin.notes.read(file.path);
+    } catch {
+      text = null;
+    }
+    if (seq !== this.noteScopeSeq) return; // superseded by a newer note/scope load
+    const inflections = resolveWordlistSettings(this.plugin.store.settings.wordlists).inflections;
+    const ids = computeNoteScope(this.plugin.store.entries, hits, text, inflections);
+    this.noteScopeCache = { path: file.path, mtime: file.stat.mtime, ids };
+    if (this.app.workspace.getActiveFile()?.path !== file.path) return;
+    if ((this.filterMode ?? "note") !== "note") return;
+    this.refreshFiltered();
+  }
+
+  // The single source of truth for "which words count" (#7, #8): isListed
+  // (like 或亮著的考試標籤)，再加上本篇模式下的 #6 scope. Used by the word
+  // list itself, and fed into the AI 討論 / 文法 sections too so every
+  // section agrees on what's visible.
+  private scopedEntries(): VocabEntry[] {
+    const ctx = this.isListedCtx();
+    let list = this.plugin.store.entries.filter((e) => isListed(e, ctx));
+    const activeFile = this.app.workspace.getActiveFile();
+    const noteMode = (this.filterMode ?? "note") === "note" && activeFile instanceof TFile;
+    if (noteMode) {
+      const file = activeFile as TFile;
+      const scope = this.noteScopeFor(file);
+      list = scope
+        ? list.filter((e) => scope.has(e.id))
+        // Scope still loading: the old source-note heuristic tides things
+        // over until loadNoteScope() resolves and redraws.
+        : list.filter((e) => e.source?.path === file.path);
+    }
+    return list;
+  }
+
+  // Something that only changes which words are allowed (a chip toggled,
+  // 本篁 scope resolved) — redraw just the 單字 section's body and refresh
+  // the AI 討論 / 文法 sections' own elements. Never the whole sidebar, so
+  // scroll position and every other section's state stay put (#10).
+  private refreshFiltered(): void {
+    this.redrawWords();
+    this.refreshWordsCount(); // also covers the folded heading
+    this.discussionList?.refresh();
+    this.grammarSection?.refresh();
+    // Folded: no live component to call .refresh() on, so these instead.
+    this.aiRecount?.();
+    this.grammarRecount?.();
+  }
+
+  private redrawWords(): void {
+    if (!this.wordsBodyEl?.isConnected) return;
+    this.wordsBodyEl.empty();
+    this.drawWords(this.wordsBodyEl);
+  }
+
+  private refreshWordsCount(): void {
+    if (!this.wordsCountEl?.isConnected) return;
+    this.wordsCountEl.setText(t("sidebar.section.words.counted", { n: this.scopedEntries().length }));
+  }
+
+  // The contract with R's WordRow (1006report.md #10): a row only calls
+  // the `refresh` it was given when it might need to leave the list (an
+  // edit that un-likes it and drops every tag, or a delete). This removes
+  // just that row and updates the 單字（n）count — never a full redraw, and
+  // the scroll position never moves. A row whose edit keeps it listed is
+  // R's problem to redraw on its own; this is a no-op for it.
+  private handleWordRowChanged(entryId: string): void {
+    const stillShown = this.scopedEntries().some((e) => e.id === entryId);
+    if (!stillShown) this.removeWordRow(entryId);
+  }
+
+  private removeWordRow(entryId: string): void {
+    this.rowEl(entryId)?.remove();
+    this.wordChips.delete(entryId);
+    this.expandState.delete(entryId);
+    this.refreshWordsCount();
   }
 
   // ── Paragraph discussions ───────────────────────────────────────────────
@@ -273,7 +406,9 @@ export class VocabSidebarView extends ItemView {
     return {
       open: (id) => this.openThread(id),
       rebind: (id) => this.startRebind(id),
-      remove: (id) => void this.plugin.threads.deleteThread(id).then(() => new Notice(t("paragraph.deleted"))),
+      // The real commit step for drawRow's own runUndoable() (#21) — no
+      // Notice here, the undo prompt shown at delete-click time covers it.
+      remove: (id) => void this.plugin.threads.deleteThread(id),
     };
   }
 
@@ -365,8 +500,15 @@ export class VocabSidebarView extends ItemView {
     const scope = (this.drawScope = this.addChild(new Component()));
     this.pane = null;
     this.paragraphList = null;
+    this.allNotesList = null;
     this.missingList = null;
+    this.discussionList = null;
+    this.grammarSection = null;
+    this.aiRecount = null;
+    this.grammarRecount = null;
     this.examStripEl = null;
+    this.wordsBodyEl = null;
+    this.wordsCountEl = null;
     this.wordChips.clear();
     root.empty();
     root.addClass("vt-sidebar");
@@ -379,6 +521,11 @@ export class VocabSidebarView extends ItemView {
     openList.setAttr("aria-label", t("sidebar.openList"));
     openList.onclick = () => this.plugin.openVocabFile();
 
+    // 本篁／全部（1006report.md #5）: moved up here, shared by every
+    // section below (words/段落討論/AI 討論/文法) instead of living inside
+    // the 單字 section.
+    this.drawFilterToggle(root);
+
     this.rebindEl = root.createDiv({ cls: "vt-rebind-banner" });
     this.drawRebindBanner();
 
@@ -388,6 +535,23 @@ export class VocabSidebarView extends ItemView {
     } else {
       this.pane = scope.addChild(new ParagraphThreadPane(root, route, this.plugin, this.wordUi.chat, this.paneNav()));
     }
+  }
+
+  private drawFilterToggle(root: HTMLElement): void {
+    if (this.filterMode === undefined) this.filterMode = "note";
+    const toggle = root.createDiv({ cls: "vt-toggle-group vt-sidebar-filter" });
+    const mkToggle = (label: string, mode: FilterMode) => {
+      const on = this.filterMode === mode;
+      const b = toggle.createEl("span", { text: label, cls: "vt-toggle-btn" });
+      b.toggleClass("is-active", on);
+      b.onclick = () => {
+        if (this.filterMode === mode) return;
+        this.filterMode = mode;
+        this.draw();
+      };
+    };
+    mkToggle(t("sidebar.filter.note"), "note");
+    mkToggle(t("sidebar.filter.all"), "all");
   }
 
   private drawList(root: HTMLElement, scope: Component) {
@@ -409,19 +573,32 @@ export class VocabSidebarView extends ItemView {
 
     // Four foldable sections (1005 回饋 2; Wave 6 W splits 段落討論 and
     // 文法 out): 單字, 段落討論, AI 討論, 文法.
-    const words = this.drawSection(root, "words", t("sidebar.section.words"));
-    if (words) this.drawWords(words);
+    const wCounter = { el: null as HTMLElement | null };
+    const words = this.drawSection(root, "words", t("sidebar.section.words.counted", { n: this.scopedEntries().length }), wCounter);
+    this.wordsCountEl = wCounter.el;
+    if (words) {
+      this.wordsBodyEl = words;
+      this.drawWords(words);
+    } else {
+      // Folded: the count still shows, and follows store changes (an
+      // edit that drops the last tag/like, a word added elsewhere…).
+      // Chip toggles and 本篇 scope resolving go through refreshFiltered()
+      // (refreshExamStrip), which also calls refreshWordsCount() directly.
+      scope.register(this.plugin.store.events.on("data:changed", () => this.refreshWordsCount()));
+    }
 
     const pCounter = { el: null as HTMLElement | null };
     const paragraphs = this.drawSection(root, "paragraphs", t("paragraph.list.title", { n: "…" }), pCounter);
     if (paragraphs) {
       this.drawParagraphs(paragraphs, scope, (n) => pCounter.el?.setText(t("paragraph.list.title", { n })));
     } else {
-      // Folded: the count still shows, and follows the note in front.
+      // Folded: the count still shows, and follows the note in front (or,
+      // in 全部, every note).
       const { threads } = this.plugin;
       const recount = () => {
         if (!pCounter.el?.isConnected) return;
-        pCounter.el.setText(t("paragraph.list.title", { n: this.currentNoteParagraphCount() }));
+        const n = (this.filterMode ?? "note") === "all" ? this.allNotesParagraphCount() : this.currentNoteParagraphCount();
+        pCounter.el.setText(t("paragraph.list.title", { n }));
       };
       scope.register(threads.events.on("thread:upsert", recount));
       scope.register(threads.events.on("threads:reloaded", recount));
@@ -432,10 +609,10 @@ export class VocabSidebarView extends ItemView {
     const ai = this.drawSection(root, "ai", t("sidebar.section.ai", { n: "…" }), counter);
     if (ai) {
       const { threads } = this.plugin;
-      scope.addChild(
+      this.discussionList = scope.addChild(
         new DiscussionList(
           ai,
-          { threads, entries: () => this.plugin.store.entries },
+          { threads, entries: () => this.scopedEntries() },
           {
             openWord: (entryId) => this.openWord(entryId, "ai"),
             counted: (n) => counter.el?.setText(t("sidebar.section.ai", { n })),
@@ -444,13 +621,15 @@ export class VocabSidebarView extends ItemView {
         )
       );
     } else {
-      // Folded: the count still shows, and follows new discussions.
+      // Folded: the count still shows, and follows new discussions (and
+      // noteScope/chip changes via refreshFiltered() → this.aiRecount).
       const { threads } = this.plugin;
       const recount = () => {
         if (!counter.el?.isConnected) return;
-        const n = discussionRows(threads, this.plugin.store.entries).length;
+        const n = discussionRows(threads, this.scopedEntries()).length;
         counter.el.setText(t("sidebar.section.ai", { n }));
       };
+      this.aiRecount = recount;
       scope.register(threads.events.on("thread:upsert", recount));
       scope.register(threads.events.on("threads:reloaded", recount));
       void threads.ensureLoaded().then(recount);
@@ -459,10 +638,10 @@ export class VocabSidebarView extends ItemView {
     const gCounter = { el: null as HTMLElement | null };
     const grammar = this.drawSection(root, "grammar", t("sidebar.section.grammar", { n: "…" }), gCounter);
     if (grammar) {
-      scope.addChild(
+      this.grammarSection = scope.addChild(
         new GrammarSection(
           grammar,
-          { verbs: this.plugin.verbs, learn: this.plugin.learn },
+          { verbs: this.scopedVerbs(), learn: this.plugin.learn },
           {
             openWord: (entryId) => void this.plugin.openWordPage(entryId),
             viewAll: () => void this.plugin.openEntryFile("verbs"),
@@ -471,18 +650,34 @@ export class VocabSidebarView extends ItemView {
         )
       );
     } else {
-      // Folded: the count still shows, and follows new/saved usages.
+      // Folded: the count still shows, and follows new/saved usages (and
+      // noteScope/chip changes via refreshFiltered() → this.grammarRecount).
       const { verbs, learn } = this.plugin;
       const recount = () => {
         if (!gCounter.el?.isConnected) return;
-        const n = verbUsageRows(verbs.verbs(), (id) => learn.verbFavorite(id)).length;
+        const n = verbUsageRows(this.scopedVerbs().verbs(), (id) => learn.verbFavorite(id)).length;
         gCounter.el.setText(t("sidebar.section.grammar", { n }));
       };
+      this.grammarRecount = recount;
       scope.register(verbs.events.on("verb:usage", recount));
       scope.register(learn.events.on("verbFavorite:upsert", recount));
       scope.register(learn.events.on("learn:reloaded", recount));
       void learn.ensureLoaded().then(recount);
     }
+  }
+
+  // 動詞用法（文法區）也套第 7 點的篩選（1006report.md #7, #8）: a live
+  // wrapper (not a snapshot) so GrammarSection.refresh() always sees the
+  // current scope without the sidebar having to recreate it.
+  private scopedVerbs(): GrammarSectionDeps["verbs"] {
+    const { verbs } = this.plugin;
+    return {
+      verbs: () => {
+        const allowed = new Set(this.scopedEntries().map((e) => e.id));
+        return verbs.verbs().filter((e) => allowed.has(e.id));
+      },
+      events: verbs.events,
+    };
   }
 
   // The active note's live paragraph threads — the 段落討論 section's
@@ -493,21 +688,41 @@ export class VocabSidebarView extends ItemView {
     return path ? this.plugin.threads.paragraphThreads(path).length : 0;
   }
 
+  // 全部模式下 folded 段落討論 的計數（規格 #8）：每一篇現存筆記的段落討
+  // 論，不含筆記已刪除/移走的那些（那些另外算在孤立清單裡）。
+  private allNotesParagraphCount(): number {
+    return this.plugin.threads
+      .paragraphThreads()
+      .filter((th) => th.anchor.kind === "paragraph" && this.app.vault.getAbstractFileByPath(th.anchor.path)).length;
+  }
+
   // ── 段落討論（n）/ orphaned discussions ─────────────────────────
   //
-  // Independent of the 單字 tab (This note / All, Wave 6 W): always the
-  // note in front's paragraph discussions, plus any discussion whose note
-  // is gone — that list hides itself when there's none (regardless of
-  // which note, if any, is in front).
+  // Independent of the filter the 單字/AI討論/文法 sections use (#7) —
+  // 段落討論 never gets篩選 (#8). 本篇: the note in front's discussions
+  // (unchanged). 全部: every existing note's discussions, grouped by note
+  // (AllNotesThreadList). Either way, discussions whose note is gone are
+  // listed separately below and shown in both modes.
   private drawParagraphs(root: HTMLElement, scope: Component, onCount: (n: number) => void): void {
-    const activeFile = this.plugin.app.workspace.getActiveFile();
-    if (activeFile instanceof TFile && activeFile.extension === "md") {
-      this.paragraphList = scope.addChild(
-        new ParagraphThreadList(root, activeFile.path, this.listDeps(), this.listActions(), undefined, onCount)
+    if ((this.filterMode ?? "note") === "all") {
+      this.allNotesList = scope.addChild(
+        new AllNotesThreadList(
+          root,
+          { ...this.listDeps(), exists: (p) => !!this.app.vault.getAbstractFileByPath(p) },
+          this.listActions(),
+          onCount
+        )
       );
     } else {
-      onCount(0);
-      root.createDiv({ cls: "vt-sidebar-hint", text: t("sidebar.paragraphs.noNote") });
+      const activeFile = this.plugin.app.workspace.getActiveFile();
+      if (activeFile instanceof TFile && activeFile.extension === "md") {
+        this.paragraphList = scope.addChild(
+          new ParagraphThreadList(root, activeFile.path, this.listDeps(), this.listActions(), undefined, onCount)
+        );
+      } else {
+        onCount(0);
+        root.createDiv({ cls: "vt-sidebar-hint", text: t("sidebar.paragraphs.noNote") });
+      }
     }
     this.missingList = scope.addChild(
       new MissingNoteThreadList(
@@ -552,46 +767,21 @@ export class VocabSidebarView extends ItemView {
     return section.createDiv({ cls: "vt-sb-section-body" });
   }
 
+  // 本篁／全部已經移到側欄頂端共用（#5）；這裡只決定「哪些字」：isListed
+  // 的字（#7），本篁模式再疊上「這篇有出現」的 scope（#6）—— scopedEntries()
+  // 是兩邊唯一的篩選依據，跟 AI討論／文法共用。
   private drawWords(root: HTMLElement) {
-    const entries = this.plugin.store.entries;
-
-    // ── Scope: words from this note, or all words ────────────────
     const activeFile = this.plugin.app.workspace.getActiveFile();
-    const canFilter = !!activeFile;
-    if (this.filterMode === undefined) this.filterMode = "note";
-    const noteMode = this.filterMode === "note" && canFilter;
+    const noteMode = (this.filterMode ?? "note") === "note" && !!activeFile;
+    const list = this.scopedEntries();
 
-    let list = entries;
-    let scopeLabel = t("sidebar.scope.all");
-    if (noteMode) {
-      list = entries.filter(
-        (e) => e.source && e.source.path === activeFile!.path
-      );
-      scopeLabel = t("sidebar.scope.note");
-    }
-
-    const listHeader = root.createEl("div", { cls: "vt-sidebar-list-header" });
-
-    const countLabel = listHeader.createEl("div", { cls: "vt-sidebar-count-label" });
-    countLabel.textContent = `${scopeLabel} (${list.length})`;
-
-    const toggle = listHeader.createEl("div", { cls: "vt-toggle-group" });
-    const mkToggle = (label: string, mode: FilterMode) => {
-      const on = this.filterMode === mode;
-      const b = toggle.createEl("span", { text: label, cls: "vt-toggle-btn" });
-      b.toggleClass("is-active", on);
-      b.onclick = () => {
-        this.filterMode = mode;
-        this.draw();
-      };
-    };
-    mkToggle(t("sidebar.filter.note"), "note");
-    mkToggle(t("sidebar.filter.all"), "all");
-
-    // Exam word stats for the note in front (規劃書 03), at the top of both
-    // tabs; its chips are the underline toggles. Redrawn on its own.
+    // Exam-tag chips (規劃書 03；1006report.md #5: the "本篁考試字彙 · 全文
+    // N 個不同的字" title and the old "(99)" count label above this are
+    // both gone — just the chips now, at the top of this section). Drawn
+    // directly here (not through refreshExamStrip(), which redraws this
+    // whole section — calling it from inside itself would recurse).
     this.examStripEl = root.createDiv();
-    this.refreshExamStrip();
+    renderExamStrip(this.examStripEl, this.plugin, activeFile, this.filterMode ?? "note");
 
     if (list.length === 0) {
       root.createEl("div", {
@@ -621,7 +811,7 @@ export class VocabSidebarView extends ItemView {
           list,
           this.collapsedGroups,
           this.expandState,
-          (entryId) => this.renderKeeping(entryId),
+          (entryId) => (entryId ? this.handleWordRowChanged(entryId) : this.redrawWords()),
           rowOpts,
           { order: "recent" }
         );
@@ -634,7 +824,7 @@ export class VocabSidebarView extends ItemView {
             entry,
             state,
             (s) => this.expandState.set(entry.id, s),
-            () => this.renderKeeping(entry.id),
+            () => this.handleWordRowChanged(entry.id),
             rowOpts
           );
         }

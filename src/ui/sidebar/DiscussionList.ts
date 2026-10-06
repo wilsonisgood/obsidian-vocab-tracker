@@ -4,6 +4,7 @@ import { t } from "../../core/i18n";
 import type { ThreadService } from "../../services/threads/ThreadService";
 import { discussionRows, RECENT_DISCUSSIONS, type DiscussionRow } from "./discussionRows";
 import { shortDate } from "./paragraphRows";
+import { runUndoable } from "../kit/undoable";
 
 // The sidebar's 「AI 討論（n）」 section body (1005 回饋 2; Wave 6 W: word
 // discussions only, newest first — paragraph discussions have their own
@@ -18,7 +19,9 @@ export interface DiscussionListActions {
 }
 
 export interface DiscussionListDeps {
-  threads: Pick<ThreadService, "events" | "ensureLoaded" | "wordThread">;
+  // "deleteThread": 整串刪除（1006report.md #21），runUndoable 包起來，見
+  // drawRow 裡的 addDeleteButton。
+  threads: Pick<ThreadService, "events" | "ensureLoaded" | "wordThread" | "deleteThread">;
   entries(): readonly VocabEntry[];
 }
 
@@ -89,10 +92,34 @@ export class DiscussionList extends Component {
     setIcon(title.createSpan({ cls: "vt-dlist-icon" }), "type");
     title.createSpan({ cls: "vt-dlist-text", text: row.title });
     title.setAttr("aria-label", row.title);
+    this.addDeleteButton(title, el, row.threadId);
 
     const parts = [t("paragraph.list.count", { n: row.count })];
     const date = shortDate(row.lastAt);
     if (date) parts.push(date);
     el.createDiv({ cls: "vt-dlist-meta", text: parts.join(" · ") });
+  }
+
+  // 整串刪除（1006report.md #21）：不跳確認，立刻藏起這一列，runUndoable
+  // 給幾秒「復原」，時間到才真的 deleteThread。
+  private addDeleteButton(parent: HTMLElement, row: HTMLElement, threadId: string): void {
+    const btn = parent.createSpan({ cls: "vt-dlist-delete" });
+    setIcon(btn, "trash-2");
+    btn.setAttr("role", "button");
+    btn.setAttr("tabindex", "0");
+    btn.setAttr("aria-label", t("row.delete"));
+    const run = (e: Event) => {
+      e.stopPropagation();
+      runUndoable({
+        message: t("undo.deletedThread"),
+        apply: () => row.addClass("vt-dlist-row-removed"),
+        restore: () => row.removeClass("vt-dlist-row-removed"),
+        commit: () => void this.deps.threads.deleteThread(threadId),
+      });
+    };
+    btn.addEventListener("click", run);
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") run(e);
+    });
   }
 }
