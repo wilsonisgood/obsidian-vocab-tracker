@@ -197,12 +197,20 @@ export class ChatPanel extends Component {
         this.turnsEl.appendChild(this.answerBubble(turn));
         continue;
       }
-      // The pair this question starts is still streaming (or about to
-      // retry) when its answer is the very next turn and hasn't settled
-      // yet — not deletable until it does.
+      // A question and its answer sit in one rounded frame, the delete
+      // button in the frame's top-left corner (1007 #1). The pair is
+      // still streaming (or about to retry) when its answer is the very
+      // next turn and hasn't settled yet — not deletable until it does.
       const next = turns[i + 1];
-      const pairBusy = !!next && next.role === "assistant" && next.status === "streaming";
-      this.turnsEl.appendChild(this.userBubble(turn, pairBusy));
+      const answer = next?.role === "assistant" ? next : undefined;
+      const pairBusy = answer?.status === "streaming";
+      const pair = this.turnsEl.createDiv({ cls: "vt-chat-pair" });
+      if (!pairBusy) pair.appendChild(this.deletePairButton(turn));
+      pair.appendChild(this.userBubble(turn));
+      if (answer) {
+        pair.appendChild(this.answerBubble(answer));
+        i++;
+      }
     }
     this.updateBusy();
     if (this.scrollOnNextRender) {
@@ -211,17 +219,21 @@ export class ChatPanel extends Component {
     }
   }
 
-  // Delete sits on the question bubble rather than the answer's action
-  // bar (where pin/copy/retry live): that bar only exists for a finished
+  // Delete belongs to the whole pair rather than the answer's action bar
+  // (where pin/copy/retry live): that bar only exists for a finished
   // answer, but a pair must stay deletable with no answer yet or a
-  // failed one too, and the question is the one part every pair always
-  // has (1006 #20). It's also the one action bar a user bubble gets, so
-  // it never competes with anything else for room.
-  private userBubble(turn: Turn, pairBusy: boolean): HTMLElement {
-    const actions: KitAction[] = pairBusy
-      ? []
-      : [{ label: t("chat.action.delete"), icon: "trash-2", iconOnly: true, onClick: () => this.deleteTurnPair(turn) }];
-    const el = bubble({ role: "user", text: turn.content, actions });
+  // failed one too (1006 #20). It sits in the pair frame's top-left
+  // corner (1007 #1).
+  private deletePairButton(turn: Turn): HTMLElement {
+    const label = t("chat.action.delete");
+    const btn = createEl("button", { cls: "vt-chat-pair-delete clickable-icon", attr: { type: "button", "aria-label": label } });
+    setIcon(btn, "trash-2");
+    btn.addEventListener("click", () => this.deleteTurnPair(turn));
+    return btn;
+  }
+
+  private userBubble(turn: Turn): HTMLElement {
+    const el = bubble({ role: "user", text: turn.content });
     if (turn.selection) {
       const quote = createDiv({ cls: "vt-bubble-quote", text: turn.selection });
       quote.setAttr("aria-label", turn.selection);

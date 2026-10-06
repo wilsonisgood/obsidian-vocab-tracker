@@ -301,6 +301,42 @@ body.is-mobile .vt-empty-action button {
   gap: 8px;
 }
 
+/* A question and its answer in one rounded frame, delete in the frame's
+   top-left corner (1007 #1). */
+.vt-chat-pair {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-l, 12px);
+}
+
+.vt-chat-pair-delete {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 4px;
+  color: var(--text-faint);
+}
+
+.vt-chat-pair-delete:hover {
+  color: var(--text-error);
+}
+
+.vt-chat-pair-delete svg {
+  width: 14px;
+  height: 14px;
+}
+
+body.is-mobile .vt-chat-pair-delete {
+  min-width: 44px;
+  min-height: 44px;
+  top: 0;
+  left: 0;
+}
+
 .vt-chat-empty {
   color: var(--text-faint);
   line-height: 1.5;
