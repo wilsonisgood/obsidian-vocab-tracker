@@ -44,6 +44,7 @@ import { EmojiService } from "./src/services/learn/EmojiService";
 import { FamilyService } from "./src/services/learn/FamilyService";
 import { VerbUsageService } from "./src/services/learn/VerbUsageService";
 import { TriviaService } from "./src/services/learn/TriviaService";
+import { MorphemeService } from "./src/services/learn/MorphemeService";
 import { SelectionTracker } from "./src/ui/chat/SelectionTracker";
 import { ObsidianWordlists, inFolder } from "./src/platform/ObsidianWordlists";
 import { WordlistService } from "./src/services/wordlists/WordlistService";
@@ -105,6 +106,33 @@ const ENRICH_GAP_MS = 400;
 // Wait after startup before retrying words with no definition, so the
 // fetches don't compete with Obsidian loading the workspace.
 const RESUME_ENRICH_DELAY_MS = 5000;
+// Word DNA (規劃書 09 §2 決定 5, A8): give the workspace a moment to settle
+// before the background auto-拆字 batch starts spending its daily budget.
+const DNA_AUTO_START_DELAY_MS = 10_000;
+// Device-local (not synced) — how many of today's auto-拆字 batches have
+// run so far, so a device doesn't blow through the daily cap across
+// restarts. Plain window.localStorage (not ObsidianDeviceState): the count
+// resetting on a device swap is harmless.
+const DNA_BUDGET_KEY = "vt:dna-budget";
+
+function loadDnaBudget(): { day: string; used: number } {
+  try {
+    const raw = window.localStorage.getItem(DNA_BUDGET_KEY);
+    if (!raw) return { day: "", used: 0 };
+    const v = JSON.parse(raw) as { day?: unknown; used?: unknown };
+    return { day: typeof v.day === "string" ? v.day : "", used: typeof v.used === "number" ? v.used : 0 };
+  } catch {
+    return { day: "", used: 0 };
+  }
+}
+
+function saveDnaBudget(v: { day: string; used: number }): void {
+  try {
+    window.localStorage.setItem(DNA_BUDGET_KEY, JSON.stringify(v));
+  } catch {
+    // storage unavailable (private mode etc.) — today's count just isn't remembered
+  }
+}
 
 // ─── Plugin ───────────────────────────────────────────────────────────────────
 
@@ -124,6 +152,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   emoji!: EmojiService;
   verbs!: VerbUsageService;
   trivia!: TriviaService;
+  morphemes!: MorphemeService;
   selection!: SelectionTracker;
   wordlists!: WordlistService;
   noteImports!: NoteImports;
@@ -242,6 +271,18 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.learn = new LearnStore({ storage: this.storage });
     this.families = new FamilyService({ ai, vocab: this.store, learn: this.learn, dictionary: this.dictionary });
     this.emoji = new EmojiService({ ai, vocab: this.store, learn: this.learn, aiReady: () => this.ai.status() === "ready" });
+    // Word DNA (規劃書 09 §7, A8/A9): splits liked words into morphemes in
+    // the background and backs the vocab-dna block's chat.
+    this.morphemes = new MorphemeService({
+      ai,
+      vocab: this.store,
+      learn: this.learn,
+      dictionary: this.dictionary,
+      threads: this.threads,
+      dailyBatches: () => this.store.settings.ai.dnaDailyBatches ?? 10,
+      budget: { load: loadDnaBudget, save: saveDnaBudget },
+      aiReady: () => this.ai.status() === "ready",
+    });
     this.verbs = new VerbUsageService({ ai, vocab: this.store, learn: this.learn });
     this.trivia = new TriviaService({
       threads: this.threads,
@@ -334,6 +375,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       vocab: this.store,
       wordPageExists: (id, word) => this.vault.exists(this.exporter.wordPagePath(id, word)),
       threadCount: (id) => this.threads.wordQuestionCount(id),
+      morphemes: { queue: (ids) => this.morphemes.queue(ids) },
     });
     this.linkage.init();
     this.register(this.store.events.on("data:changed", () => void this.linkage.sync()));
@@ -500,6 +542,10 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         RESUME_ENRICH_DELAY_MS
       );
       this.register(() => window.clearTimeout(timer));
+      // Word DNA (A8): background auto-拆字 for liked words, after the
+      // workspace has had a moment to settle.
+      const dnaTimer = window.setTimeout(() => this.morphemes.startAuto(), DNA_AUTO_START_DELAY_MS);
+      this.register(() => window.clearTimeout(dnaTimer));
     });
   }
 
