@@ -286,4 +286,28 @@ describe("VocabStore", () => {
       expect(persist).not.toHaveBeenCalled();
     });
   });
+
+  describe("restoreEntry", () => {
+    it("clears deletedAt and bumps updatedAt/rev", async () => {
+      const entry = makeEntry({ id: "1", deletedAt: "2026-01-01T00:00:00.000Z", rev: 2 });
+      const store = new VocabStore({ entries: [entry] }, async () => {});
+
+      await store.restoreEntry("1");
+
+      expect(entry.deletedAt).toBeUndefined();
+      expect(store.entries).toEqual([entry]);
+      expect(entry.rev).toBe(3);
+      expect(entry.updatedAt).toBeDefined();
+    });
+
+    it("is a no-op when the id doesn't exist", async () => {
+      const entry = makeEntry({ id: "1" });
+      const persist = vi.fn().mockResolvedValue(undefined);
+      const store = new VocabStore({ entries: [entry] }, persist);
+
+      await store.restoreEntry("missing");
+
+      expect(persist).not.toHaveBeenCalled();
+    });
+  });
 });
