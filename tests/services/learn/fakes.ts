@@ -26,6 +26,12 @@ export function entry(id: string, word: string, extra: Partial<VocabEntry> = {})
     added: "",
     lastReviewed: "",
     reviews: 0,
+    // Wave 7 Y: triviaPick.pickSubject() (and FamilyService's grouping)
+    // only consider liked === true entries now (1006report.md #23).
+    // Default to liked so the family/trivia tests here — written before
+    // `liked` existed — don't all need to opt in by hand; tests of the
+    // liked filter itself override this.
+    liked: true,
     ...extra,
   };
 }

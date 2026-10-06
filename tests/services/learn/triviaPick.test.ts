@@ -56,7 +56,7 @@ describe("pickSubject", () => {
 
   it("only picks liked words (1006report.md #24): unliked or never-backfilled words are excluded", () => {
     const unliked = entry("u1", "unliked", { createdAt: daysAgo(1), liked: false });
-    const unset = entry("u2", "unset", { createdAt: daysAgo(1) });
+    const unset = entry("u2", "unset", { createdAt: daysAgo(1), liked: undefined });
     expect(pickSubject([unliked, unset], [], { now: NOW, random: seq(0) })).toBeUndefined();
     expect(pickSubject([unliked, unset, FRESH[0]], [], { now: NOW, random: seq(0.5, 0) })?.id).toBe("f1");
   });
