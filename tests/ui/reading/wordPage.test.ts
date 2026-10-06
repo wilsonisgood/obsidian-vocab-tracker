@@ -8,8 +8,9 @@ vi.mock("obsidian", () => ({
 }));
 
 import { getLocale, setLocale, type Locale } from "../../../src/core/i18n";
+import { POS_KEYS } from "../../../src/core/model/usage";
 import { renderWordPageFile } from "../../../src/services/export/renderers/wordPage";
-import { exportLabels } from "../../../src/services/export/labels";
+import { exportLabels, posOfUsageHeading, usagePosHeadings } from "../../../src/services/export/labels";
 import { sectionAtHeading, sectionByTitle, wordPageEntryId } from "../../../src/ui/reading/WordPageDecorator";
 import { dueLabel, findTarget, originFamilyId, originLabel, originView, sourceLabel, wordTarget } from "../../../src/ui/blocks/wordHeader";
 import type { Family } from "../../../src/core/model/family";

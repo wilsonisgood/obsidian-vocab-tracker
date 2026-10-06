@@ -5,6 +5,7 @@ import type { VocabEntry } from "../../../src/core/model/entry";
 import type { Family } from "../../../src/core/model/family";
 import type { Thread } from "../../../src/core/model/thread";
 import type { TriviaItem } from "../../../src/core/model/trivia";
+import type { PosKey } from "../../../src/core/model/usage";
 import type { LearnEvents } from "../../../src/services/learn/LearnStore";
 import type { VerbUsageEvents } from "../../../src/services/learn/VerbUsageService";
 import { ExportService, shortDate } from "../../../src/services/export/ExportService";
@@ -116,7 +117,7 @@ class FakeData implements ExportDataPort {
   threads: Thread[] = [];
   paragraphs = new Map<string, ParagraphThread[]>();
   familiesList: ExportFamily[] = [];
-  usages = new Map<string, ExportUsage>();
+  usageMap = new Map<string, ExportUsage>();
   triviaList: ExportTrivia[] = [];
   verbFavoriteList: ExportVerbFavorite[] = [];
   readyCalls = 0;
@@ -139,8 +140,12 @@ class FakeData implements ExportDataPort {
   families(): readonly ExportFamily[] {
     return this.familiesList;
   }
-  usage(entryId: string): ExportUsage | undefined {
-    return this.usages.get(entryId);
+  // 1006-2 #19 #21: usage is per pos now; this fake still only ever keeps
+  // one block per entry, stored under "v" (matching the old verb-only
+  // behaviour every call site here exercises).
+  usages(entryId: string): Partial<Record<PosKey, ExportUsage>> {
+    const u = this.usageMap.get(entryId);
+    return u ? { v: u } : {};
   }
   trivia(): readonly ExportTrivia[] {
     return this.triviaList;
@@ -228,7 +233,7 @@ describe("debounce", () => {
   it("reads data when the write runs, not when the change was announced", async () => {
     vault.files.set(GLITTERY_PAGE, "---\nvocab-tracker: word\n---\n");
     svc.wordChanged(GLITTERY.id);
-    data.usages.set(GLITTERY.id, USAGE);
+    data.usageMap.set(GLITTERY.id, USAGE);
     await vi.advanceTimersByTimeAsync(1000);
     expect(vault.files.get(GLITTERY_PAGE)).toContain("glittery + 抽象名詞");
     expect(data.readyCalls).toBe(1);
@@ -369,7 +374,7 @@ describe("word pages", () => {
     const edited = created.slice(0, begin) + created.slice(end) + "my notes";
     vault.files.set(GLITTERY_PAGE, edited);
 
-    data.usages.set(GLITTERY.id, USAGE);
+    data.usageMap.set(GLITTERY.id, USAGE);
     svc.usageChanged(GLITTERY.id);
     await vi.advanceTimersByTimeAsync(1000);
     const text = vault.files.get(GLITTERY_PAGE)!;
@@ -848,7 +853,7 @@ describe("events, flush and dispose", () => {
   it("a saved verb usage (「寫入單字頁」) creates the word page; unsaving only updates it (1005 #4)", async () => {
     const learn = new TypedEmitter<LearnEvents>();
     svc.watchLearn(learn);
-    data.usages.set(GLITTERY.id, { ...USAGE, generatedAt: "2026-10-02T03:00:00.000Z" });
+    data.usageMap.set(GLITTERY.id, { ...USAGE, generatedAt: "2026-10-02T03:00:00.000Z" });
     const fav = { id: `verb:${GLITTERY.id}`, entryId: GLITTERY.id, word: "glittery", createdAt: "2026-10-05T03:00:00.000Z" };
     data.verbFavoriteList = [fav];
     learn.emit("verbFavorite:upsert", fav);

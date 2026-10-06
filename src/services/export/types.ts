@@ -6,6 +6,8 @@
 // passed in unchanged once they exist (TypeScript checks the fit at the
 // call site in main.ts / the data adapter).
 
+import type { PosKey } from "../../core/model/usage";
+
 export interface ExportFamilyMember {
   // Set when the member is a word in the vocab list; plain suggestions
   // only have `word`.
@@ -37,10 +39,13 @@ export interface ExportUsage {
   generatedAt?: string;
 }
 
-// ⊂ VerbFavorite: the verb's usage was saved (「寫入單字頁」).
+// ⊂ VerbFavorite: a part of speech's usage was saved (「寫入單字頁」).
+// `pos` absent = legacy record from before per-pos favorites existed
+// (1006-2 #21) = "v" (see usageFavoritePos()).
 export interface ExportVerbFavorite {
   id: string;
   entryId: string;
+  pos?: PosKey;
   createdAt?: string;
   deletedAt?: string;
 }
@@ -65,6 +70,9 @@ export interface ExportLabels {
   usage: string;
   usageEmpty: string;
   usageRelated: string;
+  // 1006-2 #19: the「<詞性>用法」小標題 for each part of speech that has a
+  // usage block, in the current language.
+  usagePosHeading: Record<PosKey, string>;
   trivia: string;
   triviaEmpty: string;
   triviaMentionedIn: string;

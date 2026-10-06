@@ -414,7 +414,7 @@ export class ExportService {
     const input: WordPageInput = {
       entry,
       families: data.families(),
-      usage: data.usage(entryId),
+      usages: data.usages(entryId),
       verbFavorites: data.verbFavorites?.() ?? [],
       trivia: data.trivia(),
       thread: data.wordThread(entryId),

@@ -1,8 +1,9 @@
 import { MarkdownRenderChild, MarkdownRenderer, setIcon, type App, type MarkdownPostProcessorContext } from "obsidian";
 import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
+import type { PosKey } from "../../core/model/usage";
 import { AiError, aiDebugOf, isAiError, type AiErrorCode } from "../../services/ai/errors";
-import { exportLabels } from "../../services/export/labels";
+import { exportLabels, posOfUsageHeading } from "../../services/export/labels";
 import type { FamilyService } from "../../services/learn/FamilyService";
 import type { TriviaService } from "../../services/learn/TriviaService";
 import type { VerbUsageService } from "../../services/learn/VerbUsageService";
@@ -45,7 +46,7 @@ export interface WordPageDeps {
   // Frontmatter of a note, when ctx.frontmatter isn't there (metadataCache).
   frontmatterOf(path: string): Record<string, unknown> | null | undefined;
   families: Pick<FamilyService, "generate" | "save">;
-  verbs: Pick<VerbUsageService, "canGenerate" | "generateAll" | "usages">;
+  verbs: Pick<VerbUsageService, "canGenerate" | "generateAll" | "regenerate">;
   // 「來一則」 asks in the background — no more opening 冷知識.md (1006 #1).
   // The round shows right under the heading, 未收藏, until `favorite`
   // writes it into the file (the same flow 冷知識.md's own 收藏 uses).
@@ -147,15 +148,29 @@ export function createWordPageDecorator(deps: WordPageDeps) {
     const fm = (ctx.frontmatter as Record<string, unknown> | undefined) ?? deps.frontmatterOf(ctx.sourcePath);
     const entryId = wordPageEntryId(fm);
     if (!entryId) return;
-    const headings = [...(el.matches("h2") ? [el] : []), ...Array.from(el.querySelectorAll("h2"))];
+    // h3: the per-part-of-speech 「<詞性>用法」 subheadings under 用法
+    // (1006-2 #19) — only usage has any, but checking every h3's text is
+    // cheap and keeps this generic.
+    const headings = [...(el.matches("h2, h3") ? [el] : []), ...Array.from(el.querySelectorAll("h2, h3"))];
     if (!headings.length) return;
     const info = ctx.getSectionInfo(el);
     for (const h of headings) {
       if (h.querySelector(".vt-wp-actions")) continue;
-      const section = info ? sectionAtHeading(info.text, info.lineStart) : sectionByTitle(h.textContent ?? "");
-      if (!section) continue;
       const entry = deps.entry(entryId);
       if (!entry) continue;
+      if (h.tagName === "H3") {
+        const pos = posOfUsageHeading(h.textContent ?? "");
+        if (!pos) continue;
+        // Defensive: only when section info confirms it really sits under
+        // 用法 (a user's own h3 elsewhere that happens to read "動詞用
+        // 法" shouldn't get a button). No info available → fall back to
+        // the text match alone, same tolerance sectionByTitle() has.
+        if (info && sectionAtHeading(info.text, info.lineStart) !== "usage") continue;
+        decorateUsagePos(h, pos, entry, deps);
+        continue;
+      }
+      const section = info ? sectionAtHeading(info.text, info.lineStart) : sectionByTitle(h.textContent ?? "");
+      if (!section) continue;
       decorate(h, section, entry, deps, ctx);
       if (section === "trivia") syncTriviaCard(h, entry, deps, ctx);
     }
@@ -189,13 +204,15 @@ function actionFor(
       };
     case "usage":
       // 1006-2 #17: not verb-only any more — canGenerate() now only
-      // excludes deleted entries. #18: one button, one AI call, every
-      // part of speech this word has; U2 owns the per-pos UI (#19/#22),
-      // this button just calls the new generateAll().
+      // excludes deleted entries. #18: only one button here regardless of
+      // whether there's content already — it always reads 「產生」, since
+      // regenerating one part of speech is now the per-heading 「重新產
+      // 生」 button next to each `### <詞性>用法` subheading (#19,
+      // decorateUsagePos() below). One AI call, every part of speech.
       if (!deps.verbs.canGenerate(entry)) return null;
       return {
         icon: "sparkles",
-        label: Object.keys(deps.verbs.usages(entry)).length ? l("regenerateUsage") : l("generateUsage"),
+        label: l("generateUsage"),
         run: async () => {
           await deps.verbs.generateAll(entry);
           deps.notify(l("usageSaved"));
@@ -224,21 +241,17 @@ function actionFor(
   }
 }
 
-function decorate(
-  h: HTMLElement,
-  section: WordSection,
-  entry: VocabEntry,
-  deps: WordPageDeps,
-  ctx: MarkdownPostProcessorContext
-): void {
-  const action = actionFor(section, entry, deps, h, ctx);
-  if (!action) return;
+// Draws the action button next to `h` and wires its busy/error handling.
+// `key` is this button's own entry in the shared `running` set — distinct
+// per button (entryId:section, or entryId:usage:pos for a per-pos 重新產
+// 生) so two buttons on the same page never show each other's busy state
+// (1006-2 #19).
+function attachButton(h: HTMLElement, key: string, action: Action, deps: WordPageDeps): void {
   h.addClass("vt-wp-heading");
   const box = h.createSpan({ cls: ["vt", "vt-wp-actions"] });
   const btn = box.createEl("button", { cls: "vt-wp-btn" });
   setIcon(btn.createSpan({ cls: "vt-wp-btn-icon" }), action.icon);
   btn.createSpan({ text: action.label });
-  const key = `${entry.id}:${section}`;
   const setBusy = (busy: boolean) => {
     btn.toggleClass("is-busy", busy);
     btn.disabled = busy;
@@ -268,4 +281,32 @@ function decorate(
         if (btn.isConnected) setBusy(false);
       });
   });
+}
+
+function decorate(
+  h: HTMLElement,
+  section: WordSection,
+  entry: VocabEntry,
+  deps: WordPageDeps,
+  ctx: MarkdownPostProcessorContext
+): void {
+  const action = actionFor(section, entry, deps, h, ctx);
+  if (!action) return;
+  attachButton(h, `${entry.id}:${section}`, action, deps);
+}
+
+// The 「重新產生」 next to one `### <詞性>用法` subheading (1006-2 #19):
+// only that part of speech's block is replaced (VerbUsageService.
+// regenerate()'s `onlyPos`), unlike the section's own 「產生」 button.
+function decorateUsagePos(h: HTMLElement, pos: PosKey, entry: VocabEntry, deps: WordPageDeps): void {
+  if (!deps.verbs.canGenerate(entry)) return;
+  const action: Action = {
+    icon: "sparkles",
+    label: l("regenerateUsage"),
+    run: async () => {
+      await deps.verbs.regenerate(entry, pos);
+      deps.notify(l("usageSaved"));
+    },
+  };
+  attachButton(h, `${entry.id}:usage:${pos}`, action, deps);
 }
