@@ -80,7 +80,12 @@ describe("vocab-dashboard (1006report.md #26)", () => {
 
   it("「只看 Like」 narrows the list to liked === true", () => {
     const likedIds = new Set(listedEntries().slice(0, 3).map((e) => e.id));
-    for (const id of likedIds) b.plugin.store.entries.find((e) => e.id === id)!.liked = true;
+    // The stress fixture bakes `liked` from real usage/review signals
+    // (Wave 7 Y, 1006 #23), so most entries already come up liked — this
+    // only tests the toggle's own filtering, so flip every entry to
+    // unliked first and restore the original values after.
+    const original = new Map(b.plugin.store.entries.map((e) => [e.id, e.liked]));
+    for (const e of b.plugin.store.entries) e.liked = likedIds.has(e.id);
     try {
       const el = render();
       expect(el.querySelector(".vt-dash-like-toggle")!.getAttribute("aria-pressed")).toBe("false");
@@ -92,7 +97,7 @@ describe("vocab-dashboard (1006report.md #26)", () => {
       expect(rows.length).toBe(likedIds.size);
       expect(rows.every((r) => likedIds.has(r.getAttribute("data-entry-id")!))).toBe(true);
     } finally {
-      for (const id of likedIds) b.plugin.store.entries.find((e) => e.id === id)!.liked = undefined;
+      for (const e of b.plugin.store.entries) e.liked = original.get(e.id);
     }
   });
 });
