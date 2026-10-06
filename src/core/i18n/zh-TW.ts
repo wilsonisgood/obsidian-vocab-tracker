@@ -310,6 +310,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "settings.wordlists.autoImport.desc": "第一次打開筆記時，把裡面屬於字表的字全部加入單字庫，並在「等級」欄標上考試（TOEFL、IELTS…）。每篇只匯入一次，你刪掉的字不會再被加回來。字典資料會在背景慢慢抓。",
 
   "export.families": "字族",
+  "family.aiSuggestedGroup": "AI 新建議",
   "export.familiesEmpty": "還沒有字族。",
   "export.usage": "用法",
   "export.usageEmpty": "還沒有用法。",

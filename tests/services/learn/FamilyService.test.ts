@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { t } from "../../../src/core/i18n";
 import type { Family } from "../../../src/core/model/family";
 import type { VocabStore } from "../../../src/core/store/VocabStore";
 import type { AiService } from "../../../src/services/ai/AiService";
@@ -416,7 +417,7 @@ describe("FamilyService.expand", () => {
     expect(stage.members.map((m) => m.word)).toEqual(["glittery", "Leotard", "sequin"]);
     expect(stage.members.find((m) => m.word === "sequin")).toMatchObject({ zh: "亮片", emoji: "✨" });
 
-    const newGroup = fam.groups.find((g) => g.label === "AI 新建議")!;
+    const newGroup = fam.groups.find((g) => g.label === t("family.aiSuggestedGroup"))!;
     expect(newGroup.members.map((m) => m.word)).toEqual(["apron"]);
     // Already tracked (just unliked): linked to its entry, not duplicated.
     expect(newGroup.members[0].entryId).toBe("e3");

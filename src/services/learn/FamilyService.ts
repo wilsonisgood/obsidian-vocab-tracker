@@ -1,3 +1,4 @@
+import { t } from "../../core/i18n";
 import type { DictionaryResult } from "../../core/model/dictionary";
 import type { VocabEntry } from "../../core/model/entry";
 import {
@@ -35,10 +36,6 @@ export const REGROUP_GROWTH = 1.2;
 export function familyExpandThreadId(familyId: string): string {
   return `family:expand:${familyId}`;
 }
-
-// A suggested group family.expand's model couldn't match to an existing
-// one (09 §4: 「對不到就開新分組」). Temporary i18n string — see 整合事項.
-const L = { aiSuggestedGroup: "AI 新建議" };
 
 export interface FamilyCandidate {
   topic: string;
@@ -308,11 +305,11 @@ export class FamilyService {
       existingWords.add(key(d.word));
       let group = groupByKey.get(key(d.group));
       if (!group) {
-        group = groupByKey.get(key(L.aiSuggestedGroup));
+        group = groupByKey.get(key(t("family.aiSuggestedGroup")));
         if (!group) {
-          group = { label: L.aiSuggestedGroup, members: [] };
+          group = { label: t("family.aiSuggestedGroup"), members: [] };
           f.groups.push(group);
-          groupByKey.set(key(L.aiSuggestedGroup), group);
+          groupByKey.set(key(t("family.aiSuggestedGroup")), group);
         }
       }
       const member: FamilyMember = { word: d.word, zh: d.zh, emoji: d.emoji };

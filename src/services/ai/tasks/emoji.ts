@@ -96,7 +96,7 @@ export function parseWordEmojiItems(json: unknown): WordEmojiItem[] {
 export const wordEmoji: AiTask<WordEmojiInput, WordEmojiItem[]> = {
   id: "word.emoji",
   version: 1,
-  surface: "word",
+  surface: "family",
   tier: "fast",
   maxTokens: 1024,
   // Structured JSON, not prose.

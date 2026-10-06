@@ -40,6 +40,7 @@ import { SETTINGS_SECTIONS } from "./src/ui/settings/sections";
 import { ObsidianNotes } from "./src/platform/ObsidianNotes";
 import { ThreadService } from "./src/services/threads/ThreadService";
 import { LearnStore } from "./src/services/learn/LearnStore";
+import { EmojiService } from "./src/services/learn/EmojiService";
 import { FamilyService } from "./src/services/learn/FamilyService";
 import { VerbUsageService } from "./src/services/learn/VerbUsageService";
 import { TriviaService } from "./src/services/learn/TriviaService";
@@ -120,6 +121,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   threads!: ThreadService;
   learn!: LearnStore;
   families!: FamilyService;
+  emoji!: EmojiService;
   verbs!: VerbUsageService;
   trivia!: TriviaService;
   selection!: SelectionTracker;
@@ -239,6 +241,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // the first time one of them is used.
     this.learn = new LearnStore({ storage: this.storage });
     this.families = new FamilyService({ ai, vocab: this.store, learn: this.learn, dictionary: this.dictionary });
+    this.emoji = new EmojiService({ ai, vocab: this.store, learn: this.learn, aiReady: () => this.ai.status() === "ready" });
     this.verbs = new VerbUsageService({ ai, vocab: this.store, learn: this.learn });
     this.trivia = new TriviaService({
       threads: this.threads,

@@ -312,6 +312,7 @@ export const en = {
   "settings.wordlists.autoImport.desc": "The first time a note is opened, add every list word in it to the vocab list, with its exams (TOEFL, IELTS…) in the level field. Each note is imported once; words you delete aren't re-added. Dictionary data is fetched in the background.",
 
   "export.families": "Word families",
+  "family.aiSuggestedGroup": "AI suggestions",
   "export.familiesEmpty": "No word families yet.",
   "export.usage": "Usage",
   "export.usageEmpty": "No usage notes yet.",
