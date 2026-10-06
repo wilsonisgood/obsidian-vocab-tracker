@@ -26,6 +26,12 @@ export interface TriviaServiceDeps {
   clock?: () => Date;
   random?: () => number;
   newId?: () => string;
+  // Wave 7 整合 A4（1006 #15）: a word explicitly asked about — 「單字頁來
+  // 一則」, 「冷知識頁指定一個字」 — counts as using it, so main.ts wires
+  // this to AutoLike.likeEntry(). Only fires from ask() when opts.entryId
+  // was given AND the round actually produced an answer (see ask()); never
+  // from followup() or an entryId-less `next`.
+  onAsked?: (entryId: string) => void;
 }
 
 export interface TriviaAskOptions {
@@ -163,6 +169,10 @@ export class TriviaService {
     });
     const turn = this.thread()?.turns.at(-1);
     if (turn && turn.role === "assistant" && turn.status === "done" && turn.content.trim()) {
+      // A4: only an explicit entryId (「來一則」 for THIS word) counts as
+      // using it — an entryId-less `next` picked its own subject, that's
+      // not the caller choosing to look this word up.
+      if (opts.entryId) this.deps.onAsked?.(subject.id);
       const { title, body } = splitTrivia(turn.content);
       return { entry: subject, turnId: turn.id, title, body };
     }

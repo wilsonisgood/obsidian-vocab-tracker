@@ -236,7 +236,14 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.learn = new LearnStore({ storage: this.storage });
     this.families = new FamilyService({ ai, vocab: this.store, learn: this.learn, dictionary: this.dictionary });
     this.verbs = new VerbUsageService({ ai, vocab: this.store });
-    this.trivia = new TriviaService({ threads: this.threads, vocab: this.store, learn: this.learn });
+    this.trivia = new TriviaService({
+      threads: this.threads,
+      vocab: this.store,
+      learn: this.learn,
+      // A4（1006 #15）：單字頁「來一則」／冷知識頁指定一個字，問到答案後
+      // 自動 like 這個字。autoLike 比 trivia 晚建立，用 closure 延後讀取。
+      onAsked: (id) => void this.autoLike?.likeEntry(id),
+    });
 
     // Wave 7 Y — 自動 like (1006 #15)：單字討論、找字族、產生用法、複習、
     // 冷知識指定字 都算「真的用到」，補 like 回去。見 AutoLike 開頭註解。

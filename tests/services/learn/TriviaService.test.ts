@@ -13,7 +13,7 @@ const daysAgo = (d: number) => new Date(NOW.getTime() - d * 86_400_000).toISOStr
 
 const APRON_ANSWER = "**a napron → an apron**\n\napron 原本是 *a napron*，和 **napkin** 同源。";
 
-function setup(answer?: (p: { subjectEntryId?: string; taskId: string }) => string) {
+function setup(answer?: (p: { subjectEntryId?: string; taskId: string }) => string, onAsked?: (id: string) => void) {
   const entries = [
     entry("apron", "apron", { createdAt: daysAgo(2), partOfSpeech: "noun", definitionZh: "圍裙" }),
     entry("napkin", "napkin", { createdAt: daysAgo(20) }),
@@ -31,6 +31,7 @@ function setup(answer?: (p: { subjectEntryId?: string; taskId: string }) => stri
     clock: () => NOW,
     random: () => randoms[r++ % randoms.length],
     newId: () => `item${++n}`,
+    onAsked,
   });
   return { entries, threads, learn, trivia };
 }
@@ -140,6 +141,43 @@ describe("TriviaService.ask", () => {
     const { threads, trivia } = setup();
     trivia.stop();
     expect(threads.stopped).toEqual([TRIVIA_THREAD_ID]);
+  });
+});
+
+describe("TriviaService onAsked (整合 A4, 1006 #15)", () => {
+  it("fires with the subject's id once the round actually answers, only for an explicit entryId", async () => {
+    const asked: string[] = [];
+    const { trivia } = setup(undefined, (id) => asked.push(id));
+    await trivia.ask("next", { entryId: "napkin" });
+    expect(asked).toEqual(["napkin"]);
+  });
+
+  it("doesn't fire for an entryId-less `next` (the subject wasn't chosen by the caller)", async () => {
+    const asked: string[] = [];
+    const { trivia } = setup(undefined, (id) => asked.push(id));
+    await trivia.ask("next");
+    expect(asked).toEqual([]);
+  });
+
+  it("doesn't fire when the round errors (no turnId)", async () => {
+    const asked: string[] = [];
+    const { threads, trivia } = setup(undefined, (id) => asked.push(id));
+    const original = threads.ask.bind(threads);
+    threads.ask = async (p) => {
+      await original(p);
+      threads.get(TRIVIA_THREAD_ID)!.turns.at(-1)!.status = "error";
+    };
+    await trivia.ask("next", { entryId: "napkin" });
+    expect(asked).toEqual([]);
+  });
+
+  it("followup() never fires it, even on the current subject", async () => {
+    const asked: string[] = [];
+    const { trivia } = setup(undefined, (id) => asked.push(id));
+    await trivia.ask("next", { entryId: "napkin" });
+    asked.length = 0;
+    await trivia.followup("why?");
+    expect(asked).toEqual([]);
   });
 });
 
