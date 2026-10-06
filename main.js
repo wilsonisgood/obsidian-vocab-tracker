@@ -930,8 +930,8 @@ var en = {
   "sidebar.ai.showLess": "Show recent only",
   // Wave 6 W: the 文法 section (today: 動詞用法; 句型結構 later).
   "sidebar.section.grammar": "Grammar ({n})",
-  "sidebar.grammar.verbs": "Verb usage",
-  "sidebar.grammar.empty": "No verb usage yet. Generate one from a verb's card.",
+  "sidebar.grammar.verbs": "Usage",
+  "sidebar.grammar.empty": 'No usage yet. Press "Generate" in the Usage section of a word page.',
   "sidebar.grammar.viewAll": "View all",
   "sidebar.group.family": "Word family: {name}",
   "sidebar.group.familyGone": "Word family (removed)",
@@ -969,7 +969,7 @@ var en = {
   "deleteEntry.noLinks": "This word isn't in any family, trivia or discussion.",
   "deleteEntry.impact.families": "In {n} families (the text stays; you can add it back later)",
   "deleteEntry.impact.trivia": "Mentioned in {n} saved trivia answers",
-  "deleteEntry.impact.verbFavorite": "Its verb usage is saved",
+  "deleteEntry.impact.verbFavorite": "Its usage is saved",
   "deleteEntry.impact.wordPage": "Has a word page",
   "deleteEntry.impact.threads": "{n} questions asked on its word page",
   "deleteEntry.trashWordPage": "Also delete the word page (move to trash)",
@@ -1246,7 +1246,7 @@ var en = {
   "wordPage.originTitle": "Open in word families",
   // ── M6 entry files and the Files settings section ──
   "command.openFamilies": "Open word families",
-  "command.openVerbs": "Open verb usage",
+  "command.openVerbs": "Open usage overview",
   "command.openTrivia": "Open trivia",
   "settings.section.files": "Files",
   "settings.files.desc": "Where the plugin's notes go. Changing a folder doesn't move files that already exist: entry files and word pages are found by their frontmatter, wherever you move them. Only new files use the new folder.",
@@ -1327,17 +1327,17 @@ var en = {
   "learn.dates.updated": "Updated {date}",
   "learn.dates.saved": "Saved {date}",
   "learn.openWord": "Open {word} in the sidebar",
-  "learn.verb.filter": "Filter verbs\u2026",
-  "learn.verb.count": "Learned verbs ({n})",
-  "learn.verb.none.title": "No verbs in your list yet",
-  "learn.verb.none.body": 'Words whose part of speech includes "verb" show up here.',
-  "learn.verb.noMatch": "No matching verbs",
-  "learn.verb.notVerb": `"{word}" isn't a verb, so there's no usage to generate.`,
+  "learn.verb.filter": "Filter\u2026",
+  "learn.verb.count": "Words with usage ({n})",
+  "learn.verb.none.title": "No words have usage yet",
+  "learn.verb.none.body": 'Press "Generate" in the Usage section of a word page and the word shows up here.',
+  "learn.verb.noMatch": "No matching words",
+  "learn.verb.notVerb": '"{word}" has no part of speech to generate usage for.',
   "learn.verb.generate": "Generate usage",
   "learn.verb.regenerate": "Regenerate",
   "learn.verb.generating": "Working out how {word} is used\u2026",
   "learn.verb.empty.title": "No usage for {word} yet",
-  "learn.verb.empty.body": "Let AI list common patterns, examples and similar expressions. It's saved once generated.",
+  "learn.verb.empty.body": "Let AI list common patterns, examples and similar expressions. It's saved once generated, and each part of speech can be regenerated on its own.",
   "learn.verb.related": "Similar expressions",
   "learn.verb.meta.source": "From {source}",
   "learn.verb.speak": "Pronounce",
@@ -1498,8 +1498,8 @@ var zhTW = {
   "sidebar.ai.showLess": "\u53EA\u986F\u793A\u6700\u8FD1\u7684",
   // Wave 6 W：文法分區（目前只有動詞用法；句型結構之後再加）。
   "sidebar.section.grammar": "\u6587\u6CD5\uFF08{n}\uFF09",
-  "sidebar.grammar.verbs": "\u52D5\u8A5E\u7528\u6CD5",
-  "sidebar.grammar.empty": "\u9084\u6C92\u6709\u52D5\u8A5E\u7528\u6CD5\u3002\u5728\u52D5\u8A5E\u7684\u55AE\u5B57\u5361\u7522\u751F\u4E00\u500B\u770B\u770B\u3002",
+  "sidebar.grammar.verbs": "\u7528\u6CD5",
+  "sidebar.grammar.empty": "\u9084\u6C92\u6709\u7528\u6CD5\u3002\u5728\u55AE\u5B57\u9801\u7684\u300C\u7528\u6CD5\u300D\u6309\u4E0B\u300C\u7522\u751F\u300D\u770B\u770B\u3002",
   "sidebar.grammar.viewAll": "\u67E5\u770B\u5168\u90E8",
   "sidebar.group.family": "\u5B57\u65CF\u6A39\uFF1A{name}",
   "sidebar.group.familyGone": "\u5B57\u65CF\u6A39\uFF08\u5B57\u65CF\u5DF2\u79FB\u9664\uFF09",
@@ -1537,7 +1537,7 @@ var zhTW = {
   "deleteEntry.noLinks": "\u9019\u500B\u5B57\u6C92\u6709\u95DC\u806F\u7684\u5B57\u65CF\u3001\u51B7\u77E5\u8B58\u6216\u8A0E\u8AD6\u3002",
   "deleteEntry.impact.families": "\u5728 {n} \u500B\u5B57\u65CF\u88E1\uFF08\u6587\u5B57\u6703\u4FDD\u7559\uFF0C\u4E4B\u5F8C\u53EF\u518D\u52A0\u56DE\uFF09",
   "deleteEntry.impact.trivia": "\u88AB {n} \u5247\u51B7\u77E5\u8B58\u63D0\u53CA",
-  "deleteEntry.impact.verbFavorite": "\u5DF2\u6536\u85CF\u52D5\u8A5E\u7528\u6CD5",
+  "deleteEntry.impact.verbFavorite": "\u5DF2\u6536\u85CF\u7528\u6CD5",
   "deleteEntry.impact.wordPage": "\u6709\u55AE\u5B57\u9801",
   "deleteEntry.impact.threads": "\u55AE\u5B57\u9801\u6709 {n} \u5247\u8A0E\u8AD6",
   "deleteEntry.trashWordPage": "\u540C\u6642\u522A\u9664\u55AE\u5B57\u9801\uFF08\u79FB\u5230\u5783\u573E\u6876\uFF09",
@@ -1814,7 +1814,7 @@ var zhTW = {
   "wordPage.originTitle": "\u5728\u5B57\u65CF\u6A39\u6253\u958B",
   // ── M6 入口檔與「檔案」設定 ──
   "command.openFamilies": "\u958B\u555F\u5B57\u65CF\u6A39",
-  "command.openVerbs": "\u958B\u555F\u52D5\u8A5E\u7528\u6CD5",
+  "command.openVerbs": "\u958B\u555F\u7528\u6CD5\u7E3D\u8868",
   "command.openTrivia": "\u958B\u555F\u51B7\u77E5\u8B58",
   "settings.section.files": "\u6A94\u6848",
   "settings.files.desc": "\u5916\u639B\u5EFA\u7ACB\u7684\u7B46\u8A18\u653E\u5728\u54EA\u88E1\u3002\u6539\u8CC7\u6599\u593E\u4E0D\u6703\u642C\u52D5\u5DF2\u7D93\u5B58\u5728\u7684\u6A94\u6848\uFF1A\u5165\u53E3\u6A94\u548C\u55AE\u5B57\u9801\u9760 frontmatter \u627E\u56DE\uFF0C\u642C\u5230\u54EA\u88E1\u90FD\u53EF\u4EE5\uFF1B\u53EA\u6709\u65B0\u5EFA\u7684\u6A94\u6848\u6703\u653E\u5230\u65B0\u8CC7\u6599\u593E\u3002",
@@ -1895,17 +1895,17 @@ var zhTW = {
   "learn.dates.updated": "\u66F4\u65B0 {date}",
   "learn.dates.saved": "\u6536\u85CF {date}",
   "learn.openWord": "\u5728\u5074\u6B04\u6253\u958B {word}",
-  "learn.verb.filter": "\u7BE9\u9078\u52D5\u8A5E\u2026",
-  "learn.verb.count": "\u5DF2\u5B78\u52D5\u8A5E\uFF08{n}\uFF09",
-  "learn.verb.none.title": "\u55AE\u5B57\u5EAB\u88E1\u9084\u6C92\u6709\u52D5\u8A5E",
-  "learn.verb.none.body": "\u8A5E\u6027\u542B verb \u7684\u55AE\u5B57\u6703\u51FA\u73FE\u5728\u9019\u88E1\u3002",
-  "learn.verb.noMatch": "\u6C92\u6709\u7B26\u5408\u7684\u52D5\u8A5E",
-  "learn.verb.notVerb": "\u300C{word}\u300D\u4E0D\u662F\u52D5\u8A5E\uFF0C\u6C92\u6709\u7528\u6CD5\u53EF\u4EE5\u7522\u751F\u3002",
+  "learn.verb.filter": "\u7BE9\u9078\u2026",
+  "learn.verb.count": "\u5DF2\u7522\u751F\u7528\u6CD5\uFF08{n}\uFF09",
+  "learn.verb.none.title": "\u9084\u6C92\u6709\u5B57\u7522\u751F\u904E\u7528\u6CD5",
+  "learn.verb.none.body": "\u5728\u55AE\u5B57\u9801\u7684\u300C\u7528\u6CD5\u300D\u6309\u4E0B\u300C\u7522\u751F\u300D\uFF0C\u5C31\u6703\u51FA\u73FE\u5728\u9019\u88E1\u3002",
+  "learn.verb.noMatch": "\u6C92\u6709\u7B26\u5408\u7684\u5B57",
+  "learn.verb.notVerb": "\u300C{word}\u300D\u6C92\u6709\u53EF\u4EE5\u7522\u751F\u7528\u6CD5\u7684\u8A5E\u6027\u3002",
   "learn.verb.generate": "\u7522\u751F\u7528\u6CD5",
   "learn.verb.regenerate": "\u91CD\u65B0\u7522\u751F",
   "learn.verb.generating": "AI \u6B63\u5728\u6574\u7406 {word} \u7684\u7528\u6CD5\u2026",
   "learn.verb.empty.title": "\u9084\u6C92\u6709 {word} \u7684\u7528\u6CD5",
-  "learn.verb.empty.body": "\u8B93 AI \u6574\u7406\u5E38\u898B\u53E5\u578B\u3001\u4F8B\u53E5\u548C\u76F8\u8FD1\u8AAA\u6CD5\u3002\u7522\u751F\u4E00\u6B21\u5C31\u6703\u5B58\u8D77\u4F86\u3002",
+  "learn.verb.empty.body": "\u8B93 AI \u6574\u7406\u5E38\u898B\u53E5\u578B\u3001\u4F8B\u53E5\u548C\u76F8\u8FD1\u8AAA\u6CD5\u3002\u7522\u751F\u4E00\u6B21\u5C31\u6703\u5B58\u8D77\u4F86\uFF0C\u6BCF\u500B\u8A5E\u6027\u53EF\u4EE5\u5206\u958B\u91CD\u65B0\u7522\u751F\u3002",
   "learn.verb.related": "\u76F8\u8FD1\u8AAA\u6CD5",
   "learn.verb.meta.source": "\u51FA\u81EA {source}",
   "learn.verb.speak": "\u767C\u97F3",
@@ -2048,6 +2048,9 @@ var dictionaries = { en, "zh-TW": zhTW };
 var activeLocale = "en";
 function setLocale(locale) {
   activeLocale = locale;
+}
+function getLocale() {
+  return activeLocale;
 }
 function resolveLocale(setting, appLanguage) {
   if (setting !== "auto") return setting;
@@ -8334,9 +8337,20 @@ function filterVerbs(verbs, query) {
   });
 }
 function pickVerb(verbs, current) {
-  var _a, _b;
+  var _a;
   if (current && verbs.some((e) => e.id === current)) return current;
-  return (_b = (_a = verbs.find((e) => usagesOf(e).v)) != null ? _a : verbs[0]) == null ? void 0 : _b.id;
+  return (_a = verbs[0]) == null ? void 0 : _a.id;
+}
+function entriesWithUsage(entries) {
+  return entries.filter((e) => Object.keys(usagesOf(e)).length > 0);
+}
+function posChipsIn(entries) {
+  const present = /* @__PURE__ */ new Set();
+  for (const e of entries) for (const pos of Object.keys(usagesOf(e))) present.add(pos);
+  return POS_KEYS.filter((k) => present.has(k));
+}
+function filterByActivePos(entries, active2) {
+  return entries.filter((e) => Object.keys(usagesOf(e)).some((pos) => active2.has(pos)));
 }
 function noteName(path) {
   var _a;
@@ -9559,9 +9573,93 @@ var TriviaBlock = class extends import_obsidian25.MarkdownRenderChild {
 
 // src/ui/blocks/verbs.ts
 var import_obsidian26 = require("obsidian");
+
+// src/services/export/labels.ts
+var POS_NAME = {
+  "zh-TW": {
+    n: "\u540D\u8A5E",
+    v: "\u52D5\u8A5E",
+    adj: "\u5F62\u5BB9\u8A5E",
+    adv: "\u526F\u8A5E",
+    prep: "\u4ECB\u4FC2\u8A5E",
+    conj: "\u9023\u63A5\u8A5E",
+    pron: "\u4EE3\u540D\u8A5E",
+    interj: "\u611F\u5606\u8A5E"
+  },
+  en: {
+    n: "Noun",
+    v: "Verb",
+    adj: "Adjective",
+    adv: "Adverb",
+    prep: "Preposition",
+    conj: "Conjunction",
+    pron: "Pronoun",
+    interj: "Interjection"
+  }
+};
+function posHeading(locale, pos) {
+  const name = POS_NAME[locale][pos];
+  return locale === "zh-TW" ? `${name}\u7528\u6CD5` : `${name} usage`;
+}
+function usagePosHeadings() {
+  const locale = getLocale();
+  const out = {};
+  for (const pos of POS_KEYS) out[pos] = posHeading(locale, pos);
+  return out;
+}
+function posOfUsageHeading(title) {
+  const text = title.trim();
+  for (const locale of ["zh-TW", "en"]) {
+    for (const pos of POS_KEYS) {
+      if (posHeading(locale, pos) === text) return pos;
+    }
+  }
+  return null;
+}
+var KEYS = [
+  "families",
+  "familiesEmpty",
+  "usage",
+  "usageEmpty",
+  "usageRelated",
+  "trivia",
+  "triviaEmpty",
+  "triviaMentionedIn",
+  "discussion",
+  "discussionEmpty",
+  "userNotesHint",
+  "paragraphsEmpty",
+  "paragraphOrphaned",
+  "wordsLearned",
+  "wordsEmpty",
+  "wordQuestions",
+  "favorites",
+  "favoritesEmpty",
+  "aborted",
+  "usageSaved",
+  "usageGenerated"
+];
+function exportLabels() {
+  const labels = {};
+  for (const key3 of KEYS) labels[key3] = t(`export.${key3}`);
+  labels.usagePosHeading = usagePosHeadings();
+  return labels;
+}
+
+// src/ui/blocks/verbs.ts
 function l2(key3, path) {
   return path === void 0 ? t(`learn.verb.${key3}`) : t(`learn.verb.${key3}`, { path });
 }
+var POS_ABBR = {
+  n: "n.",
+  v: "v.",
+  adj: "adj.",
+  adv: "adv.",
+  prep: "prep.",
+  conj: "conj.",
+  pron: "pron.",
+  interj: "interj."
+};
 function renderVerbs(plugin, source, el, ctx) {
   ctx.addChild(new VerbsBlock(el, plugin, parseVerbsParams(source), ctx.sourcePath));
 }
@@ -9571,9 +9669,13 @@ var VerbsBlock = class extends import_obsidian26.MarkdownRenderChild {
     this.plugin = plugin;
     this.params = params;
     this.sourcePath = sourcePath;
+    this.filterEl = null;
+    this.posChipsEl = null;
     this.listEl = null;
     this.countEl = null;
     this.query = "";
+    // 詞性 chip 被按淡的集合 (1006-2 #22)：只存在這個 block 實例裡，不跨裝置。
+    this.dimmedPos = /* @__PURE__ */ new Set();
     // Last failure per entry, shown under its usage until the next try
     // (with what was thrown, for the debug box).
     this.errors = /* @__PURE__ */ new Map();
@@ -9600,19 +9702,37 @@ var VerbsBlock = class extends import_obsidian26.MarkdownRenderChild {
     this.render();
     void this.plugin.learn.ensureLoaded().then(redraw);
   }
-  favorited(e) {
-    return this.plugin.learn.loaded && !!this.plugin.learn.verbFavorite(e.id);
+  // 跟側欄一樣的 isListed 篩選 (dashboard.ts 的 isListedCtx 同款：標籤 chip
+  // ＋ Like chip，共用同一份設定 (1006-2 #5))。
+  isListedCtx() {
+    const knownTags = this.plugin.wordlists.index.tags;
+    const settings = resolveWordlistSettings(this.plugin.store.settings.wordlists);
+    return {
+      knownTags,
+      isTagOn: (tag) => tagEnabled(settings, tag),
+      likeOn: likeChipOn(settings)
+    };
   }
-  toggleFavorite(e) {
-    const learn = this.plugin.learn;
-    if (learn.verbFavorite(e.id)) return learn.unfavoriteVerb(e.id);
-    learn.favoriteVerb(e);
+  anyFavorited(entryId) {
+    return this.plugin.learn.loaded && this.plugin.learn.usageFavoritesFor(entryId).length > 0;
+  }
+  toggleFavorite(e, pos) {
+    const verbs = this.plugin.verbs;
+    if (verbs.isFavorite(e.id, pos)) return verbs.unfavorite(e.id, pos);
+    verbs.favorite(e, pos);
     const page = this.plugin.exporter.wordPagePath(e.id, e.word);
     new import_obsidian26.Notice(l2("savedTo", page.split("/").slice(-2).join("/")));
   }
   buildLayout() {
     const grid = this.root.createDiv({ cls: "vt-verbs-grid" });
     const side = grid.createDiv({ cls: "vt-verbs-side" });
+    this.filterEl = side.createDiv({ cls: "vt-verbs-tag-chips" });
+    const wlSettings = resolveWordlistSettings(this.plugin.store.settings.wordlists);
+    renderFilterChips(this.filterEl, [
+      ...tagChipSpecs(this.plugin, this.plugin.wordlists.index.tags, wlSettings, (tag) => tagCountInLibrary(this.plugin, tag)),
+      likeChipSpec(this.plugin, wlSettings, likeCountInLibrary(this.plugin))
+    ]);
+    this.posChipsEl = side.createDiv({ cls: "vt-verbs-pos-chips" });
     const search = side.createDiv({ cls: "vt-verbs-search" });
     (0, import_obsidian26.setIcon)(search.createSpan({ cls: "vt-verbs-search-icon" }), "search");
     const input = search.createEl("input", { cls: "vt-verbs-filter", type: "search" });
@@ -9625,28 +9745,53 @@ var VerbsBlock = class extends import_obsidian26.MarkdownRenderChild {
     this.listEl = side.createDiv({ cls: "vt-verbs-list" });
     this.detailEl = grid.createDiv({ cls: "vt-verb-detail" });
   }
+  renderPosChips(chips) {
+    const host = this.posChipsEl;
+    if (!host) return;
+    host.empty();
+    if (!chips.length) return;
+    const headings = usagePosHeadings();
+    for (const pos of chips) {
+      const chip2 = host.createEl("button", { cls: "vt-verbs-pos-chip" });
+      const dim = this.dimmedPos.has(pos);
+      chip2.toggleClass("is-dim", dim);
+      chip2.setAttr("aria-pressed", String(!dim));
+      chip2.title = headings[pos];
+      chip2.setText(POS_ABBR[pos]);
+      chip2.addEventListener("click", () => {
+        if (this.dimmedPos.has(pos)) this.dimmedPos.delete(pos);
+        else this.dimmedPos.add(pos);
+        this.render();
+      });
+    }
+  }
   render() {
     if (this.params.word) return this.renderSingle(this.params.word);
-    const all = this.plugin.verbs.verbs();
-    const shown = filterVerbs(all, this.query);
+    const listedCtx = this.isListedCtx();
+    const learned = entriesWithUsage(this.plugin.store.entries).filter((e) => isListed(e, listedCtx));
+    const afterQuery = filterVerbs(learned, this.query);
+    const chips = posChipsIn(afterQuery);
+    this.renderPosChips(chips);
+    const active2 = new Set(chips.filter((p) => !this.dimmedPos.has(p)));
+    const shown = filterByActivePos(afterQuery, active2);
     this.selectedId = pickVerb(shown, this.selectedId);
-    this.root.toggleClass("is-empty", !all.length);
-    if (this.countEl) this.countEl.setText(t("learn.verb.count", { n: all.length }));
+    this.root.toggleClass("is-empty", !learned.length);
+    if (this.countEl) this.countEl.setText(t("learn.verb.count", { n: learned.length }));
     const list = this.listEl;
     if (list) {
       list.empty();
-      if (all.length && !shown.length) list.createDiv({ cls: "vt-verbs-nomatch", text: t("learn.verb.noMatch") });
+      if (learned.length && !shown.length) list.createDiv({ cls: "vt-verbs-nomatch", text: t("learn.verb.noMatch") });
       for (const e of shown) {
         const row = list.createEl("button", { cls: "vt-verbs-row" });
         row.toggleClass("is-active", e.id === this.selectedId);
         row.setAttr("aria-pressed", String(e.id === this.selectedId));
         row.createSpan({ cls: "vt-verbs-row-word", text: e.word });
         if (this.plugin.verbs.isBusy(e.id)) (0, import_obsidian26.setIcon)(row.createSpan({ cls: "vt-verbs-row-icon is-busy" }), "loader");
-        else if (this.favorited(e)) {
+        else if (this.anyFavorited(e.id)) {
           const icon = row.createSpan({ cls: "vt-verbs-row-icon is-saved" });
           (0, import_obsidian26.setIcon)(icon, "bookmark-check");
           icon.setAttr("aria-label", l2("rowFavorited"));
-        } else if (this.plugin.verbs.usage(e)) {
+        } else {
           const icon = row.createSpan({ cls: "vt-verbs-row-icon" });
           (0, import_obsidian26.setIcon)(icon, "check");
           icon.setAttr("aria-label", t("learn.verb.hasUsage"));
@@ -9658,10 +9803,8 @@ var VerbsBlock = class extends import_obsidian26.MarkdownRenderChild {
       }
     }
     this.detailEl.empty();
-    if (!all.length) {
-      this.detailEl.appendChild(
-        emptyState({ icon: "list", title: t("learn.verb.none.title"), body: t("learn.verb.none.body") })
-      );
+    if (!learned.length) {
+      this.detailEl.appendChild(emptyState({ icon: "list", title: t("learn.verb.none.title"), body: t("learn.verb.none.body") }));
       return;
     }
     const selected = shown.find((e) => e.id === this.selectedId);
@@ -9672,10 +9815,6 @@ var VerbsBlock = class extends import_obsidian26.MarkdownRenderChild {
     const entry = new WordIndex(this.plugin.store.entries).find(word);
     if (!entry) {
       this.detailEl.appendChild(inlineNote({ text: t("learn.notFound", { word }) }));
-      return;
-    }
-    if (!isVerb(entry.partOfSpeech)) {
-      this.detailEl.appendChild(inlineNote({ text: t("learn.verb.notVerb", { word: entry.word }) }));
       return;
     }
     this.renderDetail(entry);
@@ -9691,13 +9830,8 @@ var VerbsBlock = class extends import_obsidian26.MarkdownRenderChild {
     (0, import_obsidian26.setIcon)(speak, "volume-2");
     speak.setAttr("aria-label", t("learn.verb.speak"));
     bindPronounceButton(speak, e);
-    const usage = this.plugin.verbs.usage(e);
-    const meta = usageMeta(e, usage);
-    const metaParts = [];
-    if (meta.source) metaParts.push(t("learn.verb.meta.source", { source: meta.source }));
-    const dates = usageDates(usage);
-    if (dates) metaParts.push(dates);
-    if (metaParts.length) el.createDiv({ cls: "vt-verb-meta", text: metaParts.join(" \xB7 ") });
+    const source = usageMeta(e, void 0).source;
+    if (source) el.createDiv({ cls: "vt-verb-meta", text: t("learn.verb.meta.source", { source }) });
     const busy = this.plugin.verbs.isBusy(e.id);
     if (busy) {
       const box = el.createDiv({ cls: "vt-learn-busy" });
@@ -9712,61 +9846,11 @@ var VerbsBlock = class extends import_obsidian26.MarkdownRenderChild {
       this.removeChild(this.markdownScope);
       this.markdownScope = null;
     }
-    if (usage) {
-      const { patterns, related } = usageRows(usage);
+    const usages = this.plugin.verbs.usages(e);
+    const posList = POS_KEYS.filter((p) => usages[p]);
+    if (posList.length) {
       const scope = this.markdownScope = this.addChild(new import_obsidian26.Component());
-      const list = el.createDiv({ cls: "vt-verb-patterns" });
-      for (const p of patterns) {
-        const row = list.createDiv({ cls: "vt-verb-pattern" });
-        row.createSpan({ cls: "vt-verb-pattern-p", text: p.pattern });
-        const right = row.createDiv({ cls: "vt-verb-pattern-body" });
-        if (p.meaningZh) {
-          const zh = right.createDiv({ cls: "vt-verb-pattern-zh" });
-          void import_obsidian26.MarkdownRenderer.render(this.plugin.app, p.meaningZh, zh, this.sourcePath, scope);
-        }
-        if (p.example) {
-          const ex = right.createDiv({ cls: "vt-verb-pattern-ex" });
-          void import_obsidian26.MarkdownRenderer.render(this.plugin.app, p.example, ex, this.sourcePath, scope);
-        }
-      }
-      if (related.length) {
-        el.createDiv({ cls: "vt-verb-section", text: t("learn.verb.related") });
-        const chips = el.createDiv({ cls: "vt-verb-related" });
-        const index = new WordIndex(this.plugin.store.entries);
-        for (const r of related) {
-          const known = index.find(r.phrase);
-          const chip2 = wordChip(chips, this.plugin, known && known.id !== e.id ? known : void 0, "vt-verb-related-chip");
-          chip2.createSpan({ text: r.phrase });
-          if (r.zh) chip2.createSpan({ cls: "vt-verb-related-zh", text: r.zh });
-        }
-      }
-      if (!busy) {
-        const actions = el.createDiv({ cls: "vt-verb-actions" });
-        const saved = this.favorited(e);
-        const fav = learnButton(actions, {
-          label: l2(saved ? "favorited" : "favorite"),
-          icon: saved ? "bookmark-check" : "bookmark",
-          onClick: () => this.toggleFavorite(e)
-        });
-        fav.addClass("vt-verb-favorite");
-        fav.toggleClass("is-active", saved);
-        fav.setAttr("aria-pressed", String(saved));
-        if (saved) fav.title = l2("unfavorite");
-        fav.disabled = !this.plugin.learn.loaded;
-        const regen = learnButton(actions, {
-          label: t("learn.verb.regenerate"),
-          icon: "refresh-cw",
-          onClick: () => void this.generate(e)
-        });
-        const status = this.plugin.ai.status();
-        if (status !== "ready") {
-          regen.disabled = true;
-          const offline = status === "offline";
-          actions.appendChild(
-            inlineNote({ tone: offline ? "offline" : "info", text: t(offline ? "learn.ai.offline" : "learn.ai.body") })
-          );
-        }
-      }
+      for (const pos of posList) this.renderPosSection(el, e, pos, usages[pos], scope, busy);
       return;
     }
     if (busy) return;
@@ -9780,11 +9864,88 @@ var VerbsBlock = class extends import_obsidian26.MarkdownRenderChild {
       })
     );
   }
+  // One part of speech's usage: its own heading, patterns/related, meta
+  // (加入/更新日期) and actions (收藏 / 重新產生) (1006-2 #19 #22).
+  renderPosSection(el, e, pos, usage, scope, entryBusy) {
+    const section3 = el.createDiv({ cls: "vt-verb-pos" });
+    section3.createDiv({ cls: "vt-verb-pos-title", text: usagePosHeadings()[pos] });
+    const dates = usageDates(usage);
+    if (dates) section3.createDiv({ cls: "vt-verb-meta", text: dates });
+    const { patterns, related } = usageRows(usage);
+    const list = section3.createDiv({ cls: "vt-verb-patterns" });
+    for (const p of patterns) {
+      const row = list.createDiv({ cls: "vt-verb-pattern" });
+      row.createSpan({ cls: "vt-verb-pattern-p", text: p.pattern });
+      const right = row.createDiv({ cls: "vt-verb-pattern-body" });
+      if (p.meaningZh) {
+        const zh = right.createDiv({ cls: "vt-verb-pattern-zh" });
+        void import_obsidian26.MarkdownRenderer.render(this.plugin.app, p.meaningZh, zh, this.sourcePath, scope);
+      }
+      if (p.example) {
+        const ex = right.createDiv({ cls: "vt-verb-pattern-ex" });
+        void import_obsidian26.MarkdownRenderer.render(this.plugin.app, p.example, ex, this.sourcePath, scope);
+      }
+    }
+    if (related.length) {
+      section3.createDiv({ cls: "vt-verb-section", text: t("learn.verb.related") });
+      const chipsEl = section3.createDiv({ cls: "vt-verb-related" });
+      const index = new WordIndex(this.plugin.store.entries);
+      for (const r of related) {
+        const known = index.find(r.phrase);
+        const chip2 = wordChip(chipsEl, this.plugin, known && known.id !== e.id ? known : void 0, "vt-verb-related-chip");
+        chip2.createSpan({ text: r.phrase });
+        if (r.zh) chip2.createSpan({ cls: "vt-verb-related-zh", text: r.zh });
+      }
+    }
+    if (entryBusy) return;
+    const actions = section3.createDiv({ cls: "vt-verb-actions" });
+    const saved = this.plugin.verbs.isFavorite(e.id, pos);
+    const fav = learnButton(actions, {
+      label: l2(saved ? "favorited" : "favorite"),
+      icon: saved ? "bookmark-check" : "bookmark",
+      onClick: () => this.toggleFavorite(e, pos)
+    });
+    fav.addClass("vt-verb-favorite");
+    fav.toggleClass("is-active", saved);
+    fav.setAttr("aria-pressed", String(saved));
+    if (saved) fav.title = l2("unfavorite");
+    fav.disabled = !this.plugin.learn.loaded;
+    const regen = learnButton(actions, {
+      label: t("learn.verb.regenerate"),
+      icon: "refresh-cw",
+      onClick: () => void this.regenerate(e, pos)
+    });
+    const status = this.plugin.ai.status();
+    if (status !== "ready") {
+      regen.disabled = true;
+      const offline = status === "offline";
+      actions.appendChild(
+        inlineNote({ tone: offline ? "offline" : "info", text: t(offline ? "learn.ai.offline" : "learn.ai.body") })
+      );
+    }
+  }
+  // Generates every part of speech at once (empty state only — once a
+  // word has at least one, each section's own 「重新產生」 (regenerate()
+  // below) covers it instead).
   async generate(e) {
     if (this.plugin.verbs.isBusy(e.id)) return;
     this.errors.delete(e.id);
     try {
-      await this.plugin.verbs.generate(e);
+      await this.plugin.verbs.generateAll(e);
+    } catch (err) {
+      if (!isAbort(err)) {
+        console.error("Vocab Tracker: verb usage failed", err);
+        this.errors.set(e.id, { text: learnErrorText(err), cause: err });
+      }
+    }
+    this.render();
+  }
+  // 「重新產生」 on one part of speech's section — only that pos is replaced.
+  async regenerate(e, pos) {
+    if (this.plugin.verbs.isBusy(e.id)) return;
+    this.errors.delete(e.id);
+    try {
+      await this.plugin.verbs.regenerate(e, pos);
     } catch (err) {
       if (!isAbort(err)) {
         console.error("Vocab Tracker: verb usage failed", err);
@@ -17056,36 +17217,6 @@ function cacheLooksResolved(app) {
   return app.metadataCache.resolved === true;
 }
 
-// src/services/export/labels.ts
-var KEYS = [
-  "families",
-  "familiesEmpty",
-  "usage",
-  "usageEmpty",
-  "usageRelated",
-  "trivia",
-  "triviaEmpty",
-  "triviaMentionedIn",
-  "discussion",
-  "discussionEmpty",
-  "userNotesHint",
-  "paragraphsEmpty",
-  "paragraphOrphaned",
-  "wordsLearned",
-  "wordsEmpty",
-  "wordQuestions",
-  "favorites",
-  "favoritesEmpty",
-  "aborted",
-  "usageSaved",
-  "usageGenerated"
-];
-function exportLabels() {
-  const labels = {};
-  for (const key3 of KEYS) labels[key3] = t(`export.${key3}`);
-  return labels;
-}
-
 // src/services/export/managedBlock.ts
 var NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
 function checkName(name) {
@@ -17464,12 +17595,16 @@ function mentionsEntry(item, entry) {
 function triviaMentioning(items, entry) {
   return liveTrivia(items).filter((t2) => mentionsEntry(t2, entry));
 }
-function verbFavoriteOf(input) {
+function usageFavoriteOf(input, pos) {
   var _a;
-  return (_a = input.verbFavorites) == null ? void 0 : _a.find((v) => v.entryId === input.entry.id && !v.deletedAt);
+  return (_a = input.verbFavorites) == null ? void 0 : _a.find((v) => {
+    var _a2;
+    return v.entryId === input.entry.id && !v.deletedAt && ((_a2 = v.pos) != null ? _a2 : "v") === pos;
+  });
 }
 function hasWordPageContent(input) {
-  return threadRounds(input.thread).length > 0 || triviaAbout(input.trivia, input.entry.id).length > 0 || !!verbFavoriteOf(input);
+  var _a;
+  return threadRounds(input.thread).length > 0 || triviaAbout(input.trivia, input.entry.id).length > 0 || !!((_a = input.verbFavorites) == null ? void 0 : _a.some((v) => v.entryId === input.entry.id && !v.deletedAt));
 }
 function section2(name, heading, body) {
   return { name, body: `## ${heading}
@@ -17499,9 +17634,7 @@ function usageMeta2(usage, saved, ctx) {
   if (usage.generatedAt) parts.push(fill(ctx.labels.usageGenerated, { date: ctx.formatDate(usage.generatedAt) }));
   return parts.length ? italic(parts.join(" \xB7 ")) : null;
 }
-function renderUsage(input, ctx) {
-  const usage = input.usage;
-  if (!usage || !usage.patterns.length && !usage.related.length) return italic(ctx.labels.usageEmpty);
+function renderUsageBlock(usage, favorite, ctx) {
   const lines4 = usage.patterns.map((p) => {
     const item = [`- ${inlineCode(p.pattern)}`, oneLine(p.meaningZh)].filter(Boolean).join(" ");
     return p.example.trim() ? `${item}
@@ -17512,9 +17645,23 @@ function renderUsage(input, ctx) {
     const related = usage.related.map((r) => r.zh.trim() ? `${oneLine(r.phrase)}\uFF08${oneLine(r.zh)}\uFF09` : oneLine(r.phrase));
     lines4.push(`**${ctx.labels.usageRelated}**\uFF1A${related.join(" \xB7 ")}`);
   }
-  const meta = usageMeta2(usage, verbFavoriteOf(input), ctx);
+  const meta = usageMeta2(usage, favorite, ctx);
   if (meta) lines4.push("", meta);
   return lines4.join("\n");
+}
+function renderUsage(input, ctx) {
+  var _a;
+  const usages = (_a = input.usages) != null ? _a : {};
+  const present = POS_KEYS.filter((pos) => {
+    const u = usages[pos];
+    return u && (u.patterns.length || u.related.length);
+  });
+  if (!present.length) return italic(ctx.labels.usageEmpty);
+  return present.map((pos) => {
+    const heading = `### ${ctx.labels.usagePosHeading[pos]}`;
+    const body = renderUsageBlock(usages[pos], usageFavoriteOf(input, pos), ctx);
+    return [heading, "", body].join("\n");
+  }).join("\n\n");
 }
 function renderTrivia2(input, ctx) {
   const own = triviaAbout(input.trivia, input.entry.id);
@@ -17852,7 +17999,7 @@ var ExportService = class {
     const input = {
       entry,
       families: data.families(),
-      usage: data.usage(entryId),
+      usages: data.usages(entryId),
       verbFavorites: (_d = (_c = data.verbFavorites) == null ? void 0 : _c.call(data)) != null ? _d : [],
       trivia: data.trivia(),
       thread: data.wordThread(entryId)
@@ -18012,12 +18159,10 @@ function createExportData(src) {
       return threads.map((thread) => ({ thread, index: paragraphIndexOf(content, thread.anchor) }));
     },
     families: () => src.learn.families().filter((f) => !f.deletedAt),
-    // Wave 8 U1 (1006-2 #21): usage is per pos now; the word page's usage
-    // export (ExportVerbFavorite/ExportUsage, services/export/types.ts)
-    // is still verb-only this wave — U2 owns the per-pos export.
-    usage: (entryId) => {
+    // 1006-2 #19 #21: every part of speech's usage block, not just "v".
+    usages: (entryId) => {
       const e = entry(entryId);
-      return e && usagesOf(e).v;
+      return e ? usagesOf(e) : {};
     },
     trivia: () => src.learn.trivia().filter((t2) => !t2.deletedAt),
     verbFavorites: () => {
@@ -18321,19 +18466,26 @@ function syncTriviaCard(h, entry, deps, ctx) {
 }
 function createWordPageDecorator(deps) {
   return (el, ctx) => {
-    var _a, _b;
+    var _a, _b, _c;
     const fm = (_a = ctx.frontmatter) != null ? _a : deps.frontmatterOf(ctx.sourcePath);
     const entryId = wordPageEntryId(fm);
     if (!entryId) return;
-    const headings = [...el.matches("h2") ? [el] : [], ...Array.from(el.querySelectorAll("h2"))];
+    const headings = [...el.matches("h2, h3") ? [el] : [], ...Array.from(el.querySelectorAll("h2, h3"))];
     if (!headings.length) return;
     const info = ctx.getSectionInfo(el);
     for (const h of headings) {
       if (h.querySelector(".vt-wp-actions")) continue;
-      const section3 = info ? sectionAtHeading(info.text, info.lineStart) : sectionByTitle((_b = h.textContent) != null ? _b : "");
-      if (!section3) continue;
       const entry = deps.entry(entryId);
       if (!entry) continue;
+      if (h.tagName === "H3") {
+        const pos = posOfUsageHeading((_b = h.textContent) != null ? _b : "");
+        if (!pos) continue;
+        if (info && sectionAtHeading(info.text, info.lineStart) !== "usage") continue;
+        decorateUsagePos(h, pos, entry, deps);
+        continue;
+      }
+      const section3 = info ? sectionAtHeading(info.text, info.lineStart) : sectionByTitle((_c = h.textContent) != null ? _c : "");
+      if (!section3) continue;
       decorate(h, section3, entry, deps, ctx);
       if (section3 === "trivia") syncTriviaCard(h, entry, deps, ctx);
     }
@@ -18356,7 +18508,7 @@ function actionFor(section3, entry, deps, h, ctx) {
       if (!deps.verbs.canGenerate(entry)) return null;
       return {
         icon: "sparkles",
-        label: Object.keys(deps.verbs.usages(entry)).length ? l3("regenerateUsage") : l3("generateUsage"),
+        label: l3("generateUsage"),
         run: async () => {
           await deps.verbs.generateAll(entry);
           deps.notify(l3("usageSaved"));
@@ -18383,15 +18535,12 @@ function actionFor(section3, entry, deps, h, ctx) {
       return { icon: "panel-right", label: l3("openSidebar"), run: () => deps.openInSidebar(entry, "ai") };
   }
 }
-function decorate(h, section3, entry, deps, ctx) {
-  const action = actionFor(section3, entry, deps, h, ctx);
-  if (!action) return;
+function attachButton(h, key3, action, deps) {
   h.addClass("vt-wp-heading");
   const box = h.createSpan({ cls: ["vt", "vt-wp-actions"] });
   const btn = box.createEl("button", { cls: "vt-wp-btn" });
   (0, import_obsidian47.setIcon)(btn.createSpan({ cls: "vt-wp-btn-icon" }), action.icon);
   btn.createSpan({ text: action.label });
-  const key3 = `${entry.id}:${section3}`;
   const setBusy = (busy) => {
     btn.toggleClass("is-busy", busy);
     btn.disabled = busy;
@@ -18415,6 +18564,23 @@ ${debugReportText(debug)}`);
       if (btn.isConnected) setBusy(false);
     });
   });
+}
+function decorate(h, section3, entry, deps, ctx) {
+  const action = actionFor(section3, entry, deps, h, ctx);
+  if (!action) return;
+  attachButton(h, `${entry.id}:${section3}`, action, deps);
+}
+function decorateUsagePos(h, pos, entry, deps) {
+  if (!deps.verbs.canGenerate(entry)) return;
+  const action = {
+    icon: "sparkles",
+    label: l3("regenerateUsage"),
+    run: async () => {
+      await deps.verbs.regenerate(entry, pos);
+      deps.notify(l3("usageSaved"));
+    }
+  };
+  attachButton(h, `${entry.id}:usage:${pos}`, action, deps);
 }
 
 // src/ui/reading/PluginNoteChrome.ts
