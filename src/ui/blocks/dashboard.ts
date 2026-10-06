@@ -115,6 +115,7 @@ export function renderDashboard(
     renderGroupedVocabList(plugin, listWrap, rows, collapsedGroups, expandState, () => drawList(), {
       showDue: true,
       ui: wordUi,
+      openWordPage: (entry) => void plugin.openWordPage(entry.id), // 1006-2 #13
     });
   };
 
