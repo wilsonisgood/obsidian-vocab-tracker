@@ -297,13 +297,12 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // vocab-word header block itself is in registerBlocks below).
     this.registerMarkdownPostProcessor(
       createWordPageDecorator({
+        app: this.app,
         entry: (id) => this.store.entries.find((e) => e.id === id),
         frontmatterOf: (p) => this.frontmatterOf(p),
         families: this.families,
         verbs: this.verbs,
         trivia: this.trivia,
-        // A new tab, so the word page stays open behind it.
-        openTrivia: () => this.openEntryFile("trivia", "tab"),
         // The bottom sheet on iPhone.
         openInSidebar: (entry) => this.surfaces.openWordCard(entry.id, "ai"),
         notify: (m) => new Notice(m),
