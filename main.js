@@ -35,7 +35,7 @@ __export(main_exports, {
   default: () => VocabTrackerPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian49 = require("obsidian");
+var import_obsidian51 = require("obsidian");
 
 // src/core/text/wordRe.ts
 function escapeRe(s) {
@@ -472,16 +472,16 @@ function resolveUiPrefs(ui) {
 var SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists", "files", "anchors"];
 function stampMs(iso) {
   if (typeof iso !== "string" || !iso) return 0;
-  const ms4 = new Date(iso).getTime();
-  return Number.isNaN(ms4) ? 0 : ms4;
+  const ms5 = new Date(iso).getTime();
+  return Number.isNaN(ms5) ? 0 : ms5;
 }
 function legacyStamp(s) {
-  const ms4 = stampMs(s.updatedAt);
+  const ms5 = stampMs(s.updatedAt);
   let newest2 = 0;
   for (const v of Object.values(s)) {
     if (v && typeof v === "object") newest2 = Math.max(newest2, stampMs(v.updatedAt));
   }
-  return ms4 > newest2 ? { ms: ms4, iso: s.updatedAt } : null;
+  return ms5 > newest2 ? { ms: ms5, iso: s.updatedAt } : null;
 }
 function carryLegacyStamp(s) {
   const legacy = legacyStamp(s);
@@ -771,10 +771,10 @@ function pickSection(local, remote, localLegacy, remoteLegacy, lTop, rTop) {
     var _a;
     return section3 === void 0 ? -1 : Math.max(own2, (_a = legacy2 == null ? void 0 : legacy2.ms) != null ? _a : 0);
   };
-  const l5 = effective(local, lOwn, localLegacy);
+  const l4 = effective(local, lOwn, localLegacy);
   const r = effective(remote, rOwn, remoteLegacy);
-  const remoteWins = l5 !== r ? r > l5 : lTop !== rTop ? rTop > lTop : rf > lf;
-  const [winner, eff, own, legacy] = remoteWins ? [remote, r, rOwn, remoteLegacy] : [local, l5, lOwn, localLegacy];
+  const remoteWins = l4 !== r ? r > l4 : lTop !== rTop ? rTop > lTop : rf > lf;
+  const [winner, eff, own, legacy] = remoteWins ? [remote, r, rOwn, remoteLegacy] : [local, l4, lOwn, localLegacy];
   return legacy && eff > own ? { ...winner, updatedAt: legacy.iso } : winner;
 }
 function restFingerprint(s) {
@@ -785,14 +785,14 @@ function restFingerprint(s) {
 function mergeSettings(local, remote) {
   if (!local) return remote != null ? remote : { schemaVersion: 2 };
   if (!remote) return local;
-  const l5 = stampMs(local.updatedAt);
+  const l4 = stampMs(local.updatedAt);
   const r = stampMs(remote.updatedAt);
-  const remoteNewer = l5 !== r ? r > l5 : restFingerprint(remote) > restFingerprint(local);
+  const remoteNewer = l4 !== r ? r > l4 : restFingerprint(remote) > restFingerprint(local);
   const out = { ...remoteNewer ? remote : local };
   const localLegacy = legacyStamp(local);
   const remoteLegacy = legacyStamp(remote);
   for (const key3 of SETTINGS_SECTIONS) {
-    const picked = pickSection(local[key3], remote[key3], localLegacy, remoteLegacy, l5, r);
+    const picked = pickSection(local[key3], remote[key3], localLegacy, remoteLegacy, l4, r);
     if (picked === void 0) delete out[key3];
     else out[key3] = picked;
   }
@@ -846,7 +846,7 @@ function nowStamp(d = /* @__PURE__ */ new Date()) {
 }
 
 // src/ui/sidebar/VocabSidebarView.ts
-var import_obsidian16 = require("obsidian");
+var import_obsidian17 = require("obsidian");
 
 // src/ui/word/WordRow.ts
 var import_obsidian9 = require("obsidian");
@@ -891,12 +891,18 @@ var en = {
   "sidebar.hint.allEmpty": "Click an English word in reading mode to start tracking.",
   // 1005 feedback S: collapsible sections, AI discussions, grouping by source
   "sidebar.section.words": "Words",
+  // Wave 6 W: paragraph discussions split out into their own section — its
+  // header reuses paragraph.list.title (the list's own heading before).
+  "sidebar.paragraphs.noNote": "Open a note to see its paragraph discussions.",
   "sidebar.section.ai": "AI discussions ({n})",
   "sidebar.ai.empty": "No discussions yet. Open a word's AI tab, or click the \u2726 next to a paragraph in reading view.",
-  "sidebar.ai.kind.word": "Word",
-  "sidebar.ai.kind.paragraph": "Paragraph",
   "sidebar.ai.showAll": "Show all ({n})",
   "sidebar.ai.showLess": "Show recent only",
+  // Wave 6 W: the 文法 section (today: 動詞用法; 句型結構 later).
+  "sidebar.section.grammar": "Grammar ({n})",
+  "sidebar.grammar.verbs": "Verb usage",
+  "sidebar.grammar.empty": "No verb usage yet. Generate one from a verb's card.",
+  "sidebar.grammar.viewAll": "View all",
   "sidebar.group.family": "Word family: {name}",
   "sidebar.group.familyGone": "Word family (removed)",
   "sidebar.group.familyOpen": "Open word families",
@@ -926,6 +932,17 @@ var en = {
   "row.field.grammar": "Grammar tips",
   "row.field.level": "Level",
   "row.field.placeholder": "Add {label}\u2026",
+  // Confirm dialog before deleting a word: what it's linked to (W6).
+  "deleteEntry.title": 'Delete "{word}"?',
+  "deleteEntry.noLinks": "This word isn't in any family, trivia or discussion.",
+  "deleteEntry.impact.families": "In {n} families (the text stays; you can add it back later)",
+  "deleteEntry.impact.trivia": "Mentioned in {n} saved trivia answers",
+  "deleteEntry.impact.verbFavorite": "Its verb usage is saved",
+  "deleteEntry.impact.wordPage": "Has a word page",
+  "deleteEntry.impact.threads": "{n} questions asked on its word page",
+  "deleteEntry.trashWordPage": "Also delete the word page (move to trash)",
+  "deleteEntry.cancel": "Cancel",
+  "deleteEntry.confirm": "Delete",
   "dashboard.empty": "No words yet. Highlight ==words== in your notes and click them to start tracking.",
   "dashboard.search": "Search words\u2026",
   "dashboard.stat.word": "\u{1F4DA} {count} word",
@@ -1258,17 +1275,10 @@ var en = {
   "learn.family.generate": "Find families",
   "learn.family.regroup": "Regroup",
   "learn.family.regroup.hint": "Your list has grown by 20% or more since the last grouping. Regroup?",
-  "learn.family.regroup.note": "Saving replaces the families from the last regroup; families found from a word page stay.",
   "learn.family.generating": "Grouping your words\u2026",
-  "learn.family.found": "Found {families} families and {words} new words",
   "learn.family.noneFound": "No families this time. Try again later.",
-  "learn.family.from": "grown from {words}",
   "learn.family.known": "Learned",
-  "learn.family.discard": "Discard",
-  "learn.family.saveOnly": "Save families only",
-  "learn.family.saveAdd": "Save, and add {n} words",
-  "learn.family.addNote": 'Added words are looked up in the dictionary and marked as from "family: {topics}".',
-  "learn.family.saved": "Saved {families} families and added {words} words.",
+  "learn.family.saved": "Saved {families} families. New words sit in the tree as text \u2014 tap one (or its \uFF0B) to add it.",
   "learn.family.added": 'Added "{word}"',
   "learn.family.add": 'Add "{word}"',
   "learn.family.legend.known": "In your list \u2014 tap to open its card",
@@ -1280,11 +1290,6 @@ var en = {
   "learn.dates.added": "Added {date}",
   "learn.dates.updated": "Updated {date}",
   "learn.dates.saved": "Saved {date}",
-  "learn.family.reviewHint": "These are the AI's suggestions. Tick the new words to add, then save; Discard saves nothing.",
-  "learn.family.fromMore": "and {n} more",
-  "learn.family.noNew": "No new words. It shows in the tree once saved.",
-  "learn.family.selectAll": "Select all new words",
-  "learn.family.selectNone": "Select none",
   "learn.openWord": "Open {word} in the sidebar",
   "learn.verb.filter": "Filter verbs\u2026",
   "learn.verb.count": "Learned verbs ({n})",
@@ -1331,7 +1336,6 @@ var en = {
   "mobile.sheet.label.word": "Word card: {word}",
   "mobile.sheet.label.paragraph": "Paragraph discussion",
   "mobile.sheet.notTracked": "Not in your vocab list yet.",
-  "mobile.row.confirmDelete": "Tap again to delete",
   "mobile.save.added": "Added \u201C{word}\u201D",
   "mobile.save.undo": "Undo",
   "mobile.save.undone": "Removed \u201C{word}\u201D",
@@ -1428,12 +1432,18 @@ var zhTW = {
   "sidebar.hint.allEmpty": "\u5728\u95B1\u8B80\u6A21\u5F0F\u9EDE\u64CA\u82F1\u6587\u55AE\u5B57\u958B\u59CB\u8FFD\u8E64\u3002",
   // 1005 回饋 S：可收合分區、AI 討論、依來源分組
   "sidebar.section.words": "\u55AE\u5B57",
+  // Wave 6 W：段落討論獨立成自己的分區，標題沿用原本列表自己的
+  // paragraph.list.title。
+  "sidebar.paragraphs.noNote": "\u958B\u555F\u4E00\u7BC7\u7B46\u8A18\u4EE5\u67E5\u770B\u6BB5\u843D\u8A0E\u8AD6\u3002",
   "sidebar.section.ai": "AI \u8A0E\u8AD6\uFF08{n}\uFF09",
   "sidebar.ai.empty": "\u9084\u6C92\u6709\u8A0E\u8AD6\u3002\u5C55\u958B\u55AE\u5B57\u5207\u5230 AI \u5206\u9801\uFF0C\u6216\u5728\u95B1\u8B80\u6A21\u5F0F\u9EDE\u6BB5\u843D\u65C1\u7684 \u2726 \u5C31\u80FD\u63D0\u554F\u3002",
-  "sidebar.ai.kind.word": "\u55AE\u5B57",
-  "sidebar.ai.kind.paragraph": "\u6BB5\u843D",
   "sidebar.ai.showAll": "\u986F\u793A\u5168\u90E8\uFF08{n}\uFF09",
   "sidebar.ai.showLess": "\u53EA\u986F\u793A\u6700\u8FD1\u7684",
+  // Wave 6 W：文法分區（目前只有動詞用法；句型結構之後再加）。
+  "sidebar.section.grammar": "\u6587\u6CD5\uFF08{n}\uFF09",
+  "sidebar.grammar.verbs": "\u52D5\u8A5E\u7528\u6CD5",
+  "sidebar.grammar.empty": "\u9084\u6C92\u6709\u52D5\u8A5E\u7528\u6CD5\u3002\u5728\u52D5\u8A5E\u7684\u55AE\u5B57\u5361\u7522\u751F\u4E00\u500B\u770B\u770B\u3002",
+  "sidebar.grammar.viewAll": "\u67E5\u770B\u5168\u90E8",
   "sidebar.group.family": "\u5B57\u65CF\u6A39\uFF1A{name}",
   "sidebar.group.familyGone": "\u5B57\u65CF\u6A39\uFF08\u5B57\u65CF\u5DF2\u79FB\u9664\uFF09",
   "sidebar.group.familyOpen": "\u958B\u555F\u5B57\u65CF\u6A39",
@@ -1463,6 +1473,17 @@ var zhTW = {
   "row.field.grammar": "\u6587\u6CD5\u63D0\u793A",
   "row.field.level": "\u7A0B\u5EA6",
   "row.field.placeholder": "\u65B0\u589E{label}\u2026",
+  // 刪除單字前的確認視窗：列出關聯內容，確認後才刪 (W6)
+  "deleteEntry.title": "\u522A\u9664\u300C{word}\u300D\uFF1F",
+  "deleteEntry.noLinks": "\u9019\u500B\u5B57\u6C92\u6709\u95DC\u806F\u7684\u5B57\u65CF\u3001\u51B7\u77E5\u8B58\u6216\u8A0E\u8AD6\u3002",
+  "deleteEntry.impact.families": "\u5728 {n} \u500B\u5B57\u65CF\u88E1\uFF08\u6587\u5B57\u6703\u4FDD\u7559\uFF0C\u4E4B\u5F8C\u53EF\u518D\u52A0\u56DE\uFF09",
+  "deleteEntry.impact.trivia": "\u88AB {n} \u5247\u51B7\u77E5\u8B58\u63D0\u53CA",
+  "deleteEntry.impact.verbFavorite": "\u5DF2\u6536\u85CF\u52D5\u8A5E\u7528\u6CD5",
+  "deleteEntry.impact.wordPage": "\u6709\u55AE\u5B57\u9801",
+  "deleteEntry.impact.threads": "\u55AE\u5B57\u9801\u6709 {n} \u5247\u8A0E\u8AD6",
+  "deleteEntry.trashWordPage": "\u540C\u6642\u522A\u9664\u55AE\u5B57\u9801\uFF08\u79FB\u5230\u5783\u573E\u6876\uFF09",
+  "deleteEntry.cancel": "\u53D6\u6D88",
+  "deleteEntry.confirm": "\u522A\u9664",
   "dashboard.empty": "\u9084\u6C92\u6709\u55AE\u5B57\u3002\u5728\u7B46\u8A18\u4E2D\u7528 ==\u55AE\u5B57== \u6A19\u8A18\u4E26\u9EDE\u64CA\u5373\u53EF\u958B\u59CB\u8FFD\u8E64\u3002",
   "dashboard.search": "\u641C\u5C0B\u55AE\u5B57\u2026",
   "dashboard.stat.word": "\u{1F4DA} {count} \u500B\u55AE\u5B57",
@@ -1795,17 +1816,10 @@ var zhTW = {
   "learn.family.generate": "\u627E\u5B57\u65CF",
   "learn.family.regroup": "\u91CD\u65B0\u5206\u7FA4",
   "learn.family.regroup.hint": "\u55AE\u5B57\u5EAB\u6BD4\u4E0A\u6B21\u5206\u7FA4\u6642\u591A\u4E86 20% \u4EE5\u4E0A\uFF0C\u8981\u91CD\u65B0\u5206\u7FA4\u55CE\uFF1F",
-  "learn.family.regroup.note": "\u5B58\u4E0B\u5F8C\u6703\u53D6\u4EE3\u4E0A\u6B21\u6574\u9AD4\u5206\u7FA4\u7684\u5B57\u65CF\uFF1B\u55AE\u5B57\u9801\u300C\u627E\u5B57\u65CF\u300D\u5B58\u4E0B\u7684\u5B57\u65CF\u6703\u4FDD\u7559\u3002",
   "learn.family.generating": "AI \u6B63\u5728\u6574\u7406\u5B57\u65CF\u2026",
-  "learn.family.found": "AI \u627E\u5230 {families} \u500B\u5B57\u65CF\u3001{words} \u500B\u65B0\u5B57",
   "learn.family.noneFound": "AI \u6C92\u6709\u627E\u5230\u53EF\u4EE5\u6210\u70BA\u5B57\u65CF\u7684\u5B57\uFF0C\u63DB\u500B\u6642\u9593\u518D\u8A66\u8A66\u3002",
-  "learn.family.from": "\u5F9E\u4F60\u5B78\u904E\u7684 {words} \u5EF6\u4F38",
   "learn.family.known": "\u5DF2\u5B78",
-  "learn.family.discard": "\u6368\u68C4",
-  "learn.family.saveOnly": "\u53EA\u5B58\u5B57\u65CF",
-  "learn.family.saveAdd": "\u5B58\u5B57\u65CF\uFF0C\u4E26\u628A {n} \u500B\u5B57\u52A0\u5165\u55AE\u5B57\u5EAB",
-  "learn.family.addNote": "\u52A0\u5165\u7684\u5B57\u6703\u81EA\u52D5\u67E5\u5B57\u5178\u88DC\u8CC7\u6599\uFF0C\u4F86\u6E90\u6A19\u8A18\u70BA\u300C\u5B57\u65CF\uFF1A{topics}\u300D\u3002",
-  "learn.family.saved": "\u5DF2\u5B58 {families} \u500B\u5B57\u65CF\uFF0C\u52A0\u5165 {words} \u500B\u5B57\u3002",
+  "learn.family.saved": "\u5DF2\u5B58 {families} \u500B\u5B57\u65CF\u3002\u65B0\u5B57\u4EE5\u6587\u5B57\u6210\u54E1\u5B58\u5728\u5B57\u65CF\u6A39\u88E1\uFF0C\u9EDE\u4E00\u4E0B\uFF08\u6216\u65C1\u908A\u7684 \uFF0B\uFF09\u5C31\u80FD\u52A0\u5165\u55AE\u5B57\u5EAB\u3002",
   "learn.family.added": "\u5DF2\u52A0\u5165\u300C{word}\u300D",
   "learn.family.add": "\u52A0\u5165\u300C{word}\u300D",
   "learn.family.legend.known": "\u5DF2\u5728\u55AE\u5B57\u5EAB\uFF0C\u9EDE\u4E00\u4E0B\u6253\u958B\u55AE\u5B57\u5361",
@@ -1817,11 +1831,6 @@ var zhTW = {
   "learn.dates.added": "\u52A0\u5165 {date}",
   "learn.dates.updated": "\u66F4\u65B0 {date}",
   "learn.dates.saved": "\u6536\u85CF {date}",
-  "learn.family.reviewHint": "\u9019\u662F AI \u7684\u5206\u7FA4\u5EFA\u8B70\u3002\u52FE\u9078\u60F3\u52A0\u5165\u55AE\u5B57\u5EAB\u7684\u65B0\u5B57\u518D\u5B58\u4E0B\uFF1B\u6309\u300C\u6368\u68C4\u300D\u5C31\u4EC0\u9EBC\u90FD\u4E0D\u5B58\u3002",
-  "learn.family.fromMore": "\u7B49 {n} \u500B",
-  "learn.family.noNew": "\u6C92\u6709\u65B0\u5B57\u3002\u5B58\u4E0B\u5F8C\u6703\u51FA\u73FE\u5728\u5B57\u65CF\u6A39\u3002",
-  "learn.family.selectAll": "\u5168\u9078\u65B0\u5B57",
-  "learn.family.selectNone": "\u5168\u4E0D\u9078",
   "learn.openWord": "\u5728\u5074\u6B04\u6253\u958B {word}",
   "learn.verb.filter": "\u7BE9\u9078\u52D5\u8A5E\u2026",
   "learn.verb.count": "\u5DF2\u5B78\u52D5\u8A5E\uFF08{n}\uFF09",
@@ -1868,7 +1877,6 @@ var zhTW = {
   "mobile.sheet.label.word": "\u55AE\u5B57\u5361\uFF1A{word}",
   "mobile.sheet.label.paragraph": "\u6BB5\u843D\u8A0E\u8AD6",
   "mobile.sheet.notTracked": "\u9084\u6C92\u6709\u52A0\u5165\u55AE\u5B57\u5EAB\u3002",
-  "mobile.row.confirmDelete": "\u518D\u6309\u4E00\u6B21\u522A\u9664",
   "mobile.save.added": "\u5DF2\u52A0\u5165\u300C{word}\u300D",
   "mobile.save.undo": "\u5FA9\u539F",
   "mobile.save.undone": "\u5DF2\u79FB\u9664\u300C{word}\u300D",
@@ -2279,13 +2287,13 @@ var Pronouncer = class {
       clip2.on("error", fallBack)
     );
     if (this.source === "auto" && !c.ready) {
-      const ms4 = (_a = this.deps.timeoutMs) != null ? _a : DEFAULT_TIMEOUT_MS;
+      const ms5 = (_a = this.deps.timeoutMs) != null ? _a : DEFAULT_TIMEOUT_MS;
       a.timer = setTimeout(() => {
         a.timer = null;
         if (!this.live(a) || fellBack || a.state === "playing") return;
         c.timedOut = true;
         fallBack();
-      }, ms4);
+      }, ms5);
     }
     try {
       clip2.rewind();
@@ -2899,7 +2907,49 @@ var wordMnemonic = wordTask("mnemonic", { tier: "fast", maxTokens: 2048, label: 
 var wordCustom = wordTask("custom", { tier: "smart", maxTokens: 4096 });
 var WORD_TASKS = [wordUsage, wordCompare, wordSentence, wordMnemonic, wordCustom];
 
+// src/core/text/listItems.ts
+var LIST_ITEM_SPLIT_CHARS = 120;
+var LIST_TOTAL_SPLIT_CHARS = 480;
+var LIST_MARKER_RE = /^\s*([-*+]|\d+[.)])\s/;
+function indentOf(line) {
+  return line.length - line.trimStart().length;
+}
+function stripLinkUrls(text) {
+  return text.replace(/\]\([^)\n]*\)/g, "]");
+}
+function visibleLength(text) {
+  return stripLinkUrls(text).length;
+}
+function splitListItems(lines4, absoluteStart) {
+  const indent = indentOf(lines4[0]);
+  const items = [];
+  for (let i = 0; i < lines4.length; i++) {
+    const startsItem = indentOf(lines4[i]) <= indent && LIST_MARKER_RE.test(lines4[i]);
+    if (startsItem || !items.length) items.push({ start: i, end: i });
+    else items[items.length - 1].end = i;
+  }
+  return items.map((it) => ({
+    lineStart: absoluteStart + it.start,
+    lineEnd: absoluteStart + it.end,
+    text: lines4.slice(it.start, it.end + 1).join("\n")
+  }));
+}
+function shouldSplitList(lines4) {
+  const items = splitListItems(lines4, 0);
+  if (items.some((it) => visibleLength(it.text) >= LIST_ITEM_SPLIT_CHARS)) return true;
+  return visibleLength(lines4.join("\n")) >= LIST_TOTAL_SPLIT_CHARS;
+}
+function listItemOwnEndIndex(lines4) {
+  const indent = indentOf(lines4[0]);
+  for (let i = 1; i < lines4.length; i++) {
+    if (indentOf(lines4[i]) > indent && LIST_MARKER_RE.test(lines4[i])) return i - 1;
+  }
+  return lines4.length - 1;
+}
+
 // src/core/text/paragraphs.ts
+var HEADING_RE = /^#{1,6}(\s|$)/;
+var FENCE_RE = /^\s*(`{3,}|~{3,})/;
 function splitParagraphSpans(markdown) {
   const lines4 = markdown.replace(/\r\n?/g, "\n").split("\n");
   let i = 0;
@@ -2909,18 +2959,36 @@ function splitParagraphSpans(markdown) {
   }
   const out = [];
   let start = -1;
-  let inFence = false;
   const flush = (end) => {
     if (start < 0) return;
-    const text = lines4.slice(start, end + 1).join("\n").trim();
-    if (text) out.push({ text, lineStart: start, lineEnd: end });
+    const block = lines4.slice(start, end + 1);
+    if (LIST_MARKER_RE.test(block[0]) && shouldSplitList(block)) {
+      for (const item of splitListItems(block, start)) out.push(item);
+    } else {
+      out.push({ text: block.join("\n"), lineStart: start, lineEnd: end });
+    }
     start = -1;
   };
   for (; i < lines4.length; i++) {
     const line = lines4[i];
-    if (/^\s*(```|~~~)/.test(line)) inFence = !inFence;
-    if (!inFence && line.trim() === "") {
+    const fence = FENCE_RE.exec(line);
+    if (fence) {
       flush(i - 1);
+      const marker = fence[1];
+      let end = i + 1;
+      while (end < lines4.length && !lines4[end].trimStart().startsWith(marker)) end++;
+      end = Math.min(end, lines4.length - 1);
+      out.push({ text: lines4.slice(i, end + 1).join("\n"), lineStart: i, lineEnd: end });
+      i = end;
+      continue;
+    }
+    if (line.trim() === "") {
+      flush(i - 1);
+      continue;
+    }
+    if (HEADING_RE.test(line)) {
+      flush(i - 1);
+      out.push({ text: line, lineStart: i, lineEnd: i });
       continue;
     }
     if (start < 0) start = i;
@@ -3547,8 +3615,8 @@ function stampMs2(s) {
 }
 function firstMs(...values) {
   for (const v of values) {
-    const ms4 = stampMs2(v);
-    if (!Number.isNaN(ms4)) return ms4;
+    const ms5 = stampMs2(v);
+    if (!Number.isNaN(ms5)) return ms5;
   }
   return 0;
 }
@@ -3594,14 +3662,14 @@ function noteTitle(path) {
   return path.split("/").pop().replace(/\.md$/, "");
 }
 function displayStamp(s) {
-  const ms4 = stampMs2(s);
-  if (Number.isNaN(ms4)) return s != null ? s : "";
-  return nowStamp(new Date(ms4));
+  const ms5 = stampMs2(s);
+  if (Number.isNaN(ms5)) return s != null ? s : "";
+  return nowStamp(new Date(ms5));
 }
 function displayDate(s) {
-  const ms4 = stampMs2(s);
-  if (Number.isNaN(ms4)) return s != null ? s : "";
-  return nowStamp(new Date(ms4)).slice(0, 10);
+  const ms5 = stampMs2(s);
+  if (Number.isNaN(ms5)) return s != null ? s : "";
+  return nowStamp(new Date(ms5)).slice(0, 10);
 }
 function entryDates(e) {
   return { added: e.added || e.createdAt || "", updated: e.updatedAt || "" };
@@ -3623,7 +3691,8 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh, opts
   row.toggleClass("is-expanded", state !== "collapsed");
   const remove = async () => {
     var _a2;
-    await plugin.deleteEntry(entry);
+    const deleted = await plugin.confirmDeleteEntry(entry);
+    if (!deleted) return;
     (_a2 = opts.onDeleted) == null ? void 0 : _a2.call(opts, entry);
     refresh();
   };
@@ -3785,20 +3854,8 @@ function renderVocabRow(plugin, container, entry, state, setState, refresh, opts
   if (sheet) {
     const del = footerBtn(actions, "trash-2", t("row.delete"));
     del.addClass("vt-sheet-delete");
-    let armed = false;
     del.onclick = async (e) => {
       e.stopPropagation();
-      if (!armed) {
-        armed = true;
-        del.addClass("mod-warning");
-        del.setAttr("aria-label", t("mobile.row.confirmDelete"));
-        window.setTimeout(() => {
-          armed = false;
-          del.removeClass("mod-warning");
-          del.setAttr("aria-label", t("row.delete"));
-        }, 3e3);
-        return;
-      }
       await remove();
     };
   } else {
@@ -4040,10 +4097,10 @@ function parseWordlist(content) {
   let i = 0;
   let tag;
   if (((_a = lines4[0]) == null ? void 0 : _a.trim()) === "---") {
-    const close = lines4.findIndex((l5, j) => j > 0 && l5.trim() === "---");
+    const close = lines4.findIndex((l4, j) => j > 0 && l4.trim() === "---");
     if (close > 0) {
-      for (const l5 of lines4.slice(1, close)) {
-        const m = /^tag\s*:\s*["']?#?([^"']+?)["']?\s*$/.exec(l5.trim());
+      for (const l4 of lines4.slice(1, close)) {
+        const m = /^tag\s*:\s*["']?#?([^"']+?)["']?\s*$/.exec(l4.trim());
         if (m) tag = m[1];
       }
       i = close + 1;
@@ -4233,9 +4290,9 @@ var ANCHORABLE = /* @__PURE__ */ new Set(["paragraph", "list", "blockquote"]);
 function isAnchorable(type) {
   return ANCHORABLE.has(type);
 }
-var FENCE_RE = /^\s*(`{3,}|~{3,})/;
-var HEADING_RE = /^#{1,6}(\s|$)/;
-var LIST_RE = /^\s*([-*+]|\d+[.)])\s/;
+var FENCE_RE2 = /^\s*(`{3,}|~{3,})/;
+var HEADING_RE2 = /^#{1,6}(\s|$)/;
+var LIST_RE = LIST_MARKER_RE;
 var BREAK_RE = /^\s*([-*_])(\s*\1){2,}\s*$/;
 function classify(lines4) {
   const first = lines4[0];
@@ -4258,12 +4315,17 @@ function noteSections(markdown) {
   const flush = (end) => {
     if (start < 0) return;
     const block = lines4.slice(start, end + 1);
-    out.push({ type: classify(block), lineStart: start, lineEnd: end, text: block.join("\n") });
+    const type = classify(block);
+    if (type === "list" && shouldSplitList(block)) {
+      for (const item of splitListItems(block, start)) out.push({ type: "list", ...item });
+    } else {
+      out.push({ type, lineStart: start, lineEnd: end, text: block.join("\n") });
+    }
     start = -1;
   };
   for (; i < lines4.length; i++) {
     const line = lines4[i];
-    const fence = FENCE_RE.exec(line);
+    const fence = FENCE_RE2.exec(line);
     if (fence) {
       flush(i - 1);
       const marker = fence[1];
@@ -4278,7 +4340,7 @@ function noteSections(markdown) {
       flush(i - 1);
       continue;
     }
-    if (HEADING_RE.test(line)) {
+    if (HEADING_RE2.test(line)) {
       flush(i - 1);
       out.push({ type: "heading", lineStart: i, lineEnd: i, text: line });
       continue;
@@ -4294,6 +4356,30 @@ function sectionText(markdown, lineStart, lineEnd) {
 function sectionAt(sections, line) {
   return sections.find((s) => line >= s.lineStart && line <= s.lineEnd);
 }
+function ownBlockIdLine(section3) {
+  if (section3.type !== "list") return section3.lineEnd;
+  return section3.lineStart + listItemOwnEndIndex(section3.text.split("\n"));
+}
+function ownBlockIdText(section3) {
+  if (section3.type !== "list") return section3.text;
+  const lines4 = section3.text.split("\n");
+  return lines4.slice(0, listItemOwnEndIndex(lines4) + 1).join("\n");
+}
+function mergedListSections(sections) {
+  const out = [];
+  let i = 0;
+  while (i < sections.length) {
+    if (sections[i].type !== "list") {
+      i++;
+      continue;
+    }
+    let j = i;
+    while (j + 1 < sections.length && sections[j + 1].type === "list" && sections[j + 1].lineStart === sections[j].lineEnd + 1) j++;
+    if (j > i) out.push({ section: sections[i], text: sections.slice(i, j + 1).map((s) => s.text).join("\n") });
+    i = j + 1;
+  }
+  return out;
+}
 
 // src/services/anchors/noteIndex.ts
 var Index = class {
@@ -4301,6 +4387,7 @@ var Index = class {
     this.content = content;
     this.blockLines = null;
     this.hashes = null;
+    this.groupHashes = null;
     this.sections = noteSections(content);
   }
   sectionOfBlock(id) {
@@ -4327,7 +4414,17 @@ var Index = class {
       }
       this.hashes = map;
     }
-    return this.hashes.get(hash);
+    const hit = this.hashes.get(hash);
+    if (hit) return hit;
+    if (!this.groupHashes) {
+      const map = /* @__PURE__ */ new Map();
+      for (const g of mergedListSections(this.sections)) {
+        const h = paragraphHash(g.text);
+        if (!map.has(h)) map.set(h, g.section);
+      }
+      this.groupHashes = map;
+    }
+    return this.groupHashes.get(hash);
   }
 };
 var last = null;
@@ -4400,7 +4497,7 @@ var ParagraphAnchorService = class {
       hash: paragraphHash(section3.text),
       snapshot: plainParagraph(section3.text)
     };
-    const existing = trailingBlockId(section3.text);
+    const existing = trailingBlockId(ownBlockIdText(section3));
     if (existing) return { ...base, blockId: existing };
     if (this.deps.mode() === "hash") return base;
     try {
@@ -4416,14 +4513,14 @@ var ParagraphAnchorService = class {
     await this.deps.vault.process(path, (current) => {
       const target = locateSection(current, section3);
       if (!target) throw new AnchorError("missing-paragraph");
-      const already = trailingBlockId(target.text);
+      const already = trailingBlockId(ownBlockIdText(target));
       if (already) {
         id = already;
         return current;
       }
       const inNote = blockIdsIn(current);
       id = newBlockId((x) => inNote.has(x) || this.deps.vault.blockIdTaken(x), this.random);
-      return withBlockId(current, target.lineEnd, id);
+      return withBlockId(current, ownBlockIdLine(target), id);
     });
     return id;
   }
@@ -4654,12 +4751,13 @@ function drawRow(parent, row, actions, current, note) {
   if (row.orphan) orphanActions(el, row.threadId, actions);
 }
 var ParagraphThreadList = class extends import_obsidian13.Component {
-  constructor(parent, path, deps, actions, currentThreadId = () => null) {
+  constructor(parent, path, deps, actions, currentThreadId = () => null, onCount) {
     super();
     this.path = path;
     this.deps = deps;
     this.actions = actions;
     this.currentThreadId = currentThreadId;
+    this.onCount = onCount;
     this.seq = 0;
     this.alive = false;
     // Threads drawn last time.
@@ -4701,9 +4799,9 @@ var ParagraphThreadList = class extends import_obsidian13.Component {
     this.draw(paragraphRows(threads, content, (id) => this.deps.taskLabel(id)));
   }
   draw(rows) {
+    var _a;
     this.el.empty();
-    const head = this.el.createDiv({ cls: "vt-plist-head" });
-    head.createSpan({ text: t("paragraph.list.title", { n: rows.length }) });
+    (_a = this.onCount) == null ? void 0 : _a.call(this, rows.length);
     if (!rows.length) {
       this.el.createDiv({ cls: "vt-plist-hint", text: t("paragraph.list.hint") });
       return;
@@ -5266,9 +5364,9 @@ var ParagraphThreadPane = class extends import_obsidian14.Component {
     const { workspace, vault } = this.host.app;
     const file = vault.getAbstractFileByPath(target.path);
     if (!(file instanceof import_obsidian14.TFile)) return;
-    const leaf = (_a = workspace.getLeavesOfType("markdown").find((l5) => {
+    const leaf = (_a = workspace.getLeavesOfType("markdown").find((l4) => {
       var _a2;
-      return ((_a2 = l5.view.file) == null ? void 0 : _a2.path) === target.path;
+      return ((_a2 = l4.view.file) == null ? void 0 : _a2.path) === target.path;
     })) != null ? _a : workspace.getLeaf(false);
     await leaf.openFile(file, { eState: { line: target.line } });
     workspace.revealLeaf(leaf);
@@ -5303,20 +5401,7 @@ function discussionRows(src, entries) {
     if (!thread || thread.deletedAt) continue;
     const count = questions(thread);
     if (!count) continue;
-    rows.push({ threadId: thread.id, kind: "word", entryId: entry.id, title: entry.word, count, lastAt: lastTurnAt(thread) });
-  }
-  for (const thread of src.paragraphThreads()) {
-    if (thread.deletedAt || thread.anchor.kind !== "paragraph") continue;
-    const count = questions(thread);
-    if (!count) continue;
-    rows.push({
-      threadId: thread.id,
-      kind: "paragraph",
-      path: thread.anchor.path,
-      title: thread.anchor.snapshot,
-      count,
-      lastAt: lastTurnAt(thread)
-    });
+    rows.push({ threadId: thread.id, entryId: entry.id, title: entry.word, count, lastAt: lastTurnAt(thread) });
   }
   return rows.sort((a, b) => ms(b.lastAt) - ms(a.lastAt) || a.threadId.localeCompare(b.threadId));
 }
@@ -5367,33 +5452,124 @@ var DiscussionList = class extends import_obsidian15.Component {
     }
   }
   drawRow(row) {
-    const el = this.el.createDiv({ cls: "vt-dlist-row" });
-    el.addClass(row.kind === "word" ? "is-word" : "is-paragraph");
+    const el = this.el.createDiv({ cls: "vt-dlist-row is-word" });
     el.setAttr("role", "button");
     el.setAttr("tabindex", "0");
     el.setAttr("data-thread-id", row.threadId);
-    const open = () => {
-      if (row.kind === "word" && row.entryId) this.actions.openWord(row.entryId);
-      else this.actions.openParagraph(row.threadId);
-    };
+    const open = () => this.actions.openWord(row.entryId);
     el.addEventListener("click", open);
     el.addEventListener("keydown", (e) => {
       if (e.key === "Enter") open();
     });
     const title = el.createDiv({ cls: "vt-dlist-title" });
-    (0, import_obsidian15.setIcon)(title.createSpan({ cls: "vt-dlist-icon" }), row.kind === "word" ? "type" : "pilcrow");
+    (0, import_obsidian15.setIcon)(title.createSpan({ cls: "vt-dlist-icon" }), "type");
     title.createSpan({ cls: "vt-dlist-text", text: row.title });
     title.setAttr("aria-label", row.title);
-    const parts = [t(row.kind === "word" ? "sidebar.ai.kind.word" : "sidebar.ai.kind.paragraph")];
-    if (row.path) parts.push(noteTitle(row.path));
-    parts.push(t("paragraph.list.count", { n: row.count }));
+    const parts = [t("paragraph.list.count", { n: row.count })];
     const date = shortDate2(row.lastAt);
     if (date) parts.push(date);
     el.createDiv({ cls: "vt-dlist-meta", text: parts.join(" \xB7 ") });
   }
 };
 
+// src/ui/sidebar/GrammarSection.ts
+var import_obsidian16 = require("obsidian");
+
+// src/ui/sidebar/grammarRows.ts
+function ms2(iso) {
+  const n = iso ? Date.parse(iso) : NaN;
+  return Number.isNaN(n) ? 0 : n;
+}
+function later(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+  return ms2(b) > ms2(a) ? b : a;
+}
+function verbUsageRows(entries, favoriteOf) {
+  var _a;
+  const rows = [];
+  for (const e of entries) {
+    if (e.deletedAt || !e.usage) continue;
+    const fav = favoriteOf(e.id);
+    const lastAt = (_a = later(e.usage.generatedAt, fav == null ? void 0 : fav.updatedAt)) != null ? _a : e.usage.generatedAt;
+    rows.push({ entryId: e.id, word: e.word, favorited: !!fav, lastAt });
+  }
+  return rows.sort((a, b) => ms2(b.lastAt) - ms2(a.lastAt) || a.entryId.localeCompare(b.entryId));
+}
+var RECENT_VERB_USAGE = 10;
+
+// src/ui/sidebar/GrammarSection.ts
+var GrammarSection = class extends import_obsidian16.Component {
+  constructor(parent, deps, actions) {
+    super();
+    this.deps = deps;
+    this.actions = actions;
+    this.alive = false;
+    this.el = parent.createDiv({ cls: "vt-glist" });
+  }
+  onload() {
+    this.alive = true;
+    this.register(() => this.alive = false);
+    const { verbs, learn } = this.deps;
+    this.register(verbs.events.on("verb:usage", () => this.refresh()));
+    this.register(learn.events.on("verbFavorite:upsert", () => this.refresh()));
+    this.register(learn.events.on("learn:reloaded", () => this.refresh()));
+    this.refresh();
+    void learn.ensureLoaded().then(() => this.refresh());
+  }
+  rows() {
+    return verbUsageRows(this.deps.verbs.verbs(), (id) => this.deps.learn.verbFavorite(id));
+  }
+  refresh() {
+    if (!this.alive) return;
+    const rows = this.rows();
+    this.actions.counted(rows.length);
+    this.draw(rows);
+  }
+  draw(rows) {
+    this.el.empty();
+    this.el.createDiv({ cls: "vt-glist-sub", text: t("sidebar.grammar.verbs") });
+    if (!rows.length) {
+      this.el.createDiv({ cls: "vt-plist-hint", text: t("sidebar.grammar.empty") });
+    } else {
+      for (const row of rows.slice(0, RECENT_VERB_USAGE)) this.drawRow(row);
+    }
+    const more = this.el.createEl("button", { cls: "vt-glist-more", text: t("sidebar.grammar.viewAll") });
+    more.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.actions.viewAll();
+    });
+  }
+  drawRow(row) {
+    const el = this.el.createDiv({ cls: "vt-glist-row" });
+    el.setAttr("role", "button");
+    el.setAttr("tabindex", "0");
+    el.setAttr("data-entry-id", row.entryId);
+    const open = () => this.actions.openWord(row.entryId);
+    el.addEventListener("click", open);
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") open();
+    });
+    const title = el.createDiv({ cls: "vt-glist-title" });
+    const icon = title.createSpan({ cls: "vt-glist-icon" });
+    if (row.favorited) {
+      icon.addClass("is-saved");
+      (0, import_obsidian16.setIcon)(icon, "bookmark-check");
+      icon.setAttr("aria-label", t("learn.verb.rowFavorited"));
+    } else {
+      (0, import_obsidian16.setIcon)(icon, "sparkles");
+    }
+    title.createSpan({ cls: "vt-glist-text", text: row.word });
+    const date = shortDate2(row.lastAt);
+    if (date) el.createDiv({ cls: "vt-glist-meta", text: date });
+  }
+};
+
 // src/ui/sidebar/sections.ts
+var SECTION_IDS = ["words", "paragraphs", "ai", "grammar"];
+function isSectionId(value) {
+  return SECTION_IDS.includes(value);
+}
 var SECTIONS_STORAGE_KEY = "vt-sidebar-sections";
 var SectionState = class {
   constructor(store) {
@@ -5402,7 +5578,7 @@ var SectionState = class {
     try {
       const saved = store == null ? void 0 : store.loadLocalStorage(SECTIONS_STORAGE_KEY);
       if (Array.isArray(saved)) {
-        for (const id of saved) if (id === "words" || id === "ai") this.collapsed.add(id);
+        for (const id of saved) if (isSectionId(id)) this.collapsed.add(id);
       }
     } catch (e) {
     }
@@ -5437,7 +5613,7 @@ var FLASH_MS = 1600;
 // src/ui/sidebar/VocabSidebarView.ts
 var VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 var NOTE_REFRESH_MS = 400;
-var VocabSidebarView = class extends import_obsidian16.ItemView {
+var VocabSidebarView = class extends import_obsidian17.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     // Word clicked via a plain ==mark== that isn't tracked yet — prompts an
@@ -5466,7 +5642,7 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
     // Word id → its ✦ n chip in the word list (either tab).
     this.wordChips = /* @__PURE__ */ new Map();
     this.changedPaths = /* @__PURE__ */ new Set();
-    this.refreshChangedNotes = (0, import_obsidian16.debounce)(() => this.flushChangedNotes(), NOTE_REFRESH_MS, true);
+    this.refreshChangedNotes = (0, import_obsidian17.debounce)(() => this.flushChangedNotes(), NOTE_REFRESH_MS, true);
     // The note a paragraph thread belongs to, if that note still exists.
     this.threadPath = (threadId) => {
       const th = this.plugin.threads.get(threadId);
@@ -5631,11 +5807,11 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
     this.cancelRebind();
     try {
       if (!await this.plugin.threads.rebindParagraph(threadId, ref)) return;
-      new import_obsidian16.Notice(t("paragraph.rebind.done"));
+      new import_obsidian17.Notice(t("paragraph.rebind.done"));
       this.navigate({ name: "paragraph", threadId });
     } catch (e) {
       console.error("Vocab Tracker: rebind failed", e);
-      new import_obsidian16.Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian17.Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   drawRebindBanner() {
@@ -5644,7 +5820,7 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
     el.empty();
     el.toggle(!!this.rebindThreadId);
     if (!this.rebindThreadId) return;
-    (0, import_obsidian16.setIcon)(el.createSpan({ cls: "vt-rebind-icon" }), "link");
+    (0, import_obsidian17.setIcon)(el.createSpan({ cls: "vt-rebind-icon" }), "link");
     el.createSpan({ cls: "vt-rebind-text", text: t("paragraph.rebind.banner") });
     const cancel = el.createEl("button", { text: t("paragraph.rebind.cancel") });
     cancel.addEventListener("click", () => this.cancelRebind());
@@ -5653,7 +5829,7 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
     return {
       open: (id) => this.openThread(id),
       rebind: (id) => this.startRebind(id),
-      remove: (id) => void this.plugin.threads.deleteThread(id).then(() => new import_obsidian16.Notice(t("paragraph.deleted")))
+      remove: (id) => void this.plugin.threads.deleteThread(id).then(() => new import_obsidian17.Notice(t("paragraph.deleted")))
     };
   }
   paneNav() {
@@ -5702,7 +5878,7 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
     chip2.empty();
     chip2.toggle(n > 0);
     if (!n) return;
-    (0, import_obsidian16.setIcon)(chip2.createSpan({ cls: "vt-word-tc-icon" }), "sparkles");
+    (0, import_obsidian17.setIcon)(chip2.createSpan({ cls: "vt-word-tc-icon" }), "sparkles");
     chip2.createSpan({ text: String(n) });
     chip2.setAttr("aria-label", t("word.discussions", { n }));
   }
@@ -5729,7 +5905,7 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
     const root = this.containerEl.children[1];
     this.wordUi.beginRender();
     if (this.drawScope) this.removeChild(this.drawScope);
-    const scope = this.drawScope = this.addChild(new import_obsidian16.Component());
+    const scope = this.drawScope = this.addChild(new import_obsidian17.Component());
     this.pane = null;
     this.paragraphList = null;
     this.missingList = null;
@@ -5740,7 +5916,7 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
     const header = root.createEl("div", { cls: "vt-sidebar-header" });
     header.createEl("h4", { text: t("sidebar.title") });
     const openList = header.createEl("span", { cls: "vt-icon-btn clickable-icon" });
-    (0, import_obsidian16.setIcon)(openList, "file-text");
+    (0, import_obsidian17.setIcon)(openList, "file-text");
     openList.setAttr("role", "button");
     openList.setAttr("aria-label", t("sidebar.openList"));
     openList.onclick = () => this.plugin.openVocabFile();
@@ -5764,14 +5940,32 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
         this.setWord(word);
       };
       const dismiss = banner.createEl("span", { cls: "vt-close-btn" });
-      (0, import_obsidian16.setIcon)(dismiss, "x");
+      (0, import_obsidian17.setIcon)(dismiss, "x");
       dismiss.onclick = () => {
         this.pendingWord = "";
         this.render();
       };
     }
     const words = this.drawSection(root, "words", t("sidebar.section.words"));
-    if (words) this.drawWords(words, scope);
+    if (words) this.drawWords(words);
+    const pCounter = { el: null };
+    const paragraphs = this.drawSection(root, "paragraphs", t("paragraph.list.title", { n: "\u2026" }), pCounter);
+    if (paragraphs) {
+      this.drawParagraphs(paragraphs, scope, (n) => {
+        var _a;
+        return (_a = pCounter.el) == null ? void 0 : _a.setText(t("paragraph.list.title", { n }));
+      });
+    } else {
+      const { threads } = this.plugin;
+      const recount = () => {
+        var _a;
+        if (!((_a = pCounter.el) == null ? void 0 : _a.isConnected)) return;
+        pCounter.el.setText(t("paragraph.list.title", { n: this.currentNoteParagraphCount() }));
+      };
+      scope.register(threads.events.on("thread:upsert", recount));
+      scope.register(threads.events.on("threads:reloaded", recount));
+      void threads.ensureLoaded().then(recount);
+    }
     const counter = { el: null };
     const ai = this.drawSection(root, "ai", t("sidebar.section.ai", { n: "\u2026" }), counter);
     if (ai) {
@@ -5782,7 +5976,6 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
           { threads, entries: () => this.plugin.store.entries },
           {
             openWord: (entryId) => this.openWord(entryId, "ai"),
-            openParagraph: (threadId) => this.openThread(threadId),
             counted: (n) => {
               var _a;
               return (_a = counter.el) == null ? void 0 : _a.setText(t("sidebar.section.ai", { n }));
@@ -5803,6 +5996,68 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
       scope.register(threads.events.on("threads:reloaded", recount));
       void threads.ensureLoaded().then(recount);
     }
+    const gCounter = { el: null };
+    const grammar = this.drawSection(root, "grammar", t("sidebar.section.grammar", { n: "\u2026" }), gCounter);
+    if (grammar) {
+      scope.addChild(
+        new GrammarSection(
+          grammar,
+          { verbs: this.plugin.verbs, learn: this.plugin.learn },
+          {
+            openWord: (entryId) => void this.plugin.openWordPage(entryId),
+            viewAll: () => void this.plugin.openEntryFile("verbs"),
+            counted: (n) => {
+              var _a;
+              return (_a = gCounter.el) == null ? void 0 : _a.setText(t("sidebar.section.grammar", { n }));
+            }
+          }
+        )
+      );
+    } else {
+      const { verbs, learn } = this.plugin;
+      const recount = () => {
+        var _a;
+        if (!((_a = gCounter.el) == null ? void 0 : _a.isConnected)) return;
+        const n = verbUsageRows(verbs.verbs(), (id) => learn.verbFavorite(id)).length;
+        gCounter.el.setText(t("sidebar.section.grammar", { n }));
+      };
+      scope.register(verbs.events.on("verb:usage", recount));
+      scope.register(learn.events.on("verbFavorite:upsert", recount));
+      scope.register(learn.events.on("learn:reloaded", recount));
+      void learn.ensureLoaded().then(recount);
+    }
+  }
+  // The active note's live paragraph threads — the 段落討論 section's
+  // count while it's folded (unfolded, ParagraphThreadList reports its
+  // own row count via onCount instead).
+  currentNoteParagraphCount() {
+    var _a;
+    const path = (_a = this.plugin.app.workspace.getActiveFile()) == null ? void 0 : _a.path;
+    return path ? this.plugin.threads.paragraphThreads(path).length : 0;
+  }
+  // ── 段落討論（n）/ orphaned discussions ─────────────────────────
+  //
+  // Independent of the 單字 tab (This note / All, Wave 6 W): always the
+  // note in front's paragraph discussions, plus any discussion whose note
+  // is gone — that list hides itself when there's none (regardless of
+  // which note, if any, is in front).
+  drawParagraphs(root, scope, onCount) {
+    const activeFile = this.plugin.app.workspace.getActiveFile();
+    if (activeFile instanceof import_obsidian17.TFile && activeFile.extension === "md") {
+      this.paragraphList = scope.addChild(
+        new ParagraphThreadList(root, activeFile.path, this.listDeps(), this.listActions(), void 0, onCount)
+      );
+    } else {
+      onCount(0);
+      root.createDiv({ cls: "vt-sidebar-hint", text: t("sidebar.paragraphs.noNote") });
+    }
+    this.missingList = scope.addChild(
+      new MissingNoteThreadList(
+        root,
+        { ...this.listDeps(), exists: (p) => !!this.app.vault.getAbstractFileByPath(p) },
+        this.listActions()
+      )
+    );
   }
   // A section heading (click to fold); returns the body to fill, or null
   // when the section is folded.
@@ -5815,7 +6070,7 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
     head.setAttr("role", "button");
     head.setAttr("tabindex", "0");
     head.setAttr("aria-expanded", String(!collapsed));
-    (0, import_obsidian16.setIcon)(head.createSpan({ cls: "vt-sb-section-arrow" }), collapsed ? "chevron-right" : "chevron-down");
+    (0, import_obsidian17.setIcon)(head.createSpan({ cls: "vt-sb-section-arrow" }), collapsed ? "chevron-right" : "chevron-down");
     const label = head.createSpan({ cls: "vt-sb-section-title", text: title });
     if (titleRef) titleRef.el = label;
     const toggle = () => {
@@ -5832,7 +6087,7 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
     if (collapsed) return null;
     return section3.createDiv({ cls: "vt-sb-section-body" });
   }
-  drawWords(root, scope) {
+  drawWords(root) {
     var _a;
     const entries = this.plugin.store.entries;
     const activeFile = this.plugin.app.workspace.getActiveFile();
@@ -5907,24 +6162,11 @@ var VocabSidebarView = class extends import_obsidian16.ItemView {
         }
       }
     }
-    if (noteMode && activeFile instanceof import_obsidian16.TFile && activeFile.extension === "md") {
-      this.paragraphList = scope.addChild(
-        new ParagraphThreadList(root, activeFile.path, this.listDeps(), this.listActions())
-      );
-    } else if (this.filterMode === "all") {
-      this.missingList = scope.addChild(
-        new MissingNoteThreadList(
-          root,
-          { ...this.listDeps(), exists: (p) => !!this.app.vault.getAbstractFileByPath(p) },
-          this.listActions()
-        )
-      );
-    }
   }
 };
 
 // src/ui/blocks/dashboard.ts
-var import_obsidian17 = require("obsidian");
+var import_obsidian18 = require("obsidian");
 function renderDashboard(plugin, _source, el, ctx) {
   var _a;
   const entries = plugin.store.entries;
@@ -5957,7 +6199,7 @@ function renderDashboard(plugin, _source, el, ctx) {
   const search = el.createEl("input", { cls: ["vt-dash-search", "vt-field-box"] });
   search.placeholder = t("dashboard.search");
   const listWrap = el.createEl("div", { cls: "vt-word-list" });
-  const owner = new import_obsidian17.MarkdownRenderChild(listWrap);
+  const owner = new import_obsidian18.MarkdownRenderChild(listWrap);
   ctx.addChild(owner);
   const wordUi = new WordUi(owner);
   const expandState = /* @__PURE__ */ new Map();
@@ -5978,7 +6220,7 @@ function renderDashboard(plugin, _source, el, ctx) {
 }
 function renderReviewButton(plugin, el, ctx) {
   const btn = el.createEl("button", { cls: "vt-dash-review" });
-  (0, import_obsidian17.setIcon)(btn.createSpan({ cls: "vt-dash-review-icon" }), "layers");
+  (0, import_obsidian18.setIcon)(btn.createSpan({ cls: "vt-dash-review-icon" }), "layers");
   const label = btn.createSpan();
   btn.onclick = () => void plugin.openFlashcards();
   const update = () => {
@@ -5987,7 +6229,7 @@ function renderReviewButton(plugin, el, ctx) {
     btn.toggleClass("mod-cta", n > 0);
   };
   update();
-  const child = new import_obsidian17.MarkdownRenderChild(el);
+  const child = new import_obsidian18.MarkdownRenderChild(el);
   let alive = true;
   child.register(() => alive = false);
   child.register(plugin.store.events.on("data:changed", update));
@@ -5998,10 +6240,10 @@ function renderReviewButton(plugin, el, ctx) {
 }
 
 // src/ui/blocks/families.ts
-var import_obsidian20 = require("obsidian");
+var import_obsidian21 = require("obsidian");
 
 // src/ui/kit/aiDebug.ts
-var import_obsidian18 = require("obsidian");
+var import_obsidian19 = require("obsidian");
 function debugText(key3) {
   return t(`ai.debug.${key3}`);
 }
@@ -6018,12 +6260,12 @@ function aiErrorBox(opts) {
 function aiDebugDetails(d) {
   const details = createEl("details", { cls: "vt-ai-debug" });
   const summary = details.createEl("summary", { cls: "vt-ai-debug-summary" });
-  (0, import_obsidian18.setIcon)(summary.createSpan({ cls: "vt-ai-debug-icon" }), "bug");
+  (0, import_obsidian19.setIcon)(summary.createSpan({ cls: "vt-ai-debug-icon" }), "bug");
   summary.createSpan({ text: debugText("summary") });
   const bar = details.createDiv({ cls: "vt-ai-debug-bar" });
   bar.createSpan({ cls: "vt-ai-debug-hint", text: debugText("hint") });
   const copy = bar.createEl("button", { cls: "vt-btn vt-ai-debug-copy", attr: { type: "button" } });
-  (0, import_obsidian18.setIcon)(copy.createSpan({ cls: "vt-btn-icon" }), "copy");
+  (0, import_obsidian19.setIcon)(copy.createSpan({ cls: "vt-btn-icon" }), "copy");
   copy.createSpan({ text: debugText("copy") });
   copy.addEventListener("click", (e) => {
     e.preventDefault();
@@ -6043,9 +6285,9 @@ function section(parent, label, text) {
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
-    new import_obsidian18.Notice(debugText("copied"));
+    new import_obsidian19.Notice(debugText("copied"));
   } catch (e) {
-    new import_obsidian18.Notice(debugText("copyFailed"));
+    new import_obsidian19.Notice(debugText("copyFailed"));
   }
 }
 
@@ -6286,41 +6528,6 @@ function familiesWith(families, entry) {
     (f) => familyMembers(f).some((m) => m.entryId === entry.id || key(m.word) === word)
   );
 }
-function reviewView(candidates, lookup) {
-  const newWords = /* @__PURE__ */ new Set();
-  const cards = candidates.map((c) => {
-    const rows = [];
-    const from = [];
-    for (const m of c.groups.flatMap((g) => g.members)) {
-      if (!m.word.trim() || rows.some((r) => r.key === key(m.word))) continue;
-      const known = !!lookup.entry(m);
-      rows.push({ word: m.word, zh: m.zh, known, key: key(m.word) });
-      if (known) from.push(m.word);
-      else newWords.add(key(m.word));
-    }
-    return { topic: c.topic, title: familyTitle(c), from, rows };
-  });
-  return { cards, familyCount: candidates.length, newWordCount: newWords.size };
-}
-function clipWords(words, max) {
-  if (words.length <= max) return { shown: [...words], more: 0 };
-  return { shown: words.slice(0, max), more: words.length - max };
-}
-function newRows(card) {
-  return card.rows.filter((r) => !r.known);
-}
-function checkedNewWords(view, checked) {
-  const out = [];
-  for (const card of view.cards) {
-    for (const r of card.rows) if (!r.known && checked.has(r.key) && !out.includes(r.key)) out.push(r.key);
-  }
-  return out;
-}
-function allNewWords(view) {
-  const out = [];
-  for (const card of view.cards) for (const r of newRows(card)) if (!out.includes(r.key)) out.push(r.key);
-  return out;
-}
 function pickSelected(families, current, preferTopic) {
   var _a, _b;
   if (current && families.some((f) => f.id === current)) return current;
@@ -6343,7 +6550,7 @@ function onFamilyFocus(fn) {
 }
 
 // src/ui/blocks/learnUi.ts
-var import_obsidian19 = require("obsidian");
+var import_obsidian20 = require("obsidian");
 function guardReadingClicks(owner, root) {
   owner.registerDomEvent(root, "click", (e) => {
     if (e.target instanceof HTMLElement && e.target.closest("a")) return;
@@ -6392,29 +6599,24 @@ function learnButton(parent, opts) {
   const btn = parent.createEl("button", { cls: "vt-btn vt-learn-btn" });
   if (opts.cta) btn.addClass("mod-cta");
   if (opts.ghost) btn.addClass("is-ghost");
-  if (opts.icon) (0, import_obsidian19.setIcon)(btn.createSpan({ cls: "vt-btn-icon" }), opts.icon);
+  if (opts.icon) (0, import_obsidian20.setIcon)(btn.createSpan({ cls: "vt-btn-icon" }), opts.icon);
   btn.createSpan({ text: opts.label });
   btn.addEventListener("click", opts.onClick);
   return btn;
 }
 
 // src/ui/blocks/families.ts
-function l(key3, n) {
-  return n === void 0 ? t(`learn.family.${key3}`) : t(`learn.family.${key3}`, { n });
-}
 function renderFamilies(plugin, source, el, ctx) {
   ctx.addChild(new FamiliesBlock(el, plugin, parseFamiliesParams(source)));
 }
-var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
+var FamiliesBlock = class extends import_obsidian21.MarkdownRenderChild {
   constructor(containerEl, plugin, params) {
     super(containerEl);
     this.plugin = plugin;
     this.params = params;
     this.loaded = false;
     this.disposed = false;
-    this.review = null;
     this.generating = null;
-    this.saving = false;
     // The failure and what was thrown (an unreadable answer carries the
     // prompt and raw output for the debug box).
     this.error = null;
@@ -6465,11 +6667,14 @@ var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
     return entry ? familiesWith(all, entry) : all;
   }
   // ── Actions ───────────────────────────────────────────────────
+  // AI 結果直接存成字族 (1005 回饋: 審核清單移除) — nothing is shown for
+  // review first; a candidate's not-yet-learned members land in the tree
+  // as plain text, and the learner adds them one at a time from there
+  // (addSuggested, below) instead of ticking a batch up front.
   async generate(replace, seed) {
     if (this.generating) return;
     const ctrl = this.generating = new AbortController();
     this.error = null;
-    this.review = null;
     this.render();
     try {
       const candidates = await this.plugin.families.generate({
@@ -6478,7 +6683,7 @@ var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
       });
       if (this.disposed) return;
       if (!candidates.length) this.error = { text: t("learn.family.noneFound") };
-      else this.review = { candidates, checked: /* @__PURE__ */ new Set(), replace };
+      else await this.save(candidates, replace);
     } catch (e) {
       if (this.disposed) return;
       if (!isAbort(e)) {
@@ -6495,27 +6700,16 @@ var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
     (_a = this.generating) == null ? void 0 : _a.abort();
     this.plugin.families.stop();
   }
-  async save(addWords) {
+  async save(candidates, replace) {
     var _a, _b;
-    const review = this.review;
-    if (!review || this.saving) return;
-    this.saving = true;
-    this.render();
     try {
-      const { families, added } = await this.plugin.families.save(review.candidates, {
-        addWords,
-        replace: review.replace
-      });
+      const { families } = await this.plugin.families.save(candidates, { replace });
       if (this.disposed) return;
-      this.review = null;
       this.selectedId = (_b = (_a = families[0]) == null ? void 0 : _a.id) != null ? _b : this.selectedId;
-      new import_obsidian20.Notice(t("learn.family.saved", { families: families.length, words: added.length }));
+      new import_obsidian21.Notice(t("learn.family.saved", { families: families.length }));
     } catch (e) {
       console.error("Vocab Tracker: saving families failed", e);
-      new import_obsidian20.Notice(learnErrorText(e));
-    } finally {
-      this.saving = false;
-      if (!this.disposed) this.render();
+      new import_obsidian21.Notice(learnErrorText(e));
     }
   }
   async addSuggested(familyId, word) {
@@ -6525,10 +6719,10 @@ var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
     this.render();
     try {
       const entry = await this.plugin.families.addSuggested(familyId, word);
-      if (entry) new import_obsidian20.Notice(t("learn.family.added", { word: entry.word }));
+      if (entry) new import_obsidian21.Notice(t("learn.family.added", { word: entry.word }));
     } catch (e) {
       console.error("Vocab Tracker: adding a family word failed", e);
-      new import_obsidian20.Notice(learnErrorText(e));
+      new import_obsidian21.Notice(learnErrorText(e));
     } finally {
       this.adding.delete(k);
       if (!this.disposed) this.render();
@@ -6537,7 +6731,7 @@ var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
   remove(f) {
     this.plugin.families.remove(f.id);
     if (this.selectedId === f.id) this.selectedId = void 0;
-    new import_obsidian20.Notice(t("learn.family.deleted", { name: f.label || f.topic }));
+    new import_obsidian21.Notice(t("learn.family.deleted", { name: f.label || f.topic }));
   }
   // ── Render ────────────────────────────────────────────────────
   render() {
@@ -6555,8 +6749,8 @@ var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
     }
     const families = this.shownFamilies(entry);
     this.selectedId = pickSelected(families, this.selectedId, this.params.topic);
-    if (families.length && !this.review) this.renderToolbar(families, entry);
-    if (!entry && !this.review && !this.generating && this.plugin.families.needsRegroup()) {
+    if (families.length) this.renderToolbar(families, entry);
+    if (!entry && !this.generating && this.plugin.families.needsRegroup()) {
       const note = root.createDiv({ cls: "vt-fam-regroup-note" });
       note.appendChild(inlineNote({ tone: "info", icon: "refresh-cw", text: t("learn.family.regroup.hint") }));
       learnButton(note, { label: t("learn.family.regroup"), icon: "refresh-cw", onClick: () => void this.generate(true) });
@@ -6567,7 +6761,6 @@ var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
       box.appendChild(aiErrorBox({ text: this.error.text, error: this.error.cause }));
       learnButton(box, { label: t("learn.retry"), icon: "rotate-ccw", onClick: () => void this.generate(false, entry) });
     }
-    if (this.review) return this.renderReview(this.review, lookup);
     const selected = families.find((f) => f.id === this.selectedId);
     if (selected) return this.renderTree(selected, familyTree(selected, lookup, { focusEntryId: this.focusEntryId }), lookup);
     const empty = root.createDiv({ cls: "vt-fam-empty" });
@@ -6610,7 +6803,7 @@ var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
   renderGenerating() {
     const box = this.root.createDiv({ cls: "vt-learn-busy" });
     const line = box.createDiv({ cls: "vt-learn-busy-text" });
-    (0, import_obsidian20.setIcon)(line.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
+    (0, import_obsidian21.setIcon)(line.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
     line.createSpan({ text: t("learn.family.generating") });
     learnButton(box, { label: t("learn.stop"), icon: "square", onClick: () => this.stop() });
   }
@@ -6618,13 +6811,13 @@ var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
   renderTree(f, view, lookup) {
     const tree = this.root.createDiv({ cls: "vt-fam-tree" });
     const head = tree.createDiv({ cls: "vt-fam-root" });
-    (0, import_obsidian20.setIcon)(head.createSpan({ cls: "vt-fam-root-icon" }), "git-fork");
+    (0, import_obsidian21.setIcon)(head.createSpan({ cls: "vt-fam-root-icon" }), "git-fork");
     head.createSpan({ text: view.title });
     const more = head.createEl("button", { cls: "vt-fam-root-more clickable-icon" });
-    (0, import_obsidian20.setIcon)(more, "more-horizontal");
+    (0, import_obsidian21.setIcon)(more, "more-horizontal");
     more.setAttr("aria-label", t("learn.family.more"));
     more.addEventListener("click", (e) => {
-      const menu = new import_obsidian20.Menu();
+      const menu = new import_obsidian21.Menu();
       menu.addItem(
         (item) => item.setTitle(t("learn.family.delete")).setIcon("trash-2").onClick(() => this.remove(f))
       );
@@ -6652,7 +6845,7 @@ var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
         const el = list.createEl("button", { cls: "vt-fam-chip is-suggested" });
         el.createSpan({ cls: "vt-fam-chip-word", text: chip2.word });
         if (chip2.zh) el.createSpan({ cls: "vt-fam-chip-zh", text: chip2.zh });
-        (0, import_obsidian20.setIcon)(el.createSpan({ cls: "vt-fam-chip-icon" }), busy ? "loader" : "plus");
+        (0, import_obsidian21.setIcon)(el.createSpan({ cls: "vt-fam-chip-icon" }), busy ? "loader" : "plus");
         el.disabled = busy;
         el.setAttr("aria-label", t("learn.family.add", { word: chip2.word }));
         el.addEventListener("click", () => void this.addSuggested(f.id, chip2.word));
@@ -6664,88 +6857,17 @@ var FamiliesBlock = class extends import_obsidian20.MarkdownRenderChild {
     known.createSpan({ text: t("learn.family.legend.known") });
     if (view.suggestedCount) {
       const sug = legend.createSpan({ cls: "vt-fam-legend-item" });
-      (0, import_obsidian20.setIcon)(sug.createSpan({ cls: "vt-fam-chip is-suggested is-mini" }), "plus");
+      (0, import_obsidian21.setIcon)(sug.createSpan({ cls: "vt-fam-chip is-suggested is-mini" }), "plus");
       sug.createSpan({ text: t("learn.family.legend.suggested") });
     }
     if (view.seeds.length) {
       legend.createSpan({ cls: "vt-fam-legend-item", text: t("learn.family.legend.seeds", { words: joinWords(view.seeds) }) });
     }
   }
-  // ── W3 review ─────────────────────────────────────────────────
-  renderReview(review, lookup) {
-    const view = reviewView(review.candidates, lookup);
-    const box = this.root.createDiv({ cls: "vt-fam-review" });
-    const head = box.createDiv({ cls: "vt-fam-review-head" });
-    (0, import_obsidian20.setIcon)(head.createSpan({ cls: "vt-fam-review-icon" }), "sparkles");
-    head.createSpan({ text: t("learn.family.found", { families: view.familyCount, words: view.newWordCount }) });
-    box.createDiv({ cls: "vt-fam-review-hint", text: l("reviewHint") });
-    for (const card of view.cards) {
-      const el = box.createDiv({ cls: "vt-fam-card" });
-      const from = clipWords(card.from, 6);
-      const fromWords = from.more ? `${joinWords(from.shown)} ${l("fromMore", from.more)}` : joinWords(from.shown);
-      const title = card.from.length ? `${card.title} \xB7 ${t("learn.family.from", { words: fromWords })}` : card.title;
-      el.createDiv({ cls: "vt-fam-card-title", text: title });
-      const rows = newRows(card);
-      if (!rows.length) el.createDiv({ cls: "vt-fam-card-empty", text: l("noNew") });
-      for (const row of rows) {
-        const line = el.createEl("label", { cls: "vt-fam-row" });
-        const cb = line.createEl("input", { cls: "vt-fam-row-check", type: "checkbox" });
-        cb.checked = review.checked.has(row.key);
-        cb.disabled = this.saving;
-        cb.addEventListener("change", () => {
-          if (cb.checked) review.checked.add(row.key);
-          else review.checked.delete(row.key);
-          this.render();
-        });
-        line.createSpan({ cls: "vt-fam-row-word", text: row.word });
-        line.createSpan({ cls: "vt-fam-row-zh", text: row.zh });
-      }
-    }
-    const toAdd = checkedNewWords(view, review.checked);
-    const all = allNewWords(view);
-    const actions = box.createDiv({ cls: "vt-fam-review-actions" });
-    if (all.length) {
-      const everything = toAdd.length === all.length;
-      const toggle = learnButton(actions, {
-        label: l(everything ? "selectNone" : "selectAll"),
-        icon: everything ? "square" : "check-square",
-        ghost: true,
-        onClick: () => {
-          review.checked = new Set(everything ? [] : all);
-          this.render();
-        }
-      });
-      toggle.addClass("vt-fam-review-toggle");
-      toggle.disabled = this.saving;
-    }
-    const discard = learnButton(actions, {
-      label: t("learn.family.discard"),
-      onClick: () => {
-        this.review = null;
-        this.render();
-      }
-    });
-    const only = learnButton(actions, { label: t("learn.family.saveOnly"), onClick: () => void this.save([]) });
-    const add2 = learnButton(actions, {
-      label: t("learn.family.saveAdd", { n: toAdd.length }),
-      icon: "plus",
-      cta: true,
-      onClick: () => void this.save(toAdd)
-    });
-    for (const b of [discard, only, add2]) b.disabled = this.saving;
-    add2.disabled = this.saving || !toAdd.length;
-    if (review.replace) box.createDiv({ cls: "vt-fam-review-note", text: t("learn.family.regroup.note") });
-    if (view.newWordCount) {
-      box.createDiv({
-        cls: "vt-fam-review-note",
-        text: t("learn.family.addNote", { topics: joinWords(view.cards.map((c) => c.topic)) })
-      });
-    }
-  }
 };
 
 // src/ui/blocks/flashcards.ts
-var import_obsidian22 = require("obsidian");
+var import_obsidian23 = require("obsidian");
 
 // src/core/text/cloze.ts
 var SUFFIXES = "(?:s|es|ed|d|ing|er|est|ly)?";
@@ -6769,13 +6891,13 @@ function clozeParts(sentence, word) {
 var MIN = 60 * 1e3;
 var HOUR = 60 * MIN;
 var DAY = 24 * HOUR;
-function splitInterval(ms4) {
+function splitInterval(ms5) {
   const round = (n) => Math.max(1, Math.round(n));
-  if (ms4 < HOUR) return { value: round(ms4 / MIN), unit: "m" };
-  if (ms4 < DAY) return { value: round(ms4 / HOUR), unit: "h" };
-  if (ms4 < 30 * DAY) return { value: round(ms4 / DAY), unit: "d" };
-  if (ms4 < 365 * DAY) return { value: round(ms4 / (30 * DAY)), unit: "mo" };
-  return { value: Math.max(1, Math.round(ms4 / (365 * DAY) * 10) / 10), unit: "y" };
+  if (ms5 < HOUR) return { value: round(ms5 / MIN), unit: "m" };
+  if (ms5 < DAY) return { value: round(ms5 / HOUR), unit: "h" };
+  if (ms5 < 30 * DAY) return { value: round(ms5 / DAY), unit: "d" };
+  if (ms5 < 365 * DAY) return { value: round(ms5 / (30 * DAY)), unit: "mo" };
+  return { value: Math.max(1, Math.round(ms5 / (365 * DAY) * 10) / 10), unit: "y" };
 }
 
 // src/services/srs/queue.ts
@@ -6831,8 +6953,8 @@ function countDueBetween(entries, filter, from, to) {
   const b = to.getTime();
   return entries.filter((e) => {
     if (!matchesFilter(e, filter) || isNewCard(e)) return false;
-    const ms4 = dueMs(e);
-    return ms4 >= a && ms4 < b;
+    const ms5 = dueMs(e);
+    return ms5 >= a && ms5 < b;
   }).length;
 }
 
@@ -6877,7 +6999,7 @@ function buildBatchRows(state, lookup) {
 }
 
 // src/ui/blocks/wordHeader.ts
-var import_obsidian21 = require("obsidian");
+var import_obsidian22 = require("obsidian");
 
 // src/core/text/slug.ts
 var FORBIDDEN = /[/\\:*?"<>|#^[\]]/g;
@@ -6941,7 +7063,7 @@ function paragraphNumber(markdown, line) {
 
 // src/ui/blocks/wordHeader.ts
 var WORD_BLOCK_LANG = "vocab-word";
-function l2(key3, vars) {
+function l(key3, vars) {
   return t(`wordPage.${key3}`, vars);
 }
 function lo(key3, name) {
@@ -6982,16 +7104,16 @@ function shortDay(d) {
   return `${pad3(d.getMonth() + 1)}/${pad3(d.getDate())}`;
 }
 function dueLabel2(entry, now = /* @__PURE__ */ new Date()) {
-  if (isNewCard(entry) || !entry.srs) return l2("dueNew");
+  if (isNewCard(entry) || !entry.srs) return l("dueNew");
   const due = new Date(entry.srs.due);
-  if (Number.isNaN(due.getTime())) return l2("dueNew");
+  if (Number.isNaN(due.getTime())) return l("dueNew");
   const tomorrow = startOfLocalDay(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  return due.getTime() < tomorrow.getTime() ? l2("dueToday") : l2("dueOn", { date: shortDay(due) });
+  return due.getTime() < tomorrow.getTime() ? l("dueToday") : l("dueOn", { date: shortDay(due) });
 }
 function sourceLabel(path, paragraph) {
   const name = noteBasename(path);
-  return l2("source", { source: paragraph ? `${name} \xB6${paragraph}` : name });
+  return l("source", { source: paragraph ? `${name} \xB6${paragraph}` : name });
 }
 function renderWordHeader(host, source, el, ctx) {
   var _a;
@@ -6999,7 +7121,7 @@ function renderWordHeader(host, source, el, ctx) {
   const target = wordTarget(parseBlockParams(source), frontmatter2, ctx.sourcePath);
   ctx.addChild(new WordHeaderBlock(el, host, target));
 }
-var WordHeaderBlock = class extends import_obsidian21.MarkdownRenderChild {
+var WordHeaderBlock = class extends import_obsidian22.MarkdownRenderChild {
   constructor(containerEl, host, target) {
     super(containerEl);
     this.host = host;
@@ -7028,15 +7150,15 @@ var WordHeaderBlock = class extends import_obsidian21.MarkdownRenderChild {
     const root = el.createDiv({ cls: ["vt", "vt-word-header"] });
     const entry = findTarget(this.host.store.entries, this.target);
     if (!entry) {
-      root.appendChild(inlineNote({ text: l2("missing") }));
+      root.appendChild(inlineNote({ text: l("missing") }));
       return;
     }
     const top = root.createDiv({ cls: "vt-wh-top" });
     top.createSpan({ cls: "vt-wh-word", text: entry.word });
     const meta = [entry.phonetic, entry.partOfSpeech].map((s) => s == null ? void 0 : s.trim()).filter(Boolean).join(" \xB7 ");
     if (meta) top.createSpan({ cls: "vt-wh-meta", text: meta });
-    const speak = top.createEl("button", { cls: ["clickable-icon", "vt-wh-speak"], attr: { "aria-label": l2("speak") } });
-    (0, import_obsidian21.setIcon)(speak, "volume-2");
+    const speak = top.createEl("button", { cls: ["clickable-icon", "vt-wh-speak"], attr: { "aria-label": l("speak") } });
+    (0, import_obsidian22.setIcon)(speak, "volume-2");
     bindPronounceButton(speak, entry);
     const def = ((_a = entry.definitionZh) == null ? void 0 : _a.trim()) || ((_b = entry.definition) == null ? void 0 : _b.trim());
     if (def) root.createDiv({ cls: "vt-wh-def", text: def });
@@ -7045,12 +7167,12 @@ var WordHeaderBlock = class extends import_obsidian21.MarkdownRenderChild {
     this.renderOrigin(chips, entry);
     chip(chips, "calendar", dueLabel2(entry));
     const reps = (_e = (_d = entry.srs) == null ? void 0 : _d.reps) != null ? _e : 0;
-    if (reps > 0) chip(chips, "rotate-ccw", l2("reviewed", { n: reps }));
+    if (reps > 0) chip(chips, "rotate-ccw", l("reviewed", { n: reps }));
     const review = this.host.reviewWord;
     if (review) {
       const btn = chips.createEl("button", { cls: ["mod-cta", "vt-wh-review"] });
-      (0, import_obsidian21.setIcon)(btn.createSpan({ cls: "vt-wh-btn-icon" }), "layers");
-      btn.createSpan({ text: l2("review") });
+      (0, import_obsidian22.setIcon)(btn.createSpan({ cls: "vt-wh-btn-icon" }), "layers");
+      btn.createSpan({ text: l("review") });
       btn.addEventListener("click", () => void review.call(this.host, entry));
     }
   }
@@ -7085,7 +7207,7 @@ ${line}`;
     const known = this.paragraphs.get(key3);
     const el = chip(parent, "file-text", sourceLabel(path, known != null ? known : null));
     el.addClass("is-link");
-    el.setAttr("title", l2("sourceTitle"));
+    el.setAttr("title", l("sourceTitle"));
     el.setAttr("role", "link");
     el.tabIndex = 0;
     el.addEventListener("click", () => void this.host.jumpToSource(entry));
@@ -7105,7 +7227,7 @@ ${line}`;
 };
 function chip(parent, icon, text) {
   const el = parent.createSpan({ cls: "vt-wh-chip" });
-  (0, import_obsidian21.setIcon)(el.createSpan({ cls: "vt-chip-icon" }), icon);
+  (0, import_obsidian22.setIcon)(el.createSpan({ cls: "vt-chip-icon" }), icon);
   el.createSpan({ cls: "vt-chip-text", text });
   return el;
 }
@@ -7202,17 +7324,17 @@ function timingText(timing) {
 var DAY_MS = 24 * 60 * 60 * 1e3;
 function nextReviewText(due, now, interval) {
   var _a;
-  const ms4 = due.getTime() - now.getTime();
-  if (ms4 < DAY_MS) return t("flashcards.single.nextSoon", { interval: interval(ms4) });
-  return t("flashcards.single.next", { date: (_a = shortDate3(due.toISOString())) != null ? _a : "", interval: interval(ms4) });
+  const ms5 = due.getTime() - now.getTime();
+  if (ms5 < DAY_MS) return t("flashcards.single.nextSoon", { interval: interval(ms5) });
+  return t("flashcards.single.next", { date: (_a = shortDate3(due.toISOString())) != null ? _a : "", interval: interval(ms5) });
 }
 
 // src/ui/blocks/flashcards.ts
 function renderFlashcards(plugin, source, el, ctx) {
   ctx.addChild(new FlashcardsBlock(el, plugin, parseFlashcardParams(source)));
 }
-function formatInterval(ms4) {
-  const { value, unit } = splitInterval(ms4);
+function formatInterval(ms5) {
+  const { value, unit } = splitInterval(ms5);
   return t(`srs.interval.${unit}`, { n: value });
 }
 var MODE_KEY = "vocab-tracker:flashcards.mode";
@@ -7228,7 +7350,7 @@ function rememberMode(app, mode) {
   if (typeof app.saveLocalStorage === "function") app.saveLocalStorage(MODE_KEY, mode);
 }
 var batchSeq = 0;
-var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
+var FlashcardsBlock = class extends import_obsidian23.MarkdownRenderChild {
   constructor(containerEl, plugin, params, opts = {}) {
     super(containerEl);
     this.plugin = plugin;
@@ -7429,7 +7551,7 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
       };
     }
     const src = bar.createDiv({ cls: "vt-fc-source" });
-    (0, import_obsidian22.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), this.single ? "crosshair" : "folder");
+    (0, import_obsidian23.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), this.single ? "crosshair" : "folder");
     src.createSpan({
       text: this.single ? t("flashcards.single.source") : (_a = this.params.source) != null ? _a : t("flashcards.source.all")
     });
@@ -7495,7 +7617,7 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
     const meta = [entry.phonetic, entry.partOfSpeech].filter(Boolean).join(" \xB7 ");
     if (meta) sub.createSpan({ text: meta });
     const speak = sub.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
-    (0, import_obsidian22.setIcon)(speak, "volume-2");
+    (0, import_obsidian23.setIcon)(speak, "volume-2");
     bindPronounceButton(speak, entry);
   }
   // Cloze sentence with the word blanked ("blank") or revealed and
@@ -7517,7 +7639,7 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
       cls: "vt-fc-listen",
       attr: { "aria-label": t("flashcards.listen.replay") }
     });
-    (0, import_obsidian22.setIcon)(play, "volume-2");
+    (0, import_obsidian23.setIcon)(play, "volume-2");
     bindPronounceButton(play, entry);
     if (!this.flipped) {
       const input = el.createEl("input", {
@@ -7536,7 +7658,7 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
     }
     const ok = this.typed.trim().toLowerCase() === entry.word.trim().toLowerCase();
     const result = el.createDiv({ cls: ["vt-fc-result", ok ? "is-correct" : "is-wrong"] });
-    (0, import_obsidian22.setIcon)(result.createSpan({ cls: "vt-fc-icon" }), ok ? "check" : "x");
+    (0, import_obsidian23.setIcon)(result.createSpan({ cls: "vt-fc-icon" }), ok ? "check" : "x");
     result.createSpan({
       text: ok ? t("flashcards.listen.correct") : t("flashcards.listen.wrong", { answer: this.typed.trim() || "\u2014" })
     });
@@ -7549,7 +7671,7 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
     if (entry.example && this.mode !== "cloze") this.renderSentence(el, entry, "answer");
     if ((_a = entry.source) == null ? void 0 : _a.path) {
       const src = el.createDiv({ cls: "vt-fc-origin" });
-      (0, import_obsidian22.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "file-text");
+      (0, import_obsidian23.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "file-text");
       src.createSpan({ text: entry.source.path.split("/").pop().replace(/\.md$/, "") });
       src.onclick = () => {
         var _a2, _b;
@@ -7572,7 +7694,7 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
   renderEmpty() {
     if (this.single) return this.renderSingleEmpty();
     const box = this.root.createDiv({ cls: "vt-fc-empty" });
-    (0, import_obsidian22.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
+    (0, import_obsidian23.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
     box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.empty.title") });
     box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.empty.body") });
     if (this.mode === "cloze") {
@@ -7585,7 +7707,7 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
   // The word is gone, or the mode can't show it (cloze without an example).
   renderSingleEmpty() {
     const box = this.root.createDiv({ cls: "vt-fc-empty" });
-    (0, import_obsidian22.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
+    (0, import_obsidian23.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "layers");
     const missing = !this.target();
     box.createDiv({
       cls: "vt-fc-empty-body",
@@ -7596,7 +7718,7 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
   // After rating: what was recorded and when the word comes back.
   renderSingleDone() {
     const box = this.root.createDiv({ cls: ["vt-fc-empty", "vt-fc-done", "vt-fc-single-done"] });
-    (0, import_obsidian22.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
+    (0, import_obsidian23.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
     const last2 = this.results[this.results.length - 1];
     if (last2) {
       box.createDiv({
@@ -7617,7 +7739,7 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
     const actions = box.createDiv({ cls: "vt-fc-actions" });
     if (again) {
       const retry = actions.createEl("button", { cls: "vt-fc-btn" });
-      (0, import_obsidian22.setIcon)(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
+      (0, import_obsidian23.setIcon)(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
       retry.createSpan({ text: t("flashcards.single.again") });
       retry.onclick = () => this.startSession(void 0, { speak: true });
     }
@@ -7630,7 +7752,7 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
   renderDone() {
     if (this.single) return this.renderSingleDone();
     const box = this.root.createDiv({ cls: ["vt-fc-empty", "vt-fc-done"] });
-    (0, import_obsidian22.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
+    (0, import_obsidian23.setIcon)(box.createDiv({ cls: "vt-fc-empty-icon" }), "check-circle-2");
     box.createDiv({ cls: "vt-fc-empty-title", text: t("flashcards.done.title") });
     box.createDiv({ cls: "vt-fc-empty-body", text: t("flashcards.done.body") });
     const recalled = this.results.filter((r) => r.rating >= Rating.Good).length;
@@ -7649,14 +7771,14 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
         row.createSpan({ cls: "vt-fc-forgotten-word", text: entry.word });
         row.createSpan({ cls: "vt-fc-forgotten-zh", text: entry.definitionZh });
         const speak = row.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
-        (0, import_obsidian22.setIcon)(speak, "volume-2");
+        (0, import_obsidian23.setIcon)(speak, "volume-2");
         bindPronounceButton(speak, entry);
       }
     }
     const actions = box.createDiv({ cls: "vt-fc-actions" });
     if (forgotten.length > 0) {
       const retry = actions.createEl("button", { cls: ["vt-fc-btn", "mod-cta"] });
-      (0, import_obsidian22.setIcon)(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
+      (0, import_obsidian23.setIcon)(retry.createSpan({ cls: "vt-fc-icon" }), "rotate-ccw");
       retry.createSpan({ text: t("flashcards.done.retryForgotten", { count: forgotten.length }) });
       retry.onclick = () => this.startSession(forgotten.map((e) => e.id), { speak: true });
     }
@@ -7701,9 +7823,9 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
       attr: { type: "button", "aria-expanded": String(open), "aria-controls": this.batchId }
     });
     toggle.toggleClass("is-open", open);
-    (0, import_obsidian22.setIcon)(toggle.createSpan({ cls: "vt-fc-icon" }), "list");
+    (0, import_obsidian23.setIcon)(toggle.createSpan({ cls: "vt-fc-icon" }), "list");
     toggle.createSpan({ text: t("flashcards.batch.toggle", { n: rows.length }) });
-    (0, import_obsidian22.setIcon)(toggle.createSpan({ cls: ["vt-fc-icon", "vt-fc-batch-chevron"] }), "chevron-down");
+    (0, import_obsidian23.setIcon)(toggle.createSpan({ cls: ["vt-fc-icon", "vt-fc-batch-chevron"] }), "chevron-down");
     const panel = panelHost.createDiv({ cls: "vt-fc-batch", attr: { id: this.batchId } });
     panel.hidden = !open;
     const list = panel.createEl("ol", { cls: "vt-fc-batch-list" });
@@ -7755,14 +7877,14 @@ var FlashcardsBlock = class extends import_obsidian22.MarkdownRenderChild {
       cls: "vt-fc-icon-btn",
       attr: { type: "button", "aria-label": t("row.pronounce") }
     });
-    (0, import_obsidian22.setIcon)(speak, "volume-2");
+    (0, import_obsidian23.setIcon)(speak, "volume-2");
     bindPronounceButton(speak, entry, { after: (e) => this.keepCardKeys(e) });
     if (phase === "done" && ((_a = entry.source) == null ? void 0 : _a.path)) {
       const jump = meta.createEl("button", {
         cls: "vt-fc-icon-btn",
         attr: { type: "button", "aria-label": t("flashcards.batch.openSource"), title: entry.source.path }
       });
-      (0, import_obsidian22.setIcon)(jump, "file-text");
+      (0, import_obsidian23.setIcon)(jump, "file-text");
       jump.onclick = () => void this.plugin.jumpToSource(entry);
     }
   }
@@ -7787,7 +7909,7 @@ function tile(container, value, label) {
 }
 
 // src/ui/blocks/trivia.ts
-var import_obsidian23 = require("obsidian");
+var import_obsidian24 = require("obsidian");
 
 // src/core/model/trivia.ts
 var TRIVIA_THREAD_ID = "trivia-session";
@@ -8082,7 +8204,7 @@ function favoriteViews(items, wordOf, dateOf) {
 function renderTrivia(plugin, source, el, ctx) {
   ctx.addChild(new TriviaBlock(el, plugin, parseTriviaParams(source), ctx.sourcePath));
 }
-var WordPickModal = class extends import_obsidian23.FuzzySuggestModal {
+var WordPickModal = class extends import_obsidian24.FuzzySuggestModal {
   constructor(app, entries, onPick) {
     super(app);
     this.entries = entries;
@@ -8099,7 +8221,7 @@ var WordPickModal = class extends import_obsidian23.FuzzySuggestModal {
     this.onPick(e);
   }
 };
-var TriviaBlock = class extends import_obsidian23.MarkdownRenderChild {
+var TriviaBlock = class extends import_obsidian24.MarkdownRenderChild {
   constructor(containerEl, plugin, params, sourcePath) {
     super(containerEl);
     this.plugin = plugin;
@@ -8171,7 +8293,7 @@ var TriviaBlock = class extends import_obsidian23.MarkdownRenderChild {
       const card = root.createDiv({ cls: "vt-trivia-card" });
       const head = card.createDiv({ cls: "vt-trivia-head" });
       const title = head.createSpan({ cls: "vt-trivia-title" });
-      (0, import_obsidian23.setIcon)(title.createSpan({ cls: "vt-trivia-title-icon" }), "lightbulb");
+      (0, import_obsidian24.setIcon)(title.createSpan({ cls: "vt-trivia-title-icon" }), "lightbulb");
       title.createSpan({ text: t("learn.trivia.title") });
       this.chipEl = head.createEl("button", { cls: "vt-trivia-subject" });
       this.chipEl.addEventListener("click", () => this.pickWord());
@@ -8194,7 +8316,7 @@ var TriviaBlock = class extends import_obsidian23.MarkdownRenderChild {
     chip2.createSpan({
       text: pinned ? t("learn.trivia.subject", { word: pinned.word }) : t("learn.trivia.random", { n: this.entries.length })
     });
-    if (!pinned) (0, import_obsidian23.setIcon)(chip2.createSpan({ cls: "vt-trivia-subject-icon" }), "chevron-down");
+    if (!pinned) (0, import_obsidian24.setIcon)(chip2.createSpan({ cls: "vt-trivia-subject-icon" }), "chevron-down");
     chip2.disabled = !!pinned || this.plugin.ai.status() !== "ready";
     chip2.title = pinned ? "" : t("learn.trivia.pick");
   }
@@ -8232,12 +8354,12 @@ var TriviaBlock = class extends import_obsidian23.MarkdownRenderChild {
   async call(c) {
     if (c.type === "followup") return this.plugin.trivia.followup(c.question, c.selection);
     const subject = await this.plugin.trivia.ask(c.kind, c.entryId ? { entryId: c.entryId } : {});
-    if (!subject && !this.plugin.trivia.isBusy()) new import_obsidian23.Notice(t("learn.trivia.noWords"));
+    if (!subject && !this.plugin.trivia.isBusy()) new import_obsidian24.Notice(t("learn.trivia.noWords"));
   }
   run(c) {
     this.call(c).catch((e) => {
       console.error("Vocab Tracker: trivia request failed", e);
-      new import_obsidian23.Notice(learnErrorText(e));
+      new import_obsidian24.Notice(learnErrorText(e));
     });
   }
   async send(req) {
@@ -8281,11 +8403,11 @@ var TriviaBlock = class extends import_obsidian23.MarkdownRenderChild {
             ...base,
             onClick: () => {
               const item = this.plugin.trivia.favorite(turn.id);
-              if (!item) return void new import_obsidian23.Notice(t("learn.trivia.noWords"));
+              if (!item) return void new import_obsidian24.Notice(t("learn.trivia.noWords"));
               const entry = this.entryById(item.entryId);
               if (!entry) return;
               const page = this.plugin.exporter.wordPagePath(entry.id, entry.word);
-              new import_obsidian23.Notice(t("learn.trivia.savedTo", { path: page.split("/").slice(-2).join("/") }));
+              new import_obsidian24.Notice(t("learn.trivia.savedTo", { path: page.split("/").slice(-2).join("/") }));
             }
           };
         case "unfavorite":
@@ -8299,7 +8421,7 @@ var TriviaBlock = class extends import_obsidian23.MarkdownRenderChild {
     if (!el) return;
     el.empty();
     if (this.favScope) this.removeChild(this.favScope);
-    const scope = this.favScope = this.addChild(new import_obsidian23.Component());
+    const scope = this.favScope = this.addChild(new import_obsidian24.Component());
     el.createDiv({ cls: "vt-trivia-favs-title", text: t("learn.trivia.favorites") });
     const pinned = this.pinned();
     const items = this.plugin.trivia.favorites(pinned == null ? void 0 : pinned.id);
@@ -8317,11 +8439,11 @@ var TriviaBlock = class extends import_obsidian23.MarkdownRenderChild {
       const head = card.createDiv({ cls: "vt-trivia-fav-head" });
       head.createSpan({ cls: "vt-trivia-fav-title", text: v.heading });
       const remove = head.createEl("button", { cls: "vt-trivia-fav-remove clickable-icon" });
-      (0, import_obsidian23.setIcon)(remove, "bookmark-minus");
+      (0, import_obsidian24.setIcon)(remove, "bookmark-minus");
       remove.setAttr("aria-label", t("learn.trivia.unfavorite"));
       remove.addEventListener("click", () => this.plugin.trivia.unfavorite(v.id));
       const body = card.createDiv({ cls: "vt-trivia-fav-body" });
-      void import_obsidian23.MarkdownRenderer.render(this.plugin.app, v.body, body, this.sourcePath, scope);
+      void import_obsidian24.MarkdownRenderer.render(this.plugin.app, v.body, body, this.sourcePath, scope);
       if (v.date || v.mentions.length) this.renderFavoriteMeta(card.createDiv({ cls: "vt-trivia-fav-meta" }), v);
     }
   }
@@ -8344,14 +8466,14 @@ var TriviaBlock = class extends import_obsidian23.MarkdownRenderChild {
 };
 
 // src/ui/blocks/verbs.ts
-var import_obsidian24 = require("obsidian");
-function l3(key3, path) {
+var import_obsidian25 = require("obsidian");
+function l2(key3, path) {
   return path === void 0 ? t(`learn.verb.${key3}`) : t(`learn.verb.${key3}`, { path });
 }
 function renderVerbs(plugin, source, el, ctx) {
   ctx.addChild(new VerbsBlock(el, plugin, parseVerbsParams(source)));
 }
-var VerbsBlock = class extends import_obsidian24.MarkdownRenderChild {
+var VerbsBlock = class extends import_obsidian25.MarkdownRenderChild {
   constructor(containerEl, plugin, params) {
     super(containerEl);
     this.plugin = plugin;
@@ -8389,13 +8511,13 @@ var VerbsBlock = class extends import_obsidian24.MarkdownRenderChild {
     if (learn.verbFavorite(e.id)) return learn.unfavoriteVerb(e.id);
     learn.favoriteVerb(e);
     const page = this.plugin.exporter.wordPagePath(e.id, e.word);
-    new import_obsidian24.Notice(l3("savedTo", page.split("/").slice(-2).join("/")));
+    new import_obsidian25.Notice(l2("savedTo", page.split("/").slice(-2).join("/")));
   }
   buildLayout() {
     const grid = this.root.createDiv({ cls: "vt-verbs-grid" });
     const side = grid.createDiv({ cls: "vt-verbs-side" });
     const search = side.createDiv({ cls: "vt-verbs-search" });
-    (0, import_obsidian24.setIcon)(search.createSpan({ cls: "vt-verbs-search-icon" }), "search");
+    (0, import_obsidian25.setIcon)(search.createSpan({ cls: "vt-verbs-search-icon" }), "search");
     const input = search.createEl("input", { cls: "vt-verbs-filter", type: "search" });
     input.placeholder = t("learn.verb.filter");
     input.addEventListener("input", () => {
@@ -8422,14 +8544,14 @@ var VerbsBlock = class extends import_obsidian24.MarkdownRenderChild {
         row.toggleClass("is-active", e.id === this.selectedId);
         row.setAttr("aria-pressed", String(e.id === this.selectedId));
         row.createSpan({ cls: "vt-verbs-row-word", text: e.word });
-        if (this.plugin.verbs.isBusy(e.id)) (0, import_obsidian24.setIcon)(row.createSpan({ cls: "vt-verbs-row-icon is-busy" }), "loader");
+        if (this.plugin.verbs.isBusy(e.id)) (0, import_obsidian25.setIcon)(row.createSpan({ cls: "vt-verbs-row-icon is-busy" }), "loader");
         else if (this.favorited(e)) {
           const icon = row.createSpan({ cls: "vt-verbs-row-icon is-saved" });
-          (0, import_obsidian24.setIcon)(icon, "bookmark-check");
-          icon.setAttr("aria-label", l3("rowFavorited"));
+          (0, import_obsidian25.setIcon)(icon, "bookmark-check");
+          icon.setAttr("aria-label", l2("rowFavorited"));
         } else if (e.usage) {
           const icon = row.createSpan({ cls: "vt-verbs-row-icon" });
-          (0, import_obsidian24.setIcon)(icon, "check");
+          (0, import_obsidian25.setIcon)(icon, "check");
           icon.setAttr("aria-label", t("learn.verb.hasUsage"));
         }
         row.addEventListener("click", () => {
@@ -8469,7 +8591,7 @@ var VerbsBlock = class extends import_obsidian24.MarkdownRenderChild {
     const phon = phoneticLine(e);
     if (phon) head.createSpan({ cls: "vt-verb-phon", text: phon });
     const speak = head.createEl("button", { cls: "vt-verb-speak clickable-icon" });
-    (0, import_obsidian24.setIcon)(speak, "volume-2");
+    (0, import_obsidian25.setIcon)(speak, "volume-2");
     speak.setAttr("aria-label", t("learn.verb.speak"));
     bindPronounceButton(speak, e);
     const usage = this.plugin.verbs.usage(e);
@@ -8483,7 +8605,7 @@ var VerbsBlock = class extends import_obsidian24.MarkdownRenderChild {
     if (busy) {
       const box = el.createDiv({ cls: "vt-learn-busy" });
       const line = box.createDiv({ cls: "vt-learn-busy-text" });
-      (0, import_obsidian24.setIcon)(line.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
+      (0, import_obsidian25.setIcon)(line.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
       line.createSpan({ text: t("learn.verb.generating", { word: e.word }) });
       learnButton(box, { label: t("learn.stop"), icon: "square", onClick: () => this.plugin.verbs.stop(e.id) });
     }
@@ -8514,14 +8636,14 @@ var VerbsBlock = class extends import_obsidian24.MarkdownRenderChild {
         const actions = el.createDiv({ cls: "vt-verb-actions" });
         const saved = this.favorited(e);
         const fav = learnButton(actions, {
-          label: l3(saved ? "favorited" : "favorite"),
+          label: l2(saved ? "favorited" : "favorite"),
           icon: saved ? "bookmark-check" : "bookmark",
           onClick: () => this.toggleFavorite(e)
         });
         fav.addClass("vt-verb-favorite");
         fav.toggleClass("is-active", saved);
         fav.setAttr("aria-pressed", String(saved));
-        if (saved) fav.title = l3("unfavorite");
+        if (saved) fav.title = l2("unfavorite");
         fav.disabled = !this.plugin.learn.loaded;
         const regen = learnButton(actions, {
           label: t("learn.verb.regenerate"),
@@ -10436,7 +10558,7 @@ function pruneReviewLogs(logs, now, days = REVIEW_LOG_RETENTION_DAYS) {
   return logs.filter((log) => new Date(log.at).getTime() >= cutoff);
 }
 function reviewLogsFingerprint(logs) {
-  return logs.map((l5) => l5.id).sort().join("\n");
+  return logs.map((l4) => l4.id).sort().join("\n");
 }
 
 // src/services/srs/SrsService.ts
@@ -10548,7 +10670,7 @@ var SrsService = class {
     const ids = new Set(
       this.deps.store.vocabData.entries.filter((e) => matchesFilter(e, { source: filter.source })).map((e) => e.id)
     );
-    return this.logs.filter((l5) => ids.has(l5.entryId) && new Date(l5.at).getTime() >= dayStart).length;
+    return this.logs.filter((l4) => ids.has(l4.entryId) && new Date(l4.at).getTime() >= dayStart).length;
   }
   // When this entry is next due, or null for a card that's never been
   // scheduled (shown as "new" rather than a date).
@@ -10753,11 +10875,11 @@ var BrowserNetwork = class {
 };
 
 // src/platform/ObsidianRequest.ts
-var import_obsidian25 = require("obsidian");
+var import_obsidian26 = require("obsidian");
 var ObsidianRequest = class {
   async request(req) {
     var _a;
-    const res = await (0, import_obsidian25.requestUrl)({
+    const res = await (0, import_obsidian26.requestUrl)({
       url: req.url,
       method: req.method,
       headers: req.headers,
@@ -11797,7 +11919,7 @@ var MAX_CONCURRENT = 2;
 var MAX_RETRIES = 2;
 var BASE_BACKOFF_MS = 1e3;
 var MAX_RETRY_WAIT_MS = 3e4;
-function abortableSleep(ms4, signal) {
+function abortableSleep(ms5, signal) {
   return new Promise((resolve, reject) => {
     if (signal.aborted) return reject(new AiError("aborted"));
     const onAbort = () => {
@@ -11807,7 +11929,7 @@ function abortableSleep(ms4, signal) {
     const timer = setTimeout(() => {
       signal.removeEventListener("abort", onAbort);
       resolve();
-    }, ms4);
+    }, ms5);
     signal.addEventListener("abort", onAbort, { once: true });
   });
 }
@@ -12106,8 +12228,8 @@ function createAiService(store, ports) {
 }
 
 // src/ui/settings/SettingsTab.ts
-var import_obsidian26 = require("obsidian");
-var VocabSettingsTab = class extends import_obsidian26.PluginSettingTab {
+var import_obsidian27 = require("obsidian");
+var VocabSettingsTab = class extends import_obsidian27.PluginSettingTab {
   constructor(app, plugin, ctx, sections) {
     super(app, plugin);
     this.ctx = ctx;
@@ -12119,7 +12241,7 @@ var VocabSettingsTab = class extends import_obsidian26.PluginSettingTab {
     containerEl.addClass("vt-settings");
     const ctx = { ...this.ctx, redisplay: () => this.display() };
     for (const section3 of this.sections) {
-      new import_obsidian26.Setting(containerEl).setName(t(section3.title)).setHeading();
+      new import_obsidian27.Setting(containerEl).setName(t(section3.title)).setHeading();
       section3.render(containerEl.createDiv({ cls: `vt-settings-section vt-settings-${section3.id}` }), ctx);
     }
   }
@@ -12130,7 +12252,7 @@ function parseNonNegativeInt(value) {
 }
 
 // src/ui/settings/sections/ai.ts
-var import_obsidian27 = require("obsidian");
+var import_obsidian28 = require("obsidian");
 
 // src/ui/settings/traceView.ts
 function prettyBody(body) {
@@ -12144,18 +12266,18 @@ function prettyBody(body) {
 function formatTrace(trace) {
   var _a, _b;
   const { request: req, response: res } = trace;
-  const ms4 = (_a = trace.ms) != null ? _a : 0;
+  const ms5 = (_a = trace.ms) != null ? _a : 0;
   const lines4 = [`${req.method} ${req.url}`];
   for (const [k, v] of Object.entries(req.headers)) lines4.push(`${k}: ${v}`);
   if (req.body) lines4.push("", prettyBody(req.body));
   lines4.push("");
   if (res) {
-    lines4.push(t("settings.ai.test.response", { mode: res.mode, ms: ms4 }), `HTTP ${res.status}`);
+    lines4.push(t("settings.ai.test.response", { mode: res.mode, ms: ms5 }), `HTTP ${res.status}`);
     for (const [k, v] of Object.entries(res.headers)) lines4.push(`${k}: ${v}`);
     lines4.push("", prettyBody(res.body) || t("settings.ai.test.emptyBody"));
     if (res.body.length >= MAX_BODY_CHARS) lines4.push(t("settings.ai.test.truncated", { n: MAX_BODY_CHARS }));
   } else {
-    lines4.push(t("settings.ai.test.noResponse", { ms: ms4 }), (_b = trace.error) != null ? _b : "");
+    lines4.push(t("settings.ai.test.noResponse", { ms: ms5 }), (_b = trace.error) != null ? _b : "");
   }
   return lines4.join("\n");
 }
@@ -12182,14 +12304,14 @@ function renderProviderFields(el, ctx, id) {
   const update = (mutate) => ctx.store.updateSettings((s) => mutate(s.ai.providers[id]));
   const keyDesc = [t(ctx.keys.usesSecretStorage ? "settings.ai.key.descSecret" : "settings.ai.key.descData")];
   if (def.key === "optional") keyDesc.unshift(t("settings.ai.key.optional"));
-  new import_obsidian27.Setting(el).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
+  new import_obsidian28.Setting(el).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
     text.inputEl.type = "password";
     text.inputEl.autocomplete = "off";
     text.setPlaceholder(id === "anthropic" ? "sk-ant-\u2026" : "sk-\u2026").setValue(ctx.keys.get(id));
     text.onChange((v) => void ctx.keys.set(id, v));
   });
   if (def.editableBaseUrl) {
-    const baseUrl = new import_obsidian27.Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
+    const baseUrl = new import_obsidian28.Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
     baseUrl.addText((text) => {
       text.inputEl.addClass("vt-settings-wide");
       text.setPlaceholder("https://\u2026/v1").setValue(cfg().baseUrl);
@@ -12207,7 +12329,7 @@ function renderProviderFields(el, ctx, id) {
   const modelSetting = (tier) => {
     var _a2;
     const field = tier === "smart" ? "smartModel" : "fastModel";
-    const s = new import_obsidian27.Setting(el).setName(t(tier === "smart" ? "settings.ai.smartModel.name" : "settings.ai.fastModel.name")).setDesc(t(tier === "smart" ? "settings.ai.smartModel.desc" : "settings.ai.fastModel.desc"));
+    const s = new import_obsidian28.Setting(el).setName(t(tier === "smart" ? "settings.ai.smartModel.name" : "settings.ai.fastModel.name")).setDesc(t(tier === "smart" ? "settings.ai.smartModel.desc" : "settings.ai.fastModel.desc"));
     const options = (_a2 = def.models) == null ? void 0 : _a2[tier];
     if (options) {
       const all = options.includes(cfg()[field]) || !cfg()[field] ? options : [...options, cfg()[field]];
@@ -12223,7 +12345,7 @@ function renderProviderFields(el, ctx, id) {
   };
   modelSetting("smart");
   modelSetting("fast");
-  const testSetting = new import_obsidian27.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
+  const testSetting = new import_obsidian28.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
   const result = el.createDiv({ cls: "vt-settings-test-result" });
   const trace = el.createDiv();
   testSetting.addButton((b) => {
@@ -12265,14 +12387,14 @@ var aiSection = {
   title: "settings.section.ai",
   render(el, ctx) {
     const ai = () => ctx.store.settings.ai;
-    new import_obsidian27.Setting(el).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle(
+    new import_obsidian28.Setting(el).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle(
       (tg) => tg.setValue(ai().enabled).onChange(async (v) => {
         var _a;
         await ctx.store.updateSettings((s) => s.ai.enabled = v);
         (_a = ctx.onAiEnabledChanged) == null ? void 0 : _a.call(ctx);
       })
     );
-    new import_obsidian27.Setting(el).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
+    new import_obsidian28.Setting(el).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
       for (const p of PROVIDERS) d.addOption(p.id, t(p.label));
       d.setValue(ai().provider).onChange(async (v) => {
         await ctx.store.updateSettings((s) => s.ai.provider = v);
@@ -12280,7 +12402,7 @@ var aiSection = {
       });
     });
     renderProviderFields(el, ctx, ai().provider);
-    new import_obsidian27.Setting(el).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
+    new import_obsidian28.Setting(el).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setPlaceholder("0").setValue(ai().monthlyTokenBudget ? String(ai().monthlyTokenBudget) : "");
       text.onChange((v) => {
@@ -12288,7 +12410,7 @@ var aiSection = {
         if (n !== null) void ctx.store.updateSettings((s) => s.ai.monthlyTokenBudget = n);
       });
     });
-    const usage = new import_obsidian27.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
+    const usage = new import_obsidian28.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
     ctx.ai.usageSummary().then((u) => {
       const desc = createFragment((f) => {
         f.createDiv({ text: t("settings.ai.usage.value", { month: fmt(u.monthWeighted), today: fmt(u.today.input + u.today.output) }) });
@@ -12310,12 +12432,12 @@ var aiSection = {
 };
 
 // src/ui/settings/sections/general.ts
-var import_obsidian28 = require("obsidian");
+var import_obsidian29 = require("obsidian");
 var generalSection = {
   id: "general",
   title: "settings.section.general",
   render(el, ctx) {
-    new import_obsidian28.Setting(el).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
+    new import_obsidian29.Setting(el).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
       (d) => d.addOptions({ auto: t("settings.general.locale.auto"), "zh-TW": "\u7E41\u9AD4\u4E2D\u6587", en: "English" }).setValue(ctx.store.settings.ui.locale).onChange(async (v) => {
         await ctx.store.updateSettings((s) => {
           s.ui.locale = v;
@@ -12328,7 +12450,7 @@ var generalSection = {
 };
 
 // src/ui/settings/sections/learner.ts
-var import_obsidian29 = require("obsidian");
+var import_obsidian30 = require("obsidian");
 var learnerSection = {
   id: "learner",
   title: "settings.section.learner",
@@ -12340,49 +12462,49 @@ var learnerSection = {
       await ctx.store.updateSettings((s) => mutate(s.learner));
       preview2.setText(renderProfile(profile()));
     };
-    new import_obsidian29.Setting(el).setName(t("settings.learner.level.name")).addDropdown((d) => {
+    new import_obsidian30.Setting(el).setName(t("settings.learner.level.name")).addDropdown((d) => {
       d.addOption("", t("settings.learner.level.none"));
       for (const lv of CEFR_LEVELS) d.addOption(lv, lv);
       d.setValue(profile().level).onChange((v) => void update((p) => p.level = v));
     });
-    new import_obsidian29.Setting(el).setName(t("settings.learner.goal.name")).addDropdown((d) => {
+    new import_obsidian30.Setting(el).setName(t("settings.learner.goal.name")).addDropdown((d) => {
       for (const g of LEARNER_GOALS) d.addOption(g, t(`settings.learner.goal.${g}`));
       d.setValue(profile().goal).onChange((v) => void update((p) => p.goal = v));
     });
-    new import_obsidian29.Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
-      for (const l5 of ANSWER_LANGUAGES) d.addOption(l5, t(`settings.learner.language.${l5}`));
+    new import_obsidian30.Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
+      for (const l4 of ANSWER_LANGUAGES) d.addOption(l4, t(`settings.learner.language.${l4}`));
       d.setValue(profile().answerLanguage).onChange((v) => void update((p) => p.answerLanguage = v));
     });
-    new import_obsidian29.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
+    new import_obsidian30.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setValue(String(profile().maxAnswerChars)).onChange((v) => {
         const n = parseNonNegativeInt(v);
         if (n !== null) void update((p) => p.maxAnswerChars = n);
       });
     });
-    new import_obsidian29.Setting(el).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
+    new import_obsidian30.Setting(el).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
       ta.inputEl.rows = 3;
       ta.inputEl.addClass("vt-settings-wide");
       ta.setValue(profile().extra).onChange((v) => void update((p) => p.extra = v));
     });
-    const previewSetting = new import_obsidian29.Setting(el).setName(t("settings.learner.preview.name"));
+    const previewSetting = new import_obsidian30.Setting(el).setName(t("settings.learner.preview.name"));
     previewSetting.settingEl.addClass("vt-settings-preview-row");
     el.appendChild(preview2);
   }
 };
 
 // src/ui/settings/sections/srs.ts
-var import_obsidian30 = require("obsidian");
+var import_obsidian31 = require("obsidian");
 var srsSection = {
   id: "srs",
   title: "settings.section.srs",
   render(el, ctx) {
     const current = () => resolveSrsSettings(ctx.store.settings.srs);
     const update = (patch) => ctx.store.updateSettings((s) => s.srs = { ...current(), ...patch });
-    new import_obsidian30.Setting(el).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
+    new import_obsidian31.Setting(el).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
       (s) => s.setLimits(0.7, 0.99, 0.01).setValue(current().retention).setDynamicTooltip().onChange((v) => void update({ retention: v }))
     );
-    new import_obsidian30.Setting(el).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
+    new import_obsidian31.Setting(el).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setValue(String(current().dailyNew)).onChange((v) => {
         const n = parseNonNegativeInt(v);
@@ -12393,7 +12515,7 @@ var srsSection = {
 };
 
 // src/ui/settings/sections/wordlists.ts
-var import_obsidian31 = require("obsidian");
+var import_obsidian32 = require("obsidian");
 var wordlistsSection = {
   id: "wordlists",
   title: "settings.section.wordlists",
@@ -12408,19 +12530,19 @@ var wordlistsSection = {
       return update({ tags: { ...tags, [tag]: { ...tags[tag], ...patch } } }, "display");
     };
     el.createDiv({ cls: "setting-item-description", text: t("settings.wordlists.desc") });
-    new import_obsidian31.Setting(el).setName(t("settings.wordlists.folder.name")).setDesc(t("settings.wordlists.folder.desc")).addText((text) => {
+    new import_obsidian32.Setting(el).setName(t("settings.wordlists.folder.name")).setDesc(t("settings.wordlists.folder.desc")).addText((text) => {
       text.setValue(current().folder);
       text.inputEl.addEventListener("change", () => void update({ folder: text.getValue() }, "reload"));
     });
-    new import_obsidian31.Setting(el).setName(t("settings.wordlists.highlight.name")).setDesc(t("settings.wordlists.highlight.desc")).addToggle((tg) => tg.setValue(current().highlight).onChange((v) => void update({ highlight: v }, "display")));
-    new import_obsidian31.Setting(el).setName(t("settings.wordlists.inflections.name")).setDesc(t("settings.wordlists.inflections.desc")).addToggle(
+    new import_obsidian32.Setting(el).setName(t("settings.wordlists.highlight.name")).setDesc(t("settings.wordlists.highlight.desc")).addToggle((tg) => tg.setValue(current().highlight).onChange((v) => void update({ highlight: v }, "display")));
+    new import_obsidian32.Setting(el).setName(t("settings.wordlists.inflections.name")).setDesc(t("settings.wordlists.inflections.desc")).addToggle(
       (tg) => tg.setValue(current().inflections).onChange((v) => void update({ inflections: v }, "scan"))
     );
-    new import_obsidian31.Setting(el).setName(t("settings.wordlists.autoImport.name")).setDesc(t("settings.wordlists.autoImport.desc")).addToggle(
+    new import_obsidian32.Setting(el).setName(t("settings.wordlists.autoImport.name")).setDesc(t("settings.wordlists.autoImport.desc")).addToggle(
       (tg) => tg.setValue(current().autoImport).onChange((v) => void update({ autoImport: v }, "display"))
     );
     const lists = ctx.wordlists.index.lists;
-    new import_obsidian31.Setting(el).setName(t("settings.wordlists.loaded.name")).setDesc(
+    new import_obsidian32.Setting(el).setName(t("settings.wordlists.loaded.name")).setDesc(
       lists.length === 0 ? t("settings.wordlists.loaded.none", { folder: current().folder }) : t("settings.wordlists.loaded.some", { n: lists.length })
     ).addButton(
       (b) => b.setButtonText(t("settings.wordlists.reload")).onClick(async () => {
@@ -12430,14 +12552,14 @@ var wordlistsSection = {
     );
     const s = current();
     for (const list of lists) {
-      const row = new import_obsidian31.Setting(el).setName(tagLabel(list.tag)).setDesc(t("settings.wordlists.list.desc", { n: list.words.toLocaleString(), paths: list.paths.join(", ") })).addColorPicker((c) => c.setValue(tagColor(s, list.tag)).onChange((v) => void updateTag(list.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list.tag)).onChange((v) => void updateTag(list.tag, { enabled: v })));
+      const row = new import_obsidian32.Setting(el).setName(tagLabel(list.tag)).setDesc(t("settings.wordlists.list.desc", { n: list.words.toLocaleString(), paths: list.paths.join(", ") })).addColorPicker((c) => c.setValue(tagColor(s, list.tag)).onChange((v) => void updateTag(list.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list.tag)).onChange((v) => void updateTag(list.tag, { enabled: v })));
       row.settingEl.addClass("vt-wordlist-row");
     }
   }
 };
 
 // src/ui/settings/sections/files.ts
-var import_obsidian32 = require("obsidian");
+var import_obsidian33 = require("obsidian");
 
 // src/services/files/settings.ts
 var DEFAULT_FILES_SETTINGS = {
@@ -12483,7 +12605,7 @@ var filesSection = {
     const update = (patch) => ctx.store.updateSettings((s) => s.files = { ...current(), ...patch });
     el.createDiv({ cls: "setting-item-description", text: t("settings.files.desc") });
     for (const field of FIELDS) {
-      new import_obsidian32.Setting(el).setName(t(field.name)).setDesc(t(field.desc)).addText((text) => {
+      new import_obsidian33.Setting(el).setName(t(field.name)).setDesc(t(field.desc)).addText((text) => {
         text.setValue(current()[field.key]);
         text.inputEl.addEventListener("change", async () => {
           await update({ [field.key]: text.getValue() });
@@ -12495,12 +12617,12 @@ var filesSection = {
 };
 
 // src/ui/settings/sections/paragraphs.ts
-var import_obsidian33 = require("obsidian");
+var import_obsidian34 = require("obsidian");
 var paragraphsSection = {
   id: "paragraphs",
   title: "settings.section.paragraphs",
   render(el, ctx) {
-    new import_obsidian33.Setting(el).setName(t("settings.paragraphs.hashMode.name")).setDesc(t("settings.paragraphs.hashMode.desc")).addToggle(
+    new import_obsidian34.Setting(el).setName(t("settings.paragraphs.hashMode.name")).setDesc(t("settings.paragraphs.hashMode.desc")).addToggle(
       (tg) => tg.setValue(resolveAnchorSettings(ctx.store.settings).mode === "hash").onChange(
         (on) => ctx.store.updateSettings((s) => patchAnchorSettings(s, { mode: on ? "hash" : "block", blockIdNoticeSeen: true }))
       )
@@ -12509,7 +12631,7 @@ var paragraphsSection = {
 };
 
 // src/ui/settings/sections/reading.ts
-var import_obsidian34 = require("obsidian");
+var import_obsidian35 = require("obsidian");
 function tapOptions() {
   const out = {};
   for (const a of TAP_ACTIONS) out[a] = t(`settings.reading.tap.${a}`);
@@ -12531,21 +12653,21 @@ var readingSection = {
   title: "settings.section.reading",
   render(el, ctx) {
     const prefs = resolveUiPrefs(ctx.store.settings.ui);
-    new import_obsidian34.Setting(el).setName(t("settings.reading.tapAction.name")).setDesc(t("settings.reading.tapAction.desc")).addDropdown(
+    new import_obsidian35.Setting(el).setName(t("settings.reading.tapAction.name")).setDesc(t("settings.reading.tapAction.desc")).addDropdown(
       (d) => d.addOptions(tapOptions()).setValue(prefs.tapAction).onChange((v) => setPref(ctx, "tapAction", v))
     );
-    new import_obsidian34.Setting(el).setName(t("settings.reading.tapActionMobile.name")).setDesc(t("settings.reading.tapActionMobile.desc")).addDropdown(
+    new import_obsidian35.Setting(el).setName(t("settings.reading.tapActionMobile.name")).setDesc(t("settings.reading.tapActionMobile.desc")).addDropdown(
       (d) => d.addOptions(tapOptions()).setValue(prefs.tapActionMobile).onChange((v) => setPref(ctx, "tapActionMobile", v))
     );
-    new import_obsidian34.Setting(el).setName(t("settings.reading.pronounceSource.name")).setDesc(t("settings.reading.pronounceSource.desc")).addDropdown(
+    new import_obsidian35.Setting(el).setName(t("settings.reading.pronounceSource.name")).setDesc(t("settings.reading.pronounceSource.desc")).addDropdown(
       (d) => d.addOptions(pronounceOptions()).setValue(prefs.pronounceSource).onChange((v) => setPref(ctx, "pronounceSource", v))
     );
-    new import_obsidian34.Setting(el).setName(t("settings.reading.livePreviewHint.name")).setDesc(t("settings.reading.livePreviewHint.desc")).addToggle((tg) => tg.setValue(prefs.livePreviewHint).onChange((on) => setPref(ctx, "livePreviewHint", on)));
+    new import_obsidian35.Setting(el).setName(t("settings.reading.livePreviewHint.name")).setDesc(t("settings.reading.livePreviewHint.desc")).addToggle((tg) => tg.setValue(prefs.livePreviewHint).onChange((on) => setPref(ctx, "livePreviewHint", on)));
   }
 };
 
 // src/ui/settings/sections/backup.ts
-var import_obsidian36 = require("obsidian");
+var import_obsidian37 = require("obsidian");
 
 // src/ui/settings/backupText.ts
 function pad2(n) {
@@ -12614,19 +12736,19 @@ function deviceLines() {
 }
 
 // src/ui/settings/RestoreModal.ts
-var import_obsidian35 = require("obsidian");
+var import_obsidian36 = require("obsidian");
 
 // src/services/learn/learnMerge.ts
 var TOMBSTONE_TTL_MS = 30 * 24 * 60 * 60 * 1e3;
-function ms2(iso) {
+function ms3(iso) {
   const t2 = iso ? new Date(iso).getTime() : 0;
   return Number.isNaN(t2) ? 0 : t2;
 }
 function pickNewer2(local, remote) {
   var _a, _b;
-  const l5 = ms2(local.updatedAt);
-  const r = ms2(remote.updatedAt);
-  if (l5 !== r) return r > l5 ? remote : local;
+  const l4 = ms3(local.updatedAt);
+  const r = ms3(remote.updatedAt);
+  if (l4 !== r) return r > l4 ? remote : local;
   return ((_a = remote.rev) != null ? _a : 0) > ((_b = local.rev) != null ? _b : 0) ? remote : local;
 }
 function mergeRecords(local, remote, pick = pickNewer2) {
@@ -12652,7 +12774,7 @@ function pickFamily(local, remote) {
   return winner;
 }
 function dropOldTombstones(records, now) {
-  return records.filter((r) => !r.deletedAt || now - ms2(r.deletedAt) < TOMBSTONE_TTL_MS);
+  return records.filter((r) => !r.deletedAt || now - ms3(r.deletedAt) < TOMBSTONE_TTL_MS);
 }
 function emptyLearnShard() {
   return { families: [], trivia: [], verbs: [] };
@@ -13009,8 +13131,8 @@ function planRestore(current, backup, opts) {
   if (backup.reviews) {
     const cur = (_f = current.reviews) != null ? _f : [];
     const logs = pruneReviewLogs(mergeReviewLogs(cur, backup.reviews), new Date(opts.now));
-    const had = new Set(cur.map((l5) => l5.id));
-    counts.reviewsAdded = logs.filter((l5) => !had.has(l5.id)).length;
+    const had = new Set(cur.map((l4) => l4.id));
+    counts.reviewsAdded = logs.filter((l4) => !had.has(l4.id)).length;
     shards.reviews = { logs };
   } else missing.push("reviews");
   if (backup.imports) shards.imports = { notes: { ...backup.imports, ...(_g = current.imports) != null ? _g : {} } };
@@ -13130,7 +13252,7 @@ var BackupService = class {
 };
 
 // src/ui/settings/RestoreModal.ts
-var RestoreModal = class extends import_obsidian35.Modal {
+var RestoreModal = class extends import_obsidian36.Modal {
   constructor(app, backups, item, onDone) {
     super(app);
     this.backups = backups;
@@ -13168,7 +13290,7 @@ var RestoreModal = class extends import_obsidian35.Modal {
     if (text.extras) {
       el.createEl("h4", { text: t("backup.restore.extras.title") });
       el.createEl("p", { text: text.extras });
-      const remove = new import_obsidian35.Setting(el).setName(t("backup.restore.extras.remove")).addToggle(
+      const remove = new import_obsidian36.Setting(el).setName(t("backup.restore.extras.remove")).addToggle(
         (toggle) => toggle.setValue(this.removeExtras).onChange((v) => this.removeExtras = v)
       );
       if (item.reason === "before-restore") remove.setDesc(t("backup.restore.extras.undoHint"));
@@ -13177,7 +13299,7 @@ var RestoreModal = class extends import_obsidian35.Modal {
     el.createEl("h4", { text: t("backup.restore.devices.title") });
     const devices = el.createEl("ul");
     for (const line of deviceLines()) devices.createEl("li", { text: line });
-    new import_obsidian35.Setting(el).addButton((b) => b.setButtonText(t("backup.restore.cancel")).onClick(() => this.close())).addButton(
+    new import_obsidian36.Setting(el).addButton((b) => b.setButtonText(t("backup.restore.cancel")).onClick(() => this.close())).addButton(
       (b) => b.setButtonText(t("backup.restore.confirm")).setWarning().onClick(async () => {
         if (this.running) return;
         this.running = true;
@@ -13189,11 +13311,11 @@ var RestoreModal = class extends import_obsidian35.Modal {
   async restore() {
     try {
       const result = await this.backups.restore(this.item.name, { removeExtras: this.removeExtras });
-      new import_obsidian35.Notice(t("backup.restore.done", { path: result.safetyPath }), 1e4);
+      new import_obsidian36.Notice(t("backup.restore.done", { path: result.safetyPath }), 1e4);
       this.onDone(result);
     } catch (e) {
       const key3 = e instanceof BackupError && e.code === "safety-failed" ? "backup.restore.safetyFailed" : "backup.restore.failed";
-      new import_obsidian35.Notice(t(key3, { error: errorMessage(e) }), 1e4);
+      new import_obsidian36.Notice(t(key3, { error: errorMessage(e) }), 1e4);
       console.error("Vocab Tracker: restore failed", e);
     } finally {
       this.close();
@@ -13215,21 +13337,21 @@ var backupSection = {
     }
     const listEl = createDiv();
     const fill2 = () => void renderList(listEl, backups, ctx);
-    new import_obsidian36.Setting(el).setName(t("settings.backup.create.name")).setDesc(t("settings.backup.create.desc")).addButton(
+    new import_obsidian37.Setting(el).setName(t("settings.backup.create.name")).setDesc(t("settings.backup.create.desc")).addButton(
       (b) => b.setButtonText(t("settings.backup.create.button")).onClick(async () => {
         b.setDisabled(true);
         try {
           const path = await backups.create();
-          new import_obsidian36.Notice(t("settings.backup.created", { path }), 8e3);
+          new import_obsidian37.Notice(t("settings.backup.created", { path }), 8e3);
           fill2();
         } catch (e) {
-          new import_obsidian36.Notice(t("settings.backup.failed", { error: errorMessage(e) }), 8e3);
+          new import_obsidian37.Notice(t("settings.backup.failed", { error: errorMessage(e) }), 8e3);
         } finally {
           b.setDisabled(false);
         }
       })
     );
-    new import_obsidian36.Setting(el).setName(t("settings.backup.list.name")).addExtraButton((b) => b.setIcon("refresh-cw").setTooltip(t("settings.backup.list.reload")).onClick(fill2));
+    new import_obsidian37.Setting(el).setName(t("settings.backup.list.name")).addExtraButton((b) => b.setIcon("refresh-cw").setTooltip(t("settings.backup.list.reload")).onClick(fill2));
     el.appendChild(listEl);
     fill2();
   }
@@ -13251,7 +13373,7 @@ async function renderList(listEl, backups, ctx) {
     return;
   }
   for (const item of items) {
-    const row = new import_obsidian36.Setting(listEl).setName(backupTitle(item)).setDesc(backupDesc(item));
+    const row = new import_obsidian37.Setting(listEl).setName(backupTitle(item)).setDesc(backupDesc(item));
     if (item.kind === "unreadable") continue;
     row.addButton(
       (b) => b.setButtonText(t("settings.backup.restore.button")).onClick(
@@ -13278,23 +13400,23 @@ var SETTINGS_SECTIONS2 = [
 ];
 
 // src/platform/ObsidianNotes.ts
-var import_obsidian37 = require("obsidian");
+var import_obsidian38 = require("obsidian");
 var ObsidianNotes = class {
   constructor(app) {
     this.app = app;
   }
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian37.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian38.TFile ? this.app.vault.cachedRead(file) : null;
   }
 };
 
 // src/core/store/threads.ts
-function ms3(iso) {
+function ms4(iso) {
   return iso ? new Date(iso).getTime() : 0;
 }
 function turnStamp(t2) {
-  return Math.max(ms3(t2.updatedAt), ms3(t2.deletedAt), ms3(t2.at));
+  return Math.max(ms4(t2.updatedAt), ms4(t2.deletedAt), ms4(t2.at));
 }
 function pickTurn(a, b) {
   if (a.status === "streaming" && b.status !== "streaming") return b;
@@ -13308,12 +13430,12 @@ function mergeTurns(local, remote) {
     const mine = byId.get(t2.id);
     byId.set(t2.id, mine ? pickTurn(mine, t2) : t2);
   }
-  return [...byId.values()].sort((x, y) => ms3(x.at) - ms3(y.at));
+  return [...byId.values()].sort((x, y) => ms4(x.at) - ms4(y.at));
 }
 function pickThreadFields(a, b) {
   var _a, _b;
-  const aMs = ms3(a.updatedAt);
-  const bMs = ms3(b.updatedAt);
+  const aMs = ms4(a.updatedAt);
+  const bMs = ms4(b.updatedAt);
   if (aMs !== bMs) return aMs > bMs ? a : b;
   return ((_a = a.rev) != null ? _a : 0) >= ((_b = b.rev) != null ? _b : 0) ? a : b;
 }
@@ -14541,7 +14663,7 @@ ${body}`, /* @__PURE__ */ new Set([subject.id]));
 };
 
 // src/ui/chat/SelectionTracker.ts
-var import_obsidian38 = require("obsidian");
+var import_obsidian39 = require("obsidian");
 var MAX_SELECTION_CHARS = 1500;
 var SelectionTracker = class {
   constructor(app) {
@@ -14565,7 +14687,7 @@ var SelectionTracker = class {
     if (!sel || !node) return;
     const el = node instanceof HTMLElement ? node : node.parentElement;
     if (!(el == null ? void 0 : el.closest('.workspace-leaf-content[data-type="markdown"]'))) return;
-    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian38.MarkdownView && v.containerEl.contains(el));
+    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian39.MarkdownView && v.containerEl.contains(el));
     const raw = (view == null ? void 0 : view.getMode()) === "source" ? view.editor.getSelection() : sel.toString();
     const text = raw.replace(/\s+/g, " ").trim().slice(0, MAX_SELECTION_CHARS);
     if (!text) {
@@ -14582,10 +14704,10 @@ var SelectionTracker = class {
 };
 
 // src/platform/ObsidianWordlists.ts
-var import_obsidian39 = require("obsidian");
+var import_obsidian40 = require("obsidian");
 var EXTENSIONS = /* @__PURE__ */ new Set(["md", "txt", "csv", "tsv"]);
 function inFolder(path, folder) {
-  return path.startsWith((0, import_obsidian39.normalizePath)(folder) + "/");
+  return path.startsWith((0, import_obsidian40.normalizePath)(folder) + "/");
 }
 var ObsidianWordlists = class {
   constructor(app) {
@@ -14596,7 +14718,7 @@ var ObsidianWordlists = class {
   }
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian39.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian40.TFile ? this.app.vault.cachedRead(file) : null;
   }
 };
 
@@ -14691,7 +14813,7 @@ function proseLines(markdown) {
   const out = [];
   let i = 0;
   if (((_a = lines4[0]) == null ? void 0 : _a.trim()) === "---") {
-    const close = lines4.findIndex((l5, j) => j > 0 && l5.trim() === "---");
+    const close = lines4.findIndex((l4, j) => j > 0 && l4.trim() === "---");
     if (close > 0) {
       for (; i <= close; i++) out.push("");
     }
@@ -14862,7 +14984,7 @@ var WordlistService = class extends TypedEmitter {
 };
 
 // src/ui/reading/examHighlight.ts
-var import_obsidian40 = require("obsidian");
+var import_obsidian41 = require("obsidian");
 var EXAM_WORD_CLS = "vt-exam-word";
 var SKIP = [
   "code",
@@ -14906,7 +15028,7 @@ function highlightExamWords(el, lookup, colorOf) {
       const span = frag.createSpan({ cls: EXAM_WORD_CLS, text: seg.word });
       span.dataset.vtTags = seg.tags.join(" ");
       span.style.setProperty("--vt-exam-color", colorOf(seg.tags[0]));
-      (0, import_obsidian40.setTooltip)(span, seg.tags.map(tagLabel).join(" \xB7 "), { delay: 300 });
+      (0, import_obsidian41.setTooltip)(span, seg.tags.map(tagLabel).join(" \xB7 "), { delay: 300 });
     }
     node.replaceWith(frag);
   }
@@ -14992,7 +15114,7 @@ function entriesMissingDefinition(entries) {
 }
 
 // src/platform/ObsidianVault.ts
-var import_obsidian41 = require("obsidian");
+var import_obsidian42 = require("obsidian");
 var Unchanged = class {
   constructor(text) {
     this.text = text;
@@ -15017,7 +15139,7 @@ var ObsidianVault = class {
   // ── shared ────────────────────────────────────────────────────────────
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian41.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian42.TFile ? this.app.vault.cachedRead(file) : null;
   }
   // ── task G ────────────────────────────────────────────────────────────
   // vault.process(file, fn). Rethrow whatever `fn` throws unchanged:
@@ -15027,7 +15149,7 @@ var ObsidianVault = class {
   // minAppVersion ≥ 1.1.0 in manifest.json.
   async process(path, fn) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian41.TFile)) throw new Error(`File not found: ${path}`);
+    if (!(file instanceof import_obsidian42.TFile)) throw new Error(`File not found: ${path}`);
     try {
       return await this.app.vault.process(file, (text) => {
         const next = fn(text);
@@ -15073,19 +15195,19 @@ var ObsidianVault = class {
     component.registerEvent(
       vault.on("delete", (file) => {
         var _a, _b;
-        if (file instanceof import_obsidian41.TFolder) (_a = this.managed) == null ? void 0 : _a.deleteUnder(file.path);
+        if (file instanceof import_obsidian42.TFolder) (_a = this.managed) == null ? void 0 : _a.deleteUnder(file.path);
         else (_b = this.managed) == null ? void 0 : _b.delete(file.path);
       })
     );
     if (workspace.layoutReady) this.markResolved();
   }
   exists(path) {
-    return this.app.vault.getAbstractFileByPath((0, import_obsidian41.normalizePath)(path)) !== null;
+    return this.app.vault.getAbstractFileByPath((0, import_obsidian42.normalizePath)(path)) !== null;
   }
   // Creates missing parent folders; rejects when the file already exists.
   async create(path, content) {
     var _a;
-    const target = (0, import_obsidian41.normalizePath)(path);
+    const target = (0, import_obsidian42.normalizePath)(path);
     if (this.app.vault.getAbstractFileByPath(target)) throw new Error(`File already exists: ${target}`);
     await this.ensureFolder(parentOf(target));
     const file = await this.app.vault.create(target, content);
@@ -15096,8 +15218,8 @@ var ObsidianVault = class {
   // target exists (never overwrites).
   async rename(from, to) {
     var _a;
-    const source = (0, import_obsidian41.normalizePath)(from);
-    const target = (0, import_obsidian41.normalizePath)(to);
+    const source = (0, import_obsidian42.normalizePath)(from);
+    const target = (0, import_obsidian42.normalizePath)(to);
     const file = this.app.vault.getAbstractFileByPath(source);
     if (!file) throw new Error(`File not found: ${source}`);
     if (source === target) return;
@@ -15153,11 +15275,11 @@ var ObsidianVault = class {
     var _a;
     const index = this.managed;
     if (!index) return;
-    if (file instanceof import_obsidian41.TFolder) {
+    if (file instanceof import_obsidian42.TFolder) {
       index.moveUnder(oldPath, file.path);
     } else if (index.has(oldPath)) {
       index.move(oldPath, file.path);
-    } else if (file instanceof import_obsidian41.TFile) {
+    } else if (file instanceof import_obsidian42.TFile) {
       index.set(file.path, managedRefOf((_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter));
     }
   }
@@ -15179,12 +15301,12 @@ var ObsidianVault = class {
     for (let i = 1; i <= parts.length; i++) {
       const path = parts.slice(0, i).join("/");
       const existing = this.app.vault.getAbstractFileByPath(path);
-      if (existing instanceof import_obsidian41.TFolder) continue;
+      if (existing instanceof import_obsidian42.TFolder) continue;
       if (existing) throw new Error(`Not a folder: ${path}`);
       try {
         await this.app.vault.createFolder(path);
       } catch (e) {
-        if (!(this.app.vault.getAbstractFileByPath(path) instanceof import_obsidian41.TFolder)) throw e;
+        if (!(this.app.vault.getAbstractFileByPath(path) instanceof import_obsidian42.TFolder)) throw e;
       }
     }
   }
@@ -15367,7 +15489,7 @@ function findManagedBlock(text, name) {
 }
 function bodyLines(body) {
   if (body === "") return [];
-  return body.replace(/\r\n?/g, "\n").split("\n").map((l5) => MARKER_LINE.test(l5) ? l5.replace("%%", "\\%%") : l5);
+  return body.replace(/\r\n?/g, "\n").split("\n").map((l4) => MARKER_LINE.test(l4) ? l4.replace("%%", "\\%%") : l4);
 }
 function detectEol(text) {
   const nl = text.indexOf("\n");
@@ -15449,7 +15571,7 @@ function normalizeNewlines(text) {
   return text.replace(/\r\n?/g, "\n");
 }
 function blockquote(text) {
-  return normalizeNewlines(text.trim()).split("\n").map((l5) => l5.trim() ? `> ${l5}` : ">").join("\n");
+  return normalizeNewlines(text.trim()).split("\n").map((l4) => l4.trim() ? `> ${l4}` : ">").join("\n");
 }
 function oneLine(text) {
   return normalizeNewlines(text).replace(/\s*\n\s*/g, " ").trim();
@@ -15519,7 +15641,7 @@ function unquote2(raw) {
   return raw;
 }
 function lines3(text) {
-  return text.split(/(?<=\n)/).filter((l5) => l5 !== "");
+  return text.split(/(?<=\n)/).filter((l4) => l4 !== "");
 }
 function readFrontmatter(text) {
   const at = locate(text);
@@ -16458,8 +16580,8 @@ var SeedRecord = class {
 };
 
 // src/ui/blocks/wordReview.ts
-var import_obsidian42 = require("obsidian");
-var WordReviewModal = class extends import_obsidian42.Modal {
+var import_obsidian43 = require("obsidian");
+var WordReviewModal = class extends import_obsidian43.Modal {
   constructor(host, entry) {
     super(host.app);
     this.host = host;
@@ -16490,8 +16612,8 @@ function openWordReview(host, entry) {
 }
 
 // src/ui/reading/WordPageDecorator.ts
-var import_obsidian43 = require("obsidian");
-function l4(key3, vars) {
+var import_obsidian44 = require("obsidian");
+function l3(key3, vars) {
   return t(`wordPage.${key3}`, vars);
 }
 var SECTIONS = ["families", "usage", "trivia", "discussion"];
@@ -16544,35 +16666,35 @@ function actionFor(section3, entry, deps) {
     case "families":
       return {
         icon: "git-fork",
-        label: l4("findFamilies"),
+        label: l3("findFamilies"),
         run: async () => {
           const candidates = await deps.families.generate({ seedEntryIds: [entry.id] });
-          if (!candidates.length) return deps.notify(l4("familiesNone"));
+          if (!candidates.length) return deps.notify(l3("familiesNone"));
           const { families } = await deps.families.save(candidates);
-          deps.notify(l4("familiesSaved", { n: families.length }));
+          deps.notify(l3("familiesSaved", { n: families.length }));
         }
       };
     case "usage":
       if (!deps.verbs.canGenerate(entry)) return null;
       return {
         icon: "sparkles",
-        label: entry.usage ? l4("regenerateUsage") : l4("generateUsage"),
+        label: entry.usage ? l3("regenerateUsage") : l3("generateUsage"),
         run: async () => {
           await deps.verbs.generate(entry);
-          deps.notify(l4("usageSaved"));
+          deps.notify(l3("usageSaved"));
         }
       };
     case "trivia":
       return {
         icon: "lightbulb",
-        label: l4("trivia"),
+        label: l3("trivia"),
         run: async () => {
           await deps.openTrivia();
           await deps.trivia.ask("next", { entryId: entry.id });
         }
       };
     case "discussion":
-      return { icon: "panel-right", label: l4("openSidebar"), run: () => deps.openInSidebar(entry, "ai") };
+      return { icon: "panel-right", label: l3("openSidebar"), run: () => deps.openInSidebar(entry, "ai") };
   }
 }
 function decorate(h, section3, entry, deps) {
@@ -16581,7 +16703,7 @@ function decorate(h, section3, entry, deps) {
   h.addClass("vt-wp-heading");
   const box = h.createSpan({ cls: ["vt", "vt-wp-actions"] });
   const btn = box.createEl("button", { cls: "vt-wp-btn" });
-  (0, import_obsidian43.setIcon)(btn.createSpan({ cls: "vt-wp-btn-icon" }), action.icon);
+  (0, import_obsidian44.setIcon)(btn.createSpan({ cls: "vt-wp-btn-icon" }), action.icon);
   btn.createSpan({ text: action.label });
   const key3 = `${entry.id}:${section3}`;
   const setBusy = (busy) => {
@@ -16601,7 +16723,7 @@ function decorate(h, section3, entry, deps) {
       if (debug) console.error(`Vocab Tracker: unreadable AI answer
 
 ${debugReportText(debug)}`);
-      deps.notify(l4("failed", { error: message }));
+      deps.notify(l3("failed", { error: message }));
     }).finally(() => {
       running.delete(key3);
       if (btn.isConnected) setBusy(false);
@@ -16610,7 +16732,7 @@ ${debugReportText(debug)}`);
 }
 
 // src/ui/reading/PluginNoteChrome.ts
-var import_obsidian44 = require("obsidian");
+var import_obsidian45 = require("obsidian");
 
 // src/ui/reading/pluginNote.ts
 var KINDS = ["word", "entry", "ai-note"];
@@ -16670,12 +16792,12 @@ var PluginNoteChrome = class {
   // Wires the workspace events to `owner` (the plugin); undone on unload.
   attach(owner) {
     const { workspace, metadataCache } = this.app;
-    const later = () => this.schedule();
-    owner.registerEvent(workspace.on("file-open", later));
-    owner.registerEvent(workspace.on("layout-change", later));
-    owner.registerEvent(workspace.on("active-leaf-change", later));
-    owner.registerEvent(metadataCache.on("changed", later));
-    workspace.onLayoutReady(later);
+    const later2 = () => this.schedule();
+    owner.registerEvent(workspace.on("file-open", later2));
+    owner.registerEvent(workspace.on("layout-change", later2));
+    owner.registerEvent(workspace.on("active-leaf-change", later2));
+    owner.registerEvent(metadataCache.on("changed", later2));
+    workspace.onLayoutReady(later2);
     owner.register(() => this.dispose());
   }
   schedule() {
@@ -16691,7 +16813,7 @@ var PluginNoteChrome = class {
     if (this.disposed) return;
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
       const view = leaf.view;
-      if (!(view instanceof import_obsidian44.MarkdownView)) continue;
+      if (!(view instanceof import_obsidian45.MarkdownView)) continue;
       const file = view.file;
       const cache = file ? this.app.metadataCache.getFileCache(file) : null;
       const state = chromeState(cache, (_a = file == null ? void 0 : file.basename) != null ? _a : "");
@@ -16728,7 +16850,7 @@ var PluginNoteChrome = class {
 };
 
 // src/ui/reading/ParagraphBadges.ts
-var import_obsidian45 = require("obsidian");
+var import_obsidian46 = require("obsidian");
 var BADGE_CLS = "vt-pbadge";
 var BADGE_HOST_CLS = "vt-pbadge-host";
 var ANCHORABLE_TAGS = /* @__PURE__ */ new Set(["P", "UL", "OL", "BLOCKQUOTE"]);
@@ -16758,21 +16880,18 @@ var ParagraphBadges = class {
     this.lines = new SectionLines();
     // registerMarkdownPostProcessor(badges.process)
     this.process = (el, ctx) => {
-      var _a;
-      if (!isAnchorableTag((_a = el.firstElementChild) == null ? void 0 : _a.tagName)) return;
+      const first = el.firstElementChild;
+      if (!isAnchorableTag(first == null ? void 0 : first.tagName)) return;
       const info = ctx.getSectionInfo(el);
       if (!info) return;
-      const ref = {
-        path: ctx.sourcePath,
-        lineStart: info.lineStart,
-        lineEnd: info.lineEnd,
-        text: this.lines.slice(info)
-      };
-      const handle = { ref, host: el, badge: null };
-      this.draw(handle);
-      this.track(handle);
-      const child = new import_obsidian45.MarkdownRenderChild(el);
-      child.register(() => this.untrack(handle));
+      const text = this.lines.slice(info);
+      const handles = this.handlesFor(ctx.sourcePath, el, first, info.lineStart, info.lineEnd, text);
+      for (const handle of handles) {
+        this.draw(handle);
+        this.track(handle);
+      }
+      const child = new import_obsidian46.MarkdownRenderChild(el);
+      child.register(() => handles.forEach((h) => this.untrack(h)));
       ctx.addChild(child);
     };
   }
@@ -16788,6 +16907,30 @@ var ParagraphBadges = class {
     for (const path of targets) {
       for (const h of (_a = this.live.get(path)) != null ? _a : []) this.draw(h);
     }
+  }
+  // One handle per top-level `<li>` when this list was split (see class
+  // comment); otherwise the usual single handle for the whole section
+  // element. Falls back to the whole list if the DOM's `<li>` count
+  // doesn't match the split — e.g. a task-list item rendered with extra
+  // wrapper elements — rather than guessing at a mismatched mapping.
+  handlesFor(path, el, first, lineStart, lineEnd, text) {
+    var _a, _b;
+    const whole = () => [{ ref: { path, lineStart, lineEnd, text }, host: el, badge: null }];
+    const tag = (_a = first == null ? void 0 : first.tagName) == null ? void 0 : _a.toUpperCase();
+    if (tag !== "UL" && tag !== "OL") return whole();
+    const lines4 = text.split("\n");
+    if (!shouldSplitList(lines4)) return whole();
+    const items = splitListItems(lines4, lineStart);
+    const lis = Array.from((_b = first == null ? void 0 : first.children) != null ? _b : []).filter((c) => {
+      var _a2;
+      return ((_a2 = c.tagName) == null ? void 0 : _a2.toUpperCase()) === "LI";
+    });
+    if (lis.length !== items.length) return whole();
+    return items.map((item, i) => ({
+      ref: { path, lineStart: item.lineStart, lineEnd: item.lineEnd, text: item.text },
+      host: lis[i],
+      badge: null
+    }));
   }
   track(h) {
     let set = this.live.get(h.ref.path);
@@ -16820,7 +16963,7 @@ var ParagraphBadges = class {
       badge.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") open(e);
       });
-      (0, import_obsidian45.setIcon)(badge.createSpan({ cls: "vt-pbadge-icon" }), "sparkles");
+      (0, import_obsidian46.setIcon)(badge.createSpan({ cls: "vt-pbadge-icon" }), "sparkles");
       badge.createSpan({ cls: "vt-pbadge-count" });
     }
     const countEl = badge.querySelector(".vt-pbadge-count");
@@ -16850,10 +16993,10 @@ function planTap(action, tracked) {
 }
 
 // src/ui/mobile/WordSheet.ts
-var import_obsidian48 = require("obsidian");
+var import_obsidian49 = require("obsidian");
 
 // src/ui/mobile/actionNotice.ts
-var import_obsidian46 = require("obsidian");
+var import_obsidian47 = require("obsidian");
 function actionNotice(text, actions, durationMs = 5e3) {
   const frag = createFragment((f) => {
     const wrap = f.createDiv({ cls: "vt-action-notice" });
@@ -16868,12 +17011,12 @@ function actionNotice(text, actions, durationMs = 5e3) {
       });
     }
   });
-  const notice = new import_obsidian46.Notice(frag, durationMs);
+  const notice = new import_obsidian47.Notice(frag, durationMs);
   return notice;
 }
 
 // src/ui/mobile/BottomSheet.ts
-var import_obsidian47 = require("obsidian");
+var import_obsidian48 = require("obsidian");
 
 // src/ui/mobile/sheetGeometry.ts
 var TAP_SLOP_PX = 6;
@@ -16951,9 +17094,9 @@ var BottomSheet = class {
       const d = this.drag;
       if (!d || e.pointerId !== d.pointerId) return;
       const dy = e.clientY - d.y;
-      const ms4 = Math.max(1, e.timeStamp - d.t);
+      const ms5 = Math.max(1, e.timeStamp - d.t);
       this.endDrag();
-      switch (dragOutcome(dy, this.panel.offsetHeight, dy / ms4, this.expanded)) {
+      switch (dragOutcome(dy, this.panel.offsetHeight, dy / ms5, this.expanded)) {
         case "tap":
           this.setExpanded(!this.expanded);
           break;
@@ -16985,7 +17128,7 @@ var BottomSheet = class {
     grab.createDiv({ cls: "vt-sheet-grab" });
     const close = grab.createEl("button", { cls: "vt-sheet-close clickable-icon" });
     close.setAttr("aria-label", opts.closeLabel);
-    (0, import_obsidian47.setIcon)(close, "x");
+    (0, import_obsidian48.setIcon)(close, "x");
     close.addEventListener("click", () => this.close());
     grab.addEventListener("pointerdown", this.onPointerDown);
     grab.addEventListener("pointermove", this.onPointerMove);
@@ -17070,7 +17213,7 @@ function isTextInput(target) {
 }
 
 // src/ui/mobile/WordSheet.ts
-var WordSheet = class extends import_obsidian48.Component {
+var WordSheet = class extends import_obsidian49.Component {
   constructor(plugin, opts = {}) {
     super();
     this.plugin = plugin;
@@ -17275,12 +17418,12 @@ var WordSheet = class extends import_obsidian48.Component {
     this.cancelRebind();
     try {
       if (!await this.plugin.threads.rebindParagraph(threadId, ref)) return;
-      new import_obsidian48.Notice(t("paragraph.rebind.done"));
+      new import_obsidian49.Notice(t("paragraph.rebind.done"));
       this.view = { kind: "paragraph", route: { name: "paragraph", threadId } };
       this.show();
     } catch (e) {
       console.error("Vocab Tracker: rebind failed", e);
-      new import_obsidian48.Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian49.Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
 };
@@ -17358,13 +17501,199 @@ var LivePreviewHint = class {
   }
 };
 
+// src/services/learn/linkage.ts
+function familiesContaining(families, entryId) {
+  return families.filter((f) => familyMembers(f).some((m) => m.entryId === entryId));
+}
+function triviaMentioning2(trivia, entryId) {
+  return trivia.filter((t2) => t2.entryId !== entryId && t2.mentions.includes(entryId));
+}
+function deletionImpact(entryId, data) {
+  return {
+    families: familiesContaining(data.families, entryId).length,
+    triviaMentions: triviaMentioning2(data.trivia, entryId).length,
+    verbFavorite: data.hasVerbFavorite,
+    wordPageExists: data.wordPageExists,
+    threadCount: data.threadCount
+  };
+}
+function clearFamilyMemberEntry(family, entryId) {
+  let changed = false;
+  const groups = family.groups.map((g) => {
+    if (!g.members.some((m) => m.entryId === entryId)) return g;
+    changed = true;
+    return {
+      ...g,
+      members: g.members.map((m) => m.entryId !== entryId ? m : { word: m.word, zh: m.zh })
+    };
+  });
+  return changed ? { ...family, groups } : family;
+}
+function clearTriviaMention(item, entryId) {
+  if (!item.mentions.includes(entryId)) return item;
+  return { ...item, mentions: item.mentions.filter((m) => m !== entryId) };
+}
+function syncFamilyMemberText(family, entry) {
+  const stale = (m) => m.entryId === entry.id && (m.word !== entry.word || m.zh !== entry.definitionZh);
+  let changed = false;
+  const groups = family.groups.map((g) => {
+    if (!g.members.some(stale)) return g;
+    changed = true;
+    return {
+      ...g,
+      members: g.members.map((m) => stale(m) ? { ...m, word: entry.word, zh: entry.definitionZh } : m)
+    };
+  });
+  return changed ? { ...family, groups } : family;
+}
+function addMentionForNewEntry(item, entry, index) {
+  if (item.entryId === entry.id || item.mentions.includes(entry.id)) return item;
+  const found = index.mentions(`${item.title}
+${item.body}`, /* @__PURE__ */ new Set([item.entryId])).includes(entry.id);
+  return found ? { ...item, mentions: [...item.mentions, entry.id] } : item;
+}
+
+// src/services/learn/EntryLinkageService.ts
+var EntryLinkageService = class {
+  constructor(deps) {
+    this.deps = deps;
+    // entryId → {word, definitionZh} last seen, so sync() can tell a rename
+    // from any other edit (the data:changed event itself carries no diff).
+    this.last = /* @__PURE__ */ new Map();
+  }
+  // Seeds the baseline from the vocab list as it is right now — call once
+  // at startup so every already-learned word isn't treated as "just
+  // added" the first time sync() runs.
+  init() {
+    this.last.clear();
+    for (const e of this.deps.vocab.entries) this.last.set(e.id, snapshot(e));
+  }
+  // Call after every data:changed. Cheap for the common case (nothing
+  // renamed): one Map.get and two string compares per live entry; the
+  // heavier family/trivia scans only run for an entry that actually
+  // changed or just appeared.
+  async sync() {
+    await this.deps.learn.ensureLoaded();
+    const entries = this.deps.vocab.entries;
+    const live = new Set(entries.map((e) => e.id));
+    for (const id of [...this.last.keys()]) if (!live.has(id)) this.last.delete(id);
+    for (const e of entries) {
+      const before = this.last.get(e.id);
+      const now = snapshot(e);
+      this.last.set(e.id, now);
+      if (!before) this.onNewEntry(e);
+      else if (before.word !== now.word || before.definitionZh !== now.definitionZh) this.onRenamed(e);
+    }
+  }
+  // The confirm dialog's counts, before anything is touched.
+  impact(entryId, word) {
+    var _a, _b, _c, _d, _e, _f;
+    return deletionImpact(entryId, {
+      families: this.deps.learn.families(),
+      trivia: this.deps.learn.trivia(),
+      hasVerbFavorite: !!this.deps.learn.verbFavorite(entryId),
+      wordPageExists: (_c = (_b = (_a = this.deps).wordPageExists) == null ? void 0 : _b.call(_a, entryId, word)) != null ? _c : false,
+      threadCount: (_f = (_e = (_d = this.deps).threadCount) == null ? void 0 : _e.call(_d, entryId)) != null ? _f : 0
+    });
+  }
+  // Called once the learner has confirmed the delete. The entry itself is
+  // soft-deleted by VocabStore separately (main.ts's deleteEntry); this
+  // only unlinks it from the learning data.
+  unlink(entryId) {
+    for (const f of this.deps.learn.families()) {
+      const updated = clearFamilyMemberEntry(f, entryId);
+      if (updated !== f) this.deps.learn.putFamily(updated);
+    }
+    for (const item of this.deps.learn.trivia()) {
+      const updated = clearTriviaMention(item, entryId);
+      if (updated !== item) this.deps.learn.putTrivia(updated);
+    }
+    if (this.deps.learn.verbFavorite(entryId)) this.deps.learn.unfavoriteVerb(entryId);
+    this.last.delete(entryId);
+  }
+  onRenamed(entry) {
+    for (const f of this.deps.learn.families()) {
+      const updated = syncFamilyMemberText(f, entry);
+      if (updated !== f) this.deps.learn.putFamily(updated);
+    }
+  }
+  onNewEntry(entry) {
+    const index = new WordIndex(this.deps.vocab.entries);
+    for (const item of this.deps.learn.trivia()) {
+      const updated = addMentionForNewEntry(item, entry, index);
+      if (updated !== item) this.deps.learn.putTrivia(updated);
+    }
+  }
+};
+function snapshot(e) {
+  return { word: e.word, definitionZh: e.definitionZh };
+}
+
+// src/ui/word/DeleteEntryModal.ts
+var import_obsidian50 = require("obsidian");
+
+// src/ui/word/deleteEntryImpact.ts
+function deletionImpactLines(impact) {
+  const lines4 = [];
+  if (impact.families > 0) lines4.push(t("deleteEntry.impact.families", { n: impact.families }));
+  if (impact.triviaMentions > 0) lines4.push(t("deleteEntry.impact.trivia", { n: impact.triviaMentions }));
+  if (impact.verbFavorite) lines4.push(t("deleteEntry.impact.verbFavorite"));
+  if (impact.wordPageExists) lines4.push(t("deleteEntry.impact.wordPage"));
+  if (impact.threadCount > 0) lines4.push(t("deleteEntry.impact.threads", { n: impact.threadCount }));
+  return lines4;
+}
+
+// src/ui/word/DeleteEntryModal.ts
+var DeleteEntryModal = class extends import_obsidian50.Modal {
+  constructor(app, word, impact, onResult) {
+    super(app);
+    this.word = word;
+    this.impact = impact;
+    this.onResult = onResult;
+    this.trashWordPage = false;
+    this.confirmed = false;
+  }
+  onOpen() {
+    this.titleEl.setText(t("deleteEntry.title", { word: this.word }));
+    this.contentEl.addClass("vt-delete-entry");
+    this.render();
+  }
+  onClose() {
+    this.contentEl.empty();
+    if (!this.confirmed) this.onResult(null);
+  }
+  render() {
+    const el = this.contentEl;
+    el.empty();
+    const lines4 = deletionImpactLines(this.impact);
+    if (lines4.length) {
+      const ul = el.createEl("ul", { cls: "vt-delete-entry-impact" });
+      for (const line of lines4) ul.createEl("li", { text: line });
+    } else {
+      el.createEl("p", { text: t("deleteEntry.noLinks"), cls: "vt-settings-muted" });
+    }
+    if (this.impact.wordPageExists) {
+      new import_obsidian50.Setting(el).setName(t("deleteEntry.trashWordPage")).addToggle(
+        (toggle) => toggle.setValue(this.trashWordPage).onChange((v) => this.trashWordPage = v)
+      );
+    }
+    new import_obsidian50.Setting(el).addButton((b) => b.setButtonText(t("deleteEntry.cancel")).onClick(() => this.close())).addButton(
+      (b) => b.setButtonText(t("deleteEntry.confirm")).setWarning().onClick(() => {
+        this.confirmed = true;
+        this.onResult({ trashWordPage: this.trashWordPage });
+        this.close();
+      })
+    );
+  }
+};
+
 // main.ts
 var VOCAB_FOLDER = "vocab-list";
 var VOCAB_FILE = `${VOCAB_FOLDER}/vocab-list.md`;
 var VOCAB_FILE_LEGACY = "vocab-list.md";
 var ENRICH_GAP_MS = 400;
 var RESUME_ENRICH_DELAY_MS = 5e3;
-var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
+var VocabTrackerPlugin = class extends import_obsidian51.Plugin {
   constructor() {
     super(...arguments);
     this.vocabData = { entries: [] };
@@ -17473,9 +17802,17 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
       isArticle: (p) => /\.md$/i.test(p) && !/\.ai\.md$/i.test(p) && this.isImportable(p)
     });
     this.registerEvent(
-      this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof import_obsidian49.TFolder))
+      this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof import_obsidian51.TFolder))
     );
-    this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof import_obsidian49.TFolder)));
+    this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof import_obsidian51.TFolder)));
+    this.linkage = new EntryLinkageService({
+      learn: this.learn,
+      vocab: this.store,
+      wordPageExists: (id, word) => this.vault.exists(this.exporter.wordPagePath(id, word)),
+      threadCount: (id) => this.threads.wordQuestionCount(id)
+    });
+    this.linkage.init();
+    this.register(this.store.events.on("data:changed", () => void this.linkage.sync()));
     this.registerMarkdownPostProcessor(
       createWordPageDecorator({
         entry: (id) => this.store.entries.find((e) => e.id === id),
@@ -17487,7 +17824,7 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
         openTrivia: () => this.openEntryFile("trivia", "tab"),
         // The bottom sheet on iPhone.
         openInSidebar: (entry) => this.surfaces.openWordCard(entry.id, "ai"),
-        notify: (m) => new import_obsidian49.Notice(m)
+        notify: (m) => new import_obsidian51.Notice(m)
       })
     );
     new PluginNoteChrome(this.app).attach(this);
@@ -17590,7 +17927,7 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
     );
     this.registerEvent(
       this.app.vault.on("rename", async (file, oldPath) => {
-        if (!(file instanceof import_obsidian49.TFile)) return;
+        if (!(file instanceof import_obsidian51.TFile)) return;
         const changed = updateSourcePaths(this.vocabData.entries, oldPath, file.path);
         if (changed.length) await this.store.touchMany(changed);
         await this.noteImports.rename(oldPath, file.path);
@@ -17738,7 +18075,7 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
       if (plan.retag.length) await this.store.touchMany(plan.retag.map((r) => r.entry));
       await this.noteImports.mark(file.path, nowIso());
       if (created.length || plan.retag.length) {
-        new import_obsidian49.Notice(
+        new import_obsidian51.Notice(
           t("exam.import.done", { note: file.basename, added: created.length, tagged: plan.retag.length })
         );
         this.renderSidebar();
@@ -17773,7 +18110,7 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
     (_a = this.sidebarView()) == null ? void 0 : _a.render();
   }
   registerWordlistEvents() {
-    const reload = (0, import_obsidian49.debounce)(() => void this.wordlists.reload(), 800, true);
+    const reload = (0, import_obsidian51.debounce)(() => void this.wordlists.reload(), 800, true);
     const inLists = (path) => inFolder(path, this.wordlistSettings().folder);
     const onChange = (file, oldPath) => {
       if (inLists(file.path) || oldPath && inLists(oldPath)) reload();
@@ -17781,7 +18118,7 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
     this.registerEvent(this.app.vault.on("create", (f) => onChange(f)));
     this.registerEvent(this.app.vault.on("delete", (f) => onChange(f)));
     this.registerEvent(this.app.vault.on("rename", (f, oldPath) => onChange(f, oldPath)));
-    const rescanActive = (0, import_obsidian49.debounce)(() => this.refreshExamStrip(), 1500, true);
+    const rescanActive = (0, import_obsidian51.debounce)(() => this.refreshExamStrip(), 1500, true);
     this.registerEvent(
       this.app.vault.on("modify", (f) => {
         var _a;
@@ -17805,7 +18142,7 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
     var _a;
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
       const view = leaf.view;
-      if (view instanceof import_obsidian49.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
+      if (view instanceof import_obsidian51.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
     }
   }
   refreshExamStrip() {
@@ -17837,7 +18174,7 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
   }
   // Live Preview hint's 「切換到閱讀模式」.
   async switchToReadingView() {
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian49.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian51.MarkdownView);
     if (!view) return;
     await view.setState({ ...view.getState(), mode: "preview" }, { history: false });
   }
@@ -17857,7 +18194,7 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
       await this.openNote(await this.files.ensure(id), where);
     } catch (e) {
       console.error(`Vocab Tracker: couldn't open the ${id} entry file`, e);
-      new import_obsidian49.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian51.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   // The 「單字頁」 button: the word's page, created now if it has none.
@@ -17867,18 +18204,18 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
       if (path) await this.openNote(path);
     } catch (e) {
       console.error("Vocab Tracker: couldn't open the word page", e);
-      new import_obsidian49.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian51.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   // "tab": a new tab, or the tab already showing the note.
   async openNote(path, where = "current") {
     const file = this.app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian49.TFile)) return;
+    if (!(file instanceof import_obsidian51.TFile)) return;
     const { workspace } = this.app;
     if (where === "tab") {
       const open = workspace.getLeavesOfType("markdown").find((leaf) => {
         var _a;
-        return leaf.view instanceof import_obsidian49.MarkdownView && ((_a = leaf.view.file) == null ? void 0 : _a.path) === path;
+        return leaf.view instanceof import_obsidian51.MarkdownView && ((_a = leaf.view.file) == null ? void 0 : _a.path) === path;
       });
       if (open) {
         workspace.setActiveLeaf(open, { focus: true });
@@ -17911,7 +18248,7 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
       await this.app.vault.createFolder(VOCAB_FOLDER);
     }
     const legacy = this.app.vault.getAbstractFileByPath(VOCAB_FILE_LEGACY);
-    if (legacy instanceof import_obsidian49.TFile) {
+    if (legacy instanceof import_obsidian51.TFile) {
       await this.app.fileManager.renameFile(legacy, VOCAB_FILE);
       return;
     }
@@ -17955,13 +18292,13 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
     }
   }
   showWordMenu(evt, word, ctx, exists) {
-    const menu = new import_obsidian49.Menu();
+    const menu = new import_obsidian51.Menu();
     menu.addItem((item) => {
       item.setTitle(t(exists ? "mobile.menu.open" : "mobile.menu.add", { word }));
       item.setIcon(exists ? "book-open" : "plus");
       item.onClick(async () => {
         const added = await this.addWordToVocab(word, ctx);
-        if (added) new import_obsidian49.Notice(t("mobile.menu.added", { word }));
+        if (added) new import_obsidian51.Notice(t("mobile.menu.added", { word }));
       });
     });
     menu.showAtMouseEvent(evt);
@@ -17981,13 +18318,13 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
           await this.deleteEntry(entry);
           this.renderSidebar();
         },
-        notify: (text, actions) => (actions == null ? void 0 : actions.length) ? actionNotice(text, actions) : new import_obsidian49.Notice(text)
+        notify: (text, actions) => (actions == null ? void 0 : actions.length) ? actionNotice(text, actions) : new import_obsidian51.Notice(text)
       });
       this.renderSidebar();
       (_a = this.sidebarView()) == null ? void 0 : _a.locateWord(word);
     } catch (e) {
       console.error("Vocab Tracker: couldn't save the word", e);
-      new import_obsidian49.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian51.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   getWordContext(x, y) {
@@ -18088,7 +18425,7 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
     if (!entry.source || !entry.source.path) return;
     const file = this.app.vault.getAbstractFileByPath(entry.source.path);
     if (!file) {
-      new import_obsidian49.Notice("Source note not found: " + entry.source.path);
+      new import_obsidian51.Notice("Source note not found: " + entry.source.path);
       return;
     }
     const leaf = this.app.workspace.getLeaf(false);
@@ -18109,11 +18446,11 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
       await this.store.touch(entry);
       if (opts.quiet) return;
       this.renderSidebar();
-      if (opts.verbose) new import_obsidian49.Notice(`Vocab Tracker: fetched "${entry.word}"`);
+      if (opts.verbose) new import_obsidian51.Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
       if (opts.quiet) return;
-      new import_obsidian49.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
+      new import_obsidian51.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
     }
   }
   refreshSidebar() {
@@ -18130,6 +18467,33 @@ var VocabTrackerPlugin = class extends import_obsidian49.Plugin {
     await this.store.deleteEntry(entry.id);
     if (entry.source && entry.source.path) {
       await this.unhighlightWord(entry.word, entry.source.path);
+    }
+  }
+  // Every delete entry point (WordRow.ts's remove()) calls this instead of
+  // deleteEntry directly: shows what the word is linked to (families,
+  // saved trivia, verb favorite, word page, discussion), and only deletes
+  // — then unlinks those — once the learner confirms. Resolves to whether
+  // it was actually deleted, so the caller knows whether to refresh.
+  async confirmDeleteEntry(entry) {
+    await Promise.all([this.learn.ensureLoaded(), this.threads.ensureLoaded()]);
+    const impact = this.linkage.impact(entry.id, entry.word);
+    return new Promise((resolve) => {
+      new DeleteEntryModal(this.app, entry.word, impact, (result) => {
+        if (!result) {
+          resolve(false);
+          return;
+        }
+        void this.deleteEntryConfirmed(entry, result).then(() => resolve(true));
+      }).open();
+    });
+  }
+  async deleteEntryConfirmed(entry, result) {
+    await this.deleteEntry(entry);
+    this.linkage.unlink(entry.id);
+    if (result.trashWordPage) {
+      const path = this.exporter.wordPagePath(entry.id, entry.word);
+      const file = this.app.vault.getAbstractFileByPath(path);
+      if (file) await this.app.fileManager.trashFile(file);
     }
   }
   async unhighlightWord(word, path) {
