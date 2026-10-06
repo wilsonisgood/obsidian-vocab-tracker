@@ -1,3 +1,4 @@
+import { DNA_TASKS } from "./dna";
 import { EMOJI_TASKS } from "./emoji";
 import { FAMILY_TASKS } from "./family";
 import { PARAGRAPH_TASKS } from "./paragraph";
@@ -40,5 +41,13 @@ export class TaskRegistry {
 }
 
 export function defaultTaskRegistry(): TaskRegistry {
-  return new TaskRegistry([...PARAGRAPH_TASKS, ...WORD_TASKS, ...FAMILY_TASKS, ...EMOJI_TASKS, ...VERB_TASKS, ...TRIVIA_TASKS]);
+  return new TaskRegistry([
+    ...PARAGRAPH_TASKS,
+    ...WORD_TASKS,
+    ...FAMILY_TASKS,
+    ...EMOJI_TASKS,
+    ...VERB_TASKS,
+    ...TRIVIA_TASKS,
+    ...DNA_TASKS,
+  ]);
 }

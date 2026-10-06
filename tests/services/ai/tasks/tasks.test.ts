@@ -377,7 +377,18 @@ describe("task registry", () => {
   it("gives quick-action tasks a label and leaves custom/background ones unlabeled", () => {
     // family.expand (09 §4/§5.1) and word.emoji (09 §4/§5.2) aren't
     // quick-action buttons: FamilyService/EmojiService call them directly.
-    const unlabeled = new Set(["trivia.followup", "family.expand", "word.emoji"]);
+    // The five dna.* tasks (09 §7) are all called directly by
+    // MorphemeService/DnaBlock too — none is a quick-action button.
+    const unlabeled = new Set([
+      "trivia.followup",
+      "family.expand",
+      "word.emoji",
+      "dna.analyze",
+      "dna.expand",
+      "dna.examples",
+      "dna.compare",
+      "dna.followup",
+    ]);
     for (const t of defaultTaskRegistry().all()) {
       expect(t.version).toBeGreaterThanOrEqual(1);
       expect(t.maxTokens).toBeGreaterThan(0);
