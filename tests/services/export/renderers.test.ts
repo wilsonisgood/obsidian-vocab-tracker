@@ -17,7 +17,7 @@ import { ARTICLE, ctx, labelsIn, FAMILIES, GLITTERY, GLITTERY_THREAD, LEOTARD, T
 // Snapshot tests of the exported Markdown (規劃書 06 §11): any change to
 // what lands in the user's vault shows up in review.
 
-const FULL: WordPageInput = { entry: GLITTERY, families: FAMILIES, usage: USAGE, trivia: TRIVIA, thread: GLITTERY_THREAD };
+const FULL: WordPageInput = { entry: GLITTERY, families: FAMILIES, usages: { v: USAGE }, trivia: TRIVIA, thread: GLITTERY_THREAD };
 const EMPTY: WordPageInput = { entry: { id: "x", word: "leotard" }, families: [], trivia: [] };
 
 const P12 = "Last time I was in a stadium this size, I was dancing in heels and wearing a glittery leotard.";
@@ -110,7 +110,7 @@ describe("word page renderer", () => {
     expect(hasWordPageContent(FULL)).toBe(true);
     expect(hasWordPageContent(EMPTY)).toBe(false);
     // Families or usage alone don't create a page (§8.2).
-    expect(hasWordPageContent({ ...EMPTY, families: FAMILIES, usage: USAGE })).toBe(false);
+    expect(hasWordPageContent({ ...EMPTY, families: FAMILIES, usages: { v: USAGE } })).toBe(false);
     // Saved trivia does.
     expect(hasWordPageContent({ entry: GLITTERY, families: [], trivia: [TRIVIA[0]] })).toBe(true);
     // A deleted favourite doesn't.
@@ -123,7 +123,7 @@ describe("word page renderer", () => {
   it("a saved verb usage creates the page and is dated in 用法 (1005 #4, #14; snapshot)", () => {
     const saved = { id: `verb:${GLITTERY.id}`, entryId: GLITTERY.id, createdAt: "2026-10-05T03:00:00.000Z" };
     const usage = { ...USAGE, createdAt: "2026-10-01T03:00:00.000Z", generatedAt: "2026-10-02T03:00:00.000Z" };
-    const input: WordPageInput = { entry: GLITTERY, families: [], trivia: [], usage, verbFavorites: [saved] };
+    const input: WordPageInput = { entry: GLITTERY, families: [], trivia: [], usages: { v: usage }, verbFavorites: [saved] };
     expect(hasWordPageContent(input)).toBe(true);
     // Another word's save, or an unsave, doesn't count.
     expect(hasWordPageContent({ ...input, verbFavorites: [{ ...saved, entryId: LEOTARD.id }] })).toBe(false);
@@ -133,6 +133,46 @@ describe("word page renderer", () => {
     expect(body(input, { ...ctx(), labels: labelsIn("en") })).toMatchSnapshot();
     // Not saved: only the generation date.
     expect(body({ ...input, verbFavorites: [] }).split("\n").at(-1)).toBe("*AI 產生於 10/02*");
+  });
+
+  it("splits 用法 into one subheading per part of speech, each with its own saved meta (1006-2 #19 #21)", () => {
+    const vUsage = { ...USAGE, generatedAt: "2026-10-02T03:00:00.000Z" };
+    const adjUsage = { ...USAGE, patterns: [{ pattern: "a glittery dress", meaningZh: "亮片洋裝", example: "" }], generatedAt: "2026-10-03T03:00:00.000Z" };
+    // Saved as 形容詞, not 動詞 — before the #21 fix, verbFavoriteOf()
+    // matched on entryId alone and this would have shown up as the verb's
+    // save instead.
+    const savedAdj = { id: "usage:g:adj", entryId: GLITTERY.id, pos: "adj" as const, createdAt: "2026-10-05T03:00:00.000Z" };
+    const input: WordPageInput = {
+      entry: GLITTERY,
+      families: [],
+      trivia: [],
+      usages: { v: vUsage, adj: adjUsage },
+      verbFavorites: [savedAdj],
+    };
+    const body = renderWordPageSections(input, ctx()).find((s) => s.name === "usage")!.body;
+    const vIndex = body.indexOf("### 動詞用法");
+    const adjIndex = body.indexOf("### 形容詞用法");
+    expect(vIndex).toBeGreaterThanOrEqual(0);
+    expect(adjIndex).toBeGreaterThan(vIndex);
+    // Only the adj section shows 已收藏; the v section only shows 產生於.
+    const vSection = body.slice(vIndex, adjIndex);
+    const adjSection = body.slice(adjIndex);
+    expect(vSection).toContain("*AI 產生於 10/02*");
+    expect(vSection).not.toContain("已收藏");
+    expect(adjSection).toContain("已收藏 10/05");
+  });
+
+  it("merges a legacy single-block `usage` under 動詞用法 (1006-2 #21)", () => {
+    const input: WordPageInput = { entry: GLITTERY, families: [], trivia: [], usages: { v: USAGE } };
+    const body = renderWordPageSections(input, ctx()).find((s) => s.name === "usage")!.body;
+    expect(body).toContain("### 動詞用法");
+    expect(body).toContain("glittery + 服裝 / 妝容");
+  });
+
+  it("shows the empty state when no part of speech has a usage block yet", () => {
+    const input: WordPageInput = { entry: GLITTERY, families: [], trivia: [] };
+    const body = renderWordPageSections(input, ctx()).find((s) => s.name === "usage")!.body;
+    expect(body).toBe("## 用法\n\n*還沒有用法。*");
   });
 
   it("picks families by entry id, or by word for plain members", () => {

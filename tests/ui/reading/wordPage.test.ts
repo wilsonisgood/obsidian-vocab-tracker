@@ -8,8 +8,9 @@ vi.mock("obsidian", () => ({
 }));
 
 import { getLocale, setLocale, type Locale } from "../../../src/core/i18n";
+import { POS_KEYS } from "../../../src/core/model/usage";
 import { renderWordPageFile } from "../../../src/services/export/renderers/wordPage";
-import { exportLabels } from "../../../src/services/export/labels";
+import { exportLabels, posOfUsageHeading, usagePosHeadings } from "../../../src/services/export/labels";
 import { sectionAtHeading, sectionByTitle, wordPageEntryId } from "../../../src/ui/reading/WordPageDecorator";
 import { dueLabel, findTarget, originFamilyId, originLabel, originView, sourceLabel, wordTarget } from "../../../src/ui/blocks/wordHeader";
 import type { Family } from "../../../src/core/model/family";
@@ -69,6 +70,25 @@ describe("WordPageDecorator", () => {
     expect(sectionByTitle(" 字族 ")).toBe("families");
     expect(sectionByTitle("AI 討論")).toBe("discussion");
     expect(sectionByTitle("我的筆記")).toBeNull();
+  });
+});
+
+describe("usage pos headings (1006-2 #19)", () => {
+  it("round-trips every part of speech's heading back to its pos key, in the current language", () => {
+    const headings = usagePosHeadings();
+    for (const pos of POS_KEYS) expect(posOfUsageHeading(headings[pos])).toBe(pos);
+  });
+
+  it("also recognises the other language's heading — a note written before a locale switch", () => {
+    setLocale("en");
+    const enHeadings = usagePosHeadings();
+    setLocale("zh-TW");
+    for (const pos of POS_KEYS) expect(posOfUsageHeading(enHeadings[pos])).toBe(pos);
+  });
+
+  it("returns null for a heading that isn't a pos subheading", () => {
+    expect(posOfUsageHeading("我的筆記")).toBeNull();
+    expect(posOfUsageHeading("")).toBeNull();
   });
 });
 

@@ -1,4 +1,5 @@
 import type { Thread } from "../../../core/model/thread";
+import { POS_KEYS, type PosKey } from "../../../core/model/usage";
 import { buildManagedFile, type ManagedSection } from "../managedBlock";
 import type { ExportFamily, ExportTrivia, ExportUsage, ExportVerbFavorite, RenderContext } from "../types";
 import { fill, frontmatter, inlineCode, italic, normalizeNewlines, oneLine, renderRounds, threadRounds, wordRef } from "./common";
@@ -13,8 +14,13 @@ export interface WordPageInput {
   entry: { id: string; word: string };
   // Every family; the ones this word belongs to are picked here.
   families: readonly ExportFamily[];
-  usage?: ExportUsage;
-  // Every saved verb usage (動詞用法收藏); this word's is picked here.
+  // This word's usage blocks, by part of speech (1006-2 #19 #21): merges
+  // any legacy single-block `usage` under "v" (see usagesOf() in
+  // core/model/usage.ts — the adapter at ExportService.ts's writeWord()
+  // uses it to build this).
+  usages?: Partial<Record<PosKey, ExportUsage>>;
+  // Every saved usage favorite (用法收藏), now per part of speech
+  // (1006-2 #21); this word's are picked here.
   verbFavorites?: readonly ExportVerbFavorite[];
   // Every saved trivia item; this word's own and the ones mentioning it
   // are picked here.
@@ -46,18 +52,25 @@ export function triviaMentioning(items: readonly ExportTrivia[], entry: { id: st
   return liveTrivia(items).filter((t) => mentionsEntry(t, entry));
 }
 
-export function verbFavoriteOf(input: Pick<WordPageInput, "verbFavorites" | "entry">): ExportVerbFavorite | undefined {
-  return input.verbFavorites?.find((v) => v.entryId === input.entry.id && !v.deletedAt);
+// A favorite for one specific part of speech (1006-2 #21: `verbFavoriteOf`
+// used to match on entryId alone, which meant any part of speech's
+// favorite looked like the verb's — fixed to also compare pos; absent
+// `pos` on the record means "v").
+export function usageFavoriteOf(
+  input: Pick<WordPageInput, "verbFavorites" | "entry">,
+  pos: PosKey
+): ExportVerbFavorite | undefined {
+  return input.verbFavorites?.find((v) => v.entryId === input.entry.id && !v.deletedAt && (v.pos ?? "v") === pos);
 }
 
-// Only pages with a discussion or something saved (trivia, the verb's
-// usage) are created on their own (§8.2); otherwise the page waits until
-// the user opens it.
+// Only pages with a discussion or something saved (trivia, a usage) are
+// created on their own (§8.2); otherwise the page waits until the user
+// opens it.
 export function hasWordPageContent(input: WordPageInput): boolean {
   return (
     threadRounds(input.thread).length > 0 ||
     triviaAbout(input.trivia, input.entry.id).length > 0 ||
-    !!verbFavoriteOf(input)
+    !!input.verbFavorites?.some((v) => v.entryId === input.entry.id && !v.deletedAt)
   );
 }
 
@@ -97,9 +110,9 @@ function usageMeta(usage: ExportUsage, saved: ExportVerbFavorite | undefined, ct
   return parts.length ? italic(parts.join(" · ")) : null;
 }
 
-function renderUsage(input: WordPageInput, ctx: RenderContext): string {
-  const usage = input.usage;
-  if (!usage || (!usage.patterns.length && !usage.related.length)) return italic(ctx.labels.usageEmpty);
+// One part of speech's patterns/related/meta — the body under its own
+// `### <詞性>用法` subheading (1006-2 #19).
+function renderUsageBlock(usage: ExportUsage, favorite: ExportVerbFavorite | undefined, ctx: RenderContext): string {
   const lines = usage.patterns.map((p) => {
     const item = [`- ${inlineCode(p.pattern)}`, oneLine(p.meaningZh)].filter(Boolean).join(" ");
     return p.example.trim() ? `${item}\n  - ${italic(oneLine(p.example))}` : item;
@@ -109,9 +122,30 @@ function renderUsage(input: WordPageInput, ctx: RenderContext): string {
     const related = usage.related.map((r) => (r.zh.trim() ? `${oneLine(r.phrase)}（${oneLine(r.zh)}）` : oneLine(r.phrase)));
     lines.push(`**${ctx.labels.usageRelated}**：${related.join(" · ")}`);
   }
-  const meta = usageMeta(usage, verbFavoriteOf(input), ctx);
+  const meta = usageMeta(usage, favorite, ctx);
   if (meta) lines.push("", meta);
   return lines.join("\n");
+}
+
+// The whole 「用法」 section: one `### <詞性>用法` subsection per part of
+// speech that has content, in POS_KEYS order (1006-2 #19). A legacy
+// single-block entry (pre-#21) lands under "v" via usagesOf()'s merge,
+// same as every other pos here — so it shows up under 動詞用法 like
+// before, just now with its own subheading.
+function renderUsage(input: WordPageInput, ctx: RenderContext): string {
+  const usages = input.usages ?? {};
+  const present = POS_KEYS.filter((pos) => {
+    const u = usages[pos];
+    return u && (u.patterns.length || u.related.length);
+  });
+  if (!present.length) return italic(ctx.labels.usageEmpty);
+  return present
+    .map((pos) => {
+      const heading = `### ${ctx.labels.usagePosHeading[pos]}`;
+      const body = renderUsageBlock(usages[pos]!, usageFavoriteOf(input, pos), ctx);
+      return [heading, "", body].join("\n");
+    })
+    .join("\n\n");
 }
 
 function renderTrivia(input: WordPageInput, ctx: RenderContext): string {

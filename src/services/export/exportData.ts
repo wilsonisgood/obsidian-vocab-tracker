@@ -63,12 +63,10 @@ export function createExportData(src: ExportDataSources): ExportDataPort {
       return threads.map((thread) => ({ thread, index: paragraphIndexOf(content, thread.anchor as ParagraphAnchor) }));
     },
     families: () => src.learn.families().filter((f) => !f.deletedAt),
-    // Wave 8 U1 (1006-2 #21): usage is per pos now; the word page's usage
-    // export (ExportVerbFavorite/ExportUsage, services/export/types.ts)
-    // is still verb-only this wave — U2 owns the per-pos export.
-    usage: (entryId) => {
+    // 1006-2 #19 #21: every part of speech's usage block, not just "v".
+    usages: (entryId) => {
       const e = entry(entryId);
-      return e && usagesOf(e).v;
+      return e ? usagesOf(e) : {};
     },
     trivia: () => src.learn.trivia().filter((t) => !t.deletedAt),
     verbFavorites: () => (src.learn.verbFavorites?.() ?? []).filter((v) => !v.deletedAt),

@@ -316,7 +316,7 @@ describe("word pages", () => {
       wordThread: () => state.thread,
       paragraphThreads: async () => [],
       families: () => [],
-      usage: () => undefined,
+      usages: () => ({}),
       trivia: () => [],
     };
     // Wired as in main.ts: ExportService's folders come from the files

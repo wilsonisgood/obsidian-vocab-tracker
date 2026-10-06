@@ -86,8 +86,8 @@ describe("createExportData", () => {
     expect(data.entries()).toEqual([live]);
     expect(data.entry("1")).toBe(live);
     expect(data.entry("2")).toBeUndefined();
-    expect(data.usage("1")).toBe(live.usage);
-    expect(data.usage("2")).toBeUndefined();
+    expect(data.usages("1")).toEqual({ v: live.usage });
+    expect(data.usages("2")).toEqual({});
     expect(data.families().map((f) => f.id)).toEqual(["f1"]);
     expect(data.trivia().map((t) => t.id)).toEqual(["t1"]);
     expect(data.wordThread(GLITTERY_THREAD.anchor.kind === "word" ? GLITTERY_THREAD.anchor.entryId : "")).toBe(GLITTERY_THREAD);

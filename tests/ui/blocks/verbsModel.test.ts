@@ -2,11 +2,14 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getLocale, setLocale, type Locale } from "../../../src/core/i18n";
 import type { UsageBlock } from "../../../src/core/model/usage";
 import {
+  entriesWithUsage,
+  filterByActivePos,
   filterVerbs,
   noteName,
   parseVerbsParams,
   phoneticLine,
   pickVerb,
+  posChipsIn,
   shortDate,
   usageDates,
   usageMeta,
@@ -49,11 +52,41 @@ describe("filterVerbs", () => {
 describe("pickVerb", () => {
   const verbs = [entry("1", "expel"), entry("2", "sugarcoat", { usage }), entry("3", "toil")];
 
-  it("keeps the selection, else opens the first verb with usage, else the first", () => {
+  it("keeps the selection while it's listed, else opens the first row", () => {
     expect(pickVerb(verbs, "3")).toBe("3");
-    expect(pickVerb(verbs, "gone")).toBe("2");
+    expect(pickVerb(verbs, "gone")).toBe("1");
     expect(pickVerb([entry("1", "expel")], undefined)).toBe("1");
     expect(pickVerb([], "1")).toBeUndefined();
+  });
+});
+
+describe("entriesWithUsage (1006-2 #22)", () => {
+  it("keeps only words with a usage block for some part of speech, any pos, legacy included", () => {
+    const withV = entry("1", "sugarcoat", { usage });
+    const withAdj = entry("2", "glittery", { usages: { adj: { ...usage, patterns: [], related: [] } } });
+    const none = entry("3", "toil");
+    expect(entriesWithUsage([withV, withAdj, none]).map((e) => e.id)).toEqual(["1", "2"]);
+  });
+});
+
+describe("posChipsIn / filterByActivePos (1006-2 #22)", () => {
+  const verb = entry("1", "sugarcoat", { usage });
+  const adj = entry("2", "glittery", { usages: { adj: usage } });
+  const both = entry("3", "fast", { usage, usages: { adv: usage } });
+
+  it("lists only the parts of speech actually present, in POS_KEYS order", () => {
+    expect(posChipsIn([verb, adj])).toEqual(["v", "adj"]);
+    expect(posChipsIn([both])).toEqual(["v", "adv"]);
+    expect(posChipsIn([])).toEqual([]);
+  });
+
+  it("keeps a word if any one of its parts of speech is lit, not all of them", () => {
+    const active = new Set(["adj" as const]);
+    expect(filterByActivePos([verb, adj, both], active).map((e) => e.id)).toEqual(["2"]);
+    const none = new Set<"v" | "adj" | "adv">();
+    expect(filterByActivePos([verb, adj, both], none)).toEqual([]);
+    const all = new Set(["v", "adj", "adv"] as const);
+    expect(filterByActivePos([verb, adj, both], all).map((e) => e.id)).toEqual(["1", "2", "3"]);
   });
 });
 

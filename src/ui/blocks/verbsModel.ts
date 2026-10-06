@@ -1,10 +1,11 @@
 import type { VocabEntry } from "../../core/model/entry";
-import { usagesOf, type UsageBlock } from "../../core/model/usage";
+import { POS_KEYS, usagesOf, type PosKey, type UsageBlock } from "../../core/model/usage";
 import { datesText, recordDates } from "../kit/dates";
 import { parseBlockParams } from "./params";
 
-// View-models for the vocab-verbs block (規劃書 06 §7.3, screen L6). Pure —
-// no "obsidian" import — so it's unit-tested.
+// View-models for the vocab-verbs block (規劃書 06 §7.3, screen L6; wave 8
+// U2 — 用法總表, any part of speech, 1006-2 回饋 #22). Pure — no "obsidian"
+// import — so it's unit-tested.
 
 export interface VerbsParams {
   // Single-verb mode (word page): just this verb's usage, no list.
@@ -24,14 +25,35 @@ export function filterVerbs(verbs: readonly VocabEntry[], query: string): VocabE
   return verbs.filter((e) => e.word.toLowerCase().includes(q) || (e.definitionZh ?? "").toLowerCase().includes(q));
 }
 
-// Keeps the selection while it's still listed; otherwise the first verb
-// with usage (so the page opens on something to read), else the first.
+// Keeps the selection while it's still listed; otherwise the first row.
+// Wave 8 U2 (1006-2 #22): the list itself is already filtered to entries
+// with some usage (entriesWithUsage() below), so a "prefer one with
+// usage" tie-break is no longer needed here.
 export function pickVerb(verbs: readonly VocabEntry[], current: string | undefined): string | undefined {
   if (current && verbs.some((e) => e.id === current)) return current;
-  // Wave 8 U1 (1006-2 #21): usage is per pos now; this block only ever
-  // shows verbs, so "has usage" still means pos "v" (usagesOf() merges
-  // the legacy entry.usage field in).
-  return (verbs.find((e) => usagesOf(e).v) ?? verbs[0])?.id;
+  return verbs[0]?.id;
+}
+
+// 「用法」總表's base list (1006-2 #22): only words with a usage block for
+// some part of speech — not just verbs any more (usagesOf() merges the
+// legacy single-block `usage` field under "v").
+export function entriesWithUsage(entries: readonly VocabEntry[]): VocabEntry[] {
+  return entries.filter((e) => Object.keys(usagesOf(e)).length > 0);
+}
+
+// The parts of speech actually present among `entries`' usage blocks, in
+// POS_KEYS order — what the pos chip row offers (1006-2 #22: "只顯示目前
+// 列表裡有出現的詞性").
+export function posChipsIn(entries: readonly VocabEntry[]): PosKey[] {
+  const present = new Set<PosKey>();
+  for (const e of entries) for (const pos of Object.keys(usagesOf(e))) present.add(pos as PosKey);
+  return POS_KEYS.filter((k) => present.has(k));
+}
+
+// Pos-chip filter (1006-2 #22): a word only needs one lit ("active") part
+// of speech with a usage block to stay in the list — not all of them.
+export function filterByActivePos(entries: readonly VocabEntry[], active: ReadonlySet<PosKey>): VocabEntry[] {
+  return entries.filter((e) => Object.keys(usagesOf(e)).some((pos) => active.has(pos as PosKey)));
 }
 
 // "eng/Cadence_Gao_School_Speech_Transcript.md" → "Cadence_Gao_School_Speech_Transcript".

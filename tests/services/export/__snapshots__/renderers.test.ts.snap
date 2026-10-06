@@ -101,6 +101,8 @@ glow、gleam、glint、glare、glimmer 都跟光有關。
 exports[`word page renderer > a saved verb usage creates the page and is dated in 用法 (1005 #4, #14; snapshot) 1`] = `
 "## 用法
 
+### 動詞用法
+
 - \`glittery + 服裝 / 妝容\` 最常見的搭配，帶亮片、閃粉的感覺
   - *a glittery dress, glittery eyeshadow*
 - \`glittery + 抽象名詞\` 比喻光鮮亮麗，常帶一點「表面風光」的語氣
@@ -113,6 +115,8 @@ exports[`word page renderer > a saved verb usage creates the page and is dated i
 
 exports[`word page renderer > a saved verb usage creates the page and is dated in 用法 (1005 #4, #14; snapshot) 2`] = `
 "## Usage
+
+### Verb usage
 
 - \`glittery + 服裝 / 妝容\` 最常見的搭配，帶亮片、閃粉的感覺
   - *a glittery dress, glittery eyeshadow*
@@ -211,6 +215,8 @@ exports[`word page renderer > renders every section (snapshot) 1`] = `
 [usage]
 ## 用法
 
+### 動詞用法
+
 - \`glittery + 服裝 / 妝容\` 最常見的搭配，帶亮片、閃粉的感覺
   - *a glittery dress, glittery eyeshadow*
 - \`glittery + 抽象名詞\` 比喻光鮮亮麗，常帶一點「表面風光」的語氣
@@ -278,6 +284,8 @@ vocab-tracker-id: "1721900000000"
 
 %% vt:begin usage %%
 ## 用法
+
+### 動詞用法
 
 - \`glittery + 服裝 / 妝容\` 最常見的搭配，帶亮片、閃粉的感覺
   - *a glittery dress, glittery eyeshadow*
