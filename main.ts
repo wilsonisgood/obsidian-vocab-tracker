@@ -26,6 +26,7 @@ import { merge } from "./src/core/store/merge";
 import { updateSourcePaths } from "./src/core/store/updateSourcePaths";
 import { nowStamp } from "./src/core/nowStamp";
 import { VocabSidebarView, VOCAB_VIEW_TYPE } from "./src/ui/sidebar/VocabSidebarView";
+import { GalaxyView, GALAXY_VIEW_TYPE } from "./src/ui/galaxy/GalaxyView";
 import { registerBlocks } from "./src/ui/blocks/registry";
 import { SrsService } from "./src/services/srs/SrsService";
 import { resolveLocale, setLocale, t } from "./src/core/i18n";
@@ -403,6 +404,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       VOCAB_VIEW_TYPE,
       (leaf) => new VocabSidebarView(leaf, this)
     );
+    // Full-screen Word Galaxy (09 §6.1), opened by a galaxy block's 展開.
+    this.registerView(GALAXY_VIEW_TYPE, (leaf) => new GalaxyView(leaf, this));
 
     // iPhone: word cards and paragraph discussions open in a bottom sheet
     // instead (WordSurfaces decides per call; iPad/desktop keep the sidebar).

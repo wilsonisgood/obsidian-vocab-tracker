@@ -40,6 +40,8 @@ export const BLOCKS: readonly BlockDef[] = [
   { lang: WORD_BLOCK_LANG, render: renderWordHeader },
   // M7 (規劃書 06 §7): 字族樹, 動詞用法, 冷知識.
   { lang: "vocab-families", render: renderFamilies },
+  // Same block under the name the galaxy redesign uses (09 〔A2〕).
+  { lang: "vocab-galaxy", render: renderFamilies },
   { lang: "vocab-verbs", render: renderVerbs },
   { lang: "vocab-trivia", render: renderTrivia },
   // Wave 9 (規劃書 09 §7): Word DNA — morpheme breakdown, timeline, 冷知識.
