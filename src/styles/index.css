@@ -12,5 +12,6 @@
 @import "./wordRow8.css";
 @import "./chips.css";
 @import "./locate.css";
+@import "./galaxy.css";
 /* Last: its is-mobile / is-phone / is-tablet rules override the above. */
 @import "./mobile.css";
