@@ -12,6 +12,7 @@
 // （findOccurrences 等），這裡只處理「怎麼在目前這篇筆記的畫面上呈現」。
 
 import { MarkdownView, Notice, type App } from "obsidian";
+import { t } from "../../core/i18n";
 import {
   findOccurrences,
   matchesWord,
@@ -21,12 +22,6 @@ import {
   type Occurrence,
 } from "../../core/text/occurrences";
 import type { VocabEntry } from "../../core/model/entry";
-
-// main.ts／i18n 共用檔還沒接上正式字串，先用暫時的 const L（整合事項：搬進
-// src/core/i18n/{zh-TW,en}.ts，例如 key "locate.notInNote"）。
-const L = {
-  notInNote: "這篇沒有出現",
-};
 
 export interface WordLocator {
   // (#7) 捲到目前筆記裡這個字的位置；同一個字再點一次跳到下一處（循環）。
@@ -188,7 +183,7 @@ export function createWordLocator(app: App, opts: { inflections: () => boolean }
     const markdown = view.getViewData();
     const occurrences = findOccurrences(markdown, entry.word, opts.inflections());
     if (occurrences.length === 0) {
-      new Notice(L.notInNote); // (#9)
+      new Notice(t("locate.notInNote")); // (#9)
       return null;
     }
     return { view, path, occurrences };

@@ -6,16 +6,6 @@ import { tagLabel } from "../../core/wordlists/parse";
 import { examTags } from "../../core/model/like";
 import type { FilterMode } from "./sections";
 
-// Wave 8 S (1006-2 #1): new strings — `t()` doesn't have these keys yet
-// (src/core/i18n/{zh-TW,en}.ts is a shared file, see the wave's report for
-// the integration patch). zh-TW text chosen to match the existing
-// "like.like"/"like.unlike" wording.
-const L = {
-  likeChip: "Like",
-  likeChipHide: "隱藏「Like」篩選",
-  likeChipShow: "顯示「Like」篩選",
-};
-
 // ── Shared chip-row component (1006-2 #4, #5, #6) ──────────────────────
 //
 // Reused by the sidebar (renderExamStrip below), the vocab-list dashboard
@@ -94,12 +84,12 @@ export function likeChipSpec(plugin: VocabTrackerPlugin, settings: WordlistSetti
   const on = likeChipOn(settings);
   return {
     key: "like",
-    label: L.likeChip,
+    label: t("like.filter.chip"),
     count,
     on,
     icon: "heart",
-    ariaOn: L.likeChipHide,
-    ariaOff: L.likeChipShow,
+    ariaOn: t("like.filter.hide"),
+    ariaOff: t("like.filter.show"),
     onClick: () => void plugin.updateWordlistSettings({ likeEnabled: !on }),
   };
 }

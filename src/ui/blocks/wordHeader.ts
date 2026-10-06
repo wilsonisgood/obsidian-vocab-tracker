@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { getLocale, t } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { originFamilyId, type Family } from "../../core/model/family";
 import { noteBasename } from "../../core/text/slug";
@@ -11,15 +11,6 @@ import { bindPronounceButton } from "../kit/pronounce";
 import { autoGrowTextarea, commitEntryField, type EditableField, type FieldStore } from "../word/rowModel";
 import { familyTitle, focusFamily } from "./familiesModel";
 import { parseBlockParams } from "./params";
-
-// 1006-2 #12: 音標、詞性還沒有 row.field.* 這一類的 i18n key — 先用本機暫時
-// 字串，整合時併入 src/core/i18n/{zh-TW,en}.ts（跟其他欄位標籤同一個前綴：
-// row.field.phonetic / row.field.partOfSpeech）。寫成函式而不是算好的字面值，
-// 這樣使用者在設定裡切換語言後這裡也會跟著變。
-const L = {
-  phonetic: (): string => (getLocale() === "zh-TW" ? "音標" : "Phonetic"),
-  partOfSpeech: (): string => (getLocale() === "zh-TW" ? "詞性" : "Part of speech"),
-};
 
 // ── vocab-word code block: the header of a word page (規劃書 06 §8.2, W1/W2) ──
 //
@@ -222,8 +213,8 @@ class WordHeaderBlock extends MarkdownRenderChild {
     // word; the row doesn't show either any more, so both are editable
     // here now, same small-field treatment as everything below.
     const metaFields = root.createDiv({ cls: "vt-wh-metafields" });
-    this.field(metaFields, entry, "phonetic", L.phonetic());
-    this.field(metaFields, entry, "partOfSpeech", L.partOfSpeech());
+    this.field(metaFields, entry, "phonetic", t("row.field.phonetic"));
+    this.field(metaFields, entry, "partOfSpeech", t("row.field.partOfSpeech"));
 
     // 英文定義、中文定義、同義字、反義字、例句、文法提示、程度 (1006-2 #12):
     // all editable here now — the row only keeps 英文定義/中文定義 and a
