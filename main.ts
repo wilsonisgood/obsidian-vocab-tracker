@@ -78,6 +78,7 @@ import { actionNotice } from "./src/ui/mobile/actionNotice";
 import { LivePreviewHint } from "./src/ui/mobile/livePreviewHint";
 import { sharedSpeaker, type Speaker } from "./src/ui/mobile/speech";
 import { configurePronouncer, disposePronouncer } from "./src/ui/kit/pronounce";
+import { flushUndoables } from "./src/ui/kit/undoable";
 import { ObsidianDeviceState } from "./src/platform/ObsidianDevice";
 import { BackupService } from "./src/services/backup/BackupService";
 import type { RestoreChanges } from "./src/core/ports";
@@ -464,6 +465,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // Stop any 🔊 playback and release cached recordings.
     disposePronouncer();
     this.unloaded = true;
+    // Any pending undoable delete (row.ts's 10 秒復原窗) sends now, before
+    // the services it would write to go away.
+    flushUndoables();
     // Threads first: it saves in-flight answers as stopped with their text
     // so far, before ai.dispose() aborts the requests.
     this.threads?.dispose();
