@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { t } from "../../core/i18n";
+import { getLocale, t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { originFamilyId, type Family } from "../../core/model/family";
 import { noteBasename } from "../../core/text/slug";
@@ -8,8 +8,18 @@ import { isNewCard, startOfLocalDay } from "../../services/srs/queue";
 import { datesText, recordDates } from "../kit/dates";
 import { inlineNote } from "../kit/inlineNote";
 import { bindPronounceButton } from "../kit/pronounce";
+import { autoGrowTextarea, commitEntryField, type EditableField, type FieldStore } from "../word/rowModel";
 import { familyTitle, focusFamily } from "./familiesModel";
 import { parseBlockParams } from "./params";
+
+// 1006-2 #12: 音標、詞性還沒有 row.field.* 這一類的 i18n key — 先用本機暫時
+// 字串，整合時併入 src/core/i18n/{zh-TW,en}.ts（跟其他欄位標籤同一個前綴：
+// row.field.phonetic / row.field.partOfSpeech）。寫成函式而不是算好的字面值，
+// 這樣使用者在設定裡切換語言後這裡也會跟著變。
+const L = {
+  phonetic: (): string => (getLocale() === "zh-TW" ? "音標" : "Phonetic"),
+  partOfSpeech: (): string => (getLocale() === "zh-TW" ? "詞性" : "Part of speech"),
+};
 
 // ── vocab-word code block: the header of a word page (規劃書 06 §8.2, W1/W2) ──
 //
@@ -38,7 +48,9 @@ export interface WordHeaderHost {
   store: {
     readonly entries: readonly VocabEntry[];
     readonly events: { on(event: "data:changed", fn: () => void): () => void };
-  };
+  } & FieldStore; // 1006-2 #12: the word page's fields save through the
+  // same path as WordRow's (rowModel.ts's commitEntryField) — no main.ts
+  // wiring needed, VocabTrackerPlugin.store already has setLiked/touch.
   // Frontmatter of a note, when ctx.frontmatter isn't there (metadataCache).
   frontmatterOf(path: string): Record<string, unknown> | null | undefined;
   jumpToSource(entry: VocabEntry): unknown;
@@ -166,7 +178,17 @@ class WordHeaderBlock extends MarkdownRenderChild {
     // The plugin's reading-mode click handler would otherwise offer to add
     // whatever word was clicked in the header.
     this.registerDomEvent(this.containerEl, "click", (e) => e.stopPropagation());
-    this.register(this.host.store.events.on("data:changed", () => this.render()));
+    // A change from elsewhere (dictionary data arriving, a sync) redraws —
+    // except while the user is mid-edit in one of this block's own fields,
+    // same guard as WordSheet's (1006-2 #12 added text fields here; this
+    // block had nothing worth not losing before that).
+    this.register(
+      this.host.store.events.on("data:changed", () => {
+        const active = this.containerEl.ownerDocument?.activeElement;
+        if (active && this.containerEl.contains(active)) return;
+        this.render();
+      })
+    );
     this.render();
     // The origin chip names the family once learn.json is in.
     const entry = findTarget(this.host.store.entries, this.target);
@@ -192,14 +214,28 @@ class WordHeaderBlock extends MarkdownRenderChild {
 
     const top = root.createDiv({ cls: "vt-wh-top" });
     top.createSpan({ cls: "vt-wh-word", text: entry.word });
-    const meta = [entry.phonetic, entry.partOfSpeech].map((s) => s?.trim()).filter(Boolean).join(" · ");
-    if (meta) top.createSpan({ cls: "vt-wh-meta", text: meta });
     const speak = top.createEl("button", { cls: ["clickable-icon", "vt-wh-speak"], attr: { "aria-label": l("speak") } });
     setIcon(speak, "volume-2");
     bindPronounceButton(speak, entry);
 
-    const def = entry.definitionZh?.trim() || entry.definition?.trim();
-    if (def) root.createDiv({ cls: "vt-wh-def", text: def });
+    // 音標、詞性 (1006-2 #12): used to be one read-only line under the
+    // word; the row doesn't show either any more, so both are editable
+    // here now, same small-field treatment as everything below.
+    const metaFields = root.createDiv({ cls: "vt-wh-metafields" });
+    this.field(metaFields, entry, "phonetic", L.phonetic());
+    this.field(metaFields, entry, "partOfSpeech", L.partOfSpeech());
+
+    // 英文定義、中文翻译、同義字、反義字、例句、文法提示、程度 (1006-2 #12):
+    // all editable here now — the row only keeps 英文定義/中文翻译 and a
+    // read-only 程度 chip, everything else moved here entirely.
+    const fields = root.createDiv({ cls: "vt-wh-fields" });
+    this.field(fields, entry, "definition", t("row.field.definition"), { multiline: true });
+    this.field(fields, entry, "definitionZh", t("row.field.definitionZh"), { multiline: true });
+    this.field(fields, entry, "synonyms", t("row.field.synonyms"), { multiline: true });
+    this.field(fields, entry, "antonyms", t("row.field.antonyms"), { multiline: true });
+    this.field(fields, entry, "example", t("row.field.example"), { multiline: true });
+    this.field(fields, entry, "grammar", t("row.field.grammar"), { multiline: true });
+    this.field(fields, entry, "level", t("row.field.level"), { multiline: true });
 
     const chips = root.createDiv({ cls: "vt-wh-chips" });
     if (entry.source?.path) this.renderSource(chips, entry, entry.source.path, entry.source.line);
@@ -217,6 +253,47 @@ class WordHeaderBlock extends MarkdownRenderChild {
       setIcon(btn.createSpan({ cls: "vt-wh-btn-icon" }), "layers");
       btn.createSpan({ text: l("review") });
       btn.addEventListener("click", () => void review.call(this.host, entry));
+    }
+  }
+
+  // One editable field (1006-2 #12) — same save path as WordRow's own
+  // fields (rowModel.ts's commitEntryField: first edit on an unliked word
+  // also likes it, same as any other auto-like trigger). The container's
+  // own click listener (onload above) already stops a click from reaching
+  // the plugin's reading-mode handler, so fields here don't need their
+  // own stopPropagation the way WordRow's do sitting inside a clickable
+  // row header.
+  private field(
+    parent: HTMLElement,
+    entry: VocabEntry,
+    key: EditableField,
+    placeholder: string,
+    opts: { multiline?: boolean } = {}
+  ): void {
+    const value = entry[key] ?? "";
+    const wrap = parent.createDiv({ cls: "vt-field" });
+    if (value) wrap.addClass("is-filled");
+    const cls = ["vt-input", "vt-field-box"];
+    if (opts.multiline) cls.push("vt-textarea");
+
+    const commit = (next: string) => {
+      void commitEntryField(this.host.store, entry, key, next).then(() => this.render());
+    };
+
+    if (opts.multiline) {
+      const inp = wrap.createEl("textarea", { cls });
+      inp.rows = 1;
+      inp.value = value;
+      inp.placeholder = placeholder;
+      autoGrowTextarea(inp);
+      inp.addEventListener("input", () => autoGrowTextarea(inp));
+      inp.onchange = () => commit(inp.value);
+    } else {
+      const inp = wrap.createEl("input", { cls });
+      inp.type = "text";
+      inp.value = value;
+      inp.placeholder = placeholder;
+      inp.onchange = () => commit(inp.value);
     }
   }
 

@@ -1,0 +1,49 @@
+/* ── 第八波 R1 (1006-2 #10–#14): a row's reduced data tab + chip-style
+   程度, and the word page fields that absorbed everything the row gave up.
+   整合時併入 src/styles/index.css（跟其他波次一樣）. ───────────────────── */
+
+/* 程度：non-sheet row, read-only chips (#12) — sidebar.css's .vt-row-badge
+   is the part-of-speech badge in the header; this is its own look so the
+   two aren't mistaken for each other at a glance. */
+.vt-row-level-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 2px 0 6px;
+}
+
+.vt-row-level-chip {
+  font-size: 0.78em;
+  padding: 1px 7px;
+  border-radius: var(--radius-s, 4px);
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+/* ── Word page (wordHeader.ts): 音標／詞性 editable, side by side under
+   the word — a smaller field than the full-width ones below, so two sit
+   on one line instead of each claiming the row to itself. */
+.vt-wh-metafields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 2px 0 10px;
+  max-width: 320px;
+}
+
+.vt-wh-metafields .vt-field {
+  flex: 1 1 120px;
+  margin-bottom: 0;
+}
+
+/* 英文定義／中文翻译／同義字／反義字／例句／文法提示／程度 — all editable
+   here now (#12); same field chrome WordRow's own fields use (kit.css's
+   .vt-field-box, sidebar.css's .vt-field spacing), just a touch more room
+   between them than the row's tighter list. */
+.vt-wh-fields {
+  margin: 4px 0 14px;
+}
+
+.vt-wh-fields .vt-field {
+  margin-bottom: 8px;
+}
