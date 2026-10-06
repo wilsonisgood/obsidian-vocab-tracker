@@ -6202,33 +6202,34 @@ function lemmaCandidates(lower) {
 
 // src/core/text/noteWords.ts
 var WORD_RE2 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
-function noteHasWord(markdown, word, inflections) {
-  const target = word.trim().toLowerCase();
-  if (!target) return false;
+function noteWordSet(markdown, inflections) {
+  const words = /* @__PURE__ */ new Set();
   for (const line of proseLines(markdown)) {
     for (const m of line.matchAll(WORD_RE2)) {
       const lower = m[0].toLowerCase();
-      if (lower === target) return true;
-      if (inflections && lemmaCandidates(lower).includes(target)) return true;
+      if (words.has(lower)) continue;
+      words.add(lower);
+      if (inflections) for (const c of lemmaCandidates(lower)) words.add(c);
     }
   }
-  return false;
+  return words;
 }
 
 // src/ui/sidebar/noteScope.ts
-function inHits(word, hits) {
-  const lower = word.toLowerCase();
-  return hits.some((h) => h.word.toLowerCase() === lower);
-}
 function computeNoteScope(entries, hits, noteText, inflections) {
+  const hitWords = new Set(hits.map((h) => h.word.toLowerCase()));
+  let noteWords;
   const ids = /* @__PURE__ */ new Set();
   for (const entry of entries) {
     if (entry.deletedAt) continue;
-    if (inHits(entry.word, hits)) {
+    const lower = entry.word.trim().toLowerCase();
+    if (hitWords.has(lower)) {
       ids.add(entry.id);
       continue;
     }
-    if (entry.liked && noteText != null && noteHasWord(noteText, entry.word, inflections)) {
+    if (!entry.liked || noteText == null || !lower) continue;
+    noteWords != null ? noteWords : noteWords = noteWordSet(noteText, inflections);
+    if (noteWords.has(lower)) {
       ids.add(entry.id);
     }
   }
