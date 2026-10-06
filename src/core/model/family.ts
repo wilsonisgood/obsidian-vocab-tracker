@@ -11,6 +11,11 @@ export interface FamilyMember {
   entryId?: string;
   word: string;
   zh: string;
+  // Wave 9 F (09 §2 決定 1, A7) — shown beside the member in the galaxy /
+  // DNA views. Mirrors wordMeta's emoji but lives on the family so a
+  // suggestion with no entryId (nothing to key a wordMeta by) still gets
+  // one.
+  emoji?: string;
 }
 
 export interface FamilyGroup {
@@ -42,6 +47,9 @@ export interface Family extends Record_ {
   // Size of the vocab list when the AI grouped it, so L5 can offer
   // 「有新單字，要重新分群嗎」 once the list has grown by 20% (§7.2).
   entryCountAtGenerate?: number;
+  // Wave 9 F (09 §2 決定 1, A7) — the family's own emoji (galaxy center
+  // node).
+  emoji?: string;
 }
 
 // VocabEntry.origin for words added from a family (「來源標記為字族：clothing」).

@@ -13,7 +13,10 @@ export type Anchor =
   // origin: the note the word was captured from, for 「出自 ¶12」 and the
   // prompt's source paragraph.
   | { kind: "word"; entryId: string; origin?: { path: string; blockId?: string } }
-  | { kind: "trivia-session" };
+  | { kind: "trivia-session" }
+  // Wave 9 DS/DU (A9) — one DNA discussion thread per morpheme, threadId
+  // morphemeThreadId(morphemeId) (core/model/morpheme.ts).
+  | { kind: "morpheme"; morphemeId: string };
 
 export type TurnStatus = "done" | "streaming" | "error" | "aborted";
 

@@ -1,4 +1,5 @@
 import type { FamilyOrigin } from "./family";
+import type { DnaOrigin } from "./morpheme";
 import type { SrsCard } from "./srs";
 import type { PosKey, UsageBlock } from "./usage";
 import type { PluginSettings } from "./settings";
@@ -53,8 +54,10 @@ export interface VocabEntry extends Record_ {
   srs?: SrsCard;
   // How the word got here. Absent = added by hand (click in reading view);
   // "wordlist" = auto-imported from an exam word list match;
-  // "family:<id>" = added from a word family's suggestions (規劃書 06 §7.2).
-  origin?: "wordlist" | FamilyOrigin;
+  // "family:<id>" = added from a word family's suggestions (規劃書 06 §7.2);
+  // "dna:<id>" = added from a morpheme's suggestions (規劃書 09, A9's
+  // addSuggested()).
+  origin?: "wordlist" | FamilyOrigin | DnaOrigin;
   // Legacy single usage block (pre-1006-2 #21, always meant the verb's
   // usage). Superseded by `usages` (keyed by part of speech) — kept only
   // so old data/devices still type-check and merge; read both through

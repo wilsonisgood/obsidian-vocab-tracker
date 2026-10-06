@@ -1,7 +1,9 @@
 import { TypedEmitter } from "../../core/events";
 import type { Family } from "../../core/model/family";
+import type { Morpheme } from "../../core/model/morpheme";
 import type { TriviaItem } from "../../core/model/trivia";
 import { usageFavoriteId, verbFavoriteId, type PosKey, type VerbFavorite } from "../../core/model/usage";
+import type { WordMeta } from "../../core/model/wordMeta";
 import type { StoragePort } from "../../core/ports";
 import {
   dropOldTombstones,
@@ -27,6 +29,9 @@ export interface LearnEvents {
   "family:upsert": Family;
   "trivia:upsert": TriviaItem;
   "verbFavorite:upsert": VerbFavorite;
+  // Word DNA (規劃書 09 §2 決定 1).
+  "morpheme:upsert": Morpheme;
+  "wordMeta:upsert": WordMeta;
   // Families/trivia were replaced by a merge with the disk copy (sync).
   "learn:reloaded": void;
 }
@@ -229,13 +234,77 @@ export class LearnStore {
     for (const fav of this.usageFavoritesFor(entryId)) this.unfavoriteUsage(entryId, fav.pos ?? "v");
   }
 
+  // ── Word DNA — morphemes (規劃書 09 §2 決定 1) ───────────────────
+  //
+  // Not deduped here: dedupeMorphemes() only needs to run on a
+  // multi-device merge (mergeLearn, called from ensureLoaded/reload/write),
+  // so a single device coining morphemes one at a time never pays for it.
+
+  private get morphemeList(): Morpheme[] {
+    return (this.data.morphemes ??= []);
+  }
+
+  // Includes records redirected by a merge (mergedInto) — callers resolve
+  // through resolveMorphemeId() themselves, same as the interface note.
+  morphemes(): Morpheme[] {
+    return this.morphemeList.filter((m) => !m.deletedAt);
+  }
+
+  morpheme(id: string): Morpheme | undefined {
+    return this.morphemeList.find((m) => m.id === id && !m.deletedAt);
+  }
+
+  putMorpheme(m: Morpheme): Morpheme {
+    this.stamp(m);
+    this.upsert(this.morphemeList, m);
+    this.events.emit("morpheme:upsert", m);
+    this.scheduleWrite();
+    return m;
+  }
+
+  deleteMorpheme(id: string): void {
+    const m = this.morpheme(id);
+    if (!m) return;
+    m.deletedAt = this.nowIso();
+    this.putMorpheme(m);
+  }
+
+  // ── Word DNA — per-word emoji/breakdown (決定 1) ─────────────────
+
+  private get wordMetaList(): WordMeta[] {
+    return (this.data.wordMeta ??= []);
+  }
+
+  wordMeta(entryId: string): WordMeta | undefined {
+    return this.wordMetaList.find((w) => w.id === entryId && !w.deletedAt);
+  }
+
+  allWordMeta(): WordMeta[] {
+    return this.wordMetaList.filter((w) => !w.deletedAt);
+  }
+
+  putWordMeta(m: WordMeta): WordMeta {
+    this.stamp(m);
+    this.upsert(this.wordMetaList, m);
+    this.events.emit("wordMeta:upsert", m);
+    this.scheduleWrite();
+    return m;
+  }
+
+  deleteWordMeta(entryId: string): void {
+    const m = this.wordMeta(entryId);
+    if (!m) return;
+    m.deletedAt = this.nowIso();
+    this.putWordMeta(m);
+  }
+
   // ── Persistence ───────────────────────────────────────────────
 
   private nowIso(): string {
     return this.clock().toISOString();
   }
 
-  private stamp(rec: Family | TriviaItem | VerbFavorite): void {
+  private stamp(rec: Family | TriviaItem | VerbFavorite | Morpheme | WordMeta): void {
     const now = this.nowIso();
     rec.createdAt = rec.createdAt ?? now;
     rec.updatedAt = now;
@@ -266,6 +335,8 @@ export class LearnStore {
         families: dropOldTombstones(merged.families, now),
         trivia: dropOldTombstones(merged.trivia, now),
         verbs: dropOldTombstones(merged.verbs ?? [], now),
+        morphemes: dropOldTombstones(merged.morphemes ?? [], now),
+        wordMeta: dropOldTombstones(merged.wordMeta ?? [], now),
       };
       await this.deps.storage.writeShard<LearnShard>(LEARN_SHARD, this.data);
     } catch (e) {

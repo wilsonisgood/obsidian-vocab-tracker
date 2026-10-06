@@ -51,7 +51,7 @@ describe("parseBackup", () => {
     expect(file.shards).toMatchObject({ learn: null, reviews: null, imports: null, files: null });
     const parsed = parseBackup("full-x.json", JSON.parse(JSON.stringify(file)))!;
     expect(parsed).toMatchObject({ kind: "full", reason: "manual", createdAt: "2026-10-05T12:00:00.000Z" });
-    expect(parsed.snapshot.learn).toEqual({ families: [], trivia: [], verbs: [] });
+    expect(parsed.snapshot.learn).toEqual({ families: [], trivia: [], verbs: [], morphemes: [], wordMeta: [] });
     expect(parsed.snapshot.reviews).toEqual([]);
   });
 
@@ -72,7 +72,21 @@ describe("summarize", () => {
       ] as never,
       learn: { families: [{ id: "f" }], trivia: [] } as never,
     });
-    expect(s).toEqual({ words: 1, threads: 1, questions: 1, families: 1, trivia: 0 });
+    expect(s).toEqual({ words: 1, threads: 1, questions: 1, families: 1, trivia: 0, morphemes: 0 });
     expect(summarize({ data: { entries: [] } })).toEqual({ words: 0 });
+  });
+
+  // Wave 9 F (09 §2 決定 1) — live morphemes only: excludes tombstones and
+  // records a merge redirected (mergedInto) to a canonical duplicate.
+  it("counts live, non-redirected morphemes", () => {
+    const s = summarize({
+      data: { entries: [] },
+      learn: {
+        families: [],
+        trivia: [],
+        morphemes: [{ id: "a" }, { id: "b", deletedAt: "x" }, { id: "c", mergedInto: "a" }],
+      } as never,
+    });
+    expect(s.morphemes).toBe(1);
   });
 });

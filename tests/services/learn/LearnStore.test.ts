@@ -149,4 +149,94 @@ describe("LearnStore", () => {
     expect(learn.families()).toEqual([]);
     spy.mockRestore();
   });
+
+  // Word DNA (規劃書 09 §2 決定 1).
+  it("stamps, emits and writes morphemes", async () => {
+    vi.useFakeTimers();
+    const { storage, learn } = setup();
+    await learn.ensureLoaded();
+    const events: string[] = [];
+    learn.events.on("morpheme:upsert", (m) => events.push(m.id));
+
+    const m = learn.putMorpheme({
+      id: "m1",
+      form: "un",
+      variants: [],
+      type: "prefix",
+      meaningZh: "不",
+      origin: "dna:m1",
+      timeline: [],
+      suggested: [],
+      source: "ai",
+    });
+    expect(m).toMatchObject({ rev: 1, createdAt: m.updatedAt });
+    expect(events).toEqual(["m1"]);
+    expect(learn.morpheme("m1")).toMatchObject({ form: "un" });
+    expect(learn.morphemes().map((x) => x.id)).toEqual(["m1"]);
+
+    await vi.advanceTimersByTimeAsync(500);
+    await learn.flush();
+    expect(saved(storage).morphemes?.[0].id).toBe("m1");
+
+    learn.deleteMorpheme("m1");
+    expect(learn.morpheme("m1")).toBeUndefined();
+    expect(learn.morphemes()).toEqual([]);
+    await learn.flush();
+    expect(saved(storage).morphemes?.[0].deletedAt).toBeTruthy();
+  });
+
+  it("stamps, emits and writes wordMeta, keyed by entryId", async () => {
+    vi.useFakeTimers();
+    const { storage, learn } = setup();
+    await learn.ensureLoaded();
+    const events: string[] = [];
+    learn.events.on("wordMeta:upsert", (w) => events.push(w.id));
+
+    const w = learn.putWordMeta({ id: "e1", emoji: "🦊", emojiSource: "user" });
+    expect(w).toMatchObject({ rev: 1, createdAt: w.updatedAt });
+    expect(events).toEqual(["e1"]);
+    expect(learn.wordMeta("e1")).toMatchObject({ emoji: "🦊" });
+    expect(learn.allWordMeta().map((x) => x.id)).toEqual(["e1"]);
+
+    await vi.advanceTimersByTimeAsync(500);
+    await learn.flush();
+    expect(saved(storage).wordMeta?.[0].id).toBe("e1");
+
+    learn.deleteWordMeta("e1");
+    expect(learn.wordMeta("e1")).toBeUndefined();
+    expect(learn.allWordMeta()).toEqual([]);
+    await learn.flush();
+    expect(saved(storage).wordMeta?.[0].deletedAt).toBeTruthy();
+  });
+
+  it("write() keeps morphemes and wordMeta instead of dropping them (§4.3 read-merge-write)", async () => {
+    const { storage, learn } = setup();
+    await learn.ensureLoaded();
+    learn.putFamily(fam("f1"));
+    learn.putMorpheme({
+      id: "m1",
+      form: "un",
+      variants: [],
+      type: "prefix",
+      meaningZh: "不",
+      origin: "dna:m1",
+      timeline: [],
+      suggested: [],
+      source: "ai",
+    });
+    learn.putWordMeta({ id: "e1", emoji: "🦊" });
+    await learn.flush();
+    const disk = saved(storage);
+    expect(disk.families.map((f) => f.id)).toEqual(["f1"]);
+    expect(disk.morphemes?.map((m) => m.id)).toEqual(["m1"]);
+    expect(disk.wordMeta?.map((w) => w.id)).toEqual(["e1"]);
+  });
+
+  it("loads an old learn.json with no morphemes/wordMeta arrays at all", async () => {
+    const { storage, learn } = setup();
+    storage.shards.set(LEARN_SHARD, { families: [], trivia: [] });
+    await learn.ensureLoaded();
+    expect(learn.morphemes()).toEqual([]);
+    expect(learn.allWordMeta()).toEqual([]);
+  });
 });

@@ -167,6 +167,10 @@ export interface BackupSummary {
   families?: number;
   trivia?: number;
   reviews?: number;
+  // Live word-DNA morphemes (規劃書 09 §2 決定 1) — excludes tombstones and
+  // records a multi-device merge redirected (mergedInto) to a canonical
+  // duplicate, so this counts distinct morphemes, not raw records.
+  morphemes?: number;
 }
 
 export function liveQuestions(thread: Thread): number {
@@ -184,6 +188,7 @@ export function summarize(s: Snapshot): BackupSummary {
   if (s.learn) {
     out.families = s.learn.families.filter((f) => !f.deletedAt).length;
     out.trivia = s.learn.trivia.filter((t) => !t.deletedAt).length;
+    out.morphemes = (s.learn.morphemes ?? []).filter((m) => !m.deletedAt && !m.mergedInto).length;
   }
   if (s.reviews) out.reviews = s.reviews.length;
   return out;
