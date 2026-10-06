@@ -12,12 +12,18 @@ export const zhTW: Record<keyof typeof en, string> = {
   "sidebar.hint.allEmpty": "在閱讀模式點擊英文單字開始追蹤。",
   // 1005 回饋 S：可收合分區、AI 討論、依來源分組
   "sidebar.section.words": "單字",
+  // Wave 6 W：段落討論獨立成自己的分區，標題沿用原本列表自己的
+  // paragraph.list.title。
+  "sidebar.paragraphs.noNote": "開啟一篇筆記以查看段落討論。",
   "sidebar.section.ai": "AI 討論（{n}）",
   "sidebar.ai.empty": "還沒有討論。展開單字切到 AI 分頁，或在閱讀模式點段落旁的 ✦ 就能提問。",
-  "sidebar.ai.kind.word": "單字",
-  "sidebar.ai.kind.paragraph": "段落",
   "sidebar.ai.showAll": "顯示全部（{n}）",
   "sidebar.ai.showLess": "只顯示最近的",
+  // Wave 6 W：文法分區（目前只有動詞用法；句型結構之後再加）。
+  "sidebar.section.grammar": "文法（{n}）",
+  "sidebar.grammar.verbs": "動詞用法",
+  "sidebar.grammar.empty": "還沒有動詞用法。在動詞的單字卡產生一個看看。",
+  "sidebar.grammar.viewAll": "查看全部",
   "sidebar.group.family": "字族樹：{name}",
   "sidebar.group.familyGone": "字族樹（字族已移除）",
   "sidebar.group.familyOpen": "開啟字族樹",

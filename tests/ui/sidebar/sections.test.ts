@@ -11,11 +11,13 @@ class MemoryStore implements LocalStore {
   }
 }
 
-describe("SectionState (1005 回饋 2)", () => {
+describe("SectionState (1005 回饋 2; Wave 6 W: 段落討論 / 文法 added)", () => {
   it("starts with every section open", () => {
     const s = new SectionState(new MemoryStore());
     expect(s.isCollapsed("words")).toBe(false);
+    expect(s.isCollapsed("paragraphs")).toBe(false);
     expect(s.isCollapsed("ai")).toBe(false);
+    expect(s.isCollapsed("grammar")).toBe(false);
   });
 
   it("remembers folded sections in device-local storage", () => {
@@ -27,6 +29,30 @@ describe("SectionState (1005 回饋 2)", () => {
     expect(new SectionState(store).isCollapsed("ai")).toBe(true);
     s.set("ai", false);
     expect(new SectionState(store).isCollapsed("ai")).toBe(false);
+  });
+
+  it("folds and remembers the two new sections the same way", () => {
+    const store = new MemoryStore();
+    const s = new SectionState(store);
+    s.toggle("paragraphs");
+    s.toggle("grammar");
+    expect(store.data.get(SECTIONS_STORAGE_KEY)).toEqual(["paragraphs", "grammar"]);
+    const again = new SectionState(store);
+    expect(again.isCollapsed("paragraphs")).toBe(true);
+    expect(again.isCollapsed("grammar")).toBe(true);
+    expect(again.isCollapsed("words")).toBe(false);
+    expect(again.isCollapsed("ai")).toBe(false);
+  });
+
+  it("tolerates a value saved by an older build (only words/ai existed)", () => {
+    const store = new MemoryStore();
+    store.data.set(SECTIONS_STORAGE_KEY, ["words", "ai"]);
+    const s = new SectionState(store);
+    expect(s.isCollapsed("words")).toBe(true);
+    expect(s.isCollapsed("ai")).toBe(true);
+    // The sections that didn't exist yet back then start open.
+    expect(s.isCollapsed("paragraphs")).toBe(false);
+    expect(s.isCollapsed("grammar")).toBe(false);
   });
 
   it("ignores junk and missing storage", () => {

@@ -5,6 +5,7 @@ vi.mock("obsidian", () => import("../../perf/support/obsidian"));
 import type { VocabEntry } from "../../../src/core/model/entry";
 import type { VocabSidebarView } from "../../../src/ui/sidebar/VocabSidebarView";
 import { discussionRows } from "../../../src/ui/sidebar/discussionRows";
+import { verbUsageRows } from "../../../src/ui/sidebar/grammarRows";
 import { SECTIONS_STORAGE_KEY } from "../../../src/ui/sidebar/sections";
 import { t } from "../../../src/core/i18n";
 import { entryRecency, groupOf } from "../../../src/ui/word/wordOrder";
@@ -177,7 +178,7 @@ describe("sections (1005 回饋 2)", () => {
     expect(JSON.stringify(b.plugin.store.settings)).not.toContain("vt-sidebar-sections");
   });
 
-  it("AI 討論 lists every discussion, newest first, and opens them", async () => {
+  it("AI 討論 lists every word discussion, newest first, and opens them (Wave 6 W: words only)", async () => {
     const v = await open("note");
     const expected = discussionRows(b.plugin.threads, entries());
     expect(expected.length).toBeGreaterThan(20);
@@ -185,22 +186,20 @@ describe("sections (1005 回饋 2)", () => {
     expect(head.textContent).toBe(t("sidebar.section.ai", { n: expected.length }));
     const rows = root(v).querySelectorAll(".vt-dlist-row");
     expect(rows.map((r) => r.getAttribute("data-thread-id"))).toEqual(expected.slice(0, 20).map((r) => r.threadId));
+    // Every row is a word discussion now — paragraph discussions moved to
+    // their own 「段落討論」 section.
+    expect(rows.every((r) => r.classList.contains("is-word"))).toBe(true);
 
     // 顯示全部
     root(v).querySelector(".vt-dlist-more")!.click();
     expect(root(v).querySelectorAll(".vt-dlist-row")).toHaveLength(expected.length);
 
     // A word discussion → its card on the AI tab.
-    const word = expected.find((r) => r.kind === "word")!;
+    const word = expected[0];
     root(v).querySelector(`.vt-dlist-row[data-thread-id="${word.threadId}"]`)!.click();
     await flushMicrotasks();
-    expect(v.wordUi.tabs.get(word.entryId!)).toBe("ai");
+    expect(v.wordUi.tabs.get(word.entryId)).toBe("ai");
     expect(root(v).querySelector(`.vt-row[data-entry-id="${word.entryId}"]`)!.classList.contains("is-expanded")).toBe(true);
-
-    // A paragraph discussion → its pane.
-    const para = expected.find((r) => r.kind === "paragraph")!;
-    root(v).querySelector(`.vt-dlist-row[data-thread-id="${para.threadId}"]`)!.click();
-    expect(v.router.current).toEqual({ name: "paragraph", threadId: para.threadId });
   });
 
   it("a folded AI 討論 still shows its count", async () => {
@@ -210,6 +209,94 @@ describe("sections (1005 回饋 2)", () => {
     const n = discussionRows(b.plugin.threads, entries()).length;
     expect(root(v).querySelector('.vt-sb-section[data-section="ai"] .vt-sb-section-title')!.textContent).toBe(
       t("sidebar.section.ai", { n })
+    );
+  });
+});
+
+describe("段落討論 (Wave 6 W: its own section, independent of the 單字 tab)", () => {
+  it("lists the note in front's paragraph discussions, on either word tab", async () => {
+    for (const filter of ["note", "all"] as const) {
+      const v = await open(filter);
+      const expectedCount = b.plugin.threads.paragraphThreads(fx.article.path).length;
+      expect(expectedCount).toBeGreaterThan(0);
+      const head = root(v).querySelector('.vt-sb-section[data-section="paragraphs"] .vt-sb-section-title')!;
+      expect(head.textContent).toBe(t("paragraph.list.title", { n: expectedCount }));
+      expect(root(v).querySelectorAll(".vt-plist-row")).toHaveLength(expectedCount);
+      closeSidebar(b, v);
+      view = null;
+    }
+  });
+
+  it("clicking a row opens its pane", async () => {
+    const v = await open("note");
+    const ids = new Set(b.plugin.threads.paragraphThreads(fx.article.path).map((th) => th.id));
+    root(v).querySelector(".vt-plist-row")!.click();
+    expect(v.router.current.name).toBe("paragraph");
+    expect(ids.has((v.router.current as { threadId: string }).threadId)).toBe(true);
+  });
+
+  it("a folded 段落討論 still shows its count", async () => {
+    b.app.saveLocalStorage(SECTIONS_STORAGE_KEY, ["paragraphs"]);
+    const v = await open("note");
+    expect(root(v).querySelectorAll(".vt-plist-row")).toHaveLength(0);
+    const n = b.plugin.threads.paragraphThreads(fx.article.path).length;
+    expect(root(v).querySelector('.vt-sb-section[data-section="paragraphs"] .vt-sb-section-title')!.textContent).toBe(
+      t("paragraph.list.title", { n })
+    );
+  });
+
+  it("with no note in front, shows an empty state and a 0 count", async () => {
+    const before = b.app.workspace.activeFile;
+    b.app.workspace.activeFile = null;
+    try {
+      const v = await open("note");
+      expect(root(v).querySelectorAll(".vt-plist-row")).toHaveLength(0);
+      expect(root(v).querySelector(".vt-sidebar-hint")!.textContent).toBe(t("sidebar.paragraphs.noNote"));
+      expect(root(v).querySelector('.vt-sb-section[data-section="paragraphs"] .vt-sb-section-title')!.textContent).toBe(
+        t("paragraph.list.title", { n: 0 })
+      );
+    } finally {
+      b.app.workspace.activeFile = before;
+    }
+  });
+});
+
+describe("文法 (Wave 6 W: 動詞用法 subsection)", () => {
+  it("lists recently generated/regenerated/saved verb usage, capped, with a 查看全部 link", async () => {
+    const v = await open("note");
+    const expected = verbUsageRows(b.plugin.verbs.verbs(), (id) => b.plugin.learn.verbFavorite(id));
+    expect(expected.length).toBeGreaterThan(10);
+    const head = root(v).querySelector('.vt-sb-section[data-section="grammar"] .vt-sb-section-title')!;
+    expect(head.textContent).toBe(t("sidebar.section.grammar", { n: expected.length }));
+    const rows = root(v).querySelectorAll(".vt-glist-row");
+    expect(rows).toHaveLength(10);
+    expect(rows.map((r) => r.getAttribute("data-entry-id"))).toEqual(expected.slice(0, 10).map((r) => r.entryId));
+    expect(root(v).querySelector(".vt-glist-more")).not.toBeNull();
+
+    const openWordPage = vi.spyOn(b.plugin, "openWordPage").mockResolvedValue(undefined);
+    try {
+      rows[0].click();
+      expect(openWordPage).toHaveBeenCalledWith(expected[0].entryId);
+    } finally {
+      openWordPage.mockRestore();
+    }
+
+    const openEntry = vi.spyOn(b.plugin, "openEntryFile").mockResolvedValue(undefined);
+    try {
+      root(v).querySelector(".vt-glist-more")!.click();
+      expect(openEntry).toHaveBeenCalledWith("verbs");
+    } finally {
+      openEntry.mockRestore();
+    }
+  });
+
+  it("a folded 文法 still shows its count", async () => {
+    b.app.saveLocalStorage(SECTIONS_STORAGE_KEY, ["grammar"]);
+    const v = await open("note");
+    expect(root(v).querySelectorAll(".vt-glist-row")).toHaveLength(0);
+    const n = verbUsageRows(b.plugin.verbs.verbs(), (id) => b.plugin.learn.verbFavorite(id)).length;
+    expect(root(v).querySelector('.vt-sb-section[data-section="grammar"] .vt-sb-section-title')!.textContent).toBe(
+      t("sidebar.section.grammar", { n })
     );
   });
 });

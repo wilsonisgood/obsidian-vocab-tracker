@@ -2,26 +2,22 @@ import type { VocabEntry } from "../../core/model/entry";
 import { liveTurns, type Thread } from "../../core/model/thread";
 import { lastTurnAt } from "./paragraphRows";
 
-// Rows of the sidebar's 「AI 討論」 section (1005 回饋 2): every word and
-// paragraph discussion, most recently active first. Pure, so the order is
-// unit-tested; DiscussionList.ts draws them.
+// Rows of the sidebar's 「AI 討論」 section (1005 回饋 2; Wave 6 W: word
+// discussions only — paragraph discussions moved to their own 「段落討論」
+// section (VocabSidebarView §段落討論), so they aren't listed twice.
+// Every word with a live question, most recently active first. Pure, so
+// the order is unit-tested; DiscussionList.ts draws them.
 
-// What it reads from ThreadService — methods it has today, so no new
-// query is needed. (A ThreadService.liveThreads() would save the
-// per-word lookups; see the S report's integration notes.)
+// What it reads from ThreadService — a method it has today, so no new
+// query is needed.
 export interface DiscussionSource {
-  paragraphThreads(): Thread[];
   wordThread(entryId: string): Thread | undefined;
 }
 
 export interface DiscussionRow {
   threadId: string;
-  kind: "word" | "paragraph";
-  // Word: the entry; paragraph: the note the paragraph is in.
-  entryId?: string;
-  path?: string;
-  // Word: the word. Paragraph: the paragraph's text when the discussion
-  // started.
+  entryId: string;
+  // The word.
   title: string;
   // Questions asked.
   count: number;
@@ -46,20 +42,7 @@ export function discussionRows(src: DiscussionSource, entries: readonly VocabEnt
     if (!thread || thread.deletedAt) continue;
     const count = questions(thread);
     if (!count) continue;
-    rows.push({ threadId: thread.id, kind: "word", entryId: entry.id, title: entry.word, count, lastAt: lastTurnAt(thread) });
-  }
-  for (const thread of src.paragraphThreads()) {
-    if (thread.deletedAt || thread.anchor.kind !== "paragraph") continue;
-    const count = questions(thread);
-    if (!count) continue;
-    rows.push({
-      threadId: thread.id,
-      kind: "paragraph",
-      path: thread.anchor.path,
-      title: thread.anchor.snapshot,
-      count,
-      lastAt: lastTurnAt(thread),
-    });
+    rows.push({ threadId: thread.id, entryId: entry.id, title: entry.word, count, lastAt: lastTurnAt(thread) });
   }
   return rows.sort((a, b) => ms(b.lastAt) - ms(a.lastAt) || a.threadId.localeCompare(b.threadId));
 }
