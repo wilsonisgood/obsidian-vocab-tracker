@@ -129,6 +129,13 @@ class TriviaBlock extends MarkdownRenderChild {
     return this.plugin.store.entries;
   }
 
+  // 1006 #24: 「從已學的 n 個字隨機」要跟 pickSubject() 的候選池一致——只數
+  // like 過的字，不是整個單字庫（否則一個考試字表匯進幾百個還沒學的字，
+  // 這裡顯示的 n 會跟實際抽到的範圍不一樣）。
+  private get likedCount(): number {
+    return this.entries.filter((e) => e.liked === true).length;
+  }
+
   private pinned(): VocabEntry | undefined {
     return this.params.word ? new WordIndex(this.entries).find(this.params.word) : undefined;
   }
@@ -192,7 +199,7 @@ class TriviaBlock extends MarkdownRenderChild {
     chip.createSpan({
       text: pinned
         ? t("learn.trivia.subject", { word: pinned.word })
-        : t("learn.trivia.random", { n: this.entries.length }),
+        : t("learn.trivia.random", { n: this.likedCount }),
     });
     if (!pinned) setIcon(chip.createSpan({ cls: "vt-trivia-subject-icon" }), "chevron-down");
     chip.disabled = !!pinned || this.plugin.ai.status() !== "ready";
