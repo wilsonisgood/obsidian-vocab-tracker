@@ -839,6 +839,7 @@ export class VocabSidebarView extends ItemView {
           this.drawWordChip(chip, entry.id);
         },
         openWordPage: (entry: VocabEntry) => void this.plugin.openWordPage(entry.id),
+        locate: (entry: VocabEntry) => void this.plugin.locator.locate(entry),
       };
       if (this.filterMode === "all") {
         // Grouped by source note (or where a word from no note came from),
