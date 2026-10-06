@@ -1,0 +1,156 @@
+/* ── Word Galaxy force graph (規劃書 09 §6.1; design 原型 word-galaxy-dna.html
+   /* ---------- Galaxy ---------- */) ──
+   Obsidian variables only, so light/dark/community themes all work. Class
+   prefix vt-gx-; structure + force params come straight from the HTML
+   prototype (galaxyModel.ts / GalaxyGraph.ts), only the colours are
+   token-ized here. */
+
+.vt-gx-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 決定 7/A6: svg{touch-action:none} 只在「可以拖曳平移」時開，mobile+embedded
+   讓瀏覽器保留原生捲動（is-pannable 由 GalaxyGraph 依 opts 加減）。 */
+.vt-gx-svg.is-pannable {
+  touch-action: none;
+}
+
+.vt-gx-link {
+  stroke: var(--background-modifier-border);
+  stroke-width: 1.6px;
+}
+
+.vt-gx-node {
+  cursor: pointer;
+}
+
+.vt-gx-node:focus {
+  outline: none;
+}
+
+.vt-gx-node .vt-gx-halo {
+  fill: var(--background-secondary);
+  stroke: var(--background-modifier-border);
+  stroke-width: 1.6px;
+}
+
+.vt-gx-node.vt-gx-known .vt-gx-halo {
+  fill: var(--interactive-accent);
+  stroke: var(--interactive-accent);
+  stroke-width: 2.5px;
+}
+
+.vt-gx-node.vt-gx-unknown .vt-gx-halo {
+  fill: var(--background-secondary);
+  stroke: var(--background-modifier-border);
+  stroke-width: 1.6px;
+  stroke-dasharray: 4 4;
+}
+
+.vt-gx-node.vt-gx-group .vt-gx-halo {
+  fill: var(--background-secondary);
+  stroke: var(--text-muted);
+  stroke-width: 1.4px;
+}
+
+.vt-gx-node.vt-gx-hub .vt-gx-halo {
+  fill: var(--interactive-accent);
+  stroke: var(--interactive-accent);
+  stroke-width: 3px;
+}
+
+/* 選中節點加外圈（group 節點不會被選取，hub 點擊視同取消選取，見
+   GalaxyGraph#select）。放在 known/unknown 規則之後，同樣的 selector
+   權重下靠後蓋前，一定贏過節點種類本身的 stroke-width。 */
+.vt-gx-node.vt-gx-sel .vt-gx-halo {
+  stroke: var(--interactive-accent);
+  stroke-width: 4px;
+  stroke-dasharray: none;
+}
+
+.vt-gx-emo {
+  font-size: 26px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.vt-gx-node.vt-gx-hub .vt-gx-emo {
+  font-size: 34px;
+}
+
+.vt-gx-w {
+  font-size: var(--font-ui-small, 13px);
+  fill: var(--text-normal);
+  text-anchor: middle;
+  font-weight: var(--font-medium, 500);
+}
+
+.vt-gx-node.vt-gx-hub .vt-gx-w {
+  font-size: var(--font-ui-medium, 15px);
+  font-weight: var(--font-bold, 700);
+}
+
+.vt-gx-node.vt-gx-unknown .vt-gx-w {
+  fill: var(--text-muted);
+}
+
+.vt-gx-z {
+  font-size: var(--font-ui-smaller, 11px);
+  fill: var(--text-muted);
+  text-anchor: middle;
+}
+
+/* fresh：AI 剛找到、還沒出現過的建議字（09 §6.1）— 發光動畫，reduced-motion
+   關掉。 */
+@keyframes vt-gx-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    filter: drop-shadow(0 0 6px var(--interactive-accent));
+  }
+}
+
+.vt-gx-node.vt-gx-fresh .vt-gx-halo {
+  stroke: var(--interactive-accent);
+  stroke-dasharray: 2 3;
+  animation: vt-gx-glow 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-gx-node.vt-gx-fresh .vt-gx-halo {
+    animation: none;
+  }
+}
+
+/* ＋ 按鈕：只在「未學且被選中」的節點上顯示（點了未學節點就該讓人按 ＋）。 */
+.vt-gx-plus {
+  display: none;
+  cursor: pointer;
+}
+
+.vt-gx-node.vt-gx-unknown.vt-gx-sel .vt-gx-plus {
+  display: inline;
+}
+
+.vt-gx-plus circle {
+  fill: var(--interactive-accent);
+  stroke: var(--background-secondary);
+  stroke-width: 2.5px;
+}
+
+.vt-gx-plus text {
+  fill: var(--text-on-accent);
+  font-size: 17px;
+  font-weight: var(--font-bold, 700);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.vt-gx-plus:focus circle,
+.vt-gx-node:focus .vt-gx-plus circle {
+  stroke: var(--text-normal);
+}
