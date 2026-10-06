@@ -191,6 +191,7 @@ export const en = {
   "chat.action.pin": "Pin to grammar tips",
   "chat.action.unpin": "Unpin",
   "chat.action.copy": "Copy",
+  "chat.action.delete": "Delete this Q&A",
   "chat.copied": "Copied",
   "chat.truncated": "The answer hit the length limit and was cut off.",
   "chat.retryWait": "The service is busy — retrying in {seconds}s…",

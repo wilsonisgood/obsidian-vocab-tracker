@@ -191,6 +191,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "chat.action.pin": "釘選到文法提示",
   "chat.action.unpin": "取消釘選",
   "chat.action.copy": "複製",
+  "chat.action.delete": "刪除這組問答",
   "chat.copied": "已複製",
   "chat.truncated": "回答達到長度上限，後面被截掉了。",
   "chat.retryWait": "服務忙碌，{seconds} 秒後重試…",

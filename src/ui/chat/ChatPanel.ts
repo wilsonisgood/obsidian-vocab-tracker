@@ -1,5 +1,5 @@
 import { Component, MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
-import { getLocale, t } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import { liveTurns, type Thread, type Turn } from "../../core/model/thread";
 import type { AiService } from "../../services/ai/AiService";
 import { AiError, type AiErrorCode } from "../../services/ai/errors";
@@ -10,15 +10,6 @@ import { bubble } from "../kit/bubble";
 import type { KitAction } from "../kit/emptyState";
 import { runUndoable } from "../kit/undoable";
 import type { SelectionTracker } from "./SelectionTracker";
-
-// 整合事項: "chat.action.delete" isn't in src/core/i18n/{zh-TW,en}.ts yet
-// (shared files this wave doesn't touch) — add it next to the other
-// chat.action.* keys ("刪除這組問答" / "Delete this Q&A") and switch
-// deleteQaLabel() below to t("chat.action.delete").
-const DELETE_QA_LABEL: Record<"zh-TW" | "en", string> = { "zh-TW": "刪除這組問答", en: "Delete this Q&A" };
-function deleteQaLabel(): string {
-  return DELETE_QA_LABEL[getLocale()] ?? DELETE_QA_LABEL.en;
-}
 
 // Discussion panel shared by word (A2, M4), paragraph (A1, M5) and trivia
 // (L7, M7) threads — 規劃書 06 §9.3, design D3/D4.
@@ -229,7 +220,7 @@ export class ChatPanel extends Component {
   private userBubble(turn: Turn, pairBusy: boolean): HTMLElement {
     const actions: KitAction[] = pairBusy
       ? []
-      : [{ label: deleteQaLabel(), icon: "trash-2", iconOnly: true, onClick: () => this.deleteTurnPair(turn) }];
+      : [{ label: t("chat.action.delete"), icon: "trash-2", iconOnly: true, onClick: () => this.deleteTurnPair(turn) }];
     const el = bubble({ role: "user", text: turn.content, actions });
     if (turn.selection) {
       const quote = createDiv({ cls: "vt-bubble-quote", text: turn.selection });
