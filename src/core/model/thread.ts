@@ -73,3 +73,41 @@ export function wordThreadId(entryId: string): string {
 export function liveTurns(thread: Thread | undefined): Turn[] {
   return thread ? thread.turns.filter((t) => !t.deletedAt) : [];
 }
+
+// 一組問答 (1006 #20): a user turn and the assistant turn right after it
+// (its answer). `assistant` is absent for a question with no answer yet
+// — the normal in-flight case, or an orphan that shouldn't happen but
+// the pairing doesn't assume otherwise.
+export interface TurnPair {
+  user: Turn;
+  assistant?: Turn;
+}
+
+// Pairs every user turn in `turns` with the assistant turn that follows
+// it, in array order. Pass `thread.turns` (not liveTurns) when a caller
+// needs to find a pair that's already tombstoned — ThreadService's
+// restoreTurnPair relies on that to undo a delete.
+export function pairTurns(turns: readonly Turn[]): TurnPair[] {
+  const pairs: TurnPair[] = [];
+  let pending: Turn | null = null;
+  for (const turn of turns) {
+    if (turn.role === "user") {
+      if (pending) pairs.push({ user: pending });
+      pending = turn;
+    } else if (pending) {
+      pairs.push({ user: pending, assistant: turn });
+      pending = null;
+    }
+    // An assistant turn with no pending question before it shouldn't
+    // happen (ask() always pushes both together) — skipped rather than
+    // guessed at.
+  }
+  if (pending) pairs.push({ user: pending });
+  return pairs;
+}
+
+// Finds the pair `turnId` belongs to, whichever half (question or
+// answer) it names.
+export function findTurnPair(turns: readonly Turn[], turnId: string): TurnPair | undefined {
+  return pairTurns(turns).find((p) => p.user.id === turnId || p.assistant?.id === turnId);
+}
