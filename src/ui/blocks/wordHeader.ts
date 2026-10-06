@@ -225,8 +225,8 @@ class WordHeaderBlock extends MarkdownRenderChild {
     this.field(metaFields, entry, "phonetic", L.phonetic());
     this.field(metaFields, entry, "partOfSpeech", L.partOfSpeech());
 
-    // 英文定義、中文翻译、同義字、反義字、例句、文法提示、程度 (1006-2 #12):
-    // all editable here now — the row only keeps 英文定義/中文翻译 and a
+    // 英文定義、中文定義、同義字、反義字、例句、文法提示、程度 (1006-2 #12):
+    // all editable here now — the row only keeps 英文定義/中文定義 and a
     // read-only 程度 chip, everything else moved here entirely.
     const fields = root.createDiv({ cls: "vt-wh-fields" });
     this.field(fields, entry, "definition", t("row.field.definition"), { multiline: true });

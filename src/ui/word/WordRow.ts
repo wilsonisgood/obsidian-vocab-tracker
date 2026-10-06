@@ -260,7 +260,7 @@ export function renderVocabRow(
       }
 
       // Synonyms shares the exact same auto-growing textarea treatment as
-      // Definition/中文翻译, so a long list wraps flush-left instead of
+      // Definition/中文定義, so a long list wraps flush-left instead of
       // truncating in a single-line input.
       mkField(t("row.field.synonyms"), "synonyms", { multiline: true });
       mkField(t("row.field.definition"), "definition", { multiline: true });

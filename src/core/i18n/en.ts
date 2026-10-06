@@ -47,7 +47,7 @@ export const en = {
   "row.meta.addedOnly": "Added {added}",
   "row.field.synonyms": "Synonyms",
   "row.field.definition": "Definition",
-  "row.field.definitionZh": "中文翻译",
+  "row.field.definitionZh": "Chinese definition",
   "row.field.antonyms": "Antonyms",
   "row.field.example": "Example sentence (from note)",
   "row.field.grammar": "Grammar tips",

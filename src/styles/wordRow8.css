@@ -36,7 +36,7 @@
   margin-bottom: 0;
 }
 
-/* 英文定義／中文翻译／同義字／反義字／例句／文法提示／程度 — all editable
+/* 英文定義／中文定義／同義字／反義字／例句／文法提示／程度 — all editable
    here now (#12); same field chrome WordRow's own fields use (kit.css's
    .vt-field-box, sidebar.css's .vt-field spacing), just a touch more room
    between them than the row's tighter list. */
