@@ -1,7 +1,7 @@
 import { parseBlockParams } from "../blocks/params";
 import { matchMorpheme, normalizeForm, type MorphemeType } from "../../core/model/morpheme";
 import type { VocabEntry } from "../../core/model/entry";
-import type { MorphemeStat } from "./types";
+import type { MorphemeStat } from "../../services/learn/MorphemeService";
 
 // Pure helpers behind the vocab-dna block (規劃書 09 §7 A3/A9) — no DOM, so
 // they're unit-testable in vitest's node environment. dna.ts owns the DOM;

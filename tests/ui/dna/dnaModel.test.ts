@@ -11,7 +11,7 @@ import {
   resolveDnaSelection,
   wiktionaryUrl,
 } from "../../../src/ui/dna/dnaModel";
-import type { MorphemeStat } from "../../../src/ui/dna/types";
+import type { MorphemeStat } from "../../../src/services/learn/MorphemeService";
 
 function makeEntry(overrides: Partial<VocabEntry> = {}): VocabEntry {
   return {

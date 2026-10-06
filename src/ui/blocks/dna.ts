@@ -22,7 +22,7 @@ import {
 } from "../dna/dnaModel";
 import { MorphemeEditModal } from "../dna/MorphemeEditModal";
 import { renderStrand } from "../dna/strand";
-import type { MorphemeApi, MorphemeStat } from "../dna/types";
+import type { MorphemeService as MorphemeApi, MorphemeStat } from "../../services/learn/MorphemeService";
 import { emptyState } from "../kit/emptyState";
 import { inlineNote } from "../kit/inlineNote";
 import { openPluginSettings } from "../kit/openSettings";
@@ -43,8 +43,8 @@ import { guardReadingClicks, isAbort, learnErrorText } from "./learnUi";
 // (learned first, then AI suggestions not yet in the vocab list) and the
 // three AI Tutor actions (A9).
 //
-// `MorphemeApi` is this wave's parallel DS task's `MorphemeService` — see
-// ui/dna/types.ts for why this block only depends on the interface.
+// `MorphemeApi` is an alias for services/learn/MorphemeService's class type
+// (整合：former ui/dna/types.ts interface removed once DS merged).
 
 const L = {
   tabs: { prefix: "字首", suffix: "字尾", root: "字根" } as Record<MorphemeType, string>,
