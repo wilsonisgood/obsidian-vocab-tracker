@@ -2,25 +2,23 @@ import { Component, setIcon } from "obsidian";
 import type { VocabEntry } from "../../core/model/entry";
 import { t } from "../../core/i18n";
 import type { ThreadService } from "../../services/threads/ThreadService";
-import { noteTitle } from "../word/wordOrder";
 import { discussionRows, RECENT_DISCUSSIONS, type DiscussionRow } from "./discussionRows";
 import { shortDate } from "./paragraphRows";
 
-// The sidebar's 「AI 討論（n）」 section body (1005 回饋 2): every word and
-// paragraph discussion, newest first. Owns its element and redraws only
-// itself on thread events — never the word list above it.
+// The sidebar's 「AI 討論（n）」 section body (1005 回饋 2; Wave 6 W: word
+// discussions only, newest first — paragraph discussions have their own
+// 「段落討論」 section now, so they aren't listed twice). Owns its element
+// and redraws only itself on thread events — never the word list above it.
 
 export interface DiscussionListActions {
   // A word discussion: the word's card on its AI tab.
   openWord(entryId: string): void;
-  // A paragraph discussion: its pane.
-  openParagraph(threadId: string): void;
   // The heading's count changed.
   counted(n: number): void;
 }
 
 export interface DiscussionListDeps {
-  threads: Pick<ThreadService, "events" | "ensureLoaded" | "paragraphThreads" | "wordThread">;
+  threads: Pick<ThreadService, "events" | "ensureLoaded" | "wordThread">;
   entries(): readonly VocabEntry[];
 }
 
@@ -77,28 +75,22 @@ export class DiscussionList extends Component {
   }
 
   private drawRow(row: DiscussionRow): void {
-    const el = this.el.createDiv({ cls: "vt-dlist-row" });
-    el.addClass(row.kind === "word" ? "is-word" : "is-paragraph");
+    const el = this.el.createDiv({ cls: "vt-dlist-row is-word" });
     el.setAttr("role", "button");
     el.setAttr("tabindex", "0");
     el.setAttr("data-thread-id", row.threadId);
-    const open = () => {
-      if (row.kind === "word" && row.entryId) this.actions.openWord(row.entryId);
-      else this.actions.openParagraph(row.threadId);
-    };
+    const open = () => this.actions.openWord(row.entryId);
     el.addEventListener("click", open);
     el.addEventListener("keydown", (e) => {
       if (e.key === "Enter") open();
     });
 
     const title = el.createDiv({ cls: "vt-dlist-title" });
-    setIcon(title.createSpan({ cls: "vt-dlist-icon" }), row.kind === "word" ? "type" : "pilcrow");
+    setIcon(title.createSpan({ cls: "vt-dlist-icon" }), "type");
     title.createSpan({ cls: "vt-dlist-text", text: row.title });
     title.setAttr("aria-label", row.title);
 
-    const parts = [t(row.kind === "word" ? "sidebar.ai.kind.word" : "sidebar.ai.kind.paragraph")];
-    if (row.path) parts.push(noteTitle(row.path));
-    parts.push(t("paragraph.list.count", { n: row.count }));
+    const parts = [t("paragraph.list.count", { n: row.count })];
     const date = shortDate(row.lastAt);
     if (date) parts.push(date);
     el.createDiv({ cls: "vt-dlist-meta", text: parts.join(" · ") });

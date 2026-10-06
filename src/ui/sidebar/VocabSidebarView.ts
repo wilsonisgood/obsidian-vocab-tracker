@@ -13,6 +13,8 @@ import { MissingNoteThreadList, ParagraphThreadList, type ParagraphListActions, 
 import { ParagraphThreadPane, type ParagraphPaneNav } from "./ParagraphThreadPane";
 import { DiscussionList } from "./DiscussionList";
 import { discussionRows } from "./discussionRows";
+import { GrammarSection } from "./GrammarSection";
+import { verbUsageRows } from "./grammarRows";
 import { FLASH_MS, planReveal, SectionState, type FilterMode, type SectionId } from "./sections";
 import { LIST_ROUTE, REBINDING_BODY_CLS, SidebarRouter, routeForActiveNote, routeKey, sameRoute, type SidebarRoute } from "./routes";
 
@@ -405,9 +407,26 @@ export class VocabSidebarView extends ItemView {
       dismiss.onclick = () => { this.pendingWord = ""; this.render(); };
     }
 
-    // Two foldable sections (1005 回饋 2): 單字, then AI 討論.
+    // Four foldable sections (1005 回饋 2; Wave 6 W splits 段落討論 and
+    // 文法 out): 單字, 段落討論, AI 討論, 文法.
     const words = this.drawSection(root, "words", t("sidebar.section.words"));
-    if (words) this.drawWords(words, scope);
+    if (words) this.drawWords(words);
+
+    const pCounter = { el: null as HTMLElement | null };
+    const paragraphs = this.drawSection(root, "paragraphs", t("paragraph.list.title", { n: "…" }), pCounter);
+    if (paragraphs) {
+      this.drawParagraphs(paragraphs, scope, (n) => pCounter.el?.setText(t("paragraph.list.title", { n })));
+    } else {
+      // Folded: the count still shows, and follows the note in front.
+      const { threads } = this.plugin;
+      const recount = () => {
+        if (!pCounter.el?.isConnected) return;
+        pCounter.el.setText(t("paragraph.list.title", { n: this.currentNoteParagraphCount() }));
+      };
+      scope.register(threads.events.on("thread:upsert", recount));
+      scope.register(threads.events.on("threads:reloaded", recount));
+      void threads.ensureLoaded().then(recount);
+    }
 
     const counter = { el: null as HTMLElement | null };
     const ai = this.drawSection(root, "ai", t("sidebar.section.ai", { n: "…" }), counter);
@@ -419,7 +438,6 @@ export class VocabSidebarView extends ItemView {
           { threads, entries: () => this.plugin.store.entries },
           {
             openWord: (entryId) => this.openWord(entryId, "ai"),
-            openParagraph: (threadId) => this.openThread(threadId),
             counted: (n) => counter.el?.setText(t("sidebar.section.ai", { n })),
           },
           this.discussionView
@@ -437,6 +455,67 @@ export class VocabSidebarView extends ItemView {
       scope.register(threads.events.on("threads:reloaded", recount));
       void threads.ensureLoaded().then(recount);
     }
+
+    const gCounter = { el: null as HTMLElement | null };
+    const grammar = this.drawSection(root, "grammar", t("sidebar.section.grammar", { n: "…" }), gCounter);
+    if (grammar) {
+      scope.addChild(
+        new GrammarSection(
+          grammar,
+          { verbs: this.plugin.verbs, learn: this.plugin.learn },
+          {
+            openWord: (entryId) => void this.plugin.openWordPage(entryId),
+            viewAll: () => void this.plugin.openEntryFile("verbs"),
+            counted: (n) => gCounter.el?.setText(t("sidebar.section.grammar", { n })),
+          }
+        )
+      );
+    } else {
+      // Folded: the count still shows, and follows new/saved usages.
+      const { verbs, learn } = this.plugin;
+      const recount = () => {
+        if (!gCounter.el?.isConnected) return;
+        const n = verbUsageRows(verbs.verbs(), (id) => learn.verbFavorite(id)).length;
+        gCounter.el.setText(t("sidebar.section.grammar", { n }));
+      };
+      scope.register(verbs.events.on("verb:usage", recount));
+      scope.register(learn.events.on("verbFavorite:upsert", recount));
+      scope.register(learn.events.on("learn:reloaded", recount));
+      void learn.ensureLoaded().then(recount);
+    }
+  }
+
+  // The active note's live paragraph threads — the 段落討論 section's
+  // count while it's folded (unfolded, ParagraphThreadList reports its
+  // own row count via onCount instead).
+  private currentNoteParagraphCount(): number {
+    const path = this.plugin.app.workspace.getActiveFile()?.path;
+    return path ? this.plugin.threads.paragraphThreads(path).length : 0;
+  }
+
+  // ── 段落討論（n）/ orphaned discussions ─────────────────────────
+  //
+  // Independent of the 單字 tab (This note / All, Wave 6 W): always the
+  // note in front's paragraph discussions, plus any discussion whose note
+  // is gone — that list hides itself when there's none (regardless of
+  // which note, if any, is in front).
+  private drawParagraphs(root: HTMLElement, scope: Component, onCount: (n: number) => void): void {
+    const activeFile = this.plugin.app.workspace.getActiveFile();
+    if (activeFile instanceof TFile && activeFile.extension === "md") {
+      this.paragraphList = scope.addChild(
+        new ParagraphThreadList(root, activeFile.path, this.listDeps(), this.listActions(), undefined, onCount)
+      );
+    } else {
+      onCount(0);
+      root.createDiv({ cls: "vt-sidebar-hint", text: t("sidebar.paragraphs.noNote") });
+    }
+    this.missingList = scope.addChild(
+      new MissingNoteThreadList(
+        root,
+        { ...this.listDeps(), exists: (p) => !!this.app.vault.getAbstractFileByPath(p) },
+        this.listActions()
+      )
+    );
   }
 
   // A section heading (click to fold); returns the body to fill, or null
@@ -473,7 +552,7 @@ export class VocabSidebarView extends ItemView {
     return section.createDiv({ cls: "vt-sb-section-body" });
   }
 
-  private drawWords(root: HTMLElement, scope: Component) {
+  private drawWords(root: HTMLElement) {
     const entries = this.plugin.store.entries;
 
     // ── Scope: words from this note, or all words ────────────────
@@ -560,21 +639,6 @@ export class VocabSidebarView extends ItemView {
           );
         }
       }
-    }
-
-    // ── 段落討論（n） / orphaned discussions ─────────────────────
-    if (noteMode && activeFile instanceof TFile && activeFile.extension === "md") {
-      this.paragraphList = scope.addChild(
-        new ParagraphThreadList(root, activeFile.path, this.listDeps(), this.listActions())
-      );
-    } else if (this.filterMode === "all") {
-      this.missingList = scope.addChild(
-        new MissingNoteThreadList(
-          root,
-          { ...this.listDeps(), exists: (p) => !!this.app.vault.getAbstractFileByPath(p) },
-          this.listActions()
-        )
-      );
     }
   }
 }

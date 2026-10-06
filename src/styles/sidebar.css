@@ -246,8 +246,10 @@
   height: 10px;
 }
 
-/* 段落討論（n） */
-.vt-plist {
+/* 段落討論（n）— its own section now (Wave 6 W); the current-note list
+   and the orphaned-note list below it are each a .vt-plist, so only the
+   second one needs a gap above it. */
+.vt-plist + .vt-plist {
   margin-top: 16px;
 }
 
@@ -628,6 +630,86 @@
   font-size: 0.8em;
 }
 
+/* ── 文法 section: 動詞用法 (Wave 6 W) ───────────────────────────── */
+
+.vt-glist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* A subheading per topic (動詞用法 today; 句型結構 would be a sibling
+   .vt-glist-sub block later). */
+.vt-glist-sub {
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.vt-glist-sub:not(:first-child) {
+  margin-top: 14px;
+}
+
+.vt-glist-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 8px;
+  border-radius: var(--radius-m, 8px);
+  cursor: pointer;
+}
+
+.vt-glist-row:hover,
+.vt-glist-row:focus-visible {
+  background: var(--background-modifier-hover);
+}
+
+.vt-glist-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.vt-glist-icon {
+  display: inline-flex;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.vt-glist-icon.is-saved {
+  color: var(--text-accent);
+}
+
+.vt-glist-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.vt-glist-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.vt-glist-meta {
+  font-size: 0.75em;
+  color: var(--text-muted);
+  padding-left: 19px;
+}
+
+.vt-glist-more {
+  align-self: flex-start;
+  margin-top: 6px;
+  font-size: 0.8em;
+}
+
 /* ── Word groups from no note (1005 回饋 13) ─────────────────────── */
 
 .vt-group-title-link {
@@ -672,7 +754,8 @@
 }
 
 body.is-mobile .vt-sb-section-head,
-body.is-mobile .vt-dlist-row {
+body.is-mobile .vt-dlist-row,
+body.is-mobile .vt-glist-row {
   min-height: 44px;
 }
 

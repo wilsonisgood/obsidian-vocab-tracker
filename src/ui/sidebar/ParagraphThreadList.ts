@@ -5,10 +5,13 @@ import { t, type I18nKey } from "../../core/i18n";
 import type { ThreadService } from "../../services/threads/ThreadService";
 import { paragraphRows, shortDate, threadsWithMissingNote, type ParagraphRow } from "./paragraphRows";
 
-// The This note tab's 「段落討論（n）」 list (規劃書 06 §9.4, design D1),
-// and the All tab's list of discussions whose note is gone (§4.6). Each
+// The sidebar's 「段落討論（n）」 list for the note in front (規劃書 06
+// §9.4, design D1; Wave 6 W: its own top-level section, no longer nested
+// under 單字), and the list of discussions whose note is gone (§4.6). Each
 // owns its element and redraws only itself — on its own threads' events,
 // or when the sidebar says the note changed — never the word list above.
+// The section's own header carries the 「段落討論（n）」 count now, so
+// this list only draws rows (or the empty hint), not its own title.
 
 export interface ParagraphListActions {
   open(threadId: string): void;
@@ -104,7 +107,9 @@ export class ParagraphThreadList extends Component {
     private path: string,
     private deps: ParagraphListDeps,
     private actions: ParagraphListActions,
-    private currentThreadId: () => string | null = () => null
+    private currentThreadId: () => string | null = () => null,
+    // The section header's count (Wave 6 W) — called after every draw.
+    private onCount?: (n: number) => void
   ) {
     super();
     this.el = parent.createDiv({ cls: "vt-plist" });
@@ -151,8 +156,7 @@ export class ParagraphThreadList extends Component {
 
   private draw(rows: ParagraphRow[]): void {
     this.el.empty();
-    const head = this.el.createDiv({ cls: "vt-plist-head" });
-    head.createSpan({ text: t("paragraph.list.title", { n: rows.length }) });
+    this.onCount?.(rows.length);
     if (!rows.length) {
       this.el.createDiv({ cls: "vt-plist-hint", text: t("paragraph.list.hint") });
       return;

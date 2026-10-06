@@ -11,12 +11,18 @@ export const en = {
   "sidebar.hint.allEmpty": "Click an English word in reading mode to start tracking.",
   // 1005 feedback S: collapsible sections, AI discussions, grouping by source
   "sidebar.section.words": "Words",
+  // Wave 6 W: paragraph discussions split out into their own section — its
+  // header reuses paragraph.list.title (the list's own heading before).
+  "sidebar.paragraphs.noNote": "Open a note to see its paragraph discussions.",
   "sidebar.section.ai": "AI discussions ({n})",
   "sidebar.ai.empty": "No discussions yet. Open a word's AI tab, or click the ✦ next to a paragraph in reading view.",
-  "sidebar.ai.kind.word": "Word",
-  "sidebar.ai.kind.paragraph": "Paragraph",
   "sidebar.ai.showAll": "Show all ({n})",
   "sidebar.ai.showLess": "Show recent only",
+  // Wave 6 W: the 文法 section (today: 動詞用法; 句型結構 later).
+  "sidebar.section.grammar": "Grammar ({n})",
+  "sidebar.grammar.verbs": "Verb usage",
+  "sidebar.grammar.empty": "No verb usage yet. Generate one from a verb's card.",
+  "sidebar.grammar.viewAll": "View all",
   "sidebar.group.family": "Word family: {name}",
   "sidebar.group.familyGone": "Word family (removed)",
   "sidebar.group.familyOpen": "Open word families",
