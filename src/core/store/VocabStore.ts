@@ -164,6 +164,20 @@ export class VocabStore {
     return this.save();
   }
 
+  // Reverses deleteEntry (Wave 7 R, 規格 #14's undo window): clears
+  // deletedAt so the entry is live again, and bumps updatedAt/rev like any
+  // other edit — mirrors deleteEntry's shape exactly, just the opposite
+  // field value. A no-op (no save) if the id doesn't exist.
+  restoreEntry(id: string): Promise<void> {
+    const entry = this.data.entries.find((e) => e.id === id);
+    if (!entry) return Promise.resolve();
+    entry.deletedAt = undefined;
+    const stamp = nowIso();
+    entry.updatedAt = stamp;
+    entry.rev = (entry.rev ?? 0) + 1;
+    return this.save();
+  }
+
   // Emits data:changed immediately (so the UI reflects the edit right
   // away) but coalesces the actual disk write: rapid edits (e.g. typing in
   // an inline-editable field) share one write instead of one per

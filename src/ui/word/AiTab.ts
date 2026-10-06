@@ -1,3 +1,4 @@
+import type { Component } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
@@ -10,7 +11,12 @@ import { openPluginSettings } from "../kit/openSettings";
 import type { WordUi } from "./wordUi";
 
 // The word card's ✦ AI tab (design D3/D4): the word's discussion thread.
-export function renderWordAiTab(plugin: VocabTrackerPlugin, container: HTMLElement, entry: VocabEntry, ui: WordUi): void {
+// `scope` is this row's own child Component (WordUi.rowScope, Wave 7 R
+// 規格 #10) — the ChatPanel is a child of it, not of `ui.component`
+// directly, so a self-redraw that tears down just this row (switching
+// tabs, editing a field, …) unloads this ChatPanel instead of leaking it
+// until the next full redraw.
+export function renderWordAiTab(plugin: VocabTrackerPlugin, container: HTMLElement, entry: VocabEntry, ui: WordUi, scope: Component): void {
   const pinAction = (turn: Turn): KitAction[] => {
     const pinned = !!turn.pinnedToGrammar;
     return [
@@ -22,7 +28,7 @@ export function renderWordAiTab(plugin: VocabTrackerPlugin, container: HTMLEleme
     ];
   };
 
-  ui.component.addChild(
+  scope.addChild(
     new ChatPanel(container, {
       app: plugin.app,
       threads: plugin.threads,

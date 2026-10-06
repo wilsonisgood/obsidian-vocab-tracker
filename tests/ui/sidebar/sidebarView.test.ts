@@ -301,17 +301,24 @@ describe("文法 (Wave 6 W: 動詞用法 subsection)", () => {
   });
 });
 
-describe("dates on the card (1005 回饋 14)", () => {
-  it("an expanded card shows 加入 and 更新", async () => {
+describe("row meta (1006report.md 定案規格 #18)", () => {
+  it("half and full both show only 複習時間 — 加入/更新/下次複習 moved to the word page", async () => {
     const v = await open("note");
     const id = rowIds(root(v))[0];
+    const entry = byId(id);
+
     v.expandState.set(id, "half");
     v.render();
-    const line = root(v).querySelector(`.vt-row[data-entry-id="${id}"] .vt-row-dates`);
-    expect(line).not.toBeNull();
-    expect(line!.textContent).toContain(byId(id).added.slice(0, 10));
+    const rowHalf = root(v).querySelector(`.vt-row[data-entry-id="${id}"]`)!;
+    expect(rowHalf.querySelector(".vt-row-dates")).toBeNull();
+    expect(rowHalf.querySelector(".vt-row-updated")).toBeNull();
+    expect(rowHalf.textContent).toContain(t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }));
+
     v.expandState.set(id, "full");
     v.render();
-    expect(root(v).querySelector(`.vt-row[data-entry-id="${id}"] .vt-row-updated`)).not.toBeNull();
+    const rowFull = root(v).querySelector(`.vt-row[data-entry-id="${id}"]`)!;
+    expect(rowFull.querySelector(".vt-row-dates")).toBeNull();
+    expect(rowFull.querySelector(".vt-row-updated")).toBeNull();
+    expect(rowFull.textContent).toContain(t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }));
   });
 });

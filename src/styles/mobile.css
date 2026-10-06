@@ -191,7 +191,11 @@ body:not(.is-phone) .vt-sheet {
   -webkit-box-orient: vertical;
 }
 
-.vt-sheet .vt-sheet-delete.mod-warning {
+/* Wave 7 R, 規格 #13: the footer's 🗑 became ♡/♥ (like) — this used to be
+   .vt-sheet-delete.mod-warning; .vt-row-like.is-liked (row.css) already
+   colors the filled heart, this just keeps it readable inside the
+   footer-icon's label layout. */
+.vt-sheet .vt-sheet-card .vt-row-like.is-liked {
   color: var(--text-error);
 }
 

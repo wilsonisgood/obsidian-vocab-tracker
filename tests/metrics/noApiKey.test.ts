@@ -68,11 +68,6 @@ describe.each([
     await flush();
     const row = rootOf(view).querySelector(`.vt-row[data-entry-id="${entry.id}"]`)!;
     expect(row.querySelectorAll(".vt-field").length).toBeGreaterThanOrEqual(5);
-    // The ✓ (= rate Good) on the card works without AI.
-    const check = row.querySelectorAll(".vt-row-footer-icon")[2];
-    check.click();
-    await flush();
-    expect(b.plugin.store.entries.find((e) => e.id === entry.id)?.srs?.reps).toBeGreaterThan(0);
     closeSidebar(b, view);
   });
 

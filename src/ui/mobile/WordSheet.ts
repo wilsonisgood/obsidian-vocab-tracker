@@ -22,11 +22,16 @@ import type { SheetTarget } from "./WordSurfaces";
 // - A paragraph: the sidebar's ParagraphThreadPane as is; its 「← 返回」
 //   closes the sheet, and 「重新綁定」 closes it until a ✦ is tapped.
 //
-// Redraws: tab switches and field edits redraw the card (like the
-// sidebar). Store changes (dictionary data arriving, a sync) redraw the
-// data tab only while nothing in the sheet has focus — and never the AI
-// tab, so a streaming answer never takes the composer's focus (and the
-// iOS keyboard) away. The ChatPanel updates itself.
+// Redraws: tab switches, expand/collapse and field edits (incl. like) are
+// WordRow's own business now (Wave 7 R, 規格 #10) — it redraws just its
+// own DOM in place and never calls the `refresh` passed in below. `draw()`
+// here only runs for a change that might remove the card outright (the
+// word is unliked down to a delete) or for this sheet's own concerns
+// (store changes arriving, a tab reopened). Store changes (dictionary data
+// arriving, a sync) redraw the data tab only while nothing in the sheet
+// has focus — and never the AI tab, so a streaming answer never takes the
+// composer's focus (and the iOS keyboard) away. The ChatPanel updates
+// itself.
 
 type SheetView =
   | { kind: "word"; word: string; entryId?: string; ctx?: Partial<WordContext> }
