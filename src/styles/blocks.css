@@ -1031,6 +1031,13 @@ body.is-mobile .vt-learn {
   font-size: var(--font-ui-smaller);
 }
 
+/* Markdown-rendered (1006 #22): keep it inline, same as the plain text it
+   replaced — a chip is a one-line badge, not a text block. */
+.vt-fam-chip-zh p {
+  display: inline;
+  margin: 0;
+}
+
 .vt-fam-chip-icon {
   display: inline-flex;
   color: var(--vt-accent-text);
@@ -1263,6 +1270,18 @@ body.is-mobile .vt-fam-legend {
 .vt-verb-pattern-ex {
   color: var(--vt-muted);
   font-style: italic;
+}
+
+/* Markdown-rendered (1006 #22): these were plain text lines, so the
+   rendered <p>'s margin would otherwise add space that wasn't there. */
+.vt-verb-pattern-zh > :first-child,
+.vt-verb-pattern-ex > :first-child {
+  margin-top: 0;
+}
+
+.vt-verb-pattern-zh > :last-child,
+.vt-verb-pattern-ex > :last-child {
+  margin-bottom: 0;
 }
 
 .vt-verb-section {

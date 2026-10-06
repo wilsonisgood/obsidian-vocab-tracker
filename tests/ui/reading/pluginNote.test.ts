@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { chromeState, CollapseMemory, MAX_KEYS, pluginNoteKind } from "../../../src/ui/reading/pluginNote";
+import { chromeState, pluginNoteKind } from "../../../src/ui/reading/pluginNote";
 
-// 1005 回饋 #4: which notes get 「屬性」 tucked away and the inline title
-// hidden — only the plugin's own.
+// 1005 回饋 #4 / 1006 #3+#4: which notes get 「屬性」 hidden and a
+// duplicated title hidden — only the plugin's own, plus vocab-list.md
+// judged separately since it carries no frontmatter.
 
 const h = (heading: string, line: number, level = 1) => ({ heading, level, position: { start: { line } } });
 
@@ -27,17 +28,17 @@ describe("chromeState", () => {
   const entry = { "vocab-tracker": "entry", "vocab-tracker-id": "families" };
   const fmEnd = { end: { line: 3 } };
 
-  it("tucks 「屬性」 away on plugin notes only", () => {
+  it("hides 「屬性」 on plugin notes only", () => {
     expect(chromeState({ frontmatter: { title: "my note" } }, "my note")).toEqual({
       pluginNote: false,
       hideInlineTitle: false,
-      collapseKey: null,
+      hideFirstHeading: false,
     });
     expect(chromeState(null, "x").pluginNote).toBe(false);
     expect(chromeState({ frontmatter: entry, frontmatterPosition: fmEnd }, "字族樹")).toEqual({
       pluginNote: true,
       hideInlineTitle: false,
-      collapseKey: "entry:families",
+      hideFirstHeading: false,
     });
   });
 
@@ -48,26 +49,29 @@ describe("chromeState", () => {
     expect(chromeState(old, "我的字族").hideInlineTitle).toBe(false);
     // A word page with an H1 the user wrote: not an entry file.
     const word = { frontmatter: { "vocab-tracker": "word", "vocab-tracker-id": "1" }, frontmatterPosition: fmEnd, headings: [h("glittery", 4)] };
-    expect(chromeState(word, "glittery")).toEqual({ pluginNote: true, hideInlineTitle: false, collapseKey: "word:1" });
-  });
-});
-
-describe("CollapseMemory", () => {
-  it("remembers folded notes, ignoring junk from storage", () => {
-    const m = new CollapseMemory(["entry:families", 3, null]);
-    expect(m.has("entry:families")).toBe(true);
-    expect(m.has("word:1")).toBe(false);
-    expect(m.add("word:1")).toEqual(["entry:families", "word:1"]);
-    expect(m.add("word:1")).toEqual(["entry:families", "word:1"]);
-    expect(new CollapseMemory("oops").has("x")).toBe(false);
+    expect(chromeState(word, "glittery")).toEqual({ pluginNote: true, hideInlineTitle: false, hideFirstHeading: false });
   });
 
-  it("keeps the newest keys only", () => {
-    const m = new CollapseMemory(Array.from({ length: MAX_KEYS }, (_, i) => `k${i}`));
-    const saved = m.add("new");
-    expect(saved).toHaveLength(MAX_KEYS);
-    expect(saved[0]).toBe("k1");
-    expect(m.has("k0")).toBe(false);
-    expect(m.has("new")).toBe(true);
+  it("hides a vocab-list.md-style note's own H1 instead, never 「屬性」 (no frontmatter)", () => {
+    const note = { headings: [h("Vocabulary List", 0)] };
+    expect(chromeState(note, "vocab-list", true)).toEqual({
+      pluginNote: false,
+      hideInlineTitle: false,
+      hideFirstHeading: true,
+    });
+    // No vocab-dashboard block found (yet, or ever): leave it alone.
+    expect(chromeState(note, "vocab-list", false).hideFirstHeading).toBe(false);
+    // The block is further down the file, past its own heading: nothing
+    // at line 0 is an H1 that "opens" the file, so it's left alone even
+    // though the block is there somewhere.
+    const notFirst = { headings: [h("Dashboard", 40)] };
+    expect(chromeState(notFirst, "journal", true).hideFirstHeading).toBe(false);
+    // Known imprecision (documented in the wave report): a note whose own
+    // H1 happens to sit at the very top AND which also embeds a
+    // vocab-dashboard block further down (e.g. someone's personal
+    // dashboard note) still matches — opensWithH1 only looks at the first
+    // heading, not whether it's the dashboard's own title.
+    const ownTitleThenDashboard = { headings: [h("My Journal", 0), h("Dashboard", 40)] };
+    expect(chromeState(ownTitleThenDashboard, "journal", true).hideFirstHeading).toBe(true);
   });
 });

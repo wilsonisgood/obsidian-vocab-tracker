@@ -128,55 +128,95 @@
   cursor: progress;
 }
 
+/* 「來一則」's round, 未收藏 until 收藏 writes it into the file (1006 #1).
+   DOM only — never part of the note's own content. */
+.vt-wp-trivia-pending {
+  margin: 8px 0 1.2em;
+  padding: 10px 12px;
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+}
+
+.vt-wp-trivia-pending-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.vt-wp-trivia-pending-badge {
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  color: var(--text-warning, var(--text-accent));
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.vt-wp-trivia-pending-head .vt-wp-btn {
+  margin-left: auto;
+}
+
+.vt-wp-trivia-pending-title {
+  font-weight: var(--font-semibold);
+  margin-bottom: 4px;
+}
+
+.vt-wp-trivia-pending-body > :first-child {
+  margin-top: 0;
+}
+
+.vt-wp-trivia-pending-body > :last-child {
+  margin-bottom: 0;
+}
+
+.vt-wp-trivia-pending-hint {
+  margin-top: 8px;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
 body.is-mobile .vt-wp-btn,
 body.is-mobile .vt-wh-review,
 body.is-mobile .vt-wh-speak {
   min-height: 44px;
 }
 
-/* ── The plugin's own notes (PluginNoteChrome, 1005 回饋 #4) ─────────
-   `vt-plugin-note` is set on the view only while it shows a note with
-   the plugin's `vocab-tracker` frontmatter (word pages, entry files,
-   .ai.md). 「屬性」 there is bookkeeping: small and faint, and in Live
-   Preview (the editor's sizer is a flex column) moved below the content.
-   Reading view keeps it under the title, folded to one line. */
+/* ── The plugin's own notes (PluginNoteChrome, 1005 回饋 #4, 1006 #3/#4) ──
+   `vt-plugin-note` is set on the view only while it shows a note with the
+   plugin's `vocab-tracker` frontmatter (word pages, entry files, .ai.md).
+   「屬性」 there is pure bookkeeping the learner never needs, so reading
+   mode and Live Preview hide it outright; Source mode is untouched by
+   this class and never renders the Properties widget anyway, so it still
+   shows the raw frontmatter lines. */
 
 .vt-plugin-note .cm-sizer > .metadata-container,
 .vt-plugin-note .markdown-preview-sizer > .mod-header > .metadata-container {
-  --metadata-label-font-size: var(--font-ui-smaller);
-  --metadata-input-font-size: var(--font-ui-smaller);
-  font-size: var(--font-ui-smaller);
-  opacity: 0.55;
-  transition: opacity 120ms ease;
-}
-
-.vt-plugin-note .cm-sizer > .metadata-container:hover,
-.vt-plugin-note .cm-sizer > .metadata-container:focus-within,
-.vt-plugin-note .markdown-preview-sizer > .mod-header > .metadata-container:hover,
-.vt-plugin-note .markdown-preview-sizer > .mod-header > .metadata-container:focus-within {
-  opacity: 1;
-}
-
-.vt-plugin-note .metadata-container .metadata-properties-title {
-  font-size: var(--font-ui-smaller);
-  font-weight: var(--font-normal);
-  color: var(--text-faint);
-}
-
-.vt-plugin-note .metadata-container.is-collapsed .metadata-properties-heading {
-  margin-bottom: 0;
-}
-
-/* Live Preview: after the note (and its backlinks), with some air. */
-.vt-plugin-note .cm-sizer > .metadata-container {
-  order: 1;
-  margin-top: var(--size-4-6);
-  margin-bottom: var(--size-4-4);
+  display: none;
 }
 
 /* An entry file from before 1005 starts with 「# 字族樹」: that heading is
    the title, so Obsidian's inline title (same text) isn't shown twice. */
 .vt-plugin-note.vt-hide-inline-title .cm-sizer > .inline-title,
 .vt-plugin-note.vt-hide-inline-title .markdown-preview-sizer > .mod-header > .inline-title {
+  display: none;
+}
+
+/* The word page's own big word (vt-wh-word, right under the heading) is
+   a second title under Obsidian's inline title — which already is the
+   word, since word pages are named after it (1006 #4). Scoped to
+   `vt-plugin-note` so a vocab-word block the learner embeds in their own
+   note (a different word, `id:`/`word:` params) keeps showing it. */
+.vt-plugin-note .vt-wh-word {
+  display: none;
+}
+
+/* vocab-list.md (main.ts's starter file) opens with its own 「# Vocabulary
+   List」 instead of 「# 字族樹」-style repetition — no frontmatter, so
+   PluginNoteChrome judges it from the rendered vocab-dashboard block and
+   sets this class instead of `vt-plugin-note` (1006 #4). Obsidian's
+   inline title stays; the file's own H1 is hidden. */
+.vt-hide-first-heading .markdown-preview-section > div:first-child > h1,
+.vt-hide-first-heading .cm-content > .cm-line:first-child {
   display: none;
 }

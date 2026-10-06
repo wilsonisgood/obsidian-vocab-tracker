@@ -1,8 +1,11 @@
 import { legacyTitleHeading, type HeadingCacheLike } from "../../services/files/entryFiles";
 
-// Which notes are the plugin's own, and how their view is dressed
-// (1005 回饋 #4: 「屬性」 sits at the top of 字族樹.md and the word pages,
-// and the page title shows twice). Pure — no "obsidian" import — so it's
+// Which notes are the plugin's own, and how their view is dressed (1006
+// #3/#4: 「屬性」 hidden outright on the plugin's own notes in reading mode
+// and Live Preview — Source mode still shows the raw frontmatter, since
+// Obsidian never renders the Properties widget there anyway — and a
+// duplicated title above/below Obsidian's own inline title is hidden by
+// CSS, never by editing the file). Pure — no "obsidian" import — so it's
 // unit-tested; PluginNoteChrome.ts applies it to the open views.
 
 // frontmatter `vocab-tracker:` values the plugin writes. Its own notes
@@ -26,50 +29,47 @@ export interface NoteCacheLike {
 }
 
 export interface ChromeState {
-  // The view gets `vt-plugin-note`: 「屬性」 small, and in Live Preview
-  // moved under the content.
+  // The view gets `vt-plugin-note`: 「屬性」 hidden outright in reading
+  // mode and Live Preview (CSS only — Source mode is untouched, and
+  // doesn't render the Properties widget to begin with).
   pluginNote: boolean;
   // An older entry file starting with 「# 字族樹」: the inline title (the
   // same text right above it) is hidden instead of editing the file.
   hideInlineTitle: boolean;
-  // Remembers that 「屬性」 was folded once for this note, so a learner
-  // who opens it again isn't overruled (null: not a plugin note).
-  collapseKey: string | null;
+  // The opposite direction, for a note that isn't the plugin's own (no
+  // `vocab-tracker` frontmatter) but opens with its own H1 right above an
+  // embedded vocab-dashboard block (1006 #4: vocab-list.md, the starter
+  // file main.ts writes as 「# Vocabulary List」 + the block, no
+  // frontmatter at all). Obsidian's inline title stays; this H1 is hidden.
+  hideFirstHeading: boolean;
 }
 
-export function chromeState(cache: NoteCacheLike | null | undefined, basename: string): ChromeState {
+// Conservative on purpose (1006 #4): only a bare H1 as the very first
+// thing in the file — not a `vocab-dashboard` block anywhere lower down in
+// someone's own note, which keeps its own heading.
+const DASHBOARD_TITLE_SLACK = 3;
+
+function opensWithH1(headings: readonly HeadingCacheLike[] | undefined): boolean {
+  const h = headings?.[0];
+  return !!h && h.level === 1 && h.position.start.line < DASHBOARD_TITLE_SLACK;
+}
+
+export function chromeState(
+  cache: NoteCacheLike | null | undefined,
+  basename: string,
+  hasDashboardBlock = false
+): ChromeState {
   const kind = pluginNoteKind(cache?.frontmatter);
-  if (!kind || !cache) return { pluginNote: false, hideInlineTitle: false, collapseKey: null };
-  const id = String(cache.frontmatter?.["vocab-tracker-id"]).trim();
+  if (kind && cache) {
+    return {
+      pluginNote: true,
+      hideInlineTitle: kind === "entry" && legacyTitleHeading(basename, cache.headings, cache.frontmatterPosition?.end.line),
+      hideFirstHeading: false,
+    };
+  }
   return {
-    pluginNote: true,
-    hideInlineTitle: kind === "entry" && legacyTitleHeading(basename, cache.headings, cache.frontmatterPosition?.end.line),
-    collapseKey: `${kind}:${id}`,
+    pluginNote: false,
+    hideInlineTitle: false,
+    hideFirstHeading: hasDashboardBlock && opensWithH1(cache?.headings),
   };
-}
-
-// The notes whose 「屬性」 the plugin has folded once, newest last. Kept
-// small: an old key falls off after MAX_KEYS (worst case the note is
-// folded once more).
-export const MAX_KEYS = 500;
-
-export class CollapseMemory {
-  private keys: string[];
-
-  constructor(saved: unknown) {
-    this.keys = Array.isArray(saved) ? saved.filter((k): k is string => typeof k === "string").slice(-MAX_KEYS) : [];
-  }
-
-  has(key: string): boolean {
-    return this.keys.includes(key);
-  }
-
-  // Returns the list to save.
-  add(key: string): string[] {
-    if (!this.has(key)) {
-      this.keys.push(key);
-      if (this.keys.length > MAX_KEYS) this.keys.splice(0, this.keys.length - MAX_KEYS);
-    }
-    return [...this.keys];
-  }
 }

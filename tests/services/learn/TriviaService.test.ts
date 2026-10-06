@@ -41,10 +41,12 @@ describe("TriviaService.ask", () => {
   it("picks a subject, tags the turns with it and sends the learned-word list", async () => {
     const { threads, trivia } = setup();
     setLocale("zh-TW");
-    const subject = await trivia.ask("next");
+    const result = await trivia.ask("next");
 
     // random 0.1 → fresh pool (apron is the only word from the last 14 days).
-    expect(subject?.id).toBe("apron");
+    expect(result?.entry.id).toBe("apron");
+    expect(result).toMatchObject({ title: "a napron → an apron", body: "apron 原本是 *a napron*，和 **napkin** 同源。" });
+    expect(result?.turnId).toBe(threads.get(TRIVIA_THREAD_ID)!.turns[1].id);
     const p = threads.asked[0];
     expect(p).toMatchObject({
       threadId: TRIVIA_THREAD_ID,
@@ -118,6 +120,20 @@ describe("TriviaService.ask", () => {
 
     const empty = new TriviaService({ threads: new FakeThreads(), vocab: { entries: [] }, learn: new LearnStore({ storage: new MemoryStorage() }) });
     expect(await empty.ask("next")).toBeUndefined();
+  });
+
+  it("still resolves with the subject (no turnId/title/body) when the answer fails", async () => {
+    const { threads, trivia } = setup();
+    // FakeThreads always writes a "done" turn; simulate a failure the way
+    // retry() finds one — flip the just-written answer to "error" first.
+    const original = threads.ask.bind(threads);
+    threads.ask = async (p) => {
+      await original(p);
+      threads.get(TRIVIA_THREAD_ID)!.turns.at(-1)!.status = "error";
+    };
+    const result = await trivia.ask("next");
+    expect(result).toEqual({ entry: expect.objectContaining({ id: "apron" }) });
+    expect(result?.turnId).toBeUndefined();
   });
 
   it("stop() cancels the trivia thread", () => {

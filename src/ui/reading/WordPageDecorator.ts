@@ -1,7 +1,7 @@
-import { setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { t } from "../../core/i18n";
+import { MarkdownRenderChild, MarkdownRenderer, setIcon, type App, type MarkdownPostProcessorContext } from "obsidian";
+import { getLocale, t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
-import { aiDebugOf, isAiError } from "../../services/ai/errors";
+import { AiError, aiDebugOf, isAiError, type AiErrorCode } from "../../services/ai/errors";
 import { exportLabels } from "../../services/export/labels";
 import type { FamilyService } from "../../services/learn/FamilyService";
 import type { TriviaService } from "../../services/learn/TriviaService";
@@ -37,15 +37,18 @@ export type WordSection = "families" | "usage" | "trivia" | "discussion";
 const SECTIONS: readonly WordSection[] = ["families", "usage", "trivia", "discussion"];
 
 export interface WordPageDeps {
+  // For MarkdownRenderer.render() on the pending trivia round below (1006
+  // #1): the word page never opens a chat panel of its own.
+  app: App;
   entry(id: string): VocabEntry | undefined;
   // Frontmatter of a note, when ctx.frontmatter isn't there (metadataCache).
   frontmatterOf(path: string): Record<string, unknown> | null | undefined;
   families: Pick<FamilyService, "generate" | "save">;
   verbs: Pick<VerbUsageService, "canGenerate" | "generate">;
-  // ask("next", { entryId }) runs after openTrivia, so the answer streams
-  // into the vocab-trivia block the user is looking at.
-  trivia: Pick<TriviaService, "ask">;
-  openTrivia(): Promise<unknown>;
+  // 「來一則」 asks in the background — no more opening 冷知識.md (1006 #1).
+  // The round shows right under the heading, 未收藏, until `favorite`
+  // writes it into the file (the same flow 冷知識.md's own 收藏 uses).
+  trivia: Pick<TriviaService, "ask" | "favorite">;
   // The word's card in the sidebar, on its AI tab.
   openInSidebar(entry: VocabEntry, tab: "ai"): unknown;
   notify(message: string): void;
@@ -88,6 +91,74 @@ export function sectionByTitle(title: string): WordSection | null {
 // (reading view re-renders sections freely) show it as busy too.
 const running = new Set<string>();
 
+// ── 單字頁「來一則」(1006 #1) ────────────────────────────────────────
+//
+// The round 「來一則」 fetches is shown right under the 冷知識收藏 heading,
+// marked 未收藏 — DOM only, never written to the file. entryId → the round,
+// so switching tabs and back (the postprocessor runs again from scratch)
+// still shows it for the rest of the session; favoriting it removes the
+// entry (the file itself carries it from then on).
+interface PendingTrivia {
+  turnId: string;
+  title: string;
+  body: string;
+}
+const pendingTrivia = new Map<string, PendingTrivia>();
+
+// Temporary strings for 1006 #1 — not yet in src/core/i18n/{zh-TW,en}.ts
+// (see the 整合事項 in the wave report); getLocale() so they still follow
+// the user's language setting meanwhile.
+function triviaPendingText() {
+  return getLocale() === "zh-TW"
+    ? {
+        fetched: (word: string) => `已拿到 ${word} 的冷知識`,
+        badge: "未收藏",
+        hint: "離開頁面後只會留在冷知識紀錄裡。",
+      }
+    : {
+        fetched: (word: string) => `Got a trivia fact about ${word}.`,
+        badge: "Not saved",
+        hint: "Leaves the page without being saved — it only stays in the trivia log.",
+      };
+}
+
+// Draws (or clears) the pending-round card right after `h`, from the
+// current map state. Called once while decorating the heading (so a
+// re-render — switching tabs back to this note — shows what's pending)
+// and again right after 「來一則」 resolves, since nothing else would
+// redraw this section (the file didn't change).
+function syncTriviaCard(h: HTMLElement, entry: VocabEntry, deps: WordPageDeps, ctx: MarkdownPostProcessorContext): void {
+  const next = h.nextElementSibling;
+  if (next instanceof HTMLElement && next.hasClass("vt-wp-trivia-pending")) next.remove();
+  const pending = pendingTrivia.get(entry.id);
+  if (!pending) return;
+  const L = triviaPendingText();
+
+  const card = createDiv({ cls: ["vt", "vt-wp-trivia-pending"] });
+  const head = card.createDiv({ cls: "vt-wp-trivia-pending-head" });
+  head.createSpan({ cls: "vt-wp-trivia-pending-badge", text: L.badge });
+  const save = head.createEl("button", { cls: "vt-wp-btn" });
+  setIcon(save.createSpan({ cls: "vt-wp-btn-icon" }), "bookmark");
+  save.createSpan({ text: t("learn.trivia.favorite") });
+  save.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!deps.trivia.favorite(pending.turnId)) return;
+    pendingTrivia.delete(entry.id);
+    syncTriviaCard(h, entry, deps, ctx);
+  });
+
+  if (pending.title) card.createDiv({ cls: "vt-wp-trivia-pending-title", text: pending.title });
+  const body = card.createDiv({ cls: "vt-wp-trivia-pending-body" });
+  // Tied to the block's own lifecycle (same as trivia.ts's favorites list).
+  const scope = new MarkdownRenderChild(body);
+  ctx.addChild(scope);
+  void MarkdownRenderer.render(deps.app, pending.body, body, ctx.sourcePath, scope);
+
+  card.createDiv({ cls: "vt-wp-trivia-pending-hint", text: L.hint });
+  h.insertAdjacentElement("afterend", card);
+}
+
 export function createWordPageDecorator(deps: WordPageDeps) {
   return (el: HTMLElement, ctx: MarkdownPostProcessorContext): void => {
     const fm = (ctx.frontmatter as Record<string, unknown> | undefined) ?? deps.frontmatterOf(ctx.sourcePath);
@@ -102,7 +173,8 @@ export function createWordPageDecorator(deps: WordPageDeps) {
       if (!section) continue;
       const entry = deps.entry(entryId);
       if (!entry) continue;
-      decorate(h, section, entry, deps);
+      decorate(h, section, entry, deps, ctx);
+      if (section === "trivia") syncTriviaCard(h, entry, deps, ctx);
     }
   };
 }
@@ -113,7 +185,13 @@ interface Action {
   run: () => Promise<unknown> | unknown;
 }
 
-function actionFor(section: WordSection, entry: VocabEntry, deps: WordPageDeps): Action | null {
+function actionFor(
+  section: WordSection,
+  entry: VocabEntry,
+  deps: WordPageDeps,
+  h: HTMLElement,
+  ctx: MarkdownPostProcessorContext
+): Action | null {
   switch (section) {
     case "families":
       return {
@@ -141,8 +219,17 @@ function actionFor(section: WordSection, entry: VocabEntry, deps: WordPageDeps):
         icon: "lightbulb",
         label: l("trivia"),
         run: async () => {
-          await deps.openTrivia();
-          await deps.trivia.ask("next", { entryId: entry.id });
+          const result = await deps.trivia.ask("next", { entryId: entry.id });
+          if (result?.turnId) {
+            pendingTrivia.set(entry.id, { turnId: result.turnId, title: result.title ?? "", body: result.body ?? "" });
+            deps.notify(triviaPendingText().fetched(entry.word));
+          } else if (result?.error || result?.errorMessage) {
+            const message = aiErrorText(new AiError((result.error ?? "network") as AiErrorCode, result.errorMessage));
+            deps.notify(l("failed", { error: message }));
+          }
+          // The note may have been closed while this was in flight — the
+          // map entry still lands next time this heading is decorated.
+          if (h.isConnected) syncTriviaCard(h, entry, deps, ctx);
         },
       };
     case "discussion":
@@ -150,8 +237,14 @@ function actionFor(section: WordSection, entry: VocabEntry, deps: WordPageDeps):
   }
 }
 
-function decorate(h: HTMLElement, section: WordSection, entry: VocabEntry, deps: WordPageDeps): void {
-  const action = actionFor(section, entry, deps);
+function decorate(
+  h: HTMLElement,
+  section: WordSection,
+  entry: VocabEntry,
+  deps: WordPageDeps,
+  ctx: MarkdownPostProcessorContext
+): void {
+  const action = actionFor(section, entry, deps, h, ctx);
   if (!action) return;
   h.addClass("vt-wp-heading");
   const box = h.createSpan({ cls: ["vt", "vt-wp-actions"] });
