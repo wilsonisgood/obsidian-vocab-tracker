@@ -571,4 +571,22 @@ export const zhTW: Record<keyof typeof en, string> = {
   "backup.restore.done": "已從備份還原。還原前的資料存在 {path}",
   "backup.restore.failed": "還原失敗：{error}",
   "backup.restore.safetyFailed": "沒辦法先備份目前的資料，所以沒有還原，什麼都沒改：{error}",
+
+  // ── Wave 7 F：like 地基（1006report.md 定案規格 #13-#28）──────────
+  // 單字列上的叉叉／垃圾桶換成 like 按鈕（♡／♥）。單字的收藏一律叫
+  // like，就算中文介面也寫「Like」；冷知識／動詞用法的「收藏」（寫進單字
+  // 頁的意思）是不同的概念，維持原名不變。
+  "like.like": "Like",
+  "like.unlike": "取消 Like",
+  // 側欄／dashboard 的「只看 like 的字」切換。
+  "like.filter.onlyLiked": "只看 Like",
+  // 側欄「單字」分區標題，之後會帶上數字（規格 #5, #9）。
+  "sidebar.section.words.counted": "單字（{n}）",
+
+  // 延遲提交的「復原」提示，取消 like 直接刪除（規格 #14）、刪一問一答／
+  // 刪整串討論（規格 #20, #21）共用同一套。
+  "undo.action": "復原",
+  "undo.deletedWord": "已刪除 {word}",
+  "undo.deletedQa": "已刪除這組問答",
+  "undo.deletedThread": "已刪除這串討論",
 };

@@ -52,6 +52,17 @@ describe("merge", () => {
     expect(merge(data([newer]), data([older])).entries).toEqual([newer]);
   });
 
+  it("carries the liked field along with whichever whole entry wins (Wave 7 F)", () => {
+    // merge.ts picks by newer updatedAt/rev on the *whole* entry object
+    // (pickNewer), so a newly added `liked` field needs no special-casing
+    // here — this just confirms that still holds.
+    const olderLiked = makeEntry({ id: "1", liked: true, updatedAt: "2026-01-01T00:00:00.000Z" });
+    const newerUnliked = makeEntry({ id: "1", liked: false, updatedAt: "2026-01-02T00:00:00.000Z" });
+
+    expect(merge(data([olderLiked]), data([newerUnliked])).entries[0].liked).toBe(false);
+    expect(merge(data([newerUnliked]), data([olderLiked])).entries[0].liked).toBe(false);
+  });
+
   it("breaks a tie on identical updatedAt using the higher rev", () => {
     const sameTime = "2026-01-01T00:00:00.000Z";
     const lowRev = makeEntry({ id: "1", word: "low-rev", updatedAt: sameTime, rev: 1 });

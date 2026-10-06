@@ -162,6 +162,106 @@ describe("VocabStore", () => {
     });
   });
 
+  describe("setLiked", () => {
+    it("sets liked and bumps updatedAt/rev like touch() does", async () => {
+      const entry = makeEntry({ id: "1", rev: 1, updatedAt: "2020-01-01T00:00:00.000Z" });
+      const store = new VocabStore({ entries: [entry] }, async () => {});
+
+      await store.setLiked(entry, true);
+
+      expect(entry.liked).toBe(true);
+      expect(entry.rev).toBe(2);
+      expect(entry.updatedAt).not.toBe("2020-01-01T00:00:00.000Z");
+    });
+
+    it("can unlike (set false) the same way", async () => {
+      const entry = makeEntry({ id: "1", liked: true });
+      const store = new VocabStore({ entries: [entry] }, async () => {});
+
+      await store.setLiked(entry, false);
+
+      expect(entry.liked).toBe(false);
+    });
+
+    it("emits data:changed", async () => {
+      const entry = makeEntry({ id: "1" });
+      const store = new VocabStore({ entries: [entry] }, async () => {});
+      const onChanged = vi.fn();
+      store.events.on("data:changed", onChanged);
+
+      await store.setLiked(entry, true);
+
+      expect(onChanged).toHaveBeenCalled();
+    });
+  });
+
+  describe("backfillLiked", () => {
+    it("fills liked only for entries that don't have it yet", async () => {
+      const untouched = makeEntry({ id: "1", liked: undefined });
+      const alreadyTrue = makeEntry({ id: "2", liked: true });
+      const alreadyFalse = makeEntry({ id: "3", liked: false });
+      const persist = vi.fn().mockResolvedValue(undefined);
+      const store = new VocabStore({ entries: [untouched, alreadyTrue, alreadyFalse] }, persist);
+
+      const decide = vi.fn().mockReturnValue(true);
+      const changed = await store.backfillLiked(decide);
+
+      expect(changed).toBe(1);
+      expect(decide).toHaveBeenCalledTimes(1);
+      expect(decide).toHaveBeenCalledWith(untouched);
+      expect(untouched.liked).toBe(true);
+      // Already-decided entries are left exactly as they were.
+      expect(alreadyTrue.liked).toBe(true);
+      expect(alreadyFalse.liked).toBe(false);
+    });
+
+    it("bumps updatedAt/rev only for the entries it actually changes", async () => {
+      const untouched = makeEntry({ id: "1", liked: undefined, rev: 0, updatedAt: "2020-01-01T00:00:00.000Z" });
+      const alreadyTrue = makeEntry({ id: "2", liked: true, rev: 5, updatedAt: "2020-01-01T00:00:00.000Z" });
+      const store = new VocabStore({ entries: [untouched, alreadyTrue] }, async () => {});
+
+      await store.backfillLiked(() => false);
+
+      expect(untouched.rev).toBe(1);
+      expect(untouched.updatedAt).not.toBe("2020-01-01T00:00:00.000Z");
+      expect(alreadyTrue.rev).toBe(5);
+      expect(alreadyTrue.updatedAt).toBe("2020-01-01T00:00:00.000Z");
+    });
+
+    it("decides per entry, so different entries can come out liked differently", async () => {
+      const wordlistWord = makeEntry({ id: "1", liked: undefined, origin: "wordlist" });
+      const handAdded = makeEntry({ id: "2", liked: undefined, origin: undefined });
+      const store = new VocabStore({ entries: [wordlistWord, handAdded] }, async () => {});
+
+      await store.backfillLiked((e) => e.origin !== "wordlist");
+
+      expect(wordlistWord.liked).toBe(false);
+      expect(handAdded.liked).toBe(true);
+    });
+
+    it("returns 0 and never calls persist when nothing needs backfilling", async () => {
+      const entry = makeEntry({ id: "1", liked: true });
+      const persist = vi.fn().mockResolvedValue(undefined);
+      const store = new VocabStore({ entries: [entry] }, persist);
+
+      const changed = await store.backfillLiked(() => false);
+
+      expect(changed).toBe(0);
+      await store.flush();
+      expect(persist).not.toHaveBeenCalled();
+    });
+
+    it("includes tombstoned entries", async () => {
+      const deleted = makeEntry({ id: "1", liked: undefined, deletedAt: "2026-01-01T00:00:00.000Z" });
+      const store = new VocabStore({ entries: [deleted] }, async () => {});
+
+      const changed = await store.backfillLiked(() => true);
+
+      expect(changed).toBe(1);
+      expect(deleted.liked).toBe(true);
+    });
+  });
+
   describe("deleteEntry", () => {
     it("sets deletedAt instead of removing the entry", async () => {
       const entry = makeEntry({ id: "1" });

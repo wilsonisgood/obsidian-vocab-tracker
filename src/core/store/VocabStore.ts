@@ -117,6 +117,38 @@ export class VocabStore {
     return this.save();
   }
 
+  // Sets the like state (Wave 7 F, 規格 #13-#15) the same way any other
+  // field edit does: mutate in place, then stamp updatedAt/rev and save
+  // like touch() does. Callers decide *when* to like/unlike (UI click, or
+  // an automatic trigger — AI use, pin, flashcard review…); this is just
+  // the one place that writes the field so every trigger stays consistent.
+  setLiked(entry: VocabEntry, liked: boolean): Promise<void> {
+    entry.liked = liked;
+    return this.touch(entry);
+  }
+
+  // One-time migration helper (規格 #23): fills in `liked` for every entry
+  // that doesn't have it yet (liked === undefined). `decide` is typically
+  // core/model/like.ts's initialLiked(), called with signals the caller
+  // assembles from ThreadService/usage/etc — this layer can't compute those
+  // itself, it only owns the write. Tombstones are included too (harmless,
+  // and keeps the whole data set consistent). One save for the whole pass.
+  // Returns how many entries were changed, so the caller can skip the
+  // save-already-done no-op case or log it.
+  async backfillLiked(decide: (entry: VocabEntry) => boolean): Promise<number> {
+    const stamp = nowIso();
+    let count = 0;
+    for (const entry of this.data.entries) {
+      if (entry.liked !== undefined) continue;
+      entry.liked = decide(entry);
+      entry.updatedAt = stamp;
+      entry.rev = (entry.rev ?? 0) + 1;
+      count++;
+    }
+    if (count > 0) await this.save();
+    return count;
+  }
+
   // Soft-delete: sets deletedAt instead of removing the entry, so a delete
   // on one device can be merged against an edit on another (see
   // core/store/merge.ts) instead of the record just vanishing or

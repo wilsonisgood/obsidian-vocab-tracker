@@ -57,6 +57,14 @@ export interface VocabEntry extends Record_ {
   origin?: "wordlist" | FamilyOrigin;
   // Verb usage (L6, 規劃書 06 §7.3).
   usage?: UsageBlock;
+  // Wave 7 F — 單字的「like」狀態（1006report.md 定案規格 #13-#15, #23）。
+  // true/false = 已回填過的真實狀態；undefined = 尚未回填（schema 升級前的
+  // 舊資料，或還沒跑過一次性遷移）。呼叫端不應把 undefined 當成「未 like」
+  // 直接拿來篩選——core/model/like.ts 的 isListed() 只看 liked === true，
+  // 所以在遷移跑完之前 undefined 的字一律不算「已 like」地被列出，但仍可能
+  // 靠亮著的考試標籤被列出。VocabStore.backfillLiked() 負責把 undefined
+  // 一次性填成確定值，填法見 core/model/like.ts 的 initialLiked()。
+  liked?: boolean;
 }
 
 export interface VocabData {
