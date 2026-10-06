@@ -1,6 +1,6 @@
 import type { FamilyOrigin } from "./family";
 import type { SrsCard } from "./srs";
-import type { UsageBlock } from "./usage";
+import type { PosKey, UsageBlock } from "./usage";
 import type { PluginSettings } from "./settings";
 
 export interface VocabSource {
@@ -55,8 +55,15 @@ export interface VocabEntry extends Record_ {
   // "wordlist" = auto-imported from an exam word list match;
   // "family:<id>" = added from a word family's suggestions (規劃書 06 §7.2).
   origin?: "wordlist" | FamilyOrigin;
-  // Verb usage (L6, 規劃書 06 §7.3).
+  // Legacy single usage block (pre-1006-2 #21, always meant the verb's
+  // usage). Superseded by `usages` (keyed by part of speech) — kept only
+  // so old data/devices still type-check and merge; read both through
+  // core/model/usage.ts's usagesOf(), never this field directly.
   usage?: UsageBlock;
+  // Usage (L6, 規劃書 06 §7.3; 1006-2 #17 #18 #20 #21): one block per part
+  // of speech, generated together and regenerated individually. See
+  // usagesOf() for how this merges with the legacy `usage` field above.
+  usages?: Partial<Record<PosKey, UsageBlock>>;
   // Wave 7 F — 單字的「like」狀態（1006report.md 定案規格 #13-#15, #23）。
   // true/false = 已回填過的真實狀態；undefined = 尚未回填（schema 升級前的
   // 舊資料，或還沒跑過一次性遷移）。呼叫端不應把 undefined 當成「未 like」

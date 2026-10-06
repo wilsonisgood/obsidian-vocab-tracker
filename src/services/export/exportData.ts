@@ -2,7 +2,7 @@ import type { VocabEntry } from "../../core/model/entry";
 import type { Family } from "../../core/model/family";
 import type { Thread } from "../../core/model/thread";
 import type { TriviaItem } from "../../core/model/trivia";
-import type { VerbFavorite } from "../../core/model/usage";
+import { usagesOf, type VerbFavorite } from "../../core/model/usage";
 import type { NoteReaderPort } from "../../core/ports";
 import { resolveIn, type ParagraphAnchor } from "../anchors/ParagraphAnchorService";
 import { paragraphNumber } from "../files/paragraphNumber";
@@ -63,7 +63,13 @@ export function createExportData(src: ExportDataSources): ExportDataPort {
       return threads.map((thread) => ({ thread, index: paragraphIndexOf(content, thread.anchor as ParagraphAnchor) }));
     },
     families: () => src.learn.families().filter((f) => !f.deletedAt),
-    usage: (entryId) => entry(entryId)?.usage,
+    // Wave 8 U1 (1006-2 #21): usage is per pos now; the word page's usage
+    // export (ExportVerbFavorite/ExportUsage, services/export/types.ts)
+    // is still verb-only this wave — U2 owns the per-pos export.
+    usage: (entryId) => {
+      const e = entry(entryId);
+      return e && usagesOf(e).v;
+    },
     trivia: () => src.learn.trivia().filter((t) => !t.deletedAt),
     verbFavorites: () => (src.learn.verbFavorites?.() ?? []).filter((v) => !v.deletedAt),
   };

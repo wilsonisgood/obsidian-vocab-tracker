@@ -134,7 +134,7 @@ describe("runStructured", () => {
     });
     const d = aiDebugOf(await caught(runStructured(ai, verbUsage, { entry: entry("v", "sugarcoat") })))!;
     expect(d.output).toBe("Sure! Here you go: {oops");
-    expect(d.prompt).toContain("任務：動詞用法（sugarcoat）");
+    expect(d.prompt).toContain("任務：用法（sugarcoat）");
   });
 
   it("leaves other errors alone, and works without prepare", async () => {
@@ -165,9 +165,14 @@ describe("services carry the debug info", () => {
 
   it("VerbUsageService.generate", async () => {
     const vocab = new FakeVocab([entry("v1", "sugarcoat", { partOfSpeech: "verb" })]);
-    const ai = new FakePreparingAi(() => result('{"patterns": []}', { json: { patterns: [] } }));
-    const verbs = new VerbUsageService({ ai, vocab, clock: () => NOW });
+    const ai = new FakePreparingAi(() => result('{"entries": []}', { json: { entries: [] } }));
+    const learn = new LearnStore({ storage: new MemoryStorage(), clock: () => NOW });
+    const verbs = new VerbUsageService({ ai, vocab, learn, clock: () => NOW });
     const e = await caught(verbs.generate(vocab.entries[0]));
-    expect(aiDebugOf(e)).toMatchObject({ taskId: "verb.usage", reason: "verb.usage: no patterns", output: '{"patterns": []}' });
+    expect(aiDebugOf(e)).toMatchObject({
+      taskId: "verb.usage",
+      reason: "verb.usage: no usable part-of-speech entries",
+      output: '{"entries": []}',
+    });
   });
 });

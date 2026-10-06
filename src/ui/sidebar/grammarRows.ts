@@ -1,4 +1,5 @@
 import type { VocabEntry } from "../../core/model/entry";
+import { usagesOf } from "../../core/model/usage";
 
 // Rows of the sidebar's 「文法」 section → 動詞用法 subheading (Wave 6 W):
 // every verb that has a generated usage block, most recently generated,
@@ -41,9 +42,13 @@ export function verbUsageRows(
 ): VerbUsageRow[] {
   const rows: VerbUsageRow[] = [];
   for (const e of entries) {
-    if (e.deletedAt || !e.usage) continue;
+    // Wave 8 U1 (1006-2 #21): usage is per pos now; this section only
+    // ever listed verbs, so it still only cares about pos "v" (merges
+    // the legacy entry.usage field in — usagesOf()).
+    const usage = usagesOf(e).v;
+    if (e.deletedAt || !usage) continue;
     const fav = favoriteOf(e.id);
-    const lastAt = later(e.usage.generatedAt, fav?.updatedAt) ?? e.usage.generatedAt;
+    const lastAt = later(usage.generatedAt, fav?.updatedAt) ?? usage.generatedAt;
     rows.push({ entryId: e.id, word: e.word, favorited: !!fav, lastAt });
   }
   return rows.sort((a, b) => ms(b.lastAt) - ms(a.lastAt) || a.entryId.localeCompare(b.entryId));

@@ -1,7 +1,7 @@
 import { TypedEmitter } from "../../core/events";
 import type { Family } from "../../core/model/family";
 import type { TriviaItem } from "../../core/model/trivia";
-import { verbFavoriteId, type VerbFavorite } from "../../core/model/usage";
+import { usageFavoriteId, verbFavoriteId, type PosKey, type VerbFavorite } from "../../core/model/usage";
 import type { StoragePort } from "../../core/ports";
 import {
   dropOldTombstones,
@@ -176,6 +176,57 @@ export class LearnStore {
     this.stamp(rec);
     this.events.emit("verbFavorite:upsert", rec);
     this.scheduleWrite();
+  }
+
+  // ── Saved usages, any part of speech (1006-2 #21) ────────────────
+  //
+  // pos "v" always goes through favoriteVerb/verbFavorite/unfavoriteVerb
+  // above (same id, "verb:${entryId}") so a verb favorited before this
+  // wave and one favorited after it are the same record, not two. Every
+  // other pos gets the new "usage:${entryId}:${pos}" id.
+
+  usageFavorite(entryId: string, pos: PosKey): VerbFavorite | undefined {
+    if (pos === "v") return this.verbFavorite(entryId);
+    const id = usageFavoriteId(entryId, pos);
+    return this.verbList.find((v) => v.id === id && !v.deletedAt);
+  }
+
+  favoriteUsage(entry: { id: string; word: string }, pos: PosKey): VerbFavorite {
+    if (pos === "v") return this.favoriteVerb(entry);
+    const live = this.usageFavorite(entry.id, pos);
+    if (live) return live;
+    const id = usageFavoriteId(entry.id, pos);
+    const dead = this.verbList.find((v) => v.id === id);
+    const rec: VerbFavorite = { id, entryId: entry.id, word: entry.word, pos, rev: dead?.rev };
+    this.stamp(rec);
+    this.upsert(this.verbList, rec);
+    this.events.emit("verbFavorite:upsert", rec);
+    this.scheduleWrite();
+    return rec;
+  }
+
+  unfavoriteUsage(entryId: string, pos: PosKey): void {
+    if (pos === "v") return this.unfavoriteVerb(entryId);
+    const rec = this.usageFavorite(entryId, pos);
+    if (!rec) return;
+    rec.deletedAt = this.nowIso();
+    this.stamp(rec);
+    this.events.emit("verbFavorite:upsert", rec);
+    this.scheduleWrite();
+  }
+
+  // Every part of speech of this entry that's currently favorited — the
+  // delete confirm dialog's count (EntryLinkageService.impact()) and the
+  // basis for unfavoriteAllUsages() below need "any pos", not just "v".
+  usageFavoritesFor(entryId: string): VerbFavorite[] {
+    return this.verbList.filter((v) => v.entryId === entryId && !v.deletedAt);
+  }
+
+  // Called when a word is deleted (EntryLinkageService.unlink()): clears
+  // every pos's favorite, not just "v" — a word deleted with its noun AND
+  // verb usage saved should lose both, not leave the noun one behind.
+  unfavoriteAllUsages(entryId: string): void {
+    for (const fav of this.usageFavoritesFor(entryId)) this.unfavoriteUsage(entryId, fav.pos ?? "v");
   }
 
   // ── Persistence ───────────────────────────────────────────────
