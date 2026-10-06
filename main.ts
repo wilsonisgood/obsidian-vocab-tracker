@@ -235,7 +235,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // the first time one of them is used.
     this.learn = new LearnStore({ storage: this.storage });
     this.families = new FamilyService({ ai, vocab: this.store, learn: this.learn, dictionary: this.dictionary });
-    this.verbs = new VerbUsageService({ ai, vocab: this.store });
+    this.verbs = new VerbUsageService({ ai, vocab: this.store, learn: this.learn });
     this.trivia = new TriviaService({
       threads: this.threads,
       vocab: this.store,
