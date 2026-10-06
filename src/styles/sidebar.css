@@ -33,20 +33,10 @@
   flex: 1;
 }
 
-.vt-sidebar-list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  gap: 6px;
-}
-
-.vt-sidebar-count-label {
-  font-size: 0.8em;
-  color: var(--text-muted);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+/* 本篁／全部（1006report.md #5）: now shared, right under the sidebar's
+   own title, instead of living inside the 單字 section. */
+.vt-sidebar-filter {
+  margin-bottom: 12px;
 }
 
 .vt-sidebar-hint {
@@ -167,7 +157,10 @@
   margin: 4px 0 10px;
 }
 
-.vt-exam-strip-title {
+/* The "本篁考試字彙 · 全文 N 個不同的字" title line is gone (1006report.md
+   #5) — only this scanning placeholder remains, shown until the
+   background scan's first result lands. */
+.vt-exam-strip-scanning {
   font-size: 0.75em;
   color: var(--text-muted);
   margin-bottom: 4px;
@@ -272,6 +265,7 @@
 }
 
 .vt-plist-row {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -283,6 +277,56 @@
 .vt-plist-row:hover,
 .vt-plist-row.is-current {
   background: var(--background-modifier-hover);
+}
+
+/* 刪除整串討論（1006report.md #21）：不跳確認，hidden immediately by
+   runUndoable's apply(), shown again on 復原. */
+.vt-plist-row.vt-plist-row-removed {
+  display: none;
+}
+
+.vt-plist-row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vt-plist-row-head .vt-plist-text {
+  flex: 1;
+}
+
+.vt-plist-delete {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  opacity: 0;
+  padding: 2px;
+}
+
+.vt-plist-row:hover .vt-plist-delete,
+.vt-plist-delete:focus-visible {
+  opacity: 1;
+}
+
+.vt-plist-delete:hover {
+  color: var(--text-error);
+}
+
+.vt-plist-delete svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* 全部模式：段落討論依筆記分組（規格 #8） */
+.vt-plist-group-head {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 10px 0 4px;
+}
+
+.vt-plist-group-head:first-child {
+  margin-top: 0;
 }
 
 .vt-plist-text {
@@ -571,6 +615,7 @@
 }
 
 .vt-dlist-row {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -584,6 +629,11 @@
   background: var(--background-modifier-hover);
 }
 
+/* 刪除整串討論（1006report.md #21）— same pattern as .vt-plist-row above. */
+.vt-dlist-row.vt-dlist-row-removed {
+  display: none;
+}
+
 .vt-dlist-title {
   display: flex;
   align-items: center;
@@ -591,6 +641,29 @@
   min-width: 0;
   font-size: 0.9em;
   color: var(--text-normal);
+}
+
+.vt-dlist-delete {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--text-faint);
+  opacity: 0;
+  padding: 2px;
+}
+
+.vt-dlist-row:hover .vt-dlist-delete,
+.vt-dlist-delete:focus-visible {
+  opacity: 1;
+}
+
+.vt-dlist-delete:hover {
+  color: var(--text-error);
+}
+
+.vt-dlist-delete svg {
+  width: 13px;
+  height: 13px;
 }
 
 .vt-dlist-icon {

@@ -5,6 +5,8 @@ vi.mock("obsidian", () => import("../perf/support/obsidian"));
 import type { VocabEntry } from "../../src/core/model/entry";
 import type { VocabDataV1 } from "../../src/core/model/schemaV1";
 import { DEFAULT_SRS_SETTINGS } from "../../src/core/model/srs";
+import { isListed, type IsListedContext } from "../../src/core/model/like";
+import { resolveWordlistSettings, tagEnabled } from "../../src/core/model/wordlists";
 import { buildStressFixture } from "../fixtures/stress";
 import { PLUGIN_DIR, pluginFile, type FakeApp } from "../perf/support/app";
 import type { FakeElement } from "../perf/support/dom";
@@ -135,7 +137,16 @@ describe("v1 → current schema with 1,000 words", () => {
     const view = await openSidebar(b, "all");
     for (let i = 0; i < 30; i++) await Promise.resolve();
     const root = view.containerEl.children[1] as unknown as FakeElement;
-    expect(root.querySelectorAll(".vt-row")).toHaveLength(1000);
+    // 1006report.md #7: the sidebar now only lists isListed words (亮著的
+    // 考試標籤，或 like 過) — migrated v1 words carry no `liked` field, so
+    // only the ones with a matching exam tag show here.
+    const knownTags = b.plugin.wordlists.index.tags;
+    const ctx: IsListedContext = {
+      knownTags,
+      isTagOn: (tag) => tagEnabled(resolveWordlistSettings(b.plugin.store.settings.wordlists), tag),
+    };
+    const listed = b.plugin.store.entries.filter((e) => isListed(e, ctx));
+    expect(root.querySelectorAll(".vt-row")).toHaveLength(listed.length);
 
     // No SRS state yet: every word is a new card; the daily cap applies.
     await b.plugin.srs.ensureLoaded();

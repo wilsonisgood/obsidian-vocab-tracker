@@ -3,9 +3,12 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 vi.mock("obsidian", () => import("./support/obsidian"));
 
 import type { VocabSidebarView } from "../../src/ui/sidebar/VocabSidebarView";
+import { isListed, type IsListedContext } from "../../src/core/model/like";
+import { computeNoteScope } from "../../src/ui/sidebar/noteScope";
+import { resolveWordlistSettings, tagEnabled } from "../../src/core/model/wordlists";
 import { buildStressFixture } from "../fixtures/stress";
 import type { FakeElement } from "./support/dom";
-import { bootPlugin, closeSidebar, ms, openSidebar, PERF_FACTOR, type Booted } from "./support/harness";
+import { bootPlugin, closeSidebar, ms, openSidebar, PERF_FACTOR, settle, type Booted } from "./support/harness";
 import { flushMicrotasks, median, report, type Row } from "./support/report";
 
 // 規劃書 06 §1.3: with 1,000 words and 200 threads, opening the sidebar
@@ -39,6 +42,33 @@ function root(view: VocabSidebarView): FakeElement {
   return view.containerEl.children[1] as unknown as FakeElement;
 }
 
+// 1006report.md #7/#6: the sidebar now filters by isListed (亮著的考試標
+// 籤，或 like 過) and, 本篁模式下, by 「這篇有出現」 — mirrors
+// VocabSidebarView.scopedEntries()/noteScopeFor() so the perf budget is
+// still measured against a realistic row count, not the raw entry count.
+function isListedCtx(): IsListedContext {
+  const knownTags = b.plugin.wordlists.index.tags;
+  return {
+    knownTags,
+    isTagOn: (tag) => tagEnabled(resolveWordlistSettings(b.plugin.store.settings.wordlists), tag),
+  };
+}
+
+function listedCount(): number {
+  const ctx = isListedCtx();
+  return b.plugin.store.entries.filter((e) => isListed(e, ctx)).length;
+}
+
+async function thisNoteCount(path: string): Promise<number> {
+  const file = b.app.vault.getAbstractFileByPath(path) as unknown as { path: string; stat: { mtime: number } };
+  const hits = b.plugin.wordlists.cachedScan(path, file.stat.mtime)?.hits ?? [];
+  const text = await b.plugin.notes.read(path);
+  const inflections = resolveWordlistSettings(b.plugin.store.settings.wordlists).inflections;
+  const scope = computeNoteScope(b.plugin.store.entries, hits, text, inflections);
+  const ctx = isListedCtx();
+  return b.plugin.store.entries.filter((e) => isListed(e, ctx) && scope.has(e.id)).length;
+}
+
 describe("sidebar open with 1,000 words / 200 threads (§1.3 < 150 ms)", () => {
   const rows: Row[] = [];
   afterAll(() => report("sidebar open (VocabSidebarView, fake DOM)", rows));
@@ -48,11 +78,15 @@ describe("sidebar open with 1,000 words / 200 threads (§1.3 < 150 ms)", () => {
       // First open in this worker: cold JIT, like the first open after
       // Obsidian starts.
       const cold = await timedOpen(filter);
+      // 本篇 scope (#6) resolves one tick after the timed open (it reads
+      // the note); wait for it before counting rows, without folding that
+      // wait into the measured open time above.
+      await settle();
       const el = root(cold.view);
       if (filter === "all") {
-        expect(el.querySelectorAll(".vt-row")).toHaveLength(1000);
+        expect(el.querySelectorAll(".vt-row")).toHaveLength(listedCount());
       } else {
-        expect(el.querySelectorAll(".vt-row")).toHaveLength(fx.liveEntries.filter((e) => e.source?.path === fx.article.path).length);
+        expect(el.querySelectorAll(".vt-row")).toHaveLength(await thisNoteCount(fx.article.path));
         // The 段落討論 list finished drawing (async: it reads the note).
         const articleThreads = fx.threads.filter((t) => t.anchor.kind === "paragraph" && t.anchor.path === fx.article.path);
         expect(el.querySelectorAll(".vt-plist-row")).toHaveLength(articleThreads.length);

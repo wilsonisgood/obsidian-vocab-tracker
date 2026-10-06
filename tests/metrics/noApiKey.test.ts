@@ -2,9 +2,11 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("obsidian", () => import("../perf/support/obsidian"));
 
-import type { VocabData } from "../../src/core/model/entry";
+import type { VocabData, VocabEntry } from "../../src/core/model/entry";
 import { t } from "../../src/core/i18n";
 import { Rating } from "../../src/core/model/srs";
+import { isListed, type IsListedContext } from "../../src/core/model/like";
+import { resolveWordlistSettings, tagEnabled } from "../../src/core/model/wordlists";
 import type { VocabSidebarView } from "../../src/ui/sidebar/VocabSidebarView";
 import { buildStressFixture } from "../fixtures/stress";
 import { networkLog, type FakeElement } from "../perf/support/dom";
@@ -36,6 +38,18 @@ describe.each([
   const errors: unknown[][] = [];
   let spy: { mockRestore(): void };
 
+  // 1006report.md #7: the sidebar now only lists isListed words — pick
+  // from those, not any live entry, so these non-AI flows still find a
+  // row to click on.
+  function isListedEntry(pred: (e: VocabEntry) => boolean): VocabEntry {
+    const knownTags = b.plugin.wordlists.index.tags;
+    const ctx: IsListedContext = {
+      knownTags,
+      isTagOn: (tag) => tagEnabled(resolveWordlistSettings(b.plugin.store.settings.wordlists), tag),
+    };
+    return fx.liveEntries.find((e) => isListed(e, ctx) && pred(e))!;
+  }
+
   beforeAll(async () => {
     spy = vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => void errors.push(args));
     networkLog.length = 0;
@@ -62,7 +76,7 @@ describe.each([
       closeSidebar(b, view);
     }
     const view = await openSidebar(b, "all");
-    const entry = fx.liveEntries.find((e) => e.antonyms && e.source)!;
+    const entry = isListedEntry((e) => !!e.antonyms && !!e.source);
     view.expandState.set(entry.id, "full");
     view.render();
     await flush();
@@ -78,7 +92,7 @@ describe.each([
 
   it("the AI tab on a word card shows its hint instead of failing", async () => {
     const view = await openSidebar(b, "all");
-    const entry = fx.liveEntries[0];
+    const entry = isListedEntry(() => true);
     view.openWord(entry.id, "ai");
     await flush();
     const row = rootOf(view).querySelector(`.vt-row[data-entry-id="${entry.id}"]`)!;
