@@ -33,6 +33,11 @@ export interface AiSettings extends SectionStamp {
   // Weighted tokens per calendar month (cache reads count 1/10, see
   // services/ai/usage.ts). 0 = no limit.
   monthlyTokenBudget: number;
+  // Word DNA (規劃書 09 §2 決定 5, A8): how many batches of
+  // MAX_ANALYZE_WORDS liked-but-unsplit words startAuto() will send the AI
+  // per day. 0 disables the background auto-拆字 entirely (manual拆字 via
+  // analyzeNow still works).
+  dnaDailyBatches?: number;
 }
 
 export const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
@@ -249,6 +254,7 @@ export function defaultAiSettings(): AiSettings {
       },
     },
     monthlyTokenBudget: 0,
+    dnaDailyBatches: 10,
   };
 }
 
