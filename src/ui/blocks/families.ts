@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Menu, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
+import { Component, MarkdownRenderChild, MarkdownRenderer, Menu, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import type { Family } from "../../core/model/family";
@@ -43,7 +43,7 @@ export function renderFamilies(
   el: HTMLElement,
   ctx: MarkdownPostProcessorContext
 ): void {
-  ctx.addChild(new FamiliesBlock(el, plugin, parseFamiliesParams(source)));
+  ctx.addChild(new FamiliesBlock(el, plugin, parseFamiliesParams(source), ctx.sourcePath));
 }
 
 class FamiliesBlock extends MarkdownRenderChild {
@@ -59,11 +59,16 @@ class FamiliesBlock extends MarkdownRenderChild {
   private focusEntryId: string | undefined;
   // Suggested words being added (「點一下加入」), so a double tap adds once.
   private adding = new Set<string>();
+  // Each member's zh gloss is AI text, rendered as Markdown (1006 #22); a
+  // fresh scope per tree render drops the previous one's listeners (same
+  // lifecycle as trivia.ts's favorites list / verbs.ts's patterns).
+  private markdownScope: Component | null = null;
 
   constructor(
     containerEl: HTMLElement,
     private plugin: VocabTrackerPlugin,
-    private params: FamiliesParams
+    private params: FamiliesParams,
+    private sourcePath: string
   ) {
     super(containerEl);
   }
@@ -198,6 +203,10 @@ class FamiliesBlock extends MarkdownRenderChild {
   private render(): void {
     const root = this.root;
     root.empty();
+    if (this.markdownScope) {
+      this.removeChild(this.markdownScope);
+      this.markdownScope = null;
+    }
     if (!this.loaded) {
       root.createDiv({ cls: "vt-learn-loading", text: t("learn.loading") });
       return;
@@ -283,6 +292,7 @@ class FamiliesBlock extends MarkdownRenderChild {
   // ── L5 tree ───────────────────────────────────────────────────
 
   private renderTree(f: Family, view: FamilyTreeView, lookup: MemberLookup): void {
+    const scope = (this.markdownScope = this.addChild(new Component()));
     const tree = this.root.createDiv({ cls: "vt-fam-tree" });
     const head = tree.createDiv({ cls: "vt-fam-root" });
     setIcon(head.createSpan({ cls: "vt-fam-root-icon" }), "git-fork");
@@ -317,13 +327,19 @@ class FamiliesBlock extends MarkdownRenderChild {
           const entry = chip.entryId ? lookup.byEntryId(chip.entryId) : undefined;
           const el = wordChip(list, this.plugin, entry, ["vt-fam-chip", "is-known", ...(chip.focus ? ["is-focus"] : [])]);
           el.createSpan({ cls: "vt-fam-chip-word", text: chip.word });
-          if (chip.zh) el.createSpan({ cls: "vt-fam-chip-zh", text: chip.zh });
+          if (chip.zh) {
+            const zh = el.createSpan({ cls: "vt-fam-chip-zh" });
+            void MarkdownRenderer.render(this.plugin.app, chip.zh, zh, this.sourcePath, scope);
+          }
           continue;
         }
         const busy = this.adding.has(`${f.id}\u0000${chip.word.toLowerCase()}`);
         const el = list.createEl("button", { cls: "vt-fam-chip is-suggested" });
         el.createSpan({ cls: "vt-fam-chip-word", text: chip.word });
-        if (chip.zh) el.createSpan({ cls: "vt-fam-chip-zh", text: chip.zh });
+        if (chip.zh) {
+          const zh = el.createSpan({ cls: "vt-fam-chip-zh" });
+          void MarkdownRenderer.render(this.plugin.app, chip.zh, zh, this.sourcePath, scope);
+        }
         setIcon(el.createSpan({ cls: "vt-fam-chip-icon" }), busy ? "loader" : "plus");
         el.disabled = busy;
         el.setAttr("aria-label", t("learn.family.add", { word: chip.word }));

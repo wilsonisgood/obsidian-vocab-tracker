@@ -1,6 +1,6 @@
 import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
-import type { Anchor, Thread, Turn } from "../../core/model/thread";
+import type { Anchor, Thread, Turn, TurnErrorCode } from "../../core/model/thread";
 import { TRIVIA_THREAD_ID, type TriviaItem } from "../../core/model/trivia";
 import { knownWordList, MAX_TOLD, type ToldTrivia, type TriviaInput } from "../ai/context/triviaContext";
 import type { WordFacts } from "../ai/context/wordContext";
@@ -32,6 +32,23 @@ export interface TriviaAskOptions {
   // Talk about this word (e.g. 「來一則」 on a word page). Otherwise `next`
   // picks one, and quiz/etymology/joke stay on the current subject.
   entryId?: string;
+}
+
+// What ask() hands back (1006 #1): the subject is always there once one
+// was found, so callers that only cared about "any words to talk about?"
+// keep working unchanged; the round's content (turnId/title/body) is only
+// set once the answer actually finished — not on a streaming abort or an
+// AI error, which the thread itself already shows.
+export interface TriviaAnswer {
+  entry: VocabEntry;
+  turnId?: string;
+  title?: string;
+  body?: string;
+  // Set when the round errored, so a caller showing its own notice (單字頁
+  // 「來一則」, which has no chat bubble of its own to show it in) can
+  // build the same message the AI 頁籤 would (ui/kit/aiState.aiErrorText).
+  error?: TurnErrorCode;
+  errorMessage?: string;
 }
 
 function facts(e: VocabEntry): WordFacts {
@@ -124,10 +141,12 @@ export class TriviaService {
     };
   }
 
-  // A quick action. Resolves with the subject word once the answer has
-  // finished (or failed — the turn then carries the error); undefined when
-  // there are no words to talk about.
-  async ask(kind: TriviaKind, opts: TriviaAskOptions = {}): Promise<VocabEntry | undefined> {
+  // A quick action. Resolves once the answer has finished (or failed — the
+  // turn then carries the error); undefined when there are no words to
+  // talk about. `result.turnId` is set only on a finished answer, so a
+  // caller that wants the actual text (單字頁「來一則」) can tell a real
+  // round apart from one that errored.
+  async ask(kind: TriviaKind, opts: TriviaAskOptions = {}): Promise<TriviaAnswer | undefined> {
     await this.ensureLoaded();
     if (this.isBusy()) return undefined;
     const subject =
@@ -142,7 +161,18 @@ export class TriviaService {
       display: t(`ai.task.trivia.${kind}`),
       subjectEntryId: subject.id,
     });
-    return subject;
+    const turn = this.thread()?.turns.at(-1);
+    if (turn && turn.role === "assistant" && turn.status === "done" && turn.content.trim()) {
+      const { title, body } = splitTrivia(turn.content);
+      return { entry: subject, turnId: turn.id, title, body };
+    }
+    if (turn && turn.role === "assistant" && turn.status === "error") {
+      const out: TriviaAnswer = { entry: subject };
+      if (turn.error) out.error = turn.error;
+      if (turn.errorMessage) out.errorMessage = turn.errorMessage;
+      return out;
+    }
+    return { entry: subject };
   }
 
   // Free-form follow-up from the composer, about the current subject.

@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
+import { Component, MarkdownRenderChild, MarkdownRenderer, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import { WordIndex } from "../../services/learn/wordIndex";
@@ -41,7 +41,7 @@ export function renderVerbs(
   el: HTMLElement,
   ctx: MarkdownPostProcessorContext
 ): void {
-  ctx.addChild(new VerbsBlock(el, plugin, parseVerbsParams(source)));
+  ctx.addChild(new VerbsBlock(el, plugin, parseVerbsParams(source), ctx.sourcePath));
 }
 
 class VerbsBlock extends MarkdownRenderChild {
@@ -54,11 +54,16 @@ class VerbsBlock extends MarkdownRenderChild {
   // Last failure per entry, shown under its usage until the next try
   // (with what was thrown, for the debug box).
   private errors = new Map<string, { text: string; cause: unknown }>();
+  // AI text (pattern.meaningZh / .example) is Markdown (1006 #22); each
+  // renderDetail() gets a fresh scope so the previous render's listeners
+  // are dropped (same lifecycle trivia.ts's favorites list uses).
+  private markdownScope: Component | null = null;
 
   constructor(
     containerEl: HTMLElement,
     private plugin: VocabTrackerPlugin,
-    private params: VerbsParams
+    private params: VerbsParams,
+    private sourcePath: string
   ) {
     super(containerEl);
   }
@@ -210,15 +215,27 @@ class VerbsBlock extends MarkdownRenderChild {
     const error = this.errors.get(e.id);
     if (error && !busy) el.appendChild(aiErrorBox({ text: error.text, error: error.cause }));
 
+    if (this.markdownScope) {
+      this.removeChild(this.markdownScope);
+      this.markdownScope = null;
+    }
+
     if (usage) {
       const { patterns, related } = usageRows(usage);
+      const scope = (this.markdownScope = this.addChild(new Component()));
       const list = el.createDiv({ cls: "vt-verb-patterns" });
       for (const p of patterns) {
         const row = list.createDiv({ cls: "vt-verb-pattern" });
         row.createSpan({ cls: "vt-verb-pattern-p", text: p.pattern });
         const right = row.createDiv({ cls: "vt-verb-pattern-body" });
-        if (p.meaningZh) right.createDiv({ cls: "vt-verb-pattern-zh", text: p.meaningZh });
-        if (p.example) right.createDiv({ cls: "vt-verb-pattern-ex", text: p.example });
+        if (p.meaningZh) {
+          const zh = right.createDiv({ cls: "vt-verb-pattern-zh" });
+          void MarkdownRenderer.render(this.plugin.app, p.meaningZh, zh, this.sourcePath, scope);
+        }
+        if (p.example) {
+          const ex = right.createDiv({ cls: "vt-verb-pattern-ex" });
+          void MarkdownRenderer.render(this.plugin.app, p.example, ex, this.sourcePath, scope);
+        }
       }
       if (related.length) {
         el.createDiv({ cls: "vt-verb-section", text: t("learn.verb.related") });

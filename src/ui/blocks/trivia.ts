@@ -235,8 +235,8 @@ class TriviaBlock extends MarkdownRenderChild {
 
   private async call(c: TriviaCall): Promise<void> {
     if (c.type === "followup") return this.plugin.trivia.followup(c.question, c.selection);
-    const subject = await this.plugin.trivia.ask(c.kind, c.entryId ? { entryId: c.entryId } : {});
-    if (!subject && !this.plugin.trivia.isBusy()) new Notice(t("learn.trivia.noWords"));
+    const result = await this.plugin.trivia.ask(c.kind, c.entryId ? { entryId: c.entryId } : {});
+    if (!result && !this.plugin.trivia.isBusy()) new Notice(t("learn.trivia.noWords"));
   }
 
   private run(c: TriviaCall): void {
@@ -269,7 +269,10 @@ class TriviaBlock extends MarkdownRenderChild {
   private turnActions(turn: Turn): KitAction[] {
     const { threads, trivia } = this.plugin;
     const favorite = trivia.favoriteOf(turn.id);
-    const specs = triviaTurnActions(turn, { subjectWord: this.subjectWord(turn), favorite, feedback: true });
+    // 1006 #27: no more 👍👎 here — 收藏與否已經是喜好的回答。The feedback
+    // field (Turn.feedback, ThreadService.setFeedback) stays; this block
+    // just stops asking for it.
+    const specs = triviaTurnActions(turn, { subjectWord: this.subjectWord(turn), favorite, feedback: false });
     return specs.map((s): KitAction => {
       const label = t(s.label, s.params);
       const base = { label, icon: s.icon, active: s.active, iconOnly: s.iconOnly };

@@ -5,6 +5,7 @@ import { originFamilyId, type Family } from "../../core/model/family";
 import { noteBasename } from "../../core/text/slug";
 import { paragraphNumber } from "../../services/files/paragraphNumber";
 import { isNewCard, startOfLocalDay } from "../../services/srs/queue";
+import { datesText, recordDates } from "../kit/dates";
 import { inlineNote } from "../kit/inlineNote";
 import { bindPronounceButton } from "../kit/pronounce";
 import { familyTitle, focusFamily } from "./familiesModel";
@@ -203,6 +204,9 @@ class WordHeaderBlock extends MarkdownRenderChild {
     const chips = root.createDiv({ cls: "vt-wh-chips" });
     if (entry.source?.path) this.renderSource(chips, entry, entry.source.path, entry.source.line);
     this.renderOrigin(chips, entry);
+    // 加入 / 更新 時間 (1006 #2: moved here from the sidebar).
+    const dates = datesText(recordDates(entry));
+    if (dates) chip(chips, "calendar-plus", dates);
     chip(chips, "calendar", dueLabel(entry));
     const reps = entry.srs?.reps ?? 0;
     if (reps > 0) chip(chips, "rotate-ccw", l("reviewed", { n: reps }));
