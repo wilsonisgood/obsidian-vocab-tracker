@@ -12,7 +12,7 @@ import {
 import { nowStamp } from "../../core/nowStamp";
 import { TypedEmitter } from "../../core/events";
 import { entryAddedMs } from "../ai/context/triviaContext";
-import { familyGenerate, type FamilyDraft, type FamilyWord } from "../ai/tasks/family";
+import { familyExpand, familyGenerate, type FamilyDraft, type FamilyDraftMember, type FamilyWord } from "../ai/tasks/family";
 import type { LearnStore } from "./LearnStore";
 import type { DictionaryLookupPort, LearnAi, LearnVocabPort } from "./ports";
 import { runStructured } from "./structured";
@@ -29,9 +29,22 @@ export const MAX_FAMILY_CONTEXT = 300;
 // 「單字庫增加 20% 以上時」 (§7.2).
 export const REGROUP_GROWTH = 1.2;
 
+// family.expand (09 §4/§5.1, A7) runs per family, so each family cancels
+// only its own in-flight expand (unlike generate(), which is one shared
+// thread for the whole surface).
+export function familyExpandThreadId(familyId: string): string {
+  return `family:expand:${familyId}`;
+}
+
+// A suggested group family.expand's model couldn't match to an existing
+// one (09 §4: 「對不到就開新分組」). Temporary i18n string — see 整合事項.
+const L = { aiSuggestedGroup: "AI 新建議" };
+
 export interface FamilyCandidate {
   topic: string;
   label: string;
+  // Wave 9 GS (A7) — the family's own emoji.
+  emoji: string;
   // Members carry entryId when the word is already learned.
   groups: FamilyGroup[];
   seedEntryIds: string[];
@@ -156,14 +169,15 @@ export class FamilyService {
     return {
       topic: d.topic,
       label: d.label,
+      emoji: d.emoji,
       seedEntryIds,
-      groups: d.groups.map((g) => ({ label: g.label, members: g.members.map((m) => this.member(m.word, m.zh, index)) })),
+      groups: d.groups.map((g) => ({ label: g.label, members: g.members.map((m) => this.member(m, index)) })),
     };
   }
 
-  private member(word: string, zh: string, index: WordIndex): FamilyMember {
-    const e = index.find(word);
-    return e ? { entryId: e.id, word, zh } : { word, zh };
+  private member(m: FamilyDraftMember, index: WordIndex): FamilyMember {
+    const e = index.find(m.word);
+    return e ? { entryId: e.id, word: m.word, zh: m.zh, emoji: m.emoji } : { word: m.word, zh: m.zh, emoji: m.emoji };
   }
 
   // Suggested words across the candidates (「把 3 個字加入單字庫」), once each.
@@ -201,11 +215,11 @@ export class FamilyService {
     const families = candidates.map((c) => this.toFamily(c, count, renewed));
 
     const wanted = new Set((opts.addWords ?? []).map(key));
-    const toAdd = new Map<string, { word: string; zh: string; familyId: string }>();
+    const toAdd = new Map<string, { word: string; zh: string; familyId: string; emoji?: string }>();
     for (const f of families) {
       for (const m of familyMembers(f)) {
         if (!m.entryId && wanted.has(key(m.word)) && !toAdd.has(key(m.word))) {
-          toAdd.set(key(m.word), { word: m.word, zh: m.zh, familyId: f.id });
+          toAdd.set(key(m.word), { word: m.word, zh: m.zh, familyId: f.id, emoji: m.emoji });
         }
       }
     }
@@ -223,7 +237,10 @@ export class FamilyService {
     return { families, added };
   }
 
-  // L5 「點一下加入」: adds one suggested word of a saved family.
+  // L5 「點一下加入」: adds one suggested word of a saved family. A3: a word
+  // that's already tracked but not liked just gets liked — it doesn't get a
+  // second entry (galaxy/word list already show it, 「加入」 there means
+  // 「開始學」).
   async addSuggested(familyId: string, word: string): Promise<VocabEntry | undefined> {
     await this.ensureLoaded();
     const f = this.deps.learn.family(familyId);
@@ -231,7 +248,13 @@ export class FamilyService {
     if (!f || !m) return undefined;
     const index = new WordIndex(this.deps.vocab.entries);
     const existing = index.find(m.word);
-    const [entry] = existing ? [existing] : await this.addWords([{ word: m.word, zh: m.zh, familyId: f.id }]);
+    let entry: VocabEntry;
+    if (existing) {
+      if (!existing.liked) await this.deps.vocab.setLiked(existing, true);
+      entry = existing;
+    } else {
+      [entry] = await this.addWords([{ word: m.word, zh: m.zh, familyId: f.id, emoji: m.emoji }]);
+    }
     this.link(f, new WordIndex(this.deps.vocab.entries));
     this.deps.learn.putFamily(f);
     return entry;
@@ -239,6 +262,68 @@ export class FamilyService {
 
   remove(familyId: string): void {
     this.deps.learn.deleteFamily(familyId);
+  }
+
+  // A3 (09 §2): 已學＝ like 的字.
+  isKnown(entry: VocabEntry | undefined): boolean {
+    return entry?.liked === true;
+  }
+
+  stopExpand(familyId: string): void {
+    this.deps.ai.cancel(familyExpandThreadId(familyId));
+  }
+
+  // 「還有哪些字」(09 §4/§5.1): asks for 2–5 new members to grow one saved
+  // family, merges them straight into its groups and saves — the caller
+  // (galaxy) uses the returned members to make the new nodes glow; nothing
+  // is flagged "fresh" in storage (09 §5.1, A5 glow note).
+  async expand(familyId: string, signal?: AbortSignal): Promise<FamilyMember[]> {
+    await this.ensureLoaded();
+    const f = this.deps.learn.family(familyId);
+    if (!f) return [];
+    const existingWords = new Set(familyMembers(f).map((m) => key(m.word)));
+    const known = this.deps.vocab.entries
+      .filter((e) => e.liked === true)
+      .sort((a, b) => entryAddedMs(b) - entryAddedMs(a))
+      .slice(0, MAX_FAMILY_CONTEXT)
+      .map(toWord);
+
+    const { value: drafts } = await runStructured(
+      this.deps.ai,
+      familyExpand,
+      {
+        topic: f.topic,
+        label: f.label,
+        groups: f.groups.map((g) => ({ label: g.label, members: g.members.map((m) => ({ word: m.word, zh: m.zh, emoji: m.emoji ?? "" })) })),
+        known,
+      },
+      { threadId: familyExpandThreadId(familyId), signal }
+    );
+
+    const groupByKey = new Map(f.groups.map((g) => [key(g.label), g]));
+    const added: FamilyMember[] = [];
+    // parseFamilyExpandMembers already de-dupes by word within one answer.
+    for (const d of drafts) {
+      if (existingWords.has(key(d.word))) continue;
+      existingWords.add(key(d.word));
+      let group = groupByKey.get(key(d.group));
+      if (!group) {
+        group = groupByKey.get(key(L.aiSuggestedGroup));
+        if (!group) {
+          group = { label: L.aiSuggestedGroup, members: [] };
+          f.groups.push(group);
+          groupByKey.set(key(L.aiSuggestedGroup), group);
+        }
+      }
+      const member: FamilyMember = { word: d.word, zh: d.zh, emoji: d.emoji };
+      group.members.push(member);
+      added.push(member);
+    }
+    if (added.length) {
+      this.link(f, new WordIndex(this.deps.vocab.entries));
+      this.deps.learn.putFamily(f);
+    }
+    return added;
   }
 
   private toFamily(c: FamilyCandidate, entryCount: number, renewed: Set<string> = new Set()): Family {
@@ -249,6 +334,7 @@ export class FamilyService {
       return {
         ...existing,
         label: c.label,
+        emoji: c.emoji,
         scope: candidateScope(c),
         groups: c.groups.map((g) => ({ label: g.label, members: g.members.map((m) => ({ ...m })) })),
         seedEntryIds: c.seedEntryIds,
@@ -260,6 +346,7 @@ export class FamilyService {
       id: this.newId(),
       topic: c.topic,
       label: c.label,
+      emoji: c.emoji,
       source: "ai",
       scope: candidateScope(c),
       groups: c.groups.map((g) => ({ label: g.label, members: g.members.map((m) => ({ ...m })) })),
@@ -278,8 +365,9 @@ export class FamilyService {
 
   // Dictionary first, then one batch into the vocab list. A failed lookup
   // still adds the word with the AI's Chinese gloss; the startup enrich
-  // pass retries words without a definition.
-  private async addWords(words: { word: string; zh: string; familyId: string }[]): Promise<VocabEntry[]> {
+  // pass retries words without a definition. A member's emoji (A7) rides
+  // along into wordMeta (決定 1 — never onto the entry itself).
+  private async addWords(words: { word: string; zh: string; familyId: string; emoji?: string }[]): Promise<VocabEntry[]> {
     if (!words.length) return [];
     const now = this.clock();
     const entries: VocabEntry[] = [];
@@ -312,6 +400,11 @@ export class FamilyService {
       entries.push(entry);
     }
     await this.deps.vocab.addEntries(entries);
+    // Brand-new entryIds, so there's no existing wordMeta to clobber.
+    for (let i = 0; i < entries.length; i++) {
+      const emoji = words[i].emoji?.trim();
+      if (emoji) this.deps.learn.putWordMeta({ id: entries[i].id, emoji, emojiSource: "ai" });
+    }
     return entries;
   }
 }
@@ -332,5 +425,8 @@ export function mergeFamily(f: Family, c: FamilyCandidate): Family {
   }
   const seeds = [...new Set([...(f.seedEntryIds ?? []), ...c.seedEntryIds])];
   const scope: FamilyScope = familyScope(f) === "word" || candidateScope(c) === "word" ? "word" : "list";
-  return { ...f, groups, seedEntryIds: seeds, scope };
+  // Existing wins, same as its label/groups below: 重新分群 merging an
+  // older AI pick back in shouldn't flip an emoji the learner has gotten
+  // used to seeing.
+  return { ...f, groups, seedEntryIds: seeds, scope, emoji: f.emoji ?? c.emoji };
 }

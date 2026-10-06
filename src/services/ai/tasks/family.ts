@@ -29,13 +29,23 @@ export interface FamilyInput {
 export interface FamilyDraftMember {
   word: string;
   zh: string;
+  // Wave 9 GS (09 §4, A7) — one emoji per member; FamilyService.member()
+  // carries it onto the stored FamilyMember.
+  emoji: string;
 }
 
 export interface FamilyDraft {
   topic: string;
   label: string;
+  // Wave 9 GS (09 §4, A7) — the family's own emoji (galaxy center node).
+  emoji: string;
   groups: { label: string; members: FamilyDraftMember[] }[];
 }
+
+const EMOJI_PROPERTY = {
+  type: "string",
+  description: "一個 emoji，只給一個；沒有完全對應的意思就挑最接近的，不要留空。",
+} as const;
 
 // Strict-mode compatible (OpenAI json_schema strict, Anthropic
 // output_config): every object closed, every property required.
@@ -49,10 +59,11 @@ export const FAMILY_SCHEMA: JsonSchema = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["topic", "label", "groups"],
+        required: ["topic", "label", "emoji", "groups"],
         properties: {
           topic: { type: "string", description: "English key, lowercase, e.g. clothing or gl-" },
           label: { type: "string", description: "繁體中文名稱，例如「服裝」「gl- 發光家族」" },
+          emoji: { ...EMOJI_PROPERTY, description: "一個代表整個字族的 emoji，只給一個；沒有完全對應的意思就挑最接近的。" },
           groups: {
             type: "array",
             items: {
@@ -66,10 +77,11 @@ export const FAMILY_SCHEMA: JsonSchema = {
                   items: {
                     type: "object",
                     additionalProperties: false,
-                    required: ["word", "zh"],
+                    required: ["word", "zh", "emoji"],
                     properties: {
                       word: { type: "string" },
                       zh: { type: "string" },
+                      emoji: EMOJI_PROPERTY,
                     },
                   },
                 },
@@ -91,7 +103,8 @@ export const FAMILY_BASE_PROMPT = `你是一位英文字彙老師，幫一位以
 4. zh 用繁體中文（台灣用語），10 個字以內。
 5. 字根、字源只用可靠、常見的知識。不確定就不要用字根分群，改用主題分群，不要編造字源。
 6. topic 用英文小寫；label 用繁體中文，可以夾英文字根（例如「gl- 發光家族」）。
-7. 只輸出符合 schema 的 JSON。`;
+7. emoji 每個字族、每個成員都只給一個最能代表它的 emoji；沒有完全對應的意思就挑最接近的，不要留空。
+8. 只輸出符合 schema 的 JSON。`;
 
 export const FAMILY_TEMPLATES = {
   seeded: `任務：找字族
@@ -149,13 +162,13 @@ export function parseFamilies(json: unknown): FamilyDraft[] {
         const key = word.toLowerCase();
         if (!word || seen.has(key)) continue;
         seen.add(key);
-        members.push({ word, zh: str(m.zh) });
+        members.push({ word, zh: str(m.zh), emoji: str(m.emoji) });
       }
       if (members.length) groups.push({ label: str(g.label), members });
     }
     const topic = str(f.topic);
     if (!groups.length || !(topic || str(f.label))) continue;
-    out.push({ topic: topic || str(f.label), label: str(f.label) || topic, groups });
+    out.push({ topic: topic || str(f.label), label: str(f.label) || topic, emoji: str(f.emoji), groups });
   }
   return out;
 }
@@ -195,4 +208,124 @@ export const familyGenerate: AiTask<FamilyInput, FamilyDraft[]> = {
   },
 };
 
-export const FAMILY_TASKS = [familyGenerate];
+// family.expand (09 §4, §5.1 — galaxy「還有哪些字」): given one saved
+// family, suggest 2 to 5 new members to grow it with. Fast tier (short
+// answer, no thinking needed) — unlike family.generate this never looks at
+// the whole vocab list, just the one family plus up to 300 learned words
+// for context. No `label`: it's not a quick-action button, FamilyService
+// calls it directly (galaxy's「還有哪些字」 button).
+
+export interface FamilyExpandGroup {
+  label: string;
+  members: FamilyDraftMember[];
+}
+
+export interface FamilyExpandInput {
+  topic: string;
+  label: string;
+  groups: FamilyExpandGroup[];
+  // Learned words for context (FamilyService caps this at
+  // MAX_FAMILY_CONTEXT, like-only — same pool as a seedless family.generate).
+  known: FamilyWord[];
+}
+
+export interface FamilyExpandMember {
+  // Free text from the model; FamilyService matches it against the
+  // family's existing group labels (case/trim-insensitive) and falls back
+  // to a new "AI 新建議" group when nothing matches.
+  group: string;
+  word: string;
+  zh: string;
+  emoji: string;
+}
+
+export const FAMILY_EXPAND_SCHEMA: JsonSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["members"],
+  properties: {
+    members: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["group", "word", "zh", "emoji"],
+        properties: {
+          group: { type: "string", description: "哪一個既有分組最適合這個新字；照原樣抄既有分組名稱，真的沒有合適的才自己取一個新名稱" },
+          word: { type: "string" },
+          zh: { type: "string" },
+          emoji: EMOJI_PROPERTY,
+        },
+      },
+    },
+  },
+};
+
+export const FAMILY_EXPAND_BASE_PROMPT = `你是一位英文字彙老師，要幫一個已經分好組的「字族」補上幾個新成員，讓學習者繼續學。
+
+規則：
+1. 只補 2 到 5 個這個字族還沒有的常用延伸字，程度符合〔學習者設定〕；不要補罕見字，也不要重複〔字族〕裡已經有的成員。
+2. 每個新成員先判斷最相關的既有分組，group 欄位照抄該分組名稱，不要改寫；真的找不到合適的既有分組，才自己取一個新分組名稱。
+3. zh 用繁體中文（台灣用語），10 個字以內。
+4. emoji 每個新成員只給一個最能代表它的 emoji；沒有完全對應的意思就挑最接近的，不要留空。
+5. 字根、字源不確定就不要用，只根據可靠、常見的知識判斷相關性，不要編造字源。
+6. 只輸出符合 schema 的 JSON。`;
+
+export const FAMILY_EXPAND_FAMILY_TEMPLATE = `〔字族〕{{label}}（{{topic}}）
+現有分組與成員：
+{{groups}}`;
+
+export const FAMILY_EXPAND_USER_TEMPLATE = `任務：幫這個字族想 2 到 5 個新成員
+延伸字要和〔字族〕的其中一個分組密切相關；不要重複〔字族〕裡已經有的字。`;
+
+function expandGroupLine(g: FamilyExpandGroup): string {
+  const members = g.members.map((m) => `${m.word}${m.zh ? `（${m.zh}）` : ""}`).join("、");
+  return `- ${g.label}：${members || "（無）"}`;
+}
+
+export function parseFamilyExpandMembers(json: unknown): FamilyExpandMember[] {
+  if (!isObj(json) || !Array.isArray(json.members)) {
+    throw new AiError("bad_output", "family.expand: expected { members: [...] }");
+  }
+  const out: FamilyExpandMember[] = [];
+  const seen = new Set<string>();
+  for (const m of json.members) {
+    if (!isObj(m)) throw new AiError("bad_output", "family.expand: malformed member");
+    const word = str(m.word);
+    const key = word.toLowerCase();
+    if (!word || seen.has(key)) continue;
+    seen.add(key);
+    out.push({ group: str(m.group), word, zh: str(m.zh), emoji: str(m.emoji) });
+  }
+  return out;
+}
+
+export const familyExpand: AiTask<FamilyExpandInput, FamilyExpandMember[]> = {
+  id: "family.expand",
+  version: 1,
+  surface: "family",
+  tier: "fast",
+  maxTokens: 2048,
+  // Structured JSON, not prose — same reasoning as family.generate.
+  answerChars: () => 0,
+  build(input: FamilyExpandInput, ctx: TaskContext) {
+    return composeRequest({
+      base: FAMILY_EXPAND_BASE_PROMPT,
+      context: [
+        renderTemplate(FAMILY_EXPAND_FAMILY_TEMPLATE, { topic: input.topic, label: input.label, groups: input.groups.map(expandGroupLine).join("\n") }),
+        renderTemplate(KNOWN_FAMILY_TEMPLATE, { count: input.known.length, words: input.known.map(wordLine).join("\n") }),
+      ],
+      profile: profileForTask(ctx.profile, familyExpand, input),
+      history: [],
+      user: renderTemplate(FAMILY_EXPAND_USER_TEMPLATE, {}),
+      tier: familyExpand.tier,
+      maxTokens: familyExpand.maxTokens,
+      output: { name: "family_expand", schema: FAMILY_EXPAND_SCHEMA },
+    });
+  },
+  parse(r: AiResult): FamilyExpandMember[] {
+    return parseFamilyExpandMembers(structuredJson(r));
+  },
+};
+
+export const FAMILY_TASKS = [familyGenerate, familyExpand];

@@ -374,11 +374,14 @@ describe("task registry", () => {
     expect(() => reg.register(paragraphGrammar)).toThrow(/already registered/);
   });
 
-  it("gives quick-action tasks a label and leaves custom unlabeled", () => {
+  it("gives quick-action tasks a label and leaves custom/background ones unlabeled", () => {
+    // family.expand (09 §4/§5.1) and word.emoji (09 §4/§5.2) aren't
+    // quick-action buttons: FamilyService/EmojiService call them directly.
+    const unlabeled = new Set(["trivia.followup", "family.expand", "word.emoji"]);
     for (const t of defaultTaskRegistry().all()) {
       expect(t.version).toBeGreaterThanOrEqual(1);
       expect(t.maxTokens).toBeGreaterThan(0);
-      expect(!!t.label).toBe(!(t.id.endsWith(".custom") || t.id === "trivia.followup"));
+      expect(!!t.label).toBe(!(t.id.endsWith(".custom") || unlabeled.has(t.id)));
     }
   });
 });

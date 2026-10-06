@@ -6,10 +6,14 @@ import { buildWordContext, type WordInput } from "../../../../src/services/ai/co
 import type { AiRequest, AiResult, ChatMessage } from "../../../../src/services/ai/providers/types";
 import {
   FAMILY_BASE_PROMPT,
+  FAMILY_EXPAND_SCHEMA,
   FAMILY_SCHEMA,
   FAMILY_TEMPLATES,
+  familyExpand,
   familyGenerate,
   parseFamilies,
+  parseFamilyExpandMembers,
+  type FamilyExpandInput,
   type FamilyInput,
 } from "../../../../src/services/ai/tasks/family";
 import { TaskRegistry } from "../../../../src/services/ai/tasks/registry";
@@ -71,6 +75,16 @@ describe("M7 AiRequest snapshots", () => {
 
   it("family.generate — regroup the whole list (L5)", () => {
     expect(render(familyGenerate.build({ known: KNOWN }, ctx()))).toMatchSnapshot();
+  });
+
+  it("family.expand — 還有哪些字 (09 §4/§5.1)", () => {
+    const input: FamilyExpandInput = {
+      topic: "clothing",
+      label: "服裝",
+      groups: [{ label: "舞台服裝", members: [{ word: "glittery", zh: "閃亮的", emoji: "✨" }] }],
+      known: KNOWN,
+    };
+    expect(render(familyExpand.build(input, ctx(A1_TOEFL)))).toMatchSnapshot();
   });
 
   it("verb.usage", () => {
@@ -180,8 +194,9 @@ describe("family.generate parse", () => {
         {
           topic: " clothing ",
           label: "服裝",
+          emoji: " 👗 ",
           groups: [
-            { label: "舞台", members: [{ word: "glittery", zh: "閃亮" }, { word: "Glittery", zh: "dup" }, { word: " ", zh: "" }] },
+            { label: "舞台", members: [{ word: "glittery", zh: "閃亮", emoji: "✨" }, { word: "Glittery", zh: "dup", emoji: "✨" }, { word: " ", zh: "" }] },
             { label: "空的", members: [] },
           ],
         },
@@ -190,8 +205,13 @@ describe("family.generate parse", () => {
       ],
     };
     expect(familyGenerate.parse!(aiResult("", { json }))).toEqual([
-      { topic: "clothing", label: "服裝", groups: [{ label: "舞台", members: [{ word: "glittery", zh: "閃亮" }] }] },
+      { topic: "clothing", label: "服裝", emoji: "👗", groups: [{ label: "舞台", members: [{ word: "glittery", zh: "閃亮", emoji: "✨" }] }] },
     ]);
+  });
+
+  it("defaults a missing emoji to an empty string", () => {
+    const json = { families: [{ topic: "x", label: "X", groups: [{ label: "g", members: [{ word: "a", zh: "" }] }] }] };
+    expect(familyGenerate.parse!(aiResult("", { json }))[0]).toMatchObject({ emoji: "", groups: [{ label: "g", members: [{ word: "a", zh: "", emoji: "" }] }] });
   });
 
   it("falls back to JSON in the text (prompted providers)", () => {
@@ -210,6 +230,52 @@ describe("family.generate parse", () => {
       expect(() => familyGenerate.parse!(r)).toThrow(expect.objectContaining({ code: "bad_output" }));
     }
     expect(() => parseFamilies(null)).toThrow(expect.objectContaining({ code: "bad_output" }));
+  });
+});
+
+describe("family.expand", () => {
+  it("strict schema: every object is closed and requires all its properties", () => {
+    const walk = (s: Record<string, unknown>) => {
+      if (s.type === "object") {
+        expect(s.additionalProperties).toBe(false);
+        expect([...(s.required as string[])].sort()).toEqual(Object.keys(s.properties as object).sort());
+        for (const p of Object.values(s.properties as Record<string, Record<string, unknown>>)) walk(p);
+      }
+      if (s.type === "array") walk(s.items as Record<string, unknown>);
+    };
+    walk(FAMILY_EXPAND_SCHEMA);
+  });
+
+  it("is fast-tier, structured JSON with no label (not a quick-action button)", () => {
+    const input: FamilyExpandInput = { topic: "clothing", label: "服裝", groups: [], known: [] };
+    const req = familyExpand.build(input, ctx());
+    expect(req.tier).toBe("fast");
+    expect(req.output).toEqual({ name: "family_expand", schema: FAMILY_EXPAND_SCHEMA });
+    expect(req.system.at(-1)?.text).not.toContain("字以內");
+    expect(familyExpand.label).toBeUndefined();
+  });
+
+  it("parse reads members, trims group/word/zh/emoji and drops one with no word", () => {
+    const json = {
+      members: [
+        { group: " 舞台服裝 ", word: " sequin ", zh: " 亮片 ", emoji: " ✨ " },
+        { group: "x", word: "Sequin", zh: "dup", emoji: "✨" },
+        { group: "x", word: " ", zh: "", emoji: "" },
+      ],
+    };
+    expect(parseFamilyExpandMembers(json)).toEqual([{ group: "舞台服裝", word: "sequin", zh: "亮片", emoji: "✨" }]);
+  });
+
+  it("throws bad_output on the wrong shape, non-JSON or a cut-off answer", () => {
+    for (const r of [
+      aiResult("", { json: { members: "no" } }),
+      aiResult("", { json: { members: ["str"] } }),
+      aiResult("I can't do that"),
+      aiResult('{"members":[{"word"', { stop: "max_tokens" }),
+    ]) {
+      expect(() => familyExpand.parse!(r)).toThrow(expect.objectContaining({ code: "bad_output" }));
+    }
+    expect(() => parseFamilyExpandMembers(null)).toThrow(expect.objectContaining({ code: "bad_output" }));
   });
 });
 
