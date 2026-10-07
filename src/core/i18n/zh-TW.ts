@@ -648,4 +648,31 @@ export const zhTW: Record<keyof typeof en, string> = {
 
   // ui/settings/sections/ai.ts — Word DNA 每日自動拆字上限（規劃書 09 §2 決定 5）。
   "settings.ai.dnaDailyBatches.name": "每天自動拆字上限（批，每批 10 個字；0＝關閉）",
+
+  // ui/galaxy/galaxyModel.ts — 節點 ariaLabel 的已學／未學字尾。
+  "galaxy.node.known": "，已學",
+  "galaxy.node.unknown": "，未學",
+
+  // ui/galaxy/galaxyView.model.ts（Galaxy code block + 全螢幕 GalaxyView）。
+  "galaxy.mode.galaxy": "星系",
+  "galaxy.mode.list": "清單",
+  "galaxy.viewAria": "檢視",
+  "galaxy.aiExpand": "✨ 還有哪些 {label} 單字我沒學過？",
+  "galaxy.onlyKnown": "只看已學",
+  "galaxy.recenter": "重新置中",
+  "galaxy.expandFull": "展開",
+  "galaxy.more": "更多",
+  "galaxy.stop": "停止",
+  "galaxy.expandFound": "AI 找到 {n} 個新字：{words}，點節點再按 ＋ 加入",
+  "galaxy.noMoreSuggestions": "目前沒有更多建議了",
+  "galaxy.addedWord": "已把 {word} 加入單字庫，會自動查字典",
+  "galaxy.progress": "已學 {learned} / {total}",
+  "galaxy.topicLearnedOf": "這個主題已學的字（{n}）",
+  "galaxy.noneLearnedYet": "這個主題還沒有已學的字。",
+  "galaxy.collapse": "收合",
+  "galaxy.review": "複習",
+  "galaxy.wordPage": "單字頁",
+  "galaxy.ai": "✨ AI",
+  "galaxy.topicCounts": "已學 {known} · 未學 {unknown}",
+  "galaxy.graphAriaLabel": "{topic} 單字星系圖",
 };

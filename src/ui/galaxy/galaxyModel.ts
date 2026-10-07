@@ -1,17 +1,11 @@
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import type { Family, FamilyMember } from "../../core/model/family";
 
 // View-model for the Word Galaxy force graph (規劃書 09 §6.1, 決定 7-8,
-// .claude/tmp/w9-rules.md A5/A6). Pure — no "obsidian" or "d3" import here —
-// so it's unit-tested without a DOM. GalaxyGraph.ts (d3 + SVG) consumes
-// GalaxyModel and owns drawing/physics.
-
-// New user-facing strings (09 整合事項 — GA): temporary local const until
-// the integrator moves them into src/core/i18n/{zh-TW,en}.ts.
-const L = {
-  known: "，已學",
-  unknown: "，未學",
-};
+// .claude/tmp/w9-rules.md A5/A6). No "d3" import here — only "core/i18n" for
+// strings — so it's unit-tested without a DOM. GalaxyGraph.ts (d3 + SVG)
+// consumes GalaxyModel and owns drawing/physics.
 
 export type GalaxyNodeKind = "hub" | "group" | "known" | "unknown";
 
@@ -81,7 +75,7 @@ function buildWordNode(m: FamilyMember, lookup: GalaxyLookup, fresh: ReadonlySet
     emoji: lookup.emoji(m, entry),
     entryId: m.entryId,
     fresh: fresh?.has(id) ?? false,
-    ariaLabel: `${word} ${m.zh}${known ? L.known : L.unknown}`,
+    ariaLabel: `${word} ${m.zh}${t(known ? "galaxy.node.known" : "galaxy.node.unknown")}`,
   };
 }
 

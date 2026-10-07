@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { t } from "../../../src/core/i18n";
+import { afterEach, describe, expect, it } from "vitest";
+import { setLocale, t } from "../../../src/core/i18n";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import type { Family, FamilyMember } from "../../../src/core/model/family";
 import type { GalaxyLookup } from "../../../src/ui/galaxy/galaxyModel";
@@ -8,10 +8,11 @@ import {
   buildGalaxyCard,
   buildTopics,
   detailRows,
-  L,
   resolveAddWord,
 } from "../../../src/ui/galaxy/galaxyView.model";
 import { entry } from "../../services/learn/fakes";
+
+afterEach(() => setLocale("en"));
 
 function lookupOf(entries: Record<string, VocabEntry>): GalaxyLookup {
   return {
@@ -76,16 +77,20 @@ describe("resolveAddWord", () => {
 
 describe("toast 文案", () => {
   it("expandFound：n 個新字＋頓號清單", () => {
-    expect(L.expandFound(["kettle", "jar"])).toContain("AI 找到 2 個新字");
-    expect(L.expandFound(["kettle", "jar"])).toContain("點節點再按 ＋ 加入");
+    setLocale("zh-TW");
+    const text = t("galaxy.expandFound", { n: 2, words: "kettle、jar" });
+    expect(text).toContain("AI 找到 2 個新字");
+    expect(text).toContain("點節點再按 ＋ 加入");
   });
 
   it("addedWord：加入單字庫文案", () => {
-    expect(L.addedWord("kettle")).toBe("已把 kettle 加入單字庫，會自動查字典");
+    setLocale("zh-TW");
+    expect(t("galaxy.addedWord", { word: "kettle" })).toBe("已把 kettle 加入單字庫，會自動查字典");
   });
 
   it("noMoreSuggestions：固定文案", () => {
-    expect(L.noMoreSuggestions).toBe("目前沒有更多建議了");
+    setLocale("zh-TW");
+    expect(t("galaxy.noMoreSuggestions")).toBe("目前沒有更多建議了");
   });
 });
 

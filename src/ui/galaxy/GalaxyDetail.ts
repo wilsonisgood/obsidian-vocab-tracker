@@ -1,6 +1,7 @@
 import { setIcon } from "obsidian";
+import { t } from "../../core/i18n";
 import { renderStrand } from "../dna/strand";
-import { L, type GalaxyCardData, type GalaxyDetailRow } from "./galaxyView.model";
+import { type GalaxyCardData, type GalaxyDetailRow } from "./galaxyView.model";
 import type { GalaxyCounts } from "./galaxyModel";
 
 // Galaxy 詳情面板 (規劃書 09 §6.1 A4, w9-rules.md「GB」). Pure DOM — no own
@@ -40,7 +41,7 @@ export class GalaxyDetail {
     this.container.empty();
 
     const progress = this.container.createDiv({ cls: "vt-gx-progress" });
-    progress.createSpan({ cls: "vt-gx-progress-text", text: L.progress(model.counts.known, model.counts.total) });
+    progress.createSpan({ cls: "vt-gx-progress-text", text: t("galaxy.progress", { learned: model.counts.known, total: model.counts.total }) });
     const bar = progress.createDiv({ cls: "vt-gx-bar" });
     const pct = model.counts.total ? Math.round((model.counts.known / model.counts.total) * 100) : 100;
     bar.createSpan({ attr: { style: `width:${pct}%` } });
@@ -53,9 +54,9 @@ export class GalaxyDetail {
   }
 
   private renderList(rows: readonly GalaxyDetailRow[], actions: GalaxyDetailActions): void {
-    this.container.createDiv({ cls: "vt-gx-sub", text: L.topicLearnedOf(rows.length) });
+    this.container.createDiv({ cls: "vt-gx-sub", text: t("galaxy.topicLearnedOf", { n: rows.length }) });
     if (!rows.length) {
-      this.container.createDiv({ cls: "vt-gx-empty", text: L.noneLearnedYet });
+      this.container.createDiv({ cls: "vt-gx-empty", text: t("galaxy.noneLearnedYet") });
       return;
     }
     const list = this.container.createDiv({ cls: "vt-gx-list" });
@@ -78,7 +79,7 @@ export class GalaxyDetail {
     if (meta) info.createDiv({ cls: "vt-gx-card-ipa", text: meta });
     const collapse = top.createEl("button", {
       cls: "vt-gx-card-collapse clickable-icon",
-      attr: { type: "button", "aria-label": L.collapse },
+      attr: { type: "button", "aria-label": t("galaxy.collapse") },
     });
     setIcon(collapse, "chevron-up");
     collapse.addEventListener("click", () => actions.onCollapse());
@@ -92,8 +93,8 @@ export class GalaxyDetail {
     if (card.breakdown) renderStrand(box, card.breakdown);
 
     const acts = box.createDiv({ cls: "vt-gx-card-actions" });
-    actionButton(acts, { label: L.review, icon: "rotate-ccw", primary: true, onClick: () => actions.onReview(card.entryId) });
-    actionButton(acts, { label: L.wordPage, icon: "file-text", onClick: () => actions.onOpenWordPage(card.entryId) });
-    actionButton(acts, { label: L.ai, icon: "sparkles", onClick: () => actions.onOpenAi(card.entryId) });
+    actionButton(acts, { label: t("galaxy.review"), icon: "rotate-ccw", primary: true, onClick: () => actions.onReview(card.entryId) });
+    actionButton(acts, { label: t("galaxy.wordPage"), icon: "file-text", onClick: () => actions.onOpenWordPage(card.entryId) });
+    actionButton(acts, { label: t("galaxy.ai"), icon: "sparkles", onClick: () => actions.onOpenAi(card.entryId) });
   }
 }

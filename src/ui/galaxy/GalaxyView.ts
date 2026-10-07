@@ -1,12 +1,13 @@
 import { ItemView, Notice, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
+import { joinWords, t } from "../../core/i18n";
 import { defaultEmoji } from "../../core/model/wordMeta";
 import { MemberLookup } from "../blocks/familiesModel";
 import { isAbort, learnErrorText } from "../blocks/learnUi";
 import { GalaxyDetail, type GalaxyDetailActions, type GalaxyDetailModel } from "./GalaxyDetail";
 import { GalaxyGraph } from "./GalaxyGraph";
 import { buildGalaxyModel, galaxyNodeId, type GalaxyLookup, type GalaxyModel } from "./galaxyModel";
-import { buildGalaxyCard, buildTopics, detailRows, L, resolveAddWord, type GalaxyCardData, type GalaxyTopic } from "./galaxyView.model";
+import { buildGalaxyCard, buildTopics, detailRows, resolveAddWord, type GalaxyCardData, type GalaxyTopic } from "./galaxyView.model";
 
 // Full-screen Galaxy (規劃書 09 §6.1 「GalaxyView」, w9-rules.md「GB」) — the
 // 「展開」 button in the embedded vocab-families block opens one of these
@@ -141,7 +142,7 @@ export class GalaxyView extends ItemView {
     const graphHost = stage.createDiv({ cls: "vt-gx-graph" });
     const detailParent = bench.createDiv({ cls: "vt-gx-detail-host" });
 
-    const svgEl = svgNode(graphHost, "svg", { role: "group", "aria-label": L.graphAriaLabel(selected.topic) }, "vt-gx-svg");
+    const svgEl = svgNode(graphHost, "svg", { role: "group", "aria-label": t("galaxy.graphAriaLabel", { topic: selected.topic }) }, "vt-gx-svg");
     this.detail = new GalaxyDetail(detailParent);
     const mobile = document.body.hasClass("is-mobile");
     const graph = new GalaxyGraph(svgEl, {
@@ -194,7 +195,7 @@ export class GalaxyView extends ItemView {
     info.createDiv({ cls: "vt-gx-topic-name", text: topic.topic });
     info.createDiv({ cls: "vt-gx-topic-zh", text: topic.label });
     const ct = btn.createDiv({ cls: "vt-gx-topic-ct" });
-    ct.createSpan({ text: L.topicCounts(topic.known, topic.unknown) });
+    ct.createSpan({ text: t("galaxy.topicCounts", { known: topic.known, unknown: topic.unknown }) });
     const svg = svgNode(ct, "svg", { viewBox: "0 0 74 30", "aria-hidden": "true" }, "vt-gx-topic-thumb");
     for (const p of topic.points) {
       svgNode(svg, "line", { x1: "37", y1: "15", x2: String(p.x), y2: String(p.y) }, "vt-gx-topic-line");
@@ -214,11 +215,11 @@ export class GalaxyView extends ItemView {
   private renderToolbar(stage: HTMLElement, selected: { id: string; topic: string }): void {
     const bar = stage.createDiv({ cls: "vt-gx-toolbar" });
     const expanding = !!this.expandCtrl;
-    const aiBtn = bar.createEl("button", { cls: ["vt-gx-pill", "is-ai"], attr: { type: "button" }, text: expanding ? L.stop : L.aiExpand(selected.topic) });
+    const aiBtn = bar.createEl("button", { cls: ["vt-gx-pill", "is-ai"], attr: { type: "button" }, text: expanding ? t("galaxy.stop") : t("galaxy.aiExpand", { label: selected.topic }) });
     aiBtn.disabled = !expanding && this.plugin.ai.status() !== "ready";
     aiBtn.addEventListener("click", () => this.toggleExpand(selected.id));
 
-    const knownBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: L.onlyKnown });
+    const knownBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t("galaxy.onlyKnown") });
     knownBtn.setAttr("aria-pressed", String(this.onlyKnown));
     knownBtn.toggleClass("is-active", this.onlyKnown);
     knownBtn.addEventListener("click", () => {
@@ -226,7 +227,7 @@ export class GalaxyView extends ItemView {
       this.render();
     });
 
-    const recenterBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: L.recenter });
+    const recenterBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t("galaxy.recenter") });
     recenterBtn.addEventListener("click", () => this.graph?.recenter());
   }
 
@@ -243,12 +244,12 @@ export class GalaxyView extends ItemView {
       .then((added) => {
         if (this.disposed) return;
         if (!added.length) {
-          new Notice(L.noMoreSuggestions);
+          new Notice(t("galaxy.noMoreSuggestions"));
           return;
         }
         if (this.onlyKnown) this.onlyKnown = false;
         for (const m of added) this.fresh.add(galaxyNodeId(m));
-        new Notice(L.expandFound(added.map((m) => m.word)));
+        new Notice(t("galaxy.expandFound", { n: added.length, words: joinWords(added.map((m) => m.word)) }));
       })
       .catch((e) => {
         if (this.disposed || isAbort(e)) return;
@@ -271,7 +272,7 @@ export class GalaxyView extends ItemView {
     try {
       const entry = await this.plugin.families.addSuggested(familyId, word);
       if (entry) {
-        new Notice(L.addedWord(entry.word));
+        new Notice(t("galaxy.addedWord", { word: entry.word }));
         this.selected = entry.id;
         this.fresh.delete(nodeId);
       }

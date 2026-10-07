@@ -12,7 +12,6 @@ import {
   buildGalaxyCard,
   buildTopics,
   detailRows,
-  L,
   resolveAddWord,
   type GalaxyCardData,
   type GalaxyTopic,
@@ -376,11 +375,11 @@ class FamiliesBlock extends MarkdownRenderChild {
 
   private renderModeSwitch(bar: HTMLElement): void {
     segmented<GalaxyViewMode>(bar, {
-      ariaLabel: L.viewAria,
+      ariaLabel: t("galaxy.viewAria"),
       value: this.viewMode,
       options: [
-        { value: "galaxy", label: L.galaxyMode },
-        { value: "list", label: L.listMode },
+        { value: "galaxy", label: t("galaxy.mode.galaxy") },
+        { value: "list", label: t("galaxy.mode.list") },
       ],
       onChange: (v) => {
         if (v === this.viewMode) return;
@@ -509,7 +508,7 @@ class FamiliesBlock extends MarkdownRenderChild {
     // Different (or first) topic for this block instance: a fresh graph +
     // detail bound to the new elements (any previous instance was already
     // destroyed above, in render()).
-    const svgEl = svgNode(graphHost, "svg", { role: "group", "aria-label": L.graphAriaLabel(familyTitle(selected)) }, "vt-gx-svg");
+    const svgEl = svgNode(graphHost, "svg", { role: "group", "aria-label": t("galaxy.graphAriaLabel", { topic: familyTitle(selected) }) }, "vt-gx-svg");
     this.galaxyDetail = new GalaxyDetail(detailParent);
     const mobile = document.body.hasClass("is-mobile");
     const graph = new GalaxyGraph(svgEl, {
@@ -569,7 +568,7 @@ class FamiliesBlock extends MarkdownRenderChild {
     info.createDiv({ cls: "vt-gx-topic-name", text: topic.topic });
     info.createDiv({ cls: "vt-gx-topic-zh", text: topic.label });
     const ct = btn.createDiv({ cls: "vt-gx-topic-ct" });
-    ct.createSpan({ text: L.topicCounts(topic.known, topic.unknown) });
+    ct.createSpan({ text: t("galaxy.topicCounts", { known: topic.known, unknown: topic.unknown }) });
     const svg = svgNode(ct, "svg", { viewBox: "0 0 74 30", "aria-hidden": "true" }, "vt-gx-topic-thumb");
     for (const p of topic.points) {
       svgNode(svg, "line", { x1: "37", y1: "15", x2: String(p.x), y2: String(p.y) }, "vt-gx-topic-line");
@@ -590,11 +589,11 @@ class FamiliesBlock extends MarkdownRenderChild {
   private renderGalaxyToolbar(stage: HTMLElement, selected: Family, entry: VocabEntry | undefined): void {
     const bar = stage.createDiv({ cls: "vt-gx-toolbar" });
     const expanding = this.galaxyExpandCtrl.has(selected.id);
-    const aiBtn = bar.createEl("button", { cls: ["vt-gx-pill", "is-ai"], attr: { type: "button" }, text: expanding ? L.stop : L.aiExpand(selected.topic) });
+    const aiBtn = bar.createEl("button", { cls: ["vt-gx-pill", "is-ai"], attr: { type: "button" }, text: expanding ? t("galaxy.stop") : t("galaxy.aiExpand", { label: selected.topic }) });
     aiBtn.disabled = !expanding && this.plugin.ai.status() !== "ready";
     aiBtn.addEventListener("click", () => this.toggleExpand(selected));
 
-    const knownBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: L.onlyKnown });
+    const knownBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t("galaxy.onlyKnown") });
     knownBtn.setAttr("aria-pressed", String(this.onlyKnown));
     knownBtn.toggleClass("is-active", this.onlyKnown);
     knownBtn.addEventListener("click", () => {
@@ -602,10 +601,10 @@ class FamiliesBlock extends MarkdownRenderChild {
       this.render();
     });
 
-    const recenterBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: L.recenter });
+    const recenterBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t("galaxy.recenter") });
     recenterBtn.addEventListener("click", () => this.galaxyGraph?.recenter());
 
-    const expandFullBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: L.expandFull });
+    const expandFullBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t("galaxy.expandFull") });
     expandFullBtn.addEventListener("click", () => {
       void this.plugin.app.workspace.getLeaf("tab").setViewState({
         type: GALAXY_VIEW_TYPE,
@@ -616,7 +615,7 @@ class FamiliesBlock extends MarkdownRenderChild {
 
     this.renderModeSwitch(bar);
 
-    const more = bar.createEl("button", { cls: "vt-gx-pill clickable-icon", attr: { type: "button", "aria-label": L.more } });
+    const more = bar.createEl("button", { cls: "vt-gx-pill clickable-icon", attr: { type: "button", "aria-label": t("galaxy.more") } });
     setIcon(more, "more-horizontal");
     more.addEventListener("click", (e) => {
       const menu = new Menu();
@@ -644,12 +643,12 @@ class FamiliesBlock extends MarkdownRenderChild {
       .then((added) => {
         if (this.disposed) return;
         if (!added.length) {
-          new Notice(L.noMoreSuggestions);
+          new Notice(t("galaxy.noMoreSuggestions"));
           return;
         }
         if (this.onlyKnown) this.onlyKnown = false;
         for (const m of added) this.galaxyFresh.add(galaxyNodeId(m));
-        new Notice(L.expandFound(added.map((m) => m.word)));
+        new Notice(t("galaxy.expandFound", { n: added.length, words: joinWords(added.map((m) => m.word)) }));
       })
       .catch((e) => {
         if (this.disposed || isAbort(e)) return;
@@ -672,7 +671,7 @@ class FamiliesBlock extends MarkdownRenderChild {
     try {
       const entry = await this.plugin.families.addSuggested(familyId, word);
       if (entry) {
-        new Notice(L.addedWord(entry.word));
+        new Notice(t("galaxy.addedWord", { word: entry.word }));
         this.galaxySelected = entry.id;
         this.galaxyFresh.delete(nodeId);
       }

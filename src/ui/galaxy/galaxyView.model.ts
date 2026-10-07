@@ -1,4 +1,4 @@
-import { joinWords, t } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { familyMembers, type Family } from "../../core/model/family";
 import type { WordBreakdown } from "../../core/model/morpheme";
@@ -11,36 +11,6 @@ import { buildGalaxyModel, constellationPoints, galaxyNodeId, type Constellation
 // without a DOM; families.ts / GalaxyView.ts own the DOM wiring around them.
 
 export type GalaxyViewMode = "galaxy" | "list";
-
-// New user-facing strings (09 整合事項 — GB): temporary local const until
-// the integrator moves them into src/core/i18n/{zh-TW,en}.ts.
-export const L = {
-  galaxyMode: "星系",
-  listMode: "清單",
-  viewAria: "檢視",
-  aiExpand: (label: string) => `✨ 還有哪些 ${label} 單字我沒學過？`,
-  onlyKnown: "只看已學",
-  recenter: "重新置中",
-  expandFull: "展開",
-  more: "更多",
-  findFamily: "找字族",
-  regroup: "重新分群",
-  stop: "停止",
-  expandFound: (words: readonly string[]) => `AI 找到 ${words.length} 個新字：${joinWords(words)}，點節點再按 ＋ 加入`,
-  noMoreSuggestions: "目前沒有更多建議了",
-  addedWord: (word: string) => `已把 ${word} 加入單字庫，會自動查字典`,
-  progress: (learned: number, total: number) => `已學 ${learned} / ${total}`,
-  topicLearnedOf: (n: number) => `這個主題已學的字（${n}）`,
-  noneLearnedYet: "這個主題還沒有已學的字。",
-  collapse: "收合",
-  review: "複習",
-  wordPage: "單字頁",
-  ai: "✨ AI",
-  known: "已學",
-  unknown: "未學（AI 建議）",
-  topicCounts: (known: number, unknown: number) => `已學 ${known} · 未學 ${unknown}`,
-  graphAriaLabel: (topic: string) => `${topic} 單字星系圖`,
-} as const;
 
 // ── 主題清單 ───────────────────────────────────────────────────────
 

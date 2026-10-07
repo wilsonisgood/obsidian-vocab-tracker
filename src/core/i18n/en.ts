@@ -657,4 +657,31 @@ export const en = {
 
   // ui/settings/sections/ai.ts — Word DNA daily auto-breakdown limit (規劃書 09 §2 決定 5).
   "settings.ai.dnaDailyBatches.name": "Daily auto word-breakdown limit (batches of 10 words; 0 = off)",
+
+  // ui/galaxy/galaxyModel.ts — node ariaLabel suffix (known/unknown).
+  "galaxy.node.known": ", learned",
+  "galaxy.node.unknown": ", not learned",
+
+  // ui/galaxy/galaxyView.model.ts (Galaxy block + full-screen view).
+  "galaxy.mode.galaxy": "Galaxy",
+  "galaxy.mode.list": "List",
+  "galaxy.viewAria": "View",
+  "galaxy.aiExpand": "✨ What other {label} words haven't I learned?",
+  "galaxy.onlyKnown": "Learned only",
+  "galaxy.recenter": "Recenter",
+  "galaxy.expandFull": "Expand",
+  "galaxy.more": "More",
+  "galaxy.stop": "Stop",
+  "galaxy.expandFound": "AI found {n} new words: {words} — tap a node, then ＋ to add",
+  "galaxy.noMoreSuggestions": "No more suggestions for now",
+  "galaxy.addedWord": "Added {word} to your word list — looking it up automatically",
+  "galaxy.progress": "Learned {learned} / {total}",
+  "galaxy.topicLearnedOf": "Learned words in this topic ({n})",
+  "galaxy.noneLearnedYet": "No learned words in this topic yet.",
+  "galaxy.collapse": "Collapse",
+  "galaxy.review": "Review",
+  "galaxy.wordPage": "Word page",
+  "galaxy.ai": "✨ AI",
+  "galaxy.topicCounts": "Learned {known} · Not learned {unknown}",
+  "galaxy.graphAriaLabel": "{topic} word galaxy",
 } as const;

@@ -1,8 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { setLocale } from "../../../src/core/i18n";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import type { Family, FamilyMember } from "../../../src/core/model/family";
 import { buildGalaxyModel, constellationPoints, type GalaxyLookup, zoomFilter } from "../../../src/ui/galaxy/galaxyModel";
 import { entry } from "../../services/learn/fakes";
+
+afterEach(() => setLocale("en"));
 
 // A lookup backed by a plain Map<entryId, VocabEntry>; isKnown mirrors the
 // real A3 rule (liked === true), emoji falls back to the member's own emoji
@@ -104,6 +107,7 @@ describe("buildGalaxyModel", () => {
   });
 
   it("ariaLabel：已學／未學字串", () => {
+    setLocale("zh-TW");
     const f = family([
       {
         label: "烹調",
