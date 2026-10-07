@@ -75,6 +75,14 @@ The last time I stood in a stadium this big…
 "
 `;
 
+exports[`morphemes section (09 §7.1) > renders the section body (snapshot) 1`] = `
+"## 字根
+
+ex（出）＋ pel（推）＋ led → 推出去
+- ex-：出
+- pel：推"
+`;
+
 exports[`trivia favourites renderer > renders saved items newest first (snapshot) 1`] = `
 "\`\`\`vocab-trivia
 \`\`\`

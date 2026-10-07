@@ -1,4 +1,5 @@
 import type { VocabEntry } from "../../core/model/entry";
+import type { WordBreakdown } from "../../core/model/morpheme";
 import type { Thread } from "../../core/model/thread";
 import type { PosKey } from "../../core/model/usage";
 import type { ExportFamily, ExportTrivia, ExportUsage, ExportVerbFavorite } from "./types";
@@ -33,6 +34,10 @@ export interface ExportDataPort {
   // Saved usage favorites (用法收藏), any part of speech. Optional:
   // without it no page shows a usage as saved.
   verbFavorites?(): readonly ExportVerbFavorite[];
+  // This word's DNA breakdown (09 §7.1, 決定 1 — wordMeta, off
+  // VocabEntry). Optional: without it the word page's「## 字根」section
+  // is simply left out.
+  wordBreakdown?(entryId: string): WordBreakdown | undefined;
 }
 
 // Where exports go. Folders are vault paths without a trailing slash.

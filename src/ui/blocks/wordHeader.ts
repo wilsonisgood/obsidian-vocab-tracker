@@ -1,16 +1,32 @@
-import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { t } from "../../core/i18n";
+import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
+import { getLocale, t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { originFamilyId, type Family } from "../../core/model/family";
+import type { BreakdownPart, WordBreakdown } from "../../core/model/morpheme";
+import type { WordMeta } from "../../core/model/wordMeta";
 import { noteBasename } from "../../core/text/slug";
 import { paragraphNumber } from "../../services/files/paragraphNumber";
 import { isNewCard, startOfLocalDay } from "../../services/srs/queue";
+import { renderStrand } from "../dna/strand";
 import { datesText, recordDates } from "../kit/dates";
 import { inlineNote } from "../kit/inlineNote";
 import { bindPronounceButton } from "../kit/pronounce";
 import { autoGrowTextarea, commitEntryField, type EditableField, type FieldStore } from "../word/rowModel";
 import { familyTitle, focusFamily } from "./familiesModel";
 import { parseBlockParams } from "./params";
+
+// 09 §7.1 (A7, WP): emoji + 拆字 on the word page header. Neither field
+// made it into core/i18n yet (shared file — see WP's 整合事項), so these
+// strings are kept here the same way labels.ts's POS_NAME holds its own
+// temporary bilingual strings until they move.
+const DNA_L = {
+  "zh-TW": { emoji: "改 emoji", breakdown: "拆字", breakdownBusy: "拆字中…", breakdownFailed: "拆字失敗" },
+  en: { emoji: "Change emoji", breakdown: "Break down", breakdownBusy: "Breaking down…", breakdownFailed: "Couldn't break down" },
+} as const;
+
+function dl(key: keyof (typeof DNA_L)["zh-TW"]): string {
+  return DNA_L[getLocale()][key];
+}
 
 // ── vocab-word code block: the header of a word page (規劃書 06 §8.2, W1/W2) ──
 //
@@ -58,9 +74,52 @@ export interface WordHeaderHost {
   learn?: {
     ensureLoaded(): Promise<void>;
     family(id: string): Family | undefined;
+    // LearnStore has this already (決定 1: emoji/breakdown live in
+    // wordMeta, off VocabEntry, so `store.events`'s "data:changed" never
+    // fires for them — a redraw on their own change needs this instead).
+    // Optional: without it the header still shows the latest emoji/
+    // breakdown on its next unrelated redraw, just not live.
+    events?: { on(event: "wordMeta:upsert", fn: (meta: WordMeta) => void): () => void };
   };
   // Opens 字族樹.md (the chip's click); main.ts has it.
   openEntryFile?(id: "families", where?: "current" | "tab"): unknown;
+  // Per-word emoji (09 §7.1 A7). EmojiService already satisfies this
+  // (plugin.emoji) — see WP's 整合事項 for how it's wired. Optional:
+  // without it no emoji shows and the word can't be given one here.
+  emoji?: {
+    emojiOf(entry: VocabEntry): string;
+    set(entryId: string, emoji: string): void;
+  };
+  // Word DNA breakdown (09 §7.1). MorphemeService already satisfies this
+  // (plugin.morphemes). Optional: without it neither the strand nor the
+  // 「拆字」button shows — the header looks exactly as before M9.
+  morphemes?: {
+    breakdownOf(entryId: string): WordBreakdown | undefined;
+    analyzeNow(entryIds: string[], signal?: AbortSignal): Promise<void>;
+  };
+  // Opens Word DNA.md with one morpheme selected (a strand part's
+  // click) — main.ts doesn't implement this yet, see WP's 整合事項.
+  // Optional: without it strand parts render as plain (non-clickable)
+  // blocks (renderStrand's own behavior when `onPart` finds nothing to
+  // call).
+  openMorpheme?(morphemeId: string): unknown;
+}
+
+// ── emoji ／ 拆字（09 §7.1, A7）─────────────────────────────────────
+
+// Which of the three states the breakdown area is in: no breakdown yet
+// (offer the 「拆字」button), one that couldn't be split (決定 5 — show
+// neither), or a real one (show its strand). Pure so it's testable
+// without the DOM vitest doesn't have.
+export type BreakdownDisplay = "button" | "strand" | "none";
+
+export function breakdownDisplay(breakdown: WordBreakdown | undefined): BreakdownDisplay {
+  if (!breakdown) return "button";
+  return breakdown.status === "ok" ? "strand" : "none";
+}
+
+export function breakdownButtonLabel(busy: boolean): string {
+  return busy ? dl("breakdownBusy") : dl("breakdown");
 }
 
 // ── 「來源：字族樹 …」 ──────────────────────────────────────────────
@@ -156,6 +215,12 @@ class WordHeaderBlock extends MarkdownRenderChild {
   // "path\nline" → ¶ number, so a redraw doesn't re-read the note.
   private paragraphs = new Map<string, number | null>();
   private disposed = false;
+  // 09 §7.1: the emoji button becomes an inline text input while editing
+  // (same click-to-edit treatment as the fields below it).
+  private editingEmoji = false;
+  // Tracks this block's own analyzeNow() call, not MorphemeService's
+  // system-wide auto-batch progress() — only this word's button cares.
+  private analyzingBreakdown = false;
 
   constructor(
     containerEl: HTMLElement,
@@ -180,6 +245,20 @@ class WordHeaderBlock extends MarkdownRenderChild {
         this.render();
       })
     );
+    // emoji/breakdown (決定 1) live in wordMeta, off VocabEntry — "data:
+    // changed" above never fires for them, so a background 拆字/emoji
+    // write needs its own redraw.
+    if (this.host.learn?.events) {
+      this.register(
+        this.host.learn.events.on("wordMeta:upsert", (meta) => {
+          const entry = findTarget(this.host.store.entries, this.target);
+          if (!entry || meta.id !== entry.id) return;
+          const active = this.containerEl.ownerDocument?.activeElement;
+          if (active && this.containerEl.contains(active)) return;
+          this.render();
+        })
+      );
+    }
     this.render();
     // The origin chip names the family once learn.json is in.
     const entry = findTarget(this.host.store.entries, this.target);
@@ -204,6 +283,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
     }
 
     const top = root.createDiv({ cls: "vt-wh-top" });
+    if (this.host.emoji) this.renderEmoji(top, entry, this.host.emoji);
     top.createSpan({ cls: "vt-wh-word", text: entry.word });
     const speak = top.createEl("button", { cls: ["clickable-icon", "vt-wh-speak"], attr: { "aria-label": l("speak") } });
     setIcon(speak, "volume-2");
@@ -228,6 +308,8 @@ class WordHeaderBlock extends MarkdownRenderChild {
     this.field(fields, entry, "grammar", t("row.field.grammar"), { multiline: true });
     this.field(fields, entry, "level", t("row.field.level"), { multiline: true });
 
+    if (this.host.morphemes) this.renderBreakdown(root, entry, this.host.morphemes);
+
     const chips = root.createDiv({ cls: "vt-wh-chips" });
     if (entry.source?.path) this.renderSource(chips, entry, entry.source.path, entry.source.line);
     this.renderOrigin(chips, entry);
@@ -245,6 +327,76 @@ class WordHeaderBlock extends MarkdownRenderChild {
       btn.createSpan({ text: l("review") });
       btn.addEventListener("click", () => void review.call(this.host, entry));
     }
+  }
+
+  // The emoji to the left of the word (09 §7.1 A7). A click turns it into
+  // a plain text input, same click-to-edit shape as the fields below —
+  // Enter or blur-with-a-change commits through EmojiService.set, Escape
+  // cancels without writing anything (A7: this never touches VocabEntry).
+  private renderEmoji(parent: HTMLElement, entry: VocabEntry, emoji: NonNullable<WordHeaderHost["emoji"]>): void {
+    if (this.editingEmoji) {
+      const inp = parent.createEl("input", { cls: ["vt-input", "vt-wh-emoji-input"] });
+      inp.type = "text";
+      inp.value = emoji.emojiOf(entry);
+      inp.maxLength = 8;
+      const commit = () => {
+        if (!this.editingEmoji) return;
+        const next = inp.value.trim();
+        if (next) emoji.set(entry.id, next);
+        this.editingEmoji = false;
+        this.render();
+      };
+      inp.onchange = commit;
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") commit();
+        else if (e.key === "Escape") {
+          this.editingEmoji = false;
+          this.render();
+        }
+      });
+      // Focus after it's actually in the DOM (createEl above just built
+      // it this tick).
+      window.setTimeout(() => inp.focus(), 0);
+      return;
+    }
+    const btn = parent.createEl("button", { cls: ["clickable-icon", "vt-wh-emoji"], attr: { "aria-label": dl("emoji"), type: "button" } });
+    btn.setText(emoji.emojiOf(entry));
+    btn.addEventListener("click", () => {
+      this.editingEmoji = true;
+      this.render();
+    });
+  }
+
+  // The strand under the fields, or a 「拆字」button when the word hasn't
+  // been analyzed yet (09 §7.1). Nothing renders at all when it was
+  // analyzed and came back "none" (決定 5 — no morphemes worth showing).
+  private renderBreakdown(parent: HTMLElement, entry: VocabEntry, morphemes: NonNullable<WordHeaderHost["morphemes"]>): void {
+    const breakdown = morphemes.breakdownOf(entry.id);
+    const display = breakdownDisplay(breakdown);
+    if (display === "none") return;
+    if (display === "strand") {
+      renderStrand(parent, breakdown!, {
+        onPart: (part: BreakdownPart) => {
+          if (part.morphemeId) this.host.openMorpheme?.(part.morphemeId);
+        },
+      });
+      return;
+    }
+    const btn = parent.createEl("button", { cls: ["vt-wh-breakdown-btn"], attr: { type: "button" } });
+    btn.setText(breakdownButtonLabel(this.analyzingBreakdown));
+    btn.disabled = this.analyzingBreakdown;
+    btn.addEventListener("click", () => {
+      if (this.analyzingBreakdown) return;
+      this.analyzingBreakdown = true;
+      this.render();
+      morphemes
+        .analyzeNow([entry.id])
+        .catch(() => new Notice(dl("breakdownFailed")))
+        .finally(() => {
+          this.analyzingBreakdown = false;
+          if (!this.disposed) this.render();
+        });
+    });
   }
 
   // One editable field (1006-2 #12) — same save path as WordRow's own

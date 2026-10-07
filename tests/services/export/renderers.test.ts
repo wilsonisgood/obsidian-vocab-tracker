@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { WordBreakdown } from "../../../src/core/model/morpheme";
 import { findManagedBlock } from "../../../src/services/export/managedBlock";
 import { hasAiNoteContent, renderAiNoteFile, renderAiNoteSections, type AiNoteInput } from "../../../src/services/export/renderers/aiNote";
 import { balanceFences, blockquote, frontmatter, inlineCode, roundsOf } from "../../../src/services/export/renderers/common";
@@ -6,6 +7,8 @@ import { renderTriviaFavoritesFile, renderTriviaFavoritesSections } from "../../
 import {
   familiesOf,
   hasWordPageContent,
+  renderBreakdownLine,
+  renderMorphemeList,
   renderWordPageFile,
   renderWordPageSections,
   triviaAbout,
@@ -19,6 +22,21 @@ import { ARTICLE, ctx, labelsIn, FAMILIES, GLITTERY, GLITTERY_THREAD, LEOTARD, T
 
 const FULL: WordPageInput = { entry: GLITTERY, families: FAMILIES, usages: { v: USAGE }, trivia: TRIVIA, thread: GLITTERY_THREAD };
 const EMPTY: WordPageInput = { entry: { id: "x", word: "leotard" }, families: [], trivia: [] };
+
+// "expelled" → ex（出）＋ pel（推）＋ led（決定 4 inflection: doubled "l"
+// + -ed, no morpheme record of its own) → 推出去 (規劃書 09 §7.1).
+const BREAKDOWN_OK: WordBreakdown = {
+  status: "ok",
+  word: "expelled",
+  gloss: "推出去",
+  generatedAt: "2026-10-05T00:00:00.000Z",
+  model: "test",
+  parts: [
+    { text: "ex", type: "prefix", meaningZh: "出", morphemeId: "m-ex" },
+    { text: "pel", type: "root", meaningZh: "推", morphemeId: "m-pel" },
+    { text: "led", type: "inflection", meaningZh: "" },
+  ],
+};
 
 const P12 = "Last time I was in a stadium this size, I was dancing in heels and wearing a glittery leotard.";
 const P13 = "all the trustees and members of the board";
@@ -184,6 +202,33 @@ describe("word page renderer", () => {
     expect(triviaAbout(TRIVIA, GLITTERY.id).map((t) => t.id)).toEqual(["tr1"]);
     expect(triviaMentioning(TRIVIA, GLITTERY).map((t) => t.id)).toEqual(["tr2"]);
     expect(triviaMentioning(TRIVIA, LEOTARD).map((t) => t.id)).toEqual(["tr1"]);
+  });
+});
+
+describe("morphemes section (09 §7.1)", () => {
+  it("formats the breakdown line: parts joined by ＋, inflection bare, then → gloss", () => {
+    expect(renderBreakdownLine(BREAKDOWN_OK)).toBe("ex（出）＋ pel（推）＋ led → 推出去");
+  });
+
+  it("omits the arrow entirely when gloss is empty", () => {
+    expect(renderBreakdownLine({ ...BREAKDOWN_OK, gloss: "" })).toBe("ex（出）＋ pel（推）＋ led");
+  });
+
+  it("lists prefix/root/suffix (not inflection) with prefix/suffix hyphens", () => {
+    const parts = [...BREAKDOWN_OK.parts, { text: "ful", type: "suffix" as const, meaningZh: "充滿" }];
+    expect(renderMorphemeList(parts)).toEqual(["- ex-：出", "- pel：推", "- -ful：充滿"]);
+  });
+
+  it("only puts a「## 字根」section in when the breakdown is status: ok", () => {
+    const names = (b?: WordBreakdown) => renderWordPageSections({ ...FULL, breakdown: b }, ctx()).map((s) => s.name);
+    expect(names(undefined)).toEqual(["families", "usage", "trivia", "discussion"]);
+    expect(names({ ...BREAKDOWN_OK, status: "none", parts: [] })).toEqual(["families", "usage", "trivia", "discussion"]);
+    expect(names(BREAKDOWN_OK)).toEqual(["families", "morphemes", "usage", "trivia", "discussion"]);
+  });
+
+  it("renders the section body (snapshot)", () => {
+    const body = renderWordPageSections({ ...FULL, breakdown: BREAKDOWN_OK }, ctx()).find((s) => s.name === "morphemes")!.body;
+    expect(body).toMatchSnapshot();
   });
 });
 
