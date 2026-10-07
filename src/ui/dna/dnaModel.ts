@@ -58,6 +58,59 @@ export function resolveDnaSelection(
   return { type, morphemeId };
 }
 
+// ── Focus from outside the block (09 §7.1) ─────────────────────────
+// A word page's strand part opens Word DNA.md on that morpheme: main.ts
+// records the request, every vocab-dna block applies it once — an open
+// block right away (onRequest), one still opening when it first renders.
+
+// A request older than this is stale: opening Word DNA.md by hand later
+// shouldn't jump to whatever was last clicked.
+export const DNA_FOCUS_TTL_MS = 10_000;
+
+export interface DnaFocusRequest {
+  morphemeId: string;
+  at: number;
+}
+
+export interface DnaFocusPort {
+  request(): DnaFocusRequest | undefined;
+  onRequest(fn: () => void): () => void;
+}
+
+export function createDnaFocus(now: () => number = () => Date.now()): DnaFocusPort & { focus(morphemeId: string): void } {
+  let current: DnaFocusRequest | undefined;
+  const listeners = new Set<() => void>();
+  return {
+    request: () => current,
+    onRequest(fn) {
+      listeners.add(fn);
+      return () => void listeners.delete(fn);
+    },
+    focus(morphemeId) {
+      current = { morphemeId, at: now() };
+      for (const fn of listeners) fn();
+    },
+  };
+}
+
+// The request a block hasn't applied yet (newer than `appliedAt`, not stale).
+export function pendingFocus(req: DnaFocusRequest | undefined, appliedAt: number, now: number): DnaFocusRequest | null {
+  if (!req || req.at <= appliedAt || now - req.at > DNA_FOCUS_TTL_MS) return null;
+  return req;
+}
+
+// The tab a morpheme sits in; null when it has no learned word yet (stats
+// only list morphemes with ≥1 liked word).
+export function selectionForMorpheme(
+  statsByType: Record<MorphemeType, readonly MorphemeStat[]>,
+  morphemeId: string
+): DnaSelection | null {
+  for (const type of DNA_TAB_ORDER) {
+    if (statsByType[type].some((s) => s.morpheme.id === morphemeId)) return { type, morphemeId };
+  }
+  return null;
+}
+
 // ── Chips (「-ee 接受動作的人 · 已學 2」) ────────────────────────────
 
 export interface MorphemeChip {

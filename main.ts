@@ -41,6 +41,7 @@ import { SETTINGS_SECTIONS } from "./src/ui/settings/sections";
 import { ObsidianNotes } from "./src/platform/ObsidianNotes";
 import { ThreadService } from "./src/services/threads/ThreadService";
 import { LearnStore } from "./src/services/learn/LearnStore";
+import { createDnaFocus } from "./src/ui/dna/dnaModel";
 import { EmojiService } from "./src/services/learn/EmojiService";
 import { FamilyService } from "./src/services/learn/FamilyService";
 import { VerbUsageService } from "./src/services/learn/VerbUsageService";
@@ -151,6 +152,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   learn!: LearnStore;
   families!: FamilyService;
   emoji!: EmojiService;
+  // A morpheme picked on a word page, for the vocab-dna block (09 §7.1).
+  readonly dnaFocus = createDnaFocus();
   verbs!: VerbUsageService;
   trivia!: TriviaService;
   morphemes!: MorphemeService;
@@ -854,6 +857,13 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
 
   // Opens an entry file (單字卡 / 字族樹 / 動詞用法 / 冷知識), creating it if
   // it's missing — never overwriting one that's there.
+  // WordHeaderHost (09 §7.1): a strand part on a word page → Word DNA.md
+  // with that morpheme selected (an already-open copy is reused).
+  openMorpheme(morphemeId: string) {
+    this.dnaFocus.focus(morphemeId);
+    void this.openEntryFile("dna", "tab");
+  }
+
   async openEntryFile(id: EntryFileId, where: "current" | "tab" = "current") {
     try {
       await this.openNote(await this.files.ensure(id), where);

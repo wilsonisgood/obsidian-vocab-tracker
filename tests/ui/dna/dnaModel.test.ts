@@ -2,13 +2,17 @@ import { describe, expect, it } from "vitest";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import type { Morpheme } from "../../../src/core/model/morpheme";
 import {
+  createDnaFocus,
+  DNA_FOCUS_TTL_MS,
   defaultFocusEntryId,
   formatTimeline,
   morphemeChips,
   parseDnaParams,
   parseTimeline,
+  pendingFocus,
   relatedWords,
   resolveDnaSelection,
+  selectionForMorpheme,
   wiktionaryUrl,
 } from "../../../src/ui/dna/dnaModel";
 import type { MorphemeStat } from "../../../src/services/learn/MorphemeService";
@@ -184,5 +188,37 @@ describe("parseTimeline / formatTimeline", () => {
       { stage: "現代英語", form: "expel, propel" },
     ];
     expect(parseTimeline(formatTimeline(timeline))).toEqual(timeline);
+  });
+});
+
+describe("DNA focus from a word page (09 §7.1)", () => {
+  const suffixStat = makeStat({ morpheme: makeMorpheme({ id: "s1", type: "suffix", form: "-ee" }) });
+  const rootStat = makeStat({ morpheme: makeMorpheme({ id: "r1", type: "root", form: "pel" }) });
+  const stats = { prefix: [], suffix: [suffixStat], root: [rootStat] };
+
+  it("finds the morpheme's tab, or null when it has no learned word", () => {
+    expect(selectionForMorpheme(stats, "r1")).toEqual({ type: "root", morphemeId: "r1" });
+    expect(selectionForMorpheme(stats, "nope")).toBeNull();
+  });
+
+  it("notifies listeners and records the request", () => {
+    let clock = 1000;
+    const focus = createDnaFocus(() => clock);
+    let calls = 0;
+    const off = focus.onRequest(() => calls++);
+    focus.focus("r1");
+    expect(focus.request()).toEqual({ morphemeId: "r1", at: 1000 });
+    off();
+    clock = 2000;
+    focus.focus("s1");
+    expect(calls).toBe(1);
+  });
+
+  it("applies a request once, and not after it goes stale", () => {
+    const req = { morphemeId: "r1", at: 1000 };
+    expect(pendingFocus(req, 0, 1500)).toBe(req);
+    expect(pendingFocus(req, 1000, 1500)).toBeNull();
+    expect(pendingFocus(req, 0, 1000 + DNA_FOCUS_TTL_MS + 1)).toBeNull();
+    expect(pendingFocus(undefined, 0, 1500)).toBeNull();
   });
 });

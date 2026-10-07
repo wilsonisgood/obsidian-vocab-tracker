@@ -21,6 +21,7 @@ function dnaDeps(plugin: VocabTrackerPlugin): DnaBlockDeps {
     ai: plugin.ai,
     selection: plugin.selection,
     openWord: (e) => void plugin.surfaces.openWordCard(e.id, "data"),
+    focus: plugin.dnaFocus,
   };
 }
 

@@ -1,7 +1,7 @@
 import { MarkdownRenderChild, Notice, setIcon, type App, type MarkdownPostProcessorContext } from "obsidian";
 import { t, type I18nKey } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
-import { morphemeThreadId, type BreakdownPart, type Morpheme, type MorphemeType } from "../../core/model/morpheme";
+import { morphemeThreadId, resolveMorphemeId, type BreakdownPart, type Morpheme, type MorphemeType } from "../../core/model/morpheme";
 import { liveTurns } from "../../core/model/thread";
 import { emojiOf } from "../../core/model/wordMeta";
 import type { VocabStore } from "../../core/store/VocabStore";
@@ -16,8 +16,11 @@ import {
   morphemeChips,
   parseDnaParams,
   relatedWords,
+  pendingFocus,
   resolveDnaSelection,
+  selectionForMorpheme,
   wiktionaryUrl,
+  type DnaFocusPort,
   type DnaParams,
 } from "../dna/dnaModel";
 import { MorphemeEditModal } from "../dna/MorphemeEditModal";
@@ -98,6 +101,9 @@ export interface DnaBlockDeps {
   // Opens the word's card in the sidebar (plugin.surfaces.openWordCard).
   // Optional: without it the focused word's name just isn't clickable.
   openWord?(entry: VocabEntry): void;
+  // A morpheme picked on a word page (09 §7.1, main.ts's openMorpheme).
+  // Optional: without it only the block's own params pick the selection.
+  focus?: DnaFocusPort;
 }
 
 export function renderDna(deps: DnaBlockDeps, source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): void {
@@ -109,6 +115,7 @@ class DnaBlock extends MarkdownRenderChild {
   private ready = false;
   private disposed = false;
   private initializedSelection = false;
+  private focusAppliedAt = 0;
   private type: MorphemeType = "suffix";
   private morphemeId: string | undefined;
   private focusEntryId: string | undefined;
@@ -142,6 +149,7 @@ class DnaBlock extends MarkdownRenderChild {
     this.register(this.deps.learn.events.on("learn:reloaded", schedule));
     this.register(this.deps.vocab.events.on("data:changed", schedule));
     this.register(this.deps.morphemes.events.on("dna:progress", schedule));
+    if (this.deps.focus) this.register(this.deps.focus.onRequest(schedule));
     this.register(() => {
       this.disposed = true;
       if (this.rafId !== null) cancelAnimationFrame(this.rafId);
@@ -183,6 +191,18 @@ class DnaBlock extends MarkdownRenderChild {
     const statsByType = this.statsByType();
     const hasAny = DNA_TAB_ORDER.some((ty) => statsByType[ty].length > 0);
     if (!hasAny) return this.renderEmpty(root);
+
+    const req = pendingFocus(this.deps.focus?.request(), this.focusAppliedAt, Date.now());
+    if (req) {
+      this.focusAppliedAt = req.at;
+      const sel = selectionForMorpheme(statsByType, resolveMorphemeId(this.deps.learn.morphemes(), req.morphemeId));
+      if (sel) {
+        this.type = sel.type;
+        this.morphemeId = sel.morphemeId;
+        this.focusEntryId = undefined;
+        this.initializedSelection = true;
+      }
+    }
 
     if (!this.initializedSelection) {
       const sel = resolveDnaSelection(this.params, statsByType);
