@@ -675,4 +675,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "galaxy.ai": "✨ AI",
   "galaxy.topicCounts": "已學 {known} · 未學 {unknown}",
   "galaxy.graphAriaLabel": "{topic} 單字星系圖",
+
+  // services/backup/format.ts 字素摘要，照 settings.backup.summary.trivia 的寫法。
+  "settings.backup.summary.morphemes": "{n} 個字素",
 };

@@ -36,6 +36,7 @@ export function summaryText(s: BackupSummary): string {
   if (s.threads !== undefined) parts.push(t("settings.backup.summary.threads", { n: s.threads, q: s.questions ?? 0 }));
   if (s.families !== undefined) parts.push(t("settings.backup.summary.families", { n: s.families }));
   if (s.trivia !== undefined) parts.push(t("settings.backup.summary.trivia", { n: s.trivia }));
+  if (s.morphemes !== undefined) parts.push(t("settings.backup.summary.morphemes", { n: s.morphemes }));
   if (s.reviews !== undefined) parts.push(t("settings.backup.summary.reviews", { n: s.reviews }));
   return parts.join(" · ");
 }

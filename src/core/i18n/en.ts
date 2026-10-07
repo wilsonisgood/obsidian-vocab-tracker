@@ -684,4 +684,7 @@ export const en = {
   "galaxy.ai": "✨ AI",
   "galaxy.topicCounts": "Learned {known} · Not learned {unknown}",
   "galaxy.graphAriaLabel": "{topic} word galaxy",
+
+  // services/backup/format.ts morphemes count, alongside settings.backup.summary.trivia.
+  "settings.backup.summary.morphemes": "{n} morphemes",
 } as const;

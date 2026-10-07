@@ -38,6 +38,7 @@ describe("backup list wording", () => {
     expect(backupTitle(item)).toMatch(/ · 手動備份$/);
     expect(summaryText(item.summary!)).toBe("120 個單字 · 8 串討論（34 題） · 5 個字族 · 3 則冷知識收藏 · 410 筆複習紀錄");
     expect(summaryText({ words: 12 })).toBe("12 個單字");
+    expect(summaryText({ words: 12, morphemes: 7 })).toBe("12 個單字 · 7 個字素");
     expect(backupDesc({ ...item, kind: "unreadable", summary: null })).toBe("無法讀取，不能還原。");
     expect(backupTime(null)).toBe("時間不明");
   });
