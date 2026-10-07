@@ -3832,6 +3832,36 @@ button.vt-dna-row:hover {
   width: 100%;
 }
 
+/* src/styles/wordPageDna.css */
+.vt-wh-emoji {
+  font-size: 1.4em;
+  line-height: 1.2;
+  padding: 0 2px;
+}
+.vt-wh-emoji-input {
+  width: 2.6em;
+  font-size: 1.4em;
+  text-align: center;
+  padding: 0 2px;
+}
+.vt-wh-breakdown-btn {
+  align-self: flex-start;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  background: var(--background-modifier-hover);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.vt-wh-breakdown-btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.vt-word-header .vt-dna-strand {
+  margin-top: 4px;
+}
+
 /* src/styles/mobile.css */
 .vt-sheet-layer {
   position: fixed;

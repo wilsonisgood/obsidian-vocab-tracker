@@ -1208,6 +1208,7 @@ var en = {
   "export.trivia": "Saved trivia",
   "export.triviaEmpty": "Nothing saved yet.",
   "export.triviaMentionedIn": "Also mentioned in",
+  "export.morphemes": "Roots",
   "export.discussion": "AI discussion",
   "export.discussionEmpty": "No discussion yet.",
   "export.userNotesHint": "Your notes below \u2014 the plugin never changes them",
@@ -1246,6 +1247,10 @@ var en = {
   "wordPage.origin": "From word families: {name}",
   "wordPage.originUnknown": "From word families",
   "wordPage.originTitle": "Open in word families",
+  "wordPage.dna.emoji": "Change emoji",
+  "wordPage.dna.breakdown": "Break down",
+  "wordPage.dna.breakdownBusy": "Breaking down\u2026",
+  "wordPage.dna.breakdownFailed": "Couldn't break down",
   // ── M6 entry files and the Files settings section ──
   "command.openFamilies": "Open word families",
   "command.openVerbs": "Open usage overview",
@@ -1847,6 +1852,7 @@ var zhTW = {
   "export.trivia": "\u51B7\u77E5\u8B58\u6536\u85CF",
   "export.triviaEmpty": "\u9084\u6C92\u6709\u6536\u85CF\u3002",
   "export.triviaMentionedIn": "\u4E5F\u63D0\u5230\u9019\u500B\u5B57",
+  "export.morphemes": "\u5B57\u6839",
   "export.discussion": "AI \u8A0E\u8AD6",
   "export.discussionEmpty": "\u9084\u6C92\u6709\u8A0E\u8AD6\u3002",
   "export.userNotesHint": "\u4EE5\u4E0B\u662F\u4F60\u7684\u7B46\u8A18\uFF0C\u63D2\u4EF6\u4E0D\u6703\u6539\u52D5",
@@ -1885,6 +1891,10 @@ var zhTW = {
   "wordPage.origin": "\u4F86\u6E90\uFF1A\u5B57\u65CF\u6A39 {name}",
   "wordPage.originUnknown": "\u4F86\u6E90\uFF1A\u5B57\u65CF\u6A39",
   "wordPage.originTitle": "\u5728\u5B57\u65CF\u6A39\u6253\u958B",
+  "wordPage.dna.emoji": "\u6539 emoji",
+  "wordPage.dna.breakdown": "\u62C6\u5B57",
+  "wordPage.dna.breakdownBusy": "\u62C6\u5B57\u4E2D\u2026",
+  "wordPage.dna.breakdownFailed": "\u62C6\u5B57\u5931\u6557",
   // ── M6 入口檔與「檔案」設定 ──
   "command.openFamilies": "\u958B\u555F\u5B57\u65CF\u6A39",
   "command.openVerbs": "\u958B\u555F\u7528\u6CD5\u7E3D\u8868",
@@ -12212,6 +12222,32 @@ function resolveDnaSelection(params, statsByType) {
   )) == null ? void 0 : _d.id : void 0;
   return { type, morphemeId };
 }
+var DNA_FOCUS_TTL_MS = 1e4;
+function createDnaFocus(now2 = () => Date.now()) {
+  let current;
+  const listeners = /* @__PURE__ */ new Set();
+  return {
+    request: () => current,
+    onRequest(fn) {
+      listeners.add(fn);
+      return () => void listeners.delete(fn);
+    },
+    focus(morphemeId) {
+      current = { morphemeId, at: now2() };
+      for (const fn of listeners) fn();
+    }
+  };
+}
+function pendingFocus2(req, appliedAt, now2) {
+  if (!req || req.at <= appliedAt || now2 - req.at > DNA_FOCUS_TTL_MS) return null;
+  return req;
+}
+function selectionForMorpheme(statsByType, morphemeId) {
+  for (const type of DNA_TAB_ORDER) {
+    if (statsByType[type].some((s) => s.morpheme.id === morphemeId)) return { type, morphemeId };
+  }
+  return null;
+}
 function morphemeChips(stats) {
   return stats.map((s) => ({ id: s.morpheme.id, form: s.morpheme.form, meaningZh: s.morpheme.meaningZh, learnedCount: s.learned.length })).sort((a2, b) => b.learnedCount - a2.learnedCount);
 }
@@ -12369,6 +12405,7 @@ var DnaBlock = class extends import_obsidian24.MarkdownRenderChild {
     this.ready = false;
     this.disposed = false;
     this.initializedSelection = false;
+    this.focusAppliedAt = 0;
     this.type = "suffix";
     this.expandedChat = /* @__PURE__ */ new Set();
     this.chatState = createChatUiState();
@@ -12390,6 +12427,7 @@ var DnaBlock = class extends import_obsidian24.MarkdownRenderChild {
     this.register(this.deps.learn.events.on("learn:reloaded", schedule));
     this.register(this.deps.vocab.events.on("data:changed", schedule));
     this.register(this.deps.morphemes.events.on("dna:progress", schedule));
+    if (this.deps.focus) this.register(this.deps.focus.onRequest(schedule));
     this.register(() => {
       var _a;
       this.disposed = true;
@@ -12418,7 +12456,7 @@ var DnaBlock = class extends import_obsidian24.MarkdownRenderChild {
   }
   // ── Render ────────────────────────────────────────────────────
   render() {
-    var _a;
+    var _a, _b;
     const root2 = this.root;
     root2.empty();
     if (this.chat) this.removeChild(this.chat);
@@ -12427,6 +12465,17 @@ var DnaBlock = class extends import_obsidian24.MarkdownRenderChild {
     const statsByType = this.statsByType();
     const hasAny = DNA_TAB_ORDER.some((ty) => statsByType[ty].length > 0);
     if (!hasAny) return this.renderEmpty(root2);
+    const req = pendingFocus2((_a = this.deps.focus) == null ? void 0 : _a.request(), this.focusAppliedAt, Date.now());
+    if (req) {
+      this.focusAppliedAt = req.at;
+      const sel = selectionForMorpheme(statsByType, resolveMorphemeId(this.deps.learn.morphemes(), req.morphemeId));
+      if (sel) {
+        this.type = sel.type;
+        this.morphemeId = sel.morphemeId;
+        this.focusEntryId = void 0;
+        this.initializedSelection = true;
+      }
+    }
     if (!this.initializedSelection) {
       const sel = resolveDnaSelection(this.params, statsByType);
       this.type = sel.type;
@@ -12442,7 +12491,7 @@ var DnaBlock = class extends import_obsidian24.MarkdownRenderChild {
       root2.createDiv({ cls: "vt-dna-tab-empty", text: t("dna.emptyTab") });
       return;
     }
-    const cur = (_a = stats.find((s) => s.morpheme.id === this.morphemeId)) != null ? _a : stats[0];
+    const cur = (_b = stats.find((s) => s.morpheme.id === this.morphemeId)) != null ? _b : stats[0];
     this.morphemeId = cur.morpheme.id;
     if (!this.focusEntryId || !cur.learned.some((e) => e.id === this.focusEntryId)) {
       this.focusEntryId = defaultFocusEntryId(cur);
@@ -13501,6 +13550,13 @@ function l(key4, vars) {
 function lo(key4, name) {
   return name === void 0 ? t(`wordPage.${key4}`) : t(`wordPage.${key4}`, { name });
 }
+function breakdownDisplay(breakdown) {
+  if (!breakdown) return "button";
+  return breakdown.status === "ok" ? "strand" : "none";
+}
+function breakdownButtonLabel(busy) {
+  return busy ? t("wordPage.dna.breakdownBusy") : t("wordPage.dna.breakdown");
+}
 function originView(entry, family) {
   const familyId = originFamilyId(entry.origin);
   if (!familyId) return null;
@@ -13561,17 +13617,36 @@ var WordHeaderBlock = class extends import_obsidian27.MarkdownRenderChild {
     // "path\nline" → ¶ number, so a redraw doesn't re-read the note.
     this.paragraphs = /* @__PURE__ */ new Map();
     this.disposed = false;
+    // 09 §7.1: the emoji button becomes an inline text input while editing
+    // (same click-to-edit treatment as the fields below it).
+    this.editingEmoji = false;
+    // Tracks this block's own analyzeNow() call, not MorphemeService's
+    // system-wide auto-batch progress() — only this word's button cares.
+    this.analyzingBreakdown = false;
   }
   onload() {
+    var _a;
     this.registerDomEvent(this.containerEl, "click", (e) => e.stopPropagation());
     this.register(
       this.host.store.events.on("data:changed", () => {
-        var _a;
-        const active2 = (_a = this.containerEl.ownerDocument) == null ? void 0 : _a.activeElement;
+        var _a2;
+        const active2 = (_a2 = this.containerEl.ownerDocument) == null ? void 0 : _a2.activeElement;
         if (active2 && this.containerEl.contains(active2)) return;
         this.render();
       })
     );
+    if ((_a = this.host.learn) == null ? void 0 : _a.events) {
+      this.register(
+        this.host.learn.events.on("wordMeta:upsert", (meta) => {
+          var _a2;
+          const entry2 = findTarget(this.host.store.entries, this.target);
+          if (!entry2 || meta.id !== entry2.id) return;
+          const active2 = (_a2 = this.containerEl.ownerDocument) == null ? void 0 : _a2.activeElement;
+          if (active2 && this.containerEl.contains(active2)) return;
+          this.render();
+        })
+      );
+    }
     this.render();
     const entry = findTarget(this.host.store.entries, this.target);
     if (this.host.learn && originFamilyId(entry == null ? void 0 : entry.origin)) {
@@ -13593,6 +13668,7 @@ var WordHeaderBlock = class extends import_obsidian27.MarkdownRenderChild {
       return;
     }
     const top = root2.createDiv({ cls: "vt-wh-top" });
+    if (this.host.emoji) this.renderEmoji(top, entry, this.host.emoji);
     top.createSpan({ cls: "vt-wh-word", text: entry.word });
     const speak = top.createEl("button", { cls: ["clickable-icon", "vt-wh-speak"], attr: { "aria-label": l("speak") } });
     (0, import_obsidian27.setIcon)(speak, "volume-2");
@@ -13608,6 +13684,7 @@ var WordHeaderBlock = class extends import_obsidian27.MarkdownRenderChild {
     this.field(fields, entry, "example", t("row.field.example"), { multiline: true });
     this.field(fields, entry, "grammar", t("row.field.grammar"), { multiline: true });
     this.field(fields, entry, "level", t("row.field.level"), { multiline: true });
+    if (this.host.morphemes) this.renderBreakdown(root2, entry, this.host.morphemes);
     const chips = root2.createDiv({ cls: "vt-wh-chips" });
     if ((_a = entry.source) == null ? void 0 : _a.path) this.renderSource(chips, entry, entry.source.path, entry.source.line);
     this.renderOrigin(chips, entry);
@@ -13623,6 +13700,70 @@ var WordHeaderBlock = class extends import_obsidian27.MarkdownRenderChild {
       btn.createSpan({ text: l("review") });
       btn.addEventListener("click", () => void review.call(this.host, entry));
     }
+  }
+  // The emoji to the left of the word (09 §7.1 A7). A click turns it into
+  // a plain text input, same click-to-edit shape as the fields below —
+  // Enter or blur-with-a-change commits through EmojiService.set, Escape
+  // cancels without writing anything (A7: this never touches VocabEntry).
+  renderEmoji(parent, entry, emoji) {
+    if (this.editingEmoji) {
+      const inp = parent.createEl("input", { cls: ["vt-input", "vt-wh-emoji-input"] });
+      inp.type = "text";
+      inp.value = emoji.emojiOf(entry);
+      inp.maxLength = 8;
+      const commit = () => {
+        if (!this.editingEmoji) return;
+        const next = inp.value.trim();
+        if (next) emoji.set(entry.id, next);
+        this.editingEmoji = false;
+        this.render();
+      };
+      inp.onchange = commit;
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") commit();
+        else if (e.key === "Escape") {
+          this.editingEmoji = false;
+          this.render();
+        }
+      });
+      window.setTimeout(() => inp.focus(), 0);
+      return;
+    }
+    const btn = parent.createEl("button", { cls: ["clickable-icon", "vt-wh-emoji"], attr: { "aria-label": t("wordPage.dna.emoji"), type: "button" } });
+    btn.setText(emoji.emojiOf(entry));
+    btn.addEventListener("click", () => {
+      this.editingEmoji = true;
+      this.render();
+    });
+  }
+  // The strand under the fields, or a 「拆字」button when the word hasn't
+  // been analyzed yet (09 §7.1). Nothing renders at all when it was
+  // analyzed and came back "none" (決定 5 — no morphemes worth showing).
+  renderBreakdown(parent, entry, morphemes) {
+    const breakdown = morphemes.breakdownOf(entry.id);
+    const display = breakdownDisplay(breakdown);
+    if (display === "none") return;
+    if (display === "strand") {
+      renderStrand(parent, breakdown, {
+        onPart: (part) => {
+          var _a, _b;
+          if (part.morphemeId) (_b = (_a = this.host).openMorpheme) == null ? void 0 : _b.call(_a, part.morphemeId);
+        }
+      });
+      return;
+    }
+    const btn = parent.createEl("button", { cls: ["vt-wh-breakdown-btn"], attr: { type: "button" } });
+    btn.setText(breakdownButtonLabel(this.analyzingBreakdown));
+    btn.disabled = this.analyzingBreakdown;
+    btn.addEventListener("click", () => {
+      if (this.analyzingBreakdown) return;
+      this.analyzingBreakdown = true;
+      this.render();
+      morphemes.analyzeNow([entry.id]).catch(() => new import_obsidian27.Notice(t("wordPage.dna.breakdownFailed"))).finally(() => {
+        this.analyzingBreakdown = false;
+        if (!this.disposed) this.render();
+      });
+    });
   }
   // One editable field (1006-2 #12) — same save path as WordRow's own
   // fields (rowModel.ts's commitEntryField: first edit on an unliked word
@@ -15017,6 +15158,7 @@ var KEYS = [
   "trivia",
   "triviaEmpty",
   "triviaMentionedIn",
+  "morphemes",
   "discussion",
   "discussionEmpty",
   "userNotesHint",
@@ -15359,7 +15501,8 @@ function dnaDeps(plugin) {
     threads: plugin.threads,
     ai: plugin.ai,
     selection: plugin.selection,
-    openWord: (e) => void plugin.surfaces.openWordCard(e.id, "data")
+    openWord: (e) => void plugin.surfaces.openWordCard(e.id, "data"),
+    focus: plugin.dnaFocus
   };
 }
 var BLOCKS = [
@@ -24432,13 +24575,39 @@ function renderDiscussion(input, ctx) {
   const rounds = threadRounds(input.thread);
   return rounds.length ? renderRounds(rounds, ctx, "###") : italic(ctx.labels.discussionEmpty);
 }
+function breakdownPartText(part) {
+  if (part.type === "inflection") return oneLine(part.text);
+  const meaning = oneLine(part.meaningZh);
+  return meaning ? `${oneLine(part.text)}\uFF08${meaning}\uFF09` : oneLine(part.text);
+}
+function breakdownPartForm(part) {
+  if (part.type === "prefix") return `${part.text}-`;
+  if (part.type === "suffix") return `-${part.text}`;
+  return part.text;
+}
+function renderBreakdownLine(breakdown) {
+  const head = breakdown.parts.map(breakdownPartText).join("\uFF0B ");
+  const gloss = oneLine(breakdown.gloss);
+  return gloss ? `${head} \u2192 ${gloss}` : head;
+}
+function renderMorphemeList(parts) {
+  return parts.filter((p) => p.type !== "inflection").map((p) => `- ${breakdownPartForm(p)}\uFF1A${oneLine(p.meaningZh)}`);
+}
+function renderMorphemes(breakdown) {
+  return [renderBreakdownLine(breakdown), ...renderMorphemeList(breakdown.parts)].join("\n");
+}
 function renderWordPageSections(input, ctx) {
-  return [
-    section2("families", ctx.labels.families, renderFamilies2(input, ctx)),
+  var _a;
+  const sections = [section2("families", ctx.labels.families, renderFamilies2(input, ctx))];
+  if (((_a = input.breakdown) == null ? void 0 : _a.status) === "ok") {
+    sections.push(section2("morphemes", ctx.labels.morphemes, renderMorphemes(input.breakdown)));
+  }
+  sections.push(
     section2("usage", ctx.labels.usage, renderUsage(input, ctx)),
     section2("trivia", ctx.labels.trivia, renderTrivia2(input, ctx)),
     section2("discussion", ctx.labels.discussion, renderDiscussion(input, ctx))
-  ];
+  );
+  return sections;
 }
 function renderWordPageFile(input, ctx) {
   const head = [
@@ -24602,6 +24771,13 @@ var ExportService = class {
   verbFavoriteChanged(fav) {
     this.wordChanged(fav.entryId, fav.deletedAt ? "never" : "ifContent");
   }
+  // wordMeta changed (09 §7.1, 決定 1): emoji alone doesn't move the word
+  // page (A7 — it only ever shows in the header's own live block, never
+  // in the managed sections), but a finished 拆字 does, so only this
+  // updates an existing page — like usageChanged, never creates one.
+  wordMetaChanged(entryId) {
+    this.wordChanged(entryId);
+  }
   // ── Event wiring ─────────────────────────────────────────────────────
   watchThreads(source) {
     this.track(source.on("thread:upsert", (thread) => this.threadChanged(thread)));
@@ -24614,6 +24790,7 @@ var ExportService = class {
     this.track(source.on("family:upsert", (family) => this.familyChanged(family)));
     this.track(source.on("trivia:upsert", (item) => this.triviaItemChanged(item)));
     this.track(source.on("verbFavorite:upsert", (fav) => this.verbFavoriteChanged(fav)));
+    this.track(source.on("wordMeta:upsert", (meta) => this.wordMetaChanged(meta.id)));
   }
   // VerbUsageService: a usage block was (re)generated.
   watchUsage(source) {
@@ -24737,7 +24914,7 @@ var ExportService = class {
     await vault.process(path, (text) => applyManagedBlocks(text, sections));
   }
   async writeWord(path, entryId, create2) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     await ((_b = (_a = this.deps.data).ready) == null ? void 0 : _b.call(_a));
     const { data } = this.deps;
     const entry = data.entry(entryId);
@@ -24748,7 +24925,8 @@ var ExportService = class {
       usages: data.usages(entryId),
       verbFavorites: (_d = (_c = data.verbFavorites) == null ? void 0 : _c.call(data)) != null ? _d : [],
       trivia: data.trivia(),
-      thread: data.wordThread(entryId)
+      thread: data.wordThread(entryId),
+      breakdown: (_e = data.wordBreakdown) == null ? void 0 : _e.call(data, entryId)
     };
     const ctx = this.context();
     const allowed = create2 === "always" || create2 === "ifContent" && hasWordPageContent(input);
@@ -24914,6 +25092,10 @@ function createExportData(src) {
     verbFavorites: () => {
       var _a, _b, _c;
       return ((_c = (_b = (_a = src.learn).verbFavorites) == null ? void 0 : _b.call(_a)) != null ? _c : []).filter((v) => !v.deletedAt);
+    },
+    wordBreakdown: (entryId) => {
+      var _a, _b, _c;
+      return (_c = (_b = (_a = src.learn).wordMeta) == null ? void 0 : _b.call(_a, entryId)) == null ? void 0 : _c.breakdown;
     }
   };
 }
@@ -26285,6 +26467,8 @@ var VocabTrackerPlugin = class extends import_obsidian57.Plugin {
   constructor() {
     super(...arguments);
     this.vocabData = { entries: [] };
+    // A morpheme picked on a word page, for the vocab-dna block (09 §7.1).
+    this.dnaFocus = createDnaFocus();
     this.importing = /* @__PURE__ */ new Set();
     this.enrichQueue = [];
     this.enriching = false;
@@ -26824,6 +27008,12 @@ var VocabTrackerPlugin = class extends import_obsidian57.Plugin {
   }
   // Opens an entry file (單字卡 / 字族樹 / 動詞用法 / 冷知識), creating it if
   // it's missing — never overwriting one that's there.
+  // WordHeaderHost (09 §7.1): a strand part on a word page → Word DNA.md
+  // with that morpheme selected (an already-open copy is reused).
+  openMorpheme(morphemeId) {
+    this.dnaFocus.focus(morphemeId);
+    void this.openEntryFile("dna", "tab");
+  }
   async openEntryFile(id2, where = "current") {
     try {
       await this.openNote(await this.files.ensure(id2), where);
