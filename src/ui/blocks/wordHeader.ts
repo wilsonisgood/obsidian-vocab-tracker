@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { getLocale, t } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { originFamilyId, type Family } from "../../core/model/family";
 import type { BreakdownPart, WordBreakdown } from "../../core/model/morpheme";
@@ -14,19 +14,6 @@ import { bindPronounceButton } from "../kit/pronounce";
 import { autoGrowTextarea, commitEntryField, type EditableField, type FieldStore } from "../word/rowModel";
 import { familyTitle, focusFamily } from "./familiesModel";
 import { parseBlockParams } from "./params";
-
-// 09 §7.1 (A7, WP): emoji + 拆字 on the word page header. Neither field
-// made it into core/i18n yet (shared file — see WP's 整合事項), so these
-// strings are kept here the same way labels.ts's POS_NAME holds its own
-// temporary bilingual strings until they move.
-const DNA_L = {
-  "zh-TW": { emoji: "改 emoji", breakdown: "拆字", breakdownBusy: "拆字中…", breakdownFailed: "拆字失敗" },
-  en: { emoji: "Change emoji", breakdown: "Break down", breakdownBusy: "Breaking down…", breakdownFailed: "Couldn't break down" },
-} as const;
-
-function dl(key: keyof (typeof DNA_L)["zh-TW"]): string {
-  return DNA_L[getLocale()][key];
-}
 
 // ── vocab-word code block: the header of a word page (規劃書 06 §8.2, W1/W2) ──
 //
@@ -119,7 +106,7 @@ export function breakdownDisplay(breakdown: WordBreakdown | undefined): Breakdow
 }
 
 export function breakdownButtonLabel(busy: boolean): string {
-  return busy ? dl("breakdownBusy") : dl("breakdown");
+  return busy ? t("wordPage.dna.breakdownBusy") : t("wordPage.dna.breakdown");
 }
 
 // ── 「來源：字族樹 …」 ──────────────────────────────────────────────
@@ -359,7 +346,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
       window.setTimeout(() => inp.focus(), 0);
       return;
     }
-    const btn = parent.createEl("button", { cls: ["clickable-icon", "vt-wh-emoji"], attr: { "aria-label": dl("emoji"), type: "button" } });
+    const btn = parent.createEl("button", { cls: ["clickable-icon", "vt-wh-emoji"], attr: { "aria-label": t("wordPage.dna.emoji"), type: "button" } });
     btn.setText(emoji.emojiOf(entry));
     btn.addEventListener("click", () => {
       this.editingEmoji = true;
@@ -391,7 +378,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
       this.render();
       morphemes
         .analyzeNow([entry.id])
-        .catch(() => new Notice(dl("breakdownFailed")))
+        .catch(() => new Notice(t("wordPage.dna.breakdownFailed")))
         .finally(() => {
           this.analyzingBreakdown = false;
           if (!this.disposed) this.render();

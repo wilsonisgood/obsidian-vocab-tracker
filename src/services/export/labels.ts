@@ -36,15 +36,6 @@ function posHeading(locale: "zh-TW" | "en", pos: PosKey): string {
   return locale === "zh-TW" ? `${name}用法` : `${name} usage`;
 }
 
-// 「## 字根」(09 §7.1). Not in core/i18n yet (shared file — 整合事項: add
-// "export.morphemes" with 字根／Roots, then switch this to read through
-// KEYS/t() like the rest of exportLabels() does).
-const MORPHEMES_NAME: Record<"zh-TW" | "en", string> = { "zh-TW": "字根", en: "Roots" };
-
-function morphemesLabel(): string {
-  return MORPHEMES_NAME[getLocale()];
-}
-
 // 「動詞用法」等小標題文字，給 wordPage.ts 的 renderUsage() 分段用
 // (1006-2 #19)，和 verbs.ts 的用法總表分段用 (#22)。
 export function usagePosHeadings(): Record<PosKey, string> {
@@ -80,6 +71,7 @@ const KEYS: Exclude<keyof ExportLabels, "usagePosHeading">[] = [
   "trivia",
   "triviaEmpty",
   "triviaMentionedIn",
+  "morphemes",
   "discussion",
   "discussionEmpty",
   "userNotesHint",
@@ -99,6 +91,5 @@ export function exportLabels(): ExportLabels {
   const labels = {} as ExportLabels;
   for (const key of KEYS) labels[key] = t(`export.${key}` as I18nKey);
   labels.usagePosHeading = usagePosHeadings();
-  labels.morphemes = morphemesLabel();
   return labels;
 }

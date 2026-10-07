@@ -320,6 +320,7 @@ export const en = {
   "export.trivia": "Saved trivia",
   "export.triviaEmpty": "Nothing saved yet.",
   "export.triviaMentionedIn": "Also mentioned in",
+  "export.morphemes": "Roots",
   "export.discussion": "AI discussion",
   "export.discussionEmpty": "No discussion yet.",
   "export.userNotesHint": "Your notes below — the plugin never changes them",
@@ -359,6 +360,10 @@ export const en = {
   "wordPage.origin": "From word families: {name}",
   "wordPage.originUnknown": "From word families",
   "wordPage.originTitle": "Open in word families",
+  "wordPage.dna.emoji": "Change emoji",
+  "wordPage.dna.breakdown": "Break down",
+  "wordPage.dna.breakdownBusy": "Breaking down…",
+  "wordPage.dna.breakdownFailed": "Couldn't break down",
 
   // ── M6 entry files and the Files settings section ──
   "command.openFamilies": "Open word families",

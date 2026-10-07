@@ -318,6 +318,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "export.trivia": "冷知識收藏",
   "export.triviaEmpty": "還沒有收藏。",
   "export.triviaMentionedIn": "也提到這個字",
+  "export.morphemes": "字根",
   "export.discussion": "AI 討論",
   "export.discussionEmpty": "還沒有討論。",
   "export.userNotesHint": "以下是你的筆記，插件不會改動",
@@ -357,6 +358,10 @@ export const zhTW: Record<keyof typeof en, string> = {
   "wordPage.origin": "來源：字族樹 {name}",
   "wordPage.originUnknown": "來源：字族樹",
   "wordPage.originTitle": "在字族樹打開",
+  "wordPage.dna.emoji": "改 emoji",
+  "wordPage.dna.breakdown": "拆字",
+  "wordPage.dna.breakdownBusy": "拆字中…",
+  "wordPage.dna.breakdownFailed": "拆字失敗",
 
   // ── M6 入口檔與「檔案」設定 ──
   "command.openFamilies": "開啟字族樹",
