@@ -645,4 +645,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "dna.edit.factBody": "冷知識內容",
   "dna.edit.cancel": "取消",
   "dna.edit.save": "儲存",
+
+  // ui/settings/sections/ai.ts — Word DNA 每日自動拆字上限（規劃書 09 §2 決定 5）。
+  "settings.ai.dnaDailyBatches.name": "每天自動拆字上限（批，每批 10 個字；0＝關閉）",
 };

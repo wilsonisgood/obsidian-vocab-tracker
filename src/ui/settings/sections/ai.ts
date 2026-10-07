@@ -15,14 +15,6 @@ import { renderTraces } from "../traceView";
 
 const fmt = (n: number) => n.toLocaleString();
 
-// Word DNA (規劃書 09 §2 決定 5): not migrated into i18n this wave yet —
-// a later integration pass moves this into zh-TW/en (dna.* keys) like the
-// rest of the section. English: "Daily auto word-breakdown limit (batches
-// of 10 words; 0 = off)".
-const L = {
-  dnaDailyBatches: "每天自動拆字上限（批，每批 10 個字；0＝關閉）",
-};
-
 function renderProviderFields(el: HTMLElement, ctx: SettingsContext, id: ProviderId): void {
   const def = providerDef(id);
   const cfg = () => ctx.store.settings.ai.providers[id];
@@ -167,7 +159,7 @@ export const aiSection: SettingsSection = {
       });
 
     new Setting(el)
-      .setName(L.dnaDailyBatches)
+      .setName(t("settings.ai.dnaDailyBatches.name"))
       .addText((text) => {
         text.inputEl.inputMode = "numeric";
         text.setPlaceholder("10").setValue(String(ai().dnaDailyBatches ?? 10));

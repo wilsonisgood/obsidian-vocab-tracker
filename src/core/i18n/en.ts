@@ -654,4 +654,7 @@ export const en = {
   "dna.edit.factBody": "Trivia body",
   "dna.edit.cancel": "Cancel",
   "dna.edit.save": "Save",
+
+  // ui/settings/sections/ai.ts — Word DNA daily auto-breakdown limit (規劃書 09 §2 決定 5).
+  "settings.ai.dnaDailyBatches.name": "Daily auto word-breakdown limit (batches of 10 words; 0 = off)",
 } as const;
