@@ -369,6 +369,7 @@ export const en = {
   "command.openFamilies": "Open word families",
   "command.openVerbs": "Open usage overview",
   "command.openTrivia": "Open trivia",
+  "command.openDna": "Open Word DNA",
   "settings.section.files": "Files",
   "settings.files.desc": "Where the plugin's notes go. Changing a folder doesn't move files that already exist: entry files and word pages are found by their frontmatter, wherever you move them. Only new files use the new folder.",
   "settings.files.folder.name": "Entry files folder",

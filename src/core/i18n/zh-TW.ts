@@ -367,6 +367,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "command.openFamilies": "開啟字族樹",
   "command.openVerbs": "開啟用法總表",
   "command.openTrivia": "開啟冷知識",
+  "command.openDna": "開啟 Word DNA",
   "settings.section.files": "檔案",
   "settings.files.desc": "外掛建立的筆記放在哪裡。改資料夾不會搬動已經存在的檔案：入口檔和單字頁靠 frontmatter 找回，搬到哪裡都可以；只有新建的檔案會放到新資料夾。",
   "settings.files.folder.name": "入口檔資料夾",

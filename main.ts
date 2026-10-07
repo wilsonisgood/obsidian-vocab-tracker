@@ -478,6 +478,11 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       name: t("command.openTrivia"),
       callback: () => this.openEntryFile("trivia"),
     });
+    this.addCommand({
+      id: "open-dna",
+      name: t("command.openDna"),
+      callback: () => this.openEntryFile("dna"),
+    });
 
     // Command palette
     this.addCommand({
