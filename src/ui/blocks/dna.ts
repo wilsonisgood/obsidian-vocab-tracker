@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Notice, setIcon, type App, type MarkdownPostProcessorContext } from "obsidian";
-import { t } from "../../core/i18n";
+import { t, type I18nKey } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { morphemeThreadId, type BreakdownPart, type Morpheme, type MorphemeType } from "../../core/model/morpheme";
 import { liveTurns } from "../../core/model/thread";
@@ -46,34 +46,11 @@ import { guardReadingClicks, isAbort, learnErrorText } from "./learnUi";
 // `MorphemeApi` is an alias for services/learn/MorphemeService's class type
 // (整合：former ui/dna/types.ts interface removed once DS merged).
 
-const L = {
-  tabs: { prefix: "字首", suffix: "字尾", root: "字根" } as Record<MorphemeType, string>,
-  tabsAria: "類型",
-  chipLearned: (n: number) => `已學 ${n}`,
-  source: (o: string) => `來源：${o}`,
-  breakdownLabelPrefix: "單字拆解",
-  notAnalyzed: "這個字還沒拆過字。",
-  timelineLabel: "演變路線",
-  wiktionaryNote: "AI 整理的字源資訊可能有誤，可對照 Wiktionary。",
-  wiktionaryLink: "Wiktionary",
-  verified: "已確認",
-  edit: "編輯",
-  progress: (learned: number, total: number) => `已學 ${learned} / ${total}`,
-  related: "相關單字",
-  known: "已學",
-  add: (word: string) => `加入「${word}」`,
-  added: (word: string) => `已加入「${word}」`,
-  aiTutor: "✨ AI Tutor",
-  expandMore: "還有哪些字",
-  examples: "5 個例句",
-  compare: "用法比較",
-  chatPlaceholder: "問問這個字根…",
-  emptyTitle: "還沒有拆過任何字",
-  emptyBody: "分析 like 的字，拆出字首、字尾、字根，看看它們怎麼演化出現在的意思。",
-  analyzeNow: (n: number) => `立即分析 like 的字（${n} 個）`,
-  analyzing: (done: number, total: number) => `正在拆字 ${done} / ${total}`,
-  emptyTab: "這個分頁還沒有已學的字根。",
-} as const;
+const TAB_KEY: Record<MorphemeType, I18nKey> = {
+  prefix: "dna.tabs.prefix",
+  suffix: "dna.tabs.suffix",
+  root: "dna.tabs.root",
+};
 
 function fadeIn(el: HTMLElement): void {
   if (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -221,7 +198,7 @@ class DnaBlock extends MarkdownRenderChild {
 
     const stats = statsByType[this.type];
     if (!stats.length) {
-      root.createDiv({ cls: "vt-dna-tab-empty", text: L.emptyTab });
+      root.createDiv({ cls: "vt-dna-tab-empty", text: t("dna.emptyTab") });
       return;
     }
     const cur = stats.find((s) => s.morpheme.id === this.morphemeId) ?? stats[0];
@@ -247,7 +224,7 @@ class DnaBlock extends MarkdownRenderChild {
       const box = root.createDiv({ cls: "vt-learn-busy" });
       const line = box.createDiv({ cls: "vt-learn-busy-text" });
       setIcon(line.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
-      line.createSpan({ text: L.analyzing(progress.done, progress.total) });
+      line.createSpan({ text: t("dna.analyzing", { done: progress.done, total: progress.total }) });
       return;
     }
     const status = this.deps.ai.status();
@@ -257,18 +234,18 @@ class DnaBlock extends MarkdownRenderChild {
     root.appendChild(
       emptyState({
         icon: "dna",
-        title: L.emptyTitle,
-        body: L.emptyBody,
-        action: n > 0 ? { label: L.analyzeNow(n), icon: "sparkles", onClick: () => this.analyzeNow() } : undefined,
+        title: t("dna.emptyTitle"),
+        body: t("dna.emptyBody"),
+        action: n > 0 ? { label: t("dna.analyzeNow", { n }), icon: "sparkles", onClick: () => this.analyzeNow() } : undefined,
       })
     );
   }
 
   private renderTabs(root: HTMLElement): void {
     segmented<MorphemeType>(root.createDiv({ cls: "vt-dna-tabs" }), {
-      ariaLabel: L.tabsAria,
+      ariaLabel: t("dna.tabsAria"),
       value: this.type,
-      options: DNA_TAB_ORDER.map((ty) => ({ value: ty, label: L.tabs[ty] })),
+      options: DNA_TAB_ORDER.map((ty) => ({ value: ty, label: t(TAB_KEY[ty]) })),
       onChange: (ty) => {
         this.type = ty;
         this.morphemeId = undefined;
@@ -286,7 +263,7 @@ class DnaBlock extends MarkdownRenderChild {
       btn.toggleClass("is-active", active);
       btn.setAttr("aria-pressed", String(active));
       btn.createSpan({ cls: "vt-dna-chip-form", text: chip.form });
-      btn.createSpan({ cls: "vt-dna-chip-meaning", text: `${chip.meaningZh} · ${L.chipLearned(chip.learnedCount)}` });
+      btn.createSpan({ cls: "vt-dna-chip-meaning", text: `${chip.meaningZh} · ${t("dna.chipLearned", { n: chip.learnedCount })}` });
       btn.addEventListener("click", () => {
         if (chip.id === this.morphemeId) return;
         this.morphemeId = chip.id;
@@ -303,26 +280,26 @@ class DnaBlock extends MarkdownRenderChild {
     const head = main.createDiv({ cls: "vt-dna-head" });
     head.createDiv({ cls: ["vt-dna-form", `t-${m.type}`], text: m.form });
     const info = head.createDiv({ cls: "vt-dna-head-info" });
-    info.createDiv({ cls: ["vt-dna-tag", `t-${m.type}`], text: L.tabs[m.type] });
+    info.createDiv({ cls: ["vt-dna-tag", `t-${m.type}`], text: t(TAB_KEY[m.type]) });
     info.createDiv({ cls: "vt-dna-meaning", text: m.meaningZh });
-    info.createDiv({ cls: "vt-dna-note", text: L.source(m.origin) });
+    info.createDiv({ cls: "vt-dna-note", text: t("dna.source", { o: m.origin }) });
 
     const focus = cur.learned.find((e) => e.id === this.focusEntryId) ?? cur.learned[0];
     if (focus) {
       const section = main.createDiv({ cls: "vt-dna-section" });
       const label = section.createDiv({ cls: "vt-dna-label" });
       const emoji = emojiOf(this.deps.learn.wordMeta(focus.id), focus);
-      label.appendText(`${L.breakdownLabelPrefix} · ${emoji} `);
+      label.appendText(`${t("dna.breakdownLabel")} · ${emoji} `);
       this.wordButton(label, focus).setText(focus.word);
       label.appendText(`（${focus.definitionZh || ""}）`);
       const breakdown = this.deps.morphemes.breakdownOf(focus.id);
       if (breakdown) renderStrand(section, breakdown, { onPart: (part) => this.focusOnPart(part) });
-      else section.createDiv({ cls: "vt-dna-note", text: L.notAnalyzed });
+      else section.createDiv({ cls: "vt-dna-note", text: t("dna.notAnalyzed") });
     }
 
     if (m.timeline.length) {
       const section = main.createDiv({ cls: "vt-dna-section" });
-      section.createDiv({ cls: "vt-dna-label", text: L.timelineLabel });
+      section.createDiv({ cls: "vt-dna-label", text: t("dna.timelineLabel") });
       const ol = section.createEl("ol", { cls: "vt-dna-tl" });
       for (const stage of m.timeline) {
         const li = ol.createEl("li");
@@ -339,8 +316,8 @@ class DnaBlock extends MarkdownRenderChild {
 
     const wiki = main.createDiv({ cls: "vt-dna-wiki" });
     setIcon(wiki.createSpan({ cls: "vt-dna-wiki-icon" }), "info");
-    wiki.createSpan({ cls: "vt-dna-wiki-text", text: `${L.wiktionaryNote} ` });
-    const link = wiki.createEl("a", { text: L.wiktionaryLink, href: wiktionaryUrl(m.form) });
+    wiki.createSpan({ cls: "vt-dna-wiki-text", text: `${t("dna.wiktionaryNote")} ` });
+    const link = wiki.createEl("a", { text: t("dna.wiktionaryLink"), href: wiktionaryUrl(m.form) });
     link.setAttr("target", "_blank");
     link.setAttr("rel", "noopener");
 
@@ -349,12 +326,12 @@ class DnaBlock extends MarkdownRenderChild {
     verifyBtn.toggleClass("is-active", !!m.verified);
     verifyBtn.setAttr("aria-pressed", String(!!m.verified));
     setIcon(verifyBtn.createSpan({ cls: "vt-dna-verify-icon" }), m.verified ? "check-circle" : "circle");
-    verifyBtn.createSpan({ text: L.verified });
+    verifyBtn.createSpan({ text: t("dna.verified") });
     verifyBtn.addEventListener("click", () => this.deps.morphemes.setVerified(m.id, !m.verified));
 
     const editBtn = controls.createEl("button", { cls: "vt-dna-edit-btn", attr: { type: "button" } });
     setIcon(editBtn.createSpan({ cls: "vt-dna-edit-icon" }), "pencil");
-    editBtn.createSpan({ text: L.edit });
+    editBtn.createSpan({ text: t("dna.edit") });
     editBtn.addEventListener("click", () => this.openEdit(m));
   }
 
@@ -390,12 +367,12 @@ class DnaBlock extends MarkdownRenderChild {
     const learnedCount = related.filter((r) => r.kind === "learned").length;
 
     const progress = side.createDiv({ cls: "vt-dna-progress" });
-    progress.createSpan({ cls: "vt-dna-progress-text", text: L.progress(learnedCount, related.length) });
+    progress.createSpan({ cls: "vt-dna-progress-text", text: t("dna.progress", { learned: learnedCount, total: related.length }) });
     const bar = progress.createDiv({ cls: "vt-dna-bar" });
     const pct = related.length ? Math.round((learnedCount / related.length) * 100) : 100;
     bar.createSpan({ attr: { style: `width:${pct}%` } });
 
-    side.createDiv({ cls: "vt-dna-label", text: L.related });
+    side.createDiv({ cls: "vt-dna-label", text: t("dna.related") });
     const list = side.createDiv({ cls: "vt-dna-list" });
     for (const r of related) {
       if (r.kind === "learned") {
@@ -403,7 +380,7 @@ class DnaBlock extends MarkdownRenderChild {
         row.toggleClass("is-active", r.entryId === this.focusEntryId);
         row.createSpan({ cls: "vt-dna-row-emoji", text: r.emoji });
         row.createSpan({ cls: "vt-dna-row-word", text: r.word });
-        row.createSpan({ cls: "vt-dna-row-tag is-known", text: L.known });
+        row.createSpan({ cls: "vt-dna-row-tag is-known", text: t("dna.known") });
         row.createSpan({ cls: "vt-dna-row-zh", text: r.zh });
         row.addEventListener("click", () => {
           if (r.entryId === this.focusEntryId) return;
@@ -420,7 +397,7 @@ class DnaBlock extends MarkdownRenderChild {
         const add = row.createEl("button", { cls: "vt-dna-row-add clickable-icon", attr: { type: "button" } });
         setIcon(add, busy ? "loader" : "plus");
         add.disabled = busy;
-        add.setAttr("aria-label", L.add(r.word));
+        add.setAttr("aria-label", t("dna.add", { word: r.word }));
         add.addEventListener("click", () => this.addSuggested(cur.morpheme.id, r.word));
       }
     }
@@ -436,7 +413,7 @@ class DnaBlock extends MarkdownRenderChild {
     this.deps.morphemes
       .addSuggested(morphemeId, word)
       .then((entry) => {
-        if (entry) new Notice(L.added(entry.word));
+        if (entry) new Notice(t("dna.added", { word: entry.word }));
       })
       .catch((e) => {
         console.error("Vocab Tracker: adding a DNA word failed", e);
@@ -451,21 +428,21 @@ class DnaBlock extends MarkdownRenderChild {
   // ── AI Tutor (A9) ─────────────────────────────────────────────
 
   private renderAiTutor(side: HTMLElement, cur: MorphemeStat): void {
-    side.createDiv({ cls: "vt-dna-label", text: L.aiTutor });
+    side.createDiv({ cls: "vt-dna-label", text: t("dna.aiTutor") });
     const row = side.createDiv({ cls: "vt-dna-tutor" });
     const ready = this.deps.ai.status() === "ready";
     const id = cur.morpheme.id;
     const busy = this.deps.morphemes.isChatBusy(id);
 
-    const expandBtn = row.createEl("button", { cls: "vt-dna-pill", attr: { type: "button" }, text: L.expandMore });
+    const expandBtn = row.createEl("button", { cls: "vt-dna-pill", attr: { type: "button" }, text: t("dna.expandMore") });
     expandBtn.disabled = !ready || this.expanding.has(id);
     expandBtn.addEventListener("click", () => this.expandMore(id));
 
-    const exBtn = row.createEl("button", { cls: "vt-dna-pill", attr: { type: "button" }, text: L.examples });
+    const exBtn = row.createEl("button", { cls: "vt-dna-pill", attr: { type: "button" }, text: t("dna.examples") });
     exBtn.disabled = !ready || busy;
     exBtn.addEventListener("click", () => this.askChat(id, "examples"));
 
-    const cmpBtn = row.createEl("button", { cls: "vt-dna-pill", attr: { type: "button" }, text: L.compare });
+    const cmpBtn = row.createEl("button", { cls: "vt-dna-pill", attr: { type: "button" }, text: t("dna.compare") });
     cmpBtn.disabled = !ready || busy;
     cmpBtn.addEventListener("click", () => this.askChat(id, "compare"));
 
@@ -519,7 +496,7 @@ class DnaBlock extends MarkdownRenderChild {
       surface: "morpheme",
       customTaskId: "dna.followup",
       sourcePath: this.sourcePath,
-      placeholder: L.chatPlaceholder,
+      placeholder: t("dna.chatPlaceholder"),
       state: this.chatState,
       send: (req) => this.sendChat(id, req),
       retry: (turnId) => this.deps.morphemes.retry(id, turnId),
