@@ -76,6 +76,9 @@ export interface ExportLabels {
   trivia: string;
   triviaEmpty: string;
   triviaMentionedIn: string;
+  // 「## 字根」(規劃書 09 §7.1). Temporary: not in core/i18n yet, see
+  // labels.ts's morphemesLabel() — 整合事項 key "export.morphemes".
+  morphemes: string;
   discussion: string;
   discussionEmpty: string;
   userNotesHint: string;

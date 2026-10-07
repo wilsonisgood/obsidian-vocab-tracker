@@ -249,6 +249,14 @@ export class ExportService {
     this.wordChanged(fav.entryId, fav.deletedAt ? "never" : "ifContent");
   }
 
+  // wordMeta changed (09 §7.1, 決定 1): emoji alone doesn't move the word
+  // page (A7 — it only ever shows in the header's own live block, never
+  // in the managed sections), but a finished 拆字 does, so only this
+  // updates an existing page — like usageChanged, never creates one.
+  wordMetaChanged(entryId: string): void {
+    this.wordChanged(entryId);
+  }
+
   // ── Event wiring ─────────────────────────────────────────────────────
 
   watchThreads(source: Subscribable<{ "thread:upsert": Thread }>): void {
@@ -264,11 +272,14 @@ export class ExportService {
       "family:upsert": ExportFamily;
       "trivia:upsert": ExportTrivia;
       "verbFavorite:upsert": ExportVerbFavorite;
+      // 09 §7.1 (F's LearnEvents); only the id is read here.
+      "wordMeta:upsert": { id: string };
     }>
   ): void {
     this.track(source.on("family:upsert", (family) => this.familyChanged(family)));
     this.track(source.on("trivia:upsert", (item) => this.triviaItemChanged(item)));
     this.track(source.on("verbFavorite:upsert", (fav) => this.verbFavoriteChanged(fav)));
+    this.track(source.on("wordMeta:upsert", (meta) => this.wordMetaChanged(meta.id)));
   }
 
   // VerbUsageService: a usage block was (re)generated.
@@ -418,6 +429,7 @@ export class ExportService {
       verbFavorites: data.verbFavorites?.() ?? [],
       trivia: data.trivia(),
       thread: data.wordThread(entryId),
+      breakdown: data.wordBreakdown?.(entryId),
     };
     const ctx = this.context();
     const allowed = create === "always" || (create === "ifContent" && hasWordPageContent(input));

@@ -3,6 +3,7 @@ import { TypedEmitter } from "../../../src/core/events";
 import { getLocale, setLocale, type Locale } from "../../../src/core/i18n";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import type { Family } from "../../../src/core/model/family";
+import type { WordBreakdown } from "../../../src/core/model/morpheme";
 import type { Thread } from "../../../src/core/model/thread";
 import type { TriviaItem } from "../../../src/core/model/trivia";
 import type { PosKey } from "../../../src/core/model/usage";
@@ -120,6 +121,7 @@ class FakeData implements ExportDataPort {
   usageMap = new Map<string, ExportUsage>();
   triviaList: ExportTrivia[] = [];
   verbFavoriteList: ExportVerbFavorite[] = [];
+  breakdownMap = new Map<string, WordBreakdown>();
   readyCalls = 0;
 
   async ready(): Promise<void> {
@@ -152,6 +154,9 @@ class FakeData implements ExportDataPort {
   }
   verbFavorites(): readonly ExportVerbFavorite[] {
     return this.verbFavoriteList;
+  }
+  wordBreakdown(entryId: string): WordBreakdown | undefined {
+    return this.breakdownMap.get(entryId);
   }
 }
 
@@ -834,6 +839,34 @@ describe("events, flush and dispose", () => {
     verbs.emit("verb:usage", { entryId: GLITTERY.id });
     expect(family).toHaveBeenCalledTimes(1);
     expect(usage).toHaveBeenCalledTimes(1);
+  });
+
+  it("follows LearnStore's wordMeta:upsert (09 §7.1) — updates an existing page, never creates one", async () => {
+    const learn = new TypedEmitter<LearnEvents>();
+    svc.watchLearn(learn);
+    const meta = vi.spyOn(svc, "wordMetaChanged");
+    learn.emit("wordMeta:upsert", { id: GLITTERY.id, breakdown: undefined });
+    expect(meta).toHaveBeenCalledWith(GLITTERY.id);
+
+    // No page yet: a 拆字 finishing doesn't create one on its own.
+    data.breakdownMap.set(GLITTERY.id, {
+      status: "ok",
+      word: "glittery",
+      gloss: "閃亮的",
+      generatedAt: "2026-10-05T00:00:00.000Z",
+      model: "test",
+      parts: [{ text: "glitter", type: "root", meaningZh: "閃光" }],
+    });
+    learn.emit("wordMeta:upsert", { id: GLITTERY.id, breakdown: data.breakdownMap.get(GLITTERY.id) });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.exists(GLITTERY_PAGE)).toBe(false);
+
+    // An existing page picks up the breakdown's「## 字根」section.
+    vault.files.set(GLITTERY_PAGE, "---\nvocab-tracker: word\n---\n");
+    learn.emit("wordMeta:upsert", { id: GLITTERY.id, breakdown: data.breakdownMap.get(GLITTERY.id) });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(vault.files.get(GLITTERY_PAGE)).toContain("## 字根");
+    expect(vault.files.get(GLITTERY_PAGE)).toContain("glitter（閃光） → 閃亮的");
   });
 
   it("a renewed family also updates the pages of members it dropped (1005 #14)", () => {

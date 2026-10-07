@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Family } from "../../../src/core/model/family";
+import type { WordBreakdown } from "../../../src/core/model/morpheme";
 import type { Thread } from "../../../src/core/model/thread";
 import type { TriviaItem } from "../../../src/core/model/trivia";
+import type { WordMeta } from "../../../src/core/model/wordMeta";
 import { paragraphHash } from "../../../src/core/text/hash";
 import { noteSections } from "../../../src/services/anchors/sections";
 import { createExportData, paragraphIndexOf, type ExportDataSources } from "../../../src/services/export/exportData";
@@ -59,6 +61,15 @@ function setup(notes: Record<string, string> = { [ARTICLE]: NOTE }) {
     { id: "t1", entryId: "1", mentions: [], title: "a", body: "b" },
     { id: "t2", entryId: "1", mentions: [], title: "c", body: "d", deletedAt: "2026-10-01T00:00:00.000Z" },
   ] as TriviaItem[];
+  const breakdown: WordBreakdown = {
+    status: "ok",
+    word: "glittery",
+    gloss: "閃亮的",
+    generatedAt: "2026-10-05T00:00:00.000Z",
+    model: "test",
+    parts: [{ text: "glitter", type: "root", meaningZh: "閃光" }],
+  };
+  const wordMetas: WordMeta[] = [{ id: "1", breakdown }];
   const src: ExportDataSources = {
     entries: () => [live, gone],
     threads: {
@@ -67,7 +78,12 @@ function setup(notes: Record<string, string> = { [ARTICLE]: NOTE }) {
       paragraphThreads: (path) =>
         threads.filter((th) => th.anchor.kind === "paragraph" && (path === undefined || th.anchor.path === path)),
     },
-    learn: { ensureLoaded: vi.fn(async () => undefined), families: () => families, trivia: () => trivia },
+    learn: {
+      ensureLoaded: vi.fn(async () => undefined),
+      families: () => families,
+      trivia: () => trivia,
+      wordMeta: (id) => wordMetas.find((m) => m.id === id),
+    },
     notes: { read: vi.fn(async (p: string) => notes[p] ?? null) },
   };
   return { src, data: createExportData(src), live };
@@ -91,6 +107,18 @@ describe("createExportData", () => {
     expect(data.families().map((f) => f.id)).toEqual(["f1"]);
     expect(data.trivia().map((t) => t.id)).toEqual(["t1"]);
     expect(data.wordThread(GLITTERY_THREAD.anchor.kind === "word" ? GLITTERY_THREAD.anchor.entryId : "")).toBe(GLITTERY_THREAD);
+  });
+
+  it("reads a word's DNA breakdown from wordMeta (09 §7.1, 決定 1)", () => {
+    const { data } = setup();
+    expect(data.wordBreakdown?.("1")?.status).toBe("ok");
+    expect(data.wordBreakdown?.("2")).toBeUndefined();
+  });
+
+  it("stays undefined when the wiring has no wordMeta (older callers still type-check)", () => {
+    const { src } = setup();
+    const noWordMeta = { ...src, learn: { ensureLoaded: src.learn.ensureLoaded, families: src.learn.families, trivia: src.learn.trivia } };
+    expect(createExportData(noWordMeta).wordBreakdown?.("1")).toBeUndefined();
   });
 
   it("numbers a note's paragraph threads the way the word page header does", async () => {

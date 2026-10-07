@@ -1,0 +1,44 @@
+/* ── Word page DNA (規劃書 09 §7.1, A7): the emoji button next to
+   vt-wh-word, and the 「拆字」button when a word hasn't been analyzed
+   yet. The strand itself (.vt-dna-strand and friends) is dna.css's —
+   this file only adds the little WP-specific bits around it.
+
+   整合事項: this file isn't imported anywhere yet — add
+   `@import "./wordPageDna.css";` to src/styles/index.css (shared, WP
+   doesn't own it). Obsidian variables only, so light/dark/community
+   themes all work, same as wordPage.css. */
+
+.vt-wh-emoji {
+  font-size: 1.4em;
+  line-height: 1.2;
+  padding: 0 2px;
+}
+
+.vt-wh-emoji-input {
+  width: 2.6em;
+  font-size: 1.4em;
+  text-align: center;
+  padding: 0 2px;
+}
+
+.vt-wh-breakdown-btn {
+  align-self: flex-start;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  background: var(--background-modifier-hover);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.vt-wh-breakdown-btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* The strand sits right under the editable fields, same rhythm as the
+   fields themselves (vt-wh-fields's own vertical gap, see wordPage.css). */
+.vt-word-header .vt-dna-strand {
+  margin-top: 4px;
+}

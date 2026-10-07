@@ -1,3 +1,4 @@
+import type { BreakdownPart, WordBreakdown } from "../../../core/model/morpheme";
 import type { Thread } from "../../../core/model/thread";
 import { POS_KEYS, type PosKey } from "../../../core/model/usage";
 import { buildManagedFile, type ManagedSection } from "../managedBlock";
@@ -26,6 +27,11 @@ export interface WordPageInput {
   // are picked here.
   trivia: readonly ExportTrivia[];
   thread?: Thread;
+  // This word's DNA breakdown (09 §7.1, 決定 1). Only a "status: ok" one
+  // is ever rendered (renderWordPageSections below) — "none" and absent
+  // both leave the「## 字根」section out entirely, not just empty, since
+  // an un-analyzed word isn't the same as one with nothing to show.
+  breakdown?: WordBreakdown;
 }
 
 export function familiesOf(families: readonly ExportFamily[], entry: { id: string; word: string }): ExportFamily[] {
@@ -173,13 +179,58 @@ function renderDiscussion(input: WordPageInput, ctx: RenderContext): string {
   return rounds.length ? renderRounds(rounds, ctx, "###") : italic(ctx.labels.discussionEmpty);
 }
 
+// 「ex（出）＋ pel（推）＋ led」: an inflection part (決定 4) is just its
+// literal text, no parenthetical meaning — see BreakdownPart's own
+// comment on why it never has a morphemeId either.
+function breakdownPartText(part: BreakdownPart): string {
+  if (part.type === "inflection") return oneLine(part.text);
+  const meaning = oneLine(part.meaningZh);
+  return meaning ? `${oneLine(part.text)}（${meaning}）` : oneLine(part.text);
+}
+
+// 「- ex-：出」/「- -led：...」/「- pel：推」: prefix gets a trailing
+// hyphen, suffix a leading one, root stays bare — inflection parts never
+// reach this (filtered out by renderMorphemeList below, they're not a
+// morpheme record to list a meaning for).
+function breakdownPartForm(part: BreakdownPart): string {
+  if (part.type === "prefix") return `${part.text}-`;
+  if (part.type === "suffix") return `-${part.text}`;
+  return part.text;
+}
+
+// The first line: parts joined with "＋", then "→ <gloss>" when there is
+// one (gloss can be empty — e.g. a single-morpheme word broken down into
+// just itself plus an inflection).
+export function renderBreakdownLine(breakdown: Pick<WordBreakdown, "parts" | "gloss">): string {
+  const head = breakdown.parts.map(breakdownPartText).join("＋ ");
+  const gloss = oneLine(breakdown.gloss);
+  return gloss ? `${head} → ${gloss}` : head;
+}
+
+// The morpheme list under the first line, one `- <form>：<意思>` per
+// prefix/root/suffix part (inflection parts aren't morpheme records, so
+// they're never listed — same reasoning as renderStrand's onPart).
+export function renderMorphemeList(parts: readonly BreakdownPart[]): string[] {
+  return parts.filter((p) => p.type !== "inflection").map((p) => `- ${breakdownPartForm(p)}：${oneLine(p.meaningZh)}`);
+}
+
+export function renderMorphemes(breakdown: Pick<WordBreakdown, "parts" | "gloss">): string {
+  return [renderBreakdownLine(breakdown), ...renderMorphemeList(breakdown.parts)].join("\n");
+}
+
 export function renderWordPageSections(input: WordPageInput, ctx: RenderContext): ManagedSection[] {
-  return [
-    section("families", ctx.labels.families, renderFamilies(input, ctx)),
+  const sections: ManagedSection[] = [section("families", ctx.labels.families, renderFamilies(input, ctx))];
+  // Only a completed, splittable breakdown gets a section at all — "none"
+  // and "never analyzed" both leave 單字頁 exactly as before M9 (決定 1/5).
+  if (input.breakdown?.status === "ok") {
+    sections.push(section("morphemes", ctx.labels.morphemes, renderMorphemes(input.breakdown)));
+  }
+  sections.push(
     section("usage", ctx.labels.usage, renderUsage(input, ctx)),
     section("trivia", ctx.labels.trivia, renderTrivia(input, ctx)),
-    section("discussion", ctx.labels.discussion, renderDiscussion(input, ctx)),
-  ];
+    section("discussion", ctx.labels.discussion, renderDiscussion(input, ctx))
+  );
+  return sections;
 }
 
 // The whole file, for when the page doesn't exist yet. Later exports only

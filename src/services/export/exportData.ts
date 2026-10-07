@@ -1,8 +1,10 @@
 import type { VocabEntry } from "../../core/model/entry";
 import type { Family } from "../../core/model/family";
+import type { WordBreakdown } from "../../core/model/morpheme";
 import type { Thread } from "../../core/model/thread";
 import type { TriviaItem } from "../../core/model/trivia";
 import { usagesOf, type VerbFavorite } from "../../core/model/usage";
+import type { WordMeta } from "../../core/model/wordMeta";
 import type { NoteReaderPort } from "../../core/ports";
 import { resolveIn, type ParagraphAnchor } from "../anchors/ParagraphAnchorService";
 import { paragraphNumber } from "../files/paragraphNumber";
@@ -26,6 +28,9 @@ export interface ExportDataSources {
     trivia(): TriviaItem[];
     // LearnStore has it; optional so older wiring still type-checks.
     verbFavorites?(): VerbFavorite[];
+    // LearnStore has it too (09 §7.1, 決定 1); optional for the same
+    // reason as verbFavorites above.
+    wordMeta?(entryId: string): WordMeta | undefined;
   };
   notes: NoteReaderPort;
 }
@@ -70,5 +75,6 @@ export function createExportData(src: ExportDataSources): ExportDataPort {
     },
     trivia: () => src.learn.trivia().filter((t) => !t.deletedAt),
     verbFavorites: () => (src.learn.verbFavorites?.() ?? []).filter((v) => !v.deletedAt),
+    wordBreakdown: (entryId): WordBreakdown | undefined => src.learn.wordMeta?.(entryId)?.breakdown,
   };
 }
