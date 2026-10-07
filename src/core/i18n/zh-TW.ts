@@ -634,4 +634,15 @@ export const zhTW: Record<keyof typeof en, string> = {
 
   // ui/dna/strand.ts（跨 DU／GB／WP 共用的拆解 strand）。
   "dna.strand.none": "這個字沒有可拆的字根",
+
+  // ui/dna/MorphemeEditModal.ts。
+  "dna.edit.title": "編輯「{form}」",
+  "dna.edit.meaning": "意思",
+  "dna.edit.origin": "來源",
+  "dna.edit.timeline": "演變路線",
+  "dna.edit.timelineDesc": "一行一個階段，格式「階段：形式」，例如「拉丁語：ex（出、離開）」",
+  "dna.edit.factTitle": "冷知識標題",
+  "dna.edit.factBody": "冷知識內容",
+  "dna.edit.cancel": "取消",
+  "dna.edit.save": "儲存",
 };

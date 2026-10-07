@@ -1,22 +1,11 @@
 import { Modal, Setting, type App } from "obsidian";
+import { t } from "../../core/i18n";
 import type { Morpheme } from "../../core/model/morpheme";
 import { formatTimeline, parseTimeline } from "./dnaModel";
 
 // Hand-edit a morpheme's meaning/origin/timeline/fact (規劃書 09 §7).
 // Saving always marks it 已確認 — dna.ts's caller does that
 // (MorphemeApi.setVerified(id, true)) right after onSave runs.
-
-const L = {
-  title: (form: string) => `編輯「${form}」`,
-  meaning: "意思",
-  origin: "來源",
-  timeline: "演變路線",
-  timelineDesc: "一行一個階段，格式「階段：形式」，例如「拉丁語：ex（出、離開）」",
-  factTitle: "冷知識標題",
-  factBody: "冷知識內容",
-  cancel: "取消",
-  save: "儲存",
-};
 
 export interface MorphemeEditPatch {
   meaningZh: string;
@@ -46,7 +35,7 @@ export class MorphemeEditModal extends Modal {
   }
 
   onOpen(): void {
-    this.titleEl.setText(L.title(this.morpheme.form));
+    this.titleEl.setText(t("dna.edit.title", { form: this.morpheme.form }));
     this.contentEl.addClass("vt-dna-edit");
     this.render();
   }
@@ -59,25 +48,25 @@ export class MorphemeEditModal extends Modal {
     const el = this.contentEl;
     el.empty();
 
-    new Setting(el).setName(L.meaning).addText((text) => text.setValue(this.meaningZh).onChange((v) => (this.meaningZh = v)));
-    new Setting(el).setName(L.origin).addText((text) => text.setValue(this.origin).onChange((v) => (this.origin = v)));
+    new Setting(el).setName(t("dna.edit.meaning")).addText((text) => text.setValue(this.meaningZh).onChange((v) => (this.meaningZh = v)));
+    new Setting(el).setName(t("dna.edit.origin")).addText((text) => text.setValue(this.origin).onChange((v) => (this.origin = v)));
     new Setting(el)
-      .setName(L.timeline)
-      .setDesc(L.timelineDesc)
+      .setName(t("dna.edit.timeline"))
+      .setDesc(t("dna.edit.timelineDesc"))
       .addTextArea((ta) => {
         ta.setValue(this.timelineText).onChange((v) => (this.timelineText = v));
         ta.inputEl.rows = 4;
       });
-    new Setting(el).setName(L.factTitle).addText((text) => text.setValue(this.factTitle).onChange((v) => (this.factTitle = v)));
+    new Setting(el).setName(t("dna.edit.factTitle")).addText((text) => text.setValue(this.factTitle).onChange((v) => (this.factTitle = v)));
     new Setting(el)
-      .setName(L.factBody)
+      .setName(t("dna.edit.factBody"))
       .addTextArea((ta) => ta.setValue(this.factBody).onChange((v) => (this.factBody = v)));
 
     new Setting(el)
-      .addButton((b) => b.setButtonText(L.cancel).onClick(() => this.close()))
+      .addButton((b) => b.setButtonText(t("dna.edit.cancel")).onClick(() => this.close()))
       .addButton((b) =>
         b
-          .setButtonText(L.save)
+          .setButtonText(t("dna.edit.save"))
           .setCta()
           .onClick(() => {
             const title = this.factTitle.trim();

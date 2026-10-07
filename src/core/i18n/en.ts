@@ -643,4 +643,15 @@ export const en = {
 
   // ui/dna/strand.ts (shared word-breakdown strand).
   "dna.strand.none": "This word has no parts to break down",
+
+  // ui/dna/MorphemeEditModal.ts.
+  "dna.edit.title": 'Edit "{form}"',
+  "dna.edit.meaning": "Meaning",
+  "dna.edit.origin": "Origin",
+  "dna.edit.timeline": "Timeline",
+  "dna.edit.timelineDesc": 'One stage per line, format "stage: form", e.g. "Latin: ex (out, away)"',
+  "dna.edit.factTitle": "Trivia title",
+  "dna.edit.factBody": "Trivia body",
+  "dna.edit.cancel": "Cancel",
+  "dna.edit.save": "Save",
 } as const;
