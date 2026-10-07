@@ -640,4 +640,7 @@ export const en = {
   "dna.analyzeNow": "Analyze liked words now ({n})",
   "dna.analyzing": "Breaking down {done} / {total}",
   "dna.emptyTab": "No learned morphemes in this tab yet.",
+
+  // ui/dna/strand.ts (shared word-breakdown strand).
+  "dna.strand.none": "This word has no parts to break down",
 } as const;

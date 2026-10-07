@@ -1,12 +1,9 @@
+import { t } from "../../core/i18n";
 import type { BreakdownPart, WordBreakdown } from "../../core/model/morpheme";
 
 // Word-breakdown strand (規劃書 09 §7, w9-rules.md「strand（DU）」): shared
 // by the vocab-dna block, the Galaxy node detail (GB) and the word page
 // header (WP) — every caller gets the same colored blocks for free.
-
-const L = {
-  none: "這個字沒有可拆的字根",
-};
 
 const TYPE_LABEL: Record<BreakdownPart["type"], string> = {
   prefix: "字首",
@@ -25,7 +22,7 @@ export function renderStrand(parent: HTMLElement, b: WordBreakdown, opts?: Stran
   const strand = parent.createDiv({ cls: "vt-dna-strand" });
   strand.setAttr("aria-label", `${b.word} 拆解`);
   if (b.status === "none" || b.parts.length === 0) {
-    strand.createDiv({ cls: "vt-dna-strand-empty", text: L.none });
+    strand.createDiv({ cls: "vt-dna-strand-empty", text: t("dna.strand.none") });
     return strand;
   }
   for (const part of b.parts) {

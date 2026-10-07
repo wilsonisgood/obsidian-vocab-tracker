@@ -631,4 +631,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "dna.analyzeNow": "立即分析 like 的字（{n} 個）",
   "dna.analyzing": "正在拆字 {done} / {total}",
   "dna.emptyTab": "這個分頁還沒有已學的字根。",
+
+  // ui/dna/strand.ts（跨 DU／GB／WP 共用的拆解 strand）。
+  "dna.strand.none": "這個字沒有可拆的字根",
 };
