@@ -1255,6 +1255,7 @@ var en = {
   "command.openFamilies": "Open word families",
   "command.openVerbs": "Open usage overview",
   "command.openTrivia": "Open trivia",
+  "command.openDna": "Open Word DNA",
   "settings.section.files": "Files",
   "settings.files.desc": "Where the plugin's notes go. Changing a folder doesn't move files that already exist: entry files and word pages are found by their frontmatter, wherever you move them. Only new files use the new folder.",
   "settings.files.folder.name": "Entry files folder",
@@ -1899,6 +1900,7 @@ var zhTW = {
   "command.openFamilies": "\u958B\u555F\u5B57\u65CF\u6A39",
   "command.openVerbs": "\u958B\u555F\u7528\u6CD5\u7E3D\u8868",
   "command.openTrivia": "\u958B\u555F\u51B7\u77E5\u8B58",
+  "command.openDna": "\u958B\u555F Word DNA",
   "settings.section.files": "\u6A94\u6848",
   "settings.files.desc": "\u5916\u639B\u5EFA\u7ACB\u7684\u7B46\u8A18\u653E\u5728\u54EA\u88E1\u3002\u6539\u8CC7\u6599\u593E\u4E0D\u6703\u642C\u52D5\u5DF2\u7D93\u5B58\u5728\u7684\u6A94\u6848\uFF1A\u5165\u53E3\u6A94\u548C\u55AE\u5B57\u9801\u9760 frontmatter \u627E\u56DE\uFF0C\u642C\u5230\u54EA\u88E1\u90FD\u53EF\u4EE5\uFF1B\u53EA\u6709\u65B0\u5EFA\u7684\u6A94\u6848\u6703\u653E\u5230\u65B0\u8CC7\u6599\u593E\u3002",
   "settings.files.folder.name": "\u5165\u53E3\u6A94\u8CC7\u6599\u593E",
@@ -26698,6 +26700,11 @@ var VocabTrackerPlugin = class extends import_obsidian57.Plugin {
       id: "open-trivia",
       name: t("command.openTrivia"),
       callback: () => this.openEntryFile("trivia")
+    });
+    this.addCommand({
+      id: "open-dna",
+      name: t("command.openDna"),
+      callback: () => this.openEntryFile("dna")
     });
     this.addCommand({
       id: "toggle-exam-highlight",
