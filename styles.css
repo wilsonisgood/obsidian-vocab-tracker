@@ -2635,6 +2635,35 @@ body.is-mobile .vt-empty-action button {
   flex-direction: column;
   gap: 8px;
 }
+.vt-chat-pair {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-l, 12px);
+}
+.vt-chat-pair-delete {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 4px;
+  color: var(--text-faint);
+}
+.vt-chat-pair-delete:hover {
+  color: var(--text-error);
+}
+.vt-chat-pair-delete svg {
+  width: 14px;
+  height: 14px;
+}
+body.is-mobile .vt-chat-pair-delete {
+  min-width: 44px;
+  min-height: 44px;
+  top: 0;
+  left: 0;
+}
 .vt-chat-empty {
   color: var(--text-faint);
   line-height: 1.5;
@@ -2998,6 +3027,809 @@ body.is-mobile .vt-wh-speak {
   background-color: var(--text-selection);
   border-radius: 3px;
   transition: background-color 2.4s ease-out 0.6s;
+}
+
+/* src/styles/galaxy.css */
+.vt-gx-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.vt-gx-svg.is-pannable {
+  touch-action: none;
+}
+.vt-gx-link {
+  stroke: var(--background-modifier-border);
+  stroke-width: 1.6px;
+}
+.vt-gx-node {
+  cursor: pointer;
+}
+.vt-gx-node:focus {
+  outline: none;
+}
+.vt-gx-node .vt-gx-halo {
+  fill: var(--background-secondary);
+  stroke: var(--background-modifier-border);
+  stroke-width: 1.6px;
+}
+.vt-gx-node.vt-gx-known .vt-gx-halo {
+  fill: var(--interactive-accent);
+  stroke: var(--interactive-accent);
+  stroke-width: 2.5px;
+}
+.vt-gx-node.vt-gx-unknown .vt-gx-halo {
+  fill: var(--background-secondary);
+  stroke: var(--background-modifier-border);
+  stroke-width: 1.6px;
+  stroke-dasharray: 4 4;
+}
+.vt-gx-node.vt-gx-group .vt-gx-halo {
+  fill: var(--background-secondary);
+  stroke: var(--text-muted);
+  stroke-width: 1.4px;
+}
+.vt-gx-node.vt-gx-hub .vt-gx-halo {
+  fill: var(--interactive-accent);
+  stroke: var(--interactive-accent);
+  stroke-width: 3px;
+}
+.vt-gx-node.vt-gx-sel .vt-gx-halo {
+  stroke: var(--interactive-accent);
+  stroke-width: 4px;
+  stroke-dasharray: none;
+}
+.vt-gx-emo {
+  font-size: 26px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.vt-gx-node.vt-gx-hub .vt-gx-emo {
+  font-size: 34px;
+}
+.vt-gx-w {
+  font-size: var(--font-ui-small, 13px);
+  fill: var(--text-normal);
+  text-anchor: middle;
+  font-weight: var(--font-medium, 500);
+}
+.vt-gx-node.vt-gx-hub .vt-gx-w {
+  font-size: var(--font-ui-medium, 15px);
+  font-weight: var(--font-bold, 700);
+}
+.vt-gx-node.vt-gx-unknown .vt-gx-w {
+  fill: var(--text-muted);
+}
+.vt-gx-z {
+  font-size: var(--font-ui-smaller, 11px);
+  fill: var(--text-muted);
+  text-anchor: middle;
+}
+@keyframes vt-gx-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    filter: drop-shadow(0 0 6px var(--interactive-accent));
+  }
+}
+.vt-gx-node.vt-gx-fresh .vt-gx-halo {
+  stroke: var(--interactive-accent);
+  stroke-dasharray: 2 3;
+  animation: vt-gx-glow 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-gx-node.vt-gx-fresh .vt-gx-halo {
+    animation: none;
+  }
+}
+.vt-gx-plus {
+  display: none;
+  cursor: pointer;
+}
+.vt-gx-node.vt-gx-unknown.vt-gx-sel .vt-gx-plus {
+  display: inline;
+}
+.vt-gx-plus circle {
+  fill: var(--interactive-accent);
+  stroke: var(--background-secondary);
+  stroke-width: 2.5px;
+}
+.vt-gx-plus text {
+  fill: var(--text-on-accent);
+  font-size: 17px;
+  font-weight: var(--font-bold, 700);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.vt-gx-plus:focus circle,
+.vt-gx-node:focus .vt-gx-plus circle {
+  stroke: var(--text-normal);
+}
+.vt-gx-shell {
+  container-type: inline-size;
+}
+.vt-gx-bench {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr) 260px;
+  gap: 14px;
+  align-items: start;
+}
+.vt-gx-topics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vt-gx-topic {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: center;
+  text-align: left;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+.vt-gx-topic.is-active {
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+}
+.vt-gx-topic-em {
+  font-size: 24px;
+  line-height: 1;
+}
+.vt-gx-topic-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.vt-gx-topic-name {
+  font-weight: var(--font-medium, 500);
+}
+.vt-gx-topic-zh {
+  font-size: var(--font-ui-smaller, 12px);
+  color: var(--text-muted);
+}
+.vt-gx-topic-ct {
+  grid-column: 1 / -1;
+  font-size: var(--font-ui-smaller, 12px);
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.vt-gx-topic-thumb {
+  width: 74px;
+  height: 30px;
+  flex: 0 0 auto;
+}
+.vt-gx-topic-line {
+  stroke: var(--background-modifier-border);
+}
+.vt-gx-topic-dot {
+  fill: var(--background-primary);
+  stroke: var(--text-muted);
+}
+.vt-gx-topic-dot.is-known {
+  fill: var(--interactive-accent);
+  stroke: var(--interactive-accent);
+}
+.vt-gx-topic-hub {
+  fill: var(--interactive-accent);
+}
+.vt-gx-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.vt-gx-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.vt-gx-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font: inherit;
+  font-size: var(--font-ui-smaller, 13px);
+  padding: 5px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.vt-gx-pill.is-ai {
+  border-color: var(--interactive-accent);
+  color: var(--interactive-accent);
+}
+.vt-gx-pill[aria-pressed=true],
+.vt-gx-pill.is-active {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.vt-gx-pill:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.vt-gx-graph {
+  position: relative;
+  min-height: 420px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--background-primary);
+}
+.vt-gx-graph .vt-gx-svg {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+}
+.vt-gx-detail-host {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.vt-gx-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.vt-gx-progress-text {
+  font-size: var(--font-ui-smaller, 12px);
+  color: var(--text-muted);
+}
+.vt-gx-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--background-modifier-border);
+  overflow: hidden;
+}
+.vt-gx-bar span {
+  display: block;
+  height: 100%;
+  background: var(--interactive-accent);
+}
+.vt-gx-sub {
+  font-size: var(--font-ui-smaller, 12px);
+  color: var(--text-muted);
+}
+.vt-gx-empty {
+  font-size: var(--font-ui-smaller, 13px);
+  color: var(--text-muted);
+}
+.vt-gx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vt-gx-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: var(--text-normal);
+}
+.vt-gx-row:hover {
+  background: var(--background-modifier-hover);
+}
+.vt-gx-row-emoji {
+  font-size: 18px;
+}
+.vt-gx-row-word {
+  font-weight: var(--font-medium, 500);
+}
+.vt-gx-row-zh {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller, 12px);
+  margin-left: auto;
+}
+.vt-gx-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vt-gx-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.vt-gx-card-emoji {
+  font-size: 34px;
+  line-height: 1;
+}
+.vt-gx-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.vt-gx-card-word {
+  font-weight: var(--font-bold, 700);
+  font-size: var(--font-ui-medium, 15px);
+}
+.vt-gx-card-ipa {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller, 12px);
+}
+.vt-gx-card-collapse {
+  flex: 0 0 auto;
+}
+.vt-gx-card-zh {
+  color: var(--text-normal);
+}
+.vt-gx-card-example {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small, 13px);
+}
+.vt-gx-card-source {
+  font-size: var(--font-ui-smaller, 11px);
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+.vt-gx-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.vt-gx-card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-ui-smaller, 13px);
+}
+.vt-gx-card-btn.mod-cta {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+@container (max-width: 700px) {
+  .vt-gx-bench {
+    grid-template-columns: 1fr;
+  }
+  .vt-gx-topics {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .vt-gx-topic {
+    min-width: 190px;
+  }
+}
+.vt-gx-fullscreen .vt-gx-shell {
+  padding: 12px;
+}
+.vt-gx-fullscreen .vt-gx-graph,
+.vt-gx-fullscreen .vt-gx-svg {
+  min-height: 70vh;
+}
+
+/* src/styles/dna.css */
+.vt-dna {
+  container-type: inline-size;
+  --vt-dna-prefix: var(--color-blue);
+  --vt-dna-prefix-soft: color-mix(in srgb, var(--color-blue) 16%, transparent);
+  --vt-dna-root: var(--color-orange);
+  --vt-dna-root-soft: color-mix(in srgb, var(--color-orange) 16%, transparent);
+  --vt-dna-suffix: var(--color-green);
+  --vt-dna-suffix-soft: color-mix(in srgb, var(--color-green) 16%, transparent);
+}
+.vt-seg {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.vt-seg-btn {
+  border: 0;
+  background: transparent;
+  color: var(--vt-muted);
+  font: inherit;
+  font-size: var(--font-ui-smaller);
+  padding: 6px 12px;
+  min-height: var(--vt-tap);
+  border-radius: var(--vt-radius);
+  cursor: pointer;
+}
+.vt-seg-btn.is-active {
+  background: var(--vt-surface);
+  color: var(--text-normal);
+  font-weight: 600;
+}
+.vt-dna-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+@container (max-width: 640px) {
+  .vt-dna-chips {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .vt-dna-chip {
+    min-width: 150px;
+  }
+}
+.vt-dna-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border: 1px solid var(--vt-border);
+  background: var(--vt-card);
+  color: var(--text-normal);
+  font: inherit;
+  padding: 8px 12px;
+  min-height: var(--vt-tap);
+  border-radius: var(--vt-radius);
+  cursor: pointer;
+  text-align: left;
+}
+.vt-dna-chip.is-active {
+  border-color: var(--vt-accent);
+  background: color-mix(in srgb, var(--vt-accent) 16%, var(--vt-card));
+}
+.vt-dna-chip-form {
+  font-family: var(--font-monospace);
+  font-weight: 500;
+}
+.vt-dna-chip-meaning {
+  font-size: var(--font-ui-smaller);
+  color: var(--vt-muted);
+}
+.vt-dna-tab-empty {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+.vt-dna-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@container (max-width: 640px) {
+  .vt-dna-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.vt-dna-main,
+.vt-dna-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-card);
+}
+.vt-dna-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+}
+.vt-dna-form {
+  font-family: var(--font-monospace);
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 8px 16px;
+  border-radius: 12px;
+}
+.vt-dna-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-ui-smaller);
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-weight: 500;
+  width: fit-content;
+}
+.vt-dna-form.t-prefix,
+.vt-dna-tag.t-prefix {
+  background: var(--vt-dna-prefix-soft);
+  color: var(--vt-dna-prefix);
+}
+.vt-dna-form.t-root,
+.vt-dna-tag.t-root {
+  background: var(--vt-dna-root-soft);
+  color: var(--vt-dna-root);
+}
+.vt-dna-form.t-suffix,
+.vt-dna-tag.t-suffix {
+  background: var(--vt-dna-suffix-soft);
+  color: var(--vt-dna-suffix);
+}
+.vt-dna-meaning {
+  font-size: var(--font-ui-medium);
+  font-weight: 500;
+  margin-top: 4px;
+}
+.vt-dna-note {
+  font-size: var(--font-ui-smaller);
+  color: var(--vt-muted);
+}
+.vt-dna-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.vt-dna-label {
+  font-size: var(--font-ui-smaller);
+  letter-spacing: 0.04em;
+  color: var(--vt-muted);
+  font-weight: 500;
+}
+.vt-dna-word.is-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--vt-accent-text);
+  cursor: pointer;
+}
+.vt-dna-strand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: stretch;
+}
+.vt-dna-base {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 12px;
+  min-width: 56px;
+  min-height: var(--vt-tap);
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  cursor: default;
+}
+button.vt-dna-base {
+  cursor: pointer;
+}
+.vt-dna-base-text {
+  font-family: var(--font-monospace);
+  font-size: 18px;
+  font-weight: 500;
+}
+.vt-dna-base-meaning {
+  font-size: var(--font-ui-smaller);
+  opacity: 0.9;
+}
+.vt-dna-base.t-prefix {
+  background: var(--vt-dna-prefix-soft);
+  color: var(--vt-dna-prefix);
+}
+.vt-dna-base.t-root {
+  background: var(--vt-dna-root-soft);
+  color: var(--vt-dna-root);
+}
+.vt-dna-base.t-suffix {
+  background: var(--vt-dna-suffix-soft);
+  color: var(--vt-dna-suffix);
+}
+.vt-dna-base.t-inflection {
+  background: var(--vt-surface);
+  color: var(--text-faint);
+}
+.vt-dna-strand-empty {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+.vt-dna-tl {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 22px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.vt-dna-tl::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--vt-border);
+}
+.vt-dna-tl li {
+  position: relative;
+}
+.vt-dna-tl li::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--vt-card);
+  border: 2px solid var(--vt-accent);
+}
+.vt-dna-tl li:last-child::before {
+  background: var(--vt-accent);
+}
+.vt-dna-tl-stage {
+  font-size: var(--font-ui-smaller);
+  color: var(--vt-muted);
+  letter-spacing: 0.03em;
+}
+.vt-dna-tl-form {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-medium);
+}
+.vt-dna-fact {
+  background: var(--vt-surface);
+  border-radius: var(--vt-radius);
+  padding: 12px 14px;
+  font-size: var(--font-ui-small);
+}
+.vt-dna-fact-head {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.vt-dna-wiki {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-size: var(--font-ui-smaller);
+  color: var(--vt-muted);
+}
+.vt-dna-wiki-icon {
+  display: inline-flex;
+  margin-right: 4px;
+}
+.vt-dna-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.vt-dna-verify,
+.vt-dna-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--vt-tap);
+  padding: 0 12px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-surface);
+  color: var(--text-normal);
+  font: inherit;
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+}
+.vt-dna-verify.is-active {
+  border-color: var(--vt-accent);
+  color: var(--vt-accent-text);
+}
+.vt-dna-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-ui-smaller);
+  color: var(--vt-muted);
+}
+.vt-dna-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--vt-surface);
+  overflow: hidden;
+}
+.vt-dna-bar span {
+  display: block;
+  height: 100%;
+  background: var(--vt-accent);
+}
+.vt-dna-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  overflow: auto;
+}
+.vt-dna-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  min-height: var(--vt-tap);
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-normal);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+button.vt-dna-row:hover {
+  background: var(--vt-surface);
+}
+.vt-dna-row.is-active {
+  background: color-mix(in srgb, var(--vt-accent) 14%, transparent);
+}
+.vt-dna-row-emoji {
+  width: 22px;
+  text-align: center;
+  font-size: 16px;
+}
+.vt-dna-row-word {
+  font-weight: 500;
+}
+.vt-dna-row-tag {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--vt-dna-suffix-soft);
+  color: var(--vt-dna-suffix);
+}
+.vt-dna-row-zh {
+  margin-left: auto;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-smaller);
+}
+.vt-dna-row-add {
+  flex-shrink: 0;
+}
+.vt-dna-tutor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.vt-dna-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--vt-border);
+  background: var(--vt-surface);
+  color: var(--text-normal);
+  font: inherit;
+  font-size: var(--font-ui-smaller);
+  padding: 0 12px;
+  min-height: var(--vt-tap);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.vt-dna-pill:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.vt-dna-chat {
+  margin-top: 4px;
+  border-top: 1px solid var(--vt-border);
+  padding-top: 10px;
+}
+.vt-dna-edit .setting-item-control textarea {
+  width: 100%;
 }
 
 /* src/styles/mobile.css */
