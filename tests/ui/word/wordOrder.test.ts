@@ -103,6 +103,12 @@ describe("groupOf (1005 回饋 13)", () => {
     expect(groupOf(entry("c"))).toEqual({ key: "none", kind: "none" });
   });
 
+  it("words added from Word DNA's morpheme suggestions get one 「Word DNA」 group (1007-2 #9)", () => {
+    expect(groupOf(entry("a", { origin: "dna:gl-" }))).toEqual({ key: "dna", kind: "dna" });
+    // Two different morphemes still land in the same group.
+    expect(groupOf(entry("b", { origin: "dna:-port" }))).toEqual({ key: "dna", kind: "dna" });
+  });
+
   it("noteTitle is the file name without .md", () => {
     expect(noteTitle("eng/sub/Taylor_Swift.md")).toBe("Taylor_Swift");
   });

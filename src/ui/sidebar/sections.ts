@@ -68,19 +68,49 @@ export interface RevealInput {
   filterMode: FilterMode | undefined;
   // The note in front, if any.
   activePath: string | null;
-  entry: Pick<VocabEntry, "source" | "origin">;
+  // `id` is optional only so existing callers/tests that don't care about
+  // page mode can keep passing a plain {source, origin} literal — page
+  // matching below is skipped whenever it's missing.
+  entry: Pick<VocabEntry, "source" | "origin"> & { id?: string };
+  // 1007-2 #10: set whenever the active file is a 字族樹／Word DNA page
+  // (plugin.pageContext.for(activePath)) — its groups, mapped down to just
+  // what planReveal needs (word.ts/entry's own PageGroup/PageWord types
+  // aren't imported here to keep this file obsidian-free... actually it's
+  // already obsidian-free; the mapping just keeps this function's input
+  // decoupled from pageContext.ts's shape).
+  page?: { groups: { key: string; entryIds: string[] }[]; activeGroupKey: string | null };
 }
 
 export interface RevealPlan {
   filterMode: FilterMode;
-  // The All tab's group to open (null: the list isn't grouped).
+  // The group to open: an All-tab group (kind differs with filterMode —
+  // "all" → VocabSidebarView.collapsedGroups; "note" → a page-mode group,
+  // VocabSidebarView.pageCollapsed). null: nothing to open.
   openGroup: string | null;
 }
 
 // This note keeps showing when the word is from the note in front (or when
 // there's no note, so This note lists everything); otherwise the word is
 // only in All, under its group.
-export function planReveal({ filterMode, activePath, entry }: RevealInput): RevealPlan {
+//
+// 1007-2 #10: on a 字族樹／Word DNA page, a word that's in one of the
+// page's own groups stays on This note (the page IS 本篇's page mode) with
+// that group opened — preferring the page's currently active group when
+// the word is in it too — regardless of which tab was selected before.
+// Checked first so it overrides the usual "same note / different note"
+// branch below (the page's own note is virtually never the word's
+// `source.path`).
+export function planReveal({ filterMode, activePath, entry, page }: RevealInput): RevealPlan {
+  if (page && entry.id) {
+    const containing = page.groups.filter((g) => g.entryIds.includes(entry.id!));
+    if (containing.length > 0) {
+      const preferred =
+        page.activeGroupKey !== null && containing.some((g) => g.key === page.activeGroupKey)
+          ? page.activeGroupKey
+          : containing[0].key;
+      return { filterMode: "note", openGroup: preferred };
+    }
+  }
   const mode = filterMode ?? "note";
   if (mode === "note") {
     if (!activePath || entry.source?.path === activePath) return { filterMode: "note", openGroup: null };

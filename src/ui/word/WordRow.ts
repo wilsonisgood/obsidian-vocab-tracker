@@ -44,6 +44,21 @@ export interface RowOptions {
   // the word has no click handler of its own and a click falls through to
   // the row's usual expand/collapse.
   locate?(entry: VocabEntry): void;
+  // 1007-2 #8/#13（側欄「本篇」頁面模式）: the level/exam-tag chips show in
+  // the header line too, even collapsed — the dashboard/normal sidebar
+  // list leave this off (they're already shown in the half-expanded body).
+  levelInHead?: boolean;
+  // A page-mode row for a word that's in the library but not liked yet
+  // (規格 #8) gets dimmed instead of looking like a fully-tracked word.
+  dimUnliked?: boolean;
+  // Small morpheme tags next to the word (規格 #13, e.g. 「trans-」) — which
+  // morpheme(s) this row was listed under on the page.
+  morphemeLabels?: string[];
+  // 規格 #14: clicking a page-mode row's header to expand it (collapsed →
+  // half) also moves the page (page.selectWord) — wired by pageGroups.ts,
+  // never set elsewhere. Fires only on the collapsed→expanded click, not
+  // on expand→collapse or any other redraw.
+  onActivate?(entry: VocabEntry): void;
 }
 
 // ── Shared row renderer: sidebar list + dashboard both use this ──
@@ -120,6 +135,7 @@ export function renderVocabRow(
     rowEl.toggleClass("vt-sheet-card", sheet);
     const due = plugin.srs.nextDue(entry);
     rowEl.toggleClass("is-expanded", state !== "collapsed");
+    rowEl.toggleClass("vt-row-unliked", !!opts.dimUnliked && !entry.liked);
 
     // ── Header: always visible ───────────────────────────────────
     const head = rowEl.createEl("div", { cls: "vt-row-header" });
@@ -145,7 +161,16 @@ export function renderVocabRow(
     for (const pos of abbreviatePartOfSpeech(entry.partOfSpeech)) {
       wordWrap.createEl("span", { text: pos, cls: "vt-row-badge" });
     }
+    for (const label of opts.morphemeLabels ?? []) {
+      wordWrap.createEl("span", { text: label, cls: "vt-row-morpheme-chip" });
+    }
     opts.decorateWord?.(wordWrap, entry);
+
+    if (opts.levelInHead) {
+      for (const tagText of levelTags(entry.level)) {
+        head.createEl("span", { text: tagText, cls: "vt-row-level-chip" });
+      }
+    }
 
     head.createEl("span", { cls: "vt-row-spacer" });
 
@@ -175,7 +200,11 @@ export function renderVocabRow(
       setIcon(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
       arrow.setAttr("aria-label", state === "collapsed" ? t("row.expand") : t("row.collapse"));
 
-      head.onclick = () => redraw(state === "collapsed" ? "half" : "collapsed");
+      head.onclick = () => {
+        const wasCollapsed = state === "collapsed";
+        redraw(wasCollapsed ? "half" : "collapsed");
+        if (wasCollapsed) opts.onActivate?.(entry);
+      };
     }
 
     // 規格 #11: 喇叭留在標題列右上角 — 收合或展開都一樣，不搬到底部 footer。
