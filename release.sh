@@ -198,7 +198,7 @@ fi
 npm version "$NEW_VERSION"
 
 if ! npm run check; then
-  c_red "npm run check 失敗。版號已改但沒 commit，\`git checkout -- package.json manifest.json versions.json\` 可還原。"
+  c_red "npm run check 失敗。版號已改但沒 commit，\`git reset -q HEAD -- package.json manifest.json versions.json \&\& git checkout -- package.json manifest.json versions.json\` 可還原。"
   exit 1
 fi
 

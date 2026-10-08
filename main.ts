@@ -73,6 +73,7 @@ import type { WordLinkHost } from "./src/ui/blocks/learnUi";
 import { openWordReview } from "./src/ui/blocks/wordReview";
 import { createWordPageDecorator } from "./src/ui/reading/WordPageDecorator";
 import { PluginNoteChrome } from "./src/ui/reading/PluginNoteChrome";
+import { installOpenInPreview } from "./src/ui/reading/openInPreview";
 import { ParagraphAnchorService, type SectionRef } from "./src/services/anchors/ParagraphAnchorService";
 import { ParagraphIndex } from "./src/services/anchors/ParagraphIndex";
 import { ParagraphBadges } from "./src/ui/reading/ParagraphBadges";
@@ -526,6 +527,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.addRibbonIcon("book-open", t("ribbon.openWordList"), () => {
       void (currentFormFactor() === "phone" ? this.openVocabFile() : this.activateSidebar());
     });
+
+    // Notes in the vocab folder open in reading mode (1007-2 #3).
+    installOpenInPreview(this, () => this.files.paths().folder);
 
     // Keep the sidebar scoped to whatever note is in front
     this.registerEvent(
