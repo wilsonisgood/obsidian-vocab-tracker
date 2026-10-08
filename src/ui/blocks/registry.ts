@@ -22,6 +22,7 @@ function dnaDeps(plugin: VocabTrackerPlugin): DnaBlockDeps {
     selection: plugin.selection,
     openWord: (e) => void plugin.surfaces.openWordCard(e.id, "data"),
     focus: plugin.dnaFocus,
+    pageContext: plugin.pageContext,
   };
 }
 
@@ -46,7 +47,9 @@ export const BLOCKS: readonly BlockDef[] = [
   { lang: "vocab-verbs", render: renderVerbs },
   { lang: "vocab-trivia", render: renderTrivia },
   // Wave 9 (規劃書 09 §7): Word DNA — morpheme breakdown, timeline, 冷知識.
-  { lang: "vocab-dna", render: (plugin, source, el, ctx) => renderDna(dnaDeps(plugin), source, el, ctx) },
+  { lang: "vocab-dna", render: (plugin, source, el, ctx) =>
+      // Only the Word DNA entry file feeds the sidebar (規劃書 10 §2.1).
+      renderDna({ ...dnaDeps(plugin), isEntryFile: plugin.files.entryFilePath("dna") === ctx.sourcePath }, source, el, ctx) },
 ];
 
 export function registerBlocks(plugin: VocabTrackerPlugin): void {
