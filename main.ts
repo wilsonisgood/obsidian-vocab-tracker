@@ -42,6 +42,7 @@ import { ObsidianNotes } from "./src/platform/ObsidianNotes";
 import { ThreadService } from "./src/services/threads/ThreadService";
 import { LearnStore } from "./src/services/learn/LearnStore";
 import { createDnaFocus } from "./src/ui/dna/dnaModel";
+import { PageContextHub } from "./src/ui/page/pageContext";
 import { EmojiService } from "./src/services/learn/EmojiService";
 import { FamilyService } from "./src/services/learn/FamilyService";
 import { VerbUsageService } from "./src/services/learn/VerbUsageService";
@@ -154,6 +155,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   emoji!: EmojiService;
   // A morpheme picked on a word page, for the vocab-dna block (09 §7.1).
   readonly dnaFocus = createDnaFocus();
+  // 字族樹／Word DNA 頁面 ↔ 側欄「本篇」（規劃書 10 §2.1）.
+  readonly pageContext = new PageContextHub();
   verbs!: VerbUsageService;
   trivia!: TriviaService;
   morphemes!: MorphemeService;

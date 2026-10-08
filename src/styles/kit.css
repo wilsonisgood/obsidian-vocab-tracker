@@ -168,3 +168,22 @@
     animation: vt-pronounce-pulse 1.2s ease-in-out infinite;
   }
 }
+
+/* 一條橫列、超出往右捲（規劃書 10 §2.12） */
+.vt-hscroll {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 8px;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.vt-hscroll > * {
+  flex: 0 0 auto;
+}
+.vt-hscroll.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
