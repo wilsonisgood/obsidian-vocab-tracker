@@ -44,7 +44,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ["main.js", "node_modules/**", "dist/**", "docs/**"],
+    ignores: ["main.js", "node_modules/**", "dist/**", "docs/**", ".claude/**"],
   },
   {
     rules: {

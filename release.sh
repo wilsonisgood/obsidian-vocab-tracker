@@ -182,8 +182,8 @@ if [ "$DRY_RUN" = true ]; then
   echo
   echo "（--dry-run，以下步驟在正式執行時才會做）"
   cat <<EOF
-  1. npm version ${NEW_VERSION}  （改 package.json / manifest.json / versions.json）
-  2. npm run check  （typecheck + lint + test + build）
+  1. npm run check  （typecheck + lint + test + build；失敗就停，版號不動）
+  2. npm version ${NEW_VERSION}  （改 package.json / manifest.json / versions.json）
   3. git add package.json manifest.json versions.json main.js styles.css（逐檔）
      git commit -m "chore: release ${NEW_VERSION}"
   4. git push origin HEAD
@@ -195,11 +195,20 @@ EOF
 fi
 
 # ── 正式執行 ─────────────────────────────────────────────────────────
-npm version "$NEW_VERSION"
-
+# check 先跑、通過才改版號：失敗時工作區只有 build 產物（main.js／styles.css）
+# 會變，版號檔不動，修好直接重跑就行。
 if ! npm run check; then
-  c_red "npm run check 失敗。版號已改但沒 commit，\`git reset -q HEAD -- package.json manifest.json versions.json \&\& git checkout -- package.json manifest.json versions.json\` 可還原。"
+  c_red "npm run check 失敗，版號還沒改。修好後 \`git checkout -- main.js styles.css\` 再重跑一次。"
   exit 1
+fi
+
+restore_version() {
+  git reset -q HEAD -- package.json manifest.json versions.json
+  git checkout -- package.json manifest.json versions.json
+}
+if ! npm version "$NEW_VERSION"; then
+  restore_version
+  die "npm version 失敗，版號檔已還原。"
 fi
 
 git add package.json

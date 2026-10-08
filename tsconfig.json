@@ -11,5 +11,6 @@
     "strict": true,
     "moduleResolution": "bundler"
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", ".claude"]
 }
