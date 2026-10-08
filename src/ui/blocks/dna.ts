@@ -12,19 +12,21 @@ import { ChatPanel, createChatUiState, type ChatPanelOptions, type ChatSend, typ
 import type { SelectionTracker } from "../chat/SelectionTracker";
 import {
   DNA_TAB_ORDER,
-  defaultFocusEntryId,
   morphemeChips,
   parseDnaParams,
-  relatedWords,
   pendingFocus,
   resolveDnaSelection,
+  resolveFocusEntry,
   selectionForMorpheme,
   wiktionaryUrl,
   type DnaFocusPort,
   type DnaParams,
 } from "../dna/dnaModel";
 import { MorphemeEditModal } from "../dna/MorphemeEditModal";
+import { dnaPageGroups } from "../dna/dnaPage";
 import { renderStrand } from "../dna/strand";
+import type { PageContext, PageContextHub, PageWord } from "../page/pageContext";
+import { dragScroll } from "../kit/dragScroll";
 import type { MorphemeService as MorphemeApi, MorphemeStat } from "../../services/learn/MorphemeService";
 import { emptyState } from "../kit/emptyState";
 import { inlineNote } from "../kit/inlineNote";
@@ -42,9 +44,9 @@ import { guardReadingClicks, isAbort, learnErrorText } from "./learnUi";
 // Three tabs (字首／字尾／字根), each with a chip per morpheme that has at
 // least one liked word (`MorphemeApi.stats`); the selected chip's main
 // panel shows one word's breakdown (the strand, shared with Galaxy/word
-// page), its timeline and 冷知識; the side panel lists every related word
-// (learned first, then AI suggestions not yet in the vocab list) and the
-// three AI Tutor actions (A9).
+// page), its timeline, 冷知識 and the three AI Tutor actions (A9). The
+// related-words list that used to sit below it is gone (1007-2 #12) — the
+// sidebar's「本篇」(1007-2 #13/#14, via PageContextHub) is the replacement.
 //
 // `MorphemeApi` is an alias for services/learn/MorphemeService's class type
 // (整合：former ui/dna/types.ts interface removed once DS merged).
@@ -104,6 +106,15 @@ export interface DnaBlockDeps {
   // A morpheme picked on a word page (09 §7.1, main.ts's openMorpheme).
   // Optional: without it only the block's own params pick the selection.
   focus?: DnaFocusPort;
+  // Word DNA page → sidebar「本篇」(1007-2 #13/#14). Both optional so
+  // registry.ts (整合事項) can land after this file without breaking the
+  // build — without them the block just never publishes.
+  pageContext?: PageContextHub | null;
+  // True only when this block sits in the Word DNA entry file itself
+  // (plugin.files.entryFilePath("dna") === ctx.sourcePath) — a vocab-dna
+  // block embedded elsewhere (e.g. a word page) must not claim the
+  // sidebar's "本篇" for that file.
+  isEntryFile?: boolean;
 }
 
 export function renderDna(deps: DnaBlockDeps, source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): void {
@@ -123,7 +134,6 @@ class DnaBlock extends MarkdownRenderChild {
   private chatState: ChatUiState = createChatUiState();
   private chat: ChatPanel | null = null;
   private chatHost: HTMLElement | null = null;
-  private adding = new Set<string>();
   private expanding = new Set<string>();
   private analyzeCtrl: AbortController | null = null;
   private rafId: number | null = null;
@@ -154,6 +164,7 @@ class DnaBlock extends MarkdownRenderChild {
       this.disposed = true;
       if (this.rafId !== null) cancelAnimationFrame(this.rafId);
       this.analyzeCtrl?.abort();
+      this.deps.pageContext?.clear(this);
     });
 
     void this.deps.learn.ensureLoaded().then(() => {
@@ -223,19 +234,57 @@ class DnaBlock extends MarkdownRenderChild {
     }
     const cur = stats.find((s) => s.morpheme.id === this.morphemeId) ?? stats[0];
     this.morphemeId = cur.morpheme.id;
-    if (!this.focusEntryId || !cur.learned.some((e) => e.id === this.focusEntryId)) {
-      this.focusEntryId = defaultFocusEntryId(cur);
-    }
 
     this.renderChips(root, stats, cur);
 
-    const layout = root.createDiv({ cls: "vt-dna-layout" });
-    const main = layout.createDiv({ cls: "vt-dna-main" });
-    const side = layout.createDiv({ cls: "vt-dna-side" });
+    // 1007-2 #12: the old two-column main+side layout emptied out once the
+    // 相關單字 list left the side column — a single column (main card,
+    // then AI Tutor) reads less empty than a near-blank right rail.
+    const main = root.createDiv({ cls: "vt-dna-main" });
     this.renderMain(main, cur);
-    this.renderSide(side, cur);
+    this.renderAiTutor(main, cur);
     fadeIn(main);
-    fadeIn(side);
+
+    this.publishPage(statsByType);
+  }
+
+  // 1007-2 #13: publish to the sidebar's「本篇」, only from the Word DNA
+  // entry file itself (registry.ts sets `isEntryFile` — 整合事項).
+  private publishPage(statsByType: Record<MorphemeType, readonly MorphemeStat[]>): void {
+    const hub = this.deps.pageContext;
+    if (!hub || !this.deps.isEntryFile) return;
+    const ctx: PageContext = {
+      kind: "dna",
+      sourcePath: this.sourcePath,
+      groups: dnaPageGroups(statsByType, (word) => this.findEntryByWord(word), (e) => emojiOf(this.deps.learn.wordMeta(e.id), e)),
+      activeGroupKey: `dna:${this.type}`,
+      selectWord: (groupKey, w) => this.selectWord(groupKey, w),
+      addWord: (groupKey, w) => this.addWord(groupKey, w),
+    };
+    hub.publish(this, ctx);
+  }
+
+  private findEntryById(id: string): VocabEntry | undefined {
+    return this.deps.vocab.entries.find((e) => e.id === id);
+  }
+
+  private findEntryByWord(word: string): VocabEntry | undefined {
+    const key = word.trim().toLowerCase();
+    return this.deps.vocab.entries.find((e) => e.word.trim().toLowerCase() === key);
+  }
+
+  // 1007-2 #14: 側欄點「本篇」裡的字 → 切分頁、選字素、換焦點字。
+  private selectWord(groupKey: string, w: PageWord): void {
+    const type = groupKey.slice("dna:".length) as MorphemeType;
+    this.type = type;
+    this.morphemeId = w.morpheme?.id;
+    this.focusEntryId = w.entryId;
+    this.render();
+  }
+
+  private addWord(_groupKey: string, w: PageWord): Promise<VocabEntry | undefined> {
+    if (!w.morpheme) return Promise.resolve(undefined);
+    return this.deps.morphemes.addSuggested(w.morpheme.id, w.word);
   }
 
   private renderEmpty(root: HTMLElement): void {
@@ -276,7 +325,10 @@ class DnaBlock extends MarkdownRenderChild {
   }
 
   private renderChips(root: HTMLElement, stats: readonly MorphemeStat[], cur: MorphemeStat): void {
+    // 1007-2 #11: one row, overflowing right, draggable — dragScroll adds
+    // .vt-hscroll (kit.css) itself.
     const wrap = root.createDiv({ cls: "vt-dna-chips" });
+    this.register(dragScroll(wrap));
     for (const chip of morphemeChips(stats)) {
       const btn = wrap.createEl("button", { cls: "vt-dna-chip", attr: { type: "button" } });
       const active = chip.id === cur.morpheme.id;
@@ -304,7 +356,7 @@ class DnaBlock extends MarkdownRenderChild {
     info.createDiv({ cls: "vt-dna-meaning", text: m.meaningZh });
     info.createDiv({ cls: "vt-dna-note", text: t("dna.source", { o: m.origin }) });
 
-    const focus = cur.learned.find((e) => e.id === this.focusEntryId) ?? cur.learned[0];
+    const focus = resolveFocusEntry(cur, this.focusEntryId, (id) => this.findEntryById(id));
     if (focus) {
       const section = main.createDiv({ cls: "vt-dna-section" });
       const label = section.createDiv({ cls: "vt-dna-label" });
@@ -380,76 +432,13 @@ class DnaBlock extends MarkdownRenderChild {
     }).open();
   }
 
-  // ── Side panel ────────────────────────────────────────────────
-
-  private renderSide(side: HTMLElement, cur: MorphemeStat): void {
-    const related = relatedWords(cur, (e) => emojiOf(this.deps.learn.wordMeta(e.id), e));
-    const learnedCount = related.filter((r) => r.kind === "learned").length;
-
-    const progress = side.createDiv({ cls: "vt-dna-progress" });
-    progress.createSpan({ cls: "vt-dna-progress-text", text: t("dna.progress", { learned: learnedCount, total: related.length }) });
-    const bar = progress.createDiv({ cls: "vt-dna-bar" });
-    const pct = related.length ? Math.round((learnedCount / related.length) * 100) : 100;
-    bar.createSpan({ attr: { style: `width:${pct}%` } });
-
-    side.createDiv({ cls: "vt-dna-label", text: t("dna.related") });
-    const list = side.createDiv({ cls: "vt-dna-list" });
-    for (const r of related) {
-      if (r.kind === "learned") {
-        const row = list.createEl("button", { cls: "vt-dna-row", attr: { type: "button" } });
-        row.toggleClass("is-active", r.entryId === this.focusEntryId);
-        row.createSpan({ cls: "vt-dna-row-emoji", text: r.emoji });
-        row.createSpan({ cls: "vt-dna-row-word", text: r.word });
-        row.createSpan({ cls: "vt-dna-row-tag is-known", text: t("dna.known") });
-        row.createSpan({ cls: "vt-dna-row-zh", text: r.zh });
-        row.addEventListener("click", () => {
-          if (r.entryId === this.focusEntryId) return;
-          this.focusEntryId = r.entryId;
-          this.render();
-        });
-      } else {
-        const row = list.createDiv({ cls: "vt-dna-row is-suggested" });
-        row.createSpan({ cls: "vt-dna-row-emoji", text: r.emoji });
-        row.createSpan({ cls: "vt-dna-row-word", text: r.word });
-        row.createSpan({ cls: "vt-dna-row-zh", text: r.zh });
-        const key = `${cur.morpheme.id}\u0000${r.word.toLowerCase()}`;
-        const busy = this.adding.has(key);
-        const add = row.createEl("button", { cls: "vt-dna-row-add clickable-icon", attr: { type: "button" } });
-        setIcon(add, busy ? "loader" : "plus");
-        add.disabled = busy;
-        add.setAttr("aria-label", t("dna.add", { word: r.word }));
-        add.addEventListener("click", () => this.addSuggested(cur.morpheme.id, r.word));
-      }
-    }
-
-    this.renderAiTutor(side, cur);
-  }
-
-  private addSuggested(morphemeId: string, word: string): void {
-    const key = `${morphemeId}\u0000${word.toLowerCase()}`;
-    if (this.adding.has(key)) return;
-    this.adding.add(key);
-    this.render();
-    this.deps.morphemes
-      .addSuggested(morphemeId, word)
-      .then((entry) => {
-        if (entry) new Notice(t("dna.added", { word: entry.word }));
-      })
-      .catch((e) => {
-        console.error("Vocab Tracker: adding a DNA word failed", e);
-        new Notice(learnErrorText(e));
-      })
-      .finally(() => {
-        this.adding.delete(key);
-        if (!this.disposed) this.render();
-      });
-  }
-
   // ── AI Tutor (A9) ─────────────────────────────────────────────
+  // 1007-2 #12: 相關單字整塊（progress bar／已學清單／灑建議字加入）拿掉;
+  // AI Tutor 原樣留著，搬到 main 欄位下面 (render()).
 
-  private renderAiTutor(side: HTMLElement, cur: MorphemeStat): void {
-    side.createDiv({ cls: "vt-dna-label", text: t("dna.aiTutor") });
-    const row = side.createDiv({ cls: "vt-dna-tutor" });
+  private renderAiTutor(main: HTMLElement, cur: MorphemeStat): void {
+    main.createDiv({ cls: "vt-dna-label", text: t("dna.aiTutor") });
+    const row = main.createDiv({ cls: "vt-dna-tutor" });
     const ready = this.deps.ai.status() === "ready";
     const id = cur.morpheme.id;
     const busy = this.deps.morphemes.isChatBusy(id);
@@ -470,7 +459,7 @@ class DnaBlock extends MarkdownRenderChild {
 
     if (liveTurns(this.deps.morphemes.chatThread(id)).length > 0) this.expandedChat.add(id);
     if (this.expandedChat.has(id)) {
-      this.chatHost = side.createDiv({ cls: "vt-dna-chat" });
+      this.chatHost = main.createDiv({ cls: "vt-dna-chat" });
       this.mountChat(id);
     }
   }
