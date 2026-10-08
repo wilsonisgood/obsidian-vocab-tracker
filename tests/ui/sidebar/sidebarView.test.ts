@@ -4,6 +4,7 @@ vi.mock("obsidian", () => import("../../perf/support/obsidian"));
 
 import { TFile } from "obsidian";
 import type { VocabEntry } from "../../../src/core/model/entry";
+import type { PageContext, PageWord } from "../../../src/ui/page/pageContext";
 import type { VocabSidebarView } from "../../../src/ui/sidebar/VocabSidebarView";
 import { discussionRows } from "../../../src/ui/sidebar/discussionRows";
 import { verbUsageRows } from "../../../src/ui/sidebar/grammarRows";
@@ -443,5 +444,168 @@ describe("row meta (1006report.md 定案規格 #18, 1006-2 #10/#12)", () => {
     v.render();
     const rowFull = root(v).querySelector(`.vt-row[data-entry-id="${id}"]`)!;
     expect(rowFull.innerHTML).toBe(rowHalf.innerHTML);
+  });
+});
+
+// Wave 10 S (1007-2 #9): data:changed used to only redraw when the This
+// note scope cache existed, which is never the case in All — adding a word
+// from 字族樹／Word DNA there sat invisible until a manual re-render.
+describe("「全部」加字後立即重畫 (1007-2 #9)", () => {
+  it("a word added via store.addEntry shows up right away, grouped under 「Word DNA」", async () => {
+    const v = await open("all");
+    const openEntry = vi.spyOn(b.plugin, "openEntryFile").mockResolvedValue(undefined);
+    try {
+      const fresh: VocabEntry = {
+        id: "wave10-s-new",
+        word: "zzznewword",
+        level: "",
+        synonyms: "",
+        antonyms: "",
+        example: "",
+        definition: "",
+        definitionZh: "",
+        phonetic: "",
+        partOfSpeech: "",
+        grammar: "",
+        source: null,
+        added: "",
+        lastReviewed: "",
+        reviews: 0,
+        liked: true,
+        origin: "dna:gl-",
+      };
+      await b.plugin.store.addEntry(fresh);
+      // No v.render()/v.draw() here on purpose — only the fixed
+      // data:changed listener should surface it.
+      const row = root(v).querySelector('.vt-row[data-entry-id="wave10-s-new"]');
+      expect(row).not.toBeNull();
+      const heading = root(v).querySelector('.vt-group-heading[data-group-key="dna"]')!;
+      expect(heading).not.toBeNull();
+      expect(heading.querySelector(".vt-group-title")!.textContent).toBe(t("sidebar.group.dna"));
+      heading.querySelector(".vt-group-title")!.click();
+      expect(openEntry).toHaveBeenCalledWith("dna");
+    } finally {
+      openEntry.mockRestore();
+      await b.plugin.store.deleteEntry("wave10-s-new");
+    }
+  });
+});
+
+// Wave 10 S (1007-2 #8, #13, #14) — the sidebar's 「本篇」 on a 字族樹／Word
+// DNA page: PageContextHub is the only thing shared with the (separate)
+// block task, so these tests publish a PageContext by hand rather than
+// going through an actual block.
+describe("側欄「本篇」頁面模式 (1007-2 #8, #13, #14)", () => {
+  const owner = {};
+
+  function publish(ctx: Partial<PageContext> & { groups: PageContext["groups"] }): PageContext {
+    const full: PageContext = {
+      kind: "families",
+      sourcePath: fx.article.path,
+      activeGroupKey: null,
+      selectWord: () => {},
+      addWord: async () => undefined,
+      ...ctx,
+    };
+    b.plugin.pageContext.publish(owner, full);
+    return full;
+  }
+
+  afterEach(() => b.plugin.pageContext.clear(owner));
+
+  it("groups by the page's own topics; liked → unliked → suggested, with level/morpheme chips in the header", async () => {
+    const liked = entries().find((e) => e.source?.path !== fx.article.path)!;
+    const unliked = entries().find((e) => e.id !== liked.id && e.source?.path !== fx.article.path)!;
+    const saved = [liked, unliked].map((e) => ({ liked: e.liked, level: e.level, deletedAt: e.deletedAt }));
+    liked.liked = true;
+    liked.level = "GRE";
+    unliked.liked = false;
+    unliked.deletedAt = undefined;
+    try {
+      const words: PageWord[] = [
+        { word: "sugg", zh: "建議字", emoji: "🌱", morpheme: { id: "m1", label: "trans-" } },
+        { word: unliked.word, zh: "中", emoji: "🙂", entryId: unliked.id },
+        { word: liked.word, zh: "中", emoji: "🙂", entryId: liked.id },
+      ];
+      publish({ groups: [{ key: "topic:a", title: "主題 A", words }], activeGroupKey: "topic:a" });
+      const v = await open("note");
+      // Page mode replaces the exam strip entirely.
+      expect(root(v).querySelector(".vt-exam-strip")).toBeNull();
+
+      const heading = root(v).querySelector('.vt-group-heading[data-group-key="topic:a"]')!;
+      expect(heading.querySelector(".vt-group-title")!.textContent).toBe("主題 A");
+      expect(heading.querySelector(".vt-group-count")!.textContent).toBe("3");
+
+      const likedRow = root(v).querySelector(`.vt-row[data-entry-id="${liked.id}"]`)!;
+      expect(likedRow.classList.contains("vt-row-unliked")).toBe(false);
+      expect(likedRow.querySelector(".vt-row-header .vt-row-level-chip")!.textContent).toBe("GRE");
+
+      const unlikedRow = root(v).querySelector(`.vt-row[data-entry-id="${unliked.id}"]`)!;
+      expect(unlikedRow.classList.contains("vt-row-unliked")).toBe(true);
+
+      const suggestRow = root(v).querySelector(".vt-page-suggest")!;
+      expect(suggestRow.querySelector(".vt-page-suggest-word")!.textContent).toBe("sugg");
+      expect(suggestRow.querySelector(".vt-row-morpheme-chip")!.textContent).toBe("trans-");
+      const addBtn = suggestRow.querySelector(".vt-page-suggest-add")!;
+      expect(addBtn.getAttribute("aria-label")).toBe(t("sidebar.page.add", { word: "sugg" }));
+
+      // 「單字（n）」counts every distinct word on the page, suggestions
+      // included (#9) — all three here are distinct words.
+      const section = root(v).querySelector('[data-section="words"] .vt-sb-section-title')!;
+      expect(section.textContent).toBe(t("sidebar.section.words.counted", { n: 3 }));
+    } finally {
+      [liked, unliked].forEach((e, i) => Object.assign(e, saved[i]));
+    }
+  });
+
+  it("expanding a liked/unliked row moves the page too (#14); a suggested row's own click does nothing", async () => {
+    const liked = entries().find((e) => e.source?.path !== fx.article.path)!;
+    const saved = { liked: liked.liked };
+    liked.liked = true;
+    try {
+      const selectWord = vi.fn();
+      const addWord = vi.fn(async () => undefined);
+      const words: PageWord[] = [
+        { word: liked.word, zh: "中", emoji: "🙂", entryId: liked.id },
+        { word: "sugg", zh: "建議字", emoji: "🌱" },
+      ];
+      publish({ groups: [{ key: "topic:a", title: "主題 A", words }], activeGroupKey: "topic:a", selectWord, addWord });
+      const v = await open("note");
+
+      const likedRow = root(v).querySelector(`.vt-row[data-entry-id="${liked.id}"]`)!;
+      likedRow.querySelector(".vt-row-header")!.click();
+      expect(selectWord).toHaveBeenCalledWith("topic:a", words[0]);
+
+      const suggestRow = root(v).querySelector(".vt-page-suggest")!;
+      suggestRow.click();
+      expect(selectWord).toHaveBeenCalledTimes(1); // the suggested row's own click did nothing
+      expect(addWord).not.toHaveBeenCalled();
+
+      (suggestRow.querySelector(".vt-page-suggest-add")! as FakeElement).click();
+      expect(addWord).toHaveBeenCalledWith("topic:a", words[1]);
+    } finally {
+      liked.liked = saved.liked;
+    }
+  });
+
+  it("only the active group starts open; switching groups resets to just the new active one", async () => {
+    const a: PageWord[] = [{ word: "a-word", zh: "中", emoji: "🙂" }];
+    const c: PageWord[] = [{ word: "c-word", zh: "中", emoji: "🙂" }];
+    const groups = [
+      { key: "g-a", title: "A", words: a },
+      { key: "g-b", title: "B", words: c },
+    ];
+    publish({ groups, activeGroupKey: "g-b" });
+    const v = await open("note");
+    expect(root(v).querySelector('.vt-group-heading[data-group-key="g-a"]')).not.toBeNull();
+    expect(root(v).querySelector(".vt-page-suggest")).not.toBeNull(); // g-b's row (open)
+    expect(v.pageCollapsed.has("g-a")).toBe(true);
+    expect(v.pageCollapsed.has("g-b")).toBe(false);
+
+    // The page switches its active topic — same object identity doesn't
+    // matter, publish() always emits "changed" on a different signature.
+    publish({ groups, activeGroupKey: "g-a" });
+    expect(v.pageCollapsed.has("g-a")).toBe(false);
+    expect(v.pageCollapsed.has("g-b")).toBe(true);
   });
 });

@@ -26,6 +26,9 @@ import { LIST_ROUTE, REBINDING_BODY_CLS, SidebarRouter, routeForActiveNote, rout
 import { isListed, type IsListedContext } from "../../core/model/like";
 import { likeChipOn, resolveWordlistSettings, tagEnabled } from "../../core/model/wordlists";
 import { computeNoteScope, likeCountInScope, noteScopeSig } from "./noteScope";
+import type { PageContext } from "../page/pageContext";
+import { renderPageGroups } from "./pageGroups";
+import { pageGroupEntryIds, pageScopedEntries, resetPageCollapsed, uniquePageWordCount } from "./pageGroupsModel";
 
 export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 
@@ -105,6 +108,24 @@ export class VocabSidebarView extends ItemView {
   // toggle, scope resolving) can redraw just this section (#10).
   private wordsCountEl: HTMLElement | null = null;
   private wordsBodyEl: HTMLElement | null = null;
+  // Wave 10 S (1007-2 #9): store.events "data:changed" used to only redraw
+  // when noteScopeCache existed — which is never true in the All tab, so
+  // adding a word from 字族樹／Word DNA never showed up there without a
+  // manual re-render. Now it's a plain "did the live/liked set change"
+  // signature check (noteScopeSig, already used by the This-note cache
+  // below), independent of filterMode, so both tabs redraw right away.
+  private lastListSig = "";
+
+  // ── 側欄「本篇」頁面模式 (1007-2 #8, #9, #13, #14) ──────────────────────
+  // Which page-mode groups are folded — its own set, not shared with the
+  // All tab's collapsedGroups (頁面模式分類的收合狀態另外存). Reset to
+  // "only the active group open" whenever the page's activeGroupKey
+  // changes (syncPageCollapse); the user's own expand/collapse clicks in
+  // between are left alone.
+  pageCollapsed: Set<string> = new Set();
+  private lastActiveGroupKey: string | null | undefined = undefined;
+  // Suggested-row 「＋」 requests in flight (pageGroups.ts's busy spinner).
+  private pageBusy: Set<string> = new Set();
 
   constructor(leaf: WorkspaceLeaf, plugin: VocabTrackerPlugin) {
     super(leaf);
@@ -152,15 +173,23 @@ export class VocabSidebarView extends ItemView {
     // computeNoteScope()'s output changed (count of live entries, or which
     // ones are liked) — a plain field edit (store.touch()) leaves the
     // signature alone, so it still doesn't reorder/redraw the list (#10).
+    this.lastListSig = noteScopeSig(this.plugin.store.entries);
     this.register(
       this.plugin.store.events.on("data:changed", () => {
-        const cache = this.noteScopeCache;
-        if (!cache) return;
-        if (noteScopeSig(this.plugin.store.entries) === cache.sig) return;
-        this.noteScopeCache = null;
-        if ((this.filterMode ?? "note") === "note") this.refreshFiltered();
+        const sig = noteScopeSig(this.plugin.store.entries);
+        if (sig === this.lastListSig) return;
+        this.lastListSig = sig;
+        // Still invalidate the This-note cache on its own terms (mtime
+        // keyed) — only matters in note mode, but harmless either way.
+        if ((this.filterMode ?? "note") === "note") this.noteScopeCache = null;
+        this.refreshFiltered();
       })
     );
+    // Wave 10 S (1007-2 #8/#9/#13): a 字族樹／Word DNA block republished
+    // (new groups, a different activeGroupKey, a word added/removed) —
+    // redraw the filtered sections the same way any other scope change
+    // does. No mode check: harmless (and cheap) outside page mode too.
+    this.register(this.plugin.pageContext.events.on("changed", () => this.refreshFiltered()));
     this.render();
   }
 
@@ -207,13 +236,24 @@ export class VocabSidebarView extends ItemView {
   // group opened there), the card expanded — then scrolled to and briefly
   // highlighted.
   private revealEntry(entry: VocabEntry, tab?: WordTab): void {
+    // 1007-2 #10: resolved off the active file alone (not gated by the
+    // currently-selected tab, unlike currentPage() below) — clicking a
+    // page's own word must land on 本篇's page mode even if All was
+    // selected before.
+    const page = this.pageContextForActive();
     const plan = planReveal({
       filterMode: this.filterMode,
       activePath: this.app.workspace.getActiveFile()?.path ?? null,
       entry,
+      page: page
+        ? { groups: page.groups.map((g) => ({ key: g.key, entryIds: pageGroupEntryIds(g) })), activeGroupKey: page.activeGroupKey }
+        : undefined,
     });
     this.filterMode = plan.filterMode;
-    if (plan.openGroup) this.collapsedGroups.delete(plan.openGroup);
+    if (plan.openGroup) {
+      if (plan.filterMode === "note") this.pageCollapsed.delete(plan.openGroup);
+      else this.collapsedGroups.delete(plan.openGroup);
+    }
     this.sections.set("words", false);
     const state = this.expandState.get(entry.id);
     if (state === undefined || state === "collapsed") this.expandState.set(entry.id, "half");
@@ -318,11 +358,31 @@ export class VocabSidebarView extends ItemView {
     this.refreshFiltered();
   }
 
+  // 1007-2 #8/#10/#13/#14: the page (字族樹／Word DNA) for the file in
+  // front, regardless of which 本篇／全部 tab is selected right now — used
+  // by revealEntry/setWord, which must land on 本篇's page mode even from
+  // All (#10).
+  private pageContextForActive(): PageContext | null {
+    return this.plugin.pageContext.for(this.app.workspace.getActiveFile()?.path ?? null);
+  }
+
+  // The page, but only when it actually governs the current draw (#8: page
+  // mode only replaces 本篇, never 全部).
+  private currentPage(): PageContext | null {
+    return (this.filterMode ?? "note") === "note" ? this.pageContextForActive() : null;
+  }
+
   // The single source of truth for "which words count" (#7, #8): isListed
   // (like 或亮著的考試標籤)，再加上本篇模式下的 #6 scope. Used by the word
   // list itself, and fed into the AI 討論 / 文法 sections too so every
   // section agrees on what's visible.
+  //
+  // 1007-2 #8: in page mode this is instead "every word on the page that's
+  // in the vocab library" (pageScopedEntries) — AI 討論／文法 scope to the
+  // page's own words, not the usual isListed/noteScope rule.
   private scopedEntries(): VocabEntry[] {
+    const page = this.currentPage();
+    if (page) return pageScopedEntries(page.groups, this.plugin.store.entries);
     const ctx = this.isListedCtx();
     let list = this.plugin.store.entries.filter((e) => isListed(e, ctx));
     const activeFile = this.app.workspace.getActiveFile();
@@ -359,9 +419,17 @@ export class VocabSidebarView extends ItemView {
     this.drawWords(this.wordsBodyEl);
   }
 
+  // 1007-2 #8: page mode counts every distinct word shown across every
+  // category (including the grey suggestions, which scopedEntries() never
+  // includes — they have no entryId).
+  private wordsCount(): number {
+    const page = this.currentPage();
+    return page ? uniquePageWordCount(page.groups) : this.scopedEntries().length;
+  }
+
   private refreshWordsCount(): void {
     if (!this.wordsCountEl?.isConnected) return;
-    this.wordsCountEl.setText(t("sidebar.section.words.counted", { n: this.scopedEntries().length }));
+    this.wordsCountEl.setText(t("sidebar.section.words.counted", { n: this.wordsCount() }));
   }
 
   // The contract with R's WordRow (1006report.md #10): a row only calls
@@ -612,7 +680,7 @@ export class VocabSidebarView extends ItemView {
     // Four foldable sections (1005 回饋 2; Wave 6 W splits 段落討論 and
     // 文法 out): 單字, 段落討論, AI 討論, 文法.
     const wCounter = { el: null as HTMLElement | null };
-    const words = this.drawSection(root, "words", t("sidebar.section.words.counted", { n: this.scopedEntries().length }), wCounter);
+    const words = this.drawSection(root, "words", t("sidebar.section.words.counted", { n: this.wordsCount() }), wCounter);
     this.wordsCountEl = wCounter.el;
     if (words) {
       this.wordsBodyEl = words;
@@ -805,10 +873,60 @@ export class VocabSidebarView extends ItemView {
     return section.createDiv({ cls: "vt-sb-section-body" });
   }
 
+  // Shared row options every drawWords() path uses (dashboard-equivalent
+  // decorateWord/openWordPage/locate) — pageGroups.ts spreads these and
+  // adds its own page-specific bits (levelInHead/dimUnliked/…) per row.
+  private baseRowOpts(): RowOptions {
+    return {
+      ui: this.wordUi,
+      // ✦ n after the word (design D1); the dashboard doesn't pass this.
+      decorateWord: (wrap, entry) => {
+        const chip = wrap.createSpan({ cls: "vt-word-tc" });
+        this.wordChips.set(entry.id, chip);
+        this.drawWordChip(chip, entry.id);
+      },
+      openWordPage: (entry: VocabEntry) => void this.plugin.openWordPage(entry.id),
+      locate: (entry: VocabEntry) => void this.plugin.locator.locate(entry),
+    };
+  }
+
+  // 1007-2 #8/#13: resets pageCollapsed to "only the page's active group
+  // open" whenever that group changes (topic switched on 字族樹, tab
+  // switched on Word DNA) — a no-op otherwise, so a manual expand/collapse
+  // in between survives unrelated redraws (chip toggles, other words
+  // edited elsewhere…).
+  private syncPageCollapse(page: PageContext): void {
+    if (page.activeGroupKey === this.lastActiveGroupKey) return;
+    this.lastActiveGroupKey = page.activeGroupKey;
+    this.pageCollapsed = resetPageCollapsed(page.groups, page.activeGroupKey);
+  }
+
   // 本篇／全部已經移到側欄頂端共用（#5）；這裡只決定「哪些字」：isListed
   // 的字（#7），本篇模式再疊上「這篇有出現」的 scope（#6）—— scopedEntries()
   // 是兩邊唯一的篩選依據，跟 AI討論／文法共用。
+  //
+  // 1007-2 #8: on a 字族樹／Word DNA page, 本篇 becomes page mode instead —
+  // no exam strip, grouped by the page's own topics/morpheme kinds via
+  // renderPageGroups() rather than the usual flat/by-source-note list.
   private drawWords(root: HTMLElement) {
+    const page = this.currentPage();
+    if (page) {
+      this.syncPageCollapse(page);
+      this.examStripEl = null;
+      renderPageGroups(root, {
+        plugin: this.plugin,
+        page,
+        pageCollapsed: this.pageCollapsed,
+        expandState: this.expandState,
+        busy: this.pageBusy,
+        rowOpts: this.baseRowOpts(),
+        onToggleGroup: () => this.redrawWords(),
+        onRowRemoved: (entryId) => (entryId ? this.handleWordRowChanged(entryId) : this.redrawWords()),
+        onBusyChange: () => this.redrawWords(),
+      });
+      return;
+    }
+
     const activeFile = this.plugin.app.workspace.getActiveFile();
     const noteMode = (this.filterMode ?? "note") === "note" && !!activeFile;
     const list = this.scopedEntries();
@@ -830,17 +948,7 @@ export class VocabSidebarView extends ItemView {
       });
     } else {
       const listEl = root.createEl("div", { cls: "vt-word-list" });
-      const rowOpts: RowOptions = {
-        ui: this.wordUi,
-        // ✦ n after the word (design D1); the dashboard doesn't pass this.
-        decorateWord: (wrap, entry) => {
-          const chip = wrap.createSpan({ cls: "vt-word-tc" });
-          this.wordChips.set(entry.id, chip);
-          this.drawWordChip(chip, entry.id);
-        },
-        openWordPage: (entry: VocabEntry) => void this.plugin.openWordPage(entry.id),
-        locate: (entry: VocabEntry) => void this.plugin.locator.locate(entry),
-      };
+      const rowOpts: RowOptions = this.baseRowOpts();
       if (this.filterMode === "all") {
         // Grouped by source note (or where a word from no note came from),
         // same as the vocab-list dashboard — "This note" stays flat since

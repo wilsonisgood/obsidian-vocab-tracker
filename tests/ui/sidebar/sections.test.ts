@@ -106,3 +106,45 @@ describe("planReveal (1005 回饋 3)", () => {
     expect(planReveal({ filterMode: "note", activePath: null, entry: { source: null } })).toEqual({ filterMode: "note", openGroup: null });
   });
 });
+
+describe("planReveal on a 字族樹／Word DNA page (1007-2 #10)", () => {
+  const page = (activeGroupKey: string | null) => ({
+    groups: [
+      { key: "topic:a", entryIds: ["w1", "w2"] },
+      { key: "topic:b", entryIds: ["w2"] },
+    ],
+    activeGroupKey,
+  });
+
+  it("stays on This note and opens the word's page group, even starting from All", () => {
+    expect(planReveal({ filterMode: "all", activePath: "字族樹.md", entry: { source: null, id: "w1" }, page: page(null) })).toEqual({
+      filterMode: "note",
+      openGroup: "topic:a",
+    });
+  });
+
+  it("prefers the page's currently active group when the word is in it too", () => {
+    expect(planReveal({ filterMode: "note", activePath: "字族樹.md", entry: { source: null, id: "w2" }, page: page("topic:b") })).toEqual(
+      { filterMode: "note", openGroup: "topic:b" }
+    );
+  });
+
+  it("falls back to the word's first containing group when the active one doesn't have it", () => {
+    expect(planReveal({ filterMode: "note", activePath: "字族樹.md", entry: { source: null, id: "w1" }, page: page("topic:b") })).toEqual(
+      { filterMode: "note", openGroup: "topic:a" }
+    );
+  });
+
+  it("a word not on the page at all falls through to the usual rule", () => {
+    expect(
+      planReveal({ filterMode: "note", activePath: "字族樹.md", entry: { source: { path: "other.md", line: 0 }, id: "w9" }, page: page(null) })
+    ).toEqual({ filterMode: "all", openGroup: "note:other.md" });
+  });
+
+  it("without an id, page matching is skipped (back-compat for callers that don't pass one)", () => {
+    expect(planReveal({ filterMode: "all", activePath: "字族樹.md", entry: { source: null }, page: page(null) })).toEqual({
+      filterMode: "all",
+      openGroup: "none",
+    });
+  });
+});

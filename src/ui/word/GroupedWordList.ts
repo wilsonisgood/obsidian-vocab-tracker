@@ -27,6 +27,8 @@ export function groupTitle(g: GroupRef, learn?: Pick<FamilyLookup, "family">, se
       if (f) return t("sidebar.group.family", { name: f.label || f.topic });
       return settled ? t("sidebar.group.familyGone") : t("sidebar.group.family", { name: "…" });
     }
+    case "dna":
+      return t("sidebar.group.dna");
     case "wordlist":
       return t("sidebar.group.wordlist");
     case "none":
@@ -84,6 +86,18 @@ export function renderGroupedVocabList(
         void plugin.openEntryFile("families");
       };
       if (!known) pendingTitles.push({ el: titleEl, group });
+    }
+    if (group.kind === "dna") {
+      // 1007-2 #9: words added from Word DNA's morpheme suggestions get
+      // their own group (「Word DNA」), not 「（沒有來源筆記）」 — the title
+      // opens Word DNA.md, same pattern as 字族樹.
+      titleEl.addClass("vt-group-title-link");
+      titleEl.setAttr("aria-label", t("sidebar.group.dnaOpen"));
+      titleEl.setAttr("role", "link");
+      titleEl.onclick = (e) => {
+        e.stopPropagation();
+        void plugin.openEntryFile("dna");
+      };
     }
     heading.createEl("span", { cls: "vt-group-spacer" });
     heading.createEl("span", { text: String(group.entries.length), cls: "vt-group-count" });

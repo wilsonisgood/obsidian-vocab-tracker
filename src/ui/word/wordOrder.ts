@@ -1,5 +1,6 @@
 import type { VocabEntry } from "../../core/model/entry";
 import { familyOrigin, originFamilyId } from "../../core/model/family";
+import { originMorphemeId } from "../../core/model/morpheme";
 import { nowStamp } from "../../core/nowStamp";
 
 // Word list order and grouping (1005 回饋 1、13). Pure, so the order is
@@ -54,9 +55,12 @@ export function sortByRecent(entries: readonly VocabEntry[]): VocabEntry[] {
 
 //   note      the source note (words clicked in an article, exam imports)
 //   family    no note, added from a word family (origin "family:<id>")
+//   dna       no note, added from Word DNA's morpheme suggestions (origin
+//             "dna:<id>", 1007-2 #9) — one group regardless of which
+//             morpheme, unlike family (which keys per family).
 //   wordlist  no note, imported from an exam word list
 //   none      no note, origin unknown (added by hand from a word page…)
-export type GroupKind = "note" | "family" | "wordlist" | "none";
+export type GroupKind = "note" | "family" | "dna" | "wordlist" | "none";
 
 export interface GroupRef {
   // Stable id of the group (collapsed state is keyed by it).
@@ -72,6 +76,7 @@ export function groupOf(e: Pick<VocabEntry, "source" | "origin">): GroupRef {
   const origin = e.origin;
   const familyId = originFamilyId(origin);
   if (familyId) return { key: familyOrigin(familyId), kind: "family", familyId };
+  if (originMorphemeId(origin)) return { key: "dna", kind: "dna" };
   if (origin === "wordlist") return { key: "wordlist", kind: "wordlist" };
   return { key: "none", kind: "none" };
 }

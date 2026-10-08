@@ -2,6 +2,95 @@
    the like button (規格 #13/#14), the bottom collapse button (規格 #19),
    and 文法提示's render ↔ edit toggle (規格 #22). */
 
+/* Wave 10 S (1007-2 #8/#13): 側欄「本篇」頁面模式 — a word that's in the
+   library but not liked yet sits dimmed next to the liked ones above it
+   (WordRow's dimUnliked option). */
+.vt-row-unliked {
+  opacity: 0.6;
+}
+
+/* Small morpheme tag next to the word on a Word DNA page-mode row (規格
+   #13, e.g. 「trans-」) — same shape as sidebar.css's .vt-row-badge
+   (part-of-speech) but its own muted colour so the two read as different
+   kinds of label. */
+.vt-row-morpheme-chip {
+  margin-left: 5px;
+  font-size: 0.7em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  vertical-align: middle;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+/* ── 頁面模式的灰色建議字（規格 #8）: emoji · word · 中文 · chips · ＋ ── */
+.vt-page-suggest {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  opacity: 0.7;
+}
+
+.vt-page-suggest-emoji {
+  flex-shrink: 0;
+}
+
+.vt-page-suggest-word {
+  color: var(--text-normal);
+  flex-shrink: 0;
+}
+
+.vt-page-suggest-zh {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.vt-page-suggest-add {
+  position: relative;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+}
+
+.vt-page-suggest-add:hover {
+  color: var(--text-normal);
+}
+
+.vt-page-suggest-add.is-busy {
+  pointer-events: none;
+}
+
+.vt-page-suggest-add.is-busy svg {
+  opacity: 0.35;
+}
+
+.vt-page-suggest-add.is-busy::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.3em;
+  height: 1.3em;
+  margin: -0.65em 0 0 -0.65em;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: vt-page-suggest-spin 0.8s linear infinite;
+}
+
+@keyframes vt-page-suggest-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ── Like button (replaces the old ✕ in the header, and the sheet's
    footer 🗑) — plain ♡/♥ glyphs, not a Lucide icon (see WordRow.ts). The
    header one reuses the old ✕'s position/sizing; the sheet footer one
