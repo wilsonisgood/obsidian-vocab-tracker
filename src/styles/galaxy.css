@@ -155,41 +155,36 @@
   stroke: var(--text-normal);
 }
 
-/* ── Block integration (09 §6.2, w9-rules.md「GB」): 主題清單、工具列、詳情
-   面板（GalaxyDetail）、全畫面 GalaxyView 的外殼。原型 word-galaxy-dna.html
-   的 .topics/.topic/.gtools/.pill/.obpanel 一組，換成 Obsidian 的 --background-
-   等 token。 ── */
-
-.vt-gx-shell {
-  container-type: inline-size;
-}
+/* ── Block integration (09 §6.2, 10 #4/#5): 主題列、工具列、全畫面 GalaxyView
+   的外殼 — 1007-2 #4/#5 改成直向堆疊：主題列（橫向可拖）→ 工具列（橫向可
+   拖）→ 圖，detail 面板（GalaxyDetail）整個拿掉 (1007-2 #7)。原型
+   word-galaxy-dna.html 的 .topics/.topic/.gtools/.pill 一組，換成 Obsidian
+   的 --background- 等 token。 ── */
 
 .vt-gx-bench {
-  display: grid;
-  grid-template-columns: 210px minmax(0, 1fr) 260px;
-  gap: 14px;
-  align-items: start;
-}
-
-/* 主題清單 */
-
-.vt-gx-topics {
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+
+/* 主題列 (#4)：emoji＋英文＋中文一行，拿掉已學/未學數字與星座縮圖；橫向
+   可拖（.vt-hscroll 由 dragScroll() 加在同一個元素上）。 */
+
+.vt-gx-topics {
   gap: 8px;
 }
 
 .vt-gx-topic {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 4px 10px;
+  display: inline-flex;
   align-items: center;
+  gap: 8px;
+  white-space: nowrap;
   text-align: left;
   border: 1px solid var(--background-modifier-border);
   background: var(--background-secondary);
   color: var(--text-normal);
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   cursor: pointer;
   font: inherit;
 }
@@ -200,14 +195,8 @@
 }
 
 .vt-gx-topic-em {
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1;
-}
-
-.vt-gx-topic-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
 }
 
 .vt-gx-topic-name {
@@ -219,41 +208,7 @@
   color: var(--text-muted);
 }
 
-.vt-gx-topic-ct {
-  grid-column: 1 / -1;
-  font-size: var(--font-ui-smaller, 12px);
-  color: var(--text-muted);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.vt-gx-topic-thumb {
-  width: 74px;
-  height: 30px;
-  flex: 0 0 auto;
-}
-
-.vt-gx-topic-line {
-  stroke: var(--background-modifier-border);
-}
-
-.vt-gx-topic-dot {
-  fill: var(--background-primary);
-  stroke: var(--text-muted);
-}
-
-.vt-gx-topic-dot.is-known {
-  fill: var(--interactive-accent);
-  stroke: var(--interactive-accent);
-}
-
-.vt-gx-topic-hub {
-  fill: var(--interactive-accent);
-}
-
-/* 工具列 + 圖 */
+/* 工具列 (#5) + 圖 */
 
 .vt-gx-stage {
   display: flex;
@@ -263,8 +218,6 @@
 }
 
 .vt-gx-toolbar {
-  display: flex;
-  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
@@ -302,7 +255,7 @@
 
 .vt-gx-graph {
   position: relative;
-  min-height: 420px;
+  min-height: 210px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 12px;
   overflow: hidden;
@@ -312,190 +265,16 @@
 .vt-gx-graph .vt-gx-svg {
   width: 100%;
   height: 100%;
-  min-height: 420px;
+  min-height: 210px;
 }
 
-/* 詳情面板（GalaxyDetail） */
-
-.vt-gx-detail-host {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-
-.vt-gx-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.vt-gx-progress-text {
-  font-size: var(--font-ui-smaller, 12px);
-  color: var(--text-muted);
-}
-
-.vt-gx-bar {
-  height: 6px;
-  border-radius: 999px;
-  background: var(--background-modifier-border);
-  overflow: hidden;
-}
-
-.vt-gx-bar span {
-  display: block;
-  height: 100%;
-  background: var(--interactive-accent);
-}
-
-.vt-gx-sub {
-  font-size: var(--font-ui-smaller, 12px);
-  color: var(--text-muted);
-}
-
-.vt-gx-empty {
-  font-size: var(--font-ui-smaller, 13px);
-  color: var(--text-muted);
-}
-
-.vt-gx-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.vt-gx-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid transparent;
-  background: transparent;
-  border-radius: 8px;
-  padding: 6px 8px;
-  cursor: pointer;
-  font: inherit;
-  text-align: left;
-  color: var(--text-normal);
-}
-
-.vt-gx-row:hover {
-  background: var(--background-modifier-hover);
-}
-
-.vt-gx-row-emoji {
-  font-size: 18px;
-}
-
-.vt-gx-row-word {
-  font-weight: var(--font-medium, 500);
-}
-
-.vt-gx-row-zh {
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller, 12px);
-  margin-left: auto;
-}
-
-.vt-gx-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.vt-gx-card-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.vt-gx-card-emoji {
-  font-size: 34px;
-  line-height: 1;
-}
-
-.vt-gx-card-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.vt-gx-card-word {
-  font-weight: var(--font-bold, 700);
-  font-size: var(--font-ui-medium, 15px);
-}
-
-.vt-gx-card-ipa {
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller, 12px);
-}
-
-.vt-gx-card-collapse {
-  flex: 0 0 auto;
-}
-
-.vt-gx-card-zh {
-  color: var(--text-normal);
-}
-
-.vt-gx-card-example {
-  color: var(--text-muted);
-  font-size: var(--font-ui-small, 13px);
-}
-
-.vt-gx-card-source {
-  font-size: var(--font-ui-smaller, 11px);
-  color: var(--text-faint);
-  margin-top: 2px;
-}
-
-.vt-gx-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.vt-gx-card-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-primary);
-  color: var(--text-normal);
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font: inherit;
-  font-size: var(--font-ui-smaller, 13px);
-}
-
-.vt-gx-card-btn.mod-cta {
-  background: var(--interactive-accent);
-  border-color: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-
-/* 容器 < 700px：詳情移到圖下面、主題清單變橫向捲動 (09 §6.2) */
-@container (max-width: 700px) {
-  .vt-gx-bench {
-    grid-template-columns: 1fr;
-  }
-
-  .vt-gx-topics {
-    flex-direction: row;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-
-  .vt-gx-topic {
-    min-width: 190px;
-  }
-}
-
-/* 全畫面 GalaxyView */
+/* 全畫面 GalaxyView（透過 FamiliesBlock 的 opts.fullscreen 在根節點加這個
+   class，1007-2 #6）*/
 .vt-gx-fullscreen .vt-gx-shell {
   padding: 12px;
 }
 
 .vt-gx-fullscreen .vt-gx-graph,
 .vt-gx-fullscreen .vt-gx-svg {
-  min-height: 70vh;
+  min-height: 35vh;
 }

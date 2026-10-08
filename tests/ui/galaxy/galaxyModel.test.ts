@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { setLocale } from "../../../src/core/i18n";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import type { Family, FamilyMember } from "../../../src/core/model/family";
-import { buildGalaxyModel, constellationPoints, type GalaxyLookup, zoomFilter } from "../../../src/ui/galaxy/galaxyModel";
+import { buildGalaxyModel, constellationPoints, familyEmoji, type GalaxyLookup, zoomFilter } from "../../../src/ui/galaxy/galaxyModel";
 import { entry } from "../../services/learn/fakes";
 
 afterEach(() => setLocale("en"));
@@ -151,6 +151,16 @@ describe("buildGalaxyModel", () => {
     expect(m.nodes).toEqual([expect.objectContaining({ id: "hub" })]);
     expect(m.links).toEqual([]);
     expect(m.counts).toEqual({ known: 0, unknown: 0, total: 0 });
+  });
+});
+
+describe("familyEmoji", () => {
+  it("有設 emoji 時原樣帶出", () => {
+    expect(familyEmoji({ emoji: "🍳" })).toBe("🍳");
+  });
+
+  it("沒設時預設 🌌（跟 hub 節點、主題列、頁面 publish 同一個值）", () => {
+    expect(familyEmoji({})).toBe("🌌");
   });
 });
 
