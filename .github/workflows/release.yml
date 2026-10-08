@@ -1,4 +1,5 @@
-# 推 tag 時建立 GitHub Release（draft），附上 BRAT / Obsidian 要的三個未壓縮檔案。
+# 推 tag 時直接建立並發佈 GitHub Release（不是 draft），附上 BRAT / Obsidian
+# 要的三個未壓縮檔案。一般由 release.sh 推 tag 觸發；不依賴 gh 之外的工具。
 #
 # 為什麼不在 CI 重新 build：
 #   package-lock.json 被 .gitignore 排除，CI 跑 `npm install` 會依 ^ 範圍裝到
@@ -8,9 +9,9 @@
 #   那一份。發版前請在本機確認 build 產物已 commit（見 docs/plans/05-brat-release-guide.md）。
 #
 # 版號規則（BRAT 以 tag 為準，tag、release 名稱、manifest.json 的 version 要一字不差）：
-#   - tag 不加 v：2.0.0-beta.1，不是 v2.0.0-beta.1
-#   - 版號含 "-"（2.0.0-beta.1 這類）→ release 標成 prerelease
-#   - 一律建成 draft，到 GitHub 網頁確認後再按 Publish；draft 在發佈前 BRAT 看不到
+#   - 版號只用純數字 X.Y.Z（例如 2.0.0），不接受帶 "-" 的版號（2.0.0-beta.1 這類）
+#   - tag 不加 v：2.0.0，不是 v2.0.0
+#   - 直接發佈成正式 release 並標成 --latest；不建 draft、沒有 prerelease
 name: Release
 
 on:
@@ -44,6 +45,11 @@ jobs:
 
           echo "tag=$TAG manifest=$manifest_version package=$package_version minAppVersion=$min_app"
 
+          if ! [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::tag ($TAG) 不是純數字版號 X.Y.Z。版號不接受 \"-\"（像 2.0.0-beta.1），請刪掉這個 tag 重打。"
+            exit 1
+          fi
+
           if [ "$TAG" != "$manifest_version" ]; then
             echo "::error::tag ($TAG) 跟 manifest.json 的 version ($manifest_version) 不一致。BRAT 以 tag 為準，請刪掉這個 tag，改好版號後重打。"
             exit 1
@@ -74,12 +80,6 @@ jobs:
             exit 1
           fi
 
-          if [[ "$manifest_version" == *-* ]]; then
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Extract release notes from CHANGELOG.md
         env:
           TAG: ${{ github.ref_name }}
@@ -92,26 +92,22 @@ jobs:
             found { print }
           ' CHANGELOG.md > release-notes.md || true
           if [ ! -s release-notes.md ]; then
-            echo "::warning::CHANGELOG.md 沒有 [$TAG] 這一節，release notes 先留一行說明，請在 draft 裡補上。"
+            echo "::warning::CHANGELOG.md 沒有 [$TAG] 這一節，release notes 先留一行說明，請事後到 GitHub 的 Releases 頁補上。"
             echo "見 CHANGELOG.md。" > release-notes.md
           fi
           cat release-notes.md
 
-      - name: Create draft release
+      - name: Create release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
-          PRERELEASE: ${{ steps.meta.outputs.prerelease }}
         run: |
           set -euo pipefail
           if gh release view "$TAG" > /dev/null 2>&1; then
             echo "::error::Release $TAG 已經存在。要重建請先在 GitHub 刪掉那個 release（和 tag），再重推 tag。"
             exit 1
           fi
-          flags=(--draft --verify-tag --title "$TAG" --notes-file release-notes.md)
-          if [ "$PRERELEASE" = "true" ]; then
-            flags+=(--prerelease)
-          fi
-          gh release create "$TAG" "${flags[@]}" main.js manifest.json styles.css
-          echo "已建立 draft release $TAG（prerelease=$PRERELEASE）。請到 GitHub 的 Releases 頁確認後按 Publish。"
+          gh release create "$TAG" --verify-tag --latest --title "$TAG" --notes-file release-notes.md \
+            main.js manifest.json styles.css
+          echo "已發佈正式 release $TAG。"
