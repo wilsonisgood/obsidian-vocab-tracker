@@ -41,22 +41,13 @@
 }
 
 /* ── Chips (「-ee 接受動作的人 · 已學 2」) ───────────────────────── */
+/* 1007-2 #11: one row at every width, overflowing right, draggable
+   (dragScroll adds .vt-hscroll, kit.css — that supplies the flex/nowrap/
+   overflow-x/gap). Button height is content-driven (min-height only), and
+   its two lines of text never wrap or get clipped. */
 
 .vt-dna-chips {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-@container (max-width: 640px) {
-  .vt-dna-chips {
-    flex-direction: row;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-  .vt-dna-chip {
-    min-width: 150px;
-  }
+  margin-bottom: 2px;
 }
 
 .vt-dna-chip {
@@ -83,11 +74,13 @@
 .vt-dna-chip-form {
   font-family: var(--font-monospace);
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .vt-dna-chip-meaning {
   font-size: var(--font-ui-smaller);
   color: var(--vt-muted);
+  white-space: nowrap;
 }
 
 .vt-dna-tab-empty {
@@ -95,23 +88,12 @@
   font-size: var(--font-ui-small);
 }
 
-/* ── Layout: main + side, stacks under 640px ─────────────────────── */
+/* ── Layout: single column ────────────────────────────────────────
+   1007-2 #12: 相關單字整塊 (progress bar／已學清單／灑建議字加入) 拿掉之
+   後，原本的 main+side 兩欄右邊只剩 AI Tutor，比左邊空得多；AI Tutor 搬
+   到 main 底下、單欄比較不空（dna.ts render()）。 */
 
-.vt-dna-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
-@container (max-width: 640px) {
-  .vt-dna-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.vt-dna-main,
-.vt-dna-side {
+.vt-dna-main {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -370,88 +352,9 @@ button.vt-dna-base {
   color: var(--vt-accent-text);
 }
 
-/* ── Side panel ───────────────────────────────────────────────── */
-
-.vt-dna-progress {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: var(--font-ui-smaller);
-  color: var(--vt-muted);
-}
-
-.vt-dna-bar {
-  flex: 1;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--vt-surface);
-  overflow: hidden;
-}
-
-.vt-dna-bar span {
-  display: block;
-  height: 100%;
-  background: var(--vt-accent);
-}
-
-.vt-dna-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-height: 260px;
-  overflow: auto;
-}
-
-.vt-dna-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  min-height: var(--vt-tap);
-  border-radius: 8px;
-  border: 0;
-  background: transparent;
-  color: var(--text-normal);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-button.vt-dna-row:hover {
-  background: var(--vt-surface);
-}
-
-.vt-dna-row.is-active {
-  background: color-mix(in srgb, var(--vt-accent) 14%, transparent);
-}
-
-.vt-dna-row-emoji {
-  width: 22px;
-  text-align: center;
-  font-size: 16px;
-}
-
-.vt-dna-row-word {
-  font-weight: 500;
-}
-
-.vt-dna-row-tag {
-  font-size: 11px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: var(--vt-dna-suffix-soft);
-  color: var(--vt-dna-suffix);
-}
-
-.vt-dna-row-zh {
-  margin-left: auto;
-  color: var(--vt-muted);
-  font-size: var(--font-ui-smaller);
-}
-
-.vt-dna-row-add {
-  flex-shrink: 0;
-}
+/* ── AI Tutor (A9) ────────────────────────────────────────────── */
+/* 1007-2 #12 removed the related-words side panel (progress bar／已學
+   清單／建議字＋) this used to sit under — its CSS went with it. */
 
 .vt-dna-tutor {
   display: flex;

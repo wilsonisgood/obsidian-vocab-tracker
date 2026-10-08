@@ -10,8 +10,8 @@ import {
   parseDnaParams,
   parseTimeline,
   pendingFocus,
-  relatedWords,
   resolveDnaSelection,
+  resolveFocusEntry,
   selectionForMorpheme,
   wiktionaryUrl,
 } from "../../../src/ui/dna/dnaModel";
@@ -68,33 +68,6 @@ describe("morphemeChips", () => {
     expect(chips.map((c) => c.id)).toEqual(["b", "a"]);
     expect(chips[0]).toMatchObject({ form: "-ure", learnedCount: 2 });
     expect(chips[1]).toMatchObject({ form: "-ee", learnedCount: 1 });
-  });
-});
-
-describe("relatedWords", () => {
-  const emojiOf = (e: VocabEntry) => `[${e.word}]`;
-
-  it("lists learned before suggested", () => {
-    const stat = makeStat({
-      learned: [makeEntry({ id: "e1", word: "tenure", definitionZh: "任期" })],
-      suggested: [{ word: "failure", zh: "失敗", emoji: "❌" }],
-    });
-    const list = relatedWords(stat, emojiOf);
-    expect(list.map((r) => r.kind)).toEqual(["learned", "suggested"]);
-    expect(list[0]).toMatchObject({ word: "tenure", zh: "任期", emoji: "[tenure]", entryId: "e1" });
-    expect(list[1]).toMatchObject({ word: "failure", zh: "失敗", emoji: "❌" });
-  });
-
-  it("drops a suggestion that duplicates an already-learned word (case/space insensitive)", () => {
-    const stat = makeStat({
-      learned: [makeEntry({ id: "e1", word: "Tenure" })],
-      suggested: [
-        { word: " tenure ", zh: "任期", emoji: "🪑" },
-        { word: "failure", zh: "失敗", emoji: "❌" },
-      ],
-    });
-    const list = relatedWords(stat, emojiOf);
-    expect(list.map((r) => r.word)).toEqual(["Tenure", "failure"]);
   });
 });
 
@@ -220,5 +193,29 @@ describe("DNA focus from a word page (09 §7.1)", () => {
     expect(pendingFocus(req, 1000, 1500)).toBeNull();
     expect(pendingFocus(req, 0, 1000 + DNA_FOCUS_TTL_MS + 1)).toBeNull();
     expect(pendingFocus(undefined, 0, 1500)).toBeNull();
+  });
+});
+
+describe("resolveFocusEntry (1007-2 #14)", () => {
+  const e1 = makeEntry({ id: "e1", word: "tenure" });
+  const outside = makeEntry({ id: "outside", word: "failure" });
+  const stat = makeStat({ learned: [e1] });
+  const findById = (id: string): VocabEntry | undefined => [e1, outside].find((e) => e.id === id);
+
+  it("prefers the current stat's own learned entry", () => {
+    expect(resolveFocusEntry(stat, "e1", findById)).toBe(e1);
+  });
+
+  it("falls through to any vocab entry when it isn't learned for this morpheme (word not yet 拆過/liked)", () => {
+    expect(resolveFocusEntry(stat, "outside", findById)).toBe(outside);
+  });
+
+  it("defaults to the stat's first learned word when the id names no vocab entry, or there is none", () => {
+    expect(resolveFocusEntry(stat, "nope", findById)).toBe(e1);
+    expect(resolveFocusEntry(stat, undefined, findById)).toBe(e1);
+  });
+
+  it("is undefined when there's no learned word and the id doesn't resolve", () => {
+    expect(resolveFocusEntry(makeStat({ learned: [] }), undefined, findById)).toBeUndefined();
   });
 });

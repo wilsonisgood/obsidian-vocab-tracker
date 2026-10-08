@@ -129,37 +129,32 @@ export function morphemeChips(stats: readonly MorphemeStat[]): MorphemeChip[] {
     .sort((a, b) => b.learnedCount - a.learnedCount);
 }
 
-// ── Related words (side list) ────────────────────────────────────
-
-export interface RelatedWord {
-  kind: "learned" | "suggested";
-  word: string;
-  zh: string;
-  emoji: string;
-  entryId?: string;
-}
-
-// 已學在前、建議在後；建議裡跟已學同一個字（不分大小寫、去頭尾空白）的要
-// 扣掉，不然「還有哪些字」展開出一個早就在單字庫裡的字。
-export function relatedWords(stat: MorphemeStat, emojiOf: (entry: VocabEntry) => string): RelatedWord[] {
-  const key = (w: string) => w.trim().toLowerCase();
-  const learnedKeys = new Set(stat.learned.map((e) => key(e.word)));
-  const learned: RelatedWord[] = stat.learned.map((e) => ({
-    kind: "learned",
-    word: e.word,
-    zh: e.definitionZh ?? "",
-    emoji: emojiOf(e),
-    entryId: e.id,
-  }));
-  const suggested: RelatedWord[] = stat.suggested
-    .filter((s) => !learnedKeys.has(key(s.word)))
-    .map((s) => ({ kind: "suggested", word: s.word, zh: s.zh, emoji: s.emoji }));
-  return [...learned, ...suggested];
-}
-
 // 預設焦點字＝第一個已學字（stats() 保證 learned.length >= 1）。
 export function defaultFocusEntryId(stat: MorphemeStat): string | undefined {
   return stat.learned[0]?.id;
+}
+
+// ── Focus entry resolution (1007-2 #14) ──────────────────────────────
+// `focusEntryId` may now name any word in the vocab, not just one tied to
+// the currently-selected chip — the sidebar's "本篇" list can point it at
+// a word that belongs to a different chip/tab than the one being shown.
+// Preference order: the current stat's own learned entry (clicking a chip
+// keeps showing one of its words), then any vocab entry by id (a sidebar
+// pick that isn't "learned" for *this* morpheme — added/suggested but not
+// liked/analyzed — which is exactly when the caller should fall through
+// to dna.notAnalyzed), then the stat's first learned word as the default.
+export function resolveFocusEntry(
+  cur: MorphemeStat,
+  focusEntryId: string | undefined,
+  findEntryById: (id: string) => VocabEntry | undefined
+): VocabEntry | undefined {
+  if (focusEntryId) {
+    const inLearned = cur.learned.find((e) => e.id === focusEntryId);
+    if (inLearned) return inLearned;
+    const outside = findEntryById(focusEntryId);
+    if (outside) return outside;
+  }
+  return cur.learned[0];
 }
 
 // ── Wiktionary link ───────────────────────────────────────────────
