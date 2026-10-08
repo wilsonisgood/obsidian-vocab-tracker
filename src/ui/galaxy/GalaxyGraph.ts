@@ -8,7 +8,7 @@ import type { Selection } from "d3-selection";
 // `transition()` factory too, but nothing here calls it directly — the
 // selection method is what we need.
 import "d3-transition";
-import { zoom, zoomIdentity } from "d3-zoom";
+import { zoom, zoomIdentity, zoomTransform } from "d3-zoom";
 import type { ZoomBehavior } from "d3-zoom";
 
 import type { GalaxyModel, GalaxyNode } from "./galaxyModel";
@@ -331,6 +331,21 @@ export class GalaxyGraph {
   recenter(): void {
     if (!this.lastModel) return;
     this.setData(this.lastModel, { recenter: true });
+  }
+
+  // Pans (keeping the current zoom scale) so the given node sits at the
+  // view's center — side-bar → page handoff (1007-2 #14: 側欄點本篇分類裡
+  // 的字，星系選取並置中那個節點). A no-op for an unknown id or before the
+  // first setData(); d3-force assigns every node an initial x/y as soon as
+  // forceSimulation(nodes) runs (setData, above), so this reads a position
+  // that's always already set, even before the first tick.
+  focusNode(id: string): void {
+    const node = this.sim?.nodes().find((n) => n.id === id);
+    if (!node || node.x === undefined || node.y === undefined) return;
+    const current = zoomTransform(this.svgEl);
+    const transform = zoomIdentity.translate(this.width / 2 - node.x * current.k, this.height / 2 - node.y * current.k).scale(current.k);
+    if (this.reduceMotion) this.svg.call(this.zoomBehavior.transform, transform);
+    else this.svg.transition().duration(RECENTER_MS).call(this.zoomBehavior.transform, transform);
   }
 
   destroy(): void {

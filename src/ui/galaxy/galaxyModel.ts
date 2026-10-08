@@ -54,6 +54,13 @@ export interface GalaxyOpts {
 
 const wordKey = (w: string): string => w.trim().toLowerCase();
 
+// 字族沒設 emoji 時的預設 🌌 — hub 節點、主題列按鈕 (galaxyView.model.ts's
+// buildTopics)、頁面 publish 的分類標題 (familiesPage.ts) 都從這裡拿，三邊
+// 保證同一個值 (1007-2 #4 #8:「emoji 跟主題按鈕同一個來源」)。
+export function familyEmoji(f: Pick<Family, "emoji">): string {
+  return f.emoji ?? "🌌";
+}
+
 // A word's node id (entryId when it's in the vocab list, `w:<lowercase
 // word>` for a plain suggestion) — exported so callers outside this file
 // (families.ts's topic list, GalaxyView) can resolve an onAdd(id) back to
@@ -93,9 +100,7 @@ export function buildGalaxyModel(family: Family, lookup: GalaxyLookup, opts: Gal
     kind: "hub",
     word: family.topic,
     zh: family.label,
-    // 字族沒設 emoji 時的預設 (09 整合事項 GB 小修 — 原本是 ""，規格要求
-    // 🌌；同一個值也餵給主題清單的星系 icon，見 galaxyView.model.ts)。
-    emoji: family.emoji ?? "🌌",
+    emoji: familyEmoji(family),
     fresh: false,
     ariaLabel: [family.topic, family.label].filter(Boolean).join(" "),
   };

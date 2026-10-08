@@ -223,6 +223,27 @@ export class MarkdownView extends View {
   previewMode = { rerender() {} };
 }
 
+// Minimal fake of obsidian's FileView (1007-2 #6 — src/ui/galaxy/GalaxyView.ts
+// extends it so workspace.getActiveFile() resolves to 字族樹.md while the
+// galaxy is open). This harness's WorkspaceLeaf#setViewState doesn't drive
+// a real file-open lifecycle, so onLoadFile/onUnloadFile are plain no-op
+// stubs here — just enough for `extends FileView` / `instanceof FileView`
+// to work in tests that merely load main.ts, not to exercise the galaxy's
+// own file-switching behavior.
+export class FileView extends ItemView {
+  allowNoFile = false;
+  file: TFile | null = null;
+  async onLoadFile(file: TFile): Promise<void> {
+    this.file = file;
+  }
+  async onUnloadFile(_file: TFile): Promise<void> {
+    this.file = null;
+  }
+  canAcceptExtension(_extension: string): boolean {
+    return true;
+  }
+}
+
 export class Plugin extends Component {
   readonly views = new Map<string, (leaf: WorkspaceLeaf) => View>();
   readonly postProcessors: ((el: HTMLElement, ctx: any) => unknown)[] = [];
