@@ -143,6 +143,23 @@
     animation: vt-pronounce-pulse 1.2s ease-in-out infinite;
   }
 }
+.vt-hscroll {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 8px;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.vt-hscroll > * {
+  flex: 0 0 auto;
+}
+.vt-hscroll.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
 
 /* src/styles/sidebar.css */
 .vt-sidebar {
@@ -804,6 +821,75 @@ body.is-mobile .vt-sb-section-head {
 }
 
 /* src/styles/row.css */
+.vt-row-unliked {
+  opacity: 0.6;
+}
+.vt-row-morpheme-chip {
+  margin-left: 5px;
+  font-size: 0.7em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  vertical-align: middle;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+.vt-page-suggest {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  opacity: 0.7;
+}
+.vt-page-suggest-emoji {
+  flex-shrink: 0;
+}
+.vt-page-suggest-word {
+  color: var(--text-normal);
+  flex-shrink: 0;
+}
+.vt-page-suggest-zh {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.vt-page-suggest-add {
+  position: relative;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+}
+.vt-page-suggest-add:hover {
+  color: var(--text-normal);
+}
+.vt-page-suggest-add.is-busy {
+  pointer-events: none;
+}
+.vt-page-suggest-add.is-busy svg {
+  opacity: 0.35;
+}
+.vt-page-suggest-add.is-busy::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.3em;
+  height: 1.3em;
+  margin: -0.65em 0 0 -0.65em;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: vt-page-suggest-spin 0.8s linear infinite;
+}
+@keyframes vt-page-suggest-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .vt-row-like {
   color: var(--text-muted);
   padding: 0 3px;
@@ -3146,31 +3232,25 @@ body.is-mobile .vt-wh-speak {
 .vt-gx-node:focus .vt-gx-plus circle {
   stroke: var(--text-normal);
 }
-.vt-gx-shell {
-  container-type: inline-size;
-}
 .vt-gx-bench {
-  display: grid;
-  grid-template-columns: 210px minmax(0, 1fr) 260px;
-  gap: 14px;
-  align-items: start;
-}
-.vt-gx-topics {
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+.vt-gx-topics {
   gap: 8px;
 }
 .vt-gx-topic {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 4px 10px;
+  display: inline-flex;
   align-items: center;
+  gap: 8px;
+  white-space: nowrap;
   text-align: left;
   border: 1px solid var(--background-modifier-border);
   background: var(--background-secondary);
   color: var(--text-normal);
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   cursor: pointer;
   font: inherit;
 }
@@ -3179,13 +3259,8 @@ body.is-mobile .vt-wh-speak {
   background: var(--background-modifier-hover);
 }
 .vt-gx-topic-em {
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1;
-}
-.vt-gx-topic-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
 }
 .vt-gx-topic-name {
   font-weight: var(--font-medium, 500);
@@ -3194,34 +3269,6 @@ body.is-mobile .vt-wh-speak {
   font-size: var(--font-ui-smaller, 12px);
   color: var(--text-muted);
 }
-.vt-gx-topic-ct {
-  grid-column: 1 / -1;
-  font-size: var(--font-ui-smaller, 12px);
-  color: var(--text-muted);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-.vt-gx-topic-thumb {
-  width: 74px;
-  height: 30px;
-  flex: 0 0 auto;
-}
-.vt-gx-topic-line {
-  stroke: var(--background-modifier-border);
-}
-.vt-gx-topic-dot {
-  fill: var(--background-primary);
-  stroke: var(--text-muted);
-}
-.vt-gx-topic-dot.is-known {
-  fill: var(--interactive-accent);
-  stroke: var(--interactive-accent);
-}
-.vt-gx-topic-hub {
-  fill: var(--interactive-accent);
-}
 .vt-gx-stage {
   display: flex;
   flex-direction: column;
@@ -3229,8 +3276,6 @@ body.is-mobile .vt-wh-speak {
   min-width: 0;
 }
 .vt-gx-toolbar {
-  display: flex;
-  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
@@ -3263,7 +3308,7 @@ body.is-mobile .vt-wh-speak {
 }
 .vt-gx-graph {
   position: relative;
-  min-height: 420px;
+  min-height: 210px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 12px;
   overflow: hidden;
@@ -3272,157 +3317,14 @@ body.is-mobile .vt-wh-speak {
 .vt-gx-graph .vt-gx-svg {
   width: 100%;
   height: 100%;
-  min-height: 420px;
-}
-.vt-gx-detail-host {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-.vt-gx-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.vt-gx-progress-text {
-  font-size: var(--font-ui-smaller, 12px);
-  color: var(--text-muted);
-}
-.vt-gx-bar {
-  height: 6px;
-  border-radius: 999px;
-  background: var(--background-modifier-border);
-  overflow: hidden;
-}
-.vt-gx-bar span {
-  display: block;
-  height: 100%;
-  background: var(--interactive-accent);
-}
-.vt-gx-sub {
-  font-size: var(--font-ui-smaller, 12px);
-  color: var(--text-muted);
-}
-.vt-gx-empty {
-  font-size: var(--font-ui-smaller, 13px);
-  color: var(--text-muted);
-}
-.vt-gx-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.vt-gx-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid transparent;
-  background: transparent;
-  border-radius: 8px;
-  padding: 6px 8px;
-  cursor: pointer;
-  font: inherit;
-  text-align: left;
-  color: var(--text-normal);
-}
-.vt-gx-row:hover {
-  background: var(--background-modifier-hover);
-}
-.vt-gx-row-emoji {
-  font-size: 18px;
-}
-.vt-gx-row-word {
-  font-weight: var(--font-medium, 500);
-}
-.vt-gx-row-zh {
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller, 12px);
-  margin-left: auto;
-}
-.vt-gx-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.vt-gx-card-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-.vt-gx-card-emoji {
-  font-size: 34px;
-  line-height: 1;
-}
-.vt-gx-card-info {
-  flex: 1;
-  min-width: 0;
-}
-.vt-gx-card-word {
-  font-weight: var(--font-bold, 700);
-  font-size: var(--font-ui-medium, 15px);
-}
-.vt-gx-card-ipa {
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller, 12px);
-}
-.vt-gx-card-collapse {
-  flex: 0 0 auto;
-}
-.vt-gx-card-zh {
-  color: var(--text-normal);
-}
-.vt-gx-card-example {
-  color: var(--text-muted);
-  font-size: var(--font-ui-small, 13px);
-}
-.vt-gx-card-source {
-  font-size: var(--font-ui-smaller, 11px);
-  color: var(--text-faint);
-  margin-top: 2px;
-}
-.vt-gx-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.vt-gx-card-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-primary);
-  color: var(--text-normal);
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font: inherit;
-  font-size: var(--font-ui-smaller, 13px);
-}
-.vt-gx-card-btn.mod-cta {
-  background: var(--interactive-accent);
-  border-color: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-@container (max-width: 700px) {
-  .vt-gx-bench {
-    grid-template-columns: 1fr;
-  }
-  .vt-gx-topics {
-    flex-direction: row;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-  .vt-gx-topic {
-    min-width: 190px;
-  }
+  min-height: 210px;
 }
 .vt-gx-fullscreen .vt-gx-shell {
   padding: 12px;
 }
 .vt-gx-fullscreen .vt-gx-graph,
 .vt-gx-fullscreen .vt-gx-svg {
-  min-height: 70vh;
+  min-height: 35vh;
 }
 
 /* src/styles/dna.css */
@@ -3457,19 +3359,7 @@ body.is-mobile .vt-wh-speak {
   font-weight: 600;
 }
 .vt-dna-chips {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-@container (max-width: 640px) {
-  .vt-dna-chips {
-    flex-direction: row;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-  .vt-dna-chip {
-    min-width: 150px;
-  }
+  margin-bottom: 2px;
 }
 .vt-dna-chip {
   display: flex;
@@ -3493,28 +3383,18 @@ body.is-mobile .vt-wh-speak {
 .vt-dna-chip-form {
   font-family: var(--font-monospace);
   font-weight: 500;
+  white-space: nowrap;
 }
 .vt-dna-chip-meaning {
   font-size: var(--font-ui-smaller);
   color: var(--vt-muted);
+  white-space: nowrap;
 }
 .vt-dna-tab-empty {
   color: var(--vt-muted);
   font-size: var(--font-ui-small);
 }
-.vt-dna-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-@container (max-width: 640px) {
-  .vt-dna-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-.vt-dna-main,
-.vt-dna-side {
+.vt-dna-main {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -3730,75 +3610,6 @@ button.vt-dna-base {
 .vt-dna-verify.is-active {
   border-color: var(--vt-accent);
   color: var(--vt-accent-text);
-}
-.vt-dna-progress {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: var(--font-ui-smaller);
-  color: var(--vt-muted);
-}
-.vt-dna-bar {
-  flex: 1;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--vt-surface);
-  overflow: hidden;
-}
-.vt-dna-bar span {
-  display: block;
-  height: 100%;
-  background: var(--vt-accent);
-}
-.vt-dna-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-height: 260px;
-  overflow: auto;
-}
-.vt-dna-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  min-height: var(--vt-tap);
-  border-radius: 8px;
-  border: 0;
-  background: transparent;
-  color: var(--text-normal);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-button.vt-dna-row:hover {
-  background: var(--vt-surface);
-}
-.vt-dna-row.is-active {
-  background: color-mix(in srgb, var(--vt-accent) 14%, transparent);
-}
-.vt-dna-row-emoji {
-  width: 22px;
-  text-align: center;
-  font-size: 16px;
-}
-.vt-dna-row-word {
-  font-weight: 500;
-}
-.vt-dna-row-tag {
-  font-size: 11px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: var(--vt-dna-suffix-soft);
-  color: var(--vt-dna-suffix);
-}
-.vt-dna-row-zh {
-  margin-left: auto;
-  color: var(--vt-muted);
-  font-size: var(--font-ui-smaller);
-}
-.vt-dna-row-add {
-  flex-shrink: 0;
 }
 .vt-dna-tutor {
   display: flex;
