@@ -70,5 +70,9 @@ export const readingSection: SettingsSection = {
       .setName(t("settings.reading.livePreviewHint.name"))
       .setDesc(t("settings.reading.livePreviewHint.desc"))
       .addToggle((tg) => tg.setValue(prefs.livePreviewHint).onChange((on) => setPref(ctx, "livePreviewHint", on)));
+    new Setting(el)
+      .setName(t("settings.reading.sidebarOnPhone.name"))
+      .setDesc(t("settings.reading.sidebarOnPhone.desc"))
+      .addToggle((tg) => tg.setValue(prefs.sidebarOnPhone).onChange((on) => setPref(ctx, "sidebarOnPhone", on)));
   },
 };

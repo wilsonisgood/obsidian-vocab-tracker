@@ -20,7 +20,13 @@ const data = (settings: PluginSettings) => ({ schemaVersion: 2 as const, setting
 
 describe("resolveUiPrefs", () => {
   it("defaults: menu on desktop, save at once on mobile, Live Preview hint on, automatic pronunciation", () => {
-    expect(DEFAULT_UI_PREFS).toEqual({ tapAction: "menu", tapActionMobile: "save", livePreviewHint: true, pronounceSource: "auto" });
+    expect(DEFAULT_UI_PREFS).toEqual({
+      tapAction: "menu",
+      tapActionMobile: "save",
+      livePreviewHint: true,
+      pronounceSource: "auto",
+      sidebarOnPhone: false,
+    });
     expect(resolveUiPrefs(undefined)).toEqual(DEFAULT_UI_PREFS);
   });
 
@@ -36,8 +42,10 @@ describe("resolveUiPrefs", () => {
       tapActionMobile: "menu",
       livePreviewHint: false,
       pronounceSource: "synth",
+      sidebarOnPhone: false,
     });
     expect(resolveUiPrefs({ locale: "auto", pronounceSource: "recording" }).pronounceSource).toBe("recording");
+    expect(resolveUiPrefs({ locale: "auto", sidebarOnPhone: true }).sidebarOnPhone).toBe(true);
   });
 
   it("reads values it doesn't know (a newer version's) as the default", () => {

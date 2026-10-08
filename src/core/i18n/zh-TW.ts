@@ -368,6 +368,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "command.openVerbs": "開啟用法總表",
   "command.openTrivia": "開啟冷知識",
   "command.openDna": "開啟 Word DNA",
+  "ribbon.openWordList": "我的單字",
   "settings.section.files": "檔案",
   "settings.files.desc": "外掛建立的筆記放在哪裡。改資料夾不會搬動已經存在的檔案：入口檔和單字頁靠 frontmatter 找回，搬到哪裡都可以；只有新建的檔案會放到新資料夾。",
   "settings.files.folder.name": "入口檔資料夾",
@@ -523,6 +524,8 @@ export const zhTW: Record<keyof typeof en, string> = {
   "settings.reading.pronounceSource.synth": "只用系統語音",
   "settings.reading.livePreviewHint.name": "Live Preview 提示",
   "settings.reading.livePreviewHint.desc": "在行動裝置的 Live Preview（即時預覽）點字時，每次開啟提醒一次：點字只在閱讀模式有效。",
+  "settings.reading.sidebarOnPhone.name": "iPhone 右滑側欄",
+  "settings.reading.sidebarOnPhone.desc": "開啟後，從畫面右邊緣往左滑會多一個「單字」分頁，跟 Obsidian 內建的「連結」「大綱」排在一起，顯示本篇筆記的單字／段落討論／AI 討論／文法。只是多建立這個分頁，不會自動跳出來蓋住筆記；點字查單字維持用底部單字卡。",
   // ── 備份與還原 (services/backup) ──
   "settings.section.backup": "備份與還原",
   "settings.backup.desc":

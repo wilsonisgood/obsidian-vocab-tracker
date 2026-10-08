@@ -517,6 +517,13 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       callback: () => this.openVocabFile(),
     });
 
+    // Ribbon entry to the word list: the sidebar on iPad/desktop, the
+    // vocab-dashboard note on iPhone — the right sidebar there is a
+    // full-screen drawer over the article (規劃書 01 §2, §3.1).
+    this.addRibbonIcon("book-open", t("ribbon.openWordList"), () => {
+      void (currentFormFactor() === "phone" ? this.openVocabFile() : this.activateSidebar());
+    });
+
     // Keep the sidebar scoped to whatever note is in front
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", () => this.refreshSidebar())
@@ -541,6 +548,14 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     );
 
     this.app.workspace.onLayoutReady(() => {
+      // iPhone's right-swipe sidebar (規劃書 01 §2): quietly hang our tab
+      // off it, next to Obsidian's own Links/Outline — never revealed, so
+      // it doesn't jump in front of the article the way activateSidebar()
+      // would. iPad/desktop already get a leaf the normal way (tapping a
+      // tracked word routes through WordSurfaces → activateSidebar()).
+      if (currentFormFactor() === "phone" && resolveUiPrefs(this.store.settings.ui).sidebarOnPhone) {
+        void this.ensureSidebarLeaf();
+      }
       void this.ensureVocabFile();
       // Entry files never created before (one the user deleted stays deleted).
       void this.files.ensureAll();
@@ -823,16 +838,25 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     return view instanceof VocabSidebarView ? view : null;
   }
 
-  async activateSidebar(): Promise<WorkspaceLeaf> {
+  // Finds or creates the sidebar leaf, without revealing it — iPhone's
+  // sidebarOnPhone setting uses this to hang a "單字" tab off the native
+  // right-swipe sidebar quietly at startup (規劃書 01 §2: revealing it on
+  // iPhone would cover the article).
+  async ensureSidebarLeaf(): Promise<WorkspaceLeaf> {
     const { workspace } = this.app;
     let leaf = workspace.getLeavesOfType(VOCAB_VIEW_TYPE)[0];
     if (!leaf) {
       leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf("split");
       await leaf.setViewState({ type: VOCAB_VIEW_TYPE, active: true });
     }
+    return leaf;
+  }
+
+  async activateSidebar(): Promise<WorkspaceLeaf> {
+    const leaf = await this.ensureSidebarLeaf();
     // Obsidian 1.7.2+: a sidebar tab not shown since startup is a DeferredView
     // until revealed — without the await, leaf.view has no setWord/openWord.
-    await workspace.revealLeaf(leaf);
+    await this.app.workspace.revealLeaf(leaf);
     return leaf;
   }
 

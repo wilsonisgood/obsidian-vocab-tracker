@@ -370,6 +370,7 @@ export const en = {
   "command.openVerbs": "Open usage overview",
   "command.openTrivia": "Open trivia",
   "command.openDna": "Open Word DNA",
+  "ribbon.openWordList": "My Words",
   "settings.section.files": "Files",
   "settings.files.desc": "Where the plugin's notes go. Changing a folder doesn't move files that already exist: entry files and word pages are found by their frontmatter, wherever you move them. Only new files use the new folder.",
   "settings.files.folder.name": "Entry files folder",
@@ -529,6 +530,9 @@ export const en = {
   "settings.reading.livePreviewHint.name": "Live Preview hint",
   "settings.reading.livePreviewHint.desc":
     "On mobile, tell me once per session when I tap a word in Live Preview, where tapping can’t save words.",
+  "settings.reading.sidebarOnPhone.name": "iPhone swipe sidebar",
+  "settings.reading.sidebarOnPhone.desc":
+    "When on, swiping in from the right edge adds a “Words” tab next to Obsidian's built-in Links/Outline, showing this note's words, paragraph discussions, AI discussions and grammar. This only creates the tab — it won't pop open over the note on its own; tapping a word still opens the bottom word card.",
   // ── 備份與還原 (services/backup) ──
   "settings.section.backup": "Backup & restore",
   "settings.backup.desc":

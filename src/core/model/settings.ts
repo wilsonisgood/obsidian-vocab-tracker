@@ -94,6 +94,11 @@ export interface UiSettings extends SectionStamp {
   livePreviewHint?: boolean;
   // 🔊 用哪種讀音（1005 回饋第 12 項）.
   pronounceSource?: PronounceSource;
+  // iPhone 右滑拉出的原生側欄要不要掛 Vocab Tracker 分頁（本篇的單字／段落
+  // 討論／AI 討論／文法）。關閉時跟現在一樣，iPhone 右滑只有 Obsidian 內建
+  // 的連結／大綱；開啟後外掛在啟動時安靜建立一個右側欄分頁（不會跳出來蓋住
+  // 筆記），使用者自己滑過去才看得到。
+  sidebarOnPhone?: boolean;
 }
 
 export interface UiPrefs {
@@ -101,6 +106,7 @@ export interface UiPrefs {
   tapActionMobile: TapAction;
   livePreviewHint: boolean;
   pronounceSource: PronounceSource;
+  sidebarOnPhone: boolean;
 }
 
 export const DEFAULT_UI_PREFS: Readonly<UiPrefs> = {
@@ -108,6 +114,7 @@ export const DEFAULT_UI_PREFS: Readonly<UiPrefs> = {
   tapActionMobile: "save",
   livePreviewHint: true,
   pronounceSource: "auto",
+  sidebarOnPhone: false,
 };
 
 function isTapAction(v: unknown): v is TapAction {
@@ -127,6 +134,7 @@ export function resolveUiPrefs(ui: Partial<UiSettings> | undefined): UiPrefs {
     tapActionMobile: isTapAction(ui?.tapActionMobile) ? ui.tapActionMobile : DEFAULT_UI_PREFS.tapActionMobile,
     livePreviewHint: typeof ui?.livePreviewHint === "boolean" ? ui.livePreviewHint : DEFAULT_UI_PREFS.livePreviewHint,
     pronounceSource: isPronounceSource(ui?.pronounceSource) ? ui.pronounceSource : DEFAULT_UI_PREFS.pronounceSource,
+    sidebarOnPhone: typeof ui?.sidebarOnPhone === "boolean" ? ui.sidebarOnPhone : DEFAULT_UI_PREFS.sidebarOnPhone,
   };
 }
 
