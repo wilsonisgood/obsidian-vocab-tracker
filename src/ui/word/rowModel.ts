@@ -1,5 +1,6 @@
 import type { VocabEntry } from "../../core/model/entry";
 import type { ExpandState } from "./WordRow";
+import type { WordTab } from "./wordUi";
 
 // ── Pure/standalone bits pulled out of WordRow so they can be unit-tested
 // without a DOM (vitest here runs in node — see AGENT.md §5a.2) and reused
@@ -36,14 +37,47 @@ export async function commitEntryField(store: FieldStore, entry: VocabEntry, key
   else await store.touch(entry);
 }
 
-// Non-sheet rows (sidebar, vocab-list dashboard) lost their way to reach
-// "full" when #10 took away 顯示更多/底部收合 — 展開 is now just the old
-// 半開. The sheet (iPhone drawer, #14) keeps all three states as before.
-// A caller's persisted expandState map may still hold a stale "full" from
-// before this change; normalize it here instead of touching those maps.
-export function normalizeExpand(state: ExpandState, sheet: boolean): ExpandState {
-  if (sheet) return state;
+// Nothing can reach "full" any more (1009 #1 took the sheet's own 顯示更多
+// button away too, after #10 already took it off a plain row) — 展開 is
+// just the old 半開, sheet or not. A caller's persisted expandState map
+// may still hold a stale "full" from before either change; normalize it
+// here instead of touching those maps.
+export function normalizeExpand(state: ExpandState): ExpandState {
   return state === "full" ? "half" : state;
+}
+
+// 1009 #1: a row's variant now only changes three things about the
+// header/collapse behaviour — every other bit of content (fields, footer,
+// ♥ position, the Info/AI switch) is identical between the sidebar row
+// and the iPhone sheet (WordRow.ts, WordSheet.ts).
+export interface RowLayout {
+  // The sheet is never collapsed — it's the whole bottom sheet's content.
+  alwaysOpen: boolean;
+  // A non-sheet row gets the ▾/▴ expand indicator in the header.
+  chevron: boolean;
+  // A non-sheet row's header click toggles collapsed/half.
+  headerToggle: boolean;
+}
+
+export function rowLayout(variant: "row" | "sheet" = "row"): RowLayout {
+  const sheet = variant === "sheet";
+  return { alwaysOpen: sheet, chevron: !sheet, headerToggle: !sheet };
+}
+
+// 1009 #1: the footer's Info/AI toggle, as a pure function of which screen
+// is showing and how many questions are in the word's AI thread — no DOM,
+// no i18n call (label is the i18n *key*; the caller runs it through t()).
+export interface ViewToggleSpec {
+  icon: "sparkles" | "book-open";
+  label: "word.tab.ai" | "word.tab.data";
+  // Only shown on the Info screen, and only once there's at least one
+  // question (matches the old tab-bar badge, 規格 #10).
+  count: number | null;
+}
+
+export function viewToggleSpec(current: WordTab, aiQuestionCount: number): ViewToggleSpec {
+  if (current === "ai") return { icon: "book-open", label: "word.tab.data", count: null };
+  return { icon: "sparkles", label: "word.tab.ai", count: aiQuestionCount > 0 ? aiQuestionCount : null };
 }
 
 // 程度：逗號分隔的自由文字 tag 列表 → 去頭尾空白、丟掉空字串後的顯示清單。

@@ -91,11 +91,9 @@
   }
 }
 
-/* ── Like button (replaces the old ✕ in the header, and the sheet's
-   footer 🗑) — plain ♡/♥ glyphs, not a Lucide icon (see WordRow.ts). The
-   header one reuses the old ✕'s position/sizing; the sheet footer one
-   combines this with .vt-row-footer-icon (kit.css) for its flex/label
-   layout, so only the color/glyph bit lives here. ─────────────────── */
+/* ── Like button (replaces the old ✕; 1009 #3 — now in the header for
+   both the sidebar row and the iPhone sheet) — plain ♡/♥ glyphs, not a
+   Lucide icon (see WordRow.ts). ─────────────────────────────────────── */
 .vt-row-like {
   color: var(--text-muted);
   padding: 0 3px;
@@ -108,58 +106,4 @@
 
 .vt-row-like.is-liked {
   color: var(--text-error);
-}
-
-/* ── Bottom collapse button (規格 #19): every expanded row, both tabs,
-   below the 「單字頁」 button. Muted/secondary next to that button's
-   accent styling (sidebar.css's .vt-word-page-btn) — this one just tidies
-   the row away, it isn't the primary action. ─────────────────────── */
-.vt-row-collapse-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  min-height: 30px;
-  margin-top: 6px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: transparent;
-  box-shadow: none;
-  color: var(--text-muted);
-  font-size: 0.82em;
-  cursor: pointer;
-}
-
-.vt-row-collapse-bottom:hover {
-  color: var(--text-normal);
-  background: var(--background-modifier-hover);
-}
-
-.vt-row-collapse-bottom-icon svg {
-  width: 13px;
-  height: 13px;
-}
-
-/* ── 文法提示 render ↔ edit (規格 #22): the rendered-Markdown view looks
-   like a quiet piece of text until hovered, same box as the textarea it
-   swaps for so the switch doesn't jump. ──────────────────────────────── */
-.vt-row-grammar-render {
-  cursor: text;
-  padding: 5px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  font-size: 0.9em;
-}
-
-.vt-row-grammar-render:hover {
-  border-color: var(--background-modifier-border);
-}
-
-.vt-row-grammar-render p:first-child {
-  margin-top: 0;
-}
-
-.vt-row-grammar-render p:last-child {
-  margin-bottom: 0;
 }

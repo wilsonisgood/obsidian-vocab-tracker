@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { VocabEntry } from "../../../src/core/model/entry";
-import { commitEntryField, levelTags, normalizeExpand } from "../../../src/ui/word/rowModel";
+import { commitEntryField, levelTags, normalizeExpand, rowLayout, viewToggleSpec } from "../../../src/ui/word/rowModel";
 
 function entry(overrides: Partial<VocabEntry> = {}): VocabEntry {
   return {
@@ -55,20 +55,43 @@ describe("commitEntryField (1006-2 #12/#15 — one save path for a field edit)",
   });
 });
 
-describe("normalizeExpand (1006-2 #10 — no more way to reach full off a row)", () => {
-  it("sheet (iPhone drawer, #14) keeps every state as given", () => {
-    expect(normalizeExpand("collapsed", true)).toBe("collapsed");
-    expect(normalizeExpand("half", true)).toBe("half");
-    expect(normalizeExpand("full", true)).toBe("full");
+describe("normalizeExpand (1009 #1 — nothing can reach full any more, sheet or not)", () => {
+  it("collapses a stale 'full' (e.g. a persisted expandState from before 1009) down to 'half'", () => {
+    expect(normalizeExpand("full")).toBe("half");
   });
 
-  it("a non-sheet row collapses stale 'full' (e.g. a persisted expandState) down to 'half'", () => {
-    expect(normalizeExpand("full", false)).toBe("half");
+  it("otherwise passes the state through unchanged", () => {
+    expect(normalizeExpand("collapsed")).toBe("collapsed");
+    expect(normalizeExpand("half")).toBe("half");
+  });
+});
+
+describe("rowLayout (1009 #1 — a row's variant only changes these three flags)", () => {
+  it("a plain row: collapsible, with a chevron and a header toggle", () => {
+    expect(rowLayout("row")).toEqual({ alwaysOpen: false, chevron: true, headerToggle: true });
   });
 
-  it("a non-sheet row otherwise passes its state through unchanged", () => {
-    expect(normalizeExpand("collapsed", false)).toBe("collapsed");
-    expect(normalizeExpand("half", false)).toBe("half");
+  it("defaults to the plain-row layout when no variant is given", () => {
+    expect(rowLayout()).toEqual({ alwaysOpen: false, chevron: true, headerToggle: true });
+  });
+
+  it("the sheet: always open, no chevron, no header toggle", () => {
+    expect(rowLayout("sheet")).toEqual({ alwaysOpen: true, chevron: false, headerToggle: false });
+  });
+});
+
+describe("viewToggleSpec (規劃書 11 §1 — the footer's Info/AI switch)", () => {
+  it("on the Info screen with no questions yet: sparkles → AI, no badge", () => {
+    expect(viewToggleSpec("data", 0)).toEqual({ icon: "sparkles", label: "word.tab.ai", count: null });
+  });
+
+  it("on the Info screen with questions: the same, plus the live count", () => {
+    expect(viewToggleSpec("data", 3)).toEqual({ icon: "sparkles", label: "word.tab.ai", count: 3 });
+  });
+
+  it("on the AI screen: book-open → Info, never a badge (count is ignored)", () => {
+    expect(viewToggleSpec("ai", 0)).toEqual({ icon: "book-open", label: "word.tab.data", count: null });
+    expect(viewToggleSpec("ai", 5)).toEqual({ icon: "book-open", label: "word.tab.data", count: null });
   });
 });
 
