@@ -1,7 +1,7 @@
 {
   "id": "vocab-tracker",
   "name": "Vocab Tracker",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "minAppVersion": "1.5.7",
   "description": "Click any English word (or ==highlighted== word) in reading mode to track vocabulary. Review progress in a sidebar or vocab-list.md.",
   "author": "will",
