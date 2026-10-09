@@ -118,12 +118,13 @@ function findSourceLine(content, word, sentence) {
 
 // src/platform/ObsidianHttp.ts
 var import_obsidian = require("obsidian");
+var HTTP_TIMEOUT_MS = 8e3;
 var ObsidianHttp = class {
   encodeQueryParam(text) {
     return import_obsidian.Platform.isMobile ? text : encodeURIComponent(text);
   }
   async get(url) {
-    const res = await (0, import_obsidian.requestUrl)({ url, throw: false });
+    const res = await withTimeout((0, import_obsidian.requestUrl)({ url, throw: false }), HTTP_TIMEOUT_MS);
     return {
       status: res.status,
       get json() {
@@ -132,6 +133,13 @@ var ObsidianHttp = class {
     };
   }
 };
+function withTimeout(p, ms6) {
+  let timer2;
+  const timeout2 = new Promise((_, reject) => {
+    timer2 = setTimeout(() => reject(new Error(`timed out after ${ms6 / 1e3}s`)), ms6);
+  });
+  return Promise.race([p, timeout2]).finally(() => clearTimeout(timer2));
+}
 
 // src/platform/ObsidianStorage.ts
 var import_obsidian2 = require("obsidian");
@@ -22406,6 +22414,8 @@ var FamilyService = class {
   constructor(deps) {
     this.deps = deps;
     this.events = new TypedEmitter();
+    // Background dictionary fills (addWords), chained so they run one at a time.
+    this.filling = Promise.resolve();
     this.seq = 0;
     var _a, _b;
     this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
@@ -22645,48 +22655,85 @@ var FamilyService = class {
   // still adds the word with the AI's Chinese gloss; the startup enrich
   // pass retries words without a definition. A member's emoji (A7) rides
   // along into wordMeta (決定 1 — never onto the entry itself).
+  // Adds the words at once — liked, with the AI's zh gloss — so a tap on a
+  // galaxy ♡ fills in right away; the dictionary (several requests in a
+  // row, slow on a phone) fills in the rest afterwards (fillFromDictionary).
   async addWords(words) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a;
     if (!words.length) return [];
     const now2 = this.clock();
-    const entries = [];
-    for (const w of words) {
-      let d;
-      try {
-        d = await this.deps.dictionary.fetchDictionary(w.word);
-      } catch (e) {
-        console.error(`Vocab Tracker: dictionary lookup failed for "${w.word}"`, e);
-      }
-      const entry = {
-        id: this.newId(),
-        word: w.word,
-        // (1009 #5): 字族樹加字一律同時 like，並補上等級標籤 — bug fix,
-        // 照 main.ts addWordToVocab 的格式 (examLabels(...).join(", ")).
-        level: this.deps.examLabelsFor(w.word).join(", "),
-        liked: true,
-        synonyms: (_a = d == null ? void 0 : d.synonyms.join(", ")) != null ? _a : "",
-        antonyms: (_b = d == null ? void 0 : d.antonyms.join(", ")) != null ? _b : "",
-        example: "",
-        definition: (_c = d == null ? void 0 : d.definition) != null ? _c : "",
-        definitionZh: (d == null ? void 0 : d.definitionZh) || w.zh,
-        phonetic: (_d = d == null ? void 0 : d.phonetic) != null ? _d : "",
-        partOfSpeech: (_e = d == null ? void 0 : d.partOfSpeech) != null ? _e : "",
-        grammar: "",
-        source: null,
-        added: nowStamp(now2),
-        lastReviewed: nowStamp(now2),
-        reviews: 0
-      };
-      if (d == null ? void 0 : d.audio) entry.audio = d.audio;
-      entry.origin = familyOrigin(w.familyId);
-      entries.push(entry);
-    }
+    const entries = words.map((w) => ({
+      id: this.newId(),
+      word: w.word,
+      // (1009 #5): 字族樹加字一律同時 like，並補上等級標籤 — bug fix,
+      // 照 main.ts addWordToVocab 的格式 (examLabels(...).join(", ")).
+      level: this.deps.examLabelsFor(w.word).join(", "),
+      liked: true,
+      synonyms: "",
+      antonyms: "",
+      example: "",
+      definition: "",
+      definitionZh: w.zh,
+      phonetic: "",
+      partOfSpeech: "",
+      grammar: "",
+      source: null,
+      added: nowStamp(now2),
+      lastReviewed: nowStamp(now2),
+      reviews: 0,
+      origin: familyOrigin(w.familyId)
+    }));
     await this.deps.vocab.addEntries(entries);
     for (let i = 0; i < entries.length; i++) {
-      const emoji = (_f = words[i].emoji) == null ? void 0 : _f.trim();
+      const emoji = (_a = words[i].emoji) == null ? void 0 : _a.trim();
       if (emoji) this.deps.learn.putWordMeta({ id: entries[i].id, emoji, emojiSource: "ai" });
     }
+    const glosses = words.map((w) => w.zh);
+    this.filling = this.filling.then(() => this.fillFromDictionary(entries, glosses));
     return entries;
+  }
+  // Resolves once every background dictionary fill so far is done (tests).
+  dictionaryFilled() {
+    return this.filling;
+  }
+  // One word at a time, never failing: a lookup that fails or times out
+  // leaves the AI's gloss. Only empty fields are filled (and the zh gloss
+  // only while it's still the AI's), so an edit made meanwhile stays; a
+  // word deleted meanwhile is skipped.
+  async fillFromDictionary(entries, glosses) {
+    for (const [i, entry] of entries.entries()) {
+      let d;
+      try {
+        d = await this.deps.dictionary.fetchDictionary(entry.word);
+      } catch (e) {
+        console.error(`Vocab Tracker: dictionary lookup failed for "${entry.word}"`, e);
+        continue;
+      }
+      if (!this.deps.vocab.entries.includes(entry)) continue;
+      const fill2 = {
+        synonyms: d.synonyms.join(", "),
+        antonyms: d.antonyms.join(", "),
+        definition: d.definition,
+        phonetic: d.phonetic,
+        partOfSpeech: d.partOfSpeech
+      };
+      let changed = false;
+      for (const [k, v] of Object.entries(fill2)) {
+        if (v && !entry[k]) {
+          entry[k] = v;
+          changed = true;
+        }
+      }
+      if (d.definitionZh && entry.definitionZh === glosses[i] && entry.definitionZh !== d.definitionZh) {
+        entry.definitionZh = d.definitionZh;
+        changed = true;
+      }
+      if (d.audio && !entry.audio) {
+        entry.audio = d.audio;
+        changed = true;
+      }
+      if (changed) await this.deps.vocab.touch(entry);
+    }
   }
 };
 function mergeFamily(f, c2) {

@@ -92,6 +92,8 @@ export class FamilyService {
   readonly events = new TypedEmitter<FamilyServiceEvents>();
   private clock: () => Date;
   private newId: () => string;
+  // Background dictionary fills (addWords), chained so they run one at a time.
+  private filling: Promise<void> = Promise.resolve();
   private seq = 0;
 
   constructor(private deps: FamilyServiceDeps) {
@@ -368,48 +370,87 @@ export class FamilyService {
   // still adds the word with the AI's Chinese gloss; the startup enrich
   // pass retries words without a definition. A member's emoji (A7) rides
   // along into wordMeta (決定 1 — never onto the entry itself).
+  // Adds the words at once — liked, with the AI's zh gloss — so a tap on a
+  // galaxy ♡ fills in right away; the dictionary (several requests in a
+  // row, slow on a phone) fills in the rest afterwards (fillFromDictionary).
   private async addWords(words: { word: string; zh: string; familyId: string; emoji?: string }[]): Promise<VocabEntry[]> {
     if (!words.length) return [];
     const now = this.clock();
-    const entries: VocabEntry[] = [];
-    for (const w of words) {
-      let d: DictionaryResult | undefined;
-      try {
-        d = await this.deps.dictionary.fetchDictionary(w.word);
-      } catch (e) {
-        console.error(`Vocab Tracker: dictionary lookup failed for "${w.word}"`, e);
-      }
-      const entry: VocabEntry = {
-        id: this.newId(),
-        word: w.word,
-        // (1009 #5): 字族樹加字一律同時 like，並補上等級標籤 — bug fix,
-        // 照 main.ts addWordToVocab 的格式 (examLabels(...).join(", ")).
-        level: this.deps.examLabelsFor(w.word).join(", "),
-        liked: true,
-        synonyms: d?.synonyms.join(", ") ?? "",
-        antonyms: d?.antonyms.join(", ") ?? "",
-        example: "",
-        definition: d?.definition ?? "",
-        definitionZh: d?.definitionZh || w.zh,
-        phonetic: d?.phonetic ?? "",
-        partOfSpeech: d?.partOfSpeech ?? "",
-        grammar: "",
-        source: null,
-        added: nowStamp(now),
-        lastReviewed: nowStamp(now),
-        reviews: 0,
-      };
-      if (d?.audio) entry.audio = d.audio;
-      entry.origin = familyOrigin(w.familyId);
-      entries.push(entry);
-    }
+    const entries: VocabEntry[] = words.map((w) => ({
+      id: this.newId(),
+      word: w.word,
+      // (1009 #5): 字族樹加字一律同時 like，並補上等級標籤 — bug fix,
+      // 照 main.ts addWordToVocab 的格式 (examLabels(...).join(", ")).
+      level: this.deps.examLabelsFor(w.word).join(", "),
+      liked: true,
+      synonyms: "",
+      antonyms: "",
+      example: "",
+      definition: "",
+      definitionZh: w.zh,
+      phonetic: "",
+      partOfSpeech: "",
+      grammar: "",
+      source: null,
+      added: nowStamp(now),
+      lastReviewed: nowStamp(now),
+      reviews: 0,
+      origin: familyOrigin(w.familyId),
+    }));
     await this.deps.vocab.addEntries(entries);
     // Brand-new entryIds, so there's no existing wordMeta to clobber.
     for (let i = 0; i < entries.length; i++) {
       const emoji = words[i].emoji?.trim();
       if (emoji) this.deps.learn.putWordMeta({ id: entries[i].id, emoji, emojiSource: "ai" });
     }
+    const glosses = words.map((w) => w.zh);
+    this.filling = this.filling.then(() => this.fillFromDictionary(entries, glosses));
     return entries;
+  }
+
+  // Resolves once every background dictionary fill so far is done (tests).
+  dictionaryFilled(): Promise<void> {
+    return this.filling;
+  }
+
+  // One word at a time, never failing: a lookup that fails or times out
+  // leaves the AI's gloss. Only empty fields are filled (and the zh gloss
+  // only while it's still the AI's), so an edit made meanwhile stays; a
+  // word deleted meanwhile is skipped.
+  private async fillFromDictionary(entries: VocabEntry[], glosses: string[]): Promise<void> {
+    for (const [i, entry] of entries.entries()) {
+      let d: DictionaryResult;
+      try {
+        d = await this.deps.dictionary.fetchDictionary(entry.word);
+      } catch (e) {
+        console.error(`Vocab Tracker: dictionary lookup failed for "${entry.word}"`, e);
+        continue;
+      }
+      if (!this.deps.vocab.entries.includes(entry)) continue;
+      const fill: Partial<VocabEntry> = {
+        synonyms: d.synonyms.join(", "),
+        antonyms: d.antonyms.join(", "),
+        definition: d.definition,
+        phonetic: d.phonetic,
+        partOfSpeech: d.partOfSpeech,
+      };
+      let changed = false;
+      for (const [k, v] of Object.entries(fill) as [keyof VocabEntry, string][]) {
+        if (v && !entry[k]) {
+          (entry as unknown as Record<string, string>)[k] = v;
+          changed = true;
+        }
+      }
+      if (d.definitionZh && entry.definitionZh === glosses[i] && entry.definitionZh !== d.definitionZh) {
+        entry.definitionZh = d.definitionZh;
+        changed = true;
+      }
+      if (d.audio && !entry.audio) {
+        entry.audio = d.audio;
+        changed = true;
+      }
+      if (changed) await this.deps.vocab.touch(entry);
+    }
   }
 }
 
