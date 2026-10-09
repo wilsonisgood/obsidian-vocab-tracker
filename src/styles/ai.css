@@ -215,53 +215,35 @@ body.is-mobile .vt-empty-action button {
   margin: 12px 0;
 }
 
-/* ── M4: word card tabs and the discussion panel (design D2–D4) ───── */
+/* ── 規劃書 11 §1: the card footer's Info/AI view toggle (replaces the
+   old 資料 · ✦ AI tab bar at the top of the body) and the discussion
+   panel (design D2–D4) ─────────────────────────────────────────────── */
 
-.vt-tabs {
-  display: flex;
-  gap: 2px;
-  margin: 2px 0 8px;
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.vt-tab {
+.vt-view-toggle {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: none;
-  box-shadow: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  margin-bottom: -1px;
-  padding: 4px 10px;
-  height: auto;
-  font-size: var(--font-ui-small);
   color: var(--text-muted);
+  font-size: var(--font-ui-small);
   cursor: pointer;
+  user-select: none;
 }
 
-.vt-tab:hover {
+.vt-view-toggle:hover {
   color: var(--text-normal);
-  background: none;
 }
 
-.vt-tab.is-active {
-  color: var(--text-normal);
-  border-bottom-color: var(--interactive-accent);
-}
-
-.vt-tab-icon {
+.vt-view-toggle-icon {
   display: inline-flex;
   color: var(--text-accent);
 }
 
-.vt-tab-icon svg {
+.vt-view-toggle-icon svg {
   width: 13px;
   height: 13px;
 }
 
-.vt-tab-count:not(:empty) {
+.vt-view-toggle-count:not(:empty) {
   font-size: var(--font-ui-smaller);
   color: var(--text-faint);
 }
@@ -506,7 +488,7 @@ body.is-mobile .vt-chat-input {
 
 body.is-mobile .vt-chat-send,
 body.is-mobile .vt-chip,
-body.is-mobile .vt-tab {
+body.is-mobile .vt-view-toggle {
   min-height: 44px;
 }
 

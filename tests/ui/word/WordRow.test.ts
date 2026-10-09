@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("obsidian", () => import("../../perf/support/obsidian"));
 
+import { Component } from "obsidian";
 import { installDom, type FakeElement } from "../../perf/support/dom";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import { renderVocabRow, type RowOptions } from "../../../src/ui/word/WordRow";
+import { WordUi } from "../../../src/ui/word/wordUi";
 
 // A direct, plugin-light render of WordRow (no sidebar/dashboard/plugin
 // bootstrap) — just enough of VocabTrackerPlugin's surface for the row to
@@ -149,24 +151,89 @@ describe("WordRow — non-sheet row, 1006-2 #10/#11/#12/#13", () => {
   });
 });
 
-describe("WordRow — sheet variant unchanged (1006-2 #14)", () => {
-  it("still reaches full via 顯示更多 (moreBtn), showing the fields a row doesn't have any more", () => {
-    const e = entry({ antonyms: "dull", example: "x", level: "多益中級" });
-    const { container } = mount(e, "half", { variant: "sheet" });
-    // moreBtn is the footer's first icon in the sheet's unchanged layout.
-    container.querySelector(".vt-row-footer-icon")!.click();
-    // redraw() replaces the row in place — re-query the container, not the
-    // (now detached) `row` returned by mount().
-    const rebuilt = container.querySelector(".vt-row")!;
-    // synonyms/definition/definitionZh (3, always) + antonyms + example +
-    // grammar (its wrap is a .vt-field even empty) + level = 7.
-    expect(rebuilt.querySelectorAll(".vt-field").length).toBe(7);
+describe("WordRow — sheet variant now shares the row's body (1009 #1/#3)", () => {
+  it("renders the exact same Info fields as a row — no sheet-only fields left", () => {
+    const e = entry({ antonyms: "dull", example: "x", grammar: "adj.", level: "多益中級", synonyms: "x", phonetic: "/x/" });
+    const rowBuild = mount(e, "half", {});
+    const sheetBuild = mount(e, "half", { variant: "sheet" });
+    // definition + definitionZh only, same as a plain row (#12) — not the
+    // old sheet's synonyms/antonyms/example/grammar extras.
+    expect(sheetBuild.row.querySelectorAll(".vt-field").length).toBe(2);
+    expect(sheetBuild.row.querySelectorAll(".vt-field").length).toBe(rowBuild.row.querySelectorAll(".vt-field").length);
+    expect(sheetBuild.row.querySelector(".vt-row-subtext")).toBeNull(); // phonetic line
+    expect(sheetBuild.row.querySelector(".vt-meta")).toBeNull(); // 複習時間
   });
 
-  it("the sheet footer still has like, not the row's icon-only pair", () => {
+  it("no collapse arrow, and a header click doesn't collapse it (always open)", () => {
+    const e = entry();
+    const { row, getState } = mount(e, "half", { variant: "sheet" });
+    expect(row.querySelector(".vt-row-arrow")).toBeNull();
+    row.querySelector(".vt-row-header")!.click();
+    expect(getState()).toBe("half");
+  });
+
+  it("a collapsed initial state renders expanded anyway (always open)", () => {
+    const e = entry();
+    const { row } = mount(e, "collapsed", { variant: "sheet" });
+    expect(row.querySelector(".vt-row-body")).not.toBeNull();
+    expect(row.hasClass("is-expanded")).toBe(true);
+  });
+
+  it("♥ is in the header, same spot as a plain row — no footer like any more", () => {
     const e = entry({ liked: false });
     const { row } = mount(e, "half", { variant: "sheet" });
+    expect(row.querySelector(".vt-row-header .vt-row-like")).not.toBeNull();
     const footer = row.querySelector(".vt-row-footer")!;
-    expect(footer.querySelector(".vt-row-like")).not.toBeNull();
+    expect(footer.querySelector(".vt-row-like")).toBeNull();
+  });
+});
+
+describe("WordRow — footer view toggle (規劃書 11 §1)", () => {
+  function fakePluginWithThreads(count = 0) {
+    const plugin = fakePlugin();
+    (plugin as unknown as { threads: unknown }).threads = {
+      wordQuestionCount: () => count,
+      events: { on: () => () => undefined },
+      ensureLoaded: async () => undefined,
+    };
+    return plugin;
+  }
+
+  function mountWithUi(e: VocabEntry, count = 0, extra: RowOptions = {}) {
+    const plugin = fakePluginWithThreads(count);
+    const doc = installDom();
+    const container = doc.createElement("div") as unknown as FakeElement;
+    const owner = new Component();
+    const ui = new WordUi(owner);
+    let current: "collapsed" | "half" | "full" = "half";
+    const row = renderVocabRow(
+      plugin,
+      container as unknown as HTMLElement,
+      e,
+      current,
+      (s) => (current = s),
+      () => undefined,
+      { ...extra, ui }
+    ) as unknown as FakeElement;
+    return { row, ui };
+  }
+
+  it("on the Info screen: sparkles + 「AI」, with the live question count", () => {
+    const { row } = mountWithUi(entry(), 3);
+    const toggle = row.querySelector(".vt-view-toggle")!;
+    expect(toggle.querySelector(".vt-view-toggle-label")!.textContent).toBe("AI");
+    expect(toggle.querySelector(".vt-view-toggle-count")!.textContent).toBe("3");
+  });
+
+  it("no questions yet: no count badge", () => {
+    const { row } = mountWithUi(entry(), 0);
+    const toggle = row.querySelector(".vt-view-toggle")!;
+    expect(toggle.querySelector(".vt-view-toggle-count")!.textContent).toBe("");
+  });
+
+  it("without opts.ui, there is no toggle at all (just the icon pair)", () => {
+    const e = entry();
+    const { row } = mount(e, "half", {});
+    expect(row.querySelector(".vt-view-toggle")).toBeNull();
   });
 });

@@ -126,14 +126,21 @@
   color: var(--text-accent);
 }
 
-/* ── Row footer: more-info toggle · fetch · reviewed · speak ───── */
+/* ── Row footer: Info/AI view toggle (left) · 單字頁/字典重抓 (right)
+   (規劃書 11 §1) ──────────────────────────────────────────────────── */
 
 .vt-row-footer {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 10px;
   margin-top: 4px;
+}
+
+.vt-row-footer-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .vt-row-footer-actions {
@@ -486,37 +493,6 @@
   font-size: 0.8em;
 }
 
-/* 「單字頁」 at the bottom of an expanded word card (design D2–D4) */
-.vt-word-page-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  min-height: 34px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--interactive-accent) 60%, transparent);
-  background: transparent;
-  box-shadow: none;
-  color: var(--text-accent);
-  font-size: 0.85em;
-  cursor: pointer;
-}
-
-.vt-word-page-btn:hover {
-  background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
-}
-
-.vt-word-page-btn-icon {
-  display: inline-flex;
-}
-
-.vt-word-page-btn-icon svg {
-  width: 14px;
-  height: 14px;
-}
-
 /* 「開啟 討論串/xxx.ai.md」 under a paragraph discussion (design D5) */
 .vt-ppane-ainote {
   display: flex;
@@ -546,7 +522,6 @@
 }
 
 @media (hover: none) {
-  .vt-word-page-btn,
   .vt-ppane-ainote {
     min-height: 44px;
   }
