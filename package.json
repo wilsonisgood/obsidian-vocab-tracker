@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
+    "e2e": "vitest run -c vitest.e2e.config.ts",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "devDependencies": {
