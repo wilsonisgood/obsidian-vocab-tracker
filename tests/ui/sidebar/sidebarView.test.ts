@@ -494,9 +494,9 @@ describe("「全部」加字後立即重畫 (1007-2 #9)", () => {
 // Wave 11 S (1009 #10)：使用者在閱讀模式加了一個字（liked:true, source
 // 指到目前這篇），右側欄「本篇」沒有馬上出現，原因未知。試著從三個角度重
 // 現：(a) 純粹 store 層加字 → data:changed → 本篇 scopedEntries（1007-2
-// #9 已經證實「全部」這條路沒問題，這裡補「本篇」）；(b) 側欄「加入單字
-// 庫」橫幅按下去那條路（setWord → pendingWord → addBtn.onclick）；(c)
-// main.ts 整段 addWordToVocab（含 reveal）流程。
+// #9 已經證實「全部」這條路沒問題，這裡補「本篇」）；(b) 側欄的預覽卡
+// （setWord → pendingWord → ♥ promotePreview，1009-2 #1 取代了原本的
+// 「加入單字庫」橫幅）；(c) main.ts 整段 addWordToVocab（含 reveal）流程。
 describe("閱讀模式加字後側欄立即出現 (1009 #10)", () => {
   it("(a) 本篇模式：store.addEntry 一個新的 liked 字，source 指到目前這篇，data:changed 應該讓它馬上出現", async () => {
     const v = await open("note");
@@ -529,15 +529,15 @@ describe("閱讀模式加字後側欄立即出現 (1009 #10)", () => {
     }
   });
 
-  it("(b) 側欄「加入單字庫」橫幅：setWord() 顯示橫幅，按下去的 addWordToVocab + setWord() 應該馬上把它變成一般單字列", async () => {
+  it("(b) 側欄預覽卡：setWord() 顯示預覽卡，按 ♥ 的 promotePreview + setWord() 應該馬上把它變成一般單字列", async () => {
     const v = await open("note");
     v.setWord("zzzbannerword");
-    const banner = root(v).querySelector(".vt-sidebar-add-prompt");
-    expect(banner).not.toBeNull();
-    const addBtn = banner!.querySelector(".vt-sidebar-add-btn") as unknown as FakeElement | null;
-    expect(addBtn).not.toBeNull();
+    const preview = root(v).querySelector(".vt-sidebar-preview");
+    expect(preview).not.toBeNull();
+    const likeBtn = preview!.querySelector(".vt-row-like") as unknown as FakeElement | null;
+    expect(likeBtn).not.toBeNull();
     try {
-      addBtn!.click();
+      likeBtn!.click();
       await flushMicrotasks();
       await settle();
       const added = entries().find((e) => e.word === "zzzbannerword");

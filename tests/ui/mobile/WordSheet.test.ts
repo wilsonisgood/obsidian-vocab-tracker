@@ -96,6 +96,7 @@ import type { VocabEntry } from "../../../src/core/model/entry";
 import type { SectionRef } from "../../../src/services/anchors/ParagraphAnchorService";
 import type { SheetWindow } from "../../../src/ui/mobile/BottomSheet";
 import { WordSheet } from "../../../src/ui/mobile/WordSheet";
+import { _resetPreviewDictionaryCache } from "../../../src/ui/word/previewEntry";
 import { FakeEl, FakeWindow, installGlobals, type FakeDocument } from "./fakeDom";
 
 const REF: SectionRef = { path: "speech.md", lineStart: 12, lineEnd: 12, text: "Last time I was in a stadium this size" };
@@ -106,7 +107,7 @@ let docBody: FakeEl;
 let win: FakeWindow;
 let fileOpen: (() => void) | null;
 
-function makePlugin(entries: VocabEntry[], threads: Record<string, unknown> = {}) {
+function makePlugin(entries: VocabEntry[], threads: Record<string, unknown> = {}, dictionary: Record<string, unknown> = {}) {
   const events = new TypedEmitter<{ "data:changed": unknown }>();
   return {
     store: { entries, events },
@@ -129,6 +130,15 @@ function makePlugin(entries: VocabEntry[], threads: Record<string, unknown> = {}
       return true;
     }),
     openWordPage: vi.fn(async () => {}),
+    // 1009-2 #1: the preview card's own dictionary fetch — never resolved
+    // synchronously, so a test can observe the "loading" state before
+    // awaiting it.
+    dictionary: {
+      fetchDictionary: vi.fn(
+        async () => ({ phonetic: "", audio: "", partOfSpeech: "", definition: "shiny", definitionZh: "", synonyms: [], antonyms: [] })
+      ),
+      ...dictionary,
+    },
   };
 }
 
@@ -148,6 +158,7 @@ beforeEach(() => {
   panes.length = 0;
   rebindNotices.length = 0;
   fileOpen = null;
+  _resetPreviewDictionaryCache();
   doc = installGlobals();
   body = new FakeEl("BODY");
   body.ownerDocument = doc;
@@ -170,18 +181,58 @@ describe("WordSheet: a word", () => {
     expect(sheet.current).toMatchObject({ kind: "word", entryId: "e1" });
   });
 
-  it("an unsaved word shows 「加入單字庫」, which adds it (with the tapped sentence) and shows the card", async () => {
+  it("an unsaved word shows a preview card (1009-2 #1), wired with the tapped sentence and loading dictionary state", () => {
     const plugin = makePlugin([]);
     const { sheet } = makeSheet(plugin);
     sheet.showWord("leotard", { ctx: { sentence: "wearing a glittery leotard." } });
-    expect(rows).toHaveLength(0);
-    const btn = layer()!.find("vt-sheet-add-btn")!;
-    btn.click();
-    expect(plugin.addWordToVocab).toHaveBeenCalledWith("leotard", { sentence: "wearing a glittery leotard." }, { reveal: false });
-    await Promise.resolve();
-    await Promise.resolve();
     expect(rows).toHaveLength(1);
-    expect(rows[0].entryId).toBe("id-leotard");
+    expect(rows[0].entryId).toBe("preview:leotard");
+    expect(rows[0].opts.variant).toBe("sheet");
+    const preview = rows[0].opts.preview as { ctx: { sentence: string }; status: string };
+    expect(preview.ctx).toEqual({ sentence: "wearing a glittery leotard." });
+    expect(preview.status).toBe("loading");
+    expect(plugin.dictionary.fetchDictionary).toHaveBeenCalledWith("leotard");
+  });
+
+  it("the preview card's dictionary fetch settling redraws it with the result (and only fetches once)", async () => {
+    const plugin = makePlugin([]);
+    const { sheet } = makeSheet(plugin);
+    sheet.showWord("leotard");
+    expect(rows).toHaveLength(1);
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(rows).toHaveLength(2);
+    const preview = rows[1].opts.preview as { status: string; dict: { definition: string } | null };
+    expect(preview.status).toBe("ready");
+    expect(preview.dict?.definition).toBe("shiny");
+    // Reopening the same word (e.g. the sheet closed and was tapped
+    // again) reuses the cached result instead of re-fetching.
+    sheet.close();
+    sheet.showWord("leotard");
+    expect(plugin.dictionary.fetchDictionary).toHaveBeenCalledTimes(1);
+  });
+
+  it("closing the preview without ♥/a question leaves nothing behind (never calls addWordToVocab)", () => {
+    const plugin = makePlugin([]);
+    const { sheet } = makeSheet(plugin);
+    sheet.showWord("leotard");
+    sheet.close();
+    expect(plugin.addWordToVocab).not.toHaveBeenCalled();
+  });
+
+  it("♥ promoting the preview (via the row's refresh callback) hands off to the real entry", async () => {
+    const plugin = makePlugin([]);
+    const { sheet } = makeSheet(plugin);
+    sheet.showWord("leotard");
+    expect(rows[0].entryId).toBe("preview:leotard");
+    // WordRow.ts calls `refresh()` after promotePreview() resolves —
+    // simulated here since renderVocabRow itself is mocked above.
+    plugin.store.entries.push({ id: "real-leotard", word: "leotard" } as VocabEntry);
+    rows[0].refresh();
+    expect(rows).toHaveLength(2);
+    expect(rows[1].entryId).toBe("real-leotard");
+    expect(rows[1].opts.preview).toBeUndefined();
   });
 
   it("openWord opens on the asked tab", () => {
@@ -191,6 +242,55 @@ describe("WordSheet: a word", () => {
     expect(sheet.wordUi.tabs.get("e1")).toBe("ai");
     sheet.openWord("missing", "ai");
     expect(rows).toHaveLength(1);
+  });
+
+  it("1009-2 #3: the Info screen keeps the normal sheet height — no is-ai/is-expanded", () => {
+    const plugin = makePlugin([{ id: "e1", word: "glittery" } as VocabEntry]);
+    const { sheet } = makeSheet(plugin);
+    sheet.showWord("glittery");
+    expect(layer()?.hasClass("is-ai")).toBe(false);
+    expect(layer()?.hasClass("is-expanded")).toBe(false);
+  });
+
+  it("1009-2 #3: opening straight onto the AI tab goes near-fullscreen", () => {
+    const plugin = makePlugin([{ id: "e1", word: "glittery" } as VocabEntry]);
+    const { sheet } = makeSheet(plugin);
+    sheet.openWord("e1", "ai");
+    expect(layer()?.hasClass("is-ai")).toBe(true);
+    expect(layer()?.hasClass("is-expanded")).toBe(true);
+  });
+
+  it("1009-2 #3: the row's own Info↔AI toggle (self-redraw) still resizes the sheet via onViewChange", () => {
+    const plugin = makePlugin([{ id: "e1", word: "glittery" } as VocabEntry]);
+    const { sheet } = makeSheet(plugin);
+    sheet.showWord("glittery");
+    expect(layer()?.hasClass("is-ai")).toBe(false);
+    (rows[0].opts.onViewChange as (tab: string) => void)("ai");
+    expect(layer()?.hasClass("is-ai")).toBe(true);
+    expect(layer()?.hasClass("is-expanded")).toBe(true);
+    (rows[0].opts.onViewChange as (tab: string) => void)("data");
+    expect(layer()?.hasClass("is-ai")).toBe(false);
+    expect(layer()?.hasClass("is-expanded")).toBe(false);
+  });
+
+  it("1009-2 #3: closing clears is-ai so the next open doesn't flash full height", () => {
+    const plugin = makePlugin([{ id: "e1", word: "glittery" } as VocabEntry]);
+    const { sheet } = makeSheet(plugin);
+    sheet.openWord("e1", "ai");
+    expect(layer()?.hasClass("is-ai")).toBe(true);
+    sheet.close();
+    expect(layer()?.hasClass("is-ai")).toBe(false);
+  });
+
+  it("1009-2 #1/#3: a preview card's AI tab also goes near-fullscreen", () => {
+    const plugin = makePlugin([]);
+    const { sheet } = makeSheet(plugin);
+    sheet.showWord("leotard");
+    sheet.wordUi.tabs.set("preview:leotard", "ai");
+    rows[0].refresh(); // same self-redraw hand-off renderVocabRow would do
+    expect(rows.length).toBeGreaterThan(0);
+    (rows.at(-1)!.opts.onViewChange as (tab: string) => void)("ai");
+    expect(layer()?.hasClass("is-ai")).toBe(true);
   });
 
   it("closing unloads the card's components; deleting the word closes it", () => {
