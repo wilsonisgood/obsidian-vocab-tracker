@@ -1,0 +1,24 @@
+/* ── Preview card (1009-2 #1): a word that isn't in the library yet, shown
+   as an ordinary liked:false WordRow instead of the old 「加入單字庫」
+   banner/button. Shared by the sidebar (VocabSidebarView.ts's pendingWord)
+   and the iPhone sheet (WordSheet.ts — its own variant="sheet" styling in
+   mobile.css covers the card itself; this file only has the sidebar's
+   wrapper + the loading/error hint line, which both surfaces use). ── */
+
+.vt-sidebar-preview {
+  margin-bottom: 12px;
+}
+
+.vt-sidebar-preview-head {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.vt-row-preview-hint {
+  color: var(--text-muted);
+  padding: 4px 0 8px;
+}
+
+.vt-row-preview-hint.is-error {
+  color: var(--text-error, var(--text-muted));
+}

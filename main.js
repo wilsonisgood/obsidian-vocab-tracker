@@ -915,7 +915,6 @@ function dueLabel(due, now2) {
 var en = {
   "sidebar.title": "Vocab Tracker",
   "sidebar.openList": "Open vocab-list.md",
-  "sidebar.addPrompt.cta": "+ Add to vocab list",
   "sidebar.filter.note": "This note",
   "sidebar.filter.all": "All",
   "sidebar.scope.note": "This note",
@@ -991,6 +990,8 @@ var en = {
   "dashboard.startReview.none": "Flashcards \xB7 nothing due",
   "row.nextReview": "Next review: {date}",
   "row.due.today": "Today",
+  "row.preview.loading": "Fetching dictionary data\u2026",
+  "row.preview.error": "Couldn't fetch dictionary data \u2014 you can still add it.",
   "srs.interval.m": "{n} min",
   "srs.interval.h": "{n} h",
   "srs.interval.d": "{n} d",
@@ -1385,7 +1386,6 @@ var en = {
   "mobile.sheet.close": "Close",
   "mobile.sheet.label.word": "Word card: {word}",
   "mobile.sheet.label.paragraph": "Paragraph discussion",
-  "mobile.sheet.notTracked": "Not in your vocab list yet.",
   "mobile.save.added": "Added \u201C{word}\u201D",
   "mobile.save.undo": "Undo",
   "mobile.save.undone": "Removed \u201C{word}\u201D",
@@ -1550,7 +1550,6 @@ var en = {
 var zhTW = {
   "sidebar.title": "\u55AE\u5B57\u8FFD\u8E64",
   "sidebar.openList": "\u958B\u555F vocab-list.md",
-  "sidebar.addPrompt.cta": "\uFF0B \u52A0\u5165\u55AE\u5B57\u5EAB",
   "sidebar.filter.note": "\u672C\u7BC7\u7B46\u8A18",
   "sidebar.filter.all": "\u5168\u90E8",
   "sidebar.scope.note": "\u672C\u7BC7\u7B46\u8A18",
@@ -1626,6 +1625,8 @@ var zhTW = {
   "dashboard.startReview.none": "\u55AE\u5B57\u5361 \xB7 \u76EE\u524D\u6C92\u6709\u5230\u671F",
   "row.nextReview": "\u4E0B\u6B21\u8907\u7FD2\uFF1A{date}",
   "row.due.today": "\u4ECA\u5929",
+  "row.preview.loading": "\u6293\u53D6\u5B57\u5178\u8CC7\u6599\u4E2D\u2026",
+  "row.preview.error": "\u5B57\u5178\u8CC7\u6599\u6293\u53D6\u5931\u6557\uFF0C\u4ECD\u53EF\u4EE5\u52A0\u5165\u55AE\u5B57\u5EAB\u3002",
   "srs.interval.m": "{n} \u5206\u9418",
   "srs.interval.h": "{n} \u5C0F\u6642",
   "srs.interval.d": "{n} \u5929",
@@ -2020,7 +2021,6 @@ var zhTW = {
   "mobile.sheet.close": "\u95DC\u9589",
   "mobile.sheet.label.word": "\u55AE\u5B57\u5361\uFF1A{word}",
   "mobile.sheet.label.paragraph": "\u6BB5\u843D\u8A0E\u8AD6",
-  "mobile.sheet.notTracked": "\u9084\u6C92\u6709\u52A0\u5165\u55AE\u5B57\u5EAB\u3002",
   "mobile.save.added": "\u5DF2\u52A0\u5165\u300C{word}\u300D",
   "mobile.save.undo": "\u5FA9\u539F",
   "mobile.save.undone": "\u5DF2\u79FB\u9664\u300C{word}\u300D",
@@ -3916,8 +3916,79 @@ function openPluginSettings(app, pluginId) {
   (_b = setting == null ? void 0 : setting.openTabById) == null ? void 0 : _b.call(setting, pluginId);
 }
 
+// src/ui/word/previewEntry.ts
+var PREVIEW_ID_PREFIX = "preview:";
+function previewEntryId(word) {
+  return `${PREVIEW_ID_PREFIX}${word.toLowerCase()}`;
+}
+function draftEntry(word) {
+  return {
+    id: previewEntryId(word),
+    word,
+    liked: false,
+    level: "",
+    synonyms: "",
+    antonyms: "",
+    example: "",
+    definition: "",
+    definitionZh: "",
+    phonetic: "",
+    partOfSpeech: "",
+    grammar: "",
+    source: null,
+    added: "",
+    lastReviewed: "",
+    reviews: 0
+  };
+}
+function mergeDictionaryInto(entry, data) {
+  if (!entry.phonetic) entry.phonetic = data.phonetic;
+  if (!entry.audio) entry.audio = data.audio;
+  if (!entry.partOfSpeech) entry.partOfSpeech = data.partOfSpeech;
+  if (!entry.definition) entry.definition = data.definition;
+  if (!entry.definitionZh) entry.definitionZh = data.definitionZh;
+  if (!entry.synonyms) entry.synonyms = data.synonyms.join(", ");
+  if (!entry.antonyms) entry.antonyms = data.antonyms.join(", ");
+}
+async function promotePreview(host, word, ctx, dict) {
+  await host.addWordToVocab(word, ctx, { reveal: false, enrich: dict ? false : void 0 });
+  const lower2 = word.toLowerCase();
+  const entry = host.store.entries.find((e) => e.word.toLowerCase() === lower2);
+  if (!entry) throw new Error(`Vocab Tracker: couldn't find "${word}" after adding it`);
+  if (dict) {
+    mergeDictionaryInto(entry, dict);
+    await host.store.touch(entry);
+  }
+  return entry;
+}
+var cache = /* @__PURE__ */ new Map();
+function loadPreviewDictionary(dict, word, onSettled) {
+  const key4 = word.toLowerCase();
+  const hit = cache.get(key4);
+  if (hit) return hit;
+  const entry = { status: "loading" };
+  cache.set(key4, entry);
+  dict.fetchDictionary(word).then((data) => {
+    entry.status = "ready";
+    entry.data = data;
+  }).catch((error) => {
+    entry.status = "error";
+    entry.error = error;
+  }).finally(onSettled);
+  return entry;
+}
+
 // src/ui/word/AiTab.ts
-function renderWordAiTab(plugin, container, entry, ui, scope) {
+function buildPreviewSend(host, draftWord, draftThreadId, ui, preview2) {
+  return async (req) => {
+    const added = await promotePreview(host, draftWord, preview2.ctx, preview2.dict);
+    if (ui.chat.focused === draftThreadId) ui.chat.focused = wordThreadId(added.id);
+    ui.tabs.set(added.id, "ai");
+    preview2.refresh();
+    await host.threads.askWord(added, req);
+  };
+}
+function renderWordAiTab(plugin, container, entry, ui, scope, preview2) {
   var _a, _b;
   const pinAction = (turn) => {
     const pinned = !!turn.pinnedToGrammar;
@@ -3929,19 +4000,21 @@ function renderWordAiTab(plugin, container, entry, ui, scope) {
       }
     ];
   };
+  const draftThreadId = wordThreadId(entry.id);
+  const send = preview2 ? buildPreviewSend(plugin, entry.word, draftThreadId, ui, preview2) : (req) => plugin.threads.askWord(entry, req);
   scope.addChild(
     new ChatPanel(container, {
       app: plugin.app,
       threads: plugin.threads,
       ai: plugin.ai,
       selection: plugin.selection,
-      threadId: wordThreadId(entry.id),
+      threadId: draftThreadId,
       surface: "word",
       customTaskId: wordCustom.id,
       sourcePath: (_b = (_a = entry.source) == null ? void 0 : _a.path) != null ? _b : "",
       placeholder: t("chat.placeholder.word", { word: entry.word }),
       state: ui.chat,
-      send: (req) => plugin.threads.askWord(entry, req),
+      send,
       retry: (turnId) => plugin.threads.retryWord(entry, turnId),
       turnActions: pinAction,
       origin: findWordSource(entry, plugin.notes).then(
@@ -4145,9 +4218,21 @@ function renderVocabRow(plugin, container, entry, initialState, setState, refres
     row = next;
     afterMount == null ? void 0 : afterMount(next);
   };
+  let promoting = false;
   const like = async (e) => {
     var _a;
     e.stopPropagation();
+    if (opts.preview) {
+      if (promoting) return;
+      promoting = true;
+      try {
+        await promotePreview(plugin, entry.word, opts.preview.ctx, opts.preview.dict);
+      } finally {
+        promoting = false;
+      }
+      refresh();
+      return;
+    }
     if (entry.liked) {
       const deleted = unlikeEntry(plugin, entry);
       if (deleted) (_a = opts.onDeleted) == null ? void 0 : _a.call(opts, entry);
@@ -4236,7 +4321,7 @@ function renderVocabRow(plugin, container, entry, initialState, setState, refres
     const scope = opts.ui ? opts.ui.rowScope(entry.id) : new import_obsidian10.Component();
     const tab = opts.ui ? (_c = opts.ui.tabs.get(entry.id)) != null ? _c : "data" : "data";
     if (tab === "ai" && opts.ui) {
-      renderWordAiTab(plugin, body, entry, opts.ui, scope);
+      renderWordAiTab(plugin, body, entry, opts.ui, scope, opts.preview ? { ...opts.preview, refresh } : void 0);
       renderFooter(body, plugin, entry, opts, scope, tab, () => redraw());
       return rowEl;
     }
@@ -4258,17 +4343,28 @@ function renderVocabRow(plugin, container, entry, initialState, setState, refres
         inp.placeholder = t("row.field.placeholder", { label: label.toLowerCase() });
         inp.onclick = (e) => e.stopPropagation();
         autoGrowTextarea(inp);
-        inp.addEventListener("input", () => autoGrowTextarea(inp));
-        inp.onchange = () => commitField(key4, inp.value);
+        if (opts.preview) {
+          inp.disabled = true;
+        } else {
+          inp.addEventListener("input", () => autoGrowTextarea(inp));
+          inp.onchange = () => commitField(key4, inp.value);
+        }
       } else {
         const inp = wrap.createEl("input", { cls });
         inp.type = "text";
         inp.value = value;
         inp.placeholder = t("row.field.placeholder", { label: label.toLowerCase() });
         inp.onclick = (e) => e.stopPropagation();
-        inp.onchange = () => commitField(key4, inp.value);
+        if (opts.preview) inp.disabled = true;
+        else inp.onchange = () => commitField(key4, inp.value);
       }
     };
+    if (opts.preview && opts.preview.status !== "ready") {
+      body.createDiv({
+        cls: ["vt-row-preview-hint", opts.preview.status === "error" ? "is-error" : ""].filter(Boolean),
+        text: t(opts.preview.status === "error" ? "row.preview.error" : "row.preview.loading")
+      });
+    }
     mkField(t("row.field.definition"), "definition", { multiline: true });
     mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
     renderLevelChips(body, entry);
@@ -4297,8 +4393,9 @@ function renderLevelChips(body, entry) {
 function renderFooter(body, plugin, entry, opts, scope, tab, redraw) {
   const footer = body.createEl("div", { cls: "vt-row-footer" });
   const left = footer.createEl("span", { cls: "vt-row-footer-left" });
-  if (opts.ui) renderViewToggle(left, plugin, entry, opts.ui, scope, tab, redraw);
+  if (opts.ui) renderViewToggle(left, plugin, entry, opts.ui, scope, tab, redraw, opts.onViewChange);
   const actions = footer.createEl("span", { cls: "vt-row-footer-actions" });
+  if (opts.preview) return;
   if (opts.openWordPage) {
     const wordPageBtn = footerBtn(actions, "external-link", t("word.openPageTitle"));
     wordPageBtn.onclick = (e) => {
@@ -4315,7 +4412,7 @@ function renderFooter(body, plugin, entry, opts, scope, tab, redraw) {
     redraw();
   };
 }
-function renderViewToggle(parent, plugin, entry, ui, scope, current, redraw) {
+function renderViewToggle(parent, plugin, entry, ui, scope, current, redraw, onViewChange) {
   const btn = parent.createEl("span", { cls: "vt-view-toggle" });
   btn.setAttr("role", "button");
   const iconEl = btn.createSpan({ cls: "vt-view-toggle-icon" });
@@ -4340,7 +4437,9 @@ function renderViewToggle(parent, plugin, entry, ui, scope, current, redraw) {
   void plugin.threads.ensureLoaded().then(refresh);
   btn.onclick = (e) => {
     e.stopPropagation();
-    ui.tabs.set(entry.id, current === "ai" ? "data" : "ai");
+    const next = current === "ai" ? "data" : "ai";
+    ui.tabs.set(entry.id, next);
+    onViewChange == null ? void 0 : onViewChange(next);
     redraw();
   };
 }
@@ -6709,8 +6808,8 @@ var FOCUS_FLASH_MS = 1200;
 var VocabSidebarView = class extends import_obsidian19.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
-    // Word clicked via a plain ==mark== that isn't tracked yet — prompts an
-    // "add to vocab" banner instead of a full row (see processMarks).
+    // Word clicked via a plain ==mark== that isn't tracked yet — shows a
+    // preview card (1009-2 #1) instead of a library row (see processMarks).
     this.pendingWord = "";
     this.expandState = /* @__PURE__ */ new Map();
     this.collapsedGroups = /* @__PURE__ */ new Set();
@@ -6987,8 +7086,8 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
   // Cached "this note has this word" set; null while it's still loading
   // (the caller should fall back to a provisional guess, see scopedEntries).
   noteScopeFor(file) {
-    const cache = this.noteScopeCache;
-    if (cache && cache.path === file.path && cache.mtime === file.stat.mtime) return cache.ids;
+    const cache2 = this.noteScopeCache;
+    if (cache2 && cache2.path === file.path && cache2.mtime === file.stat.mtime) return cache2.ids;
     void this.loadNoteScope(file);
     return null;
   }
@@ -7282,21 +7381,36 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
     mkToggle(t("sidebar.filter.all"), "all");
   }
   drawList(root2, scope) {
+    var _a;
     if (this.pendingWord) {
-      const banner = root2.createEl("div", { cls: "vt-sidebar-add-prompt" });
-      banner.createEl("span", { text: `"${this.pendingWord}"`, cls: "vt-sidebar-add-prompt-word" });
-      const addBtn = banner.createEl("button", { text: t("sidebar.addPrompt.cta"), cls: "vt-sidebar-add-btn" });
-      addBtn.onclick = async () => {
-        const word = this.pendingWord;
-        await this.plugin.addWordToVocab(word, {}, { reveal: false });
-        this.setWord(word);
-      };
-      const dismiss = banner.createEl("span", { cls: "vt-close-btn" });
+      const word = this.pendingWord;
+      const wrap = root2.createEl("div", { cls: "vt-sidebar-preview" });
+      const head = wrap.createEl("div", { cls: "vt-sidebar-preview-head" });
+      const dismiss = head.createEl("span", { cls: "vt-close-btn" });
       (0, import_obsidian19.setIcon)(dismiss, "x");
       dismiss.onclick = () => {
         this.pendingWord = "";
         this.render();
       };
+      const dict = loadPreviewDictionary(this.plugin.dictionary, word, () => {
+        if (this.pendingWord.toLowerCase() === word.toLowerCase()) this.render();
+      });
+      const draft = draftEntry(word);
+      if (dict.status === "ready" && dict.data) mergeDictionaryInto(draft, dict.data);
+      renderVocabRow(
+        this.plugin,
+        wrap,
+        draft,
+        "half",
+        () => {
+        },
+        () => this.setWord(word),
+        {
+          ui: this.wordUi,
+          variant: "sheet",
+          preview: { ctx: {}, dict: (_a = dict.data) != null ? _a : null, status: dict.status }
+        }
+      );
     }
     const wCounter = { el: null };
     const words = this.drawSection(root2, "words", t("sidebar.section.words.counted", { n: this.wordsCount() }), wCounter);
@@ -7311,14 +7425,14 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
     const paragraphs = this.drawSection(root2, "paragraphs", t("paragraph.list.title", { n: "\u2026" }), pCounter);
     if (paragraphs) {
       this.drawParagraphs(paragraphs, scope, (n) => {
-        var _a;
-        return (_a = pCounter.el) == null ? void 0 : _a.setText(t("paragraph.list.title", { n }));
+        var _a2;
+        return (_a2 = pCounter.el) == null ? void 0 : _a2.setText(t("paragraph.list.title", { n }));
       });
     } else {
       const { threads } = this.plugin;
       const recount = () => {
-        var _a, _b;
-        if (!((_a = pCounter.el) == null ? void 0 : _a.isConnected)) return;
+        var _a2, _b;
+        if (!((_a2 = pCounter.el) == null ? void 0 : _a2.isConnected)) return;
         const n = ((_b = this.filterMode) != null ? _b : "note") === "all" ? this.allNotesParagraphCount() : this.currentNoteParagraphCount();
         pCounter.el.setText(t("paragraph.list.title", { n }));
       };
@@ -7337,8 +7451,8 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
           {
             openWord: (entryId) => this.openWord(entryId, "ai"),
             counted: (n) => {
-              var _a;
-              return (_a = counter.el) == null ? void 0 : _a.setText(t("sidebar.section.ai", { n }));
+              var _a2;
+              return (_a2 = counter.el) == null ? void 0 : _a2.setText(t("sidebar.section.ai", { n }));
             }
           },
           this.discussionView
@@ -7347,8 +7461,8 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
     } else {
       const { threads } = this.plugin;
       const recount = () => {
-        var _a;
-        if (!((_a = counter.el) == null ? void 0 : _a.isConnected)) return;
+        var _a2;
+        if (!((_a2 = counter.el) == null ? void 0 : _a2.isConnected)) return;
         const n = discussionRows(threads, this.scopedEntries()).length;
         counter.el.setText(t("sidebar.section.ai", { n }));
       };
@@ -7368,8 +7482,8 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
             openWord: (entryId) => void this.plugin.openWordPage(entryId),
             viewAll: () => void this.plugin.openEntryFile("verbs"),
             counted: (n) => {
-              var _a;
-              return (_a = gCounter.el) == null ? void 0 : _a.setText(t("sidebar.section.grammar", { n }));
+              var _a2;
+              return (_a2 = gCounter.el) == null ? void 0 : _a2.setText(t("sidebar.section.grammar", { n }));
             }
           }
         )
@@ -7377,8 +7491,8 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
     } else {
       const { verbs, learn } = this.plugin;
       const recount = () => {
-        var _a;
-        if (!((_a = gCounter.el) == null ? void 0 : _a.isConnected)) return;
+        var _a2;
+        if (!((_a2 = gCounter.el) == null ? void 0 : _a2.isConnected)) return;
         const n = verbUsageRows(this.scopedVerbs().verbs(), (id2) => learn.verbFavorite(id2)).length;
         gCounter.el.setText(t("sidebar.section.grammar", { n }));
       };
@@ -23948,9 +24062,9 @@ var ObsidianVault = class {
     this.watching = true;
     const { vault, metadataCache, workspace } = this.app;
     component.registerEvent(
-      metadataCache.on("changed", (file, _data, cache) => {
+      metadataCache.on("changed", (file, _data, cache2) => {
         var _a;
-        return (_a = this.managed) == null ? void 0 : _a.set(file.path, managedRefOf(cache == null ? void 0 : cache.frontmatter));
+        return (_a = this.managed) == null ? void 0 : _a.set(file.path, managedRefOf(cache2 == null ? void 0 : cache2.frontmatter));
       })
     );
     component.registerEvent(metadataCache.on("deleted", (file) => {
@@ -25600,20 +25714,20 @@ function opensWithH1(headings) {
   const h = headings == null ? void 0 : headings[0];
   return !!h && h.level === 1 && h.position.start.line < DASHBOARD_TITLE_SLACK;
 }
-function chromeState(cache, basename2, hasDashboardBlock = false) {
+function chromeState(cache2, basename2, hasDashboardBlock = false) {
   var _a;
-  const kind = pluginNoteKind(cache == null ? void 0 : cache.frontmatter);
-  if (kind && cache) {
+  const kind = pluginNoteKind(cache2 == null ? void 0 : cache2.frontmatter);
+  if (kind && cache2) {
     return {
       pluginNote: true,
-      hideInlineTitle: kind === "entry" && legacyTitleHeading(basename2, cache.headings, (_a = cache.frontmatterPosition) == null ? void 0 : _a.end.line),
+      hideInlineTitle: kind === "entry" && legacyTitleHeading(basename2, cache2.headings, (_a = cache2.frontmatterPosition) == null ? void 0 : _a.end.line),
       hideFirstHeading: false
     };
   }
   return {
     pluginNote: false,
     hideInlineTitle: false,
-    hideFirstHeading: hasDashboardBlock && opensWithH1(cache == null ? void 0 : cache.headings)
+    hideFirstHeading: hasDashboardBlock && opensWithH1(cache2 == null ? void 0 : cache2.headings)
   };
 }
 
@@ -25654,10 +25768,10 @@ var PluginNoteChrome = class {
       const view = leaf.view;
       if (!(view instanceof import_obsidian53.MarkdownView)) continue;
       const file = view.file;
-      const cache = file ? this.app.metadataCache.getFileCache(file) : null;
+      const cache2 = file ? this.app.metadataCache.getFileCache(file) : null;
       const el = view.containerEl;
       const hasDashboardBlock = !!el.querySelector(".vt-dash");
-      const state = chromeState(cache, (_a = file == null ? void 0 : file.basename) != null ? _a : "", hasDashboardBlock);
+      const state = chromeState(cache2, (_a = file == null ? void 0 : file.basename) != null ? _a : "", hasDashboardBlock);
       el.toggleClass(PLUGIN_NOTE_CLASS, state.pluginNote);
       el.toggleClass(HIDE_TITLE_CLASS, state.hideInlineTitle);
       el.toggleClass(HIDE_FIRST_HEADING_CLASS, state.hideFirstHeading);
@@ -25697,17 +25811,35 @@ function installOpenInPreview(plugin, folder) {
     return id2;
   };
   let lastActive = null;
-  const handle = () => {
-    const view = plugin.app.workspace.getActiveViewOfType(import_obsidian54.MarkdownView);
-    if (!(view == null ? void 0 : view.file)) return;
-    const leaf = view.leaf;
+  const processLeaf = (leaf) => {
+    const view = leaf.view;
+    if (!(view instanceof import_obsidian54.MarkdownView) || !view.file) return;
     const next = { leafId: idOf(leaf), path: view.file.path };
     const switchNow = shouldSwitchToPreview(lastActive, next, folder());
     lastActive = next;
-    if (switchNow && view.getMode() === "source") {
+    if (!switchNow) return;
+    const stable = next;
+    const tryApply = (attempt) => {
+      var _a;
+      if (attempt > 20) return;
+      const currentView = leaf.view;
+      if (!(currentView instanceof import_obsidian54.MarkdownView) || ((_a = currentView.file) == null ? void 0 : _a.path) !== stable.path) return;
+      if (currentView.getMode() !== "source") return;
       const viewState = leaf.getViewState();
-      void leaf.setViewState({ ...viewState, state: { ...viewState.state, mode: "preview" } });
+      void leaf.setViewState({ ...viewState, state: { ...viewState.state, mode: "preview" } }).then(() => {
+        window.setTimeout(() => tryApply(attempt + 1), 50);
+      });
+    };
+    tryApply(0);
+  };
+  const handle = () => {
+    const leaf = plugin.app.workspace.activeLeaf;
+    if (!leaf) return;
+    if (leaf.isDeferred) {
+      void leaf.loadIfDeferred().then(() => processLeaf(leaf));
+      return;
     }
+    processLeaf(leaf);
   };
   plugin.registerEvent(
     plugin.app.workspace.on("file-open", (file) => {
@@ -26135,8 +26267,10 @@ var WordSheet = class extends import_obsidian57.Component {
         // Unload the card's ChatPanel etc. (their subscriptions) now; the
         // DOM stays for the slide-out and goes when the layer detaches.
         onClosed: () => {
+          var _a;
           this.wordUi.beginRender();
           this.view = null;
+          (_a = this.sheet) == null ? void 0 : _a.layer.removeClass("is-ai");
         }
       });
     }
@@ -26162,12 +26296,12 @@ var WordSheet = class extends import_obsidian57.Component {
     return this.plugin.store.entries.find((e) => e.word.toLowerCase() === lower2);
   }
   drawWord(sheet, view) {
-    var _a;
+    var _a, _b;
     const entry = view.entryId && this.plugin.store.entries.find((e) => e.id === view.entryId) || this.findEntry(view.word);
     sheet.setLabel(t("mobile.sheet.label.word", { word: (_a = entry == null ? void 0 : entry.word) != null ? _a : view.word }));
     if (!entry) {
       view.entryId = void 0;
-      this.drawAddPrompt(sheet.content, view);
+      this.drawPreview(sheet.content, view);
       return;
     }
     view.entryId = entry.id;
@@ -26186,23 +26320,51 @@ var WordSheet = class extends import_obsidian57.Component {
           void this.plugin.openWordPage(e.id);
         },
         onDeleted: () => this.close(),
-        onJump: () => this.close()
+        onJump: () => this.close(),
+        onViewChange: (tab) => this.applyPaneHeight(tab)
       }
     );
+    this.applyPaneHeight((_b = this.wordUi.tabs.get(entry.id)) != null ? _b : "data");
   }
-  drawAddPrompt(el, view) {
-    const box = el.createDiv({ cls: "vt-sheet-add" });
-    box.createDiv({ cls: "vt-sheet-add-word", text: view.word });
-    box.createDiv({ cls: "vt-sheet-add-hint", text: t("mobile.sheet.notTracked") });
-    const btn = box.createEl("button", { cls: "mod-cta vt-sheet-add-btn", text: t("sidebar.addPrompt.cta") });
-    btn.addEventListener("click", () => {
-      var _a;
-      btn.disabled = true;
-      void this.plugin.addWordToVocab(view.word, (_a = view.ctx) != null ? _a : {}, { reveal: false }).then(() => this.draw()).catch((e) => {
-        console.error("Vocab Tracker: couldn't add the word", e);
-        btn.disabled = false;
-      });
+  // 1009-2 #1: a word that isn't in the library yet gets the same
+  // WordRow a liked:false library word would — ♡ + whatever the
+  // dictionary fetch (never plugin.enrichEntry(), which would touch the
+  // store) finds for it. ♥, or the AI tab's first question, is the only
+  // thing that ever adds it (previewEntry.ts's promotePreview()); closing
+  // the sheet without either leaves nothing behind.
+  drawPreview(el, view) {
+    var _a, _b, _c;
+    const dict = loadPreviewDictionary(this.plugin.dictionary, view.word, () => {
+      if (this.isOpen && this.view === view) this.draw();
     });
+    const draft = draftEntry(view.word);
+    if (dict.status === "ready" && dict.data) mergeDictionaryInto(draft, dict.data);
+    renderVocabRow(
+      this.plugin,
+      el,
+      draft,
+      this.expand,
+      (s) => this.expand = s === "collapsed" ? "half" : s,
+      () => this.draw(),
+      {
+        ui: this.wordUi,
+        variant: "sheet",
+        preview: { ctx: (_a = view.ctx) != null ? _a : {}, dict: (_b = dict.data) != null ? _b : null, status: dict.status },
+        onViewChange: (tab) => this.applyPaneHeight(tab)
+      }
+    );
+    this.applyPaneHeight((_c = this.wordUi.tabs.get(draft.id)) != null ? _c : "data");
+  }
+  // 1009-2 #3: the AI screen needs near-fullscreen room (the composer
+  // sits under the iOS keyboard otherwise) — the Info screen keeps the
+  // normal half-height sheet. Tab switches are the card's own
+  // self-redraw (規格 #10) so this runs both right after drawWord/
+  // drawPreview build the card and from its onViewChange hook.
+  applyPaneHeight(tab) {
+    const sheet = this.sheet;
+    if (!sheet) return;
+    sheet.layer.toggleClass("is-ai", tab === "ai");
+    sheet.setExpanded(tab === "ai");
   }
   drawParagraph(sheet, route) {
     sheet.setLabel(t("mobile.sheet.label.paragraph"));
@@ -27346,6 +27508,8 @@ var VocabTrackerPlugin = class extends import_obsidian59.Plugin {
   }
   // `reveal` (default): show the word afterwards — sidebar, or the bottom
   // sheet on iPhone. Quick save and the sheet's own 「加入」 pass false.
+  // `enrich: false`: the caller already has the dictionary data (a preview
+  // card, 1009-2 #1) — don't fetch it a second time.
   async addWordToVocab(word, ctx = {}, opts = {}) {
     var _a, _b;
     const existing = this.store.entries.find(
@@ -27370,7 +27534,7 @@ var VocabTrackerPlugin = class extends import_obsidian59.Plugin {
         // 1006-2 #1：手動加字＝自動 like
       });
       await this.store.addEntry(entry);
-      this.enrichEntry(entry);
+      if (opts.enrich !== false) this.enrichEntry(entry);
     } else {
       const before = JSON.stringify([existing.source, existing.example, existing.level]);
       if (!existing.source && source) existing.source = source;

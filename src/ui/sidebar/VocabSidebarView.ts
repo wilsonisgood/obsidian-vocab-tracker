@@ -4,6 +4,7 @@ import type { VocabEntry } from "../../core/model/entry";
 import type { ExpandState, RowOptions } from "../word/WordRow";
 import { renderVocabRow } from "../word/WordRow";
 import { renderGroupedVocabList } from "../word/GroupedWordList";
+import { draftEntry, loadPreviewDictionary, mergeDictionaryInto } from "../word/previewEntry";
 import { sortByRecent } from "../word/wordOrder";
 import { t } from "../../core/i18n";
 import type { SectionRef } from "../../services/anchors/ParagraphAnchorService";
@@ -58,8 +59,8 @@ export { REBINDING_BODY_CLS };
 
 export class VocabSidebarView extends ItemView {
   plugin: VocabTrackerPlugin;
-  // Word clicked via a plain ==mark== that isn't tracked yet — prompts an
-  // "add to vocab" banner instead of a full row (see processMarks).
+  // Word clicked via a plain ==mark== that isn't tracked yet — shows a
+  // preview card (1009-2 #1) instead of a library row (see processMarks).
   pendingWord = "";
   filterMode?: FilterMode;
   expandState: Map<string, ExpandState> = new Map();
@@ -710,20 +711,37 @@ export class VocabSidebarView extends ItemView {
   }
 
   private drawList(root: HTMLElement, scope: Component) {
-    // ── Not-yet-tracked word banner ──────────────────────────────
+    // ── Preview card for a word that isn't in the library yet ───────
+    // (1009-2 #1, replaces the old 「加入單字庫」 banner/button) — the same
+    // WordRow a liked:false library word gets; ♥ or the AI tab's first
+    // question adds it for real (previewEntry.ts's promotePreview, wired
+    // through RowOptions.preview), the x just clears pendingWord.
     if (this.pendingWord) {
-      const banner = root.createEl("div", { cls: "vt-sidebar-add-prompt" });
-      banner.createEl("span", { text: `"${this.pendingWord}"`, cls: "vt-sidebar-add-prompt-word" });
-      const addBtn = banner.createEl("button", { text: t("sidebar.addPrompt.cta"), cls: "vt-sidebar-add-btn" });
-      addBtn.onclick = async () => {
-        // Shown here, in the sidebar — even on iPhone, where it was opened by hand.
-        const word = this.pendingWord;
-        await this.plugin.addWordToVocab(word, {}, { reveal: false });
-        this.setWord(word);
-      };
-      const dismiss = banner.createEl("span", { cls: "vt-close-btn" });
+      const word = this.pendingWord;
+      const wrap = root.createEl("div", { cls: "vt-sidebar-preview" });
+      const head = wrap.createEl("div", { cls: "vt-sidebar-preview-head" });
+      const dismiss = head.createEl("span", { cls: "vt-close-btn" });
       setIcon(dismiss, "x");
       dismiss.onclick = () => { this.pendingWord = ""; this.render(); };
+
+      const dict = loadPreviewDictionary(this.plugin.dictionary, word, () => {
+        if (this.pendingWord.toLowerCase() === word.toLowerCase()) this.render();
+      });
+      const draft = draftEntry(word);
+      if (dict.status === "ready" && dict.data) mergeDictionaryInto(draft, dict.data);
+      renderVocabRow(
+        this.plugin,
+        wrap,
+        draft,
+        "half",
+        () => {},
+        () => this.setWord(word),
+        {
+          ui: this.wordUi,
+          variant: "sheet",
+          preview: { ctx: {}, dict: dict.data ?? null, status: dict.status },
+        }
+      );
     }
 
     // Four foldable sections (1005 回饋 2; Wave 6 W splits 段落討論 and

@@ -16,5 +16,6 @@
 @import "./galaxy.css";
 @import "./dna.css";
 @import "./wordPageDna.css";
+@import "./wordPreview.css";
 /* Last: its is-mobile / is-phone / is-tablet rules override the above. */
 @import "./mobile.css";

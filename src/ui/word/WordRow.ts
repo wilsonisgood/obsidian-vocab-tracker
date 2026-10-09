@@ -1,6 +1,8 @@
 import { Component, setIcon } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
+import type { DictionaryResult } from "../../core/model/dictionary";
 import type { VocabEntry } from "../../core/model/entry";
+import type { WordContext } from "../../core/model/word-context";
 import { dueLabel } from "../../core/text/dueLabel";
 import { t } from "../../core/i18n";
 import { wordThreadId } from "../../core/model/thread";
@@ -8,6 +10,7 @@ import { bindPronounceButton } from "../kit/pronounce";
 import { renderWordAiTab } from "./AiTab";
 import { unlikeEntry } from "./likeAction";
 import { abbreviatePartOfSpeech } from "./partOfSpeech";
+import { promotePreview } from "./previewEntry";
 import {
   autoGrowTextarea,
   commitEntryField,
@@ -19,6 +22,9 @@ import {
 } from "./rowModel";
 import type { WordTab, WordUi } from "./wordUi";
 
+// 1009-2 #1: temporary strings, not yet in core/i18n/{zh-TW,en}.ts (a
+// shared file this task doesn't touch — see AGENT.md §5b-2). Move into
+// the real i18n tables on integration.
 // Progressive-disclosure state for a single row: collapsed (one line),
 // half (synonyms-and-up visible), full (everything visible).
 export type ExpandState = "collapsed" | "half" | "full";
@@ -68,6 +74,28 @@ export interface RowOptions {
   // never set elsewhere. Fires only on the collapsed→expanded click, not
   // on expand→collapse or any other redraw.
   onActivate?(entry: VocabEntry): void;
+  // 1009-2 #1: `entry` is a draft (previewEntry.ts's draftEntry()) for a
+  // word that isn't in the library yet — nothing here writes the store
+  // except ♥ (and, on the AI tab, its first question), which both
+  // promote it into a real liked entry via promotePreview() and then
+  // call `refresh()`, same as any other change that swaps out what this
+  // row even is. Every other store-writing bit (field edits, 字典重抓,
+  // 單字頁, delete) is hidden/disabled.
+  preview?: {
+    ctx: Partial<WordContext>;
+    // Whatever the preview's own dictionary fetch has found so far —
+    // null while loading/on failure. Already merged into `entry`'s
+    // fields by the caller; passed again here only so promotePreview()
+    // can fold it into the *real* entry once ♥/the first question fires.
+    dict: DictionaryResult | null;
+    status: "loading" | "ready" | "error";
+  };
+  // 1009-2 #3: the Info/AI footer toggle switches screens with this row's
+  // own self-redraw (規格 #10) — the host (WordSheet) never hears about
+  // it otherwise, but needs to on the iPhone sheet to resize the panel
+  // (near-fullscreen on AI, back to normal on Info). Not used outside
+  // the sheet.
+  onViewChange?(tab: WordTab): void;
 }
 
 // ── Shared row renderer: sidebar list + dashboard + the iPhone sheet all
@@ -122,8 +150,23 @@ export function renderVocabRow(
     afterMount?.(next);
   };
 
+  // Guards against a second tap while the first is still adding/liking
+  // (promotePreview is async — addWordToVocab reads/modifies the note).
+  let promoting = false;
+
   const like = async (e: MouseEvent) => {
     e.stopPropagation();
+    if (opts.preview) {
+      if (promoting) return;
+      promoting = true;
+      try {
+        await promotePreview(plugin, entry.word, opts.preview.ctx, opts.preview.dict);
+      } finally {
+        promoting = false;
+      }
+      refresh();
+      return;
+    }
     if (entry.liked) {
       const deleted = unlikeEntry(plugin, entry);
       if (deleted) opts.onDeleted?.(entry);
@@ -244,7 +287,7 @@ export function renderVocabRow(
     const tab: WordTab = opts.ui ? opts.ui.tabs.get(entry.id) ?? "data" : "data";
 
     if (tab === "ai" && opts.ui) {
-      renderWordAiTab(plugin, body, entry, opts.ui, scope);
+      renderWordAiTab(plugin, body, entry, opts.ui, scope, opts.preview ? { ...opts.preview, refresh } : undefined);
       renderFooter(body, plugin, entry, opts, scope, tab, () => redraw());
       return rowEl;
     }
@@ -279,17 +322,33 @@ export function renderVocabRow(
         inp.placeholder = t("row.field.placeholder", { label: label.toLowerCase() });
         inp.onclick = (e) => e.stopPropagation();
         autoGrowTextarea(inp);
-        inp.addEventListener("input", () => autoGrowTextarea(inp));
-        inp.onchange = () => commitField(key, inp.value);
+        // 1009-2 #1: a preview card's fields are read-only — nothing
+        // commits until ♥/the first AI question promotes it for real.
+        if (opts.preview) {
+          inp.disabled = true;
+        } else {
+          inp.addEventListener("input", () => autoGrowTextarea(inp));
+          inp.onchange = () => commitField(key, inp.value);
+        }
       } else {
         const inp = wrap.createEl("input", { cls });
         inp.type = "text";
         inp.value = value;
         inp.placeholder = t("row.field.placeholder", { label: label.toLowerCase() });
         inp.onclick = (e) => e.stopPropagation();
-        inp.onchange = () => commitField(key, inp.value);
+        if (opts.preview) inp.disabled = true;
+        else inp.onchange = () => commitField(key, inp.value);
       }
     };
+
+    // 1009-2 #1: while the preview's own dictionary fetch is in flight
+    // (or failed) — the Info screen still shows, ♥ still works either way.
+    if (opts.preview && opts.preview.status !== "ready") {
+      body.createDiv({
+        cls: ["vt-row-preview-hint", opts.preview.status === "error" ? "is-error" : ""].filter(Boolean),
+        text: t(opts.preview.status === "error" ? "row.preview.error" : "row.preview.loading"),
+      });
+    }
 
     // 規格 #12/1009 #1: Info 畫面只留英文定義、中文定義（可編輯），下面是程度
     // 標籤（唯讀 chip）— 音標、同義字、反義字、例句、文法提示、出處、複習時間
@@ -350,9 +409,13 @@ function renderFooter(
   // right (row.css/sidebar.css) instead of drifting when there's no
   // toggle to balance against.
   const left = footer.createEl("span", { cls: "vt-row-footer-left" });
-  if (opts.ui) renderViewToggle(left, plugin, entry, opts.ui, scope, tab, redraw);
+  if (opts.ui) renderViewToggle(left, plugin, entry, opts.ui, scope, tab, redraw, opts.onViewChange);
 
   const actions = footer.createEl("span", { cls: "vt-row-footer-actions" });
+
+  // 1009-2 #1: a preview card can't open a word page or re-fetch the
+  // dictionary — there's no entry yet to do either to.
+  if (opts.preview) return;
 
   if (opts.openWordPage) {
     const wordPageBtn = footerBtn(actions, "external-link", t("word.openPageTitle"));
@@ -385,7 +448,8 @@ function renderViewToggle(
   ui: WordUi,
   scope: Component,
   current: WordTab,
-  redraw: () => void
+  redraw: () => void,
+  onViewChange?: (tab: WordTab) => void
 ): void {
   const btn = parent.createEl("span", { cls: "vt-view-toggle" });
   btn.setAttr("role", "button");
@@ -414,7 +478,9 @@ function renderViewToggle(
 
   btn.onclick = (e) => {
     e.stopPropagation();
-    ui.tabs.set(entry.id, current === "ai" ? "data" : "ai");
+    const next = current === "ai" ? "data" : "ai";
+    ui.tabs.set(entry.id, next);
+    onViewChange?.(next);
     redraw();
   };
 }

@@ -1122,7 +1122,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
 
   // `reveal` (default): show the word afterwards — sidebar, or the bottom
   // sheet on iPhone. Quick save and the sheet's own 「加入」 pass false.
-  async addWordToVocab(word: string, ctx: Partial<WordContext> = {}, opts: { reveal?: boolean } = {}): Promise<boolean> {
+  // `enrich: false`: the caller already has the dictionary data (a preview
+  // card, 1009-2 #1) — don't fetch it a second time.
+  async addWordToVocab(word: string, ctx: Partial<WordContext> = {}, opts: { reveal?: boolean; enrich?: boolean } = {}): Promise<boolean> {
     const existing = this.store.entries.find(
       (e) => e.word.toLowerCase() === word.toLowerCase()
     );
@@ -1149,7 +1151,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         liked: true, // 1006-2 #1：手動加字＝自動 like
       });
       await this.store.addEntry(entry);
-      this.enrichEntry(entry);
+      if (opts.enrich !== false) this.enrichEntry(entry);
     } else {
       const before = JSON.stringify([existing.source, existing.example, existing.level]);
       if (!existing.source && source) existing.source = source;

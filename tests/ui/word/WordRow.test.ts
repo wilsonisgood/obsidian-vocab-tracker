@@ -237,3 +237,100 @@ describe("WordRow — footer view toggle (規劃書 11 §1)", () => {
     expect(row.querySelector(".vt-view-toggle")).toBeNull();
   });
 });
+
+describe("WordRow — preview card (1009-2 #1, a word not in the library yet)", () => {
+  function draft(overrides: Partial<VocabEntry> = {}): VocabEntry {
+    return entry({ id: "preview:apron", liked: false, definition: "", definitionZh: "", ...overrides });
+  }
+
+  function mountPreview(
+    e: VocabEntry,
+    preview: RowOptions["preview"],
+    extra: { addedEntries?: VocabEntry[] } = {}
+  ) {
+    const plugin = fakePlugin();
+    const addedEntries = extra.addedEntries ?? [];
+    (plugin as unknown as { addWordToVocab: unknown }).addWordToVocab = vi.fn(async (word: string) => {
+      addedEntries.push(entry({ id: `real-${word}`, word, liked: true }));
+      return true;
+    });
+    (plugin as unknown as { store: unknown }).store = {
+      entries: addedEntries,
+      setLiked: vi.fn(async () => undefined),
+      touch: vi.fn(async () => undefined),
+    };
+    const doc = installDom();
+    const container = doc.createElement("div") as unknown as FakeElement;
+    let current: "collapsed" | "half" | "full" = "half";
+    const refresh = vi.fn(() => undefined);
+    const row = renderVocabRow(
+      plugin,
+      container as unknown as HTMLElement,
+      e,
+      current,
+      (s) => (current = s),
+      refresh,
+      { preview }
+    ) as unknown as FakeElement;
+    return { plugin, row, refresh, addedEntries };
+  }
+
+  it("♥ adds the word for real (liked) and hands off to the host via refresh() — never a self-redraw", async () => {
+    const e = draft();
+    const { plugin, row, refresh, addedEntries } = mountPreview(e, { ctx: { sentence: "wears an apron" }, dict: null, status: "ready" });
+    row.querySelector(".vt-row-like")!.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(plugin.addWordToVocab).toHaveBeenCalledWith("glittery", { sentence: "wears an apron" }, { reveal: false });
+    expect(addedEntries).toHaveLength(1);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    // Never the normal ♥ path (which would setLiked on the *draft*).
+    expect(plugin.store.setLiked).not.toHaveBeenCalled();
+  });
+
+  it("folds the preview's own dictionary data into the newly added entry", async () => {
+    const e = draft();
+    const dict = { phonetic: "", audio: "", partOfSpeech: "", definition: "a protective garment", definitionZh: "", synonyms: [], antonyms: [] };
+    const { addedEntries, row } = mountPreview(e, { ctx: {}, dict, status: "ready" });
+    row.querySelector(".vt-row-like")!.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(addedEntries[0].definition).toBe("a protective garment");
+  });
+
+  it("fields are read-only — no commit, no auto-like on 'edit'", () => {
+    const e = draft({ definition: "already fetched" });
+    const { row, plugin } = mountPreview(e, { ctx: {}, dict: null, status: "ready" });
+    const fields = row.querySelectorAll(".vt-field .vt-input");
+    expect(fields.length).toBe(2);
+    for (const f of fields) expect((f as unknown as { disabled: boolean }).disabled).toBe(true);
+    expect(plugin.store.setLiked).not.toHaveBeenCalled();
+  });
+
+  it("no 字典重抓/單字頁 icons — nothing in the footer writes the store", () => {
+    const e = draft();
+    const { row } = mountPreview(e, { ctx: {}, dict: null, status: "ready" });
+    expect(row.querySelectorAll(".vt-row-footer-icon").length).toBe(0);
+  });
+
+  it("shows a loading hint while the dictionary fetch is in flight", () => {
+    const e = draft();
+    const { row } = mountPreview(e, { ctx: {}, dict: null, status: "loading" });
+    const hint = row.querySelector(".vt-row-preview-hint")!;
+    expect(hint.hasClass("is-error")).toBe(false);
+    expect(hint.textContent).toContain("…");
+  });
+
+  it("shows an error hint on a failed fetch, but ♥ still works", () => {
+    const e = draft();
+    const { row } = mountPreview(e, { ctx: {}, dict: null, status: "error" });
+    expect(row.querySelector(".vt-row-preview-hint")!.hasClass("is-error")).toBe(true);
+    expect(row.querySelector(".vt-row-like")).not.toBeNull();
+  });
+
+  it("no hint once the fetch is ready", () => {
+    const e = draft({ definition: "shiny" });
+    const { row } = mountPreview(e, { ctx: {}, dict: null, status: "ready" });
+    expect(row.querySelector(".vt-row-preview-hint")).toBeNull();
+  });
+});

@@ -6,6 +6,7 @@ import type { WordContext } from "../../core/model/word-context";
 import type { SectionRef } from "../../services/anchors/ParagraphAnchorService";
 import { ParagraphThreadPane, type ParagraphPaneNav } from "../sidebar/ParagraphThreadPane";
 import { REBINDING_BODY_CLS, routeKey, type ParagraphRoute } from "../sidebar/routes";
+import { draftEntry, loadPreviewDictionary, mergeDictionaryInto } from "../word/previewEntry";
 import { renderVocabRow, type ExpandState } from "../word/WordRow";
 import { WordUi, type WordTab } from "../word/wordUi";
 import { actionNotice } from "./actionNotice";
@@ -129,6 +130,10 @@ export class WordSheet extends Component implements SheetTarget {
         onClosed: () => {
           this.wordUi.beginRender();
           this.view = null;
+          // 1009-2 #3: don't let a stale is-ai linger into the next
+          // open (it recomputes from the new view's own tab anyway, but
+          // the open→draw gap would otherwise flash the wrong height).
+          this.sheet?.layer.removeClass("is-ai");
         },
       });
     }
@@ -162,7 +167,7 @@ export class WordSheet extends Component implements SheetTarget {
     sheet.setLabel(t("mobile.sheet.label.word", { word: entry?.word ?? view.word }));
     if (!entry) {
       view.entryId = undefined;
-      this.drawAddPrompt(sheet.content, view);
+      this.drawPreview(sheet.content, view);
       return;
     }
     view.entryId = entry.id;
@@ -182,25 +187,51 @@ export class WordSheet extends Component implements SheetTarget {
         },
         onDeleted: () => this.close(),
         onJump: () => this.close(),
+        onViewChange: (tab) => this.applyPaneHeight(tab),
       }
     );
+    this.applyPaneHeight(this.wordUi.tabs.get(entry.id) ?? "data");
   }
 
-  private drawAddPrompt(el: HTMLElement, view: Extract<SheetView, { kind: "word" }>): void {
-    const box = el.createDiv({ cls: "vt-sheet-add" });
-    box.createDiv({ cls: "vt-sheet-add-word", text: view.word });
-    box.createDiv({ cls: "vt-sheet-add-hint", text: t("mobile.sheet.notTracked") });
-    const btn = box.createEl("button", { cls: "mod-cta vt-sheet-add-btn", text: t("sidebar.addPrompt.cta") });
-    btn.addEventListener("click", () => {
-      btn.disabled = true;
-      void this.plugin
-        .addWordToVocab(view.word, view.ctx ?? {}, { reveal: false })
-        .then(() => this.draw())
-        .catch((e) => {
-          console.error("Vocab Tracker: couldn't add the word", e);
-          btn.disabled = false;
-        });
+  // 1009-2 #1: a word that isn't in the library yet gets the same
+  // WordRow a liked:false library word would — ♡ + whatever the
+  // dictionary fetch (never plugin.enrichEntry(), which would touch the
+  // store) finds for it. ♥, or the AI tab's first question, is the only
+  // thing that ever adds it (previewEntry.ts's promotePreview()); closing
+  // the sheet without either leaves nothing behind.
+  private drawPreview(el: HTMLElement, view: Extract<SheetView, { kind: "word" }>): void {
+    const dict = loadPreviewDictionary(this.plugin.dictionary, view.word, () => {
+      if (this.isOpen && this.view === view) this.draw();
     });
+    const draft = draftEntry(view.word);
+    if (dict.status === "ready" && dict.data) mergeDictionaryInto(draft, dict.data);
+    renderVocabRow(
+      this.plugin,
+      el,
+      draft,
+      this.expand,
+      (s) => (this.expand = s === "collapsed" ? "half" : s),
+      () => this.draw(),
+      {
+        ui: this.wordUi,
+        variant: "sheet",
+        preview: { ctx: view.ctx ?? {}, dict: dict.data ?? null, status: dict.status },
+        onViewChange: (tab) => this.applyPaneHeight(tab),
+      }
+    );
+    this.applyPaneHeight(this.wordUi.tabs.get(draft.id) ?? "data");
+  }
+
+  // 1009-2 #3: the AI screen needs near-fullscreen room (the composer
+  // sits under the iOS keyboard otherwise) — the Info screen keeps the
+  // normal half-height sheet. Tab switches are the card's own
+  // self-redraw (規格 #10) so this runs both right after drawWord/
+  // drawPreview build the card and from its onViewChange hook.
+  private applyPaneHeight(tab: WordTab): void {
+    const sheet = this.sheet;
+    if (!sheet) return;
+    sheet.layer.toggleClass("is-ai", tab === "ai");
+    sheet.setExpanded(tab === "ai");
   }
 
   private drawParagraph(sheet: BottomSheet, route: ParagraphRoute): void {

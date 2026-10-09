@@ -74,6 +74,12 @@ export function prepareProfile(port: number, vaultDir: string): string {
     vaults: {
       [vaultId]: { path: vaultDir, ts: Date.now(), open: true },
     },
+    // (1009 #16 第二段) 全新 profile 每次啟動都會 "Checking for update using Github"
+    // 並下載 asar（obsidian.log 可見，單次量到花了超過 5 分鐘），是 openSidebarReady
+    // 偶發 timeout 的主因。obsidian.asar 的主行程把這個欄位讀成 updateDisabled，
+    // ipcMain "disable-update" handler 寫的也是同一個頂層欄位，所以直接預先寫進
+    // obsidian.json 關閉掉（不用等 app 跑起來再呼叫 IPC）。
+    updateDisabled: true,
   };
   fs.writeFileSync(
     path.join(profileDir, "obsidian.json"),

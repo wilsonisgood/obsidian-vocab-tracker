@@ -3,7 +3,6 @@ import type { en } from "./en";
 export const zhTW: Record<keyof typeof en, string> = {
   "sidebar.title": "單字追蹤",
   "sidebar.openList": "開啟 vocab-list.md",
-  "sidebar.addPrompt.cta": "＋ 加入單字庫",
   "sidebar.filter.note": "本篇筆記",
   "sidebar.filter.all": "全部",
   "sidebar.scope.note": "本篇筆記",
@@ -83,6 +82,8 @@ export const zhTW: Record<keyof typeof en, string> = {
   "dashboard.startReview.none": "單字卡 · 目前沒有到期",
   "row.nextReview": "下次複習：{date}",
   "row.due.today": "今天",
+  "row.preview.loading": "抓取字典資料中…",
+  "row.preview.error": "字典資料抓取失敗，仍可以加入單字庫。",
 
   "srs.interval.m": "{n} 分鐘",
   "srs.interval.h": "{n} 小時",
@@ -499,7 +500,6 @@ export const zhTW: Record<keyof typeof en, string> = {
   "mobile.sheet.close": "關閉",
   "mobile.sheet.label.word": "單字卡：{word}",
   "mobile.sheet.label.paragraph": "段落討論",
-  "mobile.sheet.notTracked": "還沒有加入單字庫。",
   "mobile.save.added": "已加入「{word}」",
   "mobile.save.undo": "復原",
   "mobile.save.undone": "已移除「{word}」",
