@@ -563,6 +563,9 @@ export class FamiliesBlock extends MarkdownRenderChild {
       return;
     }
     if (this.pageContextFamilies && this.pageContextLookup) {
+      // Publish once without focusWord first so clicking the same suggested
+      // node again still changes the sig and re-flashes the sidebar row.
+      this.publishPageContext(this.pageContextFamilies, this.pageContextLookup);
       this.publishPageContext(this.pageContextFamilies, this.pageContextLookup, node.word.toLowerCase());
     }
   }
