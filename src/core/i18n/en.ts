@@ -30,7 +30,7 @@ export const en = {
   "sidebar.group.none": "(no note)",
   "sidebar.group.dna": "Word DNA",
   "sidebar.group.dnaOpen": "Open Word DNA",
-  "sidebar.page.add": "Add “{word}”",
+  "sidebar.page.add": "Like “{word}” (adds it to your list)",
   "sidebar.page.emptyGroup": "No words here yet.",
 
   "row.delete": "Delete",
@@ -184,7 +184,7 @@ export const en = {
   "ai.bubble.streaming": "Answering…",
 
   // ── M4: word discussion ──────────────────────────────────────────
-  "word.tab.data": "Data",
+  "word.tab.data": "Info",
   "word.tab.ai": "AI",
   "chat.placeholder.word": "Ask about {word}…",
   "chat.send": "Send",

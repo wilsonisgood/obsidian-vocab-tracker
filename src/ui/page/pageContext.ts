@@ -28,9 +28,11 @@ export interface PageContext {
   sourcePath: string; // 入口檔路徑（字族樹.md／Word DNA.md）
   groups: PageGroup[];
   activeGroupKey: string | null;
+  // 頁面 → 側欄（1009 #8）：要側欄捲到並閃一下的字（小寫）。點星系的建議字節點時帶上。
+  focusWord?: string;
   // 側欄 → 頁面（#14）：點了某一類裡單字庫有的字。
   selectWord(groupKey: string, word: PageWord): void;
-  // 側欄灰色建議字的 ＋（#8）：加入並 like，回傳新的 entry。
+  // 側欄灰色建議字的 ♡（#8、1009 #6）：加入並 like，回傳新的 entry。
   addWord(groupKey: string, word: PageWord): Promise<VocabEntry | undefined>;
 }
 
@@ -77,6 +79,7 @@ export function pageContextSig(ctx: PageContext): string {
     ctx.kind,
     ctx.sourcePath,
     ctx.activeGroupKey,
+    ctx.focusWord ?? "",
     ctx.groups.map((g) => [g.key, g.title, g.words.map((w) => [w.word, w.entryId ?? "", w.morpheme?.id ?? "", w.zh, w.emoji])]),
   ]);
 }

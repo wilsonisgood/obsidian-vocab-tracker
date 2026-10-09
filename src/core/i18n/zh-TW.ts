@@ -31,7 +31,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "sidebar.group.none": "（沒有來源筆記）",
   "sidebar.group.dna": "Word DNA",
   "sidebar.group.dnaOpen": "開啟 Word DNA",
-  "sidebar.page.add": "加入「{word}」",
+  "sidebar.page.add": "Like「{word}」（加入單字庫）",
   "sidebar.page.emptyGroup": "這一類還沒有字。",
 
   "row.delete": "刪除",
@@ -184,7 +184,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "ai.bubble.streaming": "回答中…",
 
   // ── M4：單字討論 ──────────────────────────────────────────────────
-  "word.tab.data": "資料",
+  "word.tab.data": "Info",
   "word.tab.ai": "AI",
   "chat.placeholder.word": "問 {word}…",
   "chat.send": "送出",

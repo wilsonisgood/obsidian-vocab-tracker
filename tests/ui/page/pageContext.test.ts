@@ -45,6 +45,16 @@ describe("PageContextHub (規劃書 10 §2.1)", () => {
     expect(log).toHaveLength(2);
   });
 
+  it("emits when focusWord changes (1009 #8)", () => {
+    const { hub, log } = hubWithLog();
+    const owner = {};
+    hub.publish(owner, ctx());
+    hub.publish(owner, ctx({ focusWord: "tide" }));
+    hub.publish(owner, ctx({ focusWord: "tide" }));
+    expect(log).toHaveLength(2);
+    expect(hub.current()?.focusWord).toBe("tide");
+  });
+
   it("ignores clear() from an owner that is not current", () => {
     const { hub, log } = hubWithLog();
     const owner = {};
