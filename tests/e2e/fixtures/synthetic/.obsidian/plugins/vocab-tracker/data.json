@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "settings": {
+    "ai": {
+      "enabled": true,
+      "provider": "anthropic",
+      "providers": {
+        "anthropic": {
+          "apiKey": "sk-ant-e2e-fake",
+          "baseUrl": "https://api.anthropic.com",
+          "smartModel": "claude-sonnet-5",
+          "fastModel": "claude-haiku-4-5"
+        },
+        "openai-compatible": {
+          "apiKey": "sk-ant-e2e-fake",
+          "baseUrl": "http://localhost:11434/v1",
+          "smartModel": "",
+          "fastModel": ""
+        }
+      }
+    }
+  },
+  "entries": [
+    {
+      "id": "e2e-synthetic-resilience",
+      "word": "resilience",
+      "level": "多益中級",
+      "synonyms": "toughness",
+      "antonyms": "fragility",
+      "example": "Her resilience helped her recover quickly.",
+      "definition": "the capacity to recover quickly from difficulties",
+      "definitionZh": "韌性；復原力",
+      "phonetic": "/rɪˈzɪliəns/",
+      "partOfSpeech": "noun",
+      "grammar": "",
+      "source": null,
+      "added": "2026-01-01T00:00:00.000Z",
+      "lastReviewed": "",
+      "reviews": 0,
+      "liked": true
+    }
+  ]
+}
