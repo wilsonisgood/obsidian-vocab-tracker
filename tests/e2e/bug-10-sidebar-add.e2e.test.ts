@@ -2,10 +2,14 @@
 //
 // 第一段的結論（詳見回報）：在側欄已開啟、或側欄從沒開過（冷啟動，第一次點字才觸發
 // plugin.surfaces.revealWord -> activateSidebar）兩種情況下，用「文中點字 ->
-// VocabSidebarView.setWord() 設 pendingWord -> 側欄畫出「＋ 加入單字庫」橫幅 -> 點
-// 橫幅按鈕（跟使用者點的是同一個 DOM 節點）」這條真實路徑，側欄都在 ~100ms 內（下一個
-// microtask/tick）正確顯示新列，banner 正確消失，之後也沒有再消失。在 2.0.0 build
-// （git show 6181d5f）跟 worktree 目前的 build 上結果一樣。
+// VocabSidebarView.setWord() 設 pendingWord -> 側欄畫出預覽卡 -> 按卡片上的 ♥」
+// 這條真實路徑，側欄都在 ~100ms 內（下一個 microtask/tick）正確顯示新列，預覽卡正確
+// 消失，之後也沒有再消失。在 2.0.0 build（git show 6181d5f）跟 worktree 目前的 build
+// 上結果一樣。
+//
+// 1009-2 #1 把原本的「加入單字庫」橫幅/按鈕換成預覽卡（WordRow 的 ♥）後更新：下面
+// 點的 DOM 節點從 .vt-sidebar-add-prompt .vt-sidebar-add-btn 換成
+// .vt-sidebar-preview .vt-row-like，行為跟結論不變。
 //
 // 这个測試先斷言「現在觀察到的（看起來正確的）行為」當迴歸測試。如果之後找到更精確
 // 的重現步驟（例如真的用滑鼠點文字、或某個 exam 標籤組合、或非常快速連續加兩個字），
@@ -29,7 +33,7 @@ describe("#10 閱讀模式加字後側欄即時更新", () => {
     await endSession(session);
   });
 
-  it("本篇：點字 → 側欄橫幅「加入單字庫」→ 側欄列表馬上出現新列（不用手動切換/刷新）", async () => {
+  it("本篇：點字 → 側欄預覽卡 ♥ → 側欄列表馬上出現新列（不用手動切換/刷新）", async () => {
     await session.cdp.evaluate(`(async () => {
       const f = app.vault.getAbstractFileByPath("eng/Taylor_Swift_NYU_Speech_Transcript.md");
       await app.workspace.getLeaf(false).openFile(f, { state: { mode: "preview" } });
@@ -38,7 +42,7 @@ describe("#10 閱讀模式加字後側欄即時更新", () => {
     await new Promise((r) => setTimeout(r, 500));
 
     // 「在文中點一個還沒在庫的字」最終會呼叫 sidebarView().setWord(word)，把它設成
-    // pendingWord，側欄畫出加入橫幅（VocabSidebarView.ts drawList()）。
+    // pendingWord，側欄畫出預覽卡（VocabSidebarView.ts drawList(), 1009-2 #1）。
     await session.cdp.evaluate(`(() => {
       const plugin = app.plugins.plugins["vocab-tracker"];
       plugin.sidebarView().setWord(${JSON.stringify(TEST_WORD)});
@@ -46,17 +50,17 @@ describe("#10 閱讀模式加字後側欄即時更新", () => {
     })()`);
     await new Promise((r) => setTimeout(r, 300));
 
-    const hasBannerBefore = await session.cdp.evaluate<boolean>(`(() => {
+    const hasPreviewBefore = await session.cdp.evaluate<boolean>(`(() => {
       const plugin = app.plugins.plugins["vocab-tracker"];
-      return !!plugin.sidebarView().containerEl.querySelector(".vt-sidebar-add-prompt .vt-sidebar-add-btn");
+      return !!plugin.sidebarView().containerEl.querySelector(".vt-sidebar-preview .vt-row-like");
     })()`);
-    expect(hasBannerBefore).toBe(true);
+    expect(hasPreviewBefore).toBe(true);
 
-    // 真的點橫幅裡的「＋ 加入單字庫」按鈕。
+    // 真的點預覽卡上的 ♥。
     await session.cdp.evaluate(`(() => {
       const plugin = app.plugins.plugins["vocab-tracker"];
-      const banner = plugin.sidebarView().containerEl.querySelector(".vt-sidebar-add-prompt");
-      banner.querySelector(".vt-sidebar-add-btn").click();
+      const preview = plugin.sidebarView().containerEl.querySelector(".vt-sidebar-preview");
+      preview.querySelector(".vt-row-like").click();
       return true;
     })()`);
 

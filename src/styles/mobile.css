@@ -64,6 +64,64 @@
   max-height: calc(var(--vt-sheet-vh, 100dvh) - env(safe-area-inset-top) - 12px);
 }
 
+/* AI screen (1009-2 #3): a *fixed* near-fullscreen height, not just a
+   max-height — a short thread (or none yet) would otherwise leave the
+   panel at its intrinsic (small) height, and the composer would still
+   sit under the iOS keyboard. A sliver stays uncovered up top so it
+   still reads as a sheet over the article, not a full replacement.
+   WordSheet.ts sets this alongside is-expanded on every tab switch. */
+.vt-sheet-layer.is-ai .vt-sheet {
+  height: calc(var(--vt-sheet-vh, 100dvh) - env(safe-area-inset-top) - 28px);
+  max-height: calc(var(--vt-sheet-vh, 100dvh) - env(safe-area-inset-top) - 28px);
+}
+
+/* Inside is-ai: the card's own header stays put, the AI tab's turns list
+   scrolls on its own, and the composer (vt-chat-controls) stays pinned
+   at the panel's bottom instead of scrolling away with the turns —
+   .vt-sheet-content is no longer the scroll container here. */
+.vt-sheet-layer.is-ai .vt-sheet-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.vt-sheet-layer.is-ai .vt-sheet-content > .vt-row {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.vt-sheet-layer.is-ai .vt-sheet-content > .vt-row > .vt-row-header {
+  flex: none;
+}
+
+.vt-sheet-layer.is-ai .vt-sheet-content > .vt-row > .vt-row-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.vt-sheet-layer.is-ai .vt-sheet-content .vt-chat {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.vt-sheet-layer.is-ai .vt-sheet-content .vt-chat-turns {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vt-sheet-layer.is-ai .vt-sheet-content .vt-row-footer {
+  flex: none;
+}
+
 /* The keyboard covers the home indicator — no inset needed under it */
 .vt-sheet-layer.has-keyboard .vt-sheet {
   padding-bottom: 8px;
@@ -152,64 +210,36 @@ body:not(.is-phone) .vt-sheet {
   padding: 0;
 }
 
-/* Footer: icon buttons get their label as visible text (no hover on
-   touch screens), two per row */
+/* Footer: 單字頁/字典重抓 are icon-only now (1009-2 #2 — the visible
+   label this used to add back via ::after is gone; aria-label stays for
+   screen readers), 44×44 square touch targets, right-aligned next to the
+   Info/AI toggle instead of filling the row as a 2-col grid. */
 .vt-sheet .vt-sheet-card .vt-row-footer {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-top: 10px;
 }
 
 .vt-sheet .vt-sheet-card .vt-row-footer-actions {
-  display: contents;
+  display: flex;
+  gap: 8px;
 }
 
 .vt-sheet .vt-sheet-card .vt-row-footer-icon {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 12px;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   border-radius: 10px;
   background: var(--background-primary);
-  font-size: var(--font-ui-small);
-  line-height: 1.25;
   opacity: 1;
 }
 
 .vt-sheet .vt-sheet-card .vt-row-footer-icon svg {
   flex: none;
-}
-
-.vt-sheet .vt-sheet-card .vt-row-footer-icon::after {
-  content: attr(aria-label);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-/* 「加入單字庫」 for a word that isn't saved yet */
-.vt-sheet-add {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-bottom: 8px;
-}
-
-.vt-sheet-add-word {
-  font-size: 1.35em;
-  font-weight: 700;
-}
-
-.vt-sheet-add-hint {
-  color: var(--text-muted);
-}
-
-.vt-sheet-add-btn {
-  min-height: 44px;
 }
 
 /* A paragraph discussion: the sheet's close button replaces 「← 返回」 */
@@ -274,7 +304,6 @@ body.is-mobile .vt-toggle-btn {
   padding: 0 14px;
 }
 
-body.is-mobile .vt-sidebar-add-btn,
 body.is-mobile .vt-ppane-back,
 body.is-mobile .vt-plist-row,
 body.is-mobile .vt-plist-action,
