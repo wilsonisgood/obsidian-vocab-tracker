@@ -278,7 +278,14 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // M7: word families, verb usage and trivia. learn.json loads lazily,
     // the first time one of them is used.
     this.learn = new LearnStore({ storage: this.storage });
-    this.families = new FamilyService({ ai, vocab: this.store, learn: this.learn, dictionary: this.dictionary });
+    this.families = new FamilyService({
+      ai,
+      vocab: this.store,
+      learn: this.learn,
+      dictionary: this.dictionary,
+      // 1009 #5: a word added from 字族樹 gets its exam labels, like addWordToVocab.
+      examLabelsFor: (w) => this.examLabels(this.wordlists.match(w)?.tags ?? []),
+    });
     this.emoji = new EmojiService({ ai, vocab: this.store, learn: this.learn, aiReady: () => this.ai.status() === "ready" });
     // Word DNA (規劃書 09 §7, A8/A9): splits liked words into morphemes in
     // the background and backs the vocab-dna block's chat.
@@ -288,6 +295,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       learn: this.learn,
       dictionary: this.dictionary,
       threads: this.threads,
+      examLabelsFor: (w) => this.examLabels(this.wordlists.match(w)?.tags ?? []),
       dailyBatches: () => this.store.settings.ai.dnaDailyBatches ?? 10,
       budget: { load: loadDnaBudget, save: saveDnaBudget },
       aiReady: () => this.ai.status() === "ready",
