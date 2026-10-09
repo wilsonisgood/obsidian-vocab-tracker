@@ -96,7 +96,7 @@ describe.each([
     view.openWord(entry.id, "ai");
     await flush();
     const row = rootOf(view).querySelector(`.vt-row[data-entry-id="${entry.id}"]`)!;
-    expect(row.querySelector(".vt-tab.is-active")).not.toBeNull();
+    expect(row.querySelector(".vt-chat")).not.toBeNull();
     // 「設定 AI 後才能討論」 / 「AI 目前關閉」 with a button to the settings.
     expect(row.textContent).toContain(t(enabled ? "ai.gate.noKey.title" : "ai.gate.disabled.title"));
     closeSidebar(b, view);
