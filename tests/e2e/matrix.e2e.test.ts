@@ -364,17 +364,9 @@ describe("#16 e2e 矩陣：加入／like／取消 like", () => {
       await restoreLiked(session, word, false); // 已經是原始值，保險起見仍呼叫一次。
     });
 
-    // bug（不修，標 it.fails）：renderDashboard()（src/ui/blocks/dashboard.ts
-    // 約 27 行）用 `const allEntries = plugin.store.entries;` 在 codeblock 剛
-    // render 時只拿一次快照，之後 drawList()/filteredEntries() 都是過濾這個
-    // 舊陣列；isListed() 本身也沒有排除 deletedAt。取消 like 的字如果沒有考試
-    // 標籤會被 unlikeEntry 整個刪掉（store.deleteEntry → deletedAt），store
-    // 這邊馬上生效（plugin.store.entries 會排除它），但 dashboard 的 DOM 因為
-    // 吃的是那份舊快照，那一列還是留著，要整個 codeblock 重新渲染（例如切出
-    // 去再切回來）才會消失。重現步驟：vocab-list.md 開著 dashboard，點一個
-    // 沒有考試標籤、已經 like 的字的 ♡ 取消 like → store 已刪除，畫面上那一
-    // 列還在。
-    it.fails("沒有考試標籤、已經 like 的字（ethos）：取消 like 直接從清單消失（軟刪除） → 用 store API 復原", async () => {
+    // 曾經的 bug（w11 X 找到、已修）：dashboard 過濾的是 render 當下拿的
+    // store.entries 快照，取消 like 刪掉的字那一列不會消失。
+    it("沒有考試標籤、已經 like 的字（ethos）：取消 like 直接從清單消失（軟刪除） → 用 store API 復原", async () => {
       const word = "ethos";
       const before = await entryInfo(session, word);
       expect(before.exists).toBe(true);
