@@ -26042,6 +26042,7 @@ function keyboardInset(innerHeight, vv) {
 
 // src/ui/mobile/BottomSheet.ts
 var CLOSE_MS = 240;
+var PROBE_MS = 1e3;
 var SHEET_OPEN_CLS = "is-open";
 var SHEET_EXPANDED_CLS = "is-expanded";
 var SHEET_DRAGGING_CLS = "is-dragging";
@@ -26051,6 +26052,13 @@ var BottomSheet = class {
     this.shown = false;
     this.expanded = false;
     this.detachTimer = null;
+    // The keyboard per the visual viewport (plain browsers) / per Capacitor's
+    // events (Obsidian mobile).
+    this.viewportKb = 0;
+    this.nativeKb = false;
+    // TEMP (see onKeyboardProbe)
+    this.probeTimer = null;
+    this.probeLog = { willShowHeight: -1, didShow: 0, hide: 0 };
     this.drag = null;
     this.onKey = (e) => {
       if (e.key === "Escape" && !e.isComposing) {
@@ -26058,17 +26066,38 @@ var BottomSheet = class {
         this.close();
       }
     };
-    // Keyboard up/down (and the page scrolling under it): lift the panel
-    // above the keyboard, then keep the focused input visible.
+    // Keyboard up/down per the visual viewport (and the page scrolling under
+    // it): lift the panel above the keyboard, then keep the focused input
+    // visible. Stays 0 in Obsidian mobile — see the Capacitor events below.
     this.onViewport = () => {
-      var _a, _b;
       const vv = this.win.visualViewport;
-      const inset = keyboardInset(this.win.innerHeight, vv);
-      this.layer.style.setProperty("--vt-sheet-kb", `${inset}px`);
+      this.viewportKb = keyboardInset(this.win.innerHeight, vv);
+      this.layer.style.setProperty("--vt-sheet-kb", `${this.viewportKb}px`);
       if (vv) this.layer.style.setProperty("--vt-sheet-vh", `${Math.round(vv.height)}px`);
-      this.layer.toggleClass("has-keyboard", inset > 0);
-      const active2 = (_a = this.panel.ownerDocument) == null ? void 0 : _a.activeElement;
-      if (inset > 0 && active2 && this.panel.contains(active2)) (_b = active2.scrollIntoView) == null ? void 0 : _b.call(active2, { block: "nearest" });
+      this.syncKeyboardClass();
+      if (this.viewportKb > 0) this.revealFocused();
+    };
+    this.onKeyboardWillShow = (e) => {
+      const h = e == null ? void 0 : e.keyboardHeight;
+      this.probeLog.willShowHeight = typeof h === "number" ? h : -1;
+      if (typeof h === "number" && h > 0) this.layer.style.setProperty("--vt-sheet-kb-native", `${Math.round(h)}px`);
+      this.nativeKb = true;
+      this.syncKeyboardClass();
+    };
+    // Fully up (and the panel already lifted): Obsidian's own keyboard
+    // scroll measures the selection, not a focused <textarea>, so put the
+    // input back in view ourselves.
+    this.onKeyboardDidShow = () => {
+      this.probeLog.didShow++;
+      this.nativeKb = true;
+      this.syncKeyboardClass();
+      this.revealFocused();
+    };
+    this.onKeyboardHide = () => {
+      if (this.nativeKb) this.probeLog.hide++;
+      this.nativeKb = false;
+      this.layer.style.removeProperty("--vt-sheet-kb-native");
+      this.syncKeyboardClass();
     };
     // ── Dragging the handle ────────────────────────────────────────────
     this.onPointerDown = (e) => {
@@ -26132,7 +26161,9 @@ var BottomSheet = class {
     grab.addEventListener("pointercancel", this.onPointerCancel);
     this.content = panel.createDiv({ cls: "vt-sheet-content" });
     panel.addEventListener("focusin", (e) => {
-      if (isTextInput(e.target)) this.setExpanded(true);
+      if (!isTextInput(e.target)) return;
+      this.setExpanded(true);
+      this.scheduleProbe();
     });
   }
   get isOpen() {
@@ -26153,6 +26184,10 @@ var BottomSheet = class {
     }
     if (this.layer.parentElement !== this.host) this.host.appendChild(this.layer);
     this.win.addEventListener("keydown", this.onKey);
+    this.win.addEventListener("keyboardWillShow", this.onKeyboardWillShow);
+    this.win.addEventListener("keyboardDidShow", this.onKeyboardDidShow);
+    this.win.addEventListener("keyboardWillHide", this.onKeyboardHide);
+    this.win.addEventListener("keyboardDidHide", this.onKeyboardHide);
     const vv = this.win.visualViewport;
     vv == null ? void 0 : vv.addEventListener("resize", this.onViewport);
     vv == null ? void 0 : vv.addEventListener("scroll", this.onViewport);
@@ -26189,9 +26224,61 @@ var BottomSheet = class {
   }
   unlisten() {
     this.win.removeEventListener("keydown", this.onKey);
+    this.win.removeEventListener("keyboardWillShow", this.onKeyboardWillShow);
+    this.win.removeEventListener("keyboardDidShow", this.onKeyboardDidShow);
+    this.win.removeEventListener("keyboardWillHide", this.onKeyboardHide);
+    this.win.removeEventListener("keyboardDidHide", this.onKeyboardHide);
+    this.onKeyboardHide();
+    if (this.probeTimer !== null) this.win.clearTimeout(this.probeTimer);
+    this.probeTimer = null;
     const vv = this.win.visualViewport;
     vv == null ? void 0 : vv.removeEventListener("resize", this.onViewport);
     vv == null ? void 0 : vv.removeEventListener("scroll", this.onViewport);
+  }
+  syncKeyboardClass() {
+    this.layer.toggleClass("has-keyboard", this.viewportKb > 0 || this.nativeKb);
+  }
+  revealFocused() {
+    var _a, _b;
+    const active2 = (_a = this.panel.ownerDocument) == null ? void 0 : _a.activeElement;
+    if (active2 && this.panel.contains(active2)) (_b = active2.scrollIntoView) == null ? void 0 : _b.call(active2, { block: "nearest" });
+  }
+  // ── TEMP (1009-2 round B): keyboard probe, see onKeyboardProbe ───────
+  scheduleProbe() {
+    if (!this.opts.onKeyboardProbe) return;
+    if (this.probeTimer !== null) this.win.clearTimeout(this.probeTimer);
+    this.probeTimer = this.win.setTimeout(() => {
+      var _a, _b;
+      this.probeTimer = null;
+      if (this.shown) (_b = (_a = this.opts).onKeyboardProbe) == null ? void 0 : _b.call(_a, this.keyboardProbe());
+    }, PROBE_MS);
+  }
+  keyboardProbe() {
+    var _a, _b, _c, _d, _e;
+    const doc = this.panel.ownerDocument;
+    const view = doc == null ? void 0 : doc.defaultView;
+    const css = (el, name) => el && view ? view.getComputedStyle(el).getPropertyValue(name).trim() || "(unset)" : "(n/a)";
+    const vv = this.win.visualViewport;
+    const panelRect = (_b = (_a = this.panel).getBoundingClientRect) == null ? void 0 : _b.call(_a);
+    const active2 = doc == null ? void 0 : doc.activeElement;
+    const activeRect = active2 && this.panel.contains(active2) ? (_c = active2.getBoundingClientRect) == null ? void 0 : _c.call(active2) : void 0;
+    return {
+      innerHeight: this.win.innerHeight,
+      "visualViewport.height": vv ? Math.round(vv.height) : "(none)",
+      "visualViewport.offsetTop": vv ? Math.round(vv.offsetTop) : "(none)",
+      "body --keyboard-height": css(doc == null ? void 0 : doc.body, "--keyboard-height"),
+      "html --keyboard-height": css(doc == null ? void 0 : doc.documentElement, "--keyboard-height"),
+      "body --safe-area-inset-bottom": css(doc == null ? void 0 : doc.body, "--safe-area-inset-bottom"),
+      "keyboardWillShow keyboardHeight": this.probeLog.willShowHeight,
+      "keyboardDidShow count": this.probeLog.didShow,
+      "keyboardHide count": this.probeLog.hide,
+      "has-keyboard": this.layer.hasClass("has-keyboard"),
+      "layer --vt-sheet-lift": css(this.layer, "--vt-sheet-lift"),
+      "panel top": panelRect ? Math.round(panelRect.top) : "(n/a)",
+      "panel bottom": panelRect ? Math.round(panelRect.bottom) : "(n/a)",
+      "input bottom": activeRect ? Math.round(activeRect.bottom) : "(no focused input)",
+      "body classes": (_e = (_d = doc == null ? void 0 : doc.body) == null ? void 0 : _d.className) != null ? _e : ""
+    };
   }
   endDrag() {
     var _a, _b;
@@ -26209,6 +26296,7 @@ function isTextInput(target) {
 }
 
 // src/ui/mobile/WordSheet.ts
+var KEYBOARD_PROBE_PATH = "Vocab Tracker \u9375\u76E4\u8A3A\u65B7.md";
 var WordSheet = class extends import_obsidian57.Component {
   constructor(plugin, opts = {}) {
     super();
@@ -26287,7 +26375,8 @@ var WordSheet = class extends import_obsidian57.Component {
           this.wordUi.beginRender();
           this.view = null;
           (_a = this.sheet) == null ? void 0 : _a.layer.removeClass("is-ai");
-        }
+        },
+        onKeyboardProbe: (probe2) => void this.writeKeyboardProbe(probe2)
       });
     }
     return this.sheet;
@@ -26306,6 +26395,25 @@ var WordSheet = class extends import_obsidian57.Component {
     sheet.content.toggleClass("is-paragraph", view.kind === "paragraph");
     if (view.kind === "word") this.drawWord(sheet, view);
     else this.drawParagraph(sheet, view.route);
+  }
+  // TEMP (1009-2 round B): BottomSheet's keyboard measurements, appended
+  // to a note that Sync brings back from the iPhone. Remove with
+  // BottomSheet's onKeyboardProbe once the lift is confirmed on device.
+  async writeKeyboardProbe(probe2) {
+    try {
+      const adapter = this.plugin.app.vault.adapter;
+      const lines4 = Object.entries(probe2).map(([k, v]) => `- ${k}: \`${String(v)}\``);
+      const block = `
+## ${(/* @__PURE__ */ new Date()).toISOString()}
+
+${lines4.join("\n")}
+`;
+      if (await adapter.exists(KEYBOARD_PROBE_PATH)) await adapter.append(KEYBOARD_PROBE_PATH, block);
+      else await adapter.write(KEYBOARD_PROBE_PATH, `# Vocab Tracker \u9375\u76E4\u8A3A\u65B7
+${block}`);
+    } catch (e) {
+      console.warn("Vocab Tracker: couldn't write the keyboard probe", e);
+    }
   }
   findEntry(word) {
     const lower2 = word.toLowerCase();

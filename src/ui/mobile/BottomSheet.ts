@@ -8,10 +8,14 @@ import { dragOffset, dragOutcome, keyboardInset, type ViewportLike } from "./she
 // - Closes on: a tap on the backdrop, the close button, Escape, or dragging
 //   the handle down (gesture math in sheetGeometry.ts).
 // - Dragging the handle up (or focusing an input) makes it tall.
-// - The on-screen keyboard: the visual viewport's size goes into CSS
-//   variables (--vt-sheet-kb, --vt-sheet-vh) so mobile.css can lift the
-//   panel above the keyboard and cap its height to what's visible; the
-//   focused input is then scrolled into view inside the panel.
+// - The on-screen keyboard: Obsidian mobile lays the keyboard over the
+//   page without resizing it (visualViewport and innerHeight stay put), and
+//   publishes its height as --keyboard-height on <body>; mobile.css lifts
+//   the panel by that. Capacitor's keyboard events on `window` add the
+//   height they carry (--vt-sheet-kb-native) and say when it's fully up,
+//   which is when the focused input is scrolled into view. In a plain
+//   browser the visual viewport shrinks instead: its size goes into
+//   --vt-sheet-kb / --vt-sheet-vh. mobile.css takes the largest lift.
 // - Safe areas (home indicator, notch) are handled in mobile.css with
 //   env(safe-area-inset-*).
 // Every size lives in mobile.css; this file only sets classes and the
@@ -26,12 +30,21 @@ export interface SheetViewport extends ViewportLike {
   removeEventListener(type: "resize" | "scroll", fn: () => void): void;
 }
 
+// Capacitor's Keyboard plugin dispatches these on `window` in Obsidian's
+// mobile app; the Will* ones carry the keyboard's height.
+export type NativeKeyboardEventName = "keyboardWillShow" | "keyboardDidShow" | "keyboardWillHide" | "keyboardDidHide";
+export interface NativeKeyboardEvent {
+  keyboardHeight?: number;
+}
+
 // The parts of `window` the sheet uses (a fake in tests).
 export interface SheetWindow {
   innerHeight: number;
   visualViewport?: SheetViewport | null;
   addEventListener(type: "keydown", fn: (e: KeyboardEvent) => void): void;
+  addEventListener(type: NativeKeyboardEventName, fn: (e: NativeKeyboardEvent) => void): void;
   removeEventListener(type: "keydown", fn: (e: KeyboardEvent) => void): void;
+  removeEventListener(type: NativeKeyboardEventName, fn: (e: NativeKeyboardEvent) => void): void;
   requestAnimationFrame(fn: () => void): number;
   setTimeout(fn: () => void, ms: number): number;
   clearTimeout(id: number): void;
@@ -45,7 +58,14 @@ export interface BottomSheetOptions {
   win?: SheetWindow;
   // After every close, whatever closed it.
   onClosed?(): void;
+  // TEMP (1009-2 round B): a second after a text input takes focus, what
+  // the keyboard measurements were — written to the vault so they can be
+  // read from an iPhone. Remove once the lift is confirmed on device.
+  onKeyboardProbe?(probe: Record<string, string | number | boolean>): void;
 }
+
+// TEMP (see onKeyboardProbe): how long after focus to measure.
+const PROBE_MS = 1000;
 
 export const SHEET_OPEN_CLS = "is-open";
 export const SHEET_EXPANDED_CLS = "is-expanded";
@@ -61,6 +81,13 @@ export class BottomSheet {
   private shown = false;
   private expanded = false;
   private detachTimer: number | null = null;
+  // The keyboard per the visual viewport (plain browsers) / per Capacitor's
+  // events (Obsidian mobile).
+  private viewportKb = 0;
+  private nativeKb = false;
+  // TEMP (see onKeyboardProbe)
+  private probeTimer: number | null = null;
+  private probeLog = { willShowHeight: -1, didShow: 0, hide: 0 };
   private drag: { pointerId: number; y: number; t: number; dy: number } | null = null;
 
   constructor(private opts: BottomSheetOptions) {
@@ -91,7 +118,9 @@ export class BottomSheet {
     this.content = panel.createDiv({ cls: "vt-sheet-content" });
     // Typing needs the room: an input getting focus makes the sheet tall.
     panel.addEventListener("focusin", (e) => {
-      if (isTextInput(e.target)) this.setExpanded(true);
+      if (!isTextInput(e.target)) return;
+      this.setExpanded(true);
+      this.scheduleProbe();
     });
   }
 
@@ -116,6 +145,10 @@ export class BottomSheet {
     }
     if (this.layer.parentElement !== this.host) this.host.appendChild(this.layer);
     this.win.addEventListener("keydown", this.onKey);
+    this.win.addEventListener("keyboardWillShow", this.onKeyboardWillShow);
+    this.win.addEventListener("keyboardDidShow", this.onKeyboardDidShow);
+    this.win.addEventListener("keyboardWillHide", this.onKeyboardHide);
+    this.win.addEventListener("keyboardDidHide", this.onKeyboardHide);
     const vv = this.win.visualViewport;
     vv?.addEventListener("resize", this.onViewport);
     vv?.addEventListener("scroll", this.onViewport);
@@ -156,6 +189,13 @@ export class BottomSheet {
 
   private unlisten(): void {
     this.win.removeEventListener("keydown", this.onKey);
+    this.win.removeEventListener("keyboardWillShow", this.onKeyboardWillShow);
+    this.win.removeEventListener("keyboardDidShow", this.onKeyboardDidShow);
+    this.win.removeEventListener("keyboardWillHide", this.onKeyboardHide);
+    this.win.removeEventListener("keyboardDidHide", this.onKeyboardHide);
+    this.onKeyboardHide();
+    if (this.probeTimer !== null) this.win.clearTimeout(this.probeTimer);
+    this.probeTimer = null;
     const vv = this.win.visualViewport;
     vv?.removeEventListener("resize", this.onViewport);
     vv?.removeEventListener("scroll", this.onViewport);
@@ -168,17 +208,89 @@ export class BottomSheet {
     }
   };
 
-  // Keyboard up/down (and the page scrolling under it): lift the panel
-  // above the keyboard, then keep the focused input visible.
+  // Keyboard up/down per the visual viewport (and the page scrolling under
+  // it): lift the panel above the keyboard, then keep the focused input
+  // visible. Stays 0 in Obsidian mobile — see the Capacitor events below.
   private onViewport = (): void => {
     const vv = this.win.visualViewport;
-    const inset = keyboardInset(this.win.innerHeight, vv);
-    this.layer.style.setProperty("--vt-sheet-kb", `${inset}px`);
+    this.viewportKb = keyboardInset(this.win.innerHeight, vv);
+    this.layer.style.setProperty("--vt-sheet-kb", `${this.viewportKb}px`);
     if (vv) this.layer.style.setProperty("--vt-sheet-vh", `${Math.round(vv.height)}px`);
-    this.layer.toggleClass("has-keyboard", inset > 0);
-    const active = this.panel.ownerDocument?.activeElement as HTMLElement | null | undefined;
-    if (inset > 0 && active && this.panel.contains(active)) active.scrollIntoView?.({ block: "nearest" });
+    this.syncKeyboardClass();
+    if (this.viewportKb > 0) this.revealFocused();
   };
+
+  private onKeyboardWillShow = (e: NativeKeyboardEvent): void => {
+    const h = e?.keyboardHeight;
+    this.probeLog.willShowHeight = typeof h === "number" ? h : -1;
+    if (typeof h === "number" && h > 0) this.layer.style.setProperty("--vt-sheet-kb-native", `${Math.round(h)}px`);
+    this.nativeKb = true;
+    this.syncKeyboardClass();
+  };
+
+  // Fully up (and the panel already lifted): Obsidian's own keyboard
+  // scroll measures the selection, not a focused <textarea>, so put the
+  // input back in view ourselves.
+  private onKeyboardDidShow = (): void => {
+    this.probeLog.didShow++;
+    this.nativeKb = true;
+    this.syncKeyboardClass();
+    this.revealFocused();
+  };
+
+  private onKeyboardHide = (): void => {
+    if (this.nativeKb) this.probeLog.hide++;
+    this.nativeKb = false;
+    this.layer.style.removeProperty("--vt-sheet-kb-native");
+    this.syncKeyboardClass();
+  };
+
+  private syncKeyboardClass(): void {
+    this.layer.toggleClass("has-keyboard", this.viewportKb > 0 || this.nativeKb);
+  }
+
+  private revealFocused(): void {
+    const active = this.panel.ownerDocument?.activeElement as HTMLElement | null | undefined;
+    if (active && this.panel.contains(active)) active.scrollIntoView?.({ block: "nearest" });
+  }
+
+  // ── TEMP (1009-2 round B): keyboard probe, see onKeyboardProbe ───────
+  private scheduleProbe(): void {
+    if (!this.opts.onKeyboardProbe) return;
+    if (this.probeTimer !== null) this.win.clearTimeout(this.probeTimer);
+    this.probeTimer = this.win.setTimeout(() => {
+      this.probeTimer = null;
+      if (this.shown) this.opts.onKeyboardProbe?.(this.keyboardProbe());
+    }, PROBE_MS);
+  }
+
+  private keyboardProbe(): Record<string, string | number | boolean> {
+    const doc = this.panel.ownerDocument;
+    const view = doc?.defaultView;
+    const css = (el: Element | null | undefined, name: string): string =>
+      el && view ? view.getComputedStyle(el).getPropertyValue(name).trim() || "(unset)" : "(n/a)";
+    const vv = this.win.visualViewport;
+    const panelRect = this.panel.getBoundingClientRect?.();
+    const active = doc?.activeElement as HTMLElement | null | undefined;
+    const activeRect = active && this.panel.contains(active) ? active.getBoundingClientRect?.() : undefined;
+    return {
+      innerHeight: this.win.innerHeight,
+      "visualViewport.height": vv ? Math.round(vv.height) : "(none)",
+      "visualViewport.offsetTop": vv ? Math.round(vv.offsetTop) : "(none)",
+      "body --keyboard-height": css(doc?.body, "--keyboard-height"),
+      "html --keyboard-height": css(doc?.documentElement, "--keyboard-height"),
+      "body --safe-area-inset-bottom": css(doc?.body, "--safe-area-inset-bottom"),
+      "keyboardWillShow keyboardHeight": this.probeLog.willShowHeight,
+      "keyboardDidShow count": this.probeLog.didShow,
+      "keyboardHide count": this.probeLog.hide,
+      "has-keyboard": this.layer.hasClass("has-keyboard"),
+      "layer --vt-sheet-lift": css(this.layer, "--vt-sheet-lift"),
+      "panel top": panelRect ? Math.round(panelRect.top) : "(n/a)",
+      "panel bottom": panelRect ? Math.round(panelRect.bottom) : "(n/a)",
+      "input bottom": activeRect ? Math.round(activeRect.bottom) : "(no focused input)",
+      "body classes": doc?.body?.className ?? "",
+    };
+  }
 
   // ── Dragging the handle ────────────────────────────────────────────
   private onPointerDown = (e: PointerEvent): void => {

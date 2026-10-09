@@ -3644,6 +3644,8 @@ button.vt-dna-base {
 
 /* src/styles/mobile.css */
 .vt-sheet-layer {
+  --vt-sheet-lift: max(var(--vt-sheet-kb, 0px), var(--vt-sheet-kb-native, 0px), var(--keyboard-height, 0px));
+  --vt-sheet-room: min(var(--vt-sheet-vh, 100dvh), 100dvh - var(--vt-sheet-lift));
   position: fixed;
   inset: 0;
   z-index: var(--layer-modal);
@@ -3666,17 +3668,17 @@ button.vt-dna-base {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: var(--vt-sheet-kb, 0px);
+  bottom: var(--vt-sheet-lift);
   display: flex;
   flex-direction: column;
-  max-height: calc(var(--vt-sheet-vh, 100dvh) * 0.66);
+  max-height: calc(var(--vt-sheet-room) * 0.66);
   box-sizing: border-box;
   padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   background: var(--background-secondary);
   border-top: 1px solid var(--background-modifier-border);
   border-radius: 18px 18px 0 0;
   box-shadow: var(--shadow-l);
-  transform: translateY(calc(100% + var(--vt-sheet-kb, 0px)));
+  transform: translateY(calc(100% + var(--vt-sheet-lift)));
   transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), max-height 200ms ease;
 }
 .vt-sheet-layer.is-open .vt-sheet {
@@ -3686,11 +3688,11 @@ button.vt-dna-base {
   transition: none;
 }
 .vt-sheet-layer.is-expanded .vt-sheet {
-  max-height: calc(var(--vt-sheet-vh, 100dvh) - env(safe-area-inset-top) - 12px);
+  max-height: calc(var(--vt-sheet-room) - env(safe-area-inset-top) - 12px);
 }
 .vt-sheet-layer.is-ai .vt-sheet {
-  height: calc(var(--vt-sheet-vh, 100dvh) - env(safe-area-inset-top) - 28px);
-  max-height: calc(var(--vt-sheet-vh, 100dvh) - env(safe-area-inset-top) - 28px);
+  height: calc(var(--vt-sheet-room) - env(safe-area-inset-top) - 28px);
+  max-height: calc(var(--vt-sheet-room) - env(safe-area-inset-top) - 28px);
 }
 .vt-sheet-layer.is-ai .vt-sheet-content {
   display: flex;

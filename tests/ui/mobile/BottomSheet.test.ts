@@ -122,6 +122,73 @@ describe("BottomSheet keyboard", () => {
     expect(input.scrolledIntoView).toBe(1);
   });
 
+  it("Obsidian mobile: lifts on Capacitor's keyboard events, reveals the input once it's up", () => {
+    const s = makeSheet();
+    s.open();
+    const style = el(s.layer).style;
+    const input = el(s.content).createEl("textarea");
+    doc.activeElement = input;
+    // The visual viewport never moves here.
+    win.fire("keyboardWillShow", { keyboardHeight: 336.4 });
+    expect(style.getPropertyValue("--vt-sheet-kb")).toBe("0px");
+    expect(style.getPropertyValue("--vt-sheet-kb-native")).toBe("336px");
+    expect(el(s.layer).hasClass("has-keyboard")).toBe(true);
+    expect(input.scrolledIntoView).toBe(0);
+    win.fire("keyboardDidShow");
+    expect(input.scrolledIntoView).toBe(1);
+    // A viewport event meanwhile doesn't drop the class.
+    win.visualViewport.fire("resize");
+    expect(el(s.layer).hasClass("has-keyboard")).toBe(true);
+    win.fire("keyboardWillHide");
+    expect(style.getPropertyValue("--vt-sheet-kb-native")).toBe("");
+    expect(el(s.layer).hasClass("has-keyboard")).toBe(false);
+  });
+
+  it("a keyboard event without a height still marks the keyboard up", () => {
+    const s = makeSheet();
+    s.open();
+    win.fire("keyboardDidShow");
+    expect(el(s.layer).hasClass("has-keyboard")).toBe(true);
+    expect(el(s.layer).style.getPropertyValue("--vt-sheet-kb-native")).toBe("");
+  });
+
+  it("stops listening for Capacitor's keyboard events once closed, and forgets the keyboard", () => {
+    const s = makeSheet();
+    s.open();
+    win.fire("keyboardWillShow", { keyboardHeight: 300 });
+    s.close();
+    for (const type of ["keyboardWillShow", "keyboardDidShow", "keyboardWillHide", "keyboardDidHide"]) {
+      expect(win.listeners[type] ?? []).toHaveLength(0);
+    }
+    expect(el(s.layer).hasClass("has-keyboard")).toBe(false);
+    expect(el(s.layer).style.getPropertyValue("--vt-sheet-kb-native")).toBe("");
+  });
+
+  it("TEMP probe: reports the measurements a second after a text input takes focus", () => {
+    const probes: Record<string, unknown>[] = [];
+    const s = new BottomSheet({
+      label: "單字卡",
+      closeLabel: "關閉",
+      host: body as unknown as HTMLElement,
+      win: win as unknown as SheetWindow,
+      onKeyboardProbe: (p) => probes.push(p),
+    });
+    s.open();
+    el(s.content).createEl("textarea").dispatch("focusin");
+    win.fire("keyboardWillShow", { keyboardHeight: 336 });
+    win.fire("keyboardDidShow");
+    expect(probes).toHaveLength(0);
+    win.runTimers();
+    expect(probes).toHaveLength(1);
+    expect(probes[0]).toMatchObject({
+      innerHeight: 844,
+      "visualViewport.height": 844,
+      "keyboardWillShow keyboardHeight": 336,
+      "keyboardDidShow count": 1,
+      "has-keyboard": true,
+    });
+  });
+
   it("focus on a button doesn't expand it", () => {
     const s = makeSheet();
     s.open();

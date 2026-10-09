@@ -41,10 +41,12 @@ export interface ViewportLike {
   offsetTop: number;
 }
 
-// How much of the layout viewport's bottom the on-screen keyboard covers.
-// On iOS the keyboard shrinks the *visual* viewport; whether Obsidian also
-// resizes the page varies, and when it does innerHeight shrinks with it and
-// this comes out 0 — so the sheet is never lifted twice.
+// How much of the layout viewport's bottom the on-screen keyboard covers,
+// in a browser where the keyboard shrinks the *visual* viewport. Obsidian
+// mobile doesn't (the keyboard lies over the page; both heights stay put),
+// so there this is 0 and --keyboard-height does the lifting (mobile.css).
+// If the page itself is resized, innerHeight shrinks too and this is 0 —
+// the sheet is never lifted twice.
 export function keyboardInset(innerHeight: number, vv: ViewportLike | null | undefined): number {
   if (!vv) return 0;
   return Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop));

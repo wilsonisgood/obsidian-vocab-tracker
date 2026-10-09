@@ -2,13 +2,22 @@
    Split by the classes Obsidian puts on <body>: is-mobile (iPhone + iPad),
    is-phone, is-tablet. TypeScript never sets sizes — only classes and the
    measured keyboard/viewport values below:
-     --vt-sheet-kb    px of the layout viewport the keyboard covers
+     --vt-sheet-kb    px of the layout viewport the keyboard covers, per
+                      the visual viewport (plain browsers; 0 in Obsidian)
      --vt-sheet-vh    visual viewport height (what's visible above it)
-     --vt-sheet-drag  how far the handle is being dragged */
+     --vt-sheet-kb-native  keyboard height from Capacitor's keyboardWillShow
+     --vt-sheet-drag  how far the handle is being dragged
+   Obsidian mobile lays the keyboard over the page without resizing it and
+   sets --keyboard-height on <body> (its own modals sit on it the same way). */
 
 /* ── Bottom sheet (WordSheet / BottomSheet.ts, design M1) ──────────── */
 
 .vt-sheet-layer {
+  /* How far the keyboard pushes the sheet up — the largest of the three
+     measurements (they're the same keyboard, never added up) — and the
+     height left above it. */
+  --vt-sheet-lift: max(var(--vt-sheet-kb, 0px), var(--vt-sheet-kb-native, 0px), var(--keyboard-height, 0px));
+  --vt-sheet-room: min(var(--vt-sheet-vh, 100dvh), 100dvh - var(--vt-sheet-lift));
   position: fixed;
   inset: 0;
   z-index: var(--layer-modal);
@@ -35,17 +44,17 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: var(--vt-sheet-kb, 0px);
+  bottom: var(--vt-sheet-lift);
   display: flex;
   flex-direction: column;
-  max-height: calc(var(--vt-sheet-vh, 100dvh) * 0.66);
+  max-height: calc(var(--vt-sheet-room) * 0.66);
   box-sizing: border-box;
   padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   background: var(--background-secondary);
   border-top: 1px solid var(--background-modifier-border);
   border-radius: 18px 18px 0 0;
   box-shadow: var(--shadow-l);
-  transform: translateY(calc(100% + var(--vt-sheet-kb, 0px)));
+  transform: translateY(calc(100% + var(--vt-sheet-lift)));
   transition:
     transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
     max-height 200ms ease;
@@ -61,7 +70,7 @@
 
 /* Tall: dragged up, or typing (an input has focus) */
 .vt-sheet-layer.is-expanded .vt-sheet {
-  max-height: calc(var(--vt-sheet-vh, 100dvh) - env(safe-area-inset-top) - 12px);
+  max-height: calc(var(--vt-sheet-room) - env(safe-area-inset-top) - 12px);
 }
 
 /* AI screen (1009-2 #3): a *fixed* near-fullscreen height, not just a
@@ -71,8 +80,8 @@
    still reads as a sheet over the article, not a full replacement.
    WordSheet.ts sets this alongside is-expanded on every tab switch. */
 .vt-sheet-layer.is-ai .vt-sheet {
-  height: calc(var(--vt-sheet-vh, 100dvh) - env(safe-area-inset-top) - 28px);
-  max-height: calc(var(--vt-sheet-vh, 100dvh) - env(safe-area-inset-top) - 28px);
+  height: calc(var(--vt-sheet-room) - env(safe-area-inset-top) - 28px);
+  max-height: calc(var(--vt-sheet-room) - env(safe-area-inset-top) - 28px);
 }
 
 /* Inside is-ai: the card's own header stays put, the AI tab's turns list
