@@ -3679,7 +3679,11 @@ button.vt-dna-base {
   border-radius: 18px 18px 0 0;
   box-shadow: var(--shadow-l);
   transform: translateY(calc(100% + var(--vt-sheet-lift)));
-  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), max-height 200ms ease;
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    bottom 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    max-height 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .vt-sheet-layer.is-open .vt-sheet {
   transform: translateY(var(--vt-sheet-drag, 0px));
