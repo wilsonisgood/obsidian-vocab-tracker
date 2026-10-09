@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { setLocale } from "../../../src/core/i18n";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import type { Family, FamilyMember } from "../../../src/core/model/family";
-import { buildGalaxyModel, constellationPoints, familyEmoji, type GalaxyLookup, zoomFilter } from "../../../src/ui/galaxy/galaxyModel";
+import { buildGalaxyModel, constellationPoints, familyEmoji, heartAction, heartState, type GalaxyLookup, zoomFilter } from "../../../src/ui/galaxy/galaxyModel";
 import { entry } from "../../services/learn/fakes";
 
 afterEach(() => setLocale("en"));
@@ -127,8 +127,26 @@ describe("buildGalaxyModel", () => {
   it("entry 在庫但沒 like → 畫成未學（A3）", () => {
     const f = family([{ label: "烹調", members: [{ entryId: "e1", word: "pan", zh: "平底鍋" }] }]);
     const m = buildGalaxyModel(f, lookupOf({ e1: entry("e1", "pan", { liked: false }) }), { onlyKnown: false });
-    expect(m.nodes.find((n) => n.id === "e1")!.kind).toBe("unknown");
+    const node = m.nodes.find((n) => n.id === "e1")!;
+    expect(node.kind).toBe("unknown");
+    expect(node.inLibrary).toBe(true); // 1009 #8：在庫沒 like 跟「不在庫的建議字」要分得出來
     expect(m.counts).toEqual({ known: 0, unknown: 1, total: 1 });
+  });
+
+  it("inLibrary (1009 #8)：已學／在庫沒 like 是 true，單純建議字（entryId 都沒有）是 false", () => {
+    const f = family([
+      {
+        label: "烹調",
+        members: [
+          { entryId: "e1", word: "pan", zh: "平底鍋" },
+          { word: "spatula", zh: "鍋鏟" },
+        ],
+      },
+    ]);
+    const m = buildGalaxyModel(f, lookupOf({ e1: entry("e1", "pan") }), { onlyKnown: false });
+    expect(m.nodes.find((n) => n.id === "e1")!.inLibrary).toBe(true);
+    expect(m.nodes.find((n) => n.id === "w:spatula")!.inLibrary).toBe(false);
+    expect(m.nodes.find((n) => n.id === "hub")!.inLibrary).toBe(false);
   });
 
   it("fresh：依 opts.fresh 的 node id 標記", () => {
@@ -187,11 +205,13 @@ describe("zoomFilter", () => {
   const touch = (touches: number) => ({ type: "touchstart", ctrlKey: false, metaKey: false, touches });
   const mouse = (button = 0) => ({ type: "mousedown", ctrlKey: false, metaKey: false, button });
 
-  it("mobile 且 embedded：一律 false", () => {
+  it("mobile 且 embedded：單指 touch／wheel／mouse 都擋，兩指以上的 touch 放行 (1009 #12)", () => {
     const mode = { embedded: true, mobile: true };
     expect(zoomFilter(wheel(true), mode)).toBe(false);
-    expect(zoomFilter(touch(2), mode)).toBe(false);
+    expect(zoomFilter(touch(1), mode)).toBe(false);
     expect(zoomFilter(mouse(0), mode)).toBe(false);
+    expect(zoomFilter(touch(2), mode)).toBe(true);
+    expect(zoomFilter(touch(3), mode)).toBe(true);
   });
 
   it("embedded 桌面：wheel 只有 ctrl/meta 才 true", () => {
@@ -220,5 +240,22 @@ describe("zoomFilter", () => {
     expect(zoomFilter(mouse(2), mode)).toBe(false);
     // 非 embedded 的 mobile（GalaxyView 在手機上展開）一樣照預設
     expect(zoomFilter(touch(1), { embedded: false, mobile: true })).toBe(true);
+  });
+});
+
+describe("heartState / heartAction (1009 #8)", () => {
+  it("已 like（kind known）→ liked → unlike，不管 inLibrary", () => {
+    expect(heartState({ kind: "known", inLibrary: true })).toBe("liked");
+    expect(heartAction("liked")).toBe("unlike");
+  });
+
+  it("在庫沒 like（kind unknown, inLibrary true）→ unliked-in-library → like", () => {
+    expect(heartState({ kind: "unknown", inLibrary: true })).toBe("unliked-in-library");
+    expect(heartAction("unliked-in-library")).toBe("like");
+  });
+
+  it("不在庫的建議字（kind unknown, inLibrary false）→ suggested → add", () => {
+    expect(heartState({ kind: "unknown", inLibrary: false })).toBe("suggested");
+    expect(heartAction("suggested")).toBe("add");
   });
 });

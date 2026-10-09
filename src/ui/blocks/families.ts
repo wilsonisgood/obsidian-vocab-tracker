@@ -1,20 +1,19 @@
-import { Component, FileView, MarkdownRenderChild, MarkdownRenderer, Menu, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
+import { Component, MarkdownRenderChild, MarkdownRenderer, Menu, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import type { Family } from "../../core/model/family";
 import { defaultEmoji } from "../../core/model/wordMeta";
 import type { FamilyCandidate } from "../../services/learn/FamilyService";
 import { GalaxyGraph } from "../galaxy/GalaxyGraph";
-import { buildGalaxyModel, galaxyNodeId, type GalaxyLookup, type GalaxyModel } from "../galaxy/galaxyModel";
-import { GALAXY_VIEW_TYPE } from "../galaxy/GalaxyView";
+import { buildGalaxyModel, galaxyNodeId, heartAction, heartState, type GalaxyLookup, type GalaxyModel } from "../galaxy/galaxyModel";
 import { familiesPageGroups, familyGroupKey, familyIdOfGroupKey } from "../galaxy/familiesPage";
 import { buildTopics, resolveAddWord, type GalaxyTopic, type GalaxyViewMode } from "../galaxy/galaxyView.model";
 import type { PageContext, PageWord } from "../page/pageContext";
+import { unlikeEntry } from "../word/likeAction";
 import { aiErrorBox } from "../kit/aiDebug";
 import { datesText } from "../kit/dates";
 import { dragScroll } from "../kit/dragScroll";
 import { emptyState } from "../kit/emptyState";
-import { inlineNote } from "../kit/inlineNote";
 import { segmented } from "../kit/segmented";
 import {
   onFamilyFocus,
@@ -41,11 +40,12 @@ import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAi
 //   ```
 //
 // Saved families draw as a force-graph 「星系」 by default (A1) — a topic
-// row, a small toolbar (✨ 再一批／星系｜清單／重新置中／⋯) and the graph,
+// row, a small toolbar (✨ 再一批／星系｜清單／重新置中／🔄 重新分群，一列
+// 可左右拖，1009 #14：⋯ 選單拿掉，全攤平成第一層的 pill) and the graph,
 // stacked vertically (1007-2 #4/#5; the old topic/graph/detail 3-col grid
 // and GalaxyDetail panel are gone — #7). 「清單」 switches to the original
-// tree (renderTree, below — unchanged). 「找字族」/「重新分群」 live in the
-// galaxy toolbar's ⋯ menu; everything about how a candidate gets saved (no
+// tree (renderTree, below — unchanged). 「找字族」/「重新分群」 live directly
+// in the galaxy toolbar now; everything about how a candidate gets saved (no
 // review screen, 1005 回饋: 「審核清單沒什麼用處」) is unchanged either way.
 //
 // Opening 字族樹.md itself is a full-screen galaxy (#6, GalaxyView.ts +
@@ -83,8 +83,9 @@ export function renderFamilies(
 }
 
 export interface FamiliesBlockOpts {
-  // 全畫面星系 (GalaxyView.ts, 1007-2 #6)：圖高 35vh 而不是 210px，⋯ 選單多
-  // 一項「開啟 Markdown 原始檔」。
+  // 全畫面星系 (GalaxyView.ts, 1007-2 #6)：圖高 35vh 而不是 210px；
+  // GalaxyGraph 也因此拿到 `embedded: false`，恢復可拖曳平移縮放 (1009
+  // #12)。「開啟 Markdown 原始檔」已整個拿掉 (1009 #14)。
   fullscreen?: boolean;
 }
 
@@ -101,7 +102,8 @@ export class FamiliesBlock extends MarkdownRenderChild {
   private focusEntryId: string | undefined;
   // Suggested words being added (「點一下加入」), so a double tap adds once.
   // Shared key scheme (`${familyId}\u0000${word.toLowerCase()}`) between the
-  // tree's chips and the galaxy's ＋ nodes.
+  // tree's chips and the galaxy's heart on a not-yet-in-library node (1009
+  // #8: tapping an empty ♡ there adds-and-likes in one go).
   private adding = new Set<string>();
   // Each member's zh gloss is AI text, rendered as Markdown (1006 #22); a
   // fresh scope per tree render drops the previous one's listeners (same
@@ -113,13 +115,20 @@ export class FamiliesBlock extends MarkdownRenderChild {
   // every fresh block to 星系.
   private viewMode: GalaxyViewMode = "galaxy";
   // Selected node id (entryId, or `w:<word>` for a suggestion). #7: no more
-  // detail panel — a known node's selection just opens the sidebar card
-  // (openSelectedKnownNode); this only still drives the ＋ affordance /
-  // visual selection on unknown nodes and the page→sidebar handoff (#14).
+  // detail panel — clicking a node (not its heart) opens the sidebar card
+  // when it's in the library, or flashes it in the sidebar's 「本篇」 when
+  // it's a plain suggestion (openSelectedKnownNode, 1009 #8); this field
+  // otherwise just drives the visual selection ring and the
+  // sidebar→page handoff (#14).
   private galaxySelected: string | null = null;
   private galaxyInitialized = false;
   private galaxyFresh = new Set<string>();
   private galaxyExpandCtrl = new Map<string, AbortController>();
+  // Last families/lookup handed to publishPageContext — kept so
+  // openSelectedKnownNode can re-publish with `focusWord` set (1009 #8)
+  // without re-deriving them outside render().
+  private pageContextFamilies: Family[] | null = null;
+  private pageContextLookup: MemberLookup | null = null;
   // The live graph instance (and the family it belongs to) — kept across
   // re-renders of the *same* topic so an unrelated redraw (a background
   // wordMeta write, another word's like toggle…) never resets pan/zoom/node
@@ -325,11 +334,6 @@ export class FamiliesBlock extends MarkdownRenderChild {
     }
 
     if (families.length && this.viewMode === "list") this.renderToolbar(families, entry);
-    if (!entry && !this.generating && this.plugin.families.needsRegroup()) {
-      const note = root.createDiv({ cls: "vt-fam-regroup-note" });
-      note.appendChild(inlineNote({ tone: "info", icon: "refresh-cw", text: t("learn.family.regroup.hint") }));
-      learnButton(note, { label: t("learn.family.regroup"), icon: "refresh-cw", onClick: () => void this.generate(true) });
-    }
 
     if (this.generating) return this.renderGenerating();
     if (this.error) {
@@ -525,14 +529,17 @@ export class FamiliesBlock extends MarkdownRenderChild {
     // destroyed above, in render()).
     const svgEl = svgNode(graphHost, "svg", { role: "group", "aria-label": t("galaxy.graphAriaLabel", { topic: familyTitle(selected) }) }, "vt-gx-svg");
     const mobile = document.body.hasClass("is-mobile");
+    // 全畫面 (字族樹.md) 不是 embedded — 恢復可拖曳平移縮放 (1009 #12)；嵌在
+    // 筆記裡的 code block 才是 embedded（手機上放寬成單指拖節點／雙指平移縮
+    // 放，見 GalaxyGraph/galaxyModel 的 zoomFilter）。
     const graph = new GalaxyGraph(svgEl, {
-      embedded: true,
+      embedded: !this.opts.fullscreen,
       mobile,
       onSelect: (id) => {
         this.galaxySelected = id;
         this.openSelectedKnownNode(id);
       },
-      onAdd: (id) => void this.galaxyAdd(selected.id, id),
+      onToggleLike: (id) => void this.galaxyToggleLike(selected.id, id),
     });
     this.galaxyGraph = graph;
     this.galaxySvgEl = svgEl;
@@ -544,21 +551,68 @@ export class FamiliesBlock extends MarkdownRenderChild {
     if (this.galaxySelected) graph.select(this.galaxySelected);
   }
 
-  // 點已學節點 → 側欄定位＋展開單字卡；節點本身維持選取樣式（GalaxyGraph 自
-  // 己管）。未學節點照舊是 ＋ 加入 (galaxyAdd)，這裡不用管 (1007-2 #7/#10)。
+  // 點節點本身（不是點愛心）(1007-2 #7/#10, 1009 #8)：單字庫裡有的字（不論
+  // 有沒有 like）展開側欄單字卡；建議字（不在庫）沒有卡可開，改成通知側欄
+  // 「本篇」捲到那一列並閃一下。節點本身維持選取樣式（GalaxyGraph 自己管）。
   private openSelectedKnownNode(id: string | null): void {
     if (!id) return;
     const node = this.lastGalaxyModel?.nodes.find((n) => n.id === id);
-    if (node?.kind === "known" && node.entryId) void this.plugin.surfaces.openWordCard(node.entryId, "data");
+    if (!node || node.kind === "hub" || node.kind === "group") return;
+    if (node.inLibrary && node.entryId) {
+      void this.plugin.surfaces.openWordCard(node.entryId, "data");
+      return;
+    }
+    if (this.pageContextFamilies && this.pageContextLookup) {
+      this.publishPageContext(this.pageContextFamilies, this.pageContextLookup, node.word.toLowerCase());
+    }
   }
 
+  // 節點右上角的愛心 (1009 #8)：不在庫 → 加入並 like；在庫沒 like → like；
+  // 已 like → 取消 like（unlikeEntry，沒有考試標籤的字會被刪掉，可復原）。
+  private async galaxyToggleLike(familyId: string, nodeId: string): Promise<void> {
+    const node = this.lastGalaxyModel?.nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+    const action = heartAction(heartState(node));
+    if (action === "add") {
+      const family = this.plugin.families.families().find((f) => f.id === familyId);
+      const word = family && resolveAddWord(nodeId, family);
+      if (!word) return;
+      const key = `${familyId}\u0000${word.toLowerCase()}`;
+      if (this.adding.has(key)) return;
+      this.adding.add(key);
+      try {
+        const entry = await this.plugin.families.addSuggested(familyId, word);
+        if (entry) {
+          new Notice(t("galaxy.addedWord", { word: entry.word }));
+          this.galaxySelected = entry.id;
+          this.galaxyFresh.delete(nodeId);
+        }
+      } catch (e) {
+        console.error("Vocab Tracker: adding a galaxy word failed", e);
+        new Notice(learnErrorText(e));
+      } finally {
+        this.adding.delete(key);
+        if (!this.disposed) this.render();
+      }
+      return;
+    }
+    if (!node.entryId) return;
+    const entry = this.plugin.store.entries.find((e) => e.id === node.entryId);
+    if (!entry) return;
+    if (action === "like") void this.plugin.store.setLiked(entry, true);
+    else unlikeEntry(this.plugin, entry);
+  }
+
+  // #11：emoji 在左，右邊英文（上）／中文（下）兩行 — 兩個 span 包進一個直
+  // 排的容器，CSS（vt-gx-topic-text）負責疊成兩行。
   private renderTopicButton(container: HTMLElement, topic: GalaxyTopic, active: boolean): void {
     const btn = container.createEl("button", { cls: "vt-gx-topic", attr: { type: "button" } });
     btn.setAttr("aria-pressed", String(active));
     btn.toggleClass("is-active", active);
     btn.createSpan({ cls: "vt-gx-topic-em", text: topic.emoji });
-    btn.createSpan({ cls: "vt-gx-topic-name", text: topic.topic });
-    btn.createSpan({ cls: "vt-gx-topic-zh", text: topic.label });
+    const text = btn.createDiv({ cls: "vt-gx-topic-text" });
+    text.createSpan({ cls: "vt-gx-topic-name", text: topic.topic });
+    text.createSpan({ cls: "vt-gx-topic-zh", text: topic.label });
     btn.addEventListener("click", () => {
       if (active) return;
       this.selectedId = topic.id;
@@ -581,33 +635,14 @@ export class FamiliesBlock extends MarkdownRenderChild {
     const recenterBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t("galaxy.recenter") });
     recenterBtn.addEventListener("click", () => this.galaxyGraph?.recenter());
 
-    const more = bar.createEl("button", { cls: "vt-gx-pill clickable-icon", attr: { type: "button", "aria-label": t("galaxy.more") } });
-    setIcon(more, "more-horizontal");
-    more.addEventListener("click", (e) => {
-      const menu = new Menu();
-      menu.addItem((item) =>
-        item
-          .setTitle(t(entry ? "learn.family.generate" : "learn.family.regroup"))
-          .setIcon(entry ? "sparkles" : "refresh-cw")
-          .onClick(() => void this.generate(!entry, entry))
-      );
-      // 全畫面才有逃生口（Kanban 外掛同一招：帶 vtRaw: true 繞過
-      // galaxyOpen.ts 的 patch，開回普通 Markdown 編輯畫面，1007-2 #6）。
-      if (this.opts.fullscreen) {
-        menu.addItem((item) =>
-          item
-            .setTitle(t("galaxy.openSource"))
-            .setIcon("file-text")
-            .onClick(() => {
-              const leaf = this.plugin.app.workspace
-                .getLeavesOfType(GALAXY_VIEW_TYPE)
-                .find((l) => l.view instanceof FileView && l.view.file?.path === this.sourcePath);
-              void leaf?.setViewState({ type: "markdown", state: { file: this.sourcePath, vtRaw: true }, active: true });
-            })
-        );
-      }
-      menu.showAtMouseEvent(e);
-    });
+    // #14：⋯ 選單整個拿掉，「重新分群」／「找字族」直接攤平成同一列的
+    // pill（跟 renderToolbar 的清單模式按鈕一樣用 ai.status() 擋）；「開啟
+    // Markdown 原始檔」整個刪掉（galaxyOpen 的 vtRaw 繞道留著不用管）。
+    const ready = this.plugin.ai.status() === "ready";
+    const regenBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t(entry ? "learn.family.generate" : "learn.family.regroup") });
+    regenBtn.disabled = !ready;
+    if (!ready) regenBtn.title = t(this.plugin.ai.status() === "offline" ? "learn.ai.offline" : "learn.ai.body");
+    regenBtn.addEventListener("click", () => void this.generate(!entry, entry));
   }
 
   private toggleExpand(family: Family): void {
@@ -641,29 +676,6 @@ export class FamiliesBlock extends MarkdownRenderChild {
       });
   }
 
-  private async galaxyAdd(familyId: string, nodeId: string): Promise<void> {
-    const family = this.plugin.families.families().find((f) => f.id === familyId);
-    const word = family && resolveAddWord(nodeId, family);
-    if (!word) return;
-    const key = `${familyId}\u0000${word.toLowerCase()}`;
-    if (this.adding.has(key)) return;
-    this.adding.add(key);
-    try {
-      const entry = await this.plugin.families.addSuggested(familyId, word);
-      if (entry) {
-        new Notice(t("galaxy.addedWord", { word: entry.word }));
-        this.galaxySelected = entry.id;
-        this.galaxyFresh.delete(nodeId);
-      }
-    } catch (e) {
-      console.error("Vocab Tracker: adding a galaxy word failed", e);
-      new Notice(learnErrorText(e));
-    } finally {
-      this.adding.delete(key);
-      if (!this.disposed) this.render();
-    }
-  }
-
   private destroyGalaxyGraph(): void {
     this.galaxyGraph?.destroy();
     this.galaxyGraph = null;
@@ -674,13 +686,19 @@ export class FamiliesBlock extends MarkdownRenderChild {
 
   // ── 頁面 ↔ 側欄 (1007-2 #8/#10/#14, PageContextHub) ────────────────
 
-  private publishPageContext(families: Family[], lookup: MemberLookup): void {
+  // focusWord (1009 #8): 星系點了一個建議字節點（不在單字庫，沒有卡可開）
+  // 時由 openSelectedKnownNode 帶上，請側欄捲到那一列並閃一下；平常的
+  // render() 重新 publish 不帶這個欄位。
+  private publishPageContext(families: Family[], lookup: MemberLookup, focusWord?: string): void {
+    this.pageContextFamilies = families;
+    this.pageContextLookup = lookup;
     const gxLookup = this.galaxyLookup(lookup);
     const ctx: PageContext = {
       kind: "families",
       sourcePath: this.sourcePath,
       groups: familiesPageGroups(families, gxLookup),
       activeGroupKey: this.selectedId ? familyGroupKey(this.selectedId) : null,
+      focusWord,
       selectWord: (groupKey, w) => this.selectWord(groupKey, w),
       addWord: (groupKey, w) => this.addWord(groupKey, w),
     };
