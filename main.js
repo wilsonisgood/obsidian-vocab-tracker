@@ -943,7 +943,7 @@ var en = {
   "sidebar.group.none": "(no note)",
   "sidebar.group.dna": "Word DNA",
   "sidebar.group.dnaOpen": "Open Word DNA",
-  "sidebar.page.add": "Add \u201C{word}\u201D",
+  "sidebar.page.add": "Like \u201C{word}\u201D (adds it to your list)",
   "sidebar.page.emptyGroup": "No words here yet.",
   "row.delete": "Delete",
   "row.expand": "Expand",
@@ -1085,7 +1085,7 @@ var en = {
   "ai.action.openSettings": "Open settings",
   "ai.bubble.streaming": "Answering\u2026",
   // ── M4: word discussion ──────────────────────────────────────────
-  "word.tab.data": "Data",
+  "word.tab.data": "Info",
   "word.tab.ai": "AI",
   "chat.placeholder.word": "Ask about {word}\u2026",
   "chat.send": "Send",
@@ -1325,7 +1325,6 @@ var en = {
   "learn.family.word.empty.title": `"{word}" isn't in a family yet`,
   "learn.family.generate": "Find families",
   "learn.family.regroup": "Regroup",
-  "learn.family.regroup.hint": "Your list has grown by 20% or more since the last grouping. Regroup?",
   "learn.family.generating": "Grouping your words\u2026",
   "learn.family.noneFound": "No families this time. Try again later.",
   "learn.family.known": "Learned",
@@ -1537,9 +1536,7 @@ var en = {
   "galaxy.mode.list": "List",
   "galaxy.viewAria": "View",
   "galaxy.aiExpand": "\u2728 More words",
-  "galaxy.openSource": "Open as Markdown",
   "galaxy.recenter": "Recenter",
-  "galaxy.more": "More",
   "galaxy.stop": "Stop",
   "galaxy.expandFound": "AI found {n} new words: {words} \u2014 tap a node, then \uFF0B to add",
   "galaxy.noMoreSuggestions": "No more suggestions for now",
@@ -1581,7 +1578,7 @@ var zhTW = {
   "sidebar.group.none": "\uFF08\u6C92\u6709\u4F86\u6E90\u7B46\u8A18\uFF09",
   "sidebar.group.dna": "Word DNA",
   "sidebar.group.dnaOpen": "\u958B\u555F Word DNA",
-  "sidebar.page.add": "\u52A0\u5165\u300C{word}\u300D",
+  "sidebar.page.add": "Like\u300C{word}\u300D\uFF08\u52A0\u5165\u55AE\u5B57\u5EAB\uFF09",
   "sidebar.page.emptyGroup": "\u9019\u4E00\u985E\u9084\u6C92\u6709\u5B57\u3002",
   "row.delete": "\u522A\u9664",
   "row.expand": "\u5C55\u958B",
@@ -1723,7 +1720,7 @@ var zhTW = {
   "ai.action.openSettings": "\u958B\u555F\u8A2D\u5B9A",
   "ai.bubble.streaming": "\u56DE\u7B54\u4E2D\u2026",
   // ── M4：單字討論 ──────────────────────────────────────────────────
-  "word.tab.data": "\u8CC7\u6599",
+  "word.tab.data": "Info",
   "word.tab.ai": "AI",
   "chat.placeholder.word": "\u554F {word}\u2026",
   "chat.send": "\u9001\u51FA",
@@ -1963,7 +1960,6 @@ var zhTW = {
   "learn.family.word.empty.title": "\u300C{word}\u300D\u9084\u6C92\u6709\u5B57\u65CF",
   "learn.family.generate": "\u627E\u5B57\u65CF",
   "learn.family.regroup": "\u91CD\u65B0\u5206\u7FA4",
-  "learn.family.regroup.hint": "\u55AE\u5B57\u5EAB\u6BD4\u4E0A\u6B21\u5206\u7FA4\u6642\u591A\u4E86 20% \u4EE5\u4E0A\uFF0C\u8981\u91CD\u65B0\u5206\u7FA4\u55CE\uFF1F",
   "learn.family.generating": "AI \u6B63\u5728\u6574\u7406\u5B57\u65CF\u2026",
   "learn.family.noneFound": "AI \u6C92\u6709\u627E\u5230\u53EF\u4EE5\u6210\u70BA\u5B57\u65CF\u7684\u5B57\uFF0C\u63DB\u500B\u6642\u9593\u518D\u8A66\u8A66\u3002",
   "learn.family.known": "\u5DF2\u5B78",
@@ -2174,9 +2170,7 @@ var zhTW = {
   "galaxy.mode.list": "\u6E05\u55AE",
   "galaxy.viewAria": "\u6AA2\u8996",
   "galaxy.aiExpand": "\u2728 \u518D\u4E00\u6279",
-  "galaxy.openSource": "\u958B\u555F Markdown \u539F\u59CB\u6A94",
   "galaxy.recenter": "\u91CD\u65B0\u7F6E\u4E2D",
-  "galaxy.more": "\u66F4\u591A",
   "galaxy.stop": "\u505C\u6B62",
   "galaxy.expandFound": "AI \u627E\u5230 {n} \u500B\u65B0\u5B57\uFF1A{words}\uFF0C\u9EDE\u7BC0\u9EDE\u518D\u6309 \uFF0B \u52A0\u5165",
   "galaxy.noMoreSuggestions": "\u76EE\u524D\u6C92\u6709\u66F4\u591A\u5EFA\u8B70\u4E86",
@@ -4118,9 +4112,16 @@ async function commitEntryField(store, entry, key4, value) {
   if (!entry.liked) await store.setLiked(entry, true);
   else await store.touch(entry);
 }
-function normalizeExpand(state, sheet) {
-  if (sheet) return state;
+function normalizeExpand(state) {
   return state === "full" ? "half" : state;
+}
+function rowLayout(variant = "row") {
+  const sheet = variant === "sheet";
+  return { alwaysOpen: sheet, chevron: !sheet, headerToggle: !sheet };
+}
+function viewToggleSpec(current, aiQuestionCount) {
+  if (current === "ai") return { icon: "book-open", label: "word.tab.data", count: null };
+  return { icon: "sparkles", label: "word.tab.ai", count: aiQuestionCount > 0 ? aiQuestionCount : null };
 }
 function levelTags(level) {
   return (level != null ? level : "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -4132,9 +4133,9 @@ function autoGrowTextarea(el) {
 
 // src/ui/word/WordRow.ts
 function renderVocabRow(plugin, container, entry, initialState, setState, refresh, opts = {}) {
-  const sheet = opts.variant === "sheet";
+  const layout = rowLayout(opts.variant);
+  const sheet = layout.alwaysOpen;
   let state = initialState;
-  let grammarEditing = false;
   let row;
   const redraw = (nextState = state, afterMount) => {
     state = nextState;
@@ -4157,9 +4158,9 @@ function renderVocabRow(plugin, container, entry, initialState, setState, refres
     }
   };
   function build() {
-    var _a, _b;
-    if (sheet && state === "collapsed") state = "half";
-    state = normalizeExpand(state, sheet);
+    var _a, _b, _c;
+    if (layout.alwaysOpen && state === "collapsed") state = "half";
+    state = normalizeExpand(state);
     const rowEl = document.createElement("div");
     rowEl.addClass("vt-row");
     rowEl.setAttr("data-entry-id", entry.id);
@@ -4168,14 +4169,12 @@ function renderVocabRow(plugin, container, entry, initialState, setState, refres
     rowEl.toggleClass("is-expanded", state !== "collapsed");
     rowEl.toggleClass("vt-row-unliked", !!opts.dimUnliked && !entry.liked);
     const head = rowEl.createEl("div", { cls: "vt-row-header" });
-    if (!sheet) {
-      const likeBtn = head.createEl("span", { cls: "vt-row-like" });
-      likeBtn.toggleClass("is-liked", !!entry.liked);
-      likeBtn.setText(entry.liked ? "\u2665" : "\u2661");
-      likeBtn.setAttr("aria-label", t(entry.liked ? "like.unlike" : "like.like"));
-      likeBtn.setAttr("role", "button");
-      likeBtn.onclick = like;
-    }
+    const likeBtn = head.createEl("span", { cls: "vt-row-like" });
+    likeBtn.toggleClass("is-liked", !!entry.liked);
+    likeBtn.setText(entry.liked ? "\u2665" : "\u2661");
+    likeBtn.setAttr("aria-label", t(entry.liked ? "like.unlike" : "like.like"));
+    likeBtn.setAttr("role", "button");
+    likeBtn.onclick = like;
     const wordWrap = head.createEl("span", { cls: "vt-row-wordwrap" });
     const wordEl = wordWrap.createEl("span", { text: entry.word, cls: "vt-row-word" });
     if (opts.locate) {
@@ -4216,10 +4215,12 @@ function renderVocabRow(plugin, container, entry, initialState, setState, refres
       speak.setAttr("role", "button");
       bindPronounceButton(speak, entry, { stopPropagation: true });
     };
-    if (!sheet) {
+    if (layout.chevron) {
       const arrow = head.createEl("span", { cls: "vt-row-arrow" });
       (0, import_obsidian10.setIcon)(arrow, state === "collapsed" ? "chevron-up" : "chevron-down");
       arrow.setAttr("aria-label", state === "collapsed" ? t("row.expand") : t("row.collapse"));
+    }
+    if (layout.headerToggle) {
       head.onclick = () => {
         var _a2;
         const wasCollapsed = state === "collapsed";
@@ -4233,16 +4234,10 @@ function renderVocabRow(plugin, container, entry, initialState, setState, refres
     }
     const body = rowEl.createEl("div", { cls: "vt-row-body" });
     const scope = opts.ui ? opts.ui.rowScope(entry.id) : new import_obsidian10.Component();
-    let tab = "data";
-    if (opts.ui) tab = renderTabs(plugin, body, entry, opts.ui, scope, () => redraw());
-    if (tab === "ai") {
+    const tab = opts.ui ? (_c = opts.ui.tabs.get(entry.id)) != null ? _c : "data" : "data";
+    if (tab === "ai" && opts.ui) {
       renderWordAiTab(plugin, body, entry, opts.ui, scope);
-      if (sheet) {
-        renderWordPageButton(body, entry, opts);
-        addCollapseButton(body);
-      } else {
-        renderMinimalFooter(body, plugin, entry, opts, () => redraw());
-      }
+      renderFooter(body, plugin, entry, opts, scope, tab, () => redraw());
       return rowEl;
     }
     const commitField = async (key4, value) => {
@@ -4274,112 +4269,11 @@ function renderVocabRow(plugin, container, entry, initialState, setState, refres
         inp.onchange = () => commitField(key4, inp.value);
       }
     };
-    if (sheet) {
-      if (entry.phonetic) {
-        body.createEl("div", { text: entry.phonetic, cls: "vt-row-subtext" });
-      }
-      mkField(t("row.field.synonyms"), "synonyms", { multiline: true });
-      mkField(t("row.field.definition"), "definition", { multiline: true });
-      mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
-      body.createEl("div", {
-        text: t("row.meta.reviewed", { date: entry.lastReviewed, count: entry.reviews }),
-        cls: "vt-meta"
-      });
-      if (state === "full") {
-        if (entry.antonyms) mkField(t("row.field.antonyms"), "antonyms");
-        mkField(t("row.field.example"), "example", { multiline: true });
-        renderGrammarField(body, scope);
-        if (entry.source && entry.source.path) {
-          const src = body.createEl("div", { cls: "vt-row-source-link" });
-          const name = entry.source.path.split("/").pop();
-          src.textContent = `\u{1F4CD} ${name} : line ${entry.source.line + 1}`;
-          src.setAttr("aria-label", t("row.jumpToSource"));
-          src.onclick = async (e) => {
-            var _a2;
-            e.stopPropagation();
-            await plugin.jumpToSource(entry);
-            (_a2 = opts.onJump) == null ? void 0 : _a2.call(opts, entry);
-          };
-        }
-        mkField(t("row.field.level"), "level", { multiline: true });
-      }
-      const footer = body.createEl("div", { cls: "vt-row-footer" });
-      const moreBtn = footerBtn(footer, state === "full" ? "chevron-down" : "info", state === "full" ? t("row.showLess") : t("row.showMore"));
-      moreBtn.onclick = (e) => {
-        e.stopPropagation();
-        redraw(state === "full" ? "half" : "full");
-      };
-      const actions = footer.createEl("span", { cls: "vt-row-footer-actions" });
-      const fetchBtn = footerBtn(actions, "refresh-cw", t("row.fetch"));
-      fetchBtn.onclick = async (e) => {
-        e.stopPropagation();
-        fetchBtn.textContent = "\u2026";
-        await plugin.enrichEntry(entry, { verbose: true });
-        redraw();
-      };
-      const likeBtn = footerBtn(actions, "heart", t(entry.liked ? "like.unlike" : "like.like"));
-      likeBtn.addClass("vt-row-like");
-      likeBtn.toggleClass("is-liked", !!entry.liked);
-      likeBtn.onclick = like;
-      renderWordPageButton(body, entry, opts);
-      addCollapseButton(body);
-    } else {
-      mkField(t("row.field.definition"), "definition", { multiline: true });
-      mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
-      renderLevelChips(body, entry);
-      renderMinimalFooter(body, plugin, entry, opts, () => redraw());
-    }
+    mkField(t("row.field.definition"), "definition", { multiline: true });
+    mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
+    renderLevelChips(body, entry);
+    renderFooter(body, plugin, entry, opts, scope, tab, () => redraw());
     return rowEl;
-  }
-  function addCollapseButton(parent) {
-    if (sheet) return;
-    const btn = parent.createEl("button", { cls: "vt-row-collapse-bottom" });
-    (0, import_obsidian10.setIcon)(btn.createSpan({ cls: "vt-row-collapse-bottom-icon" }), "chevron-up");
-    btn.createSpan({ text: t("row.collapse") });
-    btn.setAttr("aria-label", t("row.collapse"));
-    btn.onclick = (e) => {
-      e.stopPropagation();
-      redraw("collapsed", (newRow) => newRow.scrollIntoView({ block: "nearest" }));
-    };
-  }
-  function renderGrammarField(body, scope) {
-    var _a, _b, _c;
-    const value = (_a = entry.grammar) != null ? _a : "";
-    const wrap = body.createEl("div", { cls: "vt-field" });
-    if (value) wrap.addClass("is-filled");
-    if (!value || grammarEditing) {
-      const inp = wrap.createEl("textarea", { cls: ["vt-input", "vt-field-box", "vt-textarea", "vt-row-grammar-input"] });
-      inp.rows = 1;
-      inp.value = value;
-      inp.placeholder = t("row.field.placeholder", { label: t("row.field.grammar").toLowerCase() });
-      inp.onclick = (e) => e.stopPropagation();
-      autoGrowTextarea(inp);
-      inp.addEventListener("input", () => autoGrowTextarea(inp));
-      inp.onblur = () => {
-        grammarEditing = false;
-        if (inp.value === value) {
-          redraw();
-          return;
-        }
-        void (async () => {
-          await commitEntryField(plugin.store, entry, "grammar", inp.value);
-          redraw();
-        })();
-      };
-    } else {
-      const render = wrap.createEl("div", { cls: ["vt-field-box", "vt-row-grammar-render"] });
-      render.setAttr("role", "button");
-      render.setAttr("aria-label", t("row.field.grammar"));
-      render.onclick = (e) => {
-        e.stopPropagation();
-        grammarEditing = true;
-        redraw(state, (newRow) => {
-          var _a2;
-          (_a2 = newRow.querySelector(".vt-row-grammar-input")) == null ? void 0 : _a2.focus();
-        });
-      };
-      void import_obsidian10.MarkdownRenderer.render(plugin.app, value, render, (_c = (_b = entry.source) == null ? void 0 : _b.path) != null ? _c : "", scope);
-    }
   }
   row = build();
   container.appendChild(row);
@@ -4392,25 +4286,6 @@ function footerBtn(parent, icon, label) {
   btn.setAttr("role", "button");
   return btn;
 }
-function renderMinimalFooter(body, plugin, entry, opts, redraw) {
-  const footer = body.createEl("div", { cls: "vt-row-footer" });
-  if (opts.openWordPage) {
-    const wordPageBtn = footerBtn(footer, "external-link", t("word.openPageTitle"));
-    wordPageBtn.onclick = (e) => {
-      var _a;
-      e.stopPropagation();
-      (_a = opts.openWordPage) == null ? void 0 : _a.call(opts, entry);
-    };
-  }
-  const actions = footer.createEl("span", { cls: "vt-row-footer-actions" });
-  const fetchBtn = footerBtn(actions, "refresh-cw", t("row.fetch"));
-  fetchBtn.onclick = async (e) => {
-    e.stopPropagation();
-    fetchBtn.textContent = "\u2026";
-    await plugin.enrichEntry(entry, { verbose: true });
-    redraw();
-  };
-}
 function renderLevelChips(body, entry) {
   const tags = levelTags(entry.level);
   if (!tags.length) return;
@@ -4419,50 +4294,55 @@ function renderLevelChips(body, entry) {
     wrap.createEl("span", { text: tagText, cls: "vt-row-level-chip" });
   }
 }
-function renderWordPageButton(body, entry, opts) {
-  const open = opts.openWordPage;
-  if (!open) return;
-  const btn = body.createEl("button", { cls: "vt-word-page-btn" });
-  (0, import_obsidian10.setIcon)(btn.createSpan({ cls: "vt-word-page-btn-icon" }), "external-link");
-  btn.createSpan({ text: t("word.openPage") });
-  btn.setAttr("aria-label", t("word.openPageTitle"));
-  btn.onclick = (e) => {
+function renderFooter(body, plugin, entry, opts, scope, tab, redraw) {
+  const footer = body.createEl("div", { cls: "vt-row-footer" });
+  const left = footer.createEl("span", { cls: "vt-row-footer-left" });
+  if (opts.ui) renderViewToggle(left, plugin, entry, opts.ui, scope, tab, redraw);
+  const actions = footer.createEl("span", { cls: "vt-row-footer-actions" });
+  if (opts.openWordPage) {
+    const wordPageBtn = footerBtn(actions, "external-link", t("word.openPageTitle"));
+    wordPageBtn.onclick = (e) => {
+      var _a;
+      e.stopPropagation();
+      (_a = opts.openWordPage) == null ? void 0 : _a.call(opts, entry);
+    };
+  }
+  const fetchBtn = footerBtn(actions, "refresh-cw", t("row.fetch"));
+  fetchBtn.onclick = async (e) => {
     e.stopPropagation();
-    open(entry);
+    fetchBtn.textContent = "\u2026";
+    await plugin.enrichEntry(entry, { verbose: true });
+    redraw();
   };
 }
-function renderTabs(plugin, body, entry, ui, scope, onChange) {
-  var _a;
-  const current = (_a = ui.tabs.get(entry.id)) != null ? _a : "data";
-  const bar = body.createDiv({ cls: "vt-tabs" });
-  const mkTab = (tab, label, icon) => {
-    const el = bar.createEl("button", { cls: "vt-tab" });
-    el.toggleClass("is-active", tab === current);
-    if (icon) (0, import_obsidian10.setIcon)(el.createSpan({ cls: "vt-tab-icon" }), icon);
-    el.createSpan({ text: label });
-    el.onclick = (e) => {
-      e.stopPropagation();
-      if (tab === current) return;
-      ui.tabs.set(entry.id, tab);
-      onChange();
-    };
-    return el;
-  };
-  mkTab("data", t("word.tab.data"));
-  const count = mkTab("ai", t("word.tab.ai"), "sparkles").createSpan({ cls: "vt-tab-count" });
-  const update = () => {
-    const n = plugin.threads.wordQuestionCount(entry.id);
-    count.setText(n > 0 ? String(n) : "");
+function renderViewToggle(parent, plugin, entry, ui, scope, current, redraw) {
+  const btn = parent.createEl("span", { cls: "vt-view-toggle" });
+  btn.setAttr("role", "button");
+  const iconEl = btn.createSpan({ cls: "vt-view-toggle-icon" });
+  const labelEl = btn.createSpan({ cls: "vt-view-toggle-label" });
+  const countEl = btn.createSpan({ cls: "vt-view-toggle-count" });
+  const apply = (n) => {
+    const spec = viewToggleSpec(current, n);
+    (0, import_obsidian10.setIcon)(iconEl, spec.icon);
+    labelEl.setText(t(spec.label));
+    countEl.setText(spec.count !== null ? String(spec.count) : "");
+    btn.setAttr("aria-label", t(spec.label));
   };
   const threadId = wordThreadId(entry.id);
+  const refresh = () => apply(plugin.threads.wordQuestionCount(entry.id));
+  refresh();
   scope.register(
     plugin.threads.events.on("thread:upsert", (th) => {
-      if (th.id === threadId) update();
+      if (th.id === threadId) refresh();
     })
   );
-  scope.register(plugin.threads.events.on("threads:reloaded", update));
-  void plugin.threads.ensureLoaded().then(update);
-  return current;
+  scope.register(plugin.threads.events.on("threads:reloaded", refresh));
+  void plugin.threads.ensureLoaded().then(refresh);
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    ui.tabs.set(entry.id, current === "ai" ? "data" : "ai");
+    redraw();
+  };
 }
 
 // src/ui/word/GroupedWordList.ts
@@ -6797,15 +6677,16 @@ function renderSuggestRow(container, page, group, row, deps) {
   const key4 = suggestKey(group.key, row.word);
   const busy = deps.busy.has(key4);
   const el = container.createDiv({ cls: ["vt-row", "vt-page-suggest"] });
+  el.setAttr("data-word", row.word.word.toLowerCase());
   if (row.word.emoji) el.createSpan({ text: row.word.emoji, cls: "vt-page-suggest-emoji" });
   el.createSpan({ text: row.word.word, cls: "vt-page-suggest-word" });
   if (row.word.zh) el.createSpan({ text: row.word.zh, cls: "vt-page-suggest-zh" });
   for (const tagText of row.levelTags) el.createSpan({ text: tagText, cls: "vt-row-level-chip" });
   for (const label of row.morphemeLabels) el.createSpan({ text: label, cls: "vt-row-morpheme-chip" });
   el.createEl("span", { cls: "vt-group-spacer" });
-  const addBtn = el.createEl("span", { cls: "vt-page-suggest-add" });
+  const addBtn = el.createEl("span", { cls: "vt-row-like" });
   addBtn.toggleClass("is-busy", busy);
-  (0, import_obsidian18.setIcon)(addBtn, "plus");
+  addBtn.setText("\u2661");
   addBtn.setAttr("role", "button");
   addBtn.setAttr("aria-label", t("sidebar.page.add", { word: row.word.word }));
   if (!busy) {
@@ -6824,6 +6705,7 @@ function renderSuggestRow(container, page, group, row, deps) {
 // src/ui/sidebar/VocabSidebarView.ts
 var VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 var NOTE_REFRESH_MS = 400;
+var FOCUS_FLASH_MS = 1200;
 var VocabSidebarView = class extends import_obsidian19.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
@@ -6893,6 +6775,10 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
     this.lastActiveGroupKey = void 0;
     // Suggested-row 「＋」 requests in flight (pageGroups.ts's busy spinner).
     this.pageBusy = /* @__PURE__ */ new Set();
+    // 1009 #8: the last focusWord we actually flashed — so a re-publish with
+    // the same word (every render while the galaxy block stays open) doesn't
+    // re-flash it over and over.
+    this.lastFocusWord = null;
     // The note a paragraph thread belongs to, if that note still exists.
     this.threadPath = (threadId) => {
       const th = this.plugin.threads.get(threadId);
@@ -6946,7 +6832,12 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
         this.refreshFiltered();
       })
     );
-    this.register(this.plugin.pageContext.events.on("changed", () => this.refreshFiltered()));
+    this.register(
+      this.plugin.pageContext.events.on("changed", (ctx) => {
+        this.refreshFiltered();
+        this.flashFocusWord(ctx);
+      })
+    );
     this.render();
   }
   // Called when a word is clicked (reading-mode word / ==mark==, through
@@ -7029,6 +6920,31 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
     row.addClass("vt-row-flash");
     window.setTimeout(() => row.removeClass("vt-row-flash"), FLASH_MS);
   }
+  // 1009 #8: the page (字族樹／星系) asked the sidebar to point at one word
+  // — a star/node tap on a suggested word republishes PageContext with
+  // focusWord set. Runs after refreshFiltered() so the row already exists
+  // in the DOM. Tracked words render through renderVocabRow
+  // (data-entry-id); suggested ones through pageGroups.ts's own
+  // data-word attribute (no entry yet).
+  flashFocusWord(ctx) {
+    var _a;
+    const word = ((_a = ctx == null ? void 0 : ctx.focusWord) == null ? void 0 : _a.toLowerCase()) || null;
+    if (!word) {
+      this.lastFocusWord = null;
+      return;
+    }
+    if (word === this.lastFocusWord) return;
+    this.lastFocusWord = word;
+    const root2 = this.scrollRoot();
+    if (!root2) return;
+    const entry = this.findEntry(word);
+    const el = entry ? root2.querySelector(`.vt-row[data-entry-id="${CSS.escape(entry.id)}"]`) : root2.querySelector(`.vt-row[data-word="${CSS.escape(word)}"]`);
+    if (!el) return;
+    el.scrollIntoView({ block: "nearest" });
+    el.removeClass("is-flash");
+    el.addClass("is-flash");
+    window.setTimeout(() => el.removeClass("is-flash"), FOCUS_FLASH_MS);
+  }
   // Called by main.ts whenever something that affects the exam chips
   // changed (a scan finished, a chip was toggled, the note was edited).
   // Since those are exactly the things the 單字／AI 討論／文法 filter also
@@ -7077,7 +6993,7 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
     return null;
   }
   async loadNoteScope(file) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     const seq = ++this.noteScopeSeq;
     const hits = (_b = (_a = this.plugin.wordlists.cachedScan(file.path, file.stat.mtime)) == null ? void 0 : _a.hits) != null ? _b : [];
     let text;
@@ -7089,9 +7005,12 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
     if (seq !== this.noteScopeSeq) return;
     const inflections = resolveWordlistSettings(this.plugin.store.settings.wordlists).inflections;
     const ids = computeNoteScope(this.plugin.store.entries, hits, text, inflections);
+    for (const e of this.plugin.store.entries) {
+      if (!e.deletedAt && ((_c = e.source) == null ? void 0 : _c.path) === file.path) ids.add(e.id);
+    }
     this.noteScopeCache = { path: file.path, mtime: file.stat.mtime, sig: noteScopeSig(this.plugin.store.entries), ids };
-    if (((_c = this.app.workspace.getActiveFile()) == null ? void 0 : _c.path) !== file.path) return;
-    if (((_d = this.filterMode) != null ? _d : "note") !== "note") return;
+    if (((_d = this.app.workspace.getActiveFile()) == null ? void 0 : _d.path) !== file.path) return;
+    if (((_e = this.filterMode) != null ? _e : "note") !== "note") return;
     this.refreshFiltered();
   }
   // 1007-2 #8/#10/#13/#14: the page (字族樹／Word DNA) for the file in
@@ -7680,7 +7599,7 @@ function emojiOf(meta, entry) {
   return (_a = meta == null ? void 0 : meta.emoji) != null ? _a : defaultEmoji(entry.partOfSpeech);
 }
 
-// node_modules/d3-dispatch/src/dispatch.js
+// ../../../node_modules/d3-dispatch/src/dispatch.js
 var noop = { value: () => {
 } };
 function dispatch() {
@@ -7750,7 +7669,7 @@ function set(type, name, callback) {
 }
 var dispatch_default = dispatch;
 
-// node_modules/d3-selection/src/namespaces.js
+// ../../../node_modules/d3-selection/src/namespaces.js
 var xhtml = "http://www.w3.org/1999/xhtml";
 var namespaces_default = {
   svg: "http://www.w3.org/2000/svg",
@@ -7760,14 +7679,14 @@ var namespaces_default = {
   xmlns: "http://www.w3.org/2000/xmlns/"
 };
 
-// node_modules/d3-selection/src/namespace.js
+// ../../../node_modules/d3-selection/src/namespace.js
 function namespace_default(name) {
   var prefix = name += "", i = prefix.indexOf(":");
   if (i >= 0 && (prefix = name.slice(0, i)) !== "xmlns") name = name.slice(i + 1);
   return namespaces_default.hasOwnProperty(prefix) ? { space: namespaces_default[prefix], local: name } : name;
 }
 
-// node_modules/d3-selection/src/creator.js
+// ../../../node_modules/d3-selection/src/creator.js
 function creatorInherit(name) {
   return function() {
     var document2 = this.ownerDocument, uri = this.namespaceURI;
@@ -7784,7 +7703,7 @@ function creator_default(name) {
   return (fullname.local ? creatorFixed : creatorInherit)(fullname);
 }
 
-// node_modules/d3-selection/src/selector.js
+// ../../../node_modules/d3-selection/src/selector.js
 function none() {
 }
 function selector_default(selector) {
@@ -7793,7 +7712,7 @@ function selector_default(selector) {
   };
 }
 
-// node_modules/d3-selection/src/selection/select.js
+// ../../../node_modules/d3-selection/src/selection/select.js
 function select_default(select) {
   if (typeof select !== "function") select = selector_default(select);
   for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
@@ -7807,12 +7726,12 @@ function select_default(select) {
   return new Selection(subgroups, this._parents);
 }
 
-// node_modules/d3-selection/src/array.js
+// ../../../node_modules/d3-selection/src/array.js
 function array(x3) {
   return x3 == null ? [] : Array.isArray(x3) ? x3 : Array.from(x3);
 }
 
-// node_modules/d3-selection/src/selectorAll.js
+// ../../../node_modules/d3-selection/src/selectorAll.js
 function empty() {
   return [];
 }
@@ -7822,7 +7741,7 @@ function selectorAll_default(selector) {
   };
 }
 
-// node_modules/d3-selection/src/selection/selectAll.js
+// ../../../node_modules/d3-selection/src/selection/selectAll.js
 function arrayAll(select) {
   return function() {
     return array(select.apply(this, arguments));
@@ -7842,7 +7761,7 @@ function selectAll_default(select) {
   return new Selection(subgroups, parents);
 }
 
-// node_modules/d3-selection/src/matcher.js
+// ../../../node_modules/d3-selection/src/matcher.js
 function matcher_default(selector) {
   return function() {
     return this.matches(selector);
@@ -7854,7 +7773,7 @@ function childMatcher(selector) {
   };
 }
 
-// node_modules/d3-selection/src/selection/selectChild.js
+// ../../../node_modules/d3-selection/src/selection/selectChild.js
 var find = Array.prototype.find;
 function childFind(match) {
   return function() {
@@ -7868,7 +7787,7 @@ function selectChild_default(match) {
   return this.select(match == null ? childFirst : childFind(typeof match === "function" ? match : childMatcher(match)));
 }
 
-// node_modules/d3-selection/src/selection/selectChildren.js
+// ../../../node_modules/d3-selection/src/selection/selectChildren.js
 var filter = Array.prototype.filter;
 function children() {
   return Array.from(this.children);
@@ -7882,7 +7801,7 @@ function selectChildren_default(match) {
   return this.selectAll(match == null ? children : childrenFilter(typeof match === "function" ? match : childMatcher(match)));
 }
 
-// node_modules/d3-selection/src/selection/filter.js
+// ../../../node_modules/d3-selection/src/selection/filter.js
 function filter_default(match) {
   if (typeof match !== "function") match = matcher_default(match);
   for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
@@ -7895,12 +7814,12 @@ function filter_default(match) {
   return new Selection(subgroups, this._parents);
 }
 
-// node_modules/d3-selection/src/selection/sparse.js
+// ../../../node_modules/d3-selection/src/selection/sparse.js
 function sparse_default(update) {
   return new Array(update.length);
 }
 
-// node_modules/d3-selection/src/selection/enter.js
+// ../../../node_modules/d3-selection/src/selection/enter.js
 function enter_default() {
   return new Selection(this._enter || this._groups.map(sparse_default), this._parents);
 }
@@ -7927,14 +7846,14 @@ EnterNode.prototype = {
   }
 };
 
-// node_modules/d3-selection/src/constant.js
+// ../../../node_modules/d3-selection/src/constant.js
 function constant_default(x3) {
   return function() {
     return x3;
   };
 }
 
-// node_modules/d3-selection/src/selection/data.js
+// ../../../node_modules/d3-selection/src/selection/data.js
 function bindIndex(parent, group, enter, update, exit, data) {
   var i = 0, node, groupLength = group.length, dataLength = data.length;
   for (; i < dataLength; ++i) {
@@ -8006,12 +7925,12 @@ function arraylike(data) {
   return typeof data === "object" && "length" in data ? data : Array.from(data);
 }
 
-// node_modules/d3-selection/src/selection/exit.js
+// ../../../node_modules/d3-selection/src/selection/exit.js
 function exit_default() {
   return new Selection(this._exit || this._groups.map(sparse_default), this._parents);
 }
 
-// node_modules/d3-selection/src/selection/join.js
+// ../../../node_modules/d3-selection/src/selection/join.js
 function join_default(onenter, onupdate, onexit) {
   var enter = this.enter(), update = this, exit = this.exit();
   if (typeof onenter === "function") {
@@ -8029,7 +7948,7 @@ function join_default(onenter, onupdate, onexit) {
   return enter && update ? enter.merge(update).order() : update;
 }
 
-// node_modules/d3-selection/src/selection/merge.js
+// ../../../node_modules/d3-selection/src/selection/merge.js
 function merge_default(context) {
   var selection2 = context.selection ? context.selection() : context;
   for (var groups0 = this._groups, groups1 = selection2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m2; ++j) {
@@ -8045,7 +7964,7 @@ function merge_default(context) {
   return new Selection(merges, this._parents);
 }
 
-// node_modules/d3-selection/src/selection/order.js
+// ../../../node_modules/d3-selection/src/selection/order.js
 function order_default() {
   for (var groups = this._groups, j = -1, m2 = groups.length; ++j < m2; ) {
     for (var group = groups[j], i = group.length - 1, next = group[i], node; --i >= 0; ) {
@@ -8058,7 +7977,7 @@ function order_default() {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/sort.js
+// ../../../node_modules/d3-selection/src/selection/sort.js
 function sort_default(compare) {
   if (!compare) compare = ascending;
   function compareNode(a2, b) {
@@ -8078,7 +7997,7 @@ function ascending(a2, b) {
   return a2 < b ? -1 : a2 > b ? 1 : a2 >= b ? 0 : NaN;
 }
 
-// node_modules/d3-selection/src/selection/call.js
+// ../../../node_modules/d3-selection/src/selection/call.js
 function call_default() {
   var callback = arguments[0];
   arguments[0] = this;
@@ -8086,12 +8005,12 @@ function call_default() {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/nodes.js
+// ../../../node_modules/d3-selection/src/selection/nodes.js
 function nodes_default() {
   return Array.from(this);
 }
 
-// node_modules/d3-selection/src/selection/node.js
+// ../../../node_modules/d3-selection/src/selection/node.js
 function node_default() {
   for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
     for (var group = groups[j], i = 0, n = group.length; i < n; ++i) {
@@ -8102,19 +8021,19 @@ function node_default() {
   return null;
 }
 
-// node_modules/d3-selection/src/selection/size.js
+// ../../../node_modules/d3-selection/src/selection/size.js
 function size_default() {
   let size = 0;
   for (const node of this) ++size;
   return size;
 }
 
-// node_modules/d3-selection/src/selection/empty.js
+// ../../../node_modules/d3-selection/src/selection/empty.js
 function empty_default() {
   return !this.node();
 }
 
-// node_modules/d3-selection/src/selection/each.js
+// ../../../node_modules/d3-selection/src/selection/each.js
 function each_default(callback) {
   for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
     for (var group = groups[j], i = 0, n = group.length, node; i < n; ++i) {
@@ -8124,7 +8043,7 @@ function each_default(callback) {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/attr.js
+// ../../../node_modules/d3-selection/src/selection/attr.js
 function attrRemove(name) {
   return function() {
     this.removeAttribute(name);
@@ -8168,12 +8087,12 @@ function attr_default(name, value) {
   return this.each((value == null ? fullname.local ? attrRemoveNS : attrRemove : typeof value === "function" ? fullname.local ? attrFunctionNS : attrFunction : fullname.local ? attrConstantNS : attrConstant)(fullname, value));
 }
 
-// node_modules/d3-selection/src/window.js
+// ../../../node_modules/d3-selection/src/window.js
 function window_default(node) {
   return node.ownerDocument && node.ownerDocument.defaultView || node.document && node || node.defaultView;
 }
 
-// node_modules/d3-selection/src/selection/style.js
+// ../../../node_modules/d3-selection/src/selection/style.js
 function styleRemove(name) {
   return function() {
     this.style.removeProperty(name);
@@ -8198,7 +8117,7 @@ function styleValue(node, name) {
   return node.style.getPropertyValue(name) || window_default(node).getComputedStyle(node, null).getPropertyValue(name);
 }
 
-// node_modules/d3-selection/src/selection/property.js
+// ../../../node_modules/d3-selection/src/selection/property.js
 function propertyRemove(name) {
   return function() {
     delete this[name];
@@ -8220,7 +8139,7 @@ function property_default(name, value) {
   return arguments.length > 1 ? this.each((value == null ? propertyRemove : typeof value === "function" ? propertyFunction : propertyConstant)(name, value)) : this.node()[name];
 }
 
-// node_modules/d3-selection/src/selection/classed.js
+// ../../../node_modules/d3-selection/src/selection/classed.js
 function classArray(string) {
   return string.trim().split(/^|\s+/);
 }
@@ -8283,7 +8202,7 @@ function classed_default(name, value) {
   return this.each((typeof value === "function" ? classedFunction : value ? classedTrue : classedFalse)(names, value));
 }
 
-// node_modules/d3-selection/src/selection/text.js
+// ../../../node_modules/d3-selection/src/selection/text.js
 function textRemove() {
   this.textContent = "";
 }
@@ -8302,7 +8221,7 @@ function text_default(value) {
   return arguments.length ? this.each(value == null ? textRemove : (typeof value === "function" ? textFunction : textConstant)(value)) : this.node().textContent;
 }
 
-// node_modules/d3-selection/src/selection/html.js
+// ../../../node_modules/d3-selection/src/selection/html.js
 function htmlRemove() {
   this.innerHTML = "";
 }
@@ -8321,7 +8240,7 @@ function html_default(value) {
   return arguments.length ? this.each(value == null ? htmlRemove : (typeof value === "function" ? htmlFunction : htmlConstant)(value)) : this.node().innerHTML;
 }
 
-// node_modules/d3-selection/src/selection/raise.js
+// ../../../node_modules/d3-selection/src/selection/raise.js
 function raise() {
   if (this.nextSibling) this.parentNode.appendChild(this);
 }
@@ -8329,7 +8248,7 @@ function raise_default() {
   return this.each(raise);
 }
 
-// node_modules/d3-selection/src/selection/lower.js
+// ../../../node_modules/d3-selection/src/selection/lower.js
 function lower() {
   if (this.previousSibling) this.parentNode.insertBefore(this, this.parentNode.firstChild);
 }
@@ -8337,7 +8256,7 @@ function lower_default() {
   return this.each(lower);
 }
 
-// node_modules/d3-selection/src/selection/append.js
+// ../../../node_modules/d3-selection/src/selection/append.js
 function append_default(name) {
   var create2 = typeof name === "function" ? name : creator_default(name);
   return this.select(function() {
@@ -8345,7 +8264,7 @@ function append_default(name) {
   });
 }
 
-// node_modules/d3-selection/src/selection/insert.js
+// ../../../node_modules/d3-selection/src/selection/insert.js
 function constantNull() {
   return null;
 }
@@ -8356,7 +8275,7 @@ function insert_default(name, before) {
   });
 }
 
-// node_modules/d3-selection/src/selection/remove.js
+// ../../../node_modules/d3-selection/src/selection/remove.js
 function remove() {
   var parent = this.parentNode;
   if (parent) parent.removeChild(this);
@@ -8365,7 +8284,7 @@ function remove_default() {
   return this.each(remove);
 }
 
-// node_modules/d3-selection/src/selection/clone.js
+// ../../../node_modules/d3-selection/src/selection/clone.js
 function selection_cloneShallow() {
   var clone = this.cloneNode(false), parent = this.parentNode;
   return parent ? parent.insertBefore(clone, this.nextSibling) : clone;
@@ -8378,12 +8297,12 @@ function clone_default(deep) {
   return this.select(deep ? selection_cloneDeep : selection_cloneShallow);
 }
 
-// node_modules/d3-selection/src/selection/datum.js
+// ../../../node_modules/d3-selection/src/selection/datum.js
 function datum_default(value) {
   return arguments.length ? this.property("__data__", value) : this.node().__data__;
 }
 
-// node_modules/d3-selection/src/selection/on.js
+// ../../../node_modules/d3-selection/src/selection/on.js
 function contextListener(listener) {
   return function(event) {
     listener.call(this, event, this.__data__);
@@ -8446,7 +8365,7 @@ function on_default(typename, value, options) {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/dispatch.js
+// ../../../node_modules/d3-selection/src/selection/dispatch.js
 function dispatchEvent(node, type, params) {
   var window2 = window_default(node), event = window2.CustomEvent;
   if (typeof event === "function") {
@@ -8472,7 +8391,7 @@ function dispatch_default2(type, params) {
   return this.each((typeof params === "function" ? dispatchFunction : dispatchConstant)(type, params));
 }
 
-// node_modules/d3-selection/src/selection/iterator.js
+// ../../../node_modules/d3-selection/src/selection/iterator.js
 function* iterator_default() {
   for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
     for (var group = groups[j], i = 0, n = group.length, node; i < n; ++i) {
@@ -8481,7 +8400,7 @@ function* iterator_default() {
   }
 }
 
-// node_modules/d3-selection/src/selection/index.js
+// ../../../node_modules/d3-selection/src/selection/index.js
 var root = [null];
 function Selection(groups, parents) {
   this._groups = groups;
@@ -8533,19 +8452,19 @@ Selection.prototype = selection.prototype = {
 };
 var selection_default = selection;
 
-// node_modules/d3-selection/src/select.js
+// ../../../node_modules/d3-selection/src/select.js
 function select_default2(selector) {
   return typeof selector === "string" ? new Selection([[document.querySelector(selector)]], [document.documentElement]) : new Selection([[selector]], root);
 }
 
-// node_modules/d3-selection/src/sourceEvent.js
+// ../../../node_modules/d3-selection/src/sourceEvent.js
 function sourceEvent_default(event) {
   let sourceEvent;
   while (sourceEvent = event.sourceEvent) event = sourceEvent;
   return event;
 }
 
-// node_modules/d3-selection/src/pointer.js
+// ../../../node_modules/d3-selection/src/pointer.js
 function pointer_default(event, node) {
   event = sourceEvent_default(event);
   if (node === void 0) node = event.currentTarget;
@@ -8565,7 +8484,7 @@ function pointer_default(event, node) {
   return [event.pageX, event.pageY];
 }
 
-// node_modules/d3-drag/src/noevent.js
+// ../../../node_modules/d3-drag/src/noevent.js
 var nonpassive = { passive: false };
 var nonpassivecapture = { capture: true, passive: false };
 function nopropagation(event) {
@@ -8576,7 +8495,7 @@ function noevent_default(event) {
   event.stopImmediatePropagation();
 }
 
-// node_modules/d3-drag/src/nodrag.js
+// ../../../node_modules/d3-drag/src/nodrag.js
 function nodrag_default(view) {
   var root2 = view.document.documentElement, selection2 = select_default2(view).on("dragstart.drag", noevent_default, nonpassivecapture);
   if ("onselectstart" in root2) {
@@ -8602,10 +8521,10 @@ function yesdrag(view, noclick) {
   }
 }
 
-// node_modules/d3-drag/src/constant.js
+// ../../../node_modules/d3-drag/src/constant.js
 var constant_default2 = (x3) => () => x3;
 
-// node_modules/d3-drag/src/event.js
+// ../../../node_modules/d3-drag/src/event.js
 function DragEvent(type, {
   sourceEvent,
   subject,
@@ -8637,7 +8556,7 @@ DragEvent.prototype.on = function() {
   return value === this._ ? this : value;
 };
 
-// node_modules/d3-drag/src/drag.js
+// ../../../node_modules/d3-drag/src/drag.js
 function defaultFilter(event) {
   return !event.ctrlKey && !event.button;
 }
@@ -8782,7 +8701,7 @@ function drag_default() {
   return drag;
 }
 
-// node_modules/d3-quadtree/src/add.js
+// ../../../node_modules/d3-quadtree/src/add.js
 function add_default(d) {
   const x3 = +this._x.call(null, d), y3 = +this._y.call(null, d);
   return add(this.cover(x3, y3), x3, y3, d);
@@ -8829,7 +8748,7 @@ function addAll(data) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/cover.js
+// ../../../node_modules/d3-quadtree/src/cover.js
 function cover_default(x3, y3) {
   if (isNaN(x3 = +x3) || isNaN(y3 = +y3)) return this;
   var x0 = this._x0, y0 = this._y0, x1 = this._x1, y1 = this._y1;
@@ -8865,7 +8784,7 @@ function cover_default(x3, y3) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/data.js
+// ../../../node_modules/d3-quadtree/src/data.js
 function data_default2() {
   var data = [];
   this.visit(function(node) {
@@ -8876,12 +8795,12 @@ function data_default2() {
   return data;
 }
 
-// node_modules/d3-quadtree/src/extent.js
+// ../../../node_modules/d3-quadtree/src/extent.js
 function extent_default(_) {
   return arguments.length ? this.cover(+_[0][0], +_[0][1]).cover(+_[1][0], +_[1][1]) : isNaN(this._x0) ? void 0 : [[this._x0, this._y0], [this._x1, this._y1]];
 }
 
-// node_modules/d3-quadtree/src/quad.js
+// ../../../node_modules/d3-quadtree/src/quad.js
 function quad_default(node, x0, y0, x1, y1) {
   this.node = node;
   this.x0 = x0;
@@ -8890,7 +8809,7 @@ function quad_default(node, x0, y0, x1, y1) {
   this.y1 = y1;
 }
 
-// node_modules/d3-quadtree/src/find.js
+// ../../../node_modules/d3-quadtree/src/find.js
 function find_default(x3, y3, radius) {
   var data, x0 = this._x0, y0 = this._y0, x1, y1, x22, y22, x32 = this._x1, y32 = this._y1, quads = [], node = this._root, q, i;
   if (node) quads.push(new quad_default(node, x0, y0, x32, y32));
@@ -8928,7 +8847,7 @@ function find_default(x3, y3, radius) {
   return data;
 }
 
-// node_modules/d3-quadtree/src/remove.js
+// ../../../node_modules/d3-quadtree/src/remove.js
 function remove_default2(d) {
   if (isNaN(x3 = +this._x.call(null, d)) || isNaN(y3 = +this._y.call(null, d))) return this;
   var parent, node = this._root, retainer, previous, next, x0 = this._x0, y0 = this._y0, x1 = this._x1, y1 = this._y1, x3, y3, xm, ym, right, bottom, i, j;
@@ -8958,12 +8877,12 @@ function removeAll(data) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/root.js
+// ../../../node_modules/d3-quadtree/src/root.js
 function root_default() {
   return this._root;
 }
 
-// node_modules/d3-quadtree/src/size.js
+// ../../../node_modules/d3-quadtree/src/size.js
 function size_default2() {
   var size = 0;
   this.visit(function(node) {
@@ -8974,7 +8893,7 @@ function size_default2() {
   return size;
 }
 
-// node_modules/d3-quadtree/src/visit.js
+// ../../../node_modules/d3-quadtree/src/visit.js
 function visit_default(callback) {
   var quads = [], q, node = this._root, child, x0, y0, x1, y1;
   if (node) quads.push(new quad_default(node, this._x0, this._y0, this._x1, this._y1));
@@ -8990,7 +8909,7 @@ function visit_default(callback) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/visitAfter.js
+// ../../../node_modules/d3-quadtree/src/visitAfter.js
 function visitAfter_default(callback) {
   var quads = [], next = [], q;
   if (this._root) quads.push(new quad_default(this._root, this._x0, this._y0, this._x1, this._y1));
@@ -9011,7 +8930,7 @@ function visitAfter_default(callback) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/x.js
+// ../../../node_modules/d3-quadtree/src/x.js
 function defaultX(d) {
   return d[0];
 }
@@ -9019,7 +8938,7 @@ function x_default(_) {
   return arguments.length ? (this._x = _, this) : this._x;
 }
 
-// node_modules/d3-quadtree/src/y.js
+// ../../../node_modules/d3-quadtree/src/y.js
 function defaultY(d) {
   return d[1];
 }
@@ -9027,7 +8946,7 @@ function y_default(_) {
   return arguments.length ? (this._y = _, this) : this._y;
 }
 
-// node_modules/d3-quadtree/src/quadtree.js
+// ../../../node_modules/d3-quadtree/src/quadtree.js
 function quadtree(nodes, x3, y3) {
   var tree = new Quadtree(x3 == null ? defaultX : x3, y3 == null ? defaultY : y3, NaN, NaN, NaN, NaN);
   return nodes == null ? tree : tree.addAll(nodes);
@@ -9077,19 +8996,19 @@ treeProto.visitAfter = visitAfter_default;
 treeProto.x = x_default;
 treeProto.y = y_default;
 
-// node_modules/d3-force/src/constant.js
+// ../../../node_modules/d3-force/src/constant.js
 function constant_default3(x3) {
   return function() {
     return x3;
   };
 }
 
-// node_modules/d3-force/src/jiggle.js
+// ../../../node_modules/d3-force/src/jiggle.js
 function jiggle_default(random) {
   return (random() - 0.5) * 1e-6;
 }
 
-// node_modules/d3-force/src/collide.js
+// ../../../node_modules/d3-force/src/collide.js
 function x(d) {
   return d.x + d.vx;
 }
@@ -9162,7 +9081,7 @@ function collide_default(radius) {
   return force;
 }
 
-// node_modules/d3-force/src/link.js
+// ../../../node_modules/d3-force/src/link.js
 function index(d) {
   return d.index;
 }
@@ -9244,7 +9163,7 @@ function link_default(links) {
   return force;
 }
 
-// node_modules/d3-timer/src/timer.js
+// ../../../node_modules/d3-timer/src/timer.js
 var frame = 0;
 var timeout = 0;
 var interval = 0;
@@ -9346,7 +9265,7 @@ function sleep(time) {
   }
 }
 
-// node_modules/d3-timer/src/timeout.js
+// ../../../node_modules/d3-timer/src/timeout.js
 function timeout_default(callback, delay, time) {
   var t2 = new Timer();
   delay = delay == null ? 0 : +delay;
@@ -9357,7 +9276,7 @@ function timeout_default(callback, delay, time) {
   return t2;
 }
 
-// node_modules/d3-force/src/lcg.js
+// ../../../node_modules/d3-force/src/lcg.js
 var a = 1664525;
 var c = 1013904223;
 var m = 4294967296;
@@ -9366,7 +9285,7 @@ function lcg_default() {
   return () => (s = (a * s + c) % m) / m;
 }
 
-// node_modules/d3-force/src/simulation.js
+// ../../../node_modules/d3-force/src/simulation.js
 function x2(d) {
   return d.x;
 }
@@ -9475,7 +9394,7 @@ function simulation_default(nodes) {
   };
 }
 
-// node_modules/d3-force/src/manyBody.js
+// ../../../node_modules/d3-force/src/manyBody.js
 function manyBody_default() {
   var nodes, node, random, alpha, strength = constant_default3(-30), strengths, distanceMin2 = 1, distanceMax2 = Infinity, theta2 = 0.81;
   function force(_) {
@@ -9554,7 +9473,7 @@ function manyBody_default() {
   return force;
 }
 
-// node_modules/d3-force/src/x.js
+// ../../../node_modules/d3-force/src/x.js
 function x_default2(x3) {
   var strength = constant_default3(0.1), nodes, strengths, xz;
   if (typeof x3 !== "function") x3 = constant_default3(x3 == null ? 0 : +x3);
@@ -9585,7 +9504,7 @@ function x_default2(x3) {
   return force;
 }
 
-// node_modules/d3-force/src/y.js
+// ../../../node_modules/d3-force/src/y.js
 function y_default2(y3) {
   var strength = constant_default3(0.1), nodes, strengths, yz;
   if (typeof y3 !== "function") y3 = constant_default3(y3 == null ? 0 : +y3);
@@ -9616,7 +9535,7 @@ function y_default2(y3) {
   return force;
 }
 
-// node_modules/d3-transition/src/transition/schedule.js
+// ../../../node_modules/d3-transition/src/transition/schedule.js
 var emptyOn = dispatch_default("start", "end", "cancel", "interrupt");
 var emptyTween = [];
 var CREATED = 0;
@@ -9727,7 +9646,7 @@ function create(node, id2, self) {
   }
 }
 
-// node_modules/d3-transition/src/interrupt.js
+// ../../../node_modules/d3-transition/src/interrupt.js
 function interrupt_default(node, name) {
   var schedules = node.__transition, schedule, active2, empty2 = true, i;
   if (!schedules) return;
@@ -9746,14 +9665,14 @@ function interrupt_default(node, name) {
   if (empty2) delete node.__transition;
 }
 
-// node_modules/d3-transition/src/selection/interrupt.js
+// ../../../node_modules/d3-transition/src/selection/interrupt.js
 function interrupt_default2(name) {
   return this.each(function() {
     interrupt_default(this, name);
   });
 }
 
-// node_modules/d3-color/src/define.js
+// ../../../node_modules/d3-color/src/define.js
 function define_default(constructor, factory, prototype) {
   constructor.prototype = factory.prototype = prototype;
   prototype.constructor = constructor;
@@ -9764,7 +9683,7 @@ function extend(parent, definition) {
   return prototype;
 }
 
-// node_modules/d3-color/src/color.js
+// ../../../node_modules/d3-color/src/color.js
 function Color() {
 }
 var darker = 0.7;
@@ -10101,7 +10020,7 @@ function hsl2rgb(h, m1, m2) {
   return (h < 60 ? m1 + (m2 - m1) * h / 60 : h < 180 ? m2 : h < 240 ? m1 + (m2 - m1) * (240 - h) / 60 : m1) * 255;
 }
 
-// node_modules/d3-interpolate/src/basis.js
+// ../../../node_modules/d3-interpolate/src/basis.js
 function basis(t1, v0, v1, v2, v3) {
   var t2 = t1 * t1, t3 = t2 * t1;
   return ((1 - 3 * t1 + 3 * t2 - t3) * v0 + (4 - 6 * t2 + 3 * t3) * v1 + (1 + 3 * t1 + 3 * t2 - 3 * t3) * v2 + t3 * v3) / 6;
@@ -10114,7 +10033,7 @@ function basis_default(values) {
   };
 }
 
-// node_modules/d3-interpolate/src/basisClosed.js
+// ../../../node_modules/d3-interpolate/src/basisClosed.js
 function basisClosed_default(values) {
   var n = values.length;
   return function(t2) {
@@ -10123,10 +10042,10 @@ function basisClosed_default(values) {
   };
 }
 
-// node_modules/d3-interpolate/src/constant.js
+// ../../../node_modules/d3-interpolate/src/constant.js
 var constant_default4 = (x3) => () => x3;
 
-// node_modules/d3-interpolate/src/color.js
+// ../../../node_modules/d3-interpolate/src/color.js
 function linear(a2, d) {
   return function(t2) {
     return a2 + t2 * d;
@@ -10147,7 +10066,7 @@ function nogamma(a2, b) {
   return d ? linear(a2, d) : constant_default4(isNaN(a2) ? b : a2);
 }
 
-// node_modules/d3-interpolate/src/rgb.js
+// ../../../node_modules/d3-interpolate/src/rgb.js
 var rgb_default = (function rgbGamma(y3) {
   var color2 = gamma(y3);
   function rgb2(start2, end) {
@@ -10187,14 +10106,14 @@ function rgbSpline(spline) {
 var rgbBasis = rgbSpline(basis_default);
 var rgbBasisClosed = rgbSpline(basisClosed_default);
 
-// node_modules/d3-interpolate/src/number.js
+// ../../../node_modules/d3-interpolate/src/number.js
 function number_default(a2, b) {
   return a2 = +a2, b = +b, function(t2) {
     return a2 * (1 - t2) + b * t2;
   };
 }
 
-// node_modules/d3-interpolate/src/string.js
+// ../../../node_modules/d3-interpolate/src/string.js
 var reA = /[-+]?(?:\d+\.?\d*|\.?\d+)(?:[eE][-+]?\d+)?/g;
 var reB = new RegExp(reA.source, "g");
 function zero(b) {
@@ -10236,7 +10155,7 @@ function string_default(a2, b) {
   });
 }
 
-// node_modules/d3-interpolate/src/transform/decompose.js
+// ../../../node_modules/d3-interpolate/src/transform/decompose.js
 var degrees = 180 / Math.PI;
 var identity = {
   translateX: 0,
@@ -10262,7 +10181,7 @@ function decompose_default(a2, b, c2, d, e, f) {
   };
 }
 
-// node_modules/d3-interpolate/src/transform/parse.js
+// ../../../node_modules/d3-interpolate/src/transform/parse.js
 var svgNode;
 function parseCss(value) {
   const m2 = new (typeof DOMMatrix === "function" ? DOMMatrix : WebKitCSSMatrix)(value + "");
@@ -10277,7 +10196,7 @@ function parseSvg(value) {
   return decompose_default(value.a, value.b, value.c, value.d, value.e, value.f);
 }
 
-// node_modules/d3-interpolate/src/transform/index.js
+// ../../../node_modules/d3-interpolate/src/transform/index.js
 function interpolateTransform(parse, pxComma, pxParen, degParen) {
   function pop(s) {
     return s.length ? s.pop() + " " : "";
@@ -10332,7 +10251,7 @@ function interpolateTransform(parse, pxComma, pxParen, degParen) {
 var interpolateTransformCss = interpolateTransform(parseCss, "px, ", "px)", "deg)");
 var interpolateTransformSvg = interpolateTransform(parseSvg, ", ", ")", ")");
 
-// node_modules/d3-interpolate/src/zoom.js
+// ../../../node_modules/d3-interpolate/src/zoom.js
 var epsilon2 = 1e-12;
 function cosh(x3) {
   return ((x3 = Math.exp(x3)) + 1 / x3) / 2;
@@ -10377,7 +10296,7 @@ var zoom_default = (function zoomRho(rho, rho2, rho4) {
   return zoom;
 })(Math.SQRT2, 2, 4);
 
-// node_modules/d3-transition/src/transition/tween.js
+// ../../../node_modules/d3-transition/src/transition/tween.js
 function tweenRemove(id2, name) {
   var tween0, tween1;
   return function() {
@@ -10438,13 +10357,13 @@ function tweenValue(transition2, name, value) {
   };
 }
 
-// node_modules/d3-transition/src/transition/interpolate.js
+// ../../../node_modules/d3-transition/src/transition/interpolate.js
 function interpolate_default(a2, b) {
   var c2;
   return (typeof b === "number" ? number_default : b instanceof color ? rgb_default : (c2 = color(b)) ? (b = c2, rgb_default) : string_default)(a2, b);
 }
 
-// node_modules/d3-transition/src/transition/attr.js
+// ../../../node_modules/d3-transition/src/transition/attr.js
 function attrRemove2(name) {
   return function() {
     this.removeAttribute(name);
@@ -10494,7 +10413,7 @@ function attr_default2(name, value) {
   return this.attrTween(name, typeof value === "function" ? (fullname.local ? attrFunctionNS2 : attrFunction2)(fullname, i, tweenValue(this, "attr." + name, value)) : value == null ? (fullname.local ? attrRemoveNS2 : attrRemove2)(fullname) : (fullname.local ? attrConstantNS2 : attrConstant2)(fullname, i, value));
 }
 
-// node_modules/d3-transition/src/transition/attrTween.js
+// ../../../node_modules/d3-transition/src/transition/attrTween.js
 function attrInterpolate(name, i) {
   return function(t2) {
     this.setAttribute(name, i.call(this, t2));
@@ -10534,7 +10453,7 @@ function attrTween_default(name, value) {
   return this.tween(key4, (fullname.local ? attrTweenNS : attrTween)(fullname, value));
 }
 
-// node_modules/d3-transition/src/transition/delay.js
+// ../../../node_modules/d3-transition/src/transition/delay.js
 function delayFunction(id2, value) {
   return function() {
     init(this, id2).delay = +value.apply(this, arguments);
@@ -10550,7 +10469,7 @@ function delay_default(value) {
   return arguments.length ? this.each((typeof value === "function" ? delayFunction : delayConstant)(id2, value)) : get2(this.node(), id2).delay;
 }
 
-// node_modules/d3-transition/src/transition/duration.js
+// ../../../node_modules/d3-transition/src/transition/duration.js
 function durationFunction(id2, value) {
   return function() {
     set2(this, id2).duration = +value.apply(this, arguments);
@@ -10566,7 +10485,7 @@ function duration_default(value) {
   return arguments.length ? this.each((typeof value === "function" ? durationFunction : durationConstant)(id2, value)) : get2(this.node(), id2).duration;
 }
 
-// node_modules/d3-transition/src/transition/ease.js
+// ../../../node_modules/d3-transition/src/transition/ease.js
 function easeConstant(id2, value) {
   if (typeof value !== "function") throw new Error();
   return function() {
@@ -10578,7 +10497,7 @@ function ease_default(value) {
   return arguments.length ? this.each(easeConstant(id2, value)) : get2(this.node(), id2).ease;
 }
 
-// node_modules/d3-transition/src/transition/easeVarying.js
+// ../../../node_modules/d3-transition/src/transition/easeVarying.js
 function easeVarying(id2, value) {
   return function() {
     var v = value.apply(this, arguments);
@@ -10591,7 +10510,7 @@ function easeVarying_default(value) {
   return this.each(easeVarying(this._id, value));
 }
 
-// node_modules/d3-transition/src/transition/filter.js
+// ../../../node_modules/d3-transition/src/transition/filter.js
 function filter_default2(match) {
   if (typeof match !== "function") match = matcher_default(match);
   for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
@@ -10604,7 +10523,7 @@ function filter_default2(match) {
   return new Transition(subgroups, this._parents, this._name, this._id);
 }
 
-// node_modules/d3-transition/src/transition/merge.js
+// ../../../node_modules/d3-transition/src/transition/merge.js
 function merge_default2(transition2) {
   if (transition2._id !== this._id) throw new Error();
   for (var groups0 = this._groups, groups1 = transition2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m2; ++j) {
@@ -10620,7 +10539,7 @@ function merge_default2(transition2) {
   return new Transition(merges, this._parents, this._name, this._id);
 }
 
-// node_modules/d3-transition/src/transition/on.js
+// ../../../node_modules/d3-transition/src/transition/on.js
 function start(name) {
   return (name + "").trim().split(/^|\s+/).every(function(t2) {
     var i = t2.indexOf(".");
@@ -10641,7 +10560,7 @@ function on_default2(name, listener) {
   return arguments.length < 2 ? get2(this.node(), id2).on.on(name) : this.each(onFunction(id2, name, listener));
 }
 
-// node_modules/d3-transition/src/transition/remove.js
+// ../../../node_modules/d3-transition/src/transition/remove.js
 function removeFunction(id2) {
   return function() {
     var parent = this.parentNode;
@@ -10653,7 +10572,7 @@ function remove_default3() {
   return this.on("end.remove", removeFunction(this._id));
 }
 
-// node_modules/d3-transition/src/transition/select.js
+// ../../../node_modules/d3-transition/src/transition/select.js
 function select_default3(select) {
   var name = this._name, id2 = this._id;
   if (typeof select !== "function") select = selector_default(select);
@@ -10669,7 +10588,7 @@ function select_default3(select) {
   return new Transition(subgroups, this._parents, name, id2);
 }
 
-// node_modules/d3-transition/src/transition/selectAll.js
+// ../../../node_modules/d3-transition/src/transition/selectAll.js
 function selectAll_default2(select) {
   var name = this._name, id2 = this._id;
   if (typeof select !== "function") select = selectorAll_default(select);
@@ -10689,13 +10608,13 @@ function selectAll_default2(select) {
   return new Transition(subgroups, parents, name, id2);
 }
 
-// node_modules/d3-transition/src/transition/selection.js
+// ../../../node_modules/d3-transition/src/transition/selection.js
 var Selection2 = selection_default.prototype.constructor;
 function selection_default2() {
   return new Selection2(this._groups, this._parents);
 }
 
-// node_modules/d3-transition/src/transition/style.js
+// ../../../node_modules/d3-transition/src/transition/style.js
 function styleNull(name, interpolate) {
   var string00, string10, interpolate0;
   return function() {
@@ -10736,7 +10655,7 @@ function style_default2(name, value, priority) {
   return value == null ? this.styleTween(name, styleNull(name, i)).on("end.style." + name, styleRemove2(name)) : typeof value === "function" ? this.styleTween(name, styleFunction2(name, i, tweenValue(this, "style." + name, value))).each(styleMaybeRemove(this._id, name)) : this.styleTween(name, styleConstant2(name, i, value), priority).on("end.style." + name, null);
 }
 
-// node_modules/d3-transition/src/transition/styleTween.js
+// ../../../node_modules/d3-transition/src/transition/styleTween.js
 function styleInterpolate(name, i, priority) {
   return function(t2) {
     this.style.setProperty(name, i.call(this, t2), priority);
@@ -10760,7 +10679,7 @@ function styleTween_default(name, value, priority) {
   return this.tween(key4, styleTween(name, value, priority == null ? "" : priority));
 }
 
-// node_modules/d3-transition/src/transition/text.js
+// ../../../node_modules/d3-transition/src/transition/text.js
 function textConstant2(value) {
   return function() {
     this.textContent = value;
@@ -10776,7 +10695,7 @@ function text_default2(value) {
   return this.tween("text", typeof value === "function" ? textFunction2(tweenValue(this, "text", value)) : textConstant2(value == null ? "" : value + ""));
 }
 
-// node_modules/d3-transition/src/transition/textTween.js
+// ../../../node_modules/d3-transition/src/transition/textTween.js
 function textInterpolate(i) {
   return function(t2) {
     this.textContent = i.call(this, t2);
@@ -10800,7 +10719,7 @@ function textTween_default(value) {
   return this.tween(key4, textTween(value));
 }
 
-// node_modules/d3-transition/src/transition/transition.js
+// ../../../node_modules/d3-transition/src/transition/transition.js
 function transition_default() {
   var name = this._name, id0 = this._id, id1 = newId();
   for (var groups = this._groups, m2 = groups.length, j = 0; j < m2; ++j) {
@@ -10819,7 +10738,7 @@ function transition_default() {
   return new Transition(groups, this._parents, name, id1);
 }
 
-// node_modules/d3-transition/src/transition/end.js
+// ../../../node_modules/d3-transition/src/transition/end.js
 function end_default() {
   var on0, on1, that = this, id2 = that._id, size = that.size();
   return new Promise(function(resolve, reject) {
@@ -10840,7 +10759,7 @@ function end_default() {
   });
 }
 
-// node_modules/d3-transition/src/transition/index.js
+// ../../../node_modules/d3-transition/src/transition/index.js
 var id = 0;
 function Transition(groups, parents, name, id2) {
   this._groups = groups;
@@ -10888,12 +10807,12 @@ Transition.prototype = transition.prototype = {
   [Symbol.iterator]: selection_prototype[Symbol.iterator]
 };
 
-// node_modules/d3-ease/src/cubic.js
+// ../../../node_modules/d3-ease/src/cubic.js
 function cubicInOut(t2) {
   return ((t2 *= 2) <= 1 ? t2 * t2 * t2 : (t2 -= 2) * t2 * t2 + 2) / 2;
 }
 
-// node_modules/d3-transition/src/selection/transition.js
+// ../../../node_modules/d3-transition/src/selection/transition.js
 var defaultTiming = {
   time: null,
   // Set on use.
@@ -10927,14 +10846,14 @@ function transition_default2(name) {
   return new Transition(groups, this._parents, name, id2);
 }
 
-// node_modules/d3-transition/src/selection/index.js
+// ../../../node_modules/d3-transition/src/selection/index.js
 selection_default.prototype.interrupt = interrupt_default2;
 selection_default.prototype.transition = transition_default2;
 
-// node_modules/d3-zoom/src/constant.js
+// ../../../node_modules/d3-zoom/src/constant.js
 var constant_default5 = (x3) => () => x3;
 
-// node_modules/d3-zoom/src/event.js
+// ../../../node_modules/d3-zoom/src/event.js
 function ZoomEvent(type, {
   sourceEvent,
   target,
@@ -10950,7 +10869,7 @@ function ZoomEvent(type, {
   });
 }
 
-// node_modules/d3-zoom/src/transform.js
+// ../../../node_modules/d3-zoom/src/transform.js
 function Transform(k, x3, y3) {
   this.k = k;
   this.x = x3;
@@ -10999,7 +10918,7 @@ function transform(node) {
   return node.__zoom;
 }
 
-// node_modules/d3-zoom/src/noevent.js
+// ../../../node_modules/d3-zoom/src/noevent.js
 function nopropagation2(event) {
   event.stopImmediatePropagation();
 }
@@ -11008,7 +10927,7 @@ function noevent_default2(event) {
   event.stopImmediatePropagation();
 }
 
-// node_modules/d3-zoom/src/zoom.js
+// ../../../node_modules/d3-zoom/src/zoom.js
 function defaultFilter2(event) {
   return (!event.ctrlKey || event.type === "wheel") && !event.button;
 }
@@ -11346,6 +11265,7 @@ function buildWordNode(m2, lookup, fresh) {
     zh: m2.zh,
     emoji: lookup.emoji(m2, entry),
     entryId: m2.entryId,
+    inLibrary: !!entry,
     fresh: (_a = fresh == null ? void 0 : fresh.has(id2)) != null ? _a : false,
     ariaLabel: `${word} ${m2.zh}${t(known ? "galaxy.node.known" : "galaxy.node.unknown")}`
   };
@@ -11358,6 +11278,7 @@ function buildGalaxyModel(family, lookup, opts) {
     word: family.topic,
     zh: family.label,
     emoji: familyEmoji(family),
+    inLibrary: false,
     fresh: false,
     ariaLabel: [family.topic, family.label].filter(Boolean).join(" ")
   };
@@ -11391,6 +11312,7 @@ function buildGalaxyModel(family, lookup, opts) {
         word: g.label,
         zh: "",
         emoji: "",
+        inLibrary: false,
         fresh: false,
         ariaLabel: g.label
       });
@@ -11410,8 +11332,17 @@ function buildGalaxyModel(family, lookup, opts) {
   }
   return { nodes, links, counts: { known, unknown: total - known, total } };
 }
+function heartState(node) {
+  if (node.kind === "known") return "liked";
+  return node.inLibrary ? "unliked-in-library" : "suggested";
+}
+function heartAction(state) {
+  if (state === "liked") return "unlike";
+  if (state === "unliked-in-library") return "like";
+  return "add";
+}
 function zoomFilter(ev, mode) {
-  if (mode.mobile && mode.embedded) return false;
+  if (mode.mobile && mode.embedded) return ev.touches !== void 0 && ev.touches >= 2;
   if (!mode.embedded) return !ev.button;
   if (ev.type === "wheel") return ev.ctrlKey || ev.metaKey;
   if (ev.touches !== void 0) return ev.touches >= 2;
@@ -11448,7 +11379,8 @@ var GalaxyGraph = class {
     this.root = this.svg.append("g").attr("class", "vt-gx-root");
     this.gLinks = this.root.append("g").attr("class", "vt-gx-links");
     this.gNodes = this.root.append("g").attr("class", "vt-gx-nodes");
-    this.svg.classed("vt-gx-svg", true).classed("is-pannable", !(opts.mobile && opts.embedded));
+    const touchPan = opts.mobile && opts.embedded;
+    this.svg.classed("vt-gx-svg", true).classed("is-pannable", !touchPan).classed("is-touch-scroll", touchPan);
     this.zoomBehavior = zoom_default2().scaleExtent([0.45, 2.6]).extent(() => [
       [0, 0],
       [this.width, this.height]
@@ -11532,9 +11464,9 @@ var GalaxyGraph = class {
     entered.append("text").attr("class", "vt-gx-emo");
     entered.append("text").attr("class", "vt-gx-w");
     entered.append("text").attr("class", "vt-gx-z");
-    const plus = entered.filter((d) => d.kind === "unknown").append("g").attr("class", "vt-gx-plus").attr("tabindex", 0).attr("role", "button");
-    plus.append("circle").attr("r", 13);
-    plus.append("text").text("+");
+    const heart = entered.filter((d) => d.kind === "known" || d.kind === "unknown").append("g").attr("class", "vt-gx-heart").attr("tabindex", 0).attr("role", "button");
+    heart.append("circle").attr("r", 13);
+    heart.append("text").attr("class", "vt-gx-heart-glyph");
     const merged = entered.merge(sel);
     merged.on("click", (ev, d) => {
       ev.stopPropagation();
@@ -11545,27 +11477,25 @@ var GalaxyGraph = class {
         this.select(d.kind === "hub" ? null : d.id);
       }
     });
-    if (!(this.opts.mobile && this.opts.embedded)) {
-      merged.call(
-        drag_default().on("start", (ev, d) => {
-          var _a;
-          if (!ev.active) (_a = this.sim) == null ? void 0 : _a.alphaTarget(0.25).restart();
-          d.fx = d.x;
-          d.fy = d.y;
-        }).on("drag", (ev, d) => {
-          d.fx = ev.x;
-          d.fy = ev.y;
-        }).on("end", (ev, d) => {
-          var _a;
-          if (!ev.active) (_a = this.sim) == null ? void 0 : _a.alphaTarget(0);
-          if (d.kind !== "hub") {
-            d.fx = null;
-            d.fy = null;
-          }
-        })
-      );
-    }
-    const onAdd2 = this.opts.onAdd;
+    merged.call(
+      drag_default().on("start", (ev, d) => {
+        var _a;
+        if (!ev.active) (_a = this.sim) == null ? void 0 : _a.alphaTarget(0.25).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }).on("drag", (ev, d) => {
+        d.fx = ev.x;
+        d.fy = ev.y;
+      }).on("end", (ev, d) => {
+        var _a;
+        if (!ev.active) (_a = this.sim) == null ? void 0 : _a.alphaTarget(0);
+        if (d.kind !== "hub") {
+          d.fx = null;
+          d.fy = null;
+        }
+      })
+    );
+    const onToggleLike = this.opts.onToggleLike;
     this.gNodes.selectAll("g.vt-gx-node").each(function(d) {
       const g = select_default2(this);
       const r = radiusOf(d);
@@ -11573,16 +11503,18 @@ var GalaxyGraph = class {
       g.select(".vt-gx-emo").text(d.emoji);
       g.select(".vt-gx-w").attr("y", r + 17).text(d.word);
       g.select(".vt-gx-z").attr("y", r + 32).text(d.zh);
-      g.select(".vt-gx-plus").attr("transform", `translate(${r * 0.74},${-r * 0.74})`).attr("aria-label", `\u628A ${d.word} \u52A0\u5165\u55AE\u5B57\u5EAB`).on("click", (ev) => {
+      const state = heartState(d);
+      const liked = state === "liked";
+      g.select(".vt-gx-heart").attr("transform", `translate(${r * 0.74},${-r * 0.74})`).classed("is-liked", liked).attr("aria-label", liked ? `\u53D6\u6D88 like ${d.word}` : `like ${d.word}`).on("click", (ev) => {
         ev.stopPropagation();
-        onAdd2(d.id);
+        onToggleLike(d.id);
       }).on("keydown", (ev) => {
         if (ev.key === "Enter" || ev.key === " ") {
           ev.preventDefault();
           ev.stopPropagation();
-          onAdd2(d.id);
+          onToggleLike(d.id);
         }
-      });
+      }).select(".vt-gx-heart-glyph").text(liked ? "\u2665" : "\u2661");
     });
   }
   mark() {
@@ -11611,20 +11543,13 @@ var GalaxyGraph = class {
       return `translate(${(_a = d.x) != null ? _a : 0},${(_b = d.y) != null ? _b : 0})`;
     });
   }
-  // Selects a node (null = clear, e.g. clicking the background). Selecting
-  // an unknown word also moves focus to its ＋ button (原型 select()),
-  // since that's the only action available on an unlearned node.
+  // Selects a node (null = clear, e.g. clicking the background). Clicking
+  // the node itself — not the heart, which stopPropagation()s — is the
+  // only way to select (1009 #8).
   select(id2) {
-    var _a;
     this.selected = id2;
     this.mark();
     this.opts.onSelect(id2);
-    if (id2 === null) return;
-    const node = (_a = this.sim) == null ? void 0 : _a.nodes().find((n) => n.id === id2);
-    if (node && node.kind === "unknown") {
-      const plus = this.gNodes.selectAll("g.vt-gx-node").filter((n) => n.id === id2).select(".vt-gx-plus").node();
-      plus == null ? void 0 : plus.focus({ preventScroll: true });
-    }
   }
   // Re-centers the current data (resize past the threshold, or a "reset
   // view" button) — resets node positions and animates the zoom transform
@@ -12130,7 +12055,8 @@ var FamiliesBlock = class extends import_obsidian22.MarkdownRenderChild {
     this.error = null;
     // Suggested words being added (「點一下加入」), so a double tap adds once.
     // Shared key scheme (`${familyId}\u0000${word.toLowerCase()}`) between the
-    // tree's chips and the galaxy's ＋ nodes.
+    // tree's chips and the galaxy's heart on a not-yet-in-library node (1009
+    // #8: tapping an empty ♡ there adds-and-likes in one go).
     this.adding = /* @__PURE__ */ new Set();
     // Each member's zh gloss is AI text, rendered as Markdown (1006 #22); a
     // fresh scope per tree render drops the previous one's listeners (same
@@ -12141,13 +12067,20 @@ var FamiliesBlock = class extends import_obsidian22.MarkdownRenderChild {
     // every fresh block to 星系.
     this.viewMode = "galaxy";
     // Selected node id (entryId, or `w:<word>` for a suggestion). #7: no more
-    // detail panel — a known node's selection just opens the sidebar card
-    // (openSelectedKnownNode); this only still drives the ＋ affordance /
-    // visual selection on unknown nodes and the page→sidebar handoff (#14).
+    // detail panel — clicking a node (not its heart) opens the sidebar card
+    // when it's in the library, or flashes it in the sidebar's 「本篇」 when
+    // it's a plain suggestion (openSelectedKnownNode, 1009 #8); this field
+    // otherwise just drives the visual selection ring and the
+    // sidebar→page handoff (#14).
     this.galaxySelected = null;
     this.galaxyInitialized = false;
     this.galaxyFresh = /* @__PURE__ */ new Set();
     this.galaxyExpandCtrl = /* @__PURE__ */ new Map();
+    // Last families/lookup handed to publishPageContext — kept so
+    // openSelectedKnownNode can re-publish with `focusWord` set (1009 #8)
+    // without re-deriving them outside render().
+    this.pageContextFamilies = null;
+    this.pageContextLookup = null;
     // The live graph instance (and the family it belongs to) — kept across
     // re-renders of the *same* topic so an unrelated redraw (a background
     // wordMeta write, another word's like toggle…) never resets pan/zoom/node
@@ -12314,11 +12247,6 @@ var FamiliesBlock = class extends import_obsidian22.MarkdownRenderChild {
       this.publishPageContext(families, lookup);
     }
     if (families.length && this.viewMode === "list") this.renderToolbar(families, entry);
-    if (!entry && !this.generating && this.plugin.families.needsRegroup()) {
-      const note = root2.createDiv({ cls: "vt-fam-regroup-note" });
-      note.appendChild(inlineNote({ tone: "info", icon: "refresh-cw", text: t("learn.family.regroup.hint") }));
-      learnButton(note, { label: t("learn.family.regroup"), icon: "refresh-cw", onClick: () => void this.generate(true) });
-    }
     if (this.generating) return this.renderGenerating();
     if (this.error) {
       const box = root2.createDiv({ cls: "vt-learn-error" });
@@ -12485,13 +12413,13 @@ var FamiliesBlock = class extends import_obsidian22.MarkdownRenderChild {
     const svgEl = svgNode2(graphHost, "svg", { role: "group", "aria-label": t("galaxy.graphAriaLabel", { topic: familyTitle(selected) }) }, "vt-gx-svg");
     const mobile = document.body.hasClass("is-mobile");
     const graph = new GalaxyGraph(svgEl, {
-      embedded: true,
+      embedded: !this.opts.fullscreen,
       mobile,
       onSelect: (id2) => {
         this.galaxySelected = id2;
         this.openSelectedKnownNode(id2);
       },
-      onAdd: (id2) => void this.galaxyAdd(selected.id, id2)
+      onToggleLike: (id2) => void this.galaxyToggleLike(selected.id, id2)
     });
     this.galaxyGraph = graph;
     this.galaxySvgEl = svgEl;
@@ -12501,21 +12429,69 @@ var FamiliesBlock = class extends import_obsidian22.MarkdownRenderChild {
     graph.setData(model, { recenter: true });
     if (this.galaxySelected) graph.select(this.galaxySelected);
   }
-  // 點已學節點 → 側欄定位＋展開單字卡；節點本身維持選取樣式（GalaxyGraph 自
-  // 己管）。未學節點照舊是 ＋ 加入 (galaxyAdd)，這裡不用管 (1007-2 #7/#10)。
+  // 點節點本身（不是點愛心）(1007-2 #7/#10, 1009 #8)：單字庫裡有的字（不論
+  // 有沒有 like）展開側欄單字卡；建議字（不在庫）沒有卡可開，改成通知側欄
+  // 「本篇」捲到那一列並閃一下。節點本身維持選取樣式（GalaxyGraph 自己管）。
   openSelectedKnownNode(id2) {
     var _a;
     if (!id2) return;
     const node = (_a = this.lastGalaxyModel) == null ? void 0 : _a.nodes.find((n) => n.id === id2);
-    if ((node == null ? void 0 : node.kind) === "known" && node.entryId) void this.plugin.surfaces.openWordCard(node.entryId, "data");
+    if (!node || node.kind === "hub" || node.kind === "group") return;
+    if (node.inLibrary && node.entryId) {
+      void this.plugin.surfaces.openWordCard(node.entryId, "data");
+      return;
+    }
+    if (this.pageContextFamilies && this.pageContextLookup) {
+      this.publishPageContext(this.pageContextFamilies, this.pageContextLookup);
+      this.publishPageContext(this.pageContextFamilies, this.pageContextLookup, node.word.toLowerCase());
+    }
   }
+  // 節點右上角的愛心 (1009 #8)：不在庫 → 加入並 like；在庫沒 like → like；
+  // 已 like → 取消 like（unlikeEntry，沒有考試標籤的字會被刪掉，可復原）。
+  async galaxyToggleLike(familyId, nodeId) {
+    var _a;
+    const node = (_a = this.lastGalaxyModel) == null ? void 0 : _a.nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+    const action = heartAction(heartState(node));
+    if (action === "add") {
+      const family = this.plugin.families.families().find((f) => f.id === familyId);
+      const word = family && resolveAddWord(nodeId, family);
+      if (!word) return;
+      const key4 = `${familyId}\0${word.toLowerCase()}`;
+      if (this.adding.has(key4)) return;
+      this.adding.add(key4);
+      try {
+        const entry2 = await this.plugin.families.addSuggested(familyId, word);
+        if (entry2) {
+          new import_obsidian22.Notice(t("galaxy.addedWord", { word: entry2.word }));
+          this.galaxySelected = entry2.id;
+          this.galaxyFresh.delete(nodeId);
+        }
+      } catch (e) {
+        console.error("Vocab Tracker: adding a galaxy word failed", e);
+        new import_obsidian22.Notice(learnErrorText(e));
+      } finally {
+        this.adding.delete(key4);
+        if (!this.disposed) this.render();
+      }
+      return;
+    }
+    if (!node.entryId) return;
+    const entry = this.plugin.store.entries.find((e) => e.id === node.entryId);
+    if (!entry) return;
+    if (action === "like") void this.plugin.store.setLiked(entry, true);
+    else unlikeEntry(this.plugin, entry);
+  }
+  // #11：emoji 在左，右邊英文（上）／中文（下）兩行 — 兩個 span 包進一個直
+  // 排的容器，CSS（vt-gx-topic-text）負責疊成兩行。
   renderTopicButton(container, topic, active2) {
     const btn = container.createEl("button", { cls: "vt-gx-topic", attr: { type: "button" } });
     btn.setAttr("aria-pressed", String(active2));
     btn.toggleClass("is-active", active2);
     btn.createSpan({ cls: "vt-gx-topic-em", text: topic.emoji });
-    btn.createSpan({ cls: "vt-gx-topic-name", text: topic.topic });
-    btn.createSpan({ cls: "vt-gx-topic-zh", text: topic.label });
+    const text = btn.createDiv({ cls: "vt-gx-topic-text" });
+    text.createSpan({ cls: "vt-gx-topic-name", text: topic.topic });
+    text.createSpan({ cls: "vt-gx-topic-zh", text: topic.label });
     btn.addEventListener("click", () => {
       if (active2) return;
       this.selectedId = topic.id;
@@ -12537,26 +12513,11 @@ var FamiliesBlock = class extends import_obsidian22.MarkdownRenderChild {
       var _a;
       return (_a = this.galaxyGraph) == null ? void 0 : _a.recenter();
     });
-    const more = bar.createEl("button", { cls: "vt-gx-pill clickable-icon", attr: { type: "button", "aria-label": t("galaxy.more") } });
-    (0, import_obsidian22.setIcon)(more, "more-horizontal");
-    more.addEventListener("click", (e) => {
-      const menu = new import_obsidian22.Menu();
-      menu.addItem(
-        (item) => item.setTitle(t(entry ? "learn.family.generate" : "learn.family.regroup")).setIcon(entry ? "sparkles" : "refresh-cw").onClick(() => void this.generate(!entry, entry))
-      );
-      if (this.opts.fullscreen) {
-        menu.addItem(
-          (item) => item.setTitle(t("galaxy.openSource")).setIcon("file-text").onClick(() => {
-            const leaf = this.plugin.app.workspace.getLeavesOfType(GALAXY_VIEW_TYPE).find((l4) => {
-              var _a;
-              return l4.view instanceof import_obsidian22.FileView && ((_a = l4.view.file) == null ? void 0 : _a.path) === this.sourcePath;
-            });
-            void (leaf == null ? void 0 : leaf.setViewState({ type: "markdown", state: { file: this.sourcePath, vtRaw: true }, active: true }));
-          })
-        );
-      }
-      menu.showAtMouseEvent(e);
-    });
+    const ready = this.plugin.ai.status() === "ready";
+    const regenBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t(entry ? "learn.family.generate" : "learn.family.regroup") });
+    regenBtn.disabled = !ready;
+    if (!ready) regenBtn.title = t(this.plugin.ai.status() === "offline" ? "learn.ai.offline" : "learn.ai.body");
+    regenBtn.addEventListener("click", () => void this.generate(!entry, entry));
   }
   toggleExpand(family) {
     const existing = this.galaxyExpandCtrl.get(family.id);
@@ -12584,28 +12545,6 @@ var FamiliesBlock = class extends import_obsidian22.MarkdownRenderChild {
       if (!this.disposed) this.render();
     });
   }
-  async galaxyAdd(familyId, nodeId) {
-    const family = this.plugin.families.families().find((f) => f.id === familyId);
-    const word = family && resolveAddWord(nodeId, family);
-    if (!word) return;
-    const key4 = `${familyId}\0${word.toLowerCase()}`;
-    if (this.adding.has(key4)) return;
-    this.adding.add(key4);
-    try {
-      const entry = await this.plugin.families.addSuggested(familyId, word);
-      if (entry) {
-        new import_obsidian22.Notice(t("galaxy.addedWord", { word: entry.word }));
-        this.galaxySelected = entry.id;
-        this.galaxyFresh.delete(nodeId);
-      }
-    } catch (e) {
-      console.error("Vocab Tracker: adding a galaxy word failed", e);
-      new import_obsidian22.Notice(learnErrorText(e));
-    } finally {
-      this.adding.delete(key4);
-      if (!this.disposed) this.render();
-    }
-  }
   destroyGalaxyGraph() {
     var _a;
     (_a = this.galaxyGraph) == null ? void 0 : _a.destroy();
@@ -12615,13 +12554,19 @@ var FamiliesBlock = class extends import_obsidian22.MarkdownRenderChild {
     this.lastGalaxyModel = null;
   }
   // ── 頁面 ↔ 側欄 (1007-2 #8/#10/#14, PageContextHub) ────────────────
-  publishPageContext(families, lookup) {
+  // focusWord (1009 #8): 星系點了一個建議字節點（不在單字庫，沒有卡可開）
+  // 時由 openSelectedKnownNode 帶上，請側欄捲到那一列並閃一下；平常的
+  // render() 重新 publish 不帶這個欄位。
+  publishPageContext(families, lookup, focusWord) {
+    this.pageContextFamilies = families;
+    this.pageContextLookup = lookup;
     const gxLookup = this.galaxyLookup(lookup);
     const ctx = {
       kind: "families",
       sourcePath: this.sourcePath,
       groups: familiesPageGroups(families, gxLookup),
       activeGroupKey: this.selectedId ? familyGroupKey(this.selectedId) : null,
+      focusWord,
       selectWord: (groupKey, w) => this.selectWord(groupKey, w),
       addWord: (groupKey, w) => this.addWord(groupKey, w)
     };
@@ -15600,7 +15545,7 @@ function registerBlocks(plugin) {
   }
 }
 
-// node_modules/ts-fsrs/dist/index.mjs
+// ../../../node_modules/ts-fsrs/dist/index.mjs
 var FSRSError = class _FSRSError extends Error {
   constructor(message = "FSRS Error") {
     var _a;
@@ -22162,13 +22107,15 @@ var PageContextHub = class {
   }
 };
 function pageContextSig(ctx) {
+  var _a;
   return JSON.stringify([
     ctx.kind,
     ctx.sourcePath,
     ctx.activeGroupKey,
+    (_a = ctx.focusWord) != null ? _a : "",
     ctx.groups.map((g) => [g.key, g.title, g.words.map((w) => {
-      var _a, _b, _c;
-      return [w.word, (_a = w.entryId) != null ? _a : "", (_c = (_b = w.morpheme) == null ? void 0 : _b.id) != null ? _c : "", w.zh, w.emoji];
+      var _a2, _b, _c;
+      return [w.word, (_a2 = w.entryId) != null ? _a2 : "", (_c = (_b = w.morpheme) == null ? void 0 : _b.id) != null ? _c : "", w.zh, w.emoji];
     })])
   ]);
 }
@@ -22583,7 +22530,10 @@ var FamilyService = class {
       const entry = {
         id: this.newId(),
         word: w.word,
-        level: "",
+        // (1009 #5): 字族樹加字一律同時 like，並補上等級標籤 — bug fix,
+        // 照 main.ts addWordToVocab 的格式 (examLabels(...).join(", ")).
+        level: this.deps.examLabelsFor(w.word).join(", "),
+        liked: true,
         synonyms: (_a = d == null ? void 0 : d.synonyms.join(", ")) != null ? _a : "",
         antonyms: (_b = d == null ? void 0 : d.antonyms.join(", ")) != null ? _b : "",
         example: "",
@@ -23305,7 +23255,9 @@ var MorphemeService = class {
     const entryRec = {
       id: this.newId(),
       word,
-      level: "",
+      // (1009 #5): bug fix — 字根／字族加字一律同時 like 並補等級標籤。
+      level: this.deps.examLabelsFor(word).join(", "),
+      liked: true,
       synonyms: (_a = d == null ? void 0 : d.synonyms.join(", ")) != null ? _a : "",
       antonyms: (_b = d == null ? void 0 : d.antonyms.join(", ")) != null ? _b : "",
       example: "",
@@ -25729,23 +25681,40 @@ function isInFolder(path, folder) {
   if (trimmed === "") return true;
   return path === trimmed || path.startsWith(`${trimmed}/`);
 }
+function shouldSwitchToPreview(prev, next, folder) {
+  const reopened = !prev || prev.leafId !== next.leafId || prev.path !== next.path;
+  return reopened && isInFolder(next.path, folder);
+}
 function installOpenInPreview(plugin, folder) {
-  const lastSeen = /* @__PURE__ */ new WeakMap();
+  const leafIds = /* @__PURE__ */ new WeakMap();
+  let nextLeafId = 0;
+  const idOf = (leaf) => {
+    let id2 = leafIds.get(leaf);
+    if (id2 === void 0) {
+      id2 = `leaf-${nextLeafId++}`;
+      leafIds.set(leaf, id2);
+    }
+    return id2;
+  };
+  let lastActive = null;
+  const handle = () => {
+    const view = plugin.app.workspace.getActiveViewOfType(import_obsidian54.MarkdownView);
+    if (!(view == null ? void 0 : view.file)) return;
+    const leaf = view.leaf;
+    const next = { leafId: idOf(leaf), path: view.file.path };
+    const switchNow = shouldSwitchToPreview(lastActive, next, folder());
+    lastActive = next;
+    if (switchNow && view.getMode() === "source") {
+      const viewState = leaf.getViewState();
+      void leaf.setViewState({ ...viewState, state: { ...viewState.state, mode: "preview" } });
+    }
+  };
   plugin.registerEvent(
     plugin.app.workspace.on("file-open", (file) => {
-      var _a;
-      if (!file) return;
-      const view = plugin.app.workspace.getActiveViewOfType(import_obsidian54.MarkdownView);
-      if (!view || ((_a = view.file) == null ? void 0 : _a.path) !== file.path) return;
-      const leaf = view.leaf;
-      const isReopen = lastSeen.get(leaf) !== file.path;
-      if (isReopen && isInFolder(file.path, folder()) && view.getMode() === "source") {
-        const viewState = leaf.getViewState();
-        void leaf.setViewState({ ...viewState, state: { ...viewState.state, mode: "preview" } });
-      }
-      lastSeen.set(leaf, file.path);
+      if (file) handle();
     })
   );
+  plugin.registerEvent(plugin.app.workspace.on("active-leaf-change", () => handle()));
 }
 
 // src/ui/reading/ParagraphBadges.ts
@@ -26684,7 +26653,17 @@ var VocabTrackerPlugin = class extends import_obsidian59.Plugin {
     });
     this.threads = new ThreadService({ storage: this.storage, store: this.store, ai, notes: this.notes, anchors: this.anchors });
     this.learn = new LearnStore({ storage: this.storage });
-    this.families = new FamilyService({ ai, vocab: this.store, learn: this.learn, dictionary: this.dictionary });
+    this.families = new FamilyService({
+      ai,
+      vocab: this.store,
+      learn: this.learn,
+      dictionary: this.dictionary,
+      // 1009 #5: a word added from 字族樹 gets its exam labels, like addWordToVocab.
+      examLabelsFor: (w) => {
+        var _a, _b;
+        return this.examLabels((_b = (_a = this.wordlists.match(w)) == null ? void 0 : _a.tags) != null ? _b : []);
+      }
+    });
     this.emoji = new EmojiService({ ai, vocab: this.store, learn: this.learn, aiReady: () => this.ai.status() === "ready" });
     this.morphemes = new MorphemeService({
       ai,
@@ -26692,6 +26671,10 @@ var VocabTrackerPlugin = class extends import_obsidian59.Plugin {
       learn: this.learn,
       dictionary: this.dictionary,
       threads: this.threads,
+      examLabelsFor: (w) => {
+        var _a, _b;
+        return this.examLabels((_b = (_a = this.wordlists.match(w)) == null ? void 0 : _a.tags) != null ? _b : []);
+      },
       dailyBatches: () => {
         var _a;
         return (_a = this.store.settings.ai.dnaDailyBatches) != null ? _a : 10;
