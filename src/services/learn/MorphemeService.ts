@@ -83,6 +83,9 @@ export interface MorphemeServiceDeps {
   // work with nowhere to show an error, so it checks before spending any
   // of the daily budget rather than letting runStructured fail per batch.
   aiReady(): boolean;
+  // (1009 #5): same contract as FamilyServiceDeps.examLabelsFor — level
+  // label for a word pulled in from a morpheme's suggested list.
+  examLabelsFor(word: string): string[];
   clock?: () => Date;
   newId?: () => string;
 }
@@ -505,7 +508,9 @@ export class MorphemeService {
     const entryRec: VocabEntry = {
       id: this.newId(),
       word,
-      level: "",
+      // (1009 #5): bug fix — 字根／字族加字一律同時 like 並補等級標籤。
+      level: this.deps.examLabelsFor(word).join(", "),
+      liked: true,
       synonyms: d?.synonyms.join(", ") ?? "",
       antonyms: d?.antonyms.join(", ") ?? "",
       example: "",

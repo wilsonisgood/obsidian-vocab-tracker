@@ -49,8 +49,9 @@ function setup(json: unknown = { families: [CLOTHING, GL] }, dict = new FakeDict
   const ai = new FakeLearnAi(() => result(JSON.stringify(json), { json }));
   const learn = new LearnStore({ storage: new MemoryStorage(), clock: () => NOW });
   let n = 0;
-  const families = new FamilyService({ ai, vocab, learn, dictionary: dict, clock: () => NOW, newId: () => `id${++n}` });
-  return { vocab, ai, learn, families, dict };
+  let examLabels: string[] = [];
+  const families = new FamilyService({ ai, vocab, learn, dictionary: dict, examLabelsFor: () => examLabels, clock: () => NOW, newId: () => `id${++n}` });
+  return { vocab, ai, learn, families, dict, setExamLabels: (v: string[]) => (examLabels = v) };
 }
 
 describe("FamilyService.generate", () => {
@@ -268,6 +269,16 @@ describe("FamilyService.save", () => {
     expect(learn.wordMeta(e!.id)).toMatchObject({ emoji: "🎀", emojiSource: "ai" });
   });
 
+  // (1009 #5): bug fix — 字族樹加字一律同時 like，並補上等級標籤。
+  it("addSuggested likes a brand-new word and fills level from examLabelsFor", async () => {
+    const { families, setExamLabels } = setup();
+    setExamLabels(["學測"]);
+    const [saved] = (await families.save(await families.generate())).families;
+    const e = await families.addSuggested(saved.id, "tulle");
+    expect(e?.liked).toBe(true);
+    expect(e?.level).toBe("學測");
+  });
+
   it("addSuggested on a word already in the vocab list just likes it (A3) instead of duplicating it", async () => {
     const { families, vocab } = setup();
     // e3 "apron" is already tracked (but unliked); put it in a saved
@@ -300,7 +311,7 @@ describe("FamilyService.save", () => {
     let json: unknown = { families: [CLOTHING, GL] };
     const ai = new FakeLearnAi(() => result(JSON.stringify(json), { json }));
     let n = 0;
-    const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), newId: () => `id${++n}` });
+    const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), examLabelsFor: () => [], newId: () => `id${++n}` });
 
     const { families: first, added } = await families.save(await families.generate(), { addWords: ["sequin"] });
     const clothing = first.find((f) => f.topic === "clothing")!;
@@ -329,7 +340,7 @@ describe("FamilyService.save", () => {
     const learn = new LearnStore({ storage, clock: () => new Date(clock) });
     const vocab = new FakeVocab([entry("e1", "glittery"), entry("e2", "leotard")]);
     const ai = new FakeLearnAi(() => result("", { json: { families: [CLOTHING] } }));
-    const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), clock: () => new Date(clock) });
+    const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), examLabelsFor: () => [], clock: () => new Date(clock) });
     const [f] = (await families.save(await families.generate())).families;
     expect([f.createdAt, f.updatedAt]).toEqual(["2026-10-01T08:00:00.000Z", "2026-10-01T08:00:00.000Z"]);
     clock = Date.parse("2026-10-03T08:00:00Z");
@@ -401,7 +412,7 @@ describe("FamilyService.expand", () => {
       lastReq = req;
       return result("", { json: expandJson });
     });
-    const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), clock: () => NOW });
+    const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), examLabelsFor: () => [], clock: () => NOW });
     return { families, ai, learn, vocab, getReq: () => lastReq! };
   }
 

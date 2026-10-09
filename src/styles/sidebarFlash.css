@@ -1,0 +1,29 @@
+/* (1009 #8): focusWord — the galaxy/字族樹 side asks the sidebar to point
+   at one word (a star/node tap); VocabSidebarView finds that row (tracked
+   or a suggested one) and flashes it briefly. Separate animation/class from
+   the existing vt-row-flash (sidebar.css) — this one is driven by
+   PageContext.focusWord rather than revealEntry's "bring a word into view"
+   flow, and uses a shorter, lighter pulse since the row is already on
+   screen most of the time (just a nudge, not a full "look over here"). */
+
+@keyframes vt-sidebar-is-flash {
+  0%,
+  40% {
+    box-shadow: inset 0 0 0 2px var(--interactive-accent);
+    background: var(--background-modifier-hover);
+  }
+  100% {
+    box-shadow: inset 0 0 0 2px transparent;
+  }
+}
+
+.vt-row.is-flash {
+  animation: vt-sidebar-is-flash 1.2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-row.is-flash {
+    animation: none;
+    box-shadow: inset 0 0 0 2px var(--interactive-accent);
+  }
+}

@@ -93,13 +93,18 @@ function suggestKey(groupKey: string, word: PageWord): string {
   return `${groupKey}::${word.word.toLowerCase()}`;
 }
 
-// 規格 #8: 單字庫裡沒有的建議字 — 灰色簡易列（emoji、單字、中文、等級標
-// 籤、字素標籤、＋）。點列本身不做事；＋ 加入並 like（page.addWord 已經
-// 做了 like），busy 時轉圈、不能重複點。
+// 規格 #6, #8: 單字庫裡沒有的建議字 — 灰色簡易列（emoji、單字、中文、等級
+// 標籤、字素標籤、空心 ♡）。點列本身不做事；♡ 加入並 like（page.addWord
+// 已經做了 like）——跟 WordRow 的 vt-row-like 同一個樣式／class，整個側欄
+// 的愛心是同一套規則：空心＝還沒 like，按了就 like。busy 時轉圈、不能重
+// 複點。
 function renderSuggestRow(container: HTMLElement, page: PageContext, group: PageGroup, row: PageRow, deps: PageGroupsDeps): void {
   const key = suggestKey(group.key, row.word);
   const busy = deps.busy.has(key);
   const el = container.createDiv({ cls: ["vt-row", "vt-page-suggest"] });
+  // 1009 #8 focusWord: the sidebar locates a suggested row by word (it has
+  // no entry id yet) — see VocabSidebarView's focusWord handling.
+  el.setAttr("data-word", row.word.word.toLowerCase());
   if (row.word.emoji) el.createSpan({ text: row.word.emoji, cls: "vt-page-suggest-emoji" });
   el.createSpan({ text: row.word.word, cls: "vt-page-suggest-word" });
   if (row.word.zh) el.createSpan({ text: row.word.zh, cls: "vt-page-suggest-zh" });
@@ -107,9 +112,9 @@ function renderSuggestRow(container: HTMLElement, page: PageContext, group: Page
   for (const label of row.morphemeLabels) el.createSpan({ text: label, cls: "vt-row-morpheme-chip" });
   el.createEl("span", { cls: "vt-group-spacer" });
 
-  const addBtn = el.createEl("span", { cls: "vt-page-suggest-add" });
+  const addBtn = el.createEl("span", { cls: "vt-row-like" });
   addBtn.toggleClass("is-busy", busy);
-  setIcon(addBtn, "plus");
+  addBtn.setText("♡");
   addBtn.setAttr("role", "button");
   addBtn.setAttr("aria-label", t("sidebar.page.add", { word: row.word.word }));
   if (!busy) {

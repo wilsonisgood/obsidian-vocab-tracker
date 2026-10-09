@@ -66,6 +66,10 @@ export interface FamilyServiceDeps {
   vocab: LearnVocabPort;
   learn: LearnStore;
   dictionary: DictionaryLookupPort;
+  // (1009 #5): exam-list tags for a word, formatted the same way main.ts's
+  // addWordToVocab does (examLabels(wordlists.match(word)?.tags)) — a
+  // suggested word pulled into the vocab here gets the same level label.
+  examLabelsFor(word: string): string[];
   clock?: () => Date;
   newId?: () => string;
 }
@@ -378,7 +382,10 @@ export class FamilyService {
       const entry: VocabEntry = {
         id: this.newId(),
         word: w.word,
-        level: "",
+        // (1009 #5): 字族樹加字一律同時 like，並補上等級標籤 — bug fix,
+        // 照 main.ts addWordToVocab 的格式 (examLabels(...).join(", ")).
+        level: this.deps.examLabelsFor(w.word).join(", "),
+        liked: true,
         synonyms: d?.synonyms.join(", ") ?? "",
         antonyms: d?.antonyms.join(", ") ?? "",
         example: "",

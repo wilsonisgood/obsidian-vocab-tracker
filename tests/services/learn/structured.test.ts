@@ -156,7 +156,7 @@ describe("services carry the debug info", () => {
     const vocab = new FakeVocab([entry("e1", "glittery", { liked: true })]);
     const ai = new FakePreparingAi(() => result("I can't group these."));
     const learn = new LearnStore({ storage: new MemoryStorage(), clock: () => NOW });
-    const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), clock: () => NOW });
+    const families = new FamilyService({ ai, vocab, learn, dictionary: new FakeDictionary(), examLabelsFor: () => [], clock: () => NOW });
     const e = await caught(families.generate());
     expect(e).toMatchObject({ code: "bad_output" });
     expect(aiDebugOf(e)?.output).toBe("I can't group these.");
