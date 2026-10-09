@@ -38,7 +38,21 @@ const GL = {
   groups: [{ label: "光", members: [{ word: "glitter", zh: "閃爍", emoji: "✨" }, { word: "gleam", zh: "光澤", emoji: "🌟" }] }],
 };
 
-function setup(json: unknown = { families: [CLOTHING, GL] }, dict = new FakeDictionary()) {
+// Holds every lookup until answer().
+class SlowDictionary extends FakeDictionary {
+  private gate: Promise<void>;
+  answer!: () => void;
+  constructor() {
+    super();
+    this.gate = new Promise((resolve) => (this.answer = resolve));
+  }
+  override async fetchDictionary(word: string) {
+    await this.gate;
+    return super.fetchDictionary(word);
+  }
+}
+
+function setup(json: unknown = { families: [CLOTHING, GL] }, dict: FakeDictionary = new FakeDictionary()) {
   const vocab = new FakeVocab([
     // liked: true — 整體分群 (無 seed) 只看 like 的字 (1006report.md #24);
     // these three are the ones several tests expect in the "known" list.
@@ -108,12 +122,13 @@ describe("FamilyService.generate", () => {
 });
 
 describe("FamilyService.save", () => {
-  it("stores families and adds ticked words after a dictionary lookup", async () => {
+  it("stores families and adds ticked words, then fills them from the dictionary", async () => {
     const dict = new FakeDictionary(new Set(["tulle"]));
     const { families, vocab, learn } = setup(undefined, dict);
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const cands = await families.generate({ seedEntryIds: ["e1"] });
     const { families: saved, added } = await families.save(cands, { addWords: ["SEQUIN", "tulle"] });
+    await families.dictionaryFilled();
     spy.mockRestore();
 
     expect(saved.map((f) => f.id)).toEqual(["id1", "id2"]);
@@ -267,6 +282,41 @@ describe("FamilyService.save", () => {
     expect(families.familiesOf(e!.id)).toHaveLength(1);
     expect(await families.addSuggested(saved.id, "unknown")).toBeUndefined();
     expect(learn.wordMeta(e!.id)).toMatchObject({ emoji: "🎀", emojiSource: "ai" });
+  });
+
+  // A galaxy ♡ on a suggested word: the word is in (liked, with the AI's
+  // gloss) before the dictionary answers — it used to wait for several
+  // requests in a row, which on a phone took long enough to look broken.
+  it("addSuggested doesn't wait for the dictionary; the lookup fills the entry afterwards", async () => {
+    const dict = new SlowDictionary();
+    const { families, vocab } = setup(undefined, dict);
+    const [saved] = (await families.save(await families.generate())).families;
+    const e = await families.addSuggested(saved.id, "tulle");
+    expect(e).toMatchObject({ word: "tulle", liked: true, definitionZh: "薄紗", definition: "" });
+    expect(vocab.entries).toContain(e);
+    expect(vocab.touched).toHaveLength(0);
+
+    dict.answer();
+    await families.dictionaryFilled();
+    expect(e).toMatchObject({ definition: "definition of tulle", definitionZh: "tulle 的中文", phonetic: "/tulle/", synonyms: "a, b" });
+    expect(vocab.touched).toEqual([e]);
+  });
+
+  it("the dictionary fill keeps what was edited meanwhile, and skips a word deleted meanwhile", async () => {
+    const dict = new SlowDictionary();
+    const { families, vocab } = setup(undefined, dict);
+    const [saved] = (await families.save(await families.generate())).families;
+    const tulle = (await families.addSuggested(saved.id, "tulle"))!;
+    const sequin = (await families.addSuggested(saved.id, "sequin"))!;
+    tulle.definitionZh = "我自己寫的";
+    tulle.phonetic = "/tuːl/";
+    vocab.all.splice(vocab.all.indexOf(sequin), 1);
+
+    dict.answer();
+    await families.dictionaryFilled();
+    expect(tulle).toMatchObject({ definitionZh: "我自己寫的", phonetic: "/tuːl/", definition: "definition of tulle" });
+    expect(sequin.definition).toBe("");
+    expect(vocab.touched).toEqual([tulle]);
   });
 
   // (1009 #5): bug fix — 字族樹加字一律同時 like，並補上等級標籤。
