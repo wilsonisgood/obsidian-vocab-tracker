@@ -77,7 +77,7 @@ export async function startSession(port: number): Promise<E2eSession> {
 // 常常卡，考慮把 Obsidian 的自動更新檢查整個關掉（目前沒找到官方的關閉方式）。
 export async function openSidebarReady(
   session: E2eSession,
-  timeoutMs = 45000
+  timeoutMs = 60000
 ): Promise<void> {
   const tryOnce = async (budgetMs: number): Promise<boolean> => {
     const deadline = Date.now() + budgetMs;
