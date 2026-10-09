@@ -12805,7 +12805,7 @@ function renderDashboard(plugin, _source, el, ctx) {
   };
   const filteredEntries = () => {
     const ctx2 = isListedCtx();
-    return allEntries.filter((e) => isListed(e, ctx2));
+    return plugin.store.entries.filter((e) => isListed(e, ctx2));
   };
   const reviewSlot = el.createDiv();
   renderReviewButton(plugin, reviewSlot, ctx);
@@ -12841,9 +12841,12 @@ function renderDashboard(plugin, _source, el, ctx) {
       });
     }
   };
+  let shownIds = "";
+  const listedIds = () => filteredEntries().map((e) => e.id).join(",");
   const drawList = () => {
     wordUi.beginRender();
     listWrap.empty();
+    shownIds = listedIds();
     const rows = filteredEntries().filter((e) => e.word.toLowerCase().includes(query.toLowerCase()));
     renderGroupedVocabList(plugin, listWrap, rows, collapsedGroups, expandState, () => drawList(), {
       showDue: true,
@@ -12854,6 +12857,19 @@ function renderDashboard(plugin, _source, el, ctx) {
   };
   drawStats();
   drawList();
+  let queued = false;
+  owner.register(
+    plugin.store.events.on("data:changed", () => {
+      if (queued) return;
+      queued = true;
+      window.setTimeout(() => {
+        queued = false;
+        if (listedIds() === shownIds) return;
+        drawStats();
+        drawList();
+      }, 0);
+    })
+  );
   search.oninput = () => {
     query = search.value;
     drawList();

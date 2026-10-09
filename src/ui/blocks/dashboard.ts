@@ -56,7 +56,9 @@ export function renderDashboard(
   // #6 的篩選依據：跟側欄一樣的 isListed（標籤 chip ＋ Like chip）。
   const filteredEntries = (): VocabEntry[] => {
     const ctx2 = isListedCtx();
-    return allEntries.filter((e) => isListed(e, ctx2));
+    // Read store.entries fresh each time (it's a filtered copy): the
+    // snapshot above would keep showing a word deleted by unliking (w11 X).
+    return plugin.store.entries.filter((e) => isListed(e, ctx2));
   };
 
   // "開始複習 · 今日 n 張" (設計稿 L1) — its own live-updating button, drawn
@@ -108,9 +110,16 @@ export function renderDashboard(
   // Grouped by source note title — lets a note that only holds a
   // vocab-dashboard block double as a per-note word list. Each group
   // heading is itself collapsible and shows its word count.
+  // Which words the list last showed — so a store change that adds or
+  // removes one (an unlike-delete or undo from anywhere, incl. another copy
+  // of this block) redraws it, while a plain field edit doesn't (w11 X).
+  let shownIds = "";
+  const listedIds = () => filteredEntries().map((e) => e.id).join(",");
+
   const drawList = () => {
     wordUi.beginRender();
     listWrap.empty();
+    shownIds = listedIds();
     const rows = filteredEntries().filter((e) => e.word.toLowerCase().includes(query.toLowerCase()));
     renderGroupedVocabList(plugin, listWrap, rows, collapsedGroups, expandState, () => drawList(), {
       showDue: true,
@@ -121,6 +130,19 @@ export function renderDashboard(
 
   drawStats();
   drawList();
+  let queued = false;
+  owner.register(
+    plugin.store.events.on("data:changed", () => {
+      if (queued) return;
+      queued = true;
+      window.setTimeout(() => {
+        queued = false;
+        if (listedIds() === shownIds) return;
+        drawStats();
+        drawList();
+      }, 0);
+    })
+  );
   search.oninput = () => {
     query = search.value;
     drawList();
