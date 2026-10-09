@@ -491,6 +491,81 @@ describe("「全部」加字後立即重畫 (1007-2 #9)", () => {
   });
 });
 
+// Wave 11 S (1009 #10)：使用者在閱讀模式加了一個字（liked:true, source
+// 指到目前這篇），右側欄「本篇」沒有馬上出現，原因未知。試著從三個角度重
+// 現：(a) 純粹 store 層加字 → data:changed → 本篇 scopedEntries（1007-2
+// #9 已經證實「全部」這條路沒問題，這裡補「本篇」）；(b) 側欄「加入單字
+// 庫」橫幅按下去那條路（setWord → pendingWord → addBtn.onclick）；(c)
+// main.ts 整段 addWordToVocab（含 reveal）流程。
+describe("閱讀模式加字後側欄立即出現 (1009 #10)", () => {
+  it("(a) 本篇模式：store.addEntry 一個新的 liked 字，source 指到目前這篇，data:changed 應該讓它馬上出現", async () => {
+    const v = await open("note");
+    const activeFile = b.app.vault.getAbstractFileByPath(fx.article.path) as unknown as InstanceType<typeof TFile>;
+    const fresh: VocabEntry = {
+      id: "wave11-s-10a",
+      word: "zzzexperienced",
+      level: "",
+      synonyms: "",
+      antonyms: "",
+      example: "",
+      definition: "",
+      definitionZh: "",
+      phonetic: "",
+      partOfSpeech: "",
+      grammar: "",
+      source: { path: activeFile.path, line: 0 },
+      added: "",
+      lastReviewed: "",
+      reviews: 0,
+      liked: true,
+    };
+    try {
+      await b.plugin.store.addEntry(fresh);
+      // No v.render()/v.draw() here on purpose — only data:changed.
+      const row = root(v).querySelector('.vt-row[data-entry-id="wave11-s-10a"]');
+      expect(row).not.toBeNull();
+    } finally {
+      await b.plugin.store.deleteEntry("wave11-s-10a");
+    }
+  });
+
+  it("(b) 側欄「加入單字庫」橫幅：setWord() 顯示橫幅，按下去的 addWordToVocab + setWord() 應該馬上把它變成一般單字列", async () => {
+    const v = await open("note");
+    v.setWord("zzzbannerword");
+    const banner = root(v).querySelector(".vt-sidebar-add-prompt");
+    expect(banner).not.toBeNull();
+    const addBtn = banner!.querySelector(".vt-sidebar-add-btn") as unknown as FakeElement | null;
+    expect(addBtn).not.toBeNull();
+    try {
+      addBtn!.click();
+      await flushMicrotasks();
+      await settle();
+      const added = entries().find((e) => e.word === "zzzbannerword");
+      expect(added).toBeTruthy();
+      const row = root(v).querySelector(`.vt-row[data-entry-id="${added!.id}"]`);
+      expect(row).not.toBeNull();
+    } finally {
+      const added = entries().find((e) => e.word === "zzzbannerword");
+      if (added) await b.plugin.store.deleteEntry(added.id);
+    }
+  });
+
+  it("(c) main.ts addWordToVocab()（預設 reveal）整段流程：新字馬上出現在本篇列表裡", async () => {
+    const v = await open("note");
+    try {
+      const ok = await b.plugin.addWordToVocab("zzzexperienced2");
+      expect(ok).toBe(true);
+      const added = entries().find((e) => e.word === "zzzexperienced2")!;
+      expect(added.liked).toBe(true);
+      const row = root(v).querySelector(`.vt-row[data-entry-id="${added.id}"]`);
+      expect(row).not.toBeNull();
+    } finally {
+      const added = entries().find((e) => e.word === "zzzexperienced2");
+      if (added) await b.plugin.store.deleteEntry(added.id);
+    }
+  });
+});
+
 // Wave 10 S (1007-2 #8, #13, #14) — the sidebar's 「本篇」 on a 字族樹／Word
 // DNA page: PageContextHub is the only thing shared with the (separate)
 // block task, so these tests publish a PageContext by hand rather than
@@ -546,8 +621,12 @@ describe("側欄「本篇」頁面模式 (1007-2 #8, #13, #14)", () => {
       const suggestRow = root(v).querySelector(".vt-page-suggest")!;
       expect(suggestRow.querySelector(".vt-page-suggest-word")!.textContent).toBe("sugg");
       expect(suggestRow.querySelector(".vt-row-morpheme-chip")!.textContent).toBe("trans-");
-      const addBtn = suggestRow.querySelector(".vt-page-suggest-add")!;
+      const addBtn = suggestRow.querySelector(".vt-row-like")!;
       expect(addBtn.getAttribute("aria-label")).toBe(t("sidebar.page.add", { word: "sugg" }));
+      // (1009 #6): the suggested-row heart is always hollow — it's the one
+      // and only "not liked yet" state, same glyph/class as WordRow's ♡.
+      expect(addBtn.textContent).toBe("♡");
+      expect(addBtn.classList.contains("is-liked")).toBe(false);
 
       // 「單字（n）」counts every distinct word on the page, suggestions
       // included (#9) — all three here are distinct words.
@@ -581,7 +660,7 @@ describe("側欄「本篇」頁面模式 (1007-2 #8, #13, #14)", () => {
       expect(selectWord).toHaveBeenCalledTimes(1); // the suggested row's own click did nothing
       expect(addWord).not.toHaveBeenCalled();
 
-      (suggestRow.querySelector(".vt-page-suggest-add")! as FakeElement).click();
+      (suggestRow.querySelector(".vt-row-like")! as FakeElement).click();
       expect(addWord).toHaveBeenCalledWith("topic:a", words[1]);
     } finally {
       liked.liked = saved.liked;
@@ -607,5 +686,48 @@ describe("側欄「本篇」頁面模式 (1007-2 #8, #13, #14)", () => {
     publish({ groups, activeGroupKey: "g-a" });
     expect(v.pageCollapsed.has("g-a")).toBe(false);
     expect(v.pageCollapsed.has("g-b")).toBe(true);
+  });
+
+  // 1009 #8: a 星系 node tap republishes PageContext with focusWord set —
+  // the sidebar scrolls that row into view and flashes it, whether it's a
+  // tracked word (data-entry-id) or a still-suggested one (data-word).
+  describe("focusWord: 捲到並閃一下 (1009 #8)", () => {
+    it("tracked word: flashes the entry's own row", async () => {
+      const liked = entries().find((e) => e.source?.path !== fx.article.path)!;
+      const saved = { liked: liked.liked };
+      liked.liked = true;
+      try {
+        const words: PageWord[] = [{ word: liked.word, zh: "中", emoji: "🙂", entryId: liked.id }];
+        publish({ groups: [{ key: "topic:a", title: "主題 A", words }], activeGroupKey: "topic:a" });
+        const v = await open("note");
+        expect(root(v).querySelector(`.vt-row[data-entry-id="${liked.id}"]`)!.classList.contains("is-flash")).toBe(false);
+
+        // refreshFiltered() (inside the "changed" handler, run before
+        // flashFocusWord) rebuilds the row — re-query it after publish
+        // rather than reusing the pre-republish (now-detached) reference.
+        publish({ groups: [{ key: "topic:a", title: "主題 A", words }], activeGroupKey: "topic:a", focusWord: liked.word.toLowerCase() });
+        expect(root(v).querySelector(`.vt-row[data-entry-id="${liked.id}"]`)!.classList.contains("is-flash")).toBe(true);
+      } finally {
+        liked.liked = saved.liked;
+      }
+    });
+
+    it("suggested word: flashes the data-word row; the same focusWord doesn't re-flash on a later render", async () => {
+      const words: PageWord[] = [{ word: "sugg", zh: "建議字", emoji: "🌱" }];
+      publish({ groups: [{ key: "topic:a", title: "主題 A", words }], activeGroupKey: "topic:a" });
+      const v = await open("note");
+
+      publish({ groups: [{ key: "topic:a", title: "主題 A", words }], activeGroupKey: "topic:a", focusWord: "sugg" });
+      const row = root(v).querySelector('.vt-row[data-word="sugg"]')!;
+      expect(row.classList.contains("is-flash")).toBe(true);
+
+      // Simulate the flash timing out, then a later render with the *same*
+      // focusWord — a second word appearing forces a new pageContextSig
+      // (so "changed" still fires) without touching focusWord/activeGroupKey.
+      row.removeClass("is-flash");
+      const words2: PageWord[] = [...words, { word: "sugg2", zh: "建議字2", emoji: "🌱" }];
+      publish({ groups: [{ key: "topic:a", title: "主題 A", words: words2 }], activeGroupKey: "topic:a", focusWord: "sugg" });
+      expect(root(v).querySelector('.vt-row[data-word="sugg"]')!.classList.contains("is-flash")).toBe(false);
+    });
   });
 });

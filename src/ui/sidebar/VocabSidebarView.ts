@@ -35,6 +35,9 @@ export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 // Re-reading a note after an edit waits for typing to settle.
 const NOTE_REFRESH_MS = 400;
 
+// 1009 #8: how long the focusWord row's .is-flash stays on (sidebarFlash.css).
+const FOCUS_FLASH_MS = 1200;
+
 // Lives in routes.ts so the iPhone sheet (ui/mobile/WordSheet.ts) can use
 // it without loading this view.
 export { REBINDING_BODY_CLS };
@@ -126,6 +129,10 @@ export class VocabSidebarView extends ItemView {
   private lastActiveGroupKey: string | null | undefined = undefined;
   // Suggested-row 「＋」 requests in flight (pageGroups.ts's busy spinner).
   private pageBusy: Set<string> = new Set();
+  // 1009 #8: the last focusWord we actually flashed — so a re-publish with
+  // the same word (every render while the galaxy block stays open) doesn't
+  // re-flash it over and over.
+  private lastFocusWord: string | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: VocabTrackerPlugin) {
     super(leaf);
@@ -189,7 +196,12 @@ export class VocabSidebarView extends ItemView {
     // (new groups, a different activeGroupKey, a word added/removed) —
     // redraw the filtered sections the same way any other scope change
     // does. No mode check: harmless (and cheap) outside page mode too.
-    this.register(this.plugin.pageContext.events.on("changed", () => this.refreshFiltered()));
+    this.register(
+      this.plugin.pageContext.events.on("changed", (ctx) => {
+        this.refreshFiltered();
+        this.flashFocusWord(ctx);
+      })
+    );
     this.render();
   }
 
@@ -286,6 +298,33 @@ export class VocabSidebarView extends ItemView {
     window.setTimeout(() => row.removeClass("vt-row-flash"), FLASH_MS);
   }
 
+  // 1009 #8: the page (字族樹／星系) asked the sidebar to point at one word
+  // — a star/node tap on a suggested word republishes PageContext with
+  // focusWord set. Runs after refreshFiltered() so the row already exists
+  // in the DOM. Tracked words render through renderVocabRow
+  // (data-entry-id); suggested ones through pageGroups.ts's own
+  // data-word attribute (no entry yet).
+  private flashFocusWord(ctx: PageContext | null): void {
+    const word = ctx?.focusWord?.toLowerCase() || null;
+    if (!word) {
+      this.lastFocusWord = null;
+      return;
+    }
+    if (word === this.lastFocusWord) return; // same word already flashed
+    this.lastFocusWord = word;
+    const root = this.scrollRoot();
+    if (!root) return;
+    const entry = this.findEntry(word);
+    const el = entry
+      ? root.querySelector<HTMLElement>(`.vt-row[data-entry-id="${CSS.escape(entry.id)}"]`)
+      : root.querySelector<HTMLElement>(`.vt-row[data-word="${CSS.escape(word)}"]`);
+    if (!el) return;
+    el.scrollIntoView({ block: "nearest" });
+    el.removeClass("is-flash");
+    el.addClass("is-flash");
+    window.setTimeout(() => el.removeClass("is-flash"), FOCUS_FLASH_MS);
+  }
+
   // Called by main.ts whenever something that affects the exam chips
   // changed (a scan finished, a chip was toggled, the note was edited).
   // Since those are exactly the things the 單字／AI 討論／文法 filter also
@@ -352,6 +391,16 @@ export class VocabSidebarView extends ItemView {
     if (seq !== this.noteScopeSeq) return; // superseded by a newer note/scope load
     const inflections = resolveWordlistSettings(this.plugin.store.settings.wordlists).inflections;
     const ids = computeNoteScope(this.plugin.store.entries, hits, text, inflections);
+    // (1009 #10): the word's own tracked source is this note → always in
+    // scope, even when computeNoteScope's text-tokenizer doesn't literally
+    // find it (punctuation/markdown edge cases, a race with the highlight
+    // wrap just written to the note, …). Without this, a word just added
+    // from reading mode can flash into view via the loading-time fallback
+    // below and then vanish once this "real" scope lands and disagrees
+    // with it — which reads as "it never showed up".
+    for (const e of this.plugin.store.entries) {
+      if (!e.deletedAt && e.source?.path === file.path) ids.add(e.id);
+    }
     this.noteScopeCache = { path: file.path, mtime: file.stat.mtime, sig: noteScopeSig(this.plugin.store.entries), ids };
     if (this.app.workspace.getActiveFile()?.path !== file.path) return;
     if ((this.filterMode ?? "note") !== "note") return;

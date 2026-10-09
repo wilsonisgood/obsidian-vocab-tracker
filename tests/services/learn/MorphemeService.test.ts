@@ -90,6 +90,7 @@ function setup() {
   let dailyBatches = 10;
   let aiReady = true;
   let budget = { day: "", used: 0 };
+  let examLabels: string[] = [];
   const deps: MorphemeServiceDeps = {
     ai,
     vocab,
@@ -104,6 +105,7 @@ function setup() {
       },
     },
     aiReady: () => aiReady,
+    examLabelsFor: () => examLabels,
     clock: tick,
   };
   const svc = new MorphemeService(deps);
@@ -120,6 +122,7 @@ function setup() {
     setDaily: (n: number) => (dailyBatches = n),
     setAiReady: (b: boolean) => (aiReady = b),
     getBudget: () => ({ ...budget }),
+    setExamLabels: (v: string[]) => (examLabels = v),
   };
 }
 
@@ -533,6 +536,19 @@ describe("MorphemeService.addSuggested", () => {
     expect(added?.origin).toBe("dna:m-un");
     expect(added?.definitionZh).toBe("undo 的中文"); // from the dictionary, not the suggested zh
     expect(vocab.all.some((e) => e.id === added?.id)).toBe(true);
+  });
+
+  // (1009 #5): bug fix — 字根／字族加字一律同時 like，並補上等級標籤。
+  it("likes a brand-new word on add and fills level from examLabelsFor", async () => {
+    const { learn, svc, setExamLabels } = setup();
+    await learn.ensureLoaded();
+    setExamLabels(["學測", "多益"]);
+    learn.putMorpheme(morpheme("m-un", { type: "prefix", form: "un", suggested: [{ word: "undo", zh: "復原", emoji: "↩️" }] }));
+
+    const added = await svc.addSuggested("m-un", "undo");
+
+    expect(added?.liked).toBe(true);
+    expect(added?.level).toBe("學測, 多益");
   });
 
   it("resolves a mergedInto id before reading/writing", async () => {
