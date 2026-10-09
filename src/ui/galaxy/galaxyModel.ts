@@ -17,6 +17,8 @@ export interface GalaxyNode {
   zh: string;
   emoji: string;
   entryId?: string;
+  // 在單字庫裡（不論有沒有 like）；hub/group 固定 false (1009 #8 愛心三態)。
+  inLibrary: boolean;
   fresh: boolean;
   ariaLabel: string;
 }
@@ -81,6 +83,7 @@ function buildWordNode(m: FamilyMember, lookup: GalaxyLookup, fresh: ReadonlySet
     zh: m.zh,
     emoji: lookup.emoji(m, entry),
     entryId: m.entryId,
+    inLibrary: !!entry,
     fresh: fresh?.has(id) ?? false,
     ariaLabel: `${word} ${m.zh}${t(known ? "galaxy.node.known" : "galaxy.node.unknown")}`,
   };
@@ -101,6 +104,7 @@ export function buildGalaxyModel(family: Family, lookup: GalaxyLookup, opts: Gal
     word: family.topic,
     zh: family.label,
     emoji: familyEmoji(family),
+    inLibrary: false,
     fresh: false,
     ariaLabel: [family.topic, family.label].filter(Boolean).join(" "),
   };
@@ -141,6 +145,7 @@ export function buildGalaxyModel(family: Family, lookup: GalaxyLookup, opts: Gal
         word: g.label,
         zh: "",
         emoji: "",
+        inLibrary: false,
         fresh: false,
         ariaLabel: g.label,
       });
@@ -160,6 +165,26 @@ export function buildGalaxyModel(family: Family, lookup: GalaxyLookup, opts: Gal
   }
 
   return { nodes, links, counts: { known, unknown: total - known, total } };
+}
+
+// ── 節點愛心 (1009 #8) ───────────────────────────────────────────────
+//
+// 三態：已 like（紅 ♥）／在庫沒 like（空心 ♡）／不在庫的建議字（空心 ♡）。
+// 點擊時三態各自對應不同動作——不在庫先加入再 like，在庫沒 like 只要
+// like，已 like 則取消 like。純函式，GalaxyGraph 畫圖、families.ts 決定
+// 怎麼呼叫 plugin API 都靠它們，不用各自重新判斷 kind/inLibrary。
+export type HeartState = "liked" | "unliked-in-library" | "suggested";
+export type HeartAction = "add" | "like" | "unlike";
+
+export function heartState(node: Pick<GalaxyNode, "kind" | "inLibrary">): HeartState {
+  if (node.kind === "known") return "liked";
+  return node.inLibrary ? "unliked-in-library" : "suggested";
+}
+
+export function heartAction(state: HeartState): HeartAction {
+  if (state === "liked") return "unlike";
+  if (state === "unliked-in-library") return "like";
+  return "add";
 }
 
 export interface ConstellationPoint {
@@ -193,11 +218,13 @@ export interface GalaxyZoomMode {
   mobile: boolean;
 }
 
-// d3-zoom's filter (A6, 決定 8). mobile 且 embedded（code block 裡）完全不能
-// 縮放平移；embedded 桌面只有 Ctrl/⌘＋滾輪或雙指才可以；非 embedded（全畫面
-// GalaxyView）照 d3 預設（非右鍵都可以）。
+// d3-zoom's filter (A6, 決定 8; 1009 #12 放寬). mobile 且 embedded（code
+// block 裡）只放行兩指以上的 touch（單指留給 GalaxyGraph 的 drag 拖節點／
+// 讓瀏覽器原生捲動頁面，見 galaxy.css 的 touch-action 設定）；embedded 桌面
+// 只有 Ctrl/⌘＋滾輪或雙指才可以；非 embedded（全畫面 GalaxyView）照 d3 預設
+// （非右鍵都可以）。
 export function zoomFilter(ev: GalaxyZoomEvent, mode: GalaxyZoomMode): boolean {
-  if (mode.mobile && mode.embedded) return false;
+  if (mode.mobile && mode.embedded) return ev.touches !== undefined && ev.touches >= 2;
   if (!mode.embedded) return !ev.button;
   if (ev.type === "wheel") return ev.ctrlKey || ev.metaKey;
   if (ev.touches !== undefined) return ev.touches >= 2;

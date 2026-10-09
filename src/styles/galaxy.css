@@ -11,10 +11,16 @@
   display: block;
 }
 
-/* 決定 7/A6: svg{touch-action:none} 只在「可以拖曳平移」時開，mobile+embedded
-   讓瀏覽器保留原生捲動（is-pannable 由 GalaxyGraph 依 opts 加減）。 */
+/* 決定 7/A6 → 1009 #12: svg{touch-action:none} 只在「完全交給 d3-zoom/drag」
+   時開（桌面 embedded、以及任何裝置的全畫面 GalaxyView）；mobile+embedded
+   改用 pan-y，讓空白處單指仍能捲動頁面——個別節點另外固定 touch-action:none
+   （下面 .vt-gx-node 規則），單指按在節點上時交給 drag 接手。 */
 .vt-gx-svg.is-pannable {
   touch-action: none;
+}
+
+.vt-gx-svg.is-touch-scroll {
+  touch-action: pan-y;
 }
 
 .vt-gx-link {
@@ -24,6 +30,9 @@
 
 .vt-gx-node {
   cursor: pointer;
+  /* 1009 #12：不管外層 svg 是 is-pannable 還是 is-touch-scroll，節點本身
+     一律吃掉 touch，讓單指按在節點上時觸發 drag 而不是頁面捲動。 */
+  touch-action: none;
 }
 
 .vt-gx-node:focus {
@@ -126,32 +135,35 @@
   }
 }
 
-/* ＋ 按鈕：只在「未學且被選中」的節點上顯示（點了未學節點就該讓人按 ＋）。 */
-.vt-gx-plus {
-  display: none;
+/* 節點右上角愛心 (1009 #8)：hub/group 沒有這個子節點（GalaxyGraph 畫圖時
+   就沒 append），字節點（已學／未學／建議字）一律有，不再像舊的 ＋ 只在選
+   中未學節點時才顯示。觸控目標靠 circle r=13 撐大，點擊 stopPropagation
+   不影響節點本身的選取／拖曳。 */
+.vt-gx-heart {
   cursor: pointer;
+  touch-action: none;
 }
 
-.vt-gx-node.vt-gx-unknown.vt-gx-sel .vt-gx-plus {
-  display: inline;
+.vt-gx-heart circle {
+  fill: var(--background-primary);
+  stroke: var(--background-modifier-border);
+  stroke-width: 1.4px;
+  opacity: 0.9;
 }
 
-.vt-gx-plus circle {
-  fill: var(--interactive-accent);
-  stroke: var(--background-secondary);
-  stroke-width: 2.5px;
-}
-
-.vt-gx-plus text {
-  fill: var(--text-on-accent);
-  font-size: 17px;
-  font-weight: var(--font-bold, 700);
+.vt-gx-heart-glyph {
+  fill: var(--text-muted);
+  font-size: 16px;
   text-anchor: middle;
   dominant-baseline: central;
 }
 
-.vt-gx-plus:focus circle,
-.vt-gx-node:focus .vt-gx-plus circle {
+.vt-gx-heart.is-liked .vt-gx-heart-glyph {
+  fill: var(--color-red, #e03131);
+}
+
+.vt-gx-heart:focus circle,
+.vt-gx-node:focus .vt-gx-heart circle {
   stroke: var(--text-normal);
 }
 
@@ -174,6 +186,7 @@
   gap: 8px;
 }
 
+/* #11：emoji 在左，右邊英文（上）／中文（下）兩行，按鈕高度放得下兩行。 */
 .vt-gx-topic {
   display: inline-flex;
   align-items: center;
@@ -184,7 +197,8 @@
   background: var(--background-secondary);
   color: var(--text-normal);
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 8px 14px;
+  min-height: 48px;
   cursor: pointer;
   font: inherit;
 }
@@ -197,6 +211,13 @@
 .vt-gx-topic-em {
   font-size: 20px;
   line-height: 1;
+}
+
+.vt-gx-topic-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
 }
 
 .vt-gx-topic-name {

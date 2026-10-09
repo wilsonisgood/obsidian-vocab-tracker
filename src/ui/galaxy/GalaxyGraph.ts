@@ -12,7 +12,7 @@ import { zoom, zoomIdentity, zoomTransform } from "d3-zoom";
 import type { ZoomBehavior } from "d3-zoom";
 
 import type { GalaxyModel, GalaxyNode } from "./galaxyModel";
-import { zoomFilter } from "./galaxyModel";
+import { heartState, zoomFilter } from "./galaxyModel";
 
 // d3-force mutates GalaxyNode in place (adds x/y/vx/vy/fx/fy) — see
 // SimNode. Links start as plain {source,target} strings (GalaxyLink) and
@@ -43,10 +43,13 @@ export interface GalaxyGraphOpts {
   // Rendered inside a reading-view code block vs. the full-screen
   // GalaxyView (A6). Gates zoomFilter and whether drag is attached at all.
   embedded: boolean;
-  // body.is-mobile (A6): embedded+mobile is view-only, no pan/zoom/drag.
+  // body.is-mobile (A6). embedded+mobile (1009 #12) 放寬成：單指拖節點、雙
+  // 指平移縮放、空白處單指捲動頁面（touch-action 由 galaxy.css 控制）。
   mobile: boolean;
   onSelect(id: string | null): void;
-  onAdd(id: string): void;
+  // 節點右上角愛心 (1009 #8) — GalaxyGraph 只負責畫三態跟轉發點擊，動作
+  // 本身（加入／like／取消 like）交給呼叫端判斷 heartState/heartAction。
+  onToggleLike(id: string): void;
 }
 
 // Galaxy force graph (規劃書 09 §6.1, 決定 7-8). Pure d3 + SVG — takes a
@@ -88,9 +91,14 @@ export class GalaxyGraph {
     this.gLinks = this.root.append("g").attr("class", "vt-gx-links");
     this.gNodes = this.root.append("g").attr("class", "vt-gx-nodes");
 
-    // .is-pannable 關掉 svg{touch-action:none}（決定 7/A6）：mobile+embedded
-    // 時瀏覽器該保留原生捲動，不要被 SVG 吃掉觸控事件。
-    this.svg.classed("vt-gx-svg", true).classed("is-pannable", !(opts.mobile && opts.embedded));
+    // 決定 7/A6 → 1009 #12 放寬：mobile+embedded 時 SVG 本身用
+    // touch-action:pan-y（空白處單指仍能捲動頁面），is-pannable
+    // （touch-action:none，完全交給 d3-zoom／drag）留給其它情況——桌面
+    // embedded、以及非 embedded 的全畫面 GalaxyView（任何裝置）。個別節點
+    // 另外在 CSS 固定 touch-action:none，讓單指按在節點上時由 drag 接手
+    // 而不是被當成頁面捲動。
+    const touchPan = opts.mobile && opts.embedded;
+    this.svg.classed("vt-gx-svg", true).classed("is-pannable", !touchPan).classed("is-touch-scroll", touchPan);
 
     this.zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.45, 2.6])
@@ -215,14 +223,16 @@ export class GalaxyGraph {
     entered.append("text").attr("class", "vt-gx-emo");
     entered.append("text").attr("class", "vt-gx-w");
     entered.append("text").attr("class", "vt-gx-z");
-    const plus = entered
-      .filter((d) => d.kind === "unknown")
+    // 愛心 (1009 #8)：hub／group 沒有，字節點（已學／未學）一律有，不再像
+    // 舊的 ＋ 只在選中未學節點時才出現。
+    const heart = entered
+      .filter((d) => d.kind === "known" || d.kind === "unknown")
       .append("g")
-      .attr("class", "vt-gx-plus")
+      .attr("class", "vt-gx-heart")
       .attr("tabindex", 0)
       .attr("role", "button");
-    plus.append("circle").attr("r", 13);
-    plus.append("text").text("+");
+    heart.append("circle").attr("r", 13);
+    heart.append("text").attr("class", "vt-gx-heart-glyph");
 
     const merged = entered.merge(sel);
 
@@ -238,29 +248,30 @@ export class GalaxyGraph {
         }
       });
 
-    if (!(this.opts.mobile && this.opts.embedded)) {
-      merged.call(
-        drag<SVGGElement, SimNode>()
-          .on("start", (ev, d) => {
-            if (!ev.active) this.sim?.alphaTarget(0.25).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-          })
-          .on("drag", (ev, d) => {
-            d.fx = ev.x;
-            d.fy = ev.y;
-          })
-          .on("end", (ev, d) => {
-            if (!ev.active) this.sim?.alphaTarget(0);
-            if (d.kind !== "hub") {
-              d.fx = null;
-              d.fy = null;
-            }
-          }),
-      );
-    }
+    // 1009 #12：embedded+mobile 也掛 drag（單指拖節點）— 不再用
+    // opts.mobile/opts.embedded 擋掉；空白處維持原生捲動靠 touch-action
+    // 分工（is-touch-scroll／節點 touch-action:none，見 galaxy.css）。
+    merged.call(
+      drag<SVGGElement, SimNode>()
+        .on("start", (ev, d) => {
+          if (!ev.active) this.sim?.alphaTarget(0.25).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on("drag", (ev, d) => {
+          d.fx = ev.x;
+          d.fy = ev.y;
+        })
+        .on("end", (ev, d) => {
+          if (!ev.active) this.sim?.alphaTarget(0);
+          if (d.kind !== "hub") {
+            d.fx = null;
+            d.fy = null;
+          }
+        }),
+    );
 
-    const onAdd = this.opts.onAdd;
+    const onToggleLike = this.opts.onToggleLike;
     this.gNodes.selectAll<SVGGElement, SimNode>("g.vt-gx-node").each(function (d) {
       const g = select(this);
       const r = radiusOf(d);
@@ -268,20 +279,25 @@ export class GalaxyGraph {
       g.select<SVGTextElement>(".vt-gx-emo").text(d.emoji);
       g.select<SVGTextElement>(".vt-gx-w").attr("y", r + 17).text(d.word);
       g.select<SVGTextElement>(".vt-gx-z").attr("y", r + 32).text(d.zh);
-      g.select<SVGGElement>(".vt-gx-plus")
+      const state = heartState(d);
+      const liked = state === "liked";
+      g.select<SVGGElement>(".vt-gx-heart")
         .attr("transform", `translate(${r * 0.74},${-r * 0.74})`)
-        .attr("aria-label", `把 ${d.word} 加入單字庫`)
+        .classed("is-liked", liked)
+        .attr("aria-label", liked ? `取消 like ${d.word}` : `like ${d.word}`)
         .on("click", (ev: MouseEvent) => {
           ev.stopPropagation();
-          onAdd(d.id);
+          onToggleLike(d.id);
         })
         .on("keydown", (ev: KeyboardEvent) => {
           if (ev.key === "Enter" || ev.key === " ") {
             ev.preventDefault();
             ev.stopPropagation();
-            onAdd(d.id);
+            onToggleLike(d.id);
           }
-        });
+        })
+        .select<SVGTextElement>(".vt-gx-heart-glyph")
+        .text(liked ? "♥" : "♡");
     });
   }
 
@@ -306,23 +322,13 @@ export class GalaxyGraph {
     this.gNodes.selectAll<SVGGElement, SimNode>("g.vt-gx-node").attr("transform", (d) => `translate(${d.x ?? 0},${d.y ?? 0})`);
   }
 
-  // Selects a node (null = clear, e.g. clicking the background). Selecting
-  // an unknown word also moves focus to its ＋ button (原型 select()),
-  // since that's the only action available on an unlearned node.
+  // Selects a node (null = clear, e.g. clicking the background). Clicking
+  // the node itself — not the heart, which stopPropagation()s — is the
+  // only way to select (1009 #8).
   select(id: string | null): void {
     this.selected = id;
     this.mark();
     this.opts.onSelect(id);
-    if (id === null) return;
-    const node = this.sim?.nodes().find((n) => n.id === id);
-    if (node && node.kind === "unknown") {
-      const plus = this.gNodes
-        .selectAll<SVGGElement, SimNode>("g.vt-gx-node")
-        .filter((n) => n.id === id)
-        .select<SVGGElement>(".vt-gx-plus")
-        .node();
-      plus?.focus({ preventScroll: true });
-    }
   }
 
   // Re-centers the current data (resize past the threshold, or a "reset
