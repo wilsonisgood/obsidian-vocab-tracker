@@ -34,6 +34,9 @@ import type { SheetTarget } from "./WordSurfaces";
 // composer's focus (and the iOS keyboard) away. The ChatPanel updates
 // itself.
 
+// TEMP (see writeKeyboardProbe)
+const KEYBOARD_PROBE_PATH = "Vocab Tracker 鍵盤診斷.md";
+
 type SheetView =
   | { kind: "word"; word: string; entryId?: string; ctx?: Partial<WordContext> }
   | { kind: "paragraph"; route: ParagraphRoute };
@@ -135,6 +138,7 @@ export class WordSheet extends Component implements SheetTarget {
           // the open→draw gap would otherwise flash the wrong height).
           this.sheet?.layer.removeClass("is-ai");
         },
+        onKeyboardProbe: (probe) => void this.writeKeyboardProbe(probe),
       });
     }
     return this.sheet;
@@ -155,6 +159,21 @@ export class WordSheet extends Component implements SheetTarget {
     sheet.content.toggleClass("is-paragraph", view.kind === "paragraph");
     if (view.kind === "word") this.drawWord(sheet, view);
     else this.drawParagraph(sheet, view.route);
+  }
+
+  // TEMP (1009-2 round B): BottomSheet's keyboard measurements, appended
+  // to a note that Sync brings back from the iPhone. Remove with
+  // BottomSheet's onKeyboardProbe once the lift is confirmed on device.
+  private async writeKeyboardProbe(probe: Record<string, string | number | boolean>): Promise<void> {
+    try {
+      const adapter = this.plugin.app.vault.adapter;
+      const lines = Object.entries(probe).map(([k, v]) => `- ${k}: \`${String(v)}\``);
+      const block = `\n## ${new Date().toISOString()}\n\n${lines.join("\n")}\n`;
+      if (await adapter.exists(KEYBOARD_PROBE_PATH)) await adapter.append(KEYBOARD_PROBE_PATH, block);
+      else await adapter.write(KEYBOARD_PROBE_PATH, `# Vocab Tracker 鍵盤診斷\n${block}`);
+    } catch (e) {
+      console.warn("Vocab Tracker: couldn't write the keyboard probe", e);
+    }
   }
 
   private findEntry(word: string): VocabEntry | undefined {

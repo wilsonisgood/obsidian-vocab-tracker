@@ -208,14 +208,21 @@ export class FakeWindow {
       for (const fn of this.listeners[type] ?? []) fn();
     },
   };
-  addEventListener(_type: "keydown", fn: (e: { key: string }) => void) {
-    this.keyListeners.push(fn);
+  // Other window events (Capacitor's keyboardWillShow etc.), by type.
+  listeners: Record<string, ((e: unknown) => void)[]> = {};
+  addEventListener(type: string, fn: (e: never) => void) {
+    if (type === "keydown") this.keyListeners.push(fn as (e: { key: string }) => void);
+    else (this.listeners[type] ??= []).push(fn as (e: unknown) => void);
   }
-  removeEventListener(_type: "keydown", fn: (e: { key: string }) => void) {
-    this.keyListeners = this.keyListeners.filter((f) => f !== fn);
+  removeEventListener(type: string, fn: (e: never) => void) {
+    if (type === "keydown") this.keyListeners = this.keyListeners.filter((f) => f !== fn);
+    else this.listeners[type] = (this.listeners[type] ?? []).filter((f) => f !== fn);
   }
   key(key: string) {
     for (const fn of [...this.keyListeners]) fn({ key, preventDefault() {} });
+  }
+  fire(type: string, e: unknown = {}) {
+    for (const fn of [...(this.listeners[type] ?? [])]) fn(e);
   }
   requestAnimationFrame(fn: () => void) {
     fn();
