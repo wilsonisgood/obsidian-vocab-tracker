@@ -55,9 +55,16 @@
   border-radius: 18px 18px 0 0;
   box-shadow: var(--shadow-l);
   transform: translateY(calc(100% + var(--vt-sheet-lift)));
+  /* The keyboard moves bottom and height by the same amount at once; one
+     shared timing keeps the top edge still while the bottom rides the
+     keyboard (an instant bottom next to an animated max-height made the
+     top drop and grow back). Mid-way updates (Capacitor's height, then
+     Obsidian's --keyboard-height) retarget instead of jumping. */
   transition:
     transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    max-height 200ms ease;
+    bottom 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    max-height 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .vt-sheet-layer.is-open .vt-sheet {
