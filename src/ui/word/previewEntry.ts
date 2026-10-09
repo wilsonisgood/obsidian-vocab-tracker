@@ -59,7 +59,7 @@ export function mergeDictionaryInto(entry: VocabEntry, data: DictionaryResult): 
 // rowModel.ts's FieldStore) so this stays importable from a plain vitest
 // file, no Obsidian.
 export interface PreviewHost {
-  addWordToVocab(word: string, ctx: Partial<WordContext>, opts: { reveal?: boolean }): Promise<boolean>;
+  addWordToVocab(word: string, ctx: Partial<WordContext>, opts: { reveal?: boolean; enrich?: boolean }): Promise<boolean>;
   store: {
     entries: VocabEntry[];
     touch(entry: VocabEntry): Promise<unknown>;
@@ -69,17 +69,15 @@ export interface PreviewHost {
 // ♥ on a preview card, or the AI tab's first question (規格 #1): adds the
 // real entry the normal way (liked:true, same as any manual add — see
 // main.ts's addWordToVocab) and folds in whatever the preview's own
-// dictionary fetch already found, so it isn't thrown away and re-fetched.
-// addWordToVocab's own background enrich (for a brand-new word) may still
-// race this with a second fetch; harmless since it's the same
-// empty-field-only merge.
+// dictionary fetch already found, so it isn't thrown away and re-fetched
+// (addWordToVocab's own background enrich is skipped when there is data).
 export async function promotePreview(
   host: PreviewHost,
   word: string,
   ctx: Partial<WordContext>,
   dict: DictionaryResult | null
 ): Promise<VocabEntry> {
-  await host.addWordToVocab(word, ctx, { reveal: false });
+  await host.addWordToVocab(word, ctx, { reveal: false, enrich: dict ? false : undefined });
   const lower = word.toLowerCase();
   const entry = host.store.entries.find((e) => e.word.toLowerCase() === lower);
   if (!entry) throw new Error(`Vocab Tracker: couldn't find "${word}" after adding it`);

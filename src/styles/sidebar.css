@@ -18,21 +18,6 @@
   margin: 0;
 }
 
-.vt-sidebar-add-prompt {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--background-secondary);
-  padding: 8px 10px;
-  border-radius: 6px;
-  margin-bottom: 12px;
-}
-
-.vt-sidebar-add-prompt-word {
-  font-weight: 600;
-  flex: 1;
-}
-
 /* 本篇／全部（1006report.md #5）: now shared, right under the sidebar's
    own title, instead of living inside the 單字 section. */
 .vt-sidebar-filter {

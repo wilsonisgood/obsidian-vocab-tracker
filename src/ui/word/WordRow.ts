@@ -25,11 +25,6 @@ import type { WordTab, WordUi } from "./wordUi";
 // 1009-2 #1: temporary strings, not yet in core/i18n/{zh-TW,en}.ts (a
 // shared file this task doesn't touch — see AGENT.md §5b-2). Move into
 // the real i18n tables on integration.
-const L = {
-  previewLoading: "抓取字典資料中…",
-  previewError: "字典資料抓取失敗，仍可以加入單字庫。",
-};
-
 // Progressive-disclosure state for a single row: collapsed (one line),
 // half (synonyms-and-up visible), full (everything visible).
 export type ExpandState = "collapsed" | "half" | "full";
@@ -351,7 +346,7 @@ export function renderVocabRow(
     if (opts.preview && opts.preview.status !== "ready") {
       body.createDiv({
         cls: ["vt-row-preview-hint", opts.preview.status === "error" ? "is-error" : ""].filter(Boolean),
-        text: opts.preview.status === "error" ? L.previewError : L.previewLoading,
+        text: t(opts.preview.status === "error" ? "row.preview.error" : "row.preview.loading"),
       });
     }
 

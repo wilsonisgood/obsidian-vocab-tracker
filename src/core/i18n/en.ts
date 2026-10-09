@@ -1,7 +1,6 @@
 export const en = {
   "sidebar.title": "Vocab Tracker",
   "sidebar.openList": "Open vocab-list.md",
-  "sidebar.addPrompt.cta": "+ Add to vocab list",
   "sidebar.filter.note": "This note",
   "sidebar.filter.all": "All",
   "sidebar.scope.note": "This note",
@@ -82,6 +81,8 @@ export const en = {
   "dashboard.startReview.none": "Flashcards · nothing due",
   "row.nextReview": "Next review: {date}",
   "row.due.today": "Today",
+  "row.preview.loading": "Fetching dictionary data…",
+  "row.preview.error": "Couldn't fetch dictionary data — you can still add it.",
 
   "srs.interval.m": "{n} min",
   "srs.interval.h": "{n} h",
@@ -503,7 +504,6 @@ export const en = {
   "mobile.sheet.close": "Close",
   "mobile.sheet.label.word": "Word card: {word}",
   "mobile.sheet.label.paragraph": "Paragraph discussion",
-  "mobile.sheet.notTracked": "Not in your vocab list yet.",
   "mobile.save.added": "Added “{word}”",
   "mobile.save.undo": "Undo",
   "mobile.save.undone": "Removed “{word}”",

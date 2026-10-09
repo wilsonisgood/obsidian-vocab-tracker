@@ -86,6 +86,8 @@ describe("promotePreview (♥ / the AI tab's first question — 1009-2 #1)", () 
     const entry = await promotePreview(host, "apron", {}, dict());
     expect(entry.definition).toBe("shiny");
     expect(host.touch).toHaveBeenCalledWith(entry);
+    // ...and addWordToVocab skips its own background fetch (不重抓).
+    expect(host.addWordToVocab).toHaveBeenCalledWith("apron", {}, { reveal: false, enrich: false });
   });
 
   it("with no dictionary result yet (still loading/failed), adds without touching", async () => {

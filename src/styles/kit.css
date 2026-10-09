@@ -30,13 +30,6 @@
   color: var(--text-on-accent);
 }
 
-.vt-sidebar-add-btn {
-  padding: 6px 10px;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 0.88em;
-}
-
 .vt-speak-icon {
   cursor: pointer;
   font-size: 0.95em;
