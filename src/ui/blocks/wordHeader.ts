@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { t } from "../../core/i18n";
+import { getLocale, t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { originFamilyId, type Family } from "../../core/model/family";
 import type { BreakdownPart, WordBreakdown } from "../../core/model/morpheme";
@@ -13,7 +13,25 @@ import { inlineNote } from "../kit/inlineNote";
 import { bindPronounceButton } from "../kit/pronounce";
 import { autoGrowTextarea, commitEntryField, type EditableField, type FieldStore } from "../word/rowModel";
 import { familyTitle, focusFamily } from "./familiesModel";
+import { isOpenStored, toggleStored, type FoldSection, type FoldStorage } from "../reading/wordPageFolds";
+import { hasDictionaryData } from "./wordHeaderModel";
 import { parseBlockParams } from "./params";
+
+export { hasDictionaryData };
+
+// Temporary strings (wave 12 C) until the integration moves them into i18n.
+const LABELS = {
+  "zh-TW": { info: "Info", dna: "字根" },
+  en: { info: "Info", dna: "Roots" },
+};
+const L = {
+  get info() {
+    return LABELS[getLocale()].info;
+  },
+  get dna() {
+    return LABELS[getLocale()].dna;
+  },
+};
 
 // ── vocab-word code block: the header of a word page (規劃書 06 §8.2, W1/W2) ──
 //
@@ -39,6 +57,9 @@ function lo(key: "origin" | "originUnknown" | "originTitle", name?: string): str
 // What the block needs from the plugin. VocabTrackerPlugin has most of it
 // already; the rest is wired in main.ts.
 export interface WordHeaderHost {
+  // The plugin's `app`: only loadLocalStorage/saveLocalStorage are used, to
+  // remember which categories are open. Optional (defaults apply without).
+  readonly app?: FoldStorage;
   store: {
     readonly entries: readonly VocabEntry[];
     readonly events: { on(event: "data:changed", fn: () => void): () => void };
@@ -269,6 +290,11 @@ class WordHeaderBlock extends MarkdownRenderChild {
       return;
     }
 
+    // Wave 12 C: one column — word, definitions, chips, 筆記 (always open),
+    // then the collapsible Info / 字根. No dictionary data → Info is gone
+    // altogether (and the empty definitions with it), only 筆記 stays.
+    const dict = hasDictionaryData(entry);
+
     const top = root.createDiv({ cls: "vt-wh-top" });
     if (this.host.emoji) this.renderEmoji(top, entry, this.host.emoji);
     top.createSpan({ cls: "vt-wh-word", text: entry.word });
@@ -276,26 +302,11 @@ class WordHeaderBlock extends MarkdownRenderChild {
     setIcon(speak, "volume-2");
     bindPronounceButton(speak, entry);
 
-    // 音標、詞性 (1006-2 #12): used to be one read-only line under the
-    // word; the row doesn't show either any more, so both are editable
-    // here now, same small-field treatment as everything below.
-    const metaFields = root.createDiv({ cls: "vt-wh-metafields" });
-    this.field(metaFields, entry, "phonetic", t("row.field.phonetic"));
-    this.field(metaFields, entry, "partOfSpeech", t("row.field.partOfSpeech"));
-
-    // 英文定義、中文定義、同義字、反義字、例句、文法提示、程度 (1006-2 #12):
-    // all editable here now — the row only keeps 英文定義/中文定義 and a
-    // read-only 程度 chip, everything else moved here entirely.
-    const fields = root.createDiv({ cls: "vt-wh-fields" });
-    this.field(fields, entry, "definition", t("row.field.definition"), { multiline: true });
-    this.field(fields, entry, "definitionZh", t("row.field.definitionZh"), { multiline: true });
-    this.field(fields, entry, "synonyms", t("row.field.synonyms"), { multiline: true });
-    this.field(fields, entry, "antonyms", t("row.field.antonyms"), { multiline: true });
-    this.field(fields, entry, "example", t("row.field.example"), { multiline: true });
-    this.field(fields, entry, "grammar", t("row.field.grammar"), { multiline: true });
-    this.field(fields, entry, "level", t("row.field.level"), { multiline: true });
-
-    if (this.host.morphemes) this.renderBreakdown(root, entry, this.host.morphemes);
+    if (dict) {
+      const defs = root.createDiv({ cls: "vt-wh-defs" });
+      this.field(defs, entry, "definition", t("row.field.definition"), { multiline: true });
+      this.field(defs, entry, "definitionZh", t("row.field.definitionZh"), { multiline: true });
+    }
 
     const chips = root.createDiv({ cls: "vt-wh-chips" });
     if (entry.source?.path) this.renderSource(chips, entry, entry.source.path, entry.source.line);
@@ -314,6 +325,61 @@ class WordHeaderBlock extends MarkdownRenderChild {
       btn.createSpan({ text: l("review") });
       btn.addEventListener("click", () => void review.call(this.host, entry));
     }
+
+    // 筆記 (= the grammar field): always open, fixed position.
+    const notes = root.createDiv({ cls: "vt-wh-notes" });
+    notes.createDiv({ cls: "vt-wh-notes-label", text: t("row.field.grammar") });
+    this.field(notes, entry, "grammar", t("row.field.grammar"), { multiline: true });
+
+    if (dict) {
+      this.fold(root, entry, "info", L.info, (body) => {
+        const rows: [EditableField, string][] = [
+          ["phonetic", t("row.field.phonetic")],
+          ["partOfSpeech", t("row.field.partOfSpeech")],
+          ["synonyms", t("row.field.synonyms")],
+          ["antonyms", t("row.field.antonyms")],
+          ["example", t("row.field.example")],
+          ["level", t("row.field.level")],
+        ];
+        for (const [key, label] of rows) {
+          const row = body.createDiv({ cls: "vt-wh-inforow" });
+          row.createSpan({ cls: "vt-wh-inforow-label", text: label });
+          this.field(row, entry, key, label, { multiline: true });
+        }
+      });
+    }
+
+    const morphemes = this.host.morphemes;
+    if (morphemes && breakdownDisplay(morphemes.breakdownOf(entry.id)) !== "none") {
+      this.fold(root, entry, "dna", L.dna, (body) => this.renderBreakdown(body, entry, morphemes));
+    }
+  }
+
+  // One collapsible category (arrow + name, nothing on the right). Open
+  // state is per word and per category, kept in the device's localStorage.
+  private fold(
+    parent: HTMLElement,
+    entry: VocabEntry,
+    section: FoldSection,
+    title: string,
+    build: (body: HTMLElement) => void
+  ): void {
+    const open = isOpenStored(this.host.app, entry.id, section);
+    const box = parent.createDiv({ cls: ["vt-wp-fold", open ? "is-open" : "is-closed"] });
+    const head = box.createEl("button", {
+      cls: "vt-wp-fold-head",
+      attr: { type: "button", "aria-expanded": String(open) },
+    });
+    setIcon(head.createSpan({ cls: "vt-wp-fold-chev" }), "chevron-right");
+    head.createSpan({ cls: "vt-wp-fold-title", text: title });
+    const body = box.createDiv({ cls: "vt-wp-fold-content" });
+    build(body);
+    head.addEventListener("click", () => {
+      const now = toggleStored(this.host.app, entry.id, section);
+      box.toggleClass("is-open", now);
+      box.toggleClass("is-closed", !now);
+      head.setAttr("aria-expanded", String(now));
+    });
   }
 
   // The emoji to the left of the word (09 §7.1 A7). A click turns it into
