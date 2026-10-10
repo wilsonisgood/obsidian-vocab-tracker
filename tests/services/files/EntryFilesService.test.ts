@@ -5,7 +5,7 @@ import type { Thread } from "../../../src/core/model/thread";
 import { ExportService } from "../../../src/services/export/ExportService";
 import type { ExportDataPort } from "../../../src/services/export/ports";
 import { EntryFilesService, type EntryFilesDeps } from "../../../src/services/files/EntryFilesService";
-import { ENTRY_FILES, legacyTitleHeading, renderEntryFile } from "../../../src/services/files/entryFiles";
+import { ENTRY_FILES, legacyTitleHeading, planEntryRenames, renderEntryFile } from "../../../src/services/files/entryFiles";
 import type { FilesExportPort } from "../../../src/core/ports";
 import { cleanFolder, resolveFilesSettings } from "../../../src/services/files/settings";
 import { MemorySeeds, MemoryVault } from "./fakes";
@@ -17,8 +17,8 @@ beforeAll(() => {
 });
 afterAll(() => setLocale(previousLocale));
 
-const FLASHCARDS = "vocab-list/單字卡.md";
-const TRIVIA = "vocab-list/冷知識.md";
+const FLASHCARDS = "vocab-list/Card.md";
+const TRIVIA = "vocab-list/Eureka.md";
 
 function setup(extra: Partial<EntryFilesDeps> = {}) {
   const vault = new MemoryVault();
@@ -38,7 +38,7 @@ function fakeExport(log: string[]): FilesExportPort {
 
 describe("entry file content", () => {
   it("hides the block's own favorites list in 冷知識.md (the exported section lists them)", () => {
-    expect(renderEntryFile("trivia")).toContain("```vocab-trivia\nfavorites: off\n```");
+    expect(renderEntryFile("trivia")).toContain("```vocab-eureka\nfavorites: off\n```");
   });
 
   it("has the frontmatter id and the code block, without a heading repeating the inline title (1005 #4)", () => {
@@ -94,9 +94,9 @@ describe("files settings", () => {
 
   it("derives the export folders, following a renamed 冷知識.md", async () => {
     const { vault, files } = setup({ settings: () => ({ folder: "英文" }) });
-    expect(files.exportFolders()).toEqual({ words: "英文/單字", threads: "英文/討論串", triviaFile: "英文/冷知識.md" });
+    expect(files.exportFolders()).toEqual({ words: "英文/單字", threads: "英文/討論串", triviaFile: "英文/Eureka.md" });
     await files.ensure("trivia");
-    vault.move("英文/冷知識.md", "我的冷知識.md");
+    vault.move("英文/Eureka.md", "我的冷知識.md");
     expect(files.exportFolders().triviaFile).toBe("我的冷知識.md");
   });
 });
@@ -123,13 +123,13 @@ describe("EntryFilesService.ensure", () => {
     const { vault, files } = setup();
     await files.ensure("families");
     const moved = "notes/我的字族.md";
-    vault.move("vocab-list/字族樹.md", moved);
+    vault.move("vocab-list/Galaxy.md", moved);
     vault.files.set(moved, vault.files.get(moved) + "\n手寫的內容\n");
     const before = vault.files.get(moved);
     vault.log = [];
     expect(await files.ensure("families")).toBe(moved);
     expect(files.entryFilePath("families")).toBe(moved);
-    expect(vault.files.has("vocab-list/字族樹.md")).toBe(false);
+    expect(vault.files.has("vocab-list/Galaxy.md")).toBe(false);
     expect(vault.files.get(moved)).toBe(before);
     expect(vault.log).toEqual([]);
   });
@@ -138,15 +138,15 @@ describe("EntryFilesService.ensure", () => {
     const { vault, files } = setup();
     const [a, b] = await Promise.all([files.ensure("verbs"), files.ensure("verbs")]);
     expect(a).toBe(b);
-    expect(vault.log).toEqual(["create vocab-list/動詞用法.md"]);
+    expect(vault.log).toEqual(["create vocab-list/Usage.md"]);
   });
 
   it("uses a file that appeared while it was creating one (sync)", async () => {
     const { vault, files } = setup();
     const synced = "---\nvocab-tracker: entry\nvocab-tracker-id: verbs\n---\nfrom the other device\n";
     vault.beforeCreate = (path) => vault.files.set(path, synced);
-    expect(await files.ensure("verbs")).toBe("vocab-list/動詞用法.md");
-    expect(vault.files.get("vocab-list/動詞用法.md")).toBe(synced);
+    expect(await files.ensure("verbs")).toBe("vocab-list/Usage.md");
+    expect(vault.files.get("vocab-list/Usage.md")).toBe(synced);
   });
 
   it("rethrows a create failure when nothing is there", async () => {
@@ -161,8 +161,8 @@ describe("EntryFilesService.ensure", () => {
     const { vault, files } = setup({ settings: () => ({ folder: "英文/vocab" }) });
     const legacy = "# 單字卡\n\n```vocab-flashcards\n```\n";
     vault.files.set(FLASHCARDS, legacy);
-    expect(await files.ensure("flashcards")).toBe("英文/vocab/單字卡.md");
-    expect(vault.files.get("英文/vocab/單字卡.md")).toBe(legacy);
+    expect(await files.ensure("flashcards")).toBe("英文/vocab/Card.md");
+    expect(vault.files.get("英文/vocab/Card.md")).toBe(legacy);
     expect(vault.files.has(FLASHCARDS)).toBe(false);
   });
 
@@ -180,11 +180,11 @@ describe("EntryFilesService.ensureAll", () => {
     const { vault, files } = setup();
     const created = await files.ensureAll();
     expect(created).toEqual([
-      "vocab-list/單字卡.md",
-      "vocab-list/字族樹.md",
-      "vocab-list/動詞用法.md",
-      "vocab-list/冷知識.md",
-      "vocab-list/Word DNA.md",
+      "vocab-list/Card.md",
+      "vocab-list/Galaxy.md",
+      "vocab-list/Usage.md",
+      "vocab-list/Eureka.md",
+      "vocab-list/DNA.md",
     ]);
     expect([...vault.files.keys()].sort()).toEqual([...created].sort());
   });
@@ -359,5 +359,90 @@ describe("word pages", () => {
     const cut = before.indexOf("%% vt:begin discussion %%");
     expect(after.slice(0, cut)).toBe(before.slice(0, cut));
     exp.dispose();
+  });
+});
+
+describe("planEntryRenames (1010 A)", () => {
+  const none = () => false;
+
+  it("gives a file still named after the old default its new name, in the same folder", () => {
+    expect(
+      planEntryRenames(
+        [
+          { id: "flashcards", path: "vocab-list/單字卡.md" },
+          { id: "families", path: "notes/字族樹.md" },
+          { id: "verbs", path: "vocab-list/動詞用法.md" },
+          { id: "trivia", path: "vocab-list/冷知識.md" },
+          { id: "dna", path: "vocab-list/Word DNA.md" },
+          { id: "list", path: "vocab-list/vocab-list.md" },
+        ],
+        none
+      )
+    ).toEqual([
+      ["vocab-list/單字卡.md", "vocab-list/Card.md"],
+      ["notes/字族樹.md", "notes/Galaxy.md"],
+      ["vocab-list/動詞用法.md", "vocab-list/Usage.md"],
+      ["vocab-list/冷知識.md", "vocab-list/Eureka.md"],
+      ["vocab-list/Word DNA.md", "vocab-list/DNA.md"],
+      ["vocab-list/vocab-list.md", "vocab-list/List.md"],
+    ]);
+  });
+
+  it("leaves a name the user chose, and a file already on the new name", () => {
+    expect(
+      planEntryRenames(
+        [
+          { id: "families", path: "vocab-list/我的字族.md" },
+          { id: "flashcards", path: "vocab-list/Card.md" },
+        ],
+        none
+      )
+    ).toEqual([]);
+  });
+
+  it("skips a file whose new name is taken", () => {
+    const taken = (p: string) => p === "vocab-list/Card.md";
+    expect(planEntryRenames([{ id: "flashcards", path: "vocab-list/單字卡.md" }], taken)).toEqual([]);
+  });
+});
+
+describe("EntryFilesService old-name migration (1010 A)", () => {
+  const withId = (id: string, body = "") =>
+    `---\nvocab-tracker: entry\nvocab-tracker-id: ${id}\n---\n${body}`;
+
+  it("renames (not delete + create) and keeps every character", async () => {
+    const { vault, files, seeds } = setup();
+    seeds.ids.add("families");
+    const text = withId("families", "# 字族樹\n\n```vocab-families\n```\n我的筆記\n");
+    vault.files.set("vocab-list/字族樹.md", text);
+    await files.ensureAll();
+    expect(vault.files.get("vocab-list/Galaxy.md")).toBe(text);
+    expect(vault.files.has("vocab-list/字族樹.md")).toBe(false);
+    expect(vault.log).toContain("rename vocab-list/字族樹.md → vocab-list/Galaxy.md");
+    expect(vault.log.some((l) => l.startsWith("create vocab-list/Galaxy"))).toBe(false);
+  });
+
+  it("renames an old file without an id, too", async () => {
+    const { vault, files } = setup();
+    const text = "```vocab-flashcards\n```\n";
+    vault.files.set("vocab-list/單字卡.md", text);
+    expect(await files.ensure("flashcards")).toBe("vocab-list/Card.md");
+    expect(vault.files.get("vocab-list/Card.md")).toBe(text);
+  });
+
+  it("leaves a renamed file and one whose new name is taken alone", async () => {
+    const { vault, files, seeds } = setup();
+    seeds.ids.add("families").add("verbs");
+    const mine = withId("families", "mine");
+    vault.files.set("notes/我的字族.md", mine);
+    const old = withId("verbs", "old");
+    vault.files.set("vocab-list/動詞用法.md", old);
+    vault.files.set("vocab-list/Usage.md", "someone else's");
+    vault.log = [];
+    await files.ensureAll();
+    expect(vault.files.get("notes/我的字族.md")).toBe(mine);
+    expect(vault.files.get("vocab-list/動詞用法.md")).toBe(old);
+    expect(vault.files.get("vocab-list/Usage.md")).toBe("someone else's");
+    expect(vault.log.some((l) => l.startsWith("rename"))).toBe(false);
   });
 });

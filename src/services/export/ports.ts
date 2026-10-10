@@ -50,5 +50,5 @@ export interface ExportFolders {
 export const DEFAULT_EXPORT_FOLDERS: ExportFolders = {
   words: "vocab-list/單字",
   threads: "vocab-list/討論串",
-  triviaFile: "vocab-list/冷知識.md",
+  triviaFile: "vocab-list/Eureka.md",
 };

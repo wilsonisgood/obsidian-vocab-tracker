@@ -162,7 +162,7 @@ describe("sidebar strings", () => {
 
   it("follows the active locale", () => {
     setLocale("zh-TW");
-    expect(t("sidebar.group.family", { name: "服裝" })).toBe("字族樹：服裝");
+    expect(t("sidebar.group.family", { name: "服裝" })).toBe("Galaxy：服裝");
     setLocale("en");
     expect(t("sidebar.group.wordlist")).toBe("Exam word lists");
   });

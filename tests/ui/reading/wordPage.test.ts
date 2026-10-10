@@ -161,7 +161,7 @@ describe("word page origin chip (1005 #13)", () => {
   it("names the family and the group the word sits in", () => {
     const view = originView(sequin, family)!;
     expect(view).toEqual({ familyId: "f9", name: "clothing 服裝 › 舞台" });
-    expect(originLabel(view)).toBe("來源：字族樹 clothing 服裝 › 舞台");
+    expect(originLabel(view)).toBe("來源：Galaxy clothing 服裝 › 舞台");
     // Matched by spelling when the member has no entry id yet.
     expect(originView({ id: "e-ap", word: "Apron", origin: "family:f9" }, family)?.name).toBe("clothing 服裝 › 配件");
     // No longer a member (regrouped): just the family.
@@ -171,7 +171,7 @@ describe("word page origin chip (1005 #13)", () => {
   it("still says where it came from when the family is gone", () => {
     const view = originView(sequin, undefined)!;
     expect(view).toEqual({ familyId: "f9" });
-    expect(originLabel(view)).toBe("來源：字族樹");
+    expect(originLabel(view)).toBe("來源：Galaxy");
     expect(originView(sequin, { ...family, deletedAt: "2026-10-05T00:00:00Z" })).toEqual({ familyId: "f9" });
     expect(originView(entry("e1", "glittery"), family)).toBeNull();
   });

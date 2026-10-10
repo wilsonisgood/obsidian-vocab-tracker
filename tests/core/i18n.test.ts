@@ -37,7 +37,7 @@ describe("dictionaries", () => {
   it("carry the M7 learning-block strings", () => {
     setLocale("zh-TW");
     expect(t("learn.family.saved", { families: 3 })).toBe(
-      "已存 3 個字族。新字以文字成員存在字族樹裡，點一下（或旁邊的 ＋）就能加入單字庫。"
+      "已存 3 個字族。新字以文字成員存在 Galaxy 裡，點一下（或旁邊的 ＋）就能加入單字庫。"
     );
     setLocale("en");
     expect(t("learn.family.saved", { families: 3 })).toBe(

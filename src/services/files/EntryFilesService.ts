@@ -1,9 +1,11 @@
+import { joinPath } from "../../core/text/slug";
 import type { ExportFolders } from "../export/ports";
 import {
   ENTRY_FILE_KIND,
   ENTRY_FILES,
   entryFileDef,
   entryFilePath,
+  planEntryRenames,
   renderEntryFile,
   type EntryFileId,
 } from "./entryFiles";
@@ -12,7 +14,7 @@ import { filesPaths, inFolderPath, resolveFilesSettings, type FilesPaths, type F
 
 // The plugin's notes as files (規劃書 06 §8.3, §4.6):
 //
-// - Entry files (單字卡.md, 字族樹.md, 動詞用法.md, 冷知識.md): created only
+// - Entry files (Card.md, Galaxy.md, Usage.md, Eureka.md, DNA.md): created only
 //   when missing, never overwritten. Found by their frontmatter id first,
 //   so a file the user renamed or moved is still the one used; then at
 //   the configured folder (an older file without an id is adopted as is).
@@ -58,7 +60,7 @@ export class EntryFilesService {
     return filesPaths(this.settings());
   }
 
-  // The folders ExportService writes to. 冷知識.md is wherever the trivia
+  // The folders ExportService writes to. Eureka.md is wherever the trivia
   // entry file is now, so the saved list lands in the file the user kept.
   exportFolders(): ExportFolders {
     const p = this.paths();
@@ -90,6 +92,7 @@ export class EntryFilesService {
   private async doEnsure(id: EntryFileId): Promise<string> {
     const { vault } = this.deps;
     await vault.ready?.();
+    await this.migrateName(id);
     const found = vault.findManaged(ENTRY_FILE_KIND, id);
     if (found) return this.seeded(id, found);
 
@@ -116,6 +119,26 @@ export class EntryFilesService {
     return this.seeded(id, path);
   }
 
+  // A file still named after the pre-1010 default (單字卡.md…) becomes the
+  // new name through a rename (links follow, content untouched). Found by
+  // frontmatter id, else by the old name in the folder (an older file
+  // without an id). A name the user chose, or a taken target, is skipped.
+  private async migrateName(id: EntryFileId): Promise<void> {
+    const { vault } = this.deps;
+    const legacyName = `${entryFileDef(id).legacyName}.md`;
+    const path =
+      vault.findManaged(ENTRY_FILE_KIND, id) ??
+      [joinPath(this.paths().folder, legacyName), joinPath(LEGACY_FOLDER, legacyName)].find((p) => vault.exists(p));
+    if (!path) return;
+    for (const [from, to] of planEntryRenames([{ id, path }], (p) => vault.exists(p))) {
+      try {
+        await vault.rename(from, to);
+      } catch (e) {
+        console.error(`Vocab Tracker: couldn't rename ${from}`, e);
+      }
+    }
+  }
+
   private async seeded(id: EntryFileId, path: string): Promise<string> {
     try {
       await this.deps.seeds?.markSeeded([id]);
@@ -128,6 +151,9 @@ export class EntryFilesService {
   // Startup: creates the entry files that were never created before.
   // Resolves to the paths created (or adopted) this time.
   async ensureAll(): Promise<string[]> {
+    await this.deps.vault.ready?.();
+    // Existing files take the new names even when they were seeded long ago.
+    for (const def of ENTRY_FILES) await this.migrateName(def.id);
     const done = (await this.deps.seeds?.seeded()) ?? new Set<string>();
     const out: string[] = [];
     for (const def of ENTRY_FILES) {

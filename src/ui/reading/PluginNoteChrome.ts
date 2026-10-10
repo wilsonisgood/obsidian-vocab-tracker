@@ -17,7 +17,7 @@ import { chromeState } from "./pluginNote";
 // - An entry file created before 1005 starts with 「# 字族樹」 right under
 //   the inline title showing the same name: the inline title is hidden
 //   (`vt-hide-inline-title`) rather than editing the file.
-// - vocab-list.md (main.ts's starter file) opens with its own 「#
+// - List.md (vocab-list.md before 1010; main.ts's starter file) opens with its own 「#
 //   Vocabulary List」 above the vocab-dashboard block instead — no
 //   frontmatter, so it's judged separately (chromeState's
 //   `hasDashboardBlock` param, from this note's own rendered DOM): the

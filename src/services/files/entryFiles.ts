@@ -5,7 +5,7 @@ import { frontmatter } from "../export/renderers/common";
 import { renderTriviaFavoritesSections } from "../export/renderers/triviaFavorites";
 import type { RenderContext } from "../export/types";
 
-// The four entry files (規劃書 06 §8.3, screen F1): one note per learning
+// The entry files (規劃書 06 §8.3, screen F1): one note per learning
 // mode, holding that mode's code block. Created only when missing, never
 // overwritten; found again by their frontmatter id when the user renames
 // or moves them.
@@ -23,18 +23,59 @@ export interface EntryFileDef {
   block: string;
   // Block body (`key: value` lines), if any.
   params?: string;
+  // The default file name before the 1010 rename (第十二波 A), without
+  // ".md". A file still carrying it is renamed to `name`.
+  legacyName: string;
 }
 
+// One name per feature, the same in both interface languages (1010 A):
+// Card, Galaxy, Usage, Eureka, DNA. The old code block names keep working
+// (registry.ts); only new files use the new ones.
 export const ENTRY_FILES: readonly EntryFileDef[] = [
-  { id: "flashcards", name: "單字卡", block: "vocab-flashcards" },
-  { id: "families", name: "字族樹", block: "vocab-families" },
-  { id: "verbs", name: "動詞用法", block: "vocab-verbs" },
+  { id: "flashcards", name: "Card", block: "vocab-card", legacyName: "單字卡" },
+  { id: "families", name: "Galaxy", block: "vocab-galaxy", legacyName: "字族樹" },
+  { id: "verbs", name: "Usage", block: "vocab-usage", legacyName: "動詞用法" },
   // The saved list is the exported section under the block, so the block
   // itself doesn't list favorites a second time.
-  { id: "trivia", name: "冷知識", block: "vocab-trivia", params: "favorites: off" },
+  { id: "trivia", name: "Eureka", block: "vocab-eureka", params: "favorites: off", legacyName: "冷知識" },
   // Word DNA (規劃書 09 §7).
-  { id: "dna", name: "Word DNA", block: "vocab-dna" },
+  { id: "dna", name: "DNA", block: "vocab-dna", legacyName: "Word DNA" },
 ];
+
+// The word list's starter note (main.ts) is not an entry file (no
+// frontmatter id) but follows the same rename.
+export const LIST_FILE_NAME = "List";
+export const LIST_FILE_LEGACY_NAME = "vocab-list";
+
+export interface RenameCandidate {
+  // An EntryFileId, or "list" for the word list's starter note.
+  id: EntryFileId | "list";
+  // Where the file is now.
+  path: string;
+}
+
+// The renames to do ([from, to] pairs): a file whose name is still the old
+// default gets the new one, in the same folder. A name the user chose is
+// left alone, and so is a file whose target is already taken.
+export function planEntryRenames(
+  files: readonly RenameCandidate[],
+  exists: (path: string) => boolean
+): Array<[string, string]> {
+  const out: Array<[string, string]> = [];
+  for (const f of files) {
+    const names =
+      f.id === "list"
+        ? { legacy: LIST_FILE_LEGACY_NAME, next: LIST_FILE_NAME }
+        : { legacy: entryFileDef(f.id).legacyName, next: entryFileDef(f.id).name };
+    const slash = f.path.lastIndexOf("/");
+    const dir = slash < 0 ? "" : f.path.slice(0, slash);
+    if (f.path.slice(slash + 1) !== `${names.legacy}.md`) continue;
+    const to = joinPath(dir, `${names.next}.md`);
+    if (to === f.path || exists(to)) continue;
+    out.push([f.path, to]);
+  }
+  return out;
+}
 
 export const ENTRY_FILE_IDS: readonly EntryFileId[] = ENTRY_FILES.map((d) => d.id);
 
@@ -64,11 +105,11 @@ function emptyContext(): RenderContext {
   };
 }
 
-// A new entry file. 冷知識.md also gets the (empty) saved-trivia section
+// A new entry file. Eureka.md also gets the (empty) saved-trivia section
 // right under its block, so ExportService fills it in place instead of
 // appending it after whatever the user writes below.
 //
-// No 「# 字族樹」 heading: Obsidian already shows the file name as the
+// No 「# Galaxy」 heading: Obsidian already shows the file name as the
 // inline title right above, so the heading only repeated it (1005 回饋 #4).
 // Files created before keep theirs — the plugin never edits an existing
 // entry file; PluginNoteChrome hides the inline title on those instead
