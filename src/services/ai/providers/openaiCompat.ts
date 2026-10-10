@@ -194,7 +194,7 @@ export class OpenAiCompatProvider implements AiProvider {
 
   private modelFor(tier: AiRequest["tier"]): string {
     const { smartModel, fastModel } = this.deps.config;
-    const model = (tier === "smart" ? smartModel : fastModel) || smartModel || fastModel;
+    const model = smartModel || fastModel;
     if (!model) throw new AiError("bad_request", "No model name configured");
     return model;
   }

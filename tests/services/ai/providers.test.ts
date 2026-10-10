@@ -216,9 +216,16 @@ describe("Anthropic request building", () => {
     expect(t.body().model).toBe("claude-sonnet-5");
   });
 
-  it("uses the fast model for fast-tier requests", async () => {
+  it("fast-tier requests use the one model (smartModel) too (1010 #S3)", async () => {
     const t = new FakeTransport(() => response(fixture("anthropic-basic.txt")));
     await anthropic(t).complete({ ...REQ, tier: "fast" }, { signal: signal() });
+    expect(t.body().model).toBe("claude-sonnet-5");
+  });
+
+  it("falls back to fastModel only when smartModel is empty", async () => {
+    const t = new FakeTransport(() => response(fixture("anthropic-basic.txt")));
+    const config = { ...defaultAiSettings().providers.anthropic, smartModel: "" };
+    await new AnthropicProvider({ config, apiKey: "k", transport: t, now: () => 0 }).complete({ ...REQ, tier: "fast" }, { signal: signal() });
     expect(t.body().model).toBe("claude-haiku-4-5");
   });
 });
@@ -383,6 +390,21 @@ describe("OpenAI-compatible usage", () => {
     const r = await p.complete({ system: [], messages: [{ role: "user", content: "ping" }], maxTokens: 256, tier: "smart" }, { signal: new AbortController().signal });
     expect(transport.requests[0].url).toBe("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions");
     expect(r.usage).toMatchObject({ input: 2, output: 89 });
+  });
+});
+
+describe("OpenAI-compatible model choice (1010 #S3)", () => {
+  const run = async (config: { smartModel: string; fastModel: string }, tier: "smart" | "fast") => {
+    const t = new FakeTransport(() => response(JSON.stringify({ choices: [{ message: { content: "x" }, finish_reason: "stop" }], usage: {} }), { headers: { "content-type": "application/json" } }));
+    const p = new OpenAiCompatProvider({ config: { apiKey: "", baseUrl: "http://localhost:11434/v1", ...config }, apiKey: "", transport: t, now: () => 0 });
+    await p.complete({ ...REQ, tier }, { signal: signal() });
+    return t.body().model;
+  };
+  it("fast tier uses smartModel", async () => {
+    expect(await run({ smartModel: "big", fastModel: "small" }, "fast")).toBe("big");
+  });
+  it("empty smartModel falls back to fastModel", async () => {
+    expect(await run({ smartModel: "", fastModel: "small" }, "smart")).toBe("small");
   });
 });
 

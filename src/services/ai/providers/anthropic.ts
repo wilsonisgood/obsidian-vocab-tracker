@@ -219,7 +219,7 @@ export class AnthropicProvider implements AiProvider {
 
   private modelFor(tier: AiRequest["tier"]): string {
     const { smartModel, fastModel } = this.deps.config;
-    return (tier === "smart" ? smartModel : fastModel) || smartModel || fastModel;
+    return smartModel || fastModel;
   }
 
   async complete(req: AiRequest, opt: CompleteOptions): Promise<AiResult> {

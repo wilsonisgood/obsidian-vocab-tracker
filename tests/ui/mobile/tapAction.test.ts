@@ -48,14 +48,12 @@ describe("formFactorOf", () => {
 });
 
 describe("tapActionFor", () => {
-  it("desktop uses tapAction, iPhone and iPad tapActionMobile — with defaults for old data", () => {
-    expect(tapActionFor(undefined, "desktop")).toBe("menu");
-    expect(tapActionFor({ locale: "auto" }, "phone")).toBe("save");
-    expect(tapActionFor({ locale: "auto" }, "tablet")).toBe("save");
-    const ui = { locale: "auto" as const, tapAction: "open" as const, tapActionMobile: "menu" as const };
-    expect(tapActionFor(ui, "desktop")).toBe("open");
-    expect(tapActionFor(ui, "phone")).toBe("menu");
-    expect(tapActionFor(ui, "tablet")).toBe("menu");
+  it("one setting for every device: wordTapAction, default open; the old keys are ignored", () => {
+    for (const form of ["desktop", "phone", "tablet"] as const) {
+      expect(tapActionFor(undefined, form)).toBe("open");
+      expect(tapActionFor({ locale: "auto", tapAction: "save", tapActionMobile: "menu" }, form)).toBe("open");
+      expect(tapActionFor({ locale: "auto", wordTapAction: "menu" }, form)).toBe("menu");
+    }
   });
 });
 
