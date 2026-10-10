@@ -30,7 +30,7 @@ import {
   type FamilyFocus,
   type FamilyTreeView,
 } from "./familiesModel";
-import { getLocale, joinWords, t } from "../../core/i18n";
+import { joinWords, t } from "../../core/i18n";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate, wordChip } from "./learnUi";
 
 // ── vocab-families code block (規劃書 06 §7.2, §9.6, 09 §6.2, 10 §2; 設計稿
@@ -92,10 +92,6 @@ export interface FamiliesBlockOpts {
 }
 
 // 1010 #G2 新字串（整合時搬進 i18n）。
-const L = {
-  added: (w: string) => (getLocale() === "zh-TW" ? `已加入 ${w}` : `Added ${w}`),
-  open: () => (getLocale() === "zh-TW" ? "打開" : "Open"),
-};
 const GALAXY_NOTICE_MS = 5000;
 
 export class FamiliesBlock extends MarkdownRenderChild {
@@ -638,7 +634,7 @@ export class FamiliesBlock extends MarkdownRenderChild {
           // but the word card only opens when the notice is tapped.
           const entryId = entry.id;
           const openCard = () => void this.plugin.surfaces.openWordCard(entryId, "data");
-          actionNotice(L.added(entry.word), [{ label: L.open(), run: openCard }], GALAXY_NOTICE_MS, openCard);
+          actionNotice(t("galaxy.addedWord", { word: entry.word }), [{ label: t("galaxy.openWord"), run: openCard }], GALAXY_NOTICE_MS, openCard);
           this.galaxySelected = entry.id;
           this.galaxyFresh.delete(nodeId);
         }

@@ -57,7 +57,7 @@ describe("toast 文案", () => {
 
   it("addedWord：加入單字庫文案", () => {
     setLocale("zh-TW");
-    expect(t("galaxy.addedWord", { word: "kettle" })).toBe("已把 kettle 加入單字庫，會自動查字典");
+    expect(t("galaxy.addedWord", { word: "kettle" })).toBe("已加入 kettle");
   });
 
   it("noMoreSuggestions：固定文案", () => {

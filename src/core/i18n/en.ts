@@ -674,7 +674,8 @@ export const en = {
   "galaxy.stop": "Stop",
   "galaxy.expandFound": "AI found {n} new words: {words} — tap a node, then ＋ to add",
   "galaxy.noMoreSuggestions": "No more suggestions for now",
-  "galaxy.addedWord": "Added {word} to your word list — looking it up automatically",
+  "galaxy.addedWord": "Added {word}",
+  "galaxy.openWord": "Open",
   "galaxy.graphAriaLabel": "{topic} word galaxy",
 
   // services/backup/format.ts morphemes count, alongside settings.backup.summary.trivia.

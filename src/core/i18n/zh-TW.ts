@@ -665,7 +665,8 @@ export const zhTW: Record<keyof typeof en, string> = {
   "galaxy.stop": "停止",
   "galaxy.expandFound": "AI 找到 {n} 個新字：{words}，點節點再按 ＋ 加入",
   "galaxy.noMoreSuggestions": "目前沒有更多建議了",
-  "galaxy.addedWord": "已把 {word} 加入單字庫，會自動查字典",
+  "galaxy.addedWord": "已加入 {word}",
+  "galaxy.openWord": "打開",
   "galaxy.graphAriaLabel": "{topic} 單字星系圖",
 
   // services/backup/format.ts 字素摘要，照 settings.backup.summary.trivia 的寫法。
