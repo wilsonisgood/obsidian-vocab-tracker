@@ -368,3 +368,71 @@ body.is-tablet .vt-fc-rate {
     min-height: 56px;
   }
 }
+
+/* ── 1010 #I1/#T3/#I2: sheet definitions, loading spinner, footer ♥ ─── */
+
+.vt-sheet .vt-sheet-card .vt-field-clamp {
+  font-size: 0.9em;
+  line-height: 1.4;
+  border: 1px solid transparent;
+  color: var(--text-normal);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.vt-sheet .vt-sheet-card .vt-field-clamp.is-truncated {
+  cursor: pointer;
+}
+
+.vt-sheet .vt-sheet-card .vt-field-clamp.is-expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+/* Loading: the ghost rows are one line each (same box as a loaded
+   definition), the spinner floats over them. */
+.vt-sheet .vt-sheet-card .vt-row-body.is-loading {
+  position: relative;
+}
+
+.vt-sheet .vt-sheet-card .vt-field-clamp.is-ghost {
+  visibility: hidden;
+  -webkit-line-clamp: 1;
+}
+
+.vt-sheet .vt-sheet-card .vt-row-spinner {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  margin: 8px 0 0 -11px;
+  border: 2px solid var(--background-modifier-border);
+  border-top-color: var(--text-muted);
+  border-radius: 50%;
+  animation: vt-row-spin 0.8s linear infinite;
+}
+
+@keyframes vt-row-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ♥ in the footer: same 44px target as the other footer icons, far right. */
+.vt-sheet .vt-sheet-card .vt-row-footer-actions .vt-row-like {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 1.3em;
+  border-radius: 10px;
+  background: var(--background-primary);
+}

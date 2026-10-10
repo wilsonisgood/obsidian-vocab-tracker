@@ -11,6 +11,7 @@ import { renderWordAiTab } from "./AiTab";
 import { unlikeEntry } from "./likeAction";
 import { abbreviatePartOfSpeech } from "./partOfSpeech";
 import { promotePreview } from "./previewEntry";
+import { definitionClamp } from "./definitionClamp";
 import {
   autoGrowTextarea,
   commitEntryField,
@@ -154,6 +155,11 @@ export function renderVocabRow(
   // (promotePreview is async — addWordToVocab reads/modifies the note).
   let promoting = false;
 
+  // 1010 #T3: per-open definition UI state (sheet only).
+  const expandedFields = new Set<EditableField>();
+  const editingFields = new Set<EditableField>();
+  let focusField: EditableField | null = null;
+
   const like = async (e: MouseEvent) => {
     e.stopPropagation();
     if (opts.preview) {
@@ -194,15 +200,6 @@ export function renderVocabRow(
 
     // ── Header: always visible ───────────────────────────────────
     const head = rowEl.createEl("div", { cls: "vt-row-header" });
-
-    // 1009 #3: ♥ sits left of the word in the header for both variants now
-    // — the sheet used to push it behind a second tap in its own footer.
-    const likeBtn = head.createEl("span", { cls: "vt-row-like" });
-    likeBtn.toggleClass("is-liked", !!entry.liked);
-    likeBtn.setText(entry.liked ? "♥" : "♡");
-    likeBtn.setAttr("aria-label", t(entry.liked ? "like.unlike" : "like.like"));
-    likeBtn.setAttr("role", "button");
-    likeBtn.onclick = like;
 
     const wordWrap = head.createEl("span", { cls: "vt-row-wordwrap" });
     const wordEl = wordWrap.createEl("span", { text: entry.word, cls: "vt-row-word" });
@@ -264,6 +261,11 @@ export function renderVocabRow(
       };
     }
 
+    // 1010 #I2: non-sheet rows order the header's right side 展開箭頭 → ♥ → 喇叭
+    // (♥ used to sit left of the word). The sheet's ♥ lives in the footer's
+    // far-right slot instead (renderFooter), so it never moves on save.
+    if (!sheet) drawLikeBtn(head, entry, like);
+
     // 規格 #11: 喇叭留在標題列右上角 — 收合或展開都一樣，不搬到底部 footer。
     headSpeak();
 
@@ -288,7 +290,7 @@ export function renderVocabRow(
 
     if (tab === "ai" && opts.ui) {
       renderWordAiTab(plugin, body, entry, opts.ui, scope, opts.preview ? { ...opts.preview, refresh } : undefined);
-      renderFooter(body, plugin, entry, opts, scope, tab, () => redraw());
+      renderFooter(body, plugin, entry, opts, scope, tab, () => redraw(), sheet ? like : undefined);
       return rowEl;
     }
 
@@ -312,6 +314,38 @@ export function renderVocabRow(
       // and a filled field reads as plain text once the border drops away.
       const wrap = body.createEl("div", { cls: "vt-field" });
       if (value) wrap.addClass("is-filled");
+
+      // 1010 #T3: the sheet shows a filled definition as at most two lines
+      // with a trailing …; tapping a truncated one expands it (this open
+      // only — the sets live in this call's closure), tapping again edits.
+      if (sheet && value && !editingFields.has(key)) {
+        const expanded = expandedFields.has(key);
+        const box = wrap.createDiv({ cls: "vt-field-clamp", text: value });
+        box.toggleClass("is-expanded", expanded);
+        const measure = () => {
+          if (expanded) {
+            box.addClass("is-truncated");
+            return;
+          }
+          const lh = parseFloat(getComputedStyle(box).lineHeight);
+          const { truncated } = definitionClamp(box.scrollHeight, lh);
+          box.toggleClass("is-truncated", truncated);
+        };
+        requestAnimationFrame(measure);
+        box.onclick = (e) => {
+          e.stopPropagation();
+          if (!expanded && box.hasClass("is-truncated")) {
+            expandedFields.add(key);
+          } else if (!opts.preview) {
+            editingFields.add(key);
+            focusField = key;
+          } else {
+            return;
+          }
+          redraw();
+        };
+        return;
+      }
       const cls = ["vt-input", "vt-field-box"];
       if (fieldOpts.multiline) cls.push("vt-textarea");
 
@@ -322,6 +356,10 @@ export function renderVocabRow(
         inp.placeholder = t("row.field.placeholder", { label: label.toLowerCase() });
         inp.onclick = (e) => e.stopPropagation();
         autoGrowTextarea(inp);
+        if (focusField === key) {
+          focusField = null;
+          requestAnimationFrame(() => inp.focus());
+        }
         // 1009-2 #1: a preview card's fields are read-only — nothing
         // commits until ♥/the first AI question promotes it for real.
         if (opts.preview) {
@@ -329,6 +367,9 @@ export function renderVocabRow(
         } else {
           inp.addEventListener("input", () => autoGrowTextarea(inp));
           inp.onchange = () => commitField(key, inp.value);
+          inp.onblur = () => {
+            if (editingFields.delete(key)) redraw();
+          };
         }
       } else {
         const inp = wrap.createEl("input", { cls });
@@ -343,7 +384,17 @@ export function renderVocabRow(
 
     // 1009-2 #1: while the preview's own dictionary fetch is in flight
     // (or failed) — the Info screen still shows, ♥ still works either way.
-    if (opts.preview && opts.preview.status !== "ready") {
+    // 1010 #I1: on the sheet, loading = a centred spinner over two ghost
+    // one-line definition rows, so the card is as tall as once loaded.
+    const loadingSheet = sheet && opts.preview?.status === "loading";
+    if (loadingSheet) {
+      body.addClass("is-loading");
+      body.createDiv({ cls: "vt-row-spinner" });
+      for (let i = 0; i < 2; i++) {
+        const ghost = body.createDiv({ cls: "vt-field" });
+        ghost.createDiv({ cls: "vt-field-clamp is-ghost", text: "\u00a0" });
+      }
+    } else if (opts.preview && opts.preview.status !== "ready") {
       body.createDiv({
         cls: ["vt-row-preview-hint", opts.preview.status === "error" ? "is-error" : ""].filter(Boolean),
         text: t(opts.preview.status === "error" ? "row.preview.error" : "row.preview.loading"),
@@ -353,11 +404,13 @@ export function renderVocabRow(
     // 規格 #12/1009 #1: Info 畫面只留英文定義、中文定義（可編輯），下面是程度
     // 標籤（唯讀 chip）— 音標、同義字、反義字、例句、文法提示、出處、複習時間
     // 都到單字頁看（src/ui/blocks/wordHeader.ts）。Sheet 跟 row 完全同一份。
-    mkField(t("row.field.definition"), "definition", { multiline: true });
-    mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
+    if (!loadingSheet) {
+      mkField(t("row.field.definition"), "definition", { multiline: true });
+      mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
+    }
     renderLevelChips(body, entry);
 
-    renderFooter(body, plugin, entry, opts, scope, tab, () => redraw());
+    renderFooter(body, plugin, entry, opts, scope, tab, () => redraw(), sheet ? like : undefined);
 
     return rowEl;
   }
@@ -400,7 +453,8 @@ function renderFooter(
   opts: RowOptions,
   scope: Component,
   tab: WordTab,
-  redraw: () => void
+  redraw: () => void,
+  sheetLike?: (e: MouseEvent) => void
 ): void {
   const footer = body.createEl("div", { cls: "vt-row-footer" });
 
@@ -415,7 +469,12 @@ function renderFooter(
 
   // 1009-2 #1: a preview card can't open a word page or re-fetch the
   // dictionary — there's no entry yet to do either to.
-  if (opts.preview) return;
+  // 1010 #I2: on the sheet ♥ is always the right-most slot (added last) so
+  // it stays put when 開啟/重抓 appear after saving.
+  if (opts.preview) {
+    if (sheetLike) drawLikeBtn(actions, entry, sheetLike);
+    return;
+  }
 
   if (opts.openWordPage) {
     const wordPageBtn = footerBtn(actions, "external-link", t("word.openPageTitle"));
@@ -432,6 +491,16 @@ function renderFooter(
     await plugin.enrichEntry(entry, { verbose: true });
     redraw();
   };
+  if (sheetLike) drawLikeBtn(actions, entry, sheetLike);
+}
+
+function drawLikeBtn(parent: HTMLElement, entry: VocabEntry, onLike: (e: MouseEvent) => void): void {
+  const likeBtn = parent.createEl("span", { cls: "vt-row-like" });
+  likeBtn.toggleClass("is-liked", !!entry.liked);
+  likeBtn.setText(entry.liked ? "♥" : "♡");
+  likeBtn.setAttr("aria-label", t(entry.liked ? "like.unlike" : "like.like"));
+  likeBtn.setAttr("role", "button");
+  likeBtn.onclick = onLike;
 }
 
 // The Info/AI switch itself (規劃書 11 §1): sparkles + "AI" (with a live

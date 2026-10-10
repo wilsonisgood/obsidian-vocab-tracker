@@ -179,12 +179,12 @@ describe("WordRow — sheet variant now shares the row's body (1009 #1/#3)", () 
     expect(row.hasClass("is-expanded")).toBe(true);
   });
 
-  it("♥ is in the header, same spot as a plain row — no footer like any more", () => {
+  it("♥ is the footer's right-most slot (1010 #I2), not in the header", () => {
     const e = entry({ liked: false });
     const { row } = mount(e, "half", { variant: "sheet" });
-    expect(row.querySelector(".vt-row-header .vt-row-like")).not.toBeNull();
+    expect(row.querySelector(".vt-row-header .vt-row-like")).toBeNull();
     const footer = row.querySelector(".vt-row-footer")!;
-    expect(footer.querySelector(".vt-row-like")).toBeNull();
+    expect(footer.querySelector(".vt-row-like")).not.toBeNull();
   });
 });
 
