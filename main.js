@@ -256,8 +256,36 @@ function errorMessage(e) {
 }
 
 // src/services/dictionary/sources/wiktionary.ts
+var SKIPPED_POS = /* @__PURE__ */ new Set(["symbol", "proper noun", "letter"]);
+function parseSense(partOfSpeech, html) {
+  const cleaned = html.replace(/<style[\s\S]*?<\/style>/g, "");
+  const listAt = cleaned.search(/<(ol|ul|dl)[\s>]/);
+  const head = (listAt === -1 ? cleaned : cleaned.slice(0, listAt)).trim();
+  if (/^<i>[\s\S]*<\/i>$/.test(head) || /^<span class="use-with-mention"[^>]*>[^<]*<\/span>$/.test(head)) return null;
+  const definition = toText(head);
+  if (!definition) return null;
+  return { partOfSpeech, definition, labeled: head.includes("usage-label-sense") };
+}
+function toText(html) {
+  return html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").replace(/ ([.,;:])/g, "$1").trim();
+}
+function pickWiktionarySense(entries) {
+  var _a, _b, _c;
+  const firsts = [];
+  for (const entry of entries) {
+    const pos = (entry.partOfSpeech || "").toLowerCase();
+    if (SKIPPED_POS.has(pos)) continue;
+    const senses = (entry.definitions || []).map((d) => parseSense(pos, d.definition || "")).filter((s) => s !== null);
+    if (senses.length === 0) continue;
+    let sense = senses[0];
+    if (sense.definition.endsWith(":") && senses[1]) {
+      sense = { ...sense, definition: `${sense.definition} ${senses[1].definition}` };
+    }
+    firsts.push({ sense, niche: senses.length === 1 && sense.labeled });
+  }
+  return (_c = (_b = (_a = firsts.find((f) => !f.niche)) != null ? _a : firsts[0]) == null ? void 0 : _b.sense) != null ? _c : null;
+}
 async function fetchWiktionaryDefinition(http, w) {
-  var _a, _b;
   let res;
   try {
     res = await http.get(`https://en.wiktionary.org/api/rest_v1/page/definition/${http.encodeQueryParam(w)}`);
@@ -272,16 +300,9 @@ async function fetchWiktionaryDefinition(http, w) {
   } catch (e) {
     throw new Error("couldn't parse Wiktionary response", { cause: e });
   }
-  const entries = Array.isArray(data == null ? void 0 : data.en) ? data.en : [];
-  const entry = entries.find((en2) => {
-    var _a2, _b2;
-    return (_b2 = (_a2 = en2.definitions) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.definition;
-  });
-  if (!entry) throw new Error(`"${w}" not found in dictionary`);
-  const rawDefinition = ((_b = (_a = entry.definitions) == null ? void 0 : _a[0]) == null ? void 0 : _b.definition) || "";
-  const definition = rawDefinition.replace(/<[^>]+>/g, "").trim();
-  const partOfSpeech = (entry.partOfSpeech || "").toLowerCase();
-  return { definition, partOfSpeech };
+  const sense = pickWiktionarySense(Array.isArray(data == null ? void 0 : data.en) ? data.en : []);
+  if (!sense) throw new Error(`"${w}" not found in dictionary`);
+  return { definition: sense.definition, partOfSpeech: sense.partOfSpeech };
 }
 
 // src/services/dictionary/sources/datamuse.ts
