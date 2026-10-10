@@ -192,7 +192,7 @@ export class OpenAiCompatProvider implements AiProvider {
     return { url: `${this.baseUrl}/chat/completions`, method: "POST", headers, body: JSON.stringify(body) };
   }
 
-  private modelFor(tier: AiRequest["tier"]): string {
+  private modelFor(_tier: AiRequest["tier"]): string {
     const { smartModel, fastModel } = this.deps.config;
     const model = smartModel || fastModel;
     if (!model) throw new AiError("bad_request", "No model name configured");

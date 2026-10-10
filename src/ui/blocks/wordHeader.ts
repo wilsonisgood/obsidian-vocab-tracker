@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { getLocale, t } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { originFamilyId, type Family } from "../../core/model/family";
 import type { BreakdownPart, WordBreakdown } from "../../core/model/morpheme";
@@ -19,19 +19,6 @@ import { parseBlockParams } from "./params";
 
 export { hasDictionaryData };
 
-// Temporary strings (wave 12 C) until the integration moves them into i18n.
-const LABELS = {
-  "zh-TW": { info: "Info", dna: "字根" },
-  en: { info: "Info", dna: "Roots" },
-};
-const L = {
-  get info() {
-    return LABELS[getLocale()].info;
-  },
-  get dna() {
-    return LABELS[getLocale()].dna;
-  },
-};
 
 // ── vocab-word code block: the header of a word page (規劃書 06 §8.2, W1/W2) ──
 //
@@ -332,7 +319,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
     this.field(notes, entry, "grammar", t("row.field.grammar"), { multiline: true });
 
     if (dict) {
-      this.fold(root, entry, "info", L.info, (body) => {
+      this.fold(root, entry, "info", t("word.tab.data"), (body) => {
         const rows: [EditableField, string][] = [
           ["phonetic", t("row.field.phonetic")],
           ["partOfSpeech", t("row.field.partOfSpeech")],
@@ -351,7 +338,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
 
     const morphemes = this.host.morphemes;
     if (morphemes && breakdownDisplay(morphemes.breakdownOf(entry.id)) !== "none") {
-      this.fold(root, entry, "dna", L.dna, (body) => this.renderBreakdown(body, entry, morphemes));
+      this.fold(root, entry, "dna", t("wordPage.section.dna"), (body) => this.renderBreakdown(body, entry, morphemes));
     }
   }
 

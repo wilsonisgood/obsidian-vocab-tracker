@@ -188,6 +188,7 @@ export const zhTW: Record<keyof typeof en, string> = {
 
   // ── M4：單字討論 ──────────────────────────────────────────────────
   "word.tab.data": "Info",
+  "wordPage.section.dna": "字根",
   "word.tab.ai": "AI",
   "chat.placeholder.word": "問 {word}…",
   "chat.send": "送出",

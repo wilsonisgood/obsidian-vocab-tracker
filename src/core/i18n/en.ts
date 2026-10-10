@@ -188,6 +188,7 @@ export const en = {
 
   // ── M4: word discussion ──────────────────────────────────────────
   "word.tab.data": "Info",
+  "wordPage.section.dna": "Roots",
   "word.tab.ai": "AI",
   "chat.placeholder.word": "Ask about {word}…",
   "chat.send": "Send",
