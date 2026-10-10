@@ -22,7 +22,7 @@ import { runUndoable } from "../kit/undoable";
 // caller (WordRow.ts) knows whether to also fire its onDeleted callback —
 // the "has a tag" branch doesn't delete anything, the word stays listed
 // (or not) purely by the existing filter rules.
-export function unlikeEntry(plugin: VocabTrackerPlugin, entry: VocabEntry): boolean {
+export function unlikeEntry(plugin: VocabTrackerPlugin, entry: VocabEntry, ms?: number): boolean {
   const knownTags = plugin.wordlists.index.tags;
   if (hasExamTag(entry, knownTags)) {
     void plugin.store.setLiked(entry, false);
@@ -33,6 +33,7 @@ export function unlikeEntry(plugin: VocabTrackerPlugin, entry: VocabEntry): bool
   const word = entry.word;
   const source = entry.source;
   runUndoable({
+    ms,
     message: t("undo.deletedWord", { word }),
     // Soft-delete only — never plugin.deleteEntry(), which would also
     // unhighlight the note immediately. The ==mark== (and the word page)

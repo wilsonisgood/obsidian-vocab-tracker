@@ -123,8 +123,8 @@ export class GalaxyGraph {
     this.resizeObserver =
       typeof ResizeObserver === "function"
         ? new ResizeObserver(() => {
-            const w = svg.getBoundingClientRect().width;
-            if (Math.abs(w - this.width) > RESIZE_THRESHOLD) this.recenter();
+            const r = svg.getBoundingClientRect();
+            if (Math.abs(r.width - this.width) > RESIZE_THRESHOLD || Math.abs(r.height - this.height) > RESIZE_THRESHOLD) this.recenter();
           })
         : null;
     this.resizeObserver?.observe(svg);
@@ -325,10 +325,13 @@ export class GalaxyGraph {
   // Selects a node (null = clear, e.g. clicking the background). Clicking
   // the node itself — not the heart, which stopPropagation()s — is the
   // only way to select (1009 #8).
-  select(id: string | null): void {
+  // `silent` re-applies the highlight without firing onSelect — used when
+  // the host re-renders and restores the previous selection (that must not
+  // re-open the word card; 1010 #G2).
+  select(id: string | null, opts?: { silent?: boolean }): void {
     this.selected = id;
     this.mark();
-    this.opts.onSelect(id);
+    if (!opts?.silent) this.opts.onSelect(id);
   }
 
   // Re-centers the current data (resize past the threshold, or a "reset
