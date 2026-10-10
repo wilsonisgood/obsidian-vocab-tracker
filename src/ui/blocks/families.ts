@@ -10,6 +10,8 @@ import { familiesPageGroups, familyGroupKey, familyIdOfGroupKey } from "../galax
 import { buildTopics, resolveAddWord, type GalaxyTopic, type GalaxyViewMode } from "../galaxy/galaxyView.model";
 import type { PageContext, PageWord } from "../page/pageContext";
 import { unlikeEntry } from "../word/likeAction";
+import { actionNotice } from "../mobile/actionNotice";
+import { galaxyFillHeight } from "../galaxy/galaxyHeight";
 import { aiErrorBox } from "../kit/aiDebug";
 import { datesText } from "../kit/dates";
 import { dragScroll } from "../kit/dragScroll";
@@ -28,7 +30,7 @@ import {
   type FamilyFocus,
   type FamilyTreeView,
 } from "./familiesModel";
-import { joinWords, t } from "../../core/i18n";
+import { getLocale, joinWords, t } from "../../core/i18n";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAiGate, wordChip } from "./learnUi";
 
 // ── vocab-families code block (規劃書 06 §7.2, §9.6, 09 §6.2, 10 §2; 設計稿
@@ -88,6 +90,13 @@ export interface FamiliesBlockOpts {
   // #12)。「開啟 Markdown 原始檔」已整個拿掉 (1009 #14)。
   fullscreen?: boolean;
 }
+
+// 1010 #G2 新字串（整合時搬進 i18n）。
+const L = {
+  added: (w: string) => (getLocale() === "zh-TW" ? `已加入 ${w}` : `Added ${w}`),
+  open: () => (getLocale() === "zh-TW" ? "打開" : "Open"),
+};
+const GALAXY_NOTICE_MS = 5000;
 
 export class FamiliesBlock extends MarkdownRenderChild {
   private root!: HTMLElement;
@@ -185,6 +194,7 @@ export class FamiliesBlock extends MarkdownRenderChild {
 
   onunload(): void {
     this.disposed = true;
+    this.viewportObserver?.disconnect();
     if (this.generating) this.plugin.families.stop();
     for (const ctrl of this.galaxyExpandCtrl.values()) ctrl.abort();
     this.destroyGalaxyGraph();
@@ -511,6 +521,7 @@ export class FamiliesBlock extends MarkdownRenderChild {
     const stage = bench.createDiv({ cls: "vt-gx-stage" });
     this.renderGalaxyToolbar(stage, selected, entry);
     const graphHost = stage.createDiv({ cls: "vt-gx-graph" });
+    this.fitGalaxyHeight(graphHost);
 
     // #7：拿掉詳情卡 — 已學節點改成直接開側欄卡片 (openSelectedKnownNode)，
     // 所以這裡不再需要 detail host／GalaxyDetail 實例。
@@ -520,7 +531,7 @@ export class FamiliesBlock extends MarkdownRenderChild {
       const model = buildGalaxyModel(selected, gxLookup, { onlyKnown: false, fresh: this.galaxyFresh });
       this.lastGalaxyModel = model;
       this.galaxyGraph!.setData(model, { recenter: false });
-      if (this.galaxySelected) this.galaxyGraph!.select(this.galaxySelected);
+      if (this.galaxySelected) this.galaxyGraph!.select(this.galaxySelected, { silent: true });
       return;
     }
 
@@ -548,7 +559,44 @@ export class FamiliesBlock extends MarkdownRenderChild {
     const model = buildGalaxyModel(selected, gxLookup, { onlyKnown: false, fresh: this.galaxyFresh });
     this.lastGalaxyModel = model;
     graph.setData(model, { recenter: true });
-    if (this.galaxySelected) graph.select(this.galaxySelected);
+    if (this.galaxySelected) graph.select(this.galaxySelected, { silent: true });
+  }
+
+  // 1010 #G1：嵌入時把窗戶高度撐到可視區底部（最少 400px）。用「捲到頂時」
+  // 的位置算（scrollTop 加回去），捲動不會變；容器 resize 時重算。全畫面不套用。
+  private fitGalaxyHeight(host: HTMLElement): void {
+    if (this.opts.fullscreen) return;
+    const scroller = (host.closest(".markdown-preview-view") ?? host.closest(".view-content")) as HTMLElement | null;
+    let top: number;
+    let bottom: number;
+    if (scroller) {
+      top = host.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+      bottom = scroller.clientHeight;
+    } else {
+      top = host.getBoundingClientRect().top + window.scrollY;
+      bottom = window.innerHeight;
+    }
+    const h = galaxyFillHeight(bottom - 16, top);
+    host.style.height = `${h}px`;
+    host.style.minHeight = `${h}px`;
+    this.observeViewport(scroller);
+  }
+
+  private viewportObserver: ResizeObserver | null = null;
+  private viewportEl: HTMLElement | null = null;
+  private observeViewport(scroller: HTMLElement | null): void {
+    const el = scroller ?? null;
+    if (el === this.viewportEl && this.viewportObserver) return;
+    this.viewportObserver?.disconnect();
+    this.viewportEl = el;
+    if (typeof ResizeObserver !== "function") return;
+    const redo = () => {
+      const host = this.root?.querySelector<HTMLElement>(".vt-gx-graph");
+      if (host && !this.disposed) this.fitGalaxyHeight(host);
+    };
+    this.viewportObserver = new ResizeObserver(redo);
+    if (el) this.viewportObserver.observe(el);
+    else this.viewportObserver.observe(document.body);
   }
 
   // 點節點本身（不是點愛心）(1007-2 #7/#10, 1009 #8)：單字庫裡有的字（不論
@@ -586,7 +634,11 @@ export class FamiliesBlock extends MarkdownRenderChild {
       try {
         const entry = await this.plugin.families.addSuggested(familyId, word);
         if (entry) {
-          new Notice(t("galaxy.addedWord", { word: entry.word }));
+          // 1010 #G2: node stays highlighted (render re-selects silently),
+          // but the word card only opens when the notice is tapped.
+          const entryId = entry.id;
+          const openCard = () => void this.plugin.surfaces.openWordCard(entryId, "data");
+          actionNotice(L.added(entry.word), [{ label: L.open(), run: openCard }], GALAXY_NOTICE_MS, openCard);
           this.galaxySelected = entry.id;
           this.galaxyFresh.delete(nodeId);
         }
@@ -603,7 +655,7 @@ export class FamiliesBlock extends MarkdownRenderChild {
     const entry = this.plugin.store.entries.find((e) => e.id === node.entryId);
     if (!entry) return;
     if (action === "like") void this.plugin.store.setLiked(entry, true);
-    else unlikeEntry(this.plugin, entry);
+    else unlikeEntry(this.plugin, entry, GALAXY_NOTICE_MS);
   }
 
   // #11：emoji 在左，右邊英文（上）／中文（下）兩行 — 兩個 span 包進一個直
