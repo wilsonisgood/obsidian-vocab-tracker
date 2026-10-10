@@ -942,7 +942,7 @@ function dueLabel(due, now2) {
 // src/core/i18n/en.ts
 var en = {
   "sidebar.title": "Vocab Tracker",
-  "sidebar.openList": "Open vocab-list.md",
+  "sidebar.openList": "Open List",
   "sidebar.filter.note": "This note",
   "sidebar.filter.all": "All",
   "sidebar.scope.note": "This note",
@@ -963,13 +963,13 @@ var en = {
   "sidebar.grammar.verbs": "Usage",
   "sidebar.grammar.empty": 'No usage yet. Press "Generate" in the Usage section of a word page.',
   "sidebar.grammar.viewAll": "View all",
-  "sidebar.group.family": "Word family: {name}",
-  "sidebar.group.familyGone": "Word family (removed)",
-  "sidebar.group.familyOpen": "Open word families",
+  "sidebar.group.family": "Galaxy: {name}",
+  "sidebar.group.familyGone": "Galaxy (family removed)",
+  "sidebar.group.familyOpen": "Open Galaxy",
   "sidebar.group.wordlist": "Exam word lists",
   "sidebar.group.none": "(no note)",
-  "sidebar.group.dna": "Word DNA",
-  "sidebar.group.dnaOpen": "Open Word DNA",
+  "sidebar.group.dna": "DNA",
+  "sidebar.group.dnaOpen": "Open DNA",
   "sidebar.page.add": "Like \u201C{word}\u201D (adds it to your list)",
   "sidebar.page.emptyGroup": "No words here yet.",
   "row.delete": "Delete",
@@ -993,7 +993,7 @@ var en = {
   "row.field.definitionZh": "Chinese definition",
   "row.field.antonyms": "Antonyms",
   "row.field.example": "Example sentence (from note)",
-  "row.field.grammar": "Grammar tips",
+  "row.field.grammar": "Notes",
   "row.field.level": "Level",
   "row.field.placeholder": "Add {label}\u2026",
   "row.field.phonetic": "Phonetic",
@@ -1015,7 +1015,7 @@ var en = {
   "dashboard.stat.words": "\u{1F4DA} {count} words",
   // ── M2: flashcards / SRS ──────────────────────────────────────
   "dashboard.startReview": "Start review \xB7 {count} due today",
-  "dashboard.startReview.none": "Flashcards \xB7 nothing due",
+  "dashboard.startReview.none": "Card \xB7 nothing due",
   "row.nextReview": "Next review: {date}",
   "row.due.today": "Today",
   "row.preview.loading": "Fetching dictionary data\u2026",
@@ -1029,7 +1029,7 @@ var en = {
   "srs.rating.2": "Hard",
   "srs.rating.3": "Good",
   "srs.rating.4": "Easy",
-  "flashcards.title": "Flashcards",
+  "flashcards.title": "Card",
   "flashcards.mode.en-zh": "EN \u2192 ZH",
   "flashcards.mode.zh-en": "ZH \u2192 EN",
   "flashcards.mode.cloze": "Cloze",
@@ -1060,7 +1060,7 @@ var en = {
   "flashcards.done.forgotten": "Forgotten this time",
   "flashcards.done.retryForgotten": "Practice forgotten words again ({count})",
   "flashcards.done.continue": "Keep reviewing ({count} due)",
-  "flashcards.done.backToList": "Back to word list",
+  "flashcards.done.backToList": "Back to List",
   "flashcards.batch.toggle": "This batch ({n})",
   "flashcards.batch.current": "Now",
   "flashcards.batch.pending": "Up next",
@@ -1078,7 +1078,9 @@ var en = {
   "flashcards.single.nextSoon": "Next review: in {interval}",
   "flashcards.single.again": "Review again",
   "flashcards.single.close": "Done",
-  "command.openFlashcards": "Open flashcards",
+  "command.openFlashcards": "Open Card",
+  "command.openSidebar": "Open Vocab Sidebar",
+  "command.openList": "Open List",
   // ── M3: AI foundation + settings ──────────────────────────────────
   "ai.provider.anthropic": "Claude (Anthropic)",
   "ai.provider.openai": "OpenAI-compatible (OpenAI, Gemini, Ollama\u2026)",
@@ -1115,6 +1117,7 @@ var en = {
   "ai.bubble.streaming": "Answering\u2026",
   // ── M4: word discussion ──────────────────────────────────────────
   "word.tab.data": "Info",
+  "wordPage.section.dna": "Roots",
   "word.tab.ai": "AI",
   "chat.placeholder.word": "Ask about {word}\u2026",
   "chat.send": "Send",
@@ -1124,7 +1127,7 @@ var en = {
   "chat.selection.hint": "Sent with your next question so the AI knows which sentence you mean.",
   "chat.empty": "No discussion yet. Pick a button above or type a question.",
   "chat.meta.origin": "from \xB6{n}",
-  "chat.action.pin": "Pin to grammar tips",
+  "chat.action.pin": "Pin to Notes",
   "chat.action.unpin": "Unpin",
   "chat.action.copy": "Copy",
   "chat.action.delete": "Delete this Q&A",
@@ -1204,7 +1207,7 @@ var en = {
   "settings.learner.extra.desc": "Free text added to every request, e.g. \u201CI'm an engineer; examples from tech are welcome.\u201D",
   "settings.learner.preview.name": "What the AI sees",
   // ── M2 settings section ──
-  "settings.section.srs": "Flashcards",
+  "settings.section.srs": "Card",
   "settings.srs.retention.name": "Target retention",
   "settings.srs.retention.desc": "Probability you still remember a card when it comes due. Higher = more frequent reviews. Default 0.9.",
   "settings.srs.dailyNew.name": "New cards per day",
@@ -1277,23 +1280,23 @@ var en = {
   "wordPage.familiesSaved": "Added {n} word families.",
   "wordPage.usageSaved": "Usage updated.",
   "wordPage.failed": "Failed: {error}",
-  "wordPage.origin": "From word families: {name}",
-  "wordPage.originUnknown": "From word families",
-  "wordPage.originTitle": "Open in word families",
+  "wordPage.origin": "From Galaxy: {name}",
+  "wordPage.originUnknown": "From Galaxy",
+  "wordPage.originTitle": "Open in Galaxy",
   "wordPage.dna.emoji": "Change emoji",
   "wordPage.dna.breakdown": "Break down",
   "wordPage.dna.breakdownBusy": "Breaking down\u2026",
   "wordPage.dna.breakdownFailed": "Couldn't break down",
   // ── M6 entry files and the Files settings section ──
-  "command.openFamilies": "Open word families",
-  "command.openVerbs": "Open usage overview",
-  "command.openTrivia": "Open trivia",
-  "command.openDna": "Open Word DNA",
+  "command.openFamilies": "Open Galaxy",
+  "command.openVerbs": "Open Usage",
+  "command.openTrivia": "Open Eureka",
+  "command.openDna": "Open DNA",
   "ribbon.openWordList": "My Words",
   "settings.section.files": "Files",
   "settings.files.desc": "Where the plugin's notes go. Changing a folder doesn't move files that already exist: entry files and word pages are found by their frontmatter, wherever you move them. Only new files use the new folder.",
   "settings.files.folder.name": "Entry files folder",
-  "settings.files.folder.desc": "Holds the four entry files (flashcards, word families, verb usage, trivia) and the two folders below. Default: vocab-list",
+  "settings.files.folder.desc": "Holds the five entry files (Card, Galaxy, Usage, Eureka, DNA) and the two folders below. Default: vocab-list",
   "settings.files.wordsFolder.name": "Word pages folder",
   "settings.files.wordsFolder.desc": "Inside the entry files folder. One page per word: <word>.md. Default: \u55AE\u5B57",
   "settings.files.threadsFolder.name": "Discussions folder",
@@ -1358,7 +1361,7 @@ var en = {
   "learn.family.saved": "Saved {families} families. New words sit in the tree as text \u2014 tap one (or its \uFF0B) to add it.",
   "learn.family.added": 'Added "{word}"',
   "learn.family.add": 'Add "{word}"',
-  "learn.family.legend.known": "In your list \u2014 tap to open its card",
+  "learn.family.legend.known": "In your list \u2014 tap to open its Word info",
   "learn.family.legend.suggested": "Suggested by AI \u2014 tap to add",
   "learn.family.legend.seeds": "Started from {words}",
   "learn.family.more": "More",
@@ -1388,7 +1391,7 @@ var en = {
   "learn.verb.unfavorite": "Unsave (the word page keeps the usage)",
   "learn.verb.savedTo": "Saved to {path}",
   "learn.verb.rowFavorited": "Saved to its word page",
-  "learn.trivia.title": "Word trivia",
+  "learn.trivia.title": "Eureka",
   "learn.trivia.random": "Random from your {n} words",
   "learn.trivia.subject": "About: {word}",
   "learn.trivia.pick": "Pick a word to talk about",
@@ -1410,7 +1413,7 @@ var en = {
   "learn.trivia.down": "Not helpful",
   "learn.trivia.mentions": "Also mentions {words}",
   "mobile.sheet.close": "Close",
-  "mobile.sheet.label.word": "Word card: {word}",
+  "mobile.sheet.label.word": "Word info: {word}",
   "mobile.sheet.label.paragraph": "Paragraph discussion",
   "mobile.save.added": "Added \u201C{word}\u201D",
   "mobile.save.undo": "Undo",
@@ -1437,10 +1440,10 @@ var en = {
   "settings.reading.livePreviewHint.name": "Live Preview hint",
   "settings.reading.livePreviewHint.desc": "On mobile, tell me once per session when I tap a word in Live Preview, where tapping can\u2019t save words.",
   "settings.reading.sidebarOnPhone.name": "iPhone swipe sidebar",
-  "settings.reading.sidebarOnPhone.desc": "When on, swiping in from the right edge adds a \u201CWords\u201D tab next to Obsidian's built-in Links/Outline, showing this note's words, paragraph discussions, AI discussions and grammar. This only creates the tab \u2014 it won't pop open over the note on its own; tapping a word still opens the bottom word card.",
+  "settings.reading.sidebarOnPhone.desc": "When on, swiping in from the right edge adds a \u201CWords\u201D tab next to Obsidian's built-in Links/Outline, showing this note's words, paragraph discussions, AI discussions and grammar. This only creates the tab \u2014 it won't pop open over the note on its own; tapping a word still opens the bottom Word info.",
   // ── 備份與還原 (services/backup) ──
   "settings.section.backup": "Backup & restore",
-  "settings.backup.desc": "Backups are saved in {folder}. Restoring one brings your words, discussions, word families, saved trivia and review history back to how they were then. Settings (AI, flashcards, exam lists\u2026) are not changed.",
+  "settings.backup.desc": "Backups are saved in {folder}. Restoring one brings your words, discussions, word families, saved trivia and review history back to how they were then. Settings (AI, Card, exam lists\u2026) are not changed.",
   "settings.backup.create.name": "Back up now",
   "settings.backup.create.desc": "Saves your word list and every discussion and learning record into one file.",
   "settings.backup.create.button": "Back up",
@@ -1467,7 +1470,7 @@ var en = {
   "backup.restore.loading": "Comparing with your current data\u2026",
   "backup.restore.from": "Backup: {time} \xB7 {summary}",
   "backup.restore.what": "What will happen",
-  "backup.restore.words": "Words: {changed} go back to how they were in the backup (definitions, levels and flashcard progress too); {revived} deleted words come back.",
+  "backup.restore.words": "Words: {changed} go back to how they were in the backup (definitions, levels and Card progress too); {revived} deleted words come back.",
   "backup.restore.threads": "Discussions: {n} go back to how they were in the backup; {q} deleted questions come back.",
   "backup.restore.learn": "Word families and saved trivia: {families} families and {trivia} saved trivia go back to how they were in the backup.",
   "backup.restore.reviews": "Review history: {n} records are added back (records are only ever added, never removed).",
@@ -1476,7 +1479,7 @@ var en = {
   "backup.restore.part.threads": "discussions",
   "backup.restore.part.learn": "word families or saved trivia",
   "backup.restore.part.reviews": "review history",
-  "backup.restore.settings": "Settings (AI, flashcards, exam lists\u2026) and AI usage stats are not changed.",
+  "backup.restore.settings": "Settings (AI, Card, exam lists\u2026) and AI usage stats are not changed.",
   "backup.restore.extras.title": "Added after the backup",
   "backup.restore.extras.desc": "You now have {words} words, {questions} discussion questions and {learn} families / saved trivia that aren\u2019t in this backup. They are kept unless you turn on the switch below.",
   "backup.restore.extras.remove": "Delete these too (other devices delete them after syncing)",
@@ -1500,7 +1503,7 @@ var en = {
   // and keeps its old name.
   "like.like": "Like",
   "like.unlike": "Unlike",
-  // Like filter chip shared by the sidebar, dashboard, and usage table (Wave 8 S, 1006-2 #1).
+  // Like filter chip shared by the sidebar, dashboard, and Usage table (Wave 8 S, 1006-2 #1).
   "like.filter.chip": "Like",
   "like.filter.hide": "Hide the Like filter",
   "like.filter.show": "Show the Like filter",
@@ -1574,7 +1577,7 @@ var en = {
 // src/core/i18n/zh-TW.ts
 var zhTW = {
   "sidebar.title": "\u55AE\u5B57\u8FFD\u8E64",
-  "sidebar.openList": "\u958B\u555F vocab-list.md",
+  "sidebar.openList": "\u958B\u555F List",
   "sidebar.filter.note": "\u672C\u7BC7\u7B46\u8A18",
   "sidebar.filter.all": "\u5168\u90E8",
   "sidebar.scope.note": "\u672C\u7BC7\u7B46\u8A18",
@@ -1595,13 +1598,13 @@ var zhTW = {
   "sidebar.grammar.verbs": "\u7528\u6CD5",
   "sidebar.grammar.empty": "\u9084\u6C92\u6709\u7528\u6CD5\u3002\u5728\u55AE\u5B57\u9801\u7684\u300C\u7528\u6CD5\u300D\u6309\u4E0B\u300C\u7522\u751F\u300D\u770B\u770B\u3002",
   "sidebar.grammar.viewAll": "\u67E5\u770B\u5168\u90E8",
-  "sidebar.group.family": "\u5B57\u65CF\u6A39\uFF1A{name}",
-  "sidebar.group.familyGone": "\u5B57\u65CF\u6A39\uFF08\u5B57\u65CF\u5DF2\u79FB\u9664\uFF09",
-  "sidebar.group.familyOpen": "\u958B\u555F\u5B57\u65CF\u6A39",
+  "sidebar.group.family": "Galaxy\uFF1A{name}",
+  "sidebar.group.familyGone": "Galaxy\uFF08\u5B57\u65CF\u5DF2\u79FB\u9664\uFF09",
+  "sidebar.group.familyOpen": "\u958B\u555F Galaxy",
   "sidebar.group.wordlist": "\u8003\u8A66\u5B57\u8868",
   "sidebar.group.none": "\uFF08\u6C92\u6709\u4F86\u6E90\u7B46\u8A18\uFF09",
-  "sidebar.group.dna": "Word DNA",
-  "sidebar.group.dnaOpen": "\u958B\u555F Word DNA",
+  "sidebar.group.dna": "DNA",
+  "sidebar.group.dnaOpen": "\u958B\u555F DNA",
   "sidebar.page.add": "Like\u300C{word}\u300D\uFF08\u52A0\u5165\u55AE\u5B57\u5EAB\uFF09",
   "sidebar.page.emptyGroup": "\u9019\u4E00\u985E\u9084\u6C92\u6709\u5B57\u3002",
   "row.delete": "\u522A\u9664",
@@ -1625,7 +1628,7 @@ var zhTW = {
   "row.field.definitionZh": "\u4E2D\u6587\u5B9A\u7FA9",
   "row.field.antonyms": "\u53CD\u7FA9\u8A5E",
   "row.field.example": "\u4F8B\u53E5\uFF08\u4F86\u81EA\u7B46\u8A18\uFF09",
-  "row.field.grammar": "\u6587\u6CD5\u63D0\u793A",
+  "row.field.grammar": "\u7B46\u8A18",
   "row.field.level": "\u7A0B\u5EA6",
   "row.field.placeholder": "\u65B0\u589E{label}\u2026",
   "row.field.phonetic": "\u97F3\u6A19",
@@ -1647,7 +1650,7 @@ var zhTW = {
   "dashboard.stat.words": "\u{1F4DA} {count} \u500B\u55AE\u5B57",
   // ── M2：單字卡 / SRS ──────────────────────────────────────────
   "dashboard.startReview": "\u958B\u59CB\u8907\u7FD2 \xB7 \u4ECA\u65E5 {count} \u5F35",
-  "dashboard.startReview.none": "\u55AE\u5B57\u5361 \xB7 \u76EE\u524D\u6C92\u6709\u5230\u671F",
+  "dashboard.startReview.none": "Card \xB7 \u76EE\u524D\u6C92\u6709\u5230\u671F",
   "row.nextReview": "\u4E0B\u6B21\u8907\u7FD2\uFF1A{date}",
   "row.due.today": "\u4ECA\u5929",
   "row.preview.loading": "\u6293\u53D6\u5B57\u5178\u8CC7\u6599\u4E2D\u2026",
@@ -1661,7 +1664,7 @@ var zhTW = {
   "srs.rating.2": "\u96E3",
   "srs.rating.3": "\u8A18\u5F97",
   "srs.rating.4": "\u7C21\u55AE",
-  "flashcards.title": "\u55AE\u5B57\u5361",
+  "flashcards.title": "Card",
   "flashcards.mode.en-zh": "\u82F1\u2192\u4E2D",
   "flashcards.mode.zh-en": "\u4E2D\u2192\u82F1",
   "flashcards.mode.cloze": "\u4F8B\u53E5\u586B\u7A7A",
@@ -1692,7 +1695,7 @@ var zhTW = {
   "flashcards.done.forgotten": "\u9019\u6B21\u5FD8\u8A18\u7684\u5B57",
   "flashcards.done.retryForgotten": "\u518D\u7DF4\u4E00\u6B21\u5FD8\u8A18\u7684\u5B57\uFF08{count}\uFF09",
   "flashcards.done.continue": "\u7E7C\u7E8C\u8907\u7FD2\uFF08{count} \u5F35\u5230\u671F\uFF09",
-  "flashcards.done.backToList": "\u56DE\u5230\u55AE\u5B57\u5217\u8868",
+  "flashcards.done.backToList": "\u56DE\u5230 List",
   "flashcards.batch.toggle": "\u672C\u6279\u55AE\u5B57\uFF08{n}\uFF09",
   "flashcards.batch.current": "\u76EE\u524D",
   "flashcards.batch.pending": "\u9084\u6C92\u5230",
@@ -1710,7 +1713,9 @@ var zhTW = {
   "flashcards.single.nextSoon": "\u4E0B\u6B21\u8907\u7FD2\uFF1A{interval}\u5F8C",
   "flashcards.single.again": "\u518D\u8907\u7FD2\u4E00\u6B21",
   "flashcards.single.close": "\u5B8C\u6210",
-  "command.openFlashcards": "\u958B\u555F\u55AE\u5B57\u5361",
+  "command.openFlashcards": "\u958B\u555F Card",
+  "command.openSidebar": "\u958B\u555F\u55AE\u5B57\u5074\u6B04",
+  "command.openList": "\u958B\u555F List",
   // ── M3: AI foundation + settings ──────────────────────────────────
   "ai.provider.anthropic": "Claude\uFF08Anthropic\uFF09",
   "ai.provider.openai": "OpenAI \u76F8\u5BB9\uFF08OpenAI\u3001Gemini\u3001Ollama\u2026\uFF09",
@@ -1747,6 +1752,7 @@ var zhTW = {
   "ai.bubble.streaming": "\u56DE\u7B54\u4E2D\u2026",
   // ── M4：單字討論 ──────────────────────────────────────────────────
   "word.tab.data": "Info",
+  "wordPage.section.dna": "\u5B57\u6839",
   "word.tab.ai": "AI",
   "chat.placeholder.word": "\u554F {word}\u2026",
   "chat.send": "\u9001\u51FA",
@@ -1756,7 +1762,7 @@ var zhTW = {
   "chat.selection.hint": "\u4E0B\u4E00\u500B\u554F\u984C\u6703\u9644\u4E0A\u9019\u6BB5\u6587\u5B57\uFF0C\u8B93 AI \u77E5\u9053\u4F60\u554F\u7684\u662F\u54EA\u4E00\u53E5\u3002",
   "chat.empty": "\u9084\u6C92\u6709\u8A0E\u8AD6\u3002\u9EDE\u4E0A\u9762\u7684\u6309\u9215\uFF0C\u6216\u76F4\u63A5\u8F38\u5165\u554F\u984C\u3002",
   "chat.meta.origin": "\u51FA\u81EA \xB6{n}",
-  "chat.action.pin": "\u91D8\u9078\u5230\u6587\u6CD5\u63D0\u793A",
+  "chat.action.pin": "\u91D8\u9078\u5230\u7B46\u8A18",
   "chat.action.unpin": "\u53D6\u6D88\u91D8\u9078",
   "chat.action.copy": "\u8907\u88FD",
   "chat.action.delete": "\u522A\u9664\u9019\u7D44\u554F\u7B54",
@@ -1836,7 +1842,7 @@ var zhTW = {
   "settings.learner.extra.desc": "\u6703\u539F\u5C01\u4E0D\u52D5\u9644\u5728\u6BCF\u6B21\u8ACB\u6C42\u88E1\uFF0C\u4F8B\u5982\u300C\u6211\u662F\u5DE5\u7A0B\u5E2B\uFF0C\u4F8B\u53E5\u53EF\u4EE5\u7528\u79D1\u6280\u60C5\u5883\u300D\u3002",
   "settings.learner.preview.name": "AI \u6703\u770B\u5230",
   // ── M2 settings section ──
-  "settings.section.srs": "\u55AE\u5B57\u5361",
+  "settings.section.srs": "Card",
   "settings.srs.retention.name": "\u76EE\u6A19\u8A18\u61B6\u7387",
   "settings.srs.retention.desc": "\u5361\u7247\u5230\u671F\u6642\u4ECD\u8A18\u5F97\u7684\u6A5F\u7387\u3002\u8D8A\u9AD8\u8907\u7FD2\u8D8A\u983B\u7E41\uFF0C\u9810\u8A2D 0.9\u3002",
   "settings.srs.dailyNew.name": "\u6BCF\u65E5\u65B0\u5361\u4E0A\u9650",
@@ -1909,23 +1915,23 @@ var zhTW = {
   "wordPage.familiesSaved": "\u5DF2\u52A0\u5165 {n} \u500B\u5B57\u65CF\u3002",
   "wordPage.usageSaved": "\u7528\u6CD5\u5DF2\u66F4\u65B0\u3002",
   "wordPage.failed": "\u5931\u6557\uFF1A{error}",
-  "wordPage.origin": "\u4F86\u6E90\uFF1A\u5B57\u65CF\u6A39 {name}",
-  "wordPage.originUnknown": "\u4F86\u6E90\uFF1A\u5B57\u65CF\u6A39",
-  "wordPage.originTitle": "\u5728\u5B57\u65CF\u6A39\u6253\u958B",
+  "wordPage.origin": "\u4F86\u6E90\uFF1AGalaxy {name}",
+  "wordPage.originUnknown": "\u4F86\u6E90\uFF1AGalaxy",
+  "wordPage.originTitle": "\u5728 Galaxy \u6253\u958B",
   "wordPage.dna.emoji": "\u6539 emoji",
   "wordPage.dna.breakdown": "\u62C6\u5B57",
   "wordPage.dna.breakdownBusy": "\u62C6\u5B57\u4E2D\u2026",
   "wordPage.dna.breakdownFailed": "\u62C6\u5B57\u5931\u6557",
   // ── M6 入口檔與「檔案」設定 ──
-  "command.openFamilies": "\u958B\u555F\u5B57\u65CF\u6A39",
-  "command.openVerbs": "\u958B\u555F\u7528\u6CD5\u7E3D\u8868",
-  "command.openTrivia": "\u958B\u555F\u51B7\u77E5\u8B58",
-  "command.openDna": "\u958B\u555F Word DNA",
+  "command.openFamilies": "\u958B\u555F Galaxy",
+  "command.openVerbs": "\u958B\u555F Usage",
+  "command.openTrivia": "\u958B\u555F Eureka",
+  "command.openDna": "\u958B\u555F DNA",
   "ribbon.openWordList": "\u6211\u7684\u55AE\u5B57",
   "settings.section.files": "\u6A94\u6848",
   "settings.files.desc": "\u5916\u639B\u5EFA\u7ACB\u7684\u7B46\u8A18\u653E\u5728\u54EA\u88E1\u3002\u6539\u8CC7\u6599\u593E\u4E0D\u6703\u642C\u52D5\u5DF2\u7D93\u5B58\u5728\u7684\u6A94\u6848\uFF1A\u5165\u53E3\u6A94\u548C\u55AE\u5B57\u9801\u9760 frontmatter \u627E\u56DE\uFF0C\u642C\u5230\u54EA\u88E1\u90FD\u53EF\u4EE5\uFF1B\u53EA\u6709\u65B0\u5EFA\u7684\u6A94\u6848\u6703\u653E\u5230\u65B0\u8CC7\u6599\u593E\u3002",
   "settings.files.folder.name": "\u5165\u53E3\u6A94\u8CC7\u6599\u593E",
-  "settings.files.folder.desc": "\u55AE\u5B57\u5361\u3001\u5B57\u65CF\u6A39\u3001\u52D5\u8A5E\u7528\u6CD5\u3001\u51B7\u77E5\u8B58\u56DB\u500B\u5165\u53E3\u6A94\u653E\u9019\u88E1\uFF0C\u4E0B\u9762\u5169\u500B\u8CC7\u6599\u593E\u4E5F\u5728\u9019\u88E1\u9762\u3002\u9810\u8A2D\uFF1Avocab-list",
+  "settings.files.folder.desc": "Card\u3001Galaxy\u3001Usage\u3001Eureka\u3001DNA \u4E94\u500B\u5165\u53E3\u6A94\u653E\u9019\u88E1\uFF0C\u4E0B\u9762\u5169\u500B\u8CC7\u6599\u593E\u4E5F\u5728\u9019\u88E1\u9762\u3002\u9810\u8A2D\uFF1Avocab-list",
   "settings.files.wordsFolder.name": "\u55AE\u5B57\u9801\u8CC7\u6599\u593E",
   "settings.files.wordsFolder.desc": "\u5728\u5165\u53E3\u6A94\u8CC7\u6599\u593E\u5E95\u4E0B\u3002\u6BCF\u500B\u5B57\u4E00\u9801\uFF1A<\u5B57>.md\u3002\u9810\u8A2D\uFF1A\u55AE\u5B57",
   "settings.files.threadsFolder.name": "\u8A0E\u8AD6\u4E32\u8CC7\u6599\u593E",
@@ -1987,10 +1993,10 @@ var zhTW = {
   "learn.family.generating": "AI \u6B63\u5728\u6574\u7406\u5B57\u65CF\u2026",
   "learn.family.noneFound": "AI \u6C92\u6709\u627E\u5230\u53EF\u4EE5\u6210\u70BA\u5B57\u65CF\u7684\u5B57\uFF0C\u63DB\u500B\u6642\u9593\u518D\u8A66\u8A66\u3002",
   "learn.family.known": "\u5DF2\u5B78",
-  "learn.family.saved": "\u5DF2\u5B58 {families} \u500B\u5B57\u65CF\u3002\u65B0\u5B57\u4EE5\u6587\u5B57\u6210\u54E1\u5B58\u5728\u5B57\u65CF\u6A39\u88E1\uFF0C\u9EDE\u4E00\u4E0B\uFF08\u6216\u65C1\u908A\u7684 \uFF0B\uFF09\u5C31\u80FD\u52A0\u5165\u55AE\u5B57\u5EAB\u3002",
+  "learn.family.saved": "\u5DF2\u5B58 {families} \u500B\u5B57\u65CF\u3002\u65B0\u5B57\u4EE5\u6587\u5B57\u6210\u54E1\u5B58\u5728 Galaxy \u88E1\uFF0C\u9EDE\u4E00\u4E0B\uFF08\u6216\u65C1\u908A\u7684 \uFF0B\uFF09\u5C31\u80FD\u52A0\u5165\u55AE\u5B57\u5EAB\u3002",
   "learn.family.added": "\u5DF2\u52A0\u5165\u300C{word}\u300D",
   "learn.family.add": "\u52A0\u5165\u300C{word}\u300D",
-  "learn.family.legend.known": "\u5DF2\u5728\u55AE\u5B57\u5EAB\uFF0C\u9EDE\u4E00\u4E0B\u6253\u958B\u55AE\u5B57\u5361",
+  "learn.family.legend.known": "\u5DF2\u5728\u55AE\u5B57\u5EAB\uFF0C\u9EDE\u4E00\u4E0B\u6253\u958B\u55AE\u5B57info",
   "learn.family.legend.suggested": "AI \u88DC\u7684\u5EF6\u4F38\u5B57\uFF0C\u9EDE\u4E00\u4E0B\u52A0\u5165",
   "learn.family.legend.seeds": "\u8D77\u9EDE\uFF1A\u4F60\u5B78\u904E\u7684 {words}",
   "learn.family.more": "\u66F4\u591A",
@@ -2020,7 +2026,7 @@ var zhTW = {
   "learn.verb.unfavorite": "\u53D6\u6D88\u6536\u85CF\uFF08\u55AE\u5B57\u9801\u4E0A\u7684\u7528\u6CD5\u6703\u4FDD\u7559\uFF09",
   "learn.verb.savedTo": "\u5DF2\u6536\u85CF\uFF0C\u5BEB\u5165 {path}",
   "learn.verb.rowFavorited": "\u5DF2\u6536\u85CF\u5230\u55AE\u5B57\u9801",
-  "learn.trivia.title": "\u55AE\u5B57\u51B7\u77E5\u8B58",
+  "learn.trivia.title": "Eureka",
   "learn.trivia.random": "\u5F9E\u5DF2\u5B78\u7684 {n} \u500B\u5B57\u96A8\u6A5F",
   "learn.trivia.subject": "\u4E3B\u89D2\uFF1A{word}",
   "learn.trivia.pick": "\u6307\u5B9A\u4E00\u500B\u5B57\u4F86\u804A",
@@ -2042,7 +2048,7 @@ var zhTW = {
   "learn.trivia.down": "\u6C92\u5E6B\u52A9",
   "learn.trivia.mentions": "\u4E5F\u63D0\u5230 {words}",
   "mobile.sheet.close": "\u95DC\u9589",
-  "mobile.sheet.label.word": "\u55AE\u5B57\u5361\uFF1A{word}",
+  "mobile.sheet.label.word": "\u55AE\u5B57info\uFF1A{word}",
   "mobile.sheet.label.paragraph": "\u6BB5\u843D\u8A0E\u8AD6",
   "mobile.save.added": "\u5DF2\u52A0\u5165\u300C{word}\u300D",
   "mobile.save.undo": "\u5FA9\u539F",
@@ -2069,10 +2075,10 @@ var zhTW = {
   "settings.reading.livePreviewHint.name": "Live Preview \u63D0\u793A",
   "settings.reading.livePreviewHint.desc": "\u5728\u884C\u52D5\u88DD\u7F6E\u7684 Live Preview\uFF08\u5373\u6642\u9810\u89BD\uFF09\u9EDE\u5B57\u6642\uFF0C\u6BCF\u6B21\u958B\u555F\u63D0\u9192\u4E00\u6B21\uFF1A\u9EDE\u5B57\u53EA\u5728\u95B1\u8B80\u6A21\u5F0F\u6709\u6548\u3002",
   "settings.reading.sidebarOnPhone.name": "iPhone \u53F3\u6ED1\u5074\u6B04",
-  "settings.reading.sidebarOnPhone.desc": "\u958B\u555F\u5F8C\uFF0C\u5F9E\u756B\u9762\u53F3\u908A\u7DE3\u5F80\u5DE6\u6ED1\u6703\u591A\u4E00\u500B\u300C\u55AE\u5B57\u300D\u5206\u9801\uFF0C\u8DDF Obsidian \u5167\u5EFA\u7684\u300C\u9023\u7D50\u300D\u300C\u5927\u7DB1\u300D\u6392\u5728\u4E00\u8D77\uFF0C\u986F\u793A\u672C\u7BC7\u7B46\u8A18\u7684\u55AE\u5B57\uFF0F\u6BB5\u843D\u8A0E\u8AD6\uFF0FAI \u8A0E\u8AD6\uFF0F\u6587\u6CD5\u3002\u53EA\u662F\u591A\u5EFA\u7ACB\u9019\u500B\u5206\u9801\uFF0C\u4E0D\u6703\u81EA\u52D5\u8DF3\u51FA\u4F86\u84CB\u4F4F\u7B46\u8A18\uFF1B\u9EDE\u5B57\u67E5\u55AE\u5B57\u7DAD\u6301\u7528\u5E95\u90E8\u55AE\u5B57\u5361\u3002",
+  "settings.reading.sidebarOnPhone.desc": "\u958B\u555F\u5F8C\uFF0C\u5F9E\u756B\u9762\u53F3\u908A\u7DE3\u5F80\u5DE6\u6ED1\u6703\u591A\u4E00\u500B\u300C\u55AE\u5B57\u300D\u5206\u9801\uFF0C\u8DDF Obsidian \u5167\u5EFA\u7684\u300C\u9023\u7D50\u300D\u300C\u5927\u7DB1\u300D\u6392\u5728\u4E00\u8D77\uFF0C\u986F\u793A\u672C\u7BC7\u7B46\u8A18\u7684\u55AE\u5B57\uFF0F\u6BB5\u843D\u8A0E\u8AD6\uFF0FAI \u8A0E\u8AD6\uFF0F\u6587\u6CD5\u3002\u53EA\u662F\u591A\u5EFA\u7ACB\u9019\u500B\u5206\u9801\uFF0C\u4E0D\u6703\u81EA\u52D5\u8DF3\u51FA\u4F86\u84CB\u4F4F\u7B46\u8A18\uFF1B\u9EDE\u5B57\u67E5\u55AE\u5B57\u7DAD\u6301\u7528\u5E95\u90E8\u55AE\u5B57info\u3002",
   // ── 備份與還原 (services/backup) ──
   "settings.section.backup": "\u5099\u4EFD\u8207\u9084\u539F",
-  "settings.backup.desc": "\u5099\u4EFD\u5B58\u5728 {folder}\u3002\u9084\u539F\u6703\u628A\u55AE\u5B57\u3001\u8A0E\u8AD6\u4E32\u3001\u5B57\u65CF\u3001\u51B7\u77E5\u8B58\u6536\u85CF\u548C\u8907\u7FD2\u7D00\u9304\u6539\u56DE\u5099\u4EFD\u7576\u6642\u7684\u6A23\u5B50\uFF1B\u8A2D\u5B9A\uFF08AI\u3001\u55AE\u5B57\u5361\u3001\u8003\u8A66\u5B57\u8868\u2026\uFF09\u4E0D\u6703\u8B8A\u3002",
+  "settings.backup.desc": "\u5099\u4EFD\u5B58\u5728 {folder}\u3002\u9084\u539F\u6703\u628A\u55AE\u5B57\u3001\u8A0E\u8AD6\u4E32\u3001\u5B57\u65CF\u3001\u51B7\u77E5\u8B58\u6536\u85CF\u548C\u8907\u7FD2\u7D00\u9304\u6539\u56DE\u5099\u4EFD\u7576\u6642\u7684\u6A23\u5B50\uFF1B\u8A2D\u5B9A\uFF08AI\u3001Card\u3001\u8003\u8A66\u5B57\u8868\u2026\uFF09\u4E0D\u6703\u8B8A\u3002",
   "settings.backup.create.name": "\u7ACB\u5373\u5099\u4EFD",
   "settings.backup.create.desc": "\u628A\u76EE\u524D\u7684\u55AE\u5B57\u5EAB\uFF0C\u9023\u540C\u6240\u6709\u8A0E\u8AD6\u548C\u5B78\u7FD2\u7D00\u9304\uFF0C\u5B58\u6210\u4E00\u500B\u6A94\u6848\u3002",
   "settings.backup.create.button": "\u5099\u4EFD",
@@ -2099,7 +2105,7 @@ var zhTW = {
   "backup.restore.loading": "\u6B63\u5728\u8DDF\u76EE\u524D\u7684\u8CC7\u6599\u6BD4\u5C0D\u2026",
   "backup.restore.from": "\u5099\u4EFD\uFF1A{time} \xB7 {summary}",
   "backup.restore.what": "\u6703\u767C\u751F\u7684\u4E8B",
-  "backup.restore.words": "\u55AE\u5B57\uFF1A{changed} \u500B\u6539\u56DE\u5099\u4EFD\u6642\u7684\u5167\u5BB9\uFF08\u91CB\u7FA9\u3001\u7B49\u7D1A\u3001\u55AE\u5B57\u5361\u9032\u5EA6\u90FD\u6703\u56DE\u5230\u7576\u6642\uFF09\uFF1B{revived} \u500B\u5DF2\u522A\u9664\u7684\u5B57\u6703\u56DE\u4F86\u3002",
+  "backup.restore.words": "\u55AE\u5B57\uFF1A{changed} \u500B\u6539\u56DE\u5099\u4EFD\u6642\u7684\u5167\u5BB9\uFF08\u91CB\u7FA9\u3001\u7B49\u7D1A\u3001Card \u9032\u5EA6\u90FD\u6703\u56DE\u5230\u7576\u6642\uFF09\uFF1B{revived} \u500B\u5DF2\u522A\u9664\u7684\u5B57\u6703\u56DE\u4F86\u3002",
   "backup.restore.threads": "\u8A0E\u8AD6\u4E32\uFF1A{n} \u4E32\u6539\u56DE\u5099\u4EFD\u6642\u7684\u5167\u5BB9\uFF1B{q} \u984C\u522A\u6389\u7684\u554F\u984C\u6703\u56DE\u4F86\u3002",
   "backup.restore.learn": "\u5B57\u65CF\u8207\u51B7\u77E5\u8B58\u6536\u85CF\uFF1A{families} \u500B\u5B57\u65CF\u3001{trivia} \u5247\u6536\u85CF\u6539\u56DE\u5099\u4EFD\u6642\u7684\u5167\u5BB9\u3002",
   "backup.restore.reviews": "\u8907\u7FD2\u7D00\u9304\uFF1A\u88DC\u56DE {n} \u7B46\uFF08\u7D00\u9304\u53EA\u6703\u589E\u52A0\uFF0C\u4E0D\u6703\u522A\u9664\uFF09\u3002",
@@ -2108,7 +2114,7 @@ var zhTW = {
   "backup.restore.part.threads": "\u8A0E\u8AD6\u4E32",
   "backup.restore.part.learn": "\u5B57\u65CF\u548C\u51B7\u77E5\u8B58\u6536\u85CF",
   "backup.restore.part.reviews": "\u8907\u7FD2\u7D00\u9304",
-  "backup.restore.settings": "\u8A2D\u5B9A\uFF08AI\u3001\u55AE\u5B57\u5361\u3001\u8003\u8A66\u5B57\u8868\u2026\uFF09\u548C AI \u7528\u91CF\u7D71\u8A08\u4E0D\u6703\u8B8A\u3002",
+  "backup.restore.settings": "\u8A2D\u5B9A\uFF08AI\u3001Card\u3001\u8003\u8A66\u5B57\u8868\u2026\uFF09\u548C AI \u7528\u91CF\u7D71\u8A08\u4E0D\u6703\u8B8A\u3002",
   "backup.restore.extras.title": "\u5099\u4EFD\u4E4B\u5F8C\u65B0\u589E\u7684",
   "backup.restore.extras.desc": "\u76EE\u524D\u6709\u3001\u4F46\u5099\u4EFD\u88E1\u6C92\u6709\u7684\uFF1A{words} \u500B\u55AE\u5B57\u3001{questions} \u984C\u8A0E\u8AD6\u3001{learn} \u500B\u5B57\u65CF\uFF0F\u6536\u85CF\u3002\u6C92\u6253\u958B\u4E0B\u9762\u7684\u958B\u95DC\u5C31\u6703\u4FDD\u7559\u3002",
   "backup.restore.extras.remove": "\u4E00\u4F75\u522A\u9664\u9019\u4E9B\uFF08\u5176\u4ED6\u88DD\u7F6E\u540C\u6B65\u5F8C\u4E5F\u6703\u522A\u9664\uFF09",
@@ -2131,7 +2137,7 @@ var zhTW = {
   // 頁的意思）是不同的概念，維持原名不變。
   "like.like": "Like",
   "like.unlike": "\u53D6\u6D88 Like",
-  // 側欄／dashboard／用法總表共用的 Like 篩選 chip（第八波 S，1006-2 #1）。
+  // 側欄／dashboard／Usage 共用的 Like 篩選 chip（第八波 S，1006-2 #1）。
   "like.filter.chip": "Like",
   "like.filter.hide": "\u96B1\u85CF\u300CLike\u300D\u7BE9\u9078",
   "like.filter.show": "\u986F\u793A\u300CLike\u300D\u7BE9\u9078",
@@ -7462,10 +7468,10 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
   }
   drawFilterToggle(root2) {
     if (this.filterMode === void 0) this.filterMode = "note";
-    const toggle = root2.createDiv({ cls: "vt-toggle-group vt-sidebar-filter" });
+    const toggle2 = root2.createDiv({ cls: "vt-toggle-group vt-sidebar-filter" });
     const mkToggle = (label, mode) => {
       const on = this.filterMode === mode;
-      const b = toggle.createEl("span", { text: label, cls: "vt-toggle-btn" });
+      const b = toggle2.createEl("span", { text: label, cls: "vt-toggle-btn" });
       b.toggleClass("is-active", on);
       b.onclick = () => {
         if (this.filterMode === mode) return;
@@ -7676,15 +7682,15 @@ var VocabSidebarView = class extends import_obsidian19.ItemView {
     (0, import_obsidian19.setIcon)(head.createSpan({ cls: "vt-sb-section-arrow" }), collapsed ? "chevron-right" : "chevron-down");
     const label = head.createSpan({ cls: "vt-sb-section-title", text: title });
     if (titleRef) titleRef.el = label;
-    const toggle = () => {
+    const toggle2 = () => {
       this.sections.toggle(id2);
       this.draw();
     };
-    head.addEventListener("click", toggle);
+    head.addEventListener("click", toggle2);
     head.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        toggle();
+        toggle2();
       }
     });
     if (collapsed) return null;
@@ -13836,6 +13842,75 @@ function paragraphNumber(markdown, line) {
   return null;
 }
 
+// src/ui/reading/wordPageFolds.ts
+var FOLD_SECTIONS = ["info", "dna", "families", "usage", "trivia", "discussion"];
+var FOLD_STORAGE_KEY = "vt-wordpage-folds";
+function defaultOpen(section3) {
+  return section3 === "info";
+}
+function isOpen(state, entryId, section3) {
+  var _a;
+  const v = (_a = state[entryId]) == null ? void 0 : _a[section3];
+  return typeof v === "boolean" ? v : defaultOpen(section3);
+}
+function toggle(state, entryId, section3) {
+  const open = !isOpen(state, entryId, section3);
+  return { ...state, [entryId]: { ...state[entryId], [section3]: open } };
+}
+function parseFolds(raw) {
+  let data = raw;
+  if (typeof raw === "string") {
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      return {};
+    }
+  }
+  const out = {};
+  if (!data || typeof data !== "object" || Array.isArray(data)) return out;
+  for (const [id2, secs] of Object.entries(data)) {
+    if (!secs || typeof secs !== "object" || Array.isArray(secs)) continue;
+    const clean = {};
+    for (const s of FOLD_SECTIONS) {
+      const v = secs[s];
+      if (typeof v === "boolean") clean[s] = v;
+    }
+    out[id2] = clean;
+  }
+  return out;
+}
+function loadFolds(app) {
+  try {
+    return parseFolds(app == null ? void 0 : app.loadLocalStorage(FOLD_STORAGE_KEY));
+  } catch (e) {
+    return {};
+  }
+}
+function toggleStored(app, entryId, section3) {
+  const next = toggle(loadFolds(app), entryId, section3);
+  try {
+    app == null ? void 0 : app.saveLocalStorage(FOLD_STORAGE_KEY, JSON.stringify(next));
+  } catch (e) {
+  }
+  return isOpen(next, entryId, section3);
+}
+function isOpenStored(app, entryId, section3) {
+  return isOpen(loadFolds(app), entryId, section3);
+}
+
+// src/ui/blocks/wordHeaderModel.ts
+function hasDictionaryData(entry) {
+  return [
+    entry.definition,
+    entry.definitionZh,
+    entry.phonetic,
+    entry.partOfSpeech,
+    entry.synonyms,
+    entry.antonyms,
+    entry.example
+  ].some((v) => typeof v === "string" && v.trim() !== "");
+}
+
 // src/ui/blocks/wordHeader.ts
 var WORD_BLOCK_LANG = "vocab-word";
 function l(key4, vars) {
@@ -13961,24 +14036,18 @@ var WordHeaderBlock = class extends import_obsidian28.MarkdownRenderChild {
       root2.appendChild(inlineNote({ text: l("missing") }));
       return;
     }
+    const dict = hasDictionaryData(entry);
     const top = root2.createDiv({ cls: "vt-wh-top" });
     if (this.host.emoji) this.renderEmoji(top, entry, this.host.emoji);
     top.createSpan({ cls: "vt-wh-word", text: entry.word });
     const speak = top.createEl("button", { cls: ["clickable-icon", "vt-wh-speak"], attr: { "aria-label": l("speak") } });
     (0, import_obsidian28.setIcon)(speak, "volume-2");
     bindPronounceButton(speak, entry);
-    const metaFields = root2.createDiv({ cls: "vt-wh-metafields" });
-    this.field(metaFields, entry, "phonetic", t("row.field.phonetic"));
-    this.field(metaFields, entry, "partOfSpeech", t("row.field.partOfSpeech"));
-    const fields = root2.createDiv({ cls: "vt-wh-fields" });
-    this.field(fields, entry, "definition", t("row.field.definition"), { multiline: true });
-    this.field(fields, entry, "definitionZh", t("row.field.definitionZh"), { multiline: true });
-    this.field(fields, entry, "synonyms", t("row.field.synonyms"), { multiline: true });
-    this.field(fields, entry, "antonyms", t("row.field.antonyms"), { multiline: true });
-    this.field(fields, entry, "example", t("row.field.example"), { multiline: true });
-    this.field(fields, entry, "grammar", t("row.field.grammar"), { multiline: true });
-    this.field(fields, entry, "level", t("row.field.level"), { multiline: true });
-    if (this.host.morphemes) this.renderBreakdown(root2, entry, this.host.morphemes);
+    if (dict) {
+      const defs = root2.createDiv({ cls: "vt-wh-defs" });
+      this.field(defs, entry, "definition", t("row.field.definition"), { multiline: true });
+      this.field(defs, entry, "definitionZh", t("row.field.definitionZh"), { multiline: true });
+    }
     const chips = root2.createDiv({ cls: "vt-wh-chips" });
     if ((_a = entry.source) == null ? void 0 : _a.path) this.renderSource(chips, entry, entry.source.path, entry.source.line);
     this.renderOrigin(chips, entry);
@@ -13994,6 +14063,50 @@ var WordHeaderBlock = class extends import_obsidian28.MarkdownRenderChild {
       btn.createSpan({ text: l("review") });
       btn.addEventListener("click", () => void review.call(this.host, entry));
     }
+    const notes = root2.createDiv({ cls: "vt-wh-notes" });
+    notes.createDiv({ cls: "vt-wh-notes-label", text: t("row.field.grammar") });
+    this.field(notes, entry, "grammar", t("row.field.grammar"), { multiline: true });
+    if (dict) {
+      this.fold(root2, entry, "info", t("word.tab.data"), (body) => {
+        const rows = [
+          ["phonetic", t("row.field.phonetic")],
+          ["partOfSpeech", t("row.field.partOfSpeech")],
+          ["synonyms", t("row.field.synonyms")],
+          ["antonyms", t("row.field.antonyms")],
+          ["example", t("row.field.example")],
+          ["level", t("row.field.level")]
+        ];
+        for (const [key4, label] of rows) {
+          const row = body.createDiv({ cls: "vt-wh-inforow" });
+          row.createSpan({ cls: "vt-wh-inforow-label", text: label });
+          this.field(row, entry, key4, label, { multiline: true });
+        }
+      });
+    }
+    const morphemes = this.host.morphemes;
+    if (morphemes && breakdownDisplay(morphemes.breakdownOf(entry.id)) !== "none") {
+      this.fold(root2, entry, "dna", t("wordPage.section.dna"), (body) => this.renderBreakdown(body, entry, morphemes));
+    }
+  }
+  // One collapsible category (arrow + name, nothing on the right). Open
+  // state is per word and per category, kept in the device's localStorage.
+  fold(parent, entry, section3, title, build) {
+    const open = isOpenStored(this.host.app, entry.id, section3);
+    const box = parent.createDiv({ cls: ["vt-wp-fold", open ? "is-open" : "is-closed"] });
+    const head = box.createEl("button", {
+      cls: "vt-wp-fold-head",
+      attr: { type: "button", "aria-expanded": String(open) }
+    });
+    (0, import_obsidian28.setIcon)(head.createSpan({ cls: "vt-wp-fold-chev" }), "chevron-right");
+    head.createSpan({ cls: "vt-wp-fold-title", text: title });
+    const body = box.createDiv({ cls: "vt-wp-fold-content" });
+    build(body);
+    head.addEventListener("click", () => {
+      const now2 = toggleStored(this.host.app, entry.id, section3);
+      box.toggleClass("is-open", now2);
+      box.toggleClass("is-closed", !now2);
+      head.setAttr("aria-expanded", String(now2));
+    });
   }
   // The emoji to the left of the word (09 §7.1 A7). A click turns it into
   // a plain text input, same click-to-edit shape as the fields below —
@@ -14745,24 +14858,24 @@ var FlashcardsBlock = class extends import_obsidian29.MarkdownRenderChild {
     );
     if (rows.length === 0) return;
     const open = this.batchOpen[phase];
-    const toggle = toggleHost.createEl("button", {
+    const toggle2 = toggleHost.createEl("button", {
       cls: "vt-fc-batch-toggle",
       attr: { type: "button", "aria-expanded": String(open), "aria-controls": this.batchId }
     });
-    toggle.toggleClass("is-open", open);
-    (0, import_obsidian29.setIcon)(toggle.createSpan({ cls: "vt-fc-icon" }), "list");
-    toggle.createSpan({ text: t("flashcards.batch.toggle", { n: rows.length }) });
-    (0, import_obsidian29.setIcon)(toggle.createSpan({ cls: ["vt-fc-icon", "vt-fc-batch-chevron"] }), "chevron-down");
+    toggle2.toggleClass("is-open", open);
+    (0, import_obsidian29.setIcon)(toggle2.createSpan({ cls: "vt-fc-icon" }), "list");
+    toggle2.createSpan({ text: t("flashcards.batch.toggle", { n: rows.length }) });
+    (0, import_obsidian29.setIcon)(toggle2.createSpan({ cls: ["vt-fc-icon", "vt-fc-batch-chevron"] }), "chevron-down");
     const panel = panelHost.createDiv({ cls: "vt-fc-batch", attr: { id: this.batchId } });
     panel.hidden = !open;
     const list = panel.createEl("ol", { cls: "vt-fc-batch-list" });
     for (const row of rows) this.renderBatchRow(list, row, entries.get(row.id), phase);
     if (open) scrollToCurrent(panel);
-    toggle.onclick = (e) => {
+    toggle2.onclick = (e) => {
       const next = !this.batchOpen[phase];
       this.batchOpen[phase] = next;
-      toggle.setAttr("aria-expanded", String(next));
-      toggle.toggleClass("is-open", next);
+      toggle2.setAttr("aria-expanded", String(next));
+      toggle2.toggleClass("is-open", next);
       panel.hidden = !next;
       if (next) scrollToCurrent(panel);
       this.keepCardKeys(e);
@@ -15803,6 +15916,8 @@ function dnaDeps(plugin) {
 var BLOCKS = [
   { lang: "vocab-dashboard", render: renderDashboard },
   { lang: "vocab-flashcards", render: renderFlashcards },
+  // 1010 A: one name per page — the old block names above/below keep working.
+  { lang: "vocab-card", render: renderFlashcards },
   // The plugin is the block's WordHeaderHost.
   { lang: WORD_BLOCK_LANG, render: renderWordHeader },
   // M7 (規劃書 06 §7): 字族樹, 動詞用法, 冷知識.
@@ -15810,7 +15925,9 @@ var BLOCKS = [
   // Same block under the name the galaxy redesign uses (09 〔A2〕).
   { lang: "vocab-galaxy", render: renderFamilies },
   { lang: "vocab-verbs", render: renderVerbs },
+  { lang: "vocab-usage", render: renderVerbs },
   { lang: "vocab-trivia", render: renderTrivia },
+  { lang: "vocab-eureka", render: renderTrivia },
   // Wave 9 (規劃書 09 §7): Word DNA — morpheme breakdown, timeline, 冷知識.
   { lang: "vocab-dna", render: (plugin, source, el, ctx) => (
     // Only the Word DNA entry file feeds the sidebar (規劃書 10 §2.1).
@@ -18612,7 +18729,7 @@ var AnthropicProvider = class {
       body: JSON.stringify(body)
     };
   }
-  modelFor(tier) {
+  modelFor(_tier) {
     const { smartModel, fastModel } = this.deps.config;
     return smartModel || fastModel;
   }
@@ -18793,7 +18910,7 @@ var OpenAiCompatProvider = class {
     if (this.deps.apiKey) headers.authorization = `Bearer ${this.deps.apiKey}`;
     return { url: `${this.baseUrl}/chat/completions`, method: "POST", headers, body: JSON.stringify(body) };
   }
-  modelFor(tier) {
+  modelFor(_tier) {
     const { smartModel, fastModel } = this.deps.config;
     const model = smartModel || fastModel;
     if (!model) throw new AiError("bad_request", "No model name configured");
@@ -21330,7 +21447,7 @@ var RestoreModal = class extends import_obsidian44.Modal {
       el.createEl("h4", { text: t("backup.restore.extras.title") });
       el.createEl("p", { text: text.extras });
       const remove2 = new import_obsidian44.Setting(el).setName(t("backup.restore.extras.remove")).addToggle(
-        (toggle) => toggle.setValue(this.removeExtras).onChange((v) => this.removeExtras = v)
+        (toggle2) => toggle2.setValue(this.removeExtras).onChange((v) => this.removeExtras = v)
       );
       if (item.reason === "before-restore") remove2.setDesc(t("backup.restore.extras.undoHint"));
     }
@@ -24604,7 +24721,7 @@ function buildManagedFile(head, sections, tail = "") {
 var DEFAULT_EXPORT_FOLDERS = {
   words: "vocab-list/\u55AE\u5B57",
   threads: "vocab-list/\u8A0E\u8AD6\u4E32",
-  triviaFile: "vocab-list/\u51B7\u77E5\u8B58.md"
+  triviaFile: "vocab-list/Eureka.md"
 };
 
 // src/services/export/renderers/common.ts
@@ -25509,15 +25626,30 @@ function createExportData(src) {
 // src/services/files/entryFiles.ts
 var ENTRY_FILE_KIND = "entry";
 var ENTRY_FILES = [
-  { id: "flashcards", name: "\u55AE\u5B57\u5361", block: "vocab-flashcards" },
-  { id: "families", name: "\u5B57\u65CF\u6A39", block: "vocab-families" },
-  { id: "verbs", name: "\u52D5\u8A5E\u7528\u6CD5", block: "vocab-verbs" },
+  { id: "flashcards", name: "Card", block: "vocab-card", legacyName: "\u55AE\u5B57\u5361" },
+  { id: "families", name: "Galaxy", block: "vocab-galaxy", legacyName: "\u5B57\u65CF\u6A39" },
+  { id: "verbs", name: "Usage", block: "vocab-usage", legacyName: "\u52D5\u8A5E\u7528\u6CD5" },
   // The saved list is the exported section under the block, so the block
   // itself doesn't list favorites a second time.
-  { id: "trivia", name: "\u51B7\u77E5\u8B58", block: "vocab-trivia", params: "favorites: off" },
+  { id: "trivia", name: "Eureka", block: "vocab-eureka", params: "favorites: off", legacyName: "\u51B7\u77E5\u8B58" },
   // Word DNA (規劃書 09 §7).
-  { id: "dna", name: "Word DNA", block: "vocab-dna" }
+  { id: "dna", name: "DNA", block: "vocab-dna", legacyName: "Word DNA" }
 ];
+var LIST_FILE_NAME = "List";
+var LIST_FILE_LEGACY_NAME = "vocab-list";
+function planEntryRenames(files, exists) {
+  const out = [];
+  for (const f of files) {
+    const names = f.id === "list" ? { legacy: LIST_FILE_LEGACY_NAME, next: LIST_FILE_NAME } : { legacy: entryFileDef(f.id).legacyName, next: entryFileDef(f.id).name };
+    const slash = f.path.lastIndexOf("/");
+    const dir = slash < 0 ? "" : f.path.slice(0, slash);
+    if (f.path.slice(slash + 1) !== `${names.legacy}.md`) continue;
+    const to = joinPath(dir, `${names.next}.md`);
+    if (to === f.path || exists(to)) continue;
+    out.push([f.path, to]);
+  }
+  return out;
+}
 var ENTRY_FILE_IDS = ENTRY_FILES.map((d) => d.id);
 function entryFileDef(id2) {
   const def = ENTRY_FILES.find((d) => d.id === id2);
@@ -25571,7 +25703,7 @@ var EntryFilesService = class {
   paths() {
     return filesPaths(this.settings());
   }
-  // The folders ExportService writes to. 冷知識.md is wherever the trivia
+  // The folders ExportService writes to. Eureka.md is wherever the trivia
   // entry file is now, so the saved list lands in the file the user kept.
   exportFolders() {
     const p = this.paths();
@@ -25600,6 +25732,7 @@ var EntryFilesService = class {
     var _a, _b, _c;
     const { vault } = this.deps;
     await ((_a = vault.ready) == null ? void 0 : _a.call(vault));
+    await this.migrateName(id2);
     const found = vault.findManaged(ENTRY_FILE_KIND, id2);
     if (found) return this.seeded(id2, found);
     const path = entryFilePath(this.paths().folder, id2);
@@ -25618,6 +25751,24 @@ var EntryFilesService = class {
     if (id2 === "trivia") (_c = (_b = this.deps.export) == null ? void 0 : _b.triviaChanged) == null ? void 0 : _c.call(_b);
     return this.seeded(id2, path);
   }
+  // A file still named after the pre-1010 default (單字卡.md…) becomes the
+  // new name through a rename (links follow, content untouched). Found by
+  // frontmatter id, else by the old name in the folder (an older file
+  // without an id). A name the user chose, or a taken target, is skipped.
+  async migrateName(id2) {
+    var _a;
+    const { vault } = this.deps;
+    const legacyName = `${entryFileDef(id2).legacyName}.md`;
+    const path = (_a = vault.findManaged(ENTRY_FILE_KIND, id2)) != null ? _a : [joinPath(this.paths().folder, legacyName), joinPath(LEGACY_FOLDER, legacyName)].find((p) => vault.exists(p));
+    if (!path) return;
+    for (const [from, to] of planEntryRenames([{ id: id2, path }], (p) => vault.exists(p))) {
+      try {
+        await vault.rename(from, to);
+      } catch (e) {
+        console.error(`Vocab Tracker: couldn't rename ${from}`, e);
+      }
+    }
+  }
   async seeded(id2, path) {
     var _a;
     try {
@@ -25630,8 +25781,10 @@ var EntryFilesService = class {
   // Startup: creates the entry files that were never created before.
   // Resolves to the paths created (or adopted) this time.
   async ensureAll() {
-    var _a, _b;
-    const done = (_b = await ((_a = this.deps.seeds) == null ? void 0 : _a.seeded())) != null ? _b : /* @__PURE__ */ new Set();
+    var _a, _b, _c, _d;
+    await ((_b = (_a = this.deps.vault).ready) == null ? void 0 : _b.call(_a));
+    for (const def of ENTRY_FILES) await this.migrateName(def.id);
+    const done = (_d = await ((_c = this.deps.seeds) == null ? void 0 : _c.seeded())) != null ? _d : /* @__PURE__ */ new Set();
     const out = [];
     for (const def of ENTRY_FILES) {
       if (done.has(def.id)) continue;
@@ -25779,7 +25932,9 @@ function syncTriviaCard(h, entry, deps, ctx) {
   if (next instanceof HTMLElement && next.hasClass("vt-wp-trivia-pending")) next.remove();
   const pending = pendingTrivia.get(entry.id);
   if (!pending) return;
-  const card = createDiv({ cls: ["vt", "vt-wp-trivia-pending"] });
+  const card = createDiv({ cls: ["vt", "vt-wp-trivia-pending", "vt-wp-sec-body"] });
+  card.dataset.vtSection = "trivia";
+  card.toggleClass("is-collapsed", !isOpenStored(deps.app, entry.id, "trivia"));
   const head = card.createDiv({ cls: "vt-wp-trivia-pending-head" });
   head.createSpan({ cls: "vt-wp-trivia-pending-badge", text: t("wordPage.trivia.pending.badge") });
   const save = head.createEl("button", { cls: "vt-wp-btn" });
@@ -25800,12 +25955,83 @@ function syncTriviaCard(h, entry, deps, ctx) {
   card.createDiv({ cls: "vt-wp-trivia-pending-hint", text: t("wordPage.trivia.pending.hint") });
   h.insertAdjacentElement("afterend", card);
 }
+var END = /^[ \t]*%%[ \t]*vt:end\b/;
+function sectionContaining(text, lineStart) {
+  var _a;
+  const lines4 = text.split(/\r?\n/);
+  let sawContent = false;
+  for (let i = lineStart; i >= 0; i--) {
+    const line = (_a = lines4[i]) != null ? _a : "";
+    if (END.test(line)) return null;
+    const m2 = BEGIN.exec(line);
+    if (m2) {
+      const name = m2[1];
+      if (!SECTIONS.includes(name)) return null;
+      return { section: name, isHeading: !sawContent };
+    }
+    if (i < lineStart && line.trim() !== "") sawContent = true;
+  }
+  return null;
+}
+var FOLD_OF = {
+  families: "families",
+  usage: "usage",
+  trivia: "trivia",
+  discussion: "discussion"
+};
+function applyFold(root2, section3, open) {
+  root2.querySelectorAll(`.vt-wp-sec-body[data-vt-section="${section3}"]`).forEach((n) => {
+    n.toggleClass("is-collapsed", !open);
+  });
+  root2.querySelectorAll(`.vt-wp-fold-h[data-vt-section="${section3}"]`).forEach((n) => {
+    n.toggleClass("is-open", open);
+    n.setAttr("aria-expanded", String(open));
+  });
+}
+function foldHeading(h, section3, entryId, deps) {
+  if (h.hasClass("vt-wp-fold-h")) return;
+  h.addClass("vt-wp-fold-h");
+  h.dataset.vtSection = section3;
+  h.setAttr("role", "button");
+  h.tabIndex = 0;
+  const open = isOpenStored(deps.app, entryId, FOLD_OF[section3]);
+  const chev = createSpan({ cls: ["vt", "vt-wp-fold-chev"] });
+  (0, import_obsidian52.setIcon)(chev, "chevron-right");
+  h.insertBefore(chev, h.firstChild);
+  h.toggleClass("is-open", open);
+  h.setAttr("aria-expanded", String(open));
+  const flip = () => {
+    var _a;
+    const now2 = toggleStored(deps.app, entryId, FOLD_OF[section3]);
+    const root2 = (_a = h.closest(".markdown-preview-view, .markdown-rendered")) != null ? _a : h.ownerDocument.body;
+    applyFold(root2, section3, now2);
+  };
+  h.addEventListener("click", (e) => {
+    if (e.target.closest(".vt-wp-actions")) return;
+    flip();
+  });
+  h.addEventListener("keydown", (e) => {
+    if (e.target === h && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      flip();
+    }
+  });
+}
 function createWordPageDecorator(deps) {
   return (el, ctx) => {
     var _a, _b, _c;
     const fm = (_a = ctx.frontmatter) != null ? _a : deps.frontmatterOf(ctx.sourcePath);
     const entryId = wordPageEntryId(fm);
     if (!entryId) return;
+    const info0 = ctx.getSectionInfo(el);
+    if (info0) {
+      const at = sectionContaining(info0.text, info0.lineStart);
+      if (at && !at.isHeading) {
+        el.addClass("vt-wp-sec-body");
+        el.dataset.vtSection = at.section;
+        el.toggleClass("is-collapsed", !isOpenStored(deps.app, entryId, FOLD_OF[at.section]));
+      }
+    }
     const headings = [...el.matches("h2, h3") ? [el] : [], ...Array.from(el.querySelectorAll("h2, h3"))];
     if (!headings.length) return;
     const info = ctx.getSectionInfo(el);
@@ -25822,6 +26048,7 @@ function createWordPageDecorator(deps) {
       }
       const section3 = info ? sectionAtHeading(info.text, info.lineStart) : sectionByTitle((_c = h.textContent) != null ? _c : "");
       if (!section3) continue;
+      foldHeading(h, section3, entryId, deps);
       decorate(h, section3, entry, deps, ctx);
       if (section3 === "trivia") syncTriviaCard(h, entry, deps, ctx);
     }
@@ -27031,7 +27258,7 @@ var DeleteEntryModal = class extends import_obsidian58.Modal {
     }
     if (this.impact.wordPageExists) {
       new import_obsidian58.Setting(el).setName(t("deleteEntry.trashWordPage")).addToggle(
-        (toggle) => toggle.setValue(this.trashWordPage).onChange((v) => this.trashWordPage = v)
+        (toggle2) => toggle2.setValue(this.trashWordPage).onChange((v) => this.trashWordPage = v)
       );
     }
     new import_obsidian58.Setting(el).addButton((b) => b.setButtonText(t("deleteEntry.cancel")).onClick(() => this.close())).addButton(
@@ -27046,7 +27273,8 @@ var DeleteEntryModal = class extends import_obsidian58.Modal {
 
 // main.ts
 var VOCAB_FOLDER = "vocab-list";
-var VOCAB_FILE = `${VOCAB_FOLDER}/vocab-list.md`;
+var VOCAB_FILE = `${VOCAB_FOLDER}/${LIST_FILE_NAME}.md`;
+var VOCAB_FILE_OLD = `${VOCAB_FOLDER}/${LIST_FILE_LEGACY_NAME}.md`;
 var VOCAB_FILE_LEGACY = "vocab-list.md";
 var ENRICH_GAP_MS = 400;
 var RESUME_ENRICH_DELAY_MS = 5e3;
@@ -27348,12 +27576,12 @@ var VocabTrackerPlugin = class extends import_obsidian59.Plugin {
     });
     this.addCommand({
       id: "open-vocab-sidebar",
-      name: "Open Vocab Sidebar",
+      name: t("command.openSidebar"),
       callback: () => this.activateSidebar()
     });
     this.addCommand({
       id: "open-vocab-list",
-      name: "Open Vocab List",
+      name: t("command.openList"),
       callback: () => this.openVocabFile()
     });
     this.addRibbonIcon("book-open", t("ribbon.openWordList"), () => {
@@ -27712,6 +27940,12 @@ var VocabTrackerPlugin = class extends import_obsidian59.Plugin {
     await this.surfaces.openWordCard(entry.id, "data");
   }
   async ensureVocabFile() {
+    const [rename] = planEntryRenames(
+      [{ id: "list", path: VOCAB_FILE_OLD }],
+      (p) => !!this.app.vault.getAbstractFileByPath(p)
+    );
+    const old = rename ? this.app.vault.getAbstractFileByPath(rename[0]) : null;
+    if (rename && old instanceof import_obsidian59.TFile) await this.app.fileManager.renameFile(old, rename[1]);
     if (this.app.vault.getAbstractFileByPath(VOCAB_FILE)) return;
     if (!this.app.vault.getAbstractFileByPath(VOCAB_FOLDER)) {
       await this.app.vault.createFolder(VOCAB_FOLDER);
@@ -27723,7 +27957,7 @@ var VocabTrackerPlugin = class extends import_obsidian59.Plugin {
     }
     await this.app.vault.create(
       VOCAB_FILE,
-      "# Vocabulary List\n\n> Click a row to expand its details. Edit fields inline and they save automatically.\n\n```vocab-dashboard\n```\n"
+      "# List\n\n> Click a row to expand its details. Edit fields inline and they save automatically.\n\n```vocab-dashboard\n```\n"
     );
   }
   // ── Click any English word in reading mode ─────────────────────

@@ -3010,6 +3010,178 @@ body.is-mobile .vt-wh-speak {
 .vt-hide-first-heading .cm-content > .cm-line:first-child {
   display: none;
 }
+.vt-word-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.vt-word-header .vt-wh-word {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.vt-word-header .vt-wh-top {
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+.vt-word-header .vt-wh-defs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.vt-word-header .vt-wh-defs .vt-field {
+  margin: 0;
+}
+.vt-word-header .vt-wh-defs .vt-field-box {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+.vt-word-header .vt-wh-chips {
+  gap: 8px;
+}
+.vt-word-header .vt-wh-chip {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.vt-wh-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vt-wh-notes-label,
+.vt-wh-inforow-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.vt-wh-notes .vt-field,
+.vt-wh-inforow .vt-field {
+  margin: 0;
+}
+.vt-wh-notes .vt-field-box,
+.vt-wh-inforow .vt-field-box {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.vt-wp-fold {
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.vt-wp-fold-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 48px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  color: var(--text-normal);
+  cursor: pointer;
+  text-align: left;
+}
+.vt-wp-fold-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+.vt-wp-fold-chev {
+  display: inline-flex;
+  color: var(--text-faint);
+  transition: transform 0.12s ease;
+}
+.vt-wp-fold-chev svg {
+  width: 16px;
+  height: 16px;
+}
+.vt-wp-fold.is-open > .vt-wp-fold-head .vt-wp-fold-chev {
+  transform: rotate(90deg);
+}
+.vt-wp-fold.is-closed > .vt-wp-fold-content {
+  display: none;
+}
+.vt-wp-fold-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 0 16px 28px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.vt-wh-inforow {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  column-gap: 16px;
+  align-items: start;
+}
+.vt-wh-inforow-label {
+  line-height: 32px;
+}
+.vt-wp-fold-h {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.vt-wp-fold-h .vt-wp-fold-chev {
+  display: inline-flex;
+  color: var(--text-faint);
+  transition: transform 0.12s ease;
+}
+.vt-wp-fold-h.is-open .vt-wp-fold-chev {
+  transform: rotate(90deg);
+}
+.vt-wp-sec-body.is-collapsed {
+  display: none;
+}
+.vt-wp-sec-body {
+  font-size: 14px;
+  line-height: 1.6;
+}
+body.is-mobile .vt-wp-fold-head {
+  height: 52px;
+}
+body.is-mobile .vt-wp-fold-h {
+  min-height: 52px;
+}
+body.is-mobile .vt-wp-fold-head,
+body.is-mobile .vt-wp-fold-h .vt-wp-btn,
+body.is-mobile .vt-wh-breakdown-btn {
+  min-height: 44px;
+}
+body.is-mobile .vt-wh-speak {
+  min-width: 44px;
+}
+body.is-phone .vt-word-header .vt-wh-word {
+  font-size: 28px;
+}
+body.is-phone .vt-wp-fold-title,
+body.is-phone .vt-wp-fold-h {
+  font-size: 16px;
+}
+body.is-phone .vt-wp-fold-content,
+body.is-phone .vt-wp-sec-body,
+body.is-phone .vt-wh-notes .vt-field-box,
+body.is-phone .vt-wh-inforow .vt-field-box {
+  font-size: 15px;
+}
+body.is-phone .vt-wh-inforow {
+  grid-template-columns: 56px minmax(0, 1fr);
+  column-gap: 12px;
+}
 
 /* src/styles/wordRow8.css */
 .vt-row-level-chips {
@@ -3024,23 +3196,6 @@ body.is-mobile .vt-wh-speak {
   border-radius: var(--radius-s, 4px);
   background: var(--background-modifier-border);
   color: var(--text-muted);
-}
-.vt-wh-metafields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 2px 0 10px;
-  max-width: 320px;
-}
-.vt-wh-metafields .vt-field {
-  flex: 1 1 120px;
-  margin-bottom: 0;
-}
-.vt-wh-fields {
-  margin: 4px 0 14px;
-}
-.vt-wh-fields .vt-field {
-  margin-bottom: 8px;
 }
 
 /* src/styles/chips.css */
