@@ -9,6 +9,7 @@ import type { TriviaService } from "../../services/learn/TriviaService";
 import type { VerbUsageService } from "../../services/learn/VerbUsageService";
 import { debugReportText } from "../kit/aiDebug";
 import { aiErrorText } from "../kit/aiState";
+import { isOpenStored, toggleStored, type FoldSection } from "./wordPageFolds";
 
 // ── Word page heading buttons (規劃書 06 §8.2, W1/W2) ──
 //
@@ -118,7 +119,9 @@ function syncTriviaCard(h: HTMLElement, entry: VocabEntry, deps: WordPageDeps, c
   const pending = pendingTrivia.get(entry.id);
   if (!pending) return;
 
-  const card = createDiv({ cls: ["vt", "vt-wp-trivia-pending"] });
+  const card = createDiv({ cls: ["vt", "vt-wp-trivia-pending", "vt-wp-sec-body"] });
+  card.dataset.vtSection = "trivia";
+  card.toggleClass("is-collapsed", !isOpenStored(deps.app, entry.id, "trivia"));
   const head = card.createDiv({ cls: "vt-wp-trivia-pending-head" });
   head.createSpan({ cls: "vt-wp-trivia-pending-badge", text: t("wordPage.trivia.pending.badge") });
   const save = head.createEl("button", { cls: "vt-wp-btn" });
@@ -143,6 +146,78 @@ function syncTriviaCard(h: HTMLElement, entry: VocabEntry, deps: WordPageDeps, c
   h.insertAdjacentElement("afterend", card);
 }
 
+const END = /^[ \t]*%%[ \t]*vt:end\b/;
+
+// Which managed section a rendered block sits inside, from its line range:
+// walk up to the nearest `vt:begin`, stopping if a `vt:end` comes first.
+// `headingLine` is true when the block starts with the section heading
+// itself (the begin marker is the line right above it).
+export function sectionContaining(text: string, lineStart: number): { section: WordSection; isHeading: boolean } | null {
+  const lines = text.split(/\r?\n/);
+  let sawContent = false;
+  for (let i = lineStart; i >= 0; i--) {
+    const line = lines[i] ?? "";
+    if (END.test(line)) return null;
+    const m = BEGIN.exec(line);
+    if (m) {
+      const name = m[1] as WordSection;
+      if (!SECTIONS.includes(name)) return null;
+      return { section: name, isHeading: !sawContent };
+    }
+    if (i < lineStart && line.trim() !== "") sawContent = true;
+  }
+  return null;
+}
+
+const FOLD_OF: Record<WordSection, FoldSection> = {
+  families: "families",
+  usage: "usage",
+  trivia: "trivia",
+  discussion: "discussion",
+};
+
+// Every rendered block of one section carries data-vt-section; the view's
+// container is where the heading click finds its siblings.
+function applyFold(root: ParentNode, section: WordSection, open: boolean): void {
+  root.querySelectorAll<HTMLElement>(`.vt-wp-sec-body[data-vt-section="${section}"]`).forEach((n) => {
+    n.toggleClass("is-collapsed", !open);
+  });
+  root.querySelectorAll<HTMLElement>(`.vt-wp-fold-h[data-vt-section="${section}"]`).forEach((n) => {
+    n.toggleClass("is-open", open);
+    n.setAttr("aria-expanded", String(open));
+  });
+}
+
+function foldHeading(h: HTMLElement, section: WordSection, entryId: string, deps: WordPageDeps): void {
+  if (h.hasClass("vt-wp-fold-h")) return;
+  h.addClass("vt-wp-fold-h");
+  h.dataset.vtSection = section;
+  h.setAttr("role", "button");
+  h.tabIndex = 0;
+  const open = isOpenStored(deps.app, entryId, FOLD_OF[section]);
+  const chev = createSpan({ cls: ["vt", "vt-wp-fold-chev"] });
+  setIcon(chev, "chevron-right");
+  h.insertBefore(chev, h.firstChild);
+  h.toggleClass("is-open", open);
+  h.setAttr("aria-expanded", String(open));
+  const flip = () => {
+    const now = toggleStored(deps.app, entryId, FOLD_OF[section]);
+    // The whole view, not just this block: reading view renders in pieces.
+    const root = h.closest(".markdown-preview-view, .markdown-rendered") ?? h.ownerDocument.body;
+    applyFold(root, section, now);
+  };
+  h.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).closest(".vt-wp-actions")) return;
+    flip();
+  });
+  h.addEventListener("keydown", (e) => {
+    if ((e.target === h) && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      flip();
+    }
+  });
+}
+
 export function createWordPageDecorator(deps: WordPageDeps) {
   return (el: HTMLElement, ctx: MarkdownPostProcessorContext): void => {
     const fm = (ctx.frontmatter as Record<string, unknown> | undefined) ?? deps.frontmatterOf(ctx.sourcePath);
@@ -151,6 +226,15 @@ export function createWordPageDecorator(deps: WordPageDeps) {
     // h3: the per-part-of-speech 「<詞性>用法」 subheadings under 用法
     // (1006-2 #19) — only usage has any, but checking every h3's text is
     // cheap and keeps this generic.
+    const info0 = ctx.getSectionInfo(el);
+    if (info0) {
+      const at = sectionContaining(info0.text, info0.lineStart);
+      if (at && !at.isHeading) {
+        el.addClass("vt-wp-sec-body");
+        el.dataset.vtSection = at.section;
+        el.toggleClass("is-collapsed", !isOpenStored(deps.app, entryId, FOLD_OF[at.section]));
+      }
+    }
     const headings = [...(el.matches("h2, h3") ? [el] : []), ...Array.from(el.querySelectorAll<HTMLElement>("h2, h3"))];
     if (!headings.length) return;
     const info = ctx.getSectionInfo(el);
@@ -171,6 +255,7 @@ export function createWordPageDecorator(deps: WordPageDeps) {
       }
       const section = info ? sectionAtHeading(info.text, info.lineStart) : sectionByTitle(h.textContent ?? "");
       if (!section) continue;
+      foldHeading(h, section, entryId, deps);
       decorate(h, section, entry, deps, ctx);
       if (section === "trivia") syncTriviaCard(h, entry, deps, ctx);
     }
