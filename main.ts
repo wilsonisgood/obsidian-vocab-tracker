@@ -68,7 +68,7 @@ import { ExportService } from "./src/services/export/ExportService";
 import { createExportData } from "./src/services/export/exportData";
 import { EntryFilesService } from "./src/services/files/EntryFilesService";
 import { SeedRecord } from "./src/services/files/SeedRecord";
-import type { EntryFileId } from "./src/services/files/entryFiles";
+import { LIST_FILE_LEGACY_NAME, LIST_FILE_NAME, planEntryRenames, type EntryFileId } from "./src/services/files/entryFiles";
 import type { WordHeaderHost } from "./src/ui/blocks/wordHeader";
 import type { WordLinkHost } from "./src/ui/blocks/learnUi";
 import { openWordReview } from "./src/ui/blocks/wordReview";
@@ -102,7 +102,9 @@ import { DeleteEntryModal, type DeleteEntryResult } from "./src/ui/word/DeleteEn
 // Lives inside its own folder so related notes (per-exam lists, planning
 // docs, etc.) can sit alongside it instead of cluttering the vault root.
 const VOCAB_FOLDER = "vocab-list";
-const VOCAB_FILE = `${VOCAB_FOLDER}/vocab-list.md`;
+const VOCAB_FILE = `${VOCAB_FOLDER}/${LIST_FILE_NAME}.md`;
+// The name before the 1010 rename (第十二波 A).
+const VOCAB_FILE_OLD = `${VOCAB_FOLDER}/${LIST_FILE_LEGACY_NAME}.md`;
 const VOCAB_FILE_LEGACY = "vocab-list.md";
 
 // Gap between background dictionary lookups for auto-imported words, so a
@@ -523,12 +525,12 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
 
     this.addCommand({
       id: "open-vocab-sidebar",
-      name: "Open Vocab Sidebar",
+      name: t("command.openSidebar"),
       callback: () => this.activateSidebar(),
     });
     this.addCommand({
       id: "open-vocab-list",
-      name: "Open Vocab List",
+      name: t("command.openList"),
       callback: () => this.openVocabFile(),
     });
 
@@ -973,6 +975,15 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   }
 
   async ensureVocabFile() {
+    // vocab-list/vocab-list.md → List.md by rename (links follow, content
+    // untouched); skipped when List.md is already there.
+    const [rename] = planEntryRenames(
+      [{ id: "list", path: VOCAB_FILE_OLD }],
+      (p) => !!this.app.vault.getAbstractFileByPath(p)
+    );
+    const old = rename ? this.app.vault.getAbstractFileByPath(rename[0]) : null;
+    if (rename && old instanceof TFile) await this.app.fileManager.renameFile(old, rename[1]);
+
     if (this.app.vault.getAbstractFileByPath(VOCAB_FILE)) return;
 
     if (!this.app.vault.getAbstractFileByPath(VOCAB_FOLDER)) {
@@ -989,7 +1000,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
 
     await this.app.vault.create(
       VOCAB_FILE,
-      "# Vocabulary List\n\n> Click a row to expand its details. Edit fields inline and they save automatically.\n\n```vocab-dashboard\n```\n"
+      "# List\n\n> Click a row to expand its details. Edit fields inline and they save automatically.\n\n```vocab-dashboard\n```\n"
     );
   }
 

@@ -106,7 +106,7 @@ describe.each([
     const path = await b.plugin.files.ensure("flashcards");
     const els = readNote(b, path);
     await flush();
-    const block = els.find((el) => el.hasClass("block-language-vocab-flashcards"))!;
+    const block = els.find((el) => el.hasClass("block-language-vocab-card"))!;
     expect(block.textContent.length).toBeGreaterThan(0);
 
     await b.plugin.srs.ensureLoaded();
@@ -141,11 +141,11 @@ describe.each([
     await flush();
     const text = (els: FakeElement[], lang: string) => els.find((el) => el.hasClass(`block-language-${lang}`))?.textContent ?? "";
 
-    expect(text(families, "vocab-families")).toContain(learn.families[0].label);
+    expect(text(families, "vocab-galaxy")).toContain(learn.families[0].label);
     const verb = fx.liveEntries.find((e) => e.usage)!;
-    expect(text(verbs, "vocab-verbs")).toContain(verb.word);
+    expect(text(verbs, "vocab-usage")).toContain(verb.word);
     // The trivia block draws (its AI part just says AI needs setting up)…
-    expect(text(trivia, "vocab-trivia").length).toBeGreaterThan(0);
+    expect(text(trivia, "vocab-eureka").length).toBeGreaterThan(0);
     // …and every saved item is listed under it.
     const page = trivia.map((el) => el.textContent).join("\n");
     for (const item of learn.trivia) expect(page).toContain(item.title);

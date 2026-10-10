@@ -38,6 +38,8 @@ export interface BlockDef {
 export const BLOCKS: readonly BlockDef[] = [
   { lang: "vocab-dashboard", render: renderDashboard },
   { lang: "vocab-flashcards", render: renderFlashcards },
+  // 1010 A: one name per page — the old block names above/below keep working.
+  { lang: "vocab-card", render: renderFlashcards },
   // The plugin is the block's WordHeaderHost.
   { lang: WORD_BLOCK_LANG, render: renderWordHeader },
   // M7 (規劃書 06 §7): 字族樹, 動詞用法, 冷知識.
@@ -45,7 +47,9 @@ export const BLOCKS: readonly BlockDef[] = [
   // Same block under the name the galaxy redesign uses (09 〔A2〕).
   { lang: "vocab-galaxy", render: renderFamilies },
   { lang: "vocab-verbs", render: renderVerbs },
+  { lang: "vocab-usage", render: renderVerbs },
   { lang: "vocab-trivia", render: renderTrivia },
+  { lang: "vocab-eureka", render: renderTrivia },
   // Wave 9 (規劃書 09 §7): Word DNA — morpheme breakdown, timeline, 冷知識.
   { lang: "vocab-dna", render: (plugin, source, el, ctx) =>
       // Only the Word DNA entry file feeds the sidebar (規劃書 10 §2.1).

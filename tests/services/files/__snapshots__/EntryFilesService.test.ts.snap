@@ -13,21 +13,21 @@ vocab-tracker-id: dna
 vocab-tracker: entry
 vocab-tracker-id: families
 ---
-\`\`\`vocab-families
+\`\`\`vocab-galaxy
 \`\`\`
 ",
   "flashcards": "---
 vocab-tracker: entry
 vocab-tracker-id: flashcards
 ---
-\`\`\`vocab-flashcards
+\`\`\`vocab-card
 \`\`\`
 ",
   "trivia": "---
 vocab-tracker: entry
 vocab-tracker-id: trivia
 ---
-\`\`\`vocab-trivia
+\`\`\`vocab-eureka
 favorites: off
 \`\`\`
 
@@ -41,7 +41,7 @@ favorites: off
 vocab-tracker: entry
 vocab-tracker-id: verbs
 ---
-\`\`\`vocab-verbs
+\`\`\`vocab-usage
 \`\`\`
 ",
 }

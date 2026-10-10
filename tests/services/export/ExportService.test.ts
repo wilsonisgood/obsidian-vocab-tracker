@@ -28,7 +28,7 @@ const WORDS = "vocab-list/單字";
 const GLITTERY_PAGE = `${WORDS}/glittery.md`;
 const LEOTARD_PAGE = `${WORDS}/leotard.md`;
 const AI_NOTE = "vocab-list/討論串/Taylor_Swift_NYU_Speech_Transcript.ai.md";
-const TRIVIA_FILE = "vocab-list/冷知識.md";
+const TRIVIA_FILE = "vocab-list/Eureka.md";
 
 interface Deferred {
   promise: Promise<void>;
