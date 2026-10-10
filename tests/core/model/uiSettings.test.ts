@@ -19,13 +19,12 @@ const T3 = "2026-10-03T00:00:00.000Z";
 const data = (settings: PluginSettings) => ({ schemaVersion: 2 as const, settings, entries: [] });
 
 describe("resolveUiPrefs", () => {
-  it("defaults: menu on desktop, save at once on mobile, Live Preview hint on, automatic pronunciation", () => {
+  it("defaults: tap opens Word info, Live Preview hint on, automatic pronunciation, phone sidebar on", () => {
     expect(DEFAULT_UI_PREFS).toEqual({
-      tapAction: "menu",
-      tapActionMobile: "save",
+      tapAction: "open",
       livePreviewHint: true,
       pronounceSource: "auto",
-      sidebarOnPhone: false,
+      sidebarOnPhone: true,
     });
     expect(resolveUiPrefs(undefined)).toEqual(DEFAULT_UI_PREFS);
   });
@@ -36,10 +35,9 @@ describe("resolveUiPrefs", () => {
 
   it("keeps stored values", () => {
     expect(
-      resolveUiPrefs({ locale: "auto", tapAction: "open", tapActionMobile: "menu", livePreviewHint: false, pronounceSource: "synth" })
+      resolveUiPrefs({ locale: "auto", wordTapAction: "menu", livePreviewHint: false, pronounceSource: "synth", sidebarOnPhone: false })
     ).toEqual({
-      tapAction: "open",
-      tapActionMobile: "menu",
+      tapAction: "menu",
       livePreviewHint: false,
       pronounceSource: "synth",
       sidebarOnPhone: false,
@@ -48,11 +46,20 @@ describe("resolveUiPrefs", () => {
     expect(resolveUiPrefs({ locale: "auto", sidebarOnPhone: true }).sidebarOnPhone).toBe(true);
   });
 
+  it("ignores the old per-device tap actions (1010 #S1)", () => {
+    expect(resolveUiPrefs({ locale: "auto", tapAction: "save", tapActionMobile: "menu" }).tapAction).toBe("open");
+    expect(resolveUiPrefs({ locale: "auto", tapAction: "menu" }).tapAction).toBe("open");
+  });
+
+  it("sidebarOnPhone: missing is on, a stored false stays off (1010 #S2)", () => {
+    expect(resolveUiPrefs({ locale: "auto" }).sidebarOnPhone).toBe(true);
+    expect(resolveUiPrefs({ locale: "auto", sidebarOnPhone: false }).sidebarOnPhone).toBe(false);
+  });
+
   it("reads values it doesn't know (a newer version's) as the default", () => {
     const ui = {
       locale: "auto",
-      tapAction: "long-press",
-      tapActionMobile: 3,
+      wordTapAction: "long-press",
       livePreviewHint: "no",
       pronounceSource: "neural",
     } as unknown as UiSettings;
@@ -64,7 +71,7 @@ describe("withSettingsDefaults and the ui section", () => {
   it("doesn't write the M8 defaults into old data, so it doesn't look edited", () => {
     const s = withSettingsDefaults({ schemaVersion: 2, ui: { locale: "en", updatedAt: T1 } });
     expect(s.ui).toEqual({ locale: "en", updatedAt: T1 });
-    expect(resolveUiPrefs(s.ui).tapActionMobile).toBe("save");
+    expect(resolveUiPrefs(s.ui).tapAction).toBe("open");
   });
 
   it("keeps a value it doesn't know on disk", () => {
@@ -77,10 +84,10 @@ describe("VocabStore.updateSettings stamps the ui section", () => {
   it("changing the mobile tap action stamps ui only", async () => {
     const store = new VocabStore({ schemaVersion: 2, entries: [], settings: { schemaVersion: 2, learner: { level: "B1", updatedAt: T1 } as PluginSettings["learner"] } }, async () => {});
     await store.updateSettings((s) => {
-      s.ui.tapActionMobile = "open";
+      s.ui.wordTapAction = "open";
     });
     const s = store.settings;
-    expect(s.ui.tapActionMobile).toBe("open");
+    expect(s.ui.wordTapAction).toBe("open");
     expect(s.ui.updatedAt).toBeDefined();
     expect(s.ui.updatedAt).toBe(s.updatedAt);
     expect(s.learner.updatedAt).toBe(T1);
@@ -99,11 +106,11 @@ describe("merge() and the tap actions", () => {
   const both = (a: PluginSettings, b: PluginSettings) => [merge(data(a), data(b)).settings, merge(data(b), data(a)).settings];
 
   it("the newer ui section wins as a whole, tap actions included", () => {
-    const phone: PluginSettings = { schemaVersion: 2, updatedAt: T2, ui: { locale: "auto", tapActionMobile: "open", updatedAt: T2 } };
+    const phone: PluginSettings = { schemaVersion: 2, updatedAt: T2, ui: { locale: "auto", wordTapAction: "open", updatedAt: T2 } };
     const mac: PluginSettings = { schemaVersion: 2, updatedAt: T1, ui: { locale: "auto", tapAction: "save", updatedAt: T1 } };
     for (const s of both(phone, mac)) {
       expect(s?.ui).toEqual(phone.ui);
-      expect(resolveUiPrefs(s?.ui).tapAction).toBe("menu");
+      expect(resolveUiPrefs(s?.ui).tapAction).toBe("open");
     }
   });
 
@@ -111,7 +118,7 @@ describe("merge() and the tap actions", () => {
     const phone: PluginSettings = {
       schemaVersion: 2,
       updatedAt: T3,
-      ui: { locale: "auto", tapActionMobile: "menu", updatedAt: T3 },
+      ui: { locale: "auto", wordTapAction: "menu", updatedAt: T3 },
       srs: { dailyNew: 10, updatedAt: T1 },
     };
     const mac: PluginSettings = {
@@ -121,17 +128,17 @@ describe("merge() and the tap actions", () => {
       srs: { dailyNew: 30, updatedAt: T2 },
     };
     for (const s of both(phone, mac)) {
-      expect(resolveUiPrefs(s?.ui).tapActionMobile).toBe("menu");
+      expect(resolveUiPrefs(s?.ui).tapAction).toBe("menu");
       expect(s?.srs?.dailyNew).toBe(30);
     }
   });
 
   it("a pre-M8 device's newer locale edit drops the tap actions (whole-section rule) — they fall back to defaults", () => {
-    const newer: PluginSettings = { schemaVersion: 2, updatedAt: T1, ui: { locale: "auto", tapActionMobile: "open", updatedAt: T1 } };
+    const newer: PluginSettings = { schemaVersion: 2, updatedAt: T1, ui: { locale: "auto", wordTapAction: "open", updatedAt: T1 } };
     const old: PluginSettings = { schemaVersion: 2, updatedAt: T2, ui: { locale: "en", updatedAt: T2 } };
     for (const s of both(newer, old)) {
       expect(s?.ui?.locale).toBe("en");
-      expect(resolveUiPrefs(s?.ui).tapActionMobile).toBe("save");
+      expect(resolveUiPrefs(s?.ui).tapAction).toBe("open");
     }
   });
 });

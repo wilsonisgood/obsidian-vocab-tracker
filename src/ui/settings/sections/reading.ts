@@ -11,7 +11,7 @@ import { t, type I18nKey } from "../../../core/i18n";
 import type { SettingsContext, SettingsSection } from "../SettingsTab";
 
 // 「點字動作」 (規劃書 01 §3.2): what tapping a word in reading view does —
-// desktop and mobile set separately (mobile defaults to saving at once).
+// one setting for all devices (1010 #S1).
 // Stored in the ui section, so it syncs and merges like the locale.
 
 function tapOptions(): Record<TapAction, string> {
@@ -34,6 +34,12 @@ async function setPref<K extends keyof UiPrefs>(ctx: SettingsContext, key: K, va
   });
 }
 
+async function setWordTapAction(ctx: SettingsContext, value: TapAction): Promise<void> {
+  await ctx.store.updateSettings((s) => {
+    s.ui.wordTapAction = value;
+  });
+}
+
 export const readingSection: SettingsSection = {
   id: "reading",
   title: "settings.section.reading",
@@ -46,16 +52,7 @@ export const readingSection: SettingsSection = {
         d
           .addOptions(tapOptions())
           .setValue(prefs.tapAction)
-          .onChange((v) => setPref(ctx, "tapAction", v as TapAction))
-      );
-    new Setting(el)
-      .setName(t("settings.reading.tapActionMobile.name"))
-      .setDesc(t("settings.reading.tapActionMobile.desc"))
-      .addDropdown((d) =>
-        d
-          .addOptions(tapOptions())
-          .setValue(prefs.tapActionMobile)
-          .onChange((v) => setPref(ctx, "tapActionMobile", v as TapAction))
+          .onChange((v) => setWordTapAction(ctx, v as TapAction))
       );
     new Setting(el)
       .setName(t("settings.reading.pronounceSource.name"))

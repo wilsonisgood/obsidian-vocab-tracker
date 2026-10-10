@@ -1,0 +1,14 @@
+/* Settings tab (1010 #S4). */
+
+/* Base URL: the input fills its own row, the OpenAI / Gemini / Ollama preset
+   buttons wrap onto the next one instead of squeezing the input out. */
+.vt-settings .vt-settings-baseurl .setting-item-control {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.vt-settings .vt-settings-baseurl .setting-item-control input[type="text"] {
+  flex: 1 1 100%;
+  width: 100%;
+  min-width: 0;
+}

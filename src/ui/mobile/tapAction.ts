@@ -1,13 +1,12 @@
 import { resolveUiPrefs, type TapAction, type UiSettings } from "../../core/model/settings";
-import { isMobileForm, type FormFactor } from "./formFactor";
+import type { FormFactor } from "./formFactor";
 
 // Tapping a word in reading view (規劃書 01 §3.2): which setting applies,
 // and what to do with this particular word.
 
-// Desktop has its own setting; iPhone and iPad share the mobile one.
-export function tapActionFor(ui: Partial<UiSettings> | undefined, form: FormFactor): TapAction {
-  const prefs = resolveUiPrefs(ui);
-  return isMobileForm(form) ? prefs.tapActionMobile : prefs.tapAction;
+// One setting for every device (1010 #S1); `form` is kept for the callers.
+export function tapActionFor(ui: Partial<UiSettings> | undefined, _form?: FormFactor): TapAction {
+  return resolveUiPrefs(ui).tapAction;
 }
 
 //   menu — the 「加入／開啟」 menu

@@ -35,6 +35,8 @@ function renderProviderFields(el: HTMLElement, ctx: SettingsContext, id: Provide
 
   if (def.editableBaseUrl) {
     const baseUrl = new Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
+    // Input on its own row, preset buttons on the next (1010 #S4); see settings.css.
+    baseUrl.settingEl.addClass("vt-settings-baseurl");
     baseUrl.addText((text) => {
       text.inputEl.addClass("vt-settings-wide");
       text.setPlaceholder("https://…/v1").setValue(cfg().baseUrl);
@@ -50,31 +52,26 @@ function renderProviderFields(el: HTMLElement, ctx: SettingsContext, id: Provide
     }
   }
 
-  const modelSetting = (tier: "smart" | "fast") => {
-    const field = tier === "smart" ? "smartModel" : "fastModel";
-    const s = new Setting(el)
-      .setName(t(tier === "smart" ? "settings.ai.smartModel.name" : "settings.ai.fastModel.name"))
-      .setDesc(t(tier === "smart" ? "settings.ai.smartModel.desc" : "settings.ai.fastModel.desc"));
-    const options = def.models?.[tier];
-    if (options) {
-      // Keep a model chosen elsewhere (newer plugin version, synced device)
-      // selectable instead of silently snapping to the first option.
-      const all = options.includes(cfg()[field]) || !cfg()[field] ? options : [...options, cfg()[field]];
-      s.addDropdown((d) => {
-        for (const m of all) d.addOption(m, m);
-        d.setValue(cfg()[field]).onChange((v) => void update((c) => (c[field] = v)));
-      });
-    } else {
-      s.addText((text) =>
-        text
-          .setPlaceholder(t("settings.ai.model.placeholder"))
-          .setValue(cfg()[field])
-          .onChange((v) => void update((c) => (c[field] = v.trim())))
-      );
-    }
-  };
-  modelSetting("smart");
-  modelSetting("fast");
+  // One model for every AI feature (1010 #S3); stored in smartModel.
+  const modelSetting = new Setting(el).setName(t("settings.ai.model.name")).setDesc(t("settings.ai.model.desc"));
+  const options = def.models?.smart;
+  if (options) {
+    // Keep a model chosen elsewhere (newer plugin version, synced device)
+    // selectable instead of silently snapping to the first option.
+    const cur = cfg().smartModel || cfg().fastModel;
+    const all = options.includes(cur) || !cur ? options : [...options, cur];
+    modelSetting.addDropdown((d) => {
+      for (const m of all) d.addOption(m, m);
+      d.setValue(cur || all[0]).onChange((v) => void update((c) => (c.smartModel = v)));
+    });
+  } else {
+    modelSetting.addText((text) =>
+      text
+        .setPlaceholder(t("settings.ai.model.placeholder"))
+        .setValue(cfg().smartModel || cfg().fastModel)
+        .onChange((v) => void update((c) => (c.smartModel = v.trim())))
+    );
+  }
 
   // 測試連線 — the M3 acceptance check (Claude and Ollama both succeed).
   const testSetting = new Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));

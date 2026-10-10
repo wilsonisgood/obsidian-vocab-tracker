@@ -35,6 +35,16 @@ export interface SettingsSection {
   render(el: HTMLElement, ctx: SettingsContext): void;
 }
 
+// The tab's container and every ancestor that can scroll (Obsidian's settings
+// pane scrolls one of them, depending on version / platform).
+function scrollableChain(start: HTMLElement): HTMLElement[] {
+  const out: HTMLElement[] = [start];
+  for (let el = start.parentElement; el; el = el.parentElement) {
+    if (el.scrollHeight > el.clientHeight && el.scrollTop > 0) out.push(el);
+  }
+  return out;
+}
+
 export class VocabSettingsTab extends PluginSettingTab {
   constructor(
     app: App,
@@ -46,14 +56,28 @@ export class VocabSettingsTab extends PluginSettingTab {
   }
 
   display(): void {
+    this.render(false);
+  }
+
+  // `keepScroll`: a redisplay() from inside the tab (1010 #S5) — put the page
+  // back where it was. A fresh open from Obsidian starts at the top.
+  private render(keepScroll: boolean): void {
     const { containerEl } = this;
+    const scrollers = keepScroll ? scrollableChain(containerEl).map((el) => [el, el.scrollTop] as const) : [];
     containerEl.empty();
     containerEl.addClass("vt-settings");
-    const ctx: SettingsContext = { ...this.ctx, redisplay: () => this.display() };
+    const ctx: SettingsContext = { ...this.ctx, redisplay: () => this.render(true) };
     for (const section of this.sections) {
       new Setting(containerEl).setName(t(section.title)).setHeading();
       section.render(containerEl.createDiv({ cls: `vt-settings-section vt-settings-${section.id}` }), ctx);
     }
+    // Emptying shrinks the page and the browser clamps scrollTop to 0; restore
+    // now, and once more next frame in case layout (e.g. fonts) settles late.
+    const restore = () => {
+      for (const [el, top] of scrollers) el.scrollTop = top;
+    };
+    restore();
+    if (scrollers.length) requestAnimationFrame(restore);
   }
 }
 

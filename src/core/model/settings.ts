@@ -85,9 +85,13 @@ export interface UiSettings extends SectionStamp {
   // Read through resolveUiPrefs() below. Optional on disk: data written
   // before M8 has none of them, and a copy that only gained defaults must
   // not look edited to merge.ts.
-  // Desktop (and anything that isn't Obsidian mobile).
+  // What tapping a word does, one setting for every device (1010 #S1).
+  wordTapAction?: TapAction;
+  // @deprecated Before 2.0.8 desktop / mobile had separate settings. No longer
+  // read (the values are not carried over); left on disk because older
+  // versions on other devices still use them.
   tapAction?: TapAction;
-  // iPhone and iPad (Platform.isMobile).
+  // @deprecated See tapAction.
   tapActionMobile?: TapAction;
   // The one-time 「Live Preview 不能點字」 hint on mobile; false once the
   // user picked 「不再提示」.
@@ -103,18 +107,17 @@ export interface UiSettings extends SectionStamp {
 
 export interface UiPrefs {
   tapAction: TapAction;
-  tapActionMobile: TapAction;
   livePreviewHint: boolean;
   pronounceSource: PronounceSource;
   sidebarOnPhone: boolean;
 }
 
 export const DEFAULT_UI_PREFS: Readonly<UiPrefs> = {
-  tapAction: "menu",
-  tapActionMobile: "save",
+  tapAction: "open",
   livePreviewHint: true,
   pronounceSource: "auto",
-  sidebarOnPhone: false,
+  // On unless the user switched it off themselves (a stored false stays) (1010 #S2).
+  sidebarOnPhone: true,
 };
 
 function isTapAction(v: unknown): v is TapAction {
@@ -130,8 +133,7 @@ function isPronounceSource(v: unknown): v is PronounceSource {
 // default, but stays on disk untouched.
 export function resolveUiPrefs(ui: Partial<UiSettings> | undefined): UiPrefs {
   return {
-    tapAction: isTapAction(ui?.tapAction) ? ui.tapAction : DEFAULT_UI_PREFS.tapAction,
-    tapActionMobile: isTapAction(ui?.tapActionMobile) ? ui.tapActionMobile : DEFAULT_UI_PREFS.tapActionMobile,
+    tapAction: isTapAction(ui?.wordTapAction) ? ui.wordTapAction : DEFAULT_UI_PREFS.tapAction,
     livePreviewHint: typeof ui?.livePreviewHint === "boolean" ? ui.livePreviewHint : DEFAULT_UI_PREFS.livePreviewHint,
     pronounceSource: isPronounceSource(ui?.pronounceSource) ? ui.pronounceSource : DEFAULT_UI_PREFS.pronounceSource,
     sidebarOnPhone: typeof ui?.sidebarOnPhone === "boolean" ? ui.sidebarOnPhone : DEFAULT_UI_PREFS.sidebarOnPhone,
