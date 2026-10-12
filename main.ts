@@ -456,14 +456,6 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       onOpen: (ref) => void this.openParagraph(ref),
       showGhost: () => this.store.settings.ai.enabled,
       frontmatterOf: (p) => this.frontmatterOf(p),
-      rerender: (path) => {
-        for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
-          const view = leaf.view;
-          if (view instanceof MarkdownView && view.file?.path === path && view.getMode() === "preview") {
-            view.previewMode.rerender(true);
-          }
-        }
-      },
     });
     this.register(this.paragraphBadges.attach());
     this.registerMarkdownPostProcessor(this.paragraphBadges.process);

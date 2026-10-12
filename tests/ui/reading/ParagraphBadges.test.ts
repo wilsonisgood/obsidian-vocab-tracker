@@ -256,25 +256,4 @@ describe("helpers", () => {
     expect(badgeState(0, true)).toEqual({ kind: "ghost", quiet: false });
     expect(badgeState(0, false)).toEqual({ kind: "ghost", quiet: true });
   });
-
-  it("re-renders the note once when a discussion's ^vt id isn't in any rendered paragraph (1010-2)", () => {
-    const events = new TypedEmitter<ParagraphIndexEvents>();
-    const ids = ["vt-aaaaaa"];
-    const index = { events, count: () => 0, blockIds: () => ids };
-    const rerender = vi.fn();
-    const badges = new ParagraphBadges({ index, onOpen: () => {}, showGhost: () => true, rerender });
-    badges.attach();
-    const s = section("P", 2, 2);
-    badges.process(s.el as unknown as HTMLElement, s.ctx);
-    events.emit("paragraph-index:change", { paths: ["a.md"] });
-    events.emit("paragraph-index:change", { paths: ["a.md"] });
-    expect(rerender).toHaveBeenCalledTimes(1);
-    expect(rerender).toHaveBeenCalledWith("a.md");
-
-    const t = section("P", 4, 4);
-    badges.process(t.el as unknown as HTMLElement, t.ctx);
-    ids.push("vt-bbbbbb");
-    events.emit("paragraph-index:change", { paths: ["a.md"] });
-    expect(rerender).toHaveBeenCalledTimes(2);
-  });
 });
