@@ -284,7 +284,7 @@ body.is-mobile .vt-fc-batch-toggle {
   align-items: center;
   gap: 8px;
   min-height: var(--vt-tap);
-  padding: 0 8px;
+  padding: 4px 8px;
   border-left: 2px solid transparent;
   border-radius: var(--radius-s);
   text-align: left;
@@ -317,11 +317,11 @@ body.is-mobile .vt-fc-batch-toggle {
   letter-spacing: 0.15em;
 }
 
+/* 1010-2: wrap to as many lines as the gloss needs instead of
+   ellipsising when the like/meta column squeezes the row */
 .vt-fc-batch-zh {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   color: var(--vt-muted);
   font-size: var(--font-ui-small);
 }
@@ -713,9 +713,7 @@ body.is-mobile .vt-fc-kbd {
 .vt-fc-forgotten-zh {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   color: var(--vt-muted);
 }
 

@@ -1,5 +1,6 @@
 import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext, type MarkdownSectionInformation } from "obsidian";
 import { t } from "../../core/i18n";
+import { wordPageEntryId } from "./WordPageDecorator";
 import { shouldSplitList, splitListItems } from "../../core/text/listItems";
 import type { SectionRef } from "../../services/anchors/ParagraphAnchorService";
 import type { ParagraphIndex } from "../../services/anchors/ParagraphIndex";
@@ -64,6 +65,9 @@ export interface ParagraphBadgeDeps {
   // Show the hover-only `✦` on paragraphs without discussions. main.ts
   // passes "AI is enabled", so users who don't use AI see no new chrome.
   showGhost(): boolean;
+  // 1010-2: word pages get no ✦ badges (frontmatter fallback when
+  // ctx.frontmatter isn't there).
+  frontmatterOf?(path: string): Record<string, unknown> | null | undefined;
 }
 
 interface BadgeHandle {
@@ -105,6 +109,8 @@ export class ParagraphBadges {
   readonly process = (el: HTMLElement, ctx: MarkdownPostProcessorContext): void => {
     const first = el.firstElementChild;
     if (!isAnchorableTag(first?.tagName)) return;
+    const fm = (ctx.frontmatter as Record<string, unknown> | undefined) ?? this.deps.frontmatterOf?.(ctx.sourcePath);
+    if (wordPageEntryId(fm)) return;
     const info = ctx.getSectionInfo(el);
     if (!info) return;
     const text = this.lines.slice(info);

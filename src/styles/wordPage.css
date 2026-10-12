@@ -88,6 +88,12 @@
   gap: 10px;
 }
 
+/* 1010-2: no Obsidian fold arrow on hover — sections fold via their own UI */
+.vt-wp-heading .heading-collapse-indicator,
+.vt-wp-fold-h .heading-collapse-indicator {
+  display: none;
+}
+
 .vt-wp-actions {
   margin-left: auto;
   display: inline-flex;

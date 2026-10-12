@@ -63,6 +63,26 @@ describe("DictionaryService.fetchDictionary", () => {
   });
 });
 
+describe("DictionaryService word-first translation (1010-2)", () => {
+  function httpFor(wordZh: string) {
+    return new FakeHttpPort((url) => {
+      if (url.includes("wiktionary.org")) {
+        return jsonResponse(200, { en: [{ partOfSpeech: "Noun", definitions: [{ definition: "a long gloss" }] }] });
+      }
+      if (url.includes("translate.googleapis.com")) {
+        return url.includes("q=attic") ? jsonResponse(200, [[[wordZh, "attic"]]]) : jsonResponse(200, [[["長定義", "a long gloss"]]]);
+      }
+      return jsonResponse(200, []);
+    });
+  }
+  it("uses the word's own translation as definitionZh", async () => {
+    expect((await new DictionaryService(httpFor("閣樓")).fetchDictionary("attic")).definitionZh).toBe("閣樓");
+  });
+  it("falls back to translating the definition when Google echoes the word", async () => {
+    expect((await new DictionaryService(httpFor("Attic")).fetchDictionary("attic")).definitionZh).toBe("長定義");
+  });
+});
+
 describe("DictionaryService.translateToZhTW", () => {
   it("returns '' for empty input without making a request", async () => {
     const http = new FakeHttpPort(() => {

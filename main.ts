@@ -455,6 +455,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       index: this.paragraphIndex,
       onOpen: (ref) => void this.openParagraph(ref),
       showGhost: () => this.store.settings.ai.enabled,
+      frontmatterOf: (p) => this.frontmatterOf(p),
     });
     this.register(this.paragraphBadges.attach());
     this.registerMarkdownPostProcessor(this.paragraphBadges.process);

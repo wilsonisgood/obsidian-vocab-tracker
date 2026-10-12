@@ -19,7 +19,12 @@ export class DictionaryService {
     const antPromise = fetchDatamuseRelated(this.http, w, "rel_ant");
 
     const { definition, partOfSpeech } = await defPromise;
-    const definitionZh = await this.translateToZhTW(definition);
+    // 1010-2: translate the word itself (attic → 閣樓, scudded → its
+    // meaning) — translating the long definition gave wordy, pointless
+    // glosses. Falls back to the definition when Google echoes the word.
+    const wordZh = await this.translateToZhTW(w);
+    const definitionZh =
+      wordZh && wordZh.trim().toLowerCase() !== w ? wordZh : await this.translateToZhTW(definition);
     const synonyms = await synPromise;
     const antonyms = await antPromise;
 
