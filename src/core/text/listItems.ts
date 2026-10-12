@@ -87,8 +87,15 @@ export function shouldSplitList(lines: readonly string[]): boolean {
 // returns its last line.
 export function listItemOwnEndIndex(lines: readonly string[]): number {
   const indent = indentOf(lines[0]);
+  let end = lines.length - 1;
   for (let i = 1; i < lines.length; i++) {
-    if (indentOf(lines[i]) > indent && LIST_MARKER_RE.test(lines[i])) return i - 1;
+    if (indentOf(lines[i]) > indent && LIST_MARKER_RE.test(lines[i])) {
+      end = i - 1;
+      break;
+    }
   }
-  return lines.length - 1;
+  // 1010-2: in a loose list the line before a sub-item is blank — the ^id
+  // went there, turning the blank line into " ^vt-…".
+  while (end > 0 && !lines[end].trim()) end--;
+  return end;
 }

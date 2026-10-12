@@ -70,7 +70,38 @@ export function locateSection(content: string, ref: Pick<SectionRef, "lineStart"
     return { type: s?.type ?? "paragraph", lineStart: ref.lineStart, lineEnd: ref.lineEnd, text: atRange };
   }
   const hash = paragraphHash(ref.text);
-  return sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === hash) ?? null;
+  return (
+    sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === hash) ??
+    shiftedRange(content, ref, want, sections)
+  );
+}
+
+// 1010-2: the UI's snapshot can go stale (a like rerenders the reading
+// view; on iPhone a synced edit lands under an open note) while its text
+// still exists in the note — just not at its old lines, and not as one of
+// our sections (a split loose list, whose items our splitter draws
+// differently). Looks for the same number of lines holding the same text,
+// nearest the old position first, instead of failing with
+// "missing-paragraph".
+function shiftedRange(
+  content: string,
+  ref: Pick<SectionRef, "lineStart" | "lineEnd">,
+  want: string,
+  sections: readonly NoteSection[]
+): NoteSection | null {
+  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+  const span = ref.lineEnd - ref.lineStart;
+  for (let d = 1; d < lines.length; d++) {
+    for (const start of [ref.lineStart - d, ref.lineStart + d]) {
+      // A window starting on a blank line normalizes the same once trimmed,
+      // but is one line off.
+      if (start < 0 || start + span >= lines.length || !lines[start].trim()) continue;
+      const text = lines.slice(start, start + span + 1).join("\n");
+      if (normalizeParagraph(text) !== want) continue;
+      return { type: sectionAt(sections, start + span)?.type ?? "paragraph", lineStart: start, lineEnd: start + span, text };
+    }
+  }
+  return null;
 }
 
 // Pure resolution against a note's text (blockId → hash → orphan). The

@@ -3214,10 +3214,15 @@ function shouldSplitList(lines4) {
 }
 function listItemOwnEndIndex(lines4) {
   const indent = indentOf(lines4[0]);
+  let end = lines4.length - 1;
   for (let i = 1; i < lines4.length; i++) {
-    if (indentOf(lines4[i]) > indent && LIST_MARKER_RE.test(lines4[i])) return i - 1;
+    if (indentOf(lines4[i]) > indent && LIST_MARKER_RE.test(lines4[i])) {
+      end = i - 1;
+      break;
+    }
   }
-  return lines4.length - 1;
+  while (end > 0 && !lines4[end].trim()) end--;
+  return end;
 }
 
 // src/core/text/paragraphs.ts
@@ -5218,7 +5223,21 @@ function locateSection(content, ref) {
     return { type: (_a = s == null ? void 0 : s.type) != null ? _a : "paragraph", lineStart: ref.lineStart, lineEnd: ref.lineEnd, text: atRange };
   }
   const hash = paragraphHash(ref.text);
-  return (_b = sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === hash)) != null ? _b : null;
+  return (_b = sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === hash)) != null ? _b : shiftedRange(content, ref, want, sections);
+}
+function shiftedRange(content, ref, want, sections) {
+  var _a, _b;
+  const lines4 = content.replace(/\r\n?/g, "\n").split("\n");
+  const span = ref.lineEnd - ref.lineStart;
+  for (let d = 1; d < lines4.length; d++) {
+    for (const start2 of [ref.lineStart - d, ref.lineStart + d]) {
+      if (start2 < 0 || start2 + span >= lines4.length || !lines4[start2].trim()) continue;
+      const text = lines4.slice(start2, start2 + span + 1).join("\n");
+      if (normalizeParagraph(text) !== want) continue;
+      return { type: (_b = (_a = sectionAt(sections, start2 + span)) == null ? void 0 : _a.type) != null ? _b : "paragraph", lineStart: start2, lineEnd: start2 + span, text };
+    }
+  }
+  return null;
 }
 function resolveIn(content, anchor) {
   const index2 = noteIndex(content);

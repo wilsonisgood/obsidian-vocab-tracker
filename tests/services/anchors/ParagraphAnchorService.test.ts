@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { paragraphHash } from "../../../src/core/text/hash";
 import {
   AnchorError,
+  locateSection,
   ParagraphAnchorService,
   resolveIn,
   type ParagraphAnchor,
@@ -210,5 +211,32 @@ describe("resolve: blockId → hash → orphan", () => {
     const r = resolveIn("New text. ^p1", anchor);
     expect(r).toMatchObject({ status: "found", via: "blockId", edited: true });
     expect(resolveIn("Old ==text==. ^p1", anchor)).toMatchObject({ edited: false });
+  });
+});
+
+describe("locateSection — stale UI snapshot (1010-2)", () => {
+  const LOOSE = ["intro", "", "- “One.”", "", "   - “Two,” she said.", "", "   - “Three.”", "", "after"].join("\n");
+
+  it("finds a loose-list item whose lines moved since the snapshot", () => {
+    // Snapshot taken before two lines were added above it.
+    const ref = { lineStart: 2, lineEnd: 6, text: sectionText(LOOSE, 2, 6) };
+    const moved = "new line\n\n" + LOOSE;
+    expect(locateSection(moved, ref)).toMatchObject({ lineStart: 4, lineEnd: 8 });
+  });
+
+  it("still fails when the text is gone", () => {
+    expect(locateSection(LOOSE, { lineStart: 2, lineEnd: 2, text: "- “Missing.”" })).toBeNull();
+  });
+});
+
+describe("ParagraphAnchorService.create — loose list with a nested sub-item (1010-2)", () => {
+  it("writes the ^id on the item's own line, keeping the blank line", async () => {
+    const note = ["- “One.”", "", "   - “Two.”", ""].join("\n");
+    const vault = new MemoryVault({ "a.md": note });
+    const svc = new ParagraphAnchorService({ vault, mode: () => "block", random: idSource() });
+    const anchor = await svc.create({ path: "a.md", lineStart: 0, lineEnd: 2, text: sectionText(note, 0, 2) });
+    const lines = (await vault.read("a.md"))!.split("\n");
+    expect(lines[0]).toBe(`- “One.” ^${anchor.blockId}`);
+    expect(lines[1]).toBe("");
   });
 });
