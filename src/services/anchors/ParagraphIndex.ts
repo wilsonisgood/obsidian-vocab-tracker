@@ -91,6 +91,11 @@ export class ParagraphIndex {
     return keys.get(`h:${paragraphHash(sectionText)}`) ?? 0;
   }
 
+  // Block ids this note's paragraph discussions are anchored to.
+  blockIds(path: string): string[] {
+    return [...(this.byPath.get(path)?.keys() ?? [])].filter((k) => k.startsWith("b:")).map((k) => k.slice(2));
+  }
+
   hasPath(path: string): boolean {
     return this.byPath.has(path);
   }

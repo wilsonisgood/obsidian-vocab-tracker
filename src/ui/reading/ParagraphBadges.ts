@@ -1,5 +1,6 @@
 import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext, type MarkdownSectionInformation } from "obsidian";
 import { t } from "../../core/i18n";
+import { trailingBlockId } from "../../core/text/blockId";
 import { wordPageEntryId } from "./WordPageDecorator";
 import { shouldSplitList, splitListItems } from "../../core/text/listItems";
 import type { SectionRef } from "../../services/anchors/ParagraphAnchorService";
@@ -58,7 +59,12 @@ export class SectionLines {
 }
 
 export interface ParagraphBadgeDeps {
-  index: Pick<ParagraphIndex, "count" | "events">;
+  index: Pick<ParagraphIndex, "count" | "events"> & Partial<Pick<ParagraphIndex, "blockIds">>;
+  // Re-render this note's reading view. Asking a paragraph's first question
+  // writes a ^vt id into the note, but reading mode may keep the section
+  // (and the badge's id-less text) as is — so the new count never matched
+  // until the note was reopened (1010-2).
+  rerender?(path: string): void;
   // Open (or start) this paragraph's discussion in the sidebar (on iPhone
   // the bottom sheet).
   onOpen(ref: SectionRef): void;
@@ -89,6 +95,8 @@ export class ParagraphBadges {
   private live = new Map<string, Set<BadgeHandle>>();
   private lines = new SectionLines();
 
+  private healed = new Set<string>();
+
   constructor(private deps: ParagraphBadgeDeps) {}
 
   // Keeps live badges in sync with the index. Returns the unsubscribe.
@@ -102,7 +110,22 @@ export class ParagraphBadges {
     const targets = paths ?? [...this.live.keys()];
     for (const path of targets) {
       for (const h of this.live.get(path) ?? []) this.draw(h);
+      this.healStale(path);
     }
+  }
+
+  // Once per id, so a paragraph that simply isn't rendered (scrolled out of
+  // a long note) can't cause a re-render loop.
+  private healStale(path: string): void {
+    const handles = this.live.get(path);
+    if (!this.deps.rerender || !this.deps.index.blockIds || !handles?.size) return;
+    const rendered = new Set([...handles].map((h) => trailingBlockId(h.ref.text)));
+    const missing = this.deps.index
+      .blockIds(path)
+      .filter((id) => !rendered.has(id) && !this.healed.has(`${path}\n${id}`));
+    if (!missing.length) return;
+    for (const id of missing) this.healed.add(`${path}\n${id}`);
+    this.deps.rerender(path);
   }
 
   // registerMarkdownPostProcessor(badges.process)

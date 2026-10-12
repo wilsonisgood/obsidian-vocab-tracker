@@ -5358,6 +5358,11 @@ var ParagraphIndex = class {
     }
     return (_a = keys.get(`h:${paragraphHash(sectionText2)}`)) != null ? _a : 0;
   }
+  // Block ids this note's paragraph discussions are anchored to.
+  blockIds(path) {
+    var _a, _b;
+    return [...(_b = (_a = this.byPath.get(path)) == null ? void 0 : _a.keys()) != null ? _b : []].filter((k) => k.startsWith("b:")).map((k) => k.slice(2));
+  }
   hasPath(path) {
     return this.byPath.has(path);
   }
@@ -26328,6 +26333,7 @@ var ParagraphBadges = class {
     this.deps = deps;
     this.live = /* @__PURE__ */ new Map();
     this.lines = new SectionLines();
+    this.healed = /* @__PURE__ */ new Set();
     // registerMarkdownPostProcessor(badges.process)
     this.process = (el, ctx) => {
       var _a, _b, _c;
@@ -26359,7 +26365,21 @@ var ParagraphBadges = class {
     const targets = paths != null ? paths : [...this.live.keys()];
     for (const path of targets) {
       for (const h of (_a = this.live.get(path)) != null ? _a : []) this.draw(h);
+      this.healStale(path);
     }
+  }
+  // Once per id, so a paragraph that simply isn't rendered (scrolled out of
+  // a long note) can't cause a re-render loop.
+  healStale(path) {
+    const handles = this.live.get(path);
+    if (!this.deps.rerender || !this.deps.index.blockIds || !(handles == null ? void 0 : handles.size)) return;
+    const rendered = new Set([...handles].map((h) => trailingBlockId(h.ref.text)));
+    const missing = this.deps.index.blockIds(path).filter((id2) => !rendered.has(id2) && !this.healed.has(`${path}
+${id2}`));
+    if (!missing.length) return;
+    for (const id2 of missing) this.healed.add(`${path}
+${id2}`);
+    this.deps.rerender(path);
   }
   // One handle per top-level `<li>` when this list was split (see class
   // comment); otherwise the usual single handle for the whole section
@@ -27521,7 +27541,16 @@ var VocabTrackerPlugin = class extends import_obsidian59.Plugin {
       index: this.paragraphIndex,
       onOpen: (ref) => void this.openParagraph(ref),
       showGhost: () => this.store.settings.ai.enabled,
-      frontmatterOf: (p) => this.frontmatterOf(p)
+      frontmatterOf: (p) => this.frontmatterOf(p),
+      rerender: (path) => {
+        var _a;
+        for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+          const view = leaf.view;
+          if (view instanceof import_obsidian59.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === path && view.getMode() === "preview") {
+            view.previewMode.rerender(true);
+          }
+        }
+      }
     });
     this.register(this.paragraphBadges.attach());
     this.registerMarkdownPostProcessor(this.paragraphBadges.process);
