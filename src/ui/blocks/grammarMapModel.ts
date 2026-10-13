@@ -1,4 +1,4 @@
-import { getLocale, t, type I18nKey } from "../../core/i18n";
+import { joinWords, t, type I18nKey } from "../../core/i18n";
 import { isMastered, objectiveStats, startDifficulty } from "../../core/grammar/progress";
 import { topicById } from "../../core/grammar/catalog";
 import type {
@@ -93,5 +93,5 @@ export function mapRows(
 }
 
 export function lockedTooltip(lockedBy: readonly GrammarTopic[]): string {
-  return t("grammar.map.locked", { list: lockedBy.map((t) => t.title).join(getLocale() === "zh-TW" ? "、" : ", ") });
+  return t("grammar.map.locked", { list: joinWords(lockedBy.map((x) => x.title)) });
 }

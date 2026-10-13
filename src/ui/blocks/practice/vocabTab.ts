@@ -2,6 +2,7 @@ import type { VocabEntry } from "../../../core/model/entry";
 import { CARD_MODES } from "../../../core/model/srs";
 import { FlashcardsBlock, type FlashcardsHost } from "../flashcards";
 import { parseFlashcardParams } from "../params";
+import { t } from "../../../core/i18n";
 import { renderFilterBar } from "./filterBar";
 import { parseFilterValue, pruneValue, type FilterValue } from "./filterBarModel";
 import type { PracticeTabDef } from "./types";
@@ -13,7 +14,7 @@ import { collectVocabOptions, toQueueFilter, vocabGroups, vocabQuickPicks, vocab
 export function vocabTab(host: FlashcardsHost): PracticeTabDef {
   return {
     id: "vocab",
-    label: "單字",
+    label: t("practice.vocab.label"),
     order: 0,
     mount(el, ctx) {
       const groups = vocabGroups(collectVocabOptions(host.store.entries as readonly VocabEntry[]));

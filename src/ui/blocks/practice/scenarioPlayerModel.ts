@@ -1,6 +1,7 @@
 // Pure logic of the scenario player (第十六波 P): text segmentation, the
 // answered line, state transitions, history trimming, keyboard mapping.
 // No DOM here — scenarioPlayer.ts renders what this decides.
+import { t } from "../../../core/i18n";
 import type { PlayerKind, PlayerLine, PlayerQuestion } from "./playerTypes";
 
 // ---------- segmentation ----------
@@ -291,8 +292,8 @@ export function entrySpeakers(entries: readonly HistoryEntry[], current?: Player
 
 // ---------- misc ----------
 
-export function statsLabel(s: Pick<PlayerState, "answered" | "correctCount">, zh: boolean): string {
-  return zh ? `今天這裡答了 ${s.answered} 題 · 對 ${s.correctCount}` : `Answered ${s.answered} here today · ${s.correctCount} right`;
+export function statsLabel(s: Pick<PlayerState, "answered" | "correctCount">): string {
+  return t("practice.player.stats", { n: s.answered, c: s.correctCount });
 }
 
 // same-sense options are sentences → always one column.

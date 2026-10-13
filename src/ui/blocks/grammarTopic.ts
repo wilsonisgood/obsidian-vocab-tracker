@@ -2,7 +2,7 @@ import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext
 import { topicById } from "../../core/grammar/catalog";
 import { builtInExplanation } from "../../core/grammar/explanations";
 import { grammarSightings } from "../../core/grammar/sightings";
-import { getLocale, t } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { GrammarSighting, GrammarTopic } from "../../core/model/grammar";
 import type { AiService, AiStatus } from "../../services/ai/AiService";
 import { grammarExplain } from "../../services/ai/tasks/grammarExplain";
@@ -175,7 +175,7 @@ class GrammarTopicBlock extends MarkdownRenderChild {
     if (this.explainEmpty() === false) return;
     // Built-in explanation (1013-2): no AI, just fill the empty section.
     if (builtInExplanation(this.topic?.id ?? "")) {
-      const label = getLocale() === "en" ? "Fill in explanation" : "填入說明";
+      const label = t("grammar.topic.fillBuiltIn");
       learnButton(box, { label, icon: "file-plus", onClick: () => void this.fillBuiltIn() });
       return;
     }

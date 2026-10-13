@@ -1,10 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { setLocale } from "../../../src/core/i18n";
 import type { PlayerQuestion } from "../../../src/ui/blocks/practice/playerTypes";
 import {
   answerState, answeredText, canHint, historyEntries, initialState, keyAction, nextState, optionColumns,
   questionSegments, refreshState, retireState, segmentBlanks, segmentFragments, segmentTargets, showHint,
   skipState, speakerSides, statsLabel, trimHistory, entrySpeakers, feedbackNote,
 } from "../../../src/ui/blocks/practice/scenarioPlayerModel";
+
+beforeEach(() => setLocale("zh-TW"));
 
 function q(id: string, over: Partial<PlayerQuestion> = {}): PlayerQuestion {
   return {
@@ -153,6 +156,6 @@ describe("misc", () => {
     expect(optionColumns("choice", false)).toBe(2);
     expect(optionColumns("choice", true)).toBe(1);
     expect(optionColumns("same-sense", false)).toBe(1);
-    expect(statsLabel({ answered: 3, correctCount: 2 }, true)).toBe("今天這裡答了 3 題 · 對 2");
+    expect(statsLabel({ answered: 3, correctCount: 2 })).toBe("今天這裡答了 3 題 · 對 2");
   });
 });

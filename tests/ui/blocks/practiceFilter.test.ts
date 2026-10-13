@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { setLocale } from "../../../src/core/i18n";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import {
   hasSelection,
@@ -39,6 +40,8 @@ describe("collectVocabOptions", () => {
     expect(firstFolder("root.md")).toBeUndefined();
   });
 });
+
+setLocale("zh-TW"); // groups below are built at collection time
 
 describe("filter value", () => {
   const groups = vocabGroups({ levels: ["A", "B"], pos: ["noun"], folders: ["eng/", "news/"] });

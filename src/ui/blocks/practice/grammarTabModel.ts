@@ -1,3 +1,4 @@
+import { joinWords, t as tr, type I18nKey } from "../../../core/i18n";
 import { GRAMMAR_TOPICS, topicById } from "../../../core/grammar/catalog";
 import type { ErrorTag, GrammarStage } from "../../../core/model/grammar";
 import type { CefrLevel } from "../../../core/model/settings";
@@ -14,16 +15,6 @@ import type { PlayerQuestion } from "./playerTypes";
 // Pure logic of the 文法 practice tab (第十六波 H): the filter bar's value
 // ⇄ GrammarFilter, quick picks, GrammarQuestion → PlayerQuestion, and the
 // mistake groups. No DOM, so it's unit-tested.
-
-const L = {
-  stage: { zh: "階段", en: "Stage" },
-  topic: { zh: "主題", en: "Topics" },
-  quickWeek: { zh: "本週讀到的", en: "Read this week" },
-  quickDue: { zh: "待複習", en: "Due for review" },
-  quickWeak: { zh: "上次錯的", en: "Missed last time" },
-  allTopics: { zh: "全部主題", en: "All topics" },
-  tag: { zh: "文法", en: "Grammar" },
-};
 
 export const SIGHTING_DAYS = 7;
 export const REFILL_THRESHOLD = 4;
@@ -56,18 +47,18 @@ export function shownStages(f: GrammarFilter, level: CefrLevel | ""): GrammarSta
   return f.stages.length > 0 ? f.stages : [defaultStage(level)];
 }
 
-export function grammarGroups(f: GrammarFilter, level: CefrLevel | "", lang: "zh" | "en" = "zh"): FilterGroup[] {
+export function grammarGroups(f: GrammarFilter, level: CefrLevel | ""): FilterGroup[] {
   const stages = new Set(shownStages(f, level));
   return [
     {
       id: "stage",
-      label: L.stage[lang],
+      label: tr("practice.grammar.stage"),
       multi: false,
       options: STAGES.map((s) => ({ id: String(s), label: stageLabel(s) })),
     },
     {
       id: "topic",
-      label: L.topic[lang],
+      label: tr("practice.grammar.topic"),
       multi: true,
       options: GRAMMAR_TOPICS.filter((t) => stages.has(t.stage)).map((t) => ({ id: t.id, label: t.title })),
     },
@@ -75,12 +66,12 @@ export function grammarGroups(f: GrammarFilter, level: CefrLevel | "", lang: "zh
 }
 
 // 「基礎 · 現在完成式、過去簡單式」; no topic chosen reads 「基礎 · 全部主題」.
-export function grammarSummary(f: GrammarFilter, level: CefrLevel | "", lang: "zh" | "en" = "zh"): string {
-  const groups = grammarGroups(f, level, lang);
+export function grammarSummary(f: GrammarFilter, level: CefrLevel | ""): string {
+  const groups = grammarGroups(f, level);
   const v = filterToValue(f);
   const stage = groups[0];
-  const stageText = f.stages.length > 0 ? selectedLabels(v, stage).join("、") : stageLabel(defaultStage(level));
-  const topics = f.topics.length > 0 ? selectedLabels(v, groups[1]).join("、") : L.allTopics[lang];
+  const stageText = f.stages.length > 0 ? joinWords(selectedLabels(v, stage)) : stageLabel(defaultStage(level));
+  const topics = f.topics.length > 0 ? joinWords(selectedLabels(v, groups[1])) : tr("practice.grammar.allTopics");
   return `${stageText} · ${topics}`;
 }
 
@@ -110,16 +101,16 @@ export interface QuickSources {
 }
 
 // Only picks that would select something are offered.
-export function grammarQuickPicks(src: QuickSources, level: CefrLevel | "", lang: "zh" | "en" = "zh"): QuickPick[] {
+export function grammarQuickPicks(src: QuickSources, level: CefrLevel | ""): QuickPick[] {
   void level;
-  const pick = (id: string, label: { zh: string; en: string }, ids: string[]): QuickPick[] =>
+  const pick = (id: string, label: I18nKey, ids: string[]): QuickPick[] =>
     filterForTopics(ids).topics.length > 0
-      ? [{ id, label: label[lang], apply: () => filterToValue(filterForTopics(ids)) }]
+      ? [{ id, label: tr(label), apply: () => filterToValue(filterForTopics(ids)) }]
       : [];
   return [
-    ...pick("week", L.quickWeek, src.weekTopics),
-    ...pick("due", L.quickDue, src.dueTopics),
-    ...pick("weak", L.quickWeak, src.weakTopics),
+    ...pick("week", "practice.grammar.quickWeek", src.weekTopics),
+    ...pick("due", "practice.grammar.quickDue", src.dueTopics),
+    ...pick("weak", "practice.grammar.quickWeak", src.weakTopics),
   ];
 }
 
@@ -167,7 +158,7 @@ export function toPlayerQuestion(q: GrammarQuestionLike): PlayerQuestion | null 
     explanation: q.explanation,
     ...(q.distractors && Object.keys(q.distractors).length > 0 ? { optionNotes: q.distractors } : {}),
     ...(q.sentenceZh ? { sentenceZh: q.sentenceZh } : {}),
-    tag: topic ? `${L.tag.zh} · ${topic.title}` : L.tag.zh,
+    tag: topic ? `${tr("practice.grammar.tag")} · ${topic.title}` : tr("practice.grammar.tag"),
   };
   if (q.type === "choice") {
     if ((q.stem.match(/_{3,}/g) ?? []).length !== 1) return null;

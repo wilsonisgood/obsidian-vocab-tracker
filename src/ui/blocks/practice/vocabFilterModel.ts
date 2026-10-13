@@ -1,3 +1,4 @@
+import { joinWords, t, type I18nKey } from "../../../core/i18n";
 import type { VocabEntry } from "../../../core/model/entry";
 import { splitTags, type QueueFilter } from "../../../services/srs/queue";
 import {
@@ -10,23 +11,6 @@ import {
 
 // The vocab tab's filter (第十六波 E): which cards the flashcards round
 // draws from. Value keys: status, level, pos, folder, added.
-
-const L = {
-  status: { zh: "狀態", en: "Status" },
-  due: { zh: "到期", en: "Due" },
-  fresh: { zh: "新字", en: "New" },
-  all: { zh: "全部", en: "All" },
-  level: { zh: "考試等級", en: "Exam level" },
-  pos: { zh: "詞性", en: "Part of speech" },
-  folder: { zh: "來源資料夾", en: "Source folder" },
-  added: { zh: "收錄時間", en: "Added" },
-  recent: { zh: "7 天內", en: "Last 7 days" },
-  quickDue: { zh: "今日到期", en: "Due today" },
-  quickRecent: { zh: "最近收錄（7 天內）", en: "Recently added (7 days)" },
-};
-
-export type Lang = "zh" | "en";
-const text = (k: { zh: string; en: string }, lang: Lang) => k[lang];
 
 export const RECENT_DAYS = 7;
 
@@ -64,37 +48,37 @@ export function collectVocabOptions(entries: readonly VocabEntry[]): VocabFilter
   return { levels: ranked(levels), pos: ranked(pos), folders: ranked(folders) };
 }
 
-export function vocabGroups(opts: VocabFilterOptions, lang: Lang = "zh"): FilterGroup[] {
-  const mk = (id: string, label: { zh: string; en: string }, ids: string[], multi: boolean): FilterGroup => ({
+export function vocabGroups(opts: VocabFilterOptions): FilterGroup[] {
+  const mk = (id: string, label: I18nKey, ids: string[], multi: boolean): FilterGroup => ({
     id,
-    label: text(label, lang),
+    label: t(label),
     multi,
     options: ids.map((x) => ({ id: x, label: x })),
   });
   const groups: FilterGroup[] = [
     {
       id: "status",
-      label: text(L.status, lang),
+      label: t("practice.vocab.status"),
       multi: false,
       options: [
-        { id: "due", label: text(L.due, lang) },
-        { id: "new", label: text(L.fresh, lang) },
-        { id: "all", label: text(L.all, lang) },
+        { id: "due", label: t("practice.vocab.due") },
+        { id: "new", label: t("practice.vocab.new") },
+        { id: "all", label: t("practice.vocab.all") },
       ],
     },
-    { id: "added", label: text(L.added, lang), multi: false, options: [{ id: "recent", label: text(L.recent, lang) }] },
+    { id: "added", label: t("practice.vocab.added"), multi: false, options: [{ id: "recent", label: t("practice.vocab.recent") }] },
   ];
-  if (opts.levels.length > 0) groups.push(mk("level", L.level, opts.levels, true));
-  if (opts.pos.length > 0) groups.push(mk("pos", L.pos, opts.pos, true));
+  if (opts.levels.length > 0) groups.push(mk("level", "practice.vocab.level", opts.levels, true));
+  if (opts.pos.length > 0) groups.push(mk("pos", "practice.vocab.pos", opts.pos, true));
   // One prefix at a time: QueueFilter.source is a single path prefix.
-  if (opts.folders.length > 0) groups.push(mk("folder", L.folder, opts.folders, false));
+  if (opts.folders.length > 0) groups.push(mk("folder", "practice.vocab.folder", opts.folders, false));
   return groups;
 }
 
-export function vocabQuickPicks(lang: Lang = "zh"): QuickPick[] {
+export function vocabQuickPicks(): QuickPick[] {
   return [
-    { id: "due-today", label: text(L.quickDue, lang), apply: () => ({ status: ["due"] }) },
-    { id: "recent", label: text(L.quickRecent, lang), apply: () => ({ status: ["all"], added: ["recent"] }) },
+    { id: "due-today", label: t("practice.vocab.quickDue"), apply: () => ({ status: ["due"] }) },
+    { id: "recent", label: t("practice.vocab.quickRecent"), apply: () => ({ status: ["all"], added: ["recent"] }) },
   ];
 }
 
@@ -105,14 +89,14 @@ export function statusOf(value: FilterValue): "due" | "new" | "all" {
 
 // 「到期 · 多益中級、托福高級 · 名詞 · eng/」; nothing picked beyond the
 // default reads just 「到期」.
-export function vocabSummary(value: FilterValue, groups: readonly FilterGroup[], lang: Lang = "zh"): string {
+export function vocabSummary(value: FilterValue, groups: readonly FilterGroup[]): string {
   const parts: string[] = [];
   const statusGroup = groups.find((g) => g.id === "status");
-  parts.push(statusGroup?.options.find((o) => o.id === statusOf(value))?.label ?? text(L.due, lang));
+  parts.push(statusGroup?.options.find((o) => o.id === statusOf(value))?.label ?? t("practice.vocab.due"));
   for (const g of groups) {
     if (g.id === "status") continue;
     const labels = selectedLabels(value, g);
-    if (labels.length > 0) parts.push(labels.join("、"));
+    if (labels.length > 0) parts.push(joinWords(labels));
   }
   return parts.join(" · ");
 }

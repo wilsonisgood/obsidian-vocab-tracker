@@ -2,7 +2,7 @@
 // machine of scenarioPlayerModel.ts; the track decides what answering,
 // skipping and 👎 do through PlayerOptions.callbacks.
 import type { Component } from "obsidian";
-import { getLocale } from "../../../core/i18n";
+import { t } from "../../../core/i18n";
 import { learnButton } from "../learnUi";
 import type { PlayerHandle, PlayerOptions, PlayerQuestion } from "./playerTypes";
 import {
@@ -12,24 +12,9 @@ import {
   type AnsweredPart, type PlayerState,
 } from "./scenarioPlayerModel";
 
-const L = {
-  "zh-TW": {
-    skip: "跳過", retire: "👎 這題有問題", hint: "💡 提示", next: "下一題",
-    right: "✓ 答對了", wrong: "✗ 答錯了", answer: "正解", earlier: "顯示更早的",
-    empty: "題目準備中…", you: "你選的",
-  },
-  en: {
-    skip: "Skip", retire: "👎 Bad question", hint: "💡 Hint", next: "Next",
-    right: "✓ Correct", wrong: "✗ Not quite", answer: "Answer", earlier: "Show earlier",
-    empty: "Preparing questions…", you: "You chose",
-  },
-};
-
 const isMobile = () => document.body.classList.contains("is-mobile");
 
 export function mountScenarioPlayer(el: HTMLElement, opts: PlayerOptions, owner: Component): PlayerHandle {
-  const zh = getLocale() === "zh-TW";
-  const T = zh ? L["zh-TW"] : L.en;
   const root = el.createDiv({ cls: "vt-pr-player" });
   root.tabIndex = 0;
   let state: PlayerState = initialState();
@@ -106,7 +91,7 @@ export function mountScenarioPlayer(el: HTMLElement, opts: PlayerOptions, owner:
     const side = speakerSides(entrySpeakers(all, state.current));
     const box = parent.createDiv({ cls: "vt-pr-history" });
     if (hidden > 0) {
-      const more = box.createEl("button", { cls: "vt-pr-more", text: `${T.earlier} (${hidden})` });
+      const more = box.createEl("button", { cls: "vt-pr-more", text: `${t("practice.player.earlier")} (${hidden})` });
       more.addEventListener("click", () => {
         expanded = true;
         render();
@@ -185,24 +170,24 @@ export function mountScenarioPlayer(el: HTMLElement, opts: PlayerOptions, owner:
     }
 
     const actions = box.createDiv({ cls: "vt-pr-actions" });
-    if (!feedback) learnButton(actions, { label: T.skip, ghost: true, onClick: skip });
-    if (canHint(state)) learnButton(actions, { label: T.hint, ghost: true, onClick: hint });
-    learnButton(actions, { label: T.retire, ghost: true, onClick: retire });
+    if (!feedback) learnButton(actions, { label: t("practice.player.skip"), ghost: true, onClick: skip });
+    if (canHint(state)) learnButton(actions, { label: t("practice.player.hint"), ghost: true, onClick: hint });
+    learnButton(actions, { label: t("practice.player.retire"), ghost: true, onClick: retire });
 
     if (feedback) renderFeedback(box, q);
   }
 
   function renderFeedback(parent: HTMLElement, q: PlayerQuestion): void {
     const fb = parent.createDiv({ cls: `vt-pr-feedback ${state.correct ? "is-right" : "is-wrong"}` });
-    fb.createDiv({ cls: "vt-pr-verdict", text: state.correct ? T.right : T.wrong });
+    fb.createDiv({ cls: "vt-pr-verdict", text: state.correct ? t("practice.player.right") : t("practice.player.wrong") });
     const ans = q.options.find((o) => o.id === q.answerId)?.text ?? "";
-    fb.createDiv({ cls: "vt-pr-answer", text: `${T.answer}: ${ans}` });
+    fb.createDiv({ cls: "vt-pr-answer", text: `${t("practice.player.answer")}: ${ans}` });
     if (q.explanation) fb.createDiv({ cls: "vt-pr-explain", text: q.explanation });
     const note = feedbackNote(state);
     if (note) fb.createDiv({ cls: "vt-pr-note", text: note });
     if (q.sentenceZh) fb.createDiv({ cls: "vt-pr-zh", text: q.sentenceZh });
     const row = fb.createDiv({ cls: "vt-pr-actions" });
-    const nb = learnButton(row, { label: `${T.next}  ↵`, cta: true, onClick: next });
+    const nb = learnButton(row, { label: `${t("practice.player.next")}  ↵`, cta: true, onClick: next });
     nb.addClass("vt-pr-next");
   }
 
@@ -210,10 +195,10 @@ export function mountScenarioPlayer(el: HTMLElement, opts: PlayerOptions, owner:
     if (dead) return;
     const hadFocus = root.contains(document.activeElement);
     root.empty();
-    root.createDiv({ cls: "vt-pr-stats", text: statsLabel(state, zh) });
+    root.createDiv({ cls: "vt-pr-stats", text: statsLabel(state) });
     renderHistory(root);
     if (state.current && state.phase !== "empty") renderCurrent(root, state.current);
-    else root.createDiv({ cls: "vt-pr-empty", text: opts.emptyText?.() ?? T.empty });
+    else root.createDiv({ cls: "vt-pr-empty", text: opts.emptyText?.() ?? t("practice.player.empty") });
     if (hadFocus) root.focus({ preventScroll: true });
   }
 

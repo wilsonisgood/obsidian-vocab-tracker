@@ -1,4 +1,5 @@
 import { MarkdownRenderChild, type MarkdownPostProcessorContext } from "obsidian";
+import { t } from "../../core/i18n";
 import { topicById } from "../../core/grammar/catalog";
 import type { GrammarPracticeApi, GrammarFilter } from "../grammar/practiceTypes";
 import { stageLabel } from "../grammar/labels";
@@ -15,14 +16,6 @@ import { routeToPractice } from "./practice/grammarTabModel";
 // Practice moved to the practice hub's 文法 tab (固定決定 5): the block is
 // one card, 「在練習中心練這個主題」 with the topic's open-mistake count.
 // The button sets the grammar filter to the topic and opens the tab.
-
-const L = {
-  title: { zh: "在練習中心練這個主題", en: "Practice this topic in the Practice hub" },
-  go: { zh: "去練習", en: "Practice" },
-  mistakes: { zh: "這個主題有 {n} 題錯題", en: "{n} mistakes in this topic" },
-  noMistakes: { zh: "這個主題沒有待重做的錯題", en: "No mistakes to redo in this topic" },
-  noTopic: { zh: "找不到這個主題，請檢查 topic: 的 id。", en: "Topic not found; check the topic: id." },
-};
 
 // What the card needs; registry.ts builds it (整合事項). The practice fields
 // stay optional until main.ts wires them: without them the button is left
@@ -65,18 +58,18 @@ class GrammarPracticeCard extends MarkdownRenderChild {
     this.register(() => (this.alive = false));
     const topic = topicById(this.topicId);
     if (!topic) {
-      this.root.createDiv({ cls: "vt-gr-empty", text: L.noTopic.zh });
+      this.root.createDiv({ cls: "vt-gr-empty", text: t("grammar.practiceCard.noTopic") });
       return;
     }
     const card = this.root.createDiv({ cls: "vt-gr-bar vt-gr-practice-bar" });
     const text = card.createDiv({ cls: "vt-gr-practice-text" });
-    text.createDiv({ cls: "vt-gr-bar-main", text: L.title.zh });
+    text.createDiv({ cls: "vt-gr-bar-main", text: t("grammar.practiceCard.title") });
     text.createDiv({ cls: "vt-gr-bar-sub", text: `${stageLabel(topic.stage)} · ${topic.title}` });
     this.countEl = text.createDiv({ cls: "vt-gr-practice-count" });
     const { setGrammarFilter, openPractice } = this.deps;
     if (setGrammarFilter && openPractice) {
       learnButton(card, {
-        label: L.go.zh,
+        label: t("grammar.practiceCard.go"),
         icon: "play",
         cta: true,
         onClick: () => routeToPractice({ setGrammarFilter, openPractice }, topic.id),
@@ -88,7 +81,7 @@ class GrammarPracticeCard extends MarkdownRenderChild {
     const refresh = () => {
       if (!this.alive || !this.countEl) return;
       const n = api.mistakeQuestions().filter((q) => q.topicId === topic.id).length;
-      this.countEl.setText(n > 0 ? L.mistakes.zh.replace("{n}", String(n)) : L.noMistakes.zh);
+      this.countEl.setText(n > 0 ? t("grammar.practiceCard.mistakes", { n }) : t("grammar.practiceCard.noMistakes"));
     };
     this.register(api.events.on("pool:change", refresh));
     void (ready ? ready() : Promise.resolve()).then(refresh);

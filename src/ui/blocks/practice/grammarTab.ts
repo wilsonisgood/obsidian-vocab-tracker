@@ -1,4 +1,5 @@
 import type { Component } from "obsidian";
+import { t } from "../../../core/i18n";
 import { GRAMMAR_TOPICS } from "../../../core/grammar/catalog";
 import { dueTopics } from "../../../core/grammar/progress";
 import type { GrammarProgress, GrammarSighting } from "../../../core/model/grammar";
@@ -34,21 +35,6 @@ import type { PracticeTabDef } from "./types";
 // 主題 + quick picks), the scenario player over the pool G keeps, and a
 // folded 錯題區 below whose groups are redone in place with the same player.
 
-const L = {
-  label: { zh: "文法", en: "Grammar" },
-  mistakes: { zh: "錯題區", en: "Mistakes" },
-  mistakesEmpty: { zh: "目前沒有錯題。", en: "No mistakes right now." },
-  redo: { zh: "重做這組", en: "Redo this group" },
-  fold: { zh: "收起", en: "Fold" },
-  count: { zh: "{n} 題", en: "{n}" },
-  preparing: { zh: "題目準備中…", en: "Preparing questions…" },
-  aiOff: { zh: "AI 沒有開啟，無法生成新題目", en: "AI is off, so new questions can't be generated" },
-  noKey: { zh: "尚未設定 AI 金鑰，無法生成新題目", en: "No AI key set, so new questions can't be generated" },
-  offline: { zh: "目前離線，無法生成新題目", en: "Offline, so new questions can't be generated" },
-  none: { zh: "目前沒有新題目，換個篩選或稍後再試。", en: "No new questions right now. Change the filter or try again later." },
-  redoDone: { zh: "這組已經做完了。", en: "This group is done." },
-};
-
 export type MountPlayer = (el: HTMLElement, opts: PlayerOptions, owner: Component) => PlayerHandle;
 
 export interface GrammarTabDeps {
@@ -73,7 +59,7 @@ export interface GrammarTabDeps {
 export function grammarTab(deps: GrammarTabDeps): PracticeTabDef {
   return {
     id: "grammar",
-    label: L.label.zh,
+    label: t("practice.grammar.label"),
     order: 1,
     mount(el, ctx) {
       el.addClass("vt-pr-grammar");
@@ -242,12 +228,12 @@ class GrammarTabView {
   }
 
   private emptyText(): string {
-    if (this.deps.api.isRefilling()) return L.preparing.zh;
+    if (this.deps.api.isRefilling()) return t("practice.grammar.preparing");
     const s = this.deps.aiStatus();
-    if (s === "disabled") return L.aiOff.zh;
-    if (s === "no_key") return L.noKey.zh;
-    if (s === "offline") return L.offline.zh;
-    return L.none.zh;
+    if (s === "disabled") return t("practice.grammar.aiOff");
+    if (s === "no_key") return t("practice.grammar.noKey");
+    if (s === "offline") return t("practice.grammar.offline");
+    return t("practice.grammar.none");
   }
 
   private showError(error: unknown): void {
@@ -267,7 +253,7 @@ class GrammarTabView {
   }
 
   private updateMistakeCount(): void {
-    this.mistakeCountEl.setText(`${L.mistakes.zh}（${mistakeCount(this.groups())}）`);
+    this.mistakeCountEl.setText(`${t("practice.grammar.mistakes")}（${mistakeCount(this.groups())}）`);
   }
 
   private renderMistakes(box: HTMLElement): void {
@@ -289,15 +275,15 @@ class GrammarTabView {
       body.toggleClass("is-hidden", !open);
       if (!open) return;
       const groups = this.groups();
-      if (groups.length === 0) body.createDiv({ cls: "vt-pr-empty", text: L.mistakesEmpty.zh });
+      if (groups.length === 0) body.createDiv({ cls: "vt-pr-empty", text: t("practice.grammar.mistakesEmpty") });
       for (const g of groups) {
         const group = body.createDiv({ cls: "vt-pr-mistake-group" });
         const row = group.createDiv({ cls: "vt-pr-mistake" });
         row.createSpan({ cls: "vt-pr-mistake-tag", text: g.label });
-        row.createSpan({ cls: "vt-pr-mistake-count", text: L.count.zh.replace("{n}", String(g.questions.length)) });
+        row.createSpan({ cls: "vt-pr-mistake-count", text: t("practice.grammar.count", { n: g.questions.length }) });
         const isOpen = redoTag === g.errorTag;
         learnButton(row, {
-          label: isOpen ? L.fold.zh : L.redo.zh,
+          label: isOpen ? t("practice.grammar.fold") : t("practice.grammar.redo"),
           icon: isOpen ? "chevron-up" : "rotate-ccw",
           ghost: true,
           onClick: () => {
@@ -357,7 +343,7 @@ export function mountMistakeRedo(host: HTMLElement, o: MistakeRedoOptions): Play
         }
         return out;
       },
-      emptyText: () => L.redoDone.zh,
+      emptyText: () => t("practice.grammar.redoDone"),
       callbacks: {
         onAnswer: (a) => {
           done.add(a.question.id);
