@@ -1746,7 +1746,10 @@ var en = {
   "practice.startHint": "Press \u201CStart practice\u201D and the AI will prepare questions.",
   "practice.player.empty": "Preparing questions\u2026",
   "practice.player.you": "You chose",
-  "practice.player.stats": "Answered {n} here today \xB7 {c} right",
+  "practice.player.ask.which-sense": "What does '{word}' mean in this sentence?",
+  "practice.player.ask.same-sense": "Which sentence uses '{word}' in the same sense?",
+  "practice.player.ask.pick": "Pick the word that fits the blank",
+  "practice.player.ask.find-error": "Which part is wrong?",
   "practice.grammar.label": "Grammar",
   "practice.grammar.stage": "Stage",
   "practice.grammar.topic": "Topics",
@@ -1784,6 +1787,7 @@ var en = {
   "practice.poly.noneChosen": "No words chosen",
   "practice.poly.allLevels": "All levels",
   "practice.poly.map": "Sense map (ticked senses are tested)",
+  "practice.poly.wordChecked": "{x}/{y} senses ticked",
   "practice.poly.dot.none": "Not practised yet",
   "practice.poly.dot.partial": "Practised, not settled",
   "practice.poly.dot.done": "Last 3 all right",
@@ -1830,7 +1834,7 @@ var en = {
   "poly.map.all": "All",
   "poly.map.search": "Search a word or meaning",
   "poly.map.none": "No matching words.",
-  "poly.map.progress": "{done}/{total} senses settled",
+  "poly.map.progress": "{done}/{total} familiar",
   "poly.map.phrases": "Phrases",
   "poly.map.practice": "Practise this word",
   // Wave 17 V: vocab scenario practice, mix tab
@@ -1838,7 +1842,6 @@ var en = {
   "practice.vocab.scenarioPractice": "Scenario practice",
   "practice.vocab.scenarioFew": "Fewer than 3 matching words have a Chinese meaning",
   "practice.mix.label": "Mix",
-  "practice.mix.include": "Categories to mix",
   "practice.mix.catVocab": "Vocab",
   "practice.mix.catGrammar": "Grammar",
   "practice.mix.catPoly": "Common words",
@@ -2594,7 +2597,10 @@ var zhTW = {
   "practice.startHint": "\u6309\u300C\u958B\u59CB\u51FA\u984C\u300D\uFF0C\u8B93 AI \u6E96\u5099\u984C\u76EE\u3002",
   "practice.player.empty": "\u984C\u76EE\u6E96\u5099\u4E2D\u2026",
   "practice.player.you": "\u4F60\u9078\u7684",
-  "practice.player.stats": "\u4ECA\u5929\u9019\u88E1\u7B54\u4E86 {n} \u984C \xB7 \u5C0D {c}",
+  "practice.player.ask.which-sense": "\u300C{word}\u300D\u5728\u9019\u53E5\u4E2D\u662F\u4EC0\u9EBC\u610F\u601D\uFF1F",
+  "practice.player.ask.same-sense": "\u54EA\u4E00\u53E5\u7684\u300C{word}\u300D\u610F\u601D\u8DDF\u4E0A\u9762\u76F8\u540C\uFF1F",
+  "practice.player.ask.pick": "\u9078\u51FA\u6700\u9069\u5408\u586B\u5165\u7A7A\u683C\u7684\u5B57",
+  "practice.player.ask.find-error": "\u54EA\u500B\u90E8\u5206\u6709\u932F\uFF1F",
   "practice.grammar.label": "\u6587\u6CD5",
   "practice.grammar.stage": "\u968E\u6BB5",
   "practice.grammar.topic": "\u4E3B\u984C",
@@ -2632,6 +2638,7 @@ var zhTW = {
   "practice.poly.noneChosen": "\u5C1A\u672A\u9078\u5B57",
   "practice.poly.allLevels": "\u5168\u90E8\u7D1A\u6578",
   "practice.poly.map": "\u610F\u601D\u5730\u5716\uFF08\u52FE\u9078\u7684\u610F\u601D\u624D\u6703\u51FA\u984C\uFF09",
+  "practice.poly.wordChecked": "\u5DF2\u52FE {x}/{y} \u500B\u610F\u601D",
   "practice.poly.dot.none": "\u9084\u6C92\u7DF4\u904E",
   "practice.poly.dot.partial": "\u7DF4\u904E\uFF0C\u9084\u4E0D\u7A69",
   "practice.poly.dot.done": "\u6700\u8FD1 3 \u6B21\u90FD\u7B54\u5C0D",
@@ -2678,7 +2685,7 @@ var zhTW = {
   "poly.map.all": "\u5168\u90E8",
   "poly.map.search": "\u641C\u5C0B\u5B57\u6216\u4E2D\u6587\u610F\u601D",
   "poly.map.none": "\u6C92\u6709\u7B26\u5408\u7684\u5B57\u3002",
-  "poly.map.progress": "{done}/{total} \u500B\u610F\u601D\u7A69\u4E86",
+  "poly.map.progress": "{done}/{total} \u719F\u6089",
   "poly.map.phrases": "\u7247\u8A9E",
   "poly.map.practice": "\u7DF4\u7FD2\u9019\u500B\u5B57",
   // 第十七波 V: 單字情境練習、混合頁籤
@@ -2686,7 +2693,6 @@ var zhTW = {
   "practice.vocab.scenarioPractice": "\u60C5\u5883\u7DF4\u7FD2",
   "practice.vocab.scenarioFew": "\u7B26\u5408\u7BE9\u9078\u3001\u6709\u4E2D\u6587\u610F\u601D\u7684\u5B57\u4E0D\u5230 3 \u500B",
   "practice.mix.label": "\u6DF7\u5408",
-  "practice.mix.include": "\u8981\u6DF7\u7684\u985E\u5225",
   "practice.mix.catVocab": "\u55AE\u5B57",
   "practice.mix.catGrammar": "\u6587\u6CD5",
   "practice.mix.catPoly": "\u5E38\u7528\u5B57",
@@ -17524,6 +17530,1231 @@ function tile(container, value, label) {
 // src/ui/blocks/grammarMap.ts
 var import_obsidian31 = require("obsidian");
 
+// src/core/model/practice.ts
+var PRACTICE_KINDS = ["which-sense", "pick-word", "same-sense", "choice", "find-error"];
+
+// src/services/ai/tasks/sentenceCheck.ts
+var MIN_SENTENCE_WORDS = 6;
+var MIN_OPTION_WORDS = 4;
+var WORD_RE3 = /[A-Za-z]+(?:['’-][A-Za-z]+)*/g;
+var CJK_RE2 = /[\u3400-\u9fff\uf900-\ufaff\u3001-\u303f\uff00-\uffef]/;
+var GAP_ANY = /_{3,}/g;
+var englishWords = (s) => {
+  var _a;
+  return (_a = s.match(WORD_RE3)) != null ? _a : [];
+};
+var hasCjk = (s) => CJK_RE2.test(s);
+function sentenceWordCount(text) {
+  return englishWords(text.replace(/\[\[|\]\]/g, "").replace(GAP_ANY, " ")).length;
+}
+function isFullSentence(text) {
+  if (hasCjk(text)) return false;
+  if (sentenceWordCount(text) < MIN_SENTENCE_WORDS) return false;
+  const i = text.search(GAP_ANY);
+  if (i >= 0) {
+    const after = text.slice(i).replace(GAP_ANY, " ");
+    if (englishWords(after).length === 0) return false;
+  }
+  return true;
+}
+var MAX_EDITS = 2;
+function editDistance(a2, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a2.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a2[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+var IRREGULAR = {
+  go: ["went", "gone"],
+  do: ["did"],
+  get: ["gotten"],
+  take: ["took"],
+  break: ["broke", "broken"],
+  catch: ["caught"],
+  bring: ["brought"]
+};
+function isTargetForm(marked, target) {
+  var _a, _b, _c;
+  const a2 = ((_a = englishWords(marked)[0]) != null ? _a : "").toLowerCase();
+  const b = ((_b = englishWords(target)[0]) != null ? _b : "").toLowerCase();
+  if (!a2 || !b) return false;
+  if ((_c = IRREGULAR[b]) == null ? void 0 : _c.includes(a2)) return true;
+  if (a2.startsWith(b) || b.startsWith(a2)) return true;
+  return Math.min(a2.length, b.length) >= 3 && a2[0] === b[0] && editDistance(a2, b) <= MAX_EDITS;
+}
+function isOptionSentence(text, target) {
+  if (hasCjk(text)) return false;
+  const words = englishWords(text);
+  if (words.length < MIN_OPTION_WORDS) return false;
+  if (target && !words.some((w2) => isTargetForm(w2, target))) return false;
+  return true;
+}
+
+// src/services/ai/transport/sse.ts
+var SseParser = class {
+  constructor() {
+    this.buffer = "";
+    this.dataLines = [];
+    // A chunk ending in "\r" might be the first half of "\r\n"; hold it back.
+    this.pendingCR = false;
+  }
+  push(chunk) {
+    let text = chunk;
+    if (this.pendingCR) {
+      if (text.startsWith("\n")) text = text.slice(1);
+      this.pendingCR = false;
+    }
+    this.buffer += text;
+    const out = [];
+    for (; ; ) {
+      const m2 = /\r\n|\r|\n/.exec(this.buffer);
+      if (!m2) break;
+      if (m2[0] === "\r" && m2.index === this.buffer.length - 1) {
+        this.pendingCR = true;
+        const line3 = this.buffer.slice(0, m2.index);
+        this.buffer = "";
+        this.handleLine(line3, out);
+        break;
+      }
+      const line2 = this.buffer.slice(0, m2.index);
+      this.buffer = this.buffer.slice(m2.index + m2[0].length);
+      this.handleLine(line2, out);
+    }
+    return out;
+  }
+  // Flushes a final event that wasn't followed by a blank line (common when
+  // a non-streaming transport hands over a truncated body).
+  end() {
+    const out = [];
+    if (this.buffer) {
+      this.handleLine(this.buffer, out);
+      this.buffer = "";
+    }
+    this.dispatch(out);
+    return out;
+  }
+  handleLine(line2, out) {
+    if (line2 === "") {
+      this.dispatch(out);
+      return;
+    }
+    if (line2.startsWith(":")) return;
+    const colon = line2.indexOf(":");
+    const field = colon === -1 ? line2 : line2.slice(0, colon);
+    let value = colon === -1 ? "" : line2.slice(colon + 1);
+    if (value.startsWith(" ")) value = value.slice(1);
+    if (field === "data") this.dataLines.push(value);
+    else if (field === "event") this.eventName = value;
+    else if (field === "id") this.id = value;
+  }
+  dispatch(out) {
+    if (this.dataLines.length > 0) {
+      const ev = { data: this.dataLines.join("\n") };
+      if (this.eventName) ev.event = this.eventName;
+      if (this.id !== void 0) ev.id = this.id;
+      out.push(ev);
+    }
+    this.dataLines = [];
+    this.eventName = void 0;
+  }
+};
+async function* parseSse(chunks) {
+  const parser = new SseParser();
+  for await (const chunk of chunks) {
+    for (const ev of parser.push(chunk)) yield ev;
+  }
+  for (const ev of parser.end()) yield ev;
+}
+
+// src/services/ai/transport/types.ts
+async function readAll(chunks) {
+  let out = "";
+  for await (const c2 of chunks) out += c2;
+  return out;
+}
+
+// src/services/ai/providers/stream.ts
+async function throwIfHttpError(res) {
+  if (res.status >= 200 && res.status < 300) return;
+  const body = await readAll(res.chunks).catch(() => "");
+  throw classifyHttpError(res.status, body, res.header("retry-after"));
+}
+async function consumeBody(res, signal, onEvent, onJson) {
+  var _a;
+  const contentType = (_a = res.header("content-type")) != null ? _a : "";
+  try {
+    if (contentType.includes("application/json")) {
+      const text = await readAll(res.chunks);
+      onJson(parseJson(text));
+      return;
+    }
+    for await (const ev of parseSse(res.chunks)) {
+      if (signal.aborted) throw new AiError("aborted");
+      if (onEvent(ev) === true) return;
+    }
+  } catch (e) {
+    if (signal.aborted) throw new AiError("aborted", void 0, { cause: e });
+    if (e instanceof AiError) throw e;
+    throw new AiError("network", e instanceof Error ? e.message : String(e), { cause: e });
+  }
+}
+function parseJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new AiError("bad_output", "Response body is not valid JSON", { cause: e });
+  }
+}
+function extractJson(text) {
+  const fenced = /```(?:json)?\s*([\s\S]*?)```/i.exec(text);
+  const candidate = (fenced ? fenced[1] : text).trim();
+  const start3 = candidate.search(/[[{]/);
+  if (start3 === -1) throw new AiError("bad_output", "No JSON found in model output");
+  const open = candidate[start3];
+  const close = open === "{" ? "}" : "]";
+  const end = candidate.lastIndexOf(close);
+  if (end <= start3) throw new AiError("bad_output", "Unterminated JSON in model output");
+  try {
+    return JSON.parse(candidate.slice(start3, end + 1));
+  } catch (e) {
+    throw new AiError("bad_output", "Model output is not valid JSON", { cause: e });
+  }
+}
+function trimSlash(url) {
+  return url.replace(/\/+$/, "");
+}
+
+// src/services/ai/tasks/family.ts
+var EMOJI_PROPERTY = {
+  type: "string",
+  description: "\u4E00\u500B emoji\uFF0C\u53EA\u7D66\u4E00\u500B\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002"
+};
+var FAMILY_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["families"],
+  properties: {
+    families: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["topic", "label", "emoji", "groups"],
+        properties: {
+          topic: { type: "string", description: "English key, lowercase, e.g. clothing or gl-" },
+          label: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\u540D\u7A31\uFF0C\u4F8B\u5982\u300C\u670D\u88DD\u300D\u300Cgl- \u767C\u5149\u5BB6\u65CF\u300D" },
+          emoji: { ...EMOJI_PROPERTY, description: "\u4E00\u500B\u4EE3\u8868\u6574\u500B\u5B57\u65CF\u7684 emoji\uFF0C\u53EA\u7D66\u4E00\u500B\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\u3002" },
+          groups: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["label", "members"],
+              properties: {
+                label: { type: "string" },
+                members: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["word", "zh", "emoji"],
+                    properties: {
+                      word: { type: "string" },
+                      zh: { type: "string" },
+                      emoji: EMOJI_PROPERTY
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+var FAMILY_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u5E2B\uFF0C\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u628A\u5B78\u904E\u7684\u55AE\u5B57\u6574\u7406\u6210\u300C\u5B57\u65CF\u300D\uFF0C\u4E26\u88DC\u4E0A\u503C\u5F97\u4E00\u8D77\u5B78\u7684\u5EF6\u4F38\u5B57\u3002
+
+\u5206\u7FA4\u898F\u5247\uFF1A
+1. \u5B57\u65CF\u53EF\u4EE5\u4F9D\u4E3B\u984C\uFF08\u4F8B\u5982 clothing \u670D\u88DD\uFF09\u3001\u5B57\u6839\u5B57\u9996\u6216\u97F3\u7D44\uFF08\u4F8B\u5982 gl- \u548C\u5149\u6709\u95DC\uFF09\u3001\u4F7F\u7528\u60C5\u5883\u4F86\u5206\u3002\u6BCF\u500B\u5B57\u65CF\u5E95\u4E0B\u518D\u5206 1 \u5230 4 \u500B\u5C0F\u7D44\uFF0C\u5C0F\u7D44\u540D\u7A31\u7528\u7E41\u9AD4\u4E2D\u6587\u3002
+2. \u6BCF\u500B\u5B57\u65CF\u81F3\u5C11\u8981\u6709 2 \u500B\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u88E1\u7684\u5B57\uFF1B\u9019\u4E9B\u5B57\u7684 word \u7167\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u7684\u539F\u6A23\u5BEB\uFF0C\u4E0D\u8981\u6539\u6210\u539F\u5F62\u6216\u5176\u4ED6\u8A5E\u5F62\u3002
+3. \u6BCF\u500B\u5B57\u65CF\u53EF\u4EE5\u88DC 2 \u5230 5 \u500B\u5B78\u7FD2\u8005\u9084\u6C92\u5B78\u3001\u4F46\u548C\u9019\u500B\u5B57\u65CF\u5BC6\u5207\u76F8\u95DC\u7684\u5E38\u7528\u5EF6\u4F38\u5B57\uFF0C\u7A0B\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\uFF1B\u4E0D\u8981\u88DC\u7F55\u898B\u5B57\u3002
+4. zh \u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C10 \u500B\u5B57\u4EE5\u5167\u3002
+5. \u5B57\u6839\u3001\u5B57\u6E90\u53EA\u7528\u53EF\u9760\u3001\u5E38\u898B\u7684\u77E5\u8B58\u3002\u4E0D\u78BA\u5B9A\u5C31\u4E0D\u8981\u7528\u5B57\u6839\u5206\u7FA4\uFF0C\u6539\u7528\u4E3B\u984C\u5206\u7FA4\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3002
+6. topic \u7528\u82F1\u6587\u5C0F\u5BEB\uFF1Blabel \u7528\u7E41\u9AD4\u4E2D\u6587\uFF0C\u53EF\u4EE5\u593E\u82F1\u6587\u5B57\u6839\uFF08\u4F8B\u5982\u300Cgl- \u767C\u5149\u5BB6\u65CF\u300D\uFF09\u3002
+7. emoji \u6BCF\u500B\u5B57\u65CF\u3001\u6BCF\u500B\u6210\u54E1\u90FD\u53EA\u7D66\u4E00\u500B\u6700\u80FD\u4EE3\u8868\u5B83\u7684 emoji\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002
+8. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
+var FAMILY_TEMPLATES = {
+  seeded: `\u4EFB\u52D9\uFF1A\u627E\u5B57\u65CF
+\u4EE5\u3014\u8D77\u9EDE\u55AE\u5B57\u3015\u70BA\u4E2D\u5FC3\u627E\u51FA 1 \u5230 3 \u500B\u5B57\u65CF\uFF0C\u6BCF\u500B\u5B57\u65CF\u90FD\u8981\u5305\u542B\u81F3\u5C11\u4E00\u500B\u8D77\u9EDE\u55AE\u5B57\u3002
+\u3014\u8D77\u9EDE\u55AE\u5B57\u3015
+{{seeds}}{{#existingTopics}}
+
+\u5DF2\u7D93\u6709\u7684\u5B57\u65CF\uFF08\u4E0D\u8981\u91CD\u8907\uFF09\uFF1A{{existingTopics}}{{/existingTopics}}`,
+  regroup: `\u4EFB\u52D9\uFF1A\u91CD\u65B0\u5206\u7FA4
+\u628A\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6574\u7406\u6210 3 \u5230 8 \u500B\u5B57\u65CF\u3002\u4E0D\u4E00\u5B9A\u6BCF\u500B\u5B57\u90FD\u8981\u5206\u9032\u53BB\uFF0C\u627E\u4E0D\u5230\u5408\u9069\u5B57\u65CF\u7684\u5B57\u53EF\u4EE5\u7565\u904E\uFF1B\u540C\u4E00\u500B\u5B57\u53EF\u4EE5\u51FA\u73FE\u5728\u4E0D\u540C\u5B57\u65CF\u3002`
+};
+var KNOWN_FAMILY_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\uFF08\u5171 {{count}} \u500B\uFF09
+{{words}}`;
+function wordLine(w2) {
+  var _a, _b;
+  const pos = (_a = w2.partOfSpeech) == null ? void 0 : _a.trim();
+  const zh = (_b = w2.zh) == null ? void 0 : _b.trim();
+  return `- ${w2.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
+}
+function isObj(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+function str(v) {
+  return typeof v === "string" ? v.trim() : "";
+}
+function structuredJson(r) {
+  if (r.json !== void 0) return r.json;
+  if (r.stop === "max_tokens") throw new AiError("bad_output", "Structured answer was cut off (max_tokens)");
+  return extractJson(r.text);
+}
+function parseFamilies(json) {
+  if (!isObj(json) || !Array.isArray(json.families)) {
+    throw new AiError("bad_output", "family.generate: expected { families: [...] }");
+  }
+  const out = [];
+  for (const f of json.families) {
+    if (!isObj(f) || !Array.isArray(f.groups)) throw new AiError("bad_output", "family.generate: malformed family");
+    const groups = [];
+    for (const g of f.groups) {
+      if (!isObj(g) || !Array.isArray(g.members)) throw new AiError("bad_output", "family.generate: malformed group");
+      const seen = /* @__PURE__ */ new Set();
+      const members = [];
+      for (const m2 of g.members) {
+        if (!isObj(m2)) throw new AiError("bad_output", "family.generate: malformed member");
+        const word = str(m2.word);
+        const key5 = word.toLowerCase();
+        if (!word || seen.has(key5)) continue;
+        seen.add(key5);
+        members.push({ word, zh: str(m2.zh), emoji: str(m2.emoji) });
+      }
+      if (members.length) groups.push({ label: str(g.label), members });
+    }
+    const topic = str(f.topic);
+    if (!groups.length || !(topic || str(f.label))) continue;
+    out.push({ topic: topic || str(f.label), label: str(f.label) || topic, emoji: str(f.emoji), groups });
+  }
+  return out;
+}
+var familyGenerate = {
+  id: "family.generate",
+  version: 1,
+  surface: "family",
+  label: "ai.task.family.generate",
+  tier: "smart",
+  // A full regroup lists many members; leave room for thinking too.
+  maxTokens: 8192,
+  // The learner's answer-length limit is for prose, not a JSON list.
+  answerChars: () => 0,
+  build(input, ctx) {
+    var _a, _b;
+    const seeds = (_a = input.seeds) != null ? _a : [];
+    const user = seeds.length ? renderTemplate(FAMILY_TEMPLATES.seeded, {
+      seeds: seeds.map(wordLine).join("\n"),
+      existingTopics: ((_b = input.existingTopics) != null ? _b : []).join("\u3001")
+    }) : renderTemplate(FAMILY_TEMPLATES.regroup, {});
+    return composeRequest({
+      base: FAMILY_BASE_PROMPT,
+      context: [renderTemplate(KNOWN_FAMILY_TEMPLATE, { count: input.known.length, words: input.known.map(wordLine).join("\n") })],
+      profile: profileForTask(ctx.profile, familyGenerate, input),
+      // Each generation stands alone.
+      history: [],
+      user,
+      tier: familyGenerate.tier,
+      maxTokens: familyGenerate.maxTokens,
+      output: { name: "word_families", schema: FAMILY_SCHEMA }
+    });
+  },
+  parse(r) {
+    return parseFamilies(structuredJson(r));
+  }
+};
+var FAMILY_EXPAND_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["members"],
+  properties: {
+    members: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["group", "word", "zh", "emoji"],
+        properties: {
+          group: { type: "string", description: "\u54EA\u4E00\u500B\u65E2\u6709\u5206\u7D44\u6700\u9069\u5408\u9019\u500B\u65B0\u5B57\uFF1B\u7167\u539F\u6A23\u6284\u65E2\u6709\u5206\u7D44\u540D\u7A31\uFF0C\u771F\u7684\u6C92\u6709\u5408\u9069\u7684\u624D\u81EA\u5DF1\u53D6\u4E00\u500B\u65B0\u540D\u7A31" },
+          word: { type: "string" },
+          zh: { type: "string" },
+          emoji: EMOJI_PROPERTY
+        }
+      }
+    }
+  }
+};
+var FAMILY_EXPAND_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u5E2B\uFF0C\u8981\u5E6B\u4E00\u500B\u5DF2\u7D93\u5206\u597D\u7D44\u7684\u300C\u5B57\u65CF\u300D\u88DC\u4E0A\u5E7E\u500B\u65B0\u6210\u54E1\uFF0C\u8B93\u5B78\u7FD2\u8005\u7E7C\u7E8C\u5B78\u3002
+
+\u898F\u5247\uFF1A
+1. \u53EA\u88DC 2 \u5230 5 \u500B\u9019\u500B\u5B57\u65CF\u9084\u6C92\u6709\u7684\u5E38\u7528\u5EF6\u4F38\u5B57\uFF0C\u7A0B\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\uFF1B\u4E0D\u8981\u88DC\u7F55\u898B\u5B57\uFF0C\u4E5F\u4E0D\u8981\u91CD\u8907\u3014\u5B57\u65CF\u3015\u88E1\u5DF2\u7D93\u6709\u7684\u6210\u54E1\u3002
+2. \u6BCF\u500B\u65B0\u6210\u54E1\u5148\u5224\u65B7\u6700\u76F8\u95DC\u7684\u65E2\u6709\u5206\u7D44\uFF0Cgroup \u6B04\u4F4D\u7167\u6284\u8A72\u5206\u7D44\u540D\u7A31\uFF0C\u4E0D\u8981\u6539\u5BEB\uFF1B\u771F\u7684\u627E\u4E0D\u5230\u5408\u9069\u7684\u65E2\u6709\u5206\u7D44\uFF0C\u624D\u81EA\u5DF1\u53D6\u4E00\u500B\u65B0\u5206\u7D44\u540D\u7A31\u3002
+3. zh \u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C10 \u500B\u5B57\u4EE5\u5167\u3002
+4. emoji \u6BCF\u500B\u65B0\u6210\u54E1\u53EA\u7D66\u4E00\u500B\u6700\u80FD\u4EE3\u8868\u5B83\u7684 emoji\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002
+5. \u5B57\u6839\u3001\u5B57\u6E90\u4E0D\u78BA\u5B9A\u5C31\u4E0D\u8981\u7528\uFF0C\u53EA\u6839\u64DA\u53EF\u9760\u3001\u5E38\u898B\u7684\u77E5\u8B58\u5224\u65B7\u76F8\u95DC\u6027\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3002
+6. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
+var FAMILY_EXPAND_FAMILY_TEMPLATE = `\u3014\u5B57\u65CF\u3015{{label}}\uFF08{{topic}}\uFF09
+\u73FE\u6709\u5206\u7D44\u8207\u6210\u54E1\uFF1A
+{{groups}}`;
+var FAMILY_EXPAND_USER_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5E6B\u9019\u500B\u5B57\u65CF\u60F3 2 \u5230 5 \u500B\u65B0\u6210\u54E1
+\u5EF6\u4F38\u5B57\u8981\u548C\u3014\u5B57\u65CF\u3015\u7684\u5176\u4E2D\u4E00\u500B\u5206\u7D44\u5BC6\u5207\u76F8\u95DC\uFF1B\u4E0D\u8981\u91CD\u8907\u3014\u5B57\u65CF\u3015\u88E1\u5DF2\u7D93\u6709\u7684\u5B57\u3002`;
+function expandGroupLine(g) {
+  const members = g.members.map((m2) => `${m2.word}${m2.zh ? `\uFF08${m2.zh}\uFF09` : ""}`).join("\u3001");
+  return `- ${g.label}\uFF1A${members || "\uFF08\u7121\uFF09"}`;
+}
+function parseFamilyExpandMembers(json) {
+  if (!isObj(json) || !Array.isArray(json.members)) {
+    throw new AiError("bad_output", "family.expand: expected { members: [...] }");
+  }
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const m2 of json.members) {
+    if (!isObj(m2)) throw new AiError("bad_output", "family.expand: malformed member");
+    const word = str(m2.word);
+    const key5 = word.toLowerCase();
+    if (!word || seen.has(key5)) continue;
+    seen.add(key5);
+    out.push({ group: str(m2.group), word, zh: str(m2.zh), emoji: str(m2.emoji) });
+  }
+  return out;
+}
+var familyExpand = {
+  id: "family.expand",
+  version: 1,
+  surface: "family",
+  tier: "fast",
+  maxTokens: 2048,
+  // Structured JSON, not prose — same reasoning as family.generate.
+  answerChars: () => 0,
+  build(input, ctx) {
+    return composeRequest({
+      base: FAMILY_EXPAND_BASE_PROMPT,
+      context: [
+        renderTemplate(FAMILY_EXPAND_FAMILY_TEMPLATE, { topic: input.topic, label: input.label, groups: input.groups.map(expandGroupLine).join("\n") }),
+        renderTemplate(KNOWN_FAMILY_TEMPLATE, { count: input.known.length, words: input.known.map(wordLine).join("\n") })
+      ],
+      profile: profileForTask(ctx.profile, familyExpand, input),
+      history: [],
+      user: renderTemplate(FAMILY_EXPAND_USER_TEMPLATE, {}),
+      tier: familyExpand.tier,
+      maxTokens: familyExpand.maxTokens,
+      output: { name: "family_expand", schema: FAMILY_EXPAND_SCHEMA }
+    });
+  },
+  parse(r) {
+    return parseFamilyExpandMembers(structuredJson(r));
+  }
+};
+var FAMILY_TASKS = [familyGenerate, familyExpand];
+
+// src/services/ai/tasks/grammarQuestions.ts
+var DEFAULT_QUESTION_COUNT = 6;
+var MAX_QUESTION_COUNT = 10;
+var MAX_WORDS = 30;
+var MAX_AVOID_STEMS = 40;
+var MAX_SENTENCES = 3;
+var MAX_LEAD = 3;
+var MAX_SENTENCE_CHARS = 300;
+var SCENARIO_TYPES = ["choice", "find-error"];
+var SCENARIO_FORMS = ["dialogue", "story"];
+var GAP = "____";
+var GRAMMAR_QUESTIONS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["scene", "form", "speakers", "turns"],
+  properties: {
+    scene: { type: "string", description: "\u4E00\u53E5\u8A71\u4EA4\u4EE3\u60C5\u5883\uFF08\u7E41\u9AD4\u4E2D\u6587\uFF09\uFF0C\u4F8B\u5982\u300C\u5728\u5496\u5561\u5E97\u9EDE\u9910\u300D" },
+    form: { type: "string", enum: [...SCENARIO_FORMS] },
+    speakers: { type: "array", items: { type: "string" }, description: "\u5C0D\u8A71\u7684\u4EBA\u7269\u540D\u5B57\uFF1B\u77ED\u6587\u586B\u7A7A\u9663\u5217" },
+    turns: {
+      type: "array",
+      description: "\u4F9D\u6642\u9593\u9806\u5E8F\u7684\u53E5\u5B50\uFF0C\u6BCF\u4E00\u53E5\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["speaker", "text", "ask"],
+        properties: {
+          speaker: { type: "string", description: "\u9019\u4E00\u53E5\u662F\u8AB0\u8AAA\u7684\uFF1B\u77ED\u6587\u586B\u7A7A\u5B57\u4E32" },
+          text: { type: "string", description: "\u4E32\u5834\u53E5\uFF08\u4E0D\u51FA\u984C\uFF09\u7684\u82F1\u6587\u53E5\u5B50\uFF1B\u6709 ask \u6642\u586B\u7A7A\u5B57\u4E32" },
+          ask: {
+            type: "array",
+            description: "\u9019\u4E00\u53E5\u8981\u51FA\u984C\u5C31\u653E\u4E00\u500B\u984C\u76EE\uFF0C\u4E0D\u51FA\u984C\u653E\u7A7A\u9663\u5217",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: [
+                "objectiveId",
+                "topicId",
+                "type",
+                "stem",
+                "options",
+                "answer",
+                "accepted",
+                "explanation",
+                "distractors",
+                "sentenceZh",
+                "errorTag",
+                "sourceIndex"
+              ],
+              properties: {
+                objectiveId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u958B\u982D\u300C\u4E3B\u984Cid/\u76EE\u6A19id\u300D\u88E1\u300C/\u300D\u5F8C\u9762\u7684\u76EE\u6A19 id" },
+                topicId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u958B\u982D\u300C/\u300D\u524D\u9762\u7684\u4E3B\u984C id" },
+                type: { type: "string", enum: [...SCENARIO_TYPES] },
+                stem: {
+                  type: "string",
+                  description: "\u984C\u5E79\u3002choice\uFF1A\u9019\u4E00\u53E5\u82F1\u6587\uFF0C\u6070\u597D\u6709\u4E00\u500B ____\uFF1Bfind-error\uFF1A\u5B8C\u6574\u7684\u4E00\u53E5\u82F1\u6587\uFF08\u88E1\u9762\u6709\u4E00\u8655\u932F\uFF09"
+                },
+                options: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "choice\uFF1A3\u20134 \u500B\u9078\u9805\uFF1Bfind-error\uFF1A3\u20134 \u500B\u6A19\u5728\u53E5\u5B50\u88E1\u7684\u7247\u6BB5\uFF08\u539F\u6587\u7167\u6284\uFF09"
+                },
+                answer: { type: "string", description: "choice\uFF1A\u6B63\u89E3\uFF1Bfind-error\uFF1A\u932F\u7684\u90A3\u500B\u7247\u6BB5\uFF08\u5FC5\u9808\u662F options \u5176\u4E2D\u4E00\u500B\uFF09" },
+                accepted: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "find-error\uFF1Aaccepted[0] \u662F\u6539\u6B63\u5F8C\u7684\u5BEB\u6CD5\uFF1Bchoice\uFF1A\u7A7A\u9663\u5217"
+                },
+                explanation: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\uFF0C60 \u5B57\u4EE5\u5167" },
+                distractors: {
+                  type: "array",
+                  description: "\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\uFF0825 \u5B57\u4EE5\u5167\uFF09",
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["option", "why"],
+                    properties: { option: { type: "string" }, why: { type: "string" } }
+                  }
+                },
+                sentenceZh: { type: "string", description: "\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F" },
+                errorTag: { type: "string", enum: [...ERROR_TAGS], description: "\u5B78\u7FD2\u8005\u7B54\u932F\u6642\u6700\u53EF\u80FD\u72AF\u7684\u932F\u8AA4\u985E\u578B" },
+                sourceIndex: {
+                  type: "integer",
+                  description: "\u9019\u984C\u6539\u7DE8\u81EA\u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015\u7684\u7B2C\u5E7E\u53E5\uFF08\u5F9E 1 \u958B\u59CB\uFF09\uFF1B\u4E0D\u662F\u6539\u7DE8\u7684\u984C\u76EE\u586B 0"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+var GRAMMAR_QUESTIONS_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u8001\u5E2B\uFF0C\u7528\u4E00\u6BB5\u9023\u7E8C\u7684\u60C5\u5883\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u505A\u9078\u64C7\u984C\u7DF4\u7FD2\u3002\u3014\u51FA\u984C\u53C3\u8003\u3015\u662F\u9019\u6B21\u8981\u8003\u7684\u91CD\u9EDE\uFF0C\u6BCF\u500B\u91CD\u9EDE\u6709\u56FA\u5B9A\u7684 id\u3002
+
+\u898F\u5247\uFF1A
+1. \u53EA\u8003\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u7684\u91CD\u9EDE\uFF1B\u6BCF\u4E00\u984C\u7684 objectiveId \u5FC5\u9808\u662F\u6E05\u55AE\u88E1\u7684 id\uFF0C\u4E0D\u8981\u81EA\u5DF1\u767C\u660E\u3002
+2. \u9023\u8CAB\uFF1A\u5168\u90E8\u984C\u76EE\u767C\u751F\u5728\u540C\u4E00\u500B\u60C5\u5883\uFF0C\u4F9D\u6642\u9593\u9806\u5E8F\u5F80\u4E0B\u8D70\uFF0C\u6BCF\u4E00\u53E5\u90FD\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5\uFF1B\u8B80\u5B8C\u5C31\u662F\u4E00\u6BB5\u5B8C\u6574\u7684\u5C0D\u8A71\u6216\u77ED\u6587\u3002\u6709\u3014\u4E0A\u4E00\u6BB5\u3015\u6642\uFF0C\u5F9E\u5B83\u7684\u6700\u5F8C\u4E00\u53E5\u76F4\u63A5\u63A5\u8457\u5BEB\uFF0C\u4EBA\u7269\u548C\u5834\u666F\u4E0D\u8B8A\u3002\u53EF\u4EE5\u7A7F\u63D2\u4E0D\u51FA\u984C\u7684\u4E32\u5834\u53E5\uFF0C\u4E00\u7D44\u6700\u591A 3 \u53E5\u3002
+3. \u53EA\u51FA\u9EDE\u9078\u7684\u984C\u578B\uFF08choice\u3001find-error\uFF09\uFF0C\u5B78\u7FD2\u8005\u4E0D\u9700\u8981\u6253\u4EFB\u4F55\u5B57\u3002
+4. \u6709\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015\u6642\uFF0C\u5148\u8003\u5F31\u9EDE\u88E1\u3001\u800C\u4E14\u5728\u3014\u51FA\u984C\u53C3\u8003\u3015\u5167\u7684\u91CD\u9EDE\uFF0C\u6700\u591A\u5360\u4E00\u534A\u984C\u6578\uFF1B\u5176\u9918\u5E73\u5747\u5206\u914D\u3002\u540C\u4E00\u500B\u91CD\u9EDE\u6700\u591A\u5169\u984C\uFF0C\u540C\u4E00\u500B\u91CD\u9EDE\u4E0D\u8981\u9023\u7E8C\u51FA\u4E09\u984C\u3002
+5. \u6BCF\u984C\u53EA\u6709\u4E00\u500B\u6B63\u78BA\u7B54\u6848\u3002\u932F\u8AA4\u9078\u9805\u8981\u300C\u770B\u8D77\u4F86\u53EF\u80FD\u5C0D\uFF0C\u4F46\u653E\u5728\u9019\u500B\u53E5\u5B50\u88E1\u4E0D\u5C0D\u300D\uFF1B\u9700\u8981\u7684\u8A71\u7528\u524D\u5F8C\u6587\u628A\u7B54\u6848\u9396\u4F4F\u3002
+6. \u7B54\u984C\u5F8C\u7684\u89E3\u8AAA\uFF1A
+   - explanation\uFF1A60 \u5B57\u4EE5\u5167\uFF0C\u5148\u9EDE\u51FA\u53E5\u5B50\u88E1\u7684\u5224\u65B7\u4F9D\u64DA\uFF0C\u518D\u8AAA\u70BA\u4EC0\u9EBC\u662F\u9019\u500B\u7B54\u6848\u3002
+   - distractors\uFF1A\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C25 \u5B57\u4EE5\u5167\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\u3002
+   - sentenceZh\uFF1A\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u4E2D\u6587\u7FFB\u8B6F\u3002
+7. errorTag \u53EA\u80FD\u5F9E\u4EFB\u52D9\u5217\u51FA\u7684\u6E05\u55AE\u9078\u3002
+8. \u53E5\u5B50\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF0C\u76EE\u6A19\u4EE5\u5916\u7684\u751F\u5B57\u8D8A\u5C11\u8D8A\u597D\uFF1B\u6709\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6642\u512A\u5148\u7528\u88E1\u9762\u7684\u5B57\uFF0C\u4F46\u4E0D\u8981\u786C\u585E\u3002
+9. \u4E0D\u8981\u91CD\u8907\u3014\u907F\u514D\u91CD\u8907\u3015\u88E1\u7684\u984C\u5E79\u3002\u53EA\u7528\u81EA\u7136\u3001\u5E38\u898B\u7684\u82F1\u6587\uFF0C\u4E0D\u78BA\u5B9A\u7684\u7528\u6CD5\u4E0D\u8981\u51FA\u3002\u6240\u6709\u53E5\u5B50\u90FD\u8981\u539F\u5275\uFF0C\u4E0D\u8981\u5F15\u7528\u51FA\u7248\u6559\u6750\u6216\u8003\u984C\u3002
+10. \u4E2D\u6587\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u6307\u5B9A\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\u6642\u7167\u5B83\u3002
+11. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002
+12. \u6BCF\u984C\u7684 stem \u5FC5\u9808\u662F\u60C5\u5883\u88E1\u4E00\u53E5\u5B8C\u6574\u3001\u81EA\u7136\u7684\u82F1\u6587\u53E5\u5B50\uFF08\u542B\u4E3B\u8A5E\u548C\u52D5\u8A5E\u3001\u81F3\u5C11 6 \u500B\u82F1\u6587\u5B57\uFF0C\u4E0D\u542B\u4E2D\u6587\uFF09\u3002\u4E0D\u8981\u628A\u63D0\u554F\u5BEB\u9032 stem\uFF0C\u63D0\u554F\u7531\u756B\u9762\u986F\u793A\u3002
+13. ____ \u524D\u5F8C\u90FD\u8981\u6709\u8DB3\u5920\u7684\u4E0A\u4E0B\u6587\uFF0C____ \u4E0D\u80FD\u662F\u53E5\u5B50\u7684\u6700\u5F8C\u4E00\u500B\u5B57\uFF08\u5F8C\u9762\u81F3\u5C11\u9084\u6709\u4E00\u500B\u82F1\u6587\u5B57\uFF09\uFF1B\u4ECB\u7CFB\u8A5E\u3001\u5C0F\u54C1\u8A5E\u7684\u7A7A\u683C\u5F8C\u9762\u4E00\u5B9A\u8981\u63A5\u5B83\u7684\u53D7\u8A5E\u6216\u88DC\u8A9E\u3002`;
+var REFERENCE_BLOCK_TEMPLATE = `\u3014\u51FA\u984C\u53C3\u8003\u3015
+{{lines}}`;
+var WEAKNESS_BLOCK_TEMPLATE = `\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015
+{{weakness}}`;
+var PREVIOUS_BLOCK_TEMPLATE = `\u3014\u4E0A\u4E00\u6BB5\u3015
+\u5834\u666F\uFF1A{{scene}}
+\u6700\u5F8C\u5169\u53E5\uFF1A
+{{lines}}`;
+var SENTENCES_BLOCK_TEMPLATE = `\u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015
+{{sentences}}`;
+var KNOWN_BLOCK_TEMPLATE = `\u3014\u5DF2\u5B78\u904E\u7684\u6587\u6CD5\u3015{{titles}}`;
+var WORDS_BLOCK_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015{{words}}`;
+var AVOID_BLOCK_TEMPLATE = `\u3014\u907F\u514D\u91CD\u8907\u3015\u5DF2\u7D93\u51FA\u904E\u7684\u984C\u5E79\uFF1A
+{{stems}}`;
+var GRAMMAR_QUESTIONS_TEMPLATE = `\u4EFB\u52D9\uFF1A\u6587\u6CD5\u60C5\u5883\u7DF4\u7FD2\uFF08{{topics}}\uFF09
+\u51FA {{count}} \u984C\u3002type \u53EF\u4EE5\u7528\uFF1Achoice\uFF08\u53E5\u5B50\u88E1\u4E00\u500B ____\uFF0B3\u20134 \u500B\u9078\u9805\uFF09\u3001find-error\uFF08\u53E5\u5B50\u88E1\u6A19\u51FA 3\u20134 \u500B\u7247\u6BB5\uFF0C\u9078\u51FA\u932F\u7684\u90A3\u500B\uFF09\u3002
+\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u662F objectiveId\uFF5C\u5B78\u7FD2\u76EE\u6A19\uFF5C\u4E3B\u984C\uFF08\u53E5\u578B\uFF09\u3002
+errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
+function objectiveRef(topicId, objectiveId) {
+  return `${topicId}/${objectiveId}`;
+}
+function cleanSentences(list) {
+  var _a;
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const x3 of list != null ? list : []) {
+    const sentence = ((_a = x3 == null ? void 0 : x3.sentence) != null ? _a : "").replace(/\s+/g, " ").trim().slice(0, MAX_SENTENCE_CHARS);
+    if (!sentence || seen.has(sentence.toLowerCase())) continue;
+    seen.add(sentence.toLowerCase());
+    out.push({ path: x3.path, sentence });
+    if (out.length >= MAX_SENTENCES) break;
+  }
+  return out;
+}
+function clean(list, max) {
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const s of list != null ? list : []) {
+    const v = (s != null ? s : "").replace(/\s+/g, " ").trim();
+    if (!v || seen.has(v.toLowerCase())) continue;
+    seen.add(v.toLowerCase());
+    out.push(v);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+function targetRefs(targets) {
+  const out = [];
+  for (const t2 of targets) {
+    const want = new Set(t2.objectiveIds);
+    const objs = t2.topic.objectives.filter((o) => want.has(o.id));
+    for (const objective of objs.length ? objs : t2.topic.objectives) out.push({ topic: t2.topic, objective });
+  }
+  return out;
+}
+function isObj2(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+function str2(v) {
+  return typeof v === "string" ? v.trim() : "";
+}
+function strList(v) {
+  return Array.isArray(v) ? v.map(str2).filter(Boolean) : [];
+}
+function uniq(list) {
+  const out = [];
+  for (const s of list) if (!out.includes(s)) out.push(s);
+  return out;
+}
+var GAP_RE = /_{3,}/g;
+function parseDistractors(v) {
+  const out = {};
+  if (Array.isArray(v)) {
+    for (const d of v) {
+      if (!isObj2(d)) continue;
+      const option = str2(d.option);
+      const why = str2(d.why);
+      if (option && why) out[option] = why;
+    }
+  } else if (isObj2(v)) {
+    for (const [k, w2] of Object.entries(v)) {
+      const option = k.trim();
+      const why = str2(w2);
+      if (option && why) out[option] = why;
+    }
+  }
+  return out;
+}
+function resolveRef(raw, refs) {
+  let topicId = str2(raw.topicId);
+  let objectiveId = str2(raw.objectiveId);
+  if (objectiveId.includes("/")) {
+    const [t2, ...rest] = objectiveId.split("/");
+    const o = rest.join("/");
+    if (!topicId) topicId = t2;
+    if (topicId === t2) objectiveId = o;
+  }
+  if (!objectiveId) return null;
+  if (!refs) return topicId ? { topicId, objectiveId } : null;
+  if (topicId) return refs.has(objectiveRef(topicId, objectiveId)) ? { topicId, objectiveId } : null;
+  const hits = [...refs].filter((r) => r.endsWith(`/${objectiveId}`));
+  if (hits.length !== 1) return null;
+  return { topicId: hits[0].slice(0, hits[0].length - objectiveId.length - 1), objectiveId };
+}
+function parseScenarioQuestion(raw, opts = {}) {
+  var _a;
+  if (!isObj2(raw)) return null;
+  const type = str2(raw.type);
+  if (!SCENARIO_TYPES.includes(type)) return null;
+  const ref = resolveRef(raw, opts.refs);
+  if (!ref) return null;
+  let stem = str2(raw.stem);
+  let answer = str2(raw.answer);
+  const explanation = str2(raw.explanation);
+  if (!stem || !answer || !explanation) return null;
+  const options = uniq(strList(raw.options));
+  if (options.length < 3 || options.length > 4) return null;
+  if (!options.includes(answer)) {
+    const hit = options.find((o) => o.toLowerCase() === answer.toLowerCase());
+    if (!hit) return null;
+    answer = hit;
+  }
+  if (type === "choice") {
+    const gaps = stem.match(GAP_RE);
+    if (!gaps || gaps.length !== 1) return null;
+    stem = stem.replace(GAP_RE, GAP);
+    if (!isFullSentence(stem)) return null;
+  } else {
+    if (stem.match(GAP_RE)) return null;
+    if (!options.every((o) => stem.includes(o))) return null;
+    if (!isFullSentence(stem)) return null;
+  }
+  const distractors = Object.fromEntries(
+    Object.entries(parseDistractors(raw.distractors)).filter(([k]) => k !== answer && options.includes(k))
+  );
+  const q = {
+    topicId: ref.topicId,
+    objectiveId: ref.objectiveId,
+    type,
+    stem,
+    options,
+    answer,
+    explanation,
+    errorTag: normalizeErrorTag(raw.errorTag)
+  };
+  const accepted = uniq(strList(raw.accepted));
+  if (type === "find-error" && accepted.length) q.accepted = accepted;
+  if (Object.keys(distractors).length) q.distractors = distractors;
+  const zh = str2(raw.sentenceZh);
+  if (zh) q.sentenceZh = zh;
+  const idx = Number(raw.sourceIndex);
+  const src = Number.isInteger(idx) && idx >= 1 ? (_a = opts.sentences) == null ? void 0 : _a[idx - 1] : void 0;
+  if (src) q.source = { path: src.path, sentence: src.sentence };
+  return q;
+}
+function askOf(turn) {
+  const a2 = turn.ask;
+  if (Array.isArray(a2)) return a2.length ? a2[0] : void 0;
+  return isObj2(a2) ? a2 : void 0;
+}
+function parseGrammarScenario(json, opts = {}) {
+  if (!isObj2(json) || !Array.isArray(json.turns)) {
+    throw new AiError("bad_output", "grammar.questions: expected { scene, form, turns: [...] }");
+  }
+  const parseOpts = { ...opts, refs: opts.refs ? new Set(opts.refs) : void 0 };
+  const scene = str2(json.scene);
+  if (!scene) throw new AiError("bad_output", "grammar.questions: no scene");
+  const speakers = uniq(strList(json.speakers));
+  const form = SCENARIO_FORMS.includes(str2(json.form)) ? str2(json.form) : speakers.length ? "dialogue" : "story";
+  const questions2 = [];
+  const seen = /* @__PURE__ */ new Set();
+  let asked = 0;
+  let lead = [];
+  for (const t2 of json.turns) {
+    if (!isObj2(t2)) continue;
+    const speaker = str2(t2.speaker);
+    const ask = askOf(t2);
+    if (ask === void 0) {
+      const text = str2(t2.text);
+      if (text) lead.push(speaker ? { speaker, text } : { text });
+      continue;
+    }
+    asked++;
+    const q = parseScenarioQuestion(ask, parseOpts);
+    if (!q) continue;
+    const key5 = q.stem.toLowerCase();
+    if (seen.has(key5)) continue;
+    seen.add(key5);
+    if (speaker) q.speaker = speaker;
+    if (lead.length) q.lead = lead.slice(-MAX_LEAD);
+    lead = [];
+    questions2.push(q);
+  }
+  if (!questions2.length || questions2.length * 2 < asked) {
+    throw new AiError("bad_output", `grammar.questions: only ${questions2.length} of ${asked} questions usable`);
+  }
+  const out = { scene, form, questions: questions2 };
+  if (speakers.length) out.speakers = speakers;
+  return out;
+}
+var grammarQuestions = {
+  id: "grammar.questions",
+  version: 3,
+  surface: "grammar",
+  tier: "smart",
+  maxTokens: 8192,
+  answerChars: () => 0,
+  build(input, ctx) {
+    var _a, _b;
+    const refs = targetRefs(input.targets);
+    const count = Math.max(1, Math.min(MAX_QUESTION_COUNT, Math.floor((_a = input.count) != null ? _a : DEFAULT_QUESTION_COUNT)));
+    const known2 = clean(input.knownTopicTitles, 60);
+    const words = clean(input.words, MAX_WORDS);
+    const avoid = clean(input.avoidStems, MAX_AVOID_STEMS);
+    const sentences = cleanSentences(input.sentences);
+    const weakness = ((_b = input.weakness) != null ? _b : "").trim();
+    const prev = input.previous;
+    const titles = [...new Set(refs.map((r) => r.topic.title))];
+    const context = [
+      renderTemplate(REFERENCE_BLOCK_TEMPLATE, {
+        lines: refs.map((r) => `${objectiveRef(r.topic.id, r.objective.id)}\uFF5C${r.objective.text}\uFF5C${r.topic.title}\uFF08${r.topic.pattern}\uFF09`).join("\n")
+      }),
+      weakness ? renderTemplate(WEAKNESS_BLOCK_TEMPLATE, { weakness }) : "",
+      prev && prev.scene.trim() ? renderTemplate(PREVIOUS_BLOCK_TEMPLATE, {
+        scene: prev.scene.trim(),
+        lines: prev.lastLines.slice(-2).map((l4) => `- ${l4}`).join("\n")
+      }) : "",
+      known2.length ? renderTemplate(KNOWN_BLOCK_TEMPLATE, { titles: known2.join("\u3001") }) : "",
+      words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE, { words: words.join(", ") }) : "",
+      avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE, { stems: avoid.map((s) => `- ${s}`).join("\n") }) : "",
+      sentences.length ? renderTemplate(SENTENCES_BLOCK_TEMPLATE, { sentences: sentences.map((x3, i) => `${i + 1}. ${x3.sentence}`).join("\n") }) : ""
+    ];
+    return composeRequest({
+      base: GRAMMAR_QUESTIONS_BASE_PROMPT,
+      context,
+      profile: ctx.profile,
+      history: [],
+      user: renderTemplate(GRAMMAR_QUESTIONS_TEMPLATE, {
+        topics: titles.join("\u3001"),
+        count,
+        errorTags: ERROR_TAGS.join("\u3001")
+      }),
+      tier: grammarQuestions.tier,
+      maxTokens: grammarQuestions.maxTokens,
+      output: { name: "grammar_questions", schema: GRAMMAR_QUESTIONS_SCHEMA }
+    });
+  },
+  parse(r) {
+    return parseGrammarScenario(structuredJson(r));
+  }
+};
+function grammarQuestionsFor(targets, sentences = []) {
+  const refs = targetRefs(targets).map((r) => objectiveRef(r.topic.id, r.objective.id));
+  const sent = cleanSentences(sentences);
+  return {
+    ...grammarQuestions,
+    parse: (r) => parseGrammarScenario(structuredJson(r), { refs, sentences: sent })
+  };
+}
+var GRAMMAR_TASKS = [grammarQuestions];
+
+// src/services/ai/tasks/practiceScenario.ts
+var MAX_AVOID = 20;
+var POLY_ERROR_TAGS = [
+  "sense-confusion",
+  "light-verb",
+  "preposition-time",
+  "preposition-place",
+  "preposition-other",
+  "phrasal-verb",
+  "collocation",
+  "pos-confusion",
+  "literal-figurative",
+  "register"
+];
+var VOCAB_ERROR_TAGS = ["meaning", "form", "collocation", "confusable"];
+var KINDS_BY_CATEGORY = {
+  vocab: ["which-sense", "pick-word"],
+  poly: ["which-sense", "pick-word", "same-sense"],
+  grammar: ["choice", "find-error"]
+};
+var PRACTICE_SCENARIO_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u8001\u5E2B\uFF0C\u7528\u4E00\u6BB5\u9023\u7E8C\u7684\u60C5\u5883\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u505A\u9078\u64C7\u984C\u7DF4\u7FD2\u3002\u3014\u51FA\u984C\u53C3\u8003\u3015\u662F\u9019\u6B21\u8981\u8003\u7684\u91CD\u9EDE\uFF0C\u6BCF\u500B\u91CD\u9EDE\u6709\u56FA\u5B9A\u7684 id\u3002
+
+\u898F\u5247\uFF1A
+1. \u53EA\u8003\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u6A19\u300C\u8003\u300D\u7684\u91CD\u9EDE\uFF1B\u6BCF\u4E00\u984C\u7684 focusId \u5FC5\u9808\u662F\u6E05\u55AE\u88E1\u6A19\u300C\u8003\u300D\u7684 id\uFF0C\u4E0D\u8981\u81EA\u5DF1\u767C\u660E\u3002\u6A19\u300C\u53C3\u8003\u300D\u7684\u53EA\u80FD\u7576\u932F\u8AA4\u9078\u9805\u6216\u5287\u60C5\u3002
+2. \u9023\u8CAB\uFF1A\u5168\u90E8\u984C\u76EE\u767C\u751F\u5728\u540C\u4E00\u500B\u60C5\u5883\uFF0C\u4F9D\u6642\u9593\u9806\u5E8F\u5F80\u4E0B\u8D70\uFF0C\u6BCF\u4E00\u53E5\u90FD\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5\uFF1B\u8B80\u5B8C\u5C31\u662F\u4E00\u6BB5\u5B8C\u6574\u7684\u5C0D\u8A71\u6216\u77ED\u6587\u3002\u6709\u3014\u4E0A\u4E00\u6BB5\u3015\u6642\uFF0C\u5F9E\u5B83\u7684\u6700\u5F8C\u4E00\u53E5\u76F4\u63A5\u63A5\u8457\u5BEB\uFF0C\u4EBA\u7269\u548C\u5834\u666F\u4E0D\u8B8A\u3002\u53EF\u4EE5\u7A7F\u63D2\u4E0D\u51FA\u984C\u7684\u4E32\u5834\u53E5\uFF0C\u4E00\u7D44\u6700\u591A 3 \u53E5\u3002
+3. \u53EA\u51FA\u9EDE\u9078\u7684\u984C\u578B\uFF08\u898B\u4EFB\u52D9\u88E1\u5217\u7684 kind\uFF09\uFF0C\u5B78\u7FD2\u8005\u4E0D\u9700\u8981\u6253\u4EFB\u4F55\u5B57\u3002
+4. \u6709\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015\u6642\uFF0C\u5148\u8003\u5F31\u9EDE\u88E1\u3001\u800C\u4E14\u5728\u3014\u51FA\u984C\u53C3\u8003\u3015\u5167\u7684\u91CD\u9EDE\uFF0C\u6700\u591A\u5360\u4E00\u534A\u984C\u6578\uFF1B\u5176\u9918\u5E73\u5747\u5206\u914D\u3002\u540C\u4E00\u500B\u91CD\u9EDE\u6700\u591A\u5169\u984C\uFF0C\u540C\u4E00\u500B\u91CD\u9EDE\u4E0D\u8981\u9023\u7E8C\u51FA\u4E09\u984C\u3002
+5. \u6BCF\u984C\u53EA\u6709\u4E00\u500B\u6B63\u78BA\u7B54\u6848\u3002\u932F\u8AA4\u9078\u9805\u8981\u300C\u770B\u8D77\u4F86\u53EF\u80FD\u5C0D\uFF0C\u4F46\u653E\u5728\u9019\u500B\u53E5\u5B50\u88E1\u4E0D\u5C0D\u300D\uFF1B\u9700\u8981\u7684\u8A71\u7528\u524D\u5F8C\u6587\u628A\u7B54\u6848\u9396\u4F4F\u3002
+6. \u7B54\u984C\u5F8C\u7684\u89E3\u8AAA\uFF1A
+   - explanation\uFF1A60 \u5B57\u4EE5\u5167\uFF0C\u5148\u9EDE\u51FA\u53E5\u5B50\u88E1\u7684\u5224\u65B7\u4F9D\u64DA\uFF0C\u518D\u8AAA\u70BA\u4EC0\u9EBC\u662F\u9019\u500B\u7B54\u6848\u3002
+   - optionNotes\uFF1A\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C25 \u5B57\u4EE5\u5167\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\u3002
+   - sentenceZh\uFF1A\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u4E2D\u6587\u7FFB\u8B6F\u3002
+7. errorTag \u53EA\u80FD\u5F9E\u4EFB\u52D9\u5217\u51FA\u7684\u6E05\u55AE\u9078\u3002
+8. \u53E5\u5B50\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF0C\u76EE\u6A19\u4EE5\u5916\u7684\u751F\u5B57\u8D8A\u5C11\u8D8A\u597D\uFF1B\u6709\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6642\u512A\u5148\u7528\u88E1\u9762\u7684\u5B57\uFF0C\u4F46\u4E0D\u8981\u786C\u585E\u3002
+9. \u4E0D\u8981\u91CD\u8907\u3014\u5DF2\u51FA\u904E\u7684\u53E5\u5B50\u3015\u3002\u53EA\u7528\u81EA\u7136\u3001\u5E38\u898B\u7684\u82F1\u6587\uFF0C\u4E0D\u78BA\u5B9A\u7684\u7528\u6CD5\u4E0D\u8981\u51FA\u3002\u6240\u6709\u53E5\u5B50\u90FD\u8981\u539F\u5275\u3002
+10. \u4E2D\u6587\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u6307\u5B9A\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\u6642\u7167\u5B83\u3002
+11. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002
+12. \u6BCF\u984C\u7684 text \u5FC5\u9808\u662F\u60C5\u5883\u88E1\u4E00\u53E5\u5B8C\u6574\u3001\u81EA\u7136\u7684\u82F1\u6587\u53E5\u5B50\uFF08\u542B\u4E3B\u8A5E\u548C\u52D5\u8A5E\u3001\u81F3\u5C11 6 \u500B\u82F1\u6587\u5B57\uFF0C\u4E0D\u542B\u4E2D\u6587\uFF09\u3002\u4E0D\u8981\u628A\u63D0\u554F\uFF08\u4F8B\u5982\u300CX \u5728\u9019\u53E5\u4E2D\u662F\u4EC0\u9EBC\u610F\u601D\u300D\u300C\u9078\u51FA\u9069\u5408\u7684\u5B57\u300D\uFF09\u5BEB\u9032 text\uFF0C\u63D0\u554F\u7531\u756B\u9762\u986F\u793A\u3002
+13. ____ \u524D\u5F8C\u90FD\u8981\u6709\u8DB3\u5920\u7684\u4E0A\u4E0B\u6587\uFF0C____ \u4E0D\u80FD\u662F\u53E5\u5B50\u7684\u6700\u5F8C\u4E00\u500B\u5B57\uFF08\u5F8C\u9762\u81F3\u5C11\u9084\u6709\u4E00\u500B\u82F1\u6587\u5B57\uFF09\uFF1B\u4ECB\u7CFB\u8A5E\u3001\u5C0F\u54C1\u8A5E\u7684\u7A7A\u683C\u5F8C\u9762\u4E00\u5B9A\u8981\u63A5\u5B83\u7684\u53D7\u8A5E\u6216\u88DC\u8A9E\uFF08\u4F8B\uFF1AWe should prepare a cup ____ tea.\uFF09\u3002`;
+var POLY_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5E38\u7528\u591A\u7FA9\u8A5E\u60C5\u5883\u7DF4\u7FD2\uFF08{{words}}\uFF09
+\u51FA {{count}} \u984C\u3002kind \u53EF\u4EE5\u7528\uFF1Awhich-sense\uFF08\u53E5\u5B50\u88E1\u7528 [[ ]] \u6A19\u51FA\u76EE\u6A19\u5B57\u4E00\u6B21\uFF0Coptions \u662F\u540C\u4E00\u500B\u5B57\u7684 3\u20134 \u500B\u610F\u601D\uFF0C\u9078\u9805 id \u7528\u610F\u601D\u7684 id\u3001\u6587\u5B57\u7528\u4E2D\u6587\u610F\u601D\uFF09\u3001pick-word\uFF08\u53E5\u5B50\u88E1\u4E00\u500B ____\uFF0C4 \u500B\u82F1\u6587\u5B57\u6216\u7247\u8A9E\uFF0C\u5176\u4E2D\u4E00\u500B\u662F\u7DF4\u7FD2\u7684\u5B57\uFF09\u3001same-sense\uFF08\u76EE\u6A19\u53E5\u7528 [[ ]] \u6A19\u51FA\u76EE\u6A19\u5B57\uFF0Coptions \u662F 3\u20134 \u500B\u7528\u5230\u540C\u4E00\u500B\u5B57\u7684\u82F1\u6587\u77ED\u53E5\uFF0C\u53EA\u6709\u4E00\u53E5\u610F\u601D\u76F8\u540C\uFF09\u3002\u6BD4\u4F8B\u7D04 4:4:2\u3002
+\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u662F id\uFF5C\u610F\u601D\uFF5C\u4F8B\uFF5C\u5224\u65B7\u7DDA\u7D22\u3002\u9020\u53E5\u6642\u8B93\u6B63\u89E3\u7684\u5224\u65B7\u7DDA\u7D22\u51FA\u73FE\u5728\u53E5\u5B50\u88E1\uFF08\u6216\u524D\u4E00\u53E5\uFF09\uFF1BoptionNotes \u7528\u932F\u8AA4\u9078\u9805\u90A3\u500B\u610F\u601D\u7684\u5224\u65B7\u7DDA\u7D22\u4F86\u8AAA\u660E\u3002
+errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
+var VOCAB_TEMPLATE = `\u4EFB\u52D9\uFF1A\u55AE\u5B57\u60C5\u5883\u7DF4\u7FD2\uFF08{{n}} \u500B\u5B57\uFF09
+\u51FA {{count}} \u984C\u3002kind \u53EF\u4EE5\u7528\uFF1Awhich-sense\uFF08[[\u76EE\u6A19\u5B57]] \u6A19\u4E00\u6B21\uFF0Coptions \u662F 3\u20134 \u500B\u4E2D\u6587\u610F\u601D\uFF0C\u9078\u9805 id \u7528 a/b/c/d\uFF09\u3001pick-word\uFF08\u53E5\u5B50\u88E1\u4E00\u500B ____\uFF0C4 \u500B\u82F1\u6587\u5B57\uFF0C\u932F\u8AA4\u9078\u9805\u53D6\u81EA\u540C\u4E00\u6279\u5B57\uFF09\u3002
+\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u662F id\uFF5C\u55AE\u5B57\uFF5C\u4E2D\u6587\uFF5C\u8A5E\u6027\u3002errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
+var MIX_TEMPLATE = `\u4EFB\u52D9\uFF1A\u7D9C\u5408\u60C5\u5883\u7DF4\u7FD2
+\u51FA {{count}} \u984C\uFF0C\u5404\u985E\u5927\u7D04\u5E73\u5747\u3002\u6BCF\u984C\u7528 focusId \u6A19\u51FA\u8003\u7684\u662F\u54EA\u4E00\u500B\u91CD\u9EDE\uFF1Bkind \u4F9D\u8A72\u91CD\u9EDE\u6240\u5C6C\u7684\u985E\u5225\uFF1A\u55AE\u5B57\uFF08which-sense\u3001pick-word\uFF09\u3001\u5E38\u7528\u5B57\uFF08which-sense\u3001pick-word\u3001same-sense\uFF09\u3001\u6587\u6CD5\uFF08choice\uFF1A\u4E00\u500B ____\uFF0B3\u20134 \u500B\u9078\u9805\uFF1Bfind-error\uFF1A\u53E5\u4E2D 3\u20134 \u500B\u7247\u6BB5\u9078\u51FA\u932F\u7684\uFF09\u3002
+errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
+var AVOID_BLOCK_TEMPLATE2 = `\u3014\u5DF2\u51FA\u904E\u7684\u53E5\u5B50\u3015
+{{sentences}}`;
+function polyLines(p) {
+  const line2 = (tag, s) => `${tag} ${s.id}\uFF5C${s.zh}\uFF5C${s.example}\uFF5C${s.cue}`;
+  return [...p.tested.map((s) => line2("\u8003", s)), ...p.reference.map((s) => line2("\u53C3\u8003", s))];
+}
+var vocabLines = (list) => list.map((v) => `${v.id}\uFF5C${v.word}\uFF5C${v.zh}\uFF5C${v.pos}`);
+var grammarLines = (list) => list.map((g) => `${objectiveRef(g.topicId, g.objectiveId)}\uFF5C${g.text}\uFF5C${g.title}\uFF08${g.pattern}\uFF09`);
+function refsOf(req) {
+  var _a, _b, _c;
+  const tested = /* @__PURE__ */ new Map();
+  const senseWord = /* @__PURE__ */ new Map();
+  const poly = req.track === "poly" ? req : req.track === "mix" ? req.poly : void 0;
+  const vocab = req.track === "vocab" ? req.words : req.track === "mix" ? req.vocab : void 0;
+  const grammar = req.track === "mix" ? req.grammar : void 0;
+  for (const s of (_a = poly == null ? void 0 : poly.tested) != null ? _a : []) tested.set(s.id, { category: "poly", kind: "sense" });
+  for (const s of [...(_b = poly == null ? void 0 : poly.tested) != null ? _b : [], ...(_c = poly == null ? void 0 : poly.reference) != null ? _c : []]) senseWord.set(s.id, s.word);
+  const vocabWord = /* @__PURE__ */ new Map();
+  for (const v of vocab != null ? vocab : []) {
+    tested.set(v.id, { category: "vocab", kind: "word" });
+    vocabWord.set(v.id, v.word);
+  }
+  for (const g of grammar != null ? grammar : []) tested.set(objectiveRef(g.topicId, g.objectiveId), { category: "grammar", kind: "grammar-objective" });
+  return { tested, senseWord, vocabWord };
+}
+function errorTagsOf(req) {
+  var _a, _b;
+  if (req.track === "poly") return [...POLY_ERROR_TAGS];
+  if (req.track === "vocab") return [...VOCAB_ERROR_TAGS];
+  const out = [];
+  if ((_a = req.vocab) == null ? void 0 : _a.length) out.push(...VOCAB_ERROR_TAGS);
+  if (req.poly) out.push(...POLY_ERROR_TAGS);
+  if ((_b = req.grammar) == null ? void 0 : _b.length) out.push(...ERROR_TAGS);
+  return [...new Set(out)];
+}
+var ALL_TAGS = [.../* @__PURE__ */ new Set([...POLY_ERROR_TAGS, ...VOCAB_ERROR_TAGS, ...ERROR_TAGS])];
+var PRACTICE_SCENARIO_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["scene", "form", "speakers", "turns"],
+  properties: {
+    scene: { type: "string", description: "\u4E00\u53E5\u8A71\u4EA4\u4EE3\u60C5\u5883\uFF08\u7E41\u9AD4\u4E2D\u6587\uFF09\uFF0C\u4F8B\u5982\u300C\u5728\u5496\u5561\u5E97\u9EDE\u9910\u300D" },
+    form: { type: "string", enum: [...SCENARIO_FORMS] },
+    speakers: { type: "array", items: { type: "string" }, description: "\u5C0D\u8A71\u7684\u4EBA\u7269\u540D\u5B57\uFF1B\u77ED\u6587\u586B\u7A7A\u9663\u5217" },
+    turns: {
+      type: "array",
+      description: "\u4F9D\u6642\u9593\u9806\u5E8F\u7684\u53E5\u5B50\uFF0C\u6BCF\u4E00\u53E5\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["speaker", "text", "ask"],
+        properties: {
+          speaker: { type: "string", description: "\u9019\u4E00\u53E5\u662F\u8AB0\u8AAA\u7684\uFF1B\u77ED\u6587\u586B\u7A7A\u5B57\u4E32" },
+          text: { type: "string", description: "\u4E32\u5834\u53E5\uFF08\u4E0D\u51FA\u984C\uFF09\u7684\u82F1\u6587\u53E5\u5B50\uFF1B\u6709 ask \u6642\u586B\u7A7A\u5B57\u4E32" },
+          ask: {
+            type: "array",
+            description: "\u9019\u4E00\u53E5\u8981\u51FA\u984C\u5C31\u653E\u4E00\u500B\u984C\u76EE\uFF0C\u4E0D\u51FA\u984C\u653E\u7A7A\u9663\u5217",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["focusId", "kind", "text", "options", "answerId", "explanation", "optionNotes", "sentenceZh", "errorTag"],
+              properties: {
+                focusId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u6A19\u300C\u8003\u300D\u7684 id\uFF08\u539F\u6A23\u7167\u6284\uFF09" },
+                kind: { type: "string", enum: [...PRACTICE_KINDS] },
+                text: {
+                  type: "string",
+                  description: "\u984C\u5E79\u3002which-sense\uFF0Fsame-sense\uFF1A\u6070\u597D\u4E00\u7D44 [[\u76EE\u6A19\u5B57]]\uFF1Bpick-word\uFF0Fchoice\uFF1A\u6070\u597D\u4E00\u500B ____\uFF1Bfind-error\uFF1A\u5B8C\u6574\u4E00\u53E5\uFF08\u88E1\u9762\u6709\u4E00\u8655\u932F\uFF09"
+                },
+                options: {
+                  type: "array",
+                  description: "3\u20134 \u500B\u9078\u9805",
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["id", "text"],
+                    properties: { id: { type: "string" }, text: { type: "string" } }
+                  }
+                },
+                answerId: { type: "string", description: "\u6B63\u89E3\u7684\u9078\u9805 id" },
+                explanation: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\uFF0C60 \u5B57\u4EE5\u5167" },
+                optionNotes: {
+                  type: "array",
+                  description: "\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\uFF0825 \u5B57\u4EE5\u5167\uFF09",
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["id", "note"],
+                    properties: { id: { type: "string", description: "\u932F\u8AA4\u9078\u9805\u7684 id" }, note: { type: "string" } }
+                  }
+                },
+                sentenceZh: { type: "string", description: "\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F" },
+                errorTag: { type: "string", enum: ALL_TAGS, description: "\u5B78\u7FD2\u8005\u7B54\u932F\u6642\u6700\u53EF\u80FD\u72AF\u7684\u932F\u8AA4\u985E\u578B" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+function isObj3(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+var str3 = (v) => typeof v === "string" ? v.trim() : "";
+var strList2 = (v) => Array.isArray(v) ? v.map(str3).filter(Boolean) : [];
+var uniq2 = (list) => [...new Set(list)];
+var GAP_RE2 = /_{3,}/g;
+var MARK_RE = /\[\[[^[\]]+\]\]/g;
+function inferInfo(id2) {
+  if (id2.includes("/")) return { category: "grammar", kind: "grammar-objective" };
+  if (id2.includes(".")) return { category: "poly", kind: "sense" };
+  return { category: "vocab", kind: "word" };
+}
+function parseOptions(v) {
+  if (!Array.isArray(v)) return null;
+  const out = [];
+  for (const o of v) {
+    if (typeof o === "string") {
+      const t2 = o.trim();
+      if (t2) out.push({ id: t2, text: t2 });
+    } else if (isObj3(o)) {
+      const id2 = str3(o.id);
+      const text = str3(o.text);
+      if (!id2 || !text) return null;
+      out.push({ id: id2, text });
+    }
+  }
+  return out;
+}
+function parseNotes(v, options, answerId) {
+  const out = {};
+  const put = (key5, note) => {
+    var _a;
+    const opt = (_a = options.find((o) => o.id === key5)) != null ? _a : options.find((o) => o.text === key5);
+    if (opt && opt.id !== answerId && note) out[opt.id] = note;
+  };
+  if (Array.isArray(v)) {
+    for (const n of v) if (isObj3(n)) put(str3(n.id) || str3(n.option), str3(n.note) || str3(n.why));
+  } else if (isObj3(v)) {
+    for (const [k, w2] of Object.entries(v)) put(k.trim(), str3(w2));
+  }
+  return out;
+}
+function parsePracticeQuestion(raw, refs) {
+  var _a, _b, _c, _d, _e, _f, _g;
+  if (!isObj3(raw)) return null;
+  const focusId = str3(raw.focusId);
+  if (!focusId) return null;
+  const info = refs ? refs.tested.get(focusId) : inferInfo(focusId);
+  if (!info) return null;
+  const kind = str3(raw.kind);
+  if (!KINDS_BY_CATEGORY[info.category].includes(kind)) return null;
+  let text = str3(raw.text);
+  const explanation = str3(raw.explanation);
+  if (!text || !explanation) return null;
+  const options = parseOptions(raw.options);
+  if (!options || options.length < 3 || options.length > 4) return null;
+  if (new Set(options.map((o) => o.id)).size !== options.length) return null;
+  if (new Set(options.map((o) => o.text.toLowerCase())).size !== options.length) return null;
+  const answerId = str3(raw.answerId);
+  if (!options.some((o) => o.id === answerId)) return null;
+  if (kind === "which-sense" || kind === "same-sense") {
+    if (((_a = text.match(MARK_RE)) != null ? _a : []).length !== 1) return null;
+    if (/\[\[|\]\]/.test(text.replace(MARK_RE, ""))) return null;
+    if (!isFullSentence(text)) return null;
+    const target = info.category === "poly" ? (_b = refs == null ? void 0 : refs.senseWord.get(focusId)) != null ? _b : focusId.split(".")[0] : (_c = refs == null ? void 0 : refs.vocabWord) == null ? void 0 : _c.get(focusId);
+    const marked = (_e = (_d = /\[\[([^[\]]+)\]\]/.exec(text)) == null ? void 0 : _d[1]) != null ? _e : "";
+    if (target && !isTargetForm(marked, target)) return null;
+    if (kind === "same-sense" && !options.every((o) => isOptionSentence(o.text, target))) return null;
+  } else if (kind === "pick-word" || kind === "choice") {
+    if (((_f = text.match(GAP_RE2)) != null ? _f : []).length !== 1) return null;
+    text = text.replace(GAP_RE2, "____");
+    if (!isFullSentence(text)) return null;
+  } else {
+    if (/_{3,}/.test(text)) return null;
+    if (!options.every((o) => text.includes(o.text))) return null;
+    if (!isFullSentence(text)) return null;
+  }
+  if (info.category === "poly" && kind === "which-sense") {
+    const word = (_g = refs == null ? void 0 : refs.senseWord.get(focusId)) != null ? _g : focusId.split(".")[0];
+    if (answerId !== focusId) return null;
+    for (const o of options) {
+      const w2 = refs ? refs.senseWord.get(o.id) : o.id.split(".")[0];
+      if (w2 !== word) return null;
+    }
+  }
+  const q = {
+    focus: { kind: info.kind, id: focusId },
+    kind,
+    text,
+    options,
+    answerId,
+    explanation
+  };
+  const notes = parseNotes(raw.optionNotes, options, answerId);
+  if (Object.keys(notes).length) q.optionNotes = notes;
+  const zh = str3(raw.sentenceZh);
+  if (zh) q.sentenceZh = zh;
+  const tag = str3(raw.errorTag).toLowerCase();
+  if (info.category === "grammar") q.errorTag = normalizeErrorTag(tag);
+  else if ((info.category === "poly" ? POLY_ERROR_TAGS : VOCAB_ERROR_TAGS).includes(tag)) q.errorTag = tag;
+  return q;
+}
+function askOf2(turn) {
+  const a2 = turn.ask;
+  if (Array.isArray(a2)) return a2.length ? a2[0] : void 0;
+  return isObj3(a2) ? a2 : void 0;
+}
+function parsePracticeScenario(json, refs) {
+  if (!isObj3(json) || !Array.isArray(json.turns)) {
+    throw new AiError("bad_output", "practice.scenario: expected { scene, form, turns: [...] }");
+  }
+  const scene = str3(json.scene);
+  if (!scene) throw new AiError("bad_output", "practice.scenario: no scene");
+  const speakers = uniq2(strList2(json.speakers));
+  const formRaw = str3(json.form);
+  const form = SCENARIO_FORMS.includes(formRaw) ? formRaw : speakers.length ? "dialogue" : "story";
+  const questions2 = [];
+  const seen = /* @__PURE__ */ new Set();
+  let asked = 0;
+  let lead = [];
+  for (const t2 of json.turns) {
+    if (!isObj3(t2)) continue;
+    const speaker = str3(t2.speaker);
+    const ask = askOf2(t2);
+    if (ask === void 0) {
+      const text = str3(t2.text);
+      if (text) lead.push(speaker ? { speaker, text } : { text });
+      continue;
+    }
+    asked++;
+    const q = parsePracticeQuestion(ask, refs);
+    if (!q) continue;
+    const key5 = q.text.toLowerCase();
+    if (seen.has(key5)) continue;
+    seen.add(key5);
+    if (speaker) q.speaker = speaker;
+    if (lead.length) q.lead = lead.slice(-MAX_LEAD);
+    lead = [];
+    questions2.push(q);
+  }
+  if (!questions2.length || questions2.length * 2 < asked) {
+    throw new AiError("bad_output", `practice.scenario: only ${questions2.length} of ${asked} questions usable`);
+  }
+  const out = { scene, form, questions: questions2 };
+  if (speakers.length) out.speakers = speakers;
+  return out;
+}
+function clean2(list, max) {
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const s of list != null ? list : []) {
+    const v = (s != null ? s : "").replace(/\s+/g, " ").trim();
+    if (!v || seen.has(v.toLowerCase())) continue;
+    seen.add(v.toLowerCase());
+    out.push(v);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+function referenceAndTask(req, count) {
+  var _a, _b;
+  const errorTags = errorTagsOf(req).join("\u3001");
+  if (req.track === "poly") {
+    const words = [...new Set(req.tested.map((s) => s.word))];
+    return {
+      reference: polyLines(req).join("\n"),
+      user: renderTemplate(POLY_TEMPLATE, { words: words.join("\u3001"), count, errorTags })
+    };
+  }
+  if (req.track === "vocab") {
+    return {
+      reference: vocabLines(req.words).join("\n"),
+      user: renderTemplate(VOCAB_TEMPLATE, { n: req.words.length, count, errorTags })
+    };
+  }
+  const parts = [];
+  if ((_a = req.vocab) == null ? void 0 : _a.length) parts.push(`\u3010\u55AE\u5B57\u3011
+${vocabLines(req.vocab).join("\n")}`);
+  if (req.poly && (req.poly.tested.length || req.poly.reference.length)) parts.push(`\u3010\u5E38\u7528\u5B57\u3011
+${polyLines(req.poly).join("\n")}`);
+  if ((_b = req.grammar) == null ? void 0 : _b.length) parts.push(`\u3010\u6587\u6CD5\u3011
+${grammarLines(req.grammar).join("\n")}`);
+  return { reference: parts.join("\n\n"), user: renderTemplate(MIX_TEMPLATE, { count, errorTags }) };
+}
+var practiceScenario = {
+  id: "practice.scenario",
+  version: 1,
+  // No surface of its own yet; the base prompt is passed in explicitly.
+  surface: "grammar",
+  tier: "smart",
+  maxTokens: 8192,
+  answerChars: () => 0,
+  build(input, ctx) {
+    var _a, _b;
+    const count = Math.max(1, Math.min(MAX_QUESTION_COUNT, Math.floor((_a = input.count) != null ? _a : DEFAULT_QUESTION_COUNT)));
+    const { reference, user } = referenceAndTask(input.request, count);
+    const words = clean2(input.words, MAX_WORDS);
+    const avoid = clean2(input.avoid, MAX_AVOID);
+    const weakness = ((_b = input.weakness) != null ? _b : "").trim();
+    const prev = input.previous;
+    const context = [
+      renderTemplate(REFERENCE_BLOCK_TEMPLATE, { lines: reference }),
+      weakness ? renderTemplate(WEAKNESS_BLOCK_TEMPLATE, { weakness }) : "",
+      prev && prev.scene.trim() ? renderTemplate(PREVIOUS_BLOCK_TEMPLATE, {
+        scene: prev.scene.trim(),
+        lines: prev.lastLines.slice(-2).map((l4) => `- ${l4}`).join("\n")
+      }) : "",
+      words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE, { words: words.join(", ") }) : "",
+      avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE2, { sentences: avoid.map((s) => `- ${s}`).join("\n") }) : ""
+    ];
+    return composeRequest({
+      base: PRACTICE_SCENARIO_BASE_PROMPT,
+      context,
+      profile: ctx.profile,
+      history: [],
+      user,
+      tier: practiceScenario.tier,
+      maxTokens: practiceScenario.maxTokens,
+      output: { name: "practice_scenario", schema: PRACTICE_SCENARIO_SCHEMA }
+    });
+  },
+  parse(r) {
+    return parsePracticeScenario(structuredJson(r));
+  }
+};
+function practiceScenarioFor(req) {
+  const refs = refsOf(req);
+  return { ...practiceScenario, parse: (r) => parsePracticeScenario(structuredJson(r), refs) };
+}
+var PRACTICE_TASKS = [practiceScenario];
+
+// src/ui/blocks/practice/mistakesPanelModel.ts
+function mistakeKey(q) {
+  return q.errorTag ? q.errorTag : `kind:${q.kind}`;
+}
+var KIND_LABEL = {
+  "which-sense": "practice.mistakes.kind.which-sense",
+  "pick-word": "practice.mistakes.kind.pick-word",
+  "same-sense": "practice.mistakes.kind.same-sense",
+  choice: "practice.mistakes.kind.choice",
+  "find-error": "practice.mistakes.kind.find-error"
+};
+var POLY_TAGS = [.../* @__PURE__ */ new Set([...POLY_ERROR_TAGS, ...VOCAB_ERROR_TAGS])];
+function mistakeLabel(key5) {
+  var _a;
+  if (key5.startsWith("kind:")) return t((_a = KIND_LABEL[key5.slice(5)]) != null ? _a : "practice.mistakes.kind.other");
+  if (POLY_TAGS.includes(key5)) return t(`practice.mistakes.tag.${key5}`);
+  if (ERROR_TAGS.includes(key5)) return errorTagLabel(key5);
+  return key5;
+}
+function groupPracticeMistakes(questions2) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const q of questions2) {
+    const key5 = mistakeKey(q);
+    const l4 = groups.get(key5);
+    if (l4) l4.push(q);
+    else groups.set(key5, [q]);
+  }
+  return [...groups.entries()].map(([key5, qs]) => ({ key: key5, label: mistakeLabel(key5), questions: qs })).sort((a2, b) => b.questions.length - a2.questions.length);
+}
+function practiceMistakeCount(groups) {
+  return groups.reduce((n, g) => n + g.questions.length, 0);
+}
+var MISTAKE_LINE_MAX = 60;
+function mistakeLine(text, max = MISTAKE_LINE_MAX) {
+  const flat = text.replace(/\[\[|\]\]/g, "").replace(/\s+/g, " ").trim();
+  return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}\u2026` : flat;
+}
+
 // src/ui/blocks/practice/filterBar.ts
 function renderFilterBar(el, opts) {
   const root2 = el.createDiv({ cls: "vt-pr-filter" });
@@ -17873,6 +19104,8 @@ var GrammarTabView = class {
         const row = group.createDiv({ cls: "vt-pr-mistake" });
         row.createSpan({ cls: "vt-pr-mistake-tag", text: g.label });
         row.createSpan({ cls: "vt-pr-mistake-count", text: t("practice.grammar.count", { n: g.questions.length }) });
+        const list = group.createEl("ul", { cls: "vt-pr-mistake-list" });
+        for (const q of g.questions) list.createEl("li", { cls: "vt-pr-mistake-item", text: mistakeLine(q.stem) });
         const isOpen2 = redoTag === g.errorTag;
         learnButton(row, {
           label: isOpen2 ? t("practice.grammar.fold") : t("practice.grammar.redo"),
@@ -20267,7 +21500,7 @@ var grammarExplain = {
   },
   parse: parseGrammarExplanation
 };
-var GRAMMAR_TASKS = [grammarExplain];
+var GRAMMAR_TASKS2 = [grammarExplain];
 
 // src/services/export/renderers/common.ts
 function roundsOf(turns) {
@@ -22050,43 +23283,22 @@ function parseMixFilter(raw) {
   if (!Array.isArray(inc)) return { include: [...MIX_CATEGORIES] };
   return { include: MIX_CATEGORIES.filter((c2) => inc.includes(c2)) };
 }
-function mixFilterToValue(f) {
-  return f.include.length > 0 ? { include: [...f.include] } : {};
-}
-function valueToMixFilter(v) {
-  var _a;
-  return parseMixFilter({ include: (_a = v.include) != null ? _a : [] });
-}
 function categoryLabel(c2) {
   return t(c2 === "vocab" ? "practice.mix.catVocab" : c2 === "grammar" ? "practice.mix.catGrammar" : "practice.mix.catPoly");
 }
-function mixGroups() {
-  return [
-    {
-      id: "include",
-      label: t("practice.mix.include"),
-      multi: true,
-      options: MIX_CATEGORIES.map((c2) => ({ id: c2, label: categoryLabel(c2) }))
-    }
-  ];
+function mixCount(c2, src) {
+  if (c2 === "vocab") return src.vocab.length;
+  if (c2 === "grammar") return new Set(src.grammar.map((g) => g.topicId)).size;
+  return new Set(src.poly.tested.map((s) => s.word)).size;
 }
-function mixSummary(f, src) {
-  if (f.include.length === 0) return t("practice.mix.none");
-  const parts = [];
-  for (const c2 of MIX_CATEGORIES) {
-    if (!f.include.includes(c2)) continue;
-    const label = categoryLabel(c2);
-    if (c2 === "vocab") {
-      parts.push(src.vocab.length > 0 ? t("practice.mix.sumVocab", { n: src.vocab.length }) : label + t("practice.mix.unset"));
-    } else if (c2 === "grammar") {
-      const topics = new Set(src.grammar.map((g) => g.topicId)).size;
-      parts.push(topics > 0 ? t("practice.mix.sumGrammar", { n: topics }) : label + t("practice.mix.unset"));
-    } else {
-      const words = [...new Set(src.poly.tested.map((s) => s.word))];
-      parts.push(words.length > 0 ? t("practice.mix.sumPoly", { words: words.join(", ") }) : label + t("practice.mix.unset"));
-    }
-  }
-  return parts.join(" \xB7 ");
+function mixTags(f, src) {
+  return MIX_CATEGORIES.map((c2) => {
+    const count = mixCount(c2, src);
+    return { id: c2, label: `${categoryLabel(c2)} ${count}`, count, on: f.include.includes(c2) && count > 0, disabled: count === 0 };
+  });
+}
+function toggleMixCategory(f, c2) {
+  return { include: MIX_CATEGORIES.filter((x3) => x3 === c2 ? !f.include.includes(c2) : f.include.includes(x3)) };
 }
 function buildMixRequest(f, src) {
   const req = { track: "mix" };
@@ -22159,18 +23371,27 @@ function start2(el, deps, filters, owner) {
     const req = buildMixRequest(filter2, sources());
     pane == null ? void 0 : pane.setRequest(req, mixFocusIds(req, (_a = deps.vocabScopeIds) == null ? void 0 : _a.call(deps)));
   };
-  const barEl = el.createDiv();
-  const bar = renderFilterBar(barEl, {
-    groups: mixGroups(),
-    value: mixFilterToValue(filter2),
-    summary: (v) => mixSummary(valueToMixFilter(v), sources()),
-    onChange: (v) => {
-      filter2 = valueToMixFilter(v);
-      filters.set("mix", filter2);
-      bar.update(mixFilterToValue(filter2));
-      apply();
+  const barEl = el.createDiv({ cls: "vt-pr-mix-tags" });
+  const drawTags = () => {
+    barEl.empty();
+    barEl.createSpan({ cls: "vt-pr-mix-tags-label", text: t("practice.filter.title") });
+    for (const tag of mixTags(filter2, sources())) {
+      const b = barEl.createEl("button", {
+        cls: "vt-pr-mix-tag",
+        text: tag.label,
+        attr: { type: "button", "aria-pressed": String(tag.on) }
+      });
+      b.toggleClass("is-on", tag.on);
+      b.disabled = tag.disabled;
+      b.addEventListener("click", () => {
+        filter2 = toggleMixCategory(filter2, tag.id);
+        filters.set("mix", filter2);
+        drawTags();
+        apply();
+      });
     }
-  });
+  };
+  drawTags();
   pane = mountScenarioPane(el, {
     track: "mix",
     api: deps.api,
@@ -22191,1147 +23412,6 @@ function start2(el, deps, filters, owner) {
   });
   tallyEl = pane.headEl.createDiv({ cls: "vt-pr-mix-tally" });
   apply();
-}
-
-// src/core/model/practice.ts
-var PRACTICE_KINDS = ["which-sense", "pick-word", "same-sense", "choice", "find-error"];
-
-// src/services/ai/transport/sse.ts
-var SseParser = class {
-  constructor() {
-    this.buffer = "";
-    this.dataLines = [];
-    // A chunk ending in "\r" might be the first half of "\r\n"; hold it back.
-    this.pendingCR = false;
-  }
-  push(chunk) {
-    let text = chunk;
-    if (this.pendingCR) {
-      if (text.startsWith("\n")) text = text.slice(1);
-      this.pendingCR = false;
-    }
-    this.buffer += text;
-    const out = [];
-    for (; ; ) {
-      const m2 = /\r\n|\r|\n/.exec(this.buffer);
-      if (!m2) break;
-      if (m2[0] === "\r" && m2.index === this.buffer.length - 1) {
-        this.pendingCR = true;
-        const line3 = this.buffer.slice(0, m2.index);
-        this.buffer = "";
-        this.handleLine(line3, out);
-        break;
-      }
-      const line2 = this.buffer.slice(0, m2.index);
-      this.buffer = this.buffer.slice(m2.index + m2[0].length);
-      this.handleLine(line2, out);
-    }
-    return out;
-  }
-  // Flushes a final event that wasn't followed by a blank line (common when
-  // a non-streaming transport hands over a truncated body).
-  end() {
-    const out = [];
-    if (this.buffer) {
-      this.handleLine(this.buffer, out);
-      this.buffer = "";
-    }
-    this.dispatch(out);
-    return out;
-  }
-  handleLine(line2, out) {
-    if (line2 === "") {
-      this.dispatch(out);
-      return;
-    }
-    if (line2.startsWith(":")) return;
-    const colon = line2.indexOf(":");
-    const field = colon === -1 ? line2 : line2.slice(0, colon);
-    let value = colon === -1 ? "" : line2.slice(colon + 1);
-    if (value.startsWith(" ")) value = value.slice(1);
-    if (field === "data") this.dataLines.push(value);
-    else if (field === "event") this.eventName = value;
-    else if (field === "id") this.id = value;
-  }
-  dispatch(out) {
-    if (this.dataLines.length > 0) {
-      const ev = { data: this.dataLines.join("\n") };
-      if (this.eventName) ev.event = this.eventName;
-      if (this.id !== void 0) ev.id = this.id;
-      out.push(ev);
-    }
-    this.dataLines = [];
-    this.eventName = void 0;
-  }
-};
-async function* parseSse(chunks) {
-  const parser = new SseParser();
-  for await (const chunk of chunks) {
-    for (const ev of parser.push(chunk)) yield ev;
-  }
-  for (const ev of parser.end()) yield ev;
-}
-
-// src/services/ai/transport/types.ts
-async function readAll(chunks) {
-  let out = "";
-  for await (const c2 of chunks) out += c2;
-  return out;
-}
-
-// src/services/ai/providers/stream.ts
-async function throwIfHttpError(res) {
-  if (res.status >= 200 && res.status < 300) return;
-  const body = await readAll(res.chunks).catch(() => "");
-  throw classifyHttpError(res.status, body, res.header("retry-after"));
-}
-async function consumeBody(res, signal, onEvent, onJson) {
-  var _a;
-  const contentType = (_a = res.header("content-type")) != null ? _a : "";
-  try {
-    if (contentType.includes("application/json")) {
-      const text = await readAll(res.chunks);
-      onJson(parseJson(text));
-      return;
-    }
-    for await (const ev of parseSse(res.chunks)) {
-      if (signal.aborted) throw new AiError("aborted");
-      if (onEvent(ev) === true) return;
-    }
-  } catch (e) {
-    if (signal.aborted) throw new AiError("aborted", void 0, { cause: e });
-    if (e instanceof AiError) throw e;
-    throw new AiError("network", e instanceof Error ? e.message : String(e), { cause: e });
-  }
-}
-function parseJson(text) {
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    throw new AiError("bad_output", "Response body is not valid JSON", { cause: e });
-  }
-}
-function extractJson(text) {
-  const fenced = /```(?:json)?\s*([\s\S]*?)```/i.exec(text);
-  const candidate = (fenced ? fenced[1] : text).trim();
-  const start3 = candidate.search(/[[{]/);
-  if (start3 === -1) throw new AiError("bad_output", "No JSON found in model output");
-  const open = candidate[start3];
-  const close = open === "{" ? "}" : "]";
-  const end = candidate.lastIndexOf(close);
-  if (end <= start3) throw new AiError("bad_output", "Unterminated JSON in model output");
-  try {
-    return JSON.parse(candidate.slice(start3, end + 1));
-  } catch (e) {
-    throw new AiError("bad_output", "Model output is not valid JSON", { cause: e });
-  }
-}
-function trimSlash(url) {
-  return url.replace(/\/+$/, "");
-}
-
-// src/services/ai/tasks/family.ts
-var EMOJI_PROPERTY = {
-  type: "string",
-  description: "\u4E00\u500B emoji\uFF0C\u53EA\u7D66\u4E00\u500B\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002"
-};
-var FAMILY_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["families"],
-  properties: {
-    families: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["topic", "label", "emoji", "groups"],
-        properties: {
-          topic: { type: "string", description: "English key, lowercase, e.g. clothing or gl-" },
-          label: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\u540D\u7A31\uFF0C\u4F8B\u5982\u300C\u670D\u88DD\u300D\u300Cgl- \u767C\u5149\u5BB6\u65CF\u300D" },
-          emoji: { ...EMOJI_PROPERTY, description: "\u4E00\u500B\u4EE3\u8868\u6574\u500B\u5B57\u65CF\u7684 emoji\uFF0C\u53EA\u7D66\u4E00\u500B\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\u3002" },
-          groups: {
-            type: "array",
-            items: {
-              type: "object",
-              additionalProperties: false,
-              required: ["label", "members"],
-              properties: {
-                label: { type: "string" },
-                members: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    additionalProperties: false,
-                    required: ["word", "zh", "emoji"],
-                    properties: {
-                      word: { type: "string" },
-                      zh: { type: "string" },
-                      emoji: EMOJI_PROPERTY
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-};
-var FAMILY_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u5E2B\uFF0C\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u628A\u5B78\u904E\u7684\u55AE\u5B57\u6574\u7406\u6210\u300C\u5B57\u65CF\u300D\uFF0C\u4E26\u88DC\u4E0A\u503C\u5F97\u4E00\u8D77\u5B78\u7684\u5EF6\u4F38\u5B57\u3002
-
-\u5206\u7FA4\u898F\u5247\uFF1A
-1. \u5B57\u65CF\u53EF\u4EE5\u4F9D\u4E3B\u984C\uFF08\u4F8B\u5982 clothing \u670D\u88DD\uFF09\u3001\u5B57\u6839\u5B57\u9996\u6216\u97F3\u7D44\uFF08\u4F8B\u5982 gl- \u548C\u5149\u6709\u95DC\uFF09\u3001\u4F7F\u7528\u60C5\u5883\u4F86\u5206\u3002\u6BCF\u500B\u5B57\u65CF\u5E95\u4E0B\u518D\u5206 1 \u5230 4 \u500B\u5C0F\u7D44\uFF0C\u5C0F\u7D44\u540D\u7A31\u7528\u7E41\u9AD4\u4E2D\u6587\u3002
-2. \u6BCF\u500B\u5B57\u65CF\u81F3\u5C11\u8981\u6709 2 \u500B\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u88E1\u7684\u5B57\uFF1B\u9019\u4E9B\u5B57\u7684 word \u7167\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u7684\u539F\u6A23\u5BEB\uFF0C\u4E0D\u8981\u6539\u6210\u539F\u5F62\u6216\u5176\u4ED6\u8A5E\u5F62\u3002
-3. \u6BCF\u500B\u5B57\u65CF\u53EF\u4EE5\u88DC 2 \u5230 5 \u500B\u5B78\u7FD2\u8005\u9084\u6C92\u5B78\u3001\u4F46\u548C\u9019\u500B\u5B57\u65CF\u5BC6\u5207\u76F8\u95DC\u7684\u5E38\u7528\u5EF6\u4F38\u5B57\uFF0C\u7A0B\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\uFF1B\u4E0D\u8981\u88DC\u7F55\u898B\u5B57\u3002
-4. zh \u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C10 \u500B\u5B57\u4EE5\u5167\u3002
-5. \u5B57\u6839\u3001\u5B57\u6E90\u53EA\u7528\u53EF\u9760\u3001\u5E38\u898B\u7684\u77E5\u8B58\u3002\u4E0D\u78BA\u5B9A\u5C31\u4E0D\u8981\u7528\u5B57\u6839\u5206\u7FA4\uFF0C\u6539\u7528\u4E3B\u984C\u5206\u7FA4\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3002
-6. topic \u7528\u82F1\u6587\u5C0F\u5BEB\uFF1Blabel \u7528\u7E41\u9AD4\u4E2D\u6587\uFF0C\u53EF\u4EE5\u593E\u82F1\u6587\u5B57\u6839\uFF08\u4F8B\u5982\u300Cgl- \u767C\u5149\u5BB6\u65CF\u300D\uFF09\u3002
-7. emoji \u6BCF\u500B\u5B57\u65CF\u3001\u6BCF\u500B\u6210\u54E1\u90FD\u53EA\u7D66\u4E00\u500B\u6700\u80FD\u4EE3\u8868\u5B83\u7684 emoji\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002
-8. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
-var FAMILY_TEMPLATES = {
-  seeded: `\u4EFB\u52D9\uFF1A\u627E\u5B57\u65CF
-\u4EE5\u3014\u8D77\u9EDE\u55AE\u5B57\u3015\u70BA\u4E2D\u5FC3\u627E\u51FA 1 \u5230 3 \u500B\u5B57\u65CF\uFF0C\u6BCF\u500B\u5B57\u65CF\u90FD\u8981\u5305\u542B\u81F3\u5C11\u4E00\u500B\u8D77\u9EDE\u55AE\u5B57\u3002
-\u3014\u8D77\u9EDE\u55AE\u5B57\u3015
-{{seeds}}{{#existingTopics}}
-
-\u5DF2\u7D93\u6709\u7684\u5B57\u65CF\uFF08\u4E0D\u8981\u91CD\u8907\uFF09\uFF1A{{existingTopics}}{{/existingTopics}}`,
-  regroup: `\u4EFB\u52D9\uFF1A\u91CD\u65B0\u5206\u7FA4
-\u628A\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6574\u7406\u6210 3 \u5230 8 \u500B\u5B57\u65CF\u3002\u4E0D\u4E00\u5B9A\u6BCF\u500B\u5B57\u90FD\u8981\u5206\u9032\u53BB\uFF0C\u627E\u4E0D\u5230\u5408\u9069\u5B57\u65CF\u7684\u5B57\u53EF\u4EE5\u7565\u904E\uFF1B\u540C\u4E00\u500B\u5B57\u53EF\u4EE5\u51FA\u73FE\u5728\u4E0D\u540C\u5B57\u65CF\u3002`
-};
-var KNOWN_FAMILY_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\uFF08\u5171 {{count}} \u500B\uFF09
-{{words}}`;
-function wordLine(w2) {
-  var _a, _b;
-  const pos = (_a = w2.partOfSpeech) == null ? void 0 : _a.trim();
-  const zh = (_b = w2.zh) == null ? void 0 : _b.trim();
-  return `- ${w2.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
-}
-function isObj(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-function str(v) {
-  return typeof v === "string" ? v.trim() : "";
-}
-function structuredJson(r) {
-  if (r.json !== void 0) return r.json;
-  if (r.stop === "max_tokens") throw new AiError("bad_output", "Structured answer was cut off (max_tokens)");
-  return extractJson(r.text);
-}
-function parseFamilies(json) {
-  if (!isObj(json) || !Array.isArray(json.families)) {
-    throw new AiError("bad_output", "family.generate: expected { families: [...] }");
-  }
-  const out = [];
-  for (const f of json.families) {
-    if (!isObj(f) || !Array.isArray(f.groups)) throw new AiError("bad_output", "family.generate: malformed family");
-    const groups = [];
-    for (const g of f.groups) {
-      if (!isObj(g) || !Array.isArray(g.members)) throw new AiError("bad_output", "family.generate: malformed group");
-      const seen = /* @__PURE__ */ new Set();
-      const members = [];
-      for (const m2 of g.members) {
-        if (!isObj(m2)) throw new AiError("bad_output", "family.generate: malformed member");
-        const word = str(m2.word);
-        const key5 = word.toLowerCase();
-        if (!word || seen.has(key5)) continue;
-        seen.add(key5);
-        members.push({ word, zh: str(m2.zh), emoji: str(m2.emoji) });
-      }
-      if (members.length) groups.push({ label: str(g.label), members });
-    }
-    const topic = str(f.topic);
-    if (!groups.length || !(topic || str(f.label))) continue;
-    out.push({ topic: topic || str(f.label), label: str(f.label) || topic, emoji: str(f.emoji), groups });
-  }
-  return out;
-}
-var familyGenerate = {
-  id: "family.generate",
-  version: 1,
-  surface: "family",
-  label: "ai.task.family.generate",
-  tier: "smart",
-  // A full regroup lists many members; leave room for thinking too.
-  maxTokens: 8192,
-  // The learner's answer-length limit is for prose, not a JSON list.
-  answerChars: () => 0,
-  build(input, ctx) {
-    var _a, _b;
-    const seeds = (_a = input.seeds) != null ? _a : [];
-    const user = seeds.length ? renderTemplate(FAMILY_TEMPLATES.seeded, {
-      seeds: seeds.map(wordLine).join("\n"),
-      existingTopics: ((_b = input.existingTopics) != null ? _b : []).join("\u3001")
-    }) : renderTemplate(FAMILY_TEMPLATES.regroup, {});
-    return composeRequest({
-      base: FAMILY_BASE_PROMPT,
-      context: [renderTemplate(KNOWN_FAMILY_TEMPLATE, { count: input.known.length, words: input.known.map(wordLine).join("\n") })],
-      profile: profileForTask(ctx.profile, familyGenerate, input),
-      // Each generation stands alone.
-      history: [],
-      user,
-      tier: familyGenerate.tier,
-      maxTokens: familyGenerate.maxTokens,
-      output: { name: "word_families", schema: FAMILY_SCHEMA }
-    });
-  },
-  parse(r) {
-    return parseFamilies(structuredJson(r));
-  }
-};
-var FAMILY_EXPAND_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["members"],
-  properties: {
-    members: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["group", "word", "zh", "emoji"],
-        properties: {
-          group: { type: "string", description: "\u54EA\u4E00\u500B\u65E2\u6709\u5206\u7D44\u6700\u9069\u5408\u9019\u500B\u65B0\u5B57\uFF1B\u7167\u539F\u6A23\u6284\u65E2\u6709\u5206\u7D44\u540D\u7A31\uFF0C\u771F\u7684\u6C92\u6709\u5408\u9069\u7684\u624D\u81EA\u5DF1\u53D6\u4E00\u500B\u65B0\u540D\u7A31" },
-          word: { type: "string" },
-          zh: { type: "string" },
-          emoji: EMOJI_PROPERTY
-        }
-      }
-    }
-  }
-};
-var FAMILY_EXPAND_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u5E2B\uFF0C\u8981\u5E6B\u4E00\u500B\u5DF2\u7D93\u5206\u597D\u7D44\u7684\u300C\u5B57\u65CF\u300D\u88DC\u4E0A\u5E7E\u500B\u65B0\u6210\u54E1\uFF0C\u8B93\u5B78\u7FD2\u8005\u7E7C\u7E8C\u5B78\u3002
-
-\u898F\u5247\uFF1A
-1. \u53EA\u88DC 2 \u5230 5 \u500B\u9019\u500B\u5B57\u65CF\u9084\u6C92\u6709\u7684\u5E38\u7528\u5EF6\u4F38\u5B57\uFF0C\u7A0B\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\uFF1B\u4E0D\u8981\u88DC\u7F55\u898B\u5B57\uFF0C\u4E5F\u4E0D\u8981\u91CD\u8907\u3014\u5B57\u65CF\u3015\u88E1\u5DF2\u7D93\u6709\u7684\u6210\u54E1\u3002
-2. \u6BCF\u500B\u65B0\u6210\u54E1\u5148\u5224\u65B7\u6700\u76F8\u95DC\u7684\u65E2\u6709\u5206\u7D44\uFF0Cgroup \u6B04\u4F4D\u7167\u6284\u8A72\u5206\u7D44\u540D\u7A31\uFF0C\u4E0D\u8981\u6539\u5BEB\uFF1B\u771F\u7684\u627E\u4E0D\u5230\u5408\u9069\u7684\u65E2\u6709\u5206\u7D44\uFF0C\u624D\u81EA\u5DF1\u53D6\u4E00\u500B\u65B0\u5206\u7D44\u540D\u7A31\u3002
-3. zh \u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C10 \u500B\u5B57\u4EE5\u5167\u3002
-4. emoji \u6BCF\u500B\u65B0\u6210\u54E1\u53EA\u7D66\u4E00\u500B\u6700\u80FD\u4EE3\u8868\u5B83\u7684 emoji\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002
-5. \u5B57\u6839\u3001\u5B57\u6E90\u4E0D\u78BA\u5B9A\u5C31\u4E0D\u8981\u7528\uFF0C\u53EA\u6839\u64DA\u53EF\u9760\u3001\u5E38\u898B\u7684\u77E5\u8B58\u5224\u65B7\u76F8\u95DC\u6027\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3002
-6. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
-var FAMILY_EXPAND_FAMILY_TEMPLATE = `\u3014\u5B57\u65CF\u3015{{label}}\uFF08{{topic}}\uFF09
-\u73FE\u6709\u5206\u7D44\u8207\u6210\u54E1\uFF1A
-{{groups}}`;
-var FAMILY_EXPAND_USER_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5E6B\u9019\u500B\u5B57\u65CF\u60F3 2 \u5230 5 \u500B\u65B0\u6210\u54E1
-\u5EF6\u4F38\u5B57\u8981\u548C\u3014\u5B57\u65CF\u3015\u7684\u5176\u4E2D\u4E00\u500B\u5206\u7D44\u5BC6\u5207\u76F8\u95DC\uFF1B\u4E0D\u8981\u91CD\u8907\u3014\u5B57\u65CF\u3015\u88E1\u5DF2\u7D93\u6709\u7684\u5B57\u3002`;
-function expandGroupLine(g) {
-  const members = g.members.map((m2) => `${m2.word}${m2.zh ? `\uFF08${m2.zh}\uFF09` : ""}`).join("\u3001");
-  return `- ${g.label}\uFF1A${members || "\uFF08\u7121\uFF09"}`;
-}
-function parseFamilyExpandMembers(json) {
-  if (!isObj(json) || !Array.isArray(json.members)) {
-    throw new AiError("bad_output", "family.expand: expected { members: [...] }");
-  }
-  const out = [];
-  const seen = /* @__PURE__ */ new Set();
-  for (const m2 of json.members) {
-    if (!isObj(m2)) throw new AiError("bad_output", "family.expand: malformed member");
-    const word = str(m2.word);
-    const key5 = word.toLowerCase();
-    if (!word || seen.has(key5)) continue;
-    seen.add(key5);
-    out.push({ group: str(m2.group), word, zh: str(m2.zh), emoji: str(m2.emoji) });
-  }
-  return out;
-}
-var familyExpand = {
-  id: "family.expand",
-  version: 1,
-  surface: "family",
-  tier: "fast",
-  maxTokens: 2048,
-  // Structured JSON, not prose — same reasoning as family.generate.
-  answerChars: () => 0,
-  build(input, ctx) {
-    return composeRequest({
-      base: FAMILY_EXPAND_BASE_PROMPT,
-      context: [
-        renderTemplate(FAMILY_EXPAND_FAMILY_TEMPLATE, { topic: input.topic, label: input.label, groups: input.groups.map(expandGroupLine).join("\n") }),
-        renderTemplate(KNOWN_FAMILY_TEMPLATE, { count: input.known.length, words: input.known.map(wordLine).join("\n") })
-      ],
-      profile: profileForTask(ctx.profile, familyExpand, input),
-      history: [],
-      user: renderTemplate(FAMILY_EXPAND_USER_TEMPLATE, {}),
-      tier: familyExpand.tier,
-      maxTokens: familyExpand.maxTokens,
-      output: { name: "family_expand", schema: FAMILY_EXPAND_SCHEMA }
-    });
-  },
-  parse(r) {
-    return parseFamilyExpandMembers(structuredJson(r));
-  }
-};
-var FAMILY_TASKS = [familyGenerate, familyExpand];
-
-// src/services/ai/tasks/grammarQuestions.ts
-var DEFAULT_QUESTION_COUNT = 6;
-var MAX_QUESTION_COUNT = 10;
-var MAX_WORDS = 30;
-var MAX_AVOID_STEMS = 40;
-var MAX_SENTENCES = 3;
-var MAX_LEAD = 3;
-var MAX_SENTENCE_CHARS = 300;
-var SCENARIO_TYPES = ["choice", "find-error"];
-var SCENARIO_FORMS = ["dialogue", "story"];
-var GAP = "____";
-var GRAMMAR_QUESTIONS_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["scene", "form", "speakers", "turns"],
-  properties: {
-    scene: { type: "string", description: "\u4E00\u53E5\u8A71\u4EA4\u4EE3\u60C5\u5883\uFF08\u7E41\u9AD4\u4E2D\u6587\uFF09\uFF0C\u4F8B\u5982\u300C\u5728\u5496\u5561\u5E97\u9EDE\u9910\u300D" },
-    form: { type: "string", enum: [...SCENARIO_FORMS] },
-    speakers: { type: "array", items: { type: "string" }, description: "\u5C0D\u8A71\u7684\u4EBA\u7269\u540D\u5B57\uFF1B\u77ED\u6587\u586B\u7A7A\u9663\u5217" },
-    turns: {
-      type: "array",
-      description: "\u4F9D\u6642\u9593\u9806\u5E8F\u7684\u53E5\u5B50\uFF0C\u6BCF\u4E00\u53E5\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["speaker", "text", "ask"],
-        properties: {
-          speaker: { type: "string", description: "\u9019\u4E00\u53E5\u662F\u8AB0\u8AAA\u7684\uFF1B\u77ED\u6587\u586B\u7A7A\u5B57\u4E32" },
-          text: { type: "string", description: "\u4E32\u5834\u53E5\uFF08\u4E0D\u51FA\u984C\uFF09\u7684\u82F1\u6587\u53E5\u5B50\uFF1B\u6709 ask \u6642\u586B\u7A7A\u5B57\u4E32" },
-          ask: {
-            type: "array",
-            description: "\u9019\u4E00\u53E5\u8981\u51FA\u984C\u5C31\u653E\u4E00\u500B\u984C\u76EE\uFF0C\u4E0D\u51FA\u984C\u653E\u7A7A\u9663\u5217",
-            items: {
-              type: "object",
-              additionalProperties: false,
-              required: [
-                "objectiveId",
-                "topicId",
-                "type",
-                "stem",
-                "options",
-                "answer",
-                "accepted",
-                "explanation",
-                "distractors",
-                "sentenceZh",
-                "errorTag",
-                "sourceIndex"
-              ],
-              properties: {
-                objectiveId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u958B\u982D\u300C\u4E3B\u984Cid/\u76EE\u6A19id\u300D\u88E1\u300C/\u300D\u5F8C\u9762\u7684\u76EE\u6A19 id" },
-                topicId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u958B\u982D\u300C/\u300D\u524D\u9762\u7684\u4E3B\u984C id" },
-                type: { type: "string", enum: [...SCENARIO_TYPES] },
-                stem: {
-                  type: "string",
-                  description: "\u984C\u5E79\u3002choice\uFF1A\u9019\u4E00\u53E5\u82F1\u6587\uFF0C\u6070\u597D\u6709\u4E00\u500B ____\uFF1Bfind-error\uFF1A\u5B8C\u6574\u7684\u4E00\u53E5\u82F1\u6587\uFF08\u88E1\u9762\u6709\u4E00\u8655\u932F\uFF09"
-                },
-                options: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "choice\uFF1A3\u20134 \u500B\u9078\u9805\uFF1Bfind-error\uFF1A3\u20134 \u500B\u6A19\u5728\u53E5\u5B50\u88E1\u7684\u7247\u6BB5\uFF08\u539F\u6587\u7167\u6284\uFF09"
-                },
-                answer: { type: "string", description: "choice\uFF1A\u6B63\u89E3\uFF1Bfind-error\uFF1A\u932F\u7684\u90A3\u500B\u7247\u6BB5\uFF08\u5FC5\u9808\u662F options \u5176\u4E2D\u4E00\u500B\uFF09" },
-                accepted: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "find-error\uFF1Aaccepted[0] \u662F\u6539\u6B63\u5F8C\u7684\u5BEB\u6CD5\uFF1Bchoice\uFF1A\u7A7A\u9663\u5217"
-                },
-                explanation: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\uFF0C60 \u5B57\u4EE5\u5167" },
-                distractors: {
-                  type: "array",
-                  description: "\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\uFF0825 \u5B57\u4EE5\u5167\uFF09",
-                  items: {
-                    type: "object",
-                    additionalProperties: false,
-                    required: ["option", "why"],
-                    properties: { option: { type: "string" }, why: { type: "string" } }
-                  }
-                },
-                sentenceZh: { type: "string", description: "\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F" },
-                errorTag: { type: "string", enum: [...ERROR_TAGS], description: "\u5B78\u7FD2\u8005\u7B54\u932F\u6642\u6700\u53EF\u80FD\u72AF\u7684\u932F\u8AA4\u985E\u578B" },
-                sourceIndex: {
-                  type: "integer",
-                  description: "\u9019\u984C\u6539\u7DE8\u81EA\u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015\u7684\u7B2C\u5E7E\u53E5\uFF08\u5F9E 1 \u958B\u59CB\uFF09\uFF1B\u4E0D\u662F\u6539\u7DE8\u7684\u984C\u76EE\u586B 0"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-};
-var GRAMMAR_QUESTIONS_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u8001\u5E2B\uFF0C\u7528\u4E00\u6BB5\u9023\u7E8C\u7684\u60C5\u5883\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u505A\u9078\u64C7\u984C\u7DF4\u7FD2\u3002\u3014\u51FA\u984C\u53C3\u8003\u3015\u662F\u9019\u6B21\u8981\u8003\u7684\u91CD\u9EDE\uFF0C\u6BCF\u500B\u91CD\u9EDE\u6709\u56FA\u5B9A\u7684 id\u3002
-
-\u898F\u5247\uFF1A
-1. \u53EA\u8003\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u7684\u91CD\u9EDE\uFF1B\u6BCF\u4E00\u984C\u7684 objectiveId \u5FC5\u9808\u662F\u6E05\u55AE\u88E1\u7684 id\uFF0C\u4E0D\u8981\u81EA\u5DF1\u767C\u660E\u3002
-2. \u9023\u8CAB\uFF1A\u5168\u90E8\u984C\u76EE\u767C\u751F\u5728\u540C\u4E00\u500B\u60C5\u5883\uFF0C\u4F9D\u6642\u9593\u9806\u5E8F\u5F80\u4E0B\u8D70\uFF0C\u6BCF\u4E00\u53E5\u90FD\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5\uFF1B\u8B80\u5B8C\u5C31\u662F\u4E00\u6BB5\u5B8C\u6574\u7684\u5C0D\u8A71\u6216\u77ED\u6587\u3002\u6709\u3014\u4E0A\u4E00\u6BB5\u3015\u6642\uFF0C\u5F9E\u5B83\u7684\u6700\u5F8C\u4E00\u53E5\u76F4\u63A5\u63A5\u8457\u5BEB\uFF0C\u4EBA\u7269\u548C\u5834\u666F\u4E0D\u8B8A\u3002\u53EF\u4EE5\u7A7F\u63D2\u4E0D\u51FA\u984C\u7684\u4E32\u5834\u53E5\uFF0C\u4E00\u7D44\u6700\u591A 3 \u53E5\u3002
-3. \u53EA\u51FA\u9EDE\u9078\u7684\u984C\u578B\uFF08choice\u3001find-error\uFF09\uFF0C\u5B78\u7FD2\u8005\u4E0D\u9700\u8981\u6253\u4EFB\u4F55\u5B57\u3002
-4. \u6709\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015\u6642\uFF0C\u5148\u8003\u5F31\u9EDE\u88E1\u3001\u800C\u4E14\u5728\u3014\u51FA\u984C\u53C3\u8003\u3015\u5167\u7684\u91CD\u9EDE\uFF0C\u6700\u591A\u5360\u4E00\u534A\u984C\u6578\uFF1B\u5176\u9918\u5E73\u5747\u5206\u914D\u3002\u540C\u4E00\u500B\u91CD\u9EDE\u6700\u591A\u5169\u984C\uFF0C\u540C\u4E00\u500B\u91CD\u9EDE\u4E0D\u8981\u9023\u7E8C\u51FA\u4E09\u984C\u3002
-5. \u6BCF\u984C\u53EA\u6709\u4E00\u500B\u6B63\u78BA\u7B54\u6848\u3002\u932F\u8AA4\u9078\u9805\u8981\u300C\u770B\u8D77\u4F86\u53EF\u80FD\u5C0D\uFF0C\u4F46\u653E\u5728\u9019\u500B\u53E5\u5B50\u88E1\u4E0D\u5C0D\u300D\uFF1B\u9700\u8981\u7684\u8A71\u7528\u524D\u5F8C\u6587\u628A\u7B54\u6848\u9396\u4F4F\u3002
-6. \u7B54\u984C\u5F8C\u7684\u89E3\u8AAA\uFF1A
-   - explanation\uFF1A60 \u5B57\u4EE5\u5167\uFF0C\u5148\u9EDE\u51FA\u53E5\u5B50\u88E1\u7684\u5224\u65B7\u4F9D\u64DA\uFF0C\u518D\u8AAA\u70BA\u4EC0\u9EBC\u662F\u9019\u500B\u7B54\u6848\u3002
-   - distractors\uFF1A\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C25 \u5B57\u4EE5\u5167\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\u3002
-   - sentenceZh\uFF1A\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u4E2D\u6587\u7FFB\u8B6F\u3002
-7. errorTag \u53EA\u80FD\u5F9E\u4EFB\u52D9\u5217\u51FA\u7684\u6E05\u55AE\u9078\u3002
-8. \u53E5\u5B50\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF0C\u76EE\u6A19\u4EE5\u5916\u7684\u751F\u5B57\u8D8A\u5C11\u8D8A\u597D\uFF1B\u6709\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6642\u512A\u5148\u7528\u88E1\u9762\u7684\u5B57\uFF0C\u4F46\u4E0D\u8981\u786C\u585E\u3002
-9. \u4E0D\u8981\u91CD\u8907\u3014\u907F\u514D\u91CD\u8907\u3015\u88E1\u7684\u984C\u5E79\u3002\u53EA\u7528\u81EA\u7136\u3001\u5E38\u898B\u7684\u82F1\u6587\uFF0C\u4E0D\u78BA\u5B9A\u7684\u7528\u6CD5\u4E0D\u8981\u51FA\u3002\u6240\u6709\u53E5\u5B50\u90FD\u8981\u539F\u5275\uFF0C\u4E0D\u8981\u5F15\u7528\u51FA\u7248\u6559\u6750\u6216\u8003\u984C\u3002
-10. \u4E2D\u6587\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u6307\u5B9A\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\u6642\u7167\u5B83\u3002
-11. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
-var REFERENCE_BLOCK_TEMPLATE = `\u3014\u51FA\u984C\u53C3\u8003\u3015
-{{lines}}`;
-var WEAKNESS_BLOCK_TEMPLATE = `\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015
-{{weakness}}`;
-var PREVIOUS_BLOCK_TEMPLATE = `\u3014\u4E0A\u4E00\u6BB5\u3015
-\u5834\u666F\uFF1A{{scene}}
-\u6700\u5F8C\u5169\u53E5\uFF1A
-{{lines}}`;
-var SENTENCES_BLOCK_TEMPLATE = `\u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015
-{{sentences}}`;
-var KNOWN_BLOCK_TEMPLATE = `\u3014\u5DF2\u5B78\u904E\u7684\u6587\u6CD5\u3015{{titles}}`;
-var WORDS_BLOCK_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015{{words}}`;
-var AVOID_BLOCK_TEMPLATE = `\u3014\u907F\u514D\u91CD\u8907\u3015\u5DF2\u7D93\u51FA\u904E\u7684\u984C\u5E79\uFF1A
-{{stems}}`;
-var GRAMMAR_QUESTIONS_TEMPLATE = `\u4EFB\u52D9\uFF1A\u6587\u6CD5\u60C5\u5883\u7DF4\u7FD2\uFF08{{topics}}\uFF09
-\u51FA {{count}} \u984C\u3002type \u53EF\u4EE5\u7528\uFF1Achoice\uFF08\u53E5\u5B50\u88E1\u4E00\u500B ____\uFF0B3\u20134 \u500B\u9078\u9805\uFF09\u3001find-error\uFF08\u53E5\u5B50\u88E1\u6A19\u51FA 3\u20134 \u500B\u7247\u6BB5\uFF0C\u9078\u51FA\u932F\u7684\u90A3\u500B\uFF09\u3002
-\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u662F objectiveId\uFF5C\u5B78\u7FD2\u76EE\u6A19\uFF5C\u4E3B\u984C\uFF08\u53E5\u578B\uFF09\u3002
-errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
-function objectiveRef(topicId, objectiveId) {
-  return `${topicId}/${objectiveId}`;
-}
-function cleanSentences(list) {
-  var _a;
-  const out = [];
-  const seen = /* @__PURE__ */ new Set();
-  for (const x3 of list != null ? list : []) {
-    const sentence = ((_a = x3 == null ? void 0 : x3.sentence) != null ? _a : "").replace(/\s+/g, " ").trim().slice(0, MAX_SENTENCE_CHARS);
-    if (!sentence || seen.has(sentence.toLowerCase())) continue;
-    seen.add(sentence.toLowerCase());
-    out.push({ path: x3.path, sentence });
-    if (out.length >= MAX_SENTENCES) break;
-  }
-  return out;
-}
-function clean(list, max) {
-  const out = [];
-  const seen = /* @__PURE__ */ new Set();
-  for (const s of list != null ? list : []) {
-    const v = (s != null ? s : "").replace(/\s+/g, " ").trim();
-    if (!v || seen.has(v.toLowerCase())) continue;
-    seen.add(v.toLowerCase());
-    out.push(v);
-    if (out.length >= max) break;
-  }
-  return out;
-}
-function targetRefs(targets) {
-  const out = [];
-  for (const t2 of targets) {
-    const want = new Set(t2.objectiveIds);
-    const objs = t2.topic.objectives.filter((o) => want.has(o.id));
-    for (const objective of objs.length ? objs : t2.topic.objectives) out.push({ topic: t2.topic, objective });
-  }
-  return out;
-}
-function isObj2(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-function str2(v) {
-  return typeof v === "string" ? v.trim() : "";
-}
-function strList(v) {
-  return Array.isArray(v) ? v.map(str2).filter(Boolean) : [];
-}
-function uniq(list) {
-  const out = [];
-  for (const s of list) if (!out.includes(s)) out.push(s);
-  return out;
-}
-var GAP_RE = /_{3,}/g;
-function parseDistractors(v) {
-  const out = {};
-  if (Array.isArray(v)) {
-    for (const d of v) {
-      if (!isObj2(d)) continue;
-      const option = str2(d.option);
-      const why = str2(d.why);
-      if (option && why) out[option] = why;
-    }
-  } else if (isObj2(v)) {
-    for (const [k, w2] of Object.entries(v)) {
-      const option = k.trim();
-      const why = str2(w2);
-      if (option && why) out[option] = why;
-    }
-  }
-  return out;
-}
-function resolveRef(raw, refs) {
-  let topicId = str2(raw.topicId);
-  let objectiveId = str2(raw.objectiveId);
-  if (objectiveId.includes("/")) {
-    const [t2, ...rest] = objectiveId.split("/");
-    const o = rest.join("/");
-    if (!topicId) topicId = t2;
-    if (topicId === t2) objectiveId = o;
-  }
-  if (!objectiveId) return null;
-  if (!refs) return topicId ? { topicId, objectiveId } : null;
-  if (topicId) return refs.has(objectiveRef(topicId, objectiveId)) ? { topicId, objectiveId } : null;
-  const hits = [...refs].filter((r) => r.endsWith(`/${objectiveId}`));
-  if (hits.length !== 1) return null;
-  return { topicId: hits[0].slice(0, hits[0].length - objectiveId.length - 1), objectiveId };
-}
-function parseScenarioQuestion(raw, opts = {}) {
-  var _a;
-  if (!isObj2(raw)) return null;
-  const type = str2(raw.type);
-  if (!SCENARIO_TYPES.includes(type)) return null;
-  const ref = resolveRef(raw, opts.refs);
-  if (!ref) return null;
-  let stem = str2(raw.stem);
-  let answer = str2(raw.answer);
-  const explanation = str2(raw.explanation);
-  if (!stem || !answer || !explanation) return null;
-  const options = uniq(strList(raw.options));
-  if (options.length < 3 || options.length > 4) return null;
-  if (!options.includes(answer)) {
-    const hit = options.find((o) => o.toLowerCase() === answer.toLowerCase());
-    if (!hit) return null;
-    answer = hit;
-  }
-  if (type === "choice") {
-    const gaps = stem.match(GAP_RE);
-    if (!gaps || gaps.length !== 1) return null;
-    stem = stem.replace(GAP_RE, GAP);
-  } else {
-    if (stem.match(GAP_RE)) return null;
-    if (!options.every((o) => stem.includes(o))) return null;
-  }
-  const distractors = Object.fromEntries(
-    Object.entries(parseDistractors(raw.distractors)).filter(([k]) => k !== answer && options.includes(k))
-  );
-  const q = {
-    topicId: ref.topicId,
-    objectiveId: ref.objectiveId,
-    type,
-    stem,
-    options,
-    answer,
-    explanation,
-    errorTag: normalizeErrorTag(raw.errorTag)
-  };
-  const accepted = uniq(strList(raw.accepted));
-  if (type === "find-error" && accepted.length) q.accepted = accepted;
-  if (Object.keys(distractors).length) q.distractors = distractors;
-  const zh = str2(raw.sentenceZh);
-  if (zh) q.sentenceZh = zh;
-  const idx = Number(raw.sourceIndex);
-  const src = Number.isInteger(idx) && idx >= 1 ? (_a = opts.sentences) == null ? void 0 : _a[idx - 1] : void 0;
-  if (src) q.source = { path: src.path, sentence: src.sentence };
-  return q;
-}
-function askOf(turn) {
-  const a2 = turn.ask;
-  if (Array.isArray(a2)) return a2.length ? a2[0] : void 0;
-  return isObj2(a2) ? a2 : void 0;
-}
-function parseGrammarScenario(json, opts = {}) {
-  if (!isObj2(json) || !Array.isArray(json.turns)) {
-    throw new AiError("bad_output", "grammar.questions: expected { scene, form, turns: [...] }");
-  }
-  const parseOpts = { ...opts, refs: opts.refs ? new Set(opts.refs) : void 0 };
-  const scene = str2(json.scene);
-  if (!scene) throw new AiError("bad_output", "grammar.questions: no scene");
-  const speakers = uniq(strList(json.speakers));
-  const form = SCENARIO_FORMS.includes(str2(json.form)) ? str2(json.form) : speakers.length ? "dialogue" : "story";
-  const questions2 = [];
-  const seen = /* @__PURE__ */ new Set();
-  let asked = 0;
-  let lead = [];
-  for (const t2 of json.turns) {
-    if (!isObj2(t2)) continue;
-    const speaker = str2(t2.speaker);
-    const ask = askOf(t2);
-    if (ask === void 0) {
-      const text = str2(t2.text);
-      if (text) lead.push(speaker ? { speaker, text } : { text });
-      continue;
-    }
-    asked++;
-    const q = parseScenarioQuestion(ask, parseOpts);
-    if (!q) continue;
-    const key5 = q.stem.toLowerCase();
-    if (seen.has(key5)) continue;
-    seen.add(key5);
-    if (speaker) q.speaker = speaker;
-    if (lead.length) q.lead = lead.slice(-MAX_LEAD);
-    lead = [];
-    questions2.push(q);
-  }
-  if (!questions2.length || questions2.length * 2 < asked) {
-    throw new AiError("bad_output", `grammar.questions: only ${questions2.length} of ${asked} questions usable`);
-  }
-  const out = { scene, form, questions: questions2 };
-  if (speakers.length) out.speakers = speakers;
-  return out;
-}
-var grammarQuestions = {
-  id: "grammar.questions",
-  version: 3,
-  surface: "grammar",
-  tier: "smart",
-  maxTokens: 8192,
-  answerChars: () => 0,
-  build(input, ctx) {
-    var _a, _b;
-    const refs = targetRefs(input.targets);
-    const count = Math.max(1, Math.min(MAX_QUESTION_COUNT, Math.floor((_a = input.count) != null ? _a : DEFAULT_QUESTION_COUNT)));
-    const known2 = clean(input.knownTopicTitles, 60);
-    const words = clean(input.words, MAX_WORDS);
-    const avoid = clean(input.avoidStems, MAX_AVOID_STEMS);
-    const sentences = cleanSentences(input.sentences);
-    const weakness = ((_b = input.weakness) != null ? _b : "").trim();
-    const prev = input.previous;
-    const titles = [...new Set(refs.map((r) => r.topic.title))];
-    const context = [
-      renderTemplate(REFERENCE_BLOCK_TEMPLATE, {
-        lines: refs.map((r) => `${objectiveRef(r.topic.id, r.objective.id)}\uFF5C${r.objective.text}\uFF5C${r.topic.title}\uFF08${r.topic.pattern}\uFF09`).join("\n")
-      }),
-      weakness ? renderTemplate(WEAKNESS_BLOCK_TEMPLATE, { weakness }) : "",
-      prev && prev.scene.trim() ? renderTemplate(PREVIOUS_BLOCK_TEMPLATE, {
-        scene: prev.scene.trim(),
-        lines: prev.lastLines.slice(-2).map((l4) => `- ${l4}`).join("\n")
-      }) : "",
-      known2.length ? renderTemplate(KNOWN_BLOCK_TEMPLATE, { titles: known2.join("\u3001") }) : "",
-      words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE, { words: words.join(", ") }) : "",
-      avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE, { stems: avoid.map((s) => `- ${s}`).join("\n") }) : "",
-      sentences.length ? renderTemplate(SENTENCES_BLOCK_TEMPLATE, { sentences: sentences.map((x3, i) => `${i + 1}. ${x3.sentence}`).join("\n") }) : ""
-    ];
-    return composeRequest({
-      base: GRAMMAR_QUESTIONS_BASE_PROMPT,
-      context,
-      profile: ctx.profile,
-      history: [],
-      user: renderTemplate(GRAMMAR_QUESTIONS_TEMPLATE, {
-        topics: titles.join("\u3001"),
-        count,
-        errorTags: ERROR_TAGS.join("\u3001")
-      }),
-      tier: grammarQuestions.tier,
-      maxTokens: grammarQuestions.maxTokens,
-      output: { name: "grammar_questions", schema: GRAMMAR_QUESTIONS_SCHEMA }
-    });
-  },
-  parse(r) {
-    return parseGrammarScenario(structuredJson(r));
-  }
-};
-function grammarQuestionsFor(targets, sentences = []) {
-  const refs = targetRefs(targets).map((r) => objectiveRef(r.topic.id, r.objective.id));
-  const sent = cleanSentences(sentences);
-  return {
-    ...grammarQuestions,
-    parse: (r) => parseGrammarScenario(structuredJson(r), { refs, sentences: sent })
-  };
-}
-var GRAMMAR_TASKS2 = [grammarQuestions];
-
-// src/services/ai/tasks/practiceScenario.ts
-var MAX_AVOID = 20;
-var POLY_ERROR_TAGS = [
-  "sense-confusion",
-  "light-verb",
-  "preposition-time",
-  "preposition-place",
-  "preposition-other",
-  "phrasal-verb",
-  "collocation",
-  "pos-confusion",
-  "literal-figurative",
-  "register"
-];
-var VOCAB_ERROR_TAGS = ["meaning", "form", "collocation", "confusable"];
-var KINDS_BY_CATEGORY = {
-  vocab: ["which-sense", "pick-word"],
-  poly: ["which-sense", "pick-word", "same-sense"],
-  grammar: ["choice", "find-error"]
-};
-var PRACTICE_SCENARIO_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u8001\u5E2B\uFF0C\u7528\u4E00\u6BB5\u9023\u7E8C\u7684\u60C5\u5883\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u505A\u9078\u64C7\u984C\u7DF4\u7FD2\u3002\u3014\u51FA\u984C\u53C3\u8003\u3015\u662F\u9019\u6B21\u8981\u8003\u7684\u91CD\u9EDE\uFF0C\u6BCF\u500B\u91CD\u9EDE\u6709\u56FA\u5B9A\u7684 id\u3002
-
-\u898F\u5247\uFF1A
-1. \u53EA\u8003\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u6A19\u300C\u8003\u300D\u7684\u91CD\u9EDE\uFF1B\u6BCF\u4E00\u984C\u7684 focusId \u5FC5\u9808\u662F\u6E05\u55AE\u88E1\u6A19\u300C\u8003\u300D\u7684 id\uFF0C\u4E0D\u8981\u81EA\u5DF1\u767C\u660E\u3002\u6A19\u300C\u53C3\u8003\u300D\u7684\u53EA\u80FD\u7576\u932F\u8AA4\u9078\u9805\u6216\u5287\u60C5\u3002
-2. \u9023\u8CAB\uFF1A\u5168\u90E8\u984C\u76EE\u767C\u751F\u5728\u540C\u4E00\u500B\u60C5\u5883\uFF0C\u4F9D\u6642\u9593\u9806\u5E8F\u5F80\u4E0B\u8D70\uFF0C\u6BCF\u4E00\u53E5\u90FD\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5\uFF1B\u8B80\u5B8C\u5C31\u662F\u4E00\u6BB5\u5B8C\u6574\u7684\u5C0D\u8A71\u6216\u77ED\u6587\u3002\u6709\u3014\u4E0A\u4E00\u6BB5\u3015\u6642\uFF0C\u5F9E\u5B83\u7684\u6700\u5F8C\u4E00\u53E5\u76F4\u63A5\u63A5\u8457\u5BEB\uFF0C\u4EBA\u7269\u548C\u5834\u666F\u4E0D\u8B8A\u3002\u53EF\u4EE5\u7A7F\u63D2\u4E0D\u51FA\u984C\u7684\u4E32\u5834\u53E5\uFF0C\u4E00\u7D44\u6700\u591A 3 \u53E5\u3002
-3. \u53EA\u51FA\u9EDE\u9078\u7684\u984C\u578B\uFF08\u898B\u4EFB\u52D9\u88E1\u5217\u7684 kind\uFF09\uFF0C\u5B78\u7FD2\u8005\u4E0D\u9700\u8981\u6253\u4EFB\u4F55\u5B57\u3002
-4. \u6709\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015\u6642\uFF0C\u5148\u8003\u5F31\u9EDE\u88E1\u3001\u800C\u4E14\u5728\u3014\u51FA\u984C\u53C3\u8003\u3015\u5167\u7684\u91CD\u9EDE\uFF0C\u6700\u591A\u5360\u4E00\u534A\u984C\u6578\uFF1B\u5176\u9918\u5E73\u5747\u5206\u914D\u3002\u540C\u4E00\u500B\u91CD\u9EDE\u6700\u591A\u5169\u984C\uFF0C\u540C\u4E00\u500B\u91CD\u9EDE\u4E0D\u8981\u9023\u7E8C\u51FA\u4E09\u984C\u3002
-5. \u6BCF\u984C\u53EA\u6709\u4E00\u500B\u6B63\u78BA\u7B54\u6848\u3002\u932F\u8AA4\u9078\u9805\u8981\u300C\u770B\u8D77\u4F86\u53EF\u80FD\u5C0D\uFF0C\u4F46\u653E\u5728\u9019\u500B\u53E5\u5B50\u88E1\u4E0D\u5C0D\u300D\uFF1B\u9700\u8981\u7684\u8A71\u7528\u524D\u5F8C\u6587\u628A\u7B54\u6848\u9396\u4F4F\u3002
-6. \u7B54\u984C\u5F8C\u7684\u89E3\u8AAA\uFF1A
-   - explanation\uFF1A60 \u5B57\u4EE5\u5167\uFF0C\u5148\u9EDE\u51FA\u53E5\u5B50\u88E1\u7684\u5224\u65B7\u4F9D\u64DA\uFF0C\u518D\u8AAA\u70BA\u4EC0\u9EBC\u662F\u9019\u500B\u7B54\u6848\u3002
-   - optionNotes\uFF1A\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C25 \u5B57\u4EE5\u5167\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\u3002
-   - sentenceZh\uFF1A\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u4E2D\u6587\u7FFB\u8B6F\u3002
-7. errorTag \u53EA\u80FD\u5F9E\u4EFB\u52D9\u5217\u51FA\u7684\u6E05\u55AE\u9078\u3002
-8. \u53E5\u5B50\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF0C\u76EE\u6A19\u4EE5\u5916\u7684\u751F\u5B57\u8D8A\u5C11\u8D8A\u597D\uFF1B\u6709\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6642\u512A\u5148\u7528\u88E1\u9762\u7684\u5B57\uFF0C\u4F46\u4E0D\u8981\u786C\u585E\u3002
-9. \u4E0D\u8981\u91CD\u8907\u3014\u5DF2\u51FA\u904E\u7684\u53E5\u5B50\u3015\u3002\u53EA\u7528\u81EA\u7136\u3001\u5E38\u898B\u7684\u82F1\u6587\uFF0C\u4E0D\u78BA\u5B9A\u7684\u7528\u6CD5\u4E0D\u8981\u51FA\u3002\u6240\u6709\u53E5\u5B50\u90FD\u8981\u539F\u5275\u3002
-10. \u4E2D\u6587\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u6307\u5B9A\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\u6642\u7167\u5B83\u3002
-11. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
-var POLY_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5E38\u7528\u591A\u7FA9\u8A5E\u60C5\u5883\u7DF4\u7FD2\uFF08{{words}}\uFF09
-\u51FA {{count}} \u984C\u3002kind \u53EF\u4EE5\u7528\uFF1Awhich-sense\uFF08\u53E5\u5B50\u88E1\u7528 [[ ]] \u6A19\u51FA\u76EE\u6A19\u5B57\u4E00\u6B21\uFF0Coptions \u662F\u540C\u4E00\u500B\u5B57\u7684 3\u20134 \u500B\u610F\u601D\uFF0C\u9078\u9805 id \u7528\u610F\u601D\u7684 id\u3001\u6587\u5B57\u7528\u4E2D\u6587\u610F\u601D\uFF09\u3001pick-word\uFF08\u53E5\u5B50\u88E1\u4E00\u500B ____\uFF0C4 \u500B\u82F1\u6587\u5B57\u6216\u7247\u8A9E\uFF0C\u5176\u4E2D\u4E00\u500B\u662F\u7DF4\u7FD2\u7684\u5B57\uFF09\u3001same-sense\uFF08\u76EE\u6A19\u53E5\u7528 [[ ]] \u6A19\u51FA\u76EE\u6A19\u5B57\uFF0Coptions \u662F 3\u20134 \u500B\u7528\u5230\u540C\u4E00\u500B\u5B57\u7684\u82F1\u6587\u77ED\u53E5\uFF0C\u53EA\u6709\u4E00\u53E5\u610F\u601D\u76F8\u540C\uFF09\u3002\u6BD4\u4F8B\u7D04 4:4:2\u3002
-\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u662F id\uFF5C\u610F\u601D\uFF5C\u4F8B\uFF5C\u5224\u65B7\u7DDA\u7D22\u3002\u9020\u53E5\u6642\u8B93\u6B63\u89E3\u7684\u5224\u65B7\u7DDA\u7D22\u51FA\u73FE\u5728\u53E5\u5B50\u88E1\uFF08\u6216\u524D\u4E00\u53E5\uFF09\uFF1BoptionNotes \u7528\u932F\u8AA4\u9078\u9805\u90A3\u500B\u610F\u601D\u7684\u5224\u65B7\u7DDA\u7D22\u4F86\u8AAA\u660E\u3002
-errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
-var VOCAB_TEMPLATE = `\u4EFB\u52D9\uFF1A\u55AE\u5B57\u60C5\u5883\u7DF4\u7FD2\uFF08{{n}} \u500B\u5B57\uFF09
-\u51FA {{count}} \u984C\u3002kind \u53EF\u4EE5\u7528\uFF1Awhich-sense\uFF08[[\u76EE\u6A19\u5B57]] \u6A19\u4E00\u6B21\uFF0Coptions \u662F 3\u20134 \u500B\u4E2D\u6587\u610F\u601D\uFF0C\u9078\u9805 id \u7528 a/b/c/d\uFF09\u3001pick-word\uFF08\u53E5\u5B50\u88E1\u4E00\u500B ____\uFF0C4 \u500B\u82F1\u6587\u5B57\uFF0C\u932F\u8AA4\u9078\u9805\u53D6\u81EA\u540C\u4E00\u6279\u5B57\uFF09\u3002
-\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u662F id\uFF5C\u55AE\u5B57\uFF5C\u4E2D\u6587\uFF5C\u8A5E\u6027\u3002errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
-var MIX_TEMPLATE = `\u4EFB\u52D9\uFF1A\u7D9C\u5408\u60C5\u5883\u7DF4\u7FD2
-\u51FA {{count}} \u984C\uFF0C\u5404\u985E\u5927\u7D04\u5E73\u5747\u3002\u6BCF\u984C\u7528 focusId \u6A19\u51FA\u8003\u7684\u662F\u54EA\u4E00\u500B\u91CD\u9EDE\uFF1Bkind \u4F9D\u8A72\u91CD\u9EDE\u6240\u5C6C\u7684\u985E\u5225\uFF1A\u55AE\u5B57\uFF08which-sense\u3001pick-word\uFF09\u3001\u5E38\u7528\u5B57\uFF08which-sense\u3001pick-word\u3001same-sense\uFF09\u3001\u6587\u6CD5\uFF08choice\uFF1A\u4E00\u500B ____\uFF0B3\u20134 \u500B\u9078\u9805\uFF1Bfind-error\uFF1A\u53E5\u4E2D 3\u20134 \u500B\u7247\u6BB5\u9078\u51FA\u932F\u7684\uFF09\u3002
-errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
-var AVOID_BLOCK_TEMPLATE2 = `\u3014\u5DF2\u51FA\u904E\u7684\u53E5\u5B50\u3015
-{{sentences}}`;
-function polyLines(p) {
-  const line2 = (tag, s) => `${tag} ${s.id}\uFF5C${s.zh}\uFF5C${s.example}\uFF5C${s.cue}`;
-  return [...p.tested.map((s) => line2("\u8003", s)), ...p.reference.map((s) => line2("\u53C3\u8003", s))];
-}
-var vocabLines = (list) => list.map((v) => `${v.id}\uFF5C${v.word}\uFF5C${v.zh}\uFF5C${v.pos}`);
-var grammarLines = (list) => list.map((g) => `${objectiveRef(g.topicId, g.objectiveId)}\uFF5C${g.text}\uFF5C${g.title}\uFF08${g.pattern}\uFF09`);
-function refsOf(req) {
-  var _a, _b, _c;
-  const tested = /* @__PURE__ */ new Map();
-  const senseWord = /* @__PURE__ */ new Map();
-  const poly = req.track === "poly" ? req : req.track === "mix" ? req.poly : void 0;
-  const vocab = req.track === "vocab" ? req.words : req.track === "mix" ? req.vocab : void 0;
-  const grammar = req.track === "mix" ? req.grammar : void 0;
-  for (const s of (_a = poly == null ? void 0 : poly.tested) != null ? _a : []) tested.set(s.id, { category: "poly", kind: "sense" });
-  for (const s of [...(_b = poly == null ? void 0 : poly.tested) != null ? _b : [], ...(_c = poly == null ? void 0 : poly.reference) != null ? _c : []]) senseWord.set(s.id, s.word);
-  for (const v of vocab != null ? vocab : []) tested.set(v.id, { category: "vocab", kind: "word" });
-  for (const g of grammar != null ? grammar : []) tested.set(objectiveRef(g.topicId, g.objectiveId), { category: "grammar", kind: "grammar-objective" });
-  return { tested, senseWord };
-}
-function errorTagsOf(req) {
-  var _a, _b;
-  if (req.track === "poly") return [...POLY_ERROR_TAGS];
-  if (req.track === "vocab") return [...VOCAB_ERROR_TAGS];
-  const out = [];
-  if ((_a = req.vocab) == null ? void 0 : _a.length) out.push(...VOCAB_ERROR_TAGS);
-  if (req.poly) out.push(...POLY_ERROR_TAGS);
-  if ((_b = req.grammar) == null ? void 0 : _b.length) out.push(...ERROR_TAGS);
-  return [...new Set(out)];
-}
-var ALL_TAGS = [.../* @__PURE__ */ new Set([...POLY_ERROR_TAGS, ...VOCAB_ERROR_TAGS, ...ERROR_TAGS])];
-var PRACTICE_SCENARIO_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["scene", "form", "speakers", "turns"],
-  properties: {
-    scene: { type: "string", description: "\u4E00\u53E5\u8A71\u4EA4\u4EE3\u60C5\u5883\uFF08\u7E41\u9AD4\u4E2D\u6587\uFF09\uFF0C\u4F8B\u5982\u300C\u5728\u5496\u5561\u5E97\u9EDE\u9910\u300D" },
-    form: { type: "string", enum: [...SCENARIO_FORMS] },
-    speakers: { type: "array", items: { type: "string" }, description: "\u5C0D\u8A71\u7684\u4EBA\u7269\u540D\u5B57\uFF1B\u77ED\u6587\u586B\u7A7A\u9663\u5217" },
-    turns: {
-      type: "array",
-      description: "\u4F9D\u6642\u9593\u9806\u5E8F\u7684\u53E5\u5B50\uFF0C\u6BCF\u4E00\u53E5\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["speaker", "text", "ask"],
-        properties: {
-          speaker: { type: "string", description: "\u9019\u4E00\u53E5\u662F\u8AB0\u8AAA\u7684\uFF1B\u77ED\u6587\u586B\u7A7A\u5B57\u4E32" },
-          text: { type: "string", description: "\u4E32\u5834\u53E5\uFF08\u4E0D\u51FA\u984C\uFF09\u7684\u82F1\u6587\u53E5\u5B50\uFF1B\u6709 ask \u6642\u586B\u7A7A\u5B57\u4E32" },
-          ask: {
-            type: "array",
-            description: "\u9019\u4E00\u53E5\u8981\u51FA\u984C\u5C31\u653E\u4E00\u500B\u984C\u76EE\uFF0C\u4E0D\u51FA\u984C\u653E\u7A7A\u9663\u5217",
-            items: {
-              type: "object",
-              additionalProperties: false,
-              required: ["focusId", "kind", "text", "options", "answerId", "explanation", "optionNotes", "sentenceZh", "errorTag"],
-              properties: {
-                focusId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u6A19\u300C\u8003\u300D\u7684 id\uFF08\u539F\u6A23\u7167\u6284\uFF09" },
-                kind: { type: "string", enum: [...PRACTICE_KINDS] },
-                text: {
-                  type: "string",
-                  description: "\u984C\u5E79\u3002which-sense\uFF0Fsame-sense\uFF1A\u6070\u597D\u4E00\u7D44 [[\u76EE\u6A19\u5B57]]\uFF1Bpick-word\uFF0Fchoice\uFF1A\u6070\u597D\u4E00\u500B ____\uFF1Bfind-error\uFF1A\u5B8C\u6574\u4E00\u53E5\uFF08\u88E1\u9762\u6709\u4E00\u8655\u932F\uFF09"
-                },
-                options: {
-                  type: "array",
-                  description: "3\u20134 \u500B\u9078\u9805",
-                  items: {
-                    type: "object",
-                    additionalProperties: false,
-                    required: ["id", "text"],
-                    properties: { id: { type: "string" }, text: { type: "string" } }
-                  }
-                },
-                answerId: { type: "string", description: "\u6B63\u89E3\u7684\u9078\u9805 id" },
-                explanation: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\uFF0C60 \u5B57\u4EE5\u5167" },
-                optionNotes: {
-                  type: "array",
-                  description: "\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\uFF0825 \u5B57\u4EE5\u5167\uFF09",
-                  items: {
-                    type: "object",
-                    additionalProperties: false,
-                    required: ["id", "note"],
-                    properties: { id: { type: "string", description: "\u932F\u8AA4\u9078\u9805\u7684 id" }, note: { type: "string" } }
-                  }
-                },
-                sentenceZh: { type: "string", description: "\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F" },
-                errorTag: { type: "string", enum: ALL_TAGS, description: "\u5B78\u7FD2\u8005\u7B54\u932F\u6642\u6700\u53EF\u80FD\u72AF\u7684\u932F\u8AA4\u985E\u578B" }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-};
-function isObj3(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-var str3 = (v) => typeof v === "string" ? v.trim() : "";
-var strList2 = (v) => Array.isArray(v) ? v.map(str3).filter(Boolean) : [];
-var uniq2 = (list) => [...new Set(list)];
-var GAP_RE2 = /_{3,}/g;
-var MARK_RE = /\[\[[^[\]]+\]\]/g;
-function inferInfo(id2) {
-  if (id2.includes("/")) return { category: "grammar", kind: "grammar-objective" };
-  if (id2.includes(".")) return { category: "poly", kind: "sense" };
-  return { category: "vocab", kind: "word" };
-}
-function parseOptions(v) {
-  if (!Array.isArray(v)) return null;
-  const out = [];
-  for (const o of v) {
-    if (typeof o === "string") {
-      const t2 = o.trim();
-      if (t2) out.push({ id: t2, text: t2 });
-    } else if (isObj3(o)) {
-      const id2 = str3(o.id);
-      const text = str3(o.text);
-      if (!id2 || !text) return null;
-      out.push({ id: id2, text });
-    }
-  }
-  return out;
-}
-function parseNotes(v, options, answerId) {
-  const out = {};
-  const put = (key5, note) => {
-    var _a;
-    const opt = (_a = options.find((o) => o.id === key5)) != null ? _a : options.find((o) => o.text === key5);
-    if (opt && opt.id !== answerId && note) out[opt.id] = note;
-  };
-  if (Array.isArray(v)) {
-    for (const n of v) if (isObj3(n)) put(str3(n.id) || str3(n.option), str3(n.note) || str3(n.why));
-  } else if (isObj3(v)) {
-    for (const [k, w2] of Object.entries(v)) put(k.trim(), str3(w2));
-  }
-  return out;
-}
-function parsePracticeQuestion(raw, refs) {
-  var _a, _b, _c;
-  if (!isObj3(raw)) return null;
-  const focusId = str3(raw.focusId);
-  if (!focusId) return null;
-  const info = refs ? refs.tested.get(focusId) : inferInfo(focusId);
-  if (!info) return null;
-  const kind = str3(raw.kind);
-  if (!KINDS_BY_CATEGORY[info.category].includes(kind)) return null;
-  let text = str3(raw.text);
-  const explanation = str3(raw.explanation);
-  if (!text || !explanation) return null;
-  const options = parseOptions(raw.options);
-  if (!options || options.length < 3 || options.length > 4) return null;
-  if (new Set(options.map((o) => o.id)).size !== options.length) return null;
-  if (new Set(options.map((o) => o.text.toLowerCase())).size !== options.length) return null;
-  const answerId = str3(raw.answerId);
-  if (!options.some((o) => o.id === answerId)) return null;
-  if (kind === "which-sense" || kind === "same-sense") {
-    if (((_a = text.match(MARK_RE)) != null ? _a : []).length !== 1) return null;
-    if (/\[\[|\]\]/.test(text.replace(MARK_RE, ""))) return null;
-  } else if (kind === "pick-word" || kind === "choice") {
-    if (((_b = text.match(GAP_RE2)) != null ? _b : []).length !== 1) return null;
-    text = text.replace(GAP_RE2, "____");
-  } else {
-    if (/_{3,}/.test(text)) return null;
-    if (!options.every((o) => text.includes(o.text))) return null;
-  }
-  if (info.category === "poly" && kind === "which-sense") {
-    const word = (_c = refs == null ? void 0 : refs.senseWord.get(focusId)) != null ? _c : focusId.split(".")[0];
-    if (answerId !== focusId) return null;
-    for (const o of options) {
-      const w2 = refs ? refs.senseWord.get(o.id) : o.id.split(".")[0];
-      if (w2 !== word) return null;
-    }
-  }
-  const q = {
-    focus: { kind: info.kind, id: focusId },
-    kind,
-    text,
-    options,
-    answerId,
-    explanation
-  };
-  const notes = parseNotes(raw.optionNotes, options, answerId);
-  if (Object.keys(notes).length) q.optionNotes = notes;
-  const zh = str3(raw.sentenceZh);
-  if (zh) q.sentenceZh = zh;
-  const tag = str3(raw.errorTag).toLowerCase();
-  if (info.category === "grammar") q.errorTag = normalizeErrorTag(tag);
-  else if ((info.category === "poly" ? POLY_ERROR_TAGS : VOCAB_ERROR_TAGS).includes(tag)) q.errorTag = tag;
-  return q;
-}
-function askOf2(turn) {
-  const a2 = turn.ask;
-  if (Array.isArray(a2)) return a2.length ? a2[0] : void 0;
-  return isObj3(a2) ? a2 : void 0;
-}
-function parsePracticeScenario(json, refs) {
-  if (!isObj3(json) || !Array.isArray(json.turns)) {
-    throw new AiError("bad_output", "practice.scenario: expected { scene, form, turns: [...] }");
-  }
-  const scene = str3(json.scene);
-  if (!scene) throw new AiError("bad_output", "practice.scenario: no scene");
-  const speakers = uniq2(strList2(json.speakers));
-  const formRaw = str3(json.form);
-  const form = SCENARIO_FORMS.includes(formRaw) ? formRaw : speakers.length ? "dialogue" : "story";
-  const questions2 = [];
-  const seen = /* @__PURE__ */ new Set();
-  let asked = 0;
-  let lead = [];
-  for (const t2 of json.turns) {
-    if (!isObj3(t2)) continue;
-    const speaker = str3(t2.speaker);
-    const ask = askOf2(t2);
-    if (ask === void 0) {
-      const text = str3(t2.text);
-      if (text) lead.push(speaker ? { speaker, text } : { text });
-      continue;
-    }
-    asked++;
-    const q = parsePracticeQuestion(ask, refs);
-    if (!q) continue;
-    const key5 = q.text.toLowerCase();
-    if (seen.has(key5)) continue;
-    seen.add(key5);
-    if (speaker) q.speaker = speaker;
-    if (lead.length) q.lead = lead.slice(-MAX_LEAD);
-    lead = [];
-    questions2.push(q);
-  }
-  if (!questions2.length || questions2.length * 2 < asked) {
-    throw new AiError("bad_output", `practice.scenario: only ${questions2.length} of ${asked} questions usable`);
-  }
-  const out = { scene, form, questions: questions2 };
-  if (speakers.length) out.speakers = speakers;
-  return out;
-}
-function clean2(list, max) {
-  const out = [];
-  const seen = /* @__PURE__ */ new Set();
-  for (const s of list != null ? list : []) {
-    const v = (s != null ? s : "").replace(/\s+/g, " ").trim();
-    if (!v || seen.has(v.toLowerCase())) continue;
-    seen.add(v.toLowerCase());
-    out.push(v);
-    if (out.length >= max) break;
-  }
-  return out;
-}
-function referenceAndTask(req, count) {
-  var _a, _b;
-  const errorTags = errorTagsOf(req).join("\u3001");
-  if (req.track === "poly") {
-    const words = [...new Set(req.tested.map((s) => s.word))];
-    return {
-      reference: polyLines(req).join("\n"),
-      user: renderTemplate(POLY_TEMPLATE, { words: words.join("\u3001"), count, errorTags })
-    };
-  }
-  if (req.track === "vocab") {
-    return {
-      reference: vocabLines(req.words).join("\n"),
-      user: renderTemplate(VOCAB_TEMPLATE, { n: req.words.length, count, errorTags })
-    };
-  }
-  const parts = [];
-  if ((_a = req.vocab) == null ? void 0 : _a.length) parts.push(`\u3010\u55AE\u5B57\u3011
-${vocabLines(req.vocab).join("\n")}`);
-  if (req.poly && (req.poly.tested.length || req.poly.reference.length)) parts.push(`\u3010\u5E38\u7528\u5B57\u3011
-${polyLines(req.poly).join("\n")}`);
-  if ((_b = req.grammar) == null ? void 0 : _b.length) parts.push(`\u3010\u6587\u6CD5\u3011
-${grammarLines(req.grammar).join("\n")}`);
-  return { reference: parts.join("\n\n"), user: renderTemplate(MIX_TEMPLATE, { count, errorTags }) };
-}
-var practiceScenario = {
-  id: "practice.scenario",
-  version: 1,
-  // No surface of its own yet; the base prompt is passed in explicitly.
-  surface: "grammar",
-  tier: "smart",
-  maxTokens: 8192,
-  answerChars: () => 0,
-  build(input, ctx) {
-    var _a, _b;
-    const count = Math.max(1, Math.min(MAX_QUESTION_COUNT, Math.floor((_a = input.count) != null ? _a : DEFAULT_QUESTION_COUNT)));
-    const { reference, user } = referenceAndTask(input.request, count);
-    const words = clean2(input.words, MAX_WORDS);
-    const avoid = clean2(input.avoid, MAX_AVOID);
-    const weakness = ((_b = input.weakness) != null ? _b : "").trim();
-    const prev = input.previous;
-    const context = [
-      renderTemplate(REFERENCE_BLOCK_TEMPLATE, { lines: reference }),
-      weakness ? renderTemplate(WEAKNESS_BLOCK_TEMPLATE, { weakness }) : "",
-      prev && prev.scene.trim() ? renderTemplate(PREVIOUS_BLOCK_TEMPLATE, {
-        scene: prev.scene.trim(),
-        lines: prev.lastLines.slice(-2).map((l4) => `- ${l4}`).join("\n")
-      }) : "",
-      words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE, { words: words.join(", ") }) : "",
-      avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE2, { sentences: avoid.map((s) => `- ${s}`).join("\n") }) : ""
-    ];
-    return composeRequest({
-      base: PRACTICE_SCENARIO_BASE_PROMPT,
-      context,
-      profile: ctx.profile,
-      history: [],
-      user,
-      tier: practiceScenario.tier,
-      maxTokens: practiceScenario.maxTokens,
-      output: { name: "practice_scenario", schema: PRACTICE_SCENARIO_SCHEMA }
-    });
-  },
-  parse(r) {
-    return parsePracticeScenario(structuredJson(r));
-  }
-};
-function practiceScenarioFor(req) {
-  const refs = refsOf(req);
-  return { ...practiceScenario, parse: (r) => parsePracticeScenario(structuredJson(r), refs) };
-}
-var PRACTICE_TASKS = [practiceScenario];
-
-// src/ui/blocks/practice/mistakesPanelModel.ts
-function mistakeKey(q) {
-  return q.errorTag ? q.errorTag : `kind:${q.kind}`;
-}
-var KIND_LABEL = {
-  "which-sense": "practice.mistakes.kind.which-sense",
-  "pick-word": "practice.mistakes.kind.pick-word",
-  "same-sense": "practice.mistakes.kind.same-sense",
-  choice: "practice.mistakes.kind.choice",
-  "find-error": "practice.mistakes.kind.find-error"
-};
-var POLY_TAGS = [.../* @__PURE__ */ new Set([...POLY_ERROR_TAGS, ...VOCAB_ERROR_TAGS])];
-function mistakeLabel(key5) {
-  var _a;
-  if (key5.startsWith("kind:")) return t((_a = KIND_LABEL[key5.slice(5)]) != null ? _a : "practice.mistakes.kind.other");
-  if (POLY_TAGS.includes(key5)) return t(`practice.mistakes.tag.${key5}`);
-  if (ERROR_TAGS.includes(key5)) return errorTagLabel(key5);
-  return key5;
-}
-function groupPracticeMistakes(questions2) {
-  const groups = /* @__PURE__ */ new Map();
-  for (const q of questions2) {
-    const key5 = mistakeKey(q);
-    const l4 = groups.get(key5);
-    if (l4) l4.push(q);
-    else groups.set(key5, [q]);
-  }
-  return [...groups.entries()].map(([key5, qs]) => ({ key: key5, label: mistakeLabel(key5), questions: qs })).sort((a2, b) => b.questions.length - a2.questions.length);
-}
-function practiceMistakeCount(groups) {
-  return groups.reduce((n, g) => n + g.questions.length, 0);
 }
 
 // src/ui/blocks/practice/mistakesPanel.ts
@@ -23370,6 +23450,8 @@ function renderMistakesPanel(el, deps, owner) {
       const row = group.createDiv({ cls: "vt-pr-mistake" });
       row.createSpan({ cls: "vt-pr-mistake-tag", text: g.label });
       row.createSpan({ cls: "vt-pr-mistake-count", text: t("practice.mistakes.count", { n: g.questions.length }) });
+      const list2 = group.createEl("ul", { cls: "vt-pr-mistake-list" });
+      for (const q of g.questions) list2.createEl("li", { cls: "vt-pr-mistake-item", text: mistakeLine(q.text) });
       const isOpen2 = redoKey === g.key;
       learnButton(row, {
         label: isOpen2 ? t("practice.mistakes.fold") : t("practice.mistakes.redo"),
@@ -23565,6 +23647,13 @@ function toggleExcluded(f, senseId) {
 function testedSenseIds(f) {
   return new Set(sensesInFilter(f).tested.map((s) => s.id));
 }
+function wordCollapsed(word, wordCount, overrides) {
+  var _a;
+  return (_a = overrides.get(word)) != null ? _a : wordCount > 1;
+}
+function wordCheckedSummary(sec) {
+  return { checked: sec.rows.filter((r) => r.checked && !r.outOfLevel).length, total: sec.rows.length };
+}
 
 // src/ui/blocks/practice/polyTab.ts
 function polyTab(deps) {
@@ -23589,6 +23678,8 @@ var PolyTabView = class {
     this.filters = filters;
     this.owner = owner;
     this.mapOpen = true;
+    // Per-word fold state the learner changed (screen only).
+    this.wordFold = /* @__PURE__ */ new Map();
     this.alive = true;
     this.byId = /* @__PURE__ */ new Map();
     this.filter = parsePolyFilter(filters.get("poly"));
@@ -23725,7 +23816,23 @@ var PolyTabView = class {
     const body = el.createDiv({ cls: "vt-pr-poly-map-body" });
     for (const sec of sections) {
       const box = body.createDiv({ cls: "vt-pr-poly-word" });
-      box.createDiv({ cls: "vt-pr-poly-word-title", text: sec.word });
+      const folded = wordCollapsed(sec.word, sections.length, this.wordFold);
+      const title = box.createDiv({ cls: "vt-pr-poly-word-title" });
+      const fold = title.createEl("button", {
+        cls: "vt-pr-poly-fold",
+        text: folded ? "\u25B8" : "\u25BE",
+        attr: { type: "button", "aria-expanded": String(!folded), "aria-label": sec.word }
+      });
+      fold.addEventListener("click", () => {
+        this.wordFold.set(sec.word, !folded);
+        this.renderMap();
+      });
+      title.createSpan({ text: sec.word });
+      if (folded) {
+        const sum = wordCheckedSummary(sec);
+        title.createSpan({ cls: "vt-pr-poly-fold-sum", text: t("practice.poly.wordChecked", { x: sum.checked, y: sum.total }) });
+        continue;
+      }
       for (const r of sec.rows) {
         const row = box.createEl("label", { cls: "vt-pr-poly-sense" });
         row.toggleClass("is-off", !r.checked || r.outOfLevel);
@@ -23806,13 +23913,17 @@ var PolyTabView = class {
 var import_obsidian36 = require("obsidian");
 
 // src/ui/blocks/polysemyMapModel.ts
+var HAS_CJK = /[\u3400-\u9fff\uf900-\ufaff]/;
+var stripBrackets = (zh) => zh.replace(/[（(][^）)]*[）)]/g, "");
 function filterPolyWords(category, query, words = POLY_WORDS) {
   const q = query.trim().toLowerCase();
-  return words.filter((w2) => {
-    if (category !== "all" && w2.category !== category) return false;
-    if (q === "") return true;
-    return w2.word.includes(q) || w2.senses.some((s) => s.zh.includes(q));
-  });
+  const inCat = words.filter((w2) => category === "all" || w2.category === category);
+  if (q === "") return inCat;
+  if (!HAS_CJK.test(q)) {
+    const rank = (w2) => w2.word === q ? 0 : w2.word.startsWith(q) ? 1 : 2;
+    return inCat.map((w2) => ({ w: w2, r: rank(w2) })).filter((x3) => x3.r < 2).sort((a2, b) => a2.r - b.r).map((x3) => x3.w);
+  }
+  return inCat.filter((w2) => w2.senses.some((s) => stripBrackets(s.zh).includes(q)));
 }
 function wordProgress(w2, stats) {
   return { done: w2.senses.filter((s) => progressDot(stats(s.id)) === "done").length, total: w2.senses.length };
@@ -24151,8 +24262,22 @@ function entrySpeakers(entries, current) {
   }
   return out;
 }
-function statsLabel(s) {
-  return t("practice.player.stats", { n: s.answered, c: s.correctCount });
+function askLine(q) {
+  switch (q.kind) {
+    case "which-sense": {
+      const word = questionSegments(q).find((s) => s.t === "target");
+      return t("practice.player.ask.which-sense", { word: word && word.t === "target" ? word.text : "" });
+    }
+    case "same-sense": {
+      const word = questionSegments(q).find((s) => s.t === "target");
+      return t("practice.player.ask.same-sense", { word: word && word.t === "target" ? word.text : "" });
+    }
+    case "pick-word":
+    case "choice":
+      return t("practice.player.ask.pick");
+    case "find-error":
+      return t("practice.player.ask.find-error");
+  }
 }
 function optionColumns(kind, mobile) {
   if (kind === "same-sense" || mobile) return 1;
@@ -24297,6 +24422,7 @@ function mountScenarioPlayer(el, opts, owner) {
         } else f.addEventListener("click", () => pick(s.optionId));
       }
     }
+    box.createDiv({ cls: "vt-pr-ask", text: askLine(q) });
     const located = new Set(questionSegments(q).flatMap((s) => s.t === "frag" ? [s.optionId] : []));
     const buttons2 = q.options.filter((o) => !fragMode || !located.has(o.id));
     if (buttons2.length) {
@@ -24344,7 +24470,6 @@ function mountScenarioPlayer(el, opts, owner) {
     if (dead) return;
     const hadFocus = root2.contains(document.activeElement);
     root2.empty();
-    root2.createDiv({ cls: "vt-pr-stats", text: statsLabel(state) });
     renderHistory(root2);
     if (state.current && state.phase !== "empty") renderCurrent(root2, state.current);
     else {
@@ -27285,7 +27410,7 @@ var SrsService = class {
 var import_obsidian38 = require("obsidian");
 
 // src/core/text/occurrences.ts
-var WORD_RE3 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
+var WORD_RE4 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
 function matchesWord(candidate, target, inflections) {
   const lower2 = candidate.toLowerCase();
   if (lower2 === target) return true;
@@ -27297,7 +27422,7 @@ function findOccurrences(markdown, word, inflections) {
   if (!target) return out;
   const lines4 = proseLines(markdown);
   for (let line2 = 0; line2 < lines4.length; line2++) {
-    for (const m2 of lines4[line2].matchAll(WORD_RE3)) {
+    for (const m2 of lines4[line2].matchAll(WORD_RE4)) {
       if (matchesWord(m2[0], target, inflections)) {
         out.push({ line: line2, ch: m2.index, length: m2[0].length });
       }
@@ -27334,7 +27459,7 @@ function occurrenceIndexInLine(occurrences, index2) {
 var FLASH_MS2 = 3e3;
 var FLASH_CLS = "vt-locate-flash";
 var RENDER_RETRY_LIMIT = 8;
-var WORD_RE4 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
+var WORD_RE5 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
 var SKIP = [
   "code",
   "pre",
@@ -27384,7 +27509,7 @@ function findNthMatch(root2, target, inflections, k) {
   let seen = 0;
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
     const text = (_a = n.nodeValue) != null ? _a : "";
-    for (const m2 of text.matchAll(WORD_RE4)) {
+    for (const m2 of text.matchAll(WORD_RE5)) {
       if (!matchesWord(m2[0], target, inflections)) continue;
       if (seen === k) return { node: n, start: m2.index, length: m2[0].length };
       seen++;
@@ -28775,8 +28900,8 @@ function defaultTaskRegistry() {
     ...VERB_TASKS,
     ...TRIVIA_TASKS,
     ...DNA_TASKS,
-    ...GRAMMAR_TASKS,
     ...GRAMMAR_TASKS2,
+    ...GRAMMAR_TASKS,
     ...GRAMMAR_TASKS3,
     ...PRACTICE_TASKS
   ]);
@@ -32310,8 +32435,8 @@ var GrammarPages = class {
 var MIN_WORDS = 8;
 var MAX_WORDS2 = 40;
 var DEFAULT_MAX_SENTENCES = 3;
-var WORD_RE5 = /[A-Za-z][A-Za-z'’-]*/g;
-var CJK_RE2 = /[぀-ヿ㐀-鿿가-힯]/g;
+var WORD_RE6 = /[A-Za-z][A-Za-z'’-]*/g;
+var CJK_RE3 = /[぀-ヿ㐀-鿿가-힯]/g;
 var PLACEHOLDERS = /* @__PURE__ */ new Set(["do", "doing", "done", "ing", "pp", "vs", "or", "and", "ed", "en", "v"]);
 function plain(text) {
   return text.replace(/```[\s\S]*?```/g, "\n\n").replace(/`([^`]*)`/g, "$1").replace(/!\[\[[^\]]*\]\]/g, " ").replace(/!\[[^\]]*\]\([^)]*\)/g, " ").replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, "$2").replace(/\[\[([^\]]*)\]\]/g, "$1").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/<[^>]+>/g, " ").replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, "").replace(/^[ \t]*(?:[-*+]|\d+[.)])[ \t]+/gm, "").replace(/^[ \t]*>+[ \t]?/gm, "").replace(/(\*\*|__|\*|~~|==)/g, "").replace(/[ \t]+/g, " ");
@@ -32328,15 +32453,15 @@ function splitSentences(text) {
   }
   return out;
 }
-function englishWords(s) {
+function englishWords2(s) {
   var _a;
-  return (_a = s.match(WORD_RE5)) != null ? _a : [];
+  return (_a = s.match(WORD_RE6)) != null ? _a : [];
 }
 function isUsableSentence(s) {
   var _a;
-  const n = englishWords(s).length;
+  const n = englishWords2(s).length;
   if (n < MIN_WORDS || n > MAX_WORDS2) return false;
-  const cjk = ((_a = s.match(CJK_RE2)) != null ? _a : []).length;
+  const cjk = ((_a = s.match(CJK_RE3)) != null ? _a : []).length;
   return cjk <= s.length * 0.1;
 }
 var key2 = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
@@ -32351,7 +32476,7 @@ function patternWords(pattern) {
 }
 function score(sentence, words) {
   if (!words.length) return 0;
-  const have = new Set(englishWords(sentence).map((w2) => w2.toLowerCase().replace(/’/g, "'")));
+  const have = new Set(englishWords2(sentence).map((w2) => w2.toLowerCase().replace(/’/g, "'")));
   return words.reduce((n, w2) => n + (have.has(w2) ? 1 : 0), 0);
 }
 function pickSentence(candidates, pattern) {
@@ -32359,7 +32484,7 @@ function pickSentence(candidates, pattern) {
   let best;
   for (const s of candidates) {
     if (!isUsableSentence(s)) continue;
-    const cur = { s, score: score(s, words), len: englishWords(s).length };
+    const cur = { s, score: score(s, words), len: englishWords2(s).length };
     if (!best || cur.score > best.score || cur.score === best.score && cur.len > best.len) best = cur;
   }
   return best == null ? void 0 : best.s;

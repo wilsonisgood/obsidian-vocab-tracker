@@ -4366,6 +4366,15 @@ body.is-mobile .vt-pr-mistakes-toggle,
 body.is-mobile .vt-pr-mistake {
   min-height: 44px;
 }
+.vt-pr-mistake-list {
+  margin: 2px 0 6px;
+  padding: 0 0 0 20px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+.vt-pr-mistake-item {
+  overflow-wrap: anywhere;
+}
 
 /* src/styles/practice-hub.css */
 .vt-pr {
@@ -4472,6 +4481,44 @@ body.is-mobile .vt-pr-filter .vt-learn-btn {
 body.is-mobile .vt-pr-chip {
   padding: 8px 16px;
 }
+.vt-pr-mix-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+}
+.vt-pr-mix-tags-label {
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+.vt-pr-mix-tag {
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: var(--font-ui-small);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  cursor: pointer;
+  box-shadow: none;
+}
+.vt-pr-mix-tag.is-on {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.vt-pr-mix-tag:disabled {
+  opacity: 0.45;
+  cursor: default;
+  border-style: dashed;
+}
+body.is-mobile .vt-pr-mix-tag {
+  min-height: 44px;
+  padding: 8px 16px;
+}
 
 /* src/styles/practice-player.css */
 .vt-pr-player {
@@ -4480,9 +4527,10 @@ body.is-mobile .vt-pr-chip {
   gap: 12px;
   outline: none;
 }
-.vt-pr-stats {
+.vt-pr-ask {
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
+  margin: 4px 0 8px;
 }
 .vt-pr-history {
   display: flex;
@@ -4875,6 +4923,27 @@ body.is-mobile .vt-pr-poly-sense input[type=checkbox] {
   width: 22px;
   height: 22px;
   margin-top: 2px;
+}
+.vt-pr-poly-word-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.vt-pr-poly-fold {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-ui-medium);
+}
+.vt-pr-poly-fold-sum {
+  font-weight: normal;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
 }
 
 /* src/styles/practice-mix.css */
