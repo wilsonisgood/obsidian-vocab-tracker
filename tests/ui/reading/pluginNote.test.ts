@@ -12,6 +12,7 @@ describe("pluginNoteKind", () => {
     expect(pluginNoteKind({ "vocab-tracker": "entry", "vocab-tracker-id": "families" })).toBe("entry");
     expect(pluginNoteKind({ "vocab-tracker": "word", "vocab-tracker-id": 1721900000000 })).toBe("word");
     expect(pluginNoteKind({ "vocab-tracker": "ai-note", "vocab-tracker-id": "eng/x.md" })).toBe("ai-note");
+    expect(pluginNoteKind({ "vocab-tracker": "grammar", "vocab-tracker-id": "be-verb" })).toBe("grammar");
   });
 
   it("leaves every other note alone", () => {

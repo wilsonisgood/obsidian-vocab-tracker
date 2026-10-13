@@ -23,6 +23,13 @@ vocab-tracker-id: flashcards
 \`\`\`vocab-card
 \`\`\`
 ",
+  "grammar": "---
+vocab-tracker: entry
+vocab-tracker-id: grammar
+---
+\`\`\`vocab-grammar
+\`\`\`
+",
   "trivia": "---
 vocab-tracker: entry
 vocab-tracker-id: trivia

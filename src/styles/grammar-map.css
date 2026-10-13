@@ -1,0 +1,411 @@
+/* Grammar map and topic page (第十五波 M, 1013 §3.1/§3.2): the vocab-grammar
+   and vocab-grammar-topic blocks. Sits on .vt-learn (blocks.css), which
+   brings --vt-tap (44px under body.is-mobile) and the surface/border vars.
+   Stage colors: 基礎 red, 中級 blue, 進階 black (text color), all from the
+   theme's own variables so light and dark both read. */
+
+.vt-gr {
+  --vt-gr-stage-1: var(--color-red);
+  --vt-gr-stage-2: var(--color-blue);
+  --vt-gr-stage-3: var(--text-normal);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Status dot: ○ new, ◐ learning, ● mastered, ↻ due ─────────── */
+
+.vt-gr-dot {
+  flex: none;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--text-faint);
+  color: var(--vt-accent);
+}
+
+.vt-gr-dot.is-learning {
+  border-color: var(--vt-accent);
+  background: conic-gradient(var(--vt-accent) 0 50%, transparent 50% 100%);
+}
+
+.vt-gr-dot.is-mastered {
+  border-color: var(--vt-accent);
+  background: var(--vt-accent);
+}
+
+.vt-gr-dot.is-due {
+  border-color: var(--color-orange);
+  background: var(--color-orange);
+}
+
+.vt-gr-dot.is-due::after {
+  content: "↻";
+  color: var(--background-primary);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* ── Map ──────────────────────────────────────────────────────── */
+
+.vt-gr-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vt-gr-title {
+  font-size: var(--font-ui-large);
+  font-weight: 600;
+}
+
+.vt-gr-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 8px 12px;
+  background: var(--vt-surface);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+}
+
+.vt-gr-bar-label {
+  color: var(--vt-muted);
+}
+
+.vt-gr-bar-main {
+  font-weight: 600;
+}
+
+.vt-gr-bar-sub {
+  color: var(--vt-muted);
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-gr-bar .vt-learn-btn {
+  margin-left: auto;
+}
+
+.vt-gr-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  overflow: hidden;
+}
+
+.vt-gr-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--vt-tap);
+  height: auto;
+  padding: 6px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--vt-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vt-gr-row:last-child {
+  border-bottom: 0;
+}
+
+.vt-gr-row:hover {
+  background: var(--vt-surface);
+}
+
+.vt-gr-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 10px;
+}
+
+.vt-gr-row-title {
+  font-weight: 500;
+}
+
+.vt-gr-row-pattern {
+  color: var(--vt-muted);
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-gr-lock {
+  flex: none;
+  font-size: var(--font-ui-smaller);
+  cursor: help;
+}
+
+.vt-gr-row-status {
+  flex: none;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-gr-row.is-mastered .vt-gr-row-status {
+  color: var(--vt-accent-text);
+}
+
+.vt-gr-row.is-due .vt-gr-row-status {
+  color: var(--color-orange);
+}
+
+.vt-gr-empty {
+  padding: 8px 12px;
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+/* ── 錯題本 ──────────────────────────────────────────────────── */
+
+.vt-gr-mistakes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.vt-gr-mistakes-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--vt-tap);
+  height: auto;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--vt-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.vt-gr-mistakes-toggle:hover {
+  color: var(--text-normal);
+}
+
+.vt-gr-chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.vt-gr-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.vt-gr-mistakes-body {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+}
+
+.vt-gr-mistake {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--vt-tap);
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--vt-border);
+}
+
+.vt-gr-mistake:last-child {
+  border-bottom: 0;
+}
+
+.vt-gr-mistake-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 10px;
+}
+
+.vt-gr-mistake-tag {
+  font-weight: 500;
+}
+
+.vt-gr-mistake-count,
+.vt-gr-mistake-topic {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+/* ── Topic page header ───────────────────────────────────────── */
+
+.vt-gr-topic-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vt-gr-topic-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-gr-stage {
+  font-weight: 600;
+  color: var(--vt-gr-stage-3);
+}
+
+.vt-gr-stage.is-stage-1 {
+  color: var(--vt-gr-stage-1);
+}
+
+.vt-gr-stage.is-stage-2 {
+  color: var(--vt-gr-stage-2);
+}
+
+.vt-gr-stage.is-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.vt-gr-difficulty {
+  color: var(--vt-muted);
+}
+
+.vt-gr-topic-title {
+  font-size: var(--font-ui-large);
+  font-weight: 600;
+}
+
+.vt-gr-topic-pattern {
+  align-self: flex-start;
+}
+
+.vt-gr-topic-summary {
+  color: var(--vt-muted);
+}
+
+.vt-gr-explain {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.vt-gr-explain:empty {
+  display: none;
+}
+
+/* ── Sections: objectives, sightings, related ────────────────── */
+
+.vt-gr-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vt-gr-sec-title {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+}
+
+.vt-gr-objective {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+}
+
+.vt-gr-objective-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.vt-gr-objective-score {
+  flex: none;
+  color: var(--vt-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-gr-sighting {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: var(--vt-tap);
+  padding: 6px 10px;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-card);
+  box-shadow: none;
+  color: var(--text-normal);
+  font: inherit;
+  text-align: left;
+  height: auto;
+  cursor: pointer;
+}
+
+.vt-gr-sighting:hover {
+  background: var(--vt-surface);
+}
+
+.vt-gr-sighting-text {
+  white-space: normal;
+}
+
+.vt-gr-sighting-note {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.vt-gr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vt-gr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--vt-tap);
+  height: auto;
+  padding: 0 12px;
+  border: 1px solid var(--vt-border);
+  border-radius: 999px;
+  background: var(--vt-card);
+  box-shadow: none;
+  color: var(--text-normal);
+  font: inherit;
+  cursor: pointer;
+}
+
+.vt-gr-chip:hover {
+  background: var(--vt-surface);
+}
+
+.vt-gr-chip-kind {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-smaller);
+}

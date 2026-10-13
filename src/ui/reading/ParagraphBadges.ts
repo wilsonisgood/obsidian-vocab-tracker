@@ -134,6 +134,8 @@ export class ParagraphBadges {
     if (!isAnchorableTag(first?.tagName)) return;
     const fm = (ctx.frontmatter as Record<string, unknown> | undefined) ?? this.deps.frontmatterOf?.(ctx.sourcePath);
     if (wordPageEntryId(fm)) return;
+    // Grammar topic pages (第十五波 M) are the plugin's own too: no ✦.
+    if (fm?.["vocab-tracker"] === "grammar") return;
     const info = ctx.getSectionInfo(el);
     if (!info) return;
     const text = this.lines.slice(info);
