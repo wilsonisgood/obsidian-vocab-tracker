@@ -51,3 +51,14 @@
 .vt-verbs-pos-chip.is-dim {
   opacity: 0.45;
 }
+
+/* Wave 14 U — desktop Usage page has no left column (the sidebar's 文法
+   section is the word list); the selected row there is marked. */
+.vt-verbs.is-side-driven .vt-verb-detail {
+  max-width: 100%;
+}
+
+.vt-glist-row.is-active {
+  background: var(--background-modifier-hover);
+  font-weight: 600;
+}

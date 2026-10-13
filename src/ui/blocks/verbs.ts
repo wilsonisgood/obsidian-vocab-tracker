@@ -1,4 +1,4 @@
-import { Component, MarkdownRenderChild, MarkdownRenderer, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
+import { Component, MarkdownRenderChild, MarkdownRenderer, Notice, Platform, setIcon, type MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import type { VocabEntry } from "../../core/model/entry";
 import { isListed, type IsListedContext } from "../../core/model/like";
@@ -59,6 +59,33 @@ const POS_ABBR: Record<PosKey, string> = {
   interj: "interj.",
 };
 
+// Wave 14 U: desktop Usage pages (no `word=`) have no left column; the
+// sidebar's 文法 section is their word list. Mounted pages register here so
+// the sidebar can find the visible one and switch its word.
+export interface UsagePageHandle {
+  selectedId(): string | undefined;
+  select(entryId: string): void;
+}
+
+const mountedPages = new Set<VerbsBlock>();
+const pageListeners = new Set<() => void>();
+
+function notifyPages(): void {
+  for (const cb of [...pageListeners]) cb();
+}
+
+export function onUsagePageChange(cb: () => void): () => void {
+  pageListeners.add(cb);
+  return () => void pageListeners.delete(cb);
+}
+
+// The Usage page that is currently shown as a main tab (isShown() is false
+// for background tabs), if any.
+export function visibleUsagePage(): UsagePageHandle | null {
+  for (const b of mountedPages) if (b.isVisible()) return b;
+  return null;
+}
+
 export function renderVerbs(
   plugin: VocabTrackerPlugin,
   source: string,
@@ -76,7 +103,7 @@ class VerbsBlock extends MarkdownRenderChild {
   private countEl: HTMLElement | null = null;
   private detailEl!: HTMLElement;
   private query = "";
-  private selectedId: string | undefined;
+  private pickedId: string | undefined;
   // 詞性 chip 被按淡的集合 (1006-2 #22)：只存在這個 block 實例裡，不跨裝置。
   private dimmedPos = new Set<PosKey>();
   // Last failure per entry, shown under its usage until the next try
@@ -104,6 +131,16 @@ class VerbsBlock extends MarkdownRenderChild {
     if (this.params.word) {
       this.root.addClass("is-single");
       this.detailEl = this.root.createDiv({ cls: "vt-verb-detail" });
+    } else if (!Platform.isMobile) {
+      // Desktop: the sidebar picks the word (wave 14 U).
+      this.root.addClass("is-side-driven");
+      this.detailEl = this.root.createDiv({ cls: "vt-verb-detail" });
+      mountedPages.add(this);
+      this.register(() => {
+        mountedPages.delete(this);
+        notifyPages();
+      });
+      window.setTimeout(notifyPages, 0);
     } else {
       this.buildLayout();
     }
@@ -130,6 +167,20 @@ class VerbsBlock extends MarkdownRenderChild {
       isTagOn: (tag) => tagEnabled(settings, tag),
       likeOn: likeChipOn(settings),
     };
+  }
+
+  isVisible(): boolean {
+    return this.root.isConnected && this.root.isShown();
+  }
+
+  selectedId(): string | undefined {
+    return this.pickedId;
+  }
+
+  select(entryId: string): void {
+    if (this.pickedId === entryId) return;
+    this.pickedId = entryId;
+    this.render();
   }
 
   private anyFavorited(entryId: string): boolean {
@@ -206,7 +257,9 @@ class VerbsBlock extends MarkdownRenderChild {
     this.renderPosChips(chips);
     const active = new Set(chips.filter((p) => !this.dimmedPos.has(p)));
     const shown = filterByActivePos(afterQuery, active);
-    this.selectedId = pickVerb(shown, this.selectedId);
+    const prev = this.pickedId;
+    this.pickedId = pickVerb(shown, this.pickedId);
+    if (this.pickedId !== prev && mountedPages.has(this)) window.setTimeout(notifyPages, 0);
     this.root.toggleClass("is-empty", !learned.length);
 
     if (this.countEl) this.countEl.setText(t("learn.verb.count", { n: learned.length }));
@@ -216,8 +269,8 @@ class VerbsBlock extends MarkdownRenderChild {
       if (learned.length && !shown.length) list.createDiv({ cls: "vt-verbs-nomatch", text: t("learn.verb.noMatch") });
       for (const e of shown) {
         const row = list.createEl("button", { cls: "vt-verbs-row" });
-        row.toggleClass("is-active", e.id === this.selectedId);
-        row.setAttr("aria-pressed", String(e.id === this.selectedId));
+        row.toggleClass("is-active", e.id === this.pickedId);
+        row.setAttr("aria-pressed", String(e.id === this.pickedId));
         row.createSpan({ cls: "vt-verbs-row-word", text: e.word });
         if (this.plugin.verbs.isBusy(e.id)) setIcon(row.createSpan({ cls: "vt-verbs-row-icon is-busy" }), "loader");
         else if (this.anyFavorited(e.id)) {
@@ -230,7 +283,7 @@ class VerbsBlock extends MarkdownRenderChild {
           icon.setAttr("aria-label", t("learn.verb.hasUsage"));
         }
         row.addEventListener("click", () => {
-          this.selectedId = e.id;
+          this.pickedId = e.id;
           this.render();
         });
       }
@@ -241,7 +294,7 @@ class VerbsBlock extends MarkdownRenderChild {
       this.detailEl.appendChild(emptyState({ icon: "list", title: t("learn.verb.none.title"), body: t("learn.verb.none.body") }));
       return;
     }
-    const selected = shown.find((e) => e.id === this.selectedId);
+    const selected = shown.find((e) => e.id === this.pickedId);
     if (selected) this.renderDetail(selected);
   }
 

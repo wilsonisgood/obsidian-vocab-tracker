@@ -22,6 +22,8 @@ import { DiscussionList } from "./DiscussionList";
 import { discussionRows } from "./discussionRows";
 import { GrammarSection, type GrammarSectionDeps } from "./GrammarSection";
 import { verbUsageRows } from "./grammarRows";
+import { onUsagePageChange, visibleUsagePage } from "../blocks/verbs";
+import { entriesWithUsage } from "../blocks/verbsModel";
 import { FLASH_MS, planReveal, SectionState, type FilterMode, type SectionId } from "./sections";
 import { LIST_ROUTE, REBINDING_BODY_CLS, SidebarRouter, routeForActiveNote, routeKey, sameRoute, type SidebarRoute } from "./routes";
 import { isListed, type IsListedContext } from "../../core/model/like";
@@ -171,6 +173,11 @@ export class VocabSidebarView extends ItemView {
         this.noteChanged(f.path, true);
       })
     );
+    // Wave 14 U: which Usage page is the visible main tab drives how the
+    // 文法 section behaves; tab switches don't go through usage events.
+    const usageTabChanged = () => this.grammarSection?.refresh();
+    this.registerEvent(this.app.workspace.on("active-leaf-change", usageTabChanged));
+    this.registerEvent(this.app.workspace.on("layout-change", usageTabChanged));
     this.register(() => document.body.removeClass(REBINDING_BODY_CLS));
     // Wave 8 S (1006-2 #2): 本篇 scope's cache was keyed on path+mtime alone
     // — a race with store.addEntry/deleteEntry/restoreEntry/setLiked (none
@@ -814,7 +821,15 @@ export class VocabSidebarView extends ItemView {
       this.grammarSection = scope.addChild(
         new GrammarSection(
           grammar,
-          { verbs: this.scopedVerbs(), learn: this.plugin.learn },
+          {
+            verbs: this.scopedVerbs(),
+            learn: this.plugin.learn,
+            usagePage: { current: visibleUsagePage, subscribe: onUsagePageChange },
+            usageEntries: () => {
+              const allowed = new Set(this.scopedEntries().map((e) => e.id));
+              return entriesWithUsage(this.plugin.store.entries).filter((e) => allowed.has(e.id));
+            },
+          },
           {
             openWord: (entryId) => void this.plugin.openWordPage(entryId),
             viewAll: () => void this.plugin.openEntryFile("verbs"),
