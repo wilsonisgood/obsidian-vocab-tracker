@@ -1,3 +1,4 @@
+import { builtInExplanation } from "../../../src/core/grammar/explanations";
 import { describe, expect, it } from "vitest";
 import {
   findExplanationSection,
@@ -10,25 +11,33 @@ import {
 } from "../../../src/services/grammar/topicPage";
 
 describe("topic page file", () => {
-  it("renders the fixed layout of rule 9", () => {
-    expect(renderTopicPage("be-verb")).toMatchInlineSnapshot(`
-      "---
-      vocab-tracker: grammar
-      vocab-tracker-id: be-verb
-      ---
-      \`\`\`vocab-grammar-topic
-      id: be-verb
-      \`\`\`
-
-      ## 說明
-
-      \`\`\`vocab-grammar-practice
-      topic: be-verb
-      \`\`\`
-
-      ## 我的筆記
-      "
-    `);
+  it("renders the fixed layout of rule 9, with the built-in explanation under 說明", () => {
+    const page = renderTopicPage("be-verb");
+    const body = sanitizeExplanation(builtInExplanation("be-verb")!);
+    expect(page).toBe(
+      [
+        "---",
+        "vocab-tracker: grammar",
+        "vocab-tracker-id: be-verb",
+        "---",
+        "```vocab-grammar-topic",
+        "id: be-verb",
+        "```",
+        "",
+        "## 說明",
+        "",
+        body,
+        "",
+        "```vocab-grammar-practice",
+        "topic: be-verb",
+        "```",
+        "",
+        "## 我的筆記",
+        "",
+      ].join("\n")
+    );
+    // The section counts as written, and is still found before 我的筆記.
+    expect(findExplanationSection(page)!.empty).toBe(false);
   });
 
   it("names the file after the title, replacing characters a path can't hold", () => {
@@ -40,7 +49,8 @@ describe("topic page file", () => {
 });
 
 describe("the 說明 section", () => {
-  const fresh = renderTopicPage("be-verb");
+  // A page whose 說明 is empty (a topic without a built-in explanation, or one the learner cleared).
+  const fresh = renderTopicPage("be-verb").replace(sanitizeExplanation(builtInExplanation("be-verb")!) + "\n\n", "");
 
   it("counts the practice block under it as empty", () => {
     const sec = findExplanationSection(fresh)!;
