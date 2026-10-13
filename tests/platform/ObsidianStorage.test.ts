@@ -67,3 +67,12 @@ describe("ObsidianStorage — grammar shard", () => {
     expect(await s.readShard("grammar")).toEqual({ v: 1 });
   });
 });
+
+describe("ObsidianStorage — learner shard (wave 16)", () => {
+  it("reads and writes store/learner.json", async () => {
+    const { storage: s } = storage();
+    expect(await s.readShard("learner")).toBeNull();
+    await s.writeShard("learner", { v: 1 });
+    expect(await s.readShard("learner")).toEqual({ v: 1 });
+  });
+});
