@@ -1,0 +1,19 @@
+/* 單字情境練習切換與混合頁籤 (第十七波 V). Import in index.css at integration. */
+
+.vt-pr-segmented {
+  display: inline-flex; align-self: flex-start; gap: 0;
+  border: 1px solid var(--background-modifier-border); border-radius: 8px; overflow: hidden;
+}
+.vt-pr-segment {
+  background: transparent; border: 0; box-shadow: none; border-radius: 0;
+  padding: 6px 14px; color: var(--text-muted); cursor: pointer; white-space: nowrap;
+}
+.vt-pr-segment + .vt-pr-segment { border-left: 1px solid var(--background-modifier-border); }
+.vt-pr-segment.is-active { background: var(--interactive-accent); color: var(--text-on-accent); font-weight: 600; }
+
+.vt-pr-vocab, .vt-pr-mix { display: flex; flex-direction: column; gap: 12px; }
+.vt-pr-vocab-body { display: flex; flex-direction: column; gap: 12px; }
+
+.vt-pr-mix-tally { color: var(--text-muted); font-size: var(--font-ui-small); min-height: 1.2em; }
+.vt-pr-mix-tally:empty { display: none; }
+.vt-pr-mix-head:empty { display: none; }
