@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { GrammarQuestion } from "../../../src/core/model/grammar";
+import { topicById } from "../../../src/core/grammar/catalog";
+import type { GrammarQuestion, GrammarSighting } from "../../../src/core/model/grammar";
 import { GRAMMAR_SHARD, GrammarStore } from "../../../src/services/grammar/GrammarStore";
-import { QuestionService, questionThreadId } from "../../../src/services/grammar/QuestionService";
+import { gradeThreadId, QuestionService, questionThreadId } from "../../../src/services/grammar/QuestionService";
 import { MemoryStorage } from "../ai/fakes";
 import { FakePreparingAi, result } from "../learn/fakes";
 
@@ -256,5 +257,135 @@ describe("QuestionService.finishSession", () => {
     const srs = service.finishSession(TOPIC, run(5, 5), NOW)!;
     expect(new Date(srs.due).getTime()).toBeGreaterThan(NOW.getTime());
     expect(grammar.progress(TOPIC)?.srs?.due).toBe(srs.due);
+  });
+});
+
+// ── R2 ────────────────────────────────────────────────────────────
+
+const READ = "I have lost my keys and I cannot get into the house tonight.";
+const sighting = (extra: Partial<GrammarSighting> = {}): GrammarSighting => ({
+  topicId: TOPIC,
+  threadId: "t1",
+  turnId: "a1",
+  path: "Books/Dune.md",
+  snapshot: READ,
+  at: "2026-10-01T00:00:00Z",
+  ...extra,
+});
+
+describe("QuestionService.generate — reading sentences", () => {
+  function withSentences(reply: unknown, opts: { use?: () => boolean; sightings?: () => GrammarSighting[] } = {}) {
+    const storage = new MemoryStorage();
+    const grammar = new GrammarStore({ storage });
+    const ai = new FakePreparingAi(() => result(JSON.stringify(reply)));
+    let seq = 0;
+    const service = new QuestionService({
+      grammar,
+      ai,
+      newId: () => `id${++seq}`,
+      sightings: opts.sightings ?? (() => [sighting()]),
+      useMySentences: opts.use,
+    });
+    return { ai, grammar, service };
+  }
+
+  it("puts the sentences in the prompt and stores the source of a question that names one", async () => {
+    const { ai, service } = withSentences({ questions: [{ ...CHOICE, sourceIndex: 1 }, BLANK] });
+    const out = await service.generate(TOPIC);
+    const text = ai.requests[0].system.map((b) => b.text).join("\n");
+    expect(text).toContain(`〔讀者讀過的句子〕\n1. ${READ}`);
+    expect(text).not.toContain("Dune");
+    expect(out[0].source).toEqual({ path: "Books/Dune.md", sentence: READ });
+    expect(out[1].source).toBeUndefined();
+  });
+
+  it("sends no sentence when the setting is off (and doesn't even read the sightings)", async () => {
+    const sightings = vi.fn(() => [sighting()]);
+    const { ai, service } = withSentences({ questions: [CHOICE] }, { use: () => false, sightings });
+    await service.generate(TOPIC);
+    expect(ai.requests[0].system.map((b) => b.text).join("\n")).not.toContain("〔讀者讀過的句子〕\n");
+    expect(sightings).not.toHaveBeenCalled();
+  });
+
+  it("is on by default, and a sightings source that throws just means no sentences", async () => {
+    const on = withSentences({ questions: [CHOICE] });
+    await on.service.generate(TOPIC);
+    expect(on.ai.requests[0].system.some((b) => b.text.startsWith("〔讀者讀過的句子〕"))).toBe(true);
+    const broken = withSentences({ questions: [CHOICE] }, {
+      sightings: () => {
+        throw new Error("boom");
+      },
+    });
+    await broken.service.generate(TOPIC);
+    expect(broken.ai.requests[0].system.some((b) => b.text.startsWith("〔讀者讀過的句子〕"))).toBe(false);
+  });
+
+  it("ignores sightings of other topics", async () => {
+    const { ai, service } = withSentences({ questions: [CHOICE] }, { sightings: () => [sighting({ topicId: "past-simple" })] });
+    await service.generate(TOPIC);
+    expect(ai.requests[0].system.some((b) => b.text.startsWith("〔讀者讀過的句子〕"))).toBe(false);
+  });
+});
+
+describe("QuestionService.generate — open questions", () => {
+  const REWRITE = {
+    objectiveId: "present-link",
+    type: "rewrite",
+    stem: "改寫成現在完成式：I lost my keys.",
+    options: [],
+    answer: "I have lost my keys.",
+    accepted: [],
+    explanation: "結果連到現在。",
+    distractors: [],
+    errorTag: "tense-choice",
+    sourceIndex: 0,
+  };
+
+  it("stores a rewrite question from a topic of difficulty >= 4", async () => {
+    const { service, grammar } = setup({ questions: [CHOICE, REWRITE] });
+    const out = await service.generate(TOPIC);
+    expect(out.map((q) => q.type)).toEqual(["choice", "rewrite"]);
+    expect(grammar.question(out[1].id)).toMatchObject({ type: "rewrite", answer: "I have lost my keys." });
+  });
+
+  it("drops it on a topic below difficulty 4", async () => {
+    const low = topicById("past-simple")!;
+    const objective = low.objectives[0].id;
+    const { service } = setup({ questions: [{ ...REWRITE, objectiveId: objective }, { ...CHOICE, objectiveId: objective }] });
+    const out = await service.generate(low.id);
+    expect(out.map((q) => q.type)).toEqual(["choice"]);
+  });
+});
+
+describe("QuestionService.grade", () => {
+  const OPEN: GrammarQuestion = {
+    id: "q-open",
+    topicId: TOPIC,
+    objectiveId: "present-link",
+    type: "rewrite",
+    stem: "改寫成現在完成式：I lost my keys.",
+    answer: "I have lost my keys.",
+    explanation: "x",
+    errorTag: "tense-choice",
+  };
+
+  it("runs grammar.grade on its own thread and returns the verdict", async () => {
+    const { ai, service } = setup({ correct: false, feedback: "要用 have lost", corrected: "I have lost my keys." });
+    const v = await service.grade(OPEN, "I lost my keys");
+    expect(v).toEqual({ correct: false, feedback: "要用 have lost", corrected: "I have lost my keys." });
+    expect(ai.threadIds).toEqual([gradeThreadId("q-open")]);
+    expect(ai.requests[0].messages[0].content).toContain("I lost my keys");
+    expect(ai.requests[0].tier).toBe("fast");
+  });
+
+  it("an unreadable verdict is bad_output with the debug info", async () => {
+    const { service } = setup({ nope: 1 });
+    await expect(service.grade(OPEN, "x")).rejects.toMatchObject({ code: "bad_output" });
+  });
+
+  it("stopGrade cancels that question's request", () => {
+    const { ai, service } = setup();
+    service.stopGrade("q-open");
+    expect(ai.cancelled).toEqual([gradeThreadId("q-open")]);
   });
 });

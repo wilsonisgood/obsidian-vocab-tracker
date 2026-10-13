@@ -2,7 +2,7 @@ import { MarkdownRenderChild, setIcon, type App, type Component, type MarkdownPo
 import type VocabTrackerPlugin from "../../../main";
 import { t, type I18nKey } from "../../core/i18n";
 import { topicById } from "../../core/grammar/catalog";
-import { canGradeLocally, grade } from "../../core/grammar/grading";
+import { grade, isAskable, isOpenQuestion } from "../../core/grammar/grading";
 import { buildSession } from "../../core/grammar/session";
 import type { SrsCard } from "../../core/model/srs";
 import type { GrammarQuestion } from "../../core/model/grammar";
@@ -15,7 +15,9 @@ import { inlineNote } from "../kit/inlineNote";
 import {
   currentQuestion,
   feedbackFor,
+  finishGrading,
   findErrorPieces,
+  gradingFailed,
   keyAction,
   lastResult,
   needsMoreQuestions,
@@ -28,9 +30,12 @@ import {
   retireCurrent,
   scheduledResults,
   schedulesTopic,
+  selfAssess,
+  sourceName,
   startRound,
   stemPieces,
   submitAnswer,
+  submitOpen,
   summarize,
   type PracticeMode,
   type PracticeParams,
@@ -51,7 +56,9 @@ import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAi
 // review (FSRS); a mistakes round never does (R1).
 //
 // One question at a time out of the stored bank (choice / blank /
-// find-error, graded locally); answer → feedback → next → summary. Keys
+// find-error graded locally; rewrite / translate by the AI when it is on,
+// else by the learner comparing with the sample answer); answer → feedback →
+// next → summary. Keys
 // 1–4 / Enter work only while the block has focus. Questions that arrive
 // while a round is running (sync, 「生成新題目」) never reorder it: they
 // wait for the next round.
@@ -71,6 +78,9 @@ export interface GrammarPracticeDeps {
   questions: QuestionService;
   // Only status() is used: the AI gate for 「生成新題目」.
   ai: Pick<AiService, "status">;
+  // Opens a note by its path (「出自〈筆記名〉」). Without it the source is
+  // shown as plain text.
+  openPath?(path: string): void;
   now?(): Date;
 }
 
@@ -101,7 +111,7 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
   private ready = false;
   private disposed = false;
   private round: RoundState = startRound([]);
-  private input: HTMLInputElement | null = null;
+  private input: HTMLInputElement | HTMLTextAreaElement | null = null;
   // The keyboard needs the block focused after a click re-drew its buttons.
   private refocus = false;
   private genError: { text: string; cause: unknown } | null = null;
@@ -114,6 +124,13 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
   private scheduled: SrsCard | null = null;
   private finished = false;
   private ctrl: AbortController | null = null;
+  // The AI grading in flight (rewrite / translate). The token tells a late
+  // answer from one the learner already moved past.
+  private gradeCtrl: AbortController | null = null;
+  private gradeToken = 0;
+  private gradeError: { text: string; cause: unknown } | null = null;
+  // What was typed into the multi-line box, kept across redraws.
+  private draft = "";
 
   constructor(
     containerEl: HTMLElement,
@@ -146,6 +163,7 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     );
     this.register(() => {
       this.disposed = true;
+      this.cancelGrade();
     });
 
     void this.deps.grammar.ensureLoaded().then(() => {
@@ -191,6 +209,8 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     this.justAdded = 0;
     this.scheduled = null;
     this.finished = false;
+    this.draft = "";
+    this.gradeError = null;
     this.render();
   }
 
@@ -279,6 +299,16 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     const card = parent.createDiv({ cls: "vt-gr-card" });
     const stem = card.createDiv({ cls: "vt-gr-stem" });
 
+    if (isOpenQuestion(q)) {
+      stem.addClass("is-open");
+      stem.setText(q.stem);
+      if (q.source) this.renderSource(card, q.source);
+      this.renderOpen(card, q);
+      if (fb) this.renderFeedback(parent, q, fb.given, fb.correct);
+      return;
+    }
+    if (q.source) this.renderSource(card, q.source);
+
     if (q.type === "find-error") {
       const options = q.options ?? [];
       const pieces = findErrorPieces(q.stem, options);
@@ -317,6 +347,93 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     }
 
     if (fb) this.renderFeedback(parent, q, fb.given, fb.correct);
+  }
+
+  // 「出自〈筆記名〉」 — the sentence this question was adapted from.
+  private renderSource(card: HTMLElement, source: { path: string; sentence: string }): void {
+    const line = card.createDiv({ cls: "vt-gr-source" });
+    const name = sourceName(source.path);
+    const open = this.deps.openPath;
+    line.title = source.sentence;
+    if (open) {
+      const link = line.createEl("a", { cls: "vt-gr-source-link", text: l("source", { name }), attr: { href: "#" } });
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        open(source.path);
+      });
+    } else {
+      line.setText(l("source", { name }));
+    }
+  }
+
+  // rewrite / translate: a multi-line box → (AI grading | self-check) →
+  // feedback. answering shows the box; the later phases keep the answer
+  // read-only above their own panel.
+  private renderOpen(card: HTMLElement, q: GrammarQuestion): void {
+    const phase = this.round.phase;
+    const fb = lastResult(this.round);
+    const given = fb?.given ?? this.round.pending;
+    const area = card.createEl("textarea", {
+      cls: "vt-gr-textarea",
+      attr: {
+        rows: "3",
+        placeholder: l(q.type === "translate" ? "typeTranslation" : "typeRewrite"),
+        "aria-label": l("typeAnswer"),
+        autocomplete: "off",
+        autocapitalize: "off",
+        autocorrect: "off",
+        spellcheck: "false",
+      },
+    });
+    if (given !== undefined) {
+      area.value = given;
+      area.readOnly = true;
+      if (fb) area.addClass(fb.correct ? "is-correct" : "is-wrong");
+    }
+    if (phase === "answering") {
+      area.value = this.draft;
+      this.input = area;
+      area.addEventListener("input", () => {
+        this.draft = area.value;
+      });
+      area.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" || !(e.metaKey || e.ctrlKey) || e.isComposing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.submitOpenAnswer();
+      });
+      const row = card.createDiv({ cls: "vt-gr-open-row" });
+      row.createSpan({
+        cls: "vt-gr-hint",
+        text: l(this.deps.ai.status() === "ready" ? "openAiHint" : "openSelfHint"),
+      });
+      learnButton(row, { label: l("submit"), cta: true, onClick: () => this.submitOpenAnswer() });
+    } else if (phase === "grading") {
+      const box = card.createDiv({ cls: "vt-learn-busy" });
+      const line = box.createDiv({ cls: "vt-learn-busy-text" });
+      setIcon(line.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
+      line.createSpan({ text: l("grading") });
+      learnButton(box, { label: l("stop"), icon: "square", onClick: () => this.stopGrade() });
+    } else if (phase === "selfcheck") {
+      this.renderSelfCheck(card, q);
+    }
+  }
+
+  private renderSelfCheck(card: HTMLElement, q: GrammarQuestion): void {
+    if (this.gradeError) {
+      card.appendChild(aiErrorBox({ text: this.gradeError.text, error: this.gradeError.cause }));
+      card.createDiv({ cls: "vt-gr-hint", text: l("gradeFailed") });
+    }
+    const box = card.createDiv({ cls: "vt-gr-selfcheck" });
+    box.createDiv({ cls: "vt-gr-selfcheck-title", text: l("sample") });
+    box.createDiv({ cls: "vt-gr-sample", text: q.answer });
+    for (const a of q.accepted ?? []) box.createDiv({ cls: "vt-gr-sample is-alt", text: a });
+    box.createDiv({ cls: "vt-gr-explain", text: q.explanation });
+    box.createDiv({ cls: "vt-gr-hint", text: l("selfAsk") });
+    const actions = box.createDiv({ cls: "vt-gr-actions" });
+    learnButton(actions, { label: l("retire"), icon: "thumbs-down", ghost: true, onClick: () => this.retire() });
+    learnButton(actions, { label: l("selfWrong"), icon: "x", onClick: () => this.selfMark(false) });
+    learnButton(actions, { label: l("selfRight"), icon: "check", cta: true, onClick: () => this.selfMark(true) });
   }
 
   private optionButton(row: HTMLElement, q: GrammarQuestion, text: string, index: number, given: string | undefined): void {
@@ -369,12 +486,18 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
   }
 
   private renderFeedback(parent: HTMLElement, q: GrammarQuestion, given: string, correct: boolean): void {
-    const m = feedbackFor(q, given, correct);
+    const result = lastResult(this.round);
+    const m = feedbackFor(q, given, correct, result);
     const box = parent.createDiv({ cls: ["vt-gr-feedback", correct ? "is-correct" : "is-wrong"] });
     const line = box.createDiv({ cls: "vt-gr-verdict" });
     setIcon(line.createSpan({ cls: "vt-gr-verdict-icon" }), correct ? "check" : "x");
     line.createSpan({ cls: "vt-gr-verdict-text", text: correct ? l("right") : l("wrong") });
-    if (!correct) {
+    if (m.selfAssessed) line.createSpan({ cls: "vt-gr-self-tag", text: l("selfTag") });
+    if (isOpenQuestion(q)) {
+      if (m.aiFeedback) box.createDiv({ cls: "vt-gr-ai-feedback", text: m.aiFeedback });
+      if (m.corrected) box.createDiv({ cls: "vt-gr-fixed", text: l("fixed", { s: m.corrected }) });
+      box.createDiv({ cls: "vt-gr-answer", text: l("sampleIs", { s: m.answer }) });
+    } else if (!correct) {
       const key = q.type === "blank" ? "youTyped" : q.type === "find-error" ? "youClicked" : "youPicked";
       box.createDiv({
         cls: "vt-gr-answer",
@@ -383,7 +506,7 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     } else if (q.type !== "blank") {
       box.createDiv({ cls: "vt-gr-answer", text: m.answer });
     }
-    if (m.corrected) box.createDiv({ cls: "vt-gr-fixed", text: l("fixed", { s: m.corrected }) });
+    if (m.corrected && !isOpenQuestion(q)) box.createDiv({ cls: "vt-gr-fixed", text: l("fixed", { s: m.corrected }) });
     box.createDiv({ cls: "vt-gr-explain", text: m.explanation });
     if (m.whyWrong) {
       const why = box.createDiv({ cls: "vt-gr-why" });
@@ -454,7 +577,7 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
       host.appendChild(inlineNote({ text: l("added", { n: this.justAdded }) }));
     }
 
-    const available = this.pool().filter(canGradeLocally).length;
+    const available = this.pool().filter(isAskable).length;
     if (!needsMoreQuestions(available, this.size)) return;
     if (this.deps.ai.status() !== "ready") {
       // Mid-round the gate would only be noise; the empty and summary
@@ -520,17 +643,81 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
 
   private answer(q: GrammarQuestion, given: string): void {
     const g = grade(q, given);
-    try {
-      this.deps.questions.record(q, g.normalizedGiven, g.correct);
-    } catch (e) {
-      console.error("Vocab Tracker: couldn't record grammar attempt", e);
-    }
+    this.record(q, g.normalizedGiven, g.correct);
     this.round = submitAnswer(this.round, g.normalizedGiven, g.correct);
     this.refocus = true;
     this.render();
   }
 
+  private record(q: GrammarQuestion, given: string, correct: boolean): void {
+    try {
+      this.deps.questions.record(q, given, correct);
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't record grammar attempt", e);
+    }
+  }
+
+  // 送出 on a rewrite / translate question. The AI is called only here, and
+  // only when it is on; otherwise the learner marks themselves.
+  private submitOpenAnswer(): void {
+    const q = currentQuestion(this.round);
+    if (!q || !isOpenQuestion(q) || this.round.phase !== "answering" || !this.input) return;
+    const given = grade(q, this.input.value).normalizedGiven;
+    if (!given) return;
+    const useAi = this.deps.ai.status() === "ready";
+    this.gradeError = null;
+    this.draft = "";
+    this.round = submitOpen(this.round, given, useAi);
+    this.render();
+    if (useAi) void this.runGrade(q, given);
+  }
+
+  private async runGrade(q: GrammarQuestion, given: string): Promise<void> {
+    const token = ++this.gradeToken;
+    const ctrl = new AbortController();
+    this.gradeCtrl = ctrl;
+    try {
+      const v = await this.deps.questions.grade(q, given, ctrl.signal);
+      if (this.disposed || token !== this.gradeToken || this.round.phase !== "grading") return;
+      this.record(q, given, v.correct);
+      this.round = finishGrading(this.round, v.correct, { feedback: v.feedback, corrected: v.corrected });
+    } catch (e) {
+      if (this.disposed || token !== this.gradeToken || this.round.phase !== "grading") return;
+      // Stopped or failed: back to marking it yourself.
+      if (!isAbort(e)) this.gradeError = { text: learnErrorText(e), cause: e };
+      this.round = gradingFailed(this.round);
+    } finally {
+      if (token === this.gradeToken) this.gradeCtrl = null;
+    }
+    this.refocus = true;
+    this.render();
+  }
+
+  private stopGrade(): void {
+    const q = currentQuestion(this.round);
+    if (q) this.deps.questions.stopGrade(q.id);
+    this.gradeCtrl?.abort();
+  }
+
+  // Leaving the question (👎, closing): a grading still in flight is dropped.
+  private cancelGrade(): void {
+    this.gradeToken++;
+    this.gradeCtrl?.abort();
+    this.gradeCtrl = null;
+  }
+
+  private selfMark(correct: boolean): void {
+    const q = currentQuestion(this.round);
+    const given = this.round.pending;
+    if (!q || this.round.phase !== "selfcheck" || given === undefined) return;
+    this.record(q, given, correct);
+    this.round = selfAssess(this.round, correct);
+    this.refocus = true;
+    this.render();
+  }
+
   private next(): void {
+    this.gradeError = null;
     this.round = nextQuestion(this.round);
     this.refocus = true;
     this.render();
@@ -539,6 +726,9 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
   private retire(): void {
     const q = currentQuestion(this.round);
     if (!q) return;
+    this.cancelGrade();
+    this.gradeError = null;
+    this.draft = "";
     try {
       this.deps.questions.retire(q.id);
     } catch (e) {
@@ -557,7 +747,8 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     const action = keyAction(e.key, {
       phase: this.round.phase,
       optionCount: q.options?.length ?? 0,
-      inInput: target instanceof HTMLInputElement,
+      inInput: target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement,
+      multiline: target instanceof HTMLTextAreaElement,
       onButton: target?.tagName === "BUTTON",
     });
     if (!action) return;

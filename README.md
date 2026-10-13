@@ -91,12 +91,14 @@ BRAT 只會換掉插件的 `main.js`、`manifest.json`、`styles.css`，單字�
 
 #### 文法學習
 
-文法主題頁有兩個按鈕會呼叫 AI，同樣只在你按下時送出：
+文法主題頁有幾個地方會呼叫 AI，同樣只在你按下時送出：
 
 - **生成說明**：送出固定的寫作指示、這個主題的資料（主題名稱、階段、學習目標等內建的主題資料），以及學習者設定（程度、目標、回答語言、回答長度、「其他補充」）。
 - **生成新題目**：送出固定的出題指示、主題名稱與學習目標、你的程度、你已經練習過的文法主題名稱、這個主題題庫裡已有的題幹（避免重複出題），以及——「設定 › 學習者設定 › 出題時使用我的單字」開著（預設開）時——最近收錄的最多 30 個單字，只送單字本身。關掉這個開關就不會送任何單字。
+- **出題時附上你讀過的句子**：你在文章裡問過文法解析、而且 AI 判斷該段用到這個主題時，出題會再附上最多 3 句原文（每句 8 到 40 個英文字，只送句子本身，不送筆記名稱或檔案路徑），讓題目改編自你真正讀過的句子。「設定 › 學習者設定 › 出題時使用我的文章句子」（預設開）可以關掉，關掉就不會送任何句子。
+- **AI 批改**：改寫題、翻譯題（中級以上的主題才會出）按下「送出」時，會送出批改指示、這個主題與學習目標、題目、範例答案，以及你寫的那一句答案，由 AI 判斷文法與句意。AI 沒有開啟時不會送任何東西，改成顯示範例答案讓你自己對照、自己按「我答對了／我答錯了」。批改失敗或你按停止時也一樣退回自評。
 
-**不會**送出：筆記內容、你的作答紀錄和錯題。出好的題目存在 `store/grammar.json`，之後的練習和批改都在本機完成，不再呼叫 AI。
+**不會**送出：筆記全文、你的其他作答紀錄和錯題（選擇、填空、找錯題都在本機批改）。出好的題目存在 `store/grammar.json`，之後的練習和批改（改寫、翻譯題的 AI 批改除外）都在本機完成，不再呼叫 AI。
 
 > 段落討論的介面還沒推出。程式裡已經寫好的段落 prompt 會送出整篇筆記（太長時只送該段前後各 3 段），推出時會在這裡補上說明。
 
@@ -221,7 +223,7 @@ achieve,達成,v.
 
 - **Dictionary/translation (always on, no key):** the word is sent to Wiktionary and Datamuse; its English definition is sent to Google Translate's unofficial endpoint (fallback: MyMemory). No note content is sent.
 - **AI (off by default):** nothing is sent until you enable AI and press a quick action / send a question (or click "Test connection", which sends `ping`). A word question sends: the built-in tutor instructions, the word's fields (incl. your "grammar note"), the **full source paragraph and the note's file name**, your learner profile (shown verbatim under *Learner settings › What the AI sees*), up to the last 6 rounds of that word's conversation (including selections attached in those rounds), your question, and your most recent text selection in any note (max 1,500 characters; shown above the composer and removable with ×). The API key only travels in the auth header to that provider. Requests go only to the provider you chose: Anthropic, or the OpenAI-compatible base URL you entered (OpenAI, Gemini, a local Ollama…).
-- **Grammar (AI, only when you press it):** "Generate explanation" sends the built-in topic data and your learner profile; "Generate new questions" sends the topic name and learning objectives, your level, the names of grammar topics you have practiced, the stems already in that topic's bank, and — unless you turn off *Learner settings › Use my words in questions* — up to 30 recently saved words (the words only). No note content, answers or mistakes are sent; questions are stored in `store/grammar.json` and graded locally.
+- **Grammar (AI, only when you press it):** "Generate explanation" sends the built-in topic data and your learner profile; "Generate new questions" sends the topic name and learning objectives, your level, the names of grammar topics you have practiced, the stems already in that topic's bank, and — unless you turn off *Learner settings › Use my words in questions* — up to 30 recently saved words (the words only). Unless you turn off *Learner settings › Use my reading sentences in questions* (on by default), "Generate new questions" also sends up to 3 sentences (8–40 English words each; the sentence text only, never the note's name or path) taken from paragraphs where you asked for a grammar analysis that named this topic. On topics of intermediate level and up, pressing *Submit* on a rewrite or translate question sends the grading instructions, the topic and objective, the question, its sample answer and the sentence you wrote — only then, and only with AI on; with AI off you compare with the sample answer and mark yourself. No other note content, answers or mistakes are sent; questions are stored in `store/grammar.json` and every other question type is graded locally.
 - **API key storage:** on Obsidian 1.11.4+ the key is kept in Obsidian's SecretStorage on that device only (not in `data.json`; enter it once per device). On older versions it is stored **in plain text** in the plugin's `data.json` and **syncs with your vault** if your sync includes the plugin folder.
 - **Recommended:** create a dedicated key for this plugin, set a spend limit in your provider's console, and set the plugin's *Monthly token limit* (Settings › AI; counted by the plugin, cache reads weighted 1/10, checked before each request).
 - Without a key, every non-AI feature keeps working.

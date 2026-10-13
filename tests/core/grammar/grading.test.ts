@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canGradeLocally, grade } from "../../../src/core/grammar/grading";
+import { canGradeLocally, grade, isAskable, isOpenQuestion } from "../../../src/core/grammar/grading";
 import type { GrammarQuestion } from "../../../src/core/model/grammar";
 
 function q(extra: Partial<GrammarQuestion>): GrammarQuestion {
@@ -90,12 +90,21 @@ describe("grade — blank", () => {
 describe("grade — open types", () => {
   it("rewrite / translate need the AI", () => {
     const r = grade(q({ type: "rewrite", answer: "He said that he was tired." }), " He said that he was tired. ");
-    expect(r).toEqual({ correct: false, normalizedGiven: "He said that he was tired", needsAi: true });
+    expect(r).toEqual({ correct: false, normalizedGiven: "He said that he was tired.", needsAi: true });
     expect(grade(q({ type: "translate" }), "x").needsAi).toBe(true);
   });
   it("canGradeLocally covers exactly the P types", () => {
     expect(["choice", "blank", "find-error"].every((type) => canGradeLocally({ type: type as GrammarQuestion["type"] }))).toBe(true);
     expect(canGradeLocally({ type: "rewrite" })).toBe(false);
     expect(canGradeLocally({ type: "translate" })).toBe(false);
+  });
+  it("keeps line breaks in an open answer", () => {
+    expect(grade(q({ type: "rewrite" }), "  Not until  she came\n\n  did he leave.  ").normalizedGiven).toBe("Not until she came\ndid he leave.");
+  });
+  it("isAskable covers all five types; isOpenQuestion only rewrite / translate", () => {
+    for (const type of ["choice", "blank", "find-error", "rewrite", "translate"] as const) expect(isAskable({ type })).toBe(true);
+    expect(isOpenQuestion({ type: "rewrite" })).toBe(true);
+    expect(isOpenQuestion({ type: "translate" })).toBe(true);
+    expect(isOpenQuestion({ type: "blank" })).toBe(false);
   });
 });

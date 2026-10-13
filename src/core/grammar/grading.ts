@@ -5,7 +5,9 @@ import type { GrammarQuestion, GrammarQuestionType } from "../model/grammar";
 // accepted after normalising the things a learner shouldn't be marked down
 // for (case, spacing, final punctuation, curly quotes, contractions).
 // rewrite / translate can't be graded by string comparison: they come back
-// as needsAi (the review wave's AI grader).
+// as needsAi — the practice block sends them to the grammar.grade task when
+// AI is on, and otherwise lets the learner compare with the sample answer
+// and mark themselves (wave 15 R2).
 
 export interface GradeResult {
   correct: boolean;
@@ -20,6 +22,18 @@ export const LOCAL_TYPES: ReadonlySet<GrammarQuestionType> = new Set(["choice", 
 
 export function canGradeLocally(q: Pick<GrammarQuestion, "type">): boolean {
   return LOCAL_TYPES.has(q.type);
+}
+
+// Every type can be asked in a round: the open ones (rewrite / translate)
+// are graded by the AI or by the learner (R2), so a bank question of any
+// type is askable.
+export function isAskable(q: Pick<GrammarQuestion, "type">): boolean {
+  return canGradeLocally(q) || isOpenQuestion(q);
+}
+
+// rewrite / translate: free multi-line answers with a sample answer.
+export function isOpenQuestion(q: Pick<GrammarQuestion, "type">): boolean {
+  return q.type === "rewrite" || q.type === "translate";
 }
 
 // ── Normalising ───────────────────────────────────────────────────
@@ -119,6 +133,8 @@ export function grade(question: GrammarQuestion, given: string): GradeResult {
       };
     }
     default:
-      return { correct: false, normalizedGiven: display(given), needsAi: true };
+      // Open answers keep their punctuation and line breaks: the AI judges
+      // the whole text, and the learner compares it with the sample.
+      return { correct: false, normalizedGiven: given.replace(/[ \t]+/g, " ").replace(/\s*\n\s*/g, "\n").trim(), needsAi: true };
   }
 }
