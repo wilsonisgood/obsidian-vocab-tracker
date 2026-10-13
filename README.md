@@ -12,6 +12,7 @@
 - **List**：`vocab-list/List.md`（裡面是 `vocab-dashboard` 區塊），欄位可以直接編輯。
 - **Card**：`vocab-list/Card.md`，用 FSRS 排程複習。
 - **考試字表**：把托福、雅思、多益等字表放進 vault，閱讀模式會在這些字底下加上彩色虛線，第一次打開筆記時會把字表裡的字自動加入單字庫（見〈考試字表〉）。
+- **文法學習**：`Grammar.md`（文法地圖）把文法主題分成基礎、中級、進階三階，標出學習中、待複習和已熟練的主題。每個主題有自己的主題頁（在入口檔資料夾的 `Grammar/` 底下），可以按「生成說明」讓 AI 寫說明。段落討論的文法解析會標出該段用到的文法主題，點一下就進主題頁。主題頁裡可以請 AI 出練習題，作答和批改都在本機完成；答錯的題目收進錯題本，之後可以只重做錯題。
 - **AI 單字家教（選用）**：針對單字問「用法、比較、造句、記憶法」，或自由提問。支援 Anthropic（Claude）和任何 OpenAI 相容端點（OpenAI、Gemini、Ollama…）。
 - **多裝置同步**：單字庫、複習紀錄和 AI 對話放在插件資料夾，用 iCloud、Git 等方式同步時，會合併各裝置的修改，而不是由最後寫入的一方蓋掉另一方。
 
@@ -61,6 +62,7 @@ BRAT 只會換掉插件的 `main.js`、`manifest.json`、`styles.css`，單字�
 | 加入單字後、啟動 5 秒後補抓沒有定義的字 | 單字本身 | Wiktionary（`en.wiktionary.org`）、Datamuse（`api.datamuse.com`） | 不用 |
 | 同上 | 抓到的英文定義（要翻成中文） | Google 翻譯的非官方端點（`translate.googleapis.com`）；失敗時改用 MyMemory（`api.mymemory.translated.net`） | 不用 |
 | 你在 AI 分頁按快捷鈕或送出問題 | 見下方〈AI 會送出哪些文字〉 | 你在設定選的服務：Anthropic（`api.anthropic.com`），或你填的 OpenAI 相容 Base URL | Anthropic 需要；OpenAI 相容端點可以不填（例如本機 Ollama） |
+| 你在文法主題頁按「生成說明」或「生成新題目」 | 見下方〈AI 會送出哪些文字〉的〈文法學習〉 | 同上 | 同上 |
 | 你在設定按「測試連線」 | 每個設定的模型各送一次 `ping` | 同上 | 同上 |
 
 除此之外，插件不會連到其他地方，也沒有任何統計或追蹤。發音用的是裝置內建的語音合成；唯一的例外是舊版插件查過字典、單字資料裡存有發音檔網址的單字，按發音時會從那個網址播放（播放失敗才改用語音合成）。
@@ -86,6 +88,15 @@ BRAT 只會換掉插件的 `main.js`、`manifest.json`、`styles.css`，單字�
 7. **反白的文字**：你最近一次在任一篇筆記（閱讀模式或編輯模式）反白的文字，最多 1,500 個字元。它會先顯示在輸入框上方的「選取：『…』」，可以按 × 不附上；送出一次後，下一個問題就不會再附上，要重新反白才會再出現。不過附上過的選取文字會留在那一輪的對話裡，之後最多 6 輪會隨著對話歷史再送出。
 
 **不會**送出：其他筆記（除了第 7 項你反白附上的文字）、整篇出處筆記（只送那一段）、單字庫裡的其他單字、複習紀錄、vault 名稱或資料夾路徑，以及上面第 4 項學習者設定以外的其他設定。API key 只會放在請求的驗證 header 裡，送到你選的那個服務，不會出現在 prompt 內容中。
+
+#### 文法學習
+
+文法主題頁有兩個按鈕會呼叫 AI，同樣只在你按下時送出：
+
+- **生成說明**：送出固定的寫作指示、這個主題的資料（主題名稱、階段、學習目標等內建的主題資料），以及學習者設定（程度、目標、回答語言、回答長度、「其他補充」）。
+- **生成新題目**：送出固定的出題指示、主題名稱與學習目標、你的程度、你已經練習過的文法主題名稱、這個主題題庫裡已有的題幹（避免重複出題），以及——「設定 › 學習者設定 › 出題時使用我的單字」開著（預設開）時——最近收錄的最多 30 個單字，只送單字本身。關掉這個開關就不會送任何單字。
+
+**不會**送出：筆記內容、你的作答紀錄和錯題。出好的題目存在 `store/grammar.json`，之後的練習和批改都在本機完成，不再呼叫 AI。
 
 > 段落討論的介面還沒推出。程式裡已經寫好的段落 prompt 會送出整篇筆記（太長時只送該段前後各 3 段），推出時會在這裡補上說明。
 
@@ -124,6 +135,7 @@ BRAT 只會換掉插件的 `main.js`、`manifest.json`、`styles.css`，單字�
 |---|---|
 | `.obsidian/plugins/vocab-tracker/data.json` | 單字庫與設定（舊版 Obsidian 也包含 API key） |
 | `.obsidian/plugins/vocab-tracker/store/threads.json` | AI 對話：你的問題、附上的選取文字、實際送出的訊息和 AI 的回答 |
+| `.obsidian/plugins/vocab-tracker/store/grammar.json` | 文法學習：AI 出好的題庫、每一次作答紀錄與各主題的練習進度 |
 | `.obsidian/plugins/vocab-tracker/store/reviews.json` | Card 複習紀錄 |
 | `.obsidian/plugins/vocab-tracker/store/usage.json` | AI 每日用量（依裝置） |
 | `.obsidian/plugins/vocab-tracker/store/imports.json` | 哪些筆記已經自動匯入過考試字彙 |
@@ -209,6 +221,7 @@ achieve,達成,v.
 
 - **Dictionary/translation (always on, no key):** the word is sent to Wiktionary and Datamuse; its English definition is sent to Google Translate's unofficial endpoint (fallback: MyMemory). No note content is sent.
 - **AI (off by default):** nothing is sent until you enable AI and press a quick action / send a question (or click "Test connection", which sends `ping`). A word question sends: the built-in tutor instructions, the word's fields (incl. your "grammar note"), the **full source paragraph and the note's file name**, your learner profile (shown verbatim under *Learner settings › What the AI sees*), up to the last 6 rounds of that word's conversation (including selections attached in those rounds), your question, and your most recent text selection in any note (max 1,500 characters; shown above the composer and removable with ×). The API key only travels in the auth header to that provider. Requests go only to the provider you chose: Anthropic, or the OpenAI-compatible base URL you entered (OpenAI, Gemini, a local Ollama…).
+- **Grammar (AI, only when you press it):** "Generate explanation" sends the built-in topic data and your learner profile; "Generate new questions" sends the topic name and learning objectives, your level, the names of grammar topics you have practiced, the stems already in that topic's bank, and — unless you turn off *Learner settings › Use my words in questions* — up to 30 recently saved words (the words only). No note content, answers or mistakes are sent; questions are stored in `store/grammar.json` and graded locally.
 - **API key storage:** on Obsidian 1.11.4+ the key is kept in Obsidian's SecretStorage on that device only (not in `data.json`; enter it once per device). On older versions it is stored **in plain text** in the plugin's `data.json` and **syncs with your vault** if your sync includes the plugin folder.
 - **Recommended:** create a dedicated key for this plugin, set a spend limit in your provider's console, and set the plugin's *Monthly token limit* (Settings › AI; counted by the plugin, cache reads weighted 1/10, checked before each request).
 - Without a key, every non-AI feature keeps working.
