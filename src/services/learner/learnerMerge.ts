@@ -1,3 +1,5 @@
+import { PRACTICE_KINDS } from "../../core/model/practice";
+import type { PracticeQuestion, ScenarioTrack } from "../../core/model/practice";
 import { FOCUS_KINDS, LEARN_RESULTS, TRACKS } from "../../core/model/learner";
 import type {
   FocusRef,
@@ -20,6 +22,9 @@ const DAY_MS = 86_400_000;
 export const POOL_TOMBSTONE_TTL_MS = 30 * DAY_MS;
 export const MISTAKE_RESOLVED_TTL_MS = 90 * DAY_MS;
 export const EVENT_TTL_MS = 365 * DAY_MS;
+// A stored question nobody points at (not in a live pool item or an open
+// mistake) is kept this long after it was written.
+export const QUESTION_TTL_MS = 30 * DAY_MS;
 
 function ms(iso: string | undefined): number {
   const t = iso ? Date.parse(iso) : 0;
@@ -27,7 +32,7 @@ function ms(iso: string | undefined): number {
 }
 
 export function emptyLearnerShard(): LearnerShard {
-  return { events: [], pool: [], mistakes: [], filters: [], meta: {} };
+  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {} };
 }
 
 const str = (v: unknown): v is string => typeof v === "string" && v !== "";
@@ -94,6 +99,60 @@ function normalizeFilter(raw: unknown): TrackFilter | null {
   return { id: raw.id, value: raw.value, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : "" };
 }
 
+const SCENARIO_TRACKS: readonly ScenarioTrack[] = ["poly", "vocab", "mix"];
+
+function normalizeQuestion(raw: unknown): PracticeQuestion | null {
+  if (!isObj(raw) || !str(raw.id) || !SCENARIO_TRACKS.includes(raw.track as ScenarioTrack)) return null;
+  if (!PRACTICE_KINDS.includes(raw.kind as PracticeQuestion["kind"])) return null;
+  if (!str(raw.text) || !str(raw.answerId) || !str(raw.explanation)) return null;
+  const focus = focusOf(raw.focus);
+  if (!focus || !isObj(raw.scenario) || !str(raw.scenario.id) || !str(raw.scenario.scene)) return null;
+  if (!Array.isArray(raw.options)) return null;
+  const options: { id: string; text: string }[] = [];
+  for (const o of raw.options) {
+    if (isObj(o) && str(o.id) && typeof o.text === "string" && o.text !== "") options.push({ id: o.id, text: o.text });
+  }
+  if (options.length < 2 || !options.some((o) => o.id === raw.answerId)) return null;
+  const sc = raw.scenario;
+  const scenario: PracticeQuestion["scenario"] = {
+    id: sc.id as string,
+    scene: sc.scene as string,
+    seq: typeof sc.seq === "number" && Number.isFinite(sc.seq) ? sc.seq : 0,
+  };
+  if (str(sc.speaker)) scenario.speaker = sc.speaker;
+  if (Array.isArray(sc.lead)) {
+    const lead: { speaker?: string; text: string }[] = [];
+    for (const l of sc.lead) {
+      if (!isObj(l) || !str(l.text)) continue;
+      lead.push(str(l.speaker) ? { speaker: l.speaker, text: l.text } : { text: l.text });
+    }
+    if (lead.length) scenario.lead = lead;
+  }
+  const createdAt = isIso(raw.createdAt) ? raw.createdAt : isIso(raw.updatedAt) ? raw.updatedAt : "1970-01-01T00:00:00.000Z";
+  const q: PracticeQuestion = {
+    id: raw.id,
+    track: raw.track as ScenarioTrack,
+    scenario,
+    kind: raw.kind as PracticeQuestion["kind"],
+    text: raw.text,
+    options,
+    answerId: raw.answerId,
+    explanation: raw.explanation,
+    focus,
+    createdAt,
+    updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : createdAt,
+  };
+  if (isObj(raw.optionNotes)) {
+    const notes: Record<string, string> = {};
+    for (const [k, v] of Object.entries(raw.optionNotes)) if (str(v)) notes[k] = v;
+    if (Object.keys(notes).length) q.optionNotes = notes;
+  }
+  if (str(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh;
+  if (str(raw.errorTag)) q.errorTag = raw.errorTag;
+  if (isIso(raw.retiredAt)) q.retiredAt = raw.retiredAt;
+  return q;
+}
+
 function normList<T>(raw: unknown, one: (r: unknown) => T | null): T[] {
   if (!Array.isArray(raw)) return [];
   const out: T[] = [];
@@ -112,6 +171,7 @@ export function normalizeLearnerShard(raw: unknown): LearnerShard {
     pool: normList(s.pool, normalizePool),
     mistakes: normList(s.mistakes, normalizeMistake),
     filters: normList(s.filters, normalizeFilter),
+    questions: normList(s.questions, normalizeQuestion),
     meta,
   };
 }
@@ -129,6 +189,7 @@ export function mergeLearner(local: LearnerShard, remote: LearnerShard): Learner
     pool: mergeRecords(local.pool, remote.pool),
     mistakes: mergeRecords(local.mistakes, remote.mistakes),
     filters: mergeRecords(local.filters, remote.filters),
+    questions: mergeRecords(local.questions, remote.questions),
     meta: migrated ? { grammarMigratedAt: migrated } : {},
   };
 }
@@ -140,6 +201,7 @@ export function learnerFingerprint(shard: LearnerShard): string {
   for (const p of shard.pool) rows.push(`p|${p.id}|${p.updatedAt}|${p.removedAt ?? ""}`);
   for (const m of shard.mistakes) rows.push(`x|${m.id}|${m.updatedAt}|${m.resolvedAt ?? ""}`);
   for (const f of shard.filters) rows.push(`f|${f.id}|${f.updatedAt}`);
+  for (const q of shard.questions) rows.push(`q|${q.id}|${q.updatedAt}`);
   return rows.sort().join("\n");
 }
 
@@ -149,6 +211,16 @@ export function pruneLearner(shard: LearnerShard, now: number): LearnerShard {
     pool: shard.pool.filter((p) => !p.removedAt || now - ms(p.removedAt) < POOL_TOMBSTONE_TTL_MS),
     mistakes: shard.mistakes.filter((m) => !m.resolvedAt || now - ms(m.resolvedAt) < MISTAKE_RESOLVED_TTL_MS),
     filters: shard.filters,
+    questions: pruneQuestions(shard, now),
     meta: shard.meta,
   };
+}
+
+// Questions that no live pool item and no open mistake points at go once
+// they're older than QUESTION_TTL_MS.
+function pruneQuestions(shard: LearnerShard, now: number): PracticeQuestion[] {
+  const used = new Set<string>();
+  for (const p of shard.pool) if (!p.removedAt) used.add(p.questionId);
+  for (const m of shard.mistakes) if (!m.resolvedAt) used.add(m.questionId);
+  return shard.questions.filter((q) => used.has(q.id) || now - ms(q.createdAt) < QUESTION_TTL_MS);
 }

@@ -1,3 +1,4 @@
+import type { PracticeQuestion } from "./practice";
 // Learner layer (規劃書 12 §1): one LearnEvent per answered question; mastery
 // and weaknesses are computed from events, never stored. Pool and mistake
 // records live beside them in store/learner.json.
@@ -66,6 +67,8 @@ export interface LearnerShard {
   pool: PoolItem[];
   mistakes: MistakeItem[];
   filters: TrackFilter[];
+  // Scenario questions of 常用字 / 單字情境 / 混合 (第十七波 S).
+  questions: PracticeQuestion[];
   meta: LearnerMeta;
 }
 

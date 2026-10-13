@@ -11,6 +11,8 @@ import type { FocusRef, Track } from "./learner";
 // find-error: the options are fragments of `text`, pick the wrong one.
 export type PracticeKind = "which-sense" | "pick-word" | "same-sense" | "choice" | "find-error";
 
+export const PRACTICE_KINDS: readonly PracticeKind[] = ["which-sense", "pick-word", "same-sense", "choice", "find-error"];
+
 export type ScenarioTrack = Exclude<Track, "grammar">;
 
 export interface PracticeScenarioInfo {

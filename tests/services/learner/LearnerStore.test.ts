@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GrammarAttempt, GrammarQuestion } from "../../../src/core/model/grammar";
 import type { LearnEvent, LearnerShard } from "../../../src/core/model/learner";
+import type { PracticeQuestion } from "../../../src/core/model/practice";
 import { addToPool, removeFromPool } from "../../../src/core/practice/pool";
 import { recordWrong } from "../../../src/core/practice/mistakes";
 import { LEARNER_SHARD, LearnerStore } from "../../../src/services/learner/LearnerStore";
@@ -76,13 +77,13 @@ describe("LearnerStore", () => {
   it("merges two devices' shards and keeps both events after reload", async () => {
     vi.useFakeTimers();
     const { storage, store } = setup();
-    storage.shards.set(LEARNER_SHARD, { events: [ev("disk")], pool: [], mistakes: [], filters: [], meta: {} });
+    storage.shards.set(LEARNER_SHARD, { events: [ev("disk")], pool: [], mistakes: [], filters: [], questions: [], meta: {} });
     await store.ensureLoaded();
     store.addEvent(ev("mine", "2026-10-12T01:00:00Z"));
     await store.flush();
     expect(saved(storage).events.map((e) => e.id).sort()).toEqual(["disk", "mine"]);
     // another device's file lands
-    storage.shards.set(LEARNER_SHARD, { events: [ev("other", "2026-10-12T02:00:00Z")], pool: [], mistakes: [], filters: [], meta: {} });
+    storage.shards.set(LEARNER_SHARD, { events: [ev("other", "2026-10-12T02:00:00Z")], pool: [], mistakes: [], filters: [], questions: [], meta: {} });
     await store.reload();
     expect(store.learnEvents().map((e) => e.id).sort()).toEqual(["disk", "mine", "other"]);
     await vi.advanceTimersByTimeAsync(600);
@@ -94,11 +95,11 @@ describe("LearnerStore", () => {
     vi.useFakeTimers();
     const { storage, store } = setup();
     const [item] = addToPool([], "grammar", [{ questionId: "q1" }], new Date("2026-10-01T00:00:00Z"));
-    storage.shards.set(LEARNER_SHARD, { events: [], pool: [item], mistakes: [], filters: [], meta: {} });
+    storage.shards.set(LEARNER_SHARD, { events: [], pool: [item], mistakes: [], filters: [], questions: [], meta: {} });
     await store.ensureLoaded();
     store.upsertPool([removeFromPool(item, "answered", NOW)]);
     await store.flush();
-    storage.shards.set(LEARNER_SHARD, { events: [], pool: [item], mistakes: [], filters: [], meta: {} });
+    storage.shards.set(LEARNER_SHARD, { events: [], pool: [item], mistakes: [], filters: [], questions: [], meta: {} });
     await store.reload();
     expect(store.pool("grammar")).toEqual([]);
     expect(addToPool(store.allPool(), "grammar", [{ questionId: "q1" }], NOW)).toEqual([]);
@@ -124,5 +125,28 @@ describe("LearnerStore", () => {
     const again = new LearnerStore({ storage });
     await again.ensureLoaded();
     expect(again.migrateFromGrammar(qs, as)).toBe(false);
+  });
+
+  it("stores practice questions, queries by track, survives a flush and an old file", async () => {
+    vi.useFakeTimers();
+    const { storage, store } = setup();
+    storage.shards.set(LEARNER_SHARD, { events: [], pool: [], mistakes: [], filters: [], meta: {} });
+    await store.ensureLoaded();
+    expect(store.practiceQuestions()).toEqual([]);
+    const pq = (id: string, track: "poly" | "vocab"): PracticeQuestion => ({
+      id, track, scenario: { id: "s", scene: "x", seq: 1 }, kind: "which-sense", text: "[[a]]",
+      options: [{ id: "a", text: "x" }, { id: "b", text: "y" }], answerId: "a", explanation: "e",
+      focus: { kind: "word", id: "w" }, createdAt: NOW.toISOString(), updatedAt: NOW.toISOString(),
+    });
+    const seen: string[] = [];
+    store.events.on("question:upsert", (l) => seen.push(...l.map((x) => x.id)));
+    store.upsertPracticeQuestions([pq("a", "poly"), pq("b", "vocab")]);
+    store.upsertPracticeQuestions([{ ...pq("a", "poly"), explanation: "new" }]);
+    expect(store.practiceQuestions("poly").map((x) => x.explanation)).toEqual(["new"]);
+    expect(store.practiceQuestions()).toHaveLength(2);
+    expect(store.practiceQuestion("b")?.track).toBe("vocab");
+    expect(seen).toEqual(["a", "b", "a"]);
+    await store.flush();
+    expect(saved(storage).questions.map((x) => x.id).sort()).toEqual(["a", "b"]);
   });
 });
