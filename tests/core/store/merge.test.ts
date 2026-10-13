@@ -270,6 +270,15 @@ describe("merge() settings, section by section", () => {
     }
   });
 
+  it("merges the grammar section on its own stamp", () => {
+    const mac: PluginSettings = { schemaVersion: 2, updatedAt: T2, grammar: { useMyWords: false, updatedAt: T2 }, ui: { locale: "en", updatedAt: T1 } };
+    const iphone: PluginSettings = { schemaVersion: 2, updatedAt: T3, grammar: { useMyWords: true, updatedAt: T1 }, ui: { locale: "zh-TW", updatedAt: T3 } };
+    for (const s of both(mac, iphone)) {
+      expect(s?.grammar).toEqual(mac.grammar);
+      expect(s?.ui?.locale).toBe("zh-TW");
+    }
+  });
+
   it("merges the paragraph anchors section on its own stamp", () => {
     // Mac turned on hash mode; the iPhone later changed its locale.
     const mac: PluginSettings = {

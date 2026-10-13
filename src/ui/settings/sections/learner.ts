@@ -8,6 +8,7 @@ import {
   type CefrLevel,
   type LearnerGoal,
   type LearnerProfile,
+  resolveGrammarSettings,
 } from "../../../core/model/settings";
 import { renderProfile } from "../../../services/ai/context/profile";
 import { parseNonNegativeInt, type SettingsSection } from "../SettingsTab";
@@ -65,6 +66,19 @@ export const learnerSection: SettingsSection = {
         ta.inputEl.addClass("vt-settings-wide");
         ta.setValue(profile().extra).onChange((v) => void update((p) => (p.extra = v)));
       });
+
+    // 文法出題 (Wave 15): whether recent words go into the grammar-question request.
+    new Setting(el)
+      .setName(t("settings.grammar.useMyWords.name"))
+      .setDesc(t("settings.grammar.useMyWords.desc"))
+      .addToggle((tg) =>
+        tg.setValue(resolveGrammarSettings(ctx.store.settings.grammar).useMyWords).onChange(
+          (v) =>
+            void ctx.store.updateSettings((s) => {
+              s.grammar = { ...(s.grammar ?? {}), ...resolveGrammarSettings(s.grammar), useMyWords: v };
+            })
+        )
+      );
 
     const previewSetting = new Setting(el).setName(t("settings.learner.preview.name"));
     previewSetting.settingEl.addClass("vt-settings-preview-row");

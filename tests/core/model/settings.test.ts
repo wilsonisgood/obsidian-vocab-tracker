@@ -3,6 +3,7 @@ import {
   carryLegacyStamp,
   defaultAiSettings,
   defaultLearnerProfile,
+  resolveGrammarSettings,
   snapshotSettingsSections,
   stampChangedSections,
   withSettingsDefaults,
@@ -281,5 +282,17 @@ describe("resolveWordlistSettings", () => {
     expect(resolveWordlistSettings({ folder: "  " }).folder).toBe("vocab-wordlists");
     expect(defaultTagColor("exam/TOEFL")).toBe("#3b82f6");
     expect(defaultTagColor("custom/醫學")).toBe(defaultTagColor("custom/醫學"));
+  });
+});
+
+describe("resolveGrammarSettings", () => {
+  it("defaults useMyWords to true and keeps a stored false", () => {
+    expect(resolveGrammarSettings(undefined)).toEqual({ useMyWords: true });
+    expect(resolveGrammarSettings({})).toEqual({ useMyWords: true });
+    expect(resolveGrammarSettings({ useMyWords: false, updatedAt: "2026-01-01T00:00:00.000Z" })).toEqual({
+      useMyWords: false,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    expect(resolveGrammarSettings({ useMyWords: "no" as unknown as boolean }).useMyWords).toBe(true);
   });
 });

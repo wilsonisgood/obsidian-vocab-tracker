@@ -161,6 +161,21 @@ export interface AnchorSettings extends SectionStamp {
   blockIdNoticeSeen: boolean;
 }
 
+// 文法學習 (Wave 15). Read through resolveGrammarSettings() below.
+export interface GrammarSettings extends SectionStamp {
+  // 出題時使用我的單字: send up to 30 recently saved words to the AI when it
+  // writes grammar questions. Off → nothing from the word list is sent.
+  useMyWords: boolean;
+}
+
+export const DEFAULT_GRAMMAR_SETTINGS: Readonly<GrammarSettings> = { useMyWords: true };
+
+export function resolveGrammarSettings(raw: Partial<GrammarSettings> | undefined): GrammarSettings {
+  const out: GrammarSettings = { useMyWords: typeof raw?.useMyWords === "boolean" ? raw.useMyWords : DEFAULT_GRAMMAR_SETTINGS.useMyWords };
+  if (typeof raw?.updatedAt === "string") out.updatedAt = raw.updatedAt;
+  return out;
+}
+
 export interface PluginSettings {
   schemaVersion: 2;
   // Set to the same stamp as the section(s) an edit changed; never newer
@@ -182,10 +197,12 @@ export interface PluginSettings {
   files?: Partial<FilesSettings>;
   // Read through resolveAnchorSettings() (ui/sidebar/anchorSettings.ts).
   anchors?: Partial<AnchorSettings>;
+  // Read through resolveGrammarSettings() above; absent = defaults.
+  grammar?: Partial<GrammarSettings>;
 }
 
 // The sections merged independently, each with its own updatedAt.
-export const SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists", "files", "anchors"] as const;
+export const SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists", "files", "anchors", "grammar"] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 export type ResolvedSettings = PluginSettings & {

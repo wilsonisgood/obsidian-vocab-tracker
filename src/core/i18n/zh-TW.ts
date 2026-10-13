@@ -284,6 +284,8 @@ export const zhTW: Record<keyof typeof en, string> = {
   "settings.learner.maxChars.desc": "大約的字數上限。0 = 不限。",
   "settings.learner.extra.name": "其他補充",
   "settings.learner.extra.desc": "會原封不動附在每次請求裡，例如「我是工程師，例句可以用科技情境」。",
+  "settings.grammar.useMyWords.name": "出題時使用我的單字",
+  "settings.grammar.useMyWords.desc": "AI 出文法題時，會帶最近收錄的最多 30 個單字，讓題目用你學過的字。",
   "settings.learner.preview.name": "AI 會看到",
 
   // ── M2 settings section ──
