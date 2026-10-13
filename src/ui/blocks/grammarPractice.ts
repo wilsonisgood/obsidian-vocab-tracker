@@ -1,6 +1,6 @@
 import { MarkdownRenderChild, setIcon, type App, type MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
-import { getLocale } from "../../core/i18n";
+import { t, type I18nKey } from "../../core/i18n";
 import { topicById } from "../../core/grammar/catalog";
 import { canGradeLocally, grade } from "../../core/grammar/grading";
 import { buildSession } from "../../core/grammar/session";
@@ -46,82 +46,10 @@ import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAi
 // while a round is running (sync, 「生成新題目」) never reorder it: they
 // wait for the next round.
 
-// New strings live here until i18n takes them over (整合事項).
-const L = {
-  "zh-TW": {
-    loading: "載入中…",
-    noTopic: "找不到這個文法主題，請檢查 topic 參數。",
-    mistakesOf: "錯題本",
-    emptyTitle: "題庫還沒有題目",
-    emptyBody: "按下「生成新題目」，AI 會為這個主題出一批題目並存起來，之後可以重複練習。",
-    noMistakes: "目前沒有錯題",
-    noMistakesBody: "答錯的題目會出現在這裡，做對就會移走。",
-    generate: "✦ 生成新題目",
-    generating: "AI 正在出題…",
-    stop: "停止",
-    added: "已加入 {n} 題，下一輪會用到。",
-    short: "題庫只有 {n} 題，不夠一輪。",
-    typeAnswer: "輸入答案",
-    check: "檢查",
-    right: "答對了",
-    wrong: "答錯了",
-    youPicked: "你選 {a} → 正解 {b}",
-    youTyped: "你填 {a} → 正解 {b}",
-    youClicked: "你點 {a} → 錯的是 {b}",
-    fixed: "改成：{s}",
-    retire: "這題有問題",
-    next: "下一題",
-    seeSummary: "看小結",
-    summaryTitle: "這一輪完成",
-    score: "答對 {c} / {n} 題",
-    wrongAdded: "{n} 題錯題已加入錯題本。",
-    allRight: "全部答對！",
-    mistakesHint: "做對的題目會從錯題本移走。",
-    retired: "{n} 題被標成有問題，之後不會再出現。",
-    again: "再練一輪",
-    pickOne: "點出錯的地方",
-    objective: "目標",
-  },
-  en: {
-    loading: "Loading…",
-    noTopic: "Unknown grammar topic: check the topic parameter.",
-    mistakesOf: "Mistakes",
-    emptyTitle: "No questions yet",
-    emptyBody: "Press “Generate questions” and the AI writes a batch for this topic and stores it for repeat practice.",
-    noMistakes: "No mistakes right now",
-    noMistakesBody: "Questions you get wrong show up here and leave once you get them right.",
-    generate: "✦ Generate questions",
-    generating: "The AI is writing questions…",
-    stop: "Stop",
-    added: "{n} questions added; they’re used next round.",
-    short: "The bank has only {n} questions, not a full round.",
-    typeAnswer: "Type your answer",
-    check: "Check",
-    right: "Correct",
-    wrong: "Not quite",
-    youPicked: "You chose {a} → answer: {b}",
-    youTyped: "You wrote {a} → answer: {b}",
-    youClicked: "You clicked {a} → the error is {b}",
-    fixed: "Should be: {s}",
-    retire: "Report a problem",
-    next: "Next",
-    seeSummary: "See summary",
-    summaryTitle: "Round complete",
-    score: "{c} / {n} correct",
-    wrongAdded: "{n} wrong answers added to your mistakes.",
-    allRight: "All correct!",
-    mistakesHint: "Questions you get right leave the mistakes list.",
-    retired: "{n} questions flagged and won’t come back.",
-    again: "Another round",
-    pickOne: "Click the error",
-    objective: "Goal",
-  },
-} as const;
-type LKey = keyof (typeof L)["zh-TW"];
+type LKey = Extract<I18nKey, `grammar.practice.${string}`> extends `grammar.practice.${infer K}` ? K : never;
 
-function l(key: LKey, params: Record<string, string | number> = {}): string {
-  const table = L[getLocale() === "en" ? "en" : "zh-TW"];
-  return table[key].replace(/\{(\w+)\}/g, (_m, k: string) => String(params[k] ?? ""));
+function l(key: LKey, params?: Record<string, string | number>): string {
+  return t(`grammar.practice.${key}` as I18nKey, params);
 }
 
 // What the block needs, bundled like DnaBlockDeps so it never depends on

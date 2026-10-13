@@ -1,5 +1,5 @@
 import { Component, setIcon } from "obsidian";
-import { getLocale, t } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import { GRAMMAR_TOPICS } from "../../core/grammar/catalog";
 import { grammarSightings } from "../../core/grammar/sightings";
 import type { GrammarStore } from "../../services/grammar/GrammarStore";
@@ -31,12 +31,6 @@ import {
 // (wave 15 wiring); the heading count is all rows of all three. Owns its
 // element and redraws only itself, on verb usage / favorite / thread /
 // grammar-progress events — never the sections above it.
-
-// Wave 15 rule 11: temporary strings, moved to i18n at integration.
-const L = {
-  "zh-TW": { note: "本篇用到的文法", due: "待複習", practice: "練習" },
-  en: { note: "Grammar in this note", due: "Due for review", practice: "Practice" },
-} as const;
 
 export interface GrammarSectionDeps {
   verbs: Pick<VerbUsageService, "verbs" | "events">;
@@ -141,13 +135,12 @@ export class GrammarSection extends Component {
 
   private draw(rows: VerbUsageRow[], note: NoteGrammarRow[], due: GrammarTopicRow[]): void {
     this.el.empty();
-    const lang = getLocale();
     if (note.length) {
-      this.el.createDiv({ cls: "vt-glist-sub", text: L[lang].note });
+      this.el.createDiv({ cls: "vt-glist-sub", text: t("grammar.sidebar.note") });
       for (const row of note) this.drawTopicRow(row, row.count);
     }
     if (due.length) {
-      this.el.createDiv({ cls: "vt-glist-sub", text: L[lang].due });
+      this.el.createDiv({ cls: "vt-glist-sub", text: t("grammar.sidebar.due") });
       for (const row of due) this.drawTopicRow(row);
     }
     const page = this.page();
@@ -185,7 +178,7 @@ export class GrammarSection extends Component {
       el.createSpan({ cls: "vt-gr-row-count", text: `×${count}` });
       return;
     }
-    const btn = el.createEl("button", { cls: "vt-gr-row-btn", text: L[getLocale()].practice, attr: { type: "button" } });
+    const btn = el.createEl("button", { cls: "vt-gr-row-btn", text: t("grammar.sidebar.practice"), attr: { type: "button" } });
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       open();
