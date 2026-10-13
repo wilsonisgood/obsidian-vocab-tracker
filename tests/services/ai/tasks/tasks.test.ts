@@ -417,6 +417,8 @@ describe("task registry", () => {
       "grammar.explain",
       "grammar.questions",
       "grammar.grade",
+      // 第十七波: the practice tabs call this directly.
+      "practice.scenario",
     ]);
     for (const t of defaultTaskRegistry().all()) {
       expect(t.version).toBeGreaterThanOrEqual(1);

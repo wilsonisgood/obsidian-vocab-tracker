@@ -43,7 +43,7 @@ class PracticeBlock extends MarkdownRenderChild {
     // pop its "add word" menu on clicks inside the block.
     this.registerDomEvent(root, "click", (e) => e.stopPropagation());
 
-    const builtin = vocabTab(this.host);
+    const builtin = vocabTab(this.host, this.host.vocabScenario?.());
     const extra = this.host.tabs().filter((t) => t.id !== builtin.id);
     this.tabs = [builtin, ...extra].sort((a, b) => a.order - b.order);
 

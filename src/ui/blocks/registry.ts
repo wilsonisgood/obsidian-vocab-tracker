@@ -9,6 +9,18 @@ import { renderGrammarPractice, type GrammarPracticeDeps } from "./grammarPracti
 import { renderGrammarTopic, type GrammarTopicDeps } from "./grammarTopic";
 import { renderPractice } from "./practice";
 import { grammarTab } from "./practice/grammarTab";
+import { mixTab } from "./practice/mixTab";
+import { polyTab } from "./practice/polyTab";
+import { renderMistakesPanel } from "./practice/mistakesPanel";
+import { pickVocabRefs } from "./practice/vocabFilterModel";
+import { toPlayerQuestion } from "./practice/scenarioQuestionView";
+import { parseFilterValue } from "./practice/filterBarModel";
+import type { MountMistakes } from "./practice/mixTypes";
+import { renderPolysemyMap, type PolysemyMapDeps } from "./polysemyMap";
+import { topicById } from "../../core/grammar/catalog";
+import { parseGrammarFilter, topicsInFilter } from "../../core/grammar/practiceFilter";
+import { parsePolyFilter, sensesInFilter } from "../../core/poly/catalog";
+import type { GrammarRef } from "../../services/practice/scenarioApi";
 import { mountScenarioPlayer } from "./practice/scenarioPlayer";
 import { grammarSightings } from "../../core/grammar/sightings";
 import { weakFocuses } from "../../core/learner/weakness";
@@ -83,6 +95,14 @@ export function grammarRouting(plugin: VocabTrackerPlugin): {
   };
 }
 
+function polysemyDeps(plugin: VocabTrackerPlugin): PolysemyMapDeps {
+  return {
+    senseStats: senseStats(plugin),
+    setPolyFilter: (f) => plugin.learner.setFilter("poly", f),
+    openPractice: (track) => void plugin.openPracticeTab(track),
+  };
+}
+
 // 練習中心 (Wave 16 E). Filter values are learning data, so they live in
 // the learner shard and sync (1013-card-tabs C5).
 function practiceFilters(plugin: VocabTrackerPlugin): FilterStore {
@@ -90,6 +110,46 @@ function practiceFilters(plugin: VocabTrackerPlugin): FilterStore {
     get: (track) => plugin.learner.filter(track),
     set: (track, value) => plugin.learner.setFilter(track, value),
   };
+}
+
+// 第十七波: both are loaded before a scenario tab draws.
+function scenarioReady(plugin: VocabTrackerPlugin): Promise<void> {
+  return grammarReady(plugin);
+}
+
+// The shared 錯題區 as the 單字 and 混合 panes mount it; 混合 shows the
+// mistakes of every scenario track.
+function mountMistakes(plugin: VocabTrackerPlugin): MountMistakes {
+  return (el, track, owner) =>
+    renderMistakesPanel(
+      el,
+      {
+        api: plugin.scenario,
+        ...(track === "mix" ? {} : { track }),
+        mountPlayer: mountScenarioPlayer,
+        toPlayer: (q) => toPlayerQuestion(q, { topicTitle: (id) => topicById(id)?.title ?? "" }),
+      },
+      owner
+    );
+}
+
+// Objectives of the topics the 文法 filter selects, at most 12 (混合 tab).
+function mixGrammarRefs(plugin: VocabTrackerPlugin): GrammarRef[] {
+  const out: GrammarRef[] = [];
+  const filter = parseGrammarFilter(plugin.learner.filter("grammar"));
+  for (const id of topicsInFilter(filter, plugin.store.settings.learner?.level ?? "")) {
+    const topic = topicById(id);
+    if (!topic) continue;
+    for (const o of topic.objectives) {
+      if (out.length >= 12) return out;
+      out.push({ topicId: topic.id, objectiveId: o.id, text: o.text, title: topic.title, pattern: topic.pattern });
+    }
+  }
+  return out;
+}
+
+function senseStats(plugin: VocabTrackerPlugin) {
+  return (id: string) => plugin.learnerModel.senseStats(id);
 }
 
 function practiceHost(plugin: VocabTrackerPlugin): PracticeHost {
@@ -116,8 +176,38 @@ function practiceHost(plugin: VocabTrackerPlugin): PracticeHost {
         ],
         aiStatus: () => plugin.ai.status(),
       }),
+      polyTab({
+        api: plugin.scenario,
+        mountPlayer: mountScenarioPlayer,
+        ready: () => scenarioReady(plugin),
+        savedWords: () => plugin.store.entries.filter((e) => e.liked === true && !e.deletedAt).map((e) => e.word),
+        weakSenseIds: () =>
+          weakFocuses(plugin.learner.learnEvents({ track: "poly" }), { now: new Date(), track: "poly" }).map(
+            (w) => w.focus.id
+          ),
+        senseStats: senseStats(plugin),
+        aiStatus: () => plugin.ai.status(),
+      }),
+      mixTab({
+        api: plugin.scenario,
+        mountPlayer: mountScenarioPlayer,
+        mountMistakes: mountMistakes(plugin),
+        ready: () => scenarioReady(plugin),
+        vocabRefs: () =>
+          pickVocabRefs(plugin.store.entries, parseFilterValue(plugin.learner.filter("vocab")), new Date()),
+        grammarRefs: () => mixGrammarRefs(plugin),
+        polySenses: () => sensesInFilter(parsePolyFilter(plugin.learner.filter("poly"))),
+        aiStatus: () => plugin.ai.status(),
+      }),
     ],
     filters: practiceFilters(plugin),
+    vocabScenario: () => ({
+      api: plugin.scenario,
+      mountPlayer: mountScenarioPlayer,
+      mountMistakes: mountMistakes(plugin),
+      ready: () => scenarioReady(plugin),
+      aiStatus: () => plugin.ai.status(),
+    }),
   };
 }
 
@@ -153,6 +243,8 @@ export const BLOCKS: readonly BlockDef[] = [
   // Wave 15: 文法學習.
   { lang: "vocab-grammar", render: (p, s, el, ctx) => renderGrammarMap(grammarMapDeps(p), s, el, ctx) },
   { lang: "vocab-grammar-topic", render: (p, s, el, ctx) => renderGrammarTopic(grammarTopicDeps(p), s, el, ctx) },
+  // 第十七波 Q: Polysemy.md 的意思地圖.
+  { lang: "vocab-polysemy", render: (p, s, el, ctx) => renderPolysemyMap(polysemyDeps(p), s, el, ctx) },
   { lang: "vocab-grammar-practice", render: (p, s, el, ctx) => renderGrammarPractice(grammarPracticeDeps(p), s, el, ctx) },
 ];
 
