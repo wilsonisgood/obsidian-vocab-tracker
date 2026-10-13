@@ -39,6 +39,12 @@ export interface VocabEntry extends Record_ {
   example: string;
   definition: string;
   definitionZh: string;
+  // 1010-2 A1: Wiktionary's "form of" line ("plural of stress") when the
+  // word is an inflection; definition then holds the lemma's sense.
+  formOf?: string;
+  // 1010-2 A2: Google's dictionary senses by part of speech, up to 3 each,
+  // e.g. "n. 壓力、應力、重音；v. 強調、注重、突出". Shown in the word page Info.
+  sensesZh?: string;
   phonetic: string;
   audio?: string;
   partOfSpeech: string;
