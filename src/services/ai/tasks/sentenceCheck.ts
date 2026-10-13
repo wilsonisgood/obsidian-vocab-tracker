@@ -47,12 +47,23 @@ function editDistance(a: string, b: string): number {
 }
 
 // Lowercase prefix match on the first token, or a close spelling that starts
-// with the same letter ("got" for "get"). Wholly irregular forms ("went" for
-// "go") are lost — rare enough.
+// with the same letter ("got" for "get"). The wholly irregular forms of the
+// 常用字 verbs, which neither rule catches, are listed.
+const IRREGULAR: Readonly<Record<string, readonly string[]>> = {
+  go: ["went", "gone"],
+  do: ["did"],
+  get: ["gotten"],
+  take: ["took"],
+  break: ["broke", "broken"],
+  catch: ["caught"],
+  bring: ["brought"],
+};
+
 export function isTargetForm(marked: string, target: string): boolean {
   const a = (englishWords(marked)[0] ?? "").toLowerCase();
   const b = (englishWords(target)[0] ?? "").toLowerCase();
   if (!a || !b) return false;
+  if (IRREGULAR[b]?.includes(a)) return true;
   if (a.startsWith(b) || b.startsWith(a)) return true;
   return Math.min(a.length, b.length) >= 3 && a[0] === b[0] && editDistance(a, b) <= MAX_EDITS;
 }
