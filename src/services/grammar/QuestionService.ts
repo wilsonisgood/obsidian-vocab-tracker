@@ -229,10 +229,20 @@ export class QuestionService implements GrammarPracticeApi {
     return this.refilling;
   }
 
+  // 第十八波 T: bumped by every applyFilter. A refill that comes back after
+  // the filter changed keeps only the questions the new filter allows.
+  private filterVersion = 0;
+  private currentFilter: GrammarFilter | null = null;
+
+  scopeVersion(): number {
+    return this.filterVersion;
+  }
+
   async refill(filter: GrammarFilter, opts: { signal?: AbortSignal } = {}): Promise<void> {
     const learner = this.deps.learner;
     if (!learner || this.refilling) return;
     this.refilling = true;
+    const version0 = this.filterVersion;
     let started = false;
     try {
       await Promise.all([learner.ensureLoaded(), this.deps.grammar.ensureLoaded()]);
@@ -252,10 +262,15 @@ export class QuestionService implements GrammarPracticeApi {
         previous: this.previousScenario(),
         signal: opts.signal,
       });
+      let keep = saved;
+      if (this.filterVersion !== version0 && this.currentFilter) {
+        const allowed = new Set(topicsInFilter(parseGrammarFilter(this.currentFilter), this.deps.level?.() ?? ""));
+        keep = saved.filter((q) => allowed.has(q.topicId));
+      }
       const added = addToPool(
         learner.pool(GRAMMAR),
         GRAMMAR,
-        saved.map((q) => ({ questionId: q.id, scenarioId: q.scenario?.id })),
+        keep.map((q) => ({ questionId: q.id, scenarioId: q.scenario?.id })),
         this.clock()
       );
       if (added.length) learner.upsertPool(added);
@@ -386,6 +401,8 @@ export class QuestionService implements GrammarPracticeApi {
   applyFilter(filter: GrammarFilter): void {
     const learner = this.deps.learner;
     if (!learner) return;
+    this.filterVersion++;
+    this.currentFilter = filter;
     const allowed = new Set(topicsInFilter(parseGrammarFilter(filter), this.deps.level?.() ?? ""));
     const now = this.clock();
     const items = learner.pool(GRAMMAR);

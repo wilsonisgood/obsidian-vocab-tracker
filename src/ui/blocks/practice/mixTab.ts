@@ -42,6 +42,8 @@ export interface MixTabDeps {
   ready(): Promise<void>;
   // What each tab's saved filter selects (≤ 12 words / topics' objectives).
   vocabRefs(): VocabRef[];
+  // All words the 單字 filter matches (the scope; vocabRefs is its first 12).
+  vocabScopeIds?(): ReadonlySet<string>;
   grammarRefs(): GrammarRef[];
   polySenses(): { tested: PolySense[]; reference: PolySense[] };
   aiStatus(): AiStatus;
@@ -83,7 +85,7 @@ function start(
 
   const apply = () => {
     const req = buildMixRequest(filter, sources());
-    pane?.setRequest(req, mixFocusIds(req));
+    pane?.setRequest(req, mixFocusIds(req, deps.vocabScopeIds?.()));
   };
 
   const barEl = el.createDiv();

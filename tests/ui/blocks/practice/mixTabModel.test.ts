@@ -85,3 +85,11 @@ describe("tally", () => {
     expect(tallyText(emptyTally())).toBe("");
   });
 });
+
+describe("mixFocusIds vocabScope (第十八波 T)", () => {
+  it("uses the whole matching set for vocab instead of the words sent", () => {
+    const req = { track: "mix", vocab: [{ id: "a", word: "a", zh: "甲", pos: "n." }] } as const;
+    expect([...mixFocusIds(req as never, new Set(["a", "b", "c"]))].sort()).toEqual(["a", "b", "c"]);
+    expect([...mixFocusIds(req as never)]).toEqual(["a"]);
+  });
+});

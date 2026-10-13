@@ -2,11 +2,12 @@ import type { Component } from "obsidian";
 import { t } from "../../../core/i18n";
 import type { PracticeQuestion, ScenarioTrack } from "../../../core/model/practice";
 import type { AiStatus } from "../../../services/ai/AiService";
-import { aiErrorBox } from "../../kit/aiDebug";
-import { isAbort, learnErrorText } from "../learnUi";
 import type { MountPlayer } from "./grammarTab";
 import type { MountMistakes, ScenarioPracticeApi, ScenarioRequest } from "./mixTypes";
+import { REFILL_THRESHOLD } from "./grammarTabModel";
 import type { PlayerAnswer, PlayerHandle, PlayerQuestion } from "./playerTypes";
+import { RefillController } from "./refillGuardModel";
+import { renderRefillError } from "./refillUi";
 
 // The scenario player over one track's pool, shared by the 單字 tab's
 // 情境練習 and the 混合 tab (第十七波 V). Mirrors grammarTab: player, refill,
@@ -36,12 +37,17 @@ export function mountScenarioPane(el: HTMLElement, o: ScenarioPaneOptions): Scen
   const { api, track } = o;
   let alive = true;
   let req: ScenarioRequest | null = null;
-  let ctrl: AbortController | null = null;
+  let mounted = false;
   let sweeping = false;
   const byId = new Map<string, PracticeQuestion>();
+  const ctl = new RefillController({
+    poolSize: () => api.poolQuestions(track).length,
+    threshold: REFILL_THRESHOLD,
+    run: (signal) => run(signal),
+  });
   o.owner.register(() => {
     alive = false;
-    ctrl?.abort();
+    ctl.dispose();
   });
 
   const headEl = el.createDiv({ cls: "vt-pr-mix-head" });
@@ -49,14 +55,26 @@ export function mountScenarioPane(el: HTMLElement, o: ScenarioPaneOptions): Scen
   const playerEl = el.createDiv({ cls: "vt-pr-scenario-player" });
 
   const showError = (error: unknown) => {
-    noteEl.empty();
-    if (!error || isAbort(error) || !alive) return;
-    noteEl.appendChild(aiErrorBox({ text: learnErrorText(error), error }));
+    if (!alive) return;
+    const failed = renderRefillError(noteEl, error, () => {
+      noteEl.empty();
+      ctl.manual();
+    });
+    ctl.ended(failed);
   };
+
+  const canStart = (): boolean =>
+    alive &&
+    !!req &&
+    !ctl.paused &&
+    !api.isRefilling(track) &&
+    o.aiStatus() === "ready" &&
+    api.poolQuestions(track).length === 0;
 
   const emptyText = (): string => {
     if (!req) return o.idleText();
     if (api.isRefilling(track)) return t("practice.grammar.preparing");
+    if (canStart()) return t("practice.startHint");
     const s = o.aiStatus();
     if (s === "disabled") return t("practice.grammar.aiOff");
     if (s === "no_key") return t("practice.grammar.noKey");
@@ -64,10 +82,9 @@ export function mountScenarioPane(el: HTMLElement, o: ScenarioPaneOptions): Scen
     return t("practice.grammar.none");
   };
 
-  const refill = () => {
+  const run = (signal: AbortSignal) => {
     if (!alive || !req || api.isRefilling(track)) return;
-    ctrl = new AbortController();
-    api.refill(req, { signal: ctrl.signal }).catch((e: unknown) => showError(e));
+    api.refill(req, { signal }).catch((e: unknown) => showError(e));
   };
 
   // Questions the player can't show leave the pool.
@@ -84,7 +101,7 @@ export function mountScenarioPane(el: HTMLElement, o: ScenarioPaneOptions): Scen
   const act = (pq: PlayerQuestion, fn: (q: PracticeQuestion) => void) => {
     const q = byId.get(pq.id);
     if (q) fn(q);
-    refill();
+    ctl.afterAction();
   };
 
   const player: PlayerHandle = o.mountPlayer(
@@ -102,6 +119,7 @@ export function mountScenarioPane(el: HTMLElement, o: ScenarioPaneOptions): Scen
         return out;
       },
       emptyText,
+      emptyAction: () => (canStart() ? { label: t("practice.start"), run: () => ctl.manual() } : null),
       callbacks: {
         onAnswer: (a) => {
           o.onAnswer?.(a);
@@ -141,7 +159,11 @@ export function mountScenarioPane(el: HTMLElement, o: ScenarioPaneOptions): Scen
       api.applyScope(track, focusIds);
       sweep();
       player.refresh();
-      refill();
+      // The first request is the tab opening (an empty pool waits for
+      // 「開始出題」); later ones are filter changes (debounced).
+      if (mounted) ctl.filterChanged();
+      else ctl.mount();
+      mounted = true;
     },
   };
 }

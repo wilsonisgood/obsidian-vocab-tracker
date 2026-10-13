@@ -198,7 +198,11 @@ export function mountScenarioPlayer(el: HTMLElement, opts: PlayerOptions, owner:
     root.createDiv({ cls: "vt-pr-stats", text: statsLabel(state) });
     renderHistory(root);
     if (state.current && state.phase !== "empty") renderCurrent(root, state.current);
-    else root.createDiv({ cls: "vt-pr-empty", text: opts.emptyText?.() ?? t("practice.player.empty") });
+    else {
+      root.createDiv({ cls: "vt-pr-empty", text: opts.emptyText?.() ?? t("practice.player.empty") });
+      const act = opts.emptyAction?.();
+      if (act) learnButton(root, { label: act.label, cta: true, onClick: act.run });
+    }
     if (hadFocus) root.focus({ preventScroll: true });
   }
 

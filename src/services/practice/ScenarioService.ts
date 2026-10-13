@@ -85,6 +85,11 @@ export function practiceLine(q: PracticeQuestion): string {
 export class ScenarioService implements ScenarioPracticeApi {
   readonly events = new TypedEmitter<ScenarioEvents>();
   private refilling = new Set<ScenarioTrack>();
+  // 第十八波 T: the scope each track last applied and a version that grows
+  // with every applyScope. A refill that returns after the scope changed
+  // keeps only the questions the new scope covers.
+  private scopes = new Map<ScenarioTrack, ReadonlySet<string>>();
+  private scopeVersions = new Map<ScenarioTrack, number>();
   private clock: () => Date;
   private newId: () => string;
 
@@ -97,6 +102,10 @@ export class ScenarioService implements ScenarioPracticeApi {
     return this.refilling.has(track);
   }
 
+  scopeVersion(track: ScenarioTrack): number {
+    return this.scopeVersions.get(track) ?? 0;
+  }
+
   // ── Refill ────────────────────────────────────────────────────
 
   async refill(req: ScenarioRequest, opts: { signal?: AbortSignal } = {}): Promise<void> {
@@ -104,6 +113,7 @@ export class ScenarioService implements ScenarioPracticeApi {
     const learner = this.deps.learner;
     if (this.refilling.has(track)) return;
     this.refilling.add(track);
+    const version0 = this.scopeVersion(track);
     let started = false;
     try {
       await learner.ensureLoaded();
@@ -132,7 +142,13 @@ export class ScenarioService implements ScenarioPracticeApi {
       const taken = new Set(learner.practiceQuestions(track).map((q) => textKey(q.text)));
       const scenarioId = `sc-${this.newId()}`;
       const saved: PracticeQuestion[] = [];
+      const scope = this.scopeVersion(track) !== version0 ? this.scopes.get(track) : undefined;
+      let outOfScope = 0;
       for (const d of draft.questions) {
+        if (scope && !scope.has(d.focus.id)) {
+          outOfScope++;
+          continue;
+        }
         const key = textKey(d.text);
         if (taken.has(key)) continue;
         taken.add(key);
@@ -156,6 +172,12 @@ export class ScenarioService implements ScenarioPracticeApi {
         if (d.sentenceZh) q.sentenceZh = d.sentenceZh;
         if (d.errorTag) q.errorTag = d.errorTag;
         saved.push(q);
+      }
+      if (!saved.length && outOfScope > 0) {
+        // Everything was written for a scope the learner has left.
+        this.refilling.delete(track);
+        this.events.emit("refill:end", { track });
+        return;
       }
       if (!saved.length) throw new AiError("bad_output", "practice.scenario: every question was already stored");
       learner.upsertPracticeQuestions(saved);
@@ -276,6 +298,8 @@ export class ScenarioService implements ScenarioPracticeApi {
   }
 
   applyScope(track: ScenarioTrack, focusIds: ReadonlySet<string>): void {
+    this.scopes.set(track, new Set(focusIds));
+    this.scopeVersions.set(track, this.scopeVersion(track) + 1);
     const learner = this.deps.learner;
     const now = this.clock();
     const gone = learner.pool(track).filter((i) => {

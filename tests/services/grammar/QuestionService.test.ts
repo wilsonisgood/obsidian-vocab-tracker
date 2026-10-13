@@ -149,6 +149,27 @@ describe("QuestionService.refill", () => {
     expect(ctx.service.isRefilling()).toBe(false);
   });
 
+  it("filter changed while the AI was writing: questions the new filter doesn't allow stay out of the pool (第十八波 T)", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const ctx = setup();
+    await ctx.learner.ensureLoaded();
+    ctx.ai.script = async () => {
+      await gate;
+      return result(JSON.stringify(scenario()));
+    };
+    ctx.service.applyFilter(FILTER);
+    const v0 = ctx.service.scopeVersion();
+    const run = ctx.service.refill(FILTER);
+    await vi.waitFor(() => expect(ctx.service.isRefilling()).toBe(true));
+    ctx.service.applyFilter({ stages: [1], topics: ["be-verb"] });
+    expect(ctx.service.scopeVersion()).toBe(v0 + 1);
+    release();
+    await run;
+    expect(ctx.service.poolQuestions()).toHaveLength(0);
+    expect(ctx.events).toContain("end");
+  });
+
   it("reports a failure through refill:end instead of throwing", async () => {
     const ctx = setup("not json");
     await ctx.learner.ensureLoaded();

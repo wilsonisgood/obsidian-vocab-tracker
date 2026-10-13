@@ -172,6 +172,14 @@ export function pickVocabRefs(entries: readonly VocabEntry[], value: FilterValue
   return toVocabRefs(pickScenarioEntries(entries, value, now, max));
 }
 
+// The scope of a round: every word the filter matches, not just the (up to
+// 12) the request sends. The send order shifts as cards are reviewed; the
+// scope must not, or questions already in the pool would be dropped as
+// "out of range" and written again.
+export function vocabScopeIds(entries: readonly VocabEntry[], value: FilterValue, now: Date): Set<string> {
+  return new Set(pickScenarioEntries(entries, value, now, Number.POSITIVE_INFINITY).map((e) => e.id));
+}
+
 // The request for a round, or null when there are too few words.
 export function vocabScenarioRequest(refs: readonly VocabRef[]): ScenarioRequest | null {
   return refs.length >= SCENARIO_MIN_WORDS ? { track: "vocab", words: [...refs] } : null;

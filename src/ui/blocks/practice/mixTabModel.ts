@@ -81,10 +81,13 @@ export function buildMixRequest(f: MixFilter, src: MixSources): ScenarioRequest 
 }
 
 // Every focus id the request may ask about (applyScope keeps only these).
-export function mixFocusIds(req: ScenarioRequest | null): Set<string> {
+// `vocabScope`: every word the 單字 filter matches (第十八波 T). The request
+// carries at most 12 of them, in an order that shifts as cards are reviewed;
+// the scope stays steady.
+export function mixFocusIds(req: ScenarioRequest | null, vocabScope?: ReadonlySet<string>): Set<string> {
   const ids = new Set<string>();
   if (req?.track !== "mix") return ids;
-  for (const v of req.vocab ?? []) ids.add(v.id);
+  if (req.vocab) for (const id of vocabScope ?? req.vocab.map((v) => v.id)) ids.add(id);
   for (const g of req.grammar ?? []) ids.add(`${g.topicId}/${g.objectiveId}`);
   for (const s of req.poly?.tested ?? []) ids.add(s.id);
   return ids;

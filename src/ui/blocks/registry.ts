@@ -12,7 +12,7 @@ import { grammarTab } from "./practice/grammarTab";
 import { mixTab } from "./practice/mixTab";
 import { polyTab } from "./practice/polyTab";
 import { renderMistakesPanel } from "./practice/mistakesPanel";
-import { pickVocabRefs } from "./practice/vocabFilterModel";
+import { pickVocabRefs, vocabScopeIds } from "./practice/vocabFilterModel";
 import { toPlayerQuestion } from "./practice/scenarioQuestionView";
 import { parseFilterValue } from "./practice/filterBarModel";
 import type { MountMistakes } from "./practice/mixTypes";
@@ -195,6 +195,8 @@ function practiceHost(plugin: VocabTrackerPlugin): PracticeHost {
         ready: () => scenarioReady(plugin),
         vocabRefs: () =>
           pickVocabRefs(plugin.store.entries, parseFilterValue(plugin.learner.filter("vocab")), new Date()),
+        vocabScopeIds: () =>
+          vocabScopeIds(plugin.store.entries, parseFilterValue(plugin.learner.filter("vocab")), new Date()),
         grammarRefs: () => mixGrammarRefs(plugin),
         polySenses: () => sensesInFilter(parsePolyFilter(plugin.learner.filter("poly"))),
         aiStatus: () => plugin.ai.status(),

@@ -168,6 +168,47 @@ describe("ScenarioService.refill", () => {
   });
 });
 
+describe("ScenarioService scope guard (第十八波 T)", () => {
+  it("scope changed while the AI was writing: out-of-scope questions never enter the pool", async () => {
+    let apply: (() => void) | null = null;
+    const ctx = setup(() => {
+      apply?.();
+      return scenario(6, polyAsk, true);
+    });
+    await ctx.learner.ensureLoaded();
+    ctx.service.applyScope("poly", new Set(["get.arrive", "get.obtain"]));
+    const v0 = ctx.service.scopeVersion("poly");
+    apply = () => ctx.service.applyScope("poly", new Set(["get.arrive"]));
+    await ctx.service.refill(POLY);
+    expect(ctx.service.scopeVersion("poly")).toBe(v0 + 1);
+    const pool = ctx.service.poolQuestions("poly");
+    expect(pool).toHaveLength(3);
+    expect(pool.every((q) => q.focus.id === "get.arrive")).toBe(true);
+  });
+
+  it("everything out of scope: ends quietly without an error", async () => {
+    let apply: (() => void) | null = null;
+    const ctx = setup(() => {
+      apply?.();
+      return scenario(6, polyAsk, true);
+    });
+    await ctx.learner.ensureLoaded();
+    apply = () => ctx.service.applyScope("poly", new Set(["other.sense"]));
+    await ctx.service.refill(POLY);
+    expect(ctx.service.poolQuestions("poly")).toHaveLength(0);
+    expect(ctx.ev).toContain("end:poly");
+    expect(ctx.ev).not.toContain("end:poly:error");
+  });
+
+  it("scope unchanged: nothing is filtered", async () => {
+    const ctx = setup();
+    await ctx.learner.ensureLoaded();
+    ctx.service.applyScope("poly", new Set(["get.arrive"]));
+    await ctx.service.refill(POLY);
+    expect(ctx.service.poolQuestions("poly")).toHaveLength(6);
+  });
+});
+
 describe("ScenarioService answers", () => {
   it("correct: event, leaves the pool, no mistake", async () => {
     const { learner, service, rated } = await filled();

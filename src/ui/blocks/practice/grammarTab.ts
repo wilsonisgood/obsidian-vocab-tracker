@@ -5,14 +5,13 @@ import { dueTopics } from "../../../core/grammar/progress";
 import type { GrammarProgress, GrammarSighting } from "../../../core/model/grammar";
 import type { CefrLevel } from "../../../core/model/settings";
 import type { AiStatus } from "../../../services/ai/AiService";
-import { aiErrorBox } from "../../kit/aiDebug";
 import {
   parseGrammarFilter,
   type GrammarFilter,
   type GrammarPracticeApi,
   type GrammarQuestionLike,
 } from "../../grammar/practiceTypes";
-import { isAbort, learnButton, learnErrorText } from "../learnUi";
+import { learnButton } from "../learnUi";
 import { renderFilterBar } from "./filterBar";
 import type { FilterGroup } from "./filterBarModel";
 import {
@@ -29,6 +28,8 @@ import {
   type MistakeGroupView,
 } from "./grammarTabModel";
 import type { PlayerHandle, PlayerOptions, PlayerQuestion } from "./playerTypes";
+import { RefillController } from "./refillGuardModel";
+import { renderRefillError } from "./refillUi";
 import type { PracticeTabDef } from "./types";
 
 // 文法 tab of the practice hub (第十六波 H): the shared filter bar (階段 /
@@ -74,7 +75,7 @@ export function grammarTab(deps: GrammarTabDeps): PracticeTabDef {
 
 class GrammarTabView {
   private filter: GrammarFilter;
-  private ctrl: AbortController | null = null;
+  private ctl!: RefillController;
   private player!: PlayerHandle;
   private noteEl!: HTMLElement;
   private mistakeCountEl!: HTMLElement;
@@ -93,9 +94,14 @@ class GrammarTabView {
 
   start(): void {
     const { api } = this.deps;
+    this.ctl = new RefillController({
+      poolSize: () => api.poolQuestions().length,
+      threshold: REFILL_THRESHOLD,
+      run: (signal) => this.refill(signal),
+    });
     this.owner.register(() => {
       this.alive = false;
-      this.ctrl?.abort();
+      this.ctl.dispose();
     });
 
     const barEl = this.el.createDiv();
@@ -108,21 +114,22 @@ class GrammarTabView {
       {
         questions: () => this.questions(),
         emptyText: () => this.emptyText(),
+        emptyAction: () => this.emptyAction(),
         callbacks: {
           onAnswer: (a) => {
             const q = this.byId.get(a.question.id);
             if (q) api.answer(q, a.optionId, a.correct, { hinted: a.hinted, fromMistakes: false });
-            this.maybeRefill();
+            this.ctl.afterAction();
           },
           onSkip: (pq) => {
             const q = this.byId.get(pq.id);
             if (q) api.skip(q);
-            this.maybeRefill();
+            this.ctl.afterAction();
           },
           onRetire: (pq) => {
             const q = this.byId.get(pq.id);
             if (q) api.retire(q);
-            this.maybeRefill();
+            this.ctl.afterAction();
           },
         },
       },
@@ -149,7 +156,8 @@ class GrammarTabView {
     api.applyFilter(this.filter);
     this.sweep();
     this.player.refresh();
-    this.refill();
+    // An empty pool waits for 「開始出題」; a part-filled one tops up.
+    this.ctl.mount();
   }
 
   // ── Filter ─────────────────────────────────────────────────────
@@ -183,7 +191,7 @@ class GrammarTabView {
         deps.api.applyFilter(this.filter);
         this.sweep();
         this.player.refresh();
-        this.refill();
+        this.ctl.filterChanged();
       },
     });
   }
@@ -215,20 +223,29 @@ class GrammarTabView {
     }
   }
 
-  private maybeRefill(): void {
-    if (this.deps.api.poolQuestions().length <= REFILL_THRESHOLD) this.refill();
-  }
-
-  private refill(): void {
+  private refill(signal: AbortSignal): void {
     const { api } = this.deps;
     if (!this.alive || api.isRefilling()) return;
-    if (api.poolQuestions().length > REFILL_THRESHOLD) return;
-    this.ctrl = new AbortController();
-    api.refill(this.filter, { signal: this.ctrl.signal }).catch((e: unknown) => this.showError(e));
+    api.refill(this.filter, { signal }).catch((e: unknown) => this.showError(e));
+  }
+
+  private canStart(): boolean {
+    return (
+      this.alive &&
+      !this.ctl.paused &&
+      !this.deps.api.isRefilling() &&
+      this.deps.aiStatus() === "ready" &&
+      this.deps.api.poolQuestions().length === 0
+    );
+  }
+
+  private emptyAction(): { label: string; run(): void } | null {
+    return this.canStart() ? { label: t("practice.start"), run: () => this.ctl.manual() } : null;
   }
 
   private emptyText(): string {
     if (this.deps.api.isRefilling()) return t("practice.grammar.preparing");
+    if (this.canStart()) return t("practice.startHint");
     const s = this.deps.aiStatus();
     if (s === "disabled") return t("practice.grammar.aiOff");
     if (s === "no_key") return t("practice.grammar.noKey");
@@ -237,9 +254,12 @@ class GrammarTabView {
   }
 
   private showError(error: unknown): void {
-    this.clearError();
-    if (!error || isAbort(error) || !this.alive) return;
-    this.noteEl.appendChild(aiErrorBox({ text: learnErrorText(error), error }));
+    if (!this.alive) return;
+    const failed = renderRefillError(this.noteEl, error, () => {
+      this.clearError();
+      this.ctl.manual();
+    });
+    this.ctl.ended(failed);
   }
 
   private clearError(): void {

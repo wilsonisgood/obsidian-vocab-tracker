@@ -68,6 +68,8 @@ export interface PlayerOptions {
   callbacks: PlayerCallbacks;
   // Shown when questions() is empty: e.g. 「題目準備中…」 or 「AI 沒開…」.
   emptyText?(): string;
+  // A button under the empty text (「開始出題」); null = none right now.
+  emptyAction?(): { label: string; run(): void } | null;
 }
 
 export interface PlayerHandle {

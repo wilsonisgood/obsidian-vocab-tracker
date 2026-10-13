@@ -4,12 +4,12 @@ import type { PolyCategory, PolyFilter } from "../../../core/model/poly";
 import type { PracticeQuestion } from "../../../core/model/practice";
 import { parsePolyFilter, sensesInFilter } from "../../../core/poly/catalog";
 import type { AiStatus } from "../../../services/ai/AiService";
-import { aiErrorBox } from "../../kit/aiDebug";
-import { isAbort, learnErrorText } from "../learnUi";
 import { renderFilterBar } from "./filterBar";
 import type { MountPlayer } from "./grammarTab";
 import { renderMistakesPanel } from "./mistakesPanel";
 import type { PlayerHandle, PlayerQuestion } from "./playerTypes";
+import { RefillController } from "./refillGuardModel";
+import { renderRefillError } from "./refillUi";
 import {
   DOT_CHAR,
   filterToValue,
@@ -67,7 +67,7 @@ export function polyTab(deps: PolyTabDeps): PracticeTabDef {
 class PolyTabView {
   private filter: PolyFilter;
   private category: PolyCategory;
-  private ctrl: AbortController | null = null;
+  private ctl!: RefillController;
   private player!: PlayerHandle;
   private noteEl!: HTMLElement;
   private mapEl!: HTMLElement;
@@ -87,9 +87,14 @@ class PolyTabView {
 
   start(): void {
     const { api } = this.deps;
+    this.ctl = new RefillController({
+      poolSize: () => api.poolQuestions("poly").length,
+      threshold: POLY_REFILL_THRESHOLD,
+      run: (signal) => this.refill(signal),
+    });
     this.owner.register(() => {
       this.alive = false;
-      this.ctrl?.abort();
+      this.ctl.dispose();
     });
 
     const barEl = this.el.createDiv();
@@ -104,6 +109,7 @@ class PolyTabView {
       {
         questions: () => this.questions(),
         emptyText: () => this.emptyText(),
+        emptyAction: () => this.emptyAction(),
         callbacks: {
           onAnswer: (a) => {
             const q = this.byId.get(a.question.id);
@@ -113,12 +119,12 @@ class PolyTabView {
           onSkip: (pq) => {
             const q = this.byId.get(pq.id);
             if (q) api.skip(q);
-            this.maybeRefill();
+            this.ctl.afterAction();
           },
           onRetire: (pq) => {
             const q = this.byId.get(pq.id);
             if (q) api.retire(q);
-            this.maybeRefill();
+            this.ctl.afterAction();
           },
         },
       },
@@ -157,7 +163,8 @@ class PolyTabView {
 
     this.applyScope();
     this.player.refresh();
-    this.refill();
+    // An empty pool waits for 「開始出題」; a part-filled one tops up.
+    this.ctl.mount();
   }
 
   // ── Filter ─────────────────────────────────────────────────────
@@ -189,7 +196,7 @@ class PolyTabView {
     this.renderMap();
     this.applyScope();
     this.player.refresh();
-    this.refill();
+    this.ctl.filterChanged();
   }
 
   // The pool keeps only questions about senses this filter tests.
@@ -265,26 +272,36 @@ class PolyTabView {
 
   private afterAnswer(): void {
     this.renderMap();
-    this.maybeRefill();
+    this.ctl.afterAction();
   }
 
-  private maybeRefill(): void {
-    if (this.deps.api.poolQuestions("poly").length <= POLY_REFILL_THRESHOLD) this.refill();
-  }
-
-  private refill(): void {
+  private refill(signal: AbortSignal): void {
     const { api } = this.deps;
     if (!this.alive || api.isRefilling("poly")) return;
     const { tested, reference } = sensesInFilter(this.filter);
     if (tested.length === 0) return;
-    if (api.poolQuestions("poly").length > POLY_REFILL_THRESHOLD) return;
-    this.ctrl = new AbortController();
-    api.refill({ track: "poly", tested, reference }, { signal: this.ctrl.signal }).catch((e: unknown) => this.showError(e));
+    api.refill({ track: "poly", tested, reference }, { signal }).catch((e: unknown) => this.showError(e));
+  }
+
+  private canStart(): boolean {
+    return (
+      this.alive &&
+      this.filter.words.length > 0 &&
+      !this.ctl.paused &&
+      !this.deps.api.isRefilling("poly") &&
+      this.deps.aiStatus() === "ready" &&
+      this.deps.api.poolQuestions("poly").length === 0
+    );
+  }
+
+  private emptyAction(): { label: string; run(): void } | null {
+    return this.canStart() ? { label: t("practice.start"), run: () => this.ctl.manual() } : null;
   }
 
   private emptyText(): string {
     if (this.filter.words.length === 0) return t("practice.poly.pickWord");
     if (this.deps.api.isRefilling("poly")) return t("practice.poly.preparing");
+    if (this.canStart()) return t("practice.startHint");
     const s = this.deps.aiStatus();
     if (s === "disabled") return t("practice.poly.aiOff");
     if (s === "no_key") return t("practice.poly.noKey");
@@ -293,9 +310,12 @@ class PolyTabView {
   }
 
   private showError(error: unknown): void {
-    this.clearError();
-    if (!error || isAbort(error) || !this.alive) return;
-    this.noteEl.appendChild(aiErrorBox({ text: learnErrorText(error), error }));
+    if (!this.alive) return;
+    const failed = renderRefillError(this.noteEl, error, () => {
+      this.clearError();
+      this.ctl.manual();
+    });
+    this.ctl.ended(failed);
   }
 
   private clearError(): void {

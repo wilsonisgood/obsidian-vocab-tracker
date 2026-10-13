@@ -20,6 +20,7 @@ import {
   vocabGroups,
   vocabQuickPicks,
   vocabScenarioRequest,
+  vocabScopeIds,
   vocabSummary,
   type VocabMode,
 } from "./vocabFilterModel";
@@ -108,7 +109,7 @@ export function vocabTab(host: FlashcardsHost, scenario?: VocabScenarioDeps): Pr
           const apply = () => {
             const r = refs();
             const req = vocabScenarioRequest(r);
-            pane.setRequest(req, new Set(r.map((x) => x.id)));
+            pane.setRequest(req, req ? vocabScopeIds(entries(), value, s.now?.() ?? new Date()) : new Set());
           };
           onFilter = apply;
           apply();
