@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LearnerShard } from "../../../src/core/model/learner";
-import { emptyLearnerShard, mergeLearner, normalizeLearnerShard, pruneLearner } from "../../../src/services/learner/learnerMerge";
+import { emptyLearnerShard, learnerFingerprint, mergeLearner, normalizeLearnerShard, pruneLearner } from "../../../src/services/learner/learnerMerge";
 
 const F = { kind: "word" as const, id: "w" };
 const ev = (id: string, at = "2026-10-01T00:00:00Z") => ({ id, at, track: "vocab" as const, focus: F, result: "wrong" as const });
@@ -51,5 +51,75 @@ describe("learnerMerge", () => {
     expect(n.events).toHaveLength(1);
     expect(n.pool).toEqual([]);
     expect(n.filters).toEqual([{ id: "grammar", value: { a: 1 }, updatedAt: "" }]);
+  });
+});
+
+describe("learnerMerge: scenario questions (第十七波 S)", () => {
+  const q = (id: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    track: "poly" as const,
+    scenario: { id: "sc1", scene: "x", seq: 1 },
+    kind: "which-sense" as const,
+    text: "A [[get]] B",
+    options: [{ id: "a", text: "甲" }, { id: "b", text: "乙" }],
+    answerId: "a",
+    explanation: "e",
+    focus: { kind: "sense" as const, id: "get.arrive" },
+    createdAt: "2026-10-12T00:00:00Z",
+    updatedAt: "2026-10-12T00:00:00Z",
+    ...extra,
+  });
+
+  it("an old learner.json without questions reads as an empty list", () => {
+    const n = normalizeLearnerShard({ events: [ev("a")], pool: [], mistakes: [], filters: [], meta: {} });
+    expect(n.questions).toEqual([]);
+    expect(n.events).toHaveLength(1);
+  });
+
+  it("normalize keeps good questions and drops broken ones", () => {
+    const n = normalizeLearnerShard({
+      questions: [q("ok", { optionNotes: { b: "n", c: 3 }, retiredAt: "2026-10-13T00:00:00Z" }), q("noAnswer", { answerId: "zz" }), q("badTrack", { track: "grammar" }), q("badKind", { kind: "blank" }), { id: "x" }, 5],
+    });
+    expect(n.questions.map((x) => x.id)).toEqual(["ok"]);
+    expect(n.questions[0].optionNotes).toEqual({ b: "n" });
+    expect(n.questions[0].retiredAt).toBeDefined();
+  });
+
+  it("merge: newer updatedAt wins, others are unioned", () => {
+    const a = shard({ questions: [q("1", { explanation: "old" }), q("2")] });
+    const b = shard({ questions: [q("1", { explanation: "new", updatedAt: "2026-10-13T00:00:00Z" }), q("3")] });
+    const m = mergeLearner(a, b);
+    expect(m.questions.map((x) => x.id).sort()).toEqual(["1", "2", "3"]);
+    expect(m.questions.find((x) => x.id === "1")!.explanation).toBe("new");
+    expect(mergeLearner(b, a).questions.find((x) => x.id === "1")!.explanation).toBe("new");
+  });
+
+  it("fingerprint changes when a question changes", () => {
+    const a = shard({ questions: [q("1")] });
+    expect(learnerFingerprint(a)).not.toBe(learnerFingerprint(shard({ questions: [q("1", { updatedAt: "2026-10-13T00:00:00Z" })] })));
+  });
+
+  it("prune: old questions go unless a live pool item or open mistake points at them", () => {
+    const now = Date.parse("2026-10-13T00:00:00Z");
+    const old = "2026-08-01T00:00:00Z";
+    const s = shard({
+      questions: [
+        q("fresh", { createdAt: "2026-10-01T00:00:00Z" }),
+        q("old", { createdAt: old }),
+        q("oldPooled", { createdAt: old }),
+        q("oldRemoved", { createdAt: old }),
+        q("oldMistake", { createdAt: old }),
+        q("oldResolved", { createdAt: old }),
+      ],
+      pool: [
+        { ...pool("2026-10-13T00:00:00Z"), id: "poly:oldPooled", track: "poly", questionId: "oldPooled" },
+        { ...pool("2026-10-13T00:00:00Z", "2026-10-12T00:00:00Z"), id: "poly:oldRemoved", track: "poly", questionId: "oldRemoved" },
+      ],
+      mistakes: [
+        { id: "poly:oldMistake", track: "poly", questionId: "oldMistake", focus: F, addedAt: "a", lastWrongAt: "a", updatedAt: "a" },
+        { id: "poly:oldResolved", track: "poly", questionId: "oldResolved", focus: F, addedAt: "a", lastWrongAt: "a", updatedAt: "a", resolvedAt: "2026-10-12T00:00:00Z" },
+      ],
+    });
+    expect(pruneLearner(s, now).questions.map((x) => x.id).sort()).toEqual(["fresh", "oldMistake", "oldPooled"]);
   });
 });

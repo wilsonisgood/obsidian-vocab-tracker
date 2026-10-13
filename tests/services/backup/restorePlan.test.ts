@@ -426,8 +426,8 @@ describe("planRestore — learner shard (wave 16)", () => {
     result: "wrong" as const,
   });
   it("unions events and leaves the shard alone when the backup has none", () => {
-    const current = { learner: { events: [ev("a")], pool: [], mistakes: [], filters: [], meta: {} } };
-    const backup = { learner: { events: [ev("b")], pool: [], mistakes: [], filters: [], meta: {} } };
+    const current = { learner: { events: [ev("a")], pool: [], mistakes: [], filters: [], questions: [], meta: {} } };
+    const backup = { learner: { events: [ev("b")], pool: [], mistakes: [], filters: [], questions: [], meta: {} } };
     const plan = planRestore(current, backup, { removeExtras: false, now: NOW });
     const shard = plan.shards.learner as { events: { id: string }[] };
     expect(shard.events.map((e) => e.id).sort()).toEqual(["a", "b"]);
