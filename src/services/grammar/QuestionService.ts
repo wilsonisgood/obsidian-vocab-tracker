@@ -1,9 +1,10 @@
 import { TypedEmitter } from "../../core/events";
 import { GRAMMAR_TOPICS, topicById } from "../../core/grammar/catalog";
+import { topicSentences } from "../../core/grammar/sentences";
 import { sessionRating, scheduleTopic } from "../../core/grammar/schedule";
 import type { SessionMode } from "../../core/grammar/session";
 import { knownTopicIds, topicStatuses } from "../../core/grammar/progress";
-import type { GrammarAttempt, GrammarQuestion } from "../../core/model/grammar";
+import type { GrammarAttempt, GrammarQuestion, GrammarSighting } from "../../core/model/grammar";
 import { DEFAULT_SRS_SETTINGS, type SrsCard } from "../../core/model/srs";
 import { AiError } from "../ai/errors";
 import {
@@ -13,6 +14,7 @@ import {
   MAX_WORDS,
   type GrammarQuestionsInput,
 } from "../ai/tasks/grammarQuestions";
+import { grammarGrade, type GrammarGradeResult } from "../ai/tasks/grammarGrade";
 import type { LearnAi } from "../learn/ports";
 import { runStructured } from "../learn/structured";
 import type { GrammarStore } from "./GrammarStore";
@@ -42,6 +44,12 @@ export interface QuestionServiceDeps {
   // at most MAX_WORDS. main.ts returns [] when the learner turned
   // 「出題時使用我的單字」 off, so nothing is sent.
   recentWords?: () => string[];
+  // Where the learner met this topic while reading (R2): main.ts returns
+  // grammarSightings(threads). Their sentences go into the question prompt.
+  sightings?: () => GrammarSighting[];
+  // The 「出題時使用我的文章句子」 setting (grammar.useMySentences, default
+  // true). false = no sentence leaves the vault.
+  useMySentences?: () => boolean;
   // FSRS request_retention (the same setting as the word cards).
   retention?: () => number;
   clock?: () => Date;
@@ -61,6 +69,11 @@ export interface QuestionServiceEvents {
 
 export function questionThreadId(topicId: string): string {
   return `grammar:${topicId}`;
+}
+
+// One AI grading at a time per question (R2).
+export function gradeThreadId(questionId: string): string {
+  return `grammar-grade:${questionId}`;
 }
 
 function defaultId(now: Date): string {
@@ -112,11 +125,12 @@ export class QuestionService {
         .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
         .slice(0, MAX_AVOID_STEMS)
         .map((q) => q.stem),
+      sentences: this.sentences(topicId),
     };
 
     this.setBusy(topicId, true);
     try {
-      const { value: drafts } = await runStructured(this.deps.ai, grammarQuestionsFor(topic), input, {
+      const { value: drafts } = await runStructured(this.deps.ai, grammarQuestionsFor(topic, input.sentences), input, {
         threadId: questionThreadId(topicId),
         signal: opts.signal,
       });
@@ -133,6 +147,21 @@ export class QuestionService {
     } finally {
       this.setBusy(topicId, false);
     }
+  }
+
+  // AI grades a rewrite / translate answer (R2). Only called when the
+  // learner pressed 送出; the caller records the attempt with the verdict
+  // (or, when this throws, lets the learner mark themselves).
+  async grade(question: GrammarQuestion, given: string, signal?: AbortSignal): Promise<GrammarGradeResult> {
+    const { value } = await runStructured(this.deps.ai, grammarGrade, { question, given }, {
+      threadId: gradeThreadId(question.id),
+      signal,
+    });
+    return value;
+  }
+
+  stopGrade(questionId: string): void {
+    this.deps.ai.cancel(gradeThreadId(questionId));
   }
 
   // 👎 這題有問題: stays stored (attempts point at it) but is never asked again.
@@ -196,6 +225,18 @@ export class QuestionService {
     return knownTopicIds(GRAMMAR_TOPICS, (id) => status.get(id) ?? "new")
       .map((id) => topicById(id)?.title ?? "")
       .filter(Boolean);
+  }
+
+  // The reading sentences for the prompt: none when the learner turned
+  // 「使用我的文章句子」 off, and never an error (a broken sightings source
+  // just means no sentences).
+  private sentences(topicId: string): { path: string; sentence: string }[] {
+    try {
+      if (this.deps.useMySentences && !this.deps.useMySentences()) return [];
+      return topicSentences(this.deps.sightings?.() ?? [], topicId);
+    } catch {
+      return [];
+    }
   }
 
   private words(): string[] {

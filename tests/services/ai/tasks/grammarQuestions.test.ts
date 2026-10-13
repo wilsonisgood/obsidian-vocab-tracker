@@ -135,8 +135,8 @@ describe("parseGrammarQuestions", () => {
       { ...BLANK, stem: "She ___ already ___ it." }, // two gaps
       { ...FIND, options: ["have visited", "Osaka", "last year"] }, // option not in the stem
       { ...FIND, answer: "yesterday" }, // answer not an option
-      { ...CHOICE, type: "rewrite" }, // not a generated type
-      { ...CHOICE, type: "translate" },
+      { ...CHOICE, type: "match" }, // not a generated type
+      { ...CHOICE, type: "essay" },
       { ...CHOICE, stem: "" },
       { ...CHOICE, explanation: "" },
       "not an object",
@@ -163,8 +163,8 @@ describe("parseGrammarQuestions", () => {
   it("drops questions whose objective isn't in the topic", () => {
     const stray = { ...CHOICE, objectiveId: "made-up", stem: "Another ___ one." };
     const ids = TOPIC.objectives.map((o) => o.id);
-    expect(parseGrammarQuestions({ questions: [CHOICE, stray] }, ids).map((q) => q.objectiveId)).toEqual(["present-link"]);
-    expect(() => parseGrammarQuestions({ questions: [stray] }, ids)).toThrowError(/no usable/);
+    expect(parseGrammarQuestions({ questions: [CHOICE, stray] }, { objectiveIds: ids }).map((q) => q.objectiveId)).toEqual(["present-link"]);
+    expect(() => parseGrammarQuestions({ questions: [stray] }, { objectiveIds: ids })).toThrowError(/no usable/);
     // the per-topic task applies the same filter
     const task = grammarQuestionsFor(TOPIC);
     expect(task.id).toBe("grammar.questions");
@@ -198,5 +198,130 @@ describe("parseGrammarQuestions", () => {
     expect(q.accepted).toEqual(["'s"]);
     const out = parseGrammarQuestions({ questions: [CHOICE, { ...CHOICE, stem: "I ___ MY keys. I can't get in now." }] });
     expect(out).toHaveLength(1);
+  });
+});
+
+// ── R2: rewrite / translate, reading sentences ────────────────────
+
+const REWRITE = {
+  objectiveId: "present-link",
+  type: "rewrite",
+  stem: "用 Not until 開頭改寫：He didn't leave until she arrived.",
+  options: [],
+  answer: "Not until she arrived did he leave.",
+  accepted: ["Not until she had arrived did he leave.", "Not until she arrived did he leave."],
+  explanation: "Not until 放句首時，主要子句倒裝。",
+  distractors: [],
+  errorTag: "inversion",
+};
+const TRANSLATE = {
+  objectiveId: "finished-time",
+  type: "translate",
+  stem: "我昨天才第一次見到她。",
+  options: ["ignored"],
+  answer: "I met her for the first time yesterday.",
+  accepted: [],
+  explanation: "yesterday 是明確的過去時間。",
+  distractors: [{ option: "x", why: "y" }],
+  errorTag: "tense-choice",
+};
+const LOW = topicById("past-simple")!;
+
+describe("grammar.questions — open types (R2)", () => {
+  it("is at version 2", () => {
+    expect(grammarQuestions.version).toBe(2);
+  });
+
+  it("allows rewrite / translate in the request only at difficulty >= 4", () => {
+    expect(TOPIC.difficulty).toBeGreaterThanOrEqual(4);
+    expect(LOW.difficulty).toBeLessThan(4);
+    const high = grammarQuestions.build(INPUT, ctx());
+    const low = grammarQuestions.build({ ...INPUT, topic: LOW, objectiveIds: [] }, ctx());
+    expect(render(high)).toContain("可以另外出 1 到 2 題開放題型");
+    expect(render(low)).toContain("這次不要出 rewrite、translate");
+    const types = (r: AiRequest) =>
+      (r.output!.schema as { properties: { questions: { items: { properties: { type: { enum: string[] } } } } } }).properties.questions.items.properties.type.enum;
+    expect(types(high)).toEqual(["choice", "blank", "find-error", "rewrite", "translate"]);
+    expect(types(low)).toEqual(["choice", "blank", "find-error"]);
+  });
+
+  it("parses a rewrite and a translate: stem + sample answer, nothing else", () => {
+    const out = parseGrammarQuestions({ questions: [REWRITE, TRANSLATE] });
+    expect(out[0]).toEqual({
+      objectiveId: "present-link",
+      type: "rewrite",
+      stem: REWRITE.stem,
+      answer: REWRITE.answer,
+      accepted: ["Not until she had arrived did he leave."],
+      explanation: REWRITE.explanation,
+      errorTag: "inversion",
+    });
+    expect(out[1]).toMatchObject({ type: "translate", answer: "I met her for the first time yesterday." });
+    expect(out[1].options).toBeUndefined();
+    expect(out[1].distractors).toBeUndefined();
+  });
+
+  it("drops open questions with an empty stem or sample answer", () => {
+    expect(() => parseGrammarQuestions({ questions: [{ ...REWRITE, stem: " " }] })).toThrowError(/no usable/);
+    expect(() => parseGrammarQuestions({ questions: [{ ...TRANSLATE, answer: "" }] })).toThrowError(/no usable/);
+  });
+
+  it("keeps at most two open questions", () => {
+    const three = [REWRITE, TRANSLATE, { ...REWRITE, stem: "用 Hardly 開頭改寫：He had hardly sat down when it rang." }];
+    expect(parseGrammarQuestions({ questions: [CHOICE, ...three] }).map((q) => q.type)).toEqual(["choice", "rewrite", "translate"]);
+  });
+
+  it("grammarQuestionsFor drops open questions below difficulty 4", () => {
+    const low = (id: string) => ({ ...REWRITE, objectiveId: id });
+    const r = aiResult(JSON.stringify({ questions: [low(LOW.objectives[0].id), { ...CHOICE, objectiveId: LOW.objectives[0].id }] }), {
+      json: { questions: [low(LOW.objectives[0].id), { ...CHOICE, objectiveId: LOW.objectives[0].id }] },
+    });
+    expect(grammarQuestionsFor(LOW).parse!(r).map((q) => q.type)).toEqual(["choice"]);
+    const high = aiResult("", { json: { questions: [REWRITE, CHOICE] } });
+    expect(grammarQuestionsFor(TOPIC).parse!(high).map((q) => q.type)).toEqual(["rewrite", "choice"]);
+  });
+});
+
+describe("grammar.questions — reading sentences (R2)", () => {
+  const SENTENCES = [
+    { path: "Books/Dune.md", sentence: "He has never seen the desert at night before." },
+    { path: "News/Sea.md", sentence: "They lived by the sea when they were children." },
+  ];
+
+  it("adds a numbered 〔讀者讀過的句子〕 block, without the note paths (snapshot)", () => {
+    const text = render(grammarQuestions.build({ ...INPUT, sentences: SENTENCES }, ctx(B1)));
+    expect(text).toMatchSnapshot();
+    expect(text).toContain("1. He has never seen the desert at night before.");
+    expect(text).toContain("2. They lived by the sea");
+    expect(text).not.toContain("Dune");
+    expect(text).not.toContain("News/");
+  });
+
+  it("sends at most 3 distinct sentences, trimmed", () => {
+    const many = Array.from({ length: 6 }, (_, i) => ({ path: `p${i}.md`, sentence: `  Sentence   number ${i}.  ` }));
+    const text = render(grammarQuestions.build({ ...INPUT, sentences: [many[0], many[0], ...many] }, ctx()));
+    expect(text).toContain("1. Sentence number 0.");
+    expect(text).toContain("3. Sentence number 2.");
+    expect(text).not.toContain("number 3");
+  });
+
+  it("has no sentences block when there are none", () => {
+    expect(render(grammarQuestions.build({ ...INPUT, sentences: [] }, ctx()))).not.toContain("〔讀者讀過的句子〕\n");
+  });
+
+  it("turns sourceIndex into source", () => {
+    const out = parseGrammarQuestions(
+      { questions: [{ ...CHOICE, sourceIndex: 2 }, { ...BLANK, sourceIndex: 0 }, { ...FIND, sourceIndex: 9 }] },
+      { sentences: SENTENCES }
+    );
+    expect(out[0].source).toEqual(SENTENCES[1]);
+    expect(out[1].source).toBeUndefined();
+    expect(out[2].source).toBeUndefined();
+  });
+
+  it("grammarQuestionsFor maps sourceIndex onto the sentences it was given", () => {
+    const r = aiResult("", { json: { questions: [{ ...CHOICE, sourceIndex: 1 }] } });
+    expect(grammarQuestionsFor(TOPIC, SENTENCES).parse!(r)[0].source).toEqual(SENTENCES[0]);
+    expect(grammarQuestionsFor(TOPIC).parse!(r)[0].source).toBeUndefined();
   });
 });

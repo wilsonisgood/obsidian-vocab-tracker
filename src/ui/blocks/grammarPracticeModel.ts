@@ -1,4 +1,5 @@
 import { ERROR_TAGS, type ErrorTag, type GrammarQuestion } from "../../core/model/grammar";
+import { isOpenQuestion } from "../../core/grammar/grading";
 import { sessionRating } from "../../core/grammar/schedule";
 import { defaultSessionSize, type SessionMode } from "../../core/grammar/session";
 import { dueLabel } from "../../core/text/dueLabel";
@@ -65,12 +66,26 @@ export function resolveSize(params: PracticeParams, mode: PracticeMode): number 
 
 // ── The round ─────────────────────────────────────────────────────
 
-export type RoundPhase = "answering" | "feedback" | "summary";
+// rewrite / translate (R2) take two more steps between answering and
+// feedback: "grading" while the AI judges the answer, "selfcheck" when the
+// learner compares it with the sample and marks themselves (AI off, the
+// request failed, or they stopped it).
+export type RoundPhase = "answering" | "grading" | "selfcheck" | "feedback" | "summary";
+
+// What grammar.grade said about an answer.
+export interface AiVerdict {
+  feedback: string;
+  corrected?: string;
+}
 
 export interface RoundResult {
   question: GrammarQuestion;
   given: string;
   correct: boolean;
+  // Set when the AI graded it.
+  ai?: AiVerdict;
+  // Set when the learner marked it themselves (自評).
+  selfAssessed?: boolean;
   // 👎: left out of the summary.
   retired?: boolean;
 }
@@ -81,6 +96,8 @@ export interface RoundState {
   phase: RoundPhase;
   // One per answered question, in order.
   results: RoundResult[];
+  // The answer waiting for the AI or for self-assessment (open questions).
+  pending?: string;
 }
 
 export function startRound(questions: readonly GrammarQuestion[]): RoundState {
@@ -99,9 +116,41 @@ export function submitAnswer(s: RoundState, given: string, correct: boolean): Ro
   return { ...s, phase: "feedback", results: [...s.results, { question: q, given, correct }] };
 }
 
+// An open question's answer was sent: to the AI (`useAi`) or straight to
+// the learner's own comparison. Only from answering, so a double click can't
+// send it twice.
+export function submitOpen(s: RoundState, given: string, useAi: boolean): RoundState {
+  const q = currentQuestion(s);
+  if (s.phase !== "answering" || !q || !given.trim()) return s;
+  return { ...s, phase: useAi ? "grading" : "selfcheck", pending: given };
+}
+
+// The AI request failed or was stopped: the learner marks it themselves.
+export function gradingFailed(s: RoundState): RoundState {
+  return s.phase === "grading" ? { ...s, phase: "selfcheck" } : s;
+}
+
+// The AI's verdict arrived (ignored unless a grading is waiting).
+export function finishGrading(s: RoundState, correct: boolean, ai: AiVerdict): RoundState {
+  const q = currentQuestion(s);
+  if (s.phase !== "grading" || !q || s.pending === undefined) return s;
+  const { pending, ...rest } = s;
+  return { ...rest, phase: "feedback", results: [...s.results, { question: q, given: pending, correct, ai }] };
+}
+
+// 「我答對了／我答錯了」.
+export function selfAssess(s: RoundState, correct: boolean): RoundState {
+  const q = currentQuestion(s);
+  if (s.phase !== "selfcheck" || !q || s.pending === undefined) return s;
+  const { pending, ...rest } = s;
+  return { ...rest, phase: "feedback", results: [...s.results, { question: q, given: pending, correct, selfAssessed: true }] };
+}
+
 function advance(s: RoundState): RoundState {
   const index = s.index + 1;
-  return index >= s.questions.length ? { ...s, index, phase: "summary" } : { ...s, index, phase: "answering" };
+  const next: RoundState = { ...s, index, phase: index >= s.questions.length ? "summary" : "answering" };
+  delete next.pending;
+  return next;
 }
 
 // 下一題 (or 看小結 after the last one).
@@ -240,24 +289,46 @@ export function findErrorPieces(stem: string, options: readonly string[]): StemP
   return out;
 }
 
+// 「出自〈筆記名〉」: the note's name from its path.
+export function sourceName(path: string): string {
+  const base = path.split("/").pop() ?? path;
+  return base.replace(/\.md$/i, "");
+}
+
 // ── Feedback ──────────────────────────────────────────────────────
 
 export interface FeedbackModel {
   correct: boolean;
   given: string;
-  // What the right answer reads as.
+  // What the right answer reads as (for rewrite / translate, the sample).
   answer: string;
-  // find-error: the sentence put right.
+  // find-error: the sentence put right; rewrite / translate: the AI's version of the learner's sentence.
   corrected?: string;
   explanation: string;
   // Why the chosen wrong option is wrong, when the question says.
   whyWrong?: string;
+  // rewrite / translate: what the AI said, or that the learner marked it.
+  aiFeedback?: string;
+  selfAssessed?: boolean;
 }
 
 const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
 
-export function feedbackFor(q: GrammarQuestion, given: string, correct: boolean): FeedbackModel {
+export function feedbackFor(
+  q: GrammarQuestion,
+  given: string,
+  correct: boolean,
+  how: Pick<RoundResult, "ai" | "selfAssessed"> = {}
+): FeedbackModel {
   const out: FeedbackModel = { correct, given, answer: q.answer, explanation: q.explanation };
+  if (isOpenQuestion(q)) {
+    if (how.ai) {
+      out.aiFeedback = how.ai.feedback;
+      if (!correct && how.ai.corrected) out.corrected = how.ai.corrected;
+    }
+    if (how.selfAssessed) out.selfAssessed = true;
+    return out;
+  }
   if (q.type === "find-error" && q.accepted?.[0]) out.corrected = q.accepted[0];
   if (!correct && q.distractors) {
     const key = Object.keys(q.distractors).find((k) => norm(k) === norm(given));
@@ -276,6 +347,9 @@ export interface KeyContext {
   optionCount: number;
   // The key landed in the text box of a blank question.
   inInput: boolean;
+  // ...which is the multi-line box of a rewrite / translate question:
+  // Enter belongs to the text (the box submits on Ctrl/⌘+Enter itself).
+  multiline?: boolean;
   // A button has focus: Enter / Space belong to it.
   onButton: boolean;
 }
@@ -284,7 +358,9 @@ export interface KeyContext {
 // question. The text box keeps its digits and Space.
 export function keyAction(key: string, ctx: KeyContext): KeyAction {
   if (ctx.phase === "summary") return null;
-  if (ctx.inInput) return ctx.phase === "answering" && key === "Enter" ? { type: "submit" } : null;
+  if (ctx.inInput) return ctx.phase === "answering" && key === "Enter" && !ctx.multiline ? { type: "submit" } : null;
+  // While the AI grades, or the learner is marking, only the buttons act.
+  if (ctx.phase === "grading" || ctx.phase === "selfcheck") return null;
   if (ctx.onButton && (key === "Enter" || key === " ")) return null;
   if (ctx.phase === "feedback") return key === "Enter" ? { type: "next" } : null;
   if (/^[1-4]$/.test(key)) {

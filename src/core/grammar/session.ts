@@ -1,5 +1,5 @@
 import type { ErrorTag, GrammarAttempt, GrammarQuestion } from "../model/grammar";
-import { canGradeLocally } from "./grading";
+import { isAskable } from "./grading";
 import { mistakeGroups } from "./progress";
 
 // Which questions a practice round asks, and in what order (wave 15 P,
@@ -60,7 +60,7 @@ function latestAttempts(attempts: readonly GrammarAttempt[]): Map<string, Gramma
 }
 
 function askable(pool: readonly GrammarQuestion[]): GrammarQuestion[] {
-  return pool.filter((q) => !q.retiredAt && !q.deletedAt && canGradeLocally(q));
+  return pool.filter((q) => !q.retiredAt && !q.deletedAt && isAskable(q));
 }
 
 export function buildSession(

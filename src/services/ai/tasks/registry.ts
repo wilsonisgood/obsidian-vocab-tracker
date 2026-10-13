@@ -2,6 +2,7 @@ import { DNA_TASKS } from "./dna";
 import { EMOJI_TASKS } from "./emoji";
 import { FAMILY_TASKS } from "./family";
 import { GRAMMAR_TASKS as GRAMMAR_EXPLAIN_TASKS } from "./grammarExplain";
+import { GRAMMAR_TASKS as GRAMMAR_GRADE_TASKS } from "./grammarGrade";
 import { GRAMMAR_TASKS as GRAMMAR_QUESTION_TASKS } from "./grammarQuestions";
 import { PARAGRAPH_TASKS } from "./paragraph";
 import { TRIVIA_TASKS } from "./trivia";
@@ -53,5 +54,6 @@ export function defaultTaskRegistry(): TaskRegistry {
     ...DNA_TASKS,
     ...GRAMMAR_EXPLAIN_TASKS,
     ...GRAMMAR_QUESTION_TASKS,
+    ...GRAMMAR_GRADE_TASKS,
   ]);
 }

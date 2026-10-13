@@ -40,10 +40,10 @@ describe("buildSession — learn", () => {
     expect(buildSession([], [], { mode: "learn" })).toEqual([]);
   });
 
-  it("never asks retired, deleted or open-ended questions", () => {
+  it("never asks retired or deleted questions, but does ask open-ended ones (R2)", () => {
     n = 0;
     const pool = [q("ok"), q("gone", "a", { retiredAt: "2026-10-02T00:00:00Z" }), q("del", "a", { deletedAt: "2026-10-02T00:00:00Z" }), q("open", "a", { type: "rewrite" })];
-    expect(ids(buildSession(pool, [], { mode: "learn" }))).toEqual(["ok"]);
+    expect(ids(buildSession(pool, [], { mode: "learn" })).sort()).toEqual(["ok", "open"]);
   });
 
   it("can stick to one objective", () => {

@@ -4,7 +4,9 @@ import type { GrammarQuestion } from "../../../src/core/model/grammar";
 import {
   currentQuestion,
   feedbackFor,
+  finishGrading,
   findErrorPieces,
+  gradingFailed,
   keyAction,
   lastResult,
   needsMoreQuestions,
@@ -17,9 +19,12 @@ import {
   retireCurrent,
   scheduledResults,
   schedulesTopic,
+  selfAssess,
+  sourceName,
   startRound,
   stemPieces,
   submitAnswer,
+  submitOpen,
   summarize,
 } from "../../../src/ui/blocks/grammarPracticeModel";
 
@@ -275,5 +280,102 @@ describe("review mode and scheduling", () => {
     expect(nextReviewText(new Date(2026, 9, 13, 20, 0), now)).toBe("下次複習：今天");
     expect(nextReviewText(new Date(2026, 9, 20, 9, 0).toISOString(), now)).toBe("下次複習：10/20");
     expect(nextReviewText(new Date(2027, 0, 5, 9, 0), now)).toBe("下次複習：2027/01/05");
+  });
+});
+
+describe("open questions (rewrite / translate, R2)", () => {
+  const open = (id: string, extra: Partial<GrammarQuestion> = {}) =>
+    q(id, "a", { type: "rewrite", stem: "改寫：He left.", options: undefined, answer: "He has left.", ...extra });
+  const start = () => startRound([open("r1"), q("c2")]);
+
+  it("submit with AI goes to grading, without AI to self-check, keeping the answer pending", () => {
+    const ai = submitOpen(start(), "He has left.", true);
+    expect(ai).toMatchObject({ phase: "grading", pending: "He has left.", index: 0, results: [] });
+    const self = submitOpen(start(), "He has left.", false);
+    expect(self).toMatchObject({ phase: "selfcheck", pending: "He has left." });
+    expect(currentQuestion(ai)?.id).toBe("r1");
+  });
+
+  it("ignores an empty answer and a second submit", () => {
+    const s = start();
+    expect(submitOpen(s, "   ", true)).toBe(s);
+    const sent = submitOpen(s, "x", true);
+    expect(submitOpen(sent, "y", true)).toBe(sent);
+  });
+
+  it("the AI's verdict ends in feedback with the result recorded", () => {
+    const s = finishGrading(submitOpen(start(), "He left already.", true), false, { feedback: "時態不對", corrected: "He has already left." });
+    expect(s.phase).toBe("feedback");
+    expect(s.pending).toBeUndefined();
+    expect(lastResult(s)).toMatchObject({ given: "He left already.", correct: false, ai: { feedback: "時態不對", corrected: "He has already left." } });
+    expect(lastResult(s)?.selfAssessed).toBeUndefined();
+  });
+
+  it("a late verdict is ignored once the learner is no longer grading", () => {
+    const grading = submitOpen(start(), "x", true);
+    const moved = retireCurrent(grading);
+    expect(moved).toMatchObject({ phase: "answering", index: 1 });
+    expect(moved.pending).toBeUndefined();
+    expect(finishGrading(moved, true, { feedback: "ok" })).toBe(moved);
+    expect(finishGrading(start(), true, { feedback: "ok" }).phase).toBe("answering");
+  });
+
+  it("a failed or stopped grading falls back to self-check, answer kept", () => {
+    const s = gradingFailed(submitOpen(start(), "mine", true));
+    expect(s).toMatchObject({ phase: "selfcheck", pending: "mine" });
+    expect(gradingFailed(start()).phase).toBe("answering");
+  });
+
+  it("self-assessment records the mark and flags it", () => {
+    for (const correct of [true, false]) {
+      const s = selfAssess(submitOpen(start(), "mine", false), correct);
+      expect(s.phase).toBe("feedback");
+      expect(lastResult(s)).toMatchObject({ given: "mine", correct, selfAssessed: true });
+      expect(lastResult(s)?.ai).toBeUndefined();
+    }
+    expect(selfAssess(submitOpen(start(), "mine", true), true).phase).toBe("grading");
+  });
+
+  it("goes on to the next question and the summary counts the result", () => {
+    let s = selfAssess(submitOpen(start(), "mine", false), true);
+    s = nextQuestion(s);
+    expect(s).toMatchObject({ phase: "answering", index: 1 });
+    expect(s.pending).toBeUndefined();
+    s = nextQuestion(submitAnswer(s, "x", false));
+    expect(s.phase).toBe("summary");
+    expect(summarize(s)).toMatchObject({ answered: 2, correct: 1, wrong: 1 });
+    expect(scheduledResults(s)).toEqual([{ correct: true }, { correct: false }]);
+  });
+
+  it("👎 while marking yourself moves on without a result", () => {
+    const s = retireCurrent(submitOpen(start(), "mine", false));
+    expect(s).toMatchObject({ phase: "answering", index: 1, results: [] });
+  });
+
+  it("feedbackFor shows the sample, the AI's words and the AI's correction (only when wrong)", () => {
+    const r = open("r1");
+    expect(feedbackFor(r, "x", false, { ai: { feedback: "缺 has", corrected: "He has left." } })).toMatchObject({
+      answer: "He has left.",
+      aiFeedback: "缺 has",
+      corrected: "He has left.",
+    });
+    expect(feedbackFor(r, "x", true, { ai: { feedback: "好", corrected: "ignored" } }).corrected).toBeUndefined();
+    expect(feedbackFor(r, "x", true, { selfAssessed: true }).selfAssessed).toBe(true);
+    expect(feedbackFor(r, "x", false).whyWrong).toBeUndefined();
+  });
+
+  it("keys: no 1–4 / Enter shortcuts while grading or self-checking, and Enter in the multi-line box is a newline", () => {
+    for (const phase of ["grading", "selfcheck"] as const) {
+      expect(keyAction("1", { phase, optionCount: 0, inInput: false, onButton: false })).toBeNull();
+      expect(keyAction("Enter", { phase, optionCount: 0, inInput: false, onButton: false })).toBeNull();
+    }
+    expect(keyAction("Enter", { phase: "answering", optionCount: 0, inInput: true, multiline: true, onButton: false })).toBeNull();
+    expect(keyAction("Enter", { phase: "answering", optionCount: 0, inInput: true, onButton: false })).toEqual({ type: "submit" });
+  });
+
+  it("sourceName is the note's name", () => {
+    expect(sourceName("Books/Dune.md")).toBe("Dune");
+    expect(sourceName("Plain")).toBe("Plain");
+    expect(sourceName("a/b/My note.v2.md")).toBe("My note.v2");
   });
 });

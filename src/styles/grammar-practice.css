@@ -391,3 +391,88 @@ body.is-mobile .vt-gr-input,
 body.is-mobile .vt-gr-practice .vt-learn-btn {
   min-height: 44px;
 }
+
+/* rewrite / translate (R2): a multi-line answer, then AI grading or self-check */
+.vt-gr-stem.is-open {
+  white-space: pre-wrap;
+}
+
+.vt-gr-textarea {
+  width: 100%;
+  min-height: 5.5em;
+  resize: vertical;
+  font-size: max(16px, var(--font-ui-medium));
+  line-height: 1.5;
+}
+
+.vt-gr-textarea.is-correct {
+  border-color: var(--color-green);
+}
+
+.vt-gr-textarea.is-wrong {
+  border-color: var(--color-red);
+}
+
+.vt-gr-open-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vt-gr-selfcheck {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-primary);
+}
+
+.vt-gr-selfcheck-title {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-gr-sample {
+  font-weight: var(--font-semibold);
+  line-height: 1.6;
+}
+
+.vt-gr-sample.is-alt {
+  color: var(--vt-muted);
+  font-weight: var(--font-normal);
+}
+
+.vt-gr-ai-feedback {
+  line-height: 1.6;
+}
+
+.vt-gr-self-tag {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-normal);
+}
+
+/* 「出自〈筆記名〉」 */
+.vt-gr-source {
+  color: var(--vt-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vt-gr-source-link {
+  color: var(--vt-muted);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+body.is-mobile .vt-gr-textarea {
+  min-height: 7em;
+}
+
+body.is-mobile .vt-gr-source-link {
+  display: inline-block;
+  padding: 12px 0;
+}

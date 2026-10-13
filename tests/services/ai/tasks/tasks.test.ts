@@ -416,6 +416,7 @@ describe("task registry", () => {
       // 文法 (Wave 15): the grammar page/block call these directly.
       "grammar.explain",
       "grammar.questions",
+      "grammar.grade",
     ]);
     for (const t of defaultTaskRegistry().all()) {
       expect(t.version).toBeGreaterThanOrEqual(1);
