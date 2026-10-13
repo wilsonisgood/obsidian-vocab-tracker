@@ -1741,6 +1741,9 @@ var en = {
   "practice.player.wrong": "\u2717 Not quite",
   "practice.player.answer": "Answer",
   "practice.player.earlier": "Show earlier",
+  "practice.start": "Start practice",
+  "practice.retry": "Try again",
+  "practice.startHint": "Press \u201CStart practice\u201D and the AI will prepare questions.",
   "practice.player.empty": "Preparing questions\u2026",
   "practice.player.you": "You chose",
   "practice.player.stats": "Answered {n} here today \xB7 {c} right",
@@ -2586,6 +2589,9 @@ var zhTW = {
   "practice.player.wrong": "\u2717 \u7B54\u932F\u4E86",
   "practice.player.answer": "\u6B63\u89E3",
   "practice.player.earlier": "\u986F\u793A\u66F4\u65E9\u7684",
+  "practice.start": "\u958B\u59CB\u51FA\u984C",
+  "practice.retry": "\u518D\u8A66\u4E00\u6B21",
+  "practice.startHint": "\u6309\u300C\u958B\u59CB\u51FA\u984C\u300D\uFF0C\u8B93 AI \u6E96\u5099\u984C\u76EE\u3002",
   "practice.player.empty": "\u984C\u76EE\u6E96\u5099\u4E2D\u2026",
   "practice.player.you": "\u4F60\u9078\u7684",
   "practice.player.stats": "\u4ECA\u5929\u9019\u88E1\u7B54\u4E86 {n} \u984C \xB7 \u5C0D {c}",
@@ -10585,7 +10591,7 @@ function emojiOf(meta, entry) {
   return (_a = meta == null ? void 0 : meta.emoji) != null ? _a : defaultEmoji(entry.partOfSpeech);
 }
 
-// node_modules/d3-dispatch/src/dispatch.js
+// ../../../node_modules/d3-dispatch/src/dispatch.js
 var noop = { value: () => {
 } };
 function dispatch() {
@@ -10655,7 +10661,7 @@ function set(type, name, callback) {
 }
 var dispatch_default = dispatch;
 
-// node_modules/d3-selection/src/namespaces.js
+// ../../../node_modules/d3-selection/src/namespaces.js
 var xhtml = "http://www.w3.org/1999/xhtml";
 var namespaces_default = {
   svg: "http://www.w3.org/2000/svg",
@@ -10665,14 +10671,14 @@ var namespaces_default = {
   xmlns: "http://www.w3.org/2000/xmlns/"
 };
 
-// node_modules/d3-selection/src/namespace.js
+// ../../../node_modules/d3-selection/src/namespace.js
 function namespace_default(name) {
   var prefix = name += "", i = prefix.indexOf(":");
   if (i >= 0 && (prefix = name.slice(0, i)) !== "xmlns") name = name.slice(i + 1);
   return namespaces_default.hasOwnProperty(prefix) ? { space: namespaces_default[prefix], local: name } : name;
 }
 
-// node_modules/d3-selection/src/creator.js
+// ../../../node_modules/d3-selection/src/creator.js
 function creatorInherit(name) {
   return function() {
     var document2 = this.ownerDocument, uri = this.namespaceURI;
@@ -10689,7 +10695,7 @@ function creator_default(name) {
   return (fullname.local ? creatorFixed : creatorInherit)(fullname);
 }
 
-// node_modules/d3-selection/src/selector.js
+// ../../../node_modules/d3-selection/src/selector.js
 function none() {
 }
 function selector_default(selector) {
@@ -10698,7 +10704,7 @@ function selector_default(selector) {
   };
 }
 
-// node_modules/d3-selection/src/selection/select.js
+// ../../../node_modules/d3-selection/src/selection/select.js
 function select_default(select) {
   if (typeof select !== "function") select = selector_default(select);
   for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
@@ -10712,12 +10718,12 @@ function select_default(select) {
   return new Selection(subgroups, this._parents);
 }
 
-// node_modules/d3-selection/src/array.js
+// ../../../node_modules/d3-selection/src/array.js
 function array(x3) {
   return x3 == null ? [] : Array.isArray(x3) ? x3 : Array.from(x3);
 }
 
-// node_modules/d3-selection/src/selectorAll.js
+// ../../../node_modules/d3-selection/src/selectorAll.js
 function empty() {
   return [];
 }
@@ -10727,7 +10733,7 @@ function selectorAll_default(selector) {
   };
 }
 
-// node_modules/d3-selection/src/selection/selectAll.js
+// ../../../node_modules/d3-selection/src/selection/selectAll.js
 function arrayAll(select) {
   return function() {
     return array(select.apply(this, arguments));
@@ -10747,7 +10753,7 @@ function selectAll_default(select) {
   return new Selection(subgroups, parents);
 }
 
-// node_modules/d3-selection/src/matcher.js
+// ../../../node_modules/d3-selection/src/matcher.js
 function matcher_default(selector) {
   return function() {
     return this.matches(selector);
@@ -10759,7 +10765,7 @@ function childMatcher(selector) {
   };
 }
 
-// node_modules/d3-selection/src/selection/selectChild.js
+// ../../../node_modules/d3-selection/src/selection/selectChild.js
 var find = Array.prototype.find;
 function childFind(match) {
   return function() {
@@ -10773,7 +10779,7 @@ function selectChild_default(match) {
   return this.select(match == null ? childFirst : childFind(typeof match === "function" ? match : childMatcher(match)));
 }
 
-// node_modules/d3-selection/src/selection/selectChildren.js
+// ../../../node_modules/d3-selection/src/selection/selectChildren.js
 var filter = Array.prototype.filter;
 function children() {
   return Array.from(this.children);
@@ -10787,7 +10793,7 @@ function selectChildren_default(match) {
   return this.selectAll(match == null ? children : childrenFilter(typeof match === "function" ? match : childMatcher(match)));
 }
 
-// node_modules/d3-selection/src/selection/filter.js
+// ../../../node_modules/d3-selection/src/selection/filter.js
 function filter_default(match) {
   if (typeof match !== "function") match = matcher_default(match);
   for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
@@ -10800,12 +10806,12 @@ function filter_default(match) {
   return new Selection(subgroups, this._parents);
 }
 
-// node_modules/d3-selection/src/selection/sparse.js
+// ../../../node_modules/d3-selection/src/selection/sparse.js
 function sparse_default(update) {
   return new Array(update.length);
 }
 
-// node_modules/d3-selection/src/selection/enter.js
+// ../../../node_modules/d3-selection/src/selection/enter.js
 function enter_default() {
   return new Selection(this._enter || this._groups.map(sparse_default), this._parents);
 }
@@ -10832,14 +10838,14 @@ EnterNode.prototype = {
   }
 };
 
-// node_modules/d3-selection/src/constant.js
+// ../../../node_modules/d3-selection/src/constant.js
 function constant_default(x3) {
   return function() {
     return x3;
   };
 }
 
-// node_modules/d3-selection/src/selection/data.js
+// ../../../node_modules/d3-selection/src/selection/data.js
 function bindIndex(parent, group, enter, update, exit, data) {
   var i = 0, node, groupLength = group.length, dataLength = data.length;
   for (; i < dataLength; ++i) {
@@ -10911,12 +10917,12 @@ function arraylike(data) {
   return typeof data === "object" && "length" in data ? data : Array.from(data);
 }
 
-// node_modules/d3-selection/src/selection/exit.js
+// ../../../node_modules/d3-selection/src/selection/exit.js
 function exit_default() {
   return new Selection(this._exit || this._groups.map(sparse_default), this._parents);
 }
 
-// node_modules/d3-selection/src/selection/join.js
+// ../../../node_modules/d3-selection/src/selection/join.js
 function join_default(onenter, onupdate, onexit) {
   var enter = this.enter(), update = this, exit = this.exit();
   if (typeof onenter === "function") {
@@ -10934,7 +10940,7 @@ function join_default(onenter, onupdate, onexit) {
   return enter && update ? enter.merge(update).order() : update;
 }
 
-// node_modules/d3-selection/src/selection/merge.js
+// ../../../node_modules/d3-selection/src/selection/merge.js
 function merge_default(context) {
   var selection2 = context.selection ? context.selection() : context;
   for (var groups0 = this._groups, groups1 = selection2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m2; ++j) {
@@ -10950,7 +10956,7 @@ function merge_default(context) {
   return new Selection(merges, this._parents);
 }
 
-// node_modules/d3-selection/src/selection/order.js
+// ../../../node_modules/d3-selection/src/selection/order.js
 function order_default() {
   for (var groups = this._groups, j = -1, m2 = groups.length; ++j < m2; ) {
     for (var group = groups[j], i = group.length - 1, next = group[i], node; --i >= 0; ) {
@@ -10963,7 +10969,7 @@ function order_default() {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/sort.js
+// ../../../node_modules/d3-selection/src/selection/sort.js
 function sort_default(compare) {
   if (!compare) compare = ascending;
   function compareNode(a2, b) {
@@ -10983,7 +10989,7 @@ function ascending(a2, b) {
   return a2 < b ? -1 : a2 > b ? 1 : a2 >= b ? 0 : NaN;
 }
 
-// node_modules/d3-selection/src/selection/call.js
+// ../../../node_modules/d3-selection/src/selection/call.js
 function call_default() {
   var callback = arguments[0];
   arguments[0] = this;
@@ -10991,12 +10997,12 @@ function call_default() {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/nodes.js
+// ../../../node_modules/d3-selection/src/selection/nodes.js
 function nodes_default() {
   return Array.from(this);
 }
 
-// node_modules/d3-selection/src/selection/node.js
+// ../../../node_modules/d3-selection/src/selection/node.js
 function node_default() {
   for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
     for (var group = groups[j], i = 0, n = group.length; i < n; ++i) {
@@ -11007,19 +11013,19 @@ function node_default() {
   return null;
 }
 
-// node_modules/d3-selection/src/selection/size.js
+// ../../../node_modules/d3-selection/src/selection/size.js
 function size_default() {
   let size = 0;
   for (const node of this) ++size;
   return size;
 }
 
-// node_modules/d3-selection/src/selection/empty.js
+// ../../../node_modules/d3-selection/src/selection/empty.js
 function empty_default() {
   return !this.node();
 }
 
-// node_modules/d3-selection/src/selection/each.js
+// ../../../node_modules/d3-selection/src/selection/each.js
 function each_default(callback) {
   for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
     for (var group = groups[j], i = 0, n = group.length, node; i < n; ++i) {
@@ -11029,7 +11035,7 @@ function each_default(callback) {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/attr.js
+// ../../../node_modules/d3-selection/src/selection/attr.js
 function attrRemove(name) {
   return function() {
     this.removeAttribute(name);
@@ -11073,12 +11079,12 @@ function attr_default(name, value) {
   return this.each((value == null ? fullname.local ? attrRemoveNS : attrRemove : typeof value === "function" ? fullname.local ? attrFunctionNS : attrFunction : fullname.local ? attrConstantNS : attrConstant)(fullname, value));
 }
 
-// node_modules/d3-selection/src/window.js
+// ../../../node_modules/d3-selection/src/window.js
 function window_default(node) {
   return node.ownerDocument && node.ownerDocument.defaultView || node.document && node || node.defaultView;
 }
 
-// node_modules/d3-selection/src/selection/style.js
+// ../../../node_modules/d3-selection/src/selection/style.js
 function styleRemove(name) {
   return function() {
     this.style.removeProperty(name);
@@ -11103,7 +11109,7 @@ function styleValue(node, name) {
   return node.style.getPropertyValue(name) || window_default(node).getComputedStyle(node, null).getPropertyValue(name);
 }
 
-// node_modules/d3-selection/src/selection/property.js
+// ../../../node_modules/d3-selection/src/selection/property.js
 function propertyRemove(name) {
   return function() {
     delete this[name];
@@ -11125,7 +11131,7 @@ function property_default(name, value) {
   return arguments.length > 1 ? this.each((value == null ? propertyRemove : typeof value === "function" ? propertyFunction : propertyConstant)(name, value)) : this.node()[name];
 }
 
-// node_modules/d3-selection/src/selection/classed.js
+// ../../../node_modules/d3-selection/src/selection/classed.js
 function classArray(string) {
   return string.trim().split(/^|\s+/);
 }
@@ -11188,7 +11194,7 @@ function classed_default(name, value) {
   return this.each((typeof value === "function" ? classedFunction : value ? classedTrue : classedFalse)(names, value));
 }
 
-// node_modules/d3-selection/src/selection/text.js
+// ../../../node_modules/d3-selection/src/selection/text.js
 function textRemove() {
   this.textContent = "";
 }
@@ -11207,7 +11213,7 @@ function text_default(value) {
   return arguments.length ? this.each(value == null ? textRemove : (typeof value === "function" ? textFunction : textConstant)(value)) : this.node().textContent;
 }
 
-// node_modules/d3-selection/src/selection/html.js
+// ../../../node_modules/d3-selection/src/selection/html.js
 function htmlRemove() {
   this.innerHTML = "";
 }
@@ -11226,7 +11232,7 @@ function html_default(value) {
   return arguments.length ? this.each(value == null ? htmlRemove : (typeof value === "function" ? htmlFunction : htmlConstant)(value)) : this.node().innerHTML;
 }
 
-// node_modules/d3-selection/src/selection/raise.js
+// ../../../node_modules/d3-selection/src/selection/raise.js
 function raise() {
   if (this.nextSibling) this.parentNode.appendChild(this);
 }
@@ -11234,7 +11240,7 @@ function raise_default() {
   return this.each(raise);
 }
 
-// node_modules/d3-selection/src/selection/lower.js
+// ../../../node_modules/d3-selection/src/selection/lower.js
 function lower() {
   if (this.previousSibling) this.parentNode.insertBefore(this, this.parentNode.firstChild);
 }
@@ -11242,7 +11248,7 @@ function lower_default() {
   return this.each(lower);
 }
 
-// node_modules/d3-selection/src/selection/append.js
+// ../../../node_modules/d3-selection/src/selection/append.js
 function append_default(name) {
   var create2 = typeof name === "function" ? name : creator_default(name);
   return this.select(function() {
@@ -11250,7 +11256,7 @@ function append_default(name) {
   });
 }
 
-// node_modules/d3-selection/src/selection/insert.js
+// ../../../node_modules/d3-selection/src/selection/insert.js
 function constantNull() {
   return null;
 }
@@ -11261,7 +11267,7 @@ function insert_default(name, before) {
   });
 }
 
-// node_modules/d3-selection/src/selection/remove.js
+// ../../../node_modules/d3-selection/src/selection/remove.js
 function remove() {
   var parent = this.parentNode;
   if (parent) parent.removeChild(this);
@@ -11270,7 +11276,7 @@ function remove_default() {
   return this.each(remove);
 }
 
-// node_modules/d3-selection/src/selection/clone.js
+// ../../../node_modules/d3-selection/src/selection/clone.js
 function selection_cloneShallow() {
   var clone = this.cloneNode(false), parent = this.parentNode;
   return parent ? parent.insertBefore(clone, this.nextSibling) : clone;
@@ -11283,12 +11289,12 @@ function clone_default(deep) {
   return this.select(deep ? selection_cloneDeep : selection_cloneShallow);
 }
 
-// node_modules/d3-selection/src/selection/datum.js
+// ../../../node_modules/d3-selection/src/selection/datum.js
 function datum_default(value) {
   return arguments.length ? this.property("__data__", value) : this.node().__data__;
 }
 
-// node_modules/d3-selection/src/selection/on.js
+// ../../../node_modules/d3-selection/src/selection/on.js
 function contextListener(listener) {
   return function(event) {
     listener.call(this, event, this.__data__);
@@ -11351,7 +11357,7 @@ function on_default(typename, value, options) {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/dispatch.js
+// ../../../node_modules/d3-selection/src/selection/dispatch.js
 function dispatchEvent(node, type, params) {
   var window2 = window_default(node), event = window2.CustomEvent;
   if (typeof event === "function") {
@@ -11377,7 +11383,7 @@ function dispatch_default2(type, params) {
   return this.each((typeof params === "function" ? dispatchFunction : dispatchConstant)(type, params));
 }
 
-// node_modules/d3-selection/src/selection/iterator.js
+// ../../../node_modules/d3-selection/src/selection/iterator.js
 function* iterator_default() {
   for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
     for (var group = groups[j], i = 0, n = group.length, node; i < n; ++i) {
@@ -11386,7 +11392,7 @@ function* iterator_default() {
   }
 }
 
-// node_modules/d3-selection/src/selection/index.js
+// ../../../node_modules/d3-selection/src/selection/index.js
 var root = [null];
 function Selection(groups, parents) {
   this._groups = groups;
@@ -11438,19 +11444,19 @@ Selection.prototype = selection.prototype = {
 };
 var selection_default = selection;
 
-// node_modules/d3-selection/src/select.js
+// ../../../node_modules/d3-selection/src/select.js
 function select_default2(selector) {
   return typeof selector === "string" ? new Selection([[document.querySelector(selector)]], [document.documentElement]) : new Selection([[selector]], root);
 }
 
-// node_modules/d3-selection/src/sourceEvent.js
+// ../../../node_modules/d3-selection/src/sourceEvent.js
 function sourceEvent_default(event) {
   let sourceEvent;
   while (sourceEvent = event.sourceEvent) event = sourceEvent;
   return event;
 }
 
-// node_modules/d3-selection/src/pointer.js
+// ../../../node_modules/d3-selection/src/pointer.js
 function pointer_default(event, node) {
   event = sourceEvent_default(event);
   if (node === void 0) node = event.currentTarget;
@@ -11470,7 +11476,7 @@ function pointer_default(event, node) {
   return [event.pageX, event.pageY];
 }
 
-// node_modules/d3-drag/src/noevent.js
+// ../../../node_modules/d3-drag/src/noevent.js
 var nonpassive = { passive: false };
 var nonpassivecapture = { capture: true, passive: false };
 function nopropagation(event) {
@@ -11481,7 +11487,7 @@ function noevent_default(event) {
   event.stopImmediatePropagation();
 }
 
-// node_modules/d3-drag/src/nodrag.js
+// ../../../node_modules/d3-drag/src/nodrag.js
 function nodrag_default(view) {
   var root2 = view.document.documentElement, selection2 = select_default2(view).on("dragstart.drag", noevent_default, nonpassivecapture);
   if ("onselectstart" in root2) {
@@ -11507,10 +11513,10 @@ function yesdrag(view, noclick) {
   }
 }
 
-// node_modules/d3-drag/src/constant.js
+// ../../../node_modules/d3-drag/src/constant.js
 var constant_default2 = (x3) => () => x3;
 
-// node_modules/d3-drag/src/event.js
+// ../../../node_modules/d3-drag/src/event.js
 function DragEvent(type, {
   sourceEvent,
   subject,
@@ -11542,7 +11548,7 @@ DragEvent.prototype.on = function() {
   return value === this._ ? this : value;
 };
 
-// node_modules/d3-drag/src/drag.js
+// ../../../node_modules/d3-drag/src/drag.js
 function defaultFilter(event) {
   return !event.ctrlKey && !event.button;
 }
@@ -11687,7 +11693,7 @@ function drag_default() {
   return drag;
 }
 
-// node_modules/d3-quadtree/src/add.js
+// ../../../node_modules/d3-quadtree/src/add.js
 function add_default(d) {
   const x3 = +this._x.call(null, d), y3 = +this._y.call(null, d);
   return add(this.cover(x3, y3), x3, y3, d);
@@ -11734,7 +11740,7 @@ function addAll(data) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/cover.js
+// ../../../node_modules/d3-quadtree/src/cover.js
 function cover_default(x3, y3) {
   if (isNaN(x3 = +x3) || isNaN(y3 = +y3)) return this;
   var x0 = this._x0, y0 = this._y0, x1 = this._x1, y1 = this._y1;
@@ -11770,7 +11776,7 @@ function cover_default(x3, y3) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/data.js
+// ../../../node_modules/d3-quadtree/src/data.js
 function data_default2() {
   var data = [];
   this.visit(function(node) {
@@ -11781,12 +11787,12 @@ function data_default2() {
   return data;
 }
 
-// node_modules/d3-quadtree/src/extent.js
+// ../../../node_modules/d3-quadtree/src/extent.js
 function extent_default(_) {
   return arguments.length ? this.cover(+_[0][0], +_[0][1]).cover(+_[1][0], +_[1][1]) : isNaN(this._x0) ? void 0 : [[this._x0, this._y0], [this._x1, this._y1]];
 }
 
-// node_modules/d3-quadtree/src/quad.js
+// ../../../node_modules/d3-quadtree/src/quad.js
 function quad_default(node, x0, y0, x1, y1) {
   this.node = node;
   this.x0 = x0;
@@ -11795,7 +11801,7 @@ function quad_default(node, x0, y0, x1, y1) {
   this.y1 = y1;
 }
 
-// node_modules/d3-quadtree/src/find.js
+// ../../../node_modules/d3-quadtree/src/find.js
 function find_default(x3, y3, radius) {
   var data, x0 = this._x0, y0 = this._y0, x1, y1, x22, y22, x32 = this._x1, y32 = this._y1, quads = [], node = this._root, q, i;
   if (node) quads.push(new quad_default(node, x0, y0, x32, y32));
@@ -11833,7 +11839,7 @@ function find_default(x3, y3, radius) {
   return data;
 }
 
-// node_modules/d3-quadtree/src/remove.js
+// ../../../node_modules/d3-quadtree/src/remove.js
 function remove_default2(d) {
   if (isNaN(x3 = +this._x.call(null, d)) || isNaN(y3 = +this._y.call(null, d))) return this;
   var parent, node = this._root, retainer, previous, next, x0 = this._x0, y0 = this._y0, x1 = this._x1, y1 = this._y1, x3, y3, xm, ym, right, bottom, i, j;
@@ -11863,12 +11869,12 @@ function removeAll(data) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/root.js
+// ../../../node_modules/d3-quadtree/src/root.js
 function root_default() {
   return this._root;
 }
 
-// node_modules/d3-quadtree/src/size.js
+// ../../../node_modules/d3-quadtree/src/size.js
 function size_default2() {
   var size = 0;
   this.visit(function(node) {
@@ -11879,7 +11885,7 @@ function size_default2() {
   return size;
 }
 
-// node_modules/d3-quadtree/src/visit.js
+// ../../../node_modules/d3-quadtree/src/visit.js
 function visit_default(callback) {
   var quads = [], q, node = this._root, child, x0, y0, x1, y1;
   if (node) quads.push(new quad_default(node, this._x0, this._y0, this._x1, this._y1));
@@ -11895,7 +11901,7 @@ function visit_default(callback) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/visitAfter.js
+// ../../../node_modules/d3-quadtree/src/visitAfter.js
 function visitAfter_default(callback) {
   var quads = [], next = [], q;
   if (this._root) quads.push(new quad_default(this._root, this._x0, this._y0, this._x1, this._y1));
@@ -11916,7 +11922,7 @@ function visitAfter_default(callback) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/x.js
+// ../../../node_modules/d3-quadtree/src/x.js
 function defaultX(d) {
   return d[0];
 }
@@ -11924,7 +11930,7 @@ function x_default(_) {
   return arguments.length ? (this._x = _, this) : this._x;
 }
 
-// node_modules/d3-quadtree/src/y.js
+// ../../../node_modules/d3-quadtree/src/y.js
 function defaultY(d) {
   return d[1];
 }
@@ -11932,7 +11938,7 @@ function y_default(_) {
   return arguments.length ? (this._y = _, this) : this._y;
 }
 
-// node_modules/d3-quadtree/src/quadtree.js
+// ../../../node_modules/d3-quadtree/src/quadtree.js
 function quadtree(nodes, x3, y3) {
   var tree = new Quadtree(x3 == null ? defaultX : x3, y3 == null ? defaultY : y3, NaN, NaN, NaN, NaN);
   return nodes == null ? tree : tree.addAll(nodes);
@@ -11982,19 +11988,19 @@ treeProto.visitAfter = visitAfter_default;
 treeProto.x = x_default;
 treeProto.y = y_default;
 
-// node_modules/d3-force/src/constant.js
+// ../../../node_modules/d3-force/src/constant.js
 function constant_default3(x3) {
   return function() {
     return x3;
   };
 }
 
-// node_modules/d3-force/src/jiggle.js
+// ../../../node_modules/d3-force/src/jiggle.js
 function jiggle_default(random) {
   return (random() - 0.5) * 1e-6;
 }
 
-// node_modules/d3-force/src/collide.js
+// ../../../node_modules/d3-force/src/collide.js
 function x(d) {
   return d.x + d.vx;
 }
@@ -12067,7 +12073,7 @@ function collide_default(radius) {
   return force;
 }
 
-// node_modules/d3-force/src/link.js
+// ../../../node_modules/d3-force/src/link.js
 function index(d) {
   return d.index;
 }
@@ -12149,7 +12155,7 @@ function link_default(links) {
   return force;
 }
 
-// node_modules/d3-timer/src/timer.js
+// ../../../node_modules/d3-timer/src/timer.js
 var frame = 0;
 var timeout = 0;
 var interval = 0;
@@ -12251,7 +12257,7 @@ function sleep(time) {
   }
 }
 
-// node_modules/d3-timer/src/timeout.js
+// ../../../node_modules/d3-timer/src/timeout.js
 function timeout_default(callback, delay, time) {
   var t2 = new Timer();
   delay = delay == null ? 0 : +delay;
@@ -12262,7 +12268,7 @@ function timeout_default(callback, delay, time) {
   return t2;
 }
 
-// node_modules/d3-force/src/lcg.js
+// ../../../node_modules/d3-force/src/lcg.js
 var a = 1664525;
 var c = 1013904223;
 var m = 4294967296;
@@ -12271,7 +12277,7 @@ function lcg_default() {
   return () => (s = (a * s + c) % m) / m;
 }
 
-// node_modules/d3-force/src/simulation.js
+// ../../../node_modules/d3-force/src/simulation.js
 function x2(d) {
   return d.x;
 }
@@ -12380,7 +12386,7 @@ function simulation_default(nodes) {
   };
 }
 
-// node_modules/d3-force/src/manyBody.js
+// ../../../node_modules/d3-force/src/manyBody.js
 function manyBody_default() {
   var nodes, node, random, alpha, strength = constant_default3(-30), strengths, distanceMin2 = 1, distanceMax2 = Infinity, theta2 = 0.81;
   function force(_) {
@@ -12459,7 +12465,7 @@ function manyBody_default() {
   return force;
 }
 
-// node_modules/d3-force/src/x.js
+// ../../../node_modules/d3-force/src/x.js
 function x_default2(x3) {
   var strength = constant_default3(0.1), nodes, strengths, xz;
   if (typeof x3 !== "function") x3 = constant_default3(x3 == null ? 0 : +x3);
@@ -12490,7 +12496,7 @@ function x_default2(x3) {
   return force;
 }
 
-// node_modules/d3-force/src/y.js
+// ../../../node_modules/d3-force/src/y.js
 function y_default2(y3) {
   var strength = constant_default3(0.1), nodes, strengths, yz;
   if (typeof y3 !== "function") y3 = constant_default3(y3 == null ? 0 : +y3);
@@ -12521,7 +12527,7 @@ function y_default2(y3) {
   return force;
 }
 
-// node_modules/d3-transition/src/transition/schedule.js
+// ../../../node_modules/d3-transition/src/transition/schedule.js
 var emptyOn = dispatch_default("start", "end", "cancel", "interrupt");
 var emptyTween = [];
 var CREATED = 0;
@@ -12632,7 +12638,7 @@ function create(node, id2, self) {
   }
 }
 
-// node_modules/d3-transition/src/interrupt.js
+// ../../../node_modules/d3-transition/src/interrupt.js
 function interrupt_default(node, name) {
   var schedules = node.__transition, schedule, active2, empty2 = true, i;
   if (!schedules) return;
@@ -12651,14 +12657,14 @@ function interrupt_default(node, name) {
   if (empty2) delete node.__transition;
 }
 
-// node_modules/d3-transition/src/selection/interrupt.js
+// ../../../node_modules/d3-transition/src/selection/interrupt.js
 function interrupt_default2(name) {
   return this.each(function() {
     interrupt_default(this, name);
   });
 }
 
-// node_modules/d3-color/src/define.js
+// ../../../node_modules/d3-color/src/define.js
 function define_default(constructor, factory, prototype) {
   constructor.prototype = factory.prototype = prototype;
   prototype.constructor = constructor;
@@ -12669,7 +12675,7 @@ function extend(parent, definition) {
   return prototype;
 }
 
-// node_modules/d3-color/src/color.js
+// ../../../node_modules/d3-color/src/color.js
 function Color() {
 }
 var darker = 0.7;
@@ -13006,7 +13012,7 @@ function hsl2rgb(h, m1, m2) {
   return (h < 60 ? m1 + (m2 - m1) * h / 60 : h < 180 ? m2 : h < 240 ? m1 + (m2 - m1) * (240 - h) / 60 : m1) * 255;
 }
 
-// node_modules/d3-interpolate/src/basis.js
+// ../../../node_modules/d3-interpolate/src/basis.js
 function basis(t1, v0, v1, v2, v3) {
   var t2 = t1 * t1, t3 = t2 * t1;
   return ((1 - 3 * t1 + 3 * t2 - t3) * v0 + (4 - 6 * t2 + 3 * t3) * v1 + (1 + 3 * t1 + 3 * t2 - 3 * t3) * v2 + t3 * v3) / 6;
@@ -13019,7 +13025,7 @@ function basis_default(values) {
   };
 }
 
-// node_modules/d3-interpolate/src/basisClosed.js
+// ../../../node_modules/d3-interpolate/src/basisClosed.js
 function basisClosed_default(values) {
   var n = values.length;
   return function(t2) {
@@ -13028,10 +13034,10 @@ function basisClosed_default(values) {
   };
 }
 
-// node_modules/d3-interpolate/src/constant.js
+// ../../../node_modules/d3-interpolate/src/constant.js
 var constant_default4 = (x3) => () => x3;
 
-// node_modules/d3-interpolate/src/color.js
+// ../../../node_modules/d3-interpolate/src/color.js
 function linear(a2, d) {
   return function(t2) {
     return a2 + t2 * d;
@@ -13052,7 +13058,7 @@ function nogamma(a2, b) {
   return d ? linear(a2, d) : constant_default4(isNaN(a2) ? b : a2);
 }
 
-// node_modules/d3-interpolate/src/rgb.js
+// ../../../node_modules/d3-interpolate/src/rgb.js
 var rgb_default = (function rgbGamma(y3) {
   var color2 = gamma(y3);
   function rgb2(start3, end) {
@@ -13092,14 +13098,14 @@ function rgbSpline(spline) {
 var rgbBasis = rgbSpline(basis_default);
 var rgbBasisClosed = rgbSpline(basisClosed_default);
 
-// node_modules/d3-interpolate/src/number.js
+// ../../../node_modules/d3-interpolate/src/number.js
 function number_default(a2, b) {
   return a2 = +a2, b = +b, function(t2) {
     return a2 * (1 - t2) + b * t2;
   };
 }
 
-// node_modules/d3-interpolate/src/string.js
+// ../../../node_modules/d3-interpolate/src/string.js
 var reA = /[-+]?(?:\d+\.?\d*|\.?\d+)(?:[eE][-+]?\d+)?/g;
 var reB = new RegExp(reA.source, "g");
 function zero(b) {
@@ -13141,7 +13147,7 @@ function string_default(a2, b) {
   });
 }
 
-// node_modules/d3-interpolate/src/transform/decompose.js
+// ../../../node_modules/d3-interpolate/src/transform/decompose.js
 var degrees = 180 / Math.PI;
 var identity = {
   translateX: 0,
@@ -13167,7 +13173,7 @@ function decompose_default(a2, b, c2, d, e, f) {
   };
 }
 
-// node_modules/d3-interpolate/src/transform/parse.js
+// ../../../node_modules/d3-interpolate/src/transform/parse.js
 var svgNode;
 function parseCss(value) {
   const m2 = new (typeof DOMMatrix === "function" ? DOMMatrix : WebKitCSSMatrix)(value + "");
@@ -13182,7 +13188,7 @@ function parseSvg(value) {
   return decompose_default(value.a, value.b, value.c, value.d, value.e, value.f);
 }
 
-// node_modules/d3-interpolate/src/transform/index.js
+// ../../../node_modules/d3-interpolate/src/transform/index.js
 function interpolateTransform(parse, pxComma, pxParen, degParen) {
   function pop(s) {
     return s.length ? s.pop() + " " : "";
@@ -13237,7 +13243,7 @@ function interpolateTransform(parse, pxComma, pxParen, degParen) {
 var interpolateTransformCss = interpolateTransform(parseCss, "px, ", "px)", "deg)");
 var interpolateTransformSvg = interpolateTransform(parseSvg, ", ", ")", ")");
 
-// node_modules/d3-interpolate/src/zoom.js
+// ../../../node_modules/d3-interpolate/src/zoom.js
 var epsilon2 = 1e-12;
 function cosh(x3) {
   return ((x3 = Math.exp(x3)) + 1 / x3) / 2;
@@ -13282,7 +13288,7 @@ var zoom_default = (function zoomRho(rho, rho2, rho4) {
   return zoom;
 })(Math.SQRT2, 2, 4);
 
-// node_modules/d3-transition/src/transition/tween.js
+// ../../../node_modules/d3-transition/src/transition/tween.js
 function tweenRemove(id2, name) {
   var tween0, tween1;
   return function() {
@@ -13343,13 +13349,13 @@ function tweenValue(transition2, name, value) {
   };
 }
 
-// node_modules/d3-transition/src/transition/interpolate.js
+// ../../../node_modules/d3-transition/src/transition/interpolate.js
 function interpolate_default(a2, b) {
   var c2;
   return (typeof b === "number" ? number_default : b instanceof color ? rgb_default : (c2 = color(b)) ? (b = c2, rgb_default) : string_default)(a2, b);
 }
 
-// node_modules/d3-transition/src/transition/attr.js
+// ../../../node_modules/d3-transition/src/transition/attr.js
 function attrRemove2(name) {
   return function() {
     this.removeAttribute(name);
@@ -13399,7 +13405,7 @@ function attr_default2(name, value) {
   return this.attrTween(name, typeof value === "function" ? (fullname.local ? attrFunctionNS2 : attrFunction2)(fullname, i, tweenValue(this, "attr." + name, value)) : value == null ? (fullname.local ? attrRemoveNS2 : attrRemove2)(fullname) : (fullname.local ? attrConstantNS2 : attrConstant2)(fullname, i, value));
 }
 
-// node_modules/d3-transition/src/transition/attrTween.js
+// ../../../node_modules/d3-transition/src/transition/attrTween.js
 function attrInterpolate(name, i) {
   return function(t2) {
     this.setAttribute(name, i.call(this, t2));
@@ -13439,7 +13445,7 @@ function attrTween_default(name, value) {
   return this.tween(key5, (fullname.local ? attrTweenNS : attrTween)(fullname, value));
 }
 
-// node_modules/d3-transition/src/transition/delay.js
+// ../../../node_modules/d3-transition/src/transition/delay.js
 function delayFunction(id2, value) {
   return function() {
     init(this, id2).delay = +value.apply(this, arguments);
@@ -13455,7 +13461,7 @@ function delay_default(value) {
   return arguments.length ? this.each((typeof value === "function" ? delayFunction : delayConstant)(id2, value)) : get2(this.node(), id2).delay;
 }
 
-// node_modules/d3-transition/src/transition/duration.js
+// ../../../node_modules/d3-transition/src/transition/duration.js
 function durationFunction(id2, value) {
   return function() {
     set2(this, id2).duration = +value.apply(this, arguments);
@@ -13471,7 +13477,7 @@ function duration_default(value) {
   return arguments.length ? this.each((typeof value === "function" ? durationFunction : durationConstant)(id2, value)) : get2(this.node(), id2).duration;
 }
 
-// node_modules/d3-transition/src/transition/ease.js
+// ../../../node_modules/d3-transition/src/transition/ease.js
 function easeConstant(id2, value) {
   if (typeof value !== "function") throw new Error();
   return function() {
@@ -13483,7 +13489,7 @@ function ease_default(value) {
   return arguments.length ? this.each(easeConstant(id2, value)) : get2(this.node(), id2).ease;
 }
 
-// node_modules/d3-transition/src/transition/easeVarying.js
+// ../../../node_modules/d3-transition/src/transition/easeVarying.js
 function easeVarying(id2, value) {
   return function() {
     var v = value.apply(this, arguments);
@@ -13496,7 +13502,7 @@ function easeVarying_default(value) {
   return this.each(easeVarying(this._id, value));
 }
 
-// node_modules/d3-transition/src/transition/filter.js
+// ../../../node_modules/d3-transition/src/transition/filter.js
 function filter_default2(match) {
   if (typeof match !== "function") match = matcher_default(match);
   for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
@@ -13509,7 +13515,7 @@ function filter_default2(match) {
   return new Transition(subgroups, this._parents, this._name, this._id);
 }
 
-// node_modules/d3-transition/src/transition/merge.js
+// ../../../node_modules/d3-transition/src/transition/merge.js
 function merge_default2(transition2) {
   if (transition2._id !== this._id) throw new Error();
   for (var groups0 = this._groups, groups1 = transition2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m2; ++j) {
@@ -13525,7 +13531,7 @@ function merge_default2(transition2) {
   return new Transition(merges, this._parents, this._name, this._id);
 }
 
-// node_modules/d3-transition/src/transition/on.js
+// ../../../node_modules/d3-transition/src/transition/on.js
 function start(name) {
   return (name + "").trim().split(/^|\s+/).every(function(t2) {
     var i = t2.indexOf(".");
@@ -13546,7 +13552,7 @@ function on_default2(name, listener) {
   return arguments.length < 2 ? get2(this.node(), id2).on.on(name) : this.each(onFunction(id2, name, listener));
 }
 
-// node_modules/d3-transition/src/transition/remove.js
+// ../../../node_modules/d3-transition/src/transition/remove.js
 function removeFunction(id2) {
   return function() {
     var parent = this.parentNode;
@@ -13558,7 +13564,7 @@ function remove_default3() {
   return this.on("end.remove", removeFunction(this._id));
 }
 
-// node_modules/d3-transition/src/transition/select.js
+// ../../../node_modules/d3-transition/src/transition/select.js
 function select_default3(select) {
   var name = this._name, id2 = this._id;
   if (typeof select !== "function") select = selector_default(select);
@@ -13574,7 +13580,7 @@ function select_default3(select) {
   return new Transition(subgroups, this._parents, name, id2);
 }
 
-// node_modules/d3-transition/src/transition/selectAll.js
+// ../../../node_modules/d3-transition/src/transition/selectAll.js
 function selectAll_default2(select) {
   var name = this._name, id2 = this._id;
   if (typeof select !== "function") select = selectorAll_default(select);
@@ -13594,13 +13600,13 @@ function selectAll_default2(select) {
   return new Transition(subgroups, parents, name, id2);
 }
 
-// node_modules/d3-transition/src/transition/selection.js
+// ../../../node_modules/d3-transition/src/transition/selection.js
 var Selection2 = selection_default.prototype.constructor;
 function selection_default2() {
   return new Selection2(this._groups, this._parents);
 }
 
-// node_modules/d3-transition/src/transition/style.js
+// ../../../node_modules/d3-transition/src/transition/style.js
 function styleNull(name, interpolate) {
   var string00, string10, interpolate0;
   return function() {
@@ -13641,7 +13647,7 @@ function style_default2(name, value, priority) {
   return value == null ? this.styleTween(name, styleNull(name, i)).on("end.style." + name, styleRemove2(name)) : typeof value === "function" ? this.styleTween(name, styleFunction2(name, i, tweenValue(this, "style." + name, value))).each(styleMaybeRemove(this._id, name)) : this.styleTween(name, styleConstant2(name, i, value), priority).on("end.style." + name, null);
 }
 
-// node_modules/d3-transition/src/transition/styleTween.js
+// ../../../node_modules/d3-transition/src/transition/styleTween.js
 function styleInterpolate(name, i, priority) {
   return function(t2) {
     this.style.setProperty(name, i.call(this, t2), priority);
@@ -13665,7 +13671,7 @@ function styleTween_default(name, value, priority) {
   return this.tween(key5, styleTween(name, value, priority == null ? "" : priority));
 }
 
-// node_modules/d3-transition/src/transition/text.js
+// ../../../node_modules/d3-transition/src/transition/text.js
 function textConstant2(value) {
   return function() {
     this.textContent = value;
@@ -13681,7 +13687,7 @@ function text_default2(value) {
   return this.tween("text", typeof value === "function" ? textFunction2(tweenValue(this, "text", value)) : textConstant2(value == null ? "" : value + ""));
 }
 
-// node_modules/d3-transition/src/transition/textTween.js
+// ../../../node_modules/d3-transition/src/transition/textTween.js
 function textInterpolate(i) {
   return function(t2) {
     this.textContent = i.call(this, t2);
@@ -13705,7 +13711,7 @@ function textTween_default(value) {
   return this.tween(key5, textTween(value));
 }
 
-// node_modules/d3-transition/src/transition/transition.js
+// ../../../node_modules/d3-transition/src/transition/transition.js
 function transition_default() {
   var name = this._name, id0 = this._id, id1 = newId();
   for (var groups = this._groups, m2 = groups.length, j = 0; j < m2; ++j) {
@@ -13724,7 +13730,7 @@ function transition_default() {
   return new Transition(groups, this._parents, name, id1);
 }
 
-// node_modules/d3-transition/src/transition/end.js
+// ../../../node_modules/d3-transition/src/transition/end.js
 function end_default() {
   var on0, on1, that = this, id2 = that._id, size = that.size();
   return new Promise(function(resolve, reject) {
@@ -13745,7 +13751,7 @@ function end_default() {
   });
 }
 
-// node_modules/d3-transition/src/transition/index.js
+// ../../../node_modules/d3-transition/src/transition/index.js
 var id = 0;
 function Transition(groups, parents, name, id2) {
   this._groups = groups;
@@ -13793,12 +13799,12 @@ Transition.prototype = transition.prototype = {
   [Symbol.iterator]: selection_prototype[Symbol.iterator]
 };
 
-// node_modules/d3-ease/src/cubic.js
+// ../../../node_modules/d3-ease/src/cubic.js
 function cubicInOut(t2) {
   return ((t2 *= 2) <= 1 ? t2 * t2 * t2 : (t2 -= 2) * t2 * t2 + 2) / 2;
 }
 
-// node_modules/d3-transition/src/selection/transition.js
+// ../../../node_modules/d3-transition/src/selection/transition.js
 var defaultTiming = {
   time: null,
   // Set on use.
@@ -13832,14 +13838,14 @@ function transition_default2(name) {
   return new Transition(groups, this._parents, name, id2);
 }
 
-// node_modules/d3-transition/src/selection/index.js
+// ../../../node_modules/d3-transition/src/selection/index.js
 selection_default.prototype.interrupt = interrupt_default2;
 selection_default.prototype.transition = transition_default2;
 
-// node_modules/d3-zoom/src/constant.js
+// ../../../node_modules/d3-zoom/src/constant.js
 var constant_default5 = (x3) => () => x3;
 
-// node_modules/d3-zoom/src/event.js
+// ../../../node_modules/d3-zoom/src/event.js
 function ZoomEvent(type, {
   sourceEvent,
   target,
@@ -13855,7 +13861,7 @@ function ZoomEvent(type, {
   });
 }
 
-// node_modules/d3-zoom/src/transform.js
+// ../../../node_modules/d3-zoom/src/transform.js
 function Transform(k, x3, y3) {
   this.k = k;
   this.x = x3;
@@ -13904,7 +13910,7 @@ function transform(node) {
   return node.__zoom;
 }
 
-// node_modules/d3-zoom/src/noevent.js
+// ../../../node_modules/d3-zoom/src/noevent.js
 function nopropagation2(event) {
   event.stopImmediatePropagation();
 }
@@ -13913,7 +13919,7 @@ function noevent_default2(event) {
   event.stopImmediatePropagation();
 }
 
-// node_modules/d3-zoom/src/zoom.js
+// ../../../node_modules/d3-zoom/src/zoom.js
 function defaultFilter2(event) {
   return (!event.ctrlKey || event.type === "wheel") && !event.button;
 }
@@ -17578,6 +17584,88 @@ function renderFilterBar(el, opts) {
   };
 }
 
+// src/ui/blocks/practice/refillGuardModel.ts
+var FILTER_REFILL_DELAY_MS = 1500;
+var openGate = () => ({ paused: false });
+function gateAfterEnd(g, failed) {
+  return failed ? { paused: true } : g.paused ? g : { paused: false };
+}
+function shouldRefill(g, cause, poolSize, threshold) {
+  if (poolSize > threshold) return false;
+  if (cause === "manual" || cause === "filter") return true;
+  if (g.paused) return false;
+  if (cause === "mount") return poolSize > 0;
+  return true;
+}
+var RefillController = class {
+  constructor(o) {
+    this.o = o;
+    this.gate = openGate();
+    this.version = 0;
+    this.timer = null;
+    this.ctrl = null;
+    this.dead = false;
+  }
+  get paused() {
+    return this.gate.paused;
+  }
+  // Grows with every filter change.
+  get scopeVersion() {
+    return this.version;
+  }
+  mount() {
+    this.request("mount");
+  }
+  afterAction() {
+    this.request("answer");
+  }
+  manual() {
+    this.gate = openGate();
+    this.cancelTimer();
+    this.request("manual");
+  }
+  filterChanged() {
+    var _a, _b;
+    this.version++;
+    this.gate = openGate();
+    (_a = this.ctrl) == null ? void 0 : _a.abort();
+    this.ctrl = null;
+    this.cancelTimer();
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      this.request("filter");
+    }, (_b = this.o.delay) != null ? _b : FILTER_REFILL_DELAY_MS);
+  }
+  ended(failed) {
+    this.gate = gateAfterEnd(this.gate, failed);
+  }
+  dispose() {
+    var _a;
+    this.dead = true;
+    this.cancelTimer();
+    (_a = this.ctrl) == null ? void 0 : _a.abort();
+  }
+  request(cause) {
+    if (this.dead || !shouldRefill(this.gate, cause, this.o.poolSize(), this.o.threshold)) return;
+    this.ctrl = new AbortController();
+    this.o.run(this.ctrl.signal);
+  }
+  cancelTimer() {
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
+  }
+};
+
+// src/ui/blocks/practice/refillUi.ts
+function renderRefillError(note, error, onRetry) {
+  note.empty();
+  if (!error || isAbort(error)) return false;
+  const box = aiErrorBox({ text: learnErrorText(error), error });
+  learnButton(box, { label: t("practice.retry"), icon: "rotate-ccw", ghost: true, onClick: onRetry });
+  note.appendChild(box);
+  return true;
+}
+
 // src/ui/blocks/practice/grammarTab.ts
 function grammarTab(deps) {
   return {
@@ -17600,7 +17688,6 @@ var GrammarTabView = class {
     this.deps = deps;
     this.filters = filters;
     this.owner = owner;
-    this.ctrl = null;
     this.sweeping = false;
     this.alive = true;
     this.byId = /* @__PURE__ */ new Map();
@@ -17608,10 +17695,14 @@ var GrammarTabView = class {
   }
   start() {
     const { api } = this.deps;
+    this.ctl = new RefillController({
+      poolSize: () => api.poolQuestions().length,
+      threshold: REFILL_THRESHOLD,
+      run: (signal) => this.refill(signal)
+    });
     this.owner.register(() => {
-      var _a;
       this.alive = false;
-      (_a = this.ctrl) == null ? void 0 : _a.abort();
+      this.ctl.dispose();
     });
     const barEl = this.el.createDiv();
     this.renderBar(barEl);
@@ -17622,21 +17713,22 @@ var GrammarTabView = class {
       {
         questions: () => this.questions(),
         emptyText: () => this.emptyText(),
+        emptyAction: () => this.emptyAction(),
         callbacks: {
           onAnswer: (a2) => {
             const q = this.byId.get(a2.question.id);
             if (q) api.answer(q, a2.optionId, a2.correct, { hinted: a2.hinted, fromMistakes: false });
-            this.maybeRefill();
+            this.ctl.afterAction();
           },
           onSkip: (pq) => {
             const q = this.byId.get(pq.id);
             if (q) api.skip(q);
-            this.maybeRefill();
+            this.ctl.afterAction();
           },
           onRetire: (pq) => {
             const q = this.byId.get(pq.id);
             if (q) api.retire(q);
-            this.maybeRefill();
+            this.ctl.afterAction();
           }
         }
       },
@@ -17660,7 +17752,7 @@ var GrammarTabView = class {
     api.applyFilter(this.filter);
     this.sweep();
     this.player.refresh();
-    this.refill();
+    this.ctl.mount();
   }
   // ── Filter ─────────────────────────────────────────────────────
   renderBar(barEl) {
@@ -17691,7 +17783,7 @@ var GrammarTabView = class {
         deps.api.applyFilter(this.filter);
         this.sweep();
         this.player.refresh();
-        this.refill();
+        this.ctl.filterChanged();
       }
     });
   }
@@ -17719,18 +17811,20 @@ var GrammarTabView = class {
       this.sweeping = false;
     }
   }
-  maybeRefill() {
-    if (this.deps.api.poolQuestions().length <= REFILL_THRESHOLD) this.refill();
-  }
-  refill() {
+  refill(signal) {
     const { api } = this.deps;
     if (!this.alive || api.isRefilling()) return;
-    if (api.poolQuestions().length > REFILL_THRESHOLD) return;
-    this.ctrl = new AbortController();
-    api.refill(this.filter, { signal: this.ctrl.signal }).catch((e) => this.showError(e));
+    api.refill(this.filter, { signal }).catch((e) => this.showError(e));
+  }
+  canStart() {
+    return this.alive && !this.ctl.paused && !this.deps.api.isRefilling() && this.deps.aiStatus() === "ready" && this.deps.api.poolQuestions().length === 0;
+  }
+  emptyAction() {
+    return this.canStart() ? { label: t("practice.start"), run: () => this.ctl.manual() } : null;
   }
   emptyText() {
     if (this.deps.api.isRefilling()) return t("practice.grammar.preparing");
+    if (this.canStart()) return t("practice.startHint");
     const s = this.deps.aiStatus();
     if (s === "disabled") return t("practice.grammar.aiOff");
     if (s === "no_key") return t("practice.grammar.noKey");
@@ -17738,9 +17832,12 @@ var GrammarTabView = class {
     return t("practice.grammar.none");
   }
   showError(error) {
-    this.clearError();
-    if (!error || isAbort(error) || !this.alive) return;
-    this.noteEl.appendChild(aiErrorBox({ text: learnErrorText(error), error }));
+    if (!this.alive) return;
+    const failed = renderRefillError(this.noteEl, error, () => {
+      this.clearError();
+      this.ctl.manual();
+    });
+    this.ctl.ended(failed);
   }
   clearError() {
     this.noteEl.empty();
@@ -21521,34 +21618,43 @@ function mountScenarioPane(el, o) {
   const { api, track: track2 } = o;
   let alive = true;
   let req = null;
-  let ctrl = null;
+  let mounted = false;
   let sweeping = false;
   const byId = /* @__PURE__ */ new Map();
+  const ctl = new RefillController({
+    poolSize: () => api.poolQuestions(track2).length,
+    threshold: REFILL_THRESHOLD,
+    run: (signal) => run(signal)
+  });
   o.owner.register(() => {
     alive = false;
-    ctrl == null ? void 0 : ctrl.abort();
+    ctl.dispose();
   });
   const headEl = el.createDiv({ cls: "vt-pr-mix-head" });
   const noteEl = el.createDiv({ cls: "vt-pr-grammar-note" });
   const playerEl = el.createDiv({ cls: "vt-pr-scenario-player" });
   const showError = (error) => {
-    noteEl.empty();
-    if (!error || isAbort(error) || !alive) return;
-    noteEl.appendChild(aiErrorBox({ text: learnErrorText(error), error }));
+    if (!alive) return;
+    const failed = renderRefillError(noteEl, error, () => {
+      noteEl.empty();
+      ctl.manual();
+    });
+    ctl.ended(failed);
   };
+  const canStart = () => alive && !!req && !ctl.paused && !api.isRefilling(track2) && o.aiStatus() === "ready" && api.poolQuestions(track2).length === 0;
   const emptyText = () => {
     if (!req) return o.idleText();
     if (api.isRefilling(track2)) return t("practice.grammar.preparing");
+    if (canStart()) return t("practice.startHint");
     const s = o.aiStatus();
     if (s === "disabled") return t("practice.grammar.aiOff");
     if (s === "no_key") return t("practice.grammar.noKey");
     if (s === "offline") return t("practice.grammar.offline");
     return t("practice.grammar.none");
   };
-  const refill = () => {
+  const run = (signal) => {
     if (!alive || !req || api.isRefilling(track2)) return;
-    ctrl = new AbortController();
-    api.refill(req, { signal: ctrl.signal }).catch((e) => showError(e));
+    api.refill(req, { signal }).catch((e) => showError(e));
   };
   const sweep = () => {
     if (sweeping) return;
@@ -21562,7 +21668,7 @@ function mountScenarioPane(el, o) {
   const act = (pq, fn) => {
     const q = byId.get(pq.id);
     if (q) fn(q);
-    refill();
+    ctl.afterAction();
   };
   const player = o.mountPlayer(
     playerEl,
@@ -21579,6 +21685,7 @@ function mountScenarioPane(el, o) {
         return out;
       },
       emptyText,
+      emptyAction: () => canStart() ? { label: t("practice.start"), run: () => ctl.manual() } : null,
       callbacks: {
         onAnswer: (a2) => {
           var _a2;
@@ -21616,7 +21723,9 @@ function mountScenarioPane(el, o) {
       api.applyScope(track2, focusIds);
       sweep();
       player.refresh();
-      refill();
+      if (mounted) ctl.filterChanged();
+      else ctl.mount();
+      mounted = true;
     }
   };
 }
@@ -21737,6 +21846,9 @@ function toVocabRefs(entries) {
 function pickVocabRefs(entries, value, now2, max = SCENARIO_MAX_WORDS) {
   return toVocabRefs(pickScenarioEntries(entries, value, now2, max));
 }
+function vocabScopeIds(entries, value, now2) {
+  return new Set(pickScenarioEntries(entries, value, now2, Number.POSITIVE_INFINITY).map((e) => e.id));
+}
 function vocabScenarioRequest(refs) {
   return refs.length >= SCENARIO_MIN_WORDS ? { track: "vocab", words: [...refs] } : null;
 }
@@ -21804,9 +21916,10 @@ function vocabTab(host, scenario) {
             idleText: () => t("practice.vocab.scenarioFew")
           });
           const apply = () => {
+            var _a, _b;
             const r = refs();
             const req = vocabScenarioRequest(r);
-            pane.setRequest(req, new Set(r.map((x3) => x3.id)));
+            pane.setRequest(req, req ? vocabScopeIds(entries(), value, (_b = (_a = s.now) == null ? void 0 : _a.call(s)) != null ? _b : /* @__PURE__ */ new Date()) : /* @__PURE__ */ new Set());
           };
           onFilter = apply;
           apply();
@@ -21984,13 +22097,13 @@ function buildMixRequest(f, src) {
   }
   return req.vocab || req.grammar || req.poly ? req : null;
 }
-function mixFocusIds(req) {
-  var _a, _b, _c, _d;
+function mixFocusIds(req, vocabScope) {
+  var _a, _b, _c;
   const ids = /* @__PURE__ */ new Set();
   if ((req == null ? void 0 : req.track) !== "mix") return ids;
-  for (const v of (_a = req.vocab) != null ? _a : []) ids.add(v.id);
-  for (const g of (_b = req.grammar) != null ? _b : []) ids.add(`${g.topicId}/${g.objectiveId}`);
-  for (const s of (_d = (_c = req.poly) == null ? void 0 : _c.tested) != null ? _d : []) ids.add(s.id);
+  if (req.vocab) for (const id2 of vocabScope != null ? vocabScope : req.vocab.map((v) => v.id)) ids.add(id2);
+  for (const g of (_a = req.grammar) != null ? _a : []) ids.add(`${g.topicId}/${g.objectiveId}`);
+  for (const s of (_c = (_b = req.poly) == null ? void 0 : _b.tested) != null ? _c : []) ids.add(s.id);
   return ids;
 }
 function emptyTally() {
@@ -22042,8 +22155,9 @@ function start2(el, deps, filters, owner) {
     poly: deps.polySenses()
   });
   const apply = () => {
+    var _a;
     const req = buildMixRequest(filter2, sources());
-    pane == null ? void 0 : pane.setRequest(req, mixFocusIds(req));
+    pane == null ? void 0 : pane.setRequest(req, mixFocusIds(req, (_a = deps.vocabScopeIds) == null ? void 0 : _a.call(deps)));
   };
   const barEl = el.createDiv();
   const bar = renderFilterBar(barEl, {
@@ -23474,7 +23588,6 @@ var PolyTabView = class {
     this.deps = deps;
     this.filters = filters;
     this.owner = owner;
-    this.ctrl = null;
     this.mapOpen = true;
     this.alive = true;
     this.byId = /* @__PURE__ */ new Map();
@@ -23483,10 +23596,14 @@ var PolyTabView = class {
   }
   start() {
     const { api } = this.deps;
+    this.ctl = new RefillController({
+      poolSize: () => api.poolQuestions("poly").length,
+      threshold: POLY_REFILL_THRESHOLD,
+      run: (signal) => this.refill(signal)
+    });
     this.owner.register(() => {
-      var _a;
       this.alive = false;
-      (_a = this.ctrl) == null ? void 0 : _a.abort();
+      this.ctl.dispose();
     });
     const barEl = this.el.createDiv();
     this.renderBar(barEl);
@@ -23499,6 +23616,7 @@ var PolyTabView = class {
       {
         questions: () => this.questions(),
         emptyText: () => this.emptyText(),
+        emptyAction: () => this.emptyAction(),
         callbacks: {
           onAnswer: (a2) => {
             const q = this.byId.get(a2.question.id);
@@ -23508,12 +23626,12 @@ var PolyTabView = class {
           onSkip: (pq) => {
             const q = this.byId.get(pq.id);
             if (q) api.skip(q);
-            this.maybeRefill();
+            this.ctl.afterAction();
           },
           onRetire: (pq) => {
             const q = this.byId.get(pq.id);
             if (q) api.retire(q);
-            this.maybeRefill();
+            this.ctl.afterAction();
           }
         }
       },
@@ -23549,7 +23667,7 @@ var PolyTabView = class {
     );
     this.applyScope();
     this.player.refresh();
-    this.refill();
+    this.ctl.mount();
   }
   // ── Filter ─────────────────────────────────────────────────────
   renderBar(barEl) {
@@ -23577,7 +23695,7 @@ var PolyTabView = class {
     this.renderMap();
     this.applyScope();
     this.player.refresh();
-    this.refill();
+    this.ctl.filterChanged();
   }
   // The pool keeps only questions about senses this filter tests.
   applyScope() {
@@ -23645,23 +23763,25 @@ var PolyTabView = class {
   }
   afterAnswer() {
     this.renderMap();
-    this.maybeRefill();
+    this.ctl.afterAction();
   }
-  maybeRefill() {
-    if (this.deps.api.poolQuestions("poly").length <= POLY_REFILL_THRESHOLD) this.refill();
-  }
-  refill() {
+  refill(signal) {
     const { api } = this.deps;
     if (!this.alive || api.isRefilling("poly")) return;
     const { tested, reference } = sensesInFilter(this.filter);
     if (tested.length === 0) return;
-    if (api.poolQuestions("poly").length > POLY_REFILL_THRESHOLD) return;
-    this.ctrl = new AbortController();
-    api.refill({ track: "poly", tested, reference }, { signal: this.ctrl.signal }).catch((e) => this.showError(e));
+    api.refill({ track: "poly", tested, reference }, { signal }).catch((e) => this.showError(e));
+  }
+  canStart() {
+    return this.alive && this.filter.words.length > 0 && !this.ctl.paused && !this.deps.api.isRefilling("poly") && this.deps.aiStatus() === "ready" && this.deps.api.poolQuestions("poly").length === 0;
+  }
+  emptyAction() {
+    return this.canStart() ? { label: t("practice.start"), run: () => this.ctl.manual() } : null;
   }
   emptyText() {
     if (this.filter.words.length === 0) return t("practice.poly.pickWord");
     if (this.deps.api.isRefilling("poly")) return t("practice.poly.preparing");
+    if (this.canStart()) return t("practice.startHint");
     const s = this.deps.aiStatus();
     if (s === "disabled") return t("practice.poly.aiOff");
     if (s === "no_key") return t("practice.poly.noKey");
@@ -23669,9 +23789,12 @@ var PolyTabView = class {
     return t("practice.poly.none");
   }
   showError(error) {
-    this.clearError();
-    if (!error || isAbort(error) || !this.alive) return;
-    this.noteEl.appendChild(aiErrorBox({ text: learnErrorText(error), error }));
+    if (!this.alive) return;
+    const failed = renderRefillError(this.noteEl, error, () => {
+      this.clearError();
+      this.ctl.manual();
+    });
+    this.ctl.ended(failed);
   }
   clearError() {
     var _a;
@@ -24217,14 +24340,18 @@ function mountScenarioPlayer(el, opts, owner) {
     nb.addClass("vt-pr-next");
   }
   function render() {
-    var _a, _b;
+    var _a, _b, _c;
     if (dead) return;
     const hadFocus = root2.contains(document.activeElement);
     root2.empty();
     root2.createDiv({ cls: "vt-pr-stats", text: statsLabel(state) });
     renderHistory(root2);
     if (state.current && state.phase !== "empty") renderCurrent(root2, state.current);
-    else root2.createDiv({ cls: "vt-pr-empty", text: (_b = (_a = opts.emptyText) == null ? void 0 : _a.call(opts)) != null ? _b : t("practice.player.empty") });
+    else {
+      root2.createDiv({ cls: "vt-pr-empty", text: (_b = (_a = opts.emptyText) == null ? void 0 : _a.call(opts)) != null ? _b : t("practice.player.empty") });
+      const act = (_c = opts.emptyAction) == null ? void 0 : _c.call(opts);
+      if (act) learnButton(root2, { label: act.label, cta: true, onClick: act.run });
+    }
     if (hadFocus) root2.focus({ preventScroll: true });
   }
   sync(refreshState(state, questions2()));
@@ -25020,6 +25147,7 @@ function practiceHost(plugin) {
         mountMistakes: mountMistakes(plugin),
         ready: () => scenarioReady(plugin),
         vocabRefs: () => pickVocabRefs(plugin.store.entries, parseFilterValue(plugin.learner.filter("vocab")), /* @__PURE__ */ new Date()),
+        vocabScopeIds: () => vocabScopeIds(plugin.store.entries, parseFilterValue(plugin.learner.filter("vocab")), /* @__PURE__ */ new Date()),
         grammarRefs: () => mixGrammarRefs(plugin),
         polySenses: () => sensesInFilter(parsePolyFilter(plugin.learner.filter("poly"))),
         aiStatus: () => plugin.ai.status()
@@ -25072,7 +25200,7 @@ function registerBlocks(plugin) {
   }
 }
 
-// node_modules/ts-fsrs/dist/index.mjs
+// ../../../node_modules/ts-fsrs/dist/index.mjs
 var FSRSError = class _FSRSError extends Error {
   constructor(message = "FSRS Error") {
     var _a;
@@ -32349,6 +32477,10 @@ var QuestionService = class {
     this.events = new TypedEmitter();
     this.busy = /* @__PURE__ */ new Set();
     this.refilling = false;
+    // 第十八波 T: bumped by every applyFilter. A refill that comes back after
+    // the filter changed keeps only the questions the new filter allows.
+    this.filterVersion = 0;
+    this.currentFilter = null;
     var _a, _b;
     this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
     this.newId = (_b = deps.newId) != null ? _b : (() => defaultId3(this.clock()));
@@ -32424,10 +32556,15 @@ var QuestionService = class {
   isRefilling() {
     return this.refilling;
   }
+  scopeVersion() {
+    return this.filterVersion;
+  }
   async refill(filter2, opts = {}) {
+    var _a, _b, _c;
     const learner = this.deps.learner;
     if (!learner || this.refilling) return;
     this.refilling = true;
+    const version0 = this.filterVersion;
     let started = false;
     try {
       await Promise.all([learner.ensureLoaded(), this.deps.grammar.ensureLoaded()]);
@@ -32447,12 +32584,17 @@ var QuestionService = class {
         previous: this.previousScenario(),
         signal: opts.signal
       });
+      let keep = saved;
+      if (this.filterVersion !== version0 && this.currentFilter) {
+        const allowed = new Set(topicsInFilter(parseGrammarFilter(this.currentFilter), (_c = (_b = (_a = this.deps).level) == null ? void 0 : _b.call(_a)) != null ? _c : ""));
+        keep = saved.filter((q) => allowed.has(q.topicId));
+      }
       const added = addToPool(
         learner.pool(GRAMMAR),
         GRAMMAR,
-        saved.map((q) => {
-          var _a;
-          return { questionId: q.id, scenarioId: (_a = q.scenario) == null ? void 0 : _a.id };
+        keep.map((q) => {
+          var _a2;
+          return { questionId: q.id, scenarioId: (_a2 = q.scenario) == null ? void 0 : _a2.id };
         }),
         this.clock()
       );
@@ -32580,6 +32722,8 @@ var QuestionService = class {
     var _a, _b, _c;
     const learner = this.deps.learner;
     if (!learner) return;
+    this.filterVersion++;
+    this.currentFilter = filter2;
     const allowed = new Set(topicsInFilter(parseGrammarFilter(filter2), (_c = (_b = (_a = this.deps).level) == null ? void 0 : _b.call(_a)) != null ? _c : ""));
     const now2 = this.clock();
     const items = learner.pool(GRAMMAR);
@@ -32794,12 +32938,21 @@ var ScenarioService = class {
     this.deps = deps;
     this.events = new TypedEmitter();
     this.refilling = /* @__PURE__ */ new Set();
+    // 第十八波 T: the scope each track last applied and a version that grows
+    // with every applyScope. A refill that returns after the scope changed
+    // keeps only the questions the new scope covers.
+    this.scopes = /* @__PURE__ */ new Map();
+    this.scopeVersions = /* @__PURE__ */ new Map();
     var _a, _b;
     this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
     this.newId = (_b = deps.newId) != null ? _b : (() => defaultId4(this.clock()));
   }
   isRefilling(track2) {
     return this.refilling.has(track2);
+  }
+  scopeVersion(track2) {
+    var _a;
+    return (_a = this.scopeVersions.get(track2)) != null ? _a : 0;
   }
   // ── Refill ────────────────────────────────────────────────────
   async refill(req, opts = {}) {
@@ -32808,6 +32961,7 @@ var ScenarioService = class {
     const learner = this.deps.learner;
     if (this.refilling.has(track2)) return;
     this.refilling.add(track2);
+    const version0 = this.scopeVersion(track2);
     let started = false;
     try {
       await learner.ensureLoaded();
@@ -32836,7 +32990,13 @@ var ScenarioService = class {
       const taken = new Set(learner.practiceQuestions(track2).map((q) => textKey(q.text)));
       const scenarioId = `sc-${this.newId()}`;
       const saved = [];
+      const scope = this.scopeVersion(track2) !== version0 ? this.scopes.get(track2) : void 0;
+      let outOfScope = 0;
       for (const d of draft.questions) {
+        if (scope && !scope.has(d.focus.id)) {
+          outOfScope++;
+          continue;
+        }
         const key5 = textKey(d.text);
         if (taken.has(key5)) continue;
         taken.add(key5);
@@ -32860,6 +33020,11 @@ var ScenarioService = class {
         if (d.sentenceZh) q.sentenceZh = d.sentenceZh;
         if (d.errorTag) q.errorTag = d.errorTag;
         saved.push(q);
+      }
+      if (!saved.length && outOfScope > 0) {
+        this.refilling.delete(track2);
+        this.events.emit("refill:end", { track: track2 });
+        return;
       }
       if (!saved.length) throw new AiError("bad_output", "practice.scenario: every question was already stored");
       learner.upsertPracticeQuestions(saved);
@@ -32969,6 +33134,8 @@ var ScenarioService = class {
     return out;
   }
   applyScope(track2, focusIds) {
+    this.scopes.set(track2, new Set(focusIds));
+    this.scopeVersions.set(track2, this.scopeVersion(track2) + 1);
     const learner = this.deps.learner;
     const now2 = this.clock();
     const gone = learner.pool(track2).filter((i) => {
