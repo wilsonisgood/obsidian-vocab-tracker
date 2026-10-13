@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Notice, type Component, type MarkdownPostProcessorContext } from "obsidian";
+import { MarkdownRenderChild, Notice, type MarkdownPostProcessorContext } from "obsidian";
 import { t } from "../../core/i18n";
 import { GRAMMAR_TOPICS, topicById } from "../../core/grammar/catalog";
 import { dueTopics, recommendNext, topicStatuses } from "../../core/grammar/progress";
@@ -6,19 +6,20 @@ import type { ErrorTag, GrammarStage } from "../../core/model/grammar";
 import type { CefrLevel } from "../../core/model/settings";
 import type { GrammarStore } from "../../services/grammar/GrammarStore";
 import { errorTagLabel, stageLabel } from "../grammar/labels";
+import type { GrammarFilter, GrammarPracticeApi } from "../grammar/practiceTypes";
 import { segmented } from "../kit/segmented";
 import {
   defaultStage,
   lockedTooltip,
   mapRows,
-  mistakeEntries,
-  mistakeTotal,
   parseMapParams,
   STAGES,
   type MapRow,
 } from "./grammarMapModel";
-import { mountGrammarPractice, type GrammarPracticeDeps } from "./grammarPractice";
 import { guardReadingClicks, learnButton } from "./learnUi";
+import { mountMistakeRedo, type MountPlayer } from "./practice/grammarTab";
+import { groupMistakes, mistakeCount, routeToPractice } from "./practice/grammarTabModel";
+import type { PlayerHandle } from "./practice/playerTypes";
 
 // ── vocab-grammar code block (第十五波 M, 1013 §3.1) ───────────────
 //
@@ -41,9 +42,16 @@ export interface GrammarMapDeps {
   level(): CefrLevel | "";
   // GrammarPages.open: the topic's page, created on first use.
   openTopic(topicId: string): void | Promise<void>;
-  // What the in-place 錯題本 redo needs (R1). Without it 「重做這組」 falls
-  // back to opening the group's biggest topic page.
-  practice?: GrammarPracticeDeps;
+  // 第十六波 H: the map's 錯題本 reads the pool service's mistakes and redoes
+  // a group in place with the scenario player. Without `api` the 錯題本 is
+  // left out; without `mountPlayer` 「重做這組」 opens the group's biggest
+  // topic page. Optional until main.ts wires them (整合事項).
+  api?: Pick<GrammarPracticeApi, "mistakeQuestions" | "answer" | "skip" | "retire" | "events">;
+  mountPlayer?: MountPlayer;
+  // 「建議下一個 [開始]」 / 「複習」 set the grammar filter to the topic and
+  // open the practice hub's 文法 tab; without these they open the topic page.
+  setGrammarFilter?(f: GrammarFilter): void;
+  openPractice?(track: "grammar"): void;
   now?(): Date;
 }
 
@@ -65,7 +73,7 @@ class GrammarMapBlock extends MarkdownRenderChild {
   // the mounted practice. The host element is kept across re-renders so a
   // redraw never throws away the round being played.
   private redoTag: ErrorTag | null = null;
-  private redo: Component | null = null;
+  private redo: PlayerHandle | null = null;
   private redoHost: HTMLElement | null = null;
 
   constructor(
@@ -95,6 +103,7 @@ class GrammarMapBlock extends MarkdownRenderChild {
     this.register(events.on("progress:upsert", refresh));
     this.register(events.on("question:upsert", refresh));
     this.register(events.on("grammar:reloaded", refresh));
+    if (this.deps.api) this.register(this.deps.api.events.on("pool:change", refresh));
     this.register(() => {
       this.disposed = true;
       this.closeRedo();
@@ -110,6 +119,11 @@ class GrammarMapBlock extends MarkdownRenderChild {
     Promise.resolve(this.deps.openTopic(topicId)).catch((e: unknown) => {
       new Notice(t("grammar.map.openFailed", { msg: e instanceof Error ? e.message : String(e) }));
     });
+  }
+
+  // The topic's practice in the hub, or (not wired) its page.
+  private practice(topicId: string): void {
+    if (!routeToPractice(this.deps, topicId)) this.open(topicId);
   }
 
   private render(): void {
@@ -142,14 +156,14 @@ class GrammarMapBlock extends MarkdownRenderChild {
       bar.createSpan({ cls: "vt-gr-bar-label", text: `${t("grammar.map.next")}：` });
       bar.createSpan({ cls: "vt-gr-bar-main", text: next.title });
       bar.createSpan({ cls: "vt-gr-bar-sub", text: next.pattern });
-      learnButton(bar, { label: t("grammar.map.start"), icon: "play", cta: true, onClick: () => this.open(next.id) });
+      learnButton(bar, { label: t("grammar.map.start"), icon: "play", cta: true, onClick: () => this.practice(next.id) });
     }
 
     const due = dueTopics(GRAMMAR_TOPICS, (id) => grammar.progress(id), now);
     if (due.length) {
       const bar = this.root.createDiv({ cls: "vt-gr-bar vt-gr-due" });
       bar.createSpan({ cls: "vt-gr-bar-main", text: t("grammar.map.due", { n: due.length }) });
-      learnButton(bar, { label: t("grammar.map.review"), icon: "repeat", onClick: () => this.open(due[0].id) });
+      learnButton(bar, { label: t("grammar.map.review"), icon: "repeat", onClick: () => this.practice(due[0].id) });
     }
 
     const rows = mapRows(this.stage, GRAMMAR_TOPICS, statusOf, attempts);
@@ -176,15 +190,16 @@ class GrammarMapBlock extends MarkdownRenderChild {
   }
 
   private renderMistakes(): void {
-    const { grammar } = this.deps;
-    const entries = mistakeEntries(grammar.questions(), grammar.attempts());
+    const { api } = this.deps;
+    if (!api) return;
+    const entries = groupMistakes(api.mistakeQuestions());
     // The group being redone stays on screen even after its last mistake
     // was fixed, so the round (and its summary) isn't pulled out from under
     // the learner.
     if (this.redoTag && !entries.some((e) => e.errorTag === this.redoTag)) {
-      entries.push({ errorTag: this.redoTag, label: errorTagLabel(this.redoTag), count: 0, topicId: "" });
+      entries.push({ errorTag: this.redoTag, label: errorTagLabel(this.redoTag), questions: [], topicId: "" });
     }
-    const total = mistakeTotal(entries);
+    const total = mistakeCount(entries);
     const box = this.root.createDiv({ cls: "vt-gr-mistakes" });
     const toggle = box.createEl("button", { cls: "vt-gr-mistakes-toggle", attr: { type: "button" } });
     toggle.setAttr("aria-expanded", String(this.mistakesOpen));
@@ -205,18 +220,19 @@ class GrammarMapBlock extends MarkdownRenderChild {
       const row = group.createDiv({ cls: "vt-gr-mistake" });
       const text = row.createDiv({ cls: "vt-gr-mistake-text" });
       text.createSpan({ cls: "vt-gr-mistake-tag", text: e.label });
-      text.createSpan({ cls: "vt-gr-mistake-count", text: t("grammar.map.mistakes.count", { n: e.count }) });
+      text.createSpan({ cls: "vt-gr-mistake-count", text: t("grammar.map.mistakes.count", { n: e.questions.length }) });
       const topic = topicById(e.topicId);
       if (topic) text.createSpan({ cls: "vt-gr-mistake-topic", text: topic.title });
       const isOpen = this.redoTag === e.errorTag;
       row.toggleClass("is-open", isOpen);
-      // 重做這組 plays the group right here (any topic, mode: mistakes, one
-      // group at a time); again to fold it. No practice deps: the page.
+      // 重做這組 plays the group right here with the scenario player (any
+      // topic, one group at a time); again to fold it. Without a player:
+      // the group's biggest topic page.
       learnButton(row, {
         label: t(isOpen ? "grammar.map.mistakes.collapse" : "grammar.map.mistakes.redo"),
         icon: isOpen ? "chevron-up" : "rotate-ccw",
         ghost: true,
-        onClick: () => (this.deps.practice ? this.toggleRedo(e.errorTag) : this.open(e.topicId)),
+        onClick: () => (this.deps.mountPlayer ? this.toggleRedo(e.errorTag) : this.open(e.topicId)),
       });
       if (isOpen && this.redoHost) group.appendChild(this.redoHost);
     }
@@ -225,17 +241,17 @@ class GrammarMapBlock extends MarkdownRenderChild {
   private toggleRedo(tag: ErrorTag): void {
     const wasOpen = this.redoTag === tag;
     this.closeRedo();
-    if (!wasOpen && this.deps.practice) {
+    const { api, mountPlayer } = this.deps;
+    if (!wasOpen && api && mountPlayer) {
       this.redoTag = tag;
       this.redoHost = createDiv({ cls: "vt-gr-redo" });
-      this.redo = mountGrammarPractice(this.redoHost, this.deps.practice, { mode: "mistakes", tag });
-      this.addChild(this.redo);
+      this.redo = mountMistakeRedo(this.redoHost, { api, mountPlayer, owner: this, errorTag: tag });
     }
     this.render();
   }
 
   private closeRedo(): void {
-    if (this.redo) this.removeChild(this.redo);
+    this.redo?.unload();
     this.redoHost?.detach();
     this.redo = null;
     this.redoHost = null;

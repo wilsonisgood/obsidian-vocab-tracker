@@ -7,11 +7,8 @@ import {
   defaultStage,
   lockedTooltip,
   mapRows,
-  mistakeEntries,
-  mistakeTotal,
   parseMapParams,
   stageOfDifficulty,
-  topicOfGroup,
 } from "../../../src/ui/blocks/grammarMapModel";
 
 beforeEach(() => setLocale("zh-TW"));
@@ -95,47 +92,6 @@ describe("mapRows", () => {
   it("works with the real status pass", () => {
     const statuses = topicStatuses(GRAMMAR_TOPICS, [], () => undefined, new Date());
     expect(mapRows(1, GRAMMAR_TOPICS, (id) => statuses.get(id)!, []).every((r) => r.status === "new")).toBe(true);
-  });
-});
-
-describe("mistakes", () => {
-  const [t1, t2] = GRAMMAR_TOPICS.filter((t) => t.stage === 1);
-  const qs = [
-    question("q1", t1.id, "article"),
-    question("q2", t2.id, "article"),
-    question("q3", t2.id, "article"),
-    question("q4", t1.id, "plural"),
-    question("q5", t1.id, "plural"),
-    question("q6", t1.id, "agreement"), // answered right: not a mistake
-  ];
-  const attempts = [
-    attempt(t1.id, "x", false, "2026-10-01T00:00:00Z", "q1"),
-    attempt(t2.id, "x", false, "2026-10-02T00:00:00Z", "q2"),
-    attempt(t2.id, "x", false, "2026-10-03T00:00:00Z", "q3"),
-    attempt(t1.id, "x", false, "2026-10-04T00:00:00Z", "q4"),
-    attempt(t1.id, "x", false, "2026-10-05T00:00:00Z", "q5"),
-    attempt(t1.id, "x", true, "2026-10-06T00:00:00Z", "q6"),
-  ];
-
-  it("groups by error tag, biggest first, with the topic that has most of its questions", () => {
-    const entries = mistakeEntries(qs, attempts);
-    expect(entries.map((e) => [e.errorTag, e.count, e.topicId])).toEqual([
-      ["article", 3, t2.id],
-      ["plural", 2, t1.id],
-    ]);
-    expect(entries[0].label).toBe("冠詞");
-    expect(mistakeTotal(entries)).toBe(5);
-  });
-
-  it("breaks a tie with the newest mistake's topic", () => {
-    const group = {
-      errorTag: "article" as const,
-      items: [
-        { question: question("a", t2.id, "article"), attempt: attempts[0] },
-        { question: question("b", t1.id, "article"), attempt: attempts[0] },
-      ],
-    };
-    expect(topicOfGroup(group)).toBe(t2.id);
   });
 });
 
