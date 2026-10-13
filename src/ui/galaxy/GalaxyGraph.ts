@@ -13,6 +13,7 @@ import type { ZoomBehavior } from "d3-zoom";
 
 import type { GalaxyModel, GalaxyNode } from "./galaxyModel";
 import { heartState, zoomFilter } from "./galaxyModel";
+import { autoFitGalaxy } from "./galaxyFit";
 
 // d3-force mutates GalaxyNode in place (adds x/y/vx/vy/fx/fy) — see
 // SimNode. Links start as plain {source,target} strings (GalaxyLink) and
@@ -128,7 +129,14 @@ export class GalaxyGraph {
           })
         : null;
     this.resizeObserver?.observe(svg);
+
+    // 1010-2 W#4: embedded windows stretch themselves to the visible bottom
+    // (re-measured on every layout change; see galaxyFit.ts for why the
+    // one-shot measure in families.ts left a gap on iPhone).
+    if (opts.embedded) this.stopFit = autoFitGalaxy(svg);
   }
+
+  private stopFit: (() => void) | null = null;
 
   private measure(): void {
     const r = this.svgEl.getBoundingClientRect();
@@ -361,5 +369,7 @@ export class GalaxyGraph {
     this.sim?.stop();
     this.sim = null;
     this.resizeObserver?.disconnect();
+    this.stopFit?.();
+    this.stopFit = null;
   }
 }

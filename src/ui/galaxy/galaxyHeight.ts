@@ -7,3 +7,12 @@ export function galaxyFillHeight(viewportBottom: number, graphTop: number, min =
   if (!Number.isFinite(space) || space <= min) return min;
   return Math.floor(space);
 }
+
+// 1010-2 W#4: the lowest line the window may reach, in viewport coordinates.
+// The scroller's own bottom can sit *below* what the phone really shows (the
+// mobile nav bar overlays it; the visual viewport is shorter), so take the
+// smallest sane candidate — not just scroller.clientHeight.
+export function galaxyViewBottom(candidates: ReadonlyArray<number | null | undefined>): number {
+  const ok = candidates.filter((n): n is number => typeof n === "number" && Number.isFinite(n) && n > 0);
+  return ok.length ? Math.min(...ok) : 0;
+}

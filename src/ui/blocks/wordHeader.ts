@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { t } from "../../core/i18n";
+import { getLocale, t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { originFamilyId, type Family } from "../../core/model/family";
 import type { BreakdownPart, WordBreakdown } from "../../core/model/morpheme";
@@ -14,7 +14,7 @@ import { bindPronounceButton } from "../kit/pronounce";
 import { autoGrowTextarea, commitEntryField, type EditableField, type FieldStore } from "../word/rowModel";
 import { familyTitle, focusFamily } from "./familiesModel";
 import { isOpenStored, toggleStored, type FoldSection, type FoldStorage } from "../reading/wordPageFolds";
-import { hasDictionaryData } from "./wordHeaderModel";
+import { hasDictionaryData, headerVisibility } from "./wordHeaderModel";
 import { parseBlockParams } from "./params";
 
 export { hasDictionaryData };
@@ -28,6 +28,13 @@ export { hasDictionaryData };
 // also name a word by hand: `id: <entry id>` or `word: glittery`.
 // Rendered live from the store and redrawn on every data change; the
 // subscription is dropped when the block goes away (MarkdownRenderChild).
+
+// 1010-2 W new strings (move into i18n at integration).
+const L = {
+  senses: () => (getLocale() === "zh-TW" ? "詞義" : "Senses"),
+  lookup: () => (getLocale() === "zh-TW" ? "查字典" : "Look up"),
+  lookingUp: () => (getLocale() === "zh-TW" ? "查詢中…" : "Looking up…"),
+};
 
 export const WORD_BLOCK_LANG = "vocab-word";
 
@@ -63,6 +70,10 @@ export interface WordHeaderHost {
   // opens WordReviewModal (wordReview.ts). Optional: the button is left
   // out without it.
   reviewWord?(entry: VocabEntry): unknown;
+  // 「查字典」 for a word with no dictionary data (1010-2 W): same call as
+  // WordRow's (plugin.enrichEntry(entry, { verbose: true })). Optional: no
+  // button without it.
+  enrich?(entry: VocabEntry): Promise<void>;
   // Families (LearnStore), for 「來源：字族樹 …」 on a word added from one
   // (origin "family:<id>"; 1005 回饋 #13). Optional: without it the chip
   // still shows, without the family's name.
@@ -216,6 +227,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
   // Tracks this block's own analyzeNow() call, not MorphemeService's
   // system-wide auto-batch progress() — only this word's button cares.
   private analyzingBreakdown = false;
+  private lookingUp = false;
 
   constructor(
     containerEl: HTMLElement,
@@ -277,10 +289,10 @@ class WordHeaderBlock extends MarkdownRenderChild {
       return;
     }
 
-    // Wave 12 C: one column — word, definitions, chips, 筆記 (always open),
-    // then the collapsible Info / 字根. No dictionary data → Info is gone
-    // altogether (and the empty definitions with it), only 筆記 stays.
-    const dict = hasDictionaryData(entry);
+    // Wave 12 C / 1010-2 W: one column — word, definitions, chips, 筆記
+    // (always open), then the collapsible Info / 字根. Only fields with a
+    // value are drawn, whether or not the dictionary was ever queried.
+    const vis = headerVisibility(entry);
 
     const top = root.createDiv({ cls: "vt-wh-top" });
     if (this.host.emoji) this.renderEmoji(top, entry, this.host.emoji);
@@ -289,10 +301,11 @@ class WordHeaderBlock extends MarkdownRenderChild {
     setIcon(speak, "volume-2");
     bindPronounceButton(speak, entry);
 
-    if (dict) {
+    if (vis.formOf || vis.definition || vis.definitionZh) {
       const defs = root.createDiv({ cls: "vt-wh-defs" });
-      this.field(defs, entry, "definition", t("row.field.definition"), { multiline: true });
-      this.field(defs, entry, "definitionZh", t("row.field.definitionZh"), { multiline: true });
+      if (vis.formOf) defs.createDiv({ cls: "vt-wh-formof", text: vis.formOf });
+      if (vis.definition) this.field(defs, entry, "definition", t("row.field.definition"), { multiline: true });
+      if (vis.definitionZh) this.field(defs, entry, "definitionZh", t("row.field.definitionZh"), { multiline: true });
     }
 
     const chips = root.createDiv({ cls: "vt-wh-chips" });
@@ -318,17 +331,18 @@ class WordHeaderBlock extends MarkdownRenderChild {
     notes.createDiv({ cls: "vt-wh-notes-label", text: t("row.field.grammar") });
     this.field(notes, entry, "grammar", t("row.field.grammar"), { multiline: true });
 
-    if (dict) {
+    if (vis.showLookup && this.host.enrich) this.renderLookup(root, entry, this.host.enrich);
+
+    if (vis.showInfo) {
       this.fold(root, entry, "info", t("word.tab.data"), (body) => {
-        const rows: [EditableField, string][] = [
-          ["phonetic", t("row.field.phonetic")],
-          ["partOfSpeech", t("row.field.partOfSpeech")],
-          ["synonyms", t("row.field.synonyms")],
-          ["antonyms", t("row.field.antonyms")],
-          ["example", t("row.field.example")],
-          ["level", t("row.field.level")],
-        ];
-        for (const [key, label] of rows) {
+        if (vis.senses.length) {
+          const row = body.createDiv({ cls: "vt-wh-inforow" });
+          row.createSpan({ cls: "vt-wh-inforow-label", text: L.senses() });
+          const lines = row.createDiv({ cls: "vt-wh-senses" });
+          for (const line of vis.senses) lines.createDiv({ cls: "vt-wh-sense", text: line });
+        }
+        for (const key of vis.infoRows) {
+          const label = t(`row.field.${key}`);
           const row = body.createDiv({ cls: "vt-wh-inforow" });
           row.createSpan({ cls: "vt-wh-inforow-label", text: label });
           this.field(row, entry, key, label, { multiline: true });
@@ -340,6 +354,25 @@ class WordHeaderBlock extends MarkdownRenderChild {
     if (morphemes && breakdownDisplay(morphemes.breakdownOf(entry.id)) !== "none") {
       this.fold(root, entry, "dna", t("wordPage.section.dna"), (body) => this.renderBreakdown(body, entry, morphemes));
     }
+  }
+
+  private renderLookup(parent: HTMLElement, entry: VocabEntry, enrich: NonNullable<WordHeaderHost["enrich"]>): void {
+    const btn = parent.createEl("button", { cls: ["vt-wh-lookup"], attr: { type: "button" } });
+    setIcon(btn.createSpan({ cls: "vt-wh-btn-icon" }), "book-open");
+    btn.createSpan({ text: this.lookingUp ? L.lookingUp() : L.lookup() });
+    btn.disabled = this.lookingUp;
+    btn.addEventListener("click", () => {
+      if (this.lookingUp) return;
+      this.lookingUp = true;
+      this.render();
+      enrich
+        .call(this.host, entry)
+        .catch(() => undefined)
+        .finally(() => {
+          this.lookingUp = false;
+          if (!this.disposed) this.render();
+        });
+    });
   }
 
   // One collapsible category (arrow + name, nothing on the right). Open
