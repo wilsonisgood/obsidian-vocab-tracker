@@ -1,6 +1,6 @@
 import { joinWords, t, type I18nKey } from "../../../core/i18n";
 import type { VocabEntry } from "../../../core/model/entry";
-import { splitTags, type QueueFilter } from "../../../services/srs/queue";
+import { isNewCard, matchesFilter, splitTags, type QueueFilter } from "../../../services/srs/queue";
 import {
   selectedIds,
   selectedLabels,
@@ -8,6 +8,7 @@ import {
   type FilterValue,
   type QuickPick,
 } from "./filterBarModel";
+import type { ScenarioRequest, VocabRef } from "./mixTypes";
 
 // The vocab tab's filter (第十六波 E): which cards the flashcards round
 // draws from. Value keys: status, level, pos, folder, added.
@@ -114,4 +115,64 @@ export function toQueueFilter(value: FilterValue, now: Date): Partial<QueueFilte
     out.addedSince = new Date(now.getTime() - RECENT_DAYS * 24 * 60 * 60 * 1000).toISOString();
   }
   return out;
+}
+
+// ── 情境練習 (第十七波 V) ───────────────────────────────────────
+
+export const SCENARIO_MAX_WORDS = 12;
+export const SCENARIO_MIN_WORDS = 3;
+
+export type VocabMode = "cards" | "scenario";
+
+export function parseVocabMode(raw: unknown): VocabMode {
+  return raw === "scenario" ? "scenario" : "cards";
+}
+
+function isDue(e: VocabEntry, nowMs: number): boolean {
+  return !isNewCard(e) && !!e.srs && new Date(e.srs.due).getTime() <= nowMs;
+}
+
+function addedStamp(e: VocabEntry): string {
+  return e.createdAt ?? e.added ?? "";
+}
+
+// The words a scenario round is written around: the same filter as the
+// cards (liked, not deleted, level / pos / folder / added), except the
+// status chip only narrows when it says 「新」 — 「到期」 would leave a
+// scenario with nothing to write about when nothing is due. Due words first
+// (oldest due first), then the most recently added; at most `max`.
+// Words without a Chinese meaning are skipped (the writer needs one).
+export function pickScenarioEntries(
+  entries: readonly VocabEntry[],
+  value: FilterValue,
+  now: Date,
+  max = SCENARIO_MAX_WORDS
+): VocabEntry[] {
+  const filter = toQueueFilter(value, now);
+  const onlyNew = filter.status === "new";
+  const nowMs = now.getTime();
+  const ok = entries.filter(
+    (e) =>
+      matchesFilter(e, { ...filter, requireLiked: true }) &&
+      e.definitionZh.trim() !== "" &&
+      (!onlyNew || isNewCard(e))
+  );
+  const due = ok.filter((e) => isDue(e, nowMs)).sort((a, b) => new Date(a.srs!.due).getTime() - new Date(b.srs!.due).getTime());
+  const rest = ok
+    .filter((e) => !isDue(e, nowMs))
+    .sort((a, b) => (addedStamp(a) < addedStamp(b) ? 1 : addedStamp(a) > addedStamp(b) ? -1 : 0));
+  return [...due, ...rest].slice(0, max);
+}
+
+export function toVocabRefs(entries: readonly VocabEntry[]): VocabRef[] {
+  return entries.map((e) => ({ id: e.id, word: e.word, zh: e.definitionZh.trim(), pos: e.partOfSpeech }));
+}
+
+export function pickVocabRefs(entries: readonly VocabEntry[], value: FilterValue, now: Date, max = SCENARIO_MAX_WORDS): VocabRef[] {
+  return toVocabRefs(pickScenarioEntries(entries, value, now, max));
+}
+
+// The request for a round, or null when there are too few words.
+export function vocabScenarioRequest(refs: readonly VocabRef[]): ScenarioRequest | null {
+  return refs.length >= SCENARIO_MIN_WORDS ? { track: "vocab", words: [...refs] } : null;
 }
