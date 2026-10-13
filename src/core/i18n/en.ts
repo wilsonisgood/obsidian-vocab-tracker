@@ -288,6 +288,8 @@ export const en = {
   "settings.learner.extra.desc": "Free text added to every request, e.g. “I'm an engineer; examples from tech are welcome.”",
   "settings.grammar.useMyWords.name": "Use my words in questions",
   "settings.grammar.useMyWords.desc": "When AI writes grammar questions, it gets up to 30 of your most recently saved words so the sentences use words you have met.",
+  "settings.grammar.useMySentences.name": "Use my reading sentences in questions",
+  "settings.grammar.useMySentences.desc": "When AI writes grammar questions, it gets up to 3 sentences from paragraphs where you asked for a grammar analysis that named the topic (the sentence only, never the note's name), so questions can be adapted from what you read.",
   "settings.learner.preview.name": "What the AI sees",
 
   // ── M2 settings section ──

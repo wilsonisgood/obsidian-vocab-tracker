@@ -286,13 +286,16 @@ describe("resolveWordlistSettings", () => {
 });
 
 describe("resolveGrammarSettings", () => {
-  it("defaults useMyWords to true and keeps a stored false", () => {
-    expect(resolveGrammarSettings(undefined)).toEqual({ useMyWords: true });
-    expect(resolveGrammarSettings({})).toEqual({ useMyWords: true });
+  it("defaults both toggles to true and keeps a stored false", () => {
+    expect(resolveGrammarSettings(undefined)).toEqual({ useMyWords: true, useMySentences: true });
+    expect(resolveGrammarSettings({})).toEqual({ useMyWords: true, useMySentences: true });
     expect(resolveGrammarSettings({ useMyWords: false, updatedAt: "2026-01-01T00:00:00.000Z" })).toEqual({
       useMyWords: false,
+      useMySentences: true,
       updatedAt: "2026-01-01T00:00:00.000Z",
     });
+    expect(resolveGrammarSettings({ useMySentences: false }).useMySentences).toBe(false);
     expect(resolveGrammarSettings({ useMyWords: "no" as unknown as boolean }).useMyWords).toBe(true);
+    expect(resolveGrammarSettings({ useMySentences: "no" as unknown as boolean }).useMySentences).toBe(true);
   });
 });

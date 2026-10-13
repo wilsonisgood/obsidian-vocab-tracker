@@ -54,7 +54,15 @@ function grammarTopicDeps(plugin: VocabTrackerPlugin): GrammarTopicDeps {
 }
 
 function grammarPracticeDeps(plugin: VocabTrackerPlugin): GrammarPracticeDeps {
-  return { app: plugin.app, manifestId: plugin.manifest.id, grammar: plugin.grammar, questions: plugin.grammarQuestions, ai: plugin.ai };
+  return {
+    app: plugin.app,
+    manifestId: plugin.manifest.id,
+    grammar: plugin.grammar,
+    questions: plugin.grammarQuestions,
+    ai: plugin.ai,
+    // R2: 「出自〈筆記名〉」 opens the note the sentence came from.
+    openPath: (p) => void plugin.openNote(p),
+  };
 }
 
 // Every vocab-* code block (規劃書 06 §9.6). The block body is its params

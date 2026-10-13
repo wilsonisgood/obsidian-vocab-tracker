@@ -79,6 +79,18 @@ export const learnerSection: SettingsSection = {
             })
         )
       );
+    // R2: whether sentences from the learner's reading go into the request.
+    new Setting(el)
+      .setName(t("settings.grammar.useMySentences.name"))
+      .setDesc(t("settings.grammar.useMySentences.desc"))
+      .addToggle((tg) =>
+        tg.setValue(resolveGrammarSettings(ctx.store.settings.grammar).useMySentences).onChange(
+          (v) =>
+            void ctx.store.updateSettings((s) => {
+              s.grammar = { ...(s.grammar ?? {}), ...resolveGrammarSettings(s.grammar), useMySentences: v };
+            })
+        )
+      );
 
     const previewSetting = new Setting(el).setName(t("settings.learner.preview.name"));
     previewSetting.settingEl.addClass("vt-settings-preview-row");

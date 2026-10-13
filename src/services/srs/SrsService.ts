@@ -7,7 +7,6 @@ import {
   type Rating,
   type ReviewLog,
   type ReviewMode,
-  type SrsCard,
   type SrsSettings,
   type SrsState,
 } from "../../core/model/srs";

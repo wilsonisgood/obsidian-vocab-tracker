@@ -286,6 +286,8 @@ export const zhTW: Record<keyof typeof en, string> = {
   "settings.learner.extra.desc": "會原封不動附在每次請求裡，例如「我是工程師，例句可以用科技情境」。",
   "settings.grammar.useMyWords.name": "出題時使用我的單字",
   "settings.grammar.useMyWords.desc": "AI 出文法題時，會帶最近收錄的最多 30 個單字，讓題目用你學過的字。",
+  "settings.grammar.useMySentences.name": "出題時使用我的文章句子",
+  "settings.grammar.useMySentences.desc": "AI 出文法題時，會附上你在文章裡問過文法解析、且用到該主題的最多 3 句原文（只送句子，不送筆記名稱），讓題目改編自你讀過的句子。",
   "settings.learner.preview.name": "AI 會看到",
 
   // ── M2 settings section ──

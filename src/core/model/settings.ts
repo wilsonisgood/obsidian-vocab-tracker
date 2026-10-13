@@ -166,12 +166,18 @@ export interface GrammarSettings extends SectionStamp {
   // 出題時使用我的單字: send up to 30 recently saved words to the AI when it
   // writes grammar questions. Off → nothing from the word list is sent.
   useMyWords: boolean;
+  // 出題時使用我的文章句子 (R2): send up to 3 sentences from paragraphs the
+  // learner asked 文法解析 about. Off → no reading sentences are sent.
+  useMySentences: boolean;
 }
 
-export const DEFAULT_GRAMMAR_SETTINGS: Readonly<GrammarSettings> = { useMyWords: true };
+export const DEFAULT_GRAMMAR_SETTINGS: Readonly<GrammarSettings> = { useMyWords: true, useMySentences: true };
 
 export function resolveGrammarSettings(raw: Partial<GrammarSettings> | undefined): GrammarSettings {
-  const out: GrammarSettings = { useMyWords: typeof raw?.useMyWords === "boolean" ? raw.useMyWords : DEFAULT_GRAMMAR_SETTINGS.useMyWords };
+  const out: GrammarSettings = {
+    useMyWords: typeof raw?.useMyWords === "boolean" ? raw.useMyWords : DEFAULT_GRAMMAR_SETTINGS.useMyWords,
+    useMySentences: typeof raw?.useMySentences === "boolean" ? raw.useMySentences : DEFAULT_GRAMMAR_SETTINGS.useMySentences,
+  };
   if (typeof raw?.updatedAt === "string") out.updatedAt = raw.updatedAt;
   return out;
 }

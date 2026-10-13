@@ -84,6 +84,7 @@ import { ParagraphAnchorService, type SectionRef } from "./src/services/anchors/
 import { ParagraphIndex } from "./src/services/anchors/ParagraphIndex";
 import { ParagraphBadges } from "./src/ui/reading/ParagraphBadges";
 import { resolveAnchorSettings } from "./src/ui/sidebar/anchorSettings";
+import { grammarSightings } from "./src/core/grammar/sightings";
 import { resolveGrammarSettings, resolveUiPrefs } from "./src/core/model/settings";
 import { currentFormFactor } from "./src/ui/mobile/platform";
 import { wordSurface } from "./src/ui/mobile/formFactor";
@@ -296,6 +297,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       recentWords: () => this.recentWords(),
       // R1: grammar topics share the flashcards' target retention.
       retention: () => this.srs.settings().retention,
+      // R2: sentences the learner read, from the 文法解析 answers.
+      sightings: () => grammarSightings(this.threads.paragraphThreads()),
+      useMySentences: () => resolveGrammarSettings(this.store.settings.grammar).useMySentences,
     });
     this.families = new FamilyService({
       ai,
