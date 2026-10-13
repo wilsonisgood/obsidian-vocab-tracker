@@ -36,6 +36,8 @@ function grammarMapDeps(plugin: VocabTrackerPlugin): GrammarMapDeps {
     grammar: plugin.grammar,
     level: () => plugin.store.settings.learner?.level ?? "",
     openTopic: (id) => plugin.grammarPages.open(id),
+    // R1: 錯題本「重做這組」 opens the practice in place.
+    practice: grammarPracticeDeps(plugin),
   };
 }
 

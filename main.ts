@@ -294,6 +294,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       grammar: this.grammar,
       ai,
       recentWords: () => this.recentWords(),
+      // R1: grammar topics share the flashcards' target retention.
+      retention: () => this.srs.settings().retention,
     });
     this.families = new FamilyService({
       ai,
