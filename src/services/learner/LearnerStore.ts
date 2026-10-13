@@ -2,6 +2,7 @@ import { TypedEmitter } from "../../core/events";
 import { migrateGrammar } from "../../core/learner/migrateGrammar";
 import type { GrammarAttempt, GrammarQuestion } from "../../core/model/grammar";
 import type { LearnEvent, LearnerShard, MistakeItem, PoolItem, Track } from "../../core/model/learner";
+import type { PracticeQuestion, ScenarioTrack } from "../../core/model/practice";
 import type { StoragePort } from "../../core/ports";
 import { livePool } from "../../core/practice/pool";
 import { openMistakes } from "../../core/practice/mistakes";
@@ -26,6 +27,7 @@ export interface LearnerEvents {
   "pool:change": Track;
   "mistake:change": MistakeItem;
   "filter:change": Track;
+  "question:upsert": PracticeQuestion[];
   // The in-memory data was replaced by a merge with the disk copy (sync).
   "learner:reloaded": void;
 }
@@ -116,6 +118,24 @@ export class LearnerStore {
       tracks.add(it.track);
     }
     for (const t of tracks) this.events.emit("pool:change", t);
+    this.scheduleWrite();
+  }
+
+  // ── Scenario questions (常用字 / 單字情境 / 混合) ──────────────
+
+  // Retired ones included (events and mistakes may still point at them).
+  practiceQuestions(track?: ScenarioTrack): PracticeQuestion[] {
+    return this.data.questions.filter((q) => track === undefined || q.track === track);
+  }
+
+  practiceQuestion(id: string): PracticeQuestion | undefined {
+    return this.data.questions.find((q) => q.id === id);
+  }
+
+  upsertPracticeQuestions(qs: readonly PracticeQuestion[]): void {
+    if (qs.length === 0) return;
+    for (const q of qs) this.upsert(this.data.questions, q);
+    this.events.emit("question:upsert", [...qs]);
     this.scheduleWrite();
   }
 

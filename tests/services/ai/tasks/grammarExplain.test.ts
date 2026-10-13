@@ -70,6 +70,6 @@ describe("grammar.explain", () => {
 
   it("is in the default registry, with grammar.questions", () => {
     expect(defaultTaskRegistry().get("grammar.explain")).toBe(grammarExplain);
-    expect(defaultTaskRegistry().forSurface("grammar").map((t) => t.id)).toEqual(["grammar.explain", "grammar.questions", "grammar.grade"]);
+    expect(defaultTaskRegistry().forSurface("grammar").map((t) => t.id)).toEqual(["grammar.explain", "grammar.questions", "grammar.grade", "practice.scenario"]);
   });
 });

@@ -235,6 +235,13 @@ describe("QuestionService.answer", () => {
     expect(service.poolQuestions()).toHaveLength(4);
   });
 
+  it("a wrong answer after using the hint records 'wrong', not 'hinted'", async () => {
+    const { learner, service } = await filled();
+    const [a] = service.poolQuestions();
+    service.answer(a, "b", false, { hinted: true, fromMistakes: false });
+    expect(events(learner).map((e) => e.result)).toEqual(["wrong"]);
+  });
+
   it("a redo from the 錯題區 resolves on a right answer and never touches the pool", async () => {
     const { learner, service } = await filled();
     const q = service.poolQuestions()[0];

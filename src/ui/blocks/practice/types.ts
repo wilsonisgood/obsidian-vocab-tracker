@@ -1,5 +1,6 @@
 import type { App, Component, MarkdownPostProcessorContext } from "obsidian";
 import type { FlashcardsHost } from "../flashcards";
+import type { VocabScenarioDeps } from "./vocabTab";
 
 // 練習中心 (第十六波 E, 規劃書 12). Shared contracts of the hub shell; the
 // tabs other tasks add (文法, 常用字, 混合) register through PracticeHost.tabs().
@@ -36,6 +37,8 @@ export interface PracticeHost extends FlashcardsHost {
   // Tabs added by other tasks (the vocab tab is built in).
   tabs(): readonly PracticeTabDef[];
   filters: FilterStore;
+  // 第十七波 V: what the 單字 tab's 情境練習 switch needs; without it the tab is cards only.
+  vocabScenario?(): VocabScenarioDeps;
 }
 
 export type RenderPractice = (

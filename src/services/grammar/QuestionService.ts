@@ -408,7 +408,7 @@ export class QuestionService implements GrammarPracticeApi {
     const attempt = this.record(q, optionText, correct);
     const learner = this.deps.learner;
     if (!learner) return;
-    const result: LearnResult = opts.hinted ? "hinted" : correct ? "correct" : "wrong";
+    const result: LearnResult = !correct ? "wrong" : opts.hinted ? "hinted" : "correct";
     const e: LearnEvent = {
       id: `g:${attempt.id}`,
       at: attempt.at,

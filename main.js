@@ -35,7 +35,7 @@ __export(main_exports, {
   default: () => VocabTrackerPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian63 = require("obsidian");
+var import_obsidian65 = require("obsidian");
 
 // src/core/text/wordRe.ts
 function escapeRe(s) {
@@ -70,8 +70,8 @@ function wrapOutsideCode(content, re) {
 }
 
 // src/core/text/sentence.ts
-function extractSentence(text, start2, end, node) {
-  let s = start2;
+function extractSentence(text, start3, end, node) {
+  let s = start3;
   let e = end;
   while (s > 0 && !/[.!?\n]/.test(text[s - 1])) s--;
   while (e < text.length && !/[.!?\n]/.test(text[e])) e++;
@@ -107,7 +107,7 @@ function findSourceLine(content, word, sentence) {
   for (const i of candidates) {
     const lw = lines4[i].toLowerCase().match(/[a-z']+/g) || [];
     let score2 = 0;
-    for (const w of lw) if (sentWords.has(w)) score2++;
+    for (const w2 of lw) if (sentWords.has(w2)) score2++;
     if (score2 > bestScore) {
       bestScore = score2;
       best = i;
@@ -289,14 +289,14 @@ function pickWiktionarySense(entries) {
   }
   return (_c = (_b = (_a = firsts.find((f) => !f.niche)) != null ? _a : firsts[0]) == null ? void 0 : _b.sense) != null ? _c : null;
 }
-async function fetchWiktionaryDefinition(http, w) {
+async function fetchWiktionaryDefinition(http, w2) {
   let res;
   try {
-    res = await http.get(`https://en.wiktionary.org/api/rest_v1/page/definition/${http.encodeQueryParam(w)}`);
+    res = await http.get(`https://en.wiktionary.org/api/rest_v1/page/definition/${http.encodeQueryParam(w2)}`);
   } catch (e) {
     throw new Error(`Wiktionary request failed (${errorMessage(e)})`, { cause: e });
   }
-  if (res.status === 404) throw new Error(`"${w}" not found in dictionary`);
+  if (res.status === 404) throw new Error(`"${w2}" not found in dictionary`);
   if (res.status !== 200) throw new Error(`Wiktionary API returned HTTP ${res.status}`);
   let data;
   try {
@@ -305,7 +305,7 @@ async function fetchWiktionaryDefinition(http, w) {
     throw new Error("couldn't parse Wiktionary response", { cause: e });
   }
   const sense = pickWiktionarySense(Array.isArray(data == null ? void 0 : data.en) ? data.en : []);
-  if (!sense) throw new Error(`"${w}" not found in dictionary`);
+  if (!sense) throw new Error(`"${w2}" not found in dictionary`);
   const out = {
     definition: sense.definition,
     partOfSpeech: sense.partOfSpeech
@@ -322,11 +322,11 @@ var POS_MAP = {
   adv: "adverb",
   u: ""
 };
-async function fetchDatamuseDefinition(http, w) {
+async function fetchDatamuseDefinition(http, w2) {
   var _a, _b, _c;
   let res;
   try {
-    res = await http.get(`https://api.datamuse.com/words?sp=${http.encodeQueryParam(w)}&md=d&max=1`);
+    res = await http.get(`https://api.datamuse.com/words?sp=${http.encodeQueryParam(w2)}&md=d&max=1`);
   } catch (e) {
     throw new Error(`Datamuse request failed (${errorMessage(e)})`, { cause: e });
   }
@@ -338,14 +338,14 @@ async function fetchDatamuseDefinition(http, w) {
     throw new Error("couldn't parse Datamuse response", { cause: e });
   }
   const defs = Array.isArray(arr) && Array.isArray((_a = arr[0]) == null ? void 0 : _a.defs) ? arr[0].defs : [];
-  if (defs.length === 0) throw new Error(`"${w}" not found in dictionary`);
+  if (defs.length === 0) throw new Error(`"${w2}" not found in dictionary`);
   const [posTag, definition] = defs[0].split("	");
   const partOfSpeech = (_c = (_b = POS_MAP[posTag]) != null ? _b : posTag) != null ? _c : "";
   return { definition: (definition || "").trim(), partOfSpeech };
 }
-async function fetchDatamuseRelated(http, w, rel) {
+async function fetchDatamuseRelated(http, w2, rel) {
   try {
-    const res = await http.get(`https://api.datamuse.com/words?${rel}=${http.encodeQueryParam(w)}&max=8`);
+    const res = await http.get(`https://api.datamuse.com/words?${rel}=${http.encodeQueryParam(w2)}&max=8`);
     const json = res.json;
     if (res.status !== 200 || !Array.isArray(json)) return [];
     return json.map((entry) => entry.word);
@@ -376,7 +376,7 @@ function formatSensesZh(dict) {
   const parts = [];
   for (const item of dict) {
     if (!Array.isArray(item) || typeof item[0] !== "string" || !Array.isArray(item[1])) continue;
-    const words = item[1].filter((w) => typeof w === "string" && w.trim() !== "").slice(0, 3);
+    const words = item[1].filter((w2) => typeof w2 === "string" && w2.trim() !== "").slice(0, 3);
     if (words.length === 0) continue;
     const pos = item[0].toLowerCase();
     parts.push(`${(_a = POS_ABBR[pos]) != null ? _a : item[0]} ${words.join("\u3001")}`);
@@ -440,14 +440,14 @@ var DictionaryService = class {
   // Wiktionary first, Datamuse as fallback for the definition; Datamuse
   // always supplies synonyms/antonyms. All three requests run concurrently.
   async fetchDictionary(word) {
-    const w = word.toLowerCase();
-    const defPromise = this.fetchDefinition(w);
-    const synPromise = fetchDatamuseRelated(this.http, w, "rel_syn");
-    const antPromise = fetchDatamuseRelated(this.http, w, "rel_ant");
+    const w2 = word.toLowerCase();
+    const defPromise = this.fetchDefinition(w2);
+    const synPromise = fetchDatamuseRelated(this.http, w2, "rel_syn");
+    const antPromise = fetchDatamuseRelated(this.http, w2, "rel_ant");
     const found = await defPromise;
     let { definition, partOfSpeech } = found;
     let formOf = "";
-    if (found.baseForm && found.baseForm.toLowerCase() !== w) {
+    if (found.baseForm && found.baseForm.toLowerCase() !== w2) {
       try {
         const base = await fetchWiktionaryDefinition(this.http, found.baseForm.toLowerCase());
         formOf = definition;
@@ -456,18 +456,18 @@ var DictionaryService = class {
       } catch (e) {
       }
     }
-    const { text: wordZh, sensesZh } = await this.translateWordWithSenses(w);
-    const definitionZh = wordZh && wordZh.trim().toLowerCase() !== w ? wordZh : await this.translateToZhTW(definition);
+    const { text: wordZh, sensesZh } = await this.translateWordWithSenses(w2);
+    const definitionZh = wordZh && wordZh.trim().toLowerCase() !== w2 ? wordZh : await this.translateToZhTW(definition);
     const synonyms = await synPromise;
     const antonyms = await antPromise;
     return { phonetic: "", audio: "", partOfSpeech, definition, definitionZh, synonyms, antonyms, formOf, sensesZh };
   }
   // Google with the dt=bd senses; MyMemory fallback has none ("").
-  async translateWordWithSenses(w) {
+  async translateWordWithSenses(w2) {
     try {
-      return await translateWithGoogleSenses(this.http, w);
+      return await translateWithGoogleSenses(this.http, w2);
     } catch (e) {
-      return { text: await this.translateToZhTW(w), sensesZh: "" };
+      return { text: await this.translateToZhTW(w2), sensesZh: "" };
     }
   }
   // Translation is a bonus — failure here must not sink the definition
@@ -485,12 +485,12 @@ var DictionaryService = class {
       }
     }
   }
-  async fetchDefinition(w) {
+  async fetchDefinition(w2) {
     try {
-      return await fetchWiktionaryDefinition(this.http, w);
+      return await fetchWiktionaryDefinition(this.http, w2);
     } catch (primaryErr) {
       try {
-        return await fetchDatamuseDefinition(this.http, w);
+        return await fetchDatamuseDefinition(this.http, w2);
       } catch (fallbackErr) {
         throw new Error(
           `${errorMessage(primaryErr)}; fallback also failed: ${errorMessage(fallbackErr)}`,
@@ -935,9 +935,9 @@ function mergeSettings(local, remote) {
   const localLegacy = legacyStamp(local);
   const remoteLegacy = legacyStamp(remote);
   for (const key5 of SETTINGS_SECTIONS) {
-    const picked = pickSection(local[key5], remote[key5], localLegacy, remoteLegacy, l4, r);
-    if (picked === void 0) delete out[key5];
-    else out[key5] = picked;
+    const picked2 = pickSection(local[key5], remote[key5], localLegacy, remoteLegacy, l4, r);
+    if (picked2 === void 0) delete out[key5];
+    else out[key5] = picked2;
   }
   return out;
 }
@@ -1768,7 +1768,88 @@ var en = {
   "grammar.practiceCard.mistakes": "{n} mistakes in this topic",
   "grammar.practiceCard.noMistakes": "No mistakes to redo in this topic",
   "grammar.practiceCard.noTopic": "Topic not found; check the topic: id.",
-  "grammar.topic.fillBuiltIn": "Fill in explanation"
+  "grammar.topic.fillBuiltIn": "Fill in explanation",
+  // ── 第十七波 Q：常用字頁籤、錯題區、Polysemy 意思地圖 ──
+  "practice.poly.label": "Common words",
+  "practice.poly.tag": "Common word",
+  "practice.poly.tagWord": "Word",
+  "practice.poly.category": "Category",
+  "practice.poly.word": "Words",
+  "practice.poly.level": "Level",
+  "practice.poly.quickSaved": "Words I saved",
+  "practice.poly.quickWeak": "Missed last time",
+  "practice.poly.noneChosen": "No words chosen",
+  "practice.poly.allLevels": "All levels",
+  "practice.poly.map": "Sense map (ticked senses are tested)",
+  "practice.poly.dot.none": "Not practised yet",
+  "practice.poly.dot.partial": "Practised, not settled",
+  "practice.poly.dot.done": "Last 3 all right",
+  "practice.poly.pickWord": "Pick a few words above to start.",
+  "practice.poly.preparing": "Preparing questions\u2026",
+  "practice.poly.aiOff": "AI is off, so no new questions can be made",
+  "practice.poly.noKey": "No AI key is set, so no new questions can be made",
+  "practice.poly.offline": "You're offline, so no new questions can be made",
+  "practice.poly.none": "No new questions right now; change the filter or try later.",
+  "practice.mistakes.title": "Mistakes",
+  "practice.mistakes.empty": "No mistakes right now.",
+  "practice.mistakes.count": "{n}",
+  "practice.mistakes.redo": "Redo this group",
+  "practice.mistakes.fold": "Fold",
+  "practice.mistakes.redoDone": "This group is done.",
+  "practice.mistakes.kind.which-sense": "Which sense",
+  "practice.mistakes.kind.pick-word": "Pick the word",
+  "practice.mistakes.kind.same-sense": "Same sense",
+  "practice.mistakes.kind.choice": "Multiple choice",
+  "practice.mistakes.kind.find-error": "Find the error",
+  "practice.mistakes.kind.other": "Other",
+  "practice.mistakes.tag.sense-confusion": "Senses mixed up",
+  "practice.mistakes.tag.light-verb": "Light verb",
+  "practice.mistakes.tag.preposition-time": "Time preposition",
+  "practice.mistakes.tag.preposition-place": "Place preposition",
+  "practice.mistakes.tag.preposition-other": "Other preposition",
+  "practice.mistakes.tag.phrasal-verb": "Phrasal verb",
+  "practice.mistakes.tag.collocation": "Collocation",
+  "practice.mistakes.tag.pos-confusion": "Part of speech",
+  "practice.mistakes.tag.literal-figurative": "Literal vs figurative",
+  "practice.mistakes.tag.register": "Register",
+  "practice.mistakes.tag.meaning": "Meaning",
+  "practice.mistakes.tag.form": "Word form",
+  "practice.mistakes.tag.confusable": "Confusable words",
+  "poly.cat.A": "Prepositions",
+  "poly.cat.B": "Everyday verbs",
+  "poly.cat.C": "Nouns",
+  "poly.cat.D": "Adjectives & adverbs",
+  "poly.cat.E": "Function words",
+  "poly.level.1": "Basic",
+  "poly.level.2": "Intermediate",
+  "poly.level.3": "Advanced",
+  "poly.map.title": "Common words: sense map",
+  "poly.map.all": "All",
+  "poly.map.search": "Search a word or meaning",
+  "poly.map.none": "No matching words.",
+  "poly.map.progress": "{done}/{total} senses settled",
+  "poly.map.phrases": "Phrases",
+  "poly.map.practice": "Practise this word",
+  // Wave 17 V: vocab scenario practice, mix tab
+  "practice.vocab.scenarioCards": "Card review",
+  "practice.vocab.scenarioPractice": "Scenario practice",
+  "practice.vocab.scenarioFew": "Fewer than 3 matching words have a Chinese meaning",
+  "practice.mix.label": "Mix",
+  "practice.mix.include": "Categories to mix",
+  "practice.mix.catVocab": "Vocab",
+  "practice.mix.catGrammar": "Grammar",
+  "practice.mix.catPoly": "Common words",
+  "practice.mix.sumVocab": "Vocab {n} words",
+  "practice.mix.sumGrammar": "Grammar {n} topics",
+  "practice.mix.sumPoly": "Common words {words}",
+  "practice.mix.unset": " (not set)",
+  "practice.mix.none": "Pick at least one category to mix.",
+  "practice.mix.nothing": "Nothing to ask about yet; set the filters on the other tabs first.",
+  // Wave 17 Z — learning summary (AI learner block)
+  "learner.summary.prefix": "Current progress: ",
+  "learner.summary.vocab": "{n} words learned ({mature} mature)",
+  "learner.summary.grammar": "{n} grammar topics mastered",
+  "learner.summary.poly": "{n} common-word senses practised"
 };
 
 // src/core/i18n/zh-TW.ts
@@ -2532,7 +2613,88 @@ var zhTW = {
   "grammar.practiceCard.mistakes": "\u9019\u500B\u4E3B\u984C\u6709 {n} \u984C\u932F\u984C",
   "grammar.practiceCard.noMistakes": "\u9019\u500B\u4E3B\u984C\u6C92\u6709\u5F85\u91CD\u505A\u7684\u932F\u984C",
   "grammar.practiceCard.noTopic": "\u627E\u4E0D\u5230\u9019\u500B\u4E3B\u984C\uFF0C\u8ACB\u6AA2\u67E5 topic: \u7684 id\u3002",
-  "grammar.topic.fillBuiltIn": "\u586B\u5165\u8AAA\u660E"
+  "grammar.topic.fillBuiltIn": "\u586B\u5165\u8AAA\u660E",
+  // ── 第十七波 Q：常用字頁籤、錯題區、Polysemy 意思地圖 ──
+  "practice.poly.label": "\u5E38\u7528\u5B57",
+  "practice.poly.tag": "\u5E38\u7528\u5B57",
+  "practice.poly.tagWord": "\u55AE\u5B57",
+  "practice.poly.category": "\u985E\u5225",
+  "practice.poly.word": "\u5B57",
+  "practice.poly.level": "\u7D1A\u6578",
+  "practice.poly.quickSaved": "\u6211\u6536\u9304\u904E\u7684",
+  "practice.poly.quickWeak": "\u4E0A\u6B21\u932F\u7684",
+  "practice.poly.noneChosen": "\u5C1A\u672A\u9078\u5B57",
+  "practice.poly.allLevels": "\u5168\u90E8\u7D1A\u6578",
+  "practice.poly.map": "\u610F\u601D\u5730\u5716\uFF08\u52FE\u9078\u7684\u610F\u601D\u624D\u6703\u51FA\u984C\uFF09",
+  "practice.poly.dot.none": "\u9084\u6C92\u7DF4\u904E",
+  "practice.poly.dot.partial": "\u7DF4\u904E\uFF0C\u9084\u4E0D\u7A69",
+  "practice.poly.dot.done": "\u6700\u8FD1 3 \u6B21\u90FD\u7B54\u5C0D",
+  "practice.poly.pickWord": "\u5148\u5728\u4E0A\u9762\u9078\u5E7E\u500B\u5B57\uFF0C\u5C31\u80FD\u958B\u59CB\u7DF4\u7FD2\u3002",
+  "practice.poly.preparing": "\u984C\u76EE\u6E96\u5099\u4E2D\u2026",
+  "practice.poly.aiOff": "AI \u6C92\u6709\u958B\u555F\uFF0C\u7121\u6CD5\u751F\u6210\u65B0\u984C\u76EE",
+  "practice.poly.noKey": "\u5C1A\u672A\u8A2D\u5B9A AI \u91D1\u9470\uFF0C\u7121\u6CD5\u751F\u6210\u65B0\u984C\u76EE",
+  "practice.poly.offline": "\u76EE\u524D\u96E2\u7DDA\uFF0C\u7121\u6CD5\u751F\u6210\u65B0\u984C\u76EE",
+  "practice.poly.none": "\u76EE\u524D\u6C92\u6709\u65B0\u984C\u76EE\uFF0C\u63DB\u500B\u7BE9\u9078\u6216\u7A0D\u5F8C\u518D\u8A66\u3002",
+  "practice.mistakes.title": "\u932F\u984C\u5340",
+  "practice.mistakes.empty": "\u76EE\u524D\u6C92\u6709\u932F\u984C\u3002",
+  "practice.mistakes.count": "{n} \u984C",
+  "practice.mistakes.redo": "\u91CD\u505A\u9019\u7D44",
+  "practice.mistakes.fold": "\u6536\u8D77",
+  "practice.mistakes.redoDone": "\u9019\u7D44\u5DF2\u7D93\u505A\u5B8C\u4E86\u3002",
+  "practice.mistakes.kind.which-sense": "\u5224\u65B7\u610F\u601D",
+  "practice.mistakes.kind.pick-word": "\u9078\u7528\u5B57",
+  "practice.mistakes.kind.same-sense": "\u540C\u7FA9\u5224\u65B7",
+  "practice.mistakes.kind.choice": "\u9078\u64C7\u984C",
+  "practice.mistakes.kind.find-error": "\u627E\u932F",
+  "practice.mistakes.kind.other": "\u5176\u4ED6",
+  "practice.mistakes.tag.sense-confusion": "\u610F\u601D\u6DF7\u6DC6",
+  "practice.mistakes.tag.light-verb": "\u8F15\u52D5\u8A5E",
+  "practice.mistakes.tag.preposition-time": "\u6642\u9593\u4ECB\u7CFB\u8A5E",
+  "practice.mistakes.tag.preposition-place": "\u5730\u9EDE\u4ECB\u7CFB\u8A5E",
+  "practice.mistakes.tag.preposition-other": "\u5176\u4ED6\u4ECB\u7CFB\u8A5E",
+  "practice.mistakes.tag.phrasal-verb": "\u7247\u8A9E\u52D5\u8A5E",
+  "practice.mistakes.tag.collocation": "\u642D\u914D\u8A5E",
+  "practice.mistakes.tag.pos-confusion": "\u8A5E\u6027\u6DF7\u6DC6",
+  "practice.mistakes.tag.literal-figurative": "\u5B57\u9762\u8207\u6BD4\u55BB",
+  "practice.mistakes.tag.register": "\u8A9E\u6C23\u5834\u5408",
+  "practice.mistakes.tag.meaning": "\u5B57\u7FA9",
+  "practice.mistakes.tag.form": "\u5B57\u5F62\u8B8A\u5316",
+  "practice.mistakes.tag.confusable": "\u6613\u6DF7\u6DC6\u5B57",
+  "poly.cat.A": "\u4ECB\u7CFB\u8A5E",
+  "poly.cat.B": "\u842C\u7528\u52D5\u8A5E",
+  "poly.cat.C": "\u540D\u8A5E",
+  "poly.cat.D": "\u5F62\u5BB9\u8A5E\u526F\u8A5E",
+  "poly.cat.E": "\u529F\u80FD\u8A5E",
+  "poly.level.1": "\u57FA\u790E",
+  "poly.level.2": "\u4E2D\u7D1A",
+  "poly.level.3": "\u9032\u968E",
+  "poly.map.title": "\u5E38\u7528\u5B57\u610F\u601D\u5730\u5716",
+  "poly.map.all": "\u5168\u90E8",
+  "poly.map.search": "\u641C\u5C0B\u5B57\u6216\u4E2D\u6587\u610F\u601D",
+  "poly.map.none": "\u6C92\u6709\u7B26\u5408\u7684\u5B57\u3002",
+  "poly.map.progress": "{done}/{total} \u500B\u610F\u601D\u7A69\u4E86",
+  "poly.map.phrases": "\u7247\u8A9E",
+  "poly.map.practice": "\u7DF4\u7FD2\u9019\u500B\u5B57",
+  // 第十七波 V: 單字情境練習、混合頁籤
+  "practice.vocab.scenarioCards": "\u5361\u7247\u8907\u7FD2",
+  "practice.vocab.scenarioPractice": "\u60C5\u5883\u7DF4\u7FD2",
+  "practice.vocab.scenarioFew": "\u7B26\u5408\u7BE9\u9078\u3001\u6709\u4E2D\u6587\u610F\u601D\u7684\u5B57\u4E0D\u5230 3 \u500B",
+  "practice.mix.label": "\u6DF7\u5408",
+  "practice.mix.include": "\u8981\u6DF7\u7684\u985E\u5225",
+  "practice.mix.catVocab": "\u55AE\u5B57",
+  "practice.mix.catGrammar": "\u6587\u6CD5",
+  "practice.mix.catPoly": "\u5E38\u7528\u5B57",
+  "practice.mix.sumVocab": "\u55AE\u5B57 {n} \u5B57",
+  "practice.mix.sumGrammar": "\u6587\u6CD5 {n} \u500B\u4E3B\u984C",
+  "practice.mix.sumPoly": "\u5E38\u7528\u5B57 {words}",
+  "practice.mix.unset": "\uFF08\u672A\u8A2D\u5B9A\uFF09",
+  "practice.mix.none": "\u8ACB\u81F3\u5C11\u9078\u4E00\u500B\u8981\u6DF7\u7684\u985E\u5225\u3002",
+  "practice.mix.nothing": "\u9078\u7684\u985E\u5225\u90FD\u9084\u6C92\u6709\u53EF\u51FA\u984C\u7684\u5167\u5BB9\uFF0C\u5148\u5230\u5404\u9801\u7C64\u8A2D\u5B9A\u7BE9\u9078\u3002",
+  // 第十七波 Z — 學習概況（AI 學習者區塊）
+  "learner.summary.prefix": "\u76EE\u524D\u5B78\u7FD2\u6982\u6CC1\uFF1A",
+  "learner.summary.vocab": "\u5DF2\u5B78\u55AE\u5B57 {n}\uFF08\u719F\u7DF4 {mature}\uFF09",
+  "learner.summary.grammar": "\u6587\u6CD5\u5DF2\u638C\u63E1 {n} \u500B\u4E3B\u984C",
+  "learner.summary.poly": "\u5E38\u7528\u5B57\u7DF4\u904E {n} \u500B\u610F\u601D"
 };
 
 // src/core/i18n/index.ts
@@ -3034,8 +3196,8 @@ var Speaker = class {
 };
 function browserSpeaker() {
   var _a;
-  const w = typeof window !== "undefined" ? window : void 0;
-  const synth = (_a = w == null ? void 0 : w.speechSynthesis) != null ? _a : null;
+  const w2 = typeof window !== "undefined" ? window : void 0;
+  const synth = (_a = w2 == null ? void 0 : w2.speechSynthesis) != null ? _a : null;
   return new Speaker(synth, (text) => new SpeechSynthesisUtterance(text));
 }
 var shared = null;
@@ -3240,9 +3402,9 @@ function tokens(text) {
 var isConsonant = (c2) => /[b-df-hj-np-tv-z]/.test(c2);
 var ACCIDENTAL = /* @__PURE__ */ new Set(["she", "the", "her"]);
 function wordForms(token2, side) {
-  const w = token2.endsWith("'s") ? token2.slice(0, -2) : token2;
-  const out = /* @__PURE__ */ new Set([token2, w]);
-  const ends = (suf) => w.length > suf.length && w.endsWith(suf);
+  const w2 = token2.endsWith("'s") ? token2.slice(0, -2) : token2;
+  const out = /* @__PURE__ */ new Set([token2, w2]);
+  const ends = (suf) => w2.length > suf.length && w2.endsWith(suf);
   const add3 = (form) => {
     if (!(side === "word" && ACCIDENTAL.has(form))) out.add(form);
   };
@@ -3256,38 +3418,38 @@ function wordForms(token2, side) {
     if (base.length >= min2) add3(base);
   };
   const min = side === "word" ? 4 : 3;
-  if (ends("ies") || ends("ied")) rebuilt(w.slice(0, -3) + "y", 3);
+  if (ends("ies") || ends("ied")) rebuilt(w2.slice(0, -3) + "y", 3);
   if (ends("s") && !ends("ss")) {
-    const base = w.slice(0, -1);
+    const base = w2.slice(0, -1);
     if (side === "word" && base.endsWith("e")) rebuilt(base, 3);
     else stem(base, min);
   }
   if (ends("es")) {
-    const base = w.slice(0, -2);
+    const base = w2.slice(0, -2);
     if (side === "selection") stem(base, min);
     else if (/(?:[sxzo]|ch|sh)$/.test(base)) rebuilt(base, 3);
   }
   if (ends("eed")) {
-    rebuilt(w.slice(0, -1), 4);
+    rebuilt(w2.slice(0, -1), 4);
   } else if (ends("ed")) {
-    stem(w.slice(0, -2), min);
-    rebuilt(w.slice(0, -1), 3);
+    stem(w2.slice(0, -2), min);
+    rebuilt(w2.slice(0, -1), 3);
   }
   if (ends("ing")) {
-    stem(w.slice(0, -3), min);
-    rebuilt(w.slice(0, -3) + "e", 3);
+    stem(w2.slice(0, -3), min);
+    rebuilt(w2.slice(0, -3) + "e", 3);
   }
-  if (ends("ying")) rebuilt(w.slice(0, -4) + "ie", 3);
+  if (ends("ying")) rebuilt(w2.slice(0, -4) + "ie", 3);
   if (side === "word") {
-    if (ends("ier")) rebuilt(w.slice(0, -3) + "y", 4);
-    if (ends("iest")) rebuilt(w.slice(0, -4) + "y", 4);
+    if (ends("ier")) rebuilt(w2.slice(0, -3) + "y", 4);
+    if (ends("iest")) rebuilt(w2.slice(0, -4) + "y", 4);
     return out;
   }
-  if (ends("ier")) rebuilt(w.slice(0, -3) + "y", 4);
-  if (ends("iest")) rebuilt(w.slice(0, -4) + "y", 4);
-  if (ends("ily")) rebuilt(w.slice(0, -3) + "y", 4);
+  if (ends("ier")) rebuilt(w2.slice(0, -3) + "y", 4);
+  if (ends("iest")) rebuilt(w2.slice(0, -4) + "y", 4);
+  if (ends("ily")) rebuilt(w2.slice(0, -3) + "y", 4);
   for (const suf of ["er", "est", "r", "st", "ly", "y"]) {
-    if (ends(suf)) stem(w.slice(0, -suf.length), 4);
+    if (ends(suf)) stem(w2.slice(0, -suf.length), 4);
   }
   return out;
 }
@@ -3384,17 +3546,32 @@ var LANGUAGE_PHRASE = {
   en: "\u6DFA\u986F\u7684\u82F1\u6587",
   bilingual: "\u4E2D\u82F1\u5C0D\u7167\uFF08\u4EE5\u7E41\u9AD4\u4E2D\u6587\u70BA\u4E3B\uFF0C\u95DC\u9375\u8655\u9644\u82F1\u6587\uFF09"
 };
-function renderProfile(p) {
+var defaultDeps = {};
+function setProfileDeps(deps) {
+  defaultDeps = deps;
+}
+function renderLearnerSummary(s) {
+  const parts = [];
+  const learned = s.vocab.learning + s.vocab.mature;
+  if (learned > 0) parts.push(t("learner.summary.vocab", { n: learned, mature: s.vocab.mature }));
+  if (s.grammar.mastered > 0) parts.push(t("learner.summary.grammar", { n: s.grammar.mastered }));
+  if (s.poly.practisedSenses > 0) parts.push(t("learner.summary.poly", { n: s.poly.practisedSenses }));
+  return parts.length ? t("learner.summary.prefix") + parts.join(" \xB7 ") : "";
+}
+function renderProfile(p, deps = defaultDeps) {
   var _a, _b;
   const parts = [];
   if (p.level) parts.push(` ${LEVEL_LABEL[p.level]}\u7A0B\u5EA6`);
   parts.push((_a = GOAL_PHRASE[p.goal]) != null ? _a : GOAL_PHRASE.general);
-  return renderTemplate(PROFILE_TEMPLATE, {
+  const base = renderTemplate(PROFILE_TEMPLATE, {
     who: `\u4E00\u500B${parts.join("\u3001")}`,
     language: (_b = LANGUAGE_PHRASE[p.answerLanguage]) != null ? _b : LANGUAGE_PHRASE["zh-TW"],
     maxChars: p.maxAnswerChars > 0 ? p.maxAnswerChars : void 0,
     extra: p.extra.trim()
   });
+  const summary = deps.learnerModel ? renderLearnerSummary(deps.learnerModel.snapshot()) : "";
+  return summary ? `${base}
+${summary}` : base;
 }
 
 // src/services/ai/tasks/compose.ts
@@ -3562,16 +3739,16 @@ function splitParagraphSpans(markdown) {
     if (close > 0) i = close + 1;
   }
   const out = [];
-  let start2 = -1;
+  let start3 = -1;
   const flush = (end) => {
-    if (start2 < 0) return;
-    const block = lines4.slice(start2, end + 1);
+    if (start3 < 0) return;
+    const block = lines4.slice(start3, end + 1);
     if (LIST_MARKER_RE.test(block[0]) && shouldSplitList(block)) {
-      for (const item of splitListItems(block, start2)) out.push(item);
+      for (const item of splitListItems(block, start3)) out.push(item);
     } else {
-      out.push({ text: block.join("\n"), lineStart: start2, lineEnd: end });
+      out.push({ text: block.join("\n"), lineStart: start3, lineEnd: end });
     }
-    start2 = -1;
+    start3 = -1;
   };
   for (; i < lines4.length; i++) {
     const line2 = lines4[i];
@@ -3595,7 +3772,7 @@ function splitParagraphSpans(markdown) {
       out.push({ text: line2, lineStart: i, lineEnd: i });
       continue;
     }
-    if (start2 < 0) start2 = i;
+    if (start3 < 0) start3 = i;
   }
   flush(lines4.length - 1);
   return out;
@@ -5426,10 +5603,10 @@ function parseWordlist(content) {
       continue;
     }
     if (inFence) continue;
-    const w = headword(lines4[i]);
-    if (w && !seen.has(w)) {
-      seen.add(w);
-      words.push(w);
+    const w2 = headword(lines4[i]);
+    if (w2 && !seen.has(w2)) {
+      seen.add(w2);
+      words.push(w2);
     }
   }
   return { tag, words };
@@ -6296,15 +6473,15 @@ function sha1(text) {
   let h2 = 2562383102;
   let h3 = 271733878;
   let h4 = 3285377520;
-  const w = new Int32Array(80);
+  const w2 = new Int32Array(80);
   for (let off = 0; off < bytes.length; off += 64) {
     for (let i = 0; i < 16; i++) {
       const j = off + i * 4;
-      w[i] = bytes[j] << 24 | bytes[j + 1] << 16 | bytes[j + 2] << 8 | bytes[j + 3];
+      w2[i] = bytes[j] << 24 | bytes[j + 1] << 16 | bytes[j + 2] << 8 | bytes[j + 3];
     }
     for (let i = 16; i < 80; i++) {
-      const x3 = w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16];
-      w[i] = x3 << 1 | x3 >>> 31;
+      const x3 = w2[i - 3] ^ w2[i - 8] ^ w2[i - 14] ^ w2[i - 16];
+      w2[i] = x3 << 1 | x3 >>> 31;
     }
     let a2 = h0;
     let b = h1;
@@ -6327,7 +6504,7 @@ function sha1(text) {
         f = b ^ c2 ^ d;
         k = 3395469782;
       }
-      const t2 = (a2 << 5 | a2 >>> 27) + f + e + k + w[i] | 0;
+      const t2 = (a2 << 5 | a2 >>> 27) + f + e + k + w2[i] | 0;
       e = d;
       d = c2;
       c2 = b << 30 | b >>> 2;
@@ -6375,17 +6552,17 @@ function noteSections(markdown) {
     const close = lines4.indexOf("---", 1);
     if (close > 0) i = close + 1;
   }
-  let start2 = -1;
+  let start3 = -1;
   const flush = (end) => {
-    if (start2 < 0) return;
-    const block = lines4.slice(start2, end + 1);
+    if (start3 < 0) return;
+    const block = lines4.slice(start3, end + 1);
     const type = classify(block);
     if (type === "list" && shouldSplitList(block)) {
-      for (const item of splitListItems(block, start2)) out.push({ type: "list", ...item });
+      for (const item of splitListItems(block, start3)) out.push({ type: "list", ...item });
     } else {
-      out.push({ type, lineStart: start2, lineEnd: end, text: block.join("\n") });
+      out.push({ type, lineStart: start3, lineEnd: end, text: block.join("\n") });
     }
-    start2 = -1;
+    start3 = -1;
   };
   for (; i < lines4.length; i++) {
     const line2 = lines4[i];
@@ -6409,7 +6586,7 @@ function noteSections(markdown) {
       out.push({ type: "heading", lineStart: i, lineEnd: i, text: line2 });
       continue;
     }
-    if (start2 < 0) start2 = i;
+    if (start3 < 0) start3 = i;
   }
   flush(lines4.length - 1);
   return out;
@@ -6523,11 +6700,11 @@ function shiftedRange(content, ref, want, sections) {
   const lines4 = content.replace(/\r\n?/g, "\n").split("\n");
   const span = ref.lineEnd - ref.lineStart;
   for (let d = 1; d < lines4.length; d++) {
-    for (const start2 of [ref.lineStart - d, ref.lineStart + d]) {
-      if (start2 < 0 || start2 + span >= lines4.length || !lines4[start2].trim()) continue;
-      const text = lines4.slice(start2, start2 + span + 1).join("\n");
+    for (const start3 of [ref.lineStart - d, ref.lineStart + d]) {
+      if (start3 < 0 || start3 + span >= lines4.length || !lines4[start3].trim()) continue;
+      const text = lines4.slice(start3, start3 + span + 1).join("\n");
       if (normalizeParagraph(text) !== want) continue;
-      return { type: (_b = (_a = sectionAt(sections, start2 + span)) == null ? void 0 : _a.type) != null ? _b : "paragraph", lineStart: start2, lineEnd: start2 + span, text };
+      return { type: (_b = (_a = sectionAt(sections, start3 + span)) == null ? void 0 : _a.type) != null ? _b : "paragraph", lineStart: start3, lineEnd: start3 + span, text };
     }
   }
   return null;
@@ -7456,7 +7633,7 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     }
     const busyBefore = new Set(threads.paragraphThreads(section3.path).filter((th) => threads.isBusy(th.id)).map((th) => th.id));
     let started = false;
-    const start2 = (id2) => {
+    const start3 = (id2) => {
       if (started) return;
       started = true;
       off();
@@ -7464,11 +7641,11 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     };
     const off = threads.events.on("thread:upsert", (th) => {
       if (th.anchor.kind !== "paragraph" || th.anchor.path !== section3.path) return;
-      if (threads.isBusy(th.id) && !busyBefore.has(th.id)) start2(th.id);
+      if (threads.isBusy(th.id) && !busyBefore.has(th.id)) start3(th.id);
     });
     try {
       const id2 = await threads.askParagraph(section3, req);
-      if (id2) start2(id2);
+      if (id2) start3(id2);
     } finally {
       off();
     }
@@ -7769,14 +7946,14 @@ function bySequence(a2, b) {
   return a2.stage - b.stage || a2.order - b.order;
 }
 function recommendNext(topics, statusOf2, level) {
-  const start2 = startDifficulty(level);
+  const start3 = startDifficulty(level);
   const sorted = [...topics].sort(bySequence);
   const byId = new Map(sorted.map((t2) => [t2.id, t2]));
   const prereqOk = (t2) => t2.prerequisites.every((id2) => {
     const p = byId.get(id2);
-    return !p || p.difficulty < start2 || statusOf2(id2) !== "new";
+    return !p || p.difficulty < start3 || statusOf2(id2) !== "new";
   });
-  const next = sorted.find((t2) => t2.difficulty >= start2 && statusOf2(t2.id) !== "mastered" && prereqOk(t2));
+  const next = sorted.find((t2) => t2.difficulty >= start3 && statusOf2(t2.id) !== "mastered" && prereqOk(t2));
   if (next) return next;
   return sorted.find((t2) => statusOf2(t2.id) === "learning");
 }
@@ -8428,28 +8605,28 @@ function isConsonant2(c2) {
   return /[b-df-hj-np-tv-z]/.test(c2);
 }
 function lemmaCandidates(lower2) {
-  const w = lower2.endsWith("'s") ? lower2.slice(0, -2) : lower2;
-  const out = w !== lower2 ? [w] : [];
+  const w2 = lower2.endsWith("'s") ? lower2.slice(0, -2) : lower2;
+  const out = w2 !== lower2 ? [w2] : [];
   const add3 = (base) => {
-    if (base.length >= MIN_BASE && base !== w && !out.includes(base)) out.push(base);
+    if (base.length >= MIN_BASE && base !== w2 && !out.includes(base)) out.push(base);
   };
-  if (w.endsWith("ies") || w.endsWith("ied")) {
-    add3(w.slice(0, -3) + "y");
+  if (w2.endsWith("ies") || w2.endsWith("ied")) {
+    add3(w2.slice(0, -3) + "y");
   }
-  if (w.endsWith("s") && !w.endsWith("ss")) {
-    add3(w.slice(0, -1));
-    if (w.endsWith("es")) add3(w.slice(0, -2));
+  if (w2.endsWith("s") && !w2.endsWith("ss")) {
+    add3(w2.slice(0, -1));
+    if (w2.endsWith("es")) add3(w2.slice(0, -2));
   }
-  if (w.endsWith("ed") && !w.endsWith("eed")) {
-    add3(w.slice(0, -1));
-    const stem = w.slice(0, -2);
+  if (w2.endsWith("ed") && !w2.endsWith("eed")) {
+    add3(w2.slice(0, -1));
+    const stem = w2.slice(0, -2);
     add3(stem);
     if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant2(stem[stem.length - 1])) {
       add3(stem.slice(0, -1));
     }
   }
-  if (w.endsWith("ing")) {
-    const stem = w.slice(0, -3);
+  if (w2.endsWith("ing")) {
+    const stem = w2.slice(0, -3);
     add3(stem);
     add3(stem + "e");
     if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant2(stem[stem.length - 1])) {
@@ -8457,18 +8634,18 @@ function lemmaCandidates(lower2) {
     }
     if (stem.endsWith("y")) add3(stem.slice(0, -1) + "ie");
   }
-  if (w.endsWith("ily")) add3(w.slice(0, -3) + "y");
-  if (w.endsWith("ly") && w.length - 2 >= 4) add3(w.slice(0, -2));
+  if (w2.endsWith("ily")) add3(w2.slice(0, -3) + "y");
+  if (w2.endsWith("ly") && w2.length - 2 >= 4) add3(w2.slice(0, -2));
   return out;
 }
 
 // src/services/learn/wordIndex.ts
 var TOKEN_RE2 = /[A-Za-z][A-Za-z'-]*/g;
 var STOP = /* @__PURE__ */ new Set(["the", "she", "new", "even", "like", "use", "her", "his", "one"]);
-function pluralBases(w) {
-  if (w.length > 4 && w.endsWith("ies")) return [w.slice(0, -3) + "y"];
-  if (/(?:s|x|z|ch|sh)es$/.test(w)) return [w.slice(0, -2)];
-  if (w.length > 3 && w.endsWith("s") && !/(?:ss|us|is)$/.test(w)) return [w.slice(0, -1)];
+function pluralBases(w2) {
+  if (w2.length > 4 && w2.endsWith("ies")) return [w2.slice(0, -3) + "y"];
+  if (/(?:s|x|z|ch|sh)es$/.test(w2)) return [w2.slice(0, -2)];
+  if (w2.length > 3 && w2.endsWith("s") && !/(?:ss|us|is)$/.test(w2)) return [w2.slice(0, -1)];
   return [];
 }
 var WordIndex = class {
@@ -8480,27 +8657,27 @@ var WordIndex = class {
     this.phrases = [];
     for (const e of entries) {
       if (e.deletedAt) continue;
-      const w = e.word.trim().toLowerCase();
-      if (!w) continue;
-      if (/\s/.test(w)) {
+      const w2 = e.word.trim().toLowerCase();
+      if (!w2) continue;
+      if (/\s/.test(w2)) {
         this.phrases.push(e);
         continue;
       }
-      if (!this.exact.has(w)) this.exact.set(w, e);
+      if (!this.exact.has(w2)) this.exact.set(w2, e);
     }
-    for (const [w, e] of this.exact) {
-      for (const b of pluralBases(w)) if (!STOP.has(b) && !this.exact.has(b) && !this.base.has(b)) this.base.set(b, e);
+    for (const [w2, e] of this.exact) {
+      for (const b of pluralBases(w2)) if (!STOP.has(b) && !this.exact.has(b) && !this.base.has(b)) this.base.set(b, e);
     }
   }
   // The entry for a single word or phrase, if it's in the list.
   find(word) {
     var _a;
-    const w = word.trim().toLowerCase();
-    if (!w) return void 0;
-    if (/\s/.test(w)) return this.phrases.find((e) => e.word.trim().toLowerCase() === w);
-    const hit = (_a = this.exact.get(w)) != null ? _a : this.base.get(w);
+    const w2 = word.trim().toLowerCase();
+    if (!w2) return void 0;
+    if (/\s/.test(w2)) return this.phrases.find((e) => e.word.trim().toLowerCase() === w2);
+    const hit = (_a = this.exact.get(w2)) != null ? _a : this.base.get(w2);
     if (hit) return hit;
-    for (const b of lemmaCandidates(w)) {
+    for (const b of lemmaCandidates(w2)) {
       const e = this.exact.get(b);
       if (e) return e;
     }
@@ -9208,8 +9385,8 @@ var ScanAccumulator = class {
       const hit = this.match(m2[0]);
       if (!hit) continue;
       if (!this.hits.has(hit.base)) {
-        const start2 = m2.index;
-        const sentence = extractSentence(text, start2, start2 + m2[0].length, null);
+        const start3 = m2.index;
+        const sentence = extractSentence(text, start3, start3 + m2[0].length, null);
         this.hits.set(hit.base, { word: hit.base, tags: hit.tags, line: line2, sentence });
       }
       for (const tag of hit.tags) {
@@ -9293,14 +9470,14 @@ function tierPageWords(words, entryById, tagsOf) {
   var _a;
   const byKey = /* @__PURE__ */ new Map();
   let order = 0;
-  for (const w of words) {
-    const key5 = w.word.toLowerCase();
+  for (const w2 of words) {
+    const key5 = w2.word.toLowerCase();
     let rec = byKey.get(key5);
     if (!rec) {
-      rec = { word: w, morphemeLabels: [], order: order++ };
+      rec = { word: w2, morphemeLabels: [], order: order++ };
       byKey.set(key5, rec);
     }
-    const label = (_a = w.morpheme) == null ? void 0 : _a.label;
+    const label = (_a = w2.morpheme) == null ? void 0 : _a.label;
     if (label && !rec.morphemeLabels.includes(label)) rec.morphemeLabels.push(label);
   }
   const rows = [];
@@ -9323,7 +9500,7 @@ function tierPageWords(words, entryById, tagsOf) {
 }
 function uniquePageWordCount(groups) {
   const seen = /* @__PURE__ */ new Set();
-  for (const g of groups) for (const w of g.words) seen.add(w.word.toLowerCase());
+  for (const g of groups) for (const w2 of g.words) seen.add(w2.word.toLowerCase());
   return seen.size;
 }
 function pageScopedEntries(groups, entries) {
@@ -9331,11 +9508,11 @@ function pageScopedEntries(groups, entries) {
   const seen = /* @__PURE__ */ new Set();
   const out = [];
   for (const g of groups) {
-    for (const w of g.words) {
-      if (!w.entryId || seen.has(w.entryId)) continue;
-      const e = byId.get(w.entryId);
+    for (const w2 of g.words) {
+      if (!w2.entryId || seen.has(w2.entryId)) continue;
+      const e = byId.get(w2.entryId);
       if (!e) continue;
-      seen.add(w.entryId);
+      seen.add(w2.entryId);
       out.push(e);
     }
   }
@@ -9344,10 +9521,10 @@ function pageScopedEntries(groups, entries) {
 function pageGroupEntryIds(group) {
   const seen = /* @__PURE__ */ new Set();
   const ids = [];
-  for (const w of group.words) {
-    if (w.entryId && !seen.has(w.entryId)) {
-      seen.add(w.entryId);
-      ids.push(w.entryId);
+  for (const w2 of group.words) {
+    if (w2.entryId && !seen.has(w2.entryId)) {
+      seen.add(w2.entryId);
+      ids.push(w2.entryId);
     }
   }
   return ids;
@@ -12238,8 +12415,8 @@ function manyBody_default() {
   }
   function apply(quad, x1, _, x22) {
     if (!quad.value) return true;
-    var x3 = quad.x - node.x, y3 = quad.y - node.y, w = x22 - x1, l4 = x3 * x3 + y3 * y3;
-    if (w * w / theta2 < l4) {
+    var x3 = quad.x - node.x, y3 = quad.y - node.y, w2 = x22 - x1, l4 = x3 * x3 + y3 * y3;
+    if (w2 * w2 / theta2 < l4) {
       if (l4 < distanceMax2) {
         if (x3 === 0) x3 = jiggle_default(random), l4 += x3 * x3;
         if (y3 === 0) y3 = jiggle_default(random), l4 += y3 * y3;
@@ -12256,9 +12433,9 @@ function manyBody_default() {
     }
     do
       if (quad.data !== node) {
-        w = strengths[quad.data.index] * alpha / l4;
-        node.vx += x3 * w;
-        node.vy += y3 * w;
+        w2 = strengths[quad.data.index] * alpha / l4;
+        node.vx += x3 * w2;
+        node.vy += y3 * w2;
       }
     while (quad = quad.next);
   }
@@ -12395,16 +12572,16 @@ function create(node, id2, self) {
   self.timer = timer(schedule, 0, self.time);
   function schedule(elapsed) {
     self.state = SCHEDULED;
-    self.timer.restart(start2, self.delay, self.time);
-    if (self.delay <= elapsed) start2(elapsed - self.delay);
+    self.timer.restart(start3, self.delay, self.time);
+    if (self.delay <= elapsed) start3(elapsed - self.delay);
   }
-  function start2(elapsed) {
+  function start3(elapsed) {
     var i, j, n, o;
     if (self.state !== SCHEDULED) return stop();
     for (i in schedules) {
       o = schedules[i];
       if (o.name !== self.name) continue;
-      if (o.state === STARTED) return timeout_default(start2);
+      if (o.state === STARTED) return timeout_default(start3);
       if (o.state === RUNNING) {
         o.state = ENDED;
         o.timer.stop();
@@ -12878,14 +13055,14 @@ function nogamma(a2, b) {
 // node_modules/d3-interpolate/src/rgb.js
 var rgb_default = (function rgbGamma(y3) {
   var color2 = gamma(y3);
-  function rgb2(start2, end) {
-    var r = color2((start2 = rgb(start2)).r, (end = rgb(end)).r), g = color2(start2.g, end.g), b = color2(start2.b, end.b), opacity = nogamma(start2.opacity, end.opacity);
+  function rgb2(start3, end) {
+    var r = color2((start3 = rgb(start3)).r, (end = rgb(end)).r), g = color2(start3.g, end.g), b = color2(start3.b, end.b), opacity = nogamma(start3.opacity, end.opacity);
     return function(t2) {
-      start2.r = r(t2);
-      start2.g = g(t2);
-      start2.b = b(t2);
-      start2.opacity = opacity(t2);
-      return start2 + "";
+      start3.r = r(t2);
+      start3.g = g(t2);
+      start3.b = b(t2);
+      start3.opacity = opacity(t2);
+      return start3 + "";
     };
   }
   rgb2.gamma = rgbGamma;
@@ -13830,19 +14007,19 @@ function zoom_default2() {
     }).on("interrupt.zoom end.zoom", function() {
       gesture(this, arguments).event(event).end();
     }).tween("zoom", function() {
-      var that = this, args = arguments, g = gesture(that, args).event(event), e = extent.apply(that, args), p = point == null ? centroid(e) : typeof point === "function" ? point.apply(that, args) : point, w = Math.max(e[1][0] - e[0][0], e[1][1] - e[0][1]), a2 = that.__zoom, b = typeof transform2 === "function" ? transform2.apply(that, args) : transform2, i = interpolate(a2.invert(p).concat(w / a2.k), b.invert(p).concat(w / b.k));
+      var that = this, args = arguments, g = gesture(that, args).event(event), e = extent.apply(that, args), p = point == null ? centroid(e) : typeof point === "function" ? point.apply(that, args) : point, w2 = Math.max(e[1][0] - e[0][0], e[1][1] - e[0][1]), a2 = that.__zoom, b = typeof transform2 === "function" ? transform2.apply(that, args) : transform2, i = interpolate(a2.invert(p).concat(w2 / a2.k), b.invert(p).concat(w2 / b.k));
       return function(t2) {
         if (t2 === 1) t2 = b;
         else {
-          var l4 = i(t2), k = w / l4[2];
+          var l4 = i(t2), k = w2 / l4[2];
           t2 = new Transform(k, p[0] - l4[0] * k, p[1] - l4[1] * k);
         }
         g.zoom(null, t2);
       };
     });
   }
-  function gesture(that, args, clean2) {
-    return !clean2 && that.__zooming || new Gesture(that, args);
+  function gesture(that, args, clean3) {
+    return !clean3 && that.__zooming || new Gesture(that, args);
   }
   function Gesture(that, args) {
     this.that = that;
@@ -14052,7 +14229,7 @@ function zoom_default2() {
 }
 
 // src/ui/galaxy/galaxyModel.ts
-var wordKey = (w) => w.trim().toLowerCase();
+var wordKey = (w2) => w2.trim().toLowerCase();
 function familyEmoji(f) {
   var _a;
   return (_a = f.emoji) != null ? _a : "\u{1F30C}";
@@ -14607,7 +14784,7 @@ function parseFamiliesParams(source) {
   if (word) out.word = word;
   return out;
 }
-var key = (w) => w.trim().toLowerCase();
+var key = (w2) => w2.trim().toLowerCase();
 function familyTitle(f) {
   const topic = f.topic.trim();
   const label = f.label.trim();
@@ -14655,7 +14832,7 @@ function familyTree(f, lookup, opts = {}) {
   const seeds = ((_a = f.seedEntryIds) != null ? _a : []).map((id2) => {
     var _a2;
     return (_a2 = lookup.byEntryId(id2)) == null ? void 0 : _a2.word;
-  }).filter((w) => !!w);
+  }).filter((w2) => !!w2);
   return { id: f.id, title: familyTitle(f), columns, seeds, knownCount, suggestedCount, dates: recordDates(f, opts.now) };
 }
 function familiesWith(families, entry) {
@@ -15227,33 +15404,33 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
       groups: familiesPageGroups(families, gxLookup),
       activeGroupKey: this.selectedId ? familyGroupKey(this.selectedId) : null,
       focusWord,
-      selectWord: (groupKey, w) => this.selectWord(groupKey, w),
-      addWord: (groupKey, w) => this.addWord(groupKey, w)
+      selectWord: (groupKey, w2) => this.selectWord(groupKey, w2),
+      addWord: (groupKey, w2) => this.addWord(groupKey, w2)
     };
     this.plugin.pageContext.publish(this, ctx);
   }
   // 側欄點「本篇」分類裡的字 (#14)：換到那個主題、星系選取並置中那個節點；
   // 清單模式只換主題＋highlight（跟「來源：字族樹…」的 focus 同一招）。
-  selectWord(groupKey, w) {
+  selectWord(groupKey, w2) {
     var _a, _b;
     this.selectedId = familyIdOfGroupKey(groupKey);
     if (this.viewMode === "list") {
-      this.focusEntryId = w.entryId;
+      this.focusEntryId = w2.entryId;
       this.render();
       return;
     }
-    this.galaxySelected = (_a = w.entryId) != null ? _a : null;
+    this.galaxySelected = (_a = w2.entryId) != null ? _a : null;
     this.focusEntryId = void 0;
     this.render();
-    if (w.entryId) (_b = this.galaxyGraph) == null ? void 0 : _b.focusNode(w.entryId);
+    if (w2.entryId) (_b = this.galaxyGraph) == null ? void 0 : _b.focusNode(w2.entryId);
   }
   // 側欄灰色建議字的 ＋ (#8)：加入並 like；addSuggested 已經處理「在庫沒
   // like → 只 like」，正常流程一定回傳 entry——查一次單字庫只是防呆。
-  async addWord(groupKey, w) {
+  async addWord(groupKey, w2) {
     const familyId = familyIdOfGroupKey(groupKey);
-    const entry = await this.plugin.families.addSuggested(familyId, w.word);
+    const entry = await this.plugin.families.addSuggested(familyId, w2.word);
     if (entry) return entry;
-    const k = w.word.trim().toLowerCase();
+    const k = w2.word.trim().toLowerCase();
     return this.plugin.store.entries.find((e) => !e.deletedAt && e.word.trim().toLowerCase() === k);
   }
 };
@@ -15782,8 +15959,8 @@ var DnaBlock = class extends import_obsidian28.MarkdownRenderChild {
       sourcePath: this.sourcePath,
       groups: dnaPageGroups(statsByType, (word) => this.findEntryByWord(word), (e) => emojiOf(this.deps.learn.wordMeta(e.id), e)),
       activeGroupKey: `dna:${this.type}`,
-      selectWord: (groupKey, w) => this.selectWord(groupKey, w),
-      addWord: (groupKey, w) => this.addWord(groupKey, w)
+      selectWord: (groupKey, w2) => this.selectWord(groupKey, w2),
+      addWord: (groupKey, w2) => this.addWord(groupKey, w2)
     };
     hub.publish(this, ctx);
   }
@@ -15795,17 +15972,17 @@ var DnaBlock = class extends import_obsidian28.MarkdownRenderChild {
     return this.deps.vocab.entries.find((e) => e.word.trim().toLowerCase() === key5);
   }
   // 1007-2 #14: 側欄點「本篇」裡的字 → 切分頁、選字素、換焦點字。
-  selectWord(groupKey, w) {
+  selectWord(groupKey, w2) {
     var _a;
     const type = groupKey.slice("dna:".length);
     this.type = type;
-    this.morphemeId = (_a = w.morpheme) == null ? void 0 : _a.id;
-    this.focusEntryId = w.entryId;
+    this.morphemeId = (_a = w2.morpheme) == null ? void 0 : _a.id;
+    this.focusEntryId = w2.entryId;
     this.render();
   }
-  addWord(_groupKey, w) {
-    if (!w.morpheme) return Promise.resolve(void 0);
-    return this.deps.morphemes.addSuggested(w.morpheme.id, w.word);
+  addWord(_groupKey, w2) {
+    if (!w2.morpheme) return Promise.resolve(void 0);
+    return this.deps.morphemes.addSuggested(w2.morpheme.id, w2.word);
   }
   renderEmpty(root2) {
     const progress = this.deps.morphemes.progress();
@@ -16041,10 +16218,10 @@ var import_obsidian30 = require("obsidian");
 // src/core/text/cloze.ts
 var SUFFIXES = "(?:s|es|ed|d|ing|er|est|ly)?";
 function clozeParts(sentence, word) {
-  const w = word.trim();
-  if (!sentence || !w) return null;
+  const w2 = word.trim();
+  if (!sentence || !w2) return null;
   const re = new RegExp(
-    `(?<![A-Za-z0-9'\\-])${escapeRe(w)}${SUFFIXES}(?![A-Za-z0-9'\\-])`,
+    `(?<![A-Za-z0-9'\\-])${escapeRe(w2)}${SUFFIXES}(?![A-Za-z0-9'\\-])`,
     "i"
   );
   const m2 = re.exec(sentence);
@@ -16177,19 +16354,19 @@ function buildBatchRows(state, lookup) {
   const hide = hiddenFields(state.mode);
   const rows = [];
   state.session.forEach((id2, i) => {
-    const w = lookup(id2);
-    if (!w) return;
+    const w2 = lookup(id2);
+    if (!w2) return;
     const rating = ratings.get(id2);
     const isCurrent = state.phase === "card" && i === state.index;
     const status = rating !== void 0 ? "rated" : isCurrent ? "current" : "pending";
     const revealed = status === "rated" || status === "current" && state.flipped;
-    const zh = briefMeaning(w.zh);
+    const zh = briefMeaning(w2.zh);
     rows.push({
       id: id2,
       status,
       isNew: state.newIds.has(id2),
       ...rating !== void 0 ? { rating } : {},
-      word: revealed || !hide.word ? w.word : null,
+      word: revealed || !hide.word ? w2.word : null,
       zh: revealed || !hide.zh ? zh || null : null
     });
   });
@@ -16287,12 +16464,12 @@ function parseFolds(raw) {
   if (!data || typeof data !== "object" || Array.isArray(data)) return out;
   for (const [id2, secs] of Object.entries(data)) {
     if (!secs || typeof secs !== "object" || Array.isArray(secs)) continue;
-    const clean2 = {};
+    const clean3 = {};
     for (const s of FOLD_SECTIONS) {
       const v = secs[s];
-      if (typeof v === "boolean") clean2[s] = v;
+      if (typeof v === "boolean") clean3[s] = v;
     }
-    out[id2] = clean2;
+    out[id2] = clean3;
   }
   return out;
 }
@@ -20435,7 +20612,7 @@ var GrammarTopicBlock = class extends import_obsidian33.MarkdownRenderChild {
 };
 
 // src/ui/blocks/practice.ts
-var import_obsidian34 = require("obsidian");
+var import_obsidian35 = require("obsidian");
 
 // src/ui/blocks/practice/practiceModel.ts
 var TAB_KEY2 = "vocab-tracker:practice.tab";
@@ -20451,12 +20628,997 @@ var ALIASES = {
 };
 function pickTab(tabs, wanted) {
   var _a, _b;
-  const w = wanted.trim().replace(/^["']|["']$/g, "");
-  const id2 = (_b = (_a = ALIASES[w.toLowerCase()]) != null ? _a : ALIASES[w]) != null ? _b : w;
+  const w2 = wanted.trim().replace(/^["']|["']$/g, "");
+  const id2 = (_b = (_a = ALIASES[w2.toLowerCase()]) != null ? _a : ALIASES[w2]) != null ? _b : w2;
   return tabs.find((t2) => t2.id === id2);
 }
 function rememberedTab(tabs, raw) {
   return typeof raw === "string" ? tabs.find((t2) => t2.id === raw) : void 0;
+}
+
+// src/ui/blocks/practice/vocabTab.ts
+var import_obsidian34 = require("obsidian");
+
+// src/core/poly/data.ts
+function w(word, category, senses, phrases = []) {
+  return { word, category, phrases, senses: senses.map(([id2, zh, example, cue, level]) => ({ id: id2, word, zh, example, cue, level })) };
+}
+var POLY_WORDS = [
+  w("of", "A", [
+    ["of.belong", "\u7684\uFF08\u6240\u5C6C\uFF09", "the roof of the house", "\u540D\u8A5E + of + \u540D\u8A5E\uFF08\u5F8C\u8005\u64C1\u6709\u524D\u8005\uFF09\uFF0C\u53EF\u63DB\u6210 's", 1],
+    ["of.part", "\u5176\u4E2D\u7684\uFF08\u90E8\u5206\uFF09", "one of my friends", "one\uFF0Fsome\uFF0Fmost\uFF0Feach + of + the \u6216\u4EE3\u540D\u8A5E\u8907\u6578", 1],
+    ["of.quantity", "\uFF08\u6578\u91CF\uFF0F\u5BB9\u5668\uFF09\u7684", "a cup of tea, a lot of", "\u55AE\u4F4D\u3001\u5BB9\u5668\u3001a lot\uFF0Fa number + of + \u540D\u8A5E", 1],
+    ["of.material", "\u7531\u2026\u69CB\u6210", "made of wood", "made of + \u6750\u6599\uFF08\u9084\u770B\u5F97\u51FA\u539F\u6A23\uFF09", 1],
+    ["of.about", "\u95DC\u65BC\uFF08\u807D\u8AAA\uFF0F\u60F3\u5230\uFF09", "hear of, think of", "hear\uFF0Fthink\uFF0Fspeak\uFF0Fdream + of", 2],
+    ["of.cause", "\u56E0\u70BA\uFF08\u6B7B\u56E0\uFF0F\u75C5\u56E0\uFF09", "die of cancer", "die of + \u75BE\u75C5\u3001\u98E2\u9913\u7B49", 2],
+    ["of.apposition", "\u5C31\u662F\uFF08\u540C\u4F4D\uFF09", "the city of Paris, the idea of moving", "the + \u985E\u5225\u540D\u8A5E + of + \u5C08\u6709\u540D\u8A5E\u6216 V-ing\uFF0C\u524D\u5F8C\u6307\u540C\u4E00\u4EF6\u4E8B", 2],
+    ["of.object", "\u5C0D\u2026\u7684\uFF08\u53D7\u8A5E\u95DC\u4FC2\uFF09", "fear of dogs, love of music", "\u60C5\u7DD2\u6216\u52D5\u4F5C\u540D\u8A5E\uFF08fear\uFF0Flove\uFF0Floss\uFF09+ of + \u5C0D\u8C61", 2],
+    ["of.remove", "\u53BB\u9664\u3001\u6C92\u6709", "free of charge, rob sb of", "free\uFF0Frid\uFF0Frob\uFF0Fshort + of", 3],
+    ["of.quality", "\u5177\u6709\u2026\u7279\u8CEA", "a man of courage", "a + \u4EBA + of + \u62BD\u8C61\u540D\u8A5E", 3]
+  ], ["be afraid of", "consist of", "instead of", "because of", "get rid of"]),
+  w("in", "A", [
+    ["in.place", "\u5728\u2026\u88E1\u9762", "in the box", "in + \u6709\u7BC4\u570D\u7684\u7A7A\u9593\uFF08\u623F\u9593\u3001\u76D2\u5B50\u3001\u57CE\u5E02\u3001\u570B\u5BB6\uFF09", 1],
+    ["in.period", "\u5728\uFF08\u6708\uFF0F\u5E74\uFF0F\u5B63\u7BC0\uFF0F\u6642\u6BB5\uFF09", "in May, in the morning", "in + \u6708\u4EFD\u3001\u5E74\u4EFD\u3001\u5B63\u7BC0\u3001the morning", 1],
+    ["in.medium", "\u7528\uFF08\u8A9E\u8A00\uFF0F\u6750\u6599\uFF09", "in English, in ink", "in + \u8A9E\u8A00\u3001\u58A8\u6C34\u3001\u984F\u8272\u3001\u8072\u97F3", 1],
+    ["in.after", "\u518D\u904E\u2026\uFF08\u672A\u4F86\uFF09", "I'll be back in two hours", "\u672A\u4F86\u5F0F + in + \u6642\u9593\u9577\u5EA6\uFF08\u5F9E\u73FE\u5728\u8D77\u7B97\uFF09", 2],
+    ["in.within", "\u5728\u2026\u4E4B\u5167\u5B8C\u6210", "finish it in a week", "\u5B8C\u6210\u67D0\u4E8B + in + \u6642\u9593\u9577\u5EA6\uFF08\u82B1\u591A\u4E45\u505A\u5B8C\uFF09", 2],
+    ["in.state", "\u8655\u65BC\uFF08\u72C0\u614B\uFF09", "in trouble, in love", "be + in + \u62BD\u8C61\u540D\u8A5E\uFF08trouble\u3001love\u3001a hurry\uFF09", 2],
+    ["in.wearing", "\u7A7F\u8457", "the girl in red", "\u4EBA + in + \u984F\u8272\u6216\u8863\u670D", 2],
+    ["in.field", "\u5728\uFF08\u9818\u57DF\uFF09", "a degree in physics", "degree\uFF0Fexperience\uFF0Finterest + in + \u5B78\u79D1", 2],
+    ["in.home", "\u5728\u5BB6\uFF0F\u9032\u4F86\uFF08\u526F\u8A5E\uFF09", "Is she in? Come in.", "\u53E5\u5C3E\u55AE\u7368\u7684 in\uFF0C\u524D\u9762\u662F be \u6216 come\uFF0Fgo \u7B49\u79FB\u52D5\u52D5\u8A5E", 2]
+  ], ["in time", "in fact", "in case", "give in", "fill in"]),
+  w("on", "A", [
+    ["on.surface", "\u5728\u2026\u4E0A\u9762\uFF08\u63A5\u89F8\uFF09", "on the table", "on + \u5E73\u9762\uFF08\u684C\u5B50\u3001\u5730\u677F\u3001\u5730\u9762\uFF09", 1],
+    ["on.attached", "\u9644\u8457\u5728", "a picture on the wall", "on + \u76F4\u7ACB\u9762\uFF08\u7246\u3001\u9580\u3001\u5929\u82B1\u677F\uFF09", 1],
+    ["on.day", "\u5728\uFF08\u67D0\u5929\uFF0F\u65E5\u671F\uFF09", "on Monday, on May 5", "on + \u661F\u671F\u3001\u65E5\u671F\u3001\u7279\u5B9A\u67D0\u5929", 1],
+    ["on.medium", "\u900F\u904E\uFF08\u5A92\u9AD4\uFF0F\u88DD\u7F6E\uFF09", "on TV, on the phone", "on + TV\uFF0Fthe radio\uFF0Fthe phone\uFF0Fthe internet", 1],
+    ["on.about", "\u95DC\u65BC\uFF08\u4E3B\u984C\u8F03\u5C08\u696D\uFF09", "a book on history", "\u66F8\u3001\u6F14\u8B1B\u3001\u6587\u7AE0 + on + \u5B78\u8853\u4E3B\u984C", 2],
+    ["on.continue", "\u7E7C\u7E8C\uFF08\u526F\u8A5E\uFF09", "go on, keep on", "go\uFF0Fkeep\uFF0Fcarry + on\uFF0C\u5F8C\u9762\u5E38\u63A5 V-ing \u6216 with", 2],
+    ["on.active", "\u958B\u8457\u3001\u4E0A\u6F14\u4E2D", "The light is on. What's on tonight?", "be + on\uFF0C\u4E3B\u8A5E\u662F\u71C8\u3001\u6A5F\u5668\u3001\u7BC0\u76EE", 2],
+    ["on.basis", "\u9760\u3001\u6839\u64DA", "live on rice, based on", "live\uFF0Fdepend\uFF0Frely\uFF0Fbased + on", 2],
+    ["on.burden", "\u7531\u2026\u8CA0\u64D4", "Dinner's on me.", "It's\uFF0FThis is + on + \u4EBA\uFF08\u8ACB\u5BA2\uFF09", 2],
+    ["on.upon", "\u4E00\u2026\u5C31", "on arrival", "\u53E5\u9996 on + \u52D5\u4F5C\u540D\u8A5E\u6216 V-ing\uFF08on arrival\u3001on hearing\uFF09", 3]
+  ], ["on time", "on purpose", "put on", "turn on", "on and off"]),
+  w("at", "A", [
+    ["at.point", "\u5728\uFF08\u5B9A\u9EDE\uFF09", "at the door, at school", "at + \u7576\u6210\u4E00\u500B\u9EDE\u7684\u5730\u9EDE\uFF08\u9580\u53E3\u3001\u8ECA\u7AD9\u3001\u5730\u5740\uFF09", 1],
+    ["at.time", "\u5728\uFF08\u6642\u523B\uFF09", "at 7, at night", "at + \u6642\u523B\u3001noon\uFF0Fnight", 1],
+    ["at.skill", "\u5C0D\u2026\uFF08\u64C5\u9577\u8207\u5426\uFF09", "good at math", "good\uFF0Fbad\uFF0Fgreat + at + \u540D\u8A5E\u6216 V-ing", 1],
+    ["at.target", "\u671D\u3001\u5C0D\u6E96", "look at, throw at", "look\uFF0Fpoint\uFF0Fthrow\uFF0Fshout + at + \u76EE\u6A19", 1],
+    ["at.rate", "\u4EE5\uFF08\u901F\u5EA6\uFF0F\u50F9\u683C\uFF09", "at 60 km/h, at a low price", "at + \u6578\u5B57 + \u55AE\u4F4D\uFF08\u901F\u5EA6\u3001\u50F9\u9322\u3001\u6EAB\u5EA6\uFF09", 2],
+    ["at.state", "\u8655\u65BC\uFF08\u6D3B\u52D5\uFF0F\u72C0\u614B\uFF09", "at work, at risk", "at + \u7121\u51A0\u8A5E\u540D\u8A5E\uFF08work\u3001war\u3001rest\u3001risk\uFF09", 2],
+    ["at.reaction", "\u56E0\u2026\uFF08\u53CD\u61C9\uFF09", "surprised at, laugh at", "surprised\uFF0Fshocked\uFF0Fangry\uFF0Flaugh + at + \u4E8B\u60C5", 2]
+  ], ["at least", "at once", "at all", "at first", "at last"]),
+  w("for", "A", [
+    ["for.recipient", "\u7D66\u3001\u70BA\u4E86\uFF08\u67D0\u4EBA\uFF09", "a gift for you", "\u6771\u897F + for + \u4EBA", 1],
+    ["for.purpose", "\u70BA\u4E86\uFF08\u76EE\u7684\uFF09", "go for a walk", "for + \u6D3B\u52D5\u540D\u8A5E\uFF08a walk\u3001lunch\u3001help\uFF09", 1],
+    ["for.duration", "\u6301\u7E8C\uFF08\u4E00\u6BB5\u6642\u9593\uFF09", "for three years", "for + \u6642\u9593\u9577\u5EA6\uFF0C\u5E38\u914D\u5B8C\u6210\u5F0F", 1],
+    ["for.exchange", "\u63DB\u53D6\u3001\u50F9\u9322\u3001\u539F\u56E0", "buy it for $5, thanks for", "\u91D1\u9322\u3001thank\uFF0Fpay\uFF0Fblame + for + \u4E8B\u7269", 1],
+    ["for.support", "\u652F\u6301\u3001\u8D0A\u6210", "vote for, Are you for it?", "vote\uFF0Fbe + for\uFF0C\u8DDF against \u76F8\u5C0D", 2],
+    ["for.destination", "\u524D\u5F80", "leave for Tokyo", "leave\uFF0Fhead\uFF0Fthe train + for + \u5730\u540D", 2],
+    ["for.considering", "\u4EE5\u2026\u800C\u8A00", "tall for his age", "\u5F62\u5BB9\u8A5E + for + \u5E74\u7D00\u6216\u8EAB\u5206\uFF08\u8DDF\u4E00\u822C\u6A19\u6E96\u6BD4\uFF09", 2],
+    ["for.represent", "\u4EE3\u8868", 'B for Bob, the word for "cat"', "\u5B57\u6BCD\u6216\u8A5E + for + \u540D\u7A31\uFF1Bthe word for\u2026", 2],
+    ["for.because", "\u56E0\u70BA\uFF08\u66F8\u9762\u9023\u63A5\u8A5E\uFF09", "..., for it was late", "\u9017\u865F\u5F8C\u7684 for + \u5B8C\u6574\u5B50\u53E5\uFF08\u66F8\u9762\uFF09", 3]
+  ], ["look for", "wait for", "for example", "for good", "care for"]),
+  w("to", "A", [
+    ["to.direction", "\u5230\u3001\u5F80", "go to school", "\u79FB\u52D5\u52D5\u8A5E + to + \u5730\u9EDE", 1],
+    ["to.recipient", "\u7D66\u3001\u5C0D", "give it to her, talk to", "give\uFF0Fsend\uFF0Ftalk\uFF0Fexplain + to + \u4EBA", 1],
+    ["to.until", "\u5230\uFF08\u7BC4\u570D\u7D42\u9EDE\uFF09", "from 9 to 5", "from A to B\uFF08\u6642\u9593\u3001\u6578\u5B57\u3001\u7BC4\u570D\uFF09", 1],
+    ["to.purpose", "\u70BA\u4E86\uFF08to V\uFF09", "I came to help.", "\u5B8C\u6574\u53E5\u5B50 + to + \u539F\u5F62\u52D5\u8A5E\uFF08\u8AAA\u660E\u76EE\u7684\uFF09", 1],
+    ["to.reaction", "\u4EE4\u2026\uFF08\u7D50\u679C\uFF09", "to my surprise", "to + \u6240\u6709\u683C + \u60C5\u7DD2\u540D\u8A5E\uFF0C\u5E38\u653E\u53E5\u9996", 2],
+    ["to.compare", "\u6BD4\u3001\u5C0D\u6BD4", "prefer A to B, 3 to 1", "prefer\uFF0Fsimilar\uFF0Fcompared + to\uFF1B\u6BD4\u5206 3 to 1", 2],
+    ["to.belonging", "\u5C6C\u65BC\u3001\u5C0D\u61C9", "the key to the door", "key\uFF0Fanswer\uFF0Fsolution + to + \u540D\u8A5E", 2],
+    ["to.clock", "\u5DEE\uFF08\u5E7E\u5206\uFF0C\u82F1\u5F0F\uFF09", "ten to five", "\u5206\u9418\u6578 + to + \u6574\u9EDE", 2]
+  ], ["look forward to", "used to", "get used to", "according to", "come to"]),
+  w("with", "A", [
+    ["with.together", "\u548C\u2026\u4E00\u8D77", "live with my parents", "\u4EBA + with + \u4EBA\uFF08\u4E00\u8D77\u505A\u4E8B\uFF09", 1],
+    ["with.tool", "\u7528\uFF08\u5DE5\u5177\uFF09", "cut with a knife", "\u52D5\u4F5C + with + \u5DE5\u5177", 1],
+    ["with.having", "\u6709\u3001\u5E36\u8457", "a girl with long hair", "\u540D\u8A5E + with + \u7279\u5FB5\uFF08\u982D\u9AEE\u3001\u7A97\u6236\uFF09", 1],
+    ["with.manner", "\u5E36\u8457\uFF08\u614B\u5EA6\uFF0F\u60C5\u7DD2\uFF09", "with care", "with + \u62BD\u8C61\u540D\u8A5E\uFF08care\u3001a smile\u3001ease\uFF09", 2],
+    ["with.cause", "\u56E0\u70BA\uFF08\u8EAB\u9AD4\u53CD\u61C9\uFF09", "shaking with cold", "\u8EAB\u9AD4\u53CD\u61C9\uFF08shake\uFF0Fcry\uFF0Fturn red\uFF09+ with + \u60C5\u7DD2\u6216\u51B7\u71B1", 2],
+    ["with.regarding", "\u5C0D\u65BC\u3001\u95DC\u65BC", "What's wrong with it?", "wrong\uFF0Fpatient\uFF0Fcareful\uFF0Fhappy + with", 2],
+    ["with.against", "\u8DDF\u2026\uFF08\u5C0D\u6297\uFF09", "argue with, fight with", "argue\uFF0Ffight\uFF0Fcompete + with", 2],
+    ["with.agree", "\u7406\u89E3\u3001\u7AD9\u5728\u540C\u4E00\u908A", "I'm with you.", "be + with + \u4EBA\uFF0C\u4E0D\u662F\u5BE6\u969B\u5728\u4E00\u8D77", 3]
+  ], ["deal with", "agree with", "be fed up with", "with regard to", "put up with"]),
+  w("by", "A", [
+    ["by.agent", "\u88AB\u3001\u7531\uFF08\u88AB\u52D5\uFF09", "written by her", "be + p.p. + by + \u505A\u7684\u4EBA", 1],
+    ["by.means", "\u642D\u3001\u900F\u904E", "by bus, by doing", "by + \u7121\u51A0\u8A5E\u4EA4\u901A\u5DE5\u5177\uFF0C\u6216 by + V-ing", 1],
+    ["by.near", "\u5728\u65C1\u908A", "by the window", "\u975C\u6B62\u7684\u4EBA\u6216\u7269 + by + \u5730\u9EDE\uFF08\u7A97\u3001\u6D77\u3001\u9580\uFF09", 1],
+    ["by.deadline", "\u6700\u665A\u5728\u2026\u4E4B\u524D", "by Friday", "by + \u6642\u9593\u9EDE\uFF0C\u5E38\u914D will\uFF0Fmust\uFF0Fhave to", 2],
+    ["by.amount", "\u5DEE\u4E86\uFF08\u591A\u5C11\uFF09", "won by two points", "\u589E\u6E1B\u3001\u8F38\u8D0F + by + \u6578\u91CF", 2],
+    ["by.unit", "\u4EE5\u2026\u8A08\u3001\u9010\u4E00", "by the hour, one by one", "by the + \u55AE\u4F4D\uFF1Bone by one", 2],
+    ["by.past", "\u7D93\u904E\u3001\u9806\u9053", "walk by, drop by", "walk\uFF0Fgo\uFF0Fdrive\uFF0Fdrop + by", 2],
+    ["by.rule", "\u4F9D\u7167", "by law", "by + law\uFF0Fthe rules\uFF0Fthe book", 3]
+  ], ["by the way", "by accident", "by heart", "by yourself", "stand by"]),
+  w("from", "A", [
+    ["from.origin", "\u5F9E\uFF08\u5730\u9EDE\uFF09", "walk from home", "\u79FB\u52D5 + from + \u5730\u9EDE\uFF0C\u5E38\u914D to", 1],
+    ["from.source", "\u4F86\u81EA\uFF08\u51FA\u8EAB\uFF0F\u4F86\u6E90\uFF09", "a letter from Tom", "\u6771\u897F + from + \u4EBA\u6216\u5730\u65B9\uFF1Bbe from", 1],
+    ["from.start", "\u5F9E\uFF08\u6642\u9593\u8D77\u9EDE\uFF09", "from Monday", "from + \u6642\u9593\u9EDE\uFF0C\u5E38\u914D to\uFF0Funtil\uFF0Fon", 1],
+    ["from.material", "\u7531\u2026\u88FD\u6210\uFF08\u770B\u4E0D\u51FA\u539F\u6599\uFF09", "made from grapes", "made from + \u539F\u6599\uFF08\u5DF2\u7D93\u770B\u4E0D\u51FA\u4F86\uFF09", 2],
+    ["from.cause", "\u7531\u65BC", "suffer from", "suffer\uFF0Fdie\uFF0Fresult + from", 2],
+    ["from.prevent", "\u9632\u6B62\u3001\u4F7F\u4E0D\u80FD", "stop sb from doing", "stop\uFF0Fkeep\uFF0Fprotect\uFF0Fprevent + \u4EBA + from", 2],
+    ["from.distinguish", "\u5340\u5206", "tell A from B", "tell\uFF0Fknow\uFF0Fdifferent + from", 2],
+    ["from.view", "\u5F9E\u2026\u770B\u4F86", "from my point of view", "from + \u67D0\u4EBA\u7684 point of view\uFF0Fperspective", 2]
+  ], ["apart from", "far from", "from now on", "hear from", "result from"]),
+  w("about", "A", [
+    ["about.topic", "\u95DC\u65BC", "a movie about cats", "\u52D5\u8A5E\u6216\u540D\u8A5E + about + \u4E3B\u984C", 1],
+    ["about.approx", "\u5927\u7D04", "about ten people", "about + \u6578\u5B57", 1],
+    ["about.suggest", "\u2026\u600E\u9EBC\u6A23\uFF08\u63D0\u8B70\uFF09", "How about tea?", "How\uFF0FWhat + about + \u540D\u8A5E\u6216 V-ing", 1],
+    ["about.ready", "\u5373\u5C07", "be about to leave", "be + about to + \u539F\u5F62\u52D5\u8A5E", 2],
+    ["about.around", "\u5230\u8655\u3001\u56DB\u5468", "walk about", "\u79FB\u52D5\u52D5\u8A5E + about\uFF0C\u6C92\u6709\u53D7\u8A5E\uFF08\u82F1\u5F0F\uFF09", 3]
+  ], ["talk about", "worry about", "care about", "bring about", "what about"]),
+  w("over", "A", [
+    ["over.above", "\u5728\u2026\u4E0A\u65B9\uFF08\u4E0D\u63A5\u89F8\uFF09", "a bridge over the river", "\u975C\u6B62 + over + \u7269\uFF08\u5728\u4E0A\u65B9\uFF0C\u6C92\u78B0\u5230\uFF09", 1],
+    ["over.across", "\u8D8A\u904E", "jump over the wall", "\u79FB\u52D5 + over + \u969C\u7919", 1],
+    ["over.more", "\u8D85\u904E", "over 18", "over + \u6578\u5B57\u6216\u5E74\u9F61", 1],
+    ["over.finished", "\u7D50\u675F", "The game is over.", "be + over\uFF0C\u4E3B\u8A5E\u662F\u6D3B\u52D5", 1],
+    ["over.during", "\u5728\u2026\u671F\u9593", "over the weekend", "over + \u4E00\u6BB5\u6642\u9593\uFF08the weekend\u3001the years\uFF09", 2],
+    ["over.about", "\u70BA\u4E86\uFF08\u722D\u57F7\uFF09", "argue over money", "argue\uFF0Ffight\uFF0Fworry + over + \u4E8B", 2],
+    ["over.covering", "\u904D\u53CA", "all over the world", "all over + \u5730\u65B9", 2],
+    ["over.via", "\u900F\u904E\uFF08\u96FB\u8A71\u7B49\uFF09", "over the phone", "over + the phone\uFF0Fthe radio\uFF0Fthe internet", 2],
+    ["over.again", "\u91CD\u4F86", "do it over", "do\uFF0Fstart + it over\uFF0C\u5728\u53E5\u5C3E", 2],
+    ["over.recover", "\u514B\u670D\u3001\u6062\u5FA9", "get over a cold", "get over + \u75C5\u3001\u5931\u6200\u3001\u9A5A\u5687", 2]
+  ], ["take over", "think over", "turn over", "over and over", "look over"]),
+  w("up", "A", [
+    ["up.direction", "\u5F80\u4E0A", "climb up", "\u79FB\u52D5 + up\uFF08+ \u6A13\u68AF\u3001\u5C71\uFF09", 1],
+    ["up.awake", "\u8D77\u5E8A\u3001\u9192\u8457", "get up, stay up", "get\uFF0Fwake\uFF0Fstay + up", 1],
+    ["up.increase", "\u589E\u52A0", "Prices went up.", "\u6578\u91CF\u4E3B\u8A5E\uFF08\u50F9\u683C\u3001\u6EAB\u5EA6\uFF09+ go\uFF0Fbe + up", 1],
+    ["up.complete", "\u5B8C\u5168\u3001\u505A\u5B8C", "eat up, use up", "\u52D5\u4F5C + up\uFF0C\u8868\u793A\u505A\u5B8C\uFF08eat\u3001use\u3001fill\uFF09", 2],
+    ["up.approach", "\u9760\u8FD1", "come up to me", "come\uFF0Fwalk + up to + \u4EBA", 2],
+    ["up.happening", "\u767C\u751F", "What's up? Something came up.", "What's up?\uFF1Bsomething came up", 2],
+    ["up.timeout", "\u6642\u9593\u5230", "Time's up.", "Time's up.", 2],
+    ["up.raise", "\u63D0\u51FA", "bring up a topic", "bring\uFF0Fcome + up + \u8A71\u984C", 2]
+  ], ["give up", "pick up", "set up", "make up", "look up"]),
+  w("out", "A", [
+    ["out.exit", "\u51FA\u53BB", "go out", "\u79FB\u52D5 + out\uFF08of + \u5730\u65B9\uFF09", 1],
+    ["out.away", "\u4E0D\u5728", "She's out.", "be + out\uFF0C\u4E3B\u8A5E\u662F\u4EBA", 1],
+    ["out.appear", "\u51FA\u73FE\u3001\u516C\u958B", "The sun came out.", "\u592A\u967D\u3001\u65B0\u66F8\u3001\u771F\u76F8 + come out", 2],
+    ["out.end", "\u7528\u5B8C\u3001\u8CE3\u5B8C", "run out, sold out", "run\uFF0Fsell + out\uFF1Bbe out of + \u6771\u897F", 2],
+    ["out.loud", "\u51FA\u8072", "read out loud", "read\uFF0Fsay\uFF0Flaugh + out loud", 2],
+    ["out.completely", "\u5FB9\u5E95", "tired out, clean out", "\u5F62\u5BB9\u8A5E\u6216\u52D5\u8A5E + out\uFF0C\u5F37\u8ABF\u5FB9\u5E95\uFF08tired out\uFF09", 2],
+    ["out.solve", "\u60F3\u51FA\u3001\u89E3\u51FA", "figure out, work out", "figure\uFF0Fwork\uFF0Ffind + out + \u7B54\u6848", 2],
+    ["out.extinguish", "\u7184\u6EC5", "The fire went out.", "\u706B\u6216\u71C8 + go out\uFF1Bput out", 2],
+    ["out.exclude", "\u6392\u9664", "leave out", "leave\uFF0Fcross\uFF0Frule + out", 2]
+  ], ["find out", "carry out", "point out", "stand out", "out of order"]),
+  w("off", "A", [
+    ["off.away", "\u96E2\u958B\u3001\u4E0B\uFF08\u8ECA\uFF09", "get off the bus", "get\uFF0Fgo + off + \u4EA4\u901A\u5DE5\u5177\u6216\u5730\u65B9", 1],
+    ["off.remove", "\u812B\u6389\u3001\u62FF\u6389", "take off your shoes", "take + \u8863\u7269 + off", 1],
+    ["off.switch", "\u95DC\u6389", "turn off", "turn\uFF0Fswitch + off + \u6A5F\u5668", 1],
+    ["off.discount", "\u6298\u6263", "20% off", "\u767E\u5206\u6BD4\u6216\u91D1\u984D + off", 1],
+    ["off.cancel", "\u53D6\u6D88", "call off", "call + off + \u6D3B\u52D5", 2],
+    ["off.rest", "\u4F11\u5047", "a day off", "a day\uFF0Ftime\uFF0Fa week + off", 2],
+    ["off.start", "\u51FA\u767C", "set off", "set\uFF0Fhead + off", 2],
+    ["off.distance", "\u8DDD\u96E2\uFF08\u7A7A\u9593\uFF0F\u6642\u9593\uFF09", "a week off", "\u8DDD\u96E2\u6216\u6642\u9593 + off\uFF0C\u8868\u793A\u9084\u6709\u591A\u9060", 3],
+    ["off.bad", "\u4E0D\u5C0D\u52C1\u3001\u58DE\u6389", "The milk is off.", "\u98DF\u7269 + be off", 3]
+  ], ["put off", "show off", "see off", "well off", "off and on"]),
+  w("through", "A", [
+    ["through.across", "\u7A7F\u904E", "through the tunnel", "\u79FB\u52D5 + through + \u96A7\u9053\u3001\u9580\u3001\u68EE\u6797", 1],
+    ["through.whole", "\u5F9E\u982D\u5230\u5C3E", "through the night", "through + the night\uFF0Fthe day \u7B49\u6642\u6BB5", 2],
+    ["through.means", "\u85C9\u7531", "through a friend", "through + \u4EBA\u6216\u7BA1\u9053\uFF08\u53D6\u5F97\u3001\u8A8D\u8B58\uFF09", 2],
+    ["through.until", "\u5230\uFF08\u542B\uFF09\uFF0C\u7F8E\u5F0F", "Monday through Friday", "\u661F\u671F\u6216\u6708\u4EFD + through + \u661F\u671F\u6216\u6708\u4EFD", 2],
+    ["through.experience", "\u7D93\u6B77", "go through a hard time", "go\uFF0Flive + through + \u56F0\u96E3", 2],
+    ["through.finish", "\u505A\u5B8C\u3001\u7D50\u675F", "I'm through with it.", "be + through\uFF08with\uFF09+ \u4E8B\u60C5", 3]
+  ], ["get through", "look through", "think through", "fall through", "see through"]),
+  w("get", "B", [
+    ["get.obtain", "\u5F97\u5230", "get a job", "get + \u540D\u8A5E\uFF08\u5DE5\u4F5C\u3001\u5206\u6578\u3001\u6A5F\u6703\uFF09", 1],
+    ["get.buy", "\u8CB7", "get some milk", "get + \u5546\u5E97\u88E1\u7684\u6771\u897F\uFF0C\u5E38\u914D some", 1],
+    ["get.receive", "\u6536\u5230", "get a message", "get + \u8A0A\u606F\u3001\u4FE1\u3001\u79AE\u7269\uFF08\u5225\u4EBA\u7D66\u7684\uFF09", 1],
+    ["get.become", "\u8B8A\u5F97", "get angry", "get + \u5F62\u5BB9\u8A5E\u6216\u6BD4\u8F03\u7D1A", 1],
+    ["get.arrive", "\u5230\u9054", "get home", "get + to + \u5730\u9EDE\uFF1Bget + here\uFF0Fhome\uFF0Fthere", 1],
+    ["get.understand", "\u61C2", "I don't get it.", "get + it\uFF0Fthe joke\uFF0Fthe point\uFF0C\u5E38\u7528\u5426\u5B9A", 2],
+    ["get.fetch", "\u53BB\u62FF", "Get me a chair.", "get + \u4EBA + \u6771\u897F\uFF08\u53BB\u62FF\u4F86\u7D66\uFF09", 2],
+    ["get.causative", "\u4F7F\u3001\u53EB\uFF08\u67D0\u4EBA\uFF0F\u67D0\u4E8B\uFF09", "get sb to help, get it fixed", "get + \u4EBA + to V\uFF1Bget + \u7269 + p.p.", 2],
+    ["get.passive", "\u88AB\uFF08get + p.p.\uFF09", "get hurt", "get + p.p.\uFF08\u610F\u5916\u3001\u7A81\u7136\u767C\u751F\uFF09", 2],
+    ["get.catch", "\u5F97\uFF08\u75C5\uFF09\u3001\u642D\uFF08\u8ECA\uFF09", "get a cold, get the bus", "get + \u75C5\u540D\uFF1Bget + the bus\uFF0Fa taxi", 2],
+    ["get.annoy", "\u60F9\u60F1", "It really gets me.", "\u4E8B\u60C5\u7576\u4E3B\u8A5E + get + \u4EBA\uFF08\u53E3\u8A9E\uFF09", 3]
+  ], ["get up", "get over", "get along", "get on", "get rid of"]),
+  w("take", "B", [
+    ["take.carry", "\u5E36\u8D70", "take an umbrella", "take + \u7269\uFF08+ with you\uFF0Fto \u5730\u9EDE\uFF09", 1],
+    ["take.grab", "\u62FF\u3001\u63E1", "take my hand", "take + \u624B\u6216\u6771\u897F\uFF08\u4F38\u624B\u62FF\uFF09", 1],
+    ["take.time", "\u82B1\uFF08\u6642\u9593\uFF09", "It takes ten minutes.", "It takes (\u4EBA) + \u6642\u9593 + to V", 1],
+    ["take.transport", "\u642D", "take a bus", "take + the bus\uFF0Fa taxi\uFF0Fthe train", 1],
+    ["take.action", "\u505A\uFF08\u52D5\u4F5C\uFF09", "take a shower, take a photo", "take a + \u52D5\u4F5C\u540D\u8A5E\uFF08shower\u3001photo\u3001walk\u3001break\uFF09", 1],
+    ["take.medicine", "\u670D\u7528", "take medicine", "take + \u85E5\u3001\u7DAD\u4ED6\u547D", 1],
+    ["take.course", "\u4FEE\u3001\u8003", "take a class, take a test", "take + class\uFF0Fcourse\uFF0Ftest", 1],
+    ["take.accept", "\u63A5\u53D7", "take advice, take cards", "take + advice\uFF0Fcards\uFF0Fa job\uFF0Fan offer", 2],
+    ["take.need", "\u9700\u8981", "It takes courage.", "It takes + \u80FD\u529B\u540D\u8A5E\uFF08courage\u3001patience\uFF09+ to V", 2],
+    ["take.view", "\u770B\u5F85\u3001\u627F\u53D7", "take it seriously", "take + it\uFF0Fsth + \u526F\u8A5E\uFF08seriously\u3001personally\uFF09", 2],
+    ["take.steal", "\u62FF\u8D70\u3001\u5077", "Someone took my bike.", "\u6C92\u7D93\u904E\u540C\u610F\u7684 take\uFF0C\u5E38\u898B Someone took\u2026", 2],
+    ["take.hold", "\u5BB9\u7D0D", "The car takes five.", "\u5BB9\u5668\u6216\u4EA4\u901A\u5DE5\u5177 + take + \u6578\u91CF", 3]
+  ], ["take off", "take after", "take up", "take over", "take in"]),
+  w("make", "B", [
+    ["make.create", "\u505A\u3001\u88FD\u9020", "make a cake", "make + \u5BE6\u9AD4\u6210\u54C1", 1],
+    ["make.cause", "\u4F7F\uFF08\u611F\u89BA\uFF0F\u72C0\u614B\uFF09", "make me happy", "make + \u4EBA + \u5F62\u5BB9\u8A5E", 1],
+    ["make.earn", "\u8CFA", "make money", "make + money \u6216\u91D1\u984D", 1],
+    ["make.action", "\u505A\uFF08\u52D5\u4F5C\u540D\u8A5E\uFF09", "make a decision, make a mistake", "make a + decision\uFF0Fmistake\uFF0Fcall\uFF0Fplan", 1],
+    ["make.prepare", "\u6E96\u5099\uFF08\u98EF\uFF0F\u5E8A\uFF09", "make dinner, make the bed", "make + \u9910\u9EDE\uFF1Bmake the bed", 1],
+    ["make.force", "\u8FEB\u4F7F", "make sb do", "make + \u4EBA + \u539F\u5F62\u52D5\u8A5E\uFF08\u88AB\u52D5\u662F be made to V\uFF09", 2],
+    ["make.total", "\u7B49\u65BC\u3001\u5408\u8A08", "2 and 2 make 4", "\u6578\u5B57 + make + \u6578\u5B57", 2],
+    ["make.reach", "\u8D95\u4E0A\u3001\u9054\u6210", "make it on time, make the team", "make it\uFF1Bmake + the team\uFF0Fthe deadline", 2],
+    ["make.become", "\u6703\u6210\u70BA", "She'll make a good teacher.", "\u4EBA + will make + a\uFF0Fan + \u89D2\u8272", 3],
+    ["make.judge", "\u7406\u89E3\u3001\u770B\u5F85", "What do you make of it?", "What do you make of + \u4E8B\u60C5\uFF1F", 3]
+  ], ["make up", "make out", "make sense", "make up for", "make sure"]),
+  w("have", "B", [
+    ["have.own", "\u6709", "have a car", "have + \u7269\u54C1\u3001\u5BB6\u4EBA\u3001\u7279\u5FB5", 1],
+    ["have.eat", "\u5403\u3001\u559D", "have lunch", "have + \u9910\u540D\u6216\u98DF\u7269", 1],
+    ["have.experience", "\u7D93\u6B77\u3001\u60A3", "have a good time, have a cold", "have + a good time\uFF0Fa problem\uFF0F\u75C5\u540D", 1],
+    ["have.must", "\u5FC5\u9808\uFF08have to\uFF09", "have to go", "have to + \u539F\u5F62\u52D5\u8A5E", 1],
+    ["have.perfect", "\u5DF2\u7D93\uFF08\u5B8C\u6210\u5F0F\uFF09", "I have finished.", "have + p.p.", 2],
+    ["have.causative", "\u8ACB\u4EBA\u505A", "have my hair cut", "have + \u7269 + p.p.\uFF1Bhave + \u4EBA + \u539F\u5F62\u52D5\u8A5E", 2],
+    ["have.action", "\u505A\u4E00\u4E0B", "have a look, have a try", "have a + look\uFF0Ftry\uFF0Ftalk\uFF0Frest", 2],
+    ["have.host", "\u8ACB\uFF08\u5BA2\u4EBA\uFF09\u4F86", "have friends over", "have + \u4EBA + over\uFF0Fround", 2],
+    ["have.birth", "\u751F", "have a baby", "have + a baby", 2],
+    ["have.allow", "\u5BB9\u8A31\uFF08\u591A\u7528\u5426\u5B9A\uFF09", "I won't have it.", "won't\uFF0Fcan't + have + it\uFF0Fthat", 3]
+  ], ["have got", "have to do with", "had better", "have on", "have a word"]),
+  w("do", "B", [
+    ["do.perform", "\u505A", "do homework", "do + homework\uFF0Fa job\uFF0Fsomething", 1],
+    ["do.aux", "\u52A9\u52D5\u8A5E\uFF08\u7591\u554F\uFF0F\u5426\u5B9A\uFF09", "Do you like it?", "\u53E5\u9996 Do\uFF0FDoes\uFF0FDid\uFF0C\u6216 don't\uFF0Fdoesn't", 1],
+    ["do.chore", "\u6574\u7406\u3001\u8655\u7406", "do the dishes", "do the + \u5BB6\u4E8B\u540D\u8A5E\uFF08dishes\u3001laundry\uFF09", 1],
+    ["do.emphasis", "\u771F\u7684\uFF08\u5F37\u8ABF\uFF09", "I do like it.", "\u80AF\u5B9A\u53E5\u88E1\u7684 do\uFF0Fdoes\uFF0Fdid + \u539F\u5F62\u52D5\u8A5E\uFF08\u91CD\u8B80\uFF09", 2],
+    ["do.substitute", "\u4EE3\u66FF\u524D\u9762\u7684\u52D5\u8A5E", "So do I.", "So\uFF0FNeither + do + \u4E3B\u8A5E\uFF1B\u53E5\u5C3E do \u4EE3\u66FF\u524D\u9762\u7684\u52D5\u8A5E", 2],
+    ["do.manage", "\u9032\u5C55\u3001\u8868\u73FE", "How are you doing? do well", "How + be + \u4EBA + doing\uFF1F\uFF1Bdo well\uFF0Fbadly", 2],
+    ["do.enough", "\u5920\u7528\u3001\u53EF\u4EE5", "That'll do.", "That will do.\uFF0FThat'll do.", 3]
+  ], ["do without", "do up", "have to do with", "do sb a favor", "could do with"]),
+  w("go", "B", [
+    ["go.move", "\u53BB", "go to work", "go + to + \u5730\u9EDE\uFF1Bgo + V-ing", 1],
+    ["go.leave", "\u96E2\u958B", "I have to go.", "have to\uFF0Fmust + go\uFF0C\u6C92\u6709\u76EE\u7684\u5730", 1],
+    ["go.future", "\u6253\u7B97\uFF08be going to\uFF09", "I'm going to call.", "be going to + \u539F\u5F62\u52D5\u8A5E", 1],
+    ["go.become", "\u8B8A\u6210\uFF08\u591A\u70BA\u8CA0\u9762\uFF09", "go bad, go crazy", "go + \u5F62\u5BB9\u8A5E\uFF08bad\u3001crazy\u3001bald\uFF09", 2],
+    ["go.progress", "\u9032\u884C\uFF08\u5F97\u5982\u4F55\uFF09", "How did it go?", "How did + \u4E8B\u60C5 + go\uFF1F\uFF1Bgo well", 2],
+    ["go.fit", "\u653E\u5728\u3001\u642D\u914D", "Where does this go?", "Where does + \u7269 + go\uFF1F\uFF1Bgo with + \u7269", 2],
+    ["go.disappear", "\u6D88\u5931", "My headache's gone.", "\u75BC\u75DB\u6216\u6771\u897F + be gone\uFF0Fgo", 2],
+    ["go.work", "\u904B\u8F49", "The car won't go.", "\u6A5F\u5668 + won't\uFF0Fdoesn't + go", 3],
+    ["go.say", "\u8AAA\uFF08\u53E3\u8A9E\uFF09\u3001\u767C\u51FA\u8072\u97F3", 'And he goes, "No way!"', "\u4EBA + goes + \u5F15\u865F\uFF08\u53E3\u8A9E\u8F49\u8FF0\uFF09\uFF1B\u52D5\u7269\u53EB\u8072", 3]
+  ], ["go on", "go out", "go over", "go through", "go off"]),
+  w("come", "B", [
+    ["come.move", "\u4F86", "Come here.", "come + here \u6216\u5230\u8AAA\u8A71\u8005\u7684\u4F4D\u7F6E", 1],
+    ["come.arrive", "\u5230\u4F86", "Spring has come.", "\u5B63\u7BC0\u3001\u65E5\u5B50\u3001\u6642\u523B + has come", 1],
+    ["come.from", "\u4F86\u81EA", "I come from Taipei.", "come from + \u5730\u65B9\u6216\u4F86\u6E90", 1],
+    ["come.become", "\u8B8A\u6210", "come true, come loose", "come + true\uFF0Floose\uFF0Fundone", 2],
+    ["come.available", "\u6709\uFF08\u6B3E\u5F0F\uFF09", "It comes in red.", "\u5546\u54C1 + come in + \u984F\u8272\u3001\u5C3A\u5BF8", 2],
+    ["come.rank", "\u540D\u5217", "come first", "come + first\uFF0Fsecond\uFF0Flast", 2],
+    ["come.reach", "\u9054\u5230\u3001\u7E3D\u8A08", "come to an agreement, The bill comes to $50.", "come to + an agreement\uFF0Fa decision\uFF1B\u5E33\u55AE come to + \u91D1\u984D", 2]
+  ], ["come up", "come across", "come out", "come up with", "how come"]),
+  w("give", "B", [
+    ["give.hand", "\u7D66", "give me the book", "give + \u4EBA + \u7269", 1],
+    ["give.do", "\u505A\u51FA\uFF08\u52D5\u4F5C\uFF09", "give a speech, give a smile", "give + a speech\uFF0Fa smile\uFF0Fa call\uFF0Fa hug", 1],
+    ["give.pay", "\u4ED8", "I'll give you $10 for it.", "give + \u4EBA + \u91D1\u984D + for + \u7269", 2],
+    ["give.host", "\u8209\u8FA6", "give a party", "give + a party\uFF0Fa concert", 2],
+    ["give.cause", "\u5E36\u4F86\uFF08\u611F\u89BA\uFF0F\u75C5\uFF09", "give me a headache", "\u7269 + give + \u4EBA + \u75C5\u75DB\u6216\u611F\u89BA", 2],
+    ["give.devote", "\u4ED8\u51FA", "give your time", "give + time\uFF0Fyour life\uFF0Feffort\uFF08+ to\uFF09", 2],
+    ["give.collapse", "\u584C\u3001\u6490\u4E0D\u4F4F", "The chair gave way.", "\u7269 + give way\uFF1B\u7E69\u5B50\u3001\u5730\u677F + give", 3]
+  ], ["give up", "give in", "give away", "give back", "give off"]),
+  w("put", "B", [
+    ["put.place", "\u653E", "put it on the desk", "put + \u7269 + \u5730\u9EDE\u4ECB\u7CFB\u8A5E", 1],
+    ["put.write", "\u5BEB\u4E0A", "Put your name here.", "put + \u540D\u5B57\u6216\u8CC7\u6599 + here\uFF0Fon the form", 2],
+    ["put.express", "\u8868\u9054", "to put it simply", "put + it + \u526F\u8A5E\uFF08simply\u3001another way\uFF09", 2],
+    ["put.state", "\u4F7F\u8655\u65BC", "put sb at ease, put sb in danger", "put + \u4EBA + at\uFF0Fin + \u72C0\u614B", 2],
+    ["put.invest", "\u6295\u5165", "put effort into", "put + \u6642\u9593\u3001\u7CBE\u529B\u3001\u9322 + into", 2],
+    ["put.rank", "\u628A\u2026\u6392\u5728", "put family first", "put + \u7269 + first\uFF0Fbefore", 2]
+  ], ["put on", "put off", "put up with", "put out", "put away"]),
+  w("set", "B", [
+    ["set.adjust", "\u8A2D\u5B9A", "set the alarm", "set + \u9B27\u9418\u3001\u6642\u9418\u3001\u6EAB\u5EA6", 1],
+    ["set.decide", "\u8A02\u5B9A", "set a date, set a goal", "set + a date\uFF0Fa goal\uFF0Fa price\uFF0Fa rule", 1],
+    ["set.sun", "\uFF08\u65E5\u6708\uFF09\u843D\u4E0B", "The sun sets.", "\u592A\u967D\u3001\u6708\u4EAE + set\uFF0C\u6C92\u6709\u53D7\u8A5E", 1],
+    ["set.group", "\u4E00\u7D44\uFF08\u540D\u8A5E\uFF09", "a set of keys", "a set of + \u8907\u6578\u540D\u8A5E", 1],
+    ["set.place", "\u653E\u4E0B", "set the box down", "set + \u7269 + down\uFF0Fon\uFF08\u5C0F\u5FC3\u653E\u4E0B\uFF09", 2],
+    ["set.table", "\u64FA\uFF08\u9910\u684C\uFF09", "set the table", "set the table", 2],
+    ["set.story", "\uFF08\u6545\u4E8B\uFF09\u80CC\u666F\u8A2D\u5728", "The story is set in Paris.", "\u6545\u4E8B\u6216\u96FB\u5F71 + be set in + \u6642\u7A7A", 2],
+    ["set.cause", "\u4F7F\uFF08\u958B\u59CB\u67D0\u72C0\u614B\uFF09", "set sb free, set fire to", "set + \u4EBA\u6216\u7269 + free\uFF0Fon fire\uFF1Bset fire to", 2],
+    ["set.ready", "\u6E96\u5099\u597D\uFF08\u5F62\u5BB9\u8A5E\uFF09", "Are you all set?", "be (all) set\uFF08+ for\uFF09", 2],
+    ["set.record", "\u5275\uFF08\u7D00\u9304\uFF09", "set a record", "set a + record\uFF0Fan example", 2],
+    ["set.harden", "\u51DD\u56FA", "The jelly set.", "\u6DB2\u9AD4\u3001\u6C34\u6CE5 + set\uFF0C\u6C92\u6709\u53D7\u8A5E", 3]
+  ], ["set up", "set off", "set out", "set aside", "set back"]),
+  w("run", "B", [
+    ["run.move", "\u8DD1", "run fast", "\u4E3B\u8A5E\u662F\u4EBA\u6216\u52D5\u7269\uFF0C\u6C92\u6709\u53D7\u8A5E\u6216\u63A5\u5730\u9EDE", 1],
+    ["run.manage", "\u7D93\u71DF", "run a shop", "run + \u5E97\u3001\u516C\u53F8\u3001\u7D44\u7E54", 2],
+    ["run.operate", "\u904B\u8F49", "The engine is running.", "\u5F15\u64CE\u3001\u6A5F\u5668 + be running", 2],
+    ["run.flow", "\u6D41", "running water, My nose is running.", "\u6C34\u3001\u9F3B\u6C34\u3001\u984F\u6599 + run", 2],
+    ["run.service", "\uFF08\u73ED\u6B21\uFF09\u884C\u99DB", "Buses run every ten minutes.", "\u516C\u8ECA\u3001\u706B\u8ECA + run + \u983B\u7387", 2],
+    ["run.campaign", "\u7AF6\u9078", "run for president", "run for + \u8077\u4F4D", 2],
+    ["run.program", "\u57F7\u884C\uFF08\u7A0B\u5F0F\uFF09", "run the app", "run + \u7A0B\u5F0F\u3001\u6E2C\u8A66", 2],
+    ["run.extend", "\u5EF6\u4F38", "The road runs along the river.", "\u8DEF\u3001\u6CB3\u3001\u908A\u754C + run + along\uFF0Fthrough", 3],
+    ["run.last", "\u6301\u7E8C\u3001\u4E0A\u6F14", "The show ran for three years.", "\u8868\u6F14\u3001\u5408\u7D04 + run for + \u6642\u9593", 3],
+    ["run.become", "\u8B8A\u5F97\uFF08low / dry\uFF09", "run low on gas", "run + low\uFF0Fshort\uFF0Fdry", 3],
+    ["run.streak", "\u4E00\u9023\u4E32\uFF08\u540D\u8A5E\uFF09", "a run of bad luck", "a run of + \u540D\u8A5E", 3]
+  ], ["run out of", "run into", "run away", "run over", "in the long run"]),
+  w("keep", "B", [
+    ["keep.hold", "\u4FDD\u7559\u3001\u7559\u8457", "Keep the change.", "keep + \u7269\uFF08\u4E0D\u9084\u3001\u7559\u8457\uFF09", 1],
+    ["keep.store", "\u5B58\u653E", "keep it in the fridge", "keep + \u7269 + \u5730\u9EDE", 1],
+    ["keep.continue", "\u4E00\u76F4\uFF08\u505A\uFF09", "keep walking", "keep (on) + V-ing", 1],
+    ["keep.stay", "\u4FDD\u6301\uFF08\u72C0\u614B\uFF09", "keep quiet, keep warm", "keep + \u5F62\u5BB9\u8A5E\uFF1Bkeep + \u7269 + \u5F62\u5BB9\u8A5E", 1],
+    ["keep.promise", "\u9075\u5B88\u3001\u4FDD\u5B88", "keep a promise, keep a secret", "keep + a promise\uFF0Fa secret\uFF0Fyour word", 2],
+    ["keep.raise", "\u98FC\u990A", "keep chickens", "keep + \u52D5\u7269", 2],
+    ["keep.prevent", "\u4F7F\u4E0D\u80FD", "keep sb from sleeping", "keep + \u4EBA + from + V-ing", 2],
+    ["keep.record", "\u8A18\uFF08\u65E5\u8A18\uFF0F\u5E33\uFF09", "keep a diary", "keep + a diary\uFF0Frecords", 2],
+    ["keep.delay", "\u803D\u64F1", "What kept you?", "What kept + \u4EBA\uFF1F", 3],
+    ["keep.last", "\uFF08\u98DF\u7269\uFF09\u653E\u5F97\u4F4F", "Milk doesn't keep long.", "\u98DF\u7269 + keep\uFF0C\u6C92\u6709\u53D7\u8A5E", 3]
+  ], ["keep up", "keep on", "keep away", "keep an eye on", "keep in touch"]),
+  w("turn", "B", [
+    ["turn.rotate", "\u8F49\u52D5", "turn the key", "turn + \u9470\u5319\u3001\u9580\u628A\u3001\u982D", 1],
+    ["turn.direction", "\u8F49\u5F4E", "turn left", "turn + left\uFF0Fright\uFF0Faround", 1],
+    ["turn.switch", "\u958B\u3001\u95DC", "turn on, turn off", "turn + on\uFF0Foff\uFF0Fup\uFF0Fdown + \u6A5F\u5668", 1],
+    ["turn.page", "\u7FFB", "turn the page", "turn + the page(s)", 1],
+    ["turn.chance", "\u8F2A\u5230\uFF08\u540D\u8A5E\uFF09", "It's your turn.", "\u6240\u6709\u683C + turn\uFF1Btake turns", 1],
+    ["turn.become", "\u8B8A\u6210\u3001\u5230\uFF08\u5E74\u7D00\uFF09", "turn red, turn 18", "turn + \u984F\u8272\u5F62\u5BB9\u8A5E\u6216\u5E74\u7D00", 2],
+    ["turn.change", "\u628A\u2026\u8B8A\u6210", "turn water into ice", "turn + \u7269 + into + \u7269", 2],
+    ["turn.refuse", "\u62D2\u7D55", "turn down an offer", "turn down + \u9080\u8ACB\u3001\u63D0\u8B70", 2]
+  ], ["turn up", "turn out", "turn in", "turn around", "take turns"]),
+  w("break", "B", [
+    ["break.smash", "\u6253\u7834", "break a glass", "break + \u6613\u788E\u7269", 1],
+    ["break.damage", "\u5F04\u58DE", "break my phone", "break + \u6A5F\u5668\u3001\u73A9\u5177\uFF08\u58DE\u6389\uFF0C\u4E0D\u4E00\u5B9A\u788E\uFF09", 1],
+    ["break.injury", "\u9AA8\u6298", "break your arm", "break + \u8EAB\u9AD4\u90E8\u4F4D\uFF08\u9AA8\u982D\uFF09", 1],
+    ["break.rest", "\u4F11\u606F\uFF08\u540D\u8A5E\uFF09", "take a break", "take\uFF0Fhave a break", 1],
+    ["break.rule", "\u9055\u53CD", "break the law, break a promise", "break + the law\uFF0Fa rule\uFF0Fa promise", 2],
+    ["break.end", "\u6253\u7834\uFF08\u7D00\u9304\uFF0F\u6C89\u9ED8\uFF09", "break the record", "break + a record\uFF0Fthe silence\uFF0Fa habit", 2],
+    ["break.news", "\u544A\u77E5\uFF08\u58DE\u6D88\u606F\uFF09", "break the news", "break + the news\uFF08+ to \u4EBA\uFF09", 2],
+    ["break.start", "\uFF08\u5929\uFF09\u4EAE\u3001\uFF08\u66B4\u98A8\uFF09\u4F86", "Day breaks.", "day\uFF0Fdawn\uFF0Fa storm + break", 3],
+    ["break.money", "\u63DB\u958B\uFF08\u9214\u7968\uFF09", "break a $20 bill", "break + \u9214\u7968\u9762\u984D", 3],
+    ["break.chance", "\u597D\u904B\u3001\u6A5F\u6703\uFF08\u540D\u8A5E\uFF09", "a lucky break", "a + lucky\uFF0Fbig + break", 3]
+  ], ["break down", "break up", "break in", "break out", "break into"]),
+  w("hold", "B", [
+    ["hold.carry", "\u62FF\u8457", "hold a cup", "hold + \u7269\uFF08\u62FF\u5728\u624B\u88E1\uFF09", 1],
+    ["hold.hug", "\u62B1", "hold the baby", "hold + \u4EBA\uFF1Bhold hands", 1],
+    ["hold.contain", "\u5BB9\u7D0D", "The room holds 50.", "\u5BB9\u5668\u6216\u5834\u5730 + hold + \u6578\u91CF", 2],
+    ["hold.event", "\u8209\u8FA6", "hold a meeting", "hold + a meeting\uFF0Fa party\uFF0Fan election", 2],
+    ["hold.wait", "\u7B49\u4E00\u4E0B\uFF08\u96FB\u8A71\uFF09", "Hold on. Hold the line.", "Hold on.\uFF1Bhold the line", 2],
+    ["hold.keep", "\u4FDD\u6301\uFF08\u59FF\u52E2\uFF09", "Hold still.", "hold + still\uFF0Fyour breath", 2],
+    ["hold.position", "\u64D4\u4EFB\u3001\u6301\u6709", "hold a post, hold a record", "hold + \u8077\u4F4D\u3001\u7D00\u9304\u3001\u5B78\u4F4D", 3],
+    ["hold.believe", "\u8A8D\u70BA\uFF08\u66F8\u9762\uFF09", "Some hold that...", "\u4EBA + hold + that \u5B50\u53E5\uFF08\u66F8\u9762\uFF09", 3],
+    ["hold.true", "\u4ECD\u7136\u6210\u7ACB", "The rule still holds.", "\u898F\u5247\u6216\u8AAA\u6CD5 + hold (true)", 3]
+  ], ["hold on", "hold back", "hold up", "get hold of", "hold your breath"]),
+  w("bring", "B", [
+    ["bring.carry", "\u5E36\u4F86", "bring your lunch", "bring + \u7269\uFF08\u5230\u8AAA\u8A71\u8005\u9019\u88E1\uFF09", 1],
+    ["bring.cause", "\u5E36\u4F86\uFF08\u7D50\u679C\uFF09", "bring joy, bring change", "\u4E8B\u60C5 + bring + \u62BD\u8C61\u7D50\u679C\uFF08joy\u3001change\uFF09", 2],
+    ["bring.raise", "\u990A\u80B2\u3001\u63D0\u8D77\uFF08bring up\uFF09", "bring up a child, bring up a topic", "bring up + \u5C0F\u5B69\u6216\u8A71\u984C", 2],
+    ["bring.recall", "\u52FE\u8D77\uFF08\u56DE\u61B6\uFF09", "It brings back memories.", "bring back + memories", 2],
+    ["bring.force", "\u72E0\u4E0B\u5FC3\uFF08\u5426\u5B9A\uFF09", "I can't bring myself to say it.", "can't bring + oneself + to V", 3]
+  ], ["bring about", "bring out", "bring in", "bring down", "bring along"]),
+  w("look", "B", [
+    ["look.see", "\u770B", "look at the board", "look at + \u7269", 1],
+    ["look.seem", "\u770B\u8D77\u4F86", "You look tired.", "look + \u5F62\u5BB9\u8A5E\uFF1Blook like + \u540D\u8A5E", 1],
+    ["look.search", "\u627E", "look for my keys", "look for + \u7269", 1],
+    ["look.check", "\u67E5", "look it up, look into it", "look up\uFF0Flook into + \u8CC7\u6599\u3001\u554F\u984C", 2],
+    ["look.glance", "\u4E00\u773C\u3001\u5916\u8868\uFF08\u540D\u8A5E\uFF09", "take a look, her new look", "take\uFF0Fhave a look\uFF1B\u540D\u8A5E look\uFF08\u5916\u8868\uFF09", 2],
+    ["look.face", "\uFF08\u623F\u9593\uFF09\u671D\u5411", "The room looks onto the garden.", "\u623F\u9593\u6216\u7A97 + look onto\uFF0Fout on", 3]
+  ], ["look after", "look forward to", "look up to", "look out", "look down on"]),
+  w("catch", "B", [
+    ["catch.grab", "\u63A5\u4F4F", "catch the ball", "catch + \u4E1F\u904E\u4F86\u7684\u6771\u897F", 1],
+    ["catch.capture", "\u6293\u5230", "catch a thief", "catch + \u4EBA\u6216\u52D5\u7269\uFF08\u902E\u5230\uFF09", 1],
+    ["catch.transport", "\u8D95\u4E0A\uFF08\u8ECA\uFF09", "catch the bus", "catch + \u73ED\u6B21\uFF08bus\u3001train\u3001flight\uFF09", 1],
+    ["catch.illness", "\u67D3\u4E0A", "catch a cold", "catch + \u75C5\u540D\uFF08a cold\u3001the flu\uFF09", 2],
+    ["catch.hear", "\u807D\u6E05\u695A", "I didn't catch your name.", "didn't catch + \u8A71\u6216\u540D\u5B57", 2],
+    ["catch.discover", "\u649E\u898B", "caught cheating", "catch + \u4EBA + V-ing\uFF1Bbe caught + V-ing", 2],
+    ["catch.snag", "\u52FE\u4F4F\u3001\u593E\u4F4F", "caught on a nail", "get\uFF0Fbe caught + on\uFF0Fin + \u7269", 2],
+    ["catch.attention", "\u5438\u5F15", "catch my eye", "catch + your eye\uFF0Fattention", 2],
+    ["catch.fire", "\u8457\u706B", "catch fire", "catch fire\uFF08\u7121\u51A0\u8A5E\uFF09", 3],
+    ["catch.trick", "\u9677\u9631\u3001\u689D\u4EF6\uFF08\u540D\u8A5E\uFF09", "What's the catch?", "What's the catch?\uFF1Bthe catch is\u2026", 3]
+  ], ["catch up", "catch on", "catch sb off guard", "catch a glimpse", "catch your breath"]),
+  w("carry", "B", [
+    ["carry.hold", "\u642C\u3001\u63D0", "carry a bag", "carry + \u7269\uFF08\u908A\u8D70\u908A\u62FF\uFF09", 1],
+    ["carry.have", "\u96A8\u8EAB\u5E36", "carry cash", "carry + \u73FE\u91D1\u3001\u8B49\u4EF6\uFF08\u96A8\u8EAB\uFF09", 2],
+    ["carry.transport", "\u904B\u9001\u3001\u8F09", "The bus carries 40 people.", "\u4EA4\u901A\u5DE5\u5177 + carry + \u4E58\u5BA2\u6216\u8CA8", 2],
+    ["carry.stock", "\uFF08\u5E97\uFF09\u6709\u8CE3", "Do you carry batteries?", "\u5E97\u5BB6 + carry + \u5546\u54C1", 3],
+    ["carry.disease", "\u5E36\uFF08\u75C5\u539F\uFF09", "Mosquitoes carry disease.", "\u52D5\u7269 + carry + \u75BE\u75C5", 3],
+    ["carry.weight", "\u6709\u4EFD\u91CF", "His opinion carries weight.", "\u610F\u898B\u6216\u8A71 + carry weight", 3]
+  ], ["carry on", "carry out", "get carried away", "carry over"]),
+  w("pick", "B", [
+    ["pick.choose", "\u9078", "pick a number", "pick + \u4E00\u500B\uFF08\u865F\u78BC\u3001\u4EBA\u3001\u984F\u8272\uFF09", 1],
+    ["pick.flower", "\u6458", "pick apples", "pick + \u82B1\u3001\u6C34\u679C", 1],
+    ["pick.lift", "\u62FF\u8D77\uFF08pick up\uFF09", "pick up the phone", "pick up + \u7269\uFF08\u5F9E\u684C\u4E0A\u3001\u5730\u4E0A\uFF09", 1],
+    ["pick.collect", "\u63A5\uFF08\u4EBA\uFF09", "pick you up at six", "pick + \u4EBA + up\uFF08\u958B\u8ECA\u63A5\uFF09", 1],
+    ["pick.learn", "\u5B78\u6703\uFF08\u9806\u4FBF\uFF09", "pick up some French", "pick up + \u8A9E\u8A00\u3001\u6280\u80FD", 2],
+    ["pick.fight", "\u6311\u8D77", "pick a fight", "pick a + fight\uFF0Fquarrel", 2],
+    ["pick.lock", "\u64AC\u958B", "pick a lock", "pick + a lock", 3]
+  ], ["pick out", "pick on", "pick up on", "pick and choose"]),
+  w("work", "B", [
+    ["work.job", "\u5DE5\u4F5C", "work at a bank", "\u4EBA + work + at\uFF0Ffor\uFF0Fas", 1],
+    ["work.function", "\u904B\u4F5C", "The phone doesn't work.", "\u6A5F\u5668 + work\uFF0Fdoesn't work", 1],
+    ["work.effective", "\u6709\u6548\u3001\u884C\u5F97\u901A", "The plan worked.", "\u8A08\u756B\u6216\u65B9\u6CD5 + work", 2],
+    ["work.solve", "\u89E3\u6C7A\u3001\u7B97\u51FA\uFF08work out\uFF09", "work out the answer", "work out + \u7B54\u6848\u3001\u554F\u984C", 2],
+    ["work.exercise", "\u904B\u52D5\uFF08work out\uFF09", "I work out every day.", "\u4EBA + work out\uFF0C\u6C92\u6709\u53D7\u8A5E", 2],
+    ["work.creation", "\u4F5C\u54C1\uFF08\u540D\u8A5E\uFF09", "a work of art", "a work of + art\uFF1Bthe works of + \u4F5C\u8005", 2],
+    ["work.operate", "\u64CD\u4F5C", "work the machine", "work + \u6A5F\u5668\uFF08\u64CD\u4F5C\uFF09", 3]
+  ], ["work on", "work out", "work for", "at work", "work up"]),
+  w("play", "B", [
+    ["play.game", "\u73A9", "play games", "play + games \u6216\u904A\u6232\u540D\uFF08chess\uFF09", 1],
+    ["play.sport", "\u6253\u3001\u8E22\uFF08\u7403\uFF09", "play tennis", "play + \u7403\u985E\uFF08\u7121\u51A0\u8A5E\uFF09", 1],
+    ["play.instrument", "\u5F48\u3001\u62C9", "play the piano", "play + the + \u6A02\u5668", 1],
+    ["play.media", "\u64AD\u653E", "play a song", "play + \u6B4C\u3001\u5F71\u7247\u3001\u9304\u97F3", 1],
+    ["play.role", "\u626E\u6F14", "play the hero", "play + \u89D2\u8272\uFF08the hero\u3001a role\uFF09", 2],
+    ["play.part", "\u8D77\u4F5C\u7528", "play a part in", "play a part\uFF0Frole + in", 2],
+    ["play.drama", "\u6232\u5287\uFF08\u540D\u8A5E\uFF09", "a play by Shakespeare", "a play\uFF08\u53EF\u6578\u540D\u8A5E\uFF09", 2],
+    ["play.pretend", "\u88DD", "play dumb", "play + dumb\uFF0Fdead", 3]
+  ], ["play down", "play along", "play it safe", "play with"]),
+  w("stand", "B", [
+    ["stand.upright", "\u7AD9", "stand up", "\u4EBA + stand (up)", 1],
+    ["stand.tolerate", "\u5FCD\u53D7\uFF08\u5426\u5B9A\uFF09", "I can't stand it.", "can't stand + \u4EBA\u6216 V-ing", 2],
+    ["stand.represent", "\u4EE3\u8868\u3001\u652F\u6301\uFF08stand for\uFF09", "UN stands for...", "\u7E2E\u5BEB + stand for\uFF1Bstand for + \u50F9\u503C\u89C0", 2],
+    ["stand.view", "\u7ACB\u5834\uFF08\u540D\u8A5E\uFF09", "take a stand", "take a stand\uFF1B\u6240\u6709\u683C + stand on", 2],
+    ["stand.located", "\u4F4D\u65BC", "The church stands on a hill.", "\u5EFA\u7BC9 + stand + \u5730\u9EDE", 3],
+    ["stand.remain", "\u4ECD\u7136\u6709\u6548", "The offer still stands.", "\u63D0\u8B70\u6216\u7D00\u9304 + still stand(s)", 3],
+    ["stand.chance", "\u6709\uFF08\u6A5F\u6703\uFF09", "stand a chance", "stand a chance\uFF0C\u5E38\u7528\u5426\u5B9A", 3]
+  ], ["stand out", "stand by", "stand up for", "stand in for"]),
+  w("drop", "B", [
+    ["drop.fall", "\u6389\u843D", "The apple dropped.", "\u7269 + drop\uFF0C\u6C92\u6709\u53D7\u8A5E", 1],
+    ["drop.letfall", "\u5F04\u6389", "drop the cup", "\u4EBA + drop + \u7269", 1],
+    ["drop.bit", "\u4E00\u6EF4\uFF08\u540D\u8A5E\uFF09", "a drop of water", "a drop of + \u6DB2\u9AD4", 1],
+    ["drop.decrease", "\u4E0B\u964D", "Prices dropped.", "\u6578\u91CF\u4E3B\u8A5E + drop", 2],
+    ["drop.quit", "\u653E\u68C4\u3001\u9000\uFF08\u8AB2\uFF09", "drop a class", "drop + \u8AB2\u3001\u8A08\u756B", 2],
+    ["drop.deliver", "\u653E\u4E0B\u3001\u8F09\u5230", "drop me off", "drop + \u4EBA + off\uFF08+ at \u5730\u9EDE\uFF09", 2],
+    ["drop.visit", "\u9806\u9053\u62DC\u8A2A", "drop by", "drop by\uFF0Fdrop in", 2],
+    ["drop.mention", "\u4E0D\u7D93\u610F\u63D0\u5230", "drop a hint", "drop a + hint\uFF0Fname", 3]
+  ], ["drop out", "drop in", "drop off", "drop it"]),
+  w("pass", "B", [
+    ["pass.goby", "\u7D93\u904E", "pass the bank", "pass + \u5730\u9EDE\u6216\u4EBA\uFF08\u7D93\u904E\uFF09", 1],
+    ["pass.hand", "\u905E", "pass the salt", "pass + \u4EBA + \u7269\uFF08\u905E\uFF09", 1],
+    ["pass.exam", "\u901A\u904E\uFF08\u8003\u8A66\uFF09", "pass the test", "pass + a test\uFF0Fan exam", 1],
+    ["pass.time", "\u5EA6\u904E\u3001\uFF08\u6642\u9593\uFF09\u904E\u53BB", "Time passes quickly.", "\u6642\u9593 + pass\uFF1Bpass the time", 2],
+    ["pass.overtake", "\u8D85\uFF08\u8ECA\uFF09", "pass a truck", "\u8ECA + pass + \u8ECA", 2],
+    ["pass.decline", "\u4E0D\u8981\u4E86", "I'll pass.", "I'll pass.\uFF0C\u6C92\u6709\u53D7\u8A5E", 2],
+    ["pass.die", "\u904E\u4E16\uFF08pass away\uFF09", "He passed away.", "pass away", 2],
+    ["pass.ticket", "\u901A\u884C\u8B49\uFF08\u540D\u8A5E\uFF09", "a bus pass", "a + \u4EA4\u901A\u6216\u5165\u5834 + pass", 2],
+    ["pass.law", "\u901A\u904E\uFF08\u6CD5\u6848\uFF09", "pass a law", "\u8B70\u6703 + pass + \u6CD5\u6848", 3]
+  ], ["pass out", "pass on", "pass by", "pass down"]),
+  w("draw", "B", [
+    ["draw.picture", "\u756B", "draw a cat", "draw + \u5716\u50CF", 1],
+    ["draw.pull", "\u62C9", "draw the curtains", "draw + the curtains\uFF0Fa chair", 2],
+    ["draw.attract", "\u5438\u5F15", "draw a crowd", "draw + a crowd\uFF0Fattention", 2],
+    ["draw.conclude", "\u5F97\u51FA", "draw a conclusion", "draw a + conclusion\uFF0Flesson", 2],
+    ["draw.withdraw", "\u63D0\uFF08\u6B3E\uFF09\u3001\u62BD\u51FA", "draw money", "draw + money\uFF0Fa gun\uFF0Fa card", 3],
+    ["draw.tie", "\u5E73\u624B", "The game was a draw.", "\u6BD4\u8CFD + end in a draw\uFF1B\u540D\u8A5E draw", 3],
+    ["draw.lots", "\u62BD\u7C64", "draw lots", "draw lots\uFF0Fstraws", 3]
+  ], ["draw up", "draw on", "draw back", "draw attention to"]),
+  w("cut", "B", [
+    ["cut.slice", "\u5207", "cut the bread", "cut + \u98DF\u7269\u3001\u7D19", 1],
+    ["cut.injury", "\u5272\u50B7", "cut my finger", "cut + \u8EAB\u9AD4\u90E8\u4F4D\uFF08\u610F\u5916\uFF09", 1],
+    ["cut.hair", "\u526A", "cut your hair", "cut + hair\uFF1Bhave + hair + cut", 1],
+    ["cut.reduce", "\u524A\u6E1B", "cut costs", "cut + costs\uFF0Fprices\uFF0Fspending", 2],
+    ["cut.remove", "\u522A\u6389", "cut a scene", "cut + \u5834\u666F\u3001\u6BB5\u843D", 2],
+    ["cut.stop", "\u505C\u6B62\uFF08cut it out\uFF09", "Cut it out!", "Cut it out!", 3],
+    ["cut.skip", "\u8E7A\uFF08\u8AB2\uFF09", "cut class", "cut + class\uFF0Fschool", 3],
+    ["cut.share", "\u4E00\u4EFD\uFF08\u540D\u8A5E\uFF09", "my cut of the money", "\u6240\u6709\u683C + cut\uFF08of \u9322\uFF09", 3]
+  ], ["cut down", "cut off", "cut in", "cut back", "short cut"]),
+  w("raise", "B", [
+    ["raise.lift", "\u8209\u8D77", "raise your hand", "raise + your hand\uFF0Fa glass", 1],
+    ["raise.increase", "\u63D0\u9AD8", "raise prices", "raise + \u50F9\u683C\u3001\u85AA\u6C34\u3001\u7A0B\u5EA6", 2],
+    ["raise.child", "\u990A\u80B2", "raise three kids", "raise + \u5C0F\u5B69\u3001\u5BB6\u5EAD", 2],
+    ["raise.question", "\u63D0\u51FA", "raise a question", "raise + a question\uFF0Fan issue\uFF0Fa concern", 2],
+    ["raise.money", "\u52DF\uFF08\u6B3E\uFF09", "raise money", "raise + money\uFF0Ffunds", 2],
+    ["raise.awareness", "\u5F15\u8D77\uFF08\u610F\u8B58\uFF09", "raise awareness", "raise + awareness", 2],
+    ["raise.pay", "\u52A0\u85AA\uFF08\u540D\u8A5E\uFF09", "get a raise", "get\uFF0Fask for + a raise", 3]
+  ], []),
+  w("miss", "B", [
+    ["miss.target", "\u6C92\u6253\u4E2D", "miss the goal", "miss + \u76EE\u6A19\uFF08\u7403\u9580\u3001\u9776\uFF09", 1],
+    ["miss.transport", "\u932F\u904E", "miss the bus", "miss + \u73ED\u6B21\u3001\u7D04\u6703", 1],
+    ["miss.longing", "\u60F3\u5FF5", "I miss you.", "miss + \u4EBA\u6216\u5730\u65B9\uFF08\u60F3\u5FF5\uFF09", 1],
+    ["miss.notice", "\u6C92\u6CE8\u610F\u5230", "You can't miss it.", "can't miss it\uFF1Bmiss + \u7D30\u7BC0", 2],
+    ["miss.absent", "\u7F3A\uFF08\u8AB2\uFF0F\u73ED\uFF09", "miss school", "miss + school\uFF0Fwork\uFF0Fclass", 2],
+    ["miss.lack", "\u5C11\u4E86\uFF08missing\uFF09", "A page is missing.", "be missing\uFF1B\u7269 + is missing", 2],
+    ["miss.avoid", "\u907F\u958B", "narrowly missed the car", "narrowly\uFF0Fjust + missed + \u7269", 3]
+  ], ["miss out", "miss the point", "hit or miss"]),
+  w("cover", "B", [
+    ["cover.over", "\u84CB\u4F4F", "cover the pot", "cover + \u7269 + with", 1],
+    ["cover.front", "\u5C01\u9762\uFF08\u540D\u8A5E\uFF09", "the cover of the book", "the cover of + \u66F8\u3001\u96DC\u8A8C", 1],
+    ["cover.include", "\u6DB5\u84CB", "The test covers units 1\u20133.", "\u8003\u8A66\u6216\u8AB2\u7A0B + cover + \u5167\u5BB9", 2],
+    ["cover.report", "\u5831\u5C0E", "cover the election", "\u8A18\u8005\u6216\u5A92\u9AD4 + cover + \u4E8B\u4EF6", 2],
+    ["cover.pay", "\u652F\u4ED8", "cover the cost", "\u9322 + cover + the cost", 2],
+    ["cover.distance", "\u8D70\u5B8C\uFF08\u8DDD\u96E2\uFF09", "cover 10 km", "cover + \u8DDD\u96E2", 3],
+    ["cover.substitute", "\u4EE3\u73ED\u3001\u63A9\u8B77\uFF08cover for\uFF09", "cover for a coworker", "cover for + \u4EBA", 3],
+    ["cover.song", "\u7FFB\u5531", "a cover of the song", "a cover of + \u6B4C", 3]
+  ], ["cover up", "take cover", "under cover"]),
+  w("see", "B", [
+    ["see.vision", "\u770B\u5230", "I see a bird.", "see + \u7269\uFF08\u81EA\u7136\u770B\u5230\uFF09", 1],
+    ["see.understand", "\u61C2", "I see.", "I see.\uFF1Bsee what\uFF0Fwhy", 1],
+    ["see.consult", "\u770B\uFF08\u91AB\u751F\uFF09", "see a doctor", "see + a doctor\uFF0Fa dentist", 1],
+    ["see.meet", "\u898B\u9762", "See you tomorrow.", "see + \u4EBA + \u6642\u9593\uFF1BSee you", 2],
+    ["see.check", "\u67E5\u770B\u3001\u78BA\u8A8D", "I'll see if she's home.", "see + if\uFF0Fwhether", 2],
+    ["see.date", "\u4EA4\u5F80", "Are you seeing anyone?", "be seeing + \u4EBA\uFF08\u9032\u884C\u5F0F\uFF09", 2],
+    ["see.escort", "\u9001\uFF08\u4EBA\uFF09", "I'll see you out.", "see + \u4EBA + out\uFF0Foff\uFF0Fhome", 3],
+    ["see.witness", "\uFF08\u6642\u4EE3\uFF0F\u5730\u65B9\uFF09\u7D93\u6B77", "This city has seen two wars.", "\u5E74\u4EE3\u6216\u5730\u9EDE + have seen + \u4E8B\u4EF6", 3]
+  ], ["see off", "see to", "see through", "let me see", "see you"]),
+  w("fall", "B", [
+    ["fall.drop", "\u6389\u843D\u3001\u8DCC\u5012", "fall down", "\u4EBA\u6216\u7269 + fall (down\uFF0Foff)", 1],
+    ["fall.season", "\u79CB\u5929\uFF08\u7F8E\u5F0F\u540D\u8A5E\uFF09", "in the fall", "in (the) fall", 1],
+    ["fall.become", "\u8B8A\u6210\uFF08\u67D0\u72C0\u614B\uFF09", "fall asleep, fall ill", "fall + asleep\uFF0Fill\uFF0Fsilent", 2],
+    ["fall.decrease", "\u4E0B\u964D", "Prices fell.", "\u6578\u91CF\u4E3B\u8A5E + fall", 2],
+    ["fall.date", "\uFF08\u65E5\u671F\uFF09\u843D\u5728", "It falls on a Sunday.", "\u65E5\u5B50 + fall on + \u661F\u671F", 2],
+    ["fall.love", "\u611B\u4E0A", "fall in love", "fall in love\uFF08+ with\uFF09", 2]
+  ], ["fall behind", "fall apart", "fall for", "fall through", "fall out"]),
+  w("find", "B", [
+    ["find.locate", "\u627E\u5230", "find my keys", "find + \u907A\u5931\u7684\u7269", 1],
+    ["find.discover", "\u767C\u73FE\uFF08\u4E8B\u5BE6\uFF09", "I found that...", "find + that \u5B50\u53E5\uFF1Bfind out", 2],
+    ["find.consider", "\u89BA\u5F97", "I find it hard.", "find + it \u6216\u7269 + \u5F62\u5BB9\u8A5E", 2],
+    ["find.court", "\u5224\u6C7A", "be found guilty", "be found + guilty\uFF0Finnocent", 3]
+  ], ["find out", "find your way"]),
+  w("feel", "B", [
+    ["feel.emotion", "\u611F\u89BA\uFF08\u60C5\u7DD2\uFF09", "feel happy", "feel + \u60C5\u7DD2\u5F62\u5BB9\u8A5E", 1],
+    ["feel.touch", "\u6478\u8D77\u4F86", "It feels soft.", "\u7269 + feel(s) + \u5F62\u5BB9\u8A5E", 1],
+    ["feel.touchdo", "\u6478", "Feel the fabric.", "feel + \u7269\uFF08\u7528\u624B\u6478\uFF09", 2],
+    ["feel.think", "\u8A8D\u70BA", "I feel we should wait.", "feel + that \u5B50\u53E5", 2],
+    ["feel.want", "\u60F3\u8981\uFF08feel like\uFF09", "feel like pizza", "feel like + \u540D\u8A5E\u6216 V-ing", 2]
+  ], ["feel free", "feel for", "feel up to", "feel at home"]),
+  w("point", "C", [
+    ["point.score", "\u5206\u6578", "win by two points", "\u6578\u5B57 + points\uFF1Bwin by", 1],
+    ["point.decimal", "\u5C0F\u6578\u9EDE", "3.5 = three point five", "\u6578\u5B57 + point + \u6578\u5B57", 1],
+    ["point.gesture", "\u6307\uFF08\u52D5\u8A5E\uFF09", "point at the map", "point + at\uFF0Fto", 1],
+    ["point.idea", "\u91CD\u9EDE\u3001\u8AD6\u9EDE", "That's a good point.", "a good point\uFF1Bmake a point", 1],
+    ["point.moment", "\u6642\u523B\u3001\u5730\u6B65", "at that point", "at + this\uFF0Fthat\uFF0Fsome + point", 2],
+    ["point.purpose", "\u610F\u7FA9\u3001\u7528\u8655", "What's the point?", "What's the point (of)?\uFF1Bno point in V-ing", 2],
+    ["point.tip", "\u5C16\u7AEF", "the point of a knife", "the point of + \u5C16\u92B3\u7269", 2],
+    ["point.place", "\u5730\u9EDE", "a meeting point", "\u540D\u8A5E + point\uFF08meeting\u3001starting\uFF09", 2],
+    ["point.feature", "\u7279\u9EDE", "her strong point", "strong\uFF0Fweak + point", 2]
+  ], ["point out", "to the point", "on the point of", "point of view"]),
+  w("case", "C", [
+    ["case.box", "\u76D2\u3001\u7BB1", "a pencil case", "\u540D\u8A5E + case\uFF08pencil\u3001phone\uFF09", 1],
+    ["case.situation", "\u60C5\u6CC1", "in that case", "in that\uFF0Fthis\uFF0Fany + case", 1],
+    ["case.instance", "\u4F8B\u5B50", "a case of bad luck", "a case of + \u72C0\u6CC1", 2],
+    ["case.law", "\u6848\u4EF6", "a murder case", "\u72AF\u7F6A\u540D\u8A5E + case\uFF1Ba court case", 2],
+    ["case.justin", "\u4EE5\u9632\uFF08just in case\uFF09", "Take it just in case.", "just in case\uFF1Bin case + \u5B50\u53E5", 2],
+    ["case.medical", "\u75C5\u4F8B", "100 new cases", "\u6578\u5B57 + cases\uFF1Ba case of + \u75C5\u540D", 3],
+    ["case.argument", "\u7406\u7531\u3001\u8AD6\u8B49", "make a case for", "make a case for\uFF0Fagainst", 3]
+  ], []),
+  w("mind", "C", [
+    ["mind.brain", "\u982D\u8166\u3001\u5FC3\u601D", "a sharp mind", "\u5F62\u5BB9\u8A5E + mind", 1],
+    ["mind.opinion", "\u4E3B\u610F", "change my mind", "change\uFF0Fmake up + \u6240\u6709\u683C + mind", 1],
+    ["mind.object", "\u4ECB\u610F\uFF08\u52D5\u8A5E\uFF09", "Do you mind if...?", "Do you mind\uFF0FWould you mind + V-ing\uFF0Fif", 1],
+    ["mind.memory", "\u8A18\u4F4F", "keep in mind", "keep\uFF0Fbear + in mind", 2],
+    ["mind.care", "\u6CE8\u610F\uFF08\u52D5\u8A5E\uFF09", "Mind the gap.", "\u7948\u4F7F\u53E5 Mind + \u5371\u96AA\u7269", 2],
+    ["mind.look", "\u7167\u770B\uFF08\u82F1\u5F0F\u52D5\u8A5E\uFF09", "mind the kids", "mind + \u5C0F\u5B69\u3001\u5E97\uFF08\u7167\u770B\uFF09", 3]
+  ], ["make up your mind", "never mind", "out of your mind", "on my mind"]),
+  w("matter", "C", [
+    ["matter.issue", "\u4E8B\u60C5", "a private matter", "a + \u5F62\u5BB9\u8A5E + matter", 1],
+    ["matter.important", "\u8981\u7DCA\uFF08\u52D5\u8A5E\uFF09", "It doesn't matter.", "\u4E3B\u8A5E + matter(s)\uFF1BIt doesn't matter", 1],
+    ["matter.problem", "\u600E\u9EBC\u4E86", "What's the matter?", "What's the matter (with)?", 1],
+    ["matter.nomatter", "\u7121\u8AD6", "no matter what", "no matter + wh-", 2],
+    ["matter.only", "\u53EA\u662F\u2026\u7684\u554F\u984C", "a matter of time", "a matter of + time\uFF0Ftaste", 2],
+    ["matter.substance", "\u7269\u8CEA", "solid matter", "\u5F62\u5BB9\u8A5E + matter\uFF08\u79D1\u5B78\uFF09", 3]
+  ], ["as a matter of fact", "for that matter"]),
+  w("way", "C", [
+    ["way.route", "\u8DEF", "on my way home", "way + to\uFF0Fhome\uFF1Bon the way", 1],
+    ["way.method", "\u65B9\u6CD5", "a way to learn", "a way + to V \u6216 of V-ing", 1],
+    ["way.manner", "\u65B9\u5F0F\u3001\u6A23\u5B50", "the way she talks", "the way + \u5B50\u53E5", 2],
+    ["way.aspect", "\u65B9\u9762", "in some ways", "in + many\uFF0Fsome\uFF0Fa + way(s)", 2],
+    ["way.distance", "\u8DDD\u96E2", "a long way", "a long way (from)", 2],
+    ["way.nope", "\u4E0D\u53EF\u80FD\uFF08No way\uFF09", "No way!", "No way!", 2],
+    ["way.very", "\u9060\u9060\u5730\uFF08\u526F\u8A5E\uFF09", "way too much", "way + too \u6216\u5F62\u5BB9\u8A5E\u3001\u6BD4\u8F03\u7D1A", 3],
+    ["way.wish", "\u5982\u9858", "get your way", "get\uFF0Fhave + \u6240\u6709\u683C + way", 3]
+  ], ["by the way", "in the way", "on the way", "give way", "all the way"]),
+  w("order", "C", [
+    ["order.request", "\u9EDE\u9910\u3001\u8A02\u8CFC", "order a pizza", "order + \u98DF\u7269\u3001\u5546\u54C1\uFF1Bplace an order", 1],
+    ["order.sequence", "\u9806\u5E8F", "in alphabetical order", "in + \u5F62\u5BB9\u8A5E + order", 1],
+    ["order.purpose", "\u70BA\u4E86\uFF08in order to\uFF09", "in order to pass", "in order to\uFF0Fthat", 1],
+    ["order.command", "\u547D\u4EE4", "give an order", "give\uFF0Ffollow + orders", 2],
+    ["order.tidy", "\u6574\u9F4A", "put things in order", "put in order\uFF1Bin good order", 2],
+    ["order.working", "\u6B63\u5E38\u904B\u4F5C\uFF08out of order\uFF09", "The machine is out of order.", "out of order\uFF08\u6A5F\u5668\uFF09", 2],
+    ["order.peace", "\u79E9\u5E8F", "law and order", "law and order\uFF1Bkeep order", 3]
+  ], []),
+  w("deal", "C", [
+    ["deal.bargain", "\u5212\u7B97", "a good deal", "a good\uFF0Fgreat + deal\uFF08\u5212\u7B97\uFF09", 1],
+    ["deal.handle", "\u8655\u7406\uFF08deal with\uFF09", "deal with problems", "deal with + \u554F\u984C\u6216\u4EBA", 1],
+    ["deal.agreement", "\u4EA4\u6613\u3001\u5354\u8B70", "make a deal", "make\uFF0Fclose + a deal", 2],
+    ["deal.amount", "\u5927\u91CF\uFF08a great deal\uFF09", "a great deal of time", "a great\uFF0Fgood deal of + \u4E0D\u53EF\u6578\u540D\u8A5E", 2],
+    ["deal.big", "\u5927\u4E8B", "It's no big deal.", "big deal\uFF1Bno big deal", 2],
+    ["deal.cards", "\u767C\uFF08\u724C\uFF09", "deal the cards", "deal + cards", 3]
+  ], []),
+  w("state", "C", [
+    ["state.region", "\u5DDE", "the state of Texas", "the state of + \u5730\u540D\uFF1B\u5DDE\u540D", 1],
+    ["state.condition", "\u72C0\u614B", "in a bad state", "in a + \u5F62\u5BB9\u8A5E + state\uFF1Bstate of mind", 2],
+    ["state.say", "\u9673\u8FF0\uFF08\u52D5\u8A5E\uFF09", "state your name", "state + \u540D\u8A5E\u6216 that \u5B50\u53E5\uFF08\u6B63\u5F0F\uFF09", 2],
+    ["state.government", "\u570B\u5BB6\u3001\u653F\u5E9C", "state-owned", "the state\uFF1Bstate + \u540D\u8A5E\uFF08\u7576\u4FEE\u98FE\uFF09", 3]
+  ], []),
+  w("interest", "C", [
+    ["interest.curiosity", "\u8208\u8DA3", "an interest in music", "interest in + \u4E8B\u7269", 1],
+    ["interest.attract", "\u4F7F\u611F\u8208\u8DA3\uFF08\u52D5\u8A5E\uFF09", "It interests me.", "\u4E8B\u7269 + interest + \u4EBA", 2],
+    ["interest.money", "\u5229\u606F", "interest rate", "interest rate\uFF1Bpay interest", 2],
+    ["interest.benefit", "\u5229\u76CA", "in your best interest", "in + \u6240\u6709\u683C + (best) interest", 3]
+  ], []),
+  w("rest", "C", [
+    ["rest.relax", "\u4F11\u606F", "get some rest", "get\uFF0Ftake + rest", 1],
+    ["rest.remainder", "\u5176\u9918", "the rest of the day", "the rest of + \u540D\u8A5E", 1],
+    ["rest.lean", "\u9760\u3001\u64F1", "rest your head on", "rest + \u7269 + on", 3],
+    ["rest.peace", "\u5B89\u606F", "rest in peace", "rest in peace", 3]
+  ], []),
+  w("account", "C", [
+    ["account.bank", "\u5E33\u6236\u3001\u5E33\u865F", "a bank account", "bank\uFF0Femail + account", 1],
+    ["account.report", "\u63CF\u8FF0\u3001\u5831\u5C0E", "an account of the trip", "an account of + \u4E8B\u4EF6", 2],
+    ["account.consider", "\u8003\u616E\uFF08take into account\uFF09", "take it into account", "take + \u7269 + into account", 2],
+    ["account.explain", "\u89E3\u91CB\uFF08account for\uFF09", "That accounts for it.", "\u4E8B\u5BE6 + account for + \u73FE\u8C61", 2],
+    ["account.proportion", "\u5360\uFF08account for\uFF09", "accounts for 30%", "\u6578\u5B57\u4E3B\u8A5E + account for + \u6BD4\u4F8B", 3],
+    ["account.because", "\u7531\u65BC\uFF08on account of\uFF09", "on account of the rain", "on account of + \u540D\u8A5E", 3]
+  ], []),
+  w("charge", "C", [
+    ["charge.power", "\u5145\u96FB", "charge my phone", "charge + \u96FB\u6C60\u3001\u624B\u6A5F", 1],
+    ["charge.fee", "\u8CBB\u7528", "free of charge", "free of charge\uFF1Ba charge for", 2],
+    ["charge.ask", "\u6536\u8CBB\uFF08\u52D5\u8A5E\uFF09", "They charge $5.", "charge + \u4EBA + \u91D1\u984D + for", 2],
+    ["charge.responsible", "\u8CA0\u8CAC\uFF08in charge of\uFF09", "in charge of sales", "in charge of + \u4E8B", 2],
+    ["charge.accuse", "\u6307\u63A7", "charged with theft", "charge + \u4EBA + with + \u7F6A", 3],
+    ["charge.card", "\u8A18\u5E33\u3001\u5237\u5361", "Charge it to my card.", "charge + \u7269 + to + \u5E33\u6236", 3],
+    ["charge.rush", "\u885D\u5411", "The bull charged.", "\u4EBA\u6216\u52D5\u7269 + charge\uFF08+ at\uFF09", 3]
+  ], []),
+  w("figure", "C", [
+    ["figure.number", "\u6578\u5B57", "sales figures", "\u6578\u5B57\u4E3B\u984C + figures\uFF08sales\u3001official\uFF09", 2],
+    ["figure.body", "\u8EAB\u6750", "keep my figure", "\u6240\u6709\u683C + figure\uFF08\u8EAB\u6750\u8A9E\u5883\uFF09", 2],
+    ["figure.person", "\u4EBA\u7269", "a public figure", "\u5F62\u5BB9\u8A5E + figure\uFF08public\u3001key\uFF09", 2],
+    ["figure.solve", "\u60F3\u51FA\uFF08figure out\uFF09", "figure it out", "figure out + \u7B54\u6848", 2],
+    ["figure.diagram", "\u5716\uFF08Figure 3\uFF09", "see Figure 3", "Figure + \u6578\u5B57", 3],
+    ["figure.think", "\u8A8D\u70BA\uFF08\u53E3\u8A9E\uFF09", "I figured you'd be late.", "I figured + \u5B50\u53E5", 3]
+  ], []),
+  w("issue", "C", [
+    ["issue.problem", "\u554F\u984C", "I have an issue with...", "have an issue with", 2],
+    ["issue.topic", "\u8B70\u984C", "a political issue", "\u5F62\u5BB9\u8A5E + issue\uFF08political\u3001social\uFF09", 2],
+    ["issue.edition", "\uFF08\u520A\u7269\uFF09\u671F", "the latest issue", "the + \u5E8F\u6578\u6216 latest + issue\uFF08\u520A\u7269\u8A9E\u5883\uFF09", 2],
+    ["issue.give", "\u767C\u7D66\u3001\u767C\u5E03\uFF08\u52D5\u8A5E\uFF09", "issue passports, issue a warning", "issue + \u6587\u4EF6\u3001\u8B66\u544A", 3]
+  ], []),
+  w("face", "C", [
+    ["face.face", "\u81C9", "wash your face", "\u6240\u6709\u683C + face\uFF08\u8EAB\u9AD4\uFF09", 1],
+    ["face.direction", "\u9762\u5411\uFF08\u52D5\u8A5E\uFF09", "The house faces south.", "\u5EFA\u7BC9 + face + \u65B9\u4F4D", 2],
+    ["face.confront", "\u9762\u5C0D", "face the problem", "face + \u56F0\u96E3\u3001\u4E8B\u5BE6", 2],
+    ["face.expression", "\u9B3C\u81C9\u3001\u8868\u60C5", "make a face", "make\uFF0Fpull a face", 2],
+    ["face.dignity", "\u9762\u5B50", "lose face", "lose\uFF0Fsave face", 3],
+    ["face.surface", "\u8868\u9762\u3001\u9336\u9762", "the face of a clock", "the face of + \u6642\u9418\u3001\u61F8\u5D16", 3]
+  ], ["face to face", "face up to", "in the face of", "on the face of it"]),
+  w("present", "C", [
+    ["present.gift", "\u79AE\u7269", "a birthday present", "give\uFF0Fget a present", 1],
+    ["present.now", "\u73FE\u5728\uFF08\u540D\u8A5E\uFF09", "at present", "at present\uFF1Bthe present", 1],
+    ["present.here", "\u51FA\u5E2D\u7684\uFF08\u5F62\u5BB9\u8A5E\uFF09", "Ten people were present.", "be present\uFF08+ at\uFF09\uFF1B\u653E\u5728\u540D\u8A5E\u5F8C", 2],
+    ["present.current", "\u76EE\u524D\u7684\uFF08\u5F62\u5BB9\u8A5E\uFF09", "the present situation", "the present + \u540D\u8A5E\uFF08\u653E\u5728\u540D\u8A5E\u524D\uFF09", 2],
+    ["present.show", "\u5448\u73FE\u3001\u5831\u544A\uFF08\u52D5\u8A5E\uFF09", "present your idea", "present + \u60F3\u6CD5\u3001\u5831\u544A\uFF08\u91CD\u97F3\u5728\u5F8C\uFF09", 2],
+    ["present.award", "\u9812\u767C\uFF08\u52D5\u8A5E\uFF09", "present an award", "present + \u4EBA + with + \u734E", 3]
+  ], []),
+  w("right", "D", [
+    ["right.correct", "\u5C0D\u7684", "the right answer", "be right\uFF1Bthe right + \u7B54\u6848", 1],
+    ["right.side", "\u53F3\u908A", "turn right", "turn right\uFF1Bon the right", 1],
+    ["right.immediately", "\u99AC\u4E0A", "right now, right away", "right + now\uFF0Faway", 1],
+    ["right.exactly", "\u6B63\u597D", "right here", "right + here\uFF0Fthere\uFF0Fbehind", 2],
+    ["right.suitable", "\u5408\u9069\u7684", "the right person", "the right + \u4EBA\u6216\u6642\u9593", 2],
+    ["right.legal", "\u6B0A\u5229\uFF08\u540D\u8A5E\uFF09", "human rights", "the right to V\uFF1Brights\uFF08\u8907\u6578\uFF09", 2],
+    ["right.okay", "\u597D\u3001\u5C0D\u5427\uFF08\u53E3\u8A9E\uFF09", "Right, let's go.", "\u53E5\u9996\u55AE\u7368 Right,\uFF1B\u53E5\u5C3E ..., right?", 2]
+  ], []),
+  w("light", "D", [
+    ["light.lamp", "\u5149\u3001\u71C8", "turn on the light", "turn on the light\uFF1Bthe light of", 1],
+    ["light.weight", "\u8F15\u7684", "a light bag", "light + \u53EF\u62FF\u7684\u6771\u897F", 1],
+    ["light.color", "\u6DFA\u8272\u7684", "light blue", "light + \u984F\u8272", 1],
+    ["light.traffic", "\u7D05\u7DA0\u71C8", "stop at the light", "at the (traffic) lights", 1],
+    ["light.amount", "\u5C11\u91CF\u7684", "light rain", "light + rain\uFF0Fbreakfast\uFF0Ftraffic", 2],
+    ["light.fire", "\u9EDE\u71C3\uFF08\u52D5\u8A5E\uFF09", "light a candle", "light + \u706B\u3001\u881F\u71ED", 2],
+    ["light.easy", "\u8F15\u9B06\u7684", "light reading", "light + reading\uFF0Fmusic", 3]
+  ], []),
+  w("kind", "D", [
+    ["kind.nice", "\u89AA\u5207\u7684", "You're so kind.", "be kind (to)\uFF1BIt's kind of you", 1],
+    ["kind.type", "\u7A2E\u985E", "what kind of music", "what\uFF0Fthis\uFF0Fall + kind(s) of + \u540D\u8A5E", 1],
+    ["kind.sortof", "\u6709\u9EDE\uFF08kind of\uFF09", "kind of tired", "kind of + \u5F62\u5BB9\u8A5E\u6216\u52D5\u8A5E\uFF08\u53E3\u8A9E\u526F\u8A5E\uFF09", 2]
+  ], []),
+  w("fine", "D", [
+    ["fine.ok", "\u597D\u3001\u6C92\u554F\u984C", "I'm fine.", "\u4EBA + be fine\uFF1BThat's fine", 1],
+    ["fine.weather", "\u6674\u6717", "a fine day", "fine + day\uFF0Fweather", 2],
+    ["fine.penalty", "\u7F70\u6B3E", "a parking fine", "a fine\uFF1Bpay a fine\uFF1Bget fined", 2],
+    ["fine.thin", "\u7D30\u7684", "fine hair", "fine + hair\uFF0Fline\uFF0Fsand", 3]
+  ], []),
+  w("mean", "D", [
+    ["mean.signify", "\u610F\u601D\u662F", "What does it mean?", "What does X mean?\uFF1BX means + \u610F\u601D", 1],
+    ["mean.intend", "\u6545\u610F\u3001\u6253\u7B97", "I didn't mean to.", "mean + to V", 2],
+    ["mean.unkind", "\u523B\u8584\u7684", "Don't be mean.", "be mean + to + \u4EBA", 2],
+    ["mean.important", "\u5C0D\u2026\u5F88\u91CD\u8981", "It means a lot to me.", "mean + a lot\uFF0Feverything + to", 2],
+    ["mean.average", "\u5E73\u5747\uFF08\u6578\u5B78\uFF09", "the mean score", "the mean + \u6578\u503C", 3]
+  ], []),
+  w("fair", "D", [
+    ["fair.just", "\u516C\u5E73\u7684", "That's not fair.", "be fair\uFF1Bfair + \u898F\u5247\u6216\u50F9\u683C", 1],
+    ["fair.event", "\u5C55\u89BD\u6703\u3001\u5E02\u96C6", "a book fair", "a + \u7A2E\u985E + fair\uFF08book\u3001job\uFF09", 2],
+    ["fair.average", "\u9084\u53EF\u4EE5\u7684", "a fair chance", "fair + chance\uFF0Famount\uFF08\u4E0D\u932F\u4F46\u666E\u901A\uFF09", 3],
+    ["fair.light", "\u767D\u7699\u7684\u3001\u91D1\u8272\u7684", "fair skin", "fair + skin\uFF0Fhair", 3]
+  ], []),
+  w("hard", "D", [
+    ["hard.solid", "\u786C\u7684", "a hard bed", "hard + \u7269\u9AD4", 1],
+    ["hard.difficult", "\u96E3\u7684", "a hard test", "hard + to V\uFF1Bhard + \u4EFB\u52D9", 1],
+    ["hard.effort", "\u52AA\u529B\u5730\uFF08\u526F\u8A5E\uFF09", "work hard", "\u52D5\u8A5E + hard\uFF08work\u3001study\uFF09", 1],
+    ["hard.strict", "\u56B4\u53B2\u7684\uFF08hard on\uFF09", "Don't be so hard on him.", "be hard on + \u4EBA", 2],
+    ["hard.heavy", "\u731B\u70C8\u5730\uFF08\u526F\u8A5E\uFF09", "It's raining hard.", "rain\uFF0Fhit + hard", 2]
+  ], []),
+  w("last", "D", [
+    ["last.final", "\u6700\u5F8C\u7684", "the last bus", "the last + \u540D\u8A5E\uFF08\u4E00\u4E32\u7684\u6700\u5F8C\uFF09", 1],
+    ["last.previous", "\u4E0A\u4E00\u500B", "last week", "last + \u6642\u9593\uFF08\u7121 the\uFF09", 1],
+    ["last.continue", "\u6301\u7E8C\uFF08\u52D5\u8A5E\uFF09", "The movie lasts two hours.", "\u4E8B\u60C5 + last + \u6642\u9593", 2],
+    ["last.unlikely", "\u6700\u4E0D\u53EF\u80FD\u7684", "the last person to lie", "the last + \u4EBA + to V", 3]
+  ], []),
+  w("just", "D", [
+    ["just.only", "\u53EA", "just one", "just + \u6578\u91CF\u6216\u540D\u8A5E", 1],
+    ["just.exactly", "\u6B63\u597D", "just like you", "just + like\uFF0Fas\uFF0Fwhat", 1],
+    ["just.recent", "\u525B\u525B", "I just ate.", "have + just + p.p.\uFF1Bjust + \u904E\u53BB\u5F0F", 1],
+    ["just.barely", "\u52C9\u5F37", "just made it", "just + \u52D5\u8A5E\uFF08made it\u3001enough\uFF09", 2],
+    ["just.emphasis", "\u771F\u7684\u3001\u7C21\u76F4", "It's just amazing.", "just + \u5F37\u70C8\u5F62\u5BB9\u8A5E", 2],
+    ["just.fair", "\u516C\u6B63\u7684", "a just decision", "just + \u540D\u8A5E\uFF08decision\u3001cause\uFF09", 3]
+  ], []),
+  w("still", "D", [
+    ["still.continue", "\u4ECD\u7136", "still raining", "\u4E3B\u8A5E + still + \u52D5\u8A5E\uFF08\u4ECD\u5728\u9032\u884C\uFF09", 1],
+    ["still.motionless", "\u975C\u6B62\u7684", "Sit still.", "sit\uFF0Fstand\uFF0Fkeep + still", 2],
+    ["still.however", "\u4E0D\u904E", "It's cheap. Still, I don't need it.", "\u53E5\u9996 Still,", 2],
+    ["still.more", "\u66F4\uFF08still better\uFF09", "still better", "still + \u6BD4\u8F03\u7D1A", 3]
+  ], []),
+  w("even", "D", [
+    ["even.emphasis", "\u751A\u81F3", "Even kids know that.", "even + \u540D\u8A5E\u6216\u52D5\u8A5E\uFF08\u51FA\u4E4E\u610F\u6599\uFF09", 1],
+    ["even.more", "\u66F4\uFF08even better\uFF09", "even better", "even + \u6BD4\u8F03\u7D1A", 2],
+    ["even.flat", "\u5E73\u7684", "an even surface", "even + \u8868\u9762", 2],
+    ["even.number", "\u5076\u6578", "an even number", "even + number", 2],
+    ["even.equal", "\u626F\u5E73", "Now we're even.", "be even", 3]
+  ], ["even if", "even though", "even so", "break even"]),
+  w("well", "D", [
+    ["well.good", "\u597D\u5730", "She sings well.", "\u52D5\u8A5E + well", 1],
+    ["well.healthy", "\u5065\u5EB7\u7684", "I'm not well.", "be\uFF0Ffeel + (not) well", 1],
+    ["well.filler", "\u55EF\uFF08\u53E3\u8A9E\uFF09", "Well, I think...", "\u53E5\u9996 Well,", 1],
+    ["well.thorough", "\u5145\u5206\u5730", "Shake well.", "\u52D5\u8A5E + well\uFF08shake\u3001cook\uFF0C\u5F37\u8ABF\u5145\u5206\uFF09", 2],
+    ["well.also", "\u4E5F\uFF08as well\uFF09", "I'll come as well.", "\u53E5\u5C3E as well", 2],
+    ["well.water", "\u4E95\uFF08\u540D\u8A5E\uFF09", "a deep well", "a well\uFF08\u540D\u8A5E\uFF09", 3]
+  ], []),
+  w("close", "D", [
+    ["close.shut", "\u95DC\uFF08\u52D5\u8A5E\uFF09", "close the door", "close + \u9580\u3001\u7A97\u3001\u5E97", 1],
+    ["close.near", "\u8FD1\u7684", "close to school", "close to + \u5730\u9EDE", 1],
+    ["close.intimate", "\u89AA\u5BC6\u7684", "a close friend", "close + friend\uFF0Ffamily", 2],
+    ["close.careful", "\u4ED4\u7D30\u7684", "take a close look", "close + look\uFF0Fattention", 2],
+    ["close.almost", "\u5DEE\u4E00\u9EDE\u3001\u52E2\u5747\u529B\u6575", "a close game", "close + game\uFF0Fcall\uFF1B\u6BD4\u5206\u63A5\u8FD1", 2],
+    ["close.end", "\u7D50\u675F\uFF08\u52D5\u8A5E\uFF09", "close the meeting", "close + a meeting\uFF0Fan account\uFF08\u6B63\u5F0F\uFF09", 3]
+  ], []),
+  w("free", "D", [
+    ["free.cost", "\u514D\u8CBB\u7684", "free tickets", "free + \u6771\u897F\uFF1Bfor free", 1],
+    ["free.available", "\u6709\u7A7A\u7684", "Are you free tonight?", "be free + \u6642\u9593", 1],
+    ["free.liberty", "\u81EA\u7531\u7684", "free to choose", "free to V", 1],
+    ["free.without", "\u4E0D\u542B", "sugar-free", "\u540D\u8A5E + -free", 2],
+    ["free.release", "\u91CB\u653E\uFF08\u52D5\u8A5E\uFF09", "free the bird", "free + \u4EBA\u6216\u52D5\u7269\uFF08\u52D5\u8A5E\uFF09", 2]
+  ], []),
+  w("as", "E", [
+    ["as.role", "\u4F5C\u70BA", "work as a nurse", "as + \u8077\u696D\u6216\u8EAB\u5206\u540D\u8A5E", 1],
+    ["as.compare", "\u8DDF\u2026\u4E00\u6A23\uFF08as\u2026as\uFF09", "as tall as me", "as + \u5F62\u5BB9\u8A5E\u6216\u526F\u8A5E + as", 1],
+    ["as.when", "\u7576\u2026\u6642", "As I left, it rained.", "As + \u5B50\u53E5,\uFF08\u540C\u6642\u767C\u751F\u7684\u904E\u53BB\u4E8B\u4EF6\uFF09", 2],
+    ["as.because", "\u56E0\u70BA", "As it's late, let's go.", "As + \u5B50\u53E5,\uFF08\u539F\u56E0\uFF0C\u4E3B\u53E5\u662F\u7D50\u8AD6\uFF09", 2],
+    ["as.like", "\u6B63\u5982", "As I said, ...", "as + I said\uFF0Fyou know", 2],
+    ["as.proportion", "\u96A8\u8457", "As time passed, ...", "As + \u4E3B\u8A5E + \u8B8A\u5316\u52D5\u8A5E\uFF08passed\u3001grew\uFF09", 2],
+    ["as.though", "\u96D6\u7136\uFF08\u5012\u88DD\uFF09", "Tired as he was, he kept going.", "\u5F62\u5BB9\u8A5E + as + \u4E3B\u8A5E + be", 3]
+  ], []),
+  w("since", "E", [
+    ["since.time", "\u81EA\u5F9E", "since 2020", "since + \u6642\u9593\u9EDE\uFF0C\u914D\u5B8C\u6210\u5F0F", 1],
+    ["since.because", "\u65E2\u7136\u3001\u56E0\u70BA", "Since you're here, help me.", "Since + \u5B50\u53E5,\uFF08\u4E3B\u53E5\u662F\u8ACB\u6C42\u6216\u7D50\u8AD6\uFF09", 2]
+  ], []),
+  w("while", "E", [
+    ["while.during", "\u7576\u2026\u7684\u6642\u5019", "while I was cooking", "while + \u9032\u884C\u5F0F\u5B50\u53E5", 1],
+    ["while.period", "\u4E00\u6703\u5152\uFF08\u540D\u8A5E\uFF09", "wait a while", "a while\uFF1Bfor a while", 1],
+    ["while.contrast", "\u800C\uFF08\u5C0D\u6BD4\uFF09", "I like tea, while she likes coffee.", "\u5B50\u53E5, while + \u5C0D\u6BD4\u5B50\u53E5", 2],
+    ["while.although", "\u96D6\u7136", "While I agree, ...", "While + \u5B50\u53E5, \u4E3B\u53E5\uFF08\u8B93\u6B65\uFF09", 3]
+  ], []),
+  w("so", "E", [
+    ["so.very", "\u5F88", "so happy", "so + \u5F62\u5BB9\u8A5E\u6216\u526F\u8A5E", 1],
+    ["so.therefore", "\u6240\u4EE5", "It rained, so we stayed.", "\u5B50\u53E5, so + \u7D50\u679C\u5B50\u53E5", 1],
+    ["so.filler", "\u90A3\u9EBC\uFF08\u958B\u8A71\u984C\uFF09", "So, what's next?", "\u53E5\u9996 So,", 1],
+    ["so.purpose", "\u4EE5\u4FBF\uFF08so that\uFF09", "so that we can see", "so (that) + \u4E3B\u8A5E + can\uFF0Fwill", 2],
+    ["so.substitute", "\u9019\u6A23\uFF08\u4EE3\u66FF\u5B50\u53E5\uFF09", "I think so.", "think\uFF0Fhope\uFF0Fguess + so", 2],
+    ["so.also", "\u4E5F\u662F\uFF08So do I\uFF09", "So do I.", "So + \u52A9\u52D5\u8A5E + \u4E3B\u8A5E", 2]
+  ], []),
+  w("that", "E", [
+    ["that.demonstrative", "\u90A3\u500B", "that book", "that + \u540D\u8A5E\uFF1B\u55AE\u7368\u7684 that", 1],
+    ["that.noun", "\uFF08\u540D\u8A5E\u5B50\u53E5\uFF0C\u5E38\u7701\u7565\uFF09", "I know that he's right.", "know\uFF0Fsay\uFF0Fthink + that + \u5B8C\u6574\u5B50\u53E5", 1],
+    ["that.relative", "\u95DC\u4FC2\u4EE3\u540D\u8A5E", "the book that I read", "\u540D\u8A5E + that + \u7F3A\u4E3B\u8A5E\u6216\u53D7\u8A5E\u7684\u5B50\u53E5", 2],
+    ["that.degree", "\u90A3\u9EBC\uFF08\u7A0B\u5EA6\uFF09", "It's not that bad.", "not that + \u5F62\u5BB9\u8A5E", 2],
+    ["that.result", "\u4EE5\u81F4\u65BC\uFF08so\u2026that\uFF09", "so tired that I slept", "so\uFF0Fsuch + \u2026 + that + \u5B50\u53E5", 2]
+  ], []),
+  w("like", "E", [
+    ["like.enjoy", "\u559C\u6B61", "I like it.", "\u4E3B\u8A5E + like + \u540D\u8A5E\u6216 V-ing", 1],
+    ["like.similar", "\u50CF", "like a bird", "be\uFF0Flook + like + \u540D\u8A5E\uFF1Blike a\u2026", 1],
+    ["like.want", "\u60F3\u8981\uFF08would like\uFF09", "I'd like tea.", "would like + \u540D\u8A5E\u6216 to V", 1],
+    ["like.example", "\u4F8B\u5982", "fruits like apples", "\u8907\u6578\u540D\u8A5E + like + \u4F8B\u5B50", 2],
+    ["like.asif", "\u597D\u50CF", "It looks like rain.", "look\uFF0Fseem\uFF0Fsound + like + \u5B50\u53E5", 2],
+    ["like.filler", "\u5C31\u662F\u2026\uFF08\u53E3\u8A9E\u586B\u5145\uFF09", "It was, like, huge.", "\u53E5\u4E2D , like,\uFF08\u53E3\u8A9E\uFF09", 3]
+  ], []),
+  w("once", "E", [
+    ["once.onetime", "\u4E00\u6B21", "once a week", "once + a + \u671F\u9593", 1],
+    ["once.past", "\u66FE\u7D93", "I once lived there.", "\u4E3B\u8A5E + once + \u904E\u53BB\u5F0F", 1],
+    ["once.assoon", "\u4E00\u65E6", "Once you start, ...", "Once + \u5B50\u53E5,\uFF08\u689D\u4EF6\uFF09", 2],
+    ["once.atonce", "\u7ACB\u523B\uFF08at once\uFF09", "Come at once.", "at once", 2]
+  ], []),
+  w("yet", "E", [
+    ["yet.notyet", "\u9084\uFF08\u6C92\uFF09", "not yet", "\u5426\u5B9A\u53E5 + yet\uFF08\u53E5\u5C3E\uFF09", 1],
+    ["yet.question", "\u5DF2\u7D93\u2026\u4E86\u55CE\uFF08\u7591\u554F\uFF09", "Have you eaten yet?", "\u7591\u554F\u53E5 + yet\uFF0C\u914D\u5B8C\u6210\u5F0F", 1],
+    ["yet.but", "\u7136\u800C", "simple yet effective", "\u5F62\u5BB9\u8A5E + yet + \u5F62\u5BB9\u8A5E\uFF1B, yet + \u5B50\u53E5", 2],
+    ["yet.more", "\u53C8\u4E00\u500B\u3001\u66F4", "yet another problem", "yet + another\uFF0Fagain\uFF0F\u6BD4\u8F03\u7D1A", 3]
+  ], [])
+];
+
+// src/core/poly/catalog.ts
+var POLY_CATEGORIES = ["A", "B", "C", "D", "E"];
+var byWord = new Map(POLY_WORDS.map((w2) => [w2.word, w2]));
+var bySense = new Map(POLY_WORDS.flatMap((w2) => w2.senses.map((s) => [s.id, s])));
+function polyWord(word) {
+  return byWord.get(word.trim().toLowerCase());
+}
+function senseById(id2) {
+  return bySense.get(id2);
+}
+function wordsInCategory(category) {
+  return POLY_WORDS.filter((w2) => w2.category === category);
+}
+var isLevel = (n) => n === 1 || n === 2 || n === 3;
+function parsePolyFilter(v) {
+  const out = { words: [], levels: [], excluded: [] };
+  if (!v || typeof v !== "object") return out;
+  const o = v;
+  if (Array.isArray(o.words)) {
+    out.words = [...new Set(o.words.filter((x3) => typeof x3 === "string" && byWord.has(x3)))];
+  }
+  if (Array.isArray(o.levels)) out.levels = [...new Set(o.levels.filter(isLevel))].sort();
+  if (Array.isArray(o.excluded)) {
+    out.excluded = [...new Set(o.excluded.filter((x3) => typeof x3 === "string" && bySense.has(x3)))];
+  }
+  return out;
+}
+function sensesInFilter(f) {
+  var _a, _b;
+  const tested = [];
+  const reference = [];
+  const excluded = new Set(f.excluded);
+  for (const word of f.words) {
+    for (const s of (_b = (_a = polyWord(word)) == null ? void 0 : _a.senses) != null ? _b : []) {
+      const inLevel = f.levels.length === 0 || f.levels.includes(s.level);
+      (inLevel && !excluded.has(s.id) ? tested : reference).push(s);
+    }
+  }
+  return { tested, reference };
+}
+
+// src/ui/blocks/practice/scenarioQuestionView.ts
+var MARK = /\[\[(.+?)\]\]/;
+function questionWord(q) {
+  var _a, _b;
+  const marked = (_a = MARK.exec(q.text)) == null ? void 0 : _a[1];
+  if (marked) return marked;
+  const right = (_b = q.options.find((o) => o.id === q.answerId)) == null ? void 0 : _b.text;
+  return right != null ? right : q.focus.id;
+}
+function questionTag(q, labels = {}) {
+  var _a, _b, _c;
+  switch (q.focus.kind) {
+    case "sense":
+      return `${t("practice.poly.tag")} \xB7 ${(_b = (_a = senseById(q.focus.id)) == null ? void 0 : _a.word) != null ? _b : q.focus.id.split(".")[0]}`;
+    case "word":
+      return `${t("practice.poly.tagWord")} \xB7 ${questionWord(q)}`;
+    case "grammar-objective": {
+      const title = (_c = labels.topicTitle) == null ? void 0 : _c.call(labels, q.focus.id.split("/")[0]);
+      return title ? `${t("practice.grammar.tag")} \xB7 ${title}` : t("practice.grammar.tag");
+    }
+  }
+}
+function questionHints(q) {
+  var _a;
+  if (q.track !== "poly" || q.kind !== "which-sense") return void 0;
+  const hints = {};
+  for (const o of q.options) {
+    if (o.id === q.answerId) continue;
+    const cue = (_a = senseById(o.id)) == null ? void 0 : _a.cue;
+    if (cue) hints[o.id] = cue;
+  }
+  return Object.keys(hints).length > 0 ? hints : void 0;
+}
+function toPlayerQuestion2(q, labels = {}) {
+  const sc = q.scenario;
+  const hints = questionHints(q);
+  return {
+    id: q.id,
+    scenarioId: sc.id,
+    scene: sc.scene,
+    ...sc.lead && sc.lead.length > 0 ? { lead: sc.lead.map((l4) => ({ ...l4.speaker ? { speaker: l4.speaker } : {}, text: l4.text })) } : {},
+    ...sc.speaker ? { speaker: sc.speaker } : {},
+    kind: q.kind,
+    text: q.text,
+    options: q.options.map((o) => ({ id: o.id, text: o.text })),
+    answerId: q.answerId,
+    explanation: q.explanation,
+    ...q.optionNotes && Object.keys(q.optionNotes).length > 0 ? { optionNotes: q.optionNotes } : {},
+    ...q.sentenceZh ? { sentenceZh: q.sentenceZh } : {},
+    ...hints ? { hints } : {},
+    tag: questionTag(q, labels)
+  };
+}
+
+// src/ui/blocks/practice/scenarioPane.ts
+function mountScenarioPane(el, o) {
+  var _a;
+  const { api, track: track2 } = o;
+  let alive = true;
+  let req = null;
+  let ctrl = null;
+  let sweeping = false;
+  const byId = /* @__PURE__ */ new Map();
+  o.owner.register(() => {
+    alive = false;
+    ctrl == null ? void 0 : ctrl.abort();
+  });
+  const headEl = el.createDiv({ cls: "vt-pr-mix-head" });
+  const noteEl = el.createDiv({ cls: "vt-pr-grammar-note" });
+  const playerEl = el.createDiv({ cls: "vt-pr-scenario-player" });
+  const showError = (error) => {
+    noteEl.empty();
+    if (!error || isAbort(error) || !alive) return;
+    noteEl.appendChild(aiErrorBox({ text: learnErrorText(error), error }));
+  };
+  const emptyText = () => {
+    if (!req) return o.idleText();
+    if (api.isRefilling(track2)) return t("practice.grammar.preparing");
+    const s = o.aiStatus();
+    if (s === "disabled") return t("practice.grammar.aiOff");
+    if (s === "no_key") return t("practice.grammar.noKey");
+    if (s === "offline") return t("practice.grammar.offline");
+    return t("practice.grammar.none");
+  };
+  const refill = () => {
+    if (!alive || !req || api.isRefilling(track2)) return;
+    ctrl = new AbortController();
+    api.refill(req, { signal: ctrl.signal }).catch((e) => showError(e));
+  };
+  const sweep = () => {
+    if (sweeping) return;
+    sweeping = true;
+    try {
+      for (const q of api.poolQuestions(track2).filter((x3) => !o.toPlayer(x3))) api.skip(q);
+    } finally {
+      sweeping = false;
+    }
+  };
+  const act = (pq, fn) => {
+    const q = byId.get(pq.id);
+    if (q) fn(q);
+    refill();
+  };
+  const player = o.mountPlayer(
+    playerEl,
+    {
+      questions: () => {
+        byId.clear();
+        const out = [];
+        for (const q of api.poolQuestions(track2)) {
+          const pq = o.toPlayer(q);
+          if (!pq) continue;
+          byId.set(q.id, q);
+          out.push(pq);
+        }
+        return out;
+      },
+      emptyText,
+      callbacks: {
+        onAnswer: (a2) => {
+          var _a2;
+          (_a2 = o.onAnswer) == null ? void 0 : _a2.call(o, a2);
+          act(a2.question, (q) => api.answer(q, a2.optionId, a2.correct, { hinted: a2.hinted, fromMistakes: false }));
+        },
+        onSkip: (pq) => act(pq, (q) => api.skip(q)),
+        onRetire: (pq) => act(pq, (q) => api.retire(q))
+      }
+    },
+    o.owner
+  );
+  const mistakes = (_a = o.mountMistakes) == null ? void 0 : _a.call(o, el.createDiv({ cls: "vt-pr-mistakes" }), track2, o.owner);
+  o.owner.register(
+    api.events.on("pool:change", (tr) => {
+      if (tr !== track2) return;
+      sweep();
+      player.refresh();
+      mistakes == null ? void 0 : mistakes.refresh();
+    })
+  );
+  o.owner.register(api.events.on("refill:start", (tr) => tr === track2 && player.refresh()));
+  o.owner.register(
+    api.events.on("refill:end", (e) => {
+      if (e.track !== track2) return;
+      showError(e.error);
+      player.refresh();
+    })
+  );
+  return {
+    headEl,
+    setRequest(next, focusIds) {
+      req = next;
+      noteEl.empty();
+      api.applyScope(track2, focusIds);
+      sweep();
+      player.refresh();
+      refill();
+    }
+  };
 }
 
 // src/ui/blocks/practice/vocabFilterModel.ts
@@ -20546,9 +21708,55 @@ function toQueueFilter(value, now2) {
   }
   return out;
 }
+var SCENARIO_MAX_WORDS = 12;
+var SCENARIO_MIN_WORDS = 3;
+function parseVocabMode(raw) {
+  return raw === "scenario" ? "scenario" : "cards";
+}
+function isDue(e, nowMs) {
+  return !isNewCard(e) && !!e.srs && new Date(e.srs.due).getTime() <= nowMs;
+}
+function addedStamp(e) {
+  var _a, _b;
+  return (_b = (_a = e.createdAt) != null ? _a : e.added) != null ? _b : "";
+}
+function pickScenarioEntries(entries, value, now2, max = SCENARIO_MAX_WORDS) {
+  const filter2 = toQueueFilter(value, now2);
+  const onlyNew = filter2.status === "new";
+  const nowMs = now2.getTime();
+  const ok = entries.filter(
+    (e) => matchesFilter(e, { ...filter2, requireLiked: true }) && e.definitionZh.trim() !== "" && (!onlyNew || isNewCard(e))
+  );
+  const due = ok.filter((e) => isDue(e, nowMs)).sort((a2, b) => new Date(a2.srs.due).getTime() - new Date(b.srs.due).getTime());
+  const rest = ok.filter((e) => !isDue(e, nowMs)).sort((a2, b) => addedStamp(a2) < addedStamp(b) ? 1 : addedStamp(a2) > addedStamp(b) ? -1 : 0);
+  return [...due, ...rest].slice(0, max);
+}
+function toVocabRefs(entries) {
+  return entries.map((e) => ({ id: e.id, word: e.word, zh: e.definitionZh.trim(), pos: e.partOfSpeech }));
+}
+function pickVocabRefs(entries, value, now2, max = SCENARIO_MAX_WORDS) {
+  return toVocabRefs(pickScenarioEntries(entries, value, now2, max));
+}
+function vocabScenarioRequest(refs) {
+  return refs.length >= SCENARIO_MIN_WORDS ? { track: "vocab", words: [...refs] } : null;
+}
 
 // src/ui/blocks/practice/vocabTab.ts
-function vocabTab(host) {
+var MODE_KEY2 = "vocab-tracker:practice.vocabMode";
+function loadMode() {
+  try {
+    return parseVocabMode(window.localStorage.getItem(MODE_KEY2));
+  } catch (e) {
+    return "cards";
+  }
+}
+function saveMode(m2) {
+  try {
+    window.localStorage.setItem(MODE_KEY2, m2);
+  } catch (e) {
+  }
+}
+function vocabTab(host, scenario) {
   return {
     id: "vocab",
     label: t("practice.vocab.label"),
@@ -20556,17 +21764,67 @@ function vocabTab(host) {
     mount(el, ctx) {
       const groups = vocabGroups(collectVocabOptions(host.store.entries));
       let value = pruneValue(parseFilterValue(ctx.filters.get("vocab")), groups);
+      let mode = scenario ? loadMode() : "cards";
       el.addClass("vt-pr-vocab");
-      const cardsEl = el.createDiv({ cls: "vt-pr-vocab-cards" });
-      const block = new FlashcardsBlock(
-        cardsEl,
-        host,
-        { ...parseFlashcardParams(""), mode: CARD_MODES[0] },
-        { filter: () => toQueueFilter(value, /* @__PURE__ */ new Date()) }
-      );
-      const barEl = createDiv();
-      el.insertBefore(barEl, cardsEl);
-      renderFilterBar(barEl, {
+      const barEl = el.createDiv();
+      const switchEl = scenario ? el.createDiv({ cls: "vt-pr-segmented", attr: { role: "group" } }) : null;
+      const bodyEl = el.createDiv({ cls: "vt-pr-vocab-body" });
+      let view = null;
+      let onFilter = () => {
+      };
+      const mountCards = (box, owner) => {
+        const cardsEl = box.createDiv({ cls: "vt-pr-vocab-cards" });
+        const block = new FlashcardsBlock(
+          cardsEl,
+          host,
+          { ...parseFlashcardParams(""), mode: CARD_MODES[0] },
+          { filter: () => toQueueFilter(value, /* @__PURE__ */ new Date()) }
+        );
+        owner.addChild(block);
+        onFilter = () => block.restart();
+      };
+      const mountScenario = (box, owner, s) => {
+        const entries = () => host.store.entries;
+        const refs = () => {
+          var _a, _b;
+          return pickVocabRefs(entries(), value, (_b = (_a = s.now) == null ? void 0 : _a.call(s)) != null ? _b : /* @__PURE__ */ new Date());
+        };
+        let alive = true;
+        owner.register(() => alive = false);
+        void s.ready().then(() => {
+          if (!alive) return;
+          const pane = mountScenarioPane(box, {
+            track: "vocab",
+            api: s.api,
+            mountPlayer: s.mountPlayer,
+            mountMistakes: s.mountMistakes,
+            owner,
+            toPlayer: (q) => toPlayerQuestion2(q),
+            aiStatus: s.aiStatus,
+            idleText: () => t("practice.vocab.scenarioFew")
+          });
+          const apply = () => {
+            const r = refs();
+            const req = vocabScenarioRequest(r);
+            pane.setRequest(req, new Set(r.map((x3) => x3.id)));
+          };
+          onFilter = apply;
+          apply();
+        });
+      };
+      const draw = () => {
+        if (view) {
+          ctx.component.removeChild(view);
+          view = null;
+        }
+        bodyEl.empty();
+        const comp = new import_obsidian34.Component();
+        view = comp;
+        ctx.component.addChild(comp);
+        if (mode === "scenario" && scenario) mountScenario(bodyEl, comp, scenario);
+        else mountCards(bodyEl, comp);
+      };
+      const bar = renderFilterBar(barEl, {
         groups,
         quick: vocabQuickPicks(),
         value,
@@ -20574,10 +21832,34 @@ function vocabTab(host) {
         onChange: (next) => {
           value = next;
           ctx.filters.set("vocab", next);
-          block.restart();
+          onFilter();
         }
       });
-      ctx.component.addChild(block);
+      void bar;
+      if (switchEl) {
+        const buttons2 = [
+          ["cards", t("practice.vocab.scenarioCards")],
+          ["scenario", t("practice.vocab.scenarioPractice")]
+        ].map(([m2, label]) => {
+          const b = switchEl.createEl("button", { cls: "vt-pr-segment", text: label, attr: { type: "button" } });
+          b.addEventListener("click", () => {
+            if (mode === m2) return;
+            mode = m2;
+            saveMode(m2);
+            paint2();
+            draw();
+          });
+          return [m2, b];
+        });
+        const paint2 = () => {
+          for (const [m2, b] of buttons2) {
+            b.toggleClass("is-active", m2 === mode);
+            b.setAttr("aria-pressed", String(m2 === mode));
+          }
+        };
+        paint2();
+      }
+      draw();
     }
   };
 }
@@ -20586,7 +21868,7 @@ function vocabTab(host) {
 function renderPractice(host, source, el, ctx) {
   ctx.addChild(new PracticeBlock(el, host, source));
 }
-var PracticeBlock = class extends import_obsidian34.MarkdownRenderChild {
+var PracticeBlock = class extends import_obsidian35.MarkdownRenderChild {
   constructor(containerEl, host, source) {
     super(containerEl);
     this.host = host;
@@ -20596,10 +21878,11 @@ var PracticeBlock = class extends import_obsidian34.MarkdownRenderChild {
     this.locked = false;
   }
   onload() {
+    var _a, _b;
     this.containerEl.empty();
     const root2 = this.containerEl.createDiv({ cls: ["vt", "vt-pr"] });
     this.registerDomEvent(root2, "click", (e) => e.stopPropagation());
-    const builtin = vocabTab(this.host);
+    const builtin = vocabTab(this.host, (_b = (_a = this.host).vocabScenario) == null ? void 0 : _b.call(_a));
     const extra = this.host.tabs().filter((t2) => t2.id !== builtin.id);
     this.tabs = [builtin, ...extra].sort((a2, b) => a2.order - b.order);
     const wanted = parseBlockParams(this.source).tab;
@@ -20628,7 +21911,7 @@ var PracticeBlock = class extends import_obsidian34.MarkdownRenderChild {
     }
     this.renderTabs();
     this.bodyEl.empty();
-    const component = new import_obsidian34.Component();
+    const component = new import_obsidian35.Component();
     this.mounted = this.addChild(component);
     tab.mount(this.bodyEl, { app: this.host.app, filters: this.host.filters, component });
   }
@@ -20644,6 +21927,1898 @@ var PracticeBlock = class extends import_obsidian34.MarkdownRenderChild {
       btn.toggleClass("is-active", on);
       btn.addEventListener("click", () => this.select(tab));
     }
+  }
+};
+
+// src/ui/blocks/practice/mixTabModel.ts
+var MIX_CATEGORIES = ["vocab", "grammar", "poly"];
+function parseMixFilter(raw) {
+  const inc = raw == null ? void 0 : raw.include;
+  if (!Array.isArray(inc)) return { include: [...MIX_CATEGORIES] };
+  return { include: MIX_CATEGORIES.filter((c2) => inc.includes(c2)) };
+}
+function mixFilterToValue(f) {
+  return f.include.length > 0 ? { include: [...f.include] } : {};
+}
+function valueToMixFilter(v) {
+  var _a;
+  return parseMixFilter({ include: (_a = v.include) != null ? _a : [] });
+}
+function categoryLabel(c2) {
+  return t(c2 === "vocab" ? "practice.mix.catVocab" : c2 === "grammar" ? "practice.mix.catGrammar" : "practice.mix.catPoly");
+}
+function mixGroups() {
+  return [
+    {
+      id: "include",
+      label: t("practice.mix.include"),
+      multi: true,
+      options: MIX_CATEGORIES.map((c2) => ({ id: c2, label: categoryLabel(c2) }))
+    }
+  ];
+}
+function mixSummary(f, src) {
+  if (f.include.length === 0) return t("practice.mix.none");
+  const parts = [];
+  for (const c2 of MIX_CATEGORIES) {
+    if (!f.include.includes(c2)) continue;
+    const label = categoryLabel(c2);
+    if (c2 === "vocab") {
+      parts.push(src.vocab.length > 0 ? t("practice.mix.sumVocab", { n: src.vocab.length }) : label + t("practice.mix.unset"));
+    } else if (c2 === "grammar") {
+      const topics = new Set(src.grammar.map((g) => g.topicId)).size;
+      parts.push(topics > 0 ? t("practice.mix.sumGrammar", { n: topics }) : label + t("practice.mix.unset"));
+    } else {
+      const words = [...new Set(src.poly.tested.map((s) => s.word))];
+      parts.push(words.length > 0 ? t("practice.mix.sumPoly", { words: words.join(", ") }) : label + t("practice.mix.unset"));
+    }
+  }
+  return parts.join(" \xB7 ");
+}
+function buildMixRequest(f, src) {
+  const req = { track: "mix" };
+  if (f.include.includes("vocab") && src.vocab.length > 0) req.vocab = [...src.vocab];
+  if (f.include.includes("grammar") && src.grammar.length > 0) req.grammar = [...src.grammar];
+  if (f.include.includes("poly") && src.poly.tested.length > 0) {
+    req.poly = { tested: [...src.poly.tested], reference: [...src.poly.reference] };
+  }
+  return req.vocab || req.grammar || req.poly ? req : null;
+}
+function mixFocusIds(req) {
+  var _a, _b, _c, _d;
+  const ids = /* @__PURE__ */ new Set();
+  if ((req == null ? void 0 : req.track) !== "mix") return ids;
+  for (const v of (_a = req.vocab) != null ? _a : []) ids.add(v.id);
+  for (const g of (_b = req.grammar) != null ? _b : []) ids.add(`${g.topicId}/${g.objectiveId}`);
+  for (const s of (_d = (_c = req.poly) == null ? void 0 : _c.tested) != null ? _d : []) ids.add(s.id);
+  return ids;
+}
+function emptyTally() {
+  return { vocab: { right: 0, total: 0 }, grammar: { right: 0, total: 0 }, poly: { right: 0, total: 0 } };
+}
+function categoryOfTag(tag) {
+  if (!tag) return null;
+  for (const c2 of MIX_CATEGORIES) {
+    const l4 = categoryLabel(c2);
+    if (tag === l4 || tag.startsWith(`${l4} \xB7`)) return c2;
+  }
+  return null;
+}
+function recordAnswer(tally, tag, correct, hinted) {
+  const c2 = categoryOfTag(tag);
+  if (!c2) return;
+  tally[c2].total += 1;
+  if (correct && !hinted) tally[c2].right += 1;
+}
+function tallyText(tally) {
+  return MIX_CATEGORIES.filter((c2) => tally[c2].total > 0).map((c2) => `${categoryLabel(c2)} ${tally[c2].right}/${tally[c2].total}`).join(" \xB7 ");
+}
+
+// src/ui/blocks/practice/mixTab.ts
+function mixTab(deps) {
+  return {
+    id: "mix",
+    label: t("practice.mix.label"),
+    order: 3,
+    mount(el, ctx) {
+      el.addClass("vt-pr-mix");
+      let alive = true;
+      ctx.component.register(() => alive = false);
+      void deps.ready().then(() => {
+        if (!alive) return;
+        start2(el, deps, ctx.filters, ctx.component);
+      });
+    }
+  };
+}
+function start2(el, deps, filters, owner) {
+  let filter2 = parseMixFilter(filters.get("mix"));
+  const tally = emptyTally();
+  let pane = null;
+  let tallyEl = null;
+  const sources = () => ({
+    vocab: deps.vocabRefs(),
+    grammar: deps.grammarRefs(),
+    poly: deps.polySenses()
+  });
+  const apply = () => {
+    const req = buildMixRequest(filter2, sources());
+    pane == null ? void 0 : pane.setRequest(req, mixFocusIds(req));
+  };
+  const barEl = el.createDiv();
+  const bar = renderFilterBar(barEl, {
+    groups: mixGroups(),
+    value: mixFilterToValue(filter2),
+    summary: (v) => mixSummary(valueToMixFilter(v), sources()),
+    onChange: (v) => {
+      filter2 = valueToMixFilter(v);
+      filters.set("mix", filter2);
+      bar.update(mixFilterToValue(filter2));
+      apply();
+    }
+  });
+  pane = mountScenarioPane(el, {
+    track: "mix",
+    api: deps.api,
+    mountPlayer: deps.mountPlayer,
+    mountMistakes: deps.mountMistakes,
+    owner,
+    toPlayer: (q) => toPlayerQuestion2(q, { topicTitle: (id2) => {
+      var _a, _b;
+      return (_b = (_a = topicById(id2)) == null ? void 0 : _a.title) != null ? _b : "";
+    } }),
+    aiStatus: deps.aiStatus,
+    idleText: () => filter2.include.length === 0 ? t("practice.mix.none") : t("practice.mix.nothing"),
+    onAnswer: (a2) => {
+      if (!categoryOfTag(a2.question.tag)) return;
+      recordAnswer(tally, a2.question.tag, a2.correct, a2.hinted);
+      tallyEl == null ? void 0 : tallyEl.setText(tallyText(tally));
+    }
+  });
+  tallyEl = pane.headEl.createDiv({ cls: "vt-pr-mix-tally" });
+  apply();
+}
+
+// src/core/model/practice.ts
+var PRACTICE_KINDS = ["which-sense", "pick-word", "same-sense", "choice", "find-error"];
+
+// src/services/ai/transport/sse.ts
+var SseParser = class {
+  constructor() {
+    this.buffer = "";
+    this.dataLines = [];
+    // A chunk ending in "\r" might be the first half of "\r\n"; hold it back.
+    this.pendingCR = false;
+  }
+  push(chunk) {
+    let text = chunk;
+    if (this.pendingCR) {
+      if (text.startsWith("\n")) text = text.slice(1);
+      this.pendingCR = false;
+    }
+    this.buffer += text;
+    const out = [];
+    for (; ; ) {
+      const m2 = /\r\n|\r|\n/.exec(this.buffer);
+      if (!m2) break;
+      if (m2[0] === "\r" && m2.index === this.buffer.length - 1) {
+        this.pendingCR = true;
+        const line3 = this.buffer.slice(0, m2.index);
+        this.buffer = "";
+        this.handleLine(line3, out);
+        break;
+      }
+      const line2 = this.buffer.slice(0, m2.index);
+      this.buffer = this.buffer.slice(m2.index + m2[0].length);
+      this.handleLine(line2, out);
+    }
+    return out;
+  }
+  // Flushes a final event that wasn't followed by a blank line (common when
+  // a non-streaming transport hands over a truncated body).
+  end() {
+    const out = [];
+    if (this.buffer) {
+      this.handleLine(this.buffer, out);
+      this.buffer = "";
+    }
+    this.dispatch(out);
+    return out;
+  }
+  handleLine(line2, out) {
+    if (line2 === "") {
+      this.dispatch(out);
+      return;
+    }
+    if (line2.startsWith(":")) return;
+    const colon = line2.indexOf(":");
+    const field = colon === -1 ? line2 : line2.slice(0, colon);
+    let value = colon === -1 ? "" : line2.slice(colon + 1);
+    if (value.startsWith(" ")) value = value.slice(1);
+    if (field === "data") this.dataLines.push(value);
+    else if (field === "event") this.eventName = value;
+    else if (field === "id") this.id = value;
+  }
+  dispatch(out) {
+    if (this.dataLines.length > 0) {
+      const ev = { data: this.dataLines.join("\n") };
+      if (this.eventName) ev.event = this.eventName;
+      if (this.id !== void 0) ev.id = this.id;
+      out.push(ev);
+    }
+    this.dataLines = [];
+    this.eventName = void 0;
+  }
+};
+async function* parseSse(chunks) {
+  const parser = new SseParser();
+  for await (const chunk of chunks) {
+    for (const ev of parser.push(chunk)) yield ev;
+  }
+  for (const ev of parser.end()) yield ev;
+}
+
+// src/services/ai/transport/types.ts
+async function readAll(chunks) {
+  let out = "";
+  for await (const c2 of chunks) out += c2;
+  return out;
+}
+
+// src/services/ai/providers/stream.ts
+async function throwIfHttpError(res) {
+  if (res.status >= 200 && res.status < 300) return;
+  const body = await readAll(res.chunks).catch(() => "");
+  throw classifyHttpError(res.status, body, res.header("retry-after"));
+}
+async function consumeBody(res, signal, onEvent, onJson) {
+  var _a;
+  const contentType = (_a = res.header("content-type")) != null ? _a : "";
+  try {
+    if (contentType.includes("application/json")) {
+      const text = await readAll(res.chunks);
+      onJson(parseJson(text));
+      return;
+    }
+    for await (const ev of parseSse(res.chunks)) {
+      if (signal.aborted) throw new AiError("aborted");
+      if (onEvent(ev) === true) return;
+    }
+  } catch (e) {
+    if (signal.aborted) throw new AiError("aborted", void 0, { cause: e });
+    if (e instanceof AiError) throw e;
+    throw new AiError("network", e instanceof Error ? e.message : String(e), { cause: e });
+  }
+}
+function parseJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new AiError("bad_output", "Response body is not valid JSON", { cause: e });
+  }
+}
+function extractJson(text) {
+  const fenced = /```(?:json)?\s*([\s\S]*?)```/i.exec(text);
+  const candidate = (fenced ? fenced[1] : text).trim();
+  const start3 = candidate.search(/[[{]/);
+  if (start3 === -1) throw new AiError("bad_output", "No JSON found in model output");
+  const open = candidate[start3];
+  const close = open === "{" ? "}" : "]";
+  const end = candidate.lastIndexOf(close);
+  if (end <= start3) throw new AiError("bad_output", "Unterminated JSON in model output");
+  try {
+    return JSON.parse(candidate.slice(start3, end + 1));
+  } catch (e) {
+    throw new AiError("bad_output", "Model output is not valid JSON", { cause: e });
+  }
+}
+function trimSlash(url) {
+  return url.replace(/\/+$/, "");
+}
+
+// src/services/ai/tasks/family.ts
+var EMOJI_PROPERTY = {
+  type: "string",
+  description: "\u4E00\u500B emoji\uFF0C\u53EA\u7D66\u4E00\u500B\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002"
+};
+var FAMILY_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["families"],
+  properties: {
+    families: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["topic", "label", "emoji", "groups"],
+        properties: {
+          topic: { type: "string", description: "English key, lowercase, e.g. clothing or gl-" },
+          label: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\u540D\u7A31\uFF0C\u4F8B\u5982\u300C\u670D\u88DD\u300D\u300Cgl- \u767C\u5149\u5BB6\u65CF\u300D" },
+          emoji: { ...EMOJI_PROPERTY, description: "\u4E00\u500B\u4EE3\u8868\u6574\u500B\u5B57\u65CF\u7684 emoji\uFF0C\u53EA\u7D66\u4E00\u500B\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\u3002" },
+          groups: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["label", "members"],
+              properties: {
+                label: { type: "string" },
+                members: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["word", "zh", "emoji"],
+                    properties: {
+                      word: { type: "string" },
+                      zh: { type: "string" },
+                      emoji: EMOJI_PROPERTY
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+var FAMILY_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u5E2B\uFF0C\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u628A\u5B78\u904E\u7684\u55AE\u5B57\u6574\u7406\u6210\u300C\u5B57\u65CF\u300D\uFF0C\u4E26\u88DC\u4E0A\u503C\u5F97\u4E00\u8D77\u5B78\u7684\u5EF6\u4F38\u5B57\u3002
+
+\u5206\u7FA4\u898F\u5247\uFF1A
+1. \u5B57\u65CF\u53EF\u4EE5\u4F9D\u4E3B\u984C\uFF08\u4F8B\u5982 clothing \u670D\u88DD\uFF09\u3001\u5B57\u6839\u5B57\u9996\u6216\u97F3\u7D44\uFF08\u4F8B\u5982 gl- \u548C\u5149\u6709\u95DC\uFF09\u3001\u4F7F\u7528\u60C5\u5883\u4F86\u5206\u3002\u6BCF\u500B\u5B57\u65CF\u5E95\u4E0B\u518D\u5206 1 \u5230 4 \u500B\u5C0F\u7D44\uFF0C\u5C0F\u7D44\u540D\u7A31\u7528\u7E41\u9AD4\u4E2D\u6587\u3002
+2. \u6BCF\u500B\u5B57\u65CF\u81F3\u5C11\u8981\u6709 2 \u500B\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u88E1\u7684\u5B57\uFF1B\u9019\u4E9B\u5B57\u7684 word \u7167\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u7684\u539F\u6A23\u5BEB\uFF0C\u4E0D\u8981\u6539\u6210\u539F\u5F62\u6216\u5176\u4ED6\u8A5E\u5F62\u3002
+3. \u6BCF\u500B\u5B57\u65CF\u53EF\u4EE5\u88DC 2 \u5230 5 \u500B\u5B78\u7FD2\u8005\u9084\u6C92\u5B78\u3001\u4F46\u548C\u9019\u500B\u5B57\u65CF\u5BC6\u5207\u76F8\u95DC\u7684\u5E38\u7528\u5EF6\u4F38\u5B57\uFF0C\u7A0B\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\uFF1B\u4E0D\u8981\u88DC\u7F55\u898B\u5B57\u3002
+4. zh \u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C10 \u500B\u5B57\u4EE5\u5167\u3002
+5. \u5B57\u6839\u3001\u5B57\u6E90\u53EA\u7528\u53EF\u9760\u3001\u5E38\u898B\u7684\u77E5\u8B58\u3002\u4E0D\u78BA\u5B9A\u5C31\u4E0D\u8981\u7528\u5B57\u6839\u5206\u7FA4\uFF0C\u6539\u7528\u4E3B\u984C\u5206\u7FA4\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3002
+6. topic \u7528\u82F1\u6587\u5C0F\u5BEB\uFF1Blabel \u7528\u7E41\u9AD4\u4E2D\u6587\uFF0C\u53EF\u4EE5\u593E\u82F1\u6587\u5B57\u6839\uFF08\u4F8B\u5982\u300Cgl- \u767C\u5149\u5BB6\u65CF\u300D\uFF09\u3002
+7. emoji \u6BCF\u500B\u5B57\u65CF\u3001\u6BCF\u500B\u6210\u54E1\u90FD\u53EA\u7D66\u4E00\u500B\u6700\u80FD\u4EE3\u8868\u5B83\u7684 emoji\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002
+8. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
+var FAMILY_TEMPLATES = {
+  seeded: `\u4EFB\u52D9\uFF1A\u627E\u5B57\u65CF
+\u4EE5\u3014\u8D77\u9EDE\u55AE\u5B57\u3015\u70BA\u4E2D\u5FC3\u627E\u51FA 1 \u5230 3 \u500B\u5B57\u65CF\uFF0C\u6BCF\u500B\u5B57\u65CF\u90FD\u8981\u5305\u542B\u81F3\u5C11\u4E00\u500B\u8D77\u9EDE\u55AE\u5B57\u3002
+\u3014\u8D77\u9EDE\u55AE\u5B57\u3015
+{{seeds}}{{#existingTopics}}
+
+\u5DF2\u7D93\u6709\u7684\u5B57\u65CF\uFF08\u4E0D\u8981\u91CD\u8907\uFF09\uFF1A{{existingTopics}}{{/existingTopics}}`,
+  regroup: `\u4EFB\u52D9\uFF1A\u91CD\u65B0\u5206\u7FA4
+\u628A\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6574\u7406\u6210 3 \u5230 8 \u500B\u5B57\u65CF\u3002\u4E0D\u4E00\u5B9A\u6BCF\u500B\u5B57\u90FD\u8981\u5206\u9032\u53BB\uFF0C\u627E\u4E0D\u5230\u5408\u9069\u5B57\u65CF\u7684\u5B57\u53EF\u4EE5\u7565\u904E\uFF1B\u540C\u4E00\u500B\u5B57\u53EF\u4EE5\u51FA\u73FE\u5728\u4E0D\u540C\u5B57\u65CF\u3002`
+};
+var KNOWN_FAMILY_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\uFF08\u5171 {{count}} \u500B\uFF09
+{{words}}`;
+function wordLine(w2) {
+  var _a, _b;
+  const pos = (_a = w2.partOfSpeech) == null ? void 0 : _a.trim();
+  const zh = (_b = w2.zh) == null ? void 0 : _b.trim();
+  return `- ${w2.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
+}
+function isObj(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+function str(v) {
+  return typeof v === "string" ? v.trim() : "";
+}
+function structuredJson(r) {
+  if (r.json !== void 0) return r.json;
+  if (r.stop === "max_tokens") throw new AiError("bad_output", "Structured answer was cut off (max_tokens)");
+  return extractJson(r.text);
+}
+function parseFamilies(json) {
+  if (!isObj(json) || !Array.isArray(json.families)) {
+    throw new AiError("bad_output", "family.generate: expected { families: [...] }");
+  }
+  const out = [];
+  for (const f of json.families) {
+    if (!isObj(f) || !Array.isArray(f.groups)) throw new AiError("bad_output", "family.generate: malformed family");
+    const groups = [];
+    for (const g of f.groups) {
+      if (!isObj(g) || !Array.isArray(g.members)) throw new AiError("bad_output", "family.generate: malformed group");
+      const seen = /* @__PURE__ */ new Set();
+      const members = [];
+      for (const m2 of g.members) {
+        if (!isObj(m2)) throw new AiError("bad_output", "family.generate: malformed member");
+        const word = str(m2.word);
+        const key5 = word.toLowerCase();
+        if (!word || seen.has(key5)) continue;
+        seen.add(key5);
+        members.push({ word, zh: str(m2.zh), emoji: str(m2.emoji) });
+      }
+      if (members.length) groups.push({ label: str(g.label), members });
+    }
+    const topic = str(f.topic);
+    if (!groups.length || !(topic || str(f.label))) continue;
+    out.push({ topic: topic || str(f.label), label: str(f.label) || topic, emoji: str(f.emoji), groups });
+  }
+  return out;
+}
+var familyGenerate = {
+  id: "family.generate",
+  version: 1,
+  surface: "family",
+  label: "ai.task.family.generate",
+  tier: "smart",
+  // A full regroup lists many members; leave room for thinking too.
+  maxTokens: 8192,
+  // The learner's answer-length limit is for prose, not a JSON list.
+  answerChars: () => 0,
+  build(input, ctx) {
+    var _a, _b;
+    const seeds = (_a = input.seeds) != null ? _a : [];
+    const user = seeds.length ? renderTemplate(FAMILY_TEMPLATES.seeded, {
+      seeds: seeds.map(wordLine).join("\n"),
+      existingTopics: ((_b = input.existingTopics) != null ? _b : []).join("\u3001")
+    }) : renderTemplate(FAMILY_TEMPLATES.regroup, {});
+    return composeRequest({
+      base: FAMILY_BASE_PROMPT,
+      context: [renderTemplate(KNOWN_FAMILY_TEMPLATE, { count: input.known.length, words: input.known.map(wordLine).join("\n") })],
+      profile: profileForTask(ctx.profile, familyGenerate, input),
+      // Each generation stands alone.
+      history: [],
+      user,
+      tier: familyGenerate.tier,
+      maxTokens: familyGenerate.maxTokens,
+      output: { name: "word_families", schema: FAMILY_SCHEMA }
+    });
+  },
+  parse(r) {
+    return parseFamilies(structuredJson(r));
+  }
+};
+var FAMILY_EXPAND_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["members"],
+  properties: {
+    members: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["group", "word", "zh", "emoji"],
+        properties: {
+          group: { type: "string", description: "\u54EA\u4E00\u500B\u65E2\u6709\u5206\u7D44\u6700\u9069\u5408\u9019\u500B\u65B0\u5B57\uFF1B\u7167\u539F\u6A23\u6284\u65E2\u6709\u5206\u7D44\u540D\u7A31\uFF0C\u771F\u7684\u6C92\u6709\u5408\u9069\u7684\u624D\u81EA\u5DF1\u53D6\u4E00\u500B\u65B0\u540D\u7A31" },
+          word: { type: "string" },
+          zh: { type: "string" },
+          emoji: EMOJI_PROPERTY
+        }
+      }
+    }
+  }
+};
+var FAMILY_EXPAND_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u5E2B\uFF0C\u8981\u5E6B\u4E00\u500B\u5DF2\u7D93\u5206\u597D\u7D44\u7684\u300C\u5B57\u65CF\u300D\u88DC\u4E0A\u5E7E\u500B\u65B0\u6210\u54E1\uFF0C\u8B93\u5B78\u7FD2\u8005\u7E7C\u7E8C\u5B78\u3002
+
+\u898F\u5247\uFF1A
+1. \u53EA\u88DC 2 \u5230 5 \u500B\u9019\u500B\u5B57\u65CF\u9084\u6C92\u6709\u7684\u5E38\u7528\u5EF6\u4F38\u5B57\uFF0C\u7A0B\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\uFF1B\u4E0D\u8981\u88DC\u7F55\u898B\u5B57\uFF0C\u4E5F\u4E0D\u8981\u91CD\u8907\u3014\u5B57\u65CF\u3015\u88E1\u5DF2\u7D93\u6709\u7684\u6210\u54E1\u3002
+2. \u6BCF\u500B\u65B0\u6210\u54E1\u5148\u5224\u65B7\u6700\u76F8\u95DC\u7684\u65E2\u6709\u5206\u7D44\uFF0Cgroup \u6B04\u4F4D\u7167\u6284\u8A72\u5206\u7D44\u540D\u7A31\uFF0C\u4E0D\u8981\u6539\u5BEB\uFF1B\u771F\u7684\u627E\u4E0D\u5230\u5408\u9069\u7684\u65E2\u6709\u5206\u7D44\uFF0C\u624D\u81EA\u5DF1\u53D6\u4E00\u500B\u65B0\u5206\u7D44\u540D\u7A31\u3002
+3. zh \u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C10 \u500B\u5B57\u4EE5\u5167\u3002
+4. emoji \u6BCF\u500B\u65B0\u6210\u54E1\u53EA\u7D66\u4E00\u500B\u6700\u80FD\u4EE3\u8868\u5B83\u7684 emoji\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002
+5. \u5B57\u6839\u3001\u5B57\u6E90\u4E0D\u78BA\u5B9A\u5C31\u4E0D\u8981\u7528\uFF0C\u53EA\u6839\u64DA\u53EF\u9760\u3001\u5E38\u898B\u7684\u77E5\u8B58\u5224\u65B7\u76F8\u95DC\u6027\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3002
+6. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
+var FAMILY_EXPAND_FAMILY_TEMPLATE = `\u3014\u5B57\u65CF\u3015{{label}}\uFF08{{topic}}\uFF09
+\u73FE\u6709\u5206\u7D44\u8207\u6210\u54E1\uFF1A
+{{groups}}`;
+var FAMILY_EXPAND_USER_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5E6B\u9019\u500B\u5B57\u65CF\u60F3 2 \u5230 5 \u500B\u65B0\u6210\u54E1
+\u5EF6\u4F38\u5B57\u8981\u548C\u3014\u5B57\u65CF\u3015\u7684\u5176\u4E2D\u4E00\u500B\u5206\u7D44\u5BC6\u5207\u76F8\u95DC\uFF1B\u4E0D\u8981\u91CD\u8907\u3014\u5B57\u65CF\u3015\u88E1\u5DF2\u7D93\u6709\u7684\u5B57\u3002`;
+function expandGroupLine(g) {
+  const members = g.members.map((m2) => `${m2.word}${m2.zh ? `\uFF08${m2.zh}\uFF09` : ""}`).join("\u3001");
+  return `- ${g.label}\uFF1A${members || "\uFF08\u7121\uFF09"}`;
+}
+function parseFamilyExpandMembers(json) {
+  if (!isObj(json) || !Array.isArray(json.members)) {
+    throw new AiError("bad_output", "family.expand: expected { members: [...] }");
+  }
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const m2 of json.members) {
+    if (!isObj(m2)) throw new AiError("bad_output", "family.expand: malformed member");
+    const word = str(m2.word);
+    const key5 = word.toLowerCase();
+    if (!word || seen.has(key5)) continue;
+    seen.add(key5);
+    out.push({ group: str(m2.group), word, zh: str(m2.zh), emoji: str(m2.emoji) });
+  }
+  return out;
+}
+var familyExpand = {
+  id: "family.expand",
+  version: 1,
+  surface: "family",
+  tier: "fast",
+  maxTokens: 2048,
+  // Structured JSON, not prose — same reasoning as family.generate.
+  answerChars: () => 0,
+  build(input, ctx) {
+    return composeRequest({
+      base: FAMILY_EXPAND_BASE_PROMPT,
+      context: [
+        renderTemplate(FAMILY_EXPAND_FAMILY_TEMPLATE, { topic: input.topic, label: input.label, groups: input.groups.map(expandGroupLine).join("\n") }),
+        renderTemplate(KNOWN_FAMILY_TEMPLATE, { count: input.known.length, words: input.known.map(wordLine).join("\n") })
+      ],
+      profile: profileForTask(ctx.profile, familyExpand, input),
+      history: [],
+      user: renderTemplate(FAMILY_EXPAND_USER_TEMPLATE, {}),
+      tier: familyExpand.tier,
+      maxTokens: familyExpand.maxTokens,
+      output: { name: "family_expand", schema: FAMILY_EXPAND_SCHEMA }
+    });
+  },
+  parse(r) {
+    return parseFamilyExpandMembers(structuredJson(r));
+  }
+};
+var FAMILY_TASKS = [familyGenerate, familyExpand];
+
+// src/services/ai/tasks/grammarQuestions.ts
+var DEFAULT_QUESTION_COUNT = 6;
+var MAX_QUESTION_COUNT = 10;
+var MAX_WORDS = 30;
+var MAX_AVOID_STEMS = 40;
+var MAX_SENTENCES = 3;
+var MAX_LEAD = 3;
+var MAX_SENTENCE_CHARS = 300;
+var SCENARIO_TYPES = ["choice", "find-error"];
+var SCENARIO_FORMS = ["dialogue", "story"];
+var GAP = "____";
+var GRAMMAR_QUESTIONS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["scene", "form", "speakers", "turns"],
+  properties: {
+    scene: { type: "string", description: "\u4E00\u53E5\u8A71\u4EA4\u4EE3\u60C5\u5883\uFF08\u7E41\u9AD4\u4E2D\u6587\uFF09\uFF0C\u4F8B\u5982\u300C\u5728\u5496\u5561\u5E97\u9EDE\u9910\u300D" },
+    form: { type: "string", enum: [...SCENARIO_FORMS] },
+    speakers: { type: "array", items: { type: "string" }, description: "\u5C0D\u8A71\u7684\u4EBA\u7269\u540D\u5B57\uFF1B\u77ED\u6587\u586B\u7A7A\u9663\u5217" },
+    turns: {
+      type: "array",
+      description: "\u4F9D\u6642\u9593\u9806\u5E8F\u7684\u53E5\u5B50\uFF0C\u6BCF\u4E00\u53E5\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["speaker", "text", "ask"],
+        properties: {
+          speaker: { type: "string", description: "\u9019\u4E00\u53E5\u662F\u8AB0\u8AAA\u7684\uFF1B\u77ED\u6587\u586B\u7A7A\u5B57\u4E32" },
+          text: { type: "string", description: "\u4E32\u5834\u53E5\uFF08\u4E0D\u51FA\u984C\uFF09\u7684\u82F1\u6587\u53E5\u5B50\uFF1B\u6709 ask \u6642\u586B\u7A7A\u5B57\u4E32" },
+          ask: {
+            type: "array",
+            description: "\u9019\u4E00\u53E5\u8981\u51FA\u984C\u5C31\u653E\u4E00\u500B\u984C\u76EE\uFF0C\u4E0D\u51FA\u984C\u653E\u7A7A\u9663\u5217",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: [
+                "objectiveId",
+                "topicId",
+                "type",
+                "stem",
+                "options",
+                "answer",
+                "accepted",
+                "explanation",
+                "distractors",
+                "sentenceZh",
+                "errorTag",
+                "sourceIndex"
+              ],
+              properties: {
+                objectiveId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u958B\u982D\u300C\u4E3B\u984Cid/\u76EE\u6A19id\u300D\u88E1\u300C/\u300D\u5F8C\u9762\u7684\u76EE\u6A19 id" },
+                topicId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u958B\u982D\u300C/\u300D\u524D\u9762\u7684\u4E3B\u984C id" },
+                type: { type: "string", enum: [...SCENARIO_TYPES] },
+                stem: {
+                  type: "string",
+                  description: "\u984C\u5E79\u3002choice\uFF1A\u9019\u4E00\u53E5\u82F1\u6587\uFF0C\u6070\u597D\u6709\u4E00\u500B ____\uFF1Bfind-error\uFF1A\u5B8C\u6574\u7684\u4E00\u53E5\u82F1\u6587\uFF08\u88E1\u9762\u6709\u4E00\u8655\u932F\uFF09"
+                },
+                options: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "choice\uFF1A3\u20134 \u500B\u9078\u9805\uFF1Bfind-error\uFF1A3\u20134 \u500B\u6A19\u5728\u53E5\u5B50\u88E1\u7684\u7247\u6BB5\uFF08\u539F\u6587\u7167\u6284\uFF09"
+                },
+                answer: { type: "string", description: "choice\uFF1A\u6B63\u89E3\uFF1Bfind-error\uFF1A\u932F\u7684\u90A3\u500B\u7247\u6BB5\uFF08\u5FC5\u9808\u662F options \u5176\u4E2D\u4E00\u500B\uFF09" },
+                accepted: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "find-error\uFF1Aaccepted[0] \u662F\u6539\u6B63\u5F8C\u7684\u5BEB\u6CD5\uFF1Bchoice\uFF1A\u7A7A\u9663\u5217"
+                },
+                explanation: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\uFF0C60 \u5B57\u4EE5\u5167" },
+                distractors: {
+                  type: "array",
+                  description: "\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\uFF0825 \u5B57\u4EE5\u5167\uFF09",
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["option", "why"],
+                    properties: { option: { type: "string" }, why: { type: "string" } }
+                  }
+                },
+                sentenceZh: { type: "string", description: "\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F" },
+                errorTag: { type: "string", enum: [...ERROR_TAGS], description: "\u5B78\u7FD2\u8005\u7B54\u932F\u6642\u6700\u53EF\u80FD\u72AF\u7684\u932F\u8AA4\u985E\u578B" },
+                sourceIndex: {
+                  type: "integer",
+                  description: "\u9019\u984C\u6539\u7DE8\u81EA\u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015\u7684\u7B2C\u5E7E\u53E5\uFF08\u5F9E 1 \u958B\u59CB\uFF09\uFF1B\u4E0D\u662F\u6539\u7DE8\u7684\u984C\u76EE\u586B 0"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+var GRAMMAR_QUESTIONS_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u8001\u5E2B\uFF0C\u7528\u4E00\u6BB5\u9023\u7E8C\u7684\u60C5\u5883\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u505A\u9078\u64C7\u984C\u7DF4\u7FD2\u3002\u3014\u51FA\u984C\u53C3\u8003\u3015\u662F\u9019\u6B21\u8981\u8003\u7684\u91CD\u9EDE\uFF0C\u6BCF\u500B\u91CD\u9EDE\u6709\u56FA\u5B9A\u7684 id\u3002
+
+\u898F\u5247\uFF1A
+1. \u53EA\u8003\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u7684\u91CD\u9EDE\uFF1B\u6BCF\u4E00\u984C\u7684 objectiveId \u5FC5\u9808\u662F\u6E05\u55AE\u88E1\u7684 id\uFF0C\u4E0D\u8981\u81EA\u5DF1\u767C\u660E\u3002
+2. \u9023\u8CAB\uFF1A\u5168\u90E8\u984C\u76EE\u767C\u751F\u5728\u540C\u4E00\u500B\u60C5\u5883\uFF0C\u4F9D\u6642\u9593\u9806\u5E8F\u5F80\u4E0B\u8D70\uFF0C\u6BCF\u4E00\u53E5\u90FD\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5\uFF1B\u8B80\u5B8C\u5C31\u662F\u4E00\u6BB5\u5B8C\u6574\u7684\u5C0D\u8A71\u6216\u77ED\u6587\u3002\u6709\u3014\u4E0A\u4E00\u6BB5\u3015\u6642\uFF0C\u5F9E\u5B83\u7684\u6700\u5F8C\u4E00\u53E5\u76F4\u63A5\u63A5\u8457\u5BEB\uFF0C\u4EBA\u7269\u548C\u5834\u666F\u4E0D\u8B8A\u3002\u53EF\u4EE5\u7A7F\u63D2\u4E0D\u51FA\u984C\u7684\u4E32\u5834\u53E5\uFF0C\u4E00\u7D44\u6700\u591A 3 \u53E5\u3002
+3. \u53EA\u51FA\u9EDE\u9078\u7684\u984C\u578B\uFF08choice\u3001find-error\uFF09\uFF0C\u5B78\u7FD2\u8005\u4E0D\u9700\u8981\u6253\u4EFB\u4F55\u5B57\u3002
+4. \u6709\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015\u6642\uFF0C\u5148\u8003\u5F31\u9EDE\u88E1\u3001\u800C\u4E14\u5728\u3014\u51FA\u984C\u53C3\u8003\u3015\u5167\u7684\u91CD\u9EDE\uFF0C\u6700\u591A\u5360\u4E00\u534A\u984C\u6578\uFF1B\u5176\u9918\u5E73\u5747\u5206\u914D\u3002\u540C\u4E00\u500B\u91CD\u9EDE\u6700\u591A\u5169\u984C\uFF0C\u540C\u4E00\u500B\u91CD\u9EDE\u4E0D\u8981\u9023\u7E8C\u51FA\u4E09\u984C\u3002
+5. \u6BCF\u984C\u53EA\u6709\u4E00\u500B\u6B63\u78BA\u7B54\u6848\u3002\u932F\u8AA4\u9078\u9805\u8981\u300C\u770B\u8D77\u4F86\u53EF\u80FD\u5C0D\uFF0C\u4F46\u653E\u5728\u9019\u500B\u53E5\u5B50\u88E1\u4E0D\u5C0D\u300D\uFF1B\u9700\u8981\u7684\u8A71\u7528\u524D\u5F8C\u6587\u628A\u7B54\u6848\u9396\u4F4F\u3002
+6. \u7B54\u984C\u5F8C\u7684\u89E3\u8AAA\uFF1A
+   - explanation\uFF1A60 \u5B57\u4EE5\u5167\uFF0C\u5148\u9EDE\u51FA\u53E5\u5B50\u88E1\u7684\u5224\u65B7\u4F9D\u64DA\uFF0C\u518D\u8AAA\u70BA\u4EC0\u9EBC\u662F\u9019\u500B\u7B54\u6848\u3002
+   - distractors\uFF1A\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C25 \u5B57\u4EE5\u5167\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\u3002
+   - sentenceZh\uFF1A\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u4E2D\u6587\u7FFB\u8B6F\u3002
+7. errorTag \u53EA\u80FD\u5F9E\u4EFB\u52D9\u5217\u51FA\u7684\u6E05\u55AE\u9078\u3002
+8. \u53E5\u5B50\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF0C\u76EE\u6A19\u4EE5\u5916\u7684\u751F\u5B57\u8D8A\u5C11\u8D8A\u597D\uFF1B\u6709\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6642\u512A\u5148\u7528\u88E1\u9762\u7684\u5B57\uFF0C\u4F46\u4E0D\u8981\u786C\u585E\u3002
+9. \u4E0D\u8981\u91CD\u8907\u3014\u907F\u514D\u91CD\u8907\u3015\u88E1\u7684\u984C\u5E79\u3002\u53EA\u7528\u81EA\u7136\u3001\u5E38\u898B\u7684\u82F1\u6587\uFF0C\u4E0D\u78BA\u5B9A\u7684\u7528\u6CD5\u4E0D\u8981\u51FA\u3002\u6240\u6709\u53E5\u5B50\u90FD\u8981\u539F\u5275\uFF0C\u4E0D\u8981\u5F15\u7528\u51FA\u7248\u6559\u6750\u6216\u8003\u984C\u3002
+10. \u4E2D\u6587\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u6307\u5B9A\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\u6642\u7167\u5B83\u3002
+11. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
+var REFERENCE_BLOCK_TEMPLATE = `\u3014\u51FA\u984C\u53C3\u8003\u3015
+{{lines}}`;
+var WEAKNESS_BLOCK_TEMPLATE = `\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015
+{{weakness}}`;
+var PREVIOUS_BLOCK_TEMPLATE = `\u3014\u4E0A\u4E00\u6BB5\u3015
+\u5834\u666F\uFF1A{{scene}}
+\u6700\u5F8C\u5169\u53E5\uFF1A
+{{lines}}`;
+var SENTENCES_BLOCK_TEMPLATE = `\u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015
+{{sentences}}`;
+var KNOWN_BLOCK_TEMPLATE = `\u3014\u5DF2\u5B78\u904E\u7684\u6587\u6CD5\u3015{{titles}}`;
+var WORDS_BLOCK_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015{{words}}`;
+var AVOID_BLOCK_TEMPLATE = `\u3014\u907F\u514D\u91CD\u8907\u3015\u5DF2\u7D93\u51FA\u904E\u7684\u984C\u5E79\uFF1A
+{{stems}}`;
+var GRAMMAR_QUESTIONS_TEMPLATE = `\u4EFB\u52D9\uFF1A\u6587\u6CD5\u60C5\u5883\u7DF4\u7FD2\uFF08{{topics}}\uFF09
+\u51FA {{count}} \u984C\u3002type \u53EF\u4EE5\u7528\uFF1Achoice\uFF08\u53E5\u5B50\u88E1\u4E00\u500B ____\uFF0B3\u20134 \u500B\u9078\u9805\uFF09\u3001find-error\uFF08\u53E5\u5B50\u88E1\u6A19\u51FA 3\u20134 \u500B\u7247\u6BB5\uFF0C\u9078\u51FA\u932F\u7684\u90A3\u500B\uFF09\u3002
+\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u662F objectiveId\uFF5C\u5B78\u7FD2\u76EE\u6A19\uFF5C\u4E3B\u984C\uFF08\u53E5\u578B\uFF09\u3002
+errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
+function objectiveRef(topicId, objectiveId) {
+  return `${topicId}/${objectiveId}`;
+}
+function cleanSentences(list) {
+  var _a;
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const x3 of list != null ? list : []) {
+    const sentence = ((_a = x3 == null ? void 0 : x3.sentence) != null ? _a : "").replace(/\s+/g, " ").trim().slice(0, MAX_SENTENCE_CHARS);
+    if (!sentence || seen.has(sentence.toLowerCase())) continue;
+    seen.add(sentence.toLowerCase());
+    out.push({ path: x3.path, sentence });
+    if (out.length >= MAX_SENTENCES) break;
+  }
+  return out;
+}
+function clean(list, max) {
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const s of list != null ? list : []) {
+    const v = (s != null ? s : "").replace(/\s+/g, " ").trim();
+    if (!v || seen.has(v.toLowerCase())) continue;
+    seen.add(v.toLowerCase());
+    out.push(v);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+function targetRefs(targets) {
+  const out = [];
+  for (const t2 of targets) {
+    const want = new Set(t2.objectiveIds);
+    const objs = t2.topic.objectives.filter((o) => want.has(o.id));
+    for (const objective of objs.length ? objs : t2.topic.objectives) out.push({ topic: t2.topic, objective });
+  }
+  return out;
+}
+function isObj2(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+function str2(v) {
+  return typeof v === "string" ? v.trim() : "";
+}
+function strList(v) {
+  return Array.isArray(v) ? v.map(str2).filter(Boolean) : [];
+}
+function uniq(list) {
+  const out = [];
+  for (const s of list) if (!out.includes(s)) out.push(s);
+  return out;
+}
+var GAP_RE = /_{3,}/g;
+function parseDistractors(v) {
+  const out = {};
+  if (Array.isArray(v)) {
+    for (const d of v) {
+      if (!isObj2(d)) continue;
+      const option = str2(d.option);
+      const why = str2(d.why);
+      if (option && why) out[option] = why;
+    }
+  } else if (isObj2(v)) {
+    for (const [k, w2] of Object.entries(v)) {
+      const option = k.trim();
+      const why = str2(w2);
+      if (option && why) out[option] = why;
+    }
+  }
+  return out;
+}
+function resolveRef(raw, refs) {
+  let topicId = str2(raw.topicId);
+  let objectiveId = str2(raw.objectiveId);
+  if (objectiveId.includes("/")) {
+    const [t2, ...rest] = objectiveId.split("/");
+    const o = rest.join("/");
+    if (!topicId) topicId = t2;
+    if (topicId === t2) objectiveId = o;
+  }
+  if (!objectiveId) return null;
+  if (!refs) return topicId ? { topicId, objectiveId } : null;
+  if (topicId) return refs.has(objectiveRef(topicId, objectiveId)) ? { topicId, objectiveId } : null;
+  const hits = [...refs].filter((r) => r.endsWith(`/${objectiveId}`));
+  if (hits.length !== 1) return null;
+  return { topicId: hits[0].slice(0, hits[0].length - objectiveId.length - 1), objectiveId };
+}
+function parseScenarioQuestion(raw, opts = {}) {
+  var _a;
+  if (!isObj2(raw)) return null;
+  const type = str2(raw.type);
+  if (!SCENARIO_TYPES.includes(type)) return null;
+  const ref = resolveRef(raw, opts.refs);
+  if (!ref) return null;
+  let stem = str2(raw.stem);
+  let answer = str2(raw.answer);
+  const explanation = str2(raw.explanation);
+  if (!stem || !answer || !explanation) return null;
+  const options = uniq(strList(raw.options));
+  if (options.length < 3 || options.length > 4) return null;
+  if (!options.includes(answer)) {
+    const hit = options.find((o) => o.toLowerCase() === answer.toLowerCase());
+    if (!hit) return null;
+    answer = hit;
+  }
+  if (type === "choice") {
+    const gaps = stem.match(GAP_RE);
+    if (!gaps || gaps.length !== 1) return null;
+    stem = stem.replace(GAP_RE, GAP);
+  } else {
+    if (stem.match(GAP_RE)) return null;
+    if (!options.every((o) => stem.includes(o))) return null;
+  }
+  const distractors = Object.fromEntries(
+    Object.entries(parseDistractors(raw.distractors)).filter(([k]) => k !== answer && options.includes(k))
+  );
+  const q = {
+    topicId: ref.topicId,
+    objectiveId: ref.objectiveId,
+    type,
+    stem,
+    options,
+    answer,
+    explanation,
+    errorTag: normalizeErrorTag(raw.errorTag)
+  };
+  const accepted = uniq(strList(raw.accepted));
+  if (type === "find-error" && accepted.length) q.accepted = accepted;
+  if (Object.keys(distractors).length) q.distractors = distractors;
+  const zh = str2(raw.sentenceZh);
+  if (zh) q.sentenceZh = zh;
+  const idx = Number(raw.sourceIndex);
+  const src = Number.isInteger(idx) && idx >= 1 ? (_a = opts.sentences) == null ? void 0 : _a[idx - 1] : void 0;
+  if (src) q.source = { path: src.path, sentence: src.sentence };
+  return q;
+}
+function askOf(turn) {
+  const a2 = turn.ask;
+  if (Array.isArray(a2)) return a2.length ? a2[0] : void 0;
+  return isObj2(a2) ? a2 : void 0;
+}
+function parseGrammarScenario(json, opts = {}) {
+  if (!isObj2(json) || !Array.isArray(json.turns)) {
+    throw new AiError("bad_output", "grammar.questions: expected { scene, form, turns: [...] }");
+  }
+  const parseOpts = { ...opts, refs: opts.refs ? new Set(opts.refs) : void 0 };
+  const scene = str2(json.scene);
+  if (!scene) throw new AiError("bad_output", "grammar.questions: no scene");
+  const speakers = uniq(strList(json.speakers));
+  const form = SCENARIO_FORMS.includes(str2(json.form)) ? str2(json.form) : speakers.length ? "dialogue" : "story";
+  const questions2 = [];
+  const seen = /* @__PURE__ */ new Set();
+  let asked = 0;
+  let lead = [];
+  for (const t2 of json.turns) {
+    if (!isObj2(t2)) continue;
+    const speaker = str2(t2.speaker);
+    const ask = askOf(t2);
+    if (ask === void 0) {
+      const text = str2(t2.text);
+      if (text) lead.push(speaker ? { speaker, text } : { text });
+      continue;
+    }
+    asked++;
+    const q = parseScenarioQuestion(ask, parseOpts);
+    if (!q) continue;
+    const key5 = q.stem.toLowerCase();
+    if (seen.has(key5)) continue;
+    seen.add(key5);
+    if (speaker) q.speaker = speaker;
+    if (lead.length) q.lead = lead.slice(-MAX_LEAD);
+    lead = [];
+    questions2.push(q);
+  }
+  if (!questions2.length || questions2.length * 2 < asked) {
+    throw new AiError("bad_output", `grammar.questions: only ${questions2.length} of ${asked} questions usable`);
+  }
+  const out = { scene, form, questions: questions2 };
+  if (speakers.length) out.speakers = speakers;
+  return out;
+}
+var grammarQuestions = {
+  id: "grammar.questions",
+  version: 3,
+  surface: "grammar",
+  tier: "smart",
+  maxTokens: 8192,
+  answerChars: () => 0,
+  build(input, ctx) {
+    var _a, _b;
+    const refs = targetRefs(input.targets);
+    const count = Math.max(1, Math.min(MAX_QUESTION_COUNT, Math.floor((_a = input.count) != null ? _a : DEFAULT_QUESTION_COUNT)));
+    const known2 = clean(input.knownTopicTitles, 60);
+    const words = clean(input.words, MAX_WORDS);
+    const avoid = clean(input.avoidStems, MAX_AVOID_STEMS);
+    const sentences = cleanSentences(input.sentences);
+    const weakness = ((_b = input.weakness) != null ? _b : "").trim();
+    const prev = input.previous;
+    const titles = [...new Set(refs.map((r) => r.topic.title))];
+    const context = [
+      renderTemplate(REFERENCE_BLOCK_TEMPLATE, {
+        lines: refs.map((r) => `${objectiveRef(r.topic.id, r.objective.id)}\uFF5C${r.objective.text}\uFF5C${r.topic.title}\uFF08${r.topic.pattern}\uFF09`).join("\n")
+      }),
+      weakness ? renderTemplate(WEAKNESS_BLOCK_TEMPLATE, { weakness }) : "",
+      prev && prev.scene.trim() ? renderTemplate(PREVIOUS_BLOCK_TEMPLATE, {
+        scene: prev.scene.trim(),
+        lines: prev.lastLines.slice(-2).map((l4) => `- ${l4}`).join("\n")
+      }) : "",
+      known2.length ? renderTemplate(KNOWN_BLOCK_TEMPLATE, { titles: known2.join("\u3001") }) : "",
+      words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE, { words: words.join(", ") }) : "",
+      avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE, { stems: avoid.map((s) => `- ${s}`).join("\n") }) : "",
+      sentences.length ? renderTemplate(SENTENCES_BLOCK_TEMPLATE, { sentences: sentences.map((x3, i) => `${i + 1}. ${x3.sentence}`).join("\n") }) : ""
+    ];
+    return composeRequest({
+      base: GRAMMAR_QUESTIONS_BASE_PROMPT,
+      context,
+      profile: ctx.profile,
+      history: [],
+      user: renderTemplate(GRAMMAR_QUESTIONS_TEMPLATE, {
+        topics: titles.join("\u3001"),
+        count,
+        errorTags: ERROR_TAGS.join("\u3001")
+      }),
+      tier: grammarQuestions.tier,
+      maxTokens: grammarQuestions.maxTokens,
+      output: { name: "grammar_questions", schema: GRAMMAR_QUESTIONS_SCHEMA }
+    });
+  },
+  parse(r) {
+    return parseGrammarScenario(structuredJson(r));
+  }
+};
+function grammarQuestionsFor(targets, sentences = []) {
+  const refs = targetRefs(targets).map((r) => objectiveRef(r.topic.id, r.objective.id));
+  const sent = cleanSentences(sentences);
+  return {
+    ...grammarQuestions,
+    parse: (r) => parseGrammarScenario(structuredJson(r), { refs, sentences: sent })
+  };
+}
+var GRAMMAR_TASKS2 = [grammarQuestions];
+
+// src/services/ai/tasks/practiceScenario.ts
+var MAX_AVOID = 20;
+var POLY_ERROR_TAGS = [
+  "sense-confusion",
+  "light-verb",
+  "preposition-time",
+  "preposition-place",
+  "preposition-other",
+  "phrasal-verb",
+  "collocation",
+  "pos-confusion",
+  "literal-figurative",
+  "register"
+];
+var VOCAB_ERROR_TAGS = ["meaning", "form", "collocation", "confusable"];
+var KINDS_BY_CATEGORY = {
+  vocab: ["which-sense", "pick-word"],
+  poly: ["which-sense", "pick-word", "same-sense"],
+  grammar: ["choice", "find-error"]
+};
+var PRACTICE_SCENARIO_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u8001\u5E2B\uFF0C\u7528\u4E00\u6BB5\u9023\u7E8C\u7684\u60C5\u5883\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u505A\u9078\u64C7\u984C\u7DF4\u7FD2\u3002\u3014\u51FA\u984C\u53C3\u8003\u3015\u662F\u9019\u6B21\u8981\u8003\u7684\u91CD\u9EDE\uFF0C\u6BCF\u500B\u91CD\u9EDE\u6709\u56FA\u5B9A\u7684 id\u3002
+
+\u898F\u5247\uFF1A
+1. \u53EA\u8003\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u6A19\u300C\u8003\u300D\u7684\u91CD\u9EDE\uFF1B\u6BCF\u4E00\u984C\u7684 focusId \u5FC5\u9808\u662F\u6E05\u55AE\u88E1\u6A19\u300C\u8003\u300D\u7684 id\uFF0C\u4E0D\u8981\u81EA\u5DF1\u767C\u660E\u3002\u6A19\u300C\u53C3\u8003\u300D\u7684\u53EA\u80FD\u7576\u932F\u8AA4\u9078\u9805\u6216\u5287\u60C5\u3002
+2. \u9023\u8CAB\uFF1A\u5168\u90E8\u984C\u76EE\u767C\u751F\u5728\u540C\u4E00\u500B\u60C5\u5883\uFF0C\u4F9D\u6642\u9593\u9806\u5E8F\u5F80\u4E0B\u8D70\uFF0C\u6BCF\u4E00\u53E5\u90FD\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5\uFF1B\u8B80\u5B8C\u5C31\u662F\u4E00\u6BB5\u5B8C\u6574\u7684\u5C0D\u8A71\u6216\u77ED\u6587\u3002\u6709\u3014\u4E0A\u4E00\u6BB5\u3015\u6642\uFF0C\u5F9E\u5B83\u7684\u6700\u5F8C\u4E00\u53E5\u76F4\u63A5\u63A5\u8457\u5BEB\uFF0C\u4EBA\u7269\u548C\u5834\u666F\u4E0D\u8B8A\u3002\u53EF\u4EE5\u7A7F\u63D2\u4E0D\u51FA\u984C\u7684\u4E32\u5834\u53E5\uFF0C\u4E00\u7D44\u6700\u591A 3 \u53E5\u3002
+3. \u53EA\u51FA\u9EDE\u9078\u7684\u984C\u578B\uFF08\u898B\u4EFB\u52D9\u88E1\u5217\u7684 kind\uFF09\uFF0C\u5B78\u7FD2\u8005\u4E0D\u9700\u8981\u6253\u4EFB\u4F55\u5B57\u3002
+4. \u6709\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015\u6642\uFF0C\u5148\u8003\u5F31\u9EDE\u88E1\u3001\u800C\u4E14\u5728\u3014\u51FA\u984C\u53C3\u8003\u3015\u5167\u7684\u91CD\u9EDE\uFF0C\u6700\u591A\u5360\u4E00\u534A\u984C\u6578\uFF1B\u5176\u9918\u5E73\u5747\u5206\u914D\u3002\u540C\u4E00\u500B\u91CD\u9EDE\u6700\u591A\u5169\u984C\uFF0C\u540C\u4E00\u500B\u91CD\u9EDE\u4E0D\u8981\u9023\u7E8C\u51FA\u4E09\u984C\u3002
+5. \u6BCF\u984C\u53EA\u6709\u4E00\u500B\u6B63\u78BA\u7B54\u6848\u3002\u932F\u8AA4\u9078\u9805\u8981\u300C\u770B\u8D77\u4F86\u53EF\u80FD\u5C0D\uFF0C\u4F46\u653E\u5728\u9019\u500B\u53E5\u5B50\u88E1\u4E0D\u5C0D\u300D\uFF1B\u9700\u8981\u7684\u8A71\u7528\u524D\u5F8C\u6587\u628A\u7B54\u6848\u9396\u4F4F\u3002
+6. \u7B54\u984C\u5F8C\u7684\u89E3\u8AAA\uFF1A
+   - explanation\uFF1A60 \u5B57\u4EE5\u5167\uFF0C\u5148\u9EDE\u51FA\u53E5\u5B50\u88E1\u7684\u5224\u65B7\u4F9D\u64DA\uFF0C\u518D\u8AAA\u70BA\u4EC0\u9EBC\u662F\u9019\u500B\u7B54\u6848\u3002
+   - optionNotes\uFF1A\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C25 \u5B57\u4EE5\u5167\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\u3002
+   - sentenceZh\uFF1A\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u4E2D\u6587\u7FFB\u8B6F\u3002
+7. errorTag \u53EA\u80FD\u5F9E\u4EFB\u52D9\u5217\u51FA\u7684\u6E05\u55AE\u9078\u3002
+8. \u53E5\u5B50\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF0C\u76EE\u6A19\u4EE5\u5916\u7684\u751F\u5B57\u8D8A\u5C11\u8D8A\u597D\uFF1B\u6709\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6642\u512A\u5148\u7528\u88E1\u9762\u7684\u5B57\uFF0C\u4F46\u4E0D\u8981\u786C\u585E\u3002
+9. \u4E0D\u8981\u91CD\u8907\u3014\u5DF2\u51FA\u904E\u7684\u53E5\u5B50\u3015\u3002\u53EA\u7528\u81EA\u7136\u3001\u5E38\u898B\u7684\u82F1\u6587\uFF0C\u4E0D\u78BA\u5B9A\u7684\u7528\u6CD5\u4E0D\u8981\u51FA\u3002\u6240\u6709\u53E5\u5B50\u90FD\u8981\u539F\u5275\u3002
+10. \u4E2D\u6587\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u6307\u5B9A\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\u6642\u7167\u5B83\u3002
+11. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
+var POLY_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5E38\u7528\u591A\u7FA9\u8A5E\u60C5\u5883\u7DF4\u7FD2\uFF08{{words}}\uFF09
+\u51FA {{count}} \u984C\u3002kind \u53EF\u4EE5\u7528\uFF1Awhich-sense\uFF08\u53E5\u5B50\u88E1\u7528 [[ ]] \u6A19\u51FA\u76EE\u6A19\u5B57\u4E00\u6B21\uFF0Coptions \u662F\u540C\u4E00\u500B\u5B57\u7684 3\u20134 \u500B\u610F\u601D\uFF0C\u9078\u9805 id \u7528\u610F\u601D\u7684 id\u3001\u6587\u5B57\u7528\u4E2D\u6587\u610F\u601D\uFF09\u3001pick-word\uFF08\u53E5\u5B50\u88E1\u4E00\u500B ____\uFF0C4 \u500B\u82F1\u6587\u5B57\u6216\u7247\u8A9E\uFF0C\u5176\u4E2D\u4E00\u500B\u662F\u7DF4\u7FD2\u7684\u5B57\uFF09\u3001same-sense\uFF08\u76EE\u6A19\u53E5\u7528 [[ ]] \u6A19\u51FA\u76EE\u6A19\u5B57\uFF0Coptions \u662F 3\u20134 \u500B\u7528\u5230\u540C\u4E00\u500B\u5B57\u7684\u82F1\u6587\u77ED\u53E5\uFF0C\u53EA\u6709\u4E00\u53E5\u610F\u601D\u76F8\u540C\uFF09\u3002\u6BD4\u4F8B\u7D04 4:4:2\u3002
+\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u662F id\uFF5C\u610F\u601D\uFF5C\u4F8B\uFF5C\u5224\u65B7\u7DDA\u7D22\u3002\u9020\u53E5\u6642\u8B93\u6B63\u89E3\u7684\u5224\u65B7\u7DDA\u7D22\u51FA\u73FE\u5728\u53E5\u5B50\u88E1\uFF08\u6216\u524D\u4E00\u53E5\uFF09\uFF1BoptionNotes \u7528\u932F\u8AA4\u9078\u9805\u90A3\u500B\u610F\u601D\u7684\u5224\u65B7\u7DDA\u7D22\u4F86\u8AAA\u660E\u3002
+errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
+var VOCAB_TEMPLATE = `\u4EFB\u52D9\uFF1A\u55AE\u5B57\u60C5\u5883\u7DF4\u7FD2\uFF08{{n}} \u500B\u5B57\uFF09
+\u51FA {{count}} \u984C\u3002kind \u53EF\u4EE5\u7528\uFF1Awhich-sense\uFF08[[\u76EE\u6A19\u5B57]] \u6A19\u4E00\u6B21\uFF0Coptions \u662F 3\u20134 \u500B\u4E2D\u6587\u610F\u601D\uFF0C\u9078\u9805 id \u7528 a/b/c/d\uFF09\u3001pick-word\uFF08\u53E5\u5B50\u88E1\u4E00\u500B ____\uFF0C4 \u500B\u82F1\u6587\u5B57\uFF0C\u932F\u8AA4\u9078\u9805\u53D6\u81EA\u540C\u4E00\u6279\u5B57\uFF09\u3002
+\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u662F id\uFF5C\u55AE\u5B57\uFF5C\u4E2D\u6587\uFF5C\u8A5E\u6027\u3002errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
+var MIX_TEMPLATE = `\u4EFB\u52D9\uFF1A\u7D9C\u5408\u60C5\u5883\u7DF4\u7FD2
+\u51FA {{count}} \u984C\uFF0C\u5404\u985E\u5927\u7D04\u5E73\u5747\u3002\u6BCF\u984C\u7528 focusId \u6A19\u51FA\u8003\u7684\u662F\u54EA\u4E00\u500B\u91CD\u9EDE\uFF1Bkind \u4F9D\u8A72\u91CD\u9EDE\u6240\u5C6C\u7684\u985E\u5225\uFF1A\u55AE\u5B57\uFF08which-sense\u3001pick-word\uFF09\u3001\u5E38\u7528\u5B57\uFF08which-sense\u3001pick-word\u3001same-sense\uFF09\u3001\u6587\u6CD5\uFF08choice\uFF1A\u4E00\u500B ____\uFF0B3\u20134 \u500B\u9078\u9805\uFF1Bfind-error\uFF1A\u53E5\u4E2D 3\u20134 \u500B\u7247\u6BB5\u9078\u51FA\u932F\u7684\uFF09\u3002
+errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
+var AVOID_BLOCK_TEMPLATE2 = `\u3014\u5DF2\u51FA\u904E\u7684\u53E5\u5B50\u3015
+{{sentences}}`;
+function polyLines(p) {
+  const line2 = (tag, s) => `${tag} ${s.id}\uFF5C${s.zh}\uFF5C${s.example}\uFF5C${s.cue}`;
+  return [...p.tested.map((s) => line2("\u8003", s)), ...p.reference.map((s) => line2("\u53C3\u8003", s))];
+}
+var vocabLines = (list) => list.map((v) => `${v.id}\uFF5C${v.word}\uFF5C${v.zh}\uFF5C${v.pos}`);
+var grammarLines = (list) => list.map((g) => `${objectiveRef(g.topicId, g.objectiveId)}\uFF5C${g.text}\uFF5C${g.title}\uFF08${g.pattern}\uFF09`);
+function refsOf(req) {
+  var _a, _b, _c;
+  const tested = /* @__PURE__ */ new Map();
+  const senseWord = /* @__PURE__ */ new Map();
+  const poly = req.track === "poly" ? req : req.track === "mix" ? req.poly : void 0;
+  const vocab = req.track === "vocab" ? req.words : req.track === "mix" ? req.vocab : void 0;
+  const grammar = req.track === "mix" ? req.grammar : void 0;
+  for (const s of (_a = poly == null ? void 0 : poly.tested) != null ? _a : []) tested.set(s.id, { category: "poly", kind: "sense" });
+  for (const s of [...(_b = poly == null ? void 0 : poly.tested) != null ? _b : [], ...(_c = poly == null ? void 0 : poly.reference) != null ? _c : []]) senseWord.set(s.id, s.word);
+  for (const v of vocab != null ? vocab : []) tested.set(v.id, { category: "vocab", kind: "word" });
+  for (const g of grammar != null ? grammar : []) tested.set(objectiveRef(g.topicId, g.objectiveId), { category: "grammar", kind: "grammar-objective" });
+  return { tested, senseWord };
+}
+function errorTagsOf(req) {
+  var _a, _b;
+  if (req.track === "poly") return [...POLY_ERROR_TAGS];
+  if (req.track === "vocab") return [...VOCAB_ERROR_TAGS];
+  const out = [];
+  if ((_a = req.vocab) == null ? void 0 : _a.length) out.push(...VOCAB_ERROR_TAGS);
+  if (req.poly) out.push(...POLY_ERROR_TAGS);
+  if ((_b = req.grammar) == null ? void 0 : _b.length) out.push(...ERROR_TAGS);
+  return [...new Set(out)];
+}
+var ALL_TAGS = [.../* @__PURE__ */ new Set([...POLY_ERROR_TAGS, ...VOCAB_ERROR_TAGS, ...ERROR_TAGS])];
+var PRACTICE_SCENARIO_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["scene", "form", "speakers", "turns"],
+  properties: {
+    scene: { type: "string", description: "\u4E00\u53E5\u8A71\u4EA4\u4EE3\u60C5\u5883\uFF08\u7E41\u9AD4\u4E2D\u6587\uFF09\uFF0C\u4F8B\u5982\u300C\u5728\u5496\u5561\u5E97\u9EDE\u9910\u300D" },
+    form: { type: "string", enum: [...SCENARIO_FORMS] },
+    speakers: { type: "array", items: { type: "string" }, description: "\u5C0D\u8A71\u7684\u4EBA\u7269\u540D\u5B57\uFF1B\u77ED\u6587\u586B\u7A7A\u9663\u5217" },
+    turns: {
+      type: "array",
+      description: "\u4F9D\u6642\u9593\u9806\u5E8F\u7684\u53E5\u5B50\uFF0C\u6BCF\u4E00\u53E5\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["speaker", "text", "ask"],
+        properties: {
+          speaker: { type: "string", description: "\u9019\u4E00\u53E5\u662F\u8AB0\u8AAA\u7684\uFF1B\u77ED\u6587\u586B\u7A7A\u5B57\u4E32" },
+          text: { type: "string", description: "\u4E32\u5834\u53E5\uFF08\u4E0D\u51FA\u984C\uFF09\u7684\u82F1\u6587\u53E5\u5B50\uFF1B\u6709 ask \u6642\u586B\u7A7A\u5B57\u4E32" },
+          ask: {
+            type: "array",
+            description: "\u9019\u4E00\u53E5\u8981\u51FA\u984C\u5C31\u653E\u4E00\u500B\u984C\u76EE\uFF0C\u4E0D\u51FA\u984C\u653E\u7A7A\u9663\u5217",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["focusId", "kind", "text", "options", "answerId", "explanation", "optionNotes", "sentenceZh", "errorTag"],
+              properties: {
+                focusId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u6A19\u300C\u8003\u300D\u7684 id\uFF08\u539F\u6A23\u7167\u6284\uFF09" },
+                kind: { type: "string", enum: [...PRACTICE_KINDS] },
+                text: {
+                  type: "string",
+                  description: "\u984C\u5E79\u3002which-sense\uFF0Fsame-sense\uFF1A\u6070\u597D\u4E00\u7D44 [[\u76EE\u6A19\u5B57]]\uFF1Bpick-word\uFF0Fchoice\uFF1A\u6070\u597D\u4E00\u500B ____\uFF1Bfind-error\uFF1A\u5B8C\u6574\u4E00\u53E5\uFF08\u88E1\u9762\u6709\u4E00\u8655\u932F\uFF09"
+                },
+                options: {
+                  type: "array",
+                  description: "3\u20134 \u500B\u9078\u9805",
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["id", "text"],
+                    properties: { id: { type: "string" }, text: { type: "string" } }
+                  }
+                },
+                answerId: { type: "string", description: "\u6B63\u89E3\u7684\u9078\u9805 id" },
+                explanation: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\uFF0C60 \u5B57\u4EE5\u5167" },
+                optionNotes: {
+                  type: "array",
+                  description: "\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\uFF0825 \u5B57\u4EE5\u5167\uFF09",
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["id", "note"],
+                    properties: { id: { type: "string", description: "\u932F\u8AA4\u9078\u9805\u7684 id" }, note: { type: "string" } }
+                  }
+                },
+                sentenceZh: { type: "string", description: "\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F" },
+                errorTag: { type: "string", enum: ALL_TAGS, description: "\u5B78\u7FD2\u8005\u7B54\u932F\u6642\u6700\u53EF\u80FD\u72AF\u7684\u932F\u8AA4\u985E\u578B" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+function isObj3(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+var str3 = (v) => typeof v === "string" ? v.trim() : "";
+var strList2 = (v) => Array.isArray(v) ? v.map(str3).filter(Boolean) : [];
+var uniq2 = (list) => [...new Set(list)];
+var GAP_RE2 = /_{3,}/g;
+var MARK_RE = /\[\[[^[\]]+\]\]/g;
+function inferInfo(id2) {
+  if (id2.includes("/")) return { category: "grammar", kind: "grammar-objective" };
+  if (id2.includes(".")) return { category: "poly", kind: "sense" };
+  return { category: "vocab", kind: "word" };
+}
+function parseOptions(v) {
+  if (!Array.isArray(v)) return null;
+  const out = [];
+  for (const o of v) {
+    if (typeof o === "string") {
+      const t2 = o.trim();
+      if (t2) out.push({ id: t2, text: t2 });
+    } else if (isObj3(o)) {
+      const id2 = str3(o.id);
+      const text = str3(o.text);
+      if (!id2 || !text) return null;
+      out.push({ id: id2, text });
+    }
+  }
+  return out;
+}
+function parseNotes(v, options, answerId) {
+  const out = {};
+  const put = (key5, note) => {
+    var _a;
+    const opt = (_a = options.find((o) => o.id === key5)) != null ? _a : options.find((o) => o.text === key5);
+    if (opt && opt.id !== answerId && note) out[opt.id] = note;
+  };
+  if (Array.isArray(v)) {
+    for (const n of v) if (isObj3(n)) put(str3(n.id) || str3(n.option), str3(n.note) || str3(n.why));
+  } else if (isObj3(v)) {
+    for (const [k, w2] of Object.entries(v)) put(k.trim(), str3(w2));
+  }
+  return out;
+}
+function parsePracticeQuestion(raw, refs) {
+  var _a, _b, _c;
+  if (!isObj3(raw)) return null;
+  const focusId = str3(raw.focusId);
+  if (!focusId) return null;
+  const info = refs ? refs.tested.get(focusId) : inferInfo(focusId);
+  if (!info) return null;
+  const kind = str3(raw.kind);
+  if (!KINDS_BY_CATEGORY[info.category].includes(kind)) return null;
+  let text = str3(raw.text);
+  const explanation = str3(raw.explanation);
+  if (!text || !explanation) return null;
+  const options = parseOptions(raw.options);
+  if (!options || options.length < 3 || options.length > 4) return null;
+  if (new Set(options.map((o) => o.id)).size !== options.length) return null;
+  if (new Set(options.map((o) => o.text.toLowerCase())).size !== options.length) return null;
+  const answerId = str3(raw.answerId);
+  if (!options.some((o) => o.id === answerId)) return null;
+  if (kind === "which-sense" || kind === "same-sense") {
+    if (((_a = text.match(MARK_RE)) != null ? _a : []).length !== 1) return null;
+    if (/\[\[|\]\]/.test(text.replace(MARK_RE, ""))) return null;
+  } else if (kind === "pick-word" || kind === "choice") {
+    if (((_b = text.match(GAP_RE2)) != null ? _b : []).length !== 1) return null;
+    text = text.replace(GAP_RE2, "____");
+  } else {
+    if (/_{3,}/.test(text)) return null;
+    if (!options.every((o) => text.includes(o.text))) return null;
+  }
+  if (info.category === "poly" && kind === "which-sense") {
+    const word = (_c = refs == null ? void 0 : refs.senseWord.get(focusId)) != null ? _c : focusId.split(".")[0];
+    if (answerId !== focusId) return null;
+    for (const o of options) {
+      const w2 = refs ? refs.senseWord.get(o.id) : o.id.split(".")[0];
+      if (w2 !== word) return null;
+    }
+  }
+  const q = {
+    focus: { kind: info.kind, id: focusId },
+    kind,
+    text,
+    options,
+    answerId,
+    explanation
+  };
+  const notes = parseNotes(raw.optionNotes, options, answerId);
+  if (Object.keys(notes).length) q.optionNotes = notes;
+  const zh = str3(raw.sentenceZh);
+  if (zh) q.sentenceZh = zh;
+  const tag = str3(raw.errorTag).toLowerCase();
+  if (info.category === "grammar") q.errorTag = normalizeErrorTag(tag);
+  else if ((info.category === "poly" ? POLY_ERROR_TAGS : VOCAB_ERROR_TAGS).includes(tag)) q.errorTag = tag;
+  return q;
+}
+function askOf2(turn) {
+  const a2 = turn.ask;
+  if (Array.isArray(a2)) return a2.length ? a2[0] : void 0;
+  return isObj3(a2) ? a2 : void 0;
+}
+function parsePracticeScenario(json, refs) {
+  if (!isObj3(json) || !Array.isArray(json.turns)) {
+    throw new AiError("bad_output", "practice.scenario: expected { scene, form, turns: [...] }");
+  }
+  const scene = str3(json.scene);
+  if (!scene) throw new AiError("bad_output", "practice.scenario: no scene");
+  const speakers = uniq2(strList2(json.speakers));
+  const formRaw = str3(json.form);
+  const form = SCENARIO_FORMS.includes(formRaw) ? formRaw : speakers.length ? "dialogue" : "story";
+  const questions2 = [];
+  const seen = /* @__PURE__ */ new Set();
+  let asked = 0;
+  let lead = [];
+  for (const t2 of json.turns) {
+    if (!isObj3(t2)) continue;
+    const speaker = str3(t2.speaker);
+    const ask = askOf2(t2);
+    if (ask === void 0) {
+      const text = str3(t2.text);
+      if (text) lead.push(speaker ? { speaker, text } : { text });
+      continue;
+    }
+    asked++;
+    const q = parsePracticeQuestion(ask, refs);
+    if (!q) continue;
+    const key5 = q.text.toLowerCase();
+    if (seen.has(key5)) continue;
+    seen.add(key5);
+    if (speaker) q.speaker = speaker;
+    if (lead.length) q.lead = lead.slice(-MAX_LEAD);
+    lead = [];
+    questions2.push(q);
+  }
+  if (!questions2.length || questions2.length * 2 < asked) {
+    throw new AiError("bad_output", `practice.scenario: only ${questions2.length} of ${asked} questions usable`);
+  }
+  const out = { scene, form, questions: questions2 };
+  if (speakers.length) out.speakers = speakers;
+  return out;
+}
+function clean2(list, max) {
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const s of list != null ? list : []) {
+    const v = (s != null ? s : "").replace(/\s+/g, " ").trim();
+    if (!v || seen.has(v.toLowerCase())) continue;
+    seen.add(v.toLowerCase());
+    out.push(v);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+function referenceAndTask(req, count) {
+  var _a, _b;
+  const errorTags = errorTagsOf(req).join("\u3001");
+  if (req.track === "poly") {
+    const words = [...new Set(req.tested.map((s) => s.word))];
+    return {
+      reference: polyLines(req).join("\n"),
+      user: renderTemplate(POLY_TEMPLATE, { words: words.join("\u3001"), count, errorTags })
+    };
+  }
+  if (req.track === "vocab") {
+    return {
+      reference: vocabLines(req.words).join("\n"),
+      user: renderTemplate(VOCAB_TEMPLATE, { n: req.words.length, count, errorTags })
+    };
+  }
+  const parts = [];
+  if ((_a = req.vocab) == null ? void 0 : _a.length) parts.push(`\u3010\u55AE\u5B57\u3011
+${vocabLines(req.vocab).join("\n")}`);
+  if (req.poly && (req.poly.tested.length || req.poly.reference.length)) parts.push(`\u3010\u5E38\u7528\u5B57\u3011
+${polyLines(req.poly).join("\n")}`);
+  if ((_b = req.grammar) == null ? void 0 : _b.length) parts.push(`\u3010\u6587\u6CD5\u3011
+${grammarLines(req.grammar).join("\n")}`);
+  return { reference: parts.join("\n\n"), user: renderTemplate(MIX_TEMPLATE, { count, errorTags }) };
+}
+var practiceScenario = {
+  id: "practice.scenario",
+  version: 1,
+  // No surface of its own yet; the base prompt is passed in explicitly.
+  surface: "grammar",
+  tier: "smart",
+  maxTokens: 8192,
+  answerChars: () => 0,
+  build(input, ctx) {
+    var _a, _b;
+    const count = Math.max(1, Math.min(MAX_QUESTION_COUNT, Math.floor((_a = input.count) != null ? _a : DEFAULT_QUESTION_COUNT)));
+    const { reference, user } = referenceAndTask(input.request, count);
+    const words = clean2(input.words, MAX_WORDS);
+    const avoid = clean2(input.avoid, MAX_AVOID);
+    const weakness = ((_b = input.weakness) != null ? _b : "").trim();
+    const prev = input.previous;
+    const context = [
+      renderTemplate(REFERENCE_BLOCK_TEMPLATE, { lines: reference }),
+      weakness ? renderTemplate(WEAKNESS_BLOCK_TEMPLATE, { weakness }) : "",
+      prev && prev.scene.trim() ? renderTemplate(PREVIOUS_BLOCK_TEMPLATE, {
+        scene: prev.scene.trim(),
+        lines: prev.lastLines.slice(-2).map((l4) => `- ${l4}`).join("\n")
+      }) : "",
+      words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE, { words: words.join(", ") }) : "",
+      avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE2, { sentences: avoid.map((s) => `- ${s}`).join("\n") }) : ""
+    ];
+    return composeRequest({
+      base: PRACTICE_SCENARIO_BASE_PROMPT,
+      context,
+      profile: ctx.profile,
+      history: [],
+      user,
+      tier: practiceScenario.tier,
+      maxTokens: practiceScenario.maxTokens,
+      output: { name: "practice_scenario", schema: PRACTICE_SCENARIO_SCHEMA }
+    });
+  },
+  parse(r) {
+    return parsePracticeScenario(structuredJson(r));
+  }
+};
+function practiceScenarioFor(req) {
+  const refs = refsOf(req);
+  return { ...practiceScenario, parse: (r) => parsePracticeScenario(structuredJson(r), refs) };
+}
+var PRACTICE_TASKS = [practiceScenario];
+
+// src/ui/blocks/practice/mistakesPanelModel.ts
+function mistakeKey(q) {
+  return q.errorTag ? q.errorTag : `kind:${q.kind}`;
+}
+var KIND_LABEL = {
+  "which-sense": "practice.mistakes.kind.which-sense",
+  "pick-word": "practice.mistakes.kind.pick-word",
+  "same-sense": "practice.mistakes.kind.same-sense",
+  choice: "practice.mistakes.kind.choice",
+  "find-error": "practice.mistakes.kind.find-error"
+};
+var POLY_TAGS = [.../* @__PURE__ */ new Set([...POLY_ERROR_TAGS, ...VOCAB_ERROR_TAGS])];
+function mistakeLabel(key5) {
+  var _a;
+  if (key5.startsWith("kind:")) return t((_a = KIND_LABEL[key5.slice(5)]) != null ? _a : "practice.mistakes.kind.other");
+  if (POLY_TAGS.includes(key5)) return t(`practice.mistakes.tag.${key5}`);
+  if (ERROR_TAGS.includes(key5)) return errorTagLabel(key5);
+  return key5;
+}
+function groupPracticeMistakes(questions2) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const q of questions2) {
+    const key5 = mistakeKey(q);
+    const l4 = groups.get(key5);
+    if (l4) l4.push(q);
+    else groups.set(key5, [q]);
+  }
+  return [...groups.entries()].map(([key5, qs]) => ({ key: key5, label: mistakeLabel(key5), questions: qs })).sort((a2, b) => b.questions.length - a2.questions.length);
+}
+function practiceMistakeCount(groups) {
+  return groups.reduce((n, g) => n + g.questions.length, 0);
+}
+
+// src/ui/blocks/practice/mistakesPanel.ts
+function renderMistakesPanel(el, deps, owner) {
+  const { api } = deps;
+  const box = el.createDiv({ cls: "vt-pr-mistakes" });
+  let open = false;
+  let redoKey = null;
+  let redoHandle = null;
+  let alive = true;
+  const toggle2 = box.createEl("button", {
+    cls: "vt-pr-mistakes-toggle",
+    attr: { type: "button", "aria-expanded": "false" }
+  });
+  const countEl = toggle2.createSpan();
+  const chevron = toggle2.createSpan({ cls: "vt-pr-chevron", text: "\u203A", attr: { "aria-hidden": "true" } });
+  const body = box.createDiv({ cls: "vt-pr-mistakes-body is-hidden" });
+  const groups = () => groupPracticeMistakes(api.mistakeQuestions(deps.track));
+  const updateCount = () => countEl.setText(`${t("practice.mistakes.title")}\uFF08${practiceMistakeCount(groups())}\uFF09`);
+  const closeRedo = () => {
+    redoHandle == null ? void 0 : redoHandle.unload();
+    redoHandle = null;
+  };
+  const draw = () => {
+    closeRedo();
+    toggle2.setAttr("aria-expanded", String(open));
+    chevron.toggleClass("is-open", open);
+    body.empty();
+    body.toggleClass("is-hidden", !open);
+    updateCount();
+    if (!open) return;
+    const list = groups();
+    if (list.length === 0) body.createDiv({ cls: "vt-pr-empty", text: t("practice.mistakes.empty") });
+    for (const g of list) {
+      const group = body.createDiv({ cls: "vt-pr-mistake-group" });
+      const row = group.createDiv({ cls: "vt-pr-mistake" });
+      row.createSpan({ cls: "vt-pr-mistake-tag", text: g.label });
+      row.createSpan({ cls: "vt-pr-mistake-count", text: t("practice.mistakes.count", { n: g.questions.length }) });
+      const isOpen2 = redoKey === g.key;
+      learnButton(row, {
+        label: isOpen2 ? t("practice.mistakes.fold") : t("practice.mistakes.redo"),
+        icon: isOpen2 ? "chevron-up" : "rotate-ccw",
+        ghost: true,
+        onClick: () => {
+          redoKey = isOpen2 ? null : g.key;
+          draw();
+        }
+      });
+      if (isOpen2) redoHandle = mountRedo(group.createDiv({ cls: "vt-pr-redo" }), g.key);
+    }
+  };
+  const mountRedo = (host, key5) => {
+    const done = /* @__PURE__ */ new Set();
+    const byId = /* @__PURE__ */ new Map();
+    return deps.mountPlayer(
+      host,
+      {
+        questions: () => {
+          byId.clear();
+          const out = [];
+          for (const q of api.mistakeQuestions(deps.track)) {
+            if (mistakeKey(q) !== key5 || done.has(q.id)) continue;
+            byId.set(q.id, q);
+            out.push(deps.toPlayer(q));
+          }
+          return out;
+        },
+        emptyText: () => t("practice.mistakes.redoDone"),
+        callbacks: {
+          onAnswer: (a2) => {
+            done.add(a2.question.id);
+            const q = byId.get(a2.question.id);
+            if (q) api.answer(q, a2.optionId, a2.correct, { hinted: a2.hinted, fromMistakes: true });
+            updateCount();
+          },
+          onSkip: (pq) => {
+            done.add(pq.id);
+            const q = byId.get(pq.id);
+            if (q) api.skip(q);
+            updateCount();
+          },
+          onRetire: (pq) => {
+            done.add(pq.id);
+            const q = byId.get(pq.id);
+            if (q) api.retire(q);
+            updateCount();
+          }
+        }
+      },
+      owner
+    );
+  };
+  toggle2.addEventListener("click", () => {
+    open = !open;
+    if (!open) redoKey = null;
+    draw();
+  });
+  const refresh = () => {
+    if (!alive) return;
+    if (redoKey) updateCount();
+    else draw();
+  };
+  owner.register(api.events.on("pool:change", () => refresh()));
+  owner.register(() => {
+    alive = false;
+    closeRedo();
+  });
+  draw();
+  return { refresh };
+}
+
+// src/ui/blocks/practice/polyTabModel.ts
+var POLY_REFILL_THRESHOLD = 4;
+var POLY_LEVELS = [1, 2, 3];
+function categoryLabel2(c2) {
+  return t(`poly.cat.${c2}`);
+}
+function levelLabel(l4) {
+  return t(`poly.level.${l4}`);
+}
+function categoryOfWord(word) {
+  var _a;
+  return (_a = polyWord(word)) == null ? void 0 : _a.category;
+}
+function initialCategory(f) {
+  return f.words[0] && categoryOfWord(f.words[0]) || "A";
+}
+function filterToValue2(f, category) {
+  const v = { category: [category] };
+  if (f.words.length > 0) v.word = [...f.words];
+  if (f.levels.length > 0) v.level = f.levels.map(String);
+  return v;
+}
+function valueToFilter2(v, prev) {
+  var _a, _b, _c, _d;
+  const category = (_b = (_a = v.category) == null ? void 0 : _a[0]) != null ? _b : initialCategory(prev);
+  const filter2 = parsePolyFilter({
+    words: (_c = v.word) != null ? _c : [],
+    levels: ((_d = v.level) != null ? _d : []).map(Number),
+    excluded: prev.excluded
+  });
+  const wordSet = new Set(filter2.words);
+  filter2.excluded = filter2.excluded.filter((id2) => wordSet.has(id2.split(".")[0]));
+  return { filter: filter2, category: POLY_CATEGORIES.includes(category) ? category : initialCategory(filter2) };
+}
+function polyGroups(category) {
+  return [
+    {
+      id: "category",
+      label: t("practice.poly.category"),
+      multi: false,
+      options: POLY_CATEGORIES.map((c2) => ({ id: c2, label: categoryLabel2(c2) }))
+    },
+    {
+      id: "word",
+      label: t("practice.poly.word"),
+      multi: true,
+      options: wordsInCategory(category).map((w2) => ({ id: w2.word, label: w2.word }))
+    },
+    {
+      id: "level",
+      label: t("practice.poly.level"),
+      multi: true,
+      options: POLY_LEVELS.map((l4) => ({ id: String(l4), label: levelLabel(l4) }))
+    }
+  ];
+}
+function polySummary(f) {
+  if (f.words.length === 0) return t("practice.poly.noneChosen");
+  const levels = f.levels.length > 0 ? joinWords(f.levels.map(levelLabel)) : t("practice.poly.allLevels");
+  return `${joinWords(f.words)} \xB7 ${levels}`;
+}
+function savedPolyWords(saved) {
+  const lower2 = new Set(saved.map((w2) => w2.trim().toLowerCase()));
+  return POLY_WORDS.filter((w2) => lower2.has(w2.word)).map((w2) => w2.word);
+}
+function weakPolyWords(senseIds) {
+  const words = new Set(senseIds.map((id2) => id2.split(".")[0]));
+  return POLY_WORDS.filter((w2) => words.has(w2.word)).map((w2) => w2.word);
+}
+function polyQuickPicks(src) {
+  const pick = (id2, label, words) => words.length > 0 ? [
+    {
+      id: id2,
+      label: t(label),
+      apply: () => {
+        var _a;
+        return filterToValue2({ words, levels: [], excluded: [] }, (_a = categoryOfWord(words[0])) != null ? _a : "A");
+      }
+    }
+  ] : [];
+  return [
+    ...pick("saved", "practice.poly.quickSaved", savedPolyWords(src.saved)),
+    ...pick("weak", "practice.poly.quickWeak", weakPolyWords(src.weakSenseIds))
+  ];
+}
+function progressDot(s) {
+  if (!s || s.correct + s.wrong === 0) return "none";
+  const last3 = s.recent.slice(-3);
+  if (last3.length === 3 && last3.every(Boolean)) return "done";
+  return "partial";
+}
+var DOT_CHAR = { none: "\u25CB", partial: "\u25D0", done: "\u25CF" };
+function senseSections(f, stats) {
+  const excluded = new Set(f.excluded);
+  return f.words.flatMap((word) => {
+    const w2 = polyWord(word);
+    if (!w2) return [];
+    return [
+      {
+        word,
+        rows: w2.senses.map((s) => ({
+          id: s.id,
+          word,
+          zh: s.zh,
+          example: s.example,
+          cue: s.cue,
+          level: s.level,
+          checked: !excluded.has(s.id),
+          outOfLevel: f.levels.length > 0 && !f.levels.includes(s.level),
+          dot: progressDot(stats(s.id))
+        }))
+      }
+    ];
+  });
+}
+function toggleExcluded(f, senseId) {
+  const excluded = f.excluded.includes(senseId) ? f.excluded.filter((x3) => x3 !== senseId) : [...f.excluded, senseId];
+  return { ...f, excluded };
+}
+function testedSenseIds(f) {
+  return new Set(sensesInFilter(f).tested.map((s) => s.id));
+}
+
+// src/ui/blocks/practice/polyTab.ts
+function polyTab(deps) {
+  return {
+    id: "poly",
+    label: t("practice.poly.label"),
+    order: 2,
+    mount(el, ctx) {
+      el.addClass("vt-pr-poly");
+      let alive = true;
+      ctx.component.register(() => alive = false);
+      void deps.ready().then(() => {
+        if (alive) new PolyTabView(el, deps, ctx.filters, ctx.component).start();
+      });
+    }
+  };
+}
+var PolyTabView = class {
+  constructor(el, deps, filters, owner) {
+    this.el = el;
+    this.deps = deps;
+    this.filters = filters;
+    this.owner = owner;
+    this.ctrl = null;
+    this.mapOpen = true;
+    this.alive = true;
+    this.byId = /* @__PURE__ */ new Map();
+    this.filter = parsePolyFilter(filters.get("poly"));
+    this.category = initialCategory(this.filter);
+  }
+  start() {
+    const { api } = this.deps;
+    this.owner.register(() => {
+      var _a;
+      this.alive = false;
+      (_a = this.ctrl) == null ? void 0 : _a.abort();
+    });
+    const barEl = this.el.createDiv();
+    this.renderBar(barEl);
+    this.mapEl = this.el.createDiv({ cls: "vt-pr-poly-map" });
+    this.renderMap();
+    this.noteEl = this.el.createDiv({ cls: "vt-pr-grammar-note" });
+    const playerEl = this.el.createDiv({ cls: "vt-pr-grammar-player" });
+    this.player = this.deps.mountPlayer(
+      playerEl,
+      {
+        questions: () => this.questions(),
+        emptyText: () => this.emptyText(),
+        callbacks: {
+          onAnswer: (a2) => {
+            const q = this.byId.get(a2.question.id);
+            if (q) api.answer(q, a2.optionId, a2.correct, { hinted: a2.hinted, fromMistakes: false });
+            this.afterAnswer();
+          },
+          onSkip: (pq) => {
+            const q = this.byId.get(pq.id);
+            if (q) api.skip(q);
+            this.maybeRefill();
+          },
+          onRetire: (pq) => {
+            const q = this.byId.get(pq.id);
+            if (q) api.retire(q);
+            this.maybeRefill();
+          }
+        }
+      },
+      this.owner
+    );
+    renderMistakesPanel(
+      this.el.createDiv(),
+      {
+        api,
+        track: "poly",
+        mountPlayer: this.deps.mountPlayer,
+        toPlayer: (q) => toPlayerQuestion2(q, {})
+      },
+      this.owner
+    );
+    this.owner.register(
+      api.events.on("pool:change", (track2) => {
+        if (track2 !== "poly") return;
+        this.player.refresh();
+      })
+    );
+    this.owner.register(
+      api.events.on("refill:start", (track2) => {
+        if (track2 === "poly") this.player.refresh();
+      })
+    );
+    this.owner.register(
+      api.events.on("refill:end", ({ track: track2, error }) => {
+        if (track2 !== "poly") return;
+        this.showError(error);
+        this.player.refresh();
+      })
+    );
+    this.applyScope();
+    this.player.refresh();
+    this.refill();
+  }
+  // ── Filter ─────────────────────────────────────────────────────
+  renderBar(barEl) {
+    const { deps } = this;
+    const groups = polyGroups(this.category);
+    const quick = polyQuickPicks({ saved: deps.savedWords(), weakSenseIds: deps.weakSenseIds() });
+    const bar = renderFilterBar(barEl, {
+      groups,
+      quick,
+      value: filterToValue2(this.filter, this.category),
+      summary: (v) => polySummary(valueToFilter2(v, this.filter).filter),
+      onChange: (v) => {
+        const next = valueToFilter2(v, this.filter);
+        this.filter = next.filter;
+        this.category = next.category;
+        this.filters.set("poly", this.filter);
+        groups.splice(0, groups.length, ...polyGroups(this.category));
+        bar.update(filterToValue2(this.filter, this.category));
+        this.onFilterChanged();
+      }
+    });
+  }
+  onFilterChanged() {
+    this.clearError();
+    this.renderMap();
+    this.applyScope();
+    this.player.refresh();
+    this.refill();
+  }
+  // The pool keeps only questions about senses this filter tests.
+  applyScope() {
+    this.deps.api.applyScope("poly", testedSenseIds(this.filter));
+  }
+  // ── Sense map ──────────────────────────────────────────────────
+  renderMap() {
+    const el = this.mapEl;
+    el.empty();
+    const sections = senseSections(this.filter, (id2) => this.deps.senseStats(id2));
+    if (sections.length === 0) {
+      el.addClass("is-hidden");
+      return;
+    }
+    el.removeClass("is-hidden");
+    const head = el.createEl("button", {
+      cls: "vt-pr-poly-map-head",
+      attr: { type: "button", "aria-expanded": String(this.mapOpen) }
+    });
+    head.createSpan({ text: t("practice.poly.map") });
+    head.createSpan({ cls: "vt-pr-chevron", text: "\u203A", attr: { "aria-hidden": "true" } }).toggleClass("is-open", this.mapOpen);
+    head.addEventListener("click", () => {
+      this.mapOpen = !this.mapOpen;
+      this.renderMap();
+    });
+    if (!this.mapOpen) return;
+    const body = el.createDiv({ cls: "vt-pr-poly-map-body" });
+    for (const sec of sections) {
+      const box = body.createDiv({ cls: "vt-pr-poly-word" });
+      box.createDiv({ cls: "vt-pr-poly-word-title", text: sec.word });
+      for (const r of sec.rows) {
+        const row = box.createEl("label", { cls: "vt-pr-poly-sense" });
+        row.toggleClass("is-off", !r.checked || r.outOfLevel);
+        const cb = row.createEl("input", { attr: { type: "checkbox" } });
+        cb.checked = r.checked;
+        cb.addEventListener("change", () => {
+          this.filter = toggleExcluded(this.filter, r.id);
+          this.filters.set("poly", this.filter);
+          this.onFilterChanged();
+        });
+        const main = row.createDiv({ cls: "vt-pr-poly-sense-main" });
+        const top = main.createDiv({ cls: "vt-pr-poly-sense-top" });
+        top.createSpan({ cls: "vt-pr-poly-zh", text: r.zh });
+        top.createSpan({ cls: "vt-pr-poly-eg", text: r.example });
+        main.createDiv({ cls: "vt-pr-poly-cue", text: r.cue });
+        const meta = row.createDiv({ cls: "vt-pr-poly-meta" });
+        meta.createSpan({ cls: "vt-pr-poly-level", text: levelLabel(r.level) });
+        meta.createSpan({
+          cls: ["vt-pr-poly-dot", `is-${r.dot}`],
+          text: DOT_CHAR[r.dot],
+          attr: { title: t(`practice.poly.dot.${r.dot}`) }
+        });
+      }
+    }
+  }
+  // ── Pool ───────────────────────────────────────────────────────
+  questions() {
+    this.byId.clear();
+    const out = [];
+    for (const q of this.deps.api.poolQuestions("poly")) {
+      this.byId.set(q.id, q);
+      out.push(toPlayerQuestion2(q, {}));
+    }
+    return out;
+  }
+  afterAnswer() {
+    this.renderMap();
+    this.maybeRefill();
+  }
+  maybeRefill() {
+    if (this.deps.api.poolQuestions("poly").length <= POLY_REFILL_THRESHOLD) this.refill();
+  }
+  refill() {
+    const { api } = this.deps;
+    if (!this.alive || api.isRefilling("poly")) return;
+    const { tested, reference } = sensesInFilter(this.filter);
+    if (tested.length === 0) return;
+    if (api.poolQuestions("poly").length > POLY_REFILL_THRESHOLD) return;
+    this.ctrl = new AbortController();
+    api.refill({ track: "poly", tested, reference }, { signal: this.ctrl.signal }).catch((e) => this.showError(e));
+  }
+  emptyText() {
+    if (this.filter.words.length === 0) return t("practice.poly.pickWord");
+    if (this.deps.api.isRefilling("poly")) return t("practice.poly.preparing");
+    const s = this.deps.aiStatus();
+    if (s === "disabled") return t("practice.poly.aiOff");
+    if (s === "no_key") return t("practice.poly.noKey");
+    if (s === "offline") return t("practice.poly.offline");
+    return t("practice.poly.none");
+  }
+  showError(error) {
+    this.clearError();
+    if (!error || isAbort(error) || !this.alive) return;
+    this.noteEl.appendChild(aiErrorBox({ text: learnErrorText(error), error }));
+  }
+  clearError() {
+    var _a;
+    (_a = this.noteEl) == null ? void 0 : _a.empty();
+  }
+};
+
+// src/ui/blocks/polysemyMap.ts
+var import_obsidian36 = require("obsidian");
+
+// src/ui/blocks/polysemyMapModel.ts
+function filterPolyWords(category, query, words = POLY_WORDS) {
+  const q = query.trim().toLowerCase();
+  return words.filter((w2) => {
+    if (category !== "all" && w2.category !== category) return false;
+    if (q === "") return true;
+    return w2.word.includes(q) || w2.senses.some((s) => s.zh.includes(q));
+  });
+}
+function wordProgress(w2, stats) {
+  return { done: w2.senses.filter((s) => progressDot(stats(s.id)) === "done").length, total: w2.senses.length };
+}
+function practiceFilterFor(word) {
+  return { words: [word], levels: [], excluded: [] };
+}
+
+// src/ui/blocks/polysemyMap.ts
+var picked = /* @__PURE__ */ new Map();
+function renderPolysemyMap(deps, _source, el, ctx) {
+  ctx.addChild(new PolysemyMapBlock(el, deps, ctx.sourcePath));
+}
+var PolysemyMapBlock = class extends import_obsidian36.MarkdownRenderChild {
+  constructor(containerEl, deps, sourcePath) {
+    var _a, _b;
+    super(containerEl);
+    this.deps = deps;
+    this.sourcePath = sourcePath;
+    this.open = /* @__PURE__ */ new Set();
+    const p = picked.get(sourcePath);
+    this.category = (_a = p == null ? void 0 : p.category) != null ? _a : "all";
+    this.query = (_b = p == null ? void 0 : p.query) != null ? _b : "";
+  }
+  onload() {
+    this.containerEl.empty();
+    const root2 = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-pm"] });
+    guardReadingClicks(this, root2);
+    root2.createDiv({ cls: "vt-gr-title", text: t("poly.map.title") });
+    const bar = root2.createDiv({ cls: "vt-pm-bar" });
+    const segHost = bar.createDiv({ cls: "vt-pm-seg" });
+    const drawSeg = () => {
+      segHost.empty();
+      segmented(segHost, {
+        options: [
+          { value: "all", label: t("poly.map.all") },
+          ...POLY_CATEGORIES.map((c2) => ({ value: c2, label: categoryLabel2(c2) }))
+        ],
+        value: this.category,
+        ariaLabel: t("practice.poly.category"),
+        onChange: (v) => {
+          this.category = v;
+          this.remember();
+          drawSeg();
+          this.renderList();
+        }
+      });
+    };
+    drawSeg();
+    const search = bar.createEl("input", {
+      cls: "vt-pm-search",
+      attr: { type: "search", placeholder: t("poly.map.search"), "aria-label": t("poly.map.search") }
+    });
+    search.value = this.query;
+    search.addEventListener("input", () => {
+      this.query = search.value;
+      this.remember();
+      this.renderList();
+    });
+    this.listEl = root2.createDiv({ cls: "vt-pm-list" });
+    this.renderList();
+  }
+  remember() {
+    picked.set(this.sourcePath, { category: this.category, query: this.query });
+  }
+  renderList() {
+    const el = this.listEl;
+    el.empty();
+    const words = filterPolyWords(this.category, this.query);
+    if (words.length === 0) {
+      el.createDiv({ cls: "vt-pr-empty", text: t("poly.map.none") });
+      return;
+    }
+    for (const w2 of words) this.renderCard(el, w2);
+  }
+  renderCard(parent, w2) {
+    const stats = (id2) => this.deps.senseStats(id2);
+    const isOpen2 = this.open.has(w2.word);
+    const card = parent.createDiv({ cls: "vt-pm-card" });
+    const head = card.createEl("button", {
+      cls: "vt-pm-card-head",
+      attr: { type: "button", "aria-expanded": String(isOpen2) }
+    });
+    head.createSpan({ cls: "vt-pm-word", text: w2.word });
+    head.createSpan({ cls: "vt-pm-cat", text: categoryLabel2(w2.category) });
+    const prog = wordProgress(w2, stats);
+    head.createSpan({
+      cls: "vt-pm-count",
+      text: t("poly.map.progress", { done: prog.done, total: prog.total })
+    });
+    head.createSpan({ cls: "vt-pr-chevron", text: "\u203A", attr: { "aria-hidden": "true" } }).toggleClass("is-open", isOpen2);
+    head.addEventListener("click", () => {
+      if (isOpen2) this.open.delete(w2.word);
+      else this.open.add(w2.word);
+      this.renderList();
+    });
+    if (!isOpen2) return;
+    const body = card.createDiv({ cls: "vt-pm-card-body" });
+    const table = body.createDiv({ cls: "vt-pm-senses" });
+    for (const s of w2.senses) {
+      const row = table.createDiv({ cls: "vt-pm-sense" });
+      const main = row.createDiv({ cls: "vt-pm-sense-main" });
+      const top = main.createDiv({ cls: "vt-pm-sense-top" });
+      top.createSpan({ cls: "vt-pm-zh", text: s.zh });
+      top.createSpan({ cls: "vt-pm-eg", text: s.example });
+      main.createDiv({ cls: "vt-pm-cue", text: s.cue });
+      const meta = row.createDiv({ cls: "vt-pm-meta" });
+      meta.createSpan({ cls: "vt-pm-level", text: levelLabel(s.level) });
+      const dot = progressDot(stats(s.id));
+      meta.createSpan({
+        cls: ["vt-pr-poly-dot", `is-${dot}`],
+        text: DOT_CHAR[dot],
+        attr: { title: t(`practice.poly.dot.${dot}`) }
+      });
+    }
+    if (w2.phrases.length > 0) {
+      const ph = body.createDiv({ cls: "vt-pm-phrases" });
+      ph.createSpan({ cls: "vt-pm-phrases-label", text: t("poly.map.phrases") });
+      for (const p of w2.phrases) ph.createSpan({ cls: "vt-pm-phrase", text: p });
+    }
+    learnButton(body, {
+      label: t("poly.map.practice"),
+      icon: "play",
+      cta: true,
+      onClick: () => {
+        this.deps.setPolyFilter(practiceFilterFor(w2.word));
+        this.deps.openPractice("poly");
+      }
+    });
   }
 };
 
@@ -20833,9 +24008,9 @@ function trimHistory2(entries, limit) {
   const lineIdx = entries.flatMap((e, i) => e.type === "line" ? [i] : []);
   if (limit <= 0 || lineIdx.length <= limit) return { shown: [...entries], hidden: 0 };
   const firstKept = lineIdx[lineIdx.length - limit];
-  let start2 = firstKept;
-  if (start2 > 0 && entries[start2 - 1].type === "scene") start2 -= 1;
-  return { shown: entries.slice(start2), hidden: lineIdx.length - limit };
+  let start3 = firstKept;
+  if (start3 > 0 && entries[start3 - 1].type === "scene") start3 -= 1;
+  return { shown: entries.slice(start3), hidden: lineIdx.length - limit };
 }
 var MOBILE_HISTORY_LIMIT = 3;
 function speakerSides(speakers) {
@@ -21114,32 +24289,32 @@ function weakFocuses(events, opts) {
         common = g;
       }
     }
-    const w = {
+    const w2 = {
       focus: acc.focus,
       track: acc.track,
       wrong: acc.wrong,
       lastWrongAt: acc.lastWrongAt,
       score: score2
     };
-    if (common !== void 0) w.commonGiven = common;
-    out.push(w);
+    if (common !== void 0) w2.commonGiven = common;
+    out.push(w2);
   }
   out.sort((a2, b) => b.score - a2.score || (a2.lastWrongAt < b.lastWrongAt ? 1 : a2.lastWrongAt > b.lastWrongAt ? -1 : 0));
-  return out.slice(0, limit).map(({ score: _s, ...w }) => w);
+  return out.slice(0, limit).map(({ score: _s, ...w2 }) => w2);
 }
 function mmdd(iso) {
   const d = new Date(iso);
   return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
 }
 function weaknessDigest(weak, label) {
-  return weak.map((w) => {
-    const head = `${label ? label(w.focus) : w.focus.id}\uFF5C\u932F ${w.wrong} \u6B21\uFF08\u6700\u8FD1 ${mmdd(w.lastWrongAt)}\uFF09`;
-    return w.commonGiven ? `${head}\uFF5C\u5E38\u9078\u6210 ${w.commonGiven}` : head;
+  return weak.map((w2) => {
+    const head = `${label ? label(w2.focus) : w2.focus.id}\uFF5C\u932F ${w2.wrong} \u6B21\uFF08\u6700\u8FD1 ${mmdd(w2.lastWrongAt)}\uFF09`;
+    return w2.commonGiven ? `${head}\uFF5C\u5E38\u9078\u6210 ${w2.commonGiven}` : head;
   }).join("\n");
 }
 
 // src/ui/blocks/trivia.ts
-var import_obsidian35 = require("obsidian");
+var import_obsidian37 = require("obsidian");
 
 // src/core/model/trivia.ts
 var TRIVIA_THREAD_ID = "trivia-session";
@@ -21423,8 +24598,8 @@ function favoriteViews(items, wordOf, dateOf) {
       date,
       ...updated && updated !== date ? { updated } : {},
       mentions: it.mentions.flatMap((entryId) => {
-        const w = wordOf(entryId);
-        return w ? [{ entryId, word: w }] : [];
+        const w2 = wordOf(entryId);
+        return w2 ? [{ entryId, word: w2 }] : [];
       })
     };
   });
@@ -21434,7 +24609,7 @@ function favoriteViews(items, wordOf, dateOf) {
 function renderTrivia(plugin, source, el, ctx) {
   ctx.addChild(new TriviaBlock(el, plugin, parseTriviaParams(source), ctx.sourcePath));
 }
-var WordPickModal = class extends import_obsidian35.FuzzySuggestModal {
+var WordPickModal = class extends import_obsidian37.FuzzySuggestModal {
   constructor(app, entries, onPick) {
     super(app);
     this.entries = entries;
@@ -21451,7 +24626,7 @@ var WordPickModal = class extends import_obsidian35.FuzzySuggestModal {
     this.onPick(e);
   }
 };
-var TriviaBlock = class extends import_obsidian35.MarkdownRenderChild {
+var TriviaBlock = class extends import_obsidian37.MarkdownRenderChild {
   constructor(containerEl, plugin, params, sourcePath) {
     super(containerEl);
     this.plugin = plugin;
@@ -21529,7 +24704,7 @@ var TriviaBlock = class extends import_obsidian35.MarkdownRenderChild {
       const card = root2.createDiv({ cls: "vt-trivia-card" });
       const head = card.createDiv({ cls: "vt-trivia-head" });
       const title = head.createSpan({ cls: "vt-trivia-title" });
-      (0, import_obsidian35.setIcon)(title.createSpan({ cls: "vt-trivia-title-icon" }), "lightbulb");
+      (0, import_obsidian37.setIcon)(title.createSpan({ cls: "vt-trivia-title-icon" }), "lightbulb");
       title.createSpan({ text: t("learn.trivia.title") });
       this.chipEl = head.createEl("button", { cls: "vt-trivia-subject" });
       this.chipEl.addEventListener("click", () => this.pickWord());
@@ -21552,7 +24727,7 @@ var TriviaBlock = class extends import_obsidian35.MarkdownRenderChild {
     chip2.createSpan({
       text: pinned ? t("learn.trivia.subject", { word: pinned.word }) : t("learn.trivia.random", { n: this.likedCount })
     });
-    if (!pinned) (0, import_obsidian35.setIcon)(chip2.createSpan({ cls: "vt-trivia-subject-icon" }), "chevron-down");
+    if (!pinned) (0, import_obsidian37.setIcon)(chip2.createSpan({ cls: "vt-trivia-subject-icon" }), "chevron-down");
     chip2.disabled = !!pinned || this.plugin.ai.status() !== "ready";
     chip2.title = pinned ? "" : t("learn.trivia.pick");
   }
@@ -21590,12 +24765,12 @@ var TriviaBlock = class extends import_obsidian35.MarkdownRenderChild {
   async call(c2) {
     if (c2.type === "followup") return this.plugin.trivia.followup(c2.question, c2.selection);
     const result = await this.plugin.trivia.ask(c2.kind, c2.entryId ? { entryId: c2.entryId } : {});
-    if (!result && !this.plugin.trivia.isBusy()) new import_obsidian35.Notice(t("learn.trivia.noWords"));
+    if (!result && !this.plugin.trivia.isBusy()) new import_obsidian37.Notice(t("learn.trivia.noWords"));
   }
   run(c2) {
     this.call(c2).catch((e) => {
       console.error("Vocab Tracker: trivia request failed", e);
-      new import_obsidian35.Notice(learnErrorText(e));
+      new import_obsidian37.Notice(learnErrorText(e));
     });
   }
   async send(req) {
@@ -21639,11 +24814,11 @@ var TriviaBlock = class extends import_obsidian35.MarkdownRenderChild {
             ...base,
             onClick: () => {
               const item = this.plugin.trivia.favorite(turn.id);
-              if (!item) return void new import_obsidian35.Notice(t("learn.trivia.noWords"));
+              if (!item) return void new import_obsidian37.Notice(t("learn.trivia.noWords"));
               const entry = this.entryById(item.entryId);
               if (!entry) return;
               const page = this.plugin.exporter.wordPagePath(entry.id, entry.word);
-              new import_obsidian35.Notice(t("learn.trivia.savedTo", { path: page.split("/").slice(-2).join("/") }));
+              new import_obsidian37.Notice(t("learn.trivia.savedTo", { path: page.split("/").slice(-2).join("/") }));
             }
           };
         case "unfavorite":
@@ -21657,7 +24832,7 @@ var TriviaBlock = class extends import_obsidian35.MarkdownRenderChild {
     if (!el) return;
     el.empty();
     if (this.favScope) this.removeChild(this.favScope);
-    const scope = this.favScope = this.addChild(new import_obsidian35.Component());
+    const scope = this.favScope = this.addChild(new import_obsidian37.Component());
     el.createDiv({ cls: "vt-trivia-favs-title", text: t("learn.trivia.favorites") });
     const pinned = this.pinned();
     const items = this.plugin.trivia.favorites(pinned == null ? void 0 : pinned.id);
@@ -21675,11 +24850,11 @@ var TriviaBlock = class extends import_obsidian35.MarkdownRenderChild {
       const head = card.createDiv({ cls: "vt-trivia-fav-head" });
       head.createSpan({ cls: "vt-trivia-fav-title", text: v.heading });
       const remove2 = head.createEl("button", { cls: "vt-trivia-fav-remove clickable-icon" });
-      (0, import_obsidian35.setIcon)(remove2, "bookmark-minus");
+      (0, import_obsidian37.setIcon)(remove2, "bookmark-minus");
       remove2.setAttr("aria-label", t("learn.trivia.unfavorite"));
       remove2.addEventListener("click", () => this.plugin.trivia.unfavorite(v.id));
       const body = card.createDiv({ cls: "vt-trivia-fav-body" });
-      void import_obsidian35.MarkdownRenderer.render(this.plugin.app, v.body, body, this.sourcePath, scope);
+      void import_obsidian37.MarkdownRenderer.render(this.plugin.app, v.body, body, this.sourcePath, scope);
       if (v.date || v.mentions.length) this.renderFavoriteMeta(card.createDiv({ cls: "vt-trivia-fav-meta" }), v);
     }
   }
@@ -21753,11 +24928,53 @@ function grammarRouting(plugin) {
     openPractice: (track2) => void plugin.openPracticeTab(track2)
   };
 }
+function polysemyDeps(plugin) {
+  return {
+    senseStats: senseStats(plugin),
+    setPolyFilter: (f) => plugin.learner.setFilter("poly", f),
+    openPractice: (track2) => void plugin.openPracticeTab(track2)
+  };
+}
 function practiceFilters(plugin) {
   return {
     get: (track2) => plugin.learner.filter(track2),
     set: (track2, value) => plugin.learner.setFilter(track2, value)
   };
+}
+function scenarioReady(plugin) {
+  return grammarReady(plugin);
+}
+function mountMistakes(plugin) {
+  return (el, track2, owner) => renderMistakesPanel(
+    el,
+    {
+      api: plugin.scenario,
+      ...track2 === "mix" ? {} : { track: track2 },
+      mountPlayer: mountScenarioPlayer,
+      toPlayer: (q) => toPlayerQuestion2(q, { topicTitle: (id2) => {
+        var _a, _b;
+        return (_b = (_a = topicById(id2)) == null ? void 0 : _a.title) != null ? _b : "";
+      } })
+    },
+    owner
+  );
+}
+function mixGrammarRefs(plugin) {
+  var _a, _b;
+  const out = [];
+  const filter2 = parseGrammarFilter(plugin.learner.filter("grammar"));
+  for (const id2 of topicsInFilter(filter2, (_b = (_a = plugin.store.settings.learner) == null ? void 0 : _a.level) != null ? _b : "")) {
+    const topic = topicById(id2);
+    if (!topic) continue;
+    for (const o of topic.objectives) {
+      if (out.length >= 12) return out;
+      out.push({ topicId: topic.id, objectiveId: o.id, text: o.text, title: topic.title, pattern: topic.pattern });
+    }
+  }
+  return out;
+}
+function senseStats(plugin) {
+  return (id2) => plugin.learnerModel.senseStats(id2);
 }
 function practiceHost(plugin) {
   return {
@@ -21780,14 +24997,42 @@ function practiceHost(plugin) {
         weakTopicIds: () => [
           ...new Set(
             weakFocuses(plugin.learner.learnEvents({ track: "grammar" }), { now: /* @__PURE__ */ new Date(), track: "grammar" }).map(
-              (w) => w.focus.id.split("/")[0]
+              (w2) => w2.focus.id.split("/")[0]
             )
           )
         ],
         aiStatus: () => plugin.ai.status()
+      }),
+      polyTab({
+        api: plugin.scenario,
+        mountPlayer: mountScenarioPlayer,
+        ready: () => scenarioReady(plugin),
+        savedWords: () => plugin.store.entries.filter((e) => e.liked === true && !e.deletedAt).map((e) => e.word),
+        weakSenseIds: () => weakFocuses(plugin.learner.learnEvents({ track: "poly" }), { now: /* @__PURE__ */ new Date(), track: "poly" }).map(
+          (w2) => w2.focus.id
+        ),
+        senseStats: senseStats(plugin),
+        aiStatus: () => plugin.ai.status()
+      }),
+      mixTab({
+        api: plugin.scenario,
+        mountPlayer: mountScenarioPlayer,
+        mountMistakes: mountMistakes(plugin),
+        ready: () => scenarioReady(plugin),
+        vocabRefs: () => pickVocabRefs(plugin.store.entries, parseFilterValue(plugin.learner.filter("vocab")), /* @__PURE__ */ new Date()),
+        grammarRefs: () => mixGrammarRefs(plugin),
+        polySenses: () => sensesInFilter(parsePolyFilter(plugin.learner.filter("poly"))),
+        aiStatus: () => plugin.ai.status()
       })
     ],
-    filters: practiceFilters(plugin)
+    filters: practiceFilters(plugin),
+    vocabScenario: () => ({
+      api: plugin.scenario,
+      mountPlayer: mountScenarioPlayer,
+      mountMistakes: mountMistakes(plugin),
+      ready: () => scenarioReady(plugin),
+      aiStatus: () => plugin.ai.status()
+    })
   };
 }
 var BLOCKS = [
@@ -21814,6 +25059,8 @@ var BLOCKS = [
   // Wave 15: 文法學習.
   { lang: "vocab-grammar", render: (p, s, el, ctx) => renderGrammarMap(grammarMapDeps(p), s, el, ctx) },
   { lang: "vocab-grammar-topic", render: (p, s, el, ctx) => renderGrammarTopic(grammarTopicDeps(p), s, el, ctx) },
+  // 第十七波 Q: Polysemy.md 的意思地圖.
+  { lang: "vocab-polysemy", render: (p, s, el, ctx) => renderPolysemyMap(polysemyDeps(p), s, el, ctx) },
   { lang: "vocab-grammar-practice", render: (p, s, el, ctx) => renderGrammarPractice(grammarPracticeDeps(p), s, el, ctx) }
 ];
 function registerBlocks(plugin) {
@@ -22404,16 +25651,16 @@ var migrateParameters = (parameters, numRelearningSteps = 0, enableShortTerm = d
         enableShortTerm
       ).concat([0, FSRS5_DEFAULT_DECAY]);
     case 17: {
-      const w = clipParameters(
+      const w2 = clipParameters(
         Array.from(parameters),
         numRelearningSteps,
         enableShortTerm
       );
-      w[4] = +(w[5] * 2 + w[4]).toFixed(8);
-      w[5] = +(Math.log(w[5] * 3 + 1) / 3).toFixed(8);
-      w[6] = +(w[6] + 0.5).toFixed(8);
+      w2[4] = +(w2[5] * 2 + w2[4]).toFixed(8);
+      w2[5] = +(Math.log(w2[5] * 3 + 1) / 3).toFixed(8);
+      w2[6] = +(w2[6] + 0.5).toFixed(8);
       console.debug("[FSRS-6]auto fill w from 17 to 21 length");
-      return w.concat([0, 0, 0, FSRS5_DEFAULT_DECAY]);
+      return w2.concat([0, 0, 0, FSRS5_DEFAULT_DECAY]);
     }
     default:
       console.warn("[FSRS]Invalid parameters length, using default parameters");
@@ -22425,7 +25672,7 @@ var generatorParameters = (props) => {
   const learning_steps = Array.isArray(props == null ? void 0 : props.learning_steps) ? props.learning_steps : default_learning_steps;
   const relearning_steps = Array.isArray(props == null ? void 0 : props.relearning_steps) ? props.relearning_steps : default_relearning_steps;
   const enable_short_term = (_a = props == null ? void 0 : props.enable_short_term) != null ? _a : default_enable_short_term;
-  const w = migrateParameters(
+  const w2 = migrateParameters(
     props == null ? void 0 : props.w,
     relearning_steps.length,
     enable_short_term
@@ -22433,7 +25680,7 @@ var generatorParameters = (props) => {
   return {
     request_retention: (props == null ? void 0 : props.request_retention) || default_request_retention,
     maximum_interval: (props == null ? void 0 : props.maximum_interval) || default_maximum_interval,
-    w,
+    w: w2,
     enable_fuzz: (_b = props == null ? void 0 : props.enable_fuzz) != null ? _b : default_enable_fuzz,
     enable_short_term,
     learning_steps,
@@ -22591,8 +25838,8 @@ var FSRSAlgorithm = class {
    * @return {number} Difficulty $$D \in [1,10]$$
    */
   init_difficulty(g) {
-    const w = this.param.w;
-    const d = w[4] - Math.exp((g - 1) * w[5]) + 1;
+    const w2 = this.param.w;
+    const d = w2[4] - Math.exp((g - 1) * w2[5]) + 1;
     return roundTo(d, 8);
   }
   /**
@@ -22656,8 +25903,8 @@ var FSRSAlgorithm = class {
    * @return {number} difficulty
    */
   mean_reversion(init2, current) {
-    const w = this.param.w;
-    return roundTo(w[7] * init2 + (1 - w[7]) * current, 8);
+    const w2 = this.param.w;
+    return roundTo(w2[7] * init2 + (1 - w2[7]) * current, 8);
   }
   /**
    * The formula used is :
@@ -22669,12 +25916,12 @@ var FSRSAlgorithm = class {
    * @return {number} S^\prime_r new stability after recall
    */
   next_recall_stability(d, s, r, g) {
-    const w = this.param.w;
-    const hard_penalty = Rating2.Hard === g ? w[15] : 1;
-    const easy_bound = Rating2.Easy === g ? w[16] : 1;
+    const w2 = this.param.w;
+    const hard_penalty = Rating2.Hard === g ? w2[15] : 1;
+    const easy_bound = Rating2.Easy === g ? w2[16] : 1;
     return roundTo(
       clamp(
-        s * (1 + Math.exp(w[8]) * (11 - d) * Math.pow(s, -w[9]) * (Math.exp((1 - r) * w[10]) - 1) * hard_penalty * easy_bound),
+        s * (1 + Math.exp(w2[8]) * (11 - d) * Math.pow(s, -w2[9]) * (Math.exp((1 - r) * w2[10]) - 1) * hard_penalty * easy_bound),
         S_MIN,
         36500
       ),
@@ -22692,10 +25939,10 @@ var FSRSAlgorithm = class {
    * @return {number} S^\prime_f new stability after forgetting
    */
   next_forget_stability(d, s, r) {
-    const w = this.param.w;
+    const w2 = this.param.w;
     return roundTo(
       clamp(
-        w[11] * Math.pow(d, -w[12]) * (Math.pow(s + 1, w[13]) - 1) * Math.exp((1 - r) * w[14]),
+        w2[11] * Math.pow(d, -w2[12]) * (Math.pow(s + 1, w2[13]) - 1) * Math.exp((1 - r) * w2[14]),
         S_MIN,
         36500
       ),
@@ -22709,8 +25956,8 @@ var FSRSAlgorithm = class {
    * @param {Grade} g Grade (Rating[0.again,1.hard,2.good,3.easy])
    */
   next_short_term_stability(s, g) {
-    const w = this.param.w;
-    const sinc = Math.pow(s, -w[19]) * Math.exp(w[17] * (g - 3 + w[18]));
+    const w2 = this.param.w;
+    const sinc = Math.pow(s, -w2[19]) * Math.exp(w2[17] * (g - 3 + w2[18]));
     const maskedSinc = g >= Rating2.Hard ? Math.max(sinc, 1) : sinc;
     return roundTo(clamp(s * maskedSinc, S_MIN, 36500), 8);
   }
@@ -22751,7 +25998,7 @@ var FSRSAlgorithm = class {
         `Invalid memory state { difficulty: ${d}, stability: ${s} }`
       );
     }
-    const w = this.param.w;
+    const w2 = this.param.w;
     r = typeof r === "number" ? r : this.forgetting_curve(t2, s);
     let new_s;
     if (t2 === 0 && this.param.enable_short_term) {
@@ -22760,8 +26007,8 @@ var FSRSAlgorithm = class {
       const s_after_fail = this.next_forget_stability(d, s, r);
       let [w_17, w_18] = [0, 0];
       if (this.param.enable_short_term) {
-        w_17 = w[17];
-        w_18 = w[18];
+        w_17 = w2[17];
+        w_18 = w2[18];
       }
       const next_s_min = s / Math.exp(w_17 * w_18);
       new_s = clamp(roundTo(next_s_min, 8), S_MIN, s_after_fail);
@@ -23907,7 +27154,7 @@ var SrsService = class {
 };
 
 // src/ui/reading/locateWord.ts
-var import_obsidian36 = require("obsidian");
+var import_obsidian38 = require("obsidian");
 
 // src/core/text/occurrences.ts
 var WORD_RE3 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
@@ -23981,10 +27228,10 @@ var SKIP = [
   `.${FLASH_CLS}`
 ].join(", ");
 function activeMarkdownView(app) {
-  const active2 = app.workspace.getActiveViewOfType(import_obsidian36.MarkdownView);
+  const active2 = app.workspace.getActiveViewOfType(import_obsidian38.MarkdownView);
   if (active2) return active2;
   const leaf = app.workspace.getMostRecentLeaf();
-  return (leaf == null ? void 0 : leaf.view) instanceof import_obsidian36.MarkdownView ? leaf.view : null;
+  return (leaf == null ? void 0 : leaf.view) instanceof import_obsidian38.MarkdownView ? leaf.view : null;
 }
 function isSourceMode(view) {
   return view.getMode() === "source";
@@ -24017,12 +27264,12 @@ function findNthMatch(root2, target, inflections, k) {
   }
   return null;
 }
-function wrapRange(node, start2, length) {
+function wrapRange(node, start3, length) {
   var _a;
   const text = (_a = node.nodeValue) != null ? _a : "";
-  const before = text.slice(0, start2);
-  const hit = text.slice(start2, start2 + length);
-  const after = text.slice(start2 + length);
+  const before = text.slice(0, start3);
+  const hit = text.slice(start3, start3 + length);
+  const after = text.slice(start3 + length);
   const parent = node.parentNode;
   if (!parent) throw new Error("text node has no parent");
   const span = document.createElement("span");
@@ -24070,7 +27317,7 @@ function createWordLocator(app, opts) {
     const markdown = view.getViewData();
     const occurrences = findOccurrences(markdown, entry.word, opts.inflections());
     if (occurrences.length === 0) {
-      new import_obsidian36.Notice(t("locate.notInNote"));
+      new import_obsidian38.Notice(t("locate.notInNote"));
       return null;
     }
     return { view, path, occurrences };
@@ -24098,14 +27345,14 @@ function createWordLocator(app, opts) {
 }
 
 // src/ui/reading/returnNav.ts
-var import_obsidian37 = require("obsidian");
+var import_obsidian39 = require("obsidian");
 function createReturnNav(app, locator) {
   let pending = null;
   let left = false;
   function restore(p) {
     var _a;
     const view = p.leaf.view;
-    if (view instanceof import_obsidian37.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === p.path) {
+    if (view instanceof import_obsidian39.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === p.path) {
       try {
         view.currentMode.applyScroll(p.scroll);
       } catch (e) {
@@ -24125,7 +27372,7 @@ function createReturnNav(app, locator) {
     if (!leaf || leaf !== current.leaf) return;
     const view = leaf.view;
     pending = null;
-    if (view instanceof import_obsidian37.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === current.path) {
+    if (view instanceof import_obsidian39.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === current.path) {
       restore(current);
     }
   }
@@ -24256,11 +27503,11 @@ var BrowserNetwork = class {
 };
 
 // src/platform/ObsidianRequest.ts
-var import_obsidian38 = require("obsidian");
+var import_obsidian40 = require("obsidian");
 var ObsidianRequest = class {
   async request(req) {
     var _a;
-    const res = await (0, import_obsidian38.requestUrl)({
+    const res = await (0, import_obsidian40.requestUrl)({
       url: req.url,
       method: req.method,
       headers: req.headers,
@@ -24334,140 +27581,6 @@ var Limiter = class {
     if (next) next.start();
   }
 };
-
-// src/services/ai/transport/sse.ts
-var SseParser = class {
-  constructor() {
-    this.buffer = "";
-    this.dataLines = [];
-    // A chunk ending in "\r" might be the first half of "\r\n"; hold it back.
-    this.pendingCR = false;
-  }
-  push(chunk) {
-    let text = chunk;
-    if (this.pendingCR) {
-      if (text.startsWith("\n")) text = text.slice(1);
-      this.pendingCR = false;
-    }
-    this.buffer += text;
-    const out = [];
-    for (; ; ) {
-      const m2 = /\r\n|\r|\n/.exec(this.buffer);
-      if (!m2) break;
-      if (m2[0] === "\r" && m2.index === this.buffer.length - 1) {
-        this.pendingCR = true;
-        const line3 = this.buffer.slice(0, m2.index);
-        this.buffer = "";
-        this.handleLine(line3, out);
-        break;
-      }
-      const line2 = this.buffer.slice(0, m2.index);
-      this.buffer = this.buffer.slice(m2.index + m2[0].length);
-      this.handleLine(line2, out);
-    }
-    return out;
-  }
-  // Flushes a final event that wasn't followed by a blank line (common when
-  // a non-streaming transport hands over a truncated body).
-  end() {
-    const out = [];
-    if (this.buffer) {
-      this.handleLine(this.buffer, out);
-      this.buffer = "";
-    }
-    this.dispatch(out);
-    return out;
-  }
-  handleLine(line2, out) {
-    if (line2 === "") {
-      this.dispatch(out);
-      return;
-    }
-    if (line2.startsWith(":")) return;
-    const colon = line2.indexOf(":");
-    const field = colon === -1 ? line2 : line2.slice(0, colon);
-    let value = colon === -1 ? "" : line2.slice(colon + 1);
-    if (value.startsWith(" ")) value = value.slice(1);
-    if (field === "data") this.dataLines.push(value);
-    else if (field === "event") this.eventName = value;
-    else if (field === "id") this.id = value;
-  }
-  dispatch(out) {
-    if (this.dataLines.length > 0) {
-      const ev = { data: this.dataLines.join("\n") };
-      if (this.eventName) ev.event = this.eventName;
-      if (this.id !== void 0) ev.id = this.id;
-      out.push(ev);
-    }
-    this.dataLines = [];
-    this.eventName = void 0;
-  }
-};
-async function* parseSse(chunks) {
-  const parser = new SseParser();
-  for await (const chunk of chunks) {
-    for (const ev of parser.push(chunk)) yield ev;
-  }
-  for (const ev of parser.end()) yield ev;
-}
-
-// src/services/ai/transport/types.ts
-async function readAll(chunks) {
-  let out = "";
-  for await (const c2 of chunks) out += c2;
-  return out;
-}
-
-// src/services/ai/providers/stream.ts
-async function throwIfHttpError(res) {
-  if (res.status >= 200 && res.status < 300) return;
-  const body = await readAll(res.chunks).catch(() => "");
-  throw classifyHttpError(res.status, body, res.header("retry-after"));
-}
-async function consumeBody(res, signal, onEvent, onJson) {
-  var _a;
-  const contentType = (_a = res.header("content-type")) != null ? _a : "";
-  try {
-    if (contentType.includes("application/json")) {
-      const text = await readAll(res.chunks);
-      onJson(parseJson(text));
-      return;
-    }
-    for await (const ev of parseSse(res.chunks)) {
-      if (signal.aborted) throw new AiError("aborted");
-      if (onEvent(ev) === true) return;
-    }
-  } catch (e) {
-    if (signal.aborted) throw new AiError("aborted", void 0, { cause: e });
-    if (e instanceof AiError) throw e;
-    throw new AiError("network", e instanceof Error ? e.message : String(e), { cause: e });
-  }
-}
-function parseJson(text) {
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    throw new AiError("bad_output", "Response body is not valid JSON", { cause: e });
-  }
-}
-function extractJson(text) {
-  const fenced = /```(?:json)?\s*([\s\S]*?)```/i.exec(text);
-  const candidate = (fenced ? fenced[1] : text).trim();
-  const start2 = candidate.search(/[[{]/);
-  if (start2 === -1) throw new AiError("bad_output", "No JSON found in model output");
-  const open = candidate[start2];
-  const close = open === "{" ? "}" : "]";
-  const end = candidate.lastIndexOf(close);
-  if (end <= start2) throw new AiError("bad_output", "Unterminated JSON in model output");
-  try {
-    return JSON.parse(candidate.slice(start2, end + 1));
-  } catch (e) {
-    throw new AiError("bad_output", "Model output is not valid JSON", { cause: e });
-  }
-}
-function trimSlash(url) {
-  return url.replace(/\/+$/, "");
-}
 
 // src/services/ai/providers/types.ts
 var TEST_MAX_TOKENS = 256;
@@ -24883,240 +27996,6 @@ function isMissingKey(id2, key5) {
   return providerDef(id2).key === "required" && !key5;
 }
 
-// src/services/ai/tasks/family.ts
-var EMOJI_PROPERTY = {
-  type: "string",
-  description: "\u4E00\u500B emoji\uFF0C\u53EA\u7D66\u4E00\u500B\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002"
-};
-var FAMILY_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["families"],
-  properties: {
-    families: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["topic", "label", "emoji", "groups"],
-        properties: {
-          topic: { type: "string", description: "English key, lowercase, e.g. clothing or gl-" },
-          label: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\u540D\u7A31\uFF0C\u4F8B\u5982\u300C\u670D\u88DD\u300D\u300Cgl- \u767C\u5149\u5BB6\u65CF\u300D" },
-          emoji: { ...EMOJI_PROPERTY, description: "\u4E00\u500B\u4EE3\u8868\u6574\u500B\u5B57\u65CF\u7684 emoji\uFF0C\u53EA\u7D66\u4E00\u500B\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\u3002" },
-          groups: {
-            type: "array",
-            items: {
-              type: "object",
-              additionalProperties: false,
-              required: ["label", "members"],
-              properties: {
-                label: { type: "string" },
-                members: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    additionalProperties: false,
-                    required: ["word", "zh", "emoji"],
-                    properties: {
-                      word: { type: "string" },
-                      zh: { type: "string" },
-                      emoji: EMOJI_PROPERTY
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-};
-var FAMILY_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u5E2B\uFF0C\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u628A\u5B78\u904E\u7684\u55AE\u5B57\u6574\u7406\u6210\u300C\u5B57\u65CF\u300D\uFF0C\u4E26\u88DC\u4E0A\u503C\u5F97\u4E00\u8D77\u5B78\u7684\u5EF6\u4F38\u5B57\u3002
-
-\u5206\u7FA4\u898F\u5247\uFF1A
-1. \u5B57\u65CF\u53EF\u4EE5\u4F9D\u4E3B\u984C\uFF08\u4F8B\u5982 clothing \u670D\u88DD\uFF09\u3001\u5B57\u6839\u5B57\u9996\u6216\u97F3\u7D44\uFF08\u4F8B\u5982 gl- \u548C\u5149\u6709\u95DC\uFF09\u3001\u4F7F\u7528\u60C5\u5883\u4F86\u5206\u3002\u6BCF\u500B\u5B57\u65CF\u5E95\u4E0B\u518D\u5206 1 \u5230 4 \u500B\u5C0F\u7D44\uFF0C\u5C0F\u7D44\u540D\u7A31\u7528\u7E41\u9AD4\u4E2D\u6587\u3002
-2. \u6BCF\u500B\u5B57\u65CF\u81F3\u5C11\u8981\u6709 2 \u500B\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u88E1\u7684\u5B57\uFF1B\u9019\u4E9B\u5B57\u7684 word \u7167\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u7684\u539F\u6A23\u5BEB\uFF0C\u4E0D\u8981\u6539\u6210\u539F\u5F62\u6216\u5176\u4ED6\u8A5E\u5F62\u3002
-3. \u6BCF\u500B\u5B57\u65CF\u53EF\u4EE5\u88DC 2 \u5230 5 \u500B\u5B78\u7FD2\u8005\u9084\u6C92\u5B78\u3001\u4F46\u548C\u9019\u500B\u5B57\u65CF\u5BC6\u5207\u76F8\u95DC\u7684\u5E38\u7528\u5EF6\u4F38\u5B57\uFF0C\u7A0B\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\uFF1B\u4E0D\u8981\u88DC\u7F55\u898B\u5B57\u3002
-4. zh \u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C10 \u500B\u5B57\u4EE5\u5167\u3002
-5. \u5B57\u6839\u3001\u5B57\u6E90\u53EA\u7528\u53EF\u9760\u3001\u5E38\u898B\u7684\u77E5\u8B58\u3002\u4E0D\u78BA\u5B9A\u5C31\u4E0D\u8981\u7528\u5B57\u6839\u5206\u7FA4\uFF0C\u6539\u7528\u4E3B\u984C\u5206\u7FA4\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3002
-6. topic \u7528\u82F1\u6587\u5C0F\u5BEB\uFF1Blabel \u7528\u7E41\u9AD4\u4E2D\u6587\uFF0C\u53EF\u4EE5\u593E\u82F1\u6587\u5B57\u6839\uFF08\u4F8B\u5982\u300Cgl- \u767C\u5149\u5BB6\u65CF\u300D\uFF09\u3002
-7. emoji \u6BCF\u500B\u5B57\u65CF\u3001\u6BCF\u500B\u6210\u54E1\u90FD\u53EA\u7D66\u4E00\u500B\u6700\u80FD\u4EE3\u8868\u5B83\u7684 emoji\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002
-8. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
-var FAMILY_TEMPLATES = {
-  seeded: `\u4EFB\u52D9\uFF1A\u627E\u5B57\u65CF
-\u4EE5\u3014\u8D77\u9EDE\u55AE\u5B57\u3015\u70BA\u4E2D\u5FC3\u627E\u51FA 1 \u5230 3 \u500B\u5B57\u65CF\uFF0C\u6BCF\u500B\u5B57\u65CF\u90FD\u8981\u5305\u542B\u81F3\u5C11\u4E00\u500B\u8D77\u9EDE\u55AE\u5B57\u3002
-\u3014\u8D77\u9EDE\u55AE\u5B57\u3015
-{{seeds}}{{#existingTopics}}
-
-\u5DF2\u7D93\u6709\u7684\u5B57\u65CF\uFF08\u4E0D\u8981\u91CD\u8907\uFF09\uFF1A{{existingTopics}}{{/existingTopics}}`,
-  regroup: `\u4EFB\u52D9\uFF1A\u91CD\u65B0\u5206\u7FA4
-\u628A\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6574\u7406\u6210 3 \u5230 8 \u500B\u5B57\u65CF\u3002\u4E0D\u4E00\u5B9A\u6BCF\u500B\u5B57\u90FD\u8981\u5206\u9032\u53BB\uFF0C\u627E\u4E0D\u5230\u5408\u9069\u5B57\u65CF\u7684\u5B57\u53EF\u4EE5\u7565\u904E\uFF1B\u540C\u4E00\u500B\u5B57\u53EF\u4EE5\u51FA\u73FE\u5728\u4E0D\u540C\u5B57\u65CF\u3002`
-};
-var KNOWN_FAMILY_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\uFF08\u5171 {{count}} \u500B\uFF09
-{{words}}`;
-function wordLine(w) {
-  var _a, _b;
-  const pos = (_a = w.partOfSpeech) == null ? void 0 : _a.trim();
-  const zh = (_b = w.zh) == null ? void 0 : _b.trim();
-  return `- ${w.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
-}
-function isObj(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-function str(v) {
-  return typeof v === "string" ? v.trim() : "";
-}
-function structuredJson(r) {
-  if (r.json !== void 0) return r.json;
-  if (r.stop === "max_tokens") throw new AiError("bad_output", "Structured answer was cut off (max_tokens)");
-  return extractJson(r.text);
-}
-function parseFamilies(json) {
-  if (!isObj(json) || !Array.isArray(json.families)) {
-    throw new AiError("bad_output", "family.generate: expected { families: [...] }");
-  }
-  const out = [];
-  for (const f of json.families) {
-    if (!isObj(f) || !Array.isArray(f.groups)) throw new AiError("bad_output", "family.generate: malformed family");
-    const groups = [];
-    for (const g of f.groups) {
-      if (!isObj(g) || !Array.isArray(g.members)) throw new AiError("bad_output", "family.generate: malformed group");
-      const seen = /* @__PURE__ */ new Set();
-      const members = [];
-      for (const m2 of g.members) {
-        if (!isObj(m2)) throw new AiError("bad_output", "family.generate: malformed member");
-        const word = str(m2.word);
-        const key5 = word.toLowerCase();
-        if (!word || seen.has(key5)) continue;
-        seen.add(key5);
-        members.push({ word, zh: str(m2.zh), emoji: str(m2.emoji) });
-      }
-      if (members.length) groups.push({ label: str(g.label), members });
-    }
-    const topic = str(f.topic);
-    if (!groups.length || !(topic || str(f.label))) continue;
-    out.push({ topic: topic || str(f.label), label: str(f.label) || topic, emoji: str(f.emoji), groups });
-  }
-  return out;
-}
-var familyGenerate = {
-  id: "family.generate",
-  version: 1,
-  surface: "family",
-  label: "ai.task.family.generate",
-  tier: "smart",
-  // A full regroup lists many members; leave room for thinking too.
-  maxTokens: 8192,
-  // The learner's answer-length limit is for prose, not a JSON list.
-  answerChars: () => 0,
-  build(input, ctx) {
-    var _a, _b;
-    const seeds = (_a = input.seeds) != null ? _a : [];
-    const user = seeds.length ? renderTemplate(FAMILY_TEMPLATES.seeded, {
-      seeds: seeds.map(wordLine).join("\n"),
-      existingTopics: ((_b = input.existingTopics) != null ? _b : []).join("\u3001")
-    }) : renderTemplate(FAMILY_TEMPLATES.regroup, {});
-    return composeRequest({
-      base: FAMILY_BASE_PROMPT,
-      context: [renderTemplate(KNOWN_FAMILY_TEMPLATE, { count: input.known.length, words: input.known.map(wordLine).join("\n") })],
-      profile: profileForTask(ctx.profile, familyGenerate, input),
-      // Each generation stands alone.
-      history: [],
-      user,
-      tier: familyGenerate.tier,
-      maxTokens: familyGenerate.maxTokens,
-      output: { name: "word_families", schema: FAMILY_SCHEMA }
-    });
-  },
-  parse(r) {
-    return parseFamilies(structuredJson(r));
-  }
-};
-var FAMILY_EXPAND_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["members"],
-  properties: {
-    members: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["group", "word", "zh", "emoji"],
-        properties: {
-          group: { type: "string", description: "\u54EA\u4E00\u500B\u65E2\u6709\u5206\u7D44\u6700\u9069\u5408\u9019\u500B\u65B0\u5B57\uFF1B\u7167\u539F\u6A23\u6284\u65E2\u6709\u5206\u7D44\u540D\u7A31\uFF0C\u771F\u7684\u6C92\u6709\u5408\u9069\u7684\u624D\u81EA\u5DF1\u53D6\u4E00\u500B\u65B0\u540D\u7A31" },
-          word: { type: "string" },
-          zh: { type: "string" },
-          emoji: EMOJI_PROPERTY
-        }
-      }
-    }
-  }
-};
-var FAMILY_EXPAND_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u5E2B\uFF0C\u8981\u5E6B\u4E00\u500B\u5DF2\u7D93\u5206\u597D\u7D44\u7684\u300C\u5B57\u65CF\u300D\u88DC\u4E0A\u5E7E\u500B\u65B0\u6210\u54E1\uFF0C\u8B93\u5B78\u7FD2\u8005\u7E7C\u7E8C\u5B78\u3002
-
-\u898F\u5247\uFF1A
-1. \u53EA\u88DC 2 \u5230 5 \u500B\u9019\u500B\u5B57\u65CF\u9084\u6C92\u6709\u7684\u5E38\u7528\u5EF6\u4F38\u5B57\uFF0C\u7A0B\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\uFF1B\u4E0D\u8981\u88DC\u7F55\u898B\u5B57\uFF0C\u4E5F\u4E0D\u8981\u91CD\u8907\u3014\u5B57\u65CF\u3015\u88E1\u5DF2\u7D93\u6709\u7684\u6210\u54E1\u3002
-2. \u6BCF\u500B\u65B0\u6210\u54E1\u5148\u5224\u65B7\u6700\u76F8\u95DC\u7684\u65E2\u6709\u5206\u7D44\uFF0Cgroup \u6B04\u4F4D\u7167\u6284\u8A72\u5206\u7D44\u540D\u7A31\uFF0C\u4E0D\u8981\u6539\u5BEB\uFF1B\u771F\u7684\u627E\u4E0D\u5230\u5408\u9069\u7684\u65E2\u6709\u5206\u7D44\uFF0C\u624D\u81EA\u5DF1\u53D6\u4E00\u500B\u65B0\u5206\u7D44\u540D\u7A31\u3002
-3. zh \u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C10 \u500B\u5B57\u4EE5\u5167\u3002
-4. emoji \u6BCF\u500B\u65B0\u6210\u54E1\u53EA\u7D66\u4E00\u500B\u6700\u80FD\u4EE3\u8868\u5B83\u7684 emoji\uFF1B\u6C92\u6709\u5B8C\u5168\u5C0D\u61C9\u7684\u610F\u601D\u5C31\u6311\u6700\u63A5\u8FD1\u7684\uFF0C\u4E0D\u8981\u7559\u7A7A\u3002
-5. \u5B57\u6839\u3001\u5B57\u6E90\u4E0D\u78BA\u5B9A\u5C31\u4E0D\u8981\u7528\uFF0C\u53EA\u6839\u64DA\u53EF\u9760\u3001\u5E38\u898B\u7684\u77E5\u8B58\u5224\u65B7\u76F8\u95DC\u6027\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3002
-6. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
-var FAMILY_EXPAND_FAMILY_TEMPLATE = `\u3014\u5B57\u65CF\u3015{{label}}\uFF08{{topic}}\uFF09
-\u73FE\u6709\u5206\u7D44\u8207\u6210\u54E1\uFF1A
-{{groups}}`;
-var FAMILY_EXPAND_USER_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5E6B\u9019\u500B\u5B57\u65CF\u60F3 2 \u5230 5 \u500B\u65B0\u6210\u54E1
-\u5EF6\u4F38\u5B57\u8981\u548C\u3014\u5B57\u65CF\u3015\u7684\u5176\u4E2D\u4E00\u500B\u5206\u7D44\u5BC6\u5207\u76F8\u95DC\uFF1B\u4E0D\u8981\u91CD\u8907\u3014\u5B57\u65CF\u3015\u88E1\u5DF2\u7D93\u6709\u7684\u5B57\u3002`;
-function expandGroupLine(g) {
-  const members = g.members.map((m2) => `${m2.word}${m2.zh ? `\uFF08${m2.zh}\uFF09` : ""}`).join("\u3001");
-  return `- ${g.label}\uFF1A${members || "\uFF08\u7121\uFF09"}`;
-}
-function parseFamilyExpandMembers(json) {
-  if (!isObj(json) || !Array.isArray(json.members)) {
-    throw new AiError("bad_output", "family.expand: expected { members: [...] }");
-  }
-  const out = [];
-  const seen = /* @__PURE__ */ new Set();
-  for (const m2 of json.members) {
-    if (!isObj(m2)) throw new AiError("bad_output", "family.expand: malformed member");
-    const word = str(m2.word);
-    const key5 = word.toLowerCase();
-    if (!word || seen.has(key5)) continue;
-    seen.add(key5);
-    out.push({ group: str(m2.group), word, zh: str(m2.zh), emoji: str(m2.emoji) });
-  }
-  return out;
-}
-var familyExpand = {
-  id: "family.expand",
-  version: 1,
-  surface: "family",
-  tier: "fast",
-  maxTokens: 2048,
-  // Structured JSON, not prose — same reasoning as family.generate.
-  answerChars: () => 0,
-  build(input, ctx) {
-    return composeRequest({
-      base: FAMILY_EXPAND_BASE_PROMPT,
-      context: [
-        renderTemplate(FAMILY_EXPAND_FAMILY_TEMPLATE, { topic: input.topic, label: input.label, groups: input.groups.map(expandGroupLine).join("\n") }),
-        renderTemplate(KNOWN_FAMILY_TEMPLATE, { count: input.known.length, words: input.known.map(wordLine).join("\n") })
-      ],
-      profile: profileForTask(ctx.profile, familyExpand, input),
-      history: [],
-      user: renderTemplate(FAMILY_EXPAND_USER_TEMPLATE, {}),
-      tier: familyExpand.tier,
-      maxTokens: familyExpand.maxTokens,
-      output: { name: "family_expand", schema: FAMILY_EXPAND_SCHEMA }
-    });
-  },
-  parse(r) {
-    return parseFamilyExpandMembers(structuredJson(r));
-  }
-};
-var FAMILY_TASKS = [familyGenerate, familyExpand];
-
 // src/services/ai/tasks/dna.ts
 var TYPE_ZH = { prefix: "\u5B57\u9996", root: "\u5B57\u6839", suffix: "\u5B57\u5C3E" };
 var MAX_ANALYZE_WORDS = 10;
@@ -25205,11 +28084,11 @@ var DNA_ANALYZE_BASE_PROMPT = `\u4F60\u662F\u82F1\u6587\u69CB\u8A5E\uFF08word DN
 5. \u771F\u7684\u62C6\u4E0D\u51FA\u5B57\u9996/\u5B57\u6839/\u5B57\u5C3E\uFF08\u50CF knife\u3001jar \u9019\u7A2E\u672C\u8EAB\u5C31\u662F\u4E00\u500B\u8A5E\u7D20\u7684\u5B57\uFF09\u5C31 status \u8A2D "none"\u3001parts \u7D66\u7A7A\u9663\u5217\uFF1Bgloss \u4ECD\u586B\u9019\u500B\u5B57\u6574\u9AD4\u7684\u610F\u601D\u3002
 6. \u6BCF\u500B\u65B0\u5B57\u7D20\u88DC 3 \u5230 5 \u500B\u5E38\u898B\u3001\u4F46\u4E0D\u5728\u3014\u8981\u5206\u6790\u7684\u55AE\u5B57\u3015\u88E1\u7684\u5EF6\u4F38\u5B57\u7576 suggested\u3002
 7. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
-function wordLine2(w) {
+function wordLine2(w2) {
   var _a, _b;
-  const pos = (_a = w.partOfSpeech) == null ? void 0 : _a.trim();
-  const zh = (_b = w.zh) == null ? void 0 : _b.trim();
-  return `- ${w.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
+  const pos = (_a = w2.partOfSpeech) == null ? void 0 : _a.trim();
+  const zh = (_b = w2.zh) == null ? void 0 : _b.trim();
+  return `- ${w2.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
 }
 function knownLine(m2) {
   const variants = m2.variants.length ? `\uFF0F${m2.variants.join("\u3001")}` : "";
@@ -25220,7 +28099,7 @@ var ANALYZE_TEMPLATE = `\u3014\u5DF2\u77E5\u5B57\u7D20\u3015\uFF08{{knownCount}}
 
 \u3014\u8981\u5206\u6790\u7684\u55AE\u5B57\u3015\uFF08{{count}} \u500B\uFF09
 {{words}}`;
-function isObj2(v) {
+function isObj4(v) {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 function isStrArr(v) {
@@ -25229,21 +28108,21 @@ function isStrArr(v) {
 var PART_TYPES = /* @__PURE__ */ new Set(["prefix", "root", "suffix", "inflection"]);
 var MORPHEME_TYPES = /* @__PURE__ */ new Set(["prefix", "root", "suffix"]);
 function parsePart(p) {
-  if (!isObj2(p) || typeof p.text !== "string" || typeof p.type !== "string" || !PART_TYPES.has(p.type) || typeof p.meaningZh !== "string" || typeof p.morphemeRef !== "string") {
+  if (!isObj4(p) || typeof p.text !== "string" || typeof p.type !== "string" || !PART_TYPES.has(p.type) || typeof p.meaningZh !== "string" || typeof p.morphemeRef !== "string") {
     throw new AiError("bad_output", "dna.analyze: malformed part");
   }
   return { text: p.text, type: p.type, meaningZh: p.meaningZh, morphemeRef: p.morphemeRef };
 }
-function parseWord(w) {
-  if (!isObj2(w) || typeof w.word !== "string" || !w.word.trim() || typeof w.emoji !== "string" || w.status !== "ok" && w.status !== "none" || !Array.isArray(w.parts) || typeof w.gloss !== "string") {
+function parseWord(w2) {
+  if (!isObj4(w2) || typeof w2.word !== "string" || !w2.word.trim() || typeof w2.emoji !== "string" || w2.status !== "ok" && w2.status !== "none" || !Array.isArray(w2.parts) || typeof w2.gloss !== "string") {
     throw new AiError("bad_output", "dna.analyze: malformed word");
   }
-  return { word: w.word.trim(), emoji: w.emoji, status: w.status, parts: w.parts.map(parsePart), gloss: w.gloss };
+  return { word: w2.word.trim(), emoji: w2.emoji, status: w2.status, parts: w2.parts.map(parsePart), gloss: w2.gloss };
 }
 function parseTimeline2(v) {
   if (!Array.isArray(v)) throw new AiError("bad_output", "dna.analyze: malformed timeline");
   return v.map((t2) => {
-    if (!isObj2(t2) || typeof t2.stage !== "string" || typeof t2.form !== "string") {
+    if (!isObj4(t2) || typeof t2.stage !== "string" || typeof t2.form !== "string") {
       throw new AiError("bad_output", "dna.analyze: malformed timeline entry");
     }
     return { stage: t2.stage, form: t2.form };
@@ -25254,7 +28133,7 @@ function parseSuggestedWords(v, errPrefix) {
   const out = [];
   const seen = /* @__PURE__ */ new Set();
   for (const s of v) {
-    if (!isObj2(s) || typeof s.word !== "string" || typeof s.zh !== "string" || typeof s.emoji !== "string") {
+    if (!isObj4(s) || typeof s.word !== "string" || typeof s.zh !== "string" || typeof s.emoji !== "string") {
       throw new AiError("bad_output", `${errPrefix}: malformed suggested entry`);
     }
     const word = s.word.trim();
@@ -25266,7 +28145,7 @@ function parseSuggestedWords(v, errPrefix) {
   return out;
 }
 function parseMorpheme(m2) {
-  if (!isObj2(m2) || typeof m2.ref !== "string" || !m2.ref.trim() || typeof m2.type !== "string" || !MORPHEME_TYPES.has(m2.type) || typeof m2.form !== "string" || !m2.form.trim() || !isStrArr(m2.variants) || typeof m2.meaningZh !== "string" || typeof m2.origin !== "string" || typeof m2.factTitle !== "string" || typeof m2.factBody !== "string") {
+  if (!isObj4(m2) || typeof m2.ref !== "string" || !m2.ref.trim() || typeof m2.type !== "string" || !MORPHEME_TYPES.has(m2.type) || typeof m2.form !== "string" || !m2.form.trim() || !isStrArr(m2.variants) || typeof m2.meaningZh !== "string" || typeof m2.origin !== "string" || typeof m2.factTitle !== "string" || typeof m2.factBody !== "string") {
     throw new AiError("bad_output", "dna.analyze: malformed morpheme");
   }
   return {
@@ -25283,7 +28162,7 @@ function parseMorpheme(m2) {
   };
 }
 function parseDnaAnalyze(json) {
-  if (!isObj2(json) || !Array.isArray(json.words) || !Array.isArray(json.morphemes)) {
+  if (!isObj4(json) || !Array.isArray(json.words) || !Array.isArray(json.morphemes)) {
     throw new AiError("bad_output", "dna.analyze: expected { words, morphemes }");
   }
   return { words: json.words.map(parseWord), morphemes: json.morphemes.map(parseMorpheme) };
@@ -25348,7 +28227,7 @@ var EXPAND_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5EF6\u4F38\u5B57
 
 {{#exclude}}\u3014\u5DF2\u7D93\u6709\u7684\u5B57\u3015\uFF08\u4E0D\u8981\u91CD\u8907\uFF09\uFF1A{{exclude}}{{/exclude}}`;
 function parseDnaExpand(json) {
-  if (!isObj2(json) || !Array.isArray(json.words)) throw new AiError("bad_output", "dna.expand: expected { words }");
+  if (!isObj4(json) || !Array.isArray(json.words)) throw new AiError("bad_output", "dna.expand: expected { words }");
   return { words: parseSuggestedWords(json.words, "dna.expand") };
 }
 var dnaExpand = {
@@ -25387,7 +28266,7 @@ var DNA_CHAT_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u69CB\u8A5E\uFF
 3. \u56DE\u7B54\u76F4\u63A5\u9032\u5165\u5167\u5BB9\uFF0C\u4E0D\u7528\u6A19\u984C\uFF08\u4E0D\u8981\u7528 #\uFF09\uFF0C\u7528 Markdown\uFF0C\u91CD\u9EDE\u7528\u7C97\u9AD4\u3002
 4. \u53EA\u7528\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u5217\u51FA\u7684\u5B57\u8209\u4F8B\uFF0C\u4E0D\u8981\u6DF7\u5165\u4ED6\u9084\u6C92\u5B78\u904E\u7684\u5B57\u3002`;
 var MORPHEME_BLOCK_TEMPLATE = `\u3014\u9019\u500B\u5B57\u7D20\u3015{{form}}\uFF08{{type}}\uFF09\uFF1A{{meaningZh}}`;
-var WORDS_BLOCK_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015
+var WORDS_BLOCK_TEMPLATE2 = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015
 {{words}}`;
 var SELECTION_HEADER4 = `{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015
 {{selection}}
@@ -25403,11 +28282,11 @@ var DNA_CHAT_TEMPLATES = {
 
 \u63A5\u8457\u524D\u9762\u7684\u5C0D\u8A71\u56DE\u7B54\uFF0C\u4E0D\u7528\u5BEB\u6A19\u984C\u3002`
 };
-function dnaChatWordLine(w) {
+function dnaChatWordLine(w2) {
   var _a, _b;
-  const pos = (_a = w.partOfSpeech) == null ? void 0 : _a.trim();
-  const zh = (_b = w.zh) == null ? void 0 : _b.trim();
-  return `- ${w.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
+  const pos = (_a = w2.partOfSpeech) == null ? void 0 : _a.trim();
+  const zh = (_b = w2.zh) == null ? void 0 : _b.trim();
+  return `- ${w2.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
 }
 function dnaChatTask(id2) {
   const task = {
@@ -25420,7 +28299,7 @@ function dnaChatTask(id2) {
       var _a, _b;
       const m2 = input.morpheme;
       const morphemeBlock = m2 ? renderTemplate(MORPHEME_BLOCK_TEMPLATE, { form: m2.form, type: TYPE_ZH[m2.type], meaningZh: m2.meaningZh }) : "";
-      const wordsBlock = input.words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE, { words: input.words.map(dnaChatWordLine).join("\n") }) : "";
+      const wordsBlock = input.words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE2, { words: input.words.map(dnaChatWordLine).join("\n") }) : "";
       return composeRequest({
         base: DNA_CHAT_BASE_PROMPT,
         cached: [morphemeBlock].filter(Boolean),
@@ -25474,31 +28353,31 @@ var WORD_EMOJI_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u5E6B\u82F1\u6587\u55AE\u
 var WORD_EMOJI_TEMPLATE = `\u3014\u55AE\u5B57\u6E05\u55AE\u3015\uFF08\u5171 {{count}} \u500B\uFF0C\u5E6B\u6BCF\u500B\u5B57\u6311\u4E00\u500B emoji\uFF09
 {{words}}`;
 var WORD_EMOJI_USER_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5E6B\u3014\u55AE\u5B57\u6E05\u55AE\u3015\u88E1\u7684\u6BCF\u500B\u5B57\u6311\u4E00\u500B emoji`;
-function wordLine3(w) {
+function wordLine3(w2) {
   var _a, _b;
-  const pos = (_a = w.partOfSpeech) == null ? void 0 : _a.trim();
-  const zh = (_b = w.zh) == null ? void 0 : _b.trim();
-  return `- ${w.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
+  const pos = (_a = w2.partOfSpeech) == null ? void 0 : _a.trim();
+  const zh = (_b = w2.zh) == null ? void 0 : _b.trim();
+  return `- ${w2.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
 }
-function isObj3(v) {
+function isObj5(v) {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
-function str2(v) {
+function str4(v) {
   return typeof v === "string" ? v.trim() : "";
 }
 function parseWordEmojiItems(json) {
-  if (!isObj3(json) || !Array.isArray(json.items)) {
+  if (!isObj5(json) || !Array.isArray(json.items)) {
     throw new AiError("bad_output", "word.emoji: expected { items: [...] }");
   }
   const out = [];
   const seen = /* @__PURE__ */ new Set();
   for (const it of json.items) {
-    if (!isObj3(it)) throw new AiError("bad_output", "word.emoji: malformed item");
-    const word = str2(it.word);
+    if (!isObj5(it)) throw new AiError("bad_output", "word.emoji: malformed item");
+    const word = str4(it.word);
     const key5 = word.toLowerCase();
     if (!word || seen.has(key5)) continue;
     seen.add(key5);
-    out.push({ word, emoji: str2(it.emoji) });
+    out.push({ word, emoji: str4(it.emoji) });
   }
   return out;
 }
@@ -25563,7 +28442,7 @@ var GRAMMAR_GRADE_TEMPLATE = `\u3014\u5B78\u7FD2\u8005\u7684\u4F5C\u7B54\u3015
 
 \u4EFB\u52D9\uFF1A\u6279\u6539\u9019\u500B\u4F5C\u7B54\u3002`;
 var KIND = { rewrite: "\u6539\u5BEB\u984C", translate: "\u7FFB\u8B6F\u984C" };
-function str3(v) {
+function str5(v) {
   return typeof v === "string" ? v.trim() : "";
 }
 function parseGrammarGrade(json) {
@@ -25572,11 +28451,11 @@ function parseGrammarGrade(json) {
   }
   const o = json;
   if (typeof o.correct !== "boolean") throw new AiError("bad_output", "grammar.grade: correct must be true or false");
-  let feedback = str3(o.feedback);
+  let feedback = str5(o.feedback);
   if (!feedback) throw new AiError("bad_output", "grammar.grade: empty feedback");
   if (feedback.length > MAX_FEEDBACK_CHARS) feedback = `${feedback.slice(0, MAX_FEEDBACK_CHARS - 1)}\u2026`;
   const out = { correct: o.correct, feedback };
-  const corrected = str3(o.corrected);
+  const corrected = str5(o.corrected);
   if (!o.correct && corrected) out.corrected = corrected;
   return out;
 }
@@ -25618,376 +28497,7 @@ var grammarGrade = {
     return parseGrammarGrade(structuredJson(r));
   }
 };
-var GRAMMAR_TASKS2 = [grammarGrade];
-
-// src/services/ai/tasks/grammarQuestions.ts
-var DEFAULT_QUESTION_COUNT = 6;
-var MAX_QUESTION_COUNT = 10;
-var MAX_WORDS = 30;
-var MAX_AVOID_STEMS = 40;
-var MAX_SENTENCES = 3;
-var MAX_LEAD = 3;
-var MAX_SENTENCE_CHARS = 300;
-var SCENARIO_TYPES = ["choice", "find-error"];
-var SCENARIO_FORMS = ["dialogue", "story"];
-var GAP = "____";
-var GRAMMAR_QUESTIONS_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["scene", "form", "speakers", "turns"],
-  properties: {
-    scene: { type: "string", description: "\u4E00\u53E5\u8A71\u4EA4\u4EE3\u60C5\u5883\uFF08\u7E41\u9AD4\u4E2D\u6587\uFF09\uFF0C\u4F8B\u5982\u300C\u5728\u5496\u5561\u5E97\u9EDE\u9910\u300D" },
-    form: { type: "string", enum: [...SCENARIO_FORMS] },
-    speakers: { type: "array", items: { type: "string" }, description: "\u5C0D\u8A71\u7684\u4EBA\u7269\u540D\u5B57\uFF1B\u77ED\u6587\u586B\u7A7A\u9663\u5217" },
-    turns: {
-      type: "array",
-      description: "\u4F9D\u6642\u9593\u9806\u5E8F\u7684\u53E5\u5B50\uFF0C\u6BCF\u4E00\u53E5\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["speaker", "text", "ask"],
-        properties: {
-          speaker: { type: "string", description: "\u9019\u4E00\u53E5\u662F\u8AB0\u8AAA\u7684\uFF1B\u77ED\u6587\u586B\u7A7A\u5B57\u4E32" },
-          text: { type: "string", description: "\u4E32\u5834\u53E5\uFF08\u4E0D\u51FA\u984C\uFF09\u7684\u82F1\u6587\u53E5\u5B50\uFF1B\u6709 ask \u6642\u586B\u7A7A\u5B57\u4E32" },
-          ask: {
-            type: "array",
-            description: "\u9019\u4E00\u53E5\u8981\u51FA\u984C\u5C31\u653E\u4E00\u500B\u984C\u76EE\uFF0C\u4E0D\u51FA\u984C\u653E\u7A7A\u9663\u5217",
-            items: {
-              type: "object",
-              additionalProperties: false,
-              required: [
-                "objectiveId",
-                "topicId",
-                "type",
-                "stem",
-                "options",
-                "answer",
-                "accepted",
-                "explanation",
-                "distractors",
-                "sentenceZh",
-                "errorTag",
-                "sourceIndex"
-              ],
-              properties: {
-                objectiveId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u958B\u982D\u300C\u4E3B\u984Cid/\u76EE\u6A19id\u300D\u88E1\u300C/\u300D\u5F8C\u9762\u7684\u76EE\u6A19 id" },
-                topicId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u958B\u982D\u300C/\u300D\u524D\u9762\u7684\u4E3B\u984C id" },
-                type: { type: "string", enum: [...SCENARIO_TYPES] },
-                stem: {
-                  type: "string",
-                  description: "\u984C\u5E79\u3002choice\uFF1A\u9019\u4E00\u53E5\u82F1\u6587\uFF0C\u6070\u597D\u6709\u4E00\u500B ____\uFF1Bfind-error\uFF1A\u5B8C\u6574\u7684\u4E00\u53E5\u82F1\u6587\uFF08\u88E1\u9762\u6709\u4E00\u8655\u932F\uFF09"
-                },
-                options: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "choice\uFF1A3\u20134 \u500B\u9078\u9805\uFF1Bfind-error\uFF1A3\u20134 \u500B\u6A19\u5728\u53E5\u5B50\u88E1\u7684\u7247\u6BB5\uFF08\u539F\u6587\u7167\u6284\uFF09"
-                },
-                answer: { type: "string", description: "choice\uFF1A\u6B63\u89E3\uFF1Bfind-error\uFF1A\u932F\u7684\u90A3\u500B\u7247\u6BB5\uFF08\u5FC5\u9808\u662F options \u5176\u4E2D\u4E00\u500B\uFF09" },
-                accepted: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "find-error\uFF1Aaccepted[0] \u662F\u6539\u6B63\u5F8C\u7684\u5BEB\u6CD5\uFF1Bchoice\uFF1A\u7A7A\u9663\u5217"
-                },
-                explanation: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\uFF0C60 \u5B57\u4EE5\u5167" },
-                distractors: {
-                  type: "array",
-                  description: "\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\uFF0825 \u5B57\u4EE5\u5167\uFF09",
-                  items: {
-                    type: "object",
-                    additionalProperties: false,
-                    required: ["option", "why"],
-                    properties: { option: { type: "string" }, why: { type: "string" } }
-                  }
-                },
-                sentenceZh: { type: "string", description: "\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F" },
-                errorTag: { type: "string", enum: [...ERROR_TAGS], description: "\u5B78\u7FD2\u8005\u7B54\u932F\u6642\u6700\u53EF\u80FD\u72AF\u7684\u932F\u8AA4\u985E\u578B" },
-                sourceIndex: {
-                  type: "integer",
-                  description: "\u9019\u984C\u6539\u7DE8\u81EA\u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015\u7684\u7B2C\u5E7E\u53E5\uFF08\u5F9E 1 \u958B\u59CB\uFF09\uFF1B\u4E0D\u662F\u6539\u7DE8\u7684\u984C\u76EE\u586B 0"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-};
-var GRAMMAR_QUESTIONS_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u8001\u5E2B\uFF0C\u7528\u4E00\u6BB5\u9023\u7E8C\u7684\u60C5\u5883\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u505A\u9078\u64C7\u984C\u7DF4\u7FD2\u3002\u3014\u51FA\u984C\u53C3\u8003\u3015\u662F\u9019\u6B21\u8981\u8003\u7684\u91CD\u9EDE\uFF0C\u6BCF\u500B\u91CD\u9EDE\u6709\u56FA\u5B9A\u7684 id\u3002
-
-\u898F\u5247\uFF1A
-1. \u53EA\u8003\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u7684\u91CD\u9EDE\uFF1B\u6BCF\u4E00\u984C\u7684 objectiveId \u5FC5\u9808\u662F\u6E05\u55AE\u88E1\u7684 id\uFF0C\u4E0D\u8981\u81EA\u5DF1\u767C\u660E\u3002
-2. \u9023\u8CAB\uFF1A\u5168\u90E8\u984C\u76EE\u767C\u751F\u5728\u540C\u4E00\u500B\u60C5\u5883\uFF0C\u4F9D\u6642\u9593\u9806\u5E8F\u5F80\u4E0B\u8D70\uFF0C\u6BCF\u4E00\u53E5\u90FD\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5\uFF1B\u8B80\u5B8C\u5C31\u662F\u4E00\u6BB5\u5B8C\u6574\u7684\u5C0D\u8A71\u6216\u77ED\u6587\u3002\u6709\u3014\u4E0A\u4E00\u6BB5\u3015\u6642\uFF0C\u5F9E\u5B83\u7684\u6700\u5F8C\u4E00\u53E5\u76F4\u63A5\u63A5\u8457\u5BEB\uFF0C\u4EBA\u7269\u548C\u5834\u666F\u4E0D\u8B8A\u3002\u53EF\u4EE5\u7A7F\u63D2\u4E0D\u51FA\u984C\u7684\u4E32\u5834\u53E5\uFF0C\u4E00\u7D44\u6700\u591A 3 \u53E5\u3002
-3. \u53EA\u51FA\u9EDE\u9078\u7684\u984C\u578B\uFF08choice\u3001find-error\uFF09\uFF0C\u5B78\u7FD2\u8005\u4E0D\u9700\u8981\u6253\u4EFB\u4F55\u5B57\u3002
-4. \u6709\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015\u6642\uFF0C\u5148\u8003\u5F31\u9EDE\u88E1\u3001\u800C\u4E14\u5728\u3014\u51FA\u984C\u53C3\u8003\u3015\u5167\u7684\u91CD\u9EDE\uFF0C\u6700\u591A\u5360\u4E00\u534A\u984C\u6578\uFF1B\u5176\u9918\u5E73\u5747\u5206\u914D\u3002\u540C\u4E00\u500B\u91CD\u9EDE\u6700\u591A\u5169\u984C\uFF0C\u540C\u4E00\u500B\u91CD\u9EDE\u4E0D\u8981\u9023\u7E8C\u51FA\u4E09\u984C\u3002
-5. \u6BCF\u984C\u53EA\u6709\u4E00\u500B\u6B63\u78BA\u7B54\u6848\u3002\u932F\u8AA4\u9078\u9805\u8981\u300C\u770B\u8D77\u4F86\u53EF\u80FD\u5C0D\uFF0C\u4F46\u653E\u5728\u9019\u500B\u53E5\u5B50\u88E1\u4E0D\u5C0D\u300D\uFF1B\u9700\u8981\u7684\u8A71\u7528\u524D\u5F8C\u6587\u628A\u7B54\u6848\u9396\u4F4F\u3002
-6. \u7B54\u984C\u5F8C\u7684\u89E3\u8AAA\uFF1A
-   - explanation\uFF1A60 \u5B57\u4EE5\u5167\uFF0C\u5148\u9EDE\u51FA\u53E5\u5B50\u88E1\u7684\u5224\u65B7\u4F9D\u64DA\uFF0C\u518D\u8AAA\u70BA\u4EC0\u9EBC\u662F\u9019\u500B\u7B54\u6848\u3002
-   - distractors\uFF1A\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C25 \u5B57\u4EE5\u5167\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\u3002
-   - sentenceZh\uFF1A\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u4E2D\u6587\u7FFB\u8B6F\u3002
-7. errorTag \u53EA\u80FD\u5F9E\u4EFB\u52D9\u5217\u51FA\u7684\u6E05\u55AE\u9078\u3002
-8. \u53E5\u5B50\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF0C\u76EE\u6A19\u4EE5\u5916\u7684\u751F\u5B57\u8D8A\u5C11\u8D8A\u597D\uFF1B\u6709\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6642\u512A\u5148\u7528\u88E1\u9762\u7684\u5B57\uFF0C\u4F46\u4E0D\u8981\u786C\u585E\u3002
-9. \u4E0D\u8981\u91CD\u8907\u3014\u907F\u514D\u91CD\u8907\u3015\u88E1\u7684\u984C\u5E79\u3002\u53EA\u7528\u81EA\u7136\u3001\u5E38\u898B\u7684\u82F1\u6587\uFF0C\u4E0D\u78BA\u5B9A\u7684\u7528\u6CD5\u4E0D\u8981\u51FA\u3002\u6240\u6709\u53E5\u5B50\u90FD\u8981\u539F\u5275\uFF0C\u4E0D\u8981\u5F15\u7528\u51FA\u7248\u6559\u6750\u6216\u8003\u984C\u3002
-10. \u4E2D\u6587\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u6307\u5B9A\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\u6642\u7167\u5B83\u3002
-11. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
-var REFERENCE_BLOCK_TEMPLATE = `\u3014\u51FA\u984C\u53C3\u8003\u3015
-{{lines}}`;
-var WEAKNESS_BLOCK_TEMPLATE = `\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015
-{{weakness}}`;
-var PREVIOUS_BLOCK_TEMPLATE = `\u3014\u4E0A\u4E00\u6BB5\u3015
-\u5834\u666F\uFF1A{{scene}}
-\u6700\u5F8C\u5169\u53E5\uFF1A
-{{lines}}`;
-var SENTENCES_BLOCK_TEMPLATE = `\u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015
-{{sentences}}`;
-var KNOWN_BLOCK_TEMPLATE = `\u3014\u5DF2\u5B78\u904E\u7684\u6587\u6CD5\u3015{{titles}}`;
-var WORDS_BLOCK_TEMPLATE2 = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015{{words}}`;
-var AVOID_BLOCK_TEMPLATE = `\u3014\u907F\u514D\u91CD\u8907\u3015\u5DF2\u7D93\u51FA\u904E\u7684\u984C\u5E79\uFF1A
-{{stems}}`;
-var GRAMMAR_QUESTIONS_TEMPLATE = `\u4EFB\u52D9\uFF1A\u6587\u6CD5\u60C5\u5883\u7DF4\u7FD2\uFF08{{topics}}\uFF09
-\u51FA {{count}} \u984C\u3002type \u53EF\u4EE5\u7528\uFF1Achoice\uFF08\u53E5\u5B50\u88E1\u4E00\u500B ____\uFF0B3\u20134 \u500B\u9078\u9805\uFF09\u3001find-error\uFF08\u53E5\u5B50\u88E1\u6A19\u51FA 3\u20134 \u500B\u7247\u6BB5\uFF0C\u9078\u51FA\u932F\u7684\u90A3\u500B\uFF09\u3002
-\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u662F objectiveId\uFF5C\u5B78\u7FD2\u76EE\u6A19\uFF5C\u4E3B\u984C\uFF08\u53E5\u578B\uFF09\u3002
-errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
-function objectiveRef(topicId, objectiveId) {
-  return `${topicId}/${objectiveId}`;
-}
-function cleanSentences(list) {
-  var _a;
-  const out = [];
-  const seen = /* @__PURE__ */ new Set();
-  for (const x3 of list != null ? list : []) {
-    const sentence = ((_a = x3 == null ? void 0 : x3.sentence) != null ? _a : "").replace(/\s+/g, " ").trim().slice(0, MAX_SENTENCE_CHARS);
-    if (!sentence || seen.has(sentence.toLowerCase())) continue;
-    seen.add(sentence.toLowerCase());
-    out.push({ path: x3.path, sentence });
-    if (out.length >= MAX_SENTENCES) break;
-  }
-  return out;
-}
-function clean(list, max) {
-  const out = [];
-  const seen = /* @__PURE__ */ new Set();
-  for (const s of list != null ? list : []) {
-    const v = (s != null ? s : "").replace(/\s+/g, " ").trim();
-    if (!v || seen.has(v.toLowerCase())) continue;
-    seen.add(v.toLowerCase());
-    out.push(v);
-    if (out.length >= max) break;
-  }
-  return out;
-}
-function targetRefs(targets) {
-  const out = [];
-  for (const t2 of targets) {
-    const want = new Set(t2.objectiveIds);
-    const objs = t2.topic.objectives.filter((o) => want.has(o.id));
-    for (const objective of objs.length ? objs : t2.topic.objectives) out.push({ topic: t2.topic, objective });
-  }
-  return out;
-}
-function isObj4(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-function str4(v) {
-  return typeof v === "string" ? v.trim() : "";
-}
-function strList(v) {
-  return Array.isArray(v) ? v.map(str4).filter(Boolean) : [];
-}
-function uniq(list) {
-  const out = [];
-  for (const s of list) if (!out.includes(s)) out.push(s);
-  return out;
-}
-var GAP_RE = /_{3,}/g;
-function parseDistractors(v) {
-  const out = {};
-  if (Array.isArray(v)) {
-    for (const d of v) {
-      if (!isObj4(d)) continue;
-      const option = str4(d.option);
-      const why = str4(d.why);
-      if (option && why) out[option] = why;
-    }
-  } else if (isObj4(v)) {
-    for (const [k, w] of Object.entries(v)) {
-      const option = k.trim();
-      const why = str4(w);
-      if (option && why) out[option] = why;
-    }
-  }
-  return out;
-}
-function resolveRef(raw, refs) {
-  let topicId = str4(raw.topicId);
-  let objectiveId = str4(raw.objectiveId);
-  if (objectiveId.includes("/")) {
-    const [t2, ...rest] = objectiveId.split("/");
-    const o = rest.join("/");
-    if (!topicId) topicId = t2;
-    if (topicId === t2) objectiveId = o;
-  }
-  if (!objectiveId) return null;
-  if (!refs) return topicId ? { topicId, objectiveId } : null;
-  if (topicId) return refs.has(objectiveRef(topicId, objectiveId)) ? { topicId, objectiveId } : null;
-  const hits = [...refs].filter((r) => r.endsWith(`/${objectiveId}`));
-  if (hits.length !== 1) return null;
-  return { topicId: hits[0].slice(0, hits[0].length - objectiveId.length - 1), objectiveId };
-}
-function parseScenarioQuestion(raw, opts = {}) {
-  var _a;
-  if (!isObj4(raw)) return null;
-  const type = str4(raw.type);
-  if (!SCENARIO_TYPES.includes(type)) return null;
-  const ref = resolveRef(raw, opts.refs);
-  if (!ref) return null;
-  let stem = str4(raw.stem);
-  let answer = str4(raw.answer);
-  const explanation = str4(raw.explanation);
-  if (!stem || !answer || !explanation) return null;
-  const options = uniq(strList(raw.options));
-  if (options.length < 3 || options.length > 4) return null;
-  if (!options.includes(answer)) {
-    const hit = options.find((o) => o.toLowerCase() === answer.toLowerCase());
-    if (!hit) return null;
-    answer = hit;
-  }
-  if (type === "choice") {
-    const gaps = stem.match(GAP_RE);
-    if (!gaps || gaps.length !== 1) return null;
-    stem = stem.replace(GAP_RE, GAP);
-  } else {
-    if (stem.match(GAP_RE)) return null;
-    if (!options.every((o) => stem.includes(o))) return null;
-  }
-  const distractors = Object.fromEntries(
-    Object.entries(parseDistractors(raw.distractors)).filter(([k]) => k !== answer && options.includes(k))
-  );
-  const q = {
-    topicId: ref.topicId,
-    objectiveId: ref.objectiveId,
-    type,
-    stem,
-    options,
-    answer,
-    explanation,
-    errorTag: normalizeErrorTag(raw.errorTag)
-  };
-  const accepted = uniq(strList(raw.accepted));
-  if (type === "find-error" && accepted.length) q.accepted = accepted;
-  if (Object.keys(distractors).length) q.distractors = distractors;
-  const zh = str4(raw.sentenceZh);
-  if (zh) q.sentenceZh = zh;
-  const idx = Number(raw.sourceIndex);
-  const src = Number.isInteger(idx) && idx >= 1 ? (_a = opts.sentences) == null ? void 0 : _a[idx - 1] : void 0;
-  if (src) q.source = { path: src.path, sentence: src.sentence };
-  return q;
-}
-function askOf(turn) {
-  const a2 = turn.ask;
-  if (Array.isArray(a2)) return a2.length ? a2[0] : void 0;
-  return isObj4(a2) ? a2 : void 0;
-}
-function parseGrammarScenario(json, opts = {}) {
-  if (!isObj4(json) || !Array.isArray(json.turns)) {
-    throw new AiError("bad_output", "grammar.questions: expected { scene, form, turns: [...] }");
-  }
-  const parseOpts = { ...opts, refs: opts.refs ? new Set(opts.refs) : void 0 };
-  const scene = str4(json.scene);
-  if (!scene) throw new AiError("bad_output", "grammar.questions: no scene");
-  const speakers = uniq(strList(json.speakers));
-  const form = SCENARIO_FORMS.includes(str4(json.form)) ? str4(json.form) : speakers.length ? "dialogue" : "story";
-  const questions2 = [];
-  const seen = /* @__PURE__ */ new Set();
-  let asked = 0;
-  let lead = [];
-  for (const t2 of json.turns) {
-    if (!isObj4(t2)) continue;
-    const speaker = str4(t2.speaker);
-    const ask = askOf(t2);
-    if (ask === void 0) {
-      const text = str4(t2.text);
-      if (text) lead.push(speaker ? { speaker, text } : { text });
-      continue;
-    }
-    asked++;
-    const q = parseScenarioQuestion(ask, parseOpts);
-    if (!q) continue;
-    const key5 = q.stem.toLowerCase();
-    if (seen.has(key5)) continue;
-    seen.add(key5);
-    if (speaker) q.speaker = speaker;
-    if (lead.length) q.lead = lead.slice(-MAX_LEAD);
-    lead = [];
-    questions2.push(q);
-  }
-  if (!questions2.length || questions2.length * 2 < asked) {
-    throw new AiError("bad_output", `grammar.questions: only ${questions2.length} of ${asked} questions usable`);
-  }
-  const out = { scene, form, questions: questions2 };
-  if (speakers.length) out.speakers = speakers;
-  return out;
-}
-var grammarQuestions = {
-  id: "grammar.questions",
-  version: 3,
-  surface: "grammar",
-  tier: "smart",
-  maxTokens: 8192,
-  answerChars: () => 0,
-  build(input, ctx) {
-    var _a, _b;
-    const refs = targetRefs(input.targets);
-    const count = Math.max(1, Math.min(MAX_QUESTION_COUNT, Math.floor((_a = input.count) != null ? _a : DEFAULT_QUESTION_COUNT)));
-    const known2 = clean(input.knownTopicTitles, 60);
-    const words = clean(input.words, MAX_WORDS);
-    const avoid = clean(input.avoidStems, MAX_AVOID_STEMS);
-    const sentences = cleanSentences(input.sentences);
-    const weakness = ((_b = input.weakness) != null ? _b : "").trim();
-    const prev = input.previous;
-    const titles = [...new Set(refs.map((r) => r.topic.title))];
-    const context = [
-      renderTemplate(REFERENCE_BLOCK_TEMPLATE, {
-        lines: refs.map((r) => `${objectiveRef(r.topic.id, r.objective.id)}\uFF5C${r.objective.text}\uFF5C${r.topic.title}\uFF08${r.topic.pattern}\uFF09`).join("\n")
-      }),
-      weakness ? renderTemplate(WEAKNESS_BLOCK_TEMPLATE, { weakness }) : "",
-      prev && prev.scene.trim() ? renderTemplate(PREVIOUS_BLOCK_TEMPLATE, {
-        scene: prev.scene.trim(),
-        lines: prev.lastLines.slice(-2).map((l4) => `- ${l4}`).join("\n")
-      }) : "",
-      known2.length ? renderTemplate(KNOWN_BLOCK_TEMPLATE, { titles: known2.join("\u3001") }) : "",
-      words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE2, { words: words.join(", ") }) : "",
-      avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE, { stems: avoid.map((s) => `- ${s}`).join("\n") }) : "",
-      sentences.length ? renderTemplate(SENTENCES_BLOCK_TEMPLATE, { sentences: sentences.map((x3, i) => `${i + 1}. ${x3.sentence}`).join("\n") }) : ""
-    ];
-    return composeRequest({
-      base: GRAMMAR_QUESTIONS_BASE_PROMPT,
-      context,
-      profile: ctx.profile,
-      history: [],
-      user: renderTemplate(GRAMMAR_QUESTIONS_TEMPLATE, {
-        topics: titles.join("\u3001"),
-        count,
-        errorTags: ERROR_TAGS.join("\u3001")
-      }),
-      tier: grammarQuestions.tier,
-      maxTokens: grammarQuestions.maxTokens,
-      output: { name: "grammar_questions", schema: GRAMMAR_QUESTIONS_SCHEMA }
-    });
-  },
-  parse(r) {
-    return parseGrammarScenario(structuredJson(r));
-  }
-};
-function grammarQuestionsFor(targets, sentences = []) {
-  const refs = targetRefs(targets).map((r) => objectiveRef(r.topic.id, r.objective.id));
-  const sent = cleanSentences(sentences);
-  return {
-    ...grammarQuestions,
-    parse: (r) => parseGrammarScenario(structuredJson(r), { refs, sentences: sent })
-  };
-}
-var GRAMMAR_TASKS3 = [grammarQuestions];
+var GRAMMAR_TASKS3 = [grammarGrade];
 
 // src/services/ai/tasks/verbUsage.ts
 var POS_CODES = "n/v/adj/adv/prep/conj/pron/interj";
@@ -26047,33 +28557,33 @@ var VERB_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u
 8. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
 var VERB_TEMPLATE = `\u4EFB\u52D9\uFF1A\u7528\u6CD5\uFF08{{word}}\uFF09
 \u5217\u51FA {{word}} \u5E38\u898B\u7684\u8A5E\u6027\uFF0C\u6574\u7406\u6BCF\u500B\u8A5E\u6027\u7684\u5E38\u898B\u53E5\u578B\u8207\u76F8\u8FD1\u8AAA\u6CD5\u3002{{#onlyPos}}\u9019\u6B21\u53EA\u9700\u8981 {{onlyPos}} \u9019\u500B\u8A5E\u6027\u7684\u7528\u6CD5\uFF0Centries \u53EA\u8981\u4E00\u9805\u3002{{/onlyPos}}{{#hasSource}}\u3014\u51FA\u8655\u6BB5\u843D\u3015\u6216\u3014\u51FA\u8655\u53E5\u5B50\u3015\u88E1\u7684\u7528\u6CD5\u5982\u679C\u5C6C\u65BC\u5176\u4E2D\u4E00\u7A2E\uFF0C\u628A\u90A3\u500B\u53E5\u578B\u6392\u5728\u7B2C\u4E00\u500B\u3002{{/hasSource}}`;
-function isObj5(v) {
+function isObj6(v) {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
-function str5(v) {
+function str6(v) {
   return typeof v === "string" ? v.trim() : "";
 }
 function parseVerbUsage(json) {
-  if (!isObj5(json) || !Array.isArray(json.entries)) {
+  if (!isObj6(json) || !Array.isArray(json.entries)) {
     throw new AiError("bad_output", "verb.usage: expected { entries: [...] }");
   }
   const entries = [];
   for (const raw of json.entries) {
-    if (!isObj5(raw)) continue;
-    const [pos] = parsePos(str5(raw.pos));
+    if (!isObj6(raw)) continue;
+    const [pos] = parsePos(str6(raw.pos));
     if (!pos) continue;
     const patterns = [];
     for (const p of Array.isArray(raw.patterns) ? raw.patterns : []) {
-      if (!isObj5(p)) continue;
-      const pattern = str5(p.pattern);
-      if (pattern) patterns.push({ pattern, meaningZh: str5(p.meaningZh), example: str5(p.example) });
+      if (!isObj6(p)) continue;
+      const pattern = str6(p.pattern);
+      if (pattern) patterns.push({ pattern, meaningZh: str6(p.meaningZh), example: str6(p.example) });
     }
     if (!patterns.length) continue;
     const related = [];
     for (const r of Array.isArray(raw.related) ? raw.related : []) {
-      if (!isObj5(r)) continue;
-      const phrase = str5(r.phrase);
-      if (phrase) related.push({ phrase, zh: str5(r.zh) });
+      if (!isObj6(r)) continue;
+      const phrase = str6(r.phrase);
+      if (phrase) related.push({ phrase, zh: str6(r.zh) });
     }
     entries.push({ pos, patterns, related });
   }
@@ -26138,8 +28648,9 @@ function defaultTaskRegistry() {
     ...TRIVIA_TASKS,
     ...DNA_TASKS,
     ...GRAMMAR_TASKS,
+    ...GRAMMAR_TASKS2,
     ...GRAMMAR_TASKS3,
-    ...GRAMMAR_TASKS2
+    ...PRACTICE_TASKS
   ]);
 }
 
@@ -26604,15 +29115,15 @@ function createAiService(store, ports) {
 }
 
 // src/ui/settings/SettingsTab.ts
-var import_obsidian39 = require("obsidian");
-function scrollableChain(start2) {
-  const out = [start2];
-  for (let el = start2.parentElement; el; el = el.parentElement) {
+var import_obsidian41 = require("obsidian");
+function scrollableChain(start3) {
+  const out = [start3];
+  for (let el = start3.parentElement; el; el = el.parentElement) {
     if (el.scrollHeight > el.clientHeight && el.scrollTop > 0) out.push(el);
   }
   return out;
 }
-var VocabSettingsTab = class extends import_obsidian39.PluginSettingTab {
+var VocabSettingsTab = class extends import_obsidian41.PluginSettingTab {
   constructor(app, plugin, ctx, sections) {
     super(app, plugin);
     this.ctx = ctx;
@@ -26630,7 +29141,7 @@ var VocabSettingsTab = class extends import_obsidian39.PluginSettingTab {
     containerEl.addClass("vt-settings");
     const ctx = { ...this.ctx, redisplay: () => this.render(true) };
     for (const section3 of this.sections) {
-      new import_obsidian39.Setting(containerEl).setName(t(section3.title)).setHeading();
+      new import_obsidian41.Setting(containerEl).setName(t(section3.title)).setHeading();
       section3.render(containerEl.createDiv({ cls: `vt-settings-section vt-settings-${section3.id}` }), ctx);
     }
     const restore = () => {
@@ -26646,7 +29157,7 @@ function parseNonNegativeInt(value) {
 }
 
 // src/ui/settings/sections/ai.ts
-var import_obsidian40 = require("obsidian");
+var import_obsidian42 = require("obsidian");
 
 // src/ui/settings/traceView.ts
 function prettyBody(body) {
@@ -26698,14 +29209,14 @@ function renderProviderFields(el, ctx, id2) {
   const update = (mutate) => ctx.store.updateSettings((s) => mutate(s.ai.providers[id2]));
   const keyDesc = [t(ctx.keys.usesSecretStorage ? "settings.ai.key.descSecret" : "settings.ai.key.descData")];
   if (def.key === "optional") keyDesc.unshift(t("settings.ai.key.optional"));
-  new import_obsidian40.Setting(el).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
+  new import_obsidian42.Setting(el).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
     text.inputEl.type = "password";
     text.inputEl.autocomplete = "off";
     text.setPlaceholder(id2 === "anthropic" ? "sk-ant-\u2026" : "sk-\u2026").setValue(ctx.keys.get(id2));
     text.onChange((v) => void ctx.keys.set(id2, v));
   });
   if (def.editableBaseUrl) {
-    const baseUrl = new import_obsidian40.Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
+    const baseUrl = new import_obsidian42.Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
     baseUrl.settingEl.addClass("vt-settings-baseurl");
     baseUrl.addText((text) => {
       text.inputEl.addClass("vt-settings-wide");
@@ -26721,7 +29232,7 @@ function renderProviderFields(el, ctx, id2) {
       );
     }
   }
-  const modelSetting = new import_obsidian40.Setting(el).setName(t("settings.ai.model.name")).setDesc(t("settings.ai.model.desc"));
+  const modelSetting = new import_obsidian42.Setting(el).setName(t("settings.ai.model.name")).setDesc(t("settings.ai.model.desc"));
   const options = (_b = def.models) == null ? void 0 : _b.smart;
   if (options) {
     const cur = cfg().smartModel || cfg().fastModel;
@@ -26735,7 +29246,7 @@ function renderProviderFields(el, ctx, id2) {
       (text) => text.setPlaceholder(t("settings.ai.model.placeholder")).setValue(cfg().smartModel || cfg().fastModel).onChange((v) => void update((c2) => c2.smartModel = v.trim()))
     );
   }
-  const testSetting = new import_obsidian40.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
+  const testSetting = new import_obsidian42.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
   const result = el.createDiv({ cls: "vt-settings-test-result" });
   const trace = el.createDiv();
   testSetting.addButton((b) => {
@@ -26777,14 +29288,14 @@ var aiSection = {
   title: "settings.section.ai",
   render(el, ctx) {
     const ai = () => ctx.store.settings.ai;
-    new import_obsidian40.Setting(el).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle(
+    new import_obsidian42.Setting(el).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle(
       (tg) => tg.setValue(ai().enabled).onChange(async (v) => {
         var _a;
         await ctx.store.updateSettings((s) => s.ai.enabled = v);
         (_a = ctx.onAiEnabledChanged) == null ? void 0 : _a.call(ctx);
       })
     );
-    new import_obsidian40.Setting(el).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
+    new import_obsidian42.Setting(el).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
       for (const p of PROVIDERS) d.addOption(p.id, t(p.label));
       d.setValue(ai().provider).onChange(async (v) => {
         await ctx.store.updateSettings((s) => s.ai.provider = v);
@@ -26792,7 +29303,7 @@ var aiSection = {
       });
     });
     renderProviderFields(el, ctx, ai().provider);
-    new import_obsidian40.Setting(el).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
+    new import_obsidian42.Setting(el).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setPlaceholder("0").setValue(ai().monthlyTokenBudget ? String(ai().monthlyTokenBudget) : "");
       text.onChange((v) => {
@@ -26800,7 +29311,7 @@ var aiSection = {
         if (n !== null) void ctx.store.updateSettings((s) => s.ai.monthlyTokenBudget = n);
       });
     });
-    new import_obsidian40.Setting(el).setName(t("settings.ai.dnaDailyBatches.name")).addText((text) => {
+    new import_obsidian42.Setting(el).setName(t("settings.ai.dnaDailyBatches.name")).addText((text) => {
       var _a;
       text.inputEl.inputMode = "numeric";
       text.setPlaceholder("10").setValue(String((_a = ai().dnaDailyBatches) != null ? _a : 10));
@@ -26809,7 +29320,7 @@ var aiSection = {
         if (n !== null) void ctx.store.updateSettings((s) => s.ai.dnaDailyBatches = n);
       });
     });
-    const usage = new import_obsidian40.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
+    const usage = new import_obsidian42.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
     ctx.ai.usageSummary().then((u) => {
       const desc = createFragment((f) => {
         f.createDiv({ text: t("settings.ai.usage.value", { month: fmt(u.monthWeighted), today: fmt(u.today.input + u.today.output) }) });
@@ -26831,12 +29342,12 @@ var aiSection = {
 };
 
 // src/ui/settings/sections/general.ts
-var import_obsidian41 = require("obsidian");
+var import_obsidian43 = require("obsidian");
 var generalSection = {
   id: "general",
   title: "settings.section.general",
   render(el, ctx) {
-    new import_obsidian41.Setting(el).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
+    new import_obsidian43.Setting(el).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
       (d) => d.addOptions({ auto: t("settings.general.locale.auto"), "zh-TW": "\u7E41\u9AD4\u4E2D\u6587", en: "English" }).setValue(ctx.store.settings.ui.locale).onChange(async (v) => {
         await ctx.store.updateSettings((s) => {
           s.ui.locale = v;
@@ -26849,7 +29360,7 @@ var generalSection = {
 };
 
 // src/ui/settings/sections/learner.ts
-var import_obsidian42 = require("obsidian");
+var import_obsidian44 = require("obsidian");
 var learnerSection = {
   id: "learner",
   title: "settings.section.learner",
@@ -26861,32 +29372,32 @@ var learnerSection = {
       await ctx.store.updateSettings((s) => mutate(s.learner));
       preview2.setText(renderProfile(profile()));
     };
-    new import_obsidian42.Setting(el).setName(t("settings.learner.level.name")).addDropdown((d) => {
+    new import_obsidian44.Setting(el).setName(t("settings.learner.level.name")).addDropdown((d) => {
       d.addOption("", t("settings.learner.level.none"));
       for (const lv of CEFR_LEVELS) d.addOption(lv, lv);
       d.setValue(profile().level).onChange((v) => void update((p) => p.level = v));
     });
-    new import_obsidian42.Setting(el).setName(t("settings.learner.goal.name")).addDropdown((d) => {
+    new import_obsidian44.Setting(el).setName(t("settings.learner.goal.name")).addDropdown((d) => {
       for (const g of LEARNER_GOALS) d.addOption(g, t(`settings.learner.goal.${g}`));
       d.setValue(profile().goal).onChange((v) => void update((p) => p.goal = v));
     });
-    new import_obsidian42.Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
+    new import_obsidian44.Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
       for (const l4 of ANSWER_LANGUAGES) d.addOption(l4, t(`settings.learner.language.${l4}`));
       d.setValue(profile().answerLanguage).onChange((v) => void update((p) => p.answerLanguage = v));
     });
-    new import_obsidian42.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
+    new import_obsidian44.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setValue(String(profile().maxAnswerChars)).onChange((v) => {
         const n = parseNonNegativeInt(v);
         if (n !== null) void update((p) => p.maxAnswerChars = n);
       });
     });
-    new import_obsidian42.Setting(el).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
+    new import_obsidian44.Setting(el).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
       ta.inputEl.rows = 3;
       ta.inputEl.addClass("vt-settings-wide");
       ta.setValue(profile().extra).onChange((v) => void update((p) => p.extra = v));
     });
-    new import_obsidian42.Setting(el).setName(t("settings.grammar.useMyWords.name")).setDesc(t("settings.grammar.useMyWords.desc")).addToggle(
+    new import_obsidian44.Setting(el).setName(t("settings.grammar.useMyWords.name")).setDesc(t("settings.grammar.useMyWords.desc")).addToggle(
       (tg) => tg.setValue(resolveGrammarSettings(ctx.store.settings.grammar).useMyWords).onChange(
         (v) => void ctx.store.updateSettings((s) => {
           var _a;
@@ -26894,7 +29405,7 @@ var learnerSection = {
         })
       )
     );
-    new import_obsidian42.Setting(el).setName(t("settings.grammar.useMySentences.name")).setDesc(t("settings.grammar.useMySentences.desc")).addToggle(
+    new import_obsidian44.Setting(el).setName(t("settings.grammar.useMySentences.name")).setDesc(t("settings.grammar.useMySentences.desc")).addToggle(
       (tg) => tg.setValue(resolveGrammarSettings(ctx.store.settings.grammar).useMySentences).onChange(
         (v) => void ctx.store.updateSettings((s) => {
           var _a;
@@ -26902,24 +29413,24 @@ var learnerSection = {
         })
       )
     );
-    const previewSetting = new import_obsidian42.Setting(el).setName(t("settings.learner.preview.name"));
+    const previewSetting = new import_obsidian44.Setting(el).setName(t("settings.learner.preview.name"));
     previewSetting.settingEl.addClass("vt-settings-preview-row");
     el.appendChild(preview2);
   }
 };
 
 // src/ui/settings/sections/srs.ts
-var import_obsidian43 = require("obsidian");
+var import_obsidian45 = require("obsidian");
 var srsSection = {
   id: "srs",
   title: "settings.section.srs",
   render(el, ctx) {
     const current = () => resolveSrsSettings(ctx.store.settings.srs);
     const update = (patch) => ctx.store.updateSettings((s) => s.srs = { ...current(), ...patch });
-    new import_obsidian43.Setting(el).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
+    new import_obsidian45.Setting(el).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
       (s) => s.setLimits(0.7, 0.99, 0.01).setValue(current().retention).setDynamicTooltip().onChange((v) => void update({ retention: v }))
     );
-    new import_obsidian43.Setting(el).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
+    new import_obsidian45.Setting(el).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setValue(String(current().dailyNew)).onChange((v) => {
         const n = parseNonNegativeInt(v);
@@ -26930,7 +29441,7 @@ var srsSection = {
 };
 
 // src/ui/settings/sections/wordlists.ts
-var import_obsidian44 = require("obsidian");
+var import_obsidian46 = require("obsidian");
 var wordlistsSection = {
   id: "wordlists",
   title: "settings.section.wordlists",
@@ -26945,19 +29456,19 @@ var wordlistsSection = {
       return update({ tags: { ...tags, [tag]: { ...tags[tag], ...patch } } }, "display");
     };
     el.createDiv({ cls: "setting-item-description", text: t("settings.wordlists.desc") });
-    new import_obsidian44.Setting(el).setName(t("settings.wordlists.folder.name")).setDesc(t("settings.wordlists.folder.desc")).addText((text) => {
+    new import_obsidian46.Setting(el).setName(t("settings.wordlists.folder.name")).setDesc(t("settings.wordlists.folder.desc")).addText((text) => {
       text.setValue(current().folder);
       text.inputEl.addEventListener("change", () => void update({ folder: text.getValue() }, "reload"));
     });
-    new import_obsidian44.Setting(el).setName(t("settings.wordlists.highlight.name")).setDesc(t("settings.wordlists.highlight.desc")).addToggle((tg) => tg.setValue(current().highlight).onChange((v) => void update({ highlight: v }, "display")));
-    new import_obsidian44.Setting(el).setName(t("settings.wordlists.inflections.name")).setDesc(t("settings.wordlists.inflections.desc")).addToggle(
+    new import_obsidian46.Setting(el).setName(t("settings.wordlists.highlight.name")).setDesc(t("settings.wordlists.highlight.desc")).addToggle((tg) => tg.setValue(current().highlight).onChange((v) => void update({ highlight: v }, "display")));
+    new import_obsidian46.Setting(el).setName(t("settings.wordlists.inflections.name")).setDesc(t("settings.wordlists.inflections.desc")).addToggle(
       (tg) => tg.setValue(current().inflections).onChange((v) => void update({ inflections: v }, "scan"))
     );
-    new import_obsidian44.Setting(el).setName(t("settings.wordlists.autoImport.name")).setDesc(t("settings.wordlists.autoImport.desc")).addToggle(
+    new import_obsidian46.Setting(el).setName(t("settings.wordlists.autoImport.name")).setDesc(t("settings.wordlists.autoImport.desc")).addToggle(
       (tg) => tg.setValue(current().autoImport).onChange((v) => void update({ autoImport: v }, "display"))
     );
     const lists = ctx.wordlists.index.lists;
-    new import_obsidian44.Setting(el).setName(t("settings.wordlists.loaded.name")).setDesc(
+    new import_obsidian46.Setting(el).setName(t("settings.wordlists.loaded.name")).setDesc(
       lists.length === 0 ? t("settings.wordlists.loaded.none", { folder: current().folder }) : t("settings.wordlists.loaded.some", { n: lists.length })
     ).addButton(
       (b) => b.setButtonText(t("settings.wordlists.reload")).onClick(async () => {
@@ -26967,14 +29478,14 @@ var wordlistsSection = {
     );
     const s = current();
     for (const list of lists) {
-      const row = new import_obsidian44.Setting(el).setName(tagLabel(list.tag)).setDesc(t("settings.wordlists.list.desc", { n: list.words.toLocaleString(), paths: list.paths.join(", ") })).addColorPicker((c2) => c2.setValue(tagColor(s, list.tag)).onChange((v) => void updateTag(list.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list.tag)).onChange((v) => void updateTag(list.tag, { enabled: v })));
+      const row = new import_obsidian46.Setting(el).setName(tagLabel(list.tag)).setDesc(t("settings.wordlists.list.desc", { n: list.words.toLocaleString(), paths: list.paths.join(", ") })).addColorPicker((c2) => c2.setValue(tagColor(s, list.tag)).onChange((v) => void updateTag(list.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list.tag)).onChange((v) => void updateTag(list.tag, { enabled: v })));
       row.settingEl.addClass("vt-wordlist-row");
     }
   }
 };
 
 // src/ui/settings/sections/files.ts
-var import_obsidian45 = require("obsidian");
+var import_obsidian47 = require("obsidian");
 
 // src/services/files/settings.ts
 var DEFAULT_FILES_SETTINGS = {
@@ -27020,7 +29531,7 @@ var filesSection = {
     const update = (patch) => ctx.store.updateSettings((s) => s.files = { ...current(), ...patch });
     el.createDiv({ cls: "setting-item-description", text: t("settings.files.desc") });
     for (const field of FIELDS) {
-      new import_obsidian45.Setting(el).setName(t(field.name)).setDesc(t(field.desc)).addText((text) => {
+      new import_obsidian47.Setting(el).setName(t(field.name)).setDesc(t(field.desc)).addText((text) => {
         text.setValue(current()[field.key]);
         text.inputEl.addEventListener("change", async () => {
           await update({ [field.key]: text.getValue() });
@@ -27032,12 +29543,12 @@ var filesSection = {
 };
 
 // src/ui/settings/sections/paragraphs.ts
-var import_obsidian46 = require("obsidian");
+var import_obsidian48 = require("obsidian");
 var paragraphsSection = {
   id: "paragraphs",
   title: "settings.section.paragraphs",
   render(el, ctx) {
-    new import_obsidian46.Setting(el).setName(t("settings.paragraphs.hashMode.name")).setDesc(t("settings.paragraphs.hashMode.desc")).addToggle(
+    new import_obsidian48.Setting(el).setName(t("settings.paragraphs.hashMode.name")).setDesc(t("settings.paragraphs.hashMode.desc")).addToggle(
       (tg) => tg.setValue(resolveAnchorSettings(ctx.store.settings).mode === "hash").onChange(
         (on) => ctx.store.updateSettings((s) => patchAnchorSettings(s, { mode: on ? "hash" : "block", blockIdNoticeSeen: true }))
       )
@@ -27046,7 +29557,7 @@ var paragraphsSection = {
 };
 
 // src/ui/settings/sections/reading.ts
-var import_obsidian47 = require("obsidian");
+var import_obsidian49 = require("obsidian");
 function tapOptions() {
   const out = {};
   for (const a2 of TAP_ACTIONS) out[a2] = t(`settings.reading.tap.${a2}`);
@@ -27073,19 +29584,19 @@ var readingSection = {
   title: "settings.section.reading",
   render(el, ctx) {
     const prefs = resolveUiPrefs(ctx.store.settings.ui);
-    new import_obsidian47.Setting(el).setName(t("settings.reading.tapAction.name")).setDesc(t("settings.reading.tapAction.desc")).addDropdown(
+    new import_obsidian49.Setting(el).setName(t("settings.reading.tapAction.name")).setDesc(t("settings.reading.tapAction.desc")).addDropdown(
       (d) => d.addOptions(tapOptions()).setValue(prefs.tapAction).onChange((v) => setWordTapAction(ctx, v))
     );
-    new import_obsidian47.Setting(el).setName(t("settings.reading.pronounceSource.name")).setDesc(t("settings.reading.pronounceSource.desc")).addDropdown(
+    new import_obsidian49.Setting(el).setName(t("settings.reading.pronounceSource.name")).setDesc(t("settings.reading.pronounceSource.desc")).addDropdown(
       (d) => d.addOptions(pronounceOptions()).setValue(prefs.pronounceSource).onChange((v) => setPref(ctx, "pronounceSource", v))
     );
-    new import_obsidian47.Setting(el).setName(t("settings.reading.livePreviewHint.name")).setDesc(t("settings.reading.livePreviewHint.desc")).addToggle((tg) => tg.setValue(prefs.livePreviewHint).onChange((on) => setPref(ctx, "livePreviewHint", on)));
-    new import_obsidian47.Setting(el).setName(t("settings.reading.sidebarOnPhone.name")).setDesc(t("settings.reading.sidebarOnPhone.desc")).addToggle((tg) => tg.setValue(prefs.sidebarOnPhone).onChange((on) => setPref(ctx, "sidebarOnPhone", on)));
+    new import_obsidian49.Setting(el).setName(t("settings.reading.livePreviewHint.name")).setDesc(t("settings.reading.livePreviewHint.desc")).addToggle((tg) => tg.setValue(prefs.livePreviewHint).onChange((on) => setPref(ctx, "livePreviewHint", on)));
+    new import_obsidian49.Setting(el).setName(t("settings.reading.sidebarOnPhone.name")).setDesc(t("settings.reading.sidebarOnPhone.desc")).addToggle((tg) => tg.setValue(prefs.sidebarOnPhone).onChange((on) => setPref(ctx, "sidebarOnPhone", on)));
   }
 };
 
 // src/ui/settings/sections/backup.ts
-var import_obsidian49 = require("obsidian");
+var import_obsidian51 = require("obsidian");
 
 // src/ui/settings/backupText.ts
 function pad2(n) {
@@ -27158,7 +29669,7 @@ function deviceLines() {
 }
 
 // src/ui/settings/RestoreModal.ts
-var import_obsidian48 = require("obsidian");
+var import_obsidian50 = require("obsidian");
 
 // src/services/learn/learnMerge.ts
 var TOMBSTONE_TTL_MS = 30 * 24 * 60 * 60 * 1e3;
@@ -27340,26 +29851,26 @@ function ms6(iso) {
 function emptyGrammarShard() {
   return { questions: [], attempts: [], progress: [] };
 }
-var str6 = (v) => typeof v === "string" && v !== "";
-var isObj6 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var str7 = (v) => typeof v === "string" && v !== "";
+var isObj7 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 function normalizeScenario(raw) {
-  if (!isObj6(raw) || !str6(raw.id) || !str6(raw.scene)) return null;
+  if (!isObj7(raw) || !str7(raw.id) || !str7(raw.scene)) return null;
   const seq = typeof raw.seq === "number" && Number.isFinite(raw.seq) && raw.seq >= 0 ? Math.floor(raw.seq) : null;
   if (seq === null) return null;
   const out = { id: raw.id, scene: raw.scene, seq };
-  if (str6(raw.speaker)) out.speaker = raw.speaker;
+  if (str7(raw.speaker)) out.speaker = raw.speaker;
   if (Array.isArray(raw.lead)) {
     const lead = [];
     for (const l4 of raw.lead) {
-      if (!isObj6(l4) || !str6(l4.text)) continue;
-      lead.push(str6(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
+      if (!isObj7(l4) || !str7(l4.text)) continue;
+      lead.push(str7(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
     }
     if (lead.length) out.lead = lead;
   }
   return out;
 }
 function normalizeQuestion(raw) {
-  if (!isObj6(raw) || !str6(raw.id) || !str6(raw.topicId) || !str6(raw.objectiveId)) return null;
+  if (!isObj7(raw) || !str7(raw.id) || !str7(raw.topicId) || !str7(raw.objectiveId)) return null;
   if (typeof raw.stem !== "string" || typeof raw.answer !== "string") return null;
   const type = GRAMMAR_QUESTION_TYPES.includes(raw.type) ? raw.type : null;
   if (!type) return null;
@@ -27376,17 +29887,17 @@ function normalizeQuestion(raw) {
   const accepted = strings(raw.accepted);
   if (accepted) q.accepted = accepted;
   else delete q.accepted;
-  if (!isObj6(raw.distractors)) delete q.distractors;
+  if (!isObj7(raw.distractors)) delete q.distractors;
   const scenario = normalizeScenario(raw.scenario);
   if (scenario) q.scenario = scenario;
   else delete q.scenario;
-  if (str6(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
+  if (str7(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
   else delete q.sentenceZh;
   return q;
 }
 function normalizeAttempt(raw) {
-  if (!isObj6(raw) || !str6(raw.id) || !str6(raw.questionId) || !str6(raw.topicId) || !str6(raw.objectiveId)) return null;
-  if (!str6(raw.at) || Number.isNaN(Date.parse(raw.at))) return null;
+  if (!isObj7(raw) || !str7(raw.id) || !str7(raw.questionId) || !str7(raw.topicId) || !str7(raw.objectiveId)) return null;
+  if (!str7(raw.at) || Number.isNaN(Date.parse(raw.at))) return null;
   return {
     id: raw.id,
     questionId: raw.questionId,
@@ -27398,9 +29909,9 @@ function normalizeAttempt(raw) {
   };
 }
 function normalizeProgress(raw) {
-  if (!isObj6(raw) || !str6(raw.id)) return null;
+  if (!isObj7(raw) || !str7(raw.id)) return null;
   const p = { ...raw };
-  if (!isObj6(p.srs)) delete p.srs;
+  if (!isObj7(p.srs)) delete p.srs;
   return p;
 }
 function normList(raw, one2) {
@@ -27413,7 +29924,7 @@ function normList(raw, one2) {
   return out;
 }
 function normalizeGrammarShard(raw) {
-  const s = isObj6(raw) ? raw : {};
+  const s = isObj7(raw) ? raw : {};
   return {
     questions: normList(s.questions, normalizeQuestion),
     attempts: normList(s.attempts, normalizeAttempt),
@@ -27456,34 +29967,35 @@ var DAY_MS4 = 864e5;
 var POOL_TOMBSTONE_TTL_MS = 30 * DAY_MS4;
 var MISTAKE_RESOLVED_TTL_MS = 90 * DAY_MS4;
 var EVENT_TTL_MS = 365 * DAY_MS4;
+var QUESTION_TTL_MS = 30 * DAY_MS4;
 function ms7(iso) {
   const t2 = iso ? Date.parse(iso) : 0;
   return Number.isNaN(t2) ? 0 : t2;
 }
 function emptyLearnerShard() {
-  return { events: [], pool: [], mistakes: [], filters: [], meta: {} };
+  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {} };
 }
-var str7 = (v) => typeof v === "string" && v !== "";
-var isObj7 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
-var isIso = (v) => str7(v) && !Number.isNaN(Date.parse(v));
+var str8 = (v) => typeof v === "string" && v !== "";
+var isObj8 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var isIso = (v) => str8(v) && !Number.isNaN(Date.parse(v));
 var isTrack = (v) => TRACKS.includes(v);
 var REASONS = ["answered", "skipped", "retired", "filtered"];
 function focusOf(raw) {
-  if (!isObj7(raw) || !str7(raw.id) || !FOCUS_KINDS.includes(raw.kind)) return null;
+  if (!isObj8(raw) || !str8(raw.id) || !FOCUS_KINDS.includes(raw.kind)) return null;
   return { kind: raw.kind, id: raw.id };
 }
 function normalizeEvent(raw) {
-  if (!isObj7(raw) || !str7(raw.id) || !isIso(raw.at) || !isTrack(raw.track)) return null;
+  if (!isObj8(raw) || !str8(raw.id) || !isIso(raw.at) || !isTrack(raw.track)) return null;
   const focus = focusOf(raw.focus);
   if (!focus || !LEARN_RESULTS.includes(raw.result)) return null;
   const e = { id: raw.id, at: raw.at, track: raw.track, focus, result: raw.result };
   if (typeof raw.given === "string") e.given = raw.given;
-  if (str7(raw.errorTag)) e.errorTag = raw.errorTag;
-  if (str7(raw.questionId)) e.questionId = raw.questionId;
+  if (str8(raw.errorTag)) e.errorTag = raw.errorTag;
+  if (str8(raw.questionId)) e.questionId = raw.questionId;
   return e;
 }
 function normalizePool(raw) {
-  if (!isObj7(raw) || !str7(raw.id) || !isTrack(raw.track) || !str7(raw.questionId)) return null;
+  if (!isObj8(raw) || !str8(raw.id) || !isTrack(raw.track) || !str8(raw.questionId)) return null;
   if (!isIso(raw.addedAt)) return null;
   const p = {
     id: raw.id,
@@ -27493,7 +30005,7 @@ function normalizePool(raw) {
     addedAt: raw.addedAt,
     updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : raw.addedAt
   };
-  if (str7(raw.scenarioId)) p.scenarioId = raw.scenarioId;
+  if (str8(raw.scenarioId)) p.scenarioId = raw.scenarioId;
   if (isIso(raw.removedAt)) {
     p.removedAt = raw.removedAt;
     p.removeReason = REASONS.includes(raw.removeReason) ? raw.removeReason : "answered";
@@ -27501,7 +30013,7 @@ function normalizePool(raw) {
   return p;
 }
 function normalizeMistake(raw) {
-  if (!isObj7(raw) || !str7(raw.id) || !isTrack(raw.track) || !str7(raw.questionId)) return null;
+  if (!isObj8(raw) || !str8(raw.id) || !isTrack(raw.track) || !str8(raw.questionId)) return null;
   const focus = focusOf(raw.focus);
   if (!focus || !isIso(raw.lastWrongAt)) return null;
   const addedAt = isIso(raw.addedAt) ? raw.addedAt : raw.lastWrongAt;
@@ -27518,8 +30030,60 @@ function normalizeMistake(raw) {
   return m2;
 }
 function normalizeFilter(raw) {
-  if (!isObj7(raw) || !isTrack(raw.id)) return null;
+  if (!isObj8(raw) || !isTrack(raw.id)) return null;
   return { id: raw.id, value: raw.value, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : "" };
+}
+var SCENARIO_TRACKS = ["poly", "vocab", "mix"];
+function normalizeQuestion2(raw) {
+  if (!isObj8(raw) || !str8(raw.id) || !SCENARIO_TRACKS.includes(raw.track)) return null;
+  if (!PRACTICE_KINDS.includes(raw.kind)) return null;
+  if (!str8(raw.text) || !str8(raw.answerId) || !str8(raw.explanation)) return null;
+  const focus = focusOf(raw.focus);
+  if (!focus || !isObj8(raw.scenario) || !str8(raw.scenario.id) || !str8(raw.scenario.scene)) return null;
+  if (!Array.isArray(raw.options)) return null;
+  const options = [];
+  for (const o of raw.options) {
+    if (isObj8(o) && str8(o.id) && typeof o.text === "string" && o.text !== "") options.push({ id: o.id, text: o.text });
+  }
+  if (options.length < 2 || !options.some((o) => o.id === raw.answerId)) return null;
+  const sc = raw.scenario;
+  const scenario = {
+    id: sc.id,
+    scene: sc.scene,
+    seq: typeof sc.seq === "number" && Number.isFinite(sc.seq) ? sc.seq : 0
+  };
+  if (str8(sc.speaker)) scenario.speaker = sc.speaker;
+  if (Array.isArray(sc.lead)) {
+    const lead = [];
+    for (const l4 of sc.lead) {
+      if (!isObj8(l4) || !str8(l4.text)) continue;
+      lead.push(str8(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
+    }
+    if (lead.length) scenario.lead = lead;
+  }
+  const createdAt = isIso(raw.createdAt) ? raw.createdAt : isIso(raw.updatedAt) ? raw.updatedAt : "1970-01-01T00:00:00.000Z";
+  const q = {
+    id: raw.id,
+    track: raw.track,
+    scenario,
+    kind: raw.kind,
+    text: raw.text,
+    options,
+    answerId: raw.answerId,
+    explanation: raw.explanation,
+    focus,
+    createdAt,
+    updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : createdAt
+  };
+  if (isObj8(raw.optionNotes)) {
+    const notes = {};
+    for (const [k, v] of Object.entries(raw.optionNotes)) if (str8(v)) notes[k] = v;
+    if (Object.keys(notes).length) q.optionNotes = notes;
+  }
+  if (str8(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh;
+  if (str8(raw.errorTag)) q.errorTag = raw.errorTag;
+  if (isIso(raw.retiredAt)) q.retiredAt = raw.retiredAt;
+  return q;
 }
 function normList2(raw, one2) {
   if (!Array.isArray(raw)) return [];
@@ -27531,13 +30095,14 @@ function normList2(raw, one2) {
   return out;
 }
 function normalizeLearnerShard(raw) {
-  const s = isObj7(raw) ? raw : {};
-  const meta = isObj7(s.meta) && isIso(s.meta.grammarMigratedAt) ? { grammarMigratedAt: s.meta.grammarMigratedAt } : {};
+  const s = isObj8(raw) ? raw : {};
+  const meta = isObj8(s.meta) && isIso(s.meta.grammarMigratedAt) ? { grammarMigratedAt: s.meta.grammarMigratedAt } : {};
   return {
     events: sortEvents(normList2(s.events, normalizeEvent)),
     pool: normList2(s.pool, normalizePool),
     mistakes: normList2(s.mistakes, normalizeMistake),
     filters: normList2(s.filters, normalizeFilter),
+    questions: normList2(s.questions, normalizeQuestion2),
     meta
   };
 }
@@ -27553,6 +30118,7 @@ function mergeLearner(local, remote) {
     pool: mergeRecords(local.pool, remote.pool),
     mistakes: mergeRecords(local.mistakes, remote.mistakes),
     filters: mergeRecords(local.filters, remote.filters),
+    questions: mergeRecords(local.questions, remote.questions),
     meta: migrated ? { grammarMigratedAt: migrated } : {}
   };
 }
@@ -27563,6 +30129,7 @@ function learnerFingerprint(shard) {
   for (const p of shard.pool) rows.push(`p|${p.id}|${p.updatedAt}|${(_b = p.removedAt) != null ? _b : ""}`);
   for (const m2 of shard.mistakes) rows.push(`x|${m2.id}|${m2.updatedAt}|${(_c = m2.resolvedAt) != null ? _c : ""}`);
   for (const f of shard.filters) rows.push(`f|${f.id}|${f.updatedAt}`);
+  for (const q of shard.questions) rows.push(`q|${q.id}|${q.updatedAt}`);
   return rows.sort().join("\n");
 }
 function pruneLearner(shard, now2) {
@@ -27571,8 +30138,15 @@ function pruneLearner(shard, now2) {
     pool: shard.pool.filter((p) => !p.removedAt || now2 - ms7(p.removedAt) < POOL_TOMBSTONE_TTL_MS),
     mistakes: shard.mistakes.filter((m2) => !m2.resolvedAt || now2 - ms7(m2.resolvedAt) < MISTAKE_RESOLVED_TTL_MS),
     filters: shard.filters,
+    questions: pruneQuestions(shard, now2),
     meta: shard.meta
   };
+}
+function pruneQuestions(shard, now2) {
+  const used = /* @__PURE__ */ new Set();
+  for (const p of shard.pool) if (!p.removedAt) used.add(p.questionId);
+  for (const m2 of shard.mistakes) if (!m2.resolvedAt) used.add(m2.questionId);
+  return shard.questions.filter((q) => used.has(q.id) || now2 - ms7(q.createdAt) < QUESTION_TTL_MS);
 }
 
 // src/services/backup/format.ts
@@ -28050,7 +30624,7 @@ var BackupService = class {
 };
 
 // src/ui/settings/RestoreModal.ts
-var RestoreModal = class extends import_obsidian48.Modal {
+var RestoreModal = class extends import_obsidian50.Modal {
   constructor(app, backups, item, onDone) {
     super(app);
     this.backups = backups;
@@ -28088,7 +30662,7 @@ var RestoreModal = class extends import_obsidian48.Modal {
     if (text.extras) {
       el.createEl("h4", { text: t("backup.restore.extras.title") });
       el.createEl("p", { text: text.extras });
-      const remove2 = new import_obsidian48.Setting(el).setName(t("backup.restore.extras.remove")).addToggle(
+      const remove2 = new import_obsidian50.Setting(el).setName(t("backup.restore.extras.remove")).addToggle(
         (toggle2) => toggle2.setValue(this.removeExtras).onChange((v) => this.removeExtras = v)
       );
       if (item.reason === "before-restore") remove2.setDesc(t("backup.restore.extras.undoHint"));
@@ -28097,7 +30671,7 @@ var RestoreModal = class extends import_obsidian48.Modal {
     el.createEl("h4", { text: t("backup.restore.devices.title") });
     const devices = el.createEl("ul");
     for (const line2 of deviceLines()) devices.createEl("li", { text: line2 });
-    new import_obsidian48.Setting(el).addButton((b) => b.setButtonText(t("backup.restore.cancel")).onClick(() => this.close())).addButton(
+    new import_obsidian50.Setting(el).addButton((b) => b.setButtonText(t("backup.restore.cancel")).onClick(() => this.close())).addButton(
       (b) => b.setButtonText(t("backup.restore.confirm")).setWarning().onClick(async () => {
         if (this.running) return;
         this.running = true;
@@ -28109,11 +30683,11 @@ var RestoreModal = class extends import_obsidian48.Modal {
   async restore() {
     try {
       const result = await this.backups.restore(this.item.name, { removeExtras: this.removeExtras });
-      new import_obsidian48.Notice(t("backup.restore.done", { path: result.safetyPath }), 1e4);
+      new import_obsidian50.Notice(t("backup.restore.done", { path: result.safetyPath }), 1e4);
       this.onDone(result);
     } catch (e) {
       const key5 = e instanceof BackupError && e.code === "safety-failed" ? "backup.restore.safetyFailed" : "backup.restore.failed";
-      new import_obsidian48.Notice(t(key5, { error: errorMessage(e) }), 1e4);
+      new import_obsidian50.Notice(t(key5, { error: errorMessage(e) }), 1e4);
       console.error("Vocab Tracker: restore failed", e);
     } finally {
       this.close();
@@ -28135,21 +30709,21 @@ var backupSection = {
     }
     const listEl = createDiv();
     const fill2 = () => void renderList(listEl, backups, ctx);
-    new import_obsidian49.Setting(el).setName(t("settings.backup.create.name")).setDesc(t("settings.backup.create.desc")).addButton(
+    new import_obsidian51.Setting(el).setName(t("settings.backup.create.name")).setDesc(t("settings.backup.create.desc")).addButton(
       (b) => b.setButtonText(t("settings.backup.create.button")).onClick(async () => {
         b.setDisabled(true);
         try {
           const path = await backups.create();
-          new import_obsidian49.Notice(t("settings.backup.created", { path }), 8e3);
+          new import_obsidian51.Notice(t("settings.backup.created", { path }), 8e3);
           fill2();
         } catch (e) {
-          new import_obsidian49.Notice(t("settings.backup.failed", { error: errorMessage(e) }), 8e3);
+          new import_obsidian51.Notice(t("settings.backup.failed", { error: errorMessage(e) }), 8e3);
         } finally {
           b.setDisabled(false);
         }
       })
     );
-    new import_obsidian49.Setting(el).setName(t("settings.backup.list.name")).addExtraButton((b) => b.setIcon("refresh-cw").setTooltip(t("settings.backup.list.reload")).onClick(fill2));
+    new import_obsidian51.Setting(el).setName(t("settings.backup.list.name")).addExtraButton((b) => b.setIcon("refresh-cw").setTooltip(t("settings.backup.list.reload")).onClick(fill2));
     el.appendChild(listEl);
     fill2();
   }
@@ -28171,7 +30745,7 @@ async function renderList(listEl, backups, ctx) {
     return;
   }
   for (const item of items) {
-    const row = new import_obsidian49.Setting(listEl).setName(backupTitle(item)).setDesc(backupDesc(item));
+    const row = new import_obsidian51.Setting(listEl).setName(backupTitle(item)).setDesc(backupDesc(item));
     if (item.kind === "unreadable") continue;
     row.addButton(
       (b) => b.setButtonText(t("settings.backup.restore.button")).onClick(
@@ -28198,14 +30772,14 @@ var SETTINGS_SECTIONS2 = [
 ];
 
 // src/platform/ObsidianNotes.ts
-var import_obsidian50 = require("obsidian");
+var import_obsidian52 = require("obsidian");
 var ObsidianNotes = class {
   constructor(app) {
     this.app = app;
   }
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian50.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian52.TFile ? this.app.vault.cachedRead(file) : null;
   }
 };
 
@@ -28288,8 +30862,8 @@ function noteTitle2(path) {
 function knownWordsIn(paragraph, words) {
   const seen = /* @__PURE__ */ new Set();
   const out = [];
-  for (const w of words) {
-    const word = w.trim();
+  for (const w2 of words) {
+    const word = w2.trim();
     const key5 = word.toLowerCase();
     if (!word || seen.has(key5)) continue;
     if (buildWordRe(word).test(paragraph)) {
@@ -29061,10 +31635,10 @@ var LearnStore = class {
     return (_b = (_a = this.data).wordMeta) != null ? _b : _a.wordMeta = [];
   }
   wordMeta(entryId) {
-    return this.wordMetaList.find((w) => w.id === entryId && !w.deletedAt);
+    return this.wordMetaList.find((w2) => w2.id === entryId && !w2.deletedAt);
   }
   allWordMeta() {
-    return this.wordMetaList.filter((w) => !w.deletedAt);
+    return this.wordMetaList.filter((w2) => !w2.deletedAt);
   }
   putWordMeta(m2) {
     this.stamp(m2);
@@ -29450,6 +32024,20 @@ var LearnerStore = class {
     for (const t2 of tracks) this.events.emit("pool:change", t2);
     this.scheduleWrite();
   }
+  // ── Scenario questions (常用字 / 單字情境 / 混合) ──────────────
+  // Retired ones included (events and mistakes may still point at them).
+  practiceQuestions(track2) {
+    return this.data.questions.filter((q) => track2 === void 0 || q.track === track2);
+  }
+  practiceQuestion(id2) {
+    return this.data.questions.find((q) => q.id === id2);
+  }
+  upsertPracticeQuestions(qs) {
+    if (qs.length === 0) return;
+    for (const q of qs) this.upsert(this.data.questions, q);
+    this.events.emit("question:upsert", [...qs]);
+    this.scheduleWrite();
+  }
   // ── Mistakes ──────────────────────────────────────────────────
   mistakes(track2) {
     return openMistakes(this.data.mistakes, track2);
@@ -29627,16 +32215,16 @@ var key2 = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
 function patternWords(pattern) {
   var _a;
   const out = [];
-  for (const w of (_a = pattern.toLowerCase().match(/[a-z]+/g)) != null ? _a : []) {
-    if (w.length < 2 || PLACEHOLDERS.has(w) || out.includes(w)) continue;
-    out.push(w);
+  for (const w2 of (_a = pattern.toLowerCase().match(/[a-z]+/g)) != null ? _a : []) {
+    if (w2.length < 2 || PLACEHOLDERS.has(w2) || out.includes(w2)) continue;
+    out.push(w2);
   }
   return out;
 }
 function score(sentence, words) {
   if (!words.length) return 0;
-  const have = new Set(englishWords(sentence).map((w) => w.toLowerCase().replace(/’/g, "'")));
-  return words.reduce((n, w) => n + (have.has(w) ? 1 : 0), 0);
+  const have = new Set(englishWords(sentence).map((w2) => w2.toLowerCase().replace(/’/g, "'")));
+  return words.reduce((n, w2) => n + (have.has(w2) ? 1 : 0), 0);
 }
 function pickSentence(candidates, pattern) {
   const words = patternWords(pattern);
@@ -29902,8 +32490,8 @@ var QuestionService = class {
       limit: 8
     });
     const weakIds = [];
-    for (const w of weak) {
-      const id2 = w.focus.id.split("/")[0];
+    for (const w2 of weak) {
+      const id2 = w2.focus.id.split("/")[0];
       if (!weakIds.includes(id2)) weakIds.push(id2);
     }
     const rest = topics.filter((t2) => !weakIds.includes(t2.id)).map((t2, i) => ({ t: t2, i, n: this.deps.grammar.attempts(t2.id).length })).sort((a2, b) => a2.n - b.n || a2.i - b.i).map((x3) => x3.t.id);
@@ -30008,7 +32596,7 @@ var QuestionService = class {
     const attempt = this.record(q, optionText2, correct);
     const learner = this.deps.learner;
     if (!learner) return;
-    const result = opts.hinted ? "hinted" : correct ? "correct" : "wrong";
+    const result = !correct ? "wrong" : opts.hinted ? "hinted" : "correct";
     const e = {
       id: `g:${attempt.id}`,
       at: attempt.at,
@@ -30181,6 +32769,357 @@ var QuestionService = class {
   }
 };
 
+// src/services/practice/ScenarioService.ts
+var SCENARIO_REFILL_COUNT = 6;
+function refillThreadId(track2) {
+  return `practice:pool:${track2}`;
+}
+function defaultId4(now2) {
+  return `${now2.getTime().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+var poolItemId2 = (track2, questionId) => `${track2}:${questionId}`;
+var textKey = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
+var unmark = (s) => s.replace(/\[\[([^[\]]+)\]\]/g, "$1");
+function practiceLine(q) {
+  var _a;
+  let text = unmark(q.text);
+  if (q.kind === "pick-word" || q.kind === "choice") {
+    const ans = (_a = q.options.find((o) => o.id === q.answerId)) == null ? void 0 : _a.text;
+    if (ans) text = text.replace(/_{3,}/, ans);
+  }
+  return q.scenario.speaker ? `${q.scenario.speaker}: ${text}` : text;
+}
+var ScenarioService = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.events = new TypedEmitter();
+    this.refilling = /* @__PURE__ */ new Set();
+    var _a, _b;
+    this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
+    this.newId = (_b = deps.newId) != null ? _b : (() => defaultId4(this.clock()));
+  }
+  isRefilling(track2) {
+    return this.refilling.has(track2);
+  }
+  // ── Refill ────────────────────────────────────────────────────
+  async refill(req, opts = {}) {
+    var _a;
+    const track2 = req.track;
+    const learner = this.deps.learner;
+    if (this.refilling.has(track2)) return;
+    this.refilling.add(track2);
+    let started = false;
+    try {
+      await learner.ensureLoaded();
+      this.dropUnaskable(track2);
+      if (!needsRefill(learner.pool(track2), track2)) return;
+      if (!this.aiReady()) return;
+      const count = Math.min(SCENARIO_REFILL_COUNT, poolRoom(learner.pool(track2), track2));
+      if (count <= 0) return;
+      const refs = refsOf(req);
+      if (!refs.tested.size) return;
+      started = true;
+      this.events.emit("refill:start", track2);
+      const input = {
+        request: req,
+        count,
+        weakness: this.weakness(req),
+        previous: this.previousScenario(track2),
+        words: this.words(),
+        avoid: this.avoid(track2)
+      };
+      const { value: draft } = await runStructured(this.deps.ai, practiceScenarioFor(req), input, {
+        threadId: refillThreadId(track2),
+        signal: opts.signal
+      });
+      const now2 = this.clock().toISOString();
+      const taken = new Set(learner.practiceQuestions(track2).map((q) => textKey(q.text)));
+      const scenarioId = `sc-${this.newId()}`;
+      const saved = [];
+      for (const d of draft.questions) {
+        const key5 = textKey(d.text);
+        if (taken.has(key5)) continue;
+        taken.add(key5);
+        const scenario = { id: scenarioId, scene: draft.scene, seq: saved.length + 1 };
+        if (d.speaker) scenario.speaker = d.speaker;
+        if ((_a = d.lead) == null ? void 0 : _a.length) scenario.lead = d.lead;
+        const q = {
+          id: this.newId(),
+          track: track2,
+          scenario,
+          kind: d.kind,
+          text: d.text,
+          options: d.options,
+          answerId: d.answerId,
+          explanation: d.explanation,
+          focus: d.focus,
+          createdAt: now2,
+          updatedAt: now2
+        };
+        if (d.optionNotes) q.optionNotes = d.optionNotes;
+        if (d.sentenceZh) q.sentenceZh = d.sentenceZh;
+        if (d.errorTag) q.errorTag = d.errorTag;
+        saved.push(q);
+      }
+      if (!saved.length) throw new AiError("bad_output", "practice.scenario: every question was already stored");
+      learner.upsertPracticeQuestions(saved);
+      const added = addToPool(
+        learner.pool(track2),
+        track2,
+        saved.map((q) => ({ questionId: q.id, scenarioId: q.scenario.id })),
+        this.clock()
+      );
+      if (added.length) learner.upsertPool(added);
+      this.refilling.delete(track2);
+      this.events.emit("refill:end", { track: track2 });
+      this.events.emit("pool:change", track2);
+    } catch (e) {
+      this.refilling.delete(track2);
+      if (started) this.events.emit("refill:end", { track: track2, error: e });
+    } finally {
+      this.refilling.delete(track2);
+    }
+  }
+  aiReady() {
+    const status = this.deps.ai.status;
+    if (!status) return true;
+    try {
+      return status.call(this.deps.ai) === "ready";
+    } catch (e) {
+      return false;
+    }
+  }
+  // 〔學習弱點〕: scoped to the ids this request sends.
+  weakness(req) {
+    var _a, _b, _c, _d;
+    const refs = refsOf(req);
+    const label = /* @__PURE__ */ new Map();
+    if (req.track === "poly") for (const s of req.tested) label.set(s.id, s.zh);
+    if (req.track === "vocab") for (const v of req.words) label.set(v.id, v.word);
+    if (req.track === "mix") {
+      for (const s of (_b = (_a = req.poly) == null ? void 0 : _a.tested) != null ? _b : []) label.set(s.id, s.zh);
+      for (const v of (_c = req.vocab) != null ? _c : []) label.set(v.id, v.word);
+      for (const g of (_d = req.grammar) != null ? _d : []) label.set(`${g.topicId}/${g.objectiveId}`, g.text);
+    }
+    const weak = weakFocuses(this.deps.learner.learnEvents(), {
+      now: this.clock(),
+      scope: new Set(refs.tested.keys()),
+      limit: 5
+    });
+    return weaknessDigest(weak, (f) => label.has(f.id) ? `${f.id}\uFF08${label.get(f.id)}\uFF09` : f.id);
+  }
+  // 〔上一段〕: the scene and last two sentences of the scenario at the end
+  // of the pool, so the next one carries on from it.
+  previousScenario(track2) {
+    var _a;
+    const learner = this.deps.learner;
+    const live = learner.pool(track2);
+    for (let i = live.length - 1; i >= 0; i--) {
+      const last2 = (_a = learner.practiceQuestion(live[i].questionId)) == null ? void 0 : _a.scenario;
+      if (!last2) continue;
+      const lines4 = learner.practiceQuestions(track2).filter((q) => q.scenario.id === last2.id).sort((x3, y3) => x3.scenario.seq - y3.scenario.seq).flatMap((q) => {
+        var _a2;
+        return [...((_a2 = q.scenario.lead) != null ? _a2 : []).map((l4) => l4.speaker ? `${l4.speaker}: ${l4.text}` : l4.text), practiceLine(q)];
+      });
+      return { scene: last2.scene, lastLines: lines4.slice(-2) };
+    }
+    return void 0;
+  }
+  avoid(track2) {
+    return [...this.deps.learner.practiceQuestions(track2)].sort((a2, b) => b.createdAt.localeCompare(a2.createdAt)).slice(0, MAX_AVOID).map((q) => unmark(q.text));
+  }
+  words() {
+    var _a, _b, _c;
+    try {
+      return ((_c = (_b = (_a = this.deps).recentWords) == null ? void 0 : _b.call(_a)) != null ? _c : []).slice(0, MAX_WORDS);
+    } catch (e) {
+      return [];
+    }
+  }
+  // Pool entries whose question is gone or retired leave the pool, so they
+  // don't hold a place or block a refill.
+  dropUnaskable(track2) {
+    const learner = this.deps.learner;
+    const now2 = this.clock();
+    const out = learner.pool(track2).filter((i) => {
+      const q = learner.practiceQuestion(i.questionId);
+      return !q || !!q.retiredAt;
+    }).map((i) => {
+      var _a;
+      return removeFromPool(i, ((_a = learner.practiceQuestion(i.questionId)) == null ? void 0 : _a.retiredAt) ? "retired" : "filtered", now2);
+    });
+    if (out.length) learner.upsertPool(out);
+  }
+  // ── Pool / 錯題區 for the practice tabs ───────────────────────
+  poolQuestions(track2) {
+    const out = [];
+    for (const i of this.deps.learner.pool(track2)) {
+      const q = this.deps.learner.practiceQuestion(i.questionId);
+      if (q && !q.retiredAt) out.push(q);
+    }
+    return out;
+  }
+  mistakeQuestions(track2) {
+    const out = [];
+    for (const m2 of this.deps.learner.mistakes(track2)) {
+      if (m2.track === "grammar") continue;
+      const q = this.deps.learner.practiceQuestion(m2.questionId);
+      if (q && !q.retiredAt) out.push(q);
+    }
+    return out;
+  }
+  applyScope(track2, focusIds) {
+    const learner = this.deps.learner;
+    const now2 = this.clock();
+    const gone = learner.pool(track2).filter((i) => {
+      const q = learner.practiceQuestion(i.questionId);
+      return !q || !focusIds.has(q.focus.id);
+    });
+    if (!gone.length) return;
+    learner.upsertPool(gone.map((i) => removeFromPool(i, "filtered", now2)));
+    this.events.emit("pool:change", track2);
+  }
+  // ── Answers ───────────────────────────────────────────────────
+  answer(q, optionId, correct, opts) {
+    var _a, _b, _c, _d;
+    const learner = this.deps.learner;
+    const now2 = this.clock();
+    const result = !correct ? "wrong" : opts.hinted ? "hinted" : "correct";
+    const e = {
+      id: `p:${q.id}:${this.newId()}`,
+      at: now2.toISOString(),
+      track: q.track,
+      focus: q.focus,
+      result,
+      given: (_b = (_a = q.options.find((o) => o.id === optionId)) == null ? void 0 : _a.text) != null ? _b : optionId,
+      questionId: q.id
+    };
+    if (!correct && q.errorTag) e.errorTag = q.errorTag;
+    learner.addEvent(e);
+    const existing = learner.mistake(poolItemId2(q.track, q.id));
+    if (!correct) {
+      learner.upsertMistake(recordWrong(existing, q.track, q.id, q.focus, now2));
+    } else if (opts.fromMistakes && !opts.hinted && existing && !existing.resolvedAt) {
+      learner.upsertMistake(resolveMistake(existing, now2));
+    }
+    if (!opts.fromMistakes) this.leavePool(q, "answered");
+    if (!correct && !opts.fromMistakes && q.focus.kind === "word") {
+      try {
+        (_d = (_c = this.deps).rateVocabAgain) == null ? void 0 : _d.call(_c, q.focus.id);
+      } catch (err) {
+        console.error("Vocab Tracker: couldn't rate the word", err);
+      }
+    }
+  }
+  skip(q) {
+    this.deps.learner.addEvent(this.plainEvent(q, "skipped", `p:skip:${q.id}:${this.newId()}`));
+    this.leavePool(q, "skipped");
+  }
+  // 👎: the question is retired for good (events keep pointing at it).
+  retire(q) {
+    var _a;
+    const learner = this.deps.learner;
+    const stored = (_a = learner.practiceQuestion(q.id)) != null ? _a : q;
+    const now2 = this.clock();
+    const retired = stored.retiredAt ? stored : { ...stored, retiredAt: now2.toISOString(), updatedAt: now2.toISOString() };
+    if (!stored.retiredAt) learner.upsertPracticeQuestions([retired]);
+    learner.addEvent(this.plainEvent(retired, "retired", `p:retired:${q.id}`));
+    const m2 = learner.mistake(poolItemId2(q.track, q.id));
+    if (m2 && !m2.resolvedAt) learner.upsertMistake(resolveMistake(m2, now2));
+    this.leavePool(retired, "retired");
+  }
+  plainEvent(q, result, id2) {
+    return { id: id2, at: this.clock().toISOString(), track: q.track, focus: q.focus, result, questionId: q.id };
+  }
+  leavePool(q, reason) {
+    const learner = this.deps.learner;
+    const item = learner.pool(q.track).find((i) => i.questionId === q.id);
+    if (!item) return;
+    learner.upsertPool([removeFromPool(item, reason, this.clock())]);
+    this.events.emit("pool:change", q.track);
+  }
+};
+
+// src/services/learner/LearnerModel.ts
+var MATURE_STABILITY_DAYS = 21;
+var WEAK_LIMIT = 8;
+var SCORED = /* @__PURE__ */ new Set(["correct", "wrong"]);
+var LearnerModel = class {
+  constructor(deps) {
+    this.deps = deps;
+  }
+  level() {
+    return this.deps.level();
+  }
+  snapshot(now2 = ((_c) => (_c = ((_a) => ((_b) => (_b = (_a = this.deps).now) == null ? void 0 : _b.call(_a))())()) != null ? _c : /* @__PURE__ */ new Date())()) {
+    const events = this.deps.learner.learnEvents();
+    const senses = /* @__PURE__ */ new Set();
+    for (const e of events) if (e.focus.kind === "sense" && (SCORED.has(e.result) || e.result === "hinted")) senses.add(e.focus.id);
+    const weakAll = weakFocuses(events, { now: now2, limit: Number.MAX_SAFE_INTEGER });
+    return {
+      level: this.level(),
+      vocab: this.vocab(now2),
+      grammar: this.grammar(now2),
+      poly: { practisedSenses: senses.size, weakSenses: weakAll.filter((w2) => w2.focus.kind === "sense").length },
+      weak: weakAll.slice(0, WEAK_LIMIT)
+    };
+  }
+  focusStats(focusId) {
+    let correct = 0;
+    let wrong = 0;
+    let lastAt;
+    for (const e of this.deps.learner.learnEvents({ focusId })) {
+      if (!SCORED.has(e.result)) continue;
+      if (e.result === "correct") correct++;
+      else wrong++;
+      if (!lastAt || Date.parse(e.at) > Date.parse(lastAt)) lastAt = e.at;
+    }
+    return lastAt ? { correct, wrong, lastAt } : { correct, wrong };
+  }
+  // For the 常用字 sense map (Q's progressDot): hinted is not a "right"
+  // answer, so it counts on the wrong side; skipped / retired don't count.
+  // `recent` = the last 3 outcomes, newest last.
+  senseStats(id2) {
+    let correct = 0;
+    let wrong = 0;
+    const seq = [];
+    for (const e of this.deps.learner.learnEvents({ focusId: id2 })) {
+      if (e.focus.kind !== "sense") continue;
+      if (e.result !== "correct" && e.result !== "wrong" && e.result !== "hinted") continue;
+      const ok = e.result === "correct";
+      if (ok) correct++;
+      else wrong++;
+      seq.push({ at: Date.parse(e.at), ok });
+    }
+    seq.sort((a2, b) => a2.at - b.at);
+    return { correct, wrong, recent: seq.slice(-3).map((x3) => x3.ok) };
+  }
+  vocab(now2) {
+    const out = { total: 0, learning: 0, mature: 0, due: 0 };
+    for (const e of this.deps.vocab()) {
+      if (e.deletedAt || e.liked !== true) continue;
+      out.total++;
+      const s = e.srs;
+      if (!s || s.state === SrsState.New) continue;
+      if (s.state === SrsState.Review && s.stability >= MATURE_STABILITY_DAYS) out.mature++;
+      else out.learning++;
+      if (Date.parse(s.due) <= now2.getTime()) out.due++;
+    }
+    return out;
+  }
+  grammar(now2) {
+    const g = this.deps.grammar;
+    const status = topicStatuses(GRAMMAR_TOPICS, g.attempts(), (id2) => g.progress(id2), now2);
+    const out = { started: 0, mastered: 0, due: 0 };
+    for (const s of status.values()) {
+      if (s !== "new") out.started++;
+      if (s === "mastered") out.mastered++;
+      else if (s === "due") out.due++;
+    }
+    return out;
+  }
+};
+
 // src/ui/page/pageContext.ts
 var PageContextHub = class {
   constructor() {
@@ -30221,9 +33160,9 @@ function pageContextSig(ctx) {
     ctx.sourcePath,
     ctx.activeGroupKey,
     (_a = ctx.focusWord) != null ? _a : "",
-    ctx.groups.map((g) => [g.key, g.title, g.words.map((w) => {
+    ctx.groups.map((g) => [g.key, g.title, g.words.map((w2) => {
       var _a2, _b, _c;
-      return [w.word, (_a2 = w.entryId) != null ? _a2 : "", (_c = (_b = w.morpheme) == null ? void 0 : _b.id) != null ? _c : "", w.zh, w.emoji];
+      return [w2.word, (_a2 = w2.entryId) != null ? _a2 : "", (_c = (_b = w2.morpheme) == null ? void 0 : _b.id) != null ? _c : "", w2.zh, w2.emoji];
     })])
   ]);
 }
@@ -30343,7 +33282,7 @@ function candidateScope(c2) {
 function toWord(e) {
   return { word: e.word, partOfSpeech: e.partOfSpeech, zh: e.definitionZh };
 }
-var key3 = (w) => w.trim().toLowerCase();
+var key3 = (w2) => w2.trim().toLowerCase();
 var FamilyService = class {
   constructor(deps) {
     this.deps = deps;
@@ -30596,18 +33535,18 @@ var FamilyService = class {
     var _a;
     if (!words.length) return [];
     const now2 = this.clock();
-    const entries = words.map((w) => ({
+    const entries = words.map((w2) => ({
       id: this.newId(),
-      word: w.word,
+      word: w2.word,
       // (1009 #5): 字族樹加字一律同時 like，並補上等級標籤 — bug fix,
       // 照 main.ts addWordToVocab 的格式 (examLabels(...).join(", ")).
-      level: this.deps.examLabelsFor(w.word).join(", "),
+      level: this.deps.examLabelsFor(w2.word).join(", "),
       liked: true,
       synonyms: "",
       antonyms: "",
       example: "",
       definition: "",
-      definitionZh: w.zh,
+      definitionZh: w2.zh,
       phonetic: "",
       partOfSpeech: "",
       grammar: "",
@@ -30615,14 +33554,14 @@ var FamilyService = class {
       added: nowStamp(now2),
       lastReviewed: nowStamp(now2),
       reviews: 0,
-      origin: familyOrigin(w.familyId)
+      origin: familyOrigin(w2.familyId)
     }));
     await this.deps.vocab.addEntries(entries);
     for (let i = 0; i < entries.length; i++) {
       const emoji = (_a = words[i].emoji) == null ? void 0 : _a.trim();
       if (emoji) this.deps.learn.putWordMeta({ id: entries[i].id, emoji, emojiSource: "ai" });
     }
-    const glosses = words.map((w) => w.zh);
+    const glosses = words.map((w2) => w2.zh);
     this.filling = this.filling.then(() => this.fillFromDictionary(entries, glosses));
     return entries;
   }
@@ -30995,7 +33934,7 @@ ${body}`, /* @__PURE__ */ new Set([subject.id]));
 };
 
 // src/services/learn/MorphemeService.ts
-var key4 = (w) => w.trim().toLowerCase();
+var key4 = (w2) => w2.trim().toLowerCase();
 var DNA_ANALYZE_THREAD = "dna:analyze";
 var DNA_EXPAND_THREAD = "dna:expand";
 function findExistingMorpheme(list, type, form, variants) {
@@ -31192,16 +34131,16 @@ var MorphemeService = class {
       const resolved = existing ? this.mergeIntoExisting(existing, dm) : this.createMorpheme(dm, list);
       refToId.set(dm.ref, resolved.id);
     }
-    const byWord = new Map(value.words.map((w) => [key4(w.word), w]));
+    const byWord2 = new Map(value.words.map((w2) => [key4(w2.word), w2]));
     for (const entry of entries) {
-      const w = byWord.get(key4(entry.word));
-      if (!w) continue;
-      const parts = w.status === "ok" ? w.parts.map((p) => this.toBreakdownPart(p, refToId)) : [];
-      const breakdown = { status: w.status, parts, gloss: w.gloss, word: entry.word, generatedAt, model };
+      const w2 = byWord2.get(key4(entry.word));
+      if (!w2) continue;
+      const parts = w2.status === "ok" ? w2.parts.map((p) => this.toBreakdownPart(p, refToId)) : [];
+      const breakdown = { status: w2.status, parts, gloss: w2.gloss, word: entry.word, generatedAt, model };
       const meta = this.deps.learn.wordMeta(entry.id);
       const next = { ...meta != null ? meta : { id: entry.id }, breakdown };
-      if (!next.emoji && w.emoji) {
-        next.emoji = w.emoji;
+      if (!next.emoji && w2.emoji) {
+        next.emoji = w2.emoji;
         next.emojiSource = "ai";
       }
       this.deps.learn.putWordMeta(next);
@@ -31332,7 +34271,7 @@ var MorphemeService = class {
       { morpheme: { type: m2.type, form: m2.form, variants: m2.variants, meaningZh: m2.meaningZh }, exclude: [...exclude] },
       { threadId: DNA_EXPAND_THREAD, signal }
     );
-    const fresh = value.words.filter((w) => w.word.trim() && !exclude.has(key4(w.word)));
+    const fresh = value.words.filter((w2) => w2.word.trim() && !exclude.has(key4(w2.word)));
     if (fresh.length) this.deps.learn.putMorpheme({ ...m2, suggested: [...m2.suggested, ...fresh] });
     return fresh;
   }
@@ -31344,15 +34283,15 @@ var MorphemeService = class {
     const resolvedId = resolveMorphemeId(this.deps.learn.morphemes(), id2);
     const m2 = this.deps.learn.morpheme(resolvedId);
     const match = m2 == null ? void 0 : m2.suggested.find((s) => key4(s.word) === key4(word));
-    const w = (_a = match == null ? void 0 : match.word) != null ? _a : word;
+    const w2 = (_a = match == null ? void 0 : match.word) != null ? _a : word;
     const zh = (_b = match == null ? void 0 : match.zh) != null ? _b : "";
     const index2 = new WordIndex(this.deps.vocab.entries);
-    const existing = index2.find(w);
+    const existing = index2.find(w2);
     if (existing) {
       if (existing.liked !== true) await this.deps.vocab.setLiked(existing, true);
       return existing;
     }
-    return this.addWord(w, zh, resolvedId);
+    return this.addWord(w2, zh, resolvedId);
   }
   async addWord(word, zh, morphemeId) {
     var _a, _b, _c, _d, _e;
@@ -31476,7 +34415,7 @@ var MorphemeService = class {
 };
 
 // src/ui/chat/SelectionTracker.ts
-var import_obsidian51 = require("obsidian");
+var import_obsidian53 = require("obsidian");
 var MAX_SELECTION_CHARS = 1500;
 var SelectionTracker = class {
   constructor(app) {
@@ -31500,7 +34439,7 @@ var SelectionTracker = class {
     if (!sel || !node) return;
     const el = node instanceof HTMLElement ? node : node.parentElement;
     if (!(el == null ? void 0 : el.closest('.workspace-leaf-content[data-type="markdown"]'))) return;
-    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian51.MarkdownView && v.containerEl.contains(el));
+    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian53.MarkdownView && v.containerEl.contains(el));
     const raw = (view == null ? void 0 : view.getMode()) === "source" ? view.editor.getSelection() : sel.toString();
     const text = raw.replace(/\s+/g, " ").trim().slice(0, MAX_SELECTION_CHARS);
     if (!text) {
@@ -31517,10 +34456,10 @@ var SelectionTracker = class {
 };
 
 // src/platform/ObsidianWordlists.ts
-var import_obsidian52 = require("obsidian");
+var import_obsidian54 = require("obsidian");
 var EXTENSIONS = /* @__PURE__ */ new Set(["md", "txt", "csv", "tsv"]);
 function inFolder(path, folder) {
-  return path.startsWith((0, import_obsidian52.normalizePath)(folder) + "/");
+  return path.startsWith((0, import_obsidian54.normalizePath)(folder) + "/");
 }
 var ObsidianWordlists = class {
   constructor(app) {
@@ -31531,7 +34470,7 @@ var ObsidianWordlists = class {
   }
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian52.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian54.TFile ? this.app.vault.cachedRead(file) : null;
   }
 };
 
@@ -31696,7 +34635,7 @@ var WordlistService = class extends TypedEmitter {
 };
 
 // src/ui/reading/examHighlight.ts
-var import_obsidian53 = require("obsidian");
+var import_obsidian55 = require("obsidian");
 var EXAM_WORD_CLS = "vt-exam-word";
 var SKIP2 = [
   "code",
@@ -31740,7 +34679,7 @@ function highlightExamWords(el, lookup, colorOf) {
       const span = frag.createSpan({ cls: EXAM_WORD_CLS, text: seg.word });
       span.dataset.vtTags = seg.tags.join(" ");
       span.style.setProperty("--vt-exam-color", colorOf(seg.tags[0]));
-      (0, import_obsidian53.setTooltip)(span, seg.tags.map(tagLabel).join(" \xB7 "), { delay: 300 });
+      (0, import_obsidian55.setTooltip)(span, seg.tags.map(tagLabel).join(" \xB7 "), { delay: 300 });
     }
     node.replaceWith(frag);
   }
@@ -31796,15 +34735,15 @@ function cleanSentence(text) {
   return text.replace(/^\s*(#{1,6}\s+|>\s*)+/, "").replace(/^\s*([-*+]\s+(\[.\]\s+)?|\d+[.)]\s+)/, "").replace(/(\*\*|__|==|~~|\*|_)(?=\S)|(?<=\S)(\*\*|__|==|~~|\*|_)/g, "").replace(/\s+/g, " ").trim();
 }
 function buildEntryLookup(entries) {
-  const byWord = /* @__PURE__ */ new Map();
+  const byWord2 = /* @__PURE__ */ new Map();
   for (const e of entries) {
     const key5 = e.word.trim().toLowerCase();
     if (!key5) continue;
-    const list = byWord.get(key5);
+    const list = byWord2.get(key5);
     if (list) list.push(e);
-    else byWord.set(key5, [e]);
+    else byWord2.set(key5, [e]);
   }
-  const forWord = (word) => byWord.get(word.trim().toLowerCase());
+  const forWord = (word) => byWord2.get(word.trim().toLowerCase());
   return {
     live: (word) => {
       var _a;
@@ -32028,7 +34967,7 @@ async function refreshStaleDictionary(entry, dictionary) {
 }
 
 // src/platform/ObsidianVault.ts
-var import_obsidian54 = require("obsidian");
+var import_obsidian56 = require("obsidian");
 var Unchanged = class {
   constructor(text) {
     this.text = text;
@@ -32053,7 +34992,7 @@ var ObsidianVault = class {
   // ── shared ────────────────────────────────────────────────────────────
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian54.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian56.TFile ? this.app.vault.cachedRead(file) : null;
   }
   // ── task G ────────────────────────────────────────────────────────────
   // vault.process(file, fn). Rethrow whatever `fn` throws unchanged:
@@ -32063,7 +35002,7 @@ var ObsidianVault = class {
   // minAppVersion ≥ 1.1.0 in manifest.json.
   async process(path, fn) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian54.TFile)) throw new Error(`File not found: ${path}`);
+    if (!(file instanceof import_obsidian56.TFile)) throw new Error(`File not found: ${path}`);
     try {
       return await this.app.vault.process(file, (text) => {
         const next = fn(text);
@@ -32109,19 +35048,19 @@ var ObsidianVault = class {
     component.registerEvent(
       vault.on("delete", (file) => {
         var _a, _b;
-        if (file instanceof import_obsidian54.TFolder) (_a = this.managed) == null ? void 0 : _a.deleteUnder(file.path);
+        if (file instanceof import_obsidian56.TFolder) (_a = this.managed) == null ? void 0 : _a.deleteUnder(file.path);
         else (_b = this.managed) == null ? void 0 : _b.delete(file.path);
       })
     );
     if (workspace.layoutReady) this.markResolved();
   }
   exists(path) {
-    return this.app.vault.getAbstractFileByPath((0, import_obsidian54.normalizePath)(path)) !== null;
+    return this.app.vault.getAbstractFileByPath((0, import_obsidian56.normalizePath)(path)) !== null;
   }
   // Creates missing parent folders; rejects when the file already exists.
   async create(path, content) {
     var _a;
-    const target = (0, import_obsidian54.normalizePath)(path);
+    const target = (0, import_obsidian56.normalizePath)(path);
     if (this.app.vault.getAbstractFileByPath(target)) throw new Error(`File already exists: ${target}`);
     await this.ensureFolder(parentOf(target));
     const file = await this.app.vault.create(target, content);
@@ -32132,8 +35071,8 @@ var ObsidianVault = class {
   // target exists (never overwrites).
   async rename(from, to) {
     var _a;
-    const source = (0, import_obsidian54.normalizePath)(from);
-    const target = (0, import_obsidian54.normalizePath)(to);
+    const source = (0, import_obsidian56.normalizePath)(from);
+    const target = (0, import_obsidian56.normalizePath)(to);
     const file = this.app.vault.getAbstractFileByPath(source);
     if (!file) throw new Error(`File not found: ${source}`);
     if (source === target) return;
@@ -32169,7 +35108,7 @@ var ObsidianVault = class {
         resolve();
       };
       const timer2 = setTimeout(() => {
-        this.readyWaiters = this.readyWaiters.filter((w) => w !== finish);
+        this.readyWaiters = this.readyWaiters.filter((w2) => w2 !== finish);
         finish();
       }, this.readyTimeoutMs);
       this.readyWaiters.push(finish);
@@ -32189,11 +35128,11 @@ var ObsidianVault = class {
     var _a;
     const index2 = this.managed;
     if (!index2) return;
-    if (file instanceof import_obsidian54.TFolder) {
+    if (file instanceof import_obsidian56.TFolder) {
       index2.moveUnder(oldPath, file.path);
     } else if (index2.has(oldPath)) {
       index2.move(oldPath, file.path);
-    } else if (file instanceof import_obsidian54.TFile) {
+    } else if (file instanceof import_obsidian56.TFile) {
       index2.set(file.path, managedRefOf((_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter));
     }
   }
@@ -32215,12 +35154,12 @@ var ObsidianVault = class {
     for (let i = 1; i <= parts.length; i++) {
       const path = parts.slice(0, i).join("/");
       const existing = this.app.vault.getAbstractFileByPath(path);
-      if (existing instanceof import_obsidian54.TFolder) continue;
+      if (existing instanceof import_obsidian56.TFolder) continue;
       if (existing) throw new Error(`Not a folder: ${path}`);
       try {
         await this.app.vault.createFolder(path);
       } catch (e) {
-        if (!(this.app.vault.getAbstractFileByPath(path) instanceof import_obsidian54.TFolder)) throw e;
+        if (!(this.app.vault.getAbstractFileByPath(path) instanceof import_obsidian56.TFolder)) throw e;
       }
     }
   }
@@ -32339,16 +35278,16 @@ function endMarker(name) {
 var MARKER_LINE = /^[ \t]*%%[ \t]*vt:(begin|end)[ \t]+([a-z0-9][a-z0-9-]*)[ \t]*%%[ \t]*$/;
 function lines2(text) {
   const out = [];
-  let start2 = 0;
-  while (start2 <= text.length) {
-    const nl = text.indexOf("\n", start2);
+  let start3 = 0;
+  while (start3 <= text.length) {
+    const nl = text.indexOf("\n", start3);
     if (nl < 0) {
-      out.push({ start: start2, textEnd: text.length, end: text.length, eol: "" });
+      out.push({ start: start3, textEnd: text.length, end: text.length, eol: "" });
       break;
     }
-    const cr = nl > start2 && text[nl - 1] === "\r";
-    out.push({ start: start2, textEnd: cr ? nl - 1 : nl, end: nl + 1, eol: cr ? "\r\n" : "\n" });
-    start2 = nl + 1;
+    const cr = nl > start3 && text[nl - 1] === "\r";
+    out.push({ start: start3, textEnd: cr ? nl - 1 : nl, end: nl + 1, eol: cr ? "\r\n" : "\n" });
+    start3 = nl + 1;
   }
   return out;
 }
@@ -32409,12 +35348,12 @@ function applyManagedBlocks(text, sections) {
 function removeManagedBlock(text, name) {
   const range = findManagedBlock(text, name);
   if (!range) return text;
-  const start2 = text.lastIndexOf("\n", range.contentStart - 2) + 1;
+  const start3 = text.lastIndexOf("\n", range.contentStart - 2) + 1;
   const nl = text.indexOf("\n", range.contentEnd);
   let end = nl === -1 ? text.length : nl + 1;
   const blank = /^[ \t]*\r?\n/.exec(text.slice(end));
   if (blank) end += blank[0].length;
-  return text.slice(0, start2) + text.slice(end);
+  return text.slice(0, start3) + text.slice(end);
 }
 function buildManagedFile(head, sections, tail = "") {
   const parts = [head.replace(/\n+$/, ""), ...sections.map((s) => renderSection(s)), tail.replace(/\n+$/, "")];
@@ -32531,9 +35470,9 @@ function renderParagraphs(input, ctx) {
   return parts.length ? parts.join("\n\n") : italic(ctx.labels.paragraphsEmpty);
 }
 function renderWords(input, ctx) {
-  const list = input.words.map((w) => {
-    const ref = wordRef(ctx, w.word, w.entryId);
-    return w.questions > 0 ? `- ${ref} \xB7 ${fill(ctx.labels.wordQuestions, { n: w.questions })}` : `- ${ref}`;
+  const list = input.words.map((w2) => {
+    const ref = wordRef(ctx, w2.word, w2.entryId);
+    return w2.questions > 0 ? `- ${ref} \xB7 ${fill(ctx.labels.wordQuestions, { n: w2.questions })}` : `- ${ref}`;
   });
   return [`## ${ctx.labels.wordsLearned}`, "", list.length ? list.join("\n") : italic(ctx.labels.wordsEmpty)].join("\n");
 }
@@ -33248,7 +36187,9 @@ var ENTRY_FILES = [
   { id: "grammar", name: "Grammar", block: "vocab-grammar", legacyName: "Grammar" },
   // Practice hub (第十六波 E). New, so legacyName = name for the same
   // reason as Grammar above; Card.md stays as it is.
-  { id: "practice", name: "Practice", block: "vocab-practice", legacyName: "Practice" }
+  { id: "practice", name: "Practice", block: "vocab-practice", legacyName: "Practice" },
+  // Polysemy sense map (第十七波 Q). New, so legacyName = name (as Grammar).
+  { id: "polysemy", name: "Polysemy", block: "vocab-polysemy", legacyName: "Polysemy" }
 ];
 var LIST_FILE_NAME = "List";
 var LIST_FILE_LEGACY_NAME = "vocab-list";
@@ -33479,8 +36420,8 @@ var SeedRecord = class {
 };
 
 // src/ui/blocks/wordReview.ts
-var import_obsidian55 = require("obsidian");
-var WordReviewModal = class extends import_obsidian55.Modal {
+var import_obsidian57 = require("obsidian");
+var WordReviewModal = class extends import_obsidian57.Modal {
   constructor(host, entry) {
     super(host.app);
     this.host = host;
@@ -33511,7 +36452,7 @@ function openWordReview(host, entry) {
 }
 
 // src/ui/reading/WordPageDecorator.ts
-var import_obsidian56 = require("obsidian");
+var import_obsidian58 = require("obsidian");
 function l3(key5, vars) {
   return t(`wordPage.${key5}`, vars);
 }
@@ -33553,7 +36494,7 @@ function syncTriviaCard(h, entry, deps, ctx) {
   const head = card.createDiv({ cls: "vt-wp-trivia-pending-head" });
   head.createSpan({ cls: "vt-wp-trivia-pending-badge", text: t("wordPage.trivia.pending.badge") });
   const save = head.createEl("button", { cls: "vt-wp-btn" });
-  (0, import_obsidian56.setIcon)(save.createSpan({ cls: "vt-wp-btn-icon" }), "bookmark");
+  (0, import_obsidian58.setIcon)(save.createSpan({ cls: "vt-wp-btn-icon" }), "bookmark");
   save.createSpan({ text: t("learn.trivia.favorite") });
   save.addEventListener("click", (e) => {
     e.preventDefault();
@@ -33564,9 +36505,9 @@ function syncTriviaCard(h, entry, deps, ctx) {
   });
   if (pending.title) card.createDiv({ cls: "vt-wp-trivia-pending-title", text: pending.title });
   const body = card.createDiv({ cls: "vt-wp-trivia-pending-body" });
-  const scope = new import_obsidian56.MarkdownRenderChild(body);
+  const scope = new import_obsidian58.MarkdownRenderChild(body);
   ctx.addChild(scope);
-  void import_obsidian56.MarkdownRenderer.render(deps.app, pending.body, body, ctx.sourcePath, scope);
+  void import_obsidian58.MarkdownRenderer.render(deps.app, pending.body, body, ctx.sourcePath, scope);
   card.createDiv({ cls: "vt-wp-trivia-pending-hint", text: t("wordPage.trivia.pending.hint") });
   h.insertAdjacentElement("afterend", card);
 }
@@ -33611,7 +36552,7 @@ function foldHeading(h, section3, entryId, deps) {
   h.tabIndex = 0;
   const open = isOpenStored(deps.app, entryId, FOLD_OF[section3]);
   const chev = createSpan({ cls: ["vt", "vt-wp-fold-chev"] });
-  (0, import_obsidian56.setIcon)(chev, "chevron-right");
+  (0, import_obsidian58.setIcon)(chev, "chevron-right");
   h.insertBefore(chev, h.firstChild);
   h.toggleClass("is-open", open);
   h.setAttr("aria-expanded", String(open));
@@ -33717,7 +36658,7 @@ function attachButton(h, key5, action, deps) {
   h.addClass("vt-wp-heading");
   const box = h.createSpan({ cls: ["vt", "vt-wp-actions"] });
   const btn = box.createEl("button", { cls: "vt-wp-btn" });
-  (0, import_obsidian56.setIcon)(btn.createSpan({ cls: "vt-wp-btn-icon" }), action.icon);
+  (0, import_obsidian58.setIcon)(btn.createSpan({ cls: "vt-wp-btn-icon" }), action.icon);
   btn.createSpan({ text: action.label });
   const setBusy = (busy) => {
     btn.toggleClass("is-busy", busy);
@@ -33762,7 +36703,7 @@ function decorateUsagePos(h, pos, entry, deps) {
 }
 
 // src/ui/reading/PluginNoteChrome.ts
-var import_obsidian57 = require("obsidian");
+var import_obsidian59 = require("obsidian");
 
 // src/ui/reading/pluginNote.ts
 var KINDS = ["word", "entry", "ai-note", "grammar"];
@@ -33830,7 +36771,7 @@ var PluginNoteChrome = class {
     if (this.disposed) return;
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
       const view = leaf.view;
-      if (!(view instanceof import_obsidian57.MarkdownView)) continue;
+      if (!(view instanceof import_obsidian59.MarkdownView)) continue;
       const file = view.file;
       const cache2 = file ? this.app.metadataCache.getFileCache(file) : null;
       const el = view.containerEl;
@@ -33852,7 +36793,7 @@ var PluginNoteChrome = class {
 };
 
 // src/ui/reading/openInPreview.ts
-var import_obsidian58 = require("obsidian");
+var import_obsidian60 = require("obsidian");
 function isInFolder(path, folder) {
   if (!/\.md$/i.test(path)) return false;
   const trimmed = folder.replace(/^\/+/, "").replace(/\/+$/, "");
@@ -33877,7 +36818,7 @@ function installOpenInPreview(plugin, folder) {
   let lastActive = null;
   const processLeaf = (leaf) => {
     const view = leaf.view;
-    if (!(view instanceof import_obsidian58.MarkdownView) || !view.file) return;
+    if (!(view instanceof import_obsidian60.MarkdownView) || !view.file) return;
     const next = { leafId: idOf(leaf), path: view.file.path };
     const switchNow = shouldSwitchToPreview(lastActive, next, folder());
     lastActive = next;
@@ -33887,7 +36828,7 @@ function installOpenInPreview(plugin, folder) {
       var _a;
       if (attempt > 20) return;
       const currentView = leaf.view;
-      if (!(currentView instanceof import_obsidian58.MarkdownView) || ((_a = currentView.file) == null ? void 0 : _a.path) !== stable.path) return;
+      if (!(currentView instanceof import_obsidian60.MarkdownView) || ((_a = currentView.file) == null ? void 0 : _a.path) !== stable.path) return;
       if (currentView.getMode() !== "source") return;
       const viewState = leaf.getViewState();
       void leaf.setViewState({ ...viewState, state: { ...viewState.state, mode: "preview" } }).then(() => {
@@ -33914,7 +36855,7 @@ function installOpenInPreview(plugin, folder) {
 }
 
 // src/ui/reading/ParagraphBadges.ts
-var import_obsidian59 = require("obsidian");
+var import_obsidian61 = require("obsidian");
 var BADGE_CLS = "vt-pbadge";
 var BADGE_HOST_CLS = "vt-pbadge-host";
 var ANCHORABLE_TAGS = /* @__PURE__ */ new Set(["P", "UL", "OL", "BLOCKQUOTE"]);
@@ -33959,7 +36900,7 @@ var ParagraphBadges = class {
         this.draw(handle);
         this.track(handle);
       }
-      const child = new import_obsidian59.MarkdownRenderChild(el);
+      const child = new import_obsidian61.MarkdownRenderChild(el);
       child.register(() => handles.forEach((h) => this.untrack(h)));
       ctx.addChild(child);
     };
@@ -34046,7 +36987,7 @@ ${id2}`);
       badge.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") open(e);
       });
-      (0, import_obsidian59.setIcon)(badge.createSpan({ cls: "vt-pbadge-icon" }), "sparkles");
+      (0, import_obsidian61.setIcon)(badge.createSpan({ cls: "vt-pbadge-icon" }), "sparkles");
       badge.createSpan({ cls: "vt-pbadge-count" });
     }
     const countEl = badge.querySelector(".vt-pbadge-count");
@@ -34075,10 +37016,10 @@ function planTap(action, tracked) {
 }
 
 // src/ui/mobile/WordSheet.ts
-var import_obsidian61 = require("obsidian");
+var import_obsidian63 = require("obsidian");
 
 // src/ui/mobile/BottomSheet.ts
-var import_obsidian60 = require("obsidian");
+var import_obsidian62 = require("obsidian");
 
 // src/ui/mobile/sheetGeometry.ts
 var TAP_SLOP_PX = 6;
@@ -34219,7 +37160,7 @@ var BottomSheet = class {
     grab.createDiv({ cls: "vt-sheet-grab" });
     const close = grab.createEl("button", { cls: "vt-sheet-close clickable-icon" });
     close.setAttr("aria-label", opts.closeLabel);
-    (0, import_obsidian60.setIcon)(close, "x");
+    (0, import_obsidian62.setIcon)(close, "x");
     close.addEventListener("click", () => this.close());
     grab.addEventListener("pointerdown", this.onPointerDown);
     grab.addEventListener("pointermove", this.onPointerMove);
@@ -34363,7 +37304,7 @@ function isTextInput(target) {
 
 // src/ui/mobile/WordSheet.ts
 var KEYBOARD_PROBE_PATH = "Vocab Tracker \u9375\u76E4\u8A3A\u65B7.md";
-var WordSheet = class extends import_obsidian61.Component {
+var WordSheet = class extends import_obsidian63.Component {
   constructor(plugin, opts = {}) {
     super();
     this.plugin = plugin;
@@ -34618,12 +37559,12 @@ ${block}`);
     this.cancelRebind();
     try {
       if (!await this.plugin.threads.rebindParagraph(threadId, ref)) return;
-      new import_obsidian61.Notice(t("paragraph.rebind.done"));
+      new import_obsidian63.Notice(t("paragraph.rebind.done"));
       this.view = { kind: "paragraph", route: { name: "paragraph", threadId } };
       this.show();
     } catch (e) {
       console.error("Vocab Tracker: rebind failed", e);
-      new import_obsidian61.Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian63.Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
 };
@@ -34848,7 +37789,7 @@ function snapshot(e) {
 }
 
 // src/ui/word/DeleteEntryModal.ts
-var import_obsidian62 = require("obsidian");
+var import_obsidian64 = require("obsidian");
 
 // src/ui/word/deleteEntryImpact.ts
 function deletionImpactLines(impact) {
@@ -34862,7 +37803,7 @@ function deletionImpactLines(impact) {
 }
 
 // src/ui/word/DeleteEntryModal.ts
-var DeleteEntryModal = class extends import_obsidian62.Modal {
+var DeleteEntryModal = class extends import_obsidian64.Modal {
   constructor(app, word, impact, onResult) {
     super(app);
     this.word = word;
@@ -34891,11 +37832,11 @@ var DeleteEntryModal = class extends import_obsidian62.Modal {
       el.createEl("p", { text: t("deleteEntry.noLinks"), cls: "vt-settings-muted" });
     }
     if (this.impact.wordPageExists) {
-      new import_obsidian62.Setting(el).setName(t("deleteEntry.trashWordPage")).addToggle(
+      new import_obsidian64.Setting(el).setName(t("deleteEntry.trashWordPage")).addToggle(
         (toggle2) => toggle2.setValue(this.trashWordPage).onChange((v) => this.trashWordPage = v)
       );
     }
-    new import_obsidian62.Setting(el).addButton((b) => b.setButtonText(t("deleteEntry.cancel")).onClick(() => this.close())).addButton(
+    new import_obsidian64.Setting(el).addButton((b) => b.setButtonText(t("deleteEntry.cancel")).onClick(() => this.close())).addButton(
       (b) => b.setButtonText(t("deleteEntry.confirm")).setWarning().onClick(() => {
         this.confirmed = true;
         this.onResult({ trashWordPage: this.trashWordPage });
@@ -34930,7 +37871,7 @@ function saveDnaBudget(v) {
   } catch (e) {
   }
 }
-var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
+var VocabTrackerPlugin = class extends import_obsidian65.Plugin {
   constructor() {
     super(...arguments);
     this.vocabData = { entries: [] };
@@ -35025,15 +37966,39 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
         return (_b = (_a = this.store.settings.learner) == null ? void 0 : _a.level) != null ? _b : "";
       }
     });
+    this.scenario = new ScenarioService({
+      ai,
+      learner: this.learner,
+      recentWords: () => this.recentWords(),
+      level: () => {
+        var _a, _b;
+        return (_b = (_a = this.store.settings.learner) == null ? void 0 : _a.level) != null ? _b : "";
+      },
+      // C6: a scenario word answered wrong is one FSRS Again.
+      rateVocabAgain: (id2) => {
+        const entry = this.store.entries.find((e) => e.id === id2);
+        if (entry) void this.srs.rate(entry, Rating.Again, "en-zh");
+      }
+    });
+    this.learnerModel = new LearnerModel({
+      vocab: () => this.store.entries,
+      grammar: this.grammar,
+      learner: this.learner,
+      level: () => {
+        var _a, _b;
+        return (_b = (_a = this.store.settings.learner) == null ? void 0 : _a.level) != null ? _b : "";
+      }
+    });
+    setProfileDeps({ learnerModel: this.learnerModel });
     this.families = new FamilyService({
       ai,
       vocab: this.store,
       learn: this.learn,
       dictionary: this.dictionary,
       // 1009 #5: a word added from 字族樹 gets its exam labels, like addWordToVocab.
-      examLabelsFor: (w) => {
+      examLabelsFor: (w2) => {
         var _a, _b;
-        return this.examLabels((_b = (_a = this.wordlists.match(w)) == null ? void 0 : _a.tags) != null ? _b : []);
+        return this.examLabels((_b = (_a = this.wordlists.match(w2)) == null ? void 0 : _a.tags) != null ? _b : []);
       }
     });
     this.emoji = new EmojiService({ ai, vocab: this.store, learn: this.learn, aiReady: () => this.ai.status() === "ready" });
@@ -35043,9 +38008,9 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
       learn: this.learn,
       dictionary: this.dictionary,
       threads: this.threads,
-      examLabelsFor: (w) => {
+      examLabelsFor: (w2) => {
         var _a, _b;
-        return this.examLabels((_b = (_a = this.wordlists.match(w)) == null ? void 0 : _a.tags) != null ? _b : []);
+        return this.examLabels((_b = (_a = this.wordlists.match(w2)) == null ? void 0 : _a.tags) != null ? _b : []);
       },
       dailyBatches: () => {
         var _a;
@@ -35123,9 +38088,9 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
       openPath: (p) => this.openNote(p)
     });
     this.registerEvent(
-      this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof import_obsidian63.TFolder))
+      this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof import_obsidian65.TFolder))
     );
-    this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof import_obsidian63.TFolder)));
+    this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof import_obsidian65.TFolder)));
     this.linkage = new EntryLinkageService({
       learn: this.learn,
       vocab: this.store,
@@ -35145,7 +38110,7 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
         trivia: this.trivia,
         // The bottom sheet on iPhone.
         openInSidebar: (entry) => this.surfaces.openWordCard(entry.id, "ai"),
-        notify: (m2) => new import_obsidian63.Notice(m2)
+        notify: (m2) => new import_obsidian65.Notice(m2)
       })
     );
     new PluginNoteChrome(this.app).attach(this);
@@ -35182,7 +38147,7 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
         var _a;
         for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
           const view = leaf.view;
-          if (view instanceof import_obsidian63.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === path && view.getMode() === "preview") {
+          if (view instanceof import_obsidian65.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === path && view.getMode() === "preview") {
             view.previewMode.rerender(true);
           }
         }
@@ -35269,7 +38234,7 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
     );
     this.registerEvent(
       this.app.vault.on("rename", async (file, oldPath) => {
-        if (!(file instanceof import_obsidian63.TFile)) return;
+        if (!(file instanceof import_obsidian65.TFile)) return;
         const changed = updateSourcePaths(this.vocabData.entries, oldPath, file.path);
         if (changed.length) await this.store.touchMany(changed);
         await this.noteImports.rename(oldPath, file.path);
@@ -35427,10 +38392,10 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
       const plan = planImport(result.hits, this.examWordIndex, (tags) => this.examLabels(tags), { now: Date.now() });
       const base = Date.now();
       const created2 = plan.create.map(
-        (w, i) => this.newEntry(`${base}-${i}`, w.word, {
-          level: w.level,
-          example: w.example,
-          source: { path: file.path, line: w.line },
+        (w2, i) => this.newEntry(`${base}-${i}`, w2.word, {
+          level: w2.level,
+          example: w2.example,
+          source: { path: file.path, line: w2.line },
           origin: "wordlist",
           liked: false
         })
@@ -35440,7 +38405,7 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
       if (plan.retag.length) await this.store.touchMany(plan.retag.map((r) => r.entry));
       await this.noteImports.mark(file.path, nowIso());
       if (created2.length || plan.retag.length) {
-        new import_obsidian63.Notice(
+        new import_obsidian65.Notice(
           t("exam.import.done", { note: file.basename, added: created2.length, tagged: plan.retag.length })
         );
         this.renderSidebar();
@@ -35490,7 +38455,7 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
     (_a = this.sidebarView()) == null ? void 0 : _a.render();
   }
   registerWordlistEvents() {
-    const reload = (0, import_obsidian63.debounce)(() => void this.wordlists.reload(), 800, true);
+    const reload = (0, import_obsidian65.debounce)(() => void this.wordlists.reload(), 800, true);
     const inLists = (path) => inFolder(path, this.wordlistSettings().folder);
     const onChange = (file, oldPath) => {
       if (inLists(file.path) || oldPath && inLists(oldPath)) reload();
@@ -35498,7 +38463,7 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
     this.registerEvent(this.app.vault.on("create", (f) => onChange(f)));
     this.registerEvent(this.app.vault.on("delete", (f) => onChange(f)));
     this.registerEvent(this.app.vault.on("rename", (f, oldPath) => onChange(f, oldPath)));
-    const rescanActive = (0, import_obsidian63.debounce)(() => this.refreshExamStrip(), 1500, true);
+    const rescanActive = (0, import_obsidian65.debounce)(() => this.refreshExamStrip(), 1500, true);
     this.registerEvent(
       this.app.vault.on("modify", (f) => {
         var _a;
@@ -35522,7 +38487,7 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
     var _a;
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
       const view = leaf.view;
-      if (view instanceof import_obsidian63.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
+      if (view instanceof import_obsidian65.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
     }
   }
   refreshExamStrip() {
@@ -35562,7 +38527,7 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
   }
   // Live Preview hint's 「切換到閱讀模式」.
   async switchToReadingView() {
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian63.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian65.MarkdownView);
     if (!view) return;
     await view.setState({ ...view.getState(), mode: "preview" }, { history: false });
   }
@@ -35593,7 +38558,7 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
       await this.openNote(await this.files.ensure(id2), where);
     } catch (e) {
       console.error(`Vocab Tracker: couldn't open the ${id2} entry file`, e);
-      new import_obsidian63.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian65.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   // The 「單字頁」 button: the word's page, created now if it has none.
@@ -35605,7 +38570,7 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
       if (path) await this.openNote(path);
     } catch (e) {
       console.error("Vocab Tracker: couldn't open the word page", e);
-      new import_obsidian63.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian65.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   // "tab": a new tab, or the tab already showing the note.
@@ -35617,12 +38582,12 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
   }
   async openNote(path, where = "current") {
     const file = this.app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian63.TFile)) return;
+    if (!(file instanceof import_obsidian65.TFile)) return;
     const { workspace } = this.app;
     if (where === "tab") {
       const open = workspace.getLeavesOfType("markdown").find((leaf) => {
         var _a;
-        return leaf.view instanceof import_obsidian63.MarkdownView && ((_a = leaf.view.file) == null ? void 0 : _a.path) === path;
+        return leaf.view instanceof import_obsidian65.MarkdownView && ((_a = leaf.view.file) == null ? void 0 : _a.path) === path;
       });
       if (open) {
         workspace.setActiveLeaf(open, { focus: true });
@@ -35659,13 +38624,13 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
       (p) => !!this.app.vault.getAbstractFileByPath(p)
     );
     const old = rename ? this.app.vault.getAbstractFileByPath(rename[0]) : null;
-    if (rename && old instanceof import_obsidian63.TFile) await this.app.fileManager.renameFile(old, rename[1]);
+    if (rename && old instanceof import_obsidian65.TFile) await this.app.fileManager.renameFile(old, rename[1]);
     if (this.app.vault.getAbstractFileByPath(VOCAB_FILE)) return;
     if (!this.app.vault.getAbstractFileByPath(VOCAB_FOLDER)) {
       await this.app.vault.createFolder(VOCAB_FOLDER);
     }
     const legacy = this.app.vault.getAbstractFileByPath(VOCAB_FILE_LEGACY);
-    if (legacy instanceof import_obsidian63.TFile) {
+    if (legacy instanceof import_obsidian65.TFile) {
       await this.app.fileManager.renameFile(legacy, VOCAB_FILE);
       return;
     }
@@ -35709,13 +38674,13 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
     }
   }
   showWordMenu(evt, word, ctx, exists) {
-    const menu = new import_obsidian63.Menu();
+    const menu = new import_obsidian65.Menu();
     menu.addItem((item) => {
       item.setTitle(t(exists ? "mobile.menu.open" : "mobile.menu.add", { word }));
       item.setIcon(exists ? "book-open" : "plus");
       item.onClick(async () => {
         const added = await this.addWordToVocab(word, ctx);
-        if (added) new import_obsidian63.Notice(t("mobile.menu.added", { word }));
+        if (added) new import_obsidian65.Notice(t("mobile.menu.added", { word }));
       });
     });
     menu.showAtMouseEvent(evt);
@@ -35735,13 +38700,13 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
           await this.deleteEntry(entry);
           this.renderSidebar();
         },
-        notify: (text, actions) => (actions == null ? void 0 : actions.length) ? actionNotice(text, actions) : new import_obsidian63.Notice(text)
+        notify: (text, actions) => (actions == null ? void 0 : actions.length) ? actionNotice(text, actions) : new import_obsidian65.Notice(text)
       });
       this.renderSidebar();
       (_a = this.sidebarView()) == null ? void 0 : _a.locateWord(word);
     } catch (e) {
       console.error("Vocab Tracker: couldn't save the word", e);
-      new import_obsidian63.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian65.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   getWordContext(x3, y3) {
@@ -35764,23 +38729,23 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
     if (!node || node.nodeType !== Node.TEXT_NODE) return { word: "", sentence: "" };
     const text = node.textContent || "";
     const isWordChar = (c2) => c2 !== void 0 && /[A-Za-z'\-]/.test(c2);
-    let start2 = offset;
+    let start3 = offset;
     let end = offset;
-    while (start2 > 0 && isWordChar(text[start2 - 1])) start2--;
+    while (start3 > 0 && isWordChar(text[start3 - 1])) start3--;
     while (end < text.length && isWordChar(text[end])) end++;
-    const word = text.slice(start2, end).replace(/^[-']+|[-']+$/g, "");
+    const word = text.slice(start3, end).replace(/^[-']+|[-']+$/g, "");
     if (!/^[A-Za-z][A-Za-z'\-]*$/.test(word)) return { word: "", sentence: "" };
     const examSpan = (_a = node.parentElement) == null ? void 0 : _a.closest(`.${EXAM_WORD_CLS}`);
     const block = examSpan == null ? void 0 : examSpan.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
     if (examSpan && block) {
       const range = document.createRange();
       range.setStart(block, 0);
-      range.setEnd(node, start2);
+      range.setEnd(node, start3);
       const before = range.toString().length;
       const blockText = block.textContent || "";
-      return { word, sentence: extractSentence(blockText, before, before + (end - start2), null) };
+      return { word, sentence: extractSentence(blockText, before, before + (end - start3), null) };
     }
-    const sentence = extractSentence(text, start2, end, node);
+    const sentence = extractSentence(text, start3, end, node);
     return { word, sentence };
   }
   // `reveal` (default): show the word afterwards — sidebar, or the bottom
@@ -35847,7 +38812,7 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
     if (!entry.source || !entry.source.path) return;
     const file = this.app.vault.getAbstractFileByPath(entry.source.path);
     if (!file) {
-      new import_obsidian63.Notice("Source note not found: " + entry.source.path);
+      new import_obsidian65.Notice("Source note not found: " + entry.source.path);
       return;
     }
     const leaf = this.app.workspace.getLeaf(false);
@@ -35871,11 +38836,11 @@ var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
       await this.store.touch(entry);
       if (opts.quiet) return;
       this.renderSidebar();
-      if (opts.verbose) new import_obsidian63.Notice(`Vocab Tracker: fetched "${entry.word}"`);
+      if (opts.verbose) new import_obsidian65.Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
       if (opts.quiet) return;
-      new import_obsidian63.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
+      new import_obsidian65.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
     }
   }
   refreshSidebar() {

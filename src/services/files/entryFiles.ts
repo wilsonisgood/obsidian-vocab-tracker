@@ -12,7 +12,7 @@ import type { RenderContext } from "../export/types";
 
 export const ENTRY_FILE_KIND = "entry";
 
-export type EntryFileId = "flashcards" | "families" | "verbs" | "trivia" | "dna" | "grammar" | "practice";
+export type EntryFileId = "flashcards" | "families" | "verbs" | "trivia" | "dna" | "grammar" | "practice" | "polysemy";
 
 export interface EntryFileDef {
   id: EntryFileId;
@@ -47,6 +47,8 @@ export const ENTRY_FILES: readonly EntryFileDef[] = [
   // Practice hub (第十六波 E). New, so legacyName = name for the same
   // reason as Grammar above; Card.md stays as it is.
   { id: "practice", name: "Practice", block: "vocab-practice", legacyName: "Practice" },
+  // Polysemy sense map (第十七波 Q). New, so legacyName = name (as Grammar).
+  { id: "polysemy", name: "Polysemy", block: "vocab-polysemy", legacyName: "Polysemy" },
 ];
 
 // The word list's starter note (main.ts) is not an entry file (no
