@@ -45,12 +45,14 @@ describe("ObsidianStorage — backups", () => {
   it("reads data.json and every store shard, unknown and unparsable ones included", async () => {
     const { app, storage: s } = storage();
     app.vault.adapter.files.set(pluginFile("store/threads.json"), JSON.stringify({ threads: [] }));
+    app.vault.adapter.files.set(pluginFile("store/grammar.json"), JSON.stringify({ questions: [], attempts: [], progress: [] }));
     app.vault.adapter.files.set(pluginFile("store/future.json"), JSON.stringify({ x: 1 }));
     app.vault.adapter.files.set(pluginFile("store/broken.json"), "{oops");
     app.vault.adapter.dirs.add(`${PLUGIN_DIR}/store`);
     expect(await s.readAllShards()).toEqual({
       data: { schemaVersion: 2, entries: [] },
       threads: { threads: [] },
+      grammar: { questions: [], attempts: [], progress: [] },
       future: { x: 1 },
       broken: "{oops",
     });

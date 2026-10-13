@@ -557,6 +557,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "settings.backup.summary.families": "{n} 個字族",
   "settings.backup.summary.trivia": "{n} 則冷知識收藏",
   "settings.backup.summary.reviews": "{n} 筆複習紀錄",
+  "settings.backup.summary.grammar": "{n} 題文法練習",
   "settings.backup.restore.button": "還原…",
   "settings.backup.lastRestore": "已還原。還原前的資料存在 {path}，要復原的話，從清單還原那一份就好。",
 
@@ -567,16 +568,18 @@ export const zhTW: Record<keyof typeof en, string> = {
   "backup.restore.words": "單字：{changed} 個改回備份時的內容（釋義、等級、Card 進度都會回到當時）；{revived} 個已刪除的字會回來。",
   "backup.restore.threads": "討論串：{n} 串改回備份時的內容；{q} 題刪掉的問題會回來。",
   "backup.restore.learn": "字族與冷知識收藏：{families} 個字族、{trivia} 則收藏改回備份時的內容。",
+  "backup.restore.grammar": "文法練習：{n} 筆題目或學習進度改回備份時的內容；補回 {a} 筆作答紀錄（紀錄只會增加，不會刪除）。",
   "backup.restore.reviews": "複習紀錄：補回 {n} 筆（紀錄只會增加，不會刪除）。",
   "backup.restore.same": "目前的資料跟這個備份一樣，還原不會改變任何東西。",
   "backup.restore.missing": "這個備份裡沒有{parts}，這些會維持現在的樣子。",
   "backup.restore.part.threads": "討論串",
   "backup.restore.part.learn": "字族和冷知識收藏",
+  "backup.restore.part.grammar": "文法練習題和進度",
   "backup.restore.part.reviews": "複習紀錄",
   "backup.restore.settings": "設定（AI、Card、考試字表…）和 AI 用量統計不會變。",
   "backup.restore.extras.title": "備份之後新增的",
   "backup.restore.extras.desc":
-    "目前有、但備份裡沒有的：{words} 個單字、{questions} 題討論、{learn} 個字族／收藏。沒打開下面的開關就會保留。",
+    "目前有、但備份裡沒有的：{words} 個單字、{questions} 題討論、{learn} 個字族／收藏、{grammar} 筆文法題目或進度。沒打開下面的開關就會保留。",
   "backup.restore.extras.remove": "一併刪除這些（其他裝置同步後也會刪除）",
   "backup.restore.extras.undoHint": "用「還原前自動備份」復原時，請打開這個開關，才會完全回到還原前的狀態。",
   "backup.restore.safety":

@@ -2,7 +2,9 @@ import type { VocabData } from "../../core/model/entry";
 import type { ReviewLog } from "../../core/model/srs";
 import type { Thread } from "../../core/model/thread";
 import { migrate } from "../../core/migrations";
+import type { GrammarShard } from "../../core/model/grammar";
 import { normalizeLearnShard, type LearnShard } from "../learn/learnMerge";
+import { normalizeGrammarShard } from "../grammar/grammarMerge";
 
 // Backup files in the plugin's backup/ folder.
 //
@@ -22,7 +24,7 @@ export const FULL_BACKUP_FORMAT = 1;
 // Shards a restore knows how to bring back. usage.json (AI token use per
 // device and day) is backed up but never restored: rolling it back would
 // only hide money already spent from the usage cap.
-export const RESTORABLE_SHARDS = ["threads", "learn", "reviews", "imports", "files"] as const;
+export const RESTORABLE_SHARDS = ["threads", "learn", "grammar", "reviews", "imports", "files"] as const;
 export type RestorableShard = (typeof RESTORABLE_SHARDS)[number];
 
 export type BackupReason = "manual" | "before-restore" | "migration" | "unknown";
@@ -45,6 +47,7 @@ export interface Snapshot {
   data?: VocabData;
   threads?: Thread[];
   learn?: LearnShard;
+  grammar?: GrammarShard;
   reviews?: ReviewLog[];
   imports?: Record<string, string>;
   files?: Record<string, string>;
@@ -86,6 +89,7 @@ export function snapshotOf(shards: Record<string, unknown>): Snapshot {
   if ("data" in shards) out.data = parseData(shards.data) ?? { schemaVersion: 2, settings: { schemaVersion: 2 }, entries: [] };
   if ("threads" in shards) out.threads = arrayField<Thread>(shards.threads, "threads");
   if ("learn" in shards) out.learn = normalizeLearnShard(shards.learn);
+  if ("grammar" in shards) out.grammar = normalizeGrammarShard(shards.grammar);
   if ("reviews" in shards) out.reviews = arrayField<ReviewLog>(shards.reviews, "logs");
   if ("imports" in shards) out.imports = stringMap(isObject(shards.imports) ? shards.imports.notes : undefined);
   if ("files" in shards) out.files = stringMap(isObject(shards.files) ? shards.files.seeded : undefined);
@@ -167,6 +171,8 @@ export interface BackupSummary {
   families?: number;
   trivia?: number;
   reviews?: number;
+  // Live grammar practice questions (store/grammar.json).
+  grammar?: number;
   // Live word-DNA morphemes (規劃書 09 §2 決定 1) — excludes tombstones and
   // records a multi-device merge redirected (mergedInto) to a canonical
   // duplicate, so this counts distinct morphemes, not raw records.
@@ -190,6 +196,7 @@ export function summarize(s: Snapshot): BackupSummary {
     out.trivia = s.learn.trivia.filter((t) => !t.deletedAt).length;
     out.morphemes = (s.learn.morphemes ?? []).filter((m) => !m.deletedAt && !m.mergedInto).length;
   }
+  if (s.grammar) out.grammar = s.grammar.questions.filter((q) => !q.deletedAt && !q.retiredAt).length;
   if (s.reviews) out.reviews = s.reviews.length;
   return out;
 }

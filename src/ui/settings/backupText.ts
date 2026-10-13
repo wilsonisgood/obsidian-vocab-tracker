@@ -37,6 +37,7 @@ export function summaryText(s: BackupSummary): string {
   if (s.families !== undefined) parts.push(t("settings.backup.summary.families", { n: s.families }));
   if (s.trivia !== undefined) parts.push(t("settings.backup.summary.trivia", { n: s.trivia }));
   if (s.morphemes !== undefined) parts.push(t("settings.backup.summary.morphemes", { n: s.morphemes }));
+  if (s.grammar !== undefined) parts.push(t("settings.backup.summary.grammar", { n: s.grammar }));
   if (s.reviews !== undefined) parts.push(t("settings.backup.summary.reviews", { n: s.reviews }));
   return parts.join(" · ");
 }
@@ -66,6 +67,8 @@ export function previewText(p: RestorePreview): PreviewText {
   const families = c.families.changed + c.families.revived;
   const trivia = c.trivia.changed + c.trivia.revived;
   if (families || trivia) what.push(t("backup.restore.learn", { families, trivia }));
+  const grammar = c.grammar.changed + c.grammar.revived;
+  if (grammar || c.attemptsAdded) what.push(t("backup.restore.grammar", { n: grammar, a: c.attemptsAdded }));
   if (c.reviewsAdded) what.push(t("backup.restore.reviews", { n: c.reviewsAdded }));
   if (!what.length) what.push(t("backup.restore.same"));
   if (p.missing.length) {
@@ -75,9 +78,9 @@ export function previewText(p: RestorePreview): PreviewText {
   what.push(t("backup.restore.settings"));
 
   const learn = c.families.extra + c.trivia.extra;
-  const anyExtra = c.words.extra || c.questions.extra || c.threads.extra || learn;
+  const anyExtra = c.words.extra || c.questions.extra || c.threads.extra || learn || c.grammar.extra;
   const extras = anyExtra
-    ? t("backup.restore.extras.desc", { words: c.words.extra, questions: c.questions.extra, learn })
+    ? t("backup.restore.extras.desc", { words: c.words.extra, questions: c.questions.extra, learn, grammar: c.grammar.extra })
     : null;
   return { what, extras };
 }

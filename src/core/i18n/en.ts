@@ -563,6 +563,7 @@ export const en = {
   "settings.backup.summary.families": "{n} word families",
   "settings.backup.summary.trivia": "{n} saved trivia",
   "settings.backup.summary.reviews": "{n} review records",
+  "settings.backup.summary.grammar": "{n} grammar questions",
   "settings.backup.restore.button": "Restore…",
   "settings.backup.lastRestore": "Restored. Your data from before the restore is saved in {path} — restore that one from the list to undo.",
 
@@ -574,16 +575,18 @@ export const en = {
     "Words: {changed} go back to how they were in the backup (definitions, levels and Card progress too); {revived} deleted words come back.",
   "backup.restore.threads": "Discussions: {n} go back to how they were in the backup; {q} deleted questions come back.",
   "backup.restore.learn": "Word families and saved trivia: {families} families and {trivia} saved trivia go back to how they were in the backup.",
+  "backup.restore.grammar": "Grammar practice: {n} questions or progress records go back to how they were in the backup; {a} answer records are added back (records are only ever added, never removed).",
   "backup.restore.reviews": "Review history: {n} records are added back (records are only ever added, never removed).",
   "backup.restore.same": "Your current data already matches this backup; nothing will change.",
   "backup.restore.missing": "This backup has no {parts}; those stay as they are now.",
   "backup.restore.part.threads": "discussions",
   "backup.restore.part.learn": "word families or saved trivia",
+  "backup.restore.part.grammar": "grammar practice questions or progress",
   "backup.restore.part.reviews": "review history",
   "backup.restore.settings": "Settings (AI, Card, exam lists…) and AI usage stats are not changed.",
   "backup.restore.extras.title": "Added after the backup",
   "backup.restore.extras.desc":
-    "You now have {words} words, {questions} discussion questions and {learn} families / saved trivia that aren’t in this backup. They are kept unless you turn on the switch below.",
+    "You now have {words} words, {questions} discussion questions and {learn} families / saved trivia and {grammar} grammar questions or progress records that aren’t in this backup. They are kept unless you turn on the switch below.",
   "backup.restore.extras.remove": "Delete these too (other devices delete them after syncing)",
   "backup.restore.extras.undoHint": "Undoing a restore with its “Saved automatically before a restore” backup? Turn this on to get back exactly to how things were.",
   "backup.restore.safety":

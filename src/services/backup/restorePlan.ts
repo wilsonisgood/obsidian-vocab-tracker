@@ -5,7 +5,9 @@ import type { Thread, Turn } from "../../core/model/thread";
 import type { TriviaItem } from "../../core/model/trivia";
 import type { VerbFavorite } from "../../core/model/usage";
 import { mergeReviewLogs, pruneReviewLogs } from "../../core/store/reviewLogs";
+import type { GrammarAttempt, GrammarProgress, GrammarQuestion, GrammarShard } from "../../core/model/grammar";
 import type { LearnShard } from "../learn/learnMerge";
+import { emptyGrammarShard, sortAttempts } from "../grammar/grammarMerge";
 import type { Snapshot } from "./format";
 import type { RestoreChanges } from "../../core/ports";
 
@@ -67,11 +69,15 @@ export interface RestoreCounts {
   questions: Counts;
   families: Counts;
   trivia: Counts;
+  // Grammar practice questions and per-topic progress, together.
+  grammar: Counts;
+  // Practice attempts the backup adds back (append-only, like review logs).
+  attemptsAdded: number;
   // Review logs the backup adds back.
   reviewsAdded: number;
 }
 
-export type PlannedShard = "data" | "threads" | "learn" | "reviews" | "imports" | "files";
+export type PlannedShard = "data" | "threads" | "learn" | "grammar" | "reviews" | "imports" | "files";
 
 export interface RestorePlan {
   // Shard name → content to write (only the shards the restore covers).
@@ -79,7 +85,7 @@ export interface RestorePlan {
   data?: VocabData;
   counts: RestoreCounts;
   // Parts the backup doesn't include, left as they are.
-  missing: ("threads" | "learn" | "reviews")[];
+  missing: ("threads" | "learn" | "grammar" | "reviews")[];
   changes: RestoreChanges;
 }
 
@@ -278,6 +284,16 @@ export function rebaseThreads(
   return out;
 }
 
+// Practice attempts never change once written, so a restore only adds the
+// backup's missing ones (none are removed), in time order like the store keeps
+// them. Nothing added → the current list as it is, so the shard isn't rewritten.
+function unionAttempts(current: readonly GrammarAttempt[], backup: readonly GrammarAttempt[], counts: RestoreCounts): GrammarAttempt[] {
+  const had = new Set(current.map((a) => a.id));
+  const added = backup.filter((a) => !had.has(a.id));
+  counts.attemptsAdded = added.length;
+  return added.length ? sortAttempts([...current, ...added]) : [...current];
+}
+
 // ── The whole plan ───────────────────────────────────────────────────────
 
 // A shard of the current state in the shape the plan writes it, so a
@@ -291,6 +307,8 @@ export function currentShard(current: Snapshot, shard: PlannedShard): unknown {
       return { threads: current.threads ?? [] };
     case "learn":
       return current.learn ?? { families: [], trivia: [], verbs: [] };
+    case "grammar":
+      return current.grammar ?? emptyGrammarShard();
     case "reviews":
       return { logs: current.reviews ?? [] };
     case "imports":
@@ -315,6 +333,8 @@ export function restoreStamp(current: Snapshot, now: Date): string {
     ...(current.learn?.families ?? []),
     ...(current.learn?.trivia ?? []),
     ...(current.learn?.verbs ?? []),
+    ...(current.grammar?.questions ?? []),
+    ...(current.grammar?.progress ?? []),
     ...(current.threads ?? []),
   ];
   for (const r of recs) max = newest(r.deletedAt, newest(r.updatedAt, max));
@@ -335,6 +355,8 @@ export function planRestore(current: Snapshot, backup: Snapshot, opts: RestoreOp
     questions: zero(),
     families: zero(),
     trivia: zero(),
+    grammar: zero(),
+    attemptsAdded: 0,
     reviewsAdded: 0,
   };
   const changes: RestoreChanges = { entryIds: [], threads: [], families: [], trivia: [] };
@@ -369,6 +391,15 @@ export function planRestore(current: Snapshot, backup: Snapshot, opts: RestoreOp
       verbs: rebaseRecords<VerbFavorite>(cur.verbs ?? [], backup.learn.verbs ?? [], opts, zero(), []),
     } satisfies LearnShard;
   } else missing.push("learn");
+
+  if (backup.grammar) {
+    const cur = current.grammar ?? emptyGrammarShard();
+    shards.grammar = {
+      questions: rebaseRecords<GrammarQuestion>(cur.questions, backup.grammar.questions, opts, counts.grammar, []),
+      attempts: unionAttempts(cur.attempts, backup.grammar.attempts, counts),
+      progress: rebaseRecords<GrammarProgress>(cur.progress, backup.grammar.progress, opts, counts.grammar, []),
+    } satisfies GrammarShard;
+  } else missing.push("grammar");
 
   if (backup.reviews) {
     const cur = current.reviews ?? [];

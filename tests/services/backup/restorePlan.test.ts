@@ -7,9 +7,11 @@ import type { TriviaItem } from "../../../src/core/model/trivia";
 import { merge } from "../../../src/core/store/merge";
 import { mergeThreads } from "../../../src/core/store/threads";
 import { mergeLearn, type LearnShard } from "../../../src/services/learn/learnMerge";
+import { mergeGrammar } from "../../../src/services/grammar/grammarMerge";
+import type { GrammarAttempt, GrammarProgress, GrammarQuestion, GrammarShard } from "../../../src/core/model/grammar";
 import type { VerbFavorite } from "../../../src/core/model/usage";
 import type { Snapshot } from "../../../src/services/backup/format";
-import { planRestore, restoreStamp } from "../../../src/services/backup/restorePlan";
+import { currentShard, planRestore, restoreStamp } from "../../../src/services/backup/restorePlan";
 
 // Times: the backup at T0, edits after it at T1/T2, the restore at NOW,
 // edits made after the restore at LATER.
@@ -202,7 +204,7 @@ describe("planRestore — what the restored state looks like", () => {
   it("leaves parts a backup doesn't include alone (a words-only migration backup)", () => {
     const p = plan(true, currentSnapshot(), { data: backupSnapshot().data });
     expect(Object.keys(p.shards)).toEqual(["data"]);
-    expect(p.missing).toEqual(["threads", "learn", "reviews"]);
+    expect(p.missing).toEqual(["threads", "learn", "grammar", "reviews"]);
   });
 
   it("changes nothing when the backup matches the current state", () => {
@@ -218,6 +220,73 @@ describe("planRestore — what the restored state looks like", () => {
     const p = plan(false, current);
     expect(byWord(p.data!, "bread")).toMatchObject({ updatedAt: NOW, rev: 2 });
     expect(p.counts.words.revived).toBe(1);
+  });
+});
+
+describe("planRestore — grammar shard (wave 15)", () => {
+  const gq = (id: string, stem: string, extra: Partial<GrammarQuestion> = {}): GrammarQuestion => ({
+    id, topicId: "past-simple", objectiveId: "o1", type: "blank", stem, answer: "went", explanation: "", errorTag: "tense-choice",
+    createdAt: T0, updatedAt: T0, rev: 1, ...extra,
+  });
+  const gp = (id: string, extra: Partial<GrammarProgress> = {}): GrammarProgress => ({ id, createdAt: T0, updatedAt: T0, rev: 1, ...extra });
+  const ga = (id: string, at: string): GrammarAttempt => ({ id, questionId: "q1", topicId: "past-simple", objectiveId: "o1", at, correct: false, given: "x" });
+
+  const base = (): Snapshot => ({ data: data([entry("a", "apple")]) });
+  const backupG = (): Snapshot => ({
+    ...base(),
+    grammar: { questions: [gq("q1", "backup"), gq("q2", "kept")], attempts: [ga("a1", T0)], progress: [gp("past-simple")] },
+  });
+  const currentG = (): Snapshot => ({
+    ...base(),
+    grammar: {
+      questions: [gq("q1", "edited", { updatedAt: T1, rev: 2 }), gq("q2", "kept", { deletedAt: T1, updatedAt: T1, rev: 2 }), gq("q3", "new", { updatedAt: T2 })],
+      attempts: [ga("a2", T2)],
+      progress: [gp("past-simple", { updatedAt: T1, rev: 2, lastPracticedAt: T1 }), gp("future", { updatedAt: T2 })],
+    },
+  });
+  const shardOf = (p: ReturnType<typeof planRestore>) => p.shards.grammar as GrammarShard;
+
+  it("reverts edited questions and progress, revives deleted ones, keeps extras, unions attempts", () => {
+    const p = planRestore(currentG(), backupG(), { removeExtras: false, now: NOW });
+    const g = shardOf(p);
+    expect(g.questions.find((q) => q.id === "q1")).toMatchObject({ stem: "backup", updatedAt: NOW, rev: 3 });
+    expect(g.questions.find((q) => q.id === "q2")).toMatchObject({ stem: "kept", updatedAt: NOW });
+    expect(g.questions.find((q) => q.id === "q2")!.deletedAt).toBeUndefined();
+    expect(g.questions.find((q) => q.id === "q3")).toMatchObject({ stem: "new", updatedAt: T2 });
+    expect(g.progress.find((x) => x.id === "past-simple")).toMatchObject({ updatedAt: NOW, rev: 3 });
+    expect(g.progress.find((x) => x.id === "future")!.deletedAt).toBeUndefined();
+    expect(g.attempts.map((a) => a.id)).toEqual(["a1", "a2"]);
+    // q1 + progress changed; q2 revived; q3 + future extra.
+    expect(p.counts.grammar).toEqual({ changed: 2, revived: 1, extra: 2 });
+    expect(p.counts.attemptsAdded).toBe(1);
+    expect(p.missing).toEqual(["threads", "learn", "reviews"]);
+  });
+
+  it("removeExtras tombstones questions and progress added after the backup, but never attempts", () => {
+    const g = shardOf(planRestore(currentG(), backupG(), { removeExtras: true, now: NOW }));
+    expect(g.questions.find((q) => q.id === "q3")).toMatchObject({ deletedAt: NOW, updatedAt: NOW });
+    expect(g.progress.find((x) => x.id === "future")).toMatchObject({ deletedAt: NOW });
+    expect(g.attempts.map((a) => a.id)).toEqual(["a1", "a2"]);
+  });
+
+  it("leaves grammar alone when the backup has none (an older backup)", () => {
+    const p = planRestore(currentG(), base(), { removeExtras: false, now: NOW });
+    expect(p.shards.grammar).toBeUndefined();
+    expect(p.missing).toContain("grammar");
+  });
+
+  it("changes nothing when the backup matches (the shard compares equal, so it isn't rewritten)", () => {
+    const p = planRestore(backupG(), backupG(), { removeExtras: false, now: NOW });
+    expect(JSON.stringify(shardOf(p))).toBe(JSON.stringify(currentShard(backupG(), "grammar")));
+    expect(p.counts.grammar).toEqual({ changed: 0, revived: 0, extra: 0 });
+  });
+
+  it("dominates the pre-restore state under mergeGrammar, in either order", () => {
+    const before = currentG().grammar!;
+    const g = shardOf(planRestore(currentG(), backupG(), { removeExtras: true, now: NOW }));
+    const live = (s: GrammarShard) => s.questions.filter((q) => !q.deletedAt).map((q) => `${q.id}:${q.stem}`).sort();
+    expect(live(mergeGrammar(before, g))).toEqual(live(g));
+    expect(live(mergeGrammar(g, before))).toEqual(live(g));
   });
 });
 

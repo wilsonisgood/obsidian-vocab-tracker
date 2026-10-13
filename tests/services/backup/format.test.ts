@@ -53,6 +53,8 @@ describe("parseBackup", () => {
     expect(parsed).toMatchObject({ kind: "full", reason: "manual", createdAt: "2026-10-05T12:00:00.000Z" });
     expect(parsed.snapshot.learn).toEqual({ families: [], trivia: [], verbs: [], morphemes: [], wordMeta: [] });
     expect(parsed.snapshot.reviews).toEqual([]);
+    expect(file.shards).toMatchObject({ grammar: null });
+    expect(parsed.snapshot.grammar).toEqual({ questions: [], attempts: [], progress: [] });
   });
 
   it("rejects anything else", () => {
@@ -74,6 +76,12 @@ describe("summarize", () => {
     });
     expect(s).toEqual({ words: 1, threads: 1, questions: 1, families: 1, trivia: 0, morphemes: 0 });
     expect(summarize({ data: { entries: [] } })).toEqual({ words: 0 });
+    expect(
+      summarize({
+        data: { entries: [] },
+        grammar: { questions: [{ id: "q" }, { id: "r", deletedAt: "x" }, { id: "s", retiredAt: "x" }], attempts: [], progress: [] } as never,
+      }).grammar
+    ).toBe(1);
   });
 
   // Wave 9 F (09 §2 決定 1) — live morphemes only: excludes tombstones and

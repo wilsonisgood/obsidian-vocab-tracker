@@ -75,7 +75,7 @@ describe("BackupService.create", () => {
     expect(calls).toEqual(["flush"]);
     expect(path).toBe(".obsidian/plugins/vocab-tracker/backup/full-2026-10-01T10-00-00.000Z-manual.json");
     const file = storage.backups.get("full-2026-10-01T10-00-00.000Z-manual.json") as { shards: Record<string, unknown> };
-    expect(Object.keys(file.shards).sort()).toEqual(["data", "files", "imports", "learn", "reviews", "threads", "usage"]);
+    expect(Object.keys(file.shards).sort()).toEqual(["data", "files", "grammar", "imports", "learn", "reviews", "threads", "usage"]);
   });
 });
 
@@ -124,6 +124,39 @@ describe("BackupService.restore", () => {
     expect(p.counts.words).toEqual({ changed: 1, revived: 1, extra: 1 });
     expect(p.safetyFolder).toBe(storage.backupFolder);
     expect(storage.log).toEqual([]);
+  });
+
+  it("restores the grammar shard (questions, progress, attempts) from a backup that has one", async () => {
+    const s = setup();
+    const q = (id: string, stem: string, extra: object = {}) => ({
+      id, topicId: "past-simple", objectiveId: "o1", type: "blank", stem, answer: "went", explanation: "", errorTag: "tense-choice",
+      createdAt: T0, updatedAt: T0, rev: 1, ...extra,
+    });
+    const at = (id: string, when: string) => ({ id, questionId: "q1", topicId: "past-simple", objectiveId: "o1", at: when, correct: true, given: "went" });
+    s.storage.shards.set("grammar", { questions: [q("q1", "I ___ home.")], attempts: [at("a1", T0)], progress: [] });
+    await s.service.create();
+    s.storage.shards.set("grammar", {
+      questions: [q("q1", "edited", { updatedAt: T1, rev: 2 }), q("q2", "new one", { updatedAt: T1 })],
+      attempts: [at("a2", T1)],
+      progress: [],
+    });
+    s.storage.log.length = 0;
+    const name = "full-2026-10-01T10-00-00.000Z-manual.json";
+
+    const p = await s.service.preview(name);
+    expect(p.counts.grammar).toEqual({ changed: 1, revived: 0, extra: 1 });
+    expect(p.counts.attemptsAdded).toBe(1);
+    expect(p.missing).toEqual([]);
+    expect(s.storage.log).toEqual([]);
+
+    await s.service.restore(name, { removeExtras: false });
+    expect(s.storage.log).toContain("shard:grammar");
+    const g = s.storage.shards.get("grammar") as { questions: { id: string; stem: string }[]; attempts: { id: string }[] };
+    expect(g.questions.map((x) => [x.id, x.stem])).toEqual([["q1", "I ___ home."], ["q2", "new one"]]);
+    expect(g.attempts.map((x) => x.id)).toEqual(["a1", "a2"]);
+    // The pre-restore backup keeps the grammar shard as it was.
+    const safety = s.storage.backups.get("full-2026-10-01T10-00-00.000Z-before-restore.json") as { shards: { grammar: { questions: unknown[] } } };
+    expect(safety.shards.grammar.questions).toHaveLength(2);
   });
 
   it("backs up the current state first, then writes the restored shards, then reloads and redraws", async () => {

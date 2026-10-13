@@ -11,6 +11,8 @@ const counts = (o: Partial<RestorePreview["counts"]> = {}): RestorePreview["coun
   questions: { changed: 0, revived: 0, extra: 0 },
   families: { changed: 0, revived: 0, extra: 0 },
   trivia: { changed: 0, revived: 0, extra: 0 },
+  grammar: { changed: 0, revived: 0, extra: 0 },
+  attemptsAdded: 0,
   reviewsAdded: 0,
   ...o,
 });
@@ -65,7 +67,23 @@ describe("confirmation wording", () => {
       "這個備份裡沒有字族和冷知識收藏，這些會維持現在的樣子。",
       "設定（AI、Card、考試字表…）和 AI 用量統計不會變。",
     ]);
-    expect(text.extras).toBe("目前有、但備份裡沒有的：3 個單字、4 題討論、0 個字族／收藏。沒打開下面的開關就會保留。");
+    expect(text.extras).toBe("目前有、但備份裡沒有的：3 個單字、4 題討論、0 個字族／收藏、0 筆文法題目或進度。沒打開下面的開關就會保留。");
+  });
+
+  it("lists the grammar practice restore, its part name, and its extras", () => {
+    setLocale("zh-TW");
+    const text = previewText(
+      preview(counts({ grammar: { changed: 3, revived: 1, extra: 2 }, attemptsAdded: 7 }), ["grammar"])
+    );
+    expect(text.what).toEqual([
+      "文法練習：4 筆題目或學習進度改回備份時的內容；補回 7 筆作答紀錄（紀錄只會增加，不會刪除）。",
+      "這個備份裡沒有文法練習題和進度，這些會維持現在的樣子。",
+      "設定（AI、Card、考試字表…）和 AI 用量統計不會變。",
+    ]);
+    expect(text.extras).toContain("2 筆文法題目或進度");
+    expect(summaryText({ words: 12, grammar: 30 })).toBe("12 個單字 · 30 題文法練習");
+    setLocale("en");
+    expect(summaryText({ words: 12, grammar: 30 })).toBe("12 words · 30 grammar questions");
   });
 
   it("says when nothing would change, and hides the extras choice when there are none", () => {
