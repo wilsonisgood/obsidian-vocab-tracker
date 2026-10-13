@@ -186,6 +186,7 @@ describe("EntryFilesService.ensureAll", () => {
       "vocab-list/Eureka.md",
       "vocab-list/DNA.md",
       "vocab-list/Grammar.md",
+      "vocab-list/Practice.md",
     ]);
     expect([...vault.files.keys()].sort()).toEqual([...created].sort());
   });
@@ -218,7 +219,7 @@ describe("EntryFilesService.ensureAll", () => {
       return create(path, content);
     };
     const err = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    expect(await files.ensureAll()).toHaveLength(5);
+    expect(await files.ensureAll()).toHaveLength(ENTRY_FILES.length - 1);
     err.mockRestore();
   });
 });

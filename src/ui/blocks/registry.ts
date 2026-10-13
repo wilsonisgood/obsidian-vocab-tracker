@@ -7,6 +7,8 @@ import { renderFlashcards } from "./flashcards";
 import { renderGrammarMap, type GrammarMapDeps } from "./grammarMap";
 import { renderGrammarPractice, type GrammarPracticeDeps } from "./grammarPractice";
 import { renderGrammarTopic, type GrammarTopicDeps } from "./grammarTopic";
+import { renderPractice } from "./practice";
+import type { FilterStore, PracticeHost } from "./practice/types";
 import { openPluginSettings } from "../kit/openSettings";
 import { renderTrivia } from "./trivia";
 import { renderVerbs } from "./verbs";
@@ -65,6 +67,27 @@ function grammarPracticeDeps(plugin: VocabTrackerPlugin): GrammarPracticeDeps {
   };
 }
 
+// 練習中心 (Wave 16 E). TEMPORARY: the filter values live in memory until
+// integration wires FilterStore to LearnerStore.filter / setFilter (F).
+const memoryFilters = new Map<string, unknown>();
+const filters: FilterStore = {
+  get: (track) => memoryFilters.get(track),
+  set: (track, value) => void memoryFilters.set(track, value),
+};
+
+function practiceHost(plugin: VocabTrackerPlugin): PracticeHost {
+  // The other tabs join through tabs() at integration.
+  return {
+    app: plugin.app,
+    store: plugin.store,
+    srs: plugin.srs,
+    jumpToSource: (e) => plugin.jumpToSource(e),
+    openVocabFile: () => plugin.openVocabFile(),
+    tabs: () => [],
+    filters,
+  };
+}
+
 // Every vocab-* code block (規劃書 06 §9.6). The block body is its params
 // (`key: value`, one per line); each renderer owns a MarkdownRenderChild
 // added through ctx.addChild, so subscriptions end with the block.
@@ -93,6 +116,7 @@ export const BLOCKS: readonly BlockDef[] = [
   { lang: "vocab-dna", render: (plugin, source, el, ctx) =>
       // Only the Word DNA entry file feeds the sidebar (規劃書 10 §2.1).
       renderDna({ ...dnaDeps(plugin), isEntryFile: plugin.files.entryFilePath("dna") === ctx.sourcePath }, source, el, ctx) },
+  { lang: "vocab-practice", render: (p, s, el, ctx) => renderPractice(practiceHost(p), s, el, ctx) },
   // Wave 15: 文法學習.
   { lang: "vocab-grammar", render: (p, s, el, ctx) => renderGrammarMap(grammarMapDeps(p), s, el, ctx) },
   { lang: "vocab-grammar-topic", render: (p, s, el, ctx) => renderGrammarTopic(grammarTopicDeps(p), s, el, ctx) },
