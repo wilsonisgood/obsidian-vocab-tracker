@@ -522,10 +522,10 @@ Try as he might、Hard as I tried 等，是已固定的說法，意思是「儘�
 第二句開頭用 She（已提過的人），自然銜接上一句。若改成 A book about cities had been written by her，新資訊跑到前面，讀起來突兀。
 
 **前置強調**
-把受詞或補語移到句首可以製造對比或強調，如 Rarely, Nowhere, Such was ... 等。但不是所有情況都要倒裝，只要前置的成分是對比的重點即可。
+把受詞或補語移到句首可以製造對比或強調，例如 This proposal I can support。這種前置不需要倒裝，主詞和動詞維持原本的順序；只有 Rarely、Never 這類否定副詞放句首時才要倒裝（見倒裝句主題）。
 
 **句尾重量**
-較長、較複雜的成分放後面：She gave the book to her sister. 若受詞很長，可寫成 She gave to her sister the book that she had bought in Paris. 但更自然的是保持原順序，視長短調整。
+較長、較複雜的成分放後面：She gave the book to her sister. 受詞很短時照一般順序；受詞很長時，可以把它移到句尾：She gave to her sister the book that she had bought in Paris. 這樣讀者不用撐著一大段受詞才看到 to her sister。
 
 **容易犯的錯**
 - ❌ I made yesterday a cake. ✅ I made a cake yesterday. 原因：受詞要緊跟在動詞後，時間副詞放後面。
@@ -585,7 +585,7 @@ anything but 的意思是「完全不是」：He is anything but honest 表示�
 not least 是「尤其」，用來強調一個重要的原因，並不是否定。not only 放句首時，後面要倒裝：Not only did she win, but she also set a record.
 
 **雙重否定與隱含否定**
-not uncommon（相當常見）、can't fail to（一定會）使用雙重否定，語氣比直接肯定更保守。另外 hardly、scarcely、barely、fail to、deny 等詞本身就含否定意思，不能再加 not。
+not uncommon（相當常見）、can't fail to（一定會）使用雙重否定，語氣比直接肯定更保守。另外 hardly、scarcely、barely 本身就含否定意思，不能再加 not。fail to、deny 也帶否定意味，但可以再加 not 形成雙重否定，例如 He didn't deny it（他沒有否認＝等於默認）。
 
 **容易犯的錯**
 - ❌ I can't hardly see it. ✅ I can hardly see it. 原因：hardly 本身已經是否定。
