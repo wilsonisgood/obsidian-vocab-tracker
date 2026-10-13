@@ -81,6 +81,18 @@ export function normalizeErrorTag(v: unknown): ErrorTag {
 export const GRAMMAR_QUESTION_TYPES = ["choice", "blank", "find-error", "rewrite", "translate"] as const;
 export type GrammarQuestionType = (typeof GRAMMAR_QUESTION_TYPES)[number];
 
+// One scenario (第十六波 G): the questions of one dialogue / short story
+// share `id`; `seq` is the order they come in. `lead` is the spoken lines
+// that come between the previous question and this one (no question of
+// their own); `speaker` is who says this question's sentence.
+export interface GrammarScenarioInfo {
+  id: string;
+  scene: string;
+  seq: number;
+  speaker?: string;
+  lead?: { speaker?: string; text: string }[];
+}
+
 // find-error convention: `stem` is the whole sentence, `options` are the 3–4
 // marked fragments of it, `answer` is the wrong fragment and `accepted[0]`
 // holds the corrected wording.
@@ -97,6 +109,10 @@ export interface GrammarQuestion extends Record_ {
   // Wrong option → why it's wrong.
   distractors?: Record<string, string>;
   errorTag: ErrorTag;
+  // Which scenario the question belongs to (第十六波 G); older questions have none.
+  scenario?: GrammarScenarioInfo;
+  // The whole sentence with the answer put back, in 繁體中文.
+  sentenceZh?: string;
   // Set when the question was built from a sentence the learner read.
   source?: { path: string; sentence: string };
   createdAt?: string;
