@@ -52,7 +52,6 @@ const KINDS_BY_CATEGORY: Record<RefCategory, readonly PracticeKind[]> = {
   poly: ["which-sense", "pick-word", "same-sense"],
   grammar: ["choice", "find-error"],
 };
-const FOCUS_KIND: Record<RefCategory, FocusKind> = { poly: "sense", vocab: "word", grammar: "grammar-objective" };
 
 export const PRACTICE_SCENARIO_BASE_PROMPT = `你是一位英文老師，用一段連續的情境幫一位以中文為母語的學習者做選擇題練習。〔出題參考〕是這次要考的重點，每個重點有固定的 id。
 
