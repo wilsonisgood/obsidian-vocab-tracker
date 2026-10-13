@@ -47,6 +47,9 @@ export interface FlashcardsOptions {
   // Take keyboard focus once the first card is up (a modal; never a block
   // in a note — that would steal focus from the editor).
   autoFocus?: boolean;
+  // Practice hub (第十六波 E): extra queue filters merged into filter() each
+  // time a round starts, read fresh so the hub's filter bar can change them.
+  filter?: () => Partial<QueueFilter>;
 }
 
 export function renderFlashcards(
@@ -161,7 +164,21 @@ export class FlashcardsBlock extends MarkdownRenderChild {
   // ── Session state ─────────────────────────────────────────────
 
   private filter(): QueueFilter {
-    return { source: this.params.source, mode: this.mode, limit: this.params.limit };
+    return {
+      source: this.params.source,
+      mode: this.mode,
+      limit: this.params.limit,
+      ...(this.opts.filter?.() ?? {}),
+    };
+  }
+
+  // Starts a fresh round with the current filter (the hub's filter bar
+  // changed). A no-op before the block has loaded.
+  restart(): void {
+    if (this.disposed || !this.root) return;
+    void this.plugin.srs.ensureLoaded().then(() => {
+      if (!this.disposed) this.startSession();
+    });
   }
 
   private live(id: string | undefined): VocabEntry | undefined {

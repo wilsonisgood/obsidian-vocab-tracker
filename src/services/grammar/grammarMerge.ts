@@ -4,6 +4,7 @@ import type {
   GrammarProgress,
   GrammarQuestion,
   GrammarQuestionType,
+  GrammarScenarioInfo,
   GrammarShard,
 } from "../../core/model/grammar";
 import { dropOldTombstones, mergeRecords } from "../learn/learnMerge";
@@ -27,6 +28,25 @@ export function emptyGrammarShard(): GrammarShard {
 const str = (v: unknown): v is string => typeof v === "string" && v !== "";
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
+// A damaged scenario is dropped as a whole (the question then reads as a
+// stand-alone one).
+function normalizeScenario(raw: unknown): GrammarScenarioInfo | null {
+  if (!isObj(raw) || !str(raw.id) || !str(raw.scene)) return null;
+  const seq = typeof raw.seq === "number" && Number.isFinite(raw.seq) && raw.seq >= 0 ? Math.floor(raw.seq) : null;
+  if (seq === null) return null;
+  const out: GrammarScenarioInfo = { id: raw.id, scene: raw.scene, seq };
+  if (str(raw.speaker)) out.speaker = raw.speaker;
+  if (Array.isArray(raw.lead)) {
+    const lead: { speaker?: string; text: string }[] = [];
+    for (const l of raw.lead) {
+      if (!isObj(l) || !str(l.text)) continue;
+      lead.push(str(l.speaker) ? { speaker: l.speaker, text: l.text } : { text: l.text });
+    }
+    if (lead.length) out.lead = lead;
+  }
+  return out;
+}
+
 function normalizeQuestion(raw: unknown): GrammarQuestion | null {
   if (!isObj(raw) || !str(raw.id) || !str(raw.topicId) || !str(raw.objectiveId)) return null;
   if (typeof raw.stem !== "string" || typeof raw.answer !== "string") return null;
@@ -46,6 +66,11 @@ function normalizeQuestion(raw: unknown): GrammarQuestion | null {
   if (accepted) q.accepted = accepted;
   else delete q.accepted;
   if (!isObj(raw.distractors)) delete q.distractors;
+  const scenario = normalizeScenario(raw.scenario);
+  if (scenario) q.scenario = scenario;
+  else delete q.scenario;
+  if (str(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
+  else delete q.sentenceZh;
   return q;
 }
 

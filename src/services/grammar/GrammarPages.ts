@@ -1,6 +1,7 @@
 import { topicById } from "../../core/grammar/catalog";
+import { builtInExplanation } from "../../core/grammar/explanations";
 import type { VaultPort } from "../../core/ports";
-import { GRAMMAR_PAGE_KIND, insertExplanation, renderTopicPage, topicPagePath } from "./topicPage";
+import { GRAMMAR_PAGE_KIND, GrammarPageError, insertExplanation, isGrammarPageError, renderTopicPage, topicPagePath } from "./topicPage";
 
 // Grammar topic pages as notes (第十五波 M, rule 9; 1013 §3.2). A page is
 // made the first time the learner opens its topic — not for all 85 up
@@ -48,7 +49,12 @@ export class GrammarPages {
     await vault.ready?.();
     const path = this.pathOf(topicId);
     // A file already there (found by id, or a note of the same name) is used as is.
-    if (vault.exists(path)) return path;
+    if (vault.exists(path)) {
+      // An old page whose 「## 說明」 is still empty gets the built-in
+      // explanation; anything the learner wrote there stays (1013-2).
+      await this.fillBuiltIn(path, topicId);
+      return path;
+    }
     try {
       await vault.create(path, renderTopicPage(topicId));
     } catch (e) {
@@ -56,6 +62,24 @@ export class GrammarPages {
       if (!vault.exists(path)) throw e;
     }
     return path;
+  }
+
+  private async fillBuiltIn(path: string, topicId: string): Promise<void> {
+    const markdown = builtInExplanation(topicId);
+    if (!markdown) return;
+    try {
+      await this.deps.vault.process(path, (text) => insertExplanation(text, markdown));
+    } catch (e) {
+      if (!isGrammarPageError(e)) throw e;
+    }
+  }
+
+  // The 「填入說明」 button: ensure() puts the built-in explanation into an
+  // empty section (and leaves a written one alone). "empty-text" when the
+  // topic has no built-in explanation.
+  async writeBuiltInExplanation(topicId: string): Promise<void> {
+    if (!builtInExplanation(topicId)) throw new GrammarPageError("empty-text");
+    await this.ensure(topicId);
   }
 
   // openGrammarTopic (the wave-15 cross-task interface).

@@ -416,3 +416,22 @@ describe("merging with the restored state (本機還原 → 另一台同步過�
     expect(byWord(other, "apple")!.definition).toBe("apple (edited)");
   });
 });
+
+describe("planRestore — learner shard (wave 16)", () => {
+  const ev = (id: string) => ({
+    id,
+    at: "2026-10-01T00:00:00.000Z",
+    track: "grammar" as const,
+    focus: { kind: "grammar-objective" as const, id: "be-verb/describe" },
+    result: "wrong" as const,
+  });
+  it("unions events and leaves the shard alone when the backup has none", () => {
+    const current = { learner: { events: [ev("a")], pool: [], mistakes: [], filters: [], meta: {} } };
+    const backup = { learner: { events: [ev("b")], pool: [], mistakes: [], filters: [], meta: {} } };
+    const plan = planRestore(current, backup, { removeExtras: false, now: NOW });
+    const shard = plan.shards.learner as { events: { id: string }[] };
+    expect(shard.events.map((e) => e.id).sort()).toEqual(["a", "b"]);
+    expect(planRestore(current, {}, { removeExtras: false, now: NOW }).shards.learner).toBeUndefined();
+    expect(currentShard({}, "learner")).toMatchObject({ events: [], pool: [], mistakes: [] });
+  });
+});

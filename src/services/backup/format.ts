@@ -5,6 +5,8 @@ import { migrate } from "../../core/migrations";
 import type { GrammarShard } from "../../core/model/grammar";
 import { normalizeLearnShard, type LearnShard } from "../learn/learnMerge";
 import { normalizeGrammarShard } from "../grammar/grammarMerge";
+import type { LearnerShard } from "../../core/model/learner";
+import { normalizeLearnerShard } from "../learner/learnerMerge";
 
 // Backup files in the plugin's backup/ folder.
 //
@@ -24,7 +26,7 @@ export const FULL_BACKUP_FORMAT = 1;
 // Shards a restore knows how to bring back. usage.json (AI token use per
 // device and day) is backed up but never restored: rolling it back would
 // only hide money already spent from the usage cap.
-export const RESTORABLE_SHARDS = ["threads", "learn", "grammar", "reviews", "imports", "files"] as const;
+export const RESTORABLE_SHARDS = ["threads", "learn", "grammar", "learner", "reviews", "imports", "files"] as const;
 export type RestorableShard = (typeof RESTORABLE_SHARDS)[number];
 
 export type BackupReason = "manual" | "before-restore" | "migration" | "unknown";
@@ -48,6 +50,7 @@ export interface Snapshot {
   threads?: Thread[];
   learn?: LearnShard;
   grammar?: GrammarShard;
+  learner?: LearnerShard;
   reviews?: ReviewLog[];
   imports?: Record<string, string>;
   files?: Record<string, string>;
@@ -90,6 +93,7 @@ export function snapshotOf(shards: Record<string, unknown>): Snapshot {
   if ("threads" in shards) out.threads = arrayField<Thread>(shards.threads, "threads");
   if ("learn" in shards) out.learn = normalizeLearnShard(shards.learn);
   if ("grammar" in shards) out.grammar = normalizeGrammarShard(shards.grammar);
+  if ("learner" in shards) out.learner = normalizeLearnerShard(shards.learner);
   if ("reviews" in shards) out.reviews = arrayField<ReviewLog>(shards.reviews, "logs");
   if ("imports" in shards) out.imports = stringMap(isObject(shards.imports) ? shards.imports.notes : undefined);
   if ("files" in shards) out.files = stringMap(isObject(shards.files) ? shards.files.seeded : undefined);

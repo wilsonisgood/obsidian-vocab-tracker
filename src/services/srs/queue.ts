@@ -20,6 +20,18 @@ export interface QueueFilter {
   // mode) — reviewing a word you typed in by name should always work,
   // liked or not.
   requireLiked?: boolean;
+  // Wave 16 E (practice hub, vocab tab). Exam-level tags (entry.level is a
+  // comma-separated list): a card matches when it has any of them.
+  levels?: string[];
+  // Parts of speech: a card matches when its partOfSpeech has any of them.
+  pos?: string[];
+  // "due" (default, the old behavior): due reviews + today's new-card
+  // allowance. "new": only new cards. "all": due, then new, then every
+  // other card by due date. "new"/"all" are an explicit choice, so the
+  // daily new-card allowance doesn't cap them (`limit` still does).
+  status?: "due" | "new" | "all";
+  // ISO timestamp: only cards added at or after it.
+  addedSince?: string;
 }
 
 export interface QueueContext {
@@ -55,11 +67,40 @@ export function newIntroducedToday(logs: readonly ReviewLog[], now: Date): numbe
   return ids.size;
 }
 
+// "多益中級, 托福高級" → ["多益中級", "托福高級"]. Commas, ideographic
+// commas and semicolons all separate.
+export function splitTags(raw: string | undefined): string[] {
+  return (raw ?? "")
+    .split(/[,，、;；]/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+// When the card was added, in ms (0 when unknown). `added` is local
+// "YYYY-MM-DD HH:mm:ss".
+function addedMs(entry: VocabEntry): number {
+  const raw = entry.createdAt ?? (entry.added ? entry.added.replace(" ", "T") : "");
+  const ms = raw ? new Date(raw).getTime() : NaN;
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
 export function matchesFilter(entry: VocabEntry, filter: QueueFilter): boolean {
   if (entry.deletedAt) return false;
   if (filter.requireLiked && entry.liked !== true) return false;
   if (filter.source && !(entry.source?.path ?? "").startsWith(filter.source)) return false;
   if (filter.mode === "cloze" && !clozeParts(entry.example, entry.word)) return false;
+  if (filter.levels && filter.levels.length > 0) {
+    const have = splitTags(entry.level);
+    if (!filter.levels.some((l) => have.includes(l))) return false;
+  }
+  if (filter.pos && filter.pos.length > 0) {
+    const have = splitTags(entry.partOfSpeech);
+    if (!filter.pos.some((p) => have.includes(p))) return false;
+  }
+  if (filter.addedSince) {
+    const since = new Date(filter.addedSince).getTime();
+    if (!Number.isNaN(since) && addedMs(entry) < since) return false;
+  }
   return true;
 }
 
@@ -89,13 +130,20 @@ export function buildQueue(
     .filter((e) => !isNewCard(e) && dueMs(e) <= nowMs)
     .sort((a, b) => dueMs(a) - dueMs(b));
 
-  const allowance = Math.max(0, ctx.dailyNew - newIntroducedToday(ctx.logs, ctx.now));
+  const status = filter.status ?? "due";
+  const allowance =
+    status === "due" ? Math.max(0, ctx.dailyNew - newIntroducedToday(ctx.logs, ctx.now)) : Infinity;
   const fresh = candidates
     .filter(isNewCard)
     .sort((a, b) => (addedKey(a) < addedKey(b) ? -1 : addedKey(a) > addedKey(b) ? 1 : 0))
     .slice(0, allowance);
 
-  const queue = [...due, ...fresh];
+  let queue: VocabEntry[];
+  if (status === "new") queue = fresh;
+  else if (status === "all") {
+    const rest = candidates.filter((e) => !isNewCard(e) && dueMs(e) > nowMs).sort((a, b) => dueMs(a) - dueMs(b));
+    queue = [...due, ...fresh, ...rest];
+  } else queue = [...due, ...fresh];
   return filter.limit !== undefined && filter.limit >= 0 ? queue.slice(0, filter.limit) : queue;
 }
 

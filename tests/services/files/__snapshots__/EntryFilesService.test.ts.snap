@@ -30,6 +30,13 @@ vocab-tracker-id: grammar
 \`\`\`vocab-grammar
 \`\`\`
 ",
+  "practice": "---
+vocab-tracker: entry
+vocab-tracker-id: practice
+---
+\`\`\`vocab-practice
+\`\`\`
+",
   "trivia": "---
 vocab-tracker: entry
 vocab-tracker-id: trivia

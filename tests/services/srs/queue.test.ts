@@ -104,3 +104,33 @@ describe("countDueBetween", () => {
     expect(countDueBetween(entries, {}, tomorrow, dayAfter)).toBe(1);
   });
 });
+
+describe("hub filters (第十六波 E)", () => {
+  const ctx = { now: NOW, dailyNew: 1, logs: [] as ReviewLog[] };
+  const entries = [
+    makeEntry({ id: "due", srs: reviewCard(hoursFromNow(-2)), level: "多益中級, 托福高級", partOfSpeech: "noun" }),
+    makeEntry({ id: "future", srs: reviewCard(hoursFromNow(5)), partOfSpeech: "verb" }),
+    makeEntry({ id: "n1", createdAt: "2026-09-01T00:00:00.000Z" }),
+    makeEntry({ id: "n2", createdAt: "2026-10-03T00:00:00.000Z", level: "托福高級" }),
+  ];
+  const ids = (f: Parameters<typeof buildQueue>[1]) => buildQueue(entries, f, ctx).map((e) => e.id);
+
+  it("status due keeps the old behavior (allowance caps new cards)", () => {
+    expect(ids({})).toEqual(["due", "n1"]);
+    expect(ids({ status: "due" })).toEqual(["due", "n1"]);
+  });
+  it("status new is only new cards; all is due, new, then the rest", () => {
+    expect(ids({ status: "new" })).toEqual(["n1", "n2"]);
+    expect(ids({ status: "all" })).toEqual(["due", "n1", "n2", "future"]);
+    expect(ids({ status: "all", limit: 2 })).toEqual(["due", "n1"]);
+  });
+  it("filters by level tag and part of speech", () => {
+    expect(ids({ status: "all", levels: ["托福高級"] })).toEqual(["due", "n2"]);
+    expect(ids({ status: "all", levels: ["多益中級", "雅思"] })).toEqual(["due"]);
+    expect(ids({ status: "all", pos: ["verb"] })).toEqual(["future"]);
+  });
+  it("addedSince keeps recently added cards", () => {
+    expect(matchesFilter(entries[3], { addedSince: "2026-10-01T00:00:00.000Z" })).toBe(true);
+    expect(matchesFilter(entries[2], { addedSince: "2026-10-01T00:00:00.000Z" })).toBe(false);
+  });
+});

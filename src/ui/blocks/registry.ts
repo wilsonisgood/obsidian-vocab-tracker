@@ -7,6 +7,13 @@ import { renderFlashcards } from "./flashcards";
 import { renderGrammarMap, type GrammarMapDeps } from "./grammarMap";
 import { renderGrammarPractice, type GrammarPracticeDeps } from "./grammarPractice";
 import { renderGrammarTopic, type GrammarTopicDeps } from "./grammarTopic";
+import { renderPractice } from "./practice";
+import { grammarTab } from "./practice/grammarTab";
+import { mountScenarioPlayer } from "./practice/scenarioPlayer";
+import { grammarSightings } from "../../core/grammar/sightings";
+import { weakFocuses } from "../../core/learner/weakness";
+import type { GrammarFilter } from "../../core/grammar/practiceFilter";
+import type { FilterStore, PracticeHost } from "./practice/types";
 import { openPluginSettings } from "../kit/openSettings";
 import { renderTrivia } from "./trivia";
 import { renderVerbs } from "./verbs";
@@ -36,8 +43,9 @@ function grammarMapDeps(plugin: VocabTrackerPlugin): GrammarMapDeps {
     grammar: plugin.grammar,
     level: () => plugin.store.settings.learner?.level ?? "",
     openTopic: (id) => plugin.grammarPages.open(id),
-    // R1: 錯題本「重做這組」 opens the practice in place.
-    practice: grammarPracticeDeps(plugin),
+    api: plugin.grammarQuestions,
+    mountPlayer: mountScenarioPlayer,
+    ...grammarRouting(plugin),
   };
 }
 
@@ -53,15 +61,63 @@ function grammarTopicDeps(plugin: VocabTrackerPlugin): GrammarTopicDeps {
   };
 }
 
+// The card needs api / ready / setGrammarFilter / openPractice at integration.
 function grammarPracticeDeps(plugin: VocabTrackerPlugin): GrammarPracticeDeps {
+  return { api: plugin.grammarQuestions, ready: () => grammarReady(plugin), ...grammarRouting(plugin) };
+}
+
+// 第十六波: the grammar stores both load before a grammar practice surface draws.
+async function grammarReady(plugin: VocabTrackerPlugin): Promise<void> {
+  await Promise.all([plugin.grammar.ensureLoaded(), plugin.learner.ensureLoaded()]);
+}
+
+// 第十六波 (12 §0, w16 第二批 rule 5): 「練這個主題」 sets the shared grammar
+// filter to the topic and opens the hub's 文法 tab.
+export function grammarRouting(plugin: VocabTrackerPlugin): {
+  setGrammarFilter(f: GrammarFilter): void;
+  openPractice(track: "grammar"): void;
+} {
+  return {
+    setGrammarFilter: (f) => plugin.learner.setFilter("grammar", f),
+    openPractice: (track) => void plugin.openPracticeTab(track),
+  };
+}
+
+// 練習中心 (Wave 16 E). Filter values are learning data, so they live in
+// the learner shard and sync (1013-card-tabs C5).
+function practiceFilters(plugin: VocabTrackerPlugin): FilterStore {
+  return {
+    get: (track) => plugin.learner.filter(track),
+    set: (track, value) => plugin.learner.setFilter(track, value),
+  };
+}
+
+function practiceHost(plugin: VocabTrackerPlugin): PracticeHost {
   return {
     app: plugin.app,
-    manifestId: plugin.manifest.id,
-    grammar: plugin.grammar,
-    questions: plugin.grammarQuestions,
-    ai: plugin.ai,
-    // R2: 「出自〈筆記名〉」 opens the note the sentence came from.
-    openPath: (p) => void plugin.openNote(p),
+    store: plugin.store,
+    srs: plugin.srs,
+    jumpToSource: (e) => plugin.jumpToSource(e),
+    openVocabFile: () => plugin.openVocabFile(),
+    tabs: () => [
+      grammarTab({
+        api: plugin.grammarQuestions,
+        mountPlayer: mountScenarioPlayer,
+        ready: () => grammarReady(plugin),
+        level: () => plugin.store.settings.learner?.level ?? "",
+        sightings: () => grammarSightings(plugin.threads.paragraphThreads()),
+        progress: (id) => plugin.grammar.progress(id),
+        weakTopicIds: () => [
+          ...new Set(
+            weakFocuses(plugin.learner.learnEvents({ track: "grammar" }), { now: new Date(), track: "grammar" }).map(
+              (w) => w.focus.id.split("/")[0]
+            )
+          ),
+        ],
+        aiStatus: () => plugin.ai.status(),
+      }),
+    ],
+    filters: practiceFilters(plugin),
   };
 }
 
@@ -93,6 +149,7 @@ export const BLOCKS: readonly BlockDef[] = [
   { lang: "vocab-dna", render: (plugin, source, el, ctx) =>
       // Only the Word DNA entry file feeds the sidebar (規劃書 10 §2.1).
       renderDna({ ...dnaDeps(plugin), isEntryFile: plugin.files.entryFilePath("dna") === ctx.sourcePath }, source, el, ctx) },
+  { lang: "vocab-practice", render: (p, s, el, ctx) => renderPractice(practiceHost(p), s, el, ctx) },
   // Wave 15: 文法學習.
   { lang: "vocab-grammar", render: (p, s, el, ctx) => renderGrammarMap(grammarMapDeps(p), s, el, ctx) },
   { lang: "vocab-grammar-topic", render: (p, s, el, ctx) => renderGrammarTopic(grammarTopicDeps(p), s, el, ctx) },

@@ -1,5 +1,6 @@
 import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
 import { topicById } from "../../core/grammar/catalog";
+import { builtInExplanation } from "../../core/grammar/explanations";
 import { grammarSightings } from "../../core/grammar/sightings";
 import { t } from "../../core/i18n";
 import type { GrammarSighting, GrammarTopic } from "../../core/model/grammar";
@@ -35,7 +36,7 @@ export interface GrammarTopicDeps {
   grammar: Pick<GrammarStore, "ensureLoaded" | "attempts" | "events">;
   threads: Pick<ThreadService, "ensureLoaded" | "paragraphThreads" | "events">;
   ai: Pick<AiService, "run" | "status">;
-  pages: Pick<GrammarPages, "writeExplanation">;
+  pages: Pick<GrammarPages, "writeExplanation" | "writeBuiltInExplanation">;
   // GrammarPages.open: another topic's page.
   openTopic(topicId: string): void | Promise<void>;
   // The note a sighting came from (plugin.app.workspace.openLinkText).
@@ -172,8 +173,27 @@ class GrammarTopicBlock extends MarkdownRenderChild {
     // Only an empty 「## 說明」 can be filled; with the section missing or
     // written by the learner there's nothing to offer.
     if (this.explainEmpty() === false) return;
+    // Built-in explanation (1013-2): no AI, just fill the empty section.
+    if (builtInExplanation(this.topic?.id ?? "")) {
+      const label = t("grammar.topic.fillBuiltIn");
+      learnButton(box, { label, icon: "file-plus", onClick: () => void this.fillBuiltIn() });
+      return;
+    }
     if (renderAiGate(box, this.deps.ai.status(), () => this.deps.openSettings())) return;
     learnButton(box, { label: t("grammar.topic.generate"), icon: "sparkles", onClick: () => void this.generate() });
+  }
+
+  private async fillBuiltIn(): Promise<void> {
+    const topic = this.topic;
+    if (!topic) return;
+    try {
+      await this.deps.pages.writeBuiltInExplanation(topic.id);
+      this.written = true;
+      this.error = null;
+    } catch (e) {
+      this.error = { text: pageErrorText(e) ?? learnErrorText(e), cause: e };
+    }
+    this.render();
   }
 
   private async generate(): Promise<void> {

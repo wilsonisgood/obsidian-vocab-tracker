@@ -843,6 +843,9 @@ export class VocabSidebarView extends ItemView {
             },
             threads: this.plugin.threads,
             grammar: this.grammarHost().grammar,
+            // 第十六波: 待複習 [練習] → the hub's 文法 tab on that topic.
+            setGrammarFilter: (f) => this.plugin.learner.setFilter("grammar", f),
+            openPractice: (track) => void this.plugin.openPracticeTab(track),
             path: () => this.plugin.app.workspace.getActiveFile()?.path ?? null,
           },
           {

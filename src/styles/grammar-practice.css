@@ -1,488 +1,120 @@
-/* ── vocab-grammar-practice (wave 15 P; 1013 §3.3) ─────────────────────
-   One question at a time. Sits inside .vt-learn (blocks.css), which
-   supplies --vt-accent / --vt-card / --vt-border / --vt-muted / --vt-radius
-   and bumps --vt-tap to 44px under body.is-mobile. Colors come from
-   Obsidian variables so light and dark both work. */
+/* ── 練習中心「文法」頁籤＋vocab-grammar-practice 卡片（第十六波 H）─────
+   The old single-question round (wave 15 P) moved into the scenario
+   player; what's left is the topic-page card and the tab's 錯題區. Colors
+   come from Obsidian variables so light and dark both work. */
 
-.vt-gr-practice {
-  max-width: 640px;
-  margin: 0 auto;
-  outline: none;
-}
-
-/* Focused so 1–4 / Enter work (it is focused after every answer). The ring
-   sits outside the content with room to spare — a box-shadow hugging the
-   text looked like a frame with no padding (1013-3). */
-.vt-gr-practice:focus-visible {
-  outline: 2px solid var(--background-modifier-border-focus);
-  outline-offset: 8px;
-  border-radius: var(--vt-radius);
-}
-
-.vt-gr-body,
-.vt-gr-gen {
+.vt-gr-practice-bar {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 12px;
 }
 
-.vt-gr-gen:empty {
-  display: none;
-}
-
-/* 3 / 8 · objective */
-.vt-gr-q-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px 12px;
-}
-
-.vt-gr-count {
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-semibold);
-}
-
-.vt-gr-goal {
-  color: var(--vt-muted);
-  font-size: var(--font-ui-small);
-  text-align: right;
-}
-
-/* Topic and objective wrap as whole pieces, not mid-phrase (1013-3: a
-   lone 「式」 used to drop to its own line on a phone). */
-.vt-gr-goal > span {
-  display: inline-block;
-}
-
-.vt-gr-topic {
-  margin-right: 8px;
-  color: var(--vt-accent-text);
-}
-
-.vt-gr-progress {
-  height: 3px;
-  border-radius: 2px;
-  background: var(--background-modifier-border);
-  overflow: hidden;
-}
-
-.vt-gr-progress-fill {
-  height: 100%;
-  background: var(--vt-accent);
-  transition: width 0.2s ease;
-}
-
-.vt-gr-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid var(--vt-border);
-  border-radius: var(--vt-radius);
-  background: var(--vt-card);
-}
-
-.vt-gr-stem {
-  font-size: calc(var(--font-text-size) * 1.12);
-  line-height: 1.7;
-}
-
-.vt-gr-hint,
-.vt-gr-short {
-  color: var(--vt-muted);
-  font-size: var(--font-ui-small);
-}
-
-/* The ___ of a choice / blank stem */
-.vt-gr-gap {
-  display: inline-block;
-  min-width: 4.5em;
-  margin: 0 2px;
-  border-bottom: 2px solid var(--text-muted);
-  text-align: center;
-  vertical-align: baseline;
-}
-
-.vt-gr-gap.is-filled {
-  border-bottom-color: var(--color-green);
-  color: var(--color-green);
-  font-weight: var(--font-semibold);
-}
-
-/* Options: 2 columns on wide screens, 2×2 on phones (a long option wraps). */
-.vt-gr-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.vt-gr-opt {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: var(--vt-tap);
-  padding: 6px 12px;
-  border: 1px solid var(--vt-border);
-  border-radius: var(--radius-s);
-  background: var(--vt-surface);
-  box-shadow: none;
-  color: var(--text-normal);
-  text-align: left;
-  height: auto;
-  white-space: normal;
-  cursor: pointer;
-}
-
-.vt-gr-opt:hover:not(:disabled) {
-  border-color: var(--vt-accent);
-}
-
-.vt-gr-opt-text {
+.vt-gr-practice-text {
   flex: 1;
   min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.vt-gr-key {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.5em;
-  height: 1.5em;
-  border-radius: var(--radius-s);
-  background: var(--background-modifier-hover);
-  color: var(--vt-muted);
-  font-size: var(--font-ui-smaller);
-  font-weight: var(--font-semibold);
-}
-
-/* find-error: the options sit inside the sentence */
-.vt-gr-frag {
-  display: inline;
-  margin: 0 1px;
-  padding: 0 4px;
-  height: auto;
-  border: 0;
-  border-bottom: 2px dashed var(--vt-accent);
-  border-radius: 3px;
-  background: hsla(var(--interactive-accent-hsl), 0.1);
-  box-shadow: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.vt-gr-frag:hover:not(:disabled) {
-  background: hsla(var(--interactive-accent-hsl), 0.22);
-}
-
-.vt-gr-frag .vt-gr-key {
-  min-width: 0;
-  height: auto;
-  margin-right: 3px;
-  padding: 0 3px;
-  vertical-align: super;
-  font-size: 0.7em;
-}
-
-.vt-gr-opt:disabled,
-.vt-gr-frag:disabled {
-  cursor: default;
-  opacity: 1;
-}
-
-.vt-gr-opt.is-correct,
-.vt-gr-frag.is-correct {
-  border-color: var(--color-green);
-  background: color-mix(in srgb, var(--color-green) 14%, transparent);
-}
-
-.vt-gr-opt.is-wrong,
-.vt-gr-frag.is-wrong {
-  border-color: var(--color-red);
-  background: color-mix(in srgb, var(--color-red) 14%, transparent);
-  text-decoration: line-through;
-}
-
-/* blank: type the answer */
-.vt-gr-blank-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.vt-gr-input {
-  flex: 1;
-  min-width: 10em;
-  min-height: var(--vt-tap);
-}
-
-.vt-gr-input.is-correct {
-  border-color: var(--color-green);
-}
-
-.vt-gr-input.is-wrong {
-  border-color: var(--color-red);
-}
-
-/* After the answer */
-.vt-gr-feedback {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px 16px;
-  border: 1px solid var(--vt-border);
-  border-left-width: 4px;
-  border-radius: var(--vt-radius);
-  background: var(--vt-surface);
-}
-
-.vt-gr-feedback.is-correct {
-  border-left-color: var(--color-green);
-}
-
-.vt-gr-feedback.is-wrong {
-  border-left-color: var(--color-red);
-}
-
-.vt-gr-verdict {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: var(--font-semibold);
-}
-
-.vt-gr-feedback.is-correct .vt-gr-verdict {
-  color: var(--color-green);
-}
-
-.vt-gr-feedback.is-wrong .vt-gr-verdict {
-  color: var(--color-red);
-}
-
-.vt-gr-verdict-icon {
-  display: inline-flex;
-}
-
-.vt-gr-verdict-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.vt-gr-answer {
-  font-weight: var(--font-semibold);
-}
-
-.vt-gr-fixed {
-  color: var(--vt-muted);
-}
-
-.vt-gr-q-explain {
-  line-height: 1.6;
-}
-
-.vt-gr-why {
-  color: var(--vt-muted);
-  font-size: var(--font-ui-small);
-  line-height: 1.5;
-}
-
-.vt-gr-why-opt {
-  color: var(--color-red);
-  font-weight: var(--font-semibold);
-}
-
-.vt-gr-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-/* Summary */
-.vt-gr-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 16px;
-  border: 1px solid var(--vt-border);
-  border-radius: var(--vt-radius);
-  background: var(--vt-card);
-}
-
-.vt-gr-summary-title {
-  color: var(--vt-muted);
-  font-size: var(--font-ui-small);
-}
-
-.vt-gr-score {
-  font-size: calc(var(--font-text-size) * 1.5);
-  font-weight: var(--font-semibold);
-}
-
-.vt-gr-tally {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.vt-gr-tally-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--vt-border);
-}
-
-.vt-gr-tally-text {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.vt-gr-tally-score {
-  flex: none;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-red);
-}
-
-.vt-gr-tally-score.is-full {
-  color: var(--color-green);
-}
-
-.vt-gr-summary-note {
-  color: var(--vt-muted);
-  font-size: var(--font-ui-small);
-}
-
-/* 🔁 待複習: the topic is due, this round is a review. */
-.vt-gr-review-tag {
-  align-self: flex-start;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--background-modifier-hover);
-  color: var(--text-accent);
+.vt-gr-practice-count {
+  color: var(--text-muted);
   font-size: var(--font-ui-smaller);
-  font-weight: 500;
 }
 
-.vt-gr-next-review {
-  color: var(--text-normal);
-}
-
-.vt-gr-gen-row {
+.vt-pr-grammar {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* Desktop shows the 1–4 key hints; a touch screen has no use for them. */
-body.is-mobile .vt-gr-key {
+.vt-pr-grammar-note:empty {
   display: none;
 }
 
-body.is-mobile .vt-gr-opt {
-  min-height: 44px;
-}
-
-body.is-mobile .vt-gr-frag {
-  padding: 6px 4px;
-}
-
-body.is-mobile .vt-gr-card,
-body.is-mobile .vt-gr-summary {
-  padding: 12px;
-}
-
-body.is-mobile .vt-gr-input,
-body.is-mobile .vt-gr-practice .vt-learn-btn {
-  min-height: 44px;
-}
-
-/* rewrite / translate (R2): a multi-line answer, then AI grading or self-check */
-.vt-gr-stem.is-open {
-  white-space: pre-wrap;
-}
-
-.vt-gr-textarea {
-  width: 100%;
-  min-height: 5.5em;
-  resize: vertical;
-  font-size: max(16px, var(--font-ui-medium));
-  line-height: 1.5;
-}
-
-.vt-gr-textarea.is-correct {
-  border-color: var(--color-green);
-}
-
-.vt-gr-textarea.is-wrong {
-  border-color: var(--color-red);
-}
-
-.vt-gr-open-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.vt-gr-selfcheck {
+/* 錯題區 */
+.vt-pr-mistakes {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
+  align-items: flex-end;
+}
+
+.vt-pr-mistakes-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  height: auto;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.vt-pr-mistakes-toggle:hover {
+  color: var(--text-normal);
+}
+
+.vt-pr-chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.vt-pr-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.vt-pr-mistakes-body {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
-  background: var(--background-primary);
 }
 
-.vt-gr-selfcheck-title {
-  color: var(--vt-muted);
-  font-size: var(--font-ui-small);
+.vt-pr-mistakes-body.is-hidden {
+  display: none;
 }
 
-.vt-gr-sample {
-  font-weight: var(--font-semibold);
-  line-height: 1.6;
+.vt-pr-empty {
+  padding: 12px;
+  color: var(--text-muted);
 }
 
-.vt-gr-sample.is-alt {
-  color: var(--vt-muted);
-  font-weight: var(--font-normal);
+.vt-pr-mistake-group {
+  border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.vt-gr-ai-feedback {
-  line-height: 1.6;
+.vt-pr-mistake-group:last-child {
+  border-bottom: 0;
 }
 
-.vt-gr-self-tag {
-  color: var(--vt-muted);
-  font-size: var(--font-ui-small);
-  font-weight: var(--font-normal);
+.vt-pr-mistake {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 4px 12px;
 }
 
-/* 「出自〈筆記名〉」 */
-.vt-gr-source {
-  color: var(--vt-muted);
-  font-size: var(--font-ui-small);
+.vt-pr-mistake-tag {
+  flex: 1;
+  min-width: 0;
+  font-weight: var(--font-medium);
 }
 
-.vt-gr-source-link {
-  color: var(--vt-muted);
-  text-decoration: underline;
-  text-decoration-style: dotted;
+.vt-pr-mistake-count {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
 }
 
-body.is-mobile .vt-gr-textarea {
-  min-height: 7em;
+.vt-pr-redo {
+  padding: 8px 12px 14px;
+  border-top: 1px dashed var(--background-modifier-border);
 }
 
-body.is-mobile .vt-gr-source-link {
-  display: inline-block;
-  padding: 12px 0;
-}
+body.is-mobile .vt-pr-mistakes-toggle,
+body.is-mobile .vt-pr-mistake { min-height: 44px; }

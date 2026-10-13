@@ -1,3 +1,4 @@
+import { builtInExplanation } from "../../core/grammar/explanations";
 import { joinPath } from "../../core/text/slug";
 import { frontmatter } from "../export/renderers/common";
 
@@ -59,6 +60,9 @@ export function topicPagePath(entryFolder: string, title: string, topicId: strin
 }
 
 export function renderTopicPage(topicId: string): string {
+  // The built-in explanation (1013-2) goes right under 「## 說明」.
+  const builtIn = builtInExplanation(topicId);
+  const explanation = builtIn ? sanitizeExplanation(builtIn) : "";
   return [
     frontmatter({ "vocab-tracker": GRAMMAR_PAGE_KIND, "vocab-tracker-id": topicId }),
     "```" + TOPIC_BLOCK,
@@ -67,6 +71,7 @@ export function renderTopicPage(topicId: string): string {
     "",
     EXPLAIN_HEADING,
     "",
+    ...(explanation ? [explanation, ""] : []),
     "```" + PRACTICE_BLOCK,
     `topic: ${topicId}`,
     "```",

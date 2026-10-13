@@ -6,6 +6,8 @@ import type { GrammarStore } from "../../services/grammar/GrammarStore";
 import type { ThreadService } from "../../services/threads/ThreadService";
 import type { LearnStore } from "../../services/learn/LearnStore";
 import type { VerbUsageService } from "../../services/learn/VerbUsageService";
+import { routeToPractice } from "../blocks/practice/grammarTabModel";
+import type { GrammarFilter } from "../grammar/practiceTypes";
 import { shortDate } from "./paragraphRows";
 import {
   dueGrammarRows,
@@ -48,6 +50,11 @@ export interface GrammarSectionDeps {
   threads?: Pick<ThreadService, "events" | "ensureLoaded" | "paragraphThreads">;
   // GrammarStore (F): progress for 待複習. Absent until main.ts wires it up.
   grammar?: Pick<GrammarStore, "events" | "ensureLoaded" | "progress">;
+  // 第十六波 H: 待複習 [練習] sets the grammar filter to the topic and opens
+  // the practice hub's 文法 tab. Optional until main.ts wires them: without
+  // them the button opens the topic page as before.
+  setGrammarFilter?(f: GrammarFilter): void;
+  openPractice?(track: "grammar"): void;
   // The note in front (vault path), if any.
   path?: () => string | null;
   now?: () => Date;
@@ -181,7 +188,7 @@ export class GrammarSection extends Component {
     const btn = el.createEl("button", { cls: "vt-gr-side-row-btn", text: t("grammar.sidebar.practice"), attr: { type: "button" } });
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      open();
+      if (!routeToPractice(this.deps, row.topicId)) open();
     });
   }
 
