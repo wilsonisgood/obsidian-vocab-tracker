@@ -39,9 +39,9 @@ import { pageGroupEntryIds, pageScopedEntries, resetPageCollapsed, uniquePageWor
 export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
 
 // Wave 15 S: what the 文法 section needs from the plugin beyond today's
-// VocabTrackerPlugin. main.ts adds `grammar` (GrammarStore) and
-// `grammarPages` (GrammarPages, M) at integration; until then both are
-// undefined and the 本篇用到的文法 / 待複習 subsections stay hidden.
+// VocabTrackerPlugin. main.ts now has `grammar` (GrammarStore) and
+// `grammarPages` (GrammarPages); the fields stay optional so tests can pass
+// a plain host and the subsections hide when either is missing.
 export interface GrammarSidebarHost {
   grammar?: GrammarSectionDeps["grammar"];
   grammarPages?: { open(topicId: string): Promise<void> | void };
@@ -881,7 +881,7 @@ export class VocabSidebarView extends ItemView {
   }
 
   private grammarHost(): GrammarSidebarHost {
-    return this.plugin as unknown as GrammarSidebarHost;
+    return this.plugin;
   }
 
   // undefined (no 本篇用到的文法 / 待複習) until GrammarPages is wired up.

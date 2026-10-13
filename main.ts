@@ -42,6 +42,10 @@ import { SETTINGS_SECTIONS } from "./src/ui/settings/sections";
 import { ObsidianNotes } from "./src/platform/ObsidianNotes";
 import { ThreadService } from "./src/services/threads/ThreadService";
 import { LearnStore } from "./src/services/learn/LearnStore";
+import { GrammarStore } from "./src/services/grammar/GrammarStore";
+import { GrammarPages } from "./src/services/grammar/GrammarPages";
+import { QuestionService } from "./src/services/grammar/QuestionService";
+import { knownWordList } from "./src/services/ai/context/triviaContext";
 import { createDnaFocus } from "./src/ui/dna/dnaModel";
 import { PageContextHub } from "./src/ui/page/pageContext";
 import { EmojiService } from "./src/services/learn/EmojiService";
@@ -80,7 +84,7 @@ import { ParagraphAnchorService, type SectionRef } from "./src/services/anchors/
 import { ParagraphIndex } from "./src/services/anchors/ParagraphIndex";
 import { ParagraphBadges } from "./src/ui/reading/ParagraphBadges";
 import { resolveAnchorSettings } from "./src/ui/sidebar/anchorSettings";
-import { resolveUiPrefs } from "./src/core/model/settings";
+import { resolveGrammarSettings, resolveUiPrefs } from "./src/core/model/settings";
 import { currentFormFactor } from "./src/ui/mobile/platform";
 import { wordSurface } from "./src/ui/mobile/formFactor";
 import { planTap, tapActionFor } from "./src/ui/mobile/tapAction";
@@ -156,6 +160,10 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   notes!: ObsidianNotes;
   threads!: ThreadService;
   learn!: LearnStore;
+  // 文法學習 (Wave 15): progress/questions store, topic pages, AI question maker.
+  grammar!: GrammarStore;
+  grammarPages!: GrammarPages;
+  grammarQuestions!: QuestionService;
   families!: FamilyService;
   emoji!: EmojiService;
   // A morpheme picked on a word page, for the vocab-dna block (09 §7.1).
@@ -235,10 +243,10 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       storage: this.storage,
       host: {
         flush: async () => {
-          await Promise.all([this.store.flush(), this.srs.flush(), this.threads.flush(), this.learn.flush()]);
+          await Promise.all([this.store.flush(), this.srs.flush(), this.threads.flush(), this.learn.flush(), this.grammar.flush()]);
         },
         reload: async () => {
-          await Promise.all([this.threads.reload(), this.learn.reload(), this.srs.reloadLogs(), this.noteImports.load()]);
+          await Promise.all([this.threads.reload(), this.learn.reload(), this.grammar.reload(), this.srs.reloadLogs(), this.noteImports.load()]);
         },
         applyData: (data) => {
           this.vocabData = data;
@@ -281,6 +289,12 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // M7: word families, verb usage and trivia. learn.json loads lazily,
     // the first time one of them is used.
     this.learn = new LearnStore({ storage: this.storage });
+    this.grammar = new GrammarStore({ storage: this.storage });
+    this.grammarQuestions = new QuestionService({
+      grammar: this.grammar,
+      ai,
+      recentWords: () => this.recentWords(),
+    });
     this.families = new FamilyService({
       ai,
       vocab: this.store,
@@ -347,6 +361,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       if (document.visibilityState !== "visible") return;
       void this.threads.reload();
       void this.learn.reload();
+      void this.grammar.reload();
       void this.srs.reloadLogs();
     });
 
@@ -378,6 +393,12 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       export: this.exporter,
       paragraphs: this.threads,
       isArticle: (p) => /\.md$/i.test(p) && !/\.ai\.md$/i.test(p) && this.isImportable(p),
+    });
+    // 文法主題頁: <入口檔資料夾>/Grammar/<title>.md, made on first open.
+    this.grammarPages = new GrammarPages({
+      vault: this.vault,
+      folder: () => this.files.paths().folder,
+      openPath: (p) => this.openNote(p),
     });
     // handleRename moves the paragraph anchors itself (folders too), then
     // the article's .ai.md; the source-path handler below stays as is.
@@ -624,7 +645,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // so far, before ai.dispose() aborts the requests.
     this.threads?.dispose();
     this.ai?.dispose();
-    await Promise.all([this.store.flush(), this.srs.flush(), this.threads?.flush(), this.learn?.flush()]);
+    await Promise.all([this.store.flush(), this.srs.flush(), this.threads?.flush(), this.learn?.flush(), this.grammar?.flush()]);
     // Last: the steps above can still announce changes (stopped answers).
     await this.exporter?.flush();
     this.exporter?.dispose();
@@ -645,6 +666,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     void this.srs.reloadLogs();
     void this.threads.reload();
     void this.learn.reload();
+    void this.grammar.reload();
     void this.noteImports.load();
 
     const disk = await this.storage.readShard<VocabData>("data");
@@ -965,6 +987,13 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   }
 
   // "tab": a new tab, or the tab already showing the note.
+  // Words sent with grammar-question requests: the 30 most recently saved,
+  // none when 「出題時使用我的單字」 is off (settings.grammar.useMyWords).
+  recentWords(): string[] {
+    if (!resolveGrammarSettings(this.store.settings.grammar).useMyWords) return [];
+    return knownWordList(this.store.entries, 30);
+  }
+
   async openNote(path: string, where: "current" | "tab" = "current") {
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof TFile)) return;
