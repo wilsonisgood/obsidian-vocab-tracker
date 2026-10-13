@@ -730,6 +730,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "grammar.map.mistakes.empty": "目前沒有錯題。",
   "grammar.map.mistakes.count": "{n} 題",
   "grammar.map.mistakes.redo": "重做這組",
+  "grammar.map.mistakes.collapse": "收起",
   "grammar.map.openFailed": "開不了主題頁：{msg}",
   "grammar.map.status.new": "尚未開始",
   "grammar.map.status.learning": "學習中",
@@ -783,4 +784,6 @@ export const zhTW: Record<keyof typeof en, string> = {
   "grammar.practice.again": "再練一輪",
   "grammar.practice.pickOne": "點出錯的地方",
   "grammar.practice.objective": "目標",
+  "grammar.practice.nextReview": "下次複習：{date}",
+  "grammar.practice.reviewTag": "🔁 待複習",
 };

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { setLocale } from "../../../src/core/i18n";
 import type { GrammarQuestion } from "../../../src/core/model/grammar";
 import {
   currentQuestion,
@@ -8,9 +9,14 @@ import {
   lastResult,
   needsMoreQuestions,
   nextQuestion,
+  nextReviewText,
   parseGrammarPracticeParams,
   progressLabel,
+  resolveMode,
+  resolveSize,
   retireCurrent,
+  scheduledResults,
+  schedulesTopic,
   startRound,
   stemPieces,
   submitAnswer,
@@ -22,8 +28,14 @@ function q(id: string, objectiveId = "a", extra: Partial<GrammarQuestion> = {}):
 }
 
 describe("parseGrammarPracticeParams", () => {
-  it("defaults to a learn round of 8", () => {
-    expect(parseGrammarPracticeParams("")).toEqual({ mode: "learn", size: 8 });
+  it("leaves mode and size unset when the block doesn't write them", () => {
+    expect(parseGrammarPracticeParams("")).toEqual({});
+    expect(parseGrammarPracticeParams("topic: be-verb")).toEqual({ topic: "be-verb" });
+  });
+  it("reads review and learn explicitly", () => {
+    expect(parseGrammarPracticeParams("mode: review")).toEqual({ mode: "review" });
+    expect(parseGrammarPracticeParams("mode: 複習")).toEqual({ mode: "review" });
+    expect(parseGrammarPracticeParams("mode: learn")).toEqual({ mode: "learn" });
   });
   it("reads topic, mode, tag and size", () => {
     expect(parseGrammarPracticeParams("topic: past-perfect\nmode: mistakes\ntag: article\nsize: 5")).toEqual({
@@ -36,8 +48,8 @@ describe("parseGrammarPracticeParams", () => {
     expect(parseGrammarPracticeParams('topic: "be-verb"')).toMatchObject({ topic: "be-verb" });
   });
   it("ignores nonsense and caps the size", () => {
-    expect(parseGrammarPracticeParams("mode: whatever\ntag: tense-error\nsize: lots")).toEqual({ mode: "learn", size: 8 });
-    expect(parseGrammarPracticeParams("size: 0")).toMatchObject({ size: 8 });
+    expect(parseGrammarPracticeParams("mode: whatever\ntag: tense-error\nsize: lots")).toEqual({});
+    expect(parseGrammarPracticeParams("size: 0")).toEqual({});
     expect(parseGrammarPracticeParams("size: 500")).toMatchObject({ size: 20 });
     expect(parseGrammarPracticeParams("tag: ARTICLE")).toMatchObject({ tag: "article" });
   });
@@ -208,5 +220,60 @@ describe("keyAction", () => {
   it("nothing in the summary", () => {
     expect(keyAction("Enter", { ...base, phase: "summary" })).toBeNull();
     expect(keyAction("1", { ...base, phase: "summary" })).toBeNull();
+  });
+});
+
+describe("review mode and scheduling", () => {
+  beforeEach(() => setLocale("zh-TW"));
+
+  it("a due topic defaults to review, an explicit mode wins", () => {
+    expect(resolveMode({ topic: "t" }, true)).toBe("review");
+    expect(resolveMode({ topic: "t" }, false)).toBe("learn");
+    expect(resolveMode({ topic: "t", mode: "learn" }, true)).toBe("learn");
+    expect(resolveMode({ topic: "t", mode: "mistakes" }, true)).toBe("mistakes");
+    expect(resolveMode({ mode: "review" }, false)).toBe("review");
+    // no topic, nothing to be due
+    expect(resolveMode({}, true)).toBe("learn");
+  });
+
+  it("review rounds default to 6, others to 8, and size: wins", () => {
+    expect(resolveSize({}, "review")).toBe(6);
+    expect(resolveSize({}, "learn")).toBe(8);
+    expect(resolveSize({}, "mistakes")).toBe(8);
+    expect(resolveSize({ size: 4 }, "review")).toBe(4);
+  });
+
+  const played = () => {
+    let s = startRound([q("1"), q("2"), q("3")]);
+    s = nextQuestion(submitAnswer(s, "x", true));
+    s = nextQuestion(submitAnswer(s, "y", false));
+    return retireCurrent(s);
+  };
+
+  it("schedules from the answers that stayed in the round", () => {
+    const s = played();
+    expect(s.phase).toBe("summary");
+    expect(scheduledResults(s)).toEqual([{ correct: true }, { correct: false }]);
+    expect(schedulesTopic("learn", s)).toBe(true);
+    expect(schedulesTopic("review", s)).toBe(true);
+    expect(schedulesTopic("mistakes", s)).toBe(false);
+  });
+
+  it("a round with nothing answered, or only 👎 answers, isn't scheduled", () => {
+    expect(schedulesTopic("learn", startRound([]))).toBe(false);
+    let s = startRound([q("1")]);
+    s = retireCurrent(s);
+    expect(schedulesTopic("learn", s)).toBe(false);
+    s = startRound([q("1")]);
+    s = retireCurrent(submitAnswer(s, "x", true));
+    expect(scheduledResults(s)).toEqual([]);
+    expect(schedulesTopic("learn", s)).toBe(false);
+  });
+
+  it("names the next review day like a word row does", () => {
+    const now = new Date(2026, 9, 13, 9, 0);
+    expect(nextReviewText(new Date(2026, 9, 13, 20, 0), now)).toBe("下次複習：今天");
+    expect(nextReviewText(new Date(2026, 9, 20, 9, 0).toISOString(), now)).toBe("下次複習：10/20");
+    expect(nextReviewText(new Date(2027, 0, 5, 9, 0), now)).toBe("下次複習：2027/01/05");
   });
 });

@@ -349,6 +349,21 @@
   font-size: var(--font-ui-small);
 }
 
+/* 🔁 待複習: the topic is due, this round is a review. */
+.vt-gr-review-tag {
+  align-self: flex-start;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--background-modifier-hover);
+  color: var(--text-accent);
+  font-size: var(--font-ui-smaller);
+  font-weight: 500;
+}
+
+.vt-gr-next-review {
+  color: var(--text-normal);
+}
+
 .vt-gr-gen-row {
   display: flex;
   justify-content: center;

@@ -1,7 +1,10 @@
 import { TypedEmitter } from "../../core/events";
 import { GRAMMAR_TOPICS, topicById } from "../../core/grammar/catalog";
+import { sessionRating, scheduleTopic } from "../../core/grammar/schedule";
+import type { SessionMode } from "../../core/grammar/session";
 import { knownTopicIds, topicStatuses } from "../../core/grammar/progress";
 import type { GrammarAttempt, GrammarQuestion } from "../../core/model/grammar";
+import { DEFAULT_SRS_SETTINGS, type SrsCard } from "../../core/model/srs";
 import { AiError } from "../ai/errors";
 import {
   DEFAULT_QUESTION_COUNT,
@@ -39,6 +42,8 @@ export interface QuestionServiceDeps {
   // at most MAX_WORDS. main.ts returns [] when the learner turned
   // 「出題時使用我的單字」 off, so nothing is sent.
   recentWords?: () => string[];
+  // FSRS request_retention (the same setting as the word cards).
+  retention?: () => number;
   clock?: () => Date;
   newId?: () => string;
 }
@@ -152,6 +157,35 @@ export class QuestionService {
     const progress = this.deps.grammar.progress(question.topicId);
     this.deps.grammar.upsertProgress({ ...(progress ?? { id: question.topicId }), lastPracticedAt: at });
     return attempt;
+  }
+
+  // A finished practice round is one review of the topic: rates how it went
+  // and writes progress.srs. Only answers that stayed in the round count
+  // (👎 ones don't), and a 錯題本 redo (`mistakes`) doesn't schedule at all.
+  // Returns the new card, or undefined when nothing was scheduled.
+  finishSession(
+    topicId: string,
+    results: readonly { correct: boolean; retired?: boolean }[],
+    now: Date = this.clock(),
+    mode: SessionMode = "learn"
+  ): SrsCard | undefined {
+    if (mode === "mistakes" || !topicById(topicId)) return undefined;
+    const rating = sessionRating(results.filter((r) => !r.retired));
+    if (!rating) return undefined;
+    const progress = this.deps.grammar.progress(topicId);
+    const srs = scheduleTopic(progress, rating, now, this.retention());
+    this.deps.grammar.upsertProgress({ ...(progress ?? { id: topicId }), srs, lastPracticedAt: now.toISOString() });
+    return srs;
+  }
+
+  private retention(): number {
+    try {
+      const r = this.deps.retention?.();
+      if (typeof r === "number" && Number.isFinite(r) && r > 0 && r < 1) return r;
+    } catch {
+      // fall through to the default
+    }
+    return DEFAULT_SRS_SETTINGS.retention;
   }
 
   // ── Prompt inputs ─────────────────────────────────────────────
