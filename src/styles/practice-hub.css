@@ -1,0 +1,49 @@
+/* 練習中心 (第十六波 E). Import in index.css at integration. */
+
+.vt-pr { display: flex; flex-direction: column; gap: 12px; }
+
+.vt-pr-tabs {
+  display: flex; gap: 4px; border-bottom: 1px solid var(--background-modifier-border);
+  overflow-x: auto;
+}
+.vt-pr-tab {
+  background: transparent; border: 0; box-shadow: none; border-radius: 6px 6px 0 0;
+  padding: 8px 16px; color: var(--text-muted); cursor: pointer; white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+.vt-pr-tab:hover { color: var(--text-normal); }
+.vt-pr-tab.is-active {
+  color: var(--text-normal); font-weight: 600; border-bottom-color: var(--interactive-accent);
+}
+
+.vt-pr-filter {
+  border: 1px solid var(--background-modifier-border); border-radius: 8px;
+  background: var(--background-secondary);
+}
+.vt-pr-filter-head {
+  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  background: transparent; border: 0; box-shadow: none; text-align: left;
+  padding: 8px 12px; color: var(--text-muted); cursor: pointer;
+}
+.vt-pr-filter-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vt-pr-filter-caret { transition: transform 0.15s; }
+.vt-pr-filter.is-open .vt-pr-filter-caret { transform: rotate(90deg); }
+.vt-pr-filter-body { padding: 4px 12px 12px; display: flex; flex-direction: column; gap: 10px; }
+.vt-pr-filter-group { display: flex; flex-direction: column; gap: 6px; }
+.vt-pr-filter-label { font-size: var(--font-ui-smaller); color: var(--text-faint); }
+.vt-pr-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.vt-pr-chip {
+  border-radius: 999px; padding: 4px 12px; font-size: var(--font-ui-small);
+  background: var(--background-primary); border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal); cursor: pointer; box-shadow: none;
+}
+.vt-pr-chip.is-on {
+  background: var(--interactive-accent); border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+body.is-mobile .vt-pr-tab,
+body.is-mobile .vt-pr-filter-head,
+body.is-mobile .vt-pr-chip,
+body.is-mobile .vt-pr-filter .vt-learn-btn { min-height: 44px; }
+body.is-mobile .vt-pr-chip { padding: 8px 16px; }

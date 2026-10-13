@@ -12,7 +12,7 @@ import type { RenderContext } from "../export/types";
 
 export const ENTRY_FILE_KIND = "entry";
 
-export type EntryFileId = "flashcards" | "families" | "verbs" | "trivia" | "dna" | "grammar";
+export type EntryFileId = "flashcards" | "families" | "verbs" | "trivia" | "dna" | "grammar" | "practice";
 
 export interface EntryFileDef {
   id: EntryFileId;
@@ -44,6 +44,9 @@ export const ENTRY_FILES: readonly EntryFileDef[] = [
   // old default name: legacyName = name makes planEntryRenames skip it
   // (a user's own 文法.md in the folder must never be renamed).
   { id: "grammar", name: "Grammar", block: "vocab-grammar", legacyName: "Grammar" },
+  // Practice hub (第十六波 E). New, so legacyName = name for the same
+  // reason as Grammar above; Card.md stays as it is.
+  { id: "practice", name: "Practice", block: "vocab-practice", legacyName: "Practice" },
 ];
 
 // The word list's starter note (main.ts) is not an entry file (no
