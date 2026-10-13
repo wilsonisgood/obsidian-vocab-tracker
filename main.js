@@ -35,7 +35,7 @@ __export(main_exports, {
   default: () => VocabTrackerPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian62 = require("obsidian");
+var import_obsidian63 = require("obsidian");
 
 // src/core/text/wordRe.ts
 function escapeRe(s) {
@@ -143,7 +143,7 @@ function withTimeout(p, ms9) {
 
 // src/platform/ObsidianStorage.ts
 var import_obsidian2 = require("obsidian");
-var FILE_SHARDS = /* @__PURE__ */ new Set(["reviews", "usage", "threads", "imports", "learn", "files", "grammar"]);
+var FILE_SHARDS = /* @__PURE__ */ new Set(["reviews", "usage", "threads", "imports", "learn", "files", "grammar", "learner"]);
 var UNSUPPORTED_SHARD = (name) => new Error(`ObsidianStorage: shard "${name}" is not implemented yet`);
 var BACKUP_NAME = /^[\w.-]+\.json$/;
 var ObsidianStorage = class {
@@ -914,10 +914,10 @@ function pickSection(local, remote, localLegacy, remoteLegacy, lTop, rTop) {
     var _a;
     return section3 === void 0 ? -1 : Math.max(own2, (_a = legacy2 == null ? void 0 : legacy2.ms) != null ? _a : 0);
   };
-  const l5 = effective(local, lOwn, localLegacy);
+  const l4 = effective(local, lOwn, localLegacy);
   const r = effective(remote, rOwn, remoteLegacy);
-  const remoteWins = l5 !== r ? r > l5 : lTop !== rTop ? rTop > lTop : rf > lf;
-  const [winner, eff, own, legacy] = remoteWins ? [remote, r, rOwn, remoteLegacy] : [local, l5, lOwn, localLegacy];
+  const remoteWins = l4 !== r ? r > l4 : lTop !== rTop ? rTop > lTop : rf > lf;
+  const [winner, eff, own, legacy] = remoteWins ? [remote, r, rOwn, remoteLegacy] : [local, l4, lOwn, localLegacy];
   return legacy && eff > own ? { ...winner, updatedAt: legacy.iso } : winner;
 }
 function restFingerprint(s) {
@@ -928,14 +928,14 @@ function restFingerprint(s) {
 function mergeSettings(local, remote) {
   if (!local) return remote != null ? remote : { schemaVersion: 2 };
   if (!remote) return local;
-  const l5 = stampMs(local.updatedAt);
+  const l4 = stampMs(local.updatedAt);
   const r = stampMs(remote.updatedAt);
-  const remoteNewer = l5 !== r ? r > l5 : restFingerprint(remote) > restFingerprint(local);
+  const remoteNewer = l4 !== r ? r > l4 : restFingerprint(remote) > restFingerprint(local);
   const out = { ...remoteNewer ? remote : local };
   const localLegacy = legacyStamp(local);
   const remoteLegacy = legacyStamp(remote);
   for (const key5 of SETTINGS_SECTIONS) {
-    const picked = pickSection(local[key5], remote[key5], localLegacy, remoteLegacy, l5, r);
+    const picked = pickSection(local[key5], remote[key5], localLegacy, remoteLegacy, l4, r);
     if (picked === void 0) delete out[key5];
     else out[key5] = picked;
   }
@@ -1718,54 +1718,57 @@ var en = {
   "grammar.topic.err.notEmpty": "The explanation section already has content; nothing was overwritten.",
   "grammar.topic.err.noSection": 'The "## \u8AAA\u660E" section is missing; nothing was written.',
   "grammar.topic.err.empty": "The AI returned nothing.",
-  "grammar.practice.loading": "Loading\u2026",
-  "grammar.practice.noTopic": "Unknown grammar topic: check the topic parameter.",
-  "grammar.practice.mistakesOf": "Mistakes",
-  "grammar.practice.emptyTitle": "No questions yet",
-  "grammar.practice.emptyBody": "Press \u201CGenerate questions\u201D and the AI writes a batch for this topic and stores it for repeat practice.",
-  "grammar.practice.noMistakes": "No mistakes right now",
-  "grammar.practice.noMistakesBody": "Questions you get wrong show up here and leave once you get them right.",
-  "grammar.practice.generate": "\u2726 Generate questions",
-  "grammar.practice.generating": "The AI is writing questions\u2026",
-  "grammar.practice.stop": "Stop",
-  "grammar.practice.added": "{n} questions added; they\u2019re used next round.",
-  "grammar.practice.short": "The bank has only {n} questions, not a full round.",
-  "grammar.practice.typeAnswer": "Type your answer",
-  "grammar.practice.check": "Check",
-  "grammar.practice.right": "Correct",
-  "grammar.practice.wrong": "Not quite",
-  "grammar.practice.youPicked": "You chose {a} \u2192 answer: {b}",
-  "grammar.practice.youTyped": "You wrote {a} \u2192 answer: {b}",
-  "grammar.practice.youClicked": "You clicked {a} \u2192 the error is {b}",
-  "grammar.practice.fixed": "Should be: {s}",
-  "grammar.practice.retire": "Report a problem",
-  "grammar.practice.next": "Next",
-  "grammar.practice.seeSummary": "See summary",
-  "grammar.practice.summaryTitle": "Round complete",
-  "grammar.practice.score": "{c} / {n} correct",
-  "grammar.practice.wrongAdded": "{n} wrong answers added to your mistakes.",
-  "grammar.practice.allRight": "All correct!",
-  "grammar.practice.mistakesHint": "Questions you get right leave the mistakes list.",
-  "grammar.practice.retired": "{n} questions flagged and won\u2019t come back.",
-  "grammar.practice.again": "Another round",
-  "grammar.practice.pickOne": "Click the error",
-  "grammar.practice.objective": "Goal",
-  "grammar.practice.nextReview": "Next review: {date}",
-  "grammar.practice.reviewTag": "\u{1F501} Due for review",
-  "grammar.practice.typeRewrite": "Type your rewritten sentence",
-  "grammar.practice.typeTranslation": "Type your English translation",
-  "grammar.practice.submit": "Submit",
-  "grammar.practice.openAiHint": "Press Ctrl/\u2318 + Enter or Submit and AI will grade your answer.",
-  "grammar.practice.openSelfHint": "After you submit you'll see a sample answer to compare with.",
-  "grammar.practice.grading": "AI is grading\u2026",
-  "grammar.practice.gradeFailed": "Grading failed. Compare with the sample answer yourself.",
-  "grammar.practice.sample": "Sample answer",
-  "grammar.practice.selfAsk": "Compared with the sample, are your meaning and grammar right?",
-  "grammar.practice.selfRight": "I got it right",
-  "grammar.practice.selfWrong": "I got it wrong",
-  "grammar.practice.selfTag": "(self-marked)",
-  "grammar.practice.sampleIs": "Sample answer: {s}",
-  "grammar.practice.source": "From \u201C{name}\u201D"
+  // 第十六波：練習中心、播放器、文法頁籤
+  "practice.filter.title": "Question filter",
+  "practice.filter.quick": "Quick picks",
+  "practice.vocab.label": "Vocab",
+  "practice.vocab.status": "Status",
+  "practice.vocab.due": "Due",
+  "practice.vocab.new": "New",
+  "practice.vocab.all": "All",
+  "practice.vocab.level": "Exam level",
+  "practice.vocab.pos": "Part of speech",
+  "practice.vocab.folder": "Source folder",
+  "practice.vocab.added": "Added",
+  "practice.vocab.recent": "Last 7 days",
+  "practice.vocab.quickDue": "Due today",
+  "practice.vocab.quickRecent": "Recently added (7 days)",
+  "practice.player.skip": "Skip",
+  "practice.player.retire": "\u{1F44E} Bad question",
+  "practice.player.hint": "\u{1F4A1} Hint",
+  "practice.player.next": "Next",
+  "practice.player.right": "\u2713 Correct",
+  "practice.player.wrong": "\u2717 Not quite",
+  "practice.player.answer": "Answer",
+  "practice.player.earlier": "Show earlier",
+  "practice.player.empty": "Preparing questions\u2026",
+  "practice.player.you": "You chose",
+  "practice.player.stats": "Answered {n} here today \xB7 {c} right",
+  "practice.grammar.label": "Grammar",
+  "practice.grammar.stage": "Stage",
+  "practice.grammar.topic": "Topics",
+  "practice.grammar.quickWeek": "Read this week",
+  "practice.grammar.quickDue": "Due for review",
+  "practice.grammar.quickWeak": "Missed last time",
+  "practice.grammar.allTopics": "All topics",
+  "practice.grammar.tag": "Grammar",
+  "practice.grammar.mistakes": "Mistakes",
+  "practice.grammar.mistakesEmpty": "No mistakes right now.",
+  "practice.grammar.redo": "Redo this group",
+  "practice.grammar.fold": "Fold",
+  "practice.grammar.count": "{n}",
+  "practice.grammar.preparing": "Preparing questions\u2026",
+  "practice.grammar.aiOff": "AI is off, so new questions can't be generated",
+  "practice.grammar.noKey": "No AI key set, so new questions can't be generated",
+  "practice.grammar.offline": "Offline, so new questions can't be generated",
+  "practice.grammar.none": "No new questions right now. Change the filter or try again later.",
+  "practice.grammar.redoDone": "This group is done.",
+  "grammar.practiceCard.title": "Practice this topic in the Practice hub",
+  "grammar.practiceCard.go": "Practice",
+  "grammar.practiceCard.mistakes": "{n} mistakes in this topic",
+  "grammar.practiceCard.noMistakes": "No mistakes to redo in this topic",
+  "grammar.practiceCard.noTopic": "Topic not found; check the topic: id.",
+  "grammar.topic.fillBuiltIn": "Fill in explanation"
 };
 
 // src/core/i18n/zh-TW.ts
@@ -2479,54 +2482,57 @@ var zhTW = {
   "grammar.topic.err.notEmpty": "\u8AAA\u660E\u5DF2\u7D93\u6709\u5167\u5BB9\uFF0C\u6C92\u6709\u8986\u84CB\u3002",
   "grammar.topic.err.noSection": "\u627E\u4E0D\u5230\u300C## \u8AAA\u660E\u300D\u6BB5\u843D\uFF0C\u6C92\u6709\u5BEB\u5165\u3002",
   "grammar.topic.err.empty": "AI \u6C92\u6709\u56DE\u50B3\u5167\u5BB9\u3002",
-  "grammar.practice.loading": "\u8F09\u5165\u4E2D\u2026",
-  "grammar.practice.noTopic": "\u627E\u4E0D\u5230\u9019\u500B\u6587\u6CD5\u4E3B\u984C\uFF0C\u8ACB\u6AA2\u67E5 topic \u53C3\u6578\u3002",
-  "grammar.practice.mistakesOf": "\u932F\u984C\u672C",
-  "grammar.practice.emptyTitle": "\u984C\u5EAB\u9084\u6C92\u6709\u984C\u76EE",
-  "grammar.practice.emptyBody": "\u6309\u4E0B\u300C\u751F\u6210\u65B0\u984C\u76EE\u300D\uFF0CAI \u6703\u70BA\u9019\u500B\u4E3B\u984C\u51FA\u4E00\u6279\u984C\u76EE\u4E26\u5B58\u8D77\u4F86\uFF0C\u4E4B\u5F8C\u53EF\u4EE5\u91CD\u8907\u7DF4\u7FD2\u3002",
-  "grammar.practice.noMistakes": "\u76EE\u524D\u6C92\u6709\u932F\u984C",
-  "grammar.practice.noMistakesBody": "\u7B54\u932F\u7684\u984C\u76EE\u6703\u51FA\u73FE\u5728\u9019\u88E1\uFF0C\u505A\u5C0D\u5C31\u6703\u79FB\u8D70\u3002",
-  "grammar.practice.generate": "\u2726 \u751F\u6210\u65B0\u984C\u76EE",
-  "grammar.practice.generating": "AI \u6B63\u5728\u51FA\u984C\u2026",
-  "grammar.practice.stop": "\u505C\u6B62",
-  "grammar.practice.added": "\u5DF2\u52A0\u5165 {n} \u984C\uFF0C\u4E0B\u4E00\u8F2A\u6703\u7528\u5230\u3002",
-  "grammar.practice.short": "\u984C\u5EAB\u53EA\u6709 {n} \u984C\uFF0C\u4E0D\u5920\u4E00\u8F2A\u3002",
-  "grammar.practice.typeAnswer": "\u8F38\u5165\u7B54\u6848",
-  "grammar.practice.check": "\u6AA2\u67E5",
-  "grammar.practice.right": "\u7B54\u5C0D\u4E86",
-  "grammar.practice.wrong": "\u7B54\u932F\u4E86",
-  "grammar.practice.youPicked": "\u4F60\u9078 {a} \u2192 \u6B63\u89E3 {b}",
-  "grammar.practice.youTyped": "\u4F60\u586B {a} \u2192 \u6B63\u89E3 {b}",
-  "grammar.practice.youClicked": "\u4F60\u9EDE {a} \u2192 \u932F\u7684\u662F {b}",
-  "grammar.practice.fixed": "\u6539\u6210\uFF1A{s}",
-  "grammar.practice.retire": "\u9019\u984C\u6709\u554F\u984C",
-  "grammar.practice.next": "\u4E0B\u4E00\u984C",
-  "grammar.practice.seeSummary": "\u770B\u5C0F\u7D50",
-  "grammar.practice.summaryTitle": "\u9019\u4E00\u8F2A\u5B8C\u6210",
-  "grammar.practice.score": "\u7B54\u5C0D {c} / {n} \u984C",
-  "grammar.practice.wrongAdded": "{n} \u984C\u932F\u984C\u5DF2\u52A0\u5165\u932F\u984C\u672C\u3002",
-  "grammar.practice.allRight": "\u5168\u90E8\u7B54\u5C0D\uFF01",
-  "grammar.practice.mistakesHint": "\u505A\u5C0D\u7684\u984C\u76EE\u6703\u5F9E\u932F\u984C\u672C\u79FB\u8D70\u3002",
-  "grammar.practice.retired": "{n} \u984C\u88AB\u6A19\u6210\u6709\u554F\u984C\uFF0C\u4E4B\u5F8C\u4E0D\u6703\u518D\u51FA\u73FE\u3002",
-  "grammar.practice.again": "\u518D\u7DF4\u4E00\u8F2A",
-  "grammar.practice.pickOne": "\u9EDE\u51FA\u932F\u7684\u5730\u65B9",
-  "grammar.practice.objective": "\u76EE\u6A19",
-  "grammar.practice.nextReview": "\u4E0B\u6B21\u8907\u7FD2\uFF1A{date}",
-  "grammar.practice.reviewTag": "\u{1F501} \u5F85\u8907\u7FD2",
-  "grammar.practice.typeRewrite": "\u8F38\u5165\u4F60\u6539\u5BEB\u7684\u53E5\u5B50",
-  "grammar.practice.typeTranslation": "\u8F38\u5165\u4F60\u7684\u82F1\u6587\u7FFB\u8B6F",
-  "grammar.practice.submit": "\u9001\u51FA",
-  "grammar.practice.openAiHint": "\u6309 Ctrl\uFF0F\u2318 + Enter \u6216\u300C\u9001\u51FA\u300D\uFF0CAI \u6703\u6279\u6539\u4F60\u7684\u7B54\u6848\u3002",
-  "grammar.practice.openSelfHint": "\u9001\u51FA\u5F8C\u6703\u986F\u793A\u7BC4\u4F8B\u7B54\u6848\uFF0C\u8ACB\u81EA\u5DF1\u5C0D\u7167\u3002",
-  "grammar.practice.grading": "AI \u6279\u6539\u4E2D\u2026",
-  "grammar.practice.gradeFailed": "\u6279\u6539\u5931\u6557\uFF0C\u8ACB\u5C0D\u7167\u7BC4\u4F8B\u7B54\u6848\u81EA\u5DF1\u5224\u65B7\u3002",
-  "grammar.practice.sample": "\u7BC4\u4F8B\u7B54\u6848",
-  "grammar.practice.selfAsk": "\u4F60\u7684\u7B54\u6848\u548C\u7BC4\u4F8B\u76F8\u6BD4\uFF0C\u610F\u601D\u548C\u6587\u6CD5\u90FD\u5C0D\u55CE\uFF1F",
-  "grammar.practice.selfRight": "\u6211\u7B54\u5C0D\u4E86",
-  "grammar.practice.selfWrong": "\u6211\u7B54\u932F\u4E86",
-  "grammar.practice.selfTag": "\uFF08\u81EA\u8A55\uFF09",
-  "grammar.practice.sampleIs": "\u7BC4\u4F8B\u7B54\u6848\uFF1A{s}",
-  "grammar.practice.source": "\u51FA\u81EA\u3008{name}\u3009"
+  // 第十六波：練習中心、播放器、文法頁籤
+  "practice.filter.title": "\u51FA\u984C\u53C3\u8003",
+  "practice.filter.quick": "\u5FEB\u9078",
+  "practice.vocab.label": "\u55AE\u5B57",
+  "practice.vocab.status": "\u72C0\u614B",
+  "practice.vocab.due": "\u5230\u671F",
+  "practice.vocab.new": "\u65B0\u5B57",
+  "practice.vocab.all": "\u5168\u90E8",
+  "practice.vocab.level": "\u8003\u8A66\u7B49\u7D1A",
+  "practice.vocab.pos": "\u8A5E\u6027",
+  "practice.vocab.folder": "\u4F86\u6E90\u8CC7\u6599\u593E",
+  "practice.vocab.added": "\u6536\u9304\u6642\u9593",
+  "practice.vocab.recent": "7 \u5929\u5167",
+  "practice.vocab.quickDue": "\u4ECA\u65E5\u5230\u671F",
+  "practice.vocab.quickRecent": "\u6700\u8FD1\u6536\u9304\uFF087 \u5929\u5167\uFF09",
+  "practice.player.skip": "\u8DF3\u904E",
+  "practice.player.retire": "\u{1F44E} \u9019\u984C\u6709\u554F\u984C",
+  "practice.player.hint": "\u{1F4A1} \u63D0\u793A",
+  "practice.player.next": "\u4E0B\u4E00\u984C",
+  "practice.player.right": "\u2713 \u7B54\u5C0D\u4E86",
+  "practice.player.wrong": "\u2717 \u7B54\u932F\u4E86",
+  "practice.player.answer": "\u6B63\u89E3",
+  "practice.player.earlier": "\u986F\u793A\u66F4\u65E9\u7684",
+  "practice.player.empty": "\u984C\u76EE\u6E96\u5099\u4E2D\u2026",
+  "practice.player.you": "\u4F60\u9078\u7684",
+  "practice.player.stats": "\u4ECA\u5929\u9019\u88E1\u7B54\u4E86 {n} \u984C \xB7 \u5C0D {c}",
+  "practice.grammar.label": "\u6587\u6CD5",
+  "practice.grammar.stage": "\u968E\u6BB5",
+  "practice.grammar.topic": "\u4E3B\u984C",
+  "practice.grammar.quickWeek": "\u672C\u9031\u8B80\u5230\u7684",
+  "practice.grammar.quickDue": "\u5F85\u8907\u7FD2",
+  "practice.grammar.quickWeak": "\u4E0A\u6B21\u932F\u7684",
+  "practice.grammar.allTopics": "\u5168\u90E8\u4E3B\u984C",
+  "practice.grammar.tag": "\u6587\u6CD5",
+  "practice.grammar.mistakes": "\u932F\u984C\u5340",
+  "practice.grammar.mistakesEmpty": "\u76EE\u524D\u6C92\u6709\u932F\u984C\u3002",
+  "practice.grammar.redo": "\u91CD\u505A\u9019\u7D44",
+  "practice.grammar.fold": "\u6536\u8D77",
+  "practice.grammar.count": "{n} \u984C",
+  "practice.grammar.preparing": "\u984C\u76EE\u6E96\u5099\u4E2D\u2026",
+  "practice.grammar.aiOff": "AI \u6C92\u6709\u958B\u555F\uFF0C\u7121\u6CD5\u751F\u6210\u65B0\u984C\u76EE",
+  "practice.grammar.noKey": "\u5C1A\u672A\u8A2D\u5B9A AI \u91D1\u9470\uFF0C\u7121\u6CD5\u751F\u6210\u65B0\u984C\u76EE",
+  "practice.grammar.offline": "\u76EE\u524D\u96E2\u7DDA\uFF0C\u7121\u6CD5\u751F\u6210\u65B0\u984C\u76EE",
+  "practice.grammar.none": "\u76EE\u524D\u6C92\u6709\u65B0\u984C\u76EE\uFF0C\u63DB\u500B\u7BE9\u9078\u6216\u7A0D\u5F8C\u518D\u8A66\u3002",
+  "practice.grammar.redoDone": "\u9019\u7D44\u5DF2\u7D93\u505A\u5B8C\u4E86\u3002",
+  "grammar.practiceCard.title": "\u5728\u7DF4\u7FD2\u4E2D\u5FC3\u7DF4\u9019\u500B\u4E3B\u984C",
+  "grammar.practiceCard.go": "\u53BB\u7DF4\u7FD2",
+  "grammar.practiceCard.mistakes": "\u9019\u500B\u4E3B\u984C\u6709 {n} \u984C\u932F\u984C",
+  "grammar.practiceCard.noMistakes": "\u9019\u500B\u4E3B\u984C\u6C92\u6709\u5F85\u91CD\u505A\u7684\u932F\u984C",
+  "grammar.practiceCard.noTopic": "\u627E\u4E0D\u5230\u9019\u500B\u4E3B\u984C\uFF0C\u8ACB\u6AA2\u67E5 topic: \u7684 id\u3002",
+  "grammar.topic.fillBuiltIn": "\u586B\u5165\u8AAA\u660E"
 };
 
 // src/core/i18n/index.ts
@@ -4698,9 +4704,9 @@ function buildRelated() {
   const m2 = /* @__PURE__ */ new Map();
   const add3 = (a2, b) => {
     var _a;
-    const l5 = (_a = m2.get(a2)) != null ? _a : [];
-    if (!l5.includes(b)) l5.push(b);
-    m2.set(a2, l5);
+    const l4 = (_a = m2.get(a2)) != null ? _a : [];
+    if (!l4.includes(b)) l4.push(b);
+    m2.set(a2, l4);
   };
   for (const [a2, b] of RELATED_EDGES) {
     add3(a2, b);
@@ -4814,8 +4820,8 @@ function grammarSightings(threads) {
 function sightingsByTopic(sightings) {
   const out = /* @__PURE__ */ new Map();
   for (const s of sightings) {
-    const l5 = out.get(s.topicId);
-    if (l5) l5.push(s);
+    const l4 = out.get(s.topicId);
+    if (l4) l4.push(s);
     else out.set(s.topicId, [s]);
   }
   return out;
@@ -5402,10 +5408,10 @@ function parseWordlist(content) {
   let i = 0;
   let tag;
   if (((_a = lines4[0]) == null ? void 0 : _a.trim()) === "---") {
-    const close = lines4.findIndex((l5, j) => j > 0 && l5.trim() === "---");
+    const close = lines4.findIndex((l4, j) => j > 0 && l4.trim() === "---");
     if (close > 0) {
-      for (const l5 of lines4.slice(1, close)) {
-        const m2 = /^tag\s*:\s*["']?#?([^"']+?)["']?\s*$/.exec(l5.trim());
+      for (const l4 of lines4.slice(1, close)) {
+        const m2 = /^tag\s*:\s*["']?#?([^"']+?)["']?\s*$/.exec(l4.trim());
         if (m2) tag = m2[1];
       }
       i = close + 1;
@@ -5545,13 +5551,13 @@ function autoGrowTextarea(el) {
 }
 
 // src/ui/word/WordRow.ts
-function renderVocabRow(plugin, container, entry, initialState, setState, refresh, opts = {}) {
+function renderVocabRow(plugin, container, entry, initialState2, setState, refresh, opts = {}) {
   const layout = rowLayout(opts.variant);
   const sheet = layout.alwaysOpen;
-  let state = initialState;
+  let state = initialState2;
   let row;
-  const redraw = (nextState = state, afterMount) => {
-    state = nextState;
+  const redraw = (nextState2 = state, afterMount) => {
+    state = nextState2;
     setState(state);
     const next = build2();
     row.replaceWith(next);
@@ -7530,9 +7536,9 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     const { workspace, vault } = this.host.app;
     const file = vault.getAbstractFileByPath(target.path);
     if (!(file instanceof import_obsidian15.TFile)) return;
-    const leaf = (_a = workspace.getLeavesOfType("markdown").find((l5) => {
+    const leaf = (_a = workspace.getLeavesOfType("markdown").find((l4) => {
       var _a2;
-      return ((_a2 = l5.view.file) == null ? void 0 : _a2.path) === target.path;
+      return ((_a2 = l4.view.file) == null ? void 0 : _a2.path) === target.path;
     })) != null ? _a : workspace.getLeaf(false);
     await leaf.openFile(file, { eState: { line: target.line } });
     workspace.revealLeaf(leaf);
@@ -7751,8 +7757,8 @@ function topicStatuses(topics, attempts, progressOf, now2) {
   var _a;
   const byTopic = /* @__PURE__ */ new Map();
   for (const a2 of attempts) {
-    const l5 = byTopic.get(a2.topicId);
-    if (l5) l5.push(a2);
+    const l4 = byTopic.get(a2.topicId);
+    if (l4) l4.push(a2);
     else byTopic.set(a2.topicId, [a2]);
   }
   const out = /* @__PURE__ */ new Map();
@@ -7762,17 +7768,17 @@ function topicStatuses(topics, attempts, progressOf, now2) {
 function bySequence(a2, b) {
   return a2.stage - b.stage || a2.order - b.order;
 }
-function recommendNext(topics, statusOf, level) {
+function recommendNext(topics, statusOf2, level) {
   const start2 = startDifficulty(level);
   const sorted = [...topics].sort(bySequence);
   const byId = new Map(sorted.map((t2) => [t2.id, t2]));
   const prereqOk = (t2) => t2.prerequisites.every((id2) => {
     const p = byId.get(id2);
-    return !p || p.difficulty < start2 || statusOf(id2) !== "new";
+    return !p || p.difficulty < start2 || statusOf2(id2) !== "new";
   });
-  const next = sorted.find((t2) => t2.difficulty >= start2 && statusOf(t2.id) !== "mastered" && prereqOk(t2));
+  const next = sorted.find((t2) => t2.difficulty >= start2 && statusOf2(t2.id) !== "mastered" && prereqOk(t2));
   if (next) return next;
-  return sorted.find((t2) => statusOf(t2.id) === "learning");
+  return sorted.find((t2) => statusOf2(t2.id) === "learning");
 }
 function dueTopics(topics, progressOf, now2) {
   var _a;
@@ -7783,25 +7789,306 @@ function dueTopics(topics, progressOf, now2) {
   }
   return due.sort((a2, b) => a2.at - b.at).map((d) => d.topic);
 }
-function mistakeGroups(questions2, attempts) {
-  const latest = /* @__PURE__ */ new Map();
-  for (const a2 of attempts) {
-    const prev = latest.get(a2.questionId);
-    if (!prev || ms2(a2.at) >= ms2(prev.at)) latest.set(a2.questionId, a2);
+function knownTopicIds(topics, statusOf2) {
+  return topics.filter((t2) => statusOf2(t2.id) !== "new").map((t2) => t2.id);
+}
+
+// src/core/grammar/practiceFilter.ts
+var STAGES = [1, 2, 3];
+function parseGrammarFilter(v) {
+  const o = typeof v === "object" && v !== null && !Array.isArray(v) ? v : {};
+  const stages = STAGES.filter((s) => Array.isArray(o.stages) && o.stages.includes(s));
+  const topics = [];
+  if (Array.isArray(o.topics)) {
+    for (const t2 of o.topics) if (typeof t2 === "string" && t2 && !topics.includes(t2)) topics.push(t2);
   }
+  return { stages, topics };
+}
+function stageOfDifficulty(difficulty) {
+  return difficulty <= 3 ? 1 : difficulty <= 6 ? 2 : 3;
+}
+function startStage(level) {
+  return stageOfDifficulty(startDifficulty(level));
+}
+function topicsInFilter(f, level) {
+  const stages = f.stages.length ? f.stages : [startStage(level)];
+  const inStages = GRAMMAR_TOPICS.filter((t2) => stages.includes(t2.stage));
+  if (f.topics.length) {
+    const want = new Set(f.topics);
+    const named2 = inStages.filter((t2) => want.has(t2.id));
+    if (named2.length) return named2.map((t2) => t2.id);
+  }
+  return inStages.map((t2) => t2.id);
+}
+
+// src/core/model/srs.ts
+var SrsState = { New: 0, Learning: 1, Review: 2, Relearning: 3 };
+var Rating = { Again: 1, Hard: 2, Good: 3, Easy: 4 };
+var RATINGS = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy];
+var CARD_MODES = ["en-zh", "zh-en", "cloze", "listen"];
+var DEFAULT_SRS_SETTINGS = { retention: 0.9, dailyNew: 20 };
+function resolveSrsSettings(partial) {
+  const retention = Number(partial == null ? void 0 : partial.retention);
+  const dailyNew = Number(partial == null ? void 0 : partial.dailyNew);
+  return {
+    retention: Number.isFinite(retention) && retention > 0 ? Math.min(0.99, Math.max(0.7, retention)) : DEFAULT_SRS_SETTINGS.retention,
+    dailyNew: Number.isFinite(dailyNew) && dailyNew >= 0 ? Math.floor(dailyNew) : DEFAULT_SRS_SETTINGS.dailyNew
+  };
+}
+
+// src/ui/blocks/params.ts
+function parseBlockParams(source) {
+  const out = {};
+  for (const raw of source.split(/\r?\n/)) {
+    const line2 = raw.trim();
+    if (!line2 || line2.startsWith("#") || line2.startsWith("//")) continue;
+    const i = line2.indexOf(":");
+    if (i <= 0) continue;
+    const key5 = line2.slice(0, i).trim().toLowerCase();
+    const value = line2.slice(i + 1).trim();
+    if (key5) out[key5] = value;
+  }
+  return out;
+}
+var MODE_ALIASES = {
+  "en-zh": "en-zh",
+  "en\u2192zh": "en-zh",
+  "\u82F1\u2192\u4E2D": "en-zh",
+  "zh-en": "zh-en",
+  "zh\u2192en": "zh-en",
+  "\u4E2D\u2192\u82F1": "zh-en",
+  cloze: "cloze",
+  "\u4F8B\u53E5\u586B\u7A7A": "cloze",
+  listen: "listen",
+  "\u807D\u97F3\u62FC\u5B57": "listen"
+};
+function parseFlashcardParams(source) {
+  var _a, _b, _c;
+  const p = parseBlockParams(source);
+  const mode = (_b = MODE_ALIASES[((_a = p.mode) != null ? _a : "").toLowerCase()]) != null ? _b : CARD_MODES[0];
+  const out = { mode };
+  const src = ((_c = p.source) != null ? _c : "").replace(/^["']|["']$/g, "").replace(/^\/+/, "");
+  if (src) out.source = src;
+  const limit = Number(p.limit);
+  if (p.limit !== void 0 && Number.isInteger(limit) && limit > 0) out.limit = limit;
+  const unquote3 = (s) => (s != null ? s : "").replace(/^["']|["']$/g, "").trim();
+  const id2 = unquote3(p.id);
+  const word = unquote3(p.word);
+  if (id2) out.id = id2;
+  else if (word) out.word = word;
+  return out;
+}
+
+// src/ui/blocks/grammarMapModel.ts
+var STAGES2 = [1, 2, 3];
+function stageOfDifficulty2(difficulty) {
+  return difficulty >= 7 ? 3 : difficulty >= 4 ? 2 : 1;
+}
+function defaultStage(level) {
+  return stageOfDifficulty2(startDifficulty(level));
+}
+function parseMapParams(source) {
+  var _a, _b;
+  const raw = ((_a = parseBlockParams(source).stage) != null ? _a : "").trim().toLowerCase();
+  if (!raw) return {};
+  const byName = {
+    \u57FA\u790E: 1,
+    basic: 1,
+    \u4E2D\u7D1A: 2,
+    intermediate: 2,
+    \u9032\u968E: 3,
+    advanced: 3
+  };
+  const n = (_b = byName[raw]) != null ? _b : Number(raw);
+  return n === 1 || n === 2 || n === 3 ? { stage: n } : {};
+}
+function statusLabel(status) {
+  return t(`grammar.map.status.${status}`);
+}
+function objectivesReached(topic, attempts) {
+  const stats = objectiveStats(topic, attempts);
+  return { reached: stats.filter((s) => isMastered([s])).length, total: stats.length };
+}
+function mapRows(stage, topics, statusOf2, attempts) {
+  return topics.filter((t2) => t2.stage === stage).sort((a2, b) => a2.order - b.order).map((topic) => {
+    const status = statusOf2(topic.id);
+    let statusText = statusLabel(status);
+    if (status === "learning") {
+      const { reached, total } = objectivesReached(topic, attempts);
+      statusText = `${statusText} ${reached}/${total}`;
+    }
+    const lockedBy = status === "new" ? topic.prerequisites.map((id2) => topicById(id2)).filter((p) => !!p && statusOf2(p.id) === "new") : [];
+    return { topic, status, statusText, lockedBy };
+  });
+}
+function lockedTooltip(lockedBy) {
+  return t("grammar.map.locked", { list: joinWords(lockedBy.map((x3) => x3.title)) });
+}
+
+// src/ui/blocks/practice/filterBarModel.ts
+function selectedIds(value, groupId) {
+  var _a;
+  return (_a = value[groupId]) != null ? _a : [];
+}
+function toggleOption(value, group, optionId) {
+  const cur = selectedIds(value, group.id);
+  let next;
+  if (group.multi) next = cur.includes(optionId) ? cur.filter((x3) => x3 !== optionId) : [...cur, optionId];
+  else next = cur.includes(optionId) ? [] : [optionId];
+  const out = { ...value };
+  if (next.length > 0) out[group.id] = next;
+  else delete out[group.id];
+  return out;
+}
+function selectedLabels(value, group) {
+  const sel = selectedIds(value, group.id);
+  return group.options.filter((o) => sel.includes(o.id)).map((o) => o.label);
+}
+function parseFilterValue(raw) {
+  const out = {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+  for (const [k, v] of Object.entries(raw)) {
+    if (!Array.isArray(v)) continue;
+    const ids = v.filter((x3) => typeof x3 === "string" && x3 !== "");
+    if (ids.length > 0) out[k] = [...new Set(ids)];
+  }
+  return out;
+}
+function pruneValue(value, groups) {
+  const out = {};
+  for (const g of groups) {
+    const ok = new Set(g.options.map((o) => o.id));
+    const kept = selectedIds(value, g.id).filter((id2) => ok.has(id2));
+    if (kept.length > 0) out[g.id] = g.multi ? kept : kept.slice(0, 1);
+  }
+  return out;
+}
+
+// src/ui/blocks/practice/grammarTabModel.ts
+var SIGHTING_DAYS = 7;
+var REFILL_THRESHOLD = 4;
+function filterToValue(f) {
+  const v = {};
+  if (f.stages.length > 0) v.stage = f.stages.map(String);
+  if (f.topics.length > 0) v.topic = [...f.topics];
+  return v;
+}
+function valueToFilter(v, level) {
+  var _a, _b;
+  const stages = ((_a = v.stage) != null ? _a : []).map(Number).filter((n) => n === 1 || n === 2 || n === 3);
+  const f = parseGrammarFilter({ stages, topics: (_b = v.topic) != null ? _b : [] });
+  const shown = new Set(shownStages(f, level));
+  f.topics = f.topics.filter((id2) => {
+    const t2 = topicById(id2);
+    return !!t2 && shown.has(t2.stage);
+  });
+  return f;
+}
+function shownStages(f, level) {
+  return f.stages.length > 0 ? f.stages : [defaultStage(level)];
+}
+function grammarGroups(f, level) {
+  const stages = new Set(shownStages(f, level));
+  return [
+    {
+      id: "stage",
+      label: t("practice.grammar.stage"),
+      multi: false,
+      options: STAGES2.map((s) => ({ id: String(s), label: stageLabel(s) }))
+    },
+    {
+      id: "topic",
+      label: t("practice.grammar.topic"),
+      multi: true,
+      options: GRAMMAR_TOPICS.filter((t2) => stages.has(t2.stage)).map((t2) => ({ id: t2.id, label: t2.title }))
+    }
+  ];
+}
+function grammarSummary(f, level) {
+  const groups = grammarGroups(f, level);
+  const v = filterToValue(f);
+  const stage = groups[0];
+  const stageText = f.stages.length > 0 ? joinWords(selectedLabels(v, stage)) : stageLabel(defaultStage(level));
+  const topics = f.topics.length > 0 ? joinWords(selectedLabels(v, groups[1])) : t("practice.grammar.allTopics");
+  return `${stageText} \xB7 ${topics}`;
+}
+function filterForTopics(ids) {
+  const topics = [...new Set(ids)].filter((id2) => !!topicById(id2));
+  const stages = [...new Set(topics.map((id2) => topicById(id2).stage))].sort();
+  return { stages, topics };
+}
+function recentSightingTopics(sightings, now2, days = SIGHTING_DAYS) {
+  const since = now2.getTime() - days * 24 * 60 * 60 * 1e3;
+  return [...new Set(sightings.filter((s) => Date.parse(s.at) >= since).map((s) => s.topicId))];
+}
+function grammarQuickPicks(src, level) {
+  void level;
+  const pick = (id2, label, ids) => filterForTopics(ids).topics.length > 0 ? [{ id: id2, label: t(label), apply: () => filterToValue(filterForTopics(ids)) }] : [];
+  return [
+    ...pick("week", "practice.grammar.quickWeek", src.weekTopics),
+    ...pick("due", "practice.grammar.quickDue", src.dueTopics),
+    ...pick("weak", "practice.grammar.quickWeak", src.weakTopics)
+  ];
+}
+function topicFilter(topicId) {
+  const t2 = topicById(topicId);
+  return t2 ? { stages: [t2.stage], topics: [t2.id] } : null;
+}
+function routeToPractice(route, topicId) {
+  const f = topicFilter(topicId);
+  if (!f || !route.setGrammarFilter || !route.openPractice) return false;
+  route.setGrammarFilter(f);
+  route.openPractice("grammar");
+  return true;
+}
+var BLANK = /_{3,}/;
+function toPlayerQuestion(q) {
+  var _a, _b, _c;
+  if (q.type !== "choice" && q.type !== "find-error") return null;
+  const opts = [...new Set(((_a = q.options) != null ? _a : []).filter((o) => o.trim() !== ""))];
+  if (opts.length < 2 || !opts.includes(q.answer)) return null;
+  const topic = topicById(q.topicId);
+  const sc = q.scenario;
+  const base = {
+    id: q.id,
+    ...sc ? { scenarioId: sc.id, scene: sc.scene } : {},
+    ...(sc == null ? void 0 : sc.lead) && sc.lead.length > 0 ? { lead: sc.lead.map((l4) => ({ ...l4.speaker ? { speaker: l4.speaker } : {}, text: l4.text })) } : {},
+    ...(sc == null ? void 0 : sc.speaker) ? { speaker: sc.speaker } : {},
+    options: opts.map((o) => ({ id: o, text: o })),
+    answerId: q.answer,
+    explanation: q.explanation,
+    ...q.distractors && Object.keys(q.distractors).length > 0 ? { optionNotes: q.distractors } : {},
+    ...q.sentenceZh ? { sentenceZh: q.sentenceZh } : {},
+    tag: topic ? `${t("practice.grammar.tag")} \xB7 ${topic.title}` : t("practice.grammar.tag")
+  };
+  if (q.type === "choice") {
+    if (((_b = q.stem.match(/_{3,}/g)) != null ? _b : []).length !== 1) return null;
+    return { ...base, kind: "choice", text: q.stem.replace(BLANK, "____") };
+  }
+  const fixed = (_c = q.accepted) == null ? void 0 : _c[0];
+  const answered = fixed && q.stem.includes(q.answer) ? q.stem.replace(q.answer, fixed) : void 0;
+  return { ...base, kind: "find-error", text: q.stem, ...answered ? { answered } : {} };
+}
+function groupMistakes(questions2) {
   const groups = /* @__PURE__ */ new Map();
   for (const q of questions2) {
-    if (q.retiredAt || q.deletedAt) continue;
-    const a2 = latest.get(q.id);
-    if (!a2 || a2.correct) continue;
-    const l5 = groups.get(q.errorTag);
-    if (l5) l5.push({ question: q, attempt: a2 });
-    else groups.set(q.errorTag, [{ question: q, attempt: a2 }]);
+    if (!toPlayerQuestion(q)) continue;
+    const l4 = groups.get(q.errorTag);
+    if (l4) l4.push(q);
+    else groups.set(q.errorTag, [q]);
   }
-  return [...groups.entries()].map(([errorTag, items]) => ({ errorTag, items: items.sort((x3, y3) => ms2(y3.attempt.at) - ms2(x3.attempt.at)) })).sort((x3, y3) => y3.items.length - x3.items.length || ERROR_TAGS.indexOf(x3.errorTag) - ERROR_TAGS.indexOf(y3.errorTag));
+  return [...groups.entries()].map(([errorTag, qs]) => ({ errorTag, label: errorTagLabel(errorTag), questions: qs, topicId: topicOfQuestions(qs) })).sort((a2, b) => b.questions.length - a2.questions.length);
 }
-function knownTopicIds(topics, statusOf) {
-  return topics.filter((t2) => statusOf(t2.id) !== "new").map((t2) => t2.id);
+function topicOfQuestions(qs) {
+  var _a, _b, _c, _d;
+  const counts = /* @__PURE__ */ new Map();
+  for (const q of qs) counts.set(q.topicId, ((_a = counts.get(q.topicId)) != null ? _a : 0) + 1);
+  let best = (_c = (_b = qs[0]) == null ? void 0 : _b.topicId) != null ? _c : "";
+  for (const [id2, n] of counts) if (n > ((_d = counts.get(best)) != null ? _d : 0)) best = id2;
+  return best;
+}
+function mistakeCount(groups) {
+  return groups.reduce((n, g) => n + g.questions.length, 0);
 }
 
 // src/core/model/usage.ts
@@ -8030,7 +8317,7 @@ var GrammarSection = class extends import_obsidian17.Component {
     const btn = el.createEl("button", { cls: "vt-gr-row-btn", text: t("grammar.sidebar.practice"), attr: { type: "button" } });
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      open();
+      if (!routeToPractice(this.deps, row.topicId)) open();
     });
   }
   drawRow(row, active2, select) {
@@ -8363,64 +8650,6 @@ function datesText(d, first = "added") {
   if (d.added) parts.push(dateLabel(first, d.added));
   if (d.updated) parts.push(dateLabel("updated", d.updated));
   return parts.join(" \xB7 ");
-}
-
-// src/core/model/srs.ts
-var SrsState = { New: 0, Learning: 1, Review: 2, Relearning: 3 };
-var Rating = { Again: 1, Hard: 2, Good: 3, Easy: 4 };
-var RATINGS = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy];
-var CARD_MODES = ["en-zh", "zh-en", "cloze", "listen"];
-var DEFAULT_SRS_SETTINGS = { retention: 0.9, dailyNew: 20 };
-function resolveSrsSettings(partial) {
-  const retention = Number(partial == null ? void 0 : partial.retention);
-  const dailyNew = Number(partial == null ? void 0 : partial.dailyNew);
-  return {
-    retention: Number.isFinite(retention) && retention > 0 ? Math.min(0.99, Math.max(0.7, retention)) : DEFAULT_SRS_SETTINGS.retention,
-    dailyNew: Number.isFinite(dailyNew) && dailyNew >= 0 ? Math.floor(dailyNew) : DEFAULT_SRS_SETTINGS.dailyNew
-  };
-}
-
-// src/ui/blocks/params.ts
-function parseBlockParams(source) {
-  const out = {};
-  for (const raw of source.split(/\r?\n/)) {
-    const line2 = raw.trim();
-    if (!line2 || line2.startsWith("#") || line2.startsWith("//")) continue;
-    const i = line2.indexOf(":");
-    if (i <= 0) continue;
-    const key5 = line2.slice(0, i).trim().toLowerCase();
-    const value = line2.slice(i + 1).trim();
-    if (key5) out[key5] = value;
-  }
-  return out;
-}
-var MODE_ALIASES = {
-  "en-zh": "en-zh",
-  "en\u2192zh": "en-zh",
-  "\u82F1\u2192\u4E2D": "en-zh",
-  "zh-en": "zh-en",
-  "zh\u2192en": "zh-en",
-  "\u4E2D\u2192\u82F1": "zh-en",
-  cloze: "cloze",
-  "\u4F8B\u53E5\u586B\u7A7A": "cloze",
-  listen: "listen",
-  "\u807D\u97F3\u62FC\u5B57": "listen"
-};
-function parseFlashcardParams(source) {
-  var _a, _b, _c;
-  const p = parseBlockParams(source);
-  const mode = (_b = MODE_ALIASES[((_a = p.mode) != null ? _a : "").toLowerCase()]) != null ? _b : CARD_MODES[0];
-  const out = { mode };
-  const src = ((_c = p.source) != null ? _c : "").replace(/^["']|["']$/g, "").replace(/^\/+/, "");
-  if (src) out.source = src;
-  const limit = Number(p.limit);
-  if (p.limit !== void 0 && Number.isInteger(limit) && limit > 0) out.limit = limit;
-  const unquote3 = (s) => (s != null ? s : "").replace(/^["']|["']$/g, "").trim();
-  const id2 = unquote3(p.id);
-  const word = unquote3(p.word);
-  if (id2) out.id = id2;
-  else if (word) out.word = word;
-  return out;
 }
 
 // src/ui/blocks/verbsModel.ts
@@ -8923,7 +9152,7 @@ function proseLines(markdown) {
   const out = [];
   let i = 0;
   if (((_a = lines4[0]) == null ? void 0 : _a.trim()) === "---") {
-    const close = lines4.findIndex((l5, j) => j > 0 && l5.trim() === "---");
+    const close = lines4.findIndex((l4, j) => j > 0 && l4.trim() === "---");
     if (close > 0) {
       for (; i <= close; i++) out.push("");
     }
@@ -9904,6 +10133,9 @@ var VocabSidebarView = class extends import_obsidian22.ItemView {
             },
             threads: this.plugin.threads,
             grammar: this.grammarHost().grammar,
+            // 第十六波: 待複習 [練習] → the hub's 文法 tab on that topic.
+            setGrammarFilter: (f) => this.plugin.learner.setFilter("grammar", f),
+            openPractice: (track2) => void this.plugin.openPracticeTab(track2),
             path: () => {
               var _a2, _b;
               return (_b = (_a2 = this.plugin.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) != null ? _b : null;
@@ -11611,13 +11843,13 @@ function collide_default(radius) {
       var data = quad.data, rj = quad.r, r = ri + rj;
       if (data) {
         if (data.index > node.index) {
-          var x3 = xi - data.x - data.vx, y3 = yi - data.y - data.vy, l5 = x3 * x3 + y3 * y3;
-          if (l5 < r * r) {
-            if (x3 === 0) x3 = jiggle_default(random), l5 += x3 * x3;
-            if (y3 === 0) y3 = jiggle_default(random), l5 += y3 * y3;
-            l5 = (r - (l5 = Math.sqrt(l5))) / l5 * strength;
-            node.vx += (x3 *= l5) * (r = (rj *= rj) / (ri2 + rj));
-            node.vy += (y3 *= l5) * r;
+          var x3 = xi - data.x - data.vx, y3 = yi - data.y - data.vy, l4 = x3 * x3 + y3 * y3;
+          if (l4 < r * r) {
+            if (x3 === 0) x3 = jiggle_default(random), l4 += x3 * x3;
+            if (y3 === 0) y3 = jiggle_default(random), l4 += y3 * y3;
+            l4 = (r - (l4 = Math.sqrt(l4))) / l4 * strength;
+            node.vx += (x3 *= l4) * (r = (rj *= rj) / (ri2 + rj));
+            node.vy += (y3 *= l4) * r;
             data.vx -= x3 * (r = 1 - r);
             data.vy -= y3 * r;
           }
@@ -11675,13 +11907,13 @@ function link_default(links) {
   }
   function force(alpha) {
     for (var k = 0, n = links.length; k < iterations; ++k) {
-      for (var i = 0, link, source, target, x3, y3, l5, b; i < n; ++i) {
+      for (var i = 0, link, source, target, x3, y3, l4, b; i < n; ++i) {
         link = links[i], source = link.source, target = link.target;
         x3 = target.x + target.vx - source.x - source.vx || jiggle_default(random);
         y3 = target.y + target.vy - source.y - source.vy || jiggle_default(random);
-        l5 = Math.sqrt(x3 * x3 + y3 * y3);
-        l5 = (l5 - distances[i]) / l5 * alpha * strengths[i];
-        x3 *= l5, y3 *= l5;
+        l4 = Math.sqrt(x3 * x3 + y3 * y3);
+        l4 = (l4 - distances[i]) / l4 * alpha * strengths[i];
+        x3 *= l4, y3 *= l4;
         target.vx -= x3 * (b = bias[i]);
         target.vy -= y3 * b;
         source.vx += x3 * (b = 1 - b);
@@ -12006,25 +12238,25 @@ function manyBody_default() {
   }
   function apply(quad, x1, _, x22) {
     if (!quad.value) return true;
-    var x3 = quad.x - node.x, y3 = quad.y - node.y, w = x22 - x1, l5 = x3 * x3 + y3 * y3;
-    if (w * w / theta2 < l5) {
-      if (l5 < distanceMax2) {
-        if (x3 === 0) x3 = jiggle_default(random), l5 += x3 * x3;
-        if (y3 === 0) y3 = jiggle_default(random), l5 += y3 * y3;
-        if (l5 < distanceMin2) l5 = Math.sqrt(distanceMin2 * l5);
-        node.vx += x3 * quad.value * alpha / l5;
-        node.vy += y3 * quad.value * alpha / l5;
+    var x3 = quad.x - node.x, y3 = quad.y - node.y, w = x22 - x1, l4 = x3 * x3 + y3 * y3;
+    if (w * w / theta2 < l4) {
+      if (l4 < distanceMax2) {
+        if (x3 === 0) x3 = jiggle_default(random), l4 += x3 * x3;
+        if (y3 === 0) y3 = jiggle_default(random), l4 += y3 * y3;
+        if (l4 < distanceMin2) l4 = Math.sqrt(distanceMin2 * l4);
+        node.vx += x3 * quad.value * alpha / l4;
+        node.vy += y3 * quad.value * alpha / l4;
       }
       return true;
-    } else if (quad.length || l5 >= distanceMax2) return;
+    } else if (quad.length || l4 >= distanceMax2) return;
     if (quad.data !== node || quad.next) {
-      if (x3 === 0) x3 = jiggle_default(random), l5 += x3 * x3;
-      if (y3 === 0) y3 = jiggle_default(random), l5 += y3 * y3;
-      if (l5 < distanceMin2) l5 = Math.sqrt(distanceMin2 * l5);
+      if (x3 === 0) x3 = jiggle_default(random), l4 += x3 * x3;
+      if (y3 === 0) y3 = jiggle_default(random), l4 += y3 * y3;
+      if (l4 < distanceMin2) l4 = Math.sqrt(distanceMin2 * l4);
     }
     do
       if (quad.data !== node) {
-        w = strengths[quad.data.index] * alpha / l5;
+        w = strengths[quad.data.index] * alpha / l4;
         node.vx += x3 * w;
         node.vy += y3 * w;
       }
@@ -12453,9 +12685,9 @@ function color_formatRgb() {
   return this.rgb().formatRgb();
 }
 function color(format) {
-  var m2, l5;
+  var m2, l4;
   format = (format + "").trim().toLowerCase();
-  return (m2 = reHex.exec(format)) ? (l5 = m2[1].length, m2 = parseInt(m2[1], 16), l5 === 6 ? rgbn(m2) : l5 === 3 ? new Rgb(m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, (m2 & 15) << 4 | m2 & 15, 1) : l5 === 8 ? rgba(m2 >> 24 & 255, m2 >> 16 & 255, m2 >> 8 & 255, (m2 & 255) / 255) : l5 === 4 ? rgba(m2 >> 12 & 15 | m2 >> 8 & 240, m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, ((m2 & 15) << 4 | m2 & 15) / 255) : null) : (m2 = reRgbInteger.exec(format)) ? new Rgb(m2[1], m2[2], m2[3], 1) : (m2 = reRgbPercent.exec(format)) ? new Rgb(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, 1) : (m2 = reRgbaInteger.exec(format)) ? rgba(m2[1], m2[2], m2[3], m2[4]) : (m2 = reRgbaPercent.exec(format)) ? rgba(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, m2[4]) : (m2 = reHslPercent.exec(format)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, 1) : (m2 = reHslaPercent.exec(format)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, m2[4]) : named.hasOwnProperty(format) ? rgbn(named[format]) : format === "transparent" ? new Rgb(NaN, NaN, NaN, 0) : null;
+  return (m2 = reHex.exec(format)) ? (l4 = m2[1].length, m2 = parseInt(m2[1], 16), l4 === 6 ? rgbn(m2) : l4 === 3 ? new Rgb(m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, (m2 & 15) << 4 | m2 & 15, 1) : l4 === 8 ? rgba(m2 >> 24 & 255, m2 >> 16 & 255, m2 >> 8 & 255, (m2 & 255) / 255) : l4 === 4 ? rgba(m2 >> 12 & 15 | m2 >> 8 & 240, m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, ((m2 & 15) << 4 | m2 & 15) / 255) : null) : (m2 = reRgbInteger.exec(format)) ? new Rgb(m2[1], m2[2], m2[3], 1) : (m2 = reRgbPercent.exec(format)) ? new Rgb(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, 1) : (m2 = reRgbaInteger.exec(format)) ? rgba(m2[1], m2[2], m2[3], m2[4]) : (m2 = reRgbaPercent.exec(format)) ? rgba(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, m2[4]) : (m2 = reHslPercent.exec(format)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, 1) : (m2 = reHslaPercent.exec(format)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, m2[4]) : named.hasOwnProperty(format) ? rgbn(named[format]) : format === "transparent" ? new Rgb(NaN, NaN, NaN, 0) : null;
 }
 function rgbn(n) {
   return new Rgb(n >> 16 & 255, n >> 8 & 255, n & 255, 1);
@@ -12524,11 +12756,11 @@ function hex(value) {
   value = clampi(value);
   return (value < 16 ? "0" : "") + value.toString(16);
 }
-function hsla(h, s, l5, a2) {
-  if (a2 <= 0) h = s = l5 = NaN;
-  else if (l5 <= 0 || l5 >= 1) h = s = NaN;
+function hsla(h, s, l4, a2) {
+  if (a2 <= 0) h = s = l4 = NaN;
+  else if (l4 <= 0 || l4 >= 1) h = s = NaN;
   else if (s <= 0) h = NaN;
-  return new Hsl(h, s, l5, a2);
+  return new Hsl(h, s, l4, a2);
 }
 function hslConvert(o) {
   if (o instanceof Hsl) return new Hsl(o.h, o.s, o.l, o.opacity);
@@ -12536,25 +12768,25 @@ function hslConvert(o) {
   if (!o) return new Hsl();
   if (o instanceof Hsl) return o;
   o = o.rgb();
-  var r = o.r / 255, g = o.g / 255, b = o.b / 255, min = Math.min(r, g, b), max = Math.max(r, g, b), h = NaN, s = max - min, l5 = (max + min) / 2;
+  var r = o.r / 255, g = o.g / 255, b = o.b / 255, min = Math.min(r, g, b), max = Math.max(r, g, b), h = NaN, s = max - min, l4 = (max + min) / 2;
   if (s) {
     if (r === max) h = (g - b) / s + (g < b) * 6;
     else if (g === max) h = (b - r) / s + 2;
     else h = (r - g) / s + 4;
-    s /= l5 < 0.5 ? max + min : 2 - max - min;
+    s /= l4 < 0.5 ? max + min : 2 - max - min;
     h *= 60;
   } else {
-    s = l5 > 0 && l5 < 1 ? 0 : h;
+    s = l4 > 0 && l4 < 1 ? 0 : h;
   }
-  return new Hsl(h, s, l5, o.opacity);
+  return new Hsl(h, s, l4, o.opacity);
 }
-function hsl(h, s, l5, opacity) {
-  return arguments.length === 1 ? hslConvert(h) : new Hsl(h, s, l5, opacity == null ? 1 : opacity);
+function hsl(h, s, l4, opacity) {
+  return arguments.length === 1 ? hslConvert(h) : new Hsl(h, s, l4, opacity == null ? 1 : opacity);
 }
-function Hsl(h, s, l5, opacity) {
+function Hsl(h, s, l4, opacity) {
   this.h = +h;
   this.s = +s;
-  this.l = +l5;
+  this.l = +l4;
   this.opacity = +opacity;
 }
 define_default(Hsl, hsl, extend(Color, {
@@ -12567,7 +12799,7 @@ define_default(Hsl, hsl, extend(Color, {
     return new Hsl(this.h, this.s, this.l * k, this.opacity);
   },
   rgb() {
-    var h = this.h % 360 + (this.h < 0) * 360, s = isNaN(h) || isNaN(this.s) ? 0 : this.s, l5 = this.l, m2 = l5 + (l5 < 0.5 ? l5 : 1 - l5) * s, m1 = 2 * l5 - m2;
+    var h = this.h % 360 + (this.h < 0) * 360, s = isNaN(h) || isNaN(this.s) ? 0 : this.s, l4 = this.l, m2 = l4 + (l4 < 0.5 ? l4 : 1 - l4) * s, m1 = 2 * l4 - m2;
     return new Rgb(
       hsl2rgb(h >= 240 ? h - 240 : h + 120, m1, m2),
       hsl2rgb(h, m1, m2),
@@ -13172,7 +13404,7 @@ function selectAll_default2(select) {
   for (var groups = this._groups, m2 = groups.length, subgroups = [], parents = [], j = 0; j < m2; ++j) {
     for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
       if (node = group[i]) {
-        for (var children2 = select.call(node, node.__data__, i, group), child, inherit2 = get2(node, id2), k = 0, l5 = children2.length; k < l5; ++k) {
+        for (var children2 = select.call(node, node.__data__, i, group), child, inherit2 = get2(node, id2), k = 0, l4 = children2.length; k < l4; ++k) {
           if (child = children2[k]) {
             schedule_default(child, name, id2, k, children2, inherit2);
           }
@@ -13602,8 +13834,8 @@ function zoom_default2() {
       return function(t2) {
         if (t2 === 1) t2 = b;
         else {
-          var l5 = i(t2), k = w / l5[2];
-          t2 = new Transform(k, p[0] - l5[0] * k, p[1] - l5[1] * k);
+          var l4 = i(t2), k = w / l4[2];
+          t2 = new Transform(k, p[0] - l4[0] * k, p[1] - l4[1] * k);
         }
         g.zoom(null, t2);
       };
@@ -13736,7 +13968,7 @@ function zoom_default2() {
   }
   function touchmoved(event, ...args) {
     if (!this.__zooming) return;
-    var g = gesture(this, args).event(event), touches = event.changedTouches, n = touches.length, i, t2, p, l5;
+    var g = gesture(this, args).event(event), touches = event.changedTouches, n = touches.length, i, t2, p, l4;
     noevent_default2(event);
     for (i = 0; i < n; ++i) {
       t2 = touches[i], p = pointer_default(t2, this);
@@ -13748,10 +13980,10 @@ function zoom_default2() {
       var p0 = g.touch0[0], l0 = g.touch0[1], p1 = g.touch1[0], l1 = g.touch1[1], dp = (dp = p1[0] - p0[0]) * dp + (dp = p1[1] - p0[1]) * dp, dl = (dl = l1[0] - l0[0]) * dl + (dl = l1[1] - l0[1]) * dl;
       t2 = scale(t2, Math.sqrt(dp / dl));
       p = [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2];
-      l5 = [(l0[0] + l1[0]) / 2, (l0[1] + l1[1]) / 2];
-    } else if (g.touch0) p = g.touch0[0], l5 = g.touch0[1];
+      l4 = [(l0[0] + l1[0]) / 2, (l0[1] + l1[1]) / 2];
+    } else if (g.touch0) p = g.touch0[0], l4 = g.touch0[1];
     else return;
-    g.zoom("touch", constrain(translate(t2, p, l5), g.extent, translateExtent));
+    g.zoom("touch", constrain(translate(t2, p, l4), g.extent, translateExtent));
   }
   function touchended(event, ...args) {
     if (!this.__zooming) return;
@@ -14085,7 +14317,7 @@ var GalaxyGraph = class {
       }
       return node;
     });
-    const links = model.links.map((l5) => ({ source: l5.source, target: l5.target }));
+    const links = model.links.map((l4) => ({ source: l4.source, target: l4.target }));
     const hub = nodes.find((n) => n.kind === "hub");
     if (hub) {
       hub.fx = this.width / 2;
@@ -14094,7 +14326,7 @@ var GalaxyGraph = class {
     if (this.sim) this.sim.stop();
     const sim = simulation_default(nodes).force(
       "link",
-      link_default(links).id((d) => d.id).distance((l5) => asNode(l5.target).kind === "known" ? 118 : 150).strength(0.9)
+      link_default(links).id((d) => d.id).distance((l4) => asNode(l4.target).kind === "known" ? 118 : 150).strength(0.9)
     ).force("charge", manyBody_default().strength(-420)).force(
       "collide",
       collide_default((d) => d.kind === "hub" ? 62 : 46)
@@ -15897,12 +16129,33 @@ function newIntroducedToday(logs, now2) {
   }
   return ids.size;
 }
+function splitTags(raw) {
+  return (raw != null ? raw : "").split(/[,，、;；]/).map((x3) => x3.trim()).filter(Boolean);
+}
+function addedMs(entry) {
+  var _a;
+  const raw = (_a = entry.createdAt) != null ? _a : entry.added ? entry.added.replace(" ", "T") : "";
+  const ms9 = raw ? new Date(raw).getTime() : NaN;
+  return Number.isNaN(ms9) ? 0 : ms9;
+}
 function matchesFilter(entry, filter2) {
   var _a, _b;
   if (entry.deletedAt) return false;
   if (filter2.requireLiked && entry.liked !== true) return false;
   if (filter2.source && !((_b = (_a = entry.source) == null ? void 0 : _a.path) != null ? _b : "").startsWith(filter2.source)) return false;
   if (filter2.mode === "cloze" && !clozeParts(entry.example, entry.word)) return false;
+  if (filter2.levels && filter2.levels.length > 0) {
+    const have = splitTags(entry.level);
+    if (!filter2.levels.some((l4) => have.includes(l4))) return false;
+  }
+  if (filter2.pos && filter2.pos.length > 0) {
+    const have = splitTags(entry.partOfSpeech);
+    if (!filter2.pos.some((p) => have.includes(p))) return false;
+  }
+  if (filter2.addedSince) {
+    const since = new Date(filter2.addedSince).getTime();
+    if (!Number.isNaN(since) && addedMs(entry) < since) return false;
+  }
   return true;
 }
 function dueMs(entry) {
@@ -15913,12 +16166,19 @@ function addedKey(entry) {
   return (_b = (_a = entry.createdAt) != null ? _a : entry.added) != null ? _b : "";
 }
 function buildQueue(entries, filter2, ctx) {
+  var _a;
   const nowMs = ctx.now.getTime();
   const candidates = entries.filter((e) => matchesFilter(e, filter2));
   const due = candidates.filter((e) => !isNewCard(e) && dueMs(e) <= nowMs).sort((a2, b) => dueMs(a2) - dueMs(b));
-  const allowance = Math.max(0, ctx.dailyNew - newIntroducedToday(ctx.logs, ctx.now));
+  const status = (_a = filter2.status) != null ? _a : "due";
+  const allowance = status === "due" ? Math.max(0, ctx.dailyNew - newIntroducedToday(ctx.logs, ctx.now)) : Infinity;
   const fresh = candidates.filter(isNewCard).sort((a2, b) => addedKey(a2) < addedKey(b) ? -1 : addedKey(a2) > addedKey(b) ? 1 : 0).slice(0, allowance);
-  const queue = [...due, ...fresh];
+  let queue;
+  if (status === "new") queue = fresh;
+  else if (status === "all") {
+    const rest = candidates.filter((e) => !isNewCard(e) && dueMs(e) > nowMs).sort((a2, b) => dueMs(a2) - dueMs(b));
+    queue = [...due, ...fresh, ...rest];
+  } else queue = [...due, ...fresh];
   return filter2.limit !== void 0 && filter2.limit >= 0 ? queue.slice(0, filter2.limit) : queue;
 }
 function reviewTiming(entry, now2) {
@@ -16385,9 +16645,9 @@ var WordHeaderBlock = class extends import_obsidian29.MarkdownRenderChild {
   // analyzed and came back "none" (決定 5 — no morphemes worth showing).
   renderBreakdown(parent, entry, morphemes) {
     const breakdown = morphemes.breakdownOf(entry.id);
-    const display2 = breakdownDisplay(breakdown);
-    if (display2 === "none") return;
-    if (display2 === "strand") {
+    const display = breakdownDisplay(breakdown);
+    if (display === "none") return;
+    if (display === "strand") {
       renderStrand(parent, breakdown, {
         onPart: (part) => {
           var _a, _b;
@@ -16597,7 +16857,21 @@ var FlashcardsBlock = class extends import_obsidian30.MarkdownRenderChild {
   }
   // ── Session state ─────────────────────────────────────────────
   filter() {
-    return { source: this.params.source, mode: this.mode, limit: this.params.limit };
+    var _a, _b, _c;
+    return {
+      source: this.params.source,
+      mode: this.mode,
+      limit: this.params.limit,
+      ...(_c = (_b = (_a = this.opts).filter) == null ? void 0 : _b.call(_a)) != null ? _c : {}
+    };
+  }
+  // Starts a fresh round with the current filter (the hub's filter bar
+  // changed). A no-op before the block has loaded.
+  restart() {
+    if (this.disposed || !this.root) return;
+    void this.plugin.srs.ensureLoaded().then(() => {
+      if (!this.disposed) this.startSession();
+    });
   }
   live(id2) {
     if (!id2) return void 0;
@@ -17106,250 +17380,4490 @@ function tile(container, value, label) {
 }
 
 // src/ui/blocks/grammarMap.ts
-var import_obsidian32 = require("obsidian");
-
-// src/ui/blocks/grammarMapModel.ts
-var STAGES = [1, 2, 3];
-function stageOfDifficulty(difficulty) {
-  return difficulty >= 7 ? 3 : difficulty >= 4 ? 2 : 1;
-}
-function defaultStage(level) {
-  return stageOfDifficulty(startDifficulty(level));
-}
-function parseMapParams(source) {
-  var _a, _b;
-  const raw = ((_a = parseBlockParams(source).stage) != null ? _a : "").trim().toLowerCase();
-  if (!raw) return {};
-  const byName = {
-    \u57FA\u790E: 1,
-    basic: 1,
-    \u4E2D\u7D1A: 2,
-    intermediate: 2,
-    \u9032\u968E: 3,
-    advanced: 3
-  };
-  const n = (_b = byName[raw]) != null ? _b : Number(raw);
-  return n === 1 || n === 2 || n === 3 ? { stage: n } : {};
-}
-function statusLabel(status) {
-  return t(`grammar.map.status.${status}`);
-}
-function objectivesReached(topic, attempts) {
-  const stats = objectiveStats(topic, attempts);
-  return { reached: stats.filter((s) => isMastered([s])).length, total: stats.length };
-}
-function mapRows(stage, topics, statusOf, attempts) {
-  return topics.filter((t2) => t2.stage === stage).sort((a2, b) => a2.order - b.order).map((topic) => {
-    const status = statusOf(topic.id);
-    let statusText = statusLabel(status);
-    if (status === "learning") {
-      const { reached, total } = objectivesReached(topic, attempts);
-      statusText = `${statusText} ${reached}/${total}`;
-    }
-    const lockedBy = status === "new" ? topic.prerequisites.map((id2) => topicById(id2)).filter((p) => !!p && statusOf(p.id) === "new") : [];
-    return { topic, status, statusText, lockedBy };
-  });
-}
-function lockedTooltip(lockedBy) {
-  return t("grammar.map.locked", { list: lockedBy.map((t2) => t2.title).join(getLocale() === "zh-TW" ? "\u3001" : ", ") });
-}
-function topicOfGroup(group) {
-  var _a, _b, _c, _d;
-  const counts = /* @__PURE__ */ new Map();
-  for (const { question } of group.items) counts.set(question.topicId, ((_a = counts.get(question.topicId)) != null ? _a : 0) + 1);
-  let best = (_c = (_b = group.items[0]) == null ? void 0 : _b.question.topicId) != null ? _c : "";
-  for (const [id2, n] of counts) if (n > ((_d = counts.get(best)) != null ? _d : 0)) best = id2;
-  return best;
-}
-function mistakeEntries(questions2, attempts) {
-  return mistakeGroups(questions2, attempts).map((g) => ({
-    errorTag: g.errorTag,
-    label: errorTagLabel(g.errorTag),
-    count: g.items.length,
-    topicId: topicOfGroup(g)
-  }));
-}
-function mistakeTotal(entries) {
-  return entries.reduce((n, e) => n + e.count, 0);
-}
-
-// src/ui/blocks/grammarPractice.ts
 var import_obsidian31 = require("obsidian");
 
-// src/core/grammar/grading.ts
-var LOCAL_TYPES = /* @__PURE__ */ new Set(["choice", "blank", "find-error"]);
-function canGradeLocally(q) {
-  return LOCAL_TYPES.has(q.type);
-}
-function isAskable(q) {
-  return canGradeLocally(q) || isOpenQuestion(q);
-}
-function isOpenQuestion(q) {
-  return q.type === "rewrite" || q.type === "translate";
-}
-function tidy(s) {
-  return s.replace(/[‘’‛ʼ′`´]/g, "'").replace(/[“”„″]/g, '"').replace(/\s+/g, " ").trim().replace(/[\s.,;:!?]+$/, "");
-}
-function display(s) {
-  return tidy(s);
-}
-var IRREGULAR = [
-  [/\bwon't\b/g, "will not"],
-  [/\bcan't\b/g, "can not"],
-  [/\bcannot\b/g, "can not"],
-  [/\bshan't\b/g, "shall not"]
-];
-var SUFFIXES2 = [
-  [/n't\b/g, " not"],
-  [/'m\b/g, " am"],
-  [/'re\b/g, " are"],
-  [/'ve\b/g, " have"],
-  [/'ll\b/g, " will"]
-];
-var S_HOSTS = "he|she|it|that|there|here|what|who|where|when|how|why|which|everyone|someone|nobody|nothing|something|everything";
-function expandFixed(s) {
-  let out = s.replace(/\blet's\b/g, "let us");
-  for (const [re, to] of IRREGULAR) out = out.replace(re, to);
-  for (const [re, to] of SUFFIXES2) out = out.replace(re, to);
-  return out;
-}
-var AMBIGUOUS_RE = new RegExp(`\\b(\\w+)'d\\b|\\b(${S_HOSTS})'s\\b`);
-var MAX_VARIANTS = 16;
-function variantsOf(s) {
-  let out = [s];
-  for (let guard = 0; guard < 4; guard++) {
-    const next = [];
-    let changed = false;
-    for (const x3 of out) {
-      const m2 = AMBIGUOUS_RE.exec(x3);
-      if (!m2) {
-        next.push(x3);
-        continue;
+// src/ui/blocks/practice/filterBar.ts
+function renderFilterBar(el, opts) {
+  const root2 = el.createDiv({ cls: "vt-pr-filter" });
+  let value = opts.value;
+  let open = !document.body.classList.contains("is-mobile");
+  const change = (next) => {
+    value = next;
+    render();
+    opts.onChange(next);
+  };
+  const render = () => {
+    var _a;
+    root2.empty();
+    root2.toggleClass("is-open", open);
+    const head = root2.createEl("button", {
+      cls: "vt-pr-filter-head",
+      attr: { type: "button", "aria-expanded": String(open) }
+    });
+    head.createSpan({ cls: "vt-pr-filter-title", text: `${t("practice.filter.title")} \xB7 ${opts.summary(value)}` });
+    head.createSpan({ cls: "vt-pr-filter-caret", text: "\u203A" });
+    head.addEventListener("click", () => {
+      open = !open;
+      render();
+    });
+    if (!open) return;
+    const body = root2.createDiv({ cls: "vt-pr-filter-body" });
+    for (const g of opts.groups) {
+      const row = body.createDiv({ cls: "vt-pr-filter-group" });
+      row.createSpan({ cls: "vt-pr-filter-label", text: g.label });
+      const chips = row.createDiv({ cls: "vt-pr-chips" });
+      const sel = (_a = value[g.id]) != null ? _a : [];
+      for (const o of g.options) {
+        const on = sel.includes(o.id);
+        const chip2 = chips.createEl("button", {
+          cls: "vt-pr-chip",
+          text: o.label,
+          attr: { type: "button", "aria-pressed": String(on) }
+        });
+        chip2.toggleClass("is-on", on);
+        chip2.addEventListener("click", () => change(toggleOption(value, g, o.id)));
       }
-      changed = true;
-      const head = x3.slice(0, m2.index);
-      const tail = x3.slice(m2.index + m2[0].length);
-      const opts = m2[1] !== void 0 ? [`${m2[1]} had`, `${m2[1]} would`] : [`${m2[2]} is`, `${m2[2]} has`];
-      for (const o of opts) next.push(head + o + tail);
     }
-    out = next.slice(0, MAX_VARIANTS);
-    if (!changed) break;
-  }
-  return out;
-}
-function forms(s) {
-  return variantsOf(expandFixed(tidy(s).toLowerCase()));
-}
-function sameOption(a2, b) {
-  return tidy(a2).toLowerCase() === tidy(b).toLowerCase();
-}
-function grade(question, given) {
-  var _a, _b;
-  switch (question.type) {
-    case "choice":
-    case "find-error": {
-      const picked = ((_a = question.options) != null ? _a : []).find((o) => sameOption(o, given));
-      return {
-        correct: !!picked && sameOption(picked, question.answer),
-        normalizedGiven: picked != null ? picked : display(given)
-      };
+    if (opts.quick && opts.quick.length > 0) {
+      const row = body.createDiv({ cls: "vt-pr-filter-group" });
+      row.createSpan({ cls: "vt-pr-filter-label", text: t("practice.filter.quick") });
+      const btns = row.createDiv({ cls: "vt-pr-chips" });
+      for (const q of opts.quick) {
+        learnButton(btns, { label: q.label, ghost: true, onClick: () => change(q.apply(value)) });
+      }
     }
-    case "blank": {
-      const accepted = [question.answer, ...(_b = question.accepted) != null ? _b : []].flatMap(forms);
-      const mine = forms(given);
-      return {
-        correct: given.trim() !== "" && mine.some((f) => accepted.includes(f)),
-        normalizedGiven: display(given)
-      };
+  };
+  render();
+  return {
+    update(next) {
+      value = next;
+      render();
     }
-    default:
-      return { correct: false, normalizedGiven: given.replace(/[ \t]+/g, " ").replace(/\s*\n\s*/g, "\n").trim(), needsAi: true };
-  }
+  };
 }
 
-// src/core/grammar/session.ts
-var DEFAULT_SESSION_SIZE = 8;
-var DEFAULT_REVIEW_SIZE = 6;
-var MAX_SAME_OBJECTIVE_RUN = 2;
-function defaultSessionSize(mode) {
-  return mode === "review" ? DEFAULT_REVIEW_SIZE : DEFAULT_SESSION_SIZE;
+// src/ui/blocks/practice/grammarTab.ts
+function grammarTab(deps) {
+  return {
+    id: "grammar",
+    label: t("practice.grammar.label"),
+    order: 1,
+    mount(el, ctx) {
+      el.addClass("vt-pr-grammar");
+      let alive = true;
+      ctx.component.register(() => alive = false);
+      void deps.ready().then(() => {
+        if (alive) new GrammarTabView(el, deps, ctx.filters, ctx.component).start();
+      });
+    }
+  };
 }
-function ms5(iso) {
-  const t2 = iso ? new Date(iso).getTime() : 0;
-  return Number.isNaN(t2) ? 0 : t2;
+var GrammarTabView = class {
+  constructor(el, deps, filters, owner) {
+    this.el = el;
+    this.deps = deps;
+    this.filters = filters;
+    this.owner = owner;
+    this.ctrl = null;
+    this.sweeping = false;
+    this.alive = true;
+    this.byId = /* @__PURE__ */ new Map();
+    this.filter = parseGrammarFilter(filters.get("grammar"));
+  }
+  start() {
+    const { api } = this.deps;
+    this.owner.register(() => {
+      var _a;
+      this.alive = false;
+      (_a = this.ctrl) == null ? void 0 : _a.abort();
+    });
+    const barEl = this.el.createDiv();
+    this.renderBar(barEl);
+    this.noteEl = this.el.createDiv({ cls: "vt-pr-grammar-note" });
+    const playerEl = this.el.createDiv({ cls: "vt-pr-grammar-player" });
+    this.player = this.deps.mountPlayer(
+      playerEl,
+      {
+        questions: () => this.questions(),
+        emptyText: () => this.emptyText(),
+        callbacks: {
+          onAnswer: (a2) => {
+            const q = this.byId.get(a2.question.id);
+            if (q) api.answer(q, a2.optionId, a2.correct, { hinted: a2.hinted, fromMistakes: false });
+            this.maybeRefill();
+          },
+          onSkip: (pq) => {
+            const q = this.byId.get(pq.id);
+            if (q) api.skip(q);
+            this.maybeRefill();
+          },
+          onRetire: (pq) => {
+            const q = this.byId.get(pq.id);
+            if (q) api.retire(q);
+            this.maybeRefill();
+          }
+        }
+      },
+      this.owner
+    );
+    this.renderMistakes(this.el.createDiv({ cls: "vt-pr-mistakes" }));
+    this.owner.register(
+      api.events.on("pool:change", () => {
+        this.sweep();
+        this.player.refresh();
+        this.updateMistakeCount();
+      })
+    );
+    this.owner.register(api.events.on("refill:start", () => this.player.refresh()));
+    this.owner.register(
+      api.events.on("refill:end", ({ error }) => {
+        this.showError(error);
+        this.player.refresh();
+      })
+    );
+    api.applyFilter(this.filter);
+    this.sweep();
+    this.player.refresh();
+    this.refill();
+  }
+  // ── Filter ─────────────────────────────────────────────────────
+  renderBar(barEl) {
+    var _a, _b;
+    const { deps } = this;
+    const now2 = (_b = (_a = deps.now) == null ? void 0 : _a.call(deps)) != null ? _b : /* @__PURE__ */ new Date();
+    const level = deps.level();
+    const groups = grammarGroups(this.filter, level);
+    const quick = grammarQuickPicks(
+      {
+        weekTopics: recentSightingTopics(deps.sightings(), now2),
+        dueTopics: dueTopics(GRAMMAR_TOPICS, (id2) => deps.progress(id2), now2).map((t2) => t2.id),
+        weakTopics: deps.weakTopicIds()
+      },
+      level
+    );
+    const bar = renderFilterBar(barEl, {
+      groups,
+      quick,
+      value: filterToValue(this.filter),
+      summary: (v) => grammarSummary(valueToFilter(v, level), level),
+      onChange: (v) => {
+        this.filter = valueToFilter(v, level);
+        this.filters.set("grammar", this.filter);
+        groups.splice(0, groups.length, ...grammarGroups(this.filter, level));
+        bar.update(filterToValue(this.filter));
+        this.clearError();
+        deps.api.applyFilter(this.filter);
+        this.sweep();
+        this.player.refresh();
+        this.refill();
+      }
+    });
+  }
+  // ── Pool ───────────────────────────────────────────────────────
+  questions() {
+    const out = [];
+    this.byId.clear();
+    for (const q of this.deps.api.poolQuestions()) {
+      const pq = toPlayerQuestion(q);
+      if (!pq) continue;
+      this.byId.set(q.id, q);
+      out.push(pq);
+    }
+    return out;
+  }
+  // Questions the player can't show (blank / rewrite / translate) are
+  // skipped so they leave the pool (fixed decision 1).
+  sweep() {
+    if (this.sweeping) return;
+    this.sweeping = true;
+    try {
+      const bad = this.deps.api.poolQuestions().filter((q) => !toPlayerQuestion(q));
+      for (const q of bad) this.deps.api.skip(q);
+    } finally {
+      this.sweeping = false;
+    }
+  }
+  maybeRefill() {
+    if (this.deps.api.poolQuestions().length <= REFILL_THRESHOLD) this.refill();
+  }
+  refill() {
+    const { api } = this.deps;
+    if (!this.alive || api.isRefilling()) return;
+    if (api.poolQuestions().length > REFILL_THRESHOLD) return;
+    this.ctrl = new AbortController();
+    api.refill(this.filter, { signal: this.ctrl.signal }).catch((e) => this.showError(e));
+  }
+  emptyText() {
+    if (this.deps.api.isRefilling()) return t("practice.grammar.preparing");
+    const s = this.deps.aiStatus();
+    if (s === "disabled") return t("practice.grammar.aiOff");
+    if (s === "no_key") return t("practice.grammar.noKey");
+    if (s === "offline") return t("practice.grammar.offline");
+    return t("practice.grammar.none");
+  }
+  showError(error) {
+    this.clearError();
+    if (!error || isAbort(error) || !this.alive) return;
+    this.noteEl.appendChild(aiErrorBox({ text: learnErrorText(error), error }));
+  }
+  clearError() {
+    this.noteEl.empty();
+  }
+  // ── 錯題區 ─────────────────────────────────────────────────────
+  groups() {
+    return groupMistakes(this.deps.api.mistakeQuestions());
+  }
+  updateMistakeCount() {
+    this.mistakeCountEl.setText(`${t("practice.grammar.mistakes")}\uFF08${mistakeCount(this.groups())}\uFF09`);
+  }
+  renderMistakes(box) {
+    let open = false;
+    let redoTag = null;
+    let redoHandle = null;
+    const toggle2 = box.createEl("button", { cls: "vt-pr-mistakes-toggle", attr: { type: "button", "aria-expanded": "false" } });
+    this.mistakeCountEl = toggle2.createSpan();
+    const chevron = toggle2.createSpan({ cls: "vt-pr-chevron", text: "\u203A", attr: { "aria-hidden": "true" } });
+    const body = box.createDiv({ cls: "vt-pr-mistakes-body" });
+    this.updateMistakeCount();
+    const draw = () => {
+      redoHandle == null ? void 0 : redoHandle.unload();
+      redoHandle = null;
+      toggle2.setAttr("aria-expanded", String(open));
+      chevron.toggleClass("is-open", open);
+      body.empty();
+      body.toggleClass("is-hidden", !open);
+      if (!open) return;
+      const groups = this.groups();
+      if (groups.length === 0) body.createDiv({ cls: "vt-pr-empty", text: t("practice.grammar.mistakesEmpty") });
+      for (const g of groups) {
+        const group = body.createDiv({ cls: "vt-pr-mistake-group" });
+        const row = group.createDiv({ cls: "vt-pr-mistake" });
+        row.createSpan({ cls: "vt-pr-mistake-tag", text: g.label });
+        row.createSpan({ cls: "vt-pr-mistake-count", text: t("practice.grammar.count", { n: g.questions.length }) });
+        const isOpen2 = redoTag === g.errorTag;
+        learnButton(row, {
+          label: isOpen2 ? t("practice.grammar.fold") : t("practice.grammar.redo"),
+          icon: isOpen2 ? "chevron-up" : "rotate-ccw",
+          ghost: true,
+          onClick: () => {
+            redoTag = isOpen2 ? null : g.errorTag;
+            draw();
+          }
+        });
+        if (isOpen2) {
+          redoHandle = mountMistakeRedo(group.createDiv({ cls: "vt-pr-redo" }), {
+            api: this.deps.api,
+            mountPlayer: this.deps.mountPlayer,
+            owner: this.owner,
+            errorTag: g.errorTag,
+            onChange: () => this.updateMistakeCount()
+          });
+        }
+      }
+    };
+    toggle2.addEventListener("click", () => {
+      open = !open;
+      if (!open) redoTag = null;
+      draw();
+    });
+    draw();
+  }
+};
+function mountMistakeRedo(host, o) {
+  const done = /* @__PURE__ */ new Set();
+  const byId = /* @__PURE__ */ new Map();
+  return o.mountPlayer(
+    host,
+    {
+      questions: () => {
+        byId.clear();
+        const out = [];
+        for (const q of o.api.mistakeQuestions()) {
+          if (q.errorTag !== o.errorTag || done.has(q.id)) continue;
+          const pq = toPlayerQuestion(q);
+          if (!pq) continue;
+          byId.set(q.id, q);
+          out.push(pq);
+        }
+        return out;
+      },
+      emptyText: () => t("practice.grammar.redoDone"),
+      callbacks: {
+        onAnswer: (a2) => {
+          var _a;
+          done.add(a2.question.id);
+          const q = byId.get(a2.question.id);
+          if (q) o.api.answer(q, a2.optionId, a2.correct, { hinted: a2.hinted, fromMistakes: true });
+          (_a = o.onChange) == null ? void 0 : _a.call(o);
+        },
+        onSkip: (pq) => {
+          var _a;
+          done.add(pq.id);
+          const q = byId.get(pq.id);
+          if (q) o.api.skip(q);
+          (_a = o.onChange) == null ? void 0 : _a.call(o);
+        },
+        onRetire: (pq) => {
+          var _a;
+          done.add(pq.id);
+          const q = byId.get(pq.id);
+          if (q) o.api.retire(q);
+          (_a = o.onChange) == null ? void 0 : _a.call(o);
+        }
+      }
+    },
+    o.owner
+  );
 }
-function spreadObjectives(ordered, size) {
-  const rest = [...ordered];
+
+// src/ui/blocks/grammarMap.ts
+var pickedStage = /* @__PURE__ */ new Map();
+function renderGrammarMap(deps, source, el, ctx) {
+  ctx.addChild(new GrammarMapBlock(el, deps, source, ctx.sourcePath));
+}
+var GrammarMapBlock = class extends import_obsidian31.MarkdownRenderChild {
+  constructor(containerEl, deps, source, sourcePath) {
+    var _a, _b;
+    super(containerEl);
+    this.deps = deps;
+    this.sourcePath = sourcePath;
+    this.ready = false;
+    this.disposed = false;
+    this.mistakesOpen = false;
+    // The error tag whose redo is open under its group (one at a time) and
+    // the mounted practice. The host element is kept across re-renders so a
+    // redraw never throws away the round being played.
+    this.redoTag = null;
+    this.redo = null;
+    this.redoHost = null;
+    this.stage = (_b = (_a = pickedStage.get(sourcePath)) != null ? _a : parseMapParams(source).stage) != null ? _b : defaultStage(deps.level());
+  }
+  onload() {
+    this.containerEl.empty();
+    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-map"] });
+    guardReadingClicks(this, this.root);
+    this.root.createDiv({ cls: "vt-learn-loading", text: t("grammar.map.loading") });
+    const { events } = this.deps.grammar;
+    const refresh = () => {
+      if (!this.redoTag) this.render();
+    };
+    this.register(events.on("attempt:add", refresh));
+    this.register(events.on("progress:upsert", refresh));
+    this.register(events.on("question:upsert", refresh));
+    this.register(events.on("grammar:reloaded", refresh));
+    if (this.deps.api) this.register(this.deps.api.events.on("pool:change", refresh));
+    this.register(() => {
+      this.disposed = true;
+      this.closeRedo();
+    });
+    void this.deps.grammar.ensureLoaded().then(() => {
+      this.ready = true;
+      this.render();
+    });
+  }
+  open(topicId) {
+    Promise.resolve(this.deps.openTopic(topicId)).catch((e) => {
+      new import_obsidian31.Notice(t("grammar.map.openFailed", { msg: e instanceof Error ? e.message : String(e) }));
+    });
+  }
+  // The topic's practice in the hub, or (not wired) its page.
+  practice(topicId) {
+    if (!routeToPractice(this.deps, topicId)) this.open(topicId);
+  }
+  render() {
+    var _a, _b, _c, _d;
+    if (this.disposed || !this.ready) return;
+    const { grammar } = this.deps;
+    const now2 = (_c = (_b = (_a = this.deps).now) == null ? void 0 : _b.call(_a)) != null ? _c : /* @__PURE__ */ new Date();
+    const attempts = grammar.attempts();
+    const statuses = topicStatuses(GRAMMAR_TOPICS, attempts, (id2) => grammar.progress(id2), now2);
+    const statusOf2 = (id2) => {
+      var _a2;
+      return (_a2 = statuses.get(id2)) != null ? _a2 : "new";
+    };
+    (_d = this.redoHost) == null ? void 0 : _d.detach();
+    this.root.empty();
+    const head = this.root.createDiv({ cls: "vt-gr-head" });
+    head.createDiv({ cls: "vt-gr-title", text: t("grammar.map.title") });
+    segmented(head, {
+      options: STAGES2.map((s) => ({ value: String(s), label: stageLabel(s) })),
+      value: String(this.stage),
+      ariaLabel: t("grammar.map.stage"),
+      onChange: (v) => {
+        this.stage = Number(v);
+        pickedStage.set(this.sourcePath, this.stage);
+        this.render();
+      }
+    });
+    const next = recommendNext(GRAMMAR_TOPICS, statusOf2, this.deps.level());
+    if (next) {
+      const bar = this.root.createDiv({ cls: "vt-gr-bar vt-gr-next" });
+      bar.createSpan({ cls: "vt-gr-bar-label", text: `${t("grammar.map.next")}\uFF1A` });
+      bar.createSpan({ cls: "vt-gr-bar-main", text: next.title });
+      bar.createSpan({ cls: "vt-gr-bar-sub", text: next.pattern });
+      learnButton(bar, { label: t("grammar.map.start"), icon: "play", cta: true, onClick: () => this.practice(next.id) });
+    }
+    const due = dueTopics(GRAMMAR_TOPICS, (id2) => grammar.progress(id2), now2);
+    if (due.length) {
+      const bar = this.root.createDiv({ cls: "vt-gr-bar vt-gr-due" });
+      bar.createSpan({ cls: "vt-gr-bar-main", text: t("grammar.map.due", { n: due.length }) });
+      learnButton(bar, { label: t("grammar.map.review"), icon: "repeat", onClick: () => this.practice(due[0].id) });
+    }
+    const rows = mapRows(this.stage, GRAMMAR_TOPICS, statusOf2, attempts);
+    const list = this.root.createDiv({ cls: "vt-gr-list" });
+    if (!rows.length) list.createDiv({ cls: "vt-gr-empty", text: t("grammar.map.empty") });
+    for (const row of rows) this.renderRow(list, row);
+    this.renderMistakes();
+  }
+  renderRow(list, row) {
+    const btn = list.createEl("button", { cls: ["vt-gr-row", `is-${row.status}`], attr: { type: "button" } });
+    btn.createSpan({ cls: ["vt-gr-dot", `is-${row.status}`], attr: { "aria-hidden": "true" } });
+    const text = btn.createSpan({ cls: "vt-gr-row-text" });
+    text.createSpan({ cls: "vt-gr-row-title", text: row.topic.title });
+    text.createSpan({ cls: "vt-gr-row-pattern", text: row.topic.pattern });
+    if (row.lockedBy.length) {
+      const tip = lockedTooltip(row.lockedBy);
+      const lock = btn.createSpan({ cls: "vt-gr-lock", text: "\u{1F512}", attr: { title: tip, "aria-label": tip } });
+      lock.setAttr("role", "img");
+    }
+    btn.createSpan({ cls: "vt-gr-row-status", text: row.statusText });
+    btn.addEventListener("click", () => this.open(row.topic.id));
+  }
+  renderMistakes() {
+    const { api } = this.deps;
+    if (!api) return;
+    const entries = groupMistakes(api.mistakeQuestions());
+    if (this.redoTag && !entries.some((e) => e.errorTag === this.redoTag)) {
+      entries.push({ errorTag: this.redoTag, label: errorTagLabel(this.redoTag), questions: [], topicId: "" });
+    }
+    const total = mistakeCount(entries);
+    const box = this.root.createDiv({ cls: "vt-gr-mistakes" });
+    const toggle2 = box.createEl("button", { cls: "vt-gr-mistakes-toggle", attr: { type: "button" } });
+    toggle2.setAttr("aria-expanded", String(this.mistakesOpen));
+    toggle2.createSpan({ text: t("grammar.map.mistakes", { n: total }) });
+    const chevron = toggle2.createSpan({ cls: "vt-gr-chevron", text: "\u203A", attr: { "aria-hidden": "true" } });
+    chevron.toggleClass("is-open", this.mistakesOpen);
+    toggle2.addEventListener("click", () => {
+      this.mistakesOpen = !this.mistakesOpen;
+      if (!this.mistakesOpen) this.closeRedo();
+      this.render();
+    });
+    if (!this.mistakesOpen) return;
+    const body = box.createDiv({ cls: "vt-gr-mistakes-body" });
+    if (!entries.length) body.createDiv({ cls: "vt-gr-empty", text: t("grammar.map.mistakes.empty") });
+    for (const e of entries) {
+      const group = body.createDiv({ cls: "vt-gr-mistake-group" });
+      const row = group.createDiv({ cls: "vt-gr-mistake" });
+      const text = row.createDiv({ cls: "vt-gr-mistake-text" });
+      text.createSpan({ cls: "vt-gr-mistake-tag", text: e.label });
+      text.createSpan({ cls: "vt-gr-mistake-count", text: t("grammar.map.mistakes.count", { n: e.questions.length }) });
+      const topic = topicById(e.topicId);
+      if (topic) text.createSpan({ cls: "vt-gr-mistake-topic", text: topic.title });
+      const isOpen2 = this.redoTag === e.errorTag;
+      row.toggleClass("is-open", isOpen2);
+      learnButton(row, {
+        label: t(isOpen2 ? "grammar.map.mistakes.collapse" : "grammar.map.mistakes.redo"),
+        icon: isOpen2 ? "chevron-up" : "rotate-ccw",
+        ghost: true,
+        onClick: () => this.deps.mountPlayer ? this.toggleRedo(e.errorTag) : this.open(e.topicId)
+      });
+      if (isOpen2 && this.redoHost) group.appendChild(this.redoHost);
+    }
+  }
+  toggleRedo(tag) {
+    const wasOpen = this.redoTag === tag;
+    this.closeRedo();
+    const { api, mountPlayer } = this.deps;
+    if (!wasOpen && api && mountPlayer) {
+      this.redoTag = tag;
+      this.redoHost = createDiv({ cls: "vt-gr-redo" });
+      this.redo = mountMistakeRedo(this.redoHost, { api, mountPlayer, owner: this, errorTag: tag });
+    }
+    this.render();
+  }
+  closeRedo() {
+    var _a, _b;
+    (_a = this.redo) == null ? void 0 : _a.unload();
+    (_b = this.redoHost) == null ? void 0 : _b.detach();
+    this.redo = null;
+    this.redoHost = null;
+    this.redoTag = null;
+  }
+};
+
+// src/ui/blocks/grammarPractice.ts
+var import_obsidian32 = require("obsidian");
+function renderGrammarPractice(deps, source, el, ctx) {
+  var _a;
+  const topic = ((_a = parseBlockParams(source).topic) != null ? _a : "").trim().replace(/^["']|["']$/g, "").trim();
+  ctx.addChild(new GrammarPracticeCard(el, deps, topic));
+}
+var GrammarPracticeCard = class extends import_obsidian32.MarkdownRenderChild {
+  constructor(containerEl, deps, topicId) {
+    super(containerEl);
+    this.deps = deps;
+    this.topicId = topicId;
+    this.countEl = null;
+    this.alive = true;
+  }
+  onload() {
+    this.containerEl.empty();
+    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-practice-card"] });
+    guardReadingClicks(this, this.root);
+    this.register(() => this.alive = false);
+    const topic = topicById(this.topicId);
+    if (!topic) {
+      this.root.createDiv({ cls: "vt-gr-empty", text: t("grammar.practiceCard.noTopic") });
+      return;
+    }
+    const card = this.root.createDiv({ cls: "vt-gr-bar vt-gr-practice-bar" });
+    const text = card.createDiv({ cls: "vt-gr-practice-text" });
+    text.createDiv({ cls: "vt-gr-bar-main", text: t("grammar.practiceCard.title") });
+    text.createDiv({ cls: "vt-gr-bar-sub", text: `${stageLabel(topic.stage)} \xB7 ${topic.title}` });
+    this.countEl = text.createDiv({ cls: "vt-gr-practice-count" });
+    const { setGrammarFilter, openPractice } = this.deps;
+    if (setGrammarFilter && openPractice) {
+      learnButton(card, {
+        label: t("grammar.practiceCard.go"),
+        icon: "play",
+        cta: true,
+        onClick: () => routeToPractice({ setGrammarFilter, openPractice }, topic.id)
+      });
+    }
+    const { api, ready } = this.deps;
+    if (!api) return;
+    const refresh = () => {
+      if (!this.alive || !this.countEl) return;
+      const n = api.mistakeQuestions().filter((q) => q.topicId === topic.id).length;
+      this.countEl.setText(n > 0 ? t("grammar.practiceCard.mistakes", { n }) : t("grammar.practiceCard.noMistakes"));
+    };
+    this.register(api.events.on("pool:change", refresh));
+    void (ready ? ready() : Promise.resolve()).then(refresh);
+  }
+};
+
+// src/ui/blocks/grammarTopic.ts
+var import_obsidian33 = require("obsidian");
+
+// src/core/grammar/explanations/stage1.ts
+var STAGE1_EXPLANATIONS = {
+  "be-verb": `**\u6838\u5FC3\u6982\u5FF5**
+be \u52D5\u8A5E\uFF08be verb\uFF09\u662F\u82F1\u6587\u6700\u57FA\u672C\u7684\u52D5\u8A5E\uFF0C\u7528\u4F86\u8AAA\u660E\u300C\u8AB0\u662F\u4EC0\u9EBC\u300D\u300C\u8AB0\u8655\u65BC\u4EC0\u9EBC\u72C0\u614B\u300D\u300C\u8AB0\u6709\u4EC0\u9EBC\u7279\u5FB5\u300D\u3002\u5B83\u6703\u4F9D\u4E3B\u8A5E\u6539\u8B8A\u5F62\u5F0F\uFF1AI \u642D\u914D am\uFF0Che / she / it \u548C\u55AE\u6578\u540D\u8A5E\u642D\u914D is\uFF0Cyou / we / they \u548C\u8907\u6578\u540D\u8A5E\u642D\u914D are\u3002
+
+**\u53E5\u578B**
+- \`\u4E3B\u8A5E + am / is / are + \u540D\u8A5E\u6216\u5F62\u5BB9\u8A5E\`\uFF1A\u63CF\u8FF0\u8EAB\u5206\u3001\u72C0\u614B\u8207\u7279\u5FB5\u3002
+- \`\u4E3B\u8A5E + am / is / are + not\`\uFF1A\u5426\u5B9A\u53E5\uFF0Cnot \u653E\u5728 be \u52D5\u8A5E\u5F8C\u9762\u3002
+- \`Am / Is / Are + \u4E3B\u8A5E ...?\`\uFF1A\u7591\u554F\u53E5\uFF0C\u628A be \u52D5\u8A5E\u79FB\u5230\u53E5\u9996\u3002
+
+**\u4F8B\u53E5**
+- I am a student.\u2014\u2014\u6211\u662F\u5B78\u751F\u3002
+- Your shoes are very clean.\u2014\u2014\u4F60\u7684\u978B\u5B50\u5F88\u4E7E\u6DE8\u3002
+- Is the soup hot?\u2014\u2014\u9019\u7897\u6E6F\u71D9\u55CE\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C She are my sister. \u2705 She is my sister. \u4E3B\u8A5E\u662F she\uFF0C\u8981\u642D\u914D is\u3002
+- \u274C They not are late. \u2705 They are not late. \u5426\u5B9A\u7684 not \u8981\u653E\u5728 be \u52D5\u8A5E\u4E4B\u5F8C\u3002
+- \u274C You are happy? \u2705 Are you happy? \u7591\u554F\u53E5\u8981\u628A be \u52D5\u8A5E\u653E\u5230\u53E5\u9996\u3002`,
+  "personal-pronouns": `**\u6838\u5FC3\u6982\u5FF5**
+\u4EBA\u7A31\u4EE3\u540D\u8A5E\uFF08personal pronoun\uFF09\u7528\u4F86\u4EE3\u66FF\u524D\u9762\u63D0\u904E\u7684\u4EBA\u6216\u4E8B\u7269\uFF0C\u907F\u514D\u91CD\u8907\u3002\u540C\u4E00\u500B\u300C\u4EBA\u300D\u6703\u56E0\u70BA\u5728\u53E5\u5B50\u88E1\u7684\u89D2\u8272\u4E0D\u540C\u800C\u63DB\u5F62\u5F0F\uFF1A\u505A\u4E3B\u8A5E\u7528\u4E3B\u683C\uFF0C\u505A\u52D5\u8A5E\u6216\u4ECB\u7CFB\u8A5E\u7684\u53D7\u8A5E\u7528\u53D7\u683C\uFF0C\u8868\u793A\u300C\u8AB0\u7684\u300D\u7528\u6240\u6709\u683C\u6216\u6240\u6709\u4EE3\u540D\u8A5E\u3002
+
+**\u53E5\u578B**
+- \u4E3B\u683C\uFF1A\`I / you / he / she / it / we / they\`\uFF0C\u653E\u5728\u52D5\u8A5E\u524D\u9762\u7576\u4E3B\u8A5E\u3002
+- \u53D7\u683C\uFF1A\`me / you / him / her / it / us / them\`\uFF0C\u653E\u5728\u52D5\u8A5E\u6216\u4ECB\u7CFB\u8A5E\u5F8C\u9762\u3002
+- \u6240\u6709\u683C\uFF1A\`my / your / his / her / its / our / their\` \u5F8C\u9762\u8981\u63A5\u540D\u8A5E\uFF1B\u6240\u6709\u4EE3\u540D\u8A5E\uFF1A\`mine / yours / his / hers / ours / theirs\` \u55AE\u7368\u4F7F\u7528\uFF0C\u4E0D\u63A5\u540D\u8A5E\u3002
+
+**\u4F8B\u53E5**
+- Mia lost her keys, so I helped her look for them.\u2014\u2014Mia \u5F04\u4E1F\u4E86\u9470\u5319\uFF0C\u6240\u4EE5\u6211\u5E6B\u5979\u627E\u3002
+- This bag is mine, not yours.\u2014\u2014\u9019\u500B\u5305\u5305\u662F\u6211\u7684\uFF0C\u4E0D\u662F\u4F60\u7684\u3002
+- We love our dog, and he loves us too.\u2014\u2014\u6211\u5011\u611B\u6211\u5011\u7684\u72D7\uFF0C\u7260\u4E5F\u611B\u6211\u5011\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C Me and him are friends. \u2705 He and I are friends. \u7576\u4E3B\u8A5E\u8981\u7528\u4E3B\u683C he\u3001I\u3002
+- \u274C This is my. \u2705 This is mine. \u5F8C\u9762\u6C92\u6709\u540D\u8A5E\u6642\u8981\u7528 mine\uFF0C\u4E0D\u80FD\u7528 my\u3002
+- \u274C Give the book to I. \u2705 Give the book to me. \u4ECB\u7CFB\u8A5E\u5F8C\u9762\u8981\u7528\u53D7\u683C\u3002`,
+  "noun-plurals": `**\u6838\u5FC3\u6982\u5FF5**
+\u53EF\u6578\u540D\u8A5E\uFF08countable noun\uFF09\u6709\u55AE\u6578\u548C\u8907\u6578\uFF0C\u8AAA\u5230\u5169\u500B\u4EE5\u4E0A\u5C31\u8981\u7528\u8907\u6578\u5F62\u3002\u5927\u591A\u6578\u540D\u8A5E\u76F4\u63A5\u52A0 -s\uFF0C\u4F46\u6709\u4E9B\u8A5E\u5C3E\u8981\u8B8A\u5316\uFF0C\u9084\u6709\u4E00\u4E9B\u4E0D\u898F\u5247\u7684\u5B57\u8981\u53E6\u5916\u8A18\u3002
+
+**\u53E5\u578B**
+- \u4E00\u822C\u898F\u5247\uFF1A\`book \u2192 books\`\uFF0C\u76F4\u63A5\u52A0 -s\u3002
+- \u8A5E\u5C3E\u662F s, x, ch, sh \u52A0 -es\uFF1A\`box \u2192 boxes\`\uFF1B\u5B50\u97F3\u52A0 y \u53BB y \u52A0 -ies\uFF1A\`baby \u2192 babies\`\u3002
+- \u4E0D\u898F\u5247\uFF1A\`child \u2192 children\`\u3001\`man \u2192 men\`\u3001\`foot \u2192 feet\`\uFF1B\`sheep\` \u55AE\u8907\u6578\u540C\u5F62\uFF1B\`people\` \u672C\u8EAB\u5C31\u662F\u8907\u6578\u3002
+- \u6578\u91CF\u8A5E\u5F8C\u9762\uFF1A\`one book\` \u7528\u55AE\u6578\uFF0C\`two books\`\u3001\`many books\` \u7528\u8907\u6578\u3002
+
+**\u4F8B\u53E5**
+- There are three boxes on the table.\u2014\u2014\u684C\u4E0A\u6709\u4E09\u500B\u7BB1\u5B50\u3002
+- The children are playing with two puppies.\u2014\u2014\u5B69\u5B50\u5011\u6B63\u5728\u548C\u5169\u96BB\u5C0F\u72D7\u73A9\u3002
+- Many people take the bus here.\u2014\u2014\u9019\u88E1\u5F88\u591A\u4EBA\u642D\u516C\u8ECA\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C two book \u2705 two books\u3002two \u4EE5\u4E0A\u7684\u6578\u91CF\uFF0C\u540D\u8A5E\u8981\u7528\u8907\u6578\u3002
+- \u274C childs \u2705 children\u3002child \u662F\u4E0D\u898F\u5247\u8907\u6578\uFF0C\u4E0D\u80FD\u52A0 -s\u3002
+- \u274C babys \u2705 babies\u3002\u5B50\u97F3\u52A0 y \u7D50\u5C3E\uFF0C\u8981\u6539\u6210 -ies\u3002
+- \u274C The people is kind. \u2705 The people are kind. people \u662F\u8907\u6578\uFF0C\u52D5\u8A5E\u7528 are\u3002`,
+  "articles-basic": `**\u6838\u5FC3\u6982\u5FF5**
+\u51A0\u8A5E\uFF08article\uFF09\u653E\u5728\u540D\u8A5E\u524D\u9762\uFF0C\u544A\u8A34\u5C0D\u65B9\u9019\u500B\u540D\u8A5E\u662F\u300C\u4EFB\u4F55\u4E00\u500B\u300D\u9084\u662F\u300C\u7279\u5B9A\u7684\u90A3\u500B\u300D\u3002a / an \u7528\u5728\u7B2C\u4E00\u6B21\u63D0\u5230\u3001\u4E0D\u7279\u5B9A\u7684\u55AE\u6578\u53EF\u6578\u540D\u8A5E\uFF1Bthe \u7528\u5728\u8AAA\u8A71\u96D9\u65B9\u90FD\u77E5\u9053\u662F\u54EA\u4E00\u500B\u7684\u6642\u5019\u3002
+
+**\u53E5\u578B**
+- \`a + \u5B50\u97F3\u958B\u982D\u7684\u767C\u97F3\`\uFF1Aa book\u3001a university\uFF08u \u5538\u6210 /ju/\uFF0C\u662F\u5B50\u97F3\uFF09\u3002
+- \`an + \u6BCD\u97F3\u958B\u982D\u7684\u767C\u97F3\`\uFF1Aan apple\u3001an hour\uFF08h \u4E0D\u767C\u97F3\uFF09\u3002\u770B\u7684\u662F\u767C\u97F3\uFF0C\u4E0D\u662F\u5B57\u6BCD\u3002
+- \`I saw a dog. The dog was big.\`\uFF1A\u7B2C\u4E00\u6B21\u63D0\u5230\u7528 a\uFF0C\u518D\u6B21\u63D0\u5230\u7528 the\u3002
+- \u7368\u4E00\u7121\u4E8C\u7684\u6771\u897F\u7528 the\uFF1A\`the sun\`\u3001\`the moon\`\u3002
+
+**\u4F8B\u53E5**
+- I bought an umbrella yesterday.\u2014\u2014\u6211\u6628\u5929\u8CB7\u4E86\u4E00\u628A\u5098\u3002
+- She has a cat. The cat likes fish.\u2014\u2014\u5979\u990A\u4E86\u4E00\u96BB\u8C93\u3002\u90A3\u96BB\u8C93\u611B\u5403\u9B5A\u3002
+- Please close the window.\u2014\u2014\u8ACB\u628A\u7A97\u6236\u95DC\u4E0A\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C a apple \u2705 an apple\u3002apple \u4EE5\u6BCD\u97F3\u767C\u97F3\u958B\u982D\uFF0C\u8981\u7528 an\u3002
+- \u274C an university \u2705 a university\u3002university \u958B\u982D\u5538 /ju/\uFF0C\u662F\u5B50\u97F3\uFF0C\u8981\u7528 a\u3002
+- \u274C I have a dog. A dog is brown. \u2705 I have a dog. The dog is brown. \u518D\u6B21\u63D0\u5230\u540C\u4E00\u96BB\uFF0C\u8981\u7528 the\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u51A0\u8A5E\u9032\u968E\uFF1A\u57FA\u790E\u53EA\u8655\u7406 a / an / the \u7684\u9078\u64C7\uFF1B\u9032\u968E\u6703\u8AC7\u6C92\u6709\u51A0\u8A5E\uFF08\u96F6\u51A0\u8A5E\uFF09\u7B49\u66F4\u7D30\u7684\u7528\u6CD5\u3002`,
+  "demonstratives": `**\u6838\u5FC3\u6982\u5FF5**
+\u6307\u793A\u8A5E\uFF08demonstrative\uFF09\u7528\u4F86\u300C\u6307\u51FA\u300D\u67D0\u500B\u4EBA\u4E8B\u7269\uFF0C\u4F9D\u8DDD\u96E2\u548C\u6578\u91CF\u5206\u6210\u56DB\u500B\uFF1A\u8FD1\u8655\u7684\u55AE\u6578 this\u3001\u8FD1\u8655\u7684\u8907\u6578 these\u3001\u9060\u8655\u7684\u55AE\u6578 that\u3001\u9060\u8655\u7684\u8907\u6578 those\u3002
+
+**\u53E5\u578B**
+- \`this / that + \u55AE\u6578\u540D\u8A5E\`\uFF1Athis pen\u3001that house\u3002
+- \`these / those + \u8907\u6578\u540D\u8A5E\`\uFF1Athese shoes\u3001those trees\u3002
+- \u55AE\u7368\u7576\u4EE3\u540D\u8A5E\uFF1A\`This is my room.\`\u3001\`Are those yours?\`\uFF0C\u5F8C\u9762\u4E0D\u63A5\u540D\u8A5E\u3002
+
+**\u4F8B\u53E5**
+- This cup is mine, and that one is yours.\u2014\u2014\u9019\u500B\u676F\u5B50\u662F\u6211\u7684\uFF0C\u90A3\u500B\u662F\u4F60\u7684\u3002
+- These apples are fresh, but those are old.\u2014\u2014\u9019\u4E9B\u860B\u679C\u5F88\u65B0\u9BAE\uFF0C\u90A3\u4E9B\u662F\u820A\u7684\u3002
+- What is that?\u2014\u2014\u90A3\u662F\u4EC0\u9EBC\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C These book is new. \u2705 This book is new. \u55AE\u8907\u6578\u8981\u548C\u540D\u8A5E\u4E00\u81F4\uFF0Cbook \u662F\u55AE\u6578\u5C31\u7528 this\u3002
+- \u274C Those is my bag. \u2705 That is my bag. \u55AE\u6578\u7528 that\uFF1B\u8907\u6578\u7684 those \u8981\u642D\u914D are\u3002
+- \u274C I like this shoes. \u2705 I like these shoes. shoes \u662F\u8907\u6578\uFF0C\u8981\u7528 these\u3002`,
+  "there-is-are": `**\u6838\u5FC3\u6982\u5FF5**
+\u5B58\u5728\u53E5\u7528\u4F86\u8AAA\u300C\u67D0\u500B\u5730\u65B9\u6709\u67D0\u6A23\u6771\u897F\u300D\uFF0C\u958B\u982D\u662F there\uFF0C\u5F8C\u9762\u63A5 be \u52D5\u8A5E\u3002\u9019\u88E1\u7684 there \u53EA\u662F\u5F15\u51FA\u53E5\u5B50\uFF0C\u771F\u6B63\u7684\u4E3B\u8A5E\u662F be \u52D5\u8A5E\u5F8C\u9762\u7684\u540D\u8A5E\uFF0C\u6240\u4EE5\u52D5\u8A5E is / are \u8981\u548C\u5F8C\u9762\u7684\u540D\u8A5E\u4E00\u81F4\u3002
+
+**\u53E5\u578B**
+- \`There is + \u55AE\u6578\u540D\u8A5E\` / \`There are + \u8907\u6578\u540D\u8A5E\`\uFF1AThere is a cat on the sofa.
+- \u5426\u5B9A\uFF1A\`There is not (isn't) ...\`\u3001\`There are not (aren't) ...\`\uFF0C\u4E5F\u53EF\u4EE5\u7528 no\u3002
+- \u7591\u554F\uFF1A\`Is there ...?\`\u3001\`Are there ...?\`\uFF0C\u56DE\u7B54 Yes, there is. / No, there aren't.
+- \u8207 have \u4E0D\u540C\uFF1A\u5B58\u5728\u53E5\u8AAA\u300C\u67D0\u8655\u6709\u67D0\u7269\u300D\uFF1Bhave \u8AAA\u300C\u67D0\u4EBA\u64C1\u6709\u67D0\u7269\u300D\u3002
+
+**\u4F8B\u53E5**
+- There is a bank near the station.\u2014\u2014\u8ECA\u7AD9\u9644\u8FD1\u6709\u4E00\u9593\u9280\u884C\u3002
+- There are two eggs in the fridge.\u2014\u2014\u51B0\u7BB1\u88E1\u6709\u5169\u9846\u86CB\u3002
+- Are there any chairs in the room?\u2014\u2014\u623F\u9593\u88E1\u6709\u6905\u5B50\u55CE\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C There is three books on the desk. \u2705 There are three books on the desk. \u5F8C\u9762\u662F\u8907\u6578\uFF0C\u8981\u7528 are\u3002
+- \u274C Is there some students? \u2705 Are there any students? \u540D\u8A5E\u662F\u8907\u6578\uFF0C\u7591\u554F\u53E5\u901A\u5E38\u7528 any\u3002
+- \u274C In my room has a desk. \u2705 There is a desk in my room. \u8AAA\u300C\u67D0\u8655\u6709\u67D0\u7269\u300D\u8981\u7528 there is\uFF0C\u4E0D\u80FD\u62FF\u5730\u9EDE\u7576\u4E3B\u8A5E\u914D has\u3002`,
+  "present-simple": `**\u6838\u5FC3\u6982\u5FF5**
+\u4E00\u822C\u73FE\u5728\u5F0F\uFF08present simple\uFF09\u7528\u4F86\u8AAA\u7FD2\u6163\u3001\u4E8B\u5BE6\uFF0C\u4EE5\u53CA\u56FA\u5B9A\u4E0D\u8B8A\u7684\u72C0\u614B\uFF0C\u4E0D\u5F37\u8ABF\u300C\u73FE\u5728\u9019\u4E00\u523B\u300D\u6B63\u5728\u505A\u4EC0\u9EBC\u3002\u5E38\u642D\u914D always\u3001every day\u3001often \u9019\u985E\u8868\u793A\u983B\u7387\u7684\u8A5E\u3002
+
+**\u53E5\u578B**
+- \`\u4E3B\u8A5E + \u539F\u5F62\u52D5\u8A5E\`\uFF1AI work, they live\u3002
+- \u7B2C\u4E09\u4EBA\u7A31\u55AE\u6578\uFF08he / she / it\uFF09\u52D5\u8A5E\u52A0 -s \u6216 -es\uFF1A\`she works\`\u3001\`he watches\`\u3001\`it carries\`\uFF08\u5B50\u97F3\u52A0 y \u6539 -ies\uFF09\u3002
+- \u5426\u5B9A\u8207\u7591\u554F\u8981\u501F\u52A9 do / does\uFF1A\`I do not work.\`\u3001\`Does she work?\`\uFF0C\u9019\u6642\u52D5\u8A5E\u56DE\u5230\u539F\u5F62\u3002
+
+**\u4F8B\u53E5**
+- My brother plays tennis every Sunday.\u2014\u2014\u6211\u54E5\u54E5\u6BCF\u500B\u9031\u65E5\u6253\u7DB2\u7403\u3002
+- Water boils at 100 degrees Celsius.\u2014\u2014\u6C34\u5728\u651D\u6C0F\u4E00\u767E\u5EA6\u6CB8\u9A30\u3002
+- Do you live near here?\u2014\u2014\u4F60\u4F4F\u5728\u9019\u9644\u8FD1\u55CE\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C He go to school by bus. \u2705 He goes to school by bus. \u7B2C\u4E09\u4EBA\u7A31\u55AE\u6578\u52D5\u8A5E\u8981\u52A0 -es\u3002
+- \u274C She doesn't likes tea. \u2705 She doesn't like tea. \u6709 doesn't \u4E4B\u5F8C\u52D5\u8A5E\u7528\u539F\u5F62\u3002
+- \u274C Does he works here? \u2705 Does he work here? \u7591\u554F\u53E5\u7684 does \u5DF2\u7D93\u5E36\u4E86 -s\uFF0C\u52D5\u8A5E\u4E0D\u7528\u518D\u52A0\u3002`,
+  "present-continuous": `**\u6838\u5FC3\u6982\u5FF5**
+\u73FE\u5728\u9032\u884C\u5F0F\uFF08present continuous\uFF09\u8AAA\u7684\u662F\u300C\u6B64\u523B\u6B63\u5728\u9032\u884C\u300D\u6216\u300C\u9019\u6BB5\u6642\u9593\u66AB\u6642\u5982\u6B64\u300D\u7684\u52D5\u4F5C\uFF0C\u7531 be \u52D5\u8A5E\u52A0\u4E0A\u52D5\u8A5E\u7684 -ing \u5F62\u5F0F\u7D44\u6210\u3002\u5B83\u548C\u4E00\u822C\u73FE\u5728\u5F0F\u4E0D\u540C\uFF1A\u73FE\u5728\u5F0F\u8AC7\u7FD2\u6163\u548C\u4E8B\u5BE6\uFF0C\u9032\u884C\u5F0F\u8AC7\u6B63\u5728\u767C\u751F\u7684\u4E8B\u3002
+
+**\u53E5\u578B**
+- \`am / is / are + \u52D5\u8A5E-ing\`\uFF1AI am reading.
+- \u5426\u5B9A\uFF1A\`is not (isn't) working\`\uFF1B\u7591\u554F\uFF1A\`Are you working?\`
+- \u52D5\u8A5E-ing \u7684\u62FC\u6CD5\uFF1A\`make \u2192 making\`\uFF08\u53BB e\uFF09\u3001\`run \u2192 running\`\uFF08\u91CD\u8907\u5C3E\u5B57\u6BCD\uFF09\u3002
+- \u72C0\u614B\u52D5\u8A5E\uFF08stative verb\uFF09\u5982 know\u3001like\u3001want\u3001love \u901A\u5E38\u4E0D\u7528\u9032\u884C\u5F0F\uFF0C\u76F4\u63A5\u7528\u73FE\u5728\u5F0F\u3002
+
+**\u4F8B\u53E5**
+- Look! It is raining outside.\u2014\u2014\u4F60\u770B\uFF01\u5916\u9762\u6B63\u5728\u4E0B\u96E8\u3002
+- I am staying with my aunt this week.\u2014\u2014\u6211\u9019\u9031\u66AB\u6642\u4F4F\u5728\u963F\u59E8\u5BB6\u3002
+- She wants a glass of water.\u2014\u2014\u5979\u60F3\u8981\u4E00\u676F\u6C34\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C She is read a book. \u2705 She is reading a book. be \u52D5\u8A5E\u5F8C\u9762\u8981\u63A5 -ing\u3002
+- \u274C I am knowing the answer. \u2705 I know the answer. know \u662F\u72C0\u614B\u52D5\u8A5E\uFF0C\u901A\u5E38\u4E0D\u7528\u9032\u884C\u5F0F\u3002
+- \u274C He is runing. \u2705 He is running. \u77ED\u6BCD\u97F3\u52A0\u55AE\u5B50\u97F3\u7D50\u5C3E\uFF0C-ing \u524D\u8981\u91CD\u8907\u5B57\u6BCD\u3002`,
+  "past-simple": `**\u6838\u5FC3\u6982\u5FF5**
+\u4E00\u822C\u904E\u53BB\u5F0F\uFF08past simple\uFF09\u7528\u4F86\u8AAA\u5DF2\u7D93\u7D50\u675F\u7684\u904E\u53BB\u4E8B\u4EF6\u6216\u72C0\u614B\uFF0C\u901A\u5E38\u6709\u660E\u78BA\u7684\u904E\u53BB\u6642\u9593\uFF0C\u4F8B\u5982 yesterday\u3001two days ago\u3001last week\u3002
+
+**\u53E5\u578B**
+- \u898F\u5247\u52D5\u8A5E\u52A0 -ed\uFF1A\`work \u2192 worked\`\uFF1Be \u7D50\u5C3E\u53EA\u52A0 -d\uFF1A\`like \u2192 liked\`\uFF1B\u5B50\u97F3\u52A0 y \u6539 -ied\uFF1A\`study \u2192 studied\`\u3002
+- \u5E38\u898B\u4E0D\u898F\u5247\u52D5\u8A5E\u8981\u500B\u5225\u8A18\uFF1A\`go \u2192 went\`\u3001\`see \u2192 saw\`\u3001\`buy \u2192 bought\`\u3001\`have \u2192 had\`\u3002
+- be \u52D5\u8A5E\u7684\u904E\u53BB\u5F0F\uFF1A\`was / were\`\u3002
+
+**\u4F8B\u53E5**
+- We visited my grandmother last weekend.\u2014\u2014\u6211\u5011\u4E0A\u9031\u672B\u53BB\u63A2\u671B\u4E86\u5976\u5976\u3002
+- He bought a new phone two days ago.\u2014\u2014\u4ED6\u5169\u5929\u524D\u8CB7\u4E86\u65B0\u624B\u6A5F\u3002
+- I was tired after the trip.\u2014\u2014\u65C5\u884C\u4E4B\u5F8C\u6211\u5F88\u7D2F\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I goed to the park. \u2705 I went to the park. go \u662F\u4E0D\u898F\u5247\u52D5\u8A5E\uFF0C\u904E\u53BB\u5F0F\u662F went\u3002
+- \u274C She studyed hard. \u2705 She studied hard. \u5B50\u97F3\u52A0 y \u7D50\u5C3E\u8981\u6539\u6210 -ied\u3002
+- \u274C I see him yesterday. \u2705 I saw him yesterday. \u6709 yesterday \u9019\u985E\u904E\u53BB\u6642\u9593\u8A5E\uFF0C\u52D5\u8A5E\u8981\u7528\u904E\u53BB\u5F0F\u3002`,
+  "do-does-did-questions": `**\u6838\u5FC3\u6982\u5FF5**
+\u52A9\u52D5\u8A5E\uFF08auxiliary verb\uFF09do\u3001does\u3001did \u5E6B\u4E00\u822C\u52D5\u8A5E\u9020\u5426\u5B9A\u53E5\u548C\u7591\u554F\u53E5\u3002\u73FE\u5728\u5F0F\u7528 do / does\uFF0C\u904E\u53BB\u5F0F\u7528 did\u3002\u9019\u4E09\u500B\u5B57\u5DF2\u7D93\u8CA0\u8CAC\u8868\u793A\u6642\u614B\u548C\u4EBA\u7A31\uFF0C\u6240\u4EE5\u5F8C\u9762\u7684\u52D5\u8A5E\u4E00\u5F8B\u56DE\u5230\u539F\u5F62\u3002
+
+**\u53E5\u578B**
+- \u5426\u5B9A\uFF1A\`\u4E3B\u8A5E + don't / doesn't / didn't + \u539F\u5F62\u52D5\u8A5E\`\u3002
+- \u7591\u554F\uFF1A\`Do / Does / Did + \u4E3B\u8A5E + \u539F\u5F62\u52D5\u8A5E ...?\`
+- \u7C21\u7B54\uFF1A\`Yes, I do.\`\u3001\`No, she doesn't.\`\u3001\`Yes, they did.\`\uFF0C\u4E0D\u7528\u91CD\u8907\u6574\u500B\u52D5\u8A5E\u3002
+- \u4E3B\u8A5E\u662F he / she / it \u6642\u7528 does\uFF1B\u904E\u53BB\u5F0F\u4E0D\u5206\u4EBA\u7A31\uFF0C\u90FD\u7528 did\u3002
+
+**\u4F8B\u53E5**
+- I don't eat meat.\u2014\u2014\u6211\u4E0D\u5403\u8089\u3002
+- Does your sister speak French?\u2014\u2014\u4F60\u59CA\u59CA\u6703\u8AAA\u6CD5\u6587\u55CE\uFF1F No, she doesn't.\u2014\u2014\u4E0D\uFF0C\u5979\u4E0D\u6703\u3002
+- Did they arrive on time?\u2014\u2014\u4ED6\u5011\u6E96\u6642\u5230\u4E86\u55CE\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C She doesn't likes coffee. \u2705 She doesn't like coffee. doesn't \u5F8C\u9762\u52D5\u8A5E\u7528\u539F\u5F62\u3002
+- \u274C Did you went there? \u2705 Did you go there? did \u5DF2\u7D93\u8868\u793A\u904E\u53BB\uFF0C\u52D5\u8A5E\u7528\u539F\u5F62\u3002
+- \u274C You like pizza? Yes, I like. \u2705 Do you like pizza? Yes, I do. \u7591\u554F\u53E5\u8981\u52A0 do\uFF0C\u7C21\u7B54\u7528\u52A9\u52D5\u8A5E\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u9644\u52A0\u554F\u53E5\uFF1A\u9644\u52A0\u554F\u53E5\u4E5F\u7528 do / does / did \u5728\u53E5\u5C3E\u78BA\u8A8D\uFF0C\u662F\u9019\u500B\u4E3B\u984C\u7684\u5EF6\u4F38\u3002`,
+  "possessive-s": `**\u6838\u5FC3\u6982\u5FF5**
+\u6240\u6709\u683C 's \u7528\u4F86\u8868\u793A\u300C\u8AB0\u7684\u300D\uFF0C\u4E5F\u5C31\u662F\u67D0\u4EBA\u6216\u67D0\u7269\u64C1\u6709\u3001\u6240\u5C6C\u7684\u95DC\u4FC2\u3002\u5B83\u52A0\u5728\u540D\u8A5E\u5F8C\u9762\uFF0C\u5F8C\u9762\u518D\u63A5\u88AB\u64C1\u6709\u7684\u6771\u897F\u3002
+
+**\u53E5\u578B**
+- \u55AE\u6578\u540D\u8A5E\u52A0 's\uFF1A\`Tom's book\`\u3001\`my mother's car\`\u3002
+- \u4EE5 -s \u7D50\u5C3E\u7684\u8907\u6578\u540D\u8A5E\u53EA\u52A0\u6487\u865F '\uFF1A\`the boys' room\`\uFF08\u7537\u5B69\u5011\u7684\u623F\u9593\uFF09\u3002
+- \u4E0D\u898F\u5247\u8907\u6578\u6C92\u6709 -s\uFF0C\u4ECD\u7136\u52A0 's\uFF1A\`the children's toys\`\u3002
+- \u901A\u5E38\u4EBA\u6216\u52D5\u7269\u7528 's\uFF1B\u6771\u897F\u5E38\u7528 of\uFF1A\`the door of the room\`\u3002
+
+**\u4F8B\u53E5**
+- This is Anna's umbrella.\u2014\u2014\u9019\u662F Anna \u7684\u5098\u3002
+- The students' bags are in the hall.\u2014\u2014\u5B78\u751F\u5011\u7684\u66F8\u5305\u5728\u8D70\u5ECA\u4E0A\u3002
+- What is the name of this street?\u2014\u2014\u9019\u689D\u8857\u53EB\u4EC0\u9EBC\u540D\u5B57\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C the girls book \u2705 the girl's book\u3002\u55AE\u6578\u540D\u8A5E\u8981\u52A0 's\u3002
+- \u274C the childrens' toys \u2705 the children's toys\u3002children \u4E0D\u4EE5 -s \u7D50\u5C3E\uFF0C\u52A0 's\u3002
+- \u274C the leg of Tom \u2705 Tom's leg\u3002\u8868\u793A\u4EBA\u7684\u6240\u5C6C\uFF0C\u901A\u5E38\u7528 's \u6BD4 of \u81EA\u7136\u3002
+- \u274C The dog wagged it's tail. \u2705 The dog wagged its tail. it's \u662F it is \u7684\u7E2E\u5BEB\uFF0C\u8868\u793A\u300C\u5B83\u7684\u300D\u8981\u7528 its\u3002`,
+  "wh-questions": `**\u6838\u5FC3\u6982\u5FF5**
+\u7591\u554F\u8A5E\uFF08wh- word\uFF09\u7528\u4F86\u554F\u5177\u9AD4\u7684\u8CC7\u8A0A\uFF0C\u800C\u4E0D\u662F\u53EA\u554F Yes \u6216 No\u3002\u4F9D\u60F3\u554F\u7684\u5167\u5BB9\u9078\u5B57\uFF1Awhat\uFF08\u4EC0\u9EBC\uFF09\u3001where\uFF08\u54EA\u88E1\uFF09\u3001who\uFF08\u8AB0\uFF09\u3001when\uFF08\u4F55\u6642\uFF09\u3001why\uFF08\u70BA\u4EC0\u9EBC\uFF09\u3001how\uFF08\u5982\u4F55\uFF09\u3002
+
+**\u53E5\u578B**
+- \`\u7591\u554F\u8A5E + \u52A9\u52D5\u8A5E\u6216 be \u52D5\u8A5E + \u4E3B\u8A5E + ...?\`\uFF1AWhere do you live? / What is your name?
+- \u7591\u554F\u8A5E\u653E\u53E5\u9996\uFF0C\u5F8C\u9762\u7684\u8A9E\u5E8F\u662F\u7591\u554F\u53E5\u8A9E\u5E8F\uFF0C\u4E0D\u662F\u76F4\u8FF0\u53E5\u8A9E\u5E8F\u3002
+- \u7591\u554F\u8A5E\u672C\u8EAB\u7576\u4E3B\u8A5E\u6642\uFF0C\u4E0D\u9700\u8981\u52A9\u52D5\u8A5E\uFF0C\u76F4\u63A5\u63A5\u52D5\u8A5E\uFF1A\`Who lives here?\`
+
+**\u4F8B\u53E5**
+- Where do you work?\u2014\u2014\u4F60\u5728\u54EA\u88E1\u5DE5\u4F5C\uFF1F
+- Why is she late today?\u2014\u2014\u5979\u4ECA\u5929\u70BA\u4EC0\u9EBC\u9072\u5230\uFF1F
+- Who broke the window?\u2014\u2014\u8AB0\u6253\u7834\u4E86\u7A97\u6236\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C Where you live? \u2705 Where do you live? \u4E00\u822C\u52D5\u8A5E\u8981\u52A0 do \u624D\u80FD\u9020\u554F\u53E5\u3002
+- \u274C What you are doing? \u2705 What are you doing? \u7591\u554F\u8A5E\u5F8C\u9762\u63A5\u7591\u554F\u53E5\u8A9E\u5E8F\uFF0Cbe \u52D5\u8A5E\u653E\u4E3B\u8A5E\u524D\u3002
+- \u274C Who does live here? \u2705 Who lives here? who \u7576\u4E3B\u8A5E\u6642\u4E0D\u52A0 does\uFF0C\u52D5\u8A5E\u7167\u7B2C\u4E09\u4EBA\u7A31\u55AE\u6578\u8B8A\u5316\u3002`,
+  "have-got": `**\u6838\u5FC3\u6982\u5FF5**
+have got \u548C have \u90FD\u53EF\u4EE5\u8868\u793A\u300C\u64C1\u6709\u300D\uFF0C\u4F8B\u5982\u64C1\u6709\u7269\u54C1\u3001\u5BB6\u4EBA\u3001\u7279\u5FB5\u6216\u75C7\u72C0\u3002have got \u5728\u65E5\u5E38\u53E3\u8A9E\u5F88\u5E38\u898B\uFF0C\u610F\u601D\u548C\u8868\u793A\u64C1\u6709\u7684 have \u76F8\u540C\u3002
+
+**\u53E5\u578B**
+- \u80AF\u5B9A\uFF1A\`I have got (I've got)\`\u3001\`she has got (she's got)\`\u3002
+- \u5426\u5B9A\uFF1A\`I haven't got\`\u3001\`she hasn't got\`\uFF1B\u7591\u554F\uFF1A\`Have you got ...?\`\u3001\`Has he got ...?\`\uFF0C\u76F4\u63A5\u628A have / has \u79FB\u5230\u524D\u9762\u3002
+- \u8207 have \u7684\u5DEE\u5225\uFF1Ahave \u7684\u5426\u5B9A\u548C\u7591\u554F\u8981\u501F\u52A9 do / does\uFF08\`I don't have\`\u3001\`Do you have\`\uFF09\uFF1Bhave got \u5247\u4E0D\u7528\u3002
+
+**\u4F8B\u53E5**
+- I've got two brothers.\u2014\u2014\u6211\u6709\u5169\u500B\u54E5\u54E5\uFF08\u5F1F\u5F1F\uFF09\u3002
+- She hasn't got a car.\u2014\u2014\u5979\u6C92\u6709\u8ECA\u3002
+- Have you got a pen?\u2014\u2014\u4F60\u6709\u7B46\u55CE\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C She have got a cold. \u2705 She has got a cold. \u4E3B\u8A5E\u662F she\uFF0C\u8981\u7528 has\u3002
+- \u274C Do you have got a pen? \u2705 Have you got a pen? / Do you have a pen? \u5169\u7A2E\u5F62\u5F0F\u4E0D\u80FD\u6DF7\u5728\u4E00\u8D77\u3002
+- \u274C I haven't a dog. \u2705 I haven't got a dog. / I don't have a dog. \u5426\u5B9A\u8981\u7528 haven't got \u6216 don't have\u3002`,
+  "imperatives": `**\u6838\u5FC3\u6982\u5FF5**
+\u547D\u4EE4\u53E5\uFF08imperative\uFF09\u7528\u4F86\u4E0B\u6307\u793A\u3001\u63D0\u51FA\u8ACB\u6C42\u3001\u7D66\u5EFA\u8B70\u6216\u8868\u793A\u7981\u6B62\u3002\u5B83\u4EE5\u539F\u5F62\u52D5\u8A5E\u958B\u982D\uFF0C\u901A\u5E38\u4E0D\u8AAA\u4E3B\u8A5E\uFF0C\u56E0\u70BA\u9ED8\u8A8D\u5C31\u662F\u5C0D\u300C\u4F60\u300D\u8AAA\u3002
+
+**\u53E5\u578B**
+- \u80AF\u5B9A\uFF1A\`\u539F\u5F62\u52D5\u8A5E + ...\`\uFF1AOpen the window.
+- \u5426\u5B9A\uFF1A\`Don't + \u539F\u5F62\u52D5\u8A5E + ...\`\uFF1ADon't touch it.
+- \u52A0 please \u8B93\u8A9E\u6C23\u66F4\u5BA2\u6C23\uFF1A\`Please sit down.\` \u6216 \`Sit down, please.\`
+- \u9080\u8ACB\u5C0D\u65B9\u4E00\u8D77\u505A\uFF1A\`Let's + \u539F\u5F62\u52D5\u8A5E\`\uFF1ALet's go home.
+
+**\u4F8B\u53E5**
+- Turn off your phone, please.\u2014\u2014\u8ACB\u628A\u4F60\u7684\u624B\u6A5F\u95DC\u6389\u3002
+- Don't forget your keys.\u2014\u2014\u5225\u5FD8\u4E86\u4F60\u7684\u9470\u5319\u3002
+- Let's have lunch together.\u2014\u2014\u6211\u5011\u4E00\u8D77\u5403\u5348\u9910\u5427\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C You open the door. \u2705 Open the door. \u547D\u4EE4\u53E5\u901A\u5E38\u7701\u7565\u4E3B\u8A5E\u3002
+- \u274C Not touch the stove. \u2705 Don't touch the stove. \u5426\u5B9A\u547D\u4EE4\u8981\u7528 Don't \u958B\u982D\u3002
+- \u274C Let's to go. \u2705 Let's go. Let's \u5F8C\u9762\u76F4\u63A5\u63A5\u539F\u5F62\u52D5\u8A5E\uFF0C\u4E0D\u52A0 to\u3002
+- \u274C Don't late. \u2705 Don't be late. be \u52D5\u8A5E\u7684\u547D\u4EE4\u53E5\u4E5F\u8981\u7528\u539F\u5F62 be\uFF0C\u5426\u5B9A\u6642\u662F Don't be\u3002`,
+  "can-cant": `**\u6838\u5FC3\u6982\u5FF5**
+\u60C5\u614B\u52D5\u8A5E\uFF08modal verb\uFF09\u662F\u653E\u5728\u52D5\u8A5E\u524D\u9762\u3001\u589E\u52A0\u610F\u7FA9\u7684\u52A9\u52D5\u8A5E\u3002can \u6700\u5E38\u7528\u4F86\u8868\u9054\u80FD\u529B\uFF08\u6703\u505A\u67D0\u4E8B\uFF09\uFF0C\u4E5F\u7528\u4F86\u8ACB\u6C42\u6216\u7D66\u4E88\u8A31\u53EF\uFF0C\u4EE5\u53CA\u8AAA\u660E\u53EF\u80FD\u3002\u5B83\u5728\u6240\u6709\u4EBA\u7A31\u90FD\u9577\u4E00\u6A23\uFF0C\u4E0D\u52A0 -s\u3002
+
+**\u53E5\u578B**
+- \u80AF\u5B9A\uFF1A\`\u4E3B\u8A5E + can + \u539F\u5F62\u52D5\u8A5E\`\uFF1AShe can swim.
+- \u5426\u5B9A\uFF1A\`can't (cannot) + \u539F\u5F62\u52D5\u8A5E\`\uFF1AI can't drive.
+- \u7591\u554F\uFF1A\`Can + \u4E3B\u8A5E + \u539F\u5F62\u52D5\u8A5E ...?\`\uFF0C\u7C21\u7B54 Yes, I can. / No, I can't.
+- \u8A31\u53EF\u8207\u8ACB\u6C42\uFF1A\`Can I sit here?\`\uFF08\u6211\u53EF\u4EE5\u5750\u9019\u88E1\u55CE\uFF09\u3001\`You can use my pen.\`\uFF08\u4F60\u53EF\u4EE5\u7528\u6211\u7684\u7B46\uFF09\u3002
+
+**\u4F8B\u53E5**
+- My little sister can ride a bike.\u2014\u2014\u6211\u59B9\u59B9\u6703\u9A0E\u8173\u8E0F\u8ECA\u3002
+- Can I borrow your eraser?\u2014\u2014\u6211\u53EF\u4EE5\u501F\u4F60\u7684\u6A61\u76AE\u64E6\u55CE\uFF1F
+- He can't speak Japanese.\u2014\u2014\u4ED6\u4E0D\u6703\u8AAA\u65E5\u6587\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C She cans swim. \u2705 She can swim. can \u4E0D\u96A8\u4EBA\u7A31\u8B8A\u5316\uFF0C\u4E0D\u52A0 -s\u3002
+- \u274C I can to swim. \u2705 I can swim. can \u5F8C\u9762\u76F4\u63A5\u63A5\u539F\u5F62\u52D5\u8A5E\uFF0C\u4E0D\u52A0 to\u3002
+- \u274C Does he can swim? \u2705 Can he swim? \u7591\u554F\u53E5\u628A can \u79FB\u5230\u53E5\u9996\uFF0C\u4E0D\u7528 do / does\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u60C5\u614B\u52D5\u8A5E\u7684\u63A8\u8AD6\uFF1Acan \u5728\u57FA\u790E\u8AC7\u80FD\u529B\u8207\u8A31\u53EF\uFF1B\u63A8\u8AD6\uFF08\u731C\u6E2C\uFF09\u7528\u6CD5\u5982 must be\u3001can't be \u6703\u5728\u5F8C\u9762\u7684\u4E3B\u984C\u5B78\u5230\u3002`,
+  "future-will-going-to": `**\u6838\u5FC3\u6982\u5FF5**
+\u82F1\u6587\u6709\u597D\u5E7E\u7A2E\u8AAA\u672A\u4F86\u7684\u65B9\u5F0F\uFF0C\u57FA\u790E\u968E\u6BB5\u5148\u5B78 will \u548C be going to\u3002will \u5E38\u7528\u65BC\u8AAA\u8A71\u7576\u4E0B\u624D\u505A\u7684\u6C7A\u5B9A\u3001\u81E8\u6642\u7684\u63D0\u8B70\u548C\u55AE\u7D14\u7684\u9810\u6E2C\uFF1Bbe going to \u7528\u65BC\u4E8B\u524D\u5DF2\u7D93\u6253\u7B97\u597D\u7684\u8A08\u756B\uFF0C\u6216\u6839\u64DA\u773C\u524D\u8DE1\u8C61\u5224\u65B7\u5373\u5C07\u767C\u751F\u7684\u4E8B\u3002
+
+**\u53E5\u578B**
+- \`will + \u539F\u5F62\u52D5\u8A5E\`\uFF1AI'll help you.\uFF08\u7576\u4E0B\u6C7A\u5B9A\uFF09
+- \`am / is / are going to + \u539F\u5F62\u52D5\u8A5E\`\uFF1AWe are going to visit Kyoto.\uFF08\u5DF2\u6709\u8A08\u756B\uFF09
+- \u5426\u5B9A\uFF1A\`will not (won't)\`\u3001\`is not going to\`\uFF1B\u7591\u554F\uFF1A\`Will you ...?\`\u3001\`Are you going to ...?\`
+- \u6709\u8DE1\u8C61\u7684\u9810\u6E2C\u7528 be going to\uFF1A\`Look at the clouds. It is going to rain.\`
+
+**\u4F8B\u53E5**
+- It's cold in here. I'll close the window.\u2014\u2014\u9019\u88E1\u597D\u51B7\uFF0C\u6211\u4F86\u628A\u7A97\u6236\u95DC\u4E0A\u3002
+- I'm going to start a new job next month.\u2014\u2014\u6211\u4E0B\u500B\u6708\u8981\u958B\u59CB\u4E00\u4EFD\u65B0\u5DE5\u4F5C\u3002
+- Will it snow tomorrow?\u2014\u2014\u660E\u5929\u6703\u4E0B\u96EA\u55CE\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C She will goes tomorrow. \u2705 She will go tomorrow. will \u5F8C\u9762\u52D5\u8A5E\u7528\u539F\u5F62\u3002
+- \u274C I will to call you. \u2705 I will call you. will \u5F8C\u9762\u4E0D\u52A0 to\u3002
+- \u274C He is going to visits us. \u2705 He is going to visit us. going to \u5F8C\u9762\u4E5F\u662F\u539F\u5F62\u52D5\u8A5E\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u672A\u4F86\u6642\u9593\u5B50\u53E5\uFF1A\u5728 when\u3001after \u9019\u985E\u5B50\u53E5\u4E2D\uFF0C\u672A\u4F86\u7684\u4E8B\u8981\u7528\u73FE\u5728\u5F0F\uFF0C\u4E0D\u7528 will\uFF0C\u9019\u6703\u5728\u5F8C\u9762\u7684\u4E3B\u984C\u5B78\u5230\u3002`,
+  "prepositions-time-place": `**\u6838\u5FC3\u6982\u5FF5**
+in\u3001on\u3001at \u662F\u6700\u5E38\u7528\u7684\u4E09\u500B\u4ECB\u7CFB\u8A5E\uFF08preposition\uFF09\uFF0C\u53EF\u4EE5\u7528\u4F86\u8868\u793A\u6642\u9593\uFF0C\u4E5F\u53EF\u4EE5\u8868\u793A\u5730\u9EDE\u3002\u5171\u901A\u7684\u6982\u5FF5\u662F\uFF1Ain \u6307\u300C\u5728\u4E00\u500B\u7BC4\u570D\u88E1\u9762\u300D\uFF0Con \u6307\u300C\u5728\u67D0\u500B\u8868\u9762\u6216\u67D0\u4E00\u5929\u300D\uFF0Cat \u6307\u300C\u5728\u4E00\u500B\u9EDE\u4E0A\u300D\u3002
+
+**\u53E5\u578B**
+- \u6642\u9593\uFF1A\`in + \u6708\u4EFD\u3001\u5E74\u3001\u5B63\u7BC0\u3001\u4E00\u5929\u4E2D\u7684\u6642\u6BB5\`\uFF08in May, in 2024, in the morning\uFF09\uFF1B\`on + \u65E5\u671F\u3001\u661F\u671F\`\uFF08on Monday, on May 5\uFF09\uFF1B\`at + \u6642\u523B\`\uFF08at 7:30, at noon, at night\uFF09\u3002
+- \u5730\u9EDE\uFF1A\`in + \u7BC4\u570D\u8F03\u5927\u6216\u6709\u5305\u570D\u611F\u7684\u5730\u65B9\`\uFF08in Taipei, in the room\uFF09\uFF1B\`on + \u8868\u9762\`\uFF08on the table, on the wall\uFF09\uFF1B\`at + \u4E00\u500B\u5B9A\u9EDE\`\uFF08at the bus stop, at school\uFF09\u3002
+- \u56FA\u5B9A\u642D\u914D\u8981\u6574\u7D44\u8A18\uFF1A\`at home\`\u3001\`in bed\`\u3001\`at work\`\u3001\`on the phone\`\u3002
+
+**\u4F8B\u53E5**
+- My class starts at 9:00 on Tuesdays.\u2014\u2014\u6211\u7684\u8AB2\u5728\u9031\u4E8C\u4E5D\u9EDE\u958B\u59CB\u3002
+- There is a picture on the wall.\u2014\u2014\u7246\u4E0A\u6709\u4E00\u5E45\u756B\u3002
+- She was born in July.\u2014\u2014\u5979\u51FA\u751F\u5728\u4E03\u6708\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I get up in 6:30. \u2705 I get up at 6:30. \u5177\u9AD4\u6642\u523B\u7528 at\u3002
+- \u274C See you in Friday. \u2705 See you on Friday. \u661F\u671F\u8981\u7528 on\u3002
+- \u274C I stay in home on weekends. \u2705 I stay at home on weekends. at home \u662F\u56FA\u5B9A\u642D\u914D\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u52D5\u8A5E\u52A0\u4ECB\u7CFB\u8A5E\uFF0F\u5F62\u5BB9\u8A5E\u52A0\u4ECB\u7CFB\u8A5E\uFF1A\u9019\u4E9B\u662F\u67D0\u500B\u5B57\u7FD2\u6163\u642D\u914D\u7684\u4ECB\u7CFB\u8A5E\uFF08\u5982 depend on\uFF09\uFF0C\u8981\u6574\u7D44\u80CC\u3002
+- \u4ECB\u7CFB\u8A5E\u7684\u8A9E\u610F\uFF1A\u6DF1\u5165\u8AAA\u660E\u4ECB\u7CFB\u8A5E\u66F4\u7D30\u7684\u610F\u601D\uFF0C\u9019\u88E1\u53EA\u5B78\u6642\u9593\u8207\u5730\u9EDE\u7684\u57FA\u672C\u5206\u5225\u3002`,
+  "some-any-much-many": `**\u6838\u5FC3\u6982\u5FF5**
+\u9019\u5E7E\u500B\u8A5E\u7528\u4F86\u8AAA\u300C\u591A\u5C11\u300D\uFF0C\u53EB\u91CF\u8A5E\uFF08quantifier\uFF09\u3002\u9078\u54EA\u4E00\u500B\uFF0C\u8981\u770B\u540D\u8A5E\u662F\u53EF\u6578\u9084\u662F\u4E0D\u53EF\u6578\uFF0C\u4E5F\u8981\u770B\u53E5\u5B50\u662F\u80AF\u5B9A\u3001\u5426\u5B9A\u9084\u662F\u7591\u554F\u3002
+
+**\u53E5\u578B**
+- \`some\` \u7528\u5728\u80AF\u5B9A\u53E5\uFF1B\`any\` \u7528\u5728\u5426\u5B9A\u53E5\u548C\u4E00\u822C\u7591\u554F\u53E5\uFF1AI have some milk. / I don't have any milk. / Do you have any milk?
+- \`many + \u53EF\u6578\u8907\u6578\u540D\u8A5E\`\uFF1Amany books\uFF1B\`much + \u4E0D\u53EF\u6578\u540D\u8A5E\`\uFF1Amuch water\u3002much \u8207 many \u591A\u7528\u5728\u5426\u5B9A\u53E5\u548C\u7591\u554F\u53E5\u3002
+- \`a lot of / lots of\` \u5169\u8005\u90FD\u53EF\u4EE5\u63A5\uFF0C\u80AF\u5B9A\u53E5\u5E38\u7528\uFF1Aa lot of books, a lot of water\u3002
+- \u63D0\u51FA\u9080\u8ACB\u6216\u8ACB\u6C42\u6642\uFF0C\u7591\u554F\u53E5\u4E5F\u53EF\u7528 some\uFF1A\`Would you like some tea?\`
+
+**\u4F8B\u53E5**
+- There are some oranges in the bag.\u2014\u2014\u888B\u5B50\u88E1\u6709\u4E00\u4E9B\u67F3\u6A59\u3002
+- We don't have much time.\u2014\u2014\u6211\u5011\u6C92\u6709\u592A\u591A\u6642\u9593\u3002
+- How many students are there in your class?\u2014\u2014\u4F60\u5011\u73ED\u6709\u591A\u5C11\u5B78\u751F\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I don't have some money. \u2705 I don't have any money. \u5426\u5B9A\u53E5\u7528 any\u3002
+- \u274C How much books do you have? \u2705 How many books do you have? books \u662F\u53EF\u6578\uFF0C\u8981\u7528 many\u3002
+- \u274C He has many money. \u2705 He has a lot of money. money \u4E0D\u53EF\u6578\uFF0C\u4E0D\u80FD\u7528 many\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u53EF\u6578\u8207\u4E0D\u53EF\u6578\u540D\u8A5E\uFF1A\u8981\u9078\u5C0D\u91CF\u8A5E\uFF0C\u5148\u8981\u5206\u8FA8\u540D\u8A5E\u662F\u5426\u53EF\u6578\uFF0C\u90A3\u662F\u9019\u500B\u4E3B\u984C\u7684\u524D\u63D0\u3002`,
+  "countable-uncountable": `**\u6838\u5FC3\u6982\u5FF5**
+\u53EF\u6578\u540D\u8A5E\uFF08countable noun\uFF09\u53EF\u4EE5\u4E00\u500B\u4E00\u500B\u6578\uFF0C\u6709\u55AE\u8907\u6578\uFF0C\u5982 book\u3001apple\u3002\u4E0D\u53EF\u6578\u540D\u8A5E\uFF08uncountable noun\uFF09\u7121\u6CD5\u4E00\u500B\u4E00\u500B\u6578\uFF0C\u6C92\u6709\u8907\u6578\uFF0C\u5982 water\u3001rice\u3001money\u3001information\u3002
+
+**\u53E5\u578B**
+- \u53EF\u6578\uFF1A\`a book / two books\`\uFF1B\u4E0D\u53EF\u6578\uFF1A\`some water\`\uFF0C\u4E0D\u52A0 a\uFF0C\u4E5F\u4E0D\u52A0 -s\u3002
+- \u4E0D\u53EF\u6578\u540D\u8A5E\u8981\u6578\u91CF\u6642\uFF0C\u501F\u7528\u55AE\u4F4D\u8A5E\uFF1A\`a glass of water\`\u3001\`a piece of advice\`\u3001\`a bowl of rice\`\u3002
+- \u4E0D\u53EF\u6578\u540D\u8A5E\u642D\u914D\u55AE\u6578\u52D5\u8A5E\uFF1A\`The information is useful.\`
+
+**\u4F8B\u53E5**
+- I need some bread and two eggs.\u2014\u2014\u6211\u9700\u8981\u4E00\u4E9B\u9EB5\u5305\u548C\u5169\u9846\u86CB\u3002
+- She gave me a piece of advice.\u2014\u2014\u5979\u7D66\u4E86\u6211\u4E00\u500B\u5EFA\u8B70\u3002
+- The water in this bottle is cold.\u2014\u2014\u9019\u74F6\u6C34\u662F\u51B7\u7684\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I need an advice. \u2705 I need some advice. / a piece of advice. advice \u4E0D\u53EF\u6578\uFF0C\u4E0D\u80FD\u76F4\u63A5\u52A0 a\u3002
+- \u274C The news are good. \u2705 The news is good. news \u662F\u4E0D\u53EF\u6578\uFF0C\u7528\u55AE\u6578\u52D5\u8A5E\u3002
+- \u274C two waters \u2705 two glasses of water\u3002\u8981\u8A08\u91CF\u5C31\u7528\u55AE\u4F4D\u8A5E\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u91CF\u8A5E some / any / much / many\uFF1A\u5148\u5224\u65B7\u540D\u8A5E\u53EF\u4E0D\u53EF\u6578\uFF0C\u624D\u77E5\u9053\u8A72\u7528 much \u9084\u662F many\u3002`,
+  "comparatives-superlatives": `**\u6838\u5FC3\u6982\u5FF5**
+\u6BD4\u8F03\u7D1A\uFF08comparative\uFF09\u7528\u4F86\u6BD4\u8F03\u5169\u8005\uFF0C\u6700\u9AD8\u7D1A\uFF08superlative\uFF09\u7528\u4F86\u5728\u4E09\u8005\u4EE5\u4E0A\u4E2D\u9078\u51FA\u6700\u7A81\u51FA\u7684\u3002\u77ED\u5F62\u5BB9\u8A5E\u7528\u5B57\u5C3E\u8B8A\u5316\uFF0C\u9577\u5F62\u5BB9\u8A5E\u5247\u5728\u524D\u9762\u52A0 more\u3001most\u3002
+
+**\u53E5\u578B**
+- \u77ED\u5F62\u5BB9\u8A5E\uFF1A\`tall \u2192 taller \u2192 the tallest\`\uFF1Be \u7D50\u5C3E\u53EA\u52A0 -r / -st\uFF1A\`nice \u2192 nicer\`\uFF1B\u5B50\u97F3\u52A0 y \u6539 -ier\uFF1A\`easy \u2192 easier\`\uFF1B\u77ED\u6BCD\u97F3\u52A0\u55AE\u5B50\u97F3\u8981\u91CD\u8907\u5B57\u6BCD\uFF1A\`big \u2192 bigger\`\u3002
+- \u9577\u5F62\u5BB9\u8A5E\uFF08\u5169\u97F3\u7BC0\u4EE5\u4E0A\u591A\u6578\uFF09\uFF1A\`more careful \u2192 the most careful\`\u3002
+- \u4E0D\u898F\u5247\uFF1A\`good \u2192 better \u2192 the best\`\u3001\`bad \u2192 worse \u2192 the worst\`\u3002
+- \u6BD4\u8F03\u7D1A\u642D\u914D than\uFF1A\`taller than\`\uFF1B\u6700\u9AD8\u7D1A\u524D\u9762\u52A0 the\uFF1A\`the tallest in the class\`\u3002
+
+**\u4F8B\u53E5**
+- My bag is heavier than yours.\u2014\u2014\u6211\u7684\u5305\u5305\u6BD4\u4F60\u7684\u91CD\u3002
+- This is the most interesting book I have read.\u2014\u2014\u9019\u662F\u6211\u8B80\u904E\u6700\u6709\u8DA3\u7684\u66F8\u3002
+- Today is better than yesterday.\u2014\u2014\u4ECA\u5929\u6BD4\u6628\u5929\u597D\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C more taller \u2705 taller\u3002\u77ED\u5F62\u5BB9\u8A5E\u7528 -er\uFF0C\u4E0D\u80FD\u540C\u6642\u52A0 more\u3002
+- \u274C the most good \u2705 the best\u3002good \u662F\u4E0D\u898F\u5247\uFF0C\u6700\u9AD8\u7D1A\u662F best\u3002
+- \u274C He is taller that me. \u2705 He is taller than me. \u6BD4\u8F03\u7D1A\u5F8C\u9762\u63A5 than\u3002
+- \u274C She is tallest girl. \u2705 She is the tallest girl. \u6700\u9AD8\u7D1A\u524D\u8981\u52A0 the\u3002`,
+  "frequency-adverbs": `**\u6838\u5FC3\u6982\u5FF5**
+\u983B\u7387\u526F\u8A5E\uFF08adverb of frequency\uFF09\u8AAA\u660E\u4E00\u4EF6\u4E8B\u300C\u591A\u5E38\u300D\u767C\u751F\u3002\u5F9E\u9AD8\u5230\u4F4E\u5927\u81F4\u662F\uFF1Aalways\uFF08\u7E3D\u662F\uFF09\u3001usually\uFF08\u901A\u5E38\uFF09\u3001often\uFF08\u5E38\u5E38\uFF09\u3001sometimes\uFF08\u6709\u6642\uFF09\u3001rarely\uFF08\u5F88\u5C11\uFF09\u3001never\uFF08\u5F9E\u4E0D\uFF09\u3002
+
+**\u53E5\u578B**
+- \u653E\u5728\u4E00\u822C\u52D5\u8A5E\u524D\u9762\uFF1A\`\u4E3B\u8A5E + \u983B\u7387\u526F\u8A5E + \u4E00\u822C\u52D5\u8A5E\`\uFF1AI usually walk to work.
+- \u653E\u5728 be \u52D5\u8A5E\u5F8C\u9762\uFF1A\`\u4E3B\u8A5E + be \u52D5\u8A5E + \u983B\u7387\u526F\u8A5E\`\uFF1AShe is always on time.
+- \u5426\u5B9A\u53E5\u8207\u983B\u7387\u526F\u8A5E\uFF1Anever \u672C\u8EAB\u5DF2\u662F\u5426\u5B9A\uFF0C\u4E0D\u518D\u52A0 not\u3002
+- sometimes \u4E5F\u53EF\u4EE5\u653E\u53E5\u9996\u6216\u53E5\u5C3E\uFF1Balways\u3001never \u901A\u5E38\u4E0D\u9019\u6A23\u653E\u3002
+
+**\u4F8B\u53E5**
+- He often reads before bed.\u2014\u2014\u4ED6\u7761\u524D\u5E38\u770B\u66F8\u3002
+- My sister is never late for school.\u2014\u2014\u6211\u59B9\u59B9\u4E0A\u5B78\u5F9E\u4E0D\u9072\u5230\u3002
+- Sometimes we eat out on Fridays.\u2014\u2014\u6211\u5011\u6709\u6642\u9031\u4E94\u6703\u5916\u51FA\u7528\u9910\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I go usually to school by bus. \u2705 I usually go to school by bus. \u4E00\u822C\u52D5\u8A5E\u524D\u624D\u662F\u983B\u7387\u526F\u8A5E\u7684\u4F4D\u7F6E\u3002
+- \u274C She always is happy. \u2705 She is always happy. \u983B\u7387\u526F\u8A5E\u653E\u5728 be \u52D5\u8A5E\u5F8C\u9762\u3002
+- \u274C I don't never eat meat. \u2705 I never eat meat. never \u5DF2\u7D93\u662F\u5426\u5B9A\uFF0C\u4E0D\u80FD\u518D\u52A0 don't\u3002`,
+  "adjectives-adverbs": `**\u6838\u5FC3\u6982\u5FF5**
+\u5F62\u5BB9\u8A5E\uFF08adjective\uFF09\u8AAA\u660E\u540D\u8A5E\u6216\u4EBA\u7269\u7684\u7279\u5FB5\uFF1B\u526F\u8A5E\uFF08adverb\uFF09\u5247\u8AAA\u660E\u52D5\u4F5C\u600E\u9EBC\u9032\u884C\uFF0C\u6216\u4FEE\u98FE\u5F62\u5BB9\u8A5E\u3002\u5F88\u591A\u526F\u8A5E\u662F\u5728\u5F62\u5BB9\u8A5E\u5F8C\u52A0 -ly \u5F62\u6210\u7684\u3002
+
+**\u53E5\u578B**
+- \u5F62\u5BB9\u8A5E\u653E\u5728\u540D\u8A5E\u524D\u9762\uFF0C\u6216\u653E\u5728 be \u52D5\u8A5E\u5F8C\u9762\uFF1A\`a quiet room\`\u3001\`The room is quiet.\`
+- \u526F\u8A5E\u4FEE\u98FE\u52D5\u8A5E\uFF1A\`She speaks softly.\`\uFF1B\u4E00\u822C\u7531\u5F62\u5BB9\u8A5E\u52A0 -ly\uFF1A\`careful \u2192 carefully\`\uFF0Cy \u7D50\u5C3E\u6539 -ily\uFF1A\`happy \u2192 happily\`\u3002
+- \u4E0D\u898F\u5247\u8981\u7279\u5225\u8A18\uFF1A\`good \u2192 well\`\uFF1B\`fast\` \u8207 \`hard\` \u7684\u526F\u8A5E\u5F62\u5F0F\u8207\u5F62\u5BB9\u8A5E\u76F8\u540C\u3002
+
+**\u4F8B\u53E5**
+- He is a careful driver.\u2014\u2014\u4ED6\u662F\u500B\u8B39\u614E\u7684\u99D5\u99DB\u3002
+- He drives carefully.\u2014\u2014\u4ED6\u958B\u8ECA\u5F88\u5C0F\u5FC3\u3002
+- She works hard and runs fast.\u2014\u2014\u5979\u5DE5\u4F5C\u52AA\u529B\uFF0C\u8DD1\u5F97\u5F88\u5FEB\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C She sings beautiful. \u2705 She sings beautifully. \u4FEE\u98FE\u52D5\u8A5E\u8981\u7528\u526F\u8A5E\u3002
+- \u274C He plays the piano good. \u2705 He plays the piano well. good \u662F\u5F62\u5BB9\u8A5E\uFF0C\u526F\u8A5E\u662F well\u3002
+- \u274C He works hardly. \u2705 He works hard. hardly \u7684\u610F\u601D\u662F\u300C\u5E7E\u4E4E\u4E0D\u300D\uFF0C\u4E0D\u662F hard \u7684\u526F\u8A5E\u5F62\u5F0F\u3002
+- \u274C The food smells well. \u2705 The food smells good. \u9023\u7DB4\u52D5\u8A5E\uFF08\u5982 smell\u3001look\uFF09\u5F8C\u9762\u63A5\u5F62\u5BB9\u8A5E\uFF0C\u4E0D\u63A5\u526F\u8A5E\u3002`,
+  "used-to-past-habit": `**\u6838\u5FC3\u6982\u5FF5**
+used to \u7528\u4F86\u8AAA\u300C\u904E\u53BB\u7D93\u5E38\u5982\u6B64\u3001\u4F46\u73FE\u5728\u5DF2\u7D93\u4E0D\u662F\u9019\u6A23\u300D\u7684\u7FD2\u6163\u6216\u72C0\u614B\u3002\u5B83\u5F37\u8ABF\u904E\u53BB\u548C\u73FE\u5728\u7684\u5C0D\u6BD4\uFF0C\u6240\u4EE5\u53E5\u5B50\u672C\u8EAB\u5C31\u6697\u793A\u4E86\u73FE\u5728\u4E0D\u540C\u3002
+
+**\u53E5\u578B**
+- \u80AF\u5B9A\uFF1A\`\u4E3B\u8A5E + used to + \u539F\u5F62\u52D5\u8A5E\`\uFF1AI used to play the piano.
+- \u5426\u5B9A\uFF1A\`didn't use to + \u539F\u5F62\u52D5\u8A5E\`\uFF1B\u7591\u554F\uFF1A\`Did + \u4E3B\u8A5E + use to + \u539F\u5F62\u52D5\u8A5E ...?\`
+- \u6CE8\u610F\u5426\u5B9A\u8207\u7591\u554F\u88E1\u7684 did \u5DF2\u7D93\u8868\u793A\u904E\u53BB\uFF0C\u6240\u4EE5 use \u4E0D\u52A0 -d\u3002
+- \u4E5F\u53EF\u7528\u65BC\u904E\u53BB\u7684\u72C0\u614B\uFF0C\u4E0D\u53EA\u662F\u52D5\u4F5C\uFF1A\`There used to be a cinema here.\`
+
+**\u4F8B\u53E5**
+- We used to live in a small town.\u2014\u2014\u6211\u5011\u4EE5\u524D\u4F4F\u5728\u5C0F\u93AE\u4E0A\u3002
+- She didn't use to like coffee.\u2014\u2014\u5979\u4EE5\u524D\u4E0D\u559C\u6B61\u5496\u5561\u3002
+- Did you use to walk to school?\u2014\u2014\u4F60\u4EE5\u524D\u8D70\u8DEF\u4E0A\u5B78\u55CE\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I used to played tennis. \u2705 I used to play tennis. used to \u5F8C\u9762\u63A5\u539F\u5F62\u52D5\u8A5E\u3002
+- \u274C Did you used to smoke? \u2705 Did you use to smoke? \u6709 did \u4E4B\u5F8C\uFF0Cuse \u8981\u56DE\u5230\u539F\u5F62\u3002
+- \u274C He use to be shy. \u2705 He used to be shy. \u80AF\u5B9A\u53E5\u8981\u5BEB used to\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- used to / be used to / get used to\uFF1Abe used to \u7684\u610F\u601D\u662F\u300C\u7FD2\u6163\u65BC\u300D\uFF0C\u5F8C\u9762\u63A5\u540D\u8A5E\u6216 -ing\uFF0C\u548C\u9019\u88E1\u7684 used to + \u539F\u5F62\u52D5\u8A5E\u610F\u601D\u5B8C\u5168\u4E0D\u540C\u3002`,
+  "present-perfect-intro": `**\u6838\u5FC3\u6982\u5FF5**
+\u73FE\u5728\u5B8C\u6210\u5F0F\uFF08present perfect\uFF09\u628A\u904E\u53BB\u767C\u751F\u7684\u4E8B\u548C\u73FE\u5728\u9023\u8D77\u4F86\uFF1A\u91CD\u9EDE\u4E0D\u5728\u4E8B\u60C5\u300C\u4F55\u6642\u767C\u751F\u300D\uFF0C\u800C\u5728\u5B83\u5C0D\u73FE\u5728\u7684\u5F71\u97FF\u3001\u7D93\u9A57\uFF0C\u6216\u6301\u7E8C\u5230\u73FE\u5728\u7684\u6642\u9593\u3002\u5F62\u5F0F\u662F have / has \u52A0\u904E\u53BB\u5206\u8A5E\uFF08past participle\uFF09\u3002
+
+**\u53E5\u578B**
+- \`\u4E3B\u8A5E + have / has + \u904E\u53BB\u5206\u8A5E\`\uFF1AI have finished my homework.
+- \u7D93\u9A57\uFF1A\u5E38\u7528 \`ever\`\uFF08\u66FE\u7D93\uFF09\u3001\`never\`\uFF08\u5F9E\u672A\uFF09\uFF1AHave you ever been to Japan?
+- \u7D50\u679C\uFF1A\u904E\u53BB\u7684\u52D5\u4F5C\u7559\u4E0B\u73FE\u5728\u7684\u7D50\u679C\uFF1A\`She has lost her keys.\`\uFF08\u73FE\u5728\u627E\u4E0D\u5230\uFF09
+- \u6301\u7E8C\uFF1A\`for + \u4E00\u6BB5\u6642\u9593\`\u3001\`since + \u8D77\u9EDE\`\uFF1AI have lived here for five years. / since 2020.
+
+**\u4F8B\u53E5**
+- I have never eaten snails.\u2014\u2014\u6211\u5F9E\u6C92\u5403\u904E\u8778\u725B\u3002
+- He has already left the office.\u2014\u2014\u4ED6\u5DF2\u7D93\u96E2\u958B\u8FA6\u516C\u5BA4\u4E86\u3002
+- They have been friends since childhood.\u2014\u2014\u4ED6\u5011\u5F9E\u5C0F\u5C31\u662F\u670B\u53CB\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I have saw that film. \u2705 I have seen that film. \u5B8C\u6210\u5F0F\u8981\u7528\u904E\u53BB\u5206\u8A5E seen\u3002
+- \u274C I have lived here since three years. \u2705 I have lived here for three years. \u4E00\u6BB5\u6642\u9593\u7528 for\uFF0C\u8D77\u9EDE\u624D\u7528 since\u3002
+- \u274C I have met him yesterday. \u2705 I met him yesterday. \u6709\u660E\u78BA\u7684\u904E\u53BB\u6642\u9593\uFF0C\u901A\u5E38\u7528\u904E\u53BB\u5F0F\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u73FE\u5728\u5B8C\u6210\u5F0F\u8207\u904E\u53BB\u5F0F\uFF1A\u6709\u660E\u78BA\u904E\u53BB\u6642\u9593\u7528\u904E\u53BB\u5F0F\uFF1B\u5F37\u8ABF\u8207\u73FE\u5728\u7684\u95DC\u4FC2\u7528\u5B8C\u6210\u5F0F\u3002
+- \u73FE\u5728\u5B8C\u6210\u9032\u884C\u5F0F\uFF1A\u5F37\u8ABF\u52D5\u4F5C\u6301\u7E8C\u9032\u884C\uFF0C\u57FA\u790E\u968E\u6BB5\u5148\u638C\u63E1\u672C\u4E3B\u984C\u7684 have + \u904E\u53BB\u5206\u8A5E\u3002`,
+  "gerund-infinitive-intro": `**\u6838\u5FC3\u6982\u5FF5**
+\u6709\u4E9B\u52D5\u8A5E\u5F8C\u9762\u63A5\u53E6\u4E00\u500B\u52D5\u8A5E\u6642\uFF0C\u8981\u628A\u5F8C\u9762\u7684\u52D5\u8A5E\u6539\u6210\u7279\u5B9A\u5F62\u5F0F\uFF1A\u52D5\u540D\u8A5E\uFF08gerund\uFF0C\u52D5\u8A5E-ing\uFF09\u6216\u4E0D\u5B9A\u8A5E\uFF08infinitive\uFF0Cto + \u539F\u5F62\u52D5\u8A5E\uFF09\u3002\u54EA\u500B\u52D5\u8A5E\u63A5\u54EA\u4E00\u7A2E\uFF0C\u57FA\u790E\u968E\u6BB5\u8981\u5148\u8A18\u4F4F\u5E38\u898B\u7684\u7D44\u5408\u3002
+
+**\u53E5\u578B**
+- \u5F8C\u63A5\u52D5\u540D\u8A5E\uFF1A\`enjoy / finish / mind / stop + \u52D5\u8A5E-ing\`\uFF1AI enjoy reading.
+- \u5F8C\u63A5\u4E0D\u5B9A\u8A5E\uFF1A\`want / hope / decide / need + to + \u539F\u5F62\u52D5\u8A5E\`\uFF1AI want to read.
+- \u5169\u7A2E\u7686\u53EF\uFF1A\`like / love / hate / start / begin + -ing \u6216 to do\`\uFF1AShe likes dancing. / She likes to dance.
+- \u5426\u5B9A\u7684\u4E0D\u5B9A\u8A5E\u628A not \u653E\u5728 to \u524D\uFF1A\`decide not to go\`\u3002
+
+**\u4F8B\u53E5**
+- She finished writing the report.\u2014\u2014\u5979\u5BEB\u5B8C\u4E86\u5831\u544A\u3002
+- We hope to see you again.\u2014\u2014\u6211\u5011\u5E0C\u671B\u518D\u898B\u5230\u4F60\u3002
+- It started raining. / It started to rain.\u2014\u2014\u958B\u59CB\u4E0B\u96E8\u4E86\u3002\uFF08\u5169\u7A2E\u7686\u53EF\uFF09
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I enjoy to swim. \u2705 I enjoy swimming. enjoy \u5F8C\u9762\u8981\u63A5\u52D5\u540D\u8A5E\u3002
+- \u274C He wants going home. \u2705 He wants to go home. want \u5F8C\u9762\u8981\u63A5\u4E0D\u5B9A\u8A5E\u3002
+- \u274C She decided going abroad. \u2705 She decided to go abroad. decide \u5F8C\u9762\u63A5 to do\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u52D5\u540D\u8A5E\u8207\u4E0D\u5B9A\u8A5E\u7684\u610F\u601D\u5DEE\u7570\uFF1A\u50CF stop doing \u548C stop to do \u610F\u601D\u4E0D\u540C\uFF0C\u90A3\u662F\u9032\u968E\u4E3B\u984C\u3002
+- \u8868\u76EE\u7684\u7684 to do\uFF1Ato do \u4E5F\u53EF\u55AE\u7368\u7528\u4F86\u8AAA\u660E\u505A\u67D0\u4E8B\u7684\u76EE\u7684\uFF0C\u8207\u52D5\u8A5E\u5F8C\u63A5\u4E0D\u5B9A\u8A5E\u7684\u7528\u6CD5\u4E0D\u540C\u3002`,
+  "relative-clauses-basic": `**\u6838\u5FC3\u6982\u5FF5**
+\u95DC\u4FC2\u5B50\u53E5\uFF08relative clause\uFF09\u63A5\u5728\u540D\u8A5E\u5F8C\u9762\uFF0C\u88DC\u5145\u8AAA\u660E\u90A3\u500B\u540D\u8A5E\u662F\u300C\u600E\u6A23\u7684\u4EBA\u300D\u6216\u300C\u600E\u6A23\u7684\u6771\u897F\u300D\uFF0C\u7528\u95DC\u4FC2\u4EE3\u540D\u8A5E\uFF08relative pronoun\uFF09\u628A\u5169\u53E5\u8A71\u5408\u6210\u4E00\u53E5\u3002
+
+**\u53E5\u578B**
+- \u4FEE\u98FE\u4EBA\uFF1A\`\u540D\u8A5E + who + \u52D5\u8A5E ...\`\uFF1Athe girl who sings
+- \u4FEE\u98FE\u4E8B\u7269\uFF1A\`\u540D\u8A5E + which + \u52D5\u8A5E ...\`\uFF1Athe book which is on the desk
+- \`that\` \u4EBA\u548C\u4E8B\u7269\u90FD\u53EF\u4EE5\u7528\uFF1Athe man that lives next door\u3002
+- \u95DC\u4FC2\u5B50\u53E5\u8981\u7DCA\u63A5\u5728\u88AB\u4FEE\u98FE\u7684\u540D\u8A5E\u5F8C\u9762\uFF0C\u5169\u8005\u4E4B\u9593\u4E0D\u8981\u9694\u592A\u9060\u3002
+
+**\u4F8B\u53E5**
+- I know a woman who speaks five languages.\u2014\u2014\u6211\u8A8D\u8B58\u4E00\u4F4D\u6703\u8AAA\u4E94\u7A2E\u8A9E\u8A00\u7684\u5973\u58EB\u3002
+- This is the cake which my mother made.\u2014\u2014\u9019\u662F\u6211\u5ABD\u5ABD\u505A\u7684\u86CB\u7CD5\u3002
+- The boy that sits next to me is my cousin.\u2014\u2014\u5750\u5728\u6211\u65C1\u908A\u7684\u7537\u751F\u662F\u6211\u8868\u5F1F\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C The man which lives here is kind. \u2705 The man who lives here is kind. \u6307\u4EBA\u901A\u5E38\u7528 who\u3002
+- \u274C She is the girl who she won the prize. \u2705 She is the girl who won the prize. who \u5DF2\u7D93\u4EE3\u66FF\u4E86\u4E3B\u8A5E\uFF0C\u4E0D\u80FD\u518D\u91CD\u8907 she\u3002
+- \u274C The book is interesting which I read. \u2705 The book which I read is interesting. \u95DC\u4FC2\u5B50\u53E5\u8981\u7DCA\u8DDF\u88AB\u4FEE\u98FE\u7684\u540D\u8A5E\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u9650\u5B9A\u8207\u975E\u9650\u5B9A\u95DC\u4FC2\u5B50\u53E5\uFF1A\u9032\u968E\u4E3B\u984C\u6703\u8AC7\u52A0\u9017\u865F\u7684\u88DC\u5145\u8AAA\u660E\uFF0C\u57FA\u790E\u968E\u6BB5\u5148\u638C\u63E1\u4E0D\u52A0\u9017\u865F\u7684\u7528\u6CD5\u3002`,
+  "basic-conjunctions": `**\u6838\u5FC3\u6982\u5FF5**
+\u9023\u63A5\u8A5E\uFF08conjunction\uFF09\u628A\u8A5E\u3001\u7247\u8A9E\u6216\u53E5\u5B50\u9023\u5728\u4E00\u8D77\uFF0C\u8868\u9054\u5B83\u5011\u4E4B\u9593\u7684\u95DC\u4FC2\u3002\u6700\u57FA\u672C\u7684\u56DB\u500B\uFF1Aand \u8868\u793A\u4E26\u5217\uFF0Cbut \u8868\u793A\u8F49\u6298\uFF0Cbecause \u8868\u793A\u539F\u56E0\uFF0Cso \u8868\u793A\u7D50\u679C\u3002
+
+**\u53E5\u578B**
+- \`A and B\`\uFF1A\u4E26\u5217\u76F8\u52A0\u3002\`A but B\`\uFF1A\u524D\u5F8C\u5167\u5BB9\u76F8\u53CD\u6216\u51FA\u4EBA\u610F\u6599\u3002
+- \`\u7D50\u679C, because \u539F\u56E0\`\uFF1A\u8AAA\u660E\u539F\u56E0\u3002\`\u539F\u56E0, so \u7D50\u679C\`\uFF1A\u8AAA\u660E\u7D50\u679C\u3002
+- \u9023\u63A5\u5169\u500B\u5B8C\u6574\u53E5\u5B50\u6642\uFF0Cand\u3001but\u3001so \u524D\u9762\u901A\u5E38\u52A0\u9017\u865F\uFF1Bbecause \u9023\u63A5\u7684\u5B50\u53E5\u653E\u5728\u5F8C\u9762\u6642\uFF0C\u524D\u9762\u901A\u5E38\u4E0D\u52A0\u9017\u865F\u3002
+- because \u548C so \u4E0D\u8981\u540C\u6642\u7528\u5728\u540C\u4E00\u53E5\u3002
+
+**\u4F8B\u53E5**
+- I like tea, but my brother likes coffee.\u2014\u2014\u6211\u559C\u6B61\u8336\uFF0C\u4F46\u6211\u54E5\u54E5\u559C\u6B61\u5496\u5561\u3002
+- She was tired, so she went to bed early.\u2014\u2014\u5979\u5F88\u7D2F\uFF0C\u6240\u4EE5\u65E9\u65E9\u4E0A\u5E8A\u7761\u89BA\u3002
+- We stayed home because it was raining.\u2014\u2014\u56E0\u70BA\u4E0B\u96E8\uFF0C\u6211\u5011\u5F85\u5728\u5BB6\u88E1\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C Because it was cold, so I wore a coat. \u2705 Because it was cold, I wore a coat. \u82F1\u6587\u7684 because \u548C so \u4E0D\u6703\u4E00\u8D77\u7528\u3002
+- \u274C I was hungry but I ate a lot. \u2705 I was hungry, so I ate a lot. \u5403\u5F88\u591A\u662F\u98E2\u9913\u7684\u7D50\u679C\uFF0C\u8981\u7528 so\uFF0C\u4E0D\u662F\u8F49\u6298\u3002
+- \u274C He is rich, and he is not happy. \u2705 He is rich, but he is not happy. \u524D\u5F8C\u8A9E\u6C23\u76F8\u53CD\uFF0C\u7528 but\u3002`,
+  "passive-basic": `**\u6838\u5FC3\u6982\u5FF5**
+\u4E00\u822C\u53E5\u5B50\uFF08\u4E3B\u52D5\u8A9E\u614B\uFF0Cactive voice\uFF09\u7684\u4E3B\u8A5E\u662F\u505A\u52D5\u4F5C\u7684\u4EBA\uFF1B\u88AB\u52D5\u8A9E\u614B\uFF08passive voice\uFF09\u7684\u4E3B\u8A5E\u5247\u662F\u627F\u53D7\u52D5\u4F5C\u7684\u4EBA\u6216\u4E8B\u7269\u3002\u7576\u6211\u5011\u66F4\u95DC\u5FC3\u300C\u88AB\u600E\u9EBC\u4E86\u300D\uFF0C\u6216\u4E0D\u77E5\u9053\u3001\u4E0D\u9700\u8981\u8AAA\u662F\u8AB0\u505A\u7684\uFF0C\u5C31\u7528\u88AB\u52D5\u3002
+
+**\u53E5\u578B**
+- \`be \u52D5\u8A5E + \u904E\u53BB\u5206\u8A5E\`\uFF1AThe room is cleaned every day.\uFF08\u73FE\u5728\uFF09/ The bridge was built in 1990.\uFF08\u904E\u53BB\uFF09
+- \u8981\u8AAA\u51FA\u52D5\u4F5C\u8005\u6642\uFF0C\u7528 by\uFF1A\`The song was written by my friend.\`
+- \u5426\u5B9A\uFF1A\`The door was not locked.\`\uFF1B\u7591\u554F\uFF1A\`Was the door locked?\`
+- \u4E3B\u52D5\u8F49\u88AB\u52D5\uFF1A\`Tom broke the cup.\` \u2192 \`The cup was broken by Tom.\`
+
+**\u4F8B\u53E5**
+- English is spoken in many countries.\u2014\u2014\u5F88\u591A\u570B\u5BB6\u90FD\u8AAA\u82F1\u8A9E\u3002
+- My bike was stolen last night.\u2014\u2014\u6211\u7684\u8173\u8E0F\u8ECA\u6628\u665A\u88AB\u5077\u4E86\u3002
+- This cake was made by my grandmother.\u2014\u2014\u9019\u500B\u86CB\u7CD5\u662F\u6211\u5976\u5976\u505A\u7684\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C The window was break. \u2705 The window was broken. \u88AB\u52D5\u8981\u7528\u904E\u53BB\u5206\u8A5E\uFF0C\u4E0D\u662F\u539F\u5F62\u3002
+- \u274C The letter wrote by Anna. \u2705 The letter was written by Anna. \u88AB\u52D5\u53E5\u4E0D\u80FD\u5C11\u4E86 be \u52D5\u8A5E\u3002
+- \u274C My bag was stolen by someone. \u2705 My bag was stolen. \u4E0D\u77E5\u9053\u6216\u4E0D\u91CD\u8981\u7684\u52D5\u4F5C\u8005\uFF0C\u4E0D\u5FC5\u5BEB\u51FA by ...\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u88AB\u52D5\u8A9E\u614B\u9032\u968E\uFF1A\u57FA\u790E\u53EA\u5B78\u6700\u5E38\u898B\u7684 be + \u904E\u53BB\u5206\u8A5E\uFF1B\u9032\u968E\u9084\u6709\u5404\u7A2E\u6642\u614B\u3001\u60C5\u614B\u52D5\u8A5E\u7684\u88AB\u52D5\u5F62\u5F0F\u3002`,
+  "conditionals-basic": `**\u6838\u5FC3\u6982\u5FF5**
+\u689D\u4EF6\u53E5\uFF08conditional\uFF09\u7528 if \u8AAA\u660E\u4E00\u500B\u689D\u4EF6\uFF0C\u4EE5\u53CA\u689D\u4EF6\u6210\u7ACB\u6642\u6703\u6709\u7684\u7D50\u679C\u3002\u57FA\u790E\u968E\u6BB5\u5B78\u6700\u5E38\u7528\u7684\u4E00\u7A2E\uFF1A\u8AAA\u7684\u662F\u300C\u53EF\u80FD\u767C\u751F\u300D\u7684\u4E8B\uFF0Cif \u5B50\u53E5\u7528\u73FE\u5728\u5F0F\uFF0C\u4E3B\u8981\u5B50\u53E5\u7528 will \u52A0\u539F\u5F62\u52D5\u8A5E\u8868\u793A\u7D50\u679C\u3002
+
+**\u53E5\u578B**
+- \`If + \u4E3B\u8A5E + \u73FE\u5728\u5F0F, \u4E3B\u8A5E + will + \u539F\u5F62\u52D5\u8A5E\`\uFF1AIf it rains, we will stay home.
+- if \u5B50\u53E5\u96D6\u7136\u8AAA\u7684\u662F\u672A\u4F86\uFF0C\u52D5\u8A5E\u4ECD\u7528\u73FE\u5728\u5F0F\uFF0C\u4E0D\u7528 will\u3002
+- if \u5B50\u53E5\u653E\u5728\u524D\u9762\u6642\u8981\u52A0\u9017\u865F\uFF1B\u653E\u5728\u5F8C\u9762\u5247\u4E0D\u7528\uFF1A\`We will stay home if it rains.\`
+- \u7D50\u679C\u4E5F\u53EF\u4EE5\u7528\u7948\u4F7F\u53E5\u6216 can\uFF1A\`If you are hungry, eat something.\`
+
+**\u4F8B\u53E5**
+- If you study hard, you will pass the test.\u2014\u2014\u5982\u679C\u4F60\u7528\u529F\u8B80\u66F8\uFF0C\u4F60\u6703\u901A\u904E\u8003\u8A66\u3002
+- If she calls, I will tell her the news.\u2014\u2014\u5982\u679C\u5979\u6253\u4F86\uFF0C\u6211\u6703\u544A\u8A34\u5979\u9019\u500B\u6D88\u606F\u3002
+- We will go to the park if the weather is nice.\u2014\u2014\u5982\u679C\u5929\u6C23\u597D\uFF0C\u6211\u5011\u5C31\u53BB\u516C\u5712\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C If it will rain, we will stay home. \u2705 If it rains, we will stay home. if \u5B50\u53E5\u4E0D\u7528 will\u3002
+- \u274C If I see him, I tell him. \u2705 If I see him, I will tell him. \u7D50\u679C\u7528 will + \u539F\u5F62\u52D5\u8A5E\u3002
+- \u274C If you are late we will start. \u2705 If you are late, we will start. if \u5B50\u53E5\u5728\u524D\uFF0C\u5F8C\u9762\u8981\u52A0\u9017\u865F\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u771F\u5BE6\u689D\u4EF6\u53E5\u3001\u5047\u8A2D\u689D\u4EF6\u53E5\uFF1A\u4E4B\u5F8C\u6703\u5B78\u66F4\u591A\u7A2E\u689D\u4EF6\u53E5\uFF1B\u57FA\u790E\u53EA\u8655\u7406\u300C\u6709\u53EF\u80FD\u767C\u751F\u300D\u7684 if + \u73FE\u5728\u5F0F\u3002`,
+  "reflexive-pronouns": `**\u6838\u5FC3\u6982\u5FF5**
+\u53CD\u8EAB\u4EE3\u540D\u8A5E\uFF08reflexive pronoun\uFF09\u4EE5 -self \u6216 -selves \u7D50\u5C3E\uFF0C\u7528\u5728\u52D5\u4F5C\u56DE\u5230\u505A\u52D5\u4F5C\u7684\u4EBA\u81EA\u5DF1\u8EAB\u4E0A\uFF0C\u4E5F\u5C31\u662F\u4E3B\u8A5E\u548C\u53D7\u8A5E\u662F\u540C\u4E00\u500B\u4EBA\u7684\u6642\u5019\u3002\u4E5F\u53EF\u4EE5\u7528\u4F86\u5F37\u8ABF\u300C\u662F\u672C\u4EBA\u89AA\u81EA\u300D\u3002
+
+**\u53E5\u578B**
+- \u5F62\u5F0F\uFF1A\`myself / yourself / himself / herself / itself / ourselves / yourselves / themselves\`\u3002\u55AE\u6578\u662F -self\uFF0C\u8907\u6578\u662F -selves\u3002
+- \u4E3B\u8A5E\u8207\u53D7\u8A5E\u76F8\u540C\uFF1A\`She hurt herself.\`
+- \u5F37\u8ABF\uFF1A\`I made the cake myself.\`
+- \u7247\u8A9E \`by oneself\` \u662F\u300C\u7368\u81EA\u3001\u9760\u81EA\u5DF1\u300D\uFF1AHe lives by himself.
+
+**\u4F8B\u53E5**
+- He looked at himself in the mirror.\u2014\u2014\u4ED6\u770B\u8457\u93E1\u5B50\u88E1\u7684\u81EA\u5DF1\u3002
+- We enjoyed ourselves at the party.\u2014\u2014\u6211\u5011\u5728\u6D3E\u5C0D\u4E0A\u73A9\u5F97\u5F88\u958B\u5FC3\u3002
+- She cooked dinner by herself.\u2014\u2014\u5979\u81EA\u5DF1\u4E00\u500B\u4EBA\u505A\u4E86\u665A\u9910\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C He hurt him. \u2705 He hurt himself. \u52D5\u4F5C\u56DE\u5230\u4E3B\u8A5E\u81EA\u5DF1\u8EAB\u4E0A\uFF0C\u8981\u7528\u53CD\u8EAB\u4EE3\u540D\u8A5E\u3002
+- \u274C They enjoyed theirselves. \u2705 They enjoyed themselves. \u6B63\u78BA\u5F62\u5F0F\u662F themselves\u3002
+- \u274C I will help me. \u2705 I will help myself. \u4E3B\u8A5E\u8207\u53D7\u8A5E\u540C\u4E00\u500B\u4EBA\uFF0C\u7528 myself\u3002
+- \u274C They help themselves each other. \u2705 They help each other. \u300C\u5F7C\u6B64\u300D\u8981\u7528 each other\uFF0C\u4E0D\u662F\u53CD\u8EAB\u4EE3\u540D\u8A5E\u3002`,
+  "purpose-to-infinitive": `**\u6838\u5FC3\u6982\u5FF5**
+\u8AAA\u660E\u300C\u70BA\u4E86\u4EC0\u9EBC\u76EE\u7684\u800C\u505A\u67D0\u4E8B\u300D\u6642\uFF0C\u53EF\u4EE5\u5728\u52D5\u4F5C\u5F8C\u9762\u52A0 to + \u539F\u5F62\u52D5\u8A5E\u3002\u9019\u88E1\u7684 to do \u56DE\u7B54\u7684\u662F Why\uFF08\u70BA\u4EC0\u9EBC\uFF09\u7684\u554F\u984C\u3002
+
+**\u53E5\u578B**
+- \`\u52D5\u4F5C + to + \u539F\u5F62\u52D5\u8A5E\`\uFF1AI went out to buy milk.
+- \u5426\u5B9A\u76EE\u7684\u7528 \`in order not to\` \u6216\u53E6\u5916\u63DB\u8AAA\u6CD5\uFF0C\u4E0D\u8981\u76F4\u63A5\u5BEB not to\u3002
+- \u76EE\u7684\u662F\u540D\u8A5E\u6642\uFF0C\u7528 \`for + \u540D\u8A5E\`\uFF1AI went out for a walk. \u52D5\u8A5E\u7528 to\uFF0C\u540D\u8A5E\u7528 for\u3002
+- \u554F\u76EE\u7684\u6642\uFF1A\`Why did you go out? \u2014 To buy milk.\` \u53EF\u4EE5\u53EA\u56DE\u7B54 to do\u3002
+
+**\u4F8B\u53E5**
+- She saved money to buy a camera.\u2014\u2014\u5979\u5B58\u9322\u662F\u70BA\u4E86\u8CB7\u76F8\u6A5F\u3002
+- I called the shop to ask about the price.\u2014\u2014\u6211\u6253\u96FB\u8A71\u7D66\u90A3\u5BB6\u5E97\u8A62\u554F\u50F9\u683C\u3002
+- He went to the library for a book.\u2014\u2014\u4ED6\u53BB\u5716\u66F8\u9928\u627E\u4E00\u672C\u66F8\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I went out for buy milk. \u2705 I went out to buy milk. \u76EE\u7684\u662F\u52D5\u4F5C\u6642\u7528 to do\uFF0C\u4E0D\u7528 for\u3002
+- \u274C I came here to a coffee. \u2705 I came here for a coffee. \u5F8C\u9762\u662F\u540D\u8A5E\uFF0C\u8981\u7528 for\u3002
+- \u274C She studies for to pass the exam. \u2705 She studies to pass the exam. for \u548C to \u4E0D\u8981\u9023\u7528\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u52D5\u540D\u8A5E\u8207\u4E0D\u5B9A\u8A5E\u5165\u9580\uFF1A\u90A3\u88E1\u8AC7\u7684\u662F want to do \u9019\u985E\u300C\u52D5\u8A5E\u5F8C\u9762\u63A5\u4EC0\u9EBC\u300D\uFF0C\u9019\u88E1\u7684 to do \u5247\u662F\u6574\u500B\u52D5\u4F5C\u7684\u76EE\u7684\uFF0C\u4E0D\u662F\u52D5\u8A5E\u7684\u53D7\u8A5E\u3002`
+};
+
+// src/core/grammar/explanations/stage2.ts
+var STAGE2_EXPLANATIONS = {
+  "present-perfect-vs-past": `**\u6838\u5FC3\u6982\u5FF5**
+\u73FE\u5728\u5B8C\u6210\u5F0F\u548C\u904E\u53BB\u5F0F\u90FD\u5728\u8AC7\u904E\u53BB\u7684\u4E8B\uFF0C\u5DEE\u5225\u5728\u300C\u9019\u4EF6\u4E8B\u8DDF\u73FE\u5728\u6709\u6C92\u6709\u95DC\u4FC2\u300D\u3002\u4E8B\u60C5\u767C\u751F\u5728\u4E00\u500B\u660E\u78BA\u3001\u5DF2\u7D93\u7D50\u675F\u7684\u904E\u53BB\u6642\u9593\uFF0C\u5C31\u7528\u904E\u53BB\u5F0F\uFF1B\u5982\u679C\u91CD\u9EDE\u662F\u300C\u5230\u73FE\u5728\u70BA\u6B62\u7684\u7D93\u9A57\u300D\u6216\u300C\u5C0D\u73FE\u5728\u9020\u6210\u7684\u7D50\u679C\u300D\uFF0C\u5C31\u7528\u73FE\u5728\u5B8C\u6210\u5F0F\u3002
+
+**\u53E5\u578B**
+\`\u4E3B\u8A5E + have / has + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u7D50\u679C\u3001\u7D93\u9A57\u3001\u5C1A\u672A\u7D50\u675F\u7684\u6642\u9593\u7BC4\u570D\u3002
+\`\u4E3B\u8A5E + \u904E\u53BB\u5F0F + \u660E\u78BA\u904E\u53BB\u6642\u9593\`\uFF1Ayesterday\u3001last year\u3001in 2019 \u7B49\u3002
+\`just / already / yet\`\uFF1Ajust \u8868\u525B\u525B\uFF0Calready \u8868\u5DF2\u7D93\uFF08\u80AF\u5B9A\u53E5\uFF09\uFF0Cyet \u7528\u5728\u7591\u554F\u8207\u5426\u5B9A\u53E5\u53E5\u5C3E\u3002
+
+**\u4F8B\u53E5**
+I lost my keys, so I can't open the door. \u2014\u2014\u6211\u628A\u9470\u5319\u5F04\u4E1F\u4E86\uFF0C\u6240\u4EE5\u73FE\u5728\u9032\u4E0D\u4E86\u9580\u3002
+We met at a concert two years ago. \u2014\u2014\u6211\u5011\u5169\u5E74\u524D\u5728\u4E00\u5834\u6F14\u5531\u6703\u8A8D\u8B58\u7684\u3002
+Has the bus left yet? No, it hasn't. \u2014\u2014\u516C\u8ECA\u5DF2\u7D93\u8D70\u4E86\u55CE\uFF1F\u9084\u6C92\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I have seen him yesterday.
+\u2705 I saw him yesterday.
+\u539F\u56E0\uFF1Ayesterday \u662F\u660E\u78BA\u7684\u904E\u53BB\u6642\u9593\uFF0C\u4E0D\u80FD\u548C\u73FE\u5728\u5B8C\u6210\u5F0F\u9023\u7528\u3002
+
+\u274C I have lived in Taipei in 2015.
+\u2705 I lived in Taipei in 2015.
+\u539F\u56E0\uFF1Ain 2015 \u662F\u660E\u78BA\u7684\u904E\u53BB\u6642\u9593\uFF0C\u8981\u7528\u904E\u53BB\u5F0F\uFF1B\u82E5\u8AAA I have lived in Taipei for years\uFF0C\u5247\u662F\u6301\u7E8C\u5230\u73FE\u5728\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u73FE\u5728\u5B8C\u6210\u5F0F\u5165\u9580\uFF1A\u5165\u9580\u53EA\u4ECB\u7D39\u5F62\u5F0F\u8207\u57FA\u672C\u7528\u6CD5\uFF1B\u9019\u4E00\u7BC7\u8457\u91CD\u5728\u300C\u4F55\u6642\u6539\u7528\u904E\u53BB\u5F0F\u300D\u3002
+\u5B8C\u6210\u5F0F\u8207\u9032\u884C\u5F0F\u7684\u7D30\u5FAE\u5DEE\u7570\uFF1A\u90A3\u4E00\u7BC7\u6BD4\u8F03\u7684\u662F\u5B8C\u6210\u5F0F\u548C\u5B8C\u6210\u9032\u884C\u5F0F\uFF0C\u9019\u4E00\u7BC7\u6BD4\u8F03\u7684\u662F\u5B8C\u6210\u5F0F\u548C\u904E\u53BB\u5F0F\u3002`,
+  "present-perfect-continuous": `**\u6838\u5FC3\u6982\u5FF5**
+\u73FE\u5728\u5B8C\u6210\u9032\u884C\u5F0F\u5F37\u8ABF\u4E00\u500B\u52D5\u4F5C\u300C\u5F9E\u904E\u53BB\u958B\u59CB\uFF0C\u6301\u7E8C\u5230\u73FE\u5728\uFF0C\u6216\u525B\u525B\u624D\u7D50\u675F\u300D\uFF0C\u91CD\u9EDE\u653E\u5728\u904E\u7A0B\u8207\u6301\u7E8C\u7684\u6642\u9593\uFF0C\u800C\u4E0D\u662F\u7D50\u679C\u3002\u5E38\u7528\u4F86\u89E3\u91CB\u73FE\u5728\u770B\u5F97\u5230\u7684\u72C0\u6CC1\uFF0C\u4F8B\u5982\u70BA\u4EC0\u9EBC\u4F60\u6EFF\u8EAB\u662F\u6C57\u3002
+
+**\u53E5\u578B**
+\`\u4E3B\u8A5E + have / has been + \u52D5\u8A5E-ing\`\uFF1A\u5F62\u5F0F\u3002
+\`have been doing + for + \u4E00\u6BB5\u6642\u9593\`\uFF1A\u6301\u7E8C\u4E86\u591A\u4E45\uFF0C\u4F8B\u5982 for two hours\u3002
+\`have been doing + since + \u8D77\u9EDE\`\uFF1A\u5F9E\u4F55\u6642\u958B\u59CB\uFF0C\u4F8B\u5982 since Monday\u3002
+
+**\u4F8B\u53E5**
+She has been learning the piano since she was six. \u2014\u2014\u5979\u5F9E\u516D\u6B72\u8D77\u5C31\u4E00\u76F4\u5728\u5B78\u92FC\u7434\u3002
+I'm tired because I have been working in the garden all morning. \u2014\u2014\u6211\u5F88\u7D2F\uFF0C\u56E0\u70BA\u6211\u6574\u500B\u65E9\u4E0A\u90FD\u5728\u82B1\u5712\u88E1\u5DE5\u4F5C\u3002
+It has been raining for three days. \u2014\u2014\u5DF2\u7D93\u4E0B\u4E86\u4E09\u5929\u7684\u96E8\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I have been knowing him for years.
+\u2705 I have known him for years.
+\u539F\u56E0\uFF1Aknow \u662F\u72C0\u614B\u52D5\u8A5E\uFF0C\u901A\u5E38\u4E0D\u7528\u9032\u884C\u5F0F\u3002
+
+\u274C I am waiting for you since an hour.
+\u2705 I have been waiting for you for an hour.
+\u539F\u56E0\uFF1Afor / since \u8868\u793A\u6301\u7E8C\u5230\u73FE\u5728\u7684\u6642\u9593\uFF0C\u8981\u642D\u914D\u5B8C\u6210\u9032\u884C\u5F0F\uFF0C\u800C\u4E14 for \u63A5\u4E00\u6BB5\u6642\u9593\u3001since \u63A5\u8D77\u9EDE\uFF0C\u4E0D\u8981\u6DF7\u7528\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u73FE\u5728\u5B8C\u6210\u5F0F\u5165\u9580\uFF1A\u5B8C\u6210\u5F0F\u91CD\u8996\u7D50\u679C\u6216\u7D93\u9A57\uFF0C\u5B8C\u6210\u9032\u884C\u5F0F\u91CD\u8996\u6301\u7E8C\u7684\u904E\u7A0B\u3002
+\u5B8C\u6210\u5F0F\u8207\u9032\u884C\u5F0F\u7684\u7D30\u5FAE\u5DEE\u7570\uFF1A\u90A3\u4E00\u7BC7\u662F\u66F4\u9032\u968E\u7684\u6BD4\u8F03\uFF0C\u9019\u4E00\u7BC7\u5148\u5B78\u6703\u5F62\u5F0F\u8207\u57FA\u672C\u7528\u6CD5\u3002`,
+  "past-perfect": `**\u6838\u5FC3\u6982\u5FF5**
+\u7576\u4F60\u5728\u8AC7\u904E\u53BB\u7684\u67D0\u4EF6\u4E8B\uFF0C\u53C8\u8981\u63D0\u5230\u300C\u6BD4\u5B83\u66F4\u65E9\u300D\u767C\u751F\u7684\u4E8B\uFF0C\u5C31\u7528\u904E\u53BB\u5B8C\u6210\u5F0F\u3002\u5B83\u50CF\u662F\u5728\u904E\u53BB\u7684\u6642\u9593\u8EF8\u4E0A\u5F80\u56DE\u9000\u4E00\u6B65\uFF0C\u8B93\u807D\u7684\u4EBA\u77E5\u9053\u4E8B\u60C5\u767C\u751F\u7684\u5148\u5F8C\u3002
+
+**\u53E5\u578B**
+\`\u4E3B\u8A5E + had + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u5F62\u5F0F\uFF0C\u6240\u6709\u4EBA\u7A31\u90FD\u7528 had\u3002
+\`When / By the time + \u904E\u53BB\u5F0F, \u4E3B\u8A5E + had + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u5148\u767C\u751F\u7684\u4E8B\u7528\u904E\u53BB\u5B8C\u6210\u5F0F\u3002
+\`had not (hadn't) + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u5426\u5B9A\u5F62\u5F0F\u3002
+
+**\u4F8B\u53E5**
+When I got to the station, the train had already left. \u2014\u2014\u6211\u5230\u8ECA\u7AD9\u6642\uFF0C\u706B\u8ECA\u5DF2\u7D93\u958B\u8D70\u4E86\u3002
+She was upset because she had forgotten her passport. \u2014\u2014\u5979\u5F88\u6CAE\u55AA\uFF0C\u56E0\u70BA\u5979\u5FD8\u4E86\u5E36\u8B77\u7167\u3002
+He hadn't eaten all day, so he was very hungry. \u2014\u2014\u4ED6\u4E00\u6574\u5929\u6C92\u5403\u6771\u897F\uFF0C\u6240\u4EE5\u975E\u5E38\u9913\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C When I arrived, the film already started.
+\u2705 When I arrived, the film had already started.
+\u539F\u56E0\uFF1A\u96FB\u5F71\u958B\u59CB\u5728\u6211\u62B5\u9054\u4E4B\u524D\uFF0C\u662F\u5169\u4EF6\u904E\u53BB\u4E8B\u4EF6\u4E2D\u8F03\u65E9\u7684\u4E00\u4EF6\u3002
+
+\u274C I had breakfast and then I had gone to work.
+\u2705 I had breakfast and then I went to work.
+\u539F\u56E0\uFF1A\u4E8B\u60C5\u6309\u9806\u5E8F\u8B1B\u8FF0\u6642\uFF0C\u7528\u4E00\u822C\u904E\u53BB\u5F0F\u5C31\u5920\u4E86\uFF0C\u4E0D\u9700\u8981\u6BCF\u4EF6\u4E8B\u90FD\u7528\u904E\u53BB\u5B8C\u6210\u5F0F\u3002
+
+\u53E6\u5916\uFF0C\u5169\u4EF6\u4E8B\u7684\u5148\u5F8C\u5F9E\u9023\u63A5\u8A5E\uFF08before\u3001after\uFF09\u5C31\u5F88\u6E05\u695A\u6642\uFF0C\u53E3\u8A9E\u4E2D\u4E5F\u5E38\u76F4\u63A5\u7528\u904E\u53BB\u5F0F\uFF0C\u4E0D\u4E00\u5B9A\u8981\u7528\u904E\u53BB\u5B8C\u6210\u5F0F\u3002`,
+  "future-continuous-perfect": `**\u6838\u5FC3\u6982\u5FF5**
+\u9019\u5169\u500B\u6642\u614B\u90FD\u662F\u7AD9\u5728\u672A\u4F86\u7684\u67D0\u500B\u6642\u9593\u9EDE\u4E0A\u770B\u4E8B\u60C5\u3002\u672A\u4F86\u9032\u884C\u5F0F\u8AC7\u300C\u5230\u90A3\u500B\u6642\u9593\u9EDE\uFF0C\u67D0\u4EF6\u4E8B\u6B63\u5728\u9032\u884C\u4E2D\u300D\uFF1B\u672A\u4F86\u5B8C\u6210\u5F0F\u8AC7\u300C\u5230\u90A3\u500B\u6642\u9593\u9EDE\u4E4B\u524D\uFF0C\u67D0\u4EF6\u4E8B\u5DF2\u7D93\u5B8C\u6210\u300D\u3002
+
+**\u53E5\u578B**
+\`will be + \u52D5\u8A5E-ing\`\uFF1A\u672A\u4F86\u67D0\u6642\u6B63\u5728\u9032\u884C\u3002
+\`will have + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u672A\u4F86\u67D0\u6642\u5DF2\u7D93\u5B8C\u6210\u3002
+\`by + \u6642\u9593\u9EDE\`\uFF1A\u642D\u914D\u672A\u4F86\u5B8C\u6210\u5F0F\uFF0C\u8868\u793A\u300C\u5230\u2026\u2026\u4E4B\u524D\u300D\u3002
+
+**\u4F8B\u53E5**
+This time tomorrow, I will be flying to Tokyo. \u2014\u2014\u660E\u5929\u9019\u500B\u6642\u5019\uFF0C\u6211\u6703\u6B63\u5728\u98DB\u5F80\u6771\u4EAC\u7684\u9014\u4E2D\u3002
+By next June, they will have finished the new bridge. \u2014\u2014\u5230\u660E\u5E74\u516D\u6708\uFF0C\u4ED6\u5011\u5C31\u6703\u5B8C\u6210\u9019\u5EA7\u65B0\u6A4B\u4E86\u3002
+Don't call me at eight; I will be cooking dinner. \u2014\u2014\u516B\u9EDE\u4E0D\u8981\u6253\u7D66\u6211\uFF0C\u6211\u6703\u6B63\u5728\u716E\u665A\u9910\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I will be finished the report by Friday.
+\u2705 I will have finished the report by Friday.
+\u539F\u56E0\uFF1A\u300C\u5230\u661F\u671F\u4E94\u5DF2\u5B8C\u6210\u300D\u8981\u7528 will have + \u904E\u53BB\u5206\u8A5E\uFF0C\u4E0D\u662F will be + \u904E\u53BB\u5206\u8A5E\u3002
+
+\u274C By the time you arrive, I will cook dinner already.
+\u2705 By the time you arrive, I will have cooked dinner.
+\u539F\u56E0\uFF1A\u5F37\u8ABF\u300C\u5230\u4F60\u62B5\u9054\u524D\u5DF2\u5B8C\u6210\u300D\uFF0C\u61C9\u8A72\u7528\u672A\u4F86\u5B8C\u6210\u5F0F\u3002by the time \u5B50\u53E5\u5247\u7528\u73FE\u5728\u5F0F\u8868\u793A\u672A\u4F86\u3002
+
+\u6CE8\u610F\uFF1Aby \u8868\u793A\u300C\u4E0D\u665A\u65BC\u67D0\u6642\u9593\u300D\uFF0Cuntil \u8868\u793A\u300C\u6301\u7E8C\u5230\u67D0\u6642\u9593\u300D\uFF0C\u5169\u8005\u610F\u601D\u4E0D\u540C\u3002`,
+  "modals-deduction": `**\u6838\u5FC3\u6982\u5FF5**
+\u60C5\u614B\u52D5\u8A5E\u9664\u4E86\u8868\u793A\u80FD\u529B\u6216\u8A31\u53EF\uFF0C\u4E5F\u80FD\u8868\u793A\u300C\u6839\u64DA\u7DDA\u7D22\u505A\u51FA\u7684\u63A8\u6E2C\u300D\u3002\u4F9D\u4F60\u6709\u591A\u78BA\u5B9A\uFF0C\u9078\u7528\u4E0D\u540C\u7684\u60C5\u614B\u52D5\u8A5E\uFF1A\u5E7E\u4E4E\u80AF\u5B9A\u7528 must\uFF0C\u6709\u53EF\u80FD\u7528 might / may / could\uFF0C\u5E7E\u4E4E\u4E0D\u53EF\u80FD\u7528 can't\u3002
+
+**\u53E5\u578B**
+\`must / might / can't + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u5C0D\u73FE\u5728\u7684\u63A8\u8AD6\u3002
+\`must / might / can't + have + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u5C0D\u904E\u53BB\u7684\u63A8\u8AD6\u3002
+\`must\`\uFF08\u5F88\u78BA\u5B9A\u662F\u771F\u7684\uFF09\u3001\`might\`\uFF08\u6709\u53EF\u80FD\uFF09\u3001\`can't\`\uFF08\u5F88\u78BA\u5B9A\u4E0D\u662F\u771F\u7684\uFF09\u3002
+
+**\u4F8B\u53E5**
+The lights are on, so he must be at home. \u2014\u2014\u71C8\u662F\u4EAE\u7684\uFF0C\u6240\u4EE5\u4ED6\u4E00\u5B9A\u5728\u5BB6\u3002
+She might have missed the train; she's usually here by now. \u2014\u2014\u5979\u53EF\u80FD\u932F\u904E\u4E86\u706B\u8ECA\uFF0C\u5979\u5E73\u5E38\u9019\u6642\u5019\u90FD\u5230\u4E86\u3002
+That can't be Tom's car; he doesn't own one. \u2014\u2014\u90A3\u4E0D\u53EF\u80FD\u662F\u6E6F\u59C6\u7684\u8ECA\uFF0C\u4ED6\u6C92\u6709\u8ECA\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C He must not be at home, because the door is locked.
+\u2705 He can't be at home, because the door is locked.
+\u539F\u56E0\uFF1A\u8868\u793A\u300C\u4E0D\u53EF\u80FD\u300D\u7684\u63A8\u8AD6\u8981\u7528 can't\uFF0C\u4E0D\u662F mustn't\uFF1Bmustn't \u662F\u7981\u6B62\u7684\u610F\u601D\u3002
+
+\u274C She must left early.
+\u2705 She must have left early.
+\u539F\u56E0\uFF1A\u5C0D\u904E\u53BB\u7684\u63A8\u8AD6\u8981\u7528 must have + \u904E\u53BB\u5206\u8A5E\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u60C5\u614B\u52D5\u8A5E\u5165\u9580\uFF1A\u5165\u9580\u4ECB\u7D39\u80FD\u529B\u3001\u8A31\u53EF\u7B49\u57FA\u672C\u7528\u6CD5\uFF1B\u9019\u4E00\u7BC7\u5C08\u9580\u8655\u7406\u300C\u63A8\u6E2C\u300D\u3002
+\u60C5\u614B\u52D5\u8A5E\u7684\u7D30\u5FAE\u8A9E\u610F\uFF1A\u90A3\u4E00\u7BC7\u6BD4\u8F03\u66F4\u7D30\u7684\u8A9E\u6C23\u5DEE\u5225\uFF0C\u9019\u4E00\u7BC7\u5148\u5EFA\u7ACB\u78BA\u5B9A\u7A0B\u5EA6\u7684\u57FA\u672C\u968E\u5C64\u3002`,
+  "passive-advanced": `**\u6838\u5FC3\u6982\u5FF5**
+\u88AB\u52D5\u8A9E\u614B\u4E0D\u53EA\u51FA\u73FE\u5728\u7C21\u55AE\u7684\u6642\u614B\uFF0C\u4E5F\u53EF\u4EE5\u548C\u5B8C\u6210\u5F0F\u3001\u60C5\u614B\u52D5\u8A5E\u3001\u9032\u884C\u5F0F\u7D50\u5408\u3002\u91CD\u9EDE\u662F\u8A18\u4F4F\uFF1A\u88AB\u52D5\u6C38\u9060\u7531 \`be\` \u7684\u67D0\u7A2E\u5F62\u5F0F\u52A0\u4E0A\u904E\u53BB\u5206\u8A5E\u7D44\u6210\uFF0C\u6642\u614B\u6216\u60C5\u614B\u52D5\u8A5E\u7684\u8B8A\u5316\u90FD\u843D\u5728 be \u9019\u4E00\u90E8\u5206\u3002
+
+**\u53E5\u578B**
+\`has / have been + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u5B8C\u6210\u5F0F\u88AB\u52D5\u3002
+\`must / can / should + be + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u60C5\u614B\u52D5\u8A5E\u88AB\u52D5\u3002
+\`is / are / was / were being + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u9032\u884C\u5F0F\u88AB\u52D5\u3002
+
+**\u4F8B\u53E5**
+The windows have been cleaned this morning. \u2014\u2014\u7A97\u6236\u4ECA\u5929\u65E9\u4E0A\u5DF2\u7D93\u64E6\u904E\u4E86\u3002
+This form must be signed before Friday. \u2014\u2014\u9019\u5F35\u8868\u683C\u5FC5\u9808\u5728\u661F\u671F\u4E94\u524D\u7C3D\u540D\u3002
+The road is being repaired at the moment. \u2014\u2014\u9019\u689D\u8DEF\u76EE\u524D\u6B63\u5728\u4FEE\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C The report has been write by the manager.
+\u2705 The report has been written by the manager.
+\u539F\u56E0\uFF1A\u88AB\u52D5\u8A9E\u614B\u7684\u6700\u5F8C\u4E00\u500B\u52D5\u8A5E\u5FC5\u9808\u662F\u904E\u53BB\u5206\u8A5E\u3002
+
+\u274C The bridge is building now.
+\u2705 The bridge is being built now.
+\u539F\u56E0\uFF1A\u9032\u884C\u5F0F\u88AB\u52D5\u8981\u7528 be being + \u904E\u53BB\u5206\u8A5E\uFF0C\u5C11\u4E86 being \u5C31\u8B8A\u6210\u4E3B\u52D5\u610F\u601D\u3002
+
+\u53E6\u5916\uFF0Cby \u5F8C\u9762\u7684\u65BD\u52D5\u8005\u5728\u4E0D\u91CD\u8981\u6216\u4E0D\u660E\u78BA\u6642\u53EF\u4EE5\u7701\u7565\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u57FA\u672C\u88AB\u52D5\u8A9E\u614B\uFF1A\u57FA\u672C\u7BC7\u53EA\u8655\u7406\u7C21\u55AE\u73FE\u5728\u5F0F\u8207\u904E\u53BB\u5F0F\uFF0C\u9019\u4E00\u7BC7\u64F4\u5145\u5230\u5B8C\u6210\u5F0F\u3001\u60C5\u614B\u8207\u9032\u884C\u5F0F\u3002
+\u975E\u4EBA\u7A31\u88AB\u52D5\u8207\u5831\u5C0E\u7D50\u69CB\uFF1A\u90A3\u4E00\u7BC7\u8655\u7406 It is said that ... \u9019\u985E\u53E5\u578B\uFF0C\u66F4\u504F\u6B63\u5F0F\u8207\u9032\u968E\u3002`,
+  "conditionals-real": `**\u6838\u5FC3\u6982\u5FF5**
+\u771F\u5BE6\u689D\u4EF6\u53E5\u8AC7\u7684\u662F\u300C\u6709\u53EF\u80FD\u70BA\u771F\u300D\u7684\u60C5\u6CC1\u3002\u96F6\u578B\u689D\u4EF6\u8AC7\u4E00\u5B9A\u6703\u767C\u751F\u7684\u4E8B\u5BE6\u6216\u898F\u5F8B\uFF1B\u7B2C\u4E00\u578B\u689D\u4EF6\u8AC7\u672A\u4F86\u6709\u53EF\u80FD\u767C\u751F\u7684\u4E8B\uFF0C\u4EE5\u53CA\u767C\u751F\u4E4B\u5F8C\u7684\u7D50\u679C\u3002
+
+**\u53E5\u578B**
+\`If + \u73FE\u5728\u5F0F, \u73FE\u5728\u5F0F\`\uFF1A\u96F6\u578B\u689D\u4EF6\uFF0C\u8AAA\u660E\u4E8B\u5BE6\u3001\u79D1\u5B78\u539F\u7406\u6216\u7FD2\u6163\u3002
+\`If + \u73FE\u5728\u5F0F, will + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u7B2C\u4E00\u578B\u689D\u4EF6\uFF0C\u8AC7\u672A\u4F86\u53EF\u80FD\u7684\u60C5\u6CC1\u3002
+\`when\` \u8207 \`if\`\uFF1Awhen \u8868\u793A\u4E8B\u60C5\u78BA\u5B9A\u6703\u767C\u751F\uFF0Cif \u8868\u793A\u4E0D\u78BA\u5B9A\u3002
+
+**\u4F8B\u53E5**
+If you heat ice, it melts. \u2014\u2014\u51B0\u52A0\u71B1\u5C31\u6703\u878D\u5316\u3002
+If it rains tomorrow, we will stay at home. \u2014\u2014\u5982\u679C\u660E\u5929\u4E0B\u96E8\uFF0C\u6211\u5011\u5C31\u5F85\u5728\u5BB6\u3002
+I'll call you when I get to the airport. \u2014\u2014\u6211\u5230\u6A5F\u5834\u7684\u6642\u5019\u6703\u6253\u7D66\u4F60\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C If it will rain tomorrow, we will cancel the picnic.
+\u2705 If it rains tomorrow, we will cancel the picnic.
+\u539F\u56E0\uFF1Aif \u5B50\u53E5\u8AC7\u672A\u4F86\u6642\u7528\u73FE\u5728\u5F0F\uFF0C\u4E0D\u7528 will\u3002
+
+\u274C If I will see him, I will tell him.
+\u2705 If I see him, I will tell him.
+\u539F\u56E0\uFF1A\u540C\u4E0A\uFF0Cwill \u53EA\u653E\u5728\u4E3B\u8981\u5B50\u53E5\u3002
+
+\u53E6\u5916\uFF0C\u78BA\u5B9A\u6703\u767C\u751F\u7684\u4E8B\u7528 when\uFF08I'll call you when I arrive\uFF09\uFF0C\u4E0D\u78BA\u5B9A\u624D\u7528 if\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u57FA\u672C\u689D\u4EF6\u53E5\uFF1A\u57FA\u672C\u7BC7\u5EFA\u7ACB if \u53E5\u7684\u6982\u5FF5\uFF0C\u9019\u4E00\u7BC7\u5206\u6E05\u695A\u96F6\u578B\u8207\u7B2C\u4E00\u578B\u3002
+\u5047\u8A2D\u689D\u4EF6\u53E5\uFF1A\u5047\u8A2D\u689D\u4EF6\u53E5\u8AC7\u8207\u4E8B\u5BE6\u76F8\u53CD\u7684\u60C5\u6CC1\uFF1B\u771F\u5BE6\u689D\u4EF6\u53E5\u8AC7\u6709\u53EF\u80FD\u767C\u751F\u7684\u60C5\u6CC1\u3002
+\u689D\u4EF6\u9023\u63A5\u8A5E\uFF1Aunless\u3001as long as \u7B49\u662F if \u7684\u66FF\u4EE3\u8AAA\u6CD5\u3002`,
+  "conditionals-unreal": `**\u6838\u5FC3\u6982\u5FF5**
+\u5047\u8A2D\u689D\u4EF6\u53E5\u8AC7\u7684\u662F\u300C\u8207\u4E8B\u5BE6\u4E0D\u7B26\u300D\u7684\u60C5\u6CC1\uFF1A\u7B2C\u4E8C\u578B\u662F\u8207\u73FE\u5728\uFF08\u6216\u4E0D\u592A\u53EF\u80FD\u7684\u672A\u4F86\uFF09\u4E8B\u5BE6\u76F8\u53CD\u7684\u5047\u8A2D\uFF0C\u7B2C\u4E09\u578B\u662F\u8207\u904E\u53BB\u4E8B\u5BE6\u76F8\u53CD\u3001\u5DF2\u7D93\u7121\u6CD5\u6539\u8B8A\u7684\u5047\u8A2D\u3002
+
+**\u53E5\u578B**
+\`If + \u904E\u53BB\u5F0F, would + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u7B2C\u4E8C\u578B\uFF0Cbe \u52D5\u8A5E\u5E38\u7528 were\uFF08If I were you\uFF09\u3002
+\`If + had + \u904E\u53BB\u5206\u8A5E, would have + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u7B2C\u4E09\u578B\u3002
+\`would have done\`\uFF1A\u7B2C\u4E09\u578B\u7684\u7D50\u679C\u5B50\u53E5\uFF0C\u8868\u793A\u300C\u7576\u6642\u5C31\u6703\u2026\u2026\u300D\u3002
+
+**\u4F8B\u53E5**
+If I had more time, I would learn another language. \u2014\u2014\u5982\u679C\u6211\u6709\u66F4\u591A\u6642\u9593\uFF0C\u6211\u5C31\u6703\u5B78\u53E6\u4E00\u7A2E\u8A9E\u8A00\u3002
+If I were you, I would talk to him. \u2014\u2014\u5982\u679C\u6211\u662F\u4F60\uFF0C\u6211\u6703\u8DDF\u4ED6\u8AC7\u8AC7\u3002
+If she had left earlier, she would have caught the train. \u2014\u2014\u5982\u679C\u5979\u65E9\u9EDE\u51FA\u9580\uFF0C\u5C31\u8D95\u5F97\u4E0A\u706B\u8ECA\u4E86\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C If I would have time, I would travel more.
+\u2705 If I had time, I would travel more.
+\u539F\u56E0\uFF1Aif \u5B50\u53E5\u4E0D\u653E would\uFF0C\u7B2C\u4E8C\u578B\u7684 if \u5B50\u53E5\u7528\u904E\u53BB\u5F0F\u3002
+
+\u274C If I had known, I would told you.
+\u2705 If I had known, I would have told you.
+\u539F\u56E0\uFF1A\u7B2C\u4E09\u578B\u7684\u7D50\u679C\u5B50\u53E5\u662F would have + \u904E\u53BB\u5206\u8A5E\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u771F\u5BE6\u689D\u4EF6\u53E5\uFF1A\u8AC7\u6709\u53EF\u80FD\u767C\u751F\u7684\u4E8B\uFF0C\u7528\u73FE\u5728\u5F0F\uFF1B\u5047\u8A2D\u689D\u4EF6\u53E5\u8AC7\u8207\u4E8B\u5BE6\u76F8\u53CD\u7684\u4E8B\uFF0C\u5F80\u5F8C\u9000\u4E00\u500B\u6642\u614B\u3002
+\u9858\u671B\u8207\u907A\u61BE\uFF1Awish \u7684\u6642\u614B\u898F\u5247\u8207\u9019\u4E00\u7BC7\u76F8\u4F3C\uFF0C\u4F46\u7528\u4F86\u8868\u9054\u9858\u671B\u3002
+\u6DF7\u5408\u689D\u4EF6\u53E5\uFF1A\u90A3\u4E00\u7BC7\u8655\u7406\u904E\u53BB\u539F\u56E0\u3001\u73FE\u5728\u7D50\u679C\u4E4B\u985E\u7684\u6DF7\u5408\u60C5\u6CC1\u3002`,
+  "gerund-vs-infinitive-meaning": `**\u6838\u5FC3\u6982\u5FF5**
+\u5927\u90E8\u5206\u52D5\u8A5E\u53EA\u63A5\u52D5\u540D\u8A5E\uFF08-ing\uFF09\u6216\u53EA\u63A5\u4E0D\u5B9A\u8A5E\uFF08to do\uFF09\uFF0C\u4F46\u6709\u4E00\u5C0F\u7FA4\u52D5\u8A5E\u5169\u8005\u90FD\u80FD\u63A5\uFF0C\u800C\u4E14\u610F\u601D\u4E0D\u540C\u3002\u8981\u6CE8\u610F\u7684\u662F\uFF1A\u4F60\u60F3\u8AAA\u7684\u662F\u300C\u505A\u904E\u7684\u4E8B\u300D\u9084\u662F\u300C\u63A5\u4E0B\u4F86\u8981\u505A\u7684\u4E8B\u300D\u3002
+
+**\u53E5\u578B**
+\`stop doing\`\uFF08\u505C\u6B62\u505A\u67D0\u4E8B\uFF09\uFF0F\`stop to do\`\uFF08\u505C\u4E0B\u4F86\u53BB\u505A\u53E6\u4E00\u4EF6\u4E8B\uFF09\u3002
+\`remember / forget doing\`\uFF08\u8A18\u5F97\uFF0F\u5FD8\u4E86\u505A\u904E\u67D0\u4E8B\uFF09\uFF0F\`remember / forget to do\`\uFF08\u8A18\u5F97\uFF0F\u5FD8\u4E86\u8981\u53BB\u505A\uFF09\u3002
+\`try doing\`\uFF08\u8A66\u8A66\u770B\uFF09\uFF0F\`try to do\`\uFF08\u52AA\u529B\u53BB\u505A\uFF09\uFF1B\`regret doing\`\uFF08\u5F8C\u6094\u505A\u904E\uFF09\uFF0F\`regret to do\`\uFF08\u907A\u61BE\u5730\u8981\u505A\uFF09\u3002
+
+**\u4F8B\u53E5**
+He stopped smoking last year. \u2014\u2014\u4ED6\u53BB\u5E74\u6212\u83F8\u4E86\u3002
+I remembered to lock the door before leaving. \u2014\u2014\u6211\u96E2\u958B\u524D\u8A18\u5F97\u8981\u9396\u9580\u3002
+Try adding a little salt; it might taste better. \u2014\u2014\u8A66\u8A66\u52A0\u4E00\u9EDE\u9E7D\uFF0C\u53EF\u80FD\u6703\u6BD4\u8F03\u597D\u5403\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I'll never forget to meet her last year.
+\u2705 I'll never forget meeting her last year.
+\u539F\u56E0\uFF1A\u8A18\u5F97\u300C\u5DF2\u7D93\u767C\u751F\u7684\u4E8B\u300D\u7528 forget / remember doing\uFF1Bforget to do \u662F\u300C\u5FD8\u4E86\u8981\u53BB\u505A\u300D\uFF0C\u5169\u8005\u65B9\u5411\u4E0D\u540C\u3002
+
+\u274C She stopped to talk when the teacher came in.
+\u2705 She stopped talking when the teacher came in.
+\u539F\u56E0\uFF1Astop to talk \u662F\u505C\u4E0B\u4F86\u53BB\u8AAA\u8A71\uFF0Cstop talking \u624D\u662F\u505C\u6B62\u8AAA\u8A71\u3002
+
+\u53E6\u5916\uFF0Cgo on doing \u662F\u6301\u7E8C\u505A\u540C\u4E00\u4EF6\u4E8B\uFF0Cgo on to do \u662F\u63A5\u8457\u505A\u53E6\u4E00\u4EF6\u4E8B\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u52D5\u540D\u8A5E\u8207\u4E0D\u5B9A\u8A5E\u5165\u9580\uFF1A\u5165\u9580\u7BC7\u5B78\u54EA\u4E9B\u52D5\u8A5E\u63A5\u54EA\u4E00\u7A2E\u5F62\u5F0F\uFF1B\u9019\u4E00\u7BC7\u8A0E\u8AD6\u540C\u4E00\u500B\u52D5\u8A5E\u5169\u8005\u7686\u53EF\u4F46\u610F\u601D\u4E0D\u540C\u3002
+\u8868\u76EE\u7684\u7684 to do\uFF1Astop to do \u88E1\u7684 to do \u662F\u8868\u76EE\u7684\uFF0C\u8207 stop doing \u7684\u53D7\u8A5E -ing \u4E0D\u540C\u3002`,
+  "relative-clauses-defining-non": `**\u6838\u5FC3\u6982\u5FF5**
+\u95DC\u4FC2\u5B50\u53E5\u5206\u6210\u5169\u985E\uFF1A\u9650\u5B9A\u5B50\u53E5\u63D0\u4F9B\u300C\u8FA8\u8B58\u662F\u54EA\u4E00\u500B\u300D\u6240\u9700\u7684\u8CC7\u8A0A\uFF0C\u53BB\u6389\u6703\u8B93\u53E5\u610F\u4E0D\u5B8C\u6574\uFF1B\u975E\u9650\u5B9A\u5B50\u53E5\u53EA\u662F\u88DC\u5145\u984D\u5916\u8CC7\u8A0A\uFF0C\u7528\u9017\u865F\u9694\u958B\uFF0C\u53BB\u6389\u4E5F\u4E0D\u5F71\u97FF\u4E3B\u8981\u610F\u601D\u3002
+
+**\u53E5\u578B**
+\`\u540D\u8A5E + who / which / that + \u5B50\u53E5\`\uFF1A\u9650\u5B9A\u5B50\u53E5\uFF0C\u4E0D\u52A0\u9017\u865F\u3002
+\`\u540D\u8A5E, who / which + \u5B50\u53E5,\`\uFF1A\u975E\u9650\u5B9A\u5B50\u53E5\uFF0C\u524D\u5F8C\u6709\u9017\u865F\uFF0C\u4E0D\u80FD\u7528 that\u3002
+\`\u7701\u7565\u95DC\u4FC2\u4EE3\u540D\u8A5E\`\uFF1A\u9650\u5B9A\u5B50\u53E5\u4E2D\uFF0C\u95DC\u4FC2\u4EE3\u540D\u8A5E\u662F\u53D7\u8A5E\u6642\u53EF\u4EE5\u7701\u7565\u3002
+
+**\u4F8B\u53E5**
+The man who lives next door is a doctor. \u2014\u2014\u4F4F\u5728\u9694\u58C1\u7684\u90A3\u4F4D\u7537\u58EB\u662F\u91AB\u751F\u3002
+My brother, who lives in Paris, is a chef. \u2014\u2014\u6211\u54E5\u54E5\u4F4F\u5728\u5DF4\u9ECE\uFF0C\u662F\u500B\u5EDA\u5E2B\u3002
+The book I borrowed was really interesting. \u2014\u2014\u6211\u501F\u7684\u90A3\u672C\u66F8\u771F\u7684\u5F88\u6709\u8DA3\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C My mother, that is a nurse, works at night.
+\u2705 My mother, who is a nurse, works at night.
+\u539F\u56E0\uFF1A\u975E\u9650\u5B9A\u5B50\u53E5\u4E0D\u80FD\u7528 that\uFF0C\u800C\u4E14\u9017\u865F\u5FC5\u9808\u6210\u5C0D\u51FA\u73FE\u3002
+
+\u274C The woman who I called her was busy.
+\u2705 The woman (who) I called was busy.
+\u539F\u56E0\uFF1Awho \u5DF2\u7D93\u4EE3\u8868 called \u7684\u53D7\u8A5E\uFF0C\u4E0D\u80FD\u518D\u91CD\u8907\u653E her\uFF1B\u9019\u7A2E\u53D7\u8A5E\u95DC\u4FC2\u4EE3\u540D\u8A5E\u53EF\u4EE5\u7701\u7565\u3002
+
+\u6CE8\u610F\uFF1A\u5982\u679C\u4E3B\u8A5E\u662F\u95DC\u4FC2\u4EE3\u540D\u8A5E\uFF08The man who lives ...\uFF09\uFF0C\u5C31\u4E0D\u80FD\u7701\u7565\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u57FA\u672C\u95DC\u4FC2\u5B50\u53E5\uFF1A\u57FA\u672C\u7BC7\u53EA\u8B1B who\u3001which\u3001that \u7684\u9078\u64C7\uFF1B\u9019\u4E00\u7BC7\u591A\u4E86\u9017\u865F\u8207\u8CC7\u8A0A\u91CD\u8981\u7A0B\u5EA6\u7684\u5224\u65B7\u3002
+\u9AD8\u7D1A\u95DC\u4FC2\u5B50\u53E5\uFF1A\u90A3\u4E00\u7BC7\u8655\u7406 whose\u3001\u4ECB\u7CFB\u8A5E\u52A0\u95DC\u4FC2\u4EE3\u540D\u8A5E\u7B49\u66F4\u8907\u96DC\u7684\u7D50\u69CB\u3002`,
+  "reported-speech": `**\u6838\u5FC3\u6982\u5FF5**
+\u9593\u63A5\u5F15\u8FF0\u662F\u7528\u81EA\u5DF1\u7684\u8A71\u8F49\u8FF0\u5225\u4EBA\u8AAA\u7684\u5167\u5BB9\u3002\u8F49\u8FF0\u6642\u901A\u5E38\u8981\u8ABF\u6574\u4E09\u4EF6\u4E8B\uFF1A\u6642\u614B\u5F80\u5F8C\u63A8\u4E00\u683C\u3001\u4EBA\u7A31\u4EE3\u540D\u8A5E\u914D\u5408\u8AAA\u8A71\u8005\u6539\u8B8A\u3001\u6642\u9593\u6216\u5730\u9EDE\u8A5E\u8DDF\u8457\u63DB\u3002
+
+**\u53E5\u578B**
+\`said (that) + \u5B50\u53E5\`\uFF1A\u73FE\u5728\u5F0F\u8B8A\u904E\u53BB\u5F0F\uFF0C\u904E\u53BB\u5F0F\u8B8A\u904E\u53BB\u5B8C\u6210\u5F0F\u3002
+\`asked + if / whether / wh- \u8A5E + \u5B50\u53E5\`\uFF1A\u8F49\u8FF0\u7591\u554F\u53E5\uFF0C\u8A9E\u5E8F\u56DE\u5230\u76F4\u8FF0\u53E5\u3002
+\`told + \u4EBA + to do\`\uFF1A\u8F49\u8FF0\u547D\u4EE4\u6216\u8ACB\u6C42\uFF1B\u5426\u5B9A\u7528 not to do\u3002
+
+**\u4F8B\u53E5**
+She said that she was tired. \u2014\u2014\u5979\u8AAA\u5979\u5F88\u7D2F\u3002
+He asked me where I had put the keys. \u2014\u2014\u4ED6\u554F\u6211\u9470\u5319\u653E\u5230\u54EA\u88E1\u53BB\u4E86\u3002
+The teacher told us not to use our phones. \u2014\u2014\u8001\u5E2B\u53EB\u6211\u5011\u4E0D\u8981\u7528\u624B\u6A5F\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C He asked me where did I live.
+\u2705 He asked me where I lived.
+\u539F\u56E0\uFF1A\u8F49\u8FF0\u7591\u554F\u53E5\u6642\u8A9E\u5E8F\u8981\u6062\u5FA9\u6210\u76F4\u8FF0\u53E5\uFF0C\u4E0D\u518D\u4F7F\u7528\u5012\u88DD\u8207\u52A9\u52D5\u8A5E do\u3002
+
+\u274C She told that she was busy.
+\u2705 She said that she was busy. / She told me that she was busy.
+\u539F\u56E0\uFF1Atell \u5F8C\u9762\u4E00\u5B9A\u8981\u63A5\u807D\u8A71\u7684\u4EBA\uFF0Csay \u5247\u4E0D\u9700\u8981\u3002
+
+\u53E6\u5916\uFF0C\u6642\u9593\u8A5E\u5E38\u9700\u8DDF\u8457\u8F49\u63DB\uFF0C\u4F8B\u5982 today \u8B8A\u6210 that day\uFF0Ctomorrow \u8B8A\u6210 the next day\uFF0Chere \u8B8A\u6210 there\u3002\u5982\u679C\u8F49\u8FF0\u7684\u5167\u5BB9\u81F3\u4ECA\u4ECD\u7136\u6210\u7ACB\uFF0C\u6642\u614B\u4E0D\u4E00\u5B9A\u8981\u5F80\u5F8C\u63A8\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u904E\u53BB\u5F0F\uFF1A\u8F49\u8FF0\u6642\u6703\u7528\u5230\u904E\u53BB\u5F0F\u8207\u904E\u53BB\u5B8C\u6210\u5F0F\uFF0C\u9019\u4E00\u7BC7\u8655\u7406\u7684\u662F\u628A\u76F4\u63A5\u5F15\u8FF0\u6539\u6210\u8F49\u8FF0\u7684\u898F\u5247\u3002`,
+  "must-vs-have-to": `**\u6838\u5FC3\u6982\u5FF5**
+must \u548C have to \u90FD\u8868\u793A\u7FA9\u52D9\uFF0C\u4F46 must \u901A\u5E38\u662F\u8AAA\u8A71\u8005\u81EA\u5DF1\u89BA\u5F97\u5FC5\u9808\uFF0Chave to \u591A\u534A\u662F\u898F\u5B9A\u6216\u5916\u5728\u60C5\u6CC1\u9020\u6210\u7684\u3002\u6700\u5BB9\u6613\u641E\u6DF7\u7684\u662F\u5426\u5B9A\uFF1Amustn't \u662F\u300C\u7981\u6B62\u300D\uFF0Cdon't have to \u662F\u300C\u4E0D\u5FC5\u300D\u3002
+
+**\u53E5\u578B**
+\`must + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u8AAA\u8A71\u8005\u8A8D\u70BA\u5FC5\u9808\u3002
+\`have to + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u5916\u5728\u898F\u5B9A\u6216\u60C5\u6CC1\uFF0C\u904E\u53BB\u5F0F\u7528 had to\u3002
+\`mustn't\`\uFF08\u4E0D\u53EF\u4EE5\uFF09\uFF0F\`don't have to\`\uFF08\u4E0D\u9700\u8981\uFF0C\u4F46\u505A\u4E5F\u53EF\u4EE5\uFF09\u3002
+
+**\u4F8B\u53E5**
+You must wear a helmet; it's dangerous without one. \u2014\u2014\u4F60\u4E00\u5B9A\u8981\u6234\u5B89\u5168\u5E3D\uFF0C\u4E0D\u6234\u5F88\u5371\u96AA\u3002
+I have to wake up at six because my train leaves early. \u2014\u2014\u6211\u5F97\u516D\u9EDE\u8D77\u5E8A\uFF0C\u56E0\u70BA\u706B\u8ECA\u5F88\u65E9\u958B\u3002
+You don't have to come with me, but you're welcome to. \u2014\u2014\u4F60\u4E0D\u7528\u8DDF\u6211\u53BB\uFF0C\u4E0D\u904E\u6B61\u8FCE\u4F60\u4F86\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C You mustn't bring a pen; we have them here.
+\u2705 You don't have to bring a pen; we have them here.
+\u539F\u56E0\uFF1A\u9019\u88E1\u662F\u300C\u4E0D\u9700\u8981\u300D\uFF0C\u4E0D\u662F\u300C\u7981\u6B62\u300D\uFF0C\u8981\u7528 don't have to\u3002
+
+\u274C I must go to school yesterday.
+\u2705 I had to go to school yesterday.
+\u539F\u56E0\uFF1Amust \u6C92\u6709\u904E\u53BB\u5F0F\uFF0C\u8868\u9054\u904E\u53BB\u7684\u7FA9\u52D9\u8981\u7528 had to\u3002
+
+\u53E6\u5916\uFF0Cmust \u8207 have to \u5728\u65E5\u5E38\u4F7F\u7528\u4E2D\u610F\u601D\u5E38\u5E38\u5F88\u63A5\u8FD1\uFF0C\u4E0D\u7528\u904E\u5EA6\u64D4\u5FC3\uFF1B\u4F46\u5728\u5426\u5B9A\u53E5\u4E2D\uFF0C\u5169\u8005\u7684\u5DEE\u5225\u4E00\u5B9A\u8981\u5206\u6E05\u695A\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u60C5\u614B\u52D5\u8A5E\u7684\u7D30\u5FAE\u8A9E\u610F\uFF1A\u90A3\u4E00\u7BC7\u8A0E\u8AD6\u66F4\u7D30\u7684\u8A9E\u6C23\u5DEE\u7570\uFF0C\u9019\u4E00\u7BC7\u5148\u78BA\u7ACB\u7FA9\u52D9\u3001\u7981\u6B62\u8207\u4E0D\u5FC5\u8981\u7684\u5340\u5225\u3002`,
+  "articles-advanced": `**\u6838\u5FC3\u6982\u5FF5**
+\u51A0\u8A5E\u9032\u968E\u8655\u7406\u7684\u662F\u66F4\u7D30\u7684\u9078\u64C7\uFF1A\u4EC0\u9EBC\u6642\u5019\u6CDB\u6307\u4E00\u6574\u500B\u985E\u5225\u3001\u4EC0\u9EBC\u6642\u5019\u4E0D\u52A0\u51A0\u8A5E\uFF0C\u4EE5\u53CA\u4E00\u4E9B\u56FA\u5B9A\u642D\u914D\u4E2D\u4E0D\u80FD\u96A8\u4FBF\u52A0\u6E1B\u51A0\u8A5E\u7684\u60C5\u6CC1\u3002
+
+**\u53E5\u578B**
+\`a / an + \u55AE\u6578\u540D\u8A5E\`\u3001\`the + \u540D\u8A5E\`\u3001\`\u8907\u6578\u540D\u8A5E / \u4E0D\u53EF\u6578\u540D\u8A5E\`\uFF1A\u4E09\u7A2E\u6CDB\u6307\u985E\u5225\u7684\u65B9\u5F0F\uFF0C\u610F\u601D\u76F8\u8FD1\u3002
+\`\u96F6\u51A0\u8A5E\`\uFF1A\u62BD\u8C61\u540D\u8A5E\u8207\u4E0D\u53EF\u6578\u540D\u8A5E\u6CDB\u6307\u6642\uFF0C\u4F8B\u5982 Life is short\u3002
+\`in hospital\` \uFF0F \`the sea\`\uFF1A\u56FA\u5B9A\u642D\u914D\uFF0C\u8981\u6574\u7D44\u8A18\u3002
+
+**\u4F8B\u53E5**
+Dogs are loyal animals. \u2014\u2014\u72D7\u662F\u5FE0\u5FC3\u7684\u52D5\u7269\u3002
+Honesty matters more than money. \u2014\u2014\u8AA0\u5BE6\u6BD4\u91D1\u9322\u91CD\u8981\u3002
+My uncle is in hospital, so we visited the hospital on Sunday. \u2014\u2014\u6211\u53D4\u53D4\u4F4F\u9662\u4E86\uFF0C\u6240\u4EE5\u661F\u671F\u5929\u6211\u5011\u53BB\u4E86\u90A3\u9593\u91AB\u9662\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C The life is not easy.
+\u2705 Life is not easy.
+\u539F\u56E0\uFF1A\u6CDB\u6307\u7684\u62BD\u8C61\u540D\u8A5E\u901A\u5E38\u4E0D\u52A0\u51A0\u8A5E\u3002
+
+\u274C She goes to the school every day. \uFF08\u6307\u81EA\u5DF1\u662F\u5B78\u751F\u6642\uFF09
+\u2705 She goes to school every day.
+\u539F\u56E0\uFF1Aschool\u3001hospital\u3001bed \u7B49\u5730\u9EDE\u7528\u65BC\u5176\u672C\u4F86\u7684\u529F\u80FD\uFF08\u4E0A\u5B78\u3001\u4F4F\u9662\u3001\u7761\u89BA\uFF09\u6642\u4E0D\u52A0 the\uFF1B\u53EA\u662F\u53BB\u90A3\u68DF\u5EFA\u7BC9\u7269\u6642\u624D\u52A0\u3002\u9019\u662F\u82F1\u5F0F\u7528\u6CD5\uFF0C\u7F8E\u5F0F\u82F1\u8A9E\u6709\u4E9B\u8AAA\u6CD5\u7565\u6709\u4E0D\u540C\u3002
+
+\u53E6\u5916\uFF0Cthe sea\u3001the sky\u3001the weather \u9019\u985E\u7368\u4E00\u7121\u4E8C\u6216\u56FA\u5B9A\u642D\u914D\u7684\u540D\u8A5E\uFF0C\u7FD2\u6163\u4E0A\u8981\u52A0 the\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u51A0\u8A5E\uFF1A\u57FA\u672C\u7BC7\u53EA\u8655\u7406 a\u3001an\u3001the \u7684\u57FA\u672C\u9078\u64C7\uFF1B\u9019\u4E00\u7BC7\u8655\u7406\u6CDB\u6307\u8207\u96F6\u51A0\u8A5E\u3002
+\u9650\u5B9A\u8A5E\u8207\u6307\u6D89\u7BC4\u570D\uFF1A\u90A3\u4E00\u7BC7\u8A0E\u8AD6\u66F4\u5EE3\u7684\u9650\u5B9A\u8A5E\u7CFB\u7D71\uFF0C\u9019\u4E00\u7BC7\u805A\u7126\u5728\u51A0\u8A5E\u3002`,
+  "verb-preposition": `**\u6838\u5FC3\u6982\u5FF5**
+\u8A31\u591A\u52D5\u8A5E\u5F8C\u9762\u6703\u56FA\u5B9A\u63A5\u67D0\u500B\u4ECB\u7CFB\u8A5E\uFF0C\u9019\u4E9B\u642D\u914D\u591A\u534A\u6C92\u6709\u898F\u5247\u53EF\u5FAA\uFF0C\u9700\u8981\u4E00\u7D44\u4E00\u7D44\u8A18\u3002\u540C\u4E00\u500B\u52D5\u8A5E\u63DB\u4E86\u4ECB\u7CFB\u8A5E\uFF0C\u610F\u601D\u5F80\u5F80\u4E5F\u8DDF\u8457\u6539\u8B8A\u3002
+
+**\u53E5\u578B**
+\`depend on\`\u3001\`belong to\`\u3001\`listen to\`\u3001\`wait for\`\u3001\`agree with\`\uFF1A\u5E38\u898B\u642D\u914D\u3002
+\`\u52D5\u8A5E + \u4ECB\u7CFB\u8A5E + \u52D5\u540D\u8A5E\`\uFF1A\u4ECB\u7CFB\u8A5E\u5F8C\u9762\u5982\u679C\u63A5\u52D5\u8A5E\uFF0C\u8981\u7528 -ing\u3002
+\`\u52D5\u8A5E + \u53D7\u8A5E + \u4ECB\u7CFB\u8A5E\`\uFF1A\u4F8B\u5982 thank someone for\u3001blame someone for\u3002
+
+**\u4F8B\u53E5**
+It depends on the weather. \u2014\u2014\u9019\u8981\u770B\u5929\u6C23\u3002
+The red bicycle belongs to my sister. \u2014\u2014\u90A3\u8F1B\u7D05\u8272\u8173\u8E0F\u8ECA\u662F\u6211\u59CA\u59CA\u7684\u3002
+She apologized for being late. \u2014\u2014\u5979\u70BA\u9072\u5230\u9053\u6B49\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I am waiting you at the station.
+\u2705 I am waiting for you at the station.
+\u539F\u56E0\uFF1Await \u9700\u8981\u63A5 for \u624D\u80FD\u5E36\u53D7\u8A5E\u3002
+
+\u274C He insisted to pay the bill.
+\u2705 He insisted on paying the bill.
+\u539F\u56E0\uFF1Ainsist \u5F8C\u9762\u63A5 on\uFF0C\u4ECB\u7CFB\u8A5E\u5F8C\u9762\u7684\u52D5\u8A5E\u7528 -ing\u3002
+
+\u5B78\u7FD2\u6642\u5EFA\u8B70\u6574\u7D44\u8A18\uFF0C\u4F8B\u5982\u9023\u540C\u53D7\u8A5E\u4E00\u8D77\u80CC\uFF1Alisten to music\u3001wait for the bus\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u6642\u9593\u8207\u5730\u9EDE\u4ECB\u7CFB\u8A5E\uFF1A\u90A3\u4E00\u7BC7\u8655\u7406 in\u3001on\u3001at \u8868\u793A\u6642\u9593\u5730\u9EDE\uFF0C\u9019\u4E00\u7BC7\u8655\u7406\u52D5\u8A5E\u56FA\u5B9A\u642D\u914D\u7684\u4ECB\u7CFB\u8A5E\u3002`,
+  "adjective-preposition": `**\u6838\u5FC3\u6982\u5FF5**
+\u8A31\u591A\u5F62\u5BB9\u8A5E\u5F8C\u9762\u4E5F\u6703\u56FA\u5B9A\u63A5\u67D0\u500B\u4ECB\u7CFB\u8A5E\uFF0C\u4F8B\u5982 interested in\u3001afraid of\u3002\u9019\u4E9B\u642D\u914D\u9700\u8981\u6574\u7D44\u8A18\uFF0C\u800C\u4E14\u4ECB\u7CFB\u8A5E\u5F8C\u9762\u63A5\u540D\u8A5E\u6216\u52D5\u540D\u8A5E\uFF0C\u4E0D\u63A5\u539F\u5F62\u52D5\u8A5E\u3002
+
+**\u53E5\u578B**
+\`interested in\`\u3001\`afraid of\`\u3001\`good at\`\u3001\`proud of\`\u3001\`famous for\`\uFF1A\u5E38\u898B\u642D\u914D\u3002
+\`\u5F62\u5BB9\u8A5E + \u4ECB\u7CFB\u8A5E + \u540D\u8A5E\`\uFF1AShe is afraid of dogs\u3002
+\`\u5F62\u5BB9\u8A5E + \u4ECB\u7CFB\u8A5E + \u52D5\u540D\u8A5E\`\uFF1AHe is good at fixing things\u3002
+
+**\u4F8B\u53E5**
+I'm interested in learning about space. \u2014\u2014\u6211\u5C0D\u4E86\u89E3\u592A\u7A7A\u5F88\u6709\u8208\u8DA3\u3002
+She is proud of her little brother. \u2014\u2014\u5979\u4EE5\u5979\u5F1F\u5F1F\u70BA\u69AE\u3002
+This town is famous for its fresh seafood. \u2014\u2014\u9019\u500B\u5C0F\u93AE\u4EE5\u65B0\u9BAE\u6D77\u7522\u805E\u540D\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I'm afraid to spiders.
+\u2705 I'm afraid of spiders.
+\u539F\u56E0\uFF1Aafraid \u8981\u642D\u914D of\uFF0C\u4E0D\u662F to\u3002
+
+\u274C She is good at to draw.
+\u2705 She is good at drawing.
+\u539F\u56E0\uFF1A\u4ECB\u7CFB\u8A5E\u5F8C\u9762\u63A5\u52D5\u8A5E\u6642\u8981\u7528 -ing\uFF0C\u4E0D\u80FD\u7528 to + \u539F\u5F62\u52D5\u8A5E\u3002
+
+\u53E6\u5916\uFF0C\u6709\u4E9B\u5F62\u5BB9\u8A5E\u53EF\u4EE5\u642D\u914D\u4E0D\u540C\u4ECB\u7CFB\u8A5E\uFF0C\u610F\u601D\u6703\u7A0D\u6709\u4E0D\u540C\uFF0C\u4F8B\u5982 angry with someone\u3001angry about something\uFF0C\u9047\u5230\u6642\u6700\u597D\u67E5\u5B57\u5178\u78BA\u8A8D\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u6642\u9593\u8207\u5730\u9EDE\u4ECB\u7CFB\u8A5E\uFF1A\u90A3\u4E00\u7BC7\u8655\u7406\u6642\u9593\u8207\u5730\u9EDE\uFF0C\u9019\u4E00\u7BC7\u8655\u7406\u5F62\u5BB9\u8A5E\u56FA\u5B9A\u642D\u914D\u7684\u4ECB\u7CFB\u8A5E\u3002`,
+  "participle-adjectives": `**\u6838\u5FC3\u6982\u5FF5**
+\u5F88\u591A\u60C5\u7DD2\u52D5\u8A5E\uFF08bore\u3001interest\u3001surprise \u7B49\uFF09\u53EF\u4EE5\u8B8A\u6210 -ing \u8207 -ed \u5169\u7A2E\u5F62\u5BB9\u8A5E\u3002-ing \u63CF\u8FF0\u300C\u9020\u6210\u9019\u7A2E\u611F\u53D7\u7684\u4E8B\u7269\u300D\uFF0C-ed \u63CF\u8FF0\u300C\u611F\u53D7\u5230\u9019\u7A2E\u60C5\u7DD2\u7684\u4EBA\u300D\u3002
+
+**\u53E5\u578B**
+\`-ing \u5F62\u5BB9\u8A5E\`\uFF1A\u63CF\u8FF0\u4E8B\u7269\u6216\u4EBA\u9020\u6210\u7684\u6548\u679C\uFF0C\u4F8B\u5982 boring\u3001exciting\u3002
+\`-ed \u5F62\u5BB9\u8A5E\`\uFF1A\u63CF\u8FF0\u4EBA\u7684\u611F\u53D7\uFF0C\u4F8B\u5982 bored\u3001excited\u3002
+\`be + -ed + about / by / with\`\uFF1A\u5E38\u898B\u642D\u914D\uFF0C\u4F8B\u5982 excited about\u3002
+
+**\u4F8B\u53E5**
+The lecture was boring, so I felt bored. \u2014\u2014\u9019\u5834\u6F14\u8B1B\u5F88\u7121\u804A\uFF0C\u6240\u4EE5\u6211\u89BA\u5F97\u7121\u804A\u3002
+She was surprised by the surprising news. \u2014\u2014\u5979\u88AB\u9019\u500B\u4EE4\u4EBA\u9A5A\u8A1D\u7684\u6D88\u606F\u5687\u4E86\u4E00\u8DF3\u3002
+It was an exhausting trip, and we were all exhausted. \u2014\u2014\u90A3\u662F\u4E00\u8D9F\u7D2F\u4EBA\u7684\u65C5\u7A0B\uFF0C\u6211\u5011\u90FD\u7D2F\u58DE\u4E86\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I am boring in this class.
+\u2705 I am bored in this class.
+\u539F\u56E0\uFF1A\u63CF\u8FF0\u81EA\u5DF1\u7684\u611F\u53D7\u7528 -ed\uFF1BI am boring \u7684\u610F\u601D\u662F\u300C\u6211\u9019\u500B\u4EBA\u5F88\u7121\u8DA3\u300D\u3002
+
+\u274C The movie was very excited.
+\u2705 The movie was very exciting.
+\u539F\u56E0\uFF1A\u96FB\u5F71\u662F\u9020\u6210\u8208\u596E\u7684\u4E8B\u7269\uFF0C\u8981\u7528 -ing\u3002
+
+\u53E6\u5916\uFF0C\u4FEE\u98FE\u4EBA\u4E5F\u53EF\u4EE5\u7528 -ing\uFF0C\u610F\u601D\u662F\u9019\u500B\u4EBA\u9020\u6210\u5225\u4EBA\u7684\u611F\u53D7\uFF0C\u4F8B\u5982 He is a boring person\uFF08\u4ED6\u662F\u500B\u7121\u8DA3\u7684\u4EBA\uFF09\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u5F62\u5BB9\u8A5E\u8207\u526F\u8A5E\uFF1A\u57FA\u672C\u7BC7\u8655\u7406\u5F62\u5BB9\u8A5E\u7684\u4F4D\u7F6E\u8207\u526F\u8A5E\u7684\u5340\u5225\uFF1B\u9019\u4E00\u7BC7\u8655\u7406\u7531\u52D5\u8A5E\u8B8A\u4F86\u7684\u5206\u8A5E\u5F62\u5BB9\u8A5E\u3002`,
+  "comparison-advanced": `**\u6838\u5FC3\u6982\u5FF5**
+\u6BD4\u8F03\u7D50\u69CB\u9664\u4E86\u300C\u6BD4\u8F03\u7D1A\u300D\u548C\u300C\u6700\u9AD8\u7D1A\u300D\uFF0C\u9084\u80FD\u8868\u9054\u76F8\u7B49\u3001\u8F03\u5C11\uFF0C\u4EE5\u53CA\u5169\u4EF6\u4E8B\u4E00\u8D77\u8B8A\u5316\u7684\u95DC\u4FC2\u3002
+
+**\u53E5\u578B**
+\`as + \u5F62\u5BB9\u8A5E\uFF0F\u526F\u8A5E + as\`\uFF1A\u8868\u793A\u76F8\u7B49\uFF1B\u5426\u5B9A\u7528 not as ... as\u3002
+\`less + \u5F62\u5BB9\u8A5E + than\`\u3001\`the least + \u5F62\u5BB9\u8A5E\`\uFF1A\u8868\u793A\u8F03\u5C11\u548C\u6700\u5C11\u3002
+\`the + \u6BD4\u8F03\u7D1A, the + \u6BD4\u8F03\u7D1A\`\uFF1A\u8D8A\u2026\u2026\u5C31\u8D8A\u2026\u2026\u3002
+
+**\u4F8B\u53E5**
+This laptop is as light as a tablet. \u2014\u2014\u9019\u53F0\u7B46\u96FB\u8DDF\u5E73\u677F\u4E00\u6A23\u8F15\u3002
+The second hotel was less expensive than the first. \u2014\u2014\u7B2C\u4E8C\u9593\u65C5\u9928\u6BD4\u7B2C\u4E00\u9593\u4FBF\u5B9C\u3002
+The more you practice, the better you will become. \u2014\u2014\u4F60\u7DF4\u7FD2\u5F97\u8D8A\u591A\uFF0C\u5C31\u6703\u8B8A\u5F97\u8D8A\u597D\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C He is not as taller as his brother.
+\u2705 He is not as tall as his brother.
+\u539F\u56E0\uFF1Aas ... as \u4E2D\u9593\u7528\u5F62\u5BB9\u8A5E\u539F\u7D1A\uFF0C\u4E0D\u7528\u6BD4\u8F03\u7D1A\u3002
+
+\u274C The more harder you work, the more success you get.
+\u2705 The harder you work, the more success you get.
+\u539F\u56E0\uFF1Aharder \u672C\u8EAB\u5DF2\u7D93\u662F\u6BD4\u8F03\u7D1A\uFF0C\u4E0D\u80FD\u518D\u52A0 more\uFF1Bthe more \u5F8C\u9762\u63A5\u7684\u662F\u540D\u8A5E\u6216\u52D5\u8A5E\u6642\u624D\u7528\u3002
+
+\u53E6\u5916\uFF0Cless \u901A\u5E38\u642D\u914D\u4E0D\u53EF\u6578\u540D\u8A5E\u6216\u5F62\u5BB9\u8A5E\uFF1B\u53EF\u6578\u8907\u6578\u540D\u8A5E\u5247\u7FD2\u6163\u7528 fewer\uFF0C\u4F8B\u5982 fewer mistakes\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u6BD4\u8F03\u7D1A\u8207\u6700\u9AD8\u7D1A\uFF1A\u57FA\u672C\u7BC7\u8655\u7406 -er\u3001-est \u8207 more\u3001most\uFF1B\u9019\u4E00\u7BC7\u8655\u7406\u76F8\u7B49\u3001\u8F03\u5C11\u8207\u9023\u52D5\u8B8A\u5316\u3002`,
+  "causative-perception-verbs": `**\u6838\u5FC3\u6982\u5FF5**
+\u6709\u4E9B\u52D5\u8A5E\u5F8C\u9762\u63A5\u300C\u53D7\u8A5E + \u52D5\u8A5E\u300D\uFF0C\u800C\u53D7\u8A5E\u5F8C\u9762\u7684\u52D5\u8A5E\u5F62\u5F0F\u8981\u770B\u4E3B\u8981\u52D5\u8A5E\u4F86\u6C7A\u5B9A\u3002\u4F7F\u5F79\u52D5\u8A5E\uFF08make\u3001let\u3001have\u3001get\uFF09\u8868\u793A\u8B93\u67D0\u4EBA\u505A\u67D0\u4E8B\uFF1B\u611F\u5B98\u52D5\u8A5E\uFF08see\u3001hear\u3001watch\u3001feel\uFF09\u8868\u793A\u611F\u77E5\u5230\u67D0\u4EF6\u4E8B\u767C\u751F\u3002
+
+**\u53E5\u578B**
+\`make / let / have + \u53D7\u8A5E + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u4F7F\u5F79\uFF0C\u4E0D\u52A0 to\u3002
+\`get + \u53D7\u8A5E + to do\`\uFF1Aget \u7684\u4F7F\u5F79\u8981\u52A0 to\u3002
+\`see / hear + \u53D7\u8A5E + \u539F\u5F62\u52D5\u8A5E \u6216 -ing\`\uFF1A\u539F\u5F62\u5F37\u8ABF\u6574\u500B\u52D5\u4F5C\uFF0C-ing \u5F37\u8ABF\u52D5\u4F5C\u6B63\u5728\u9032\u884C\u3002
+
+**\u4F8B\u53E5**
+The teacher made us rewrite the essay. \u2014\u2014\u8001\u5E2B\u8981\u6211\u5011\u91CD\u5BEB\u90A3\u7BC7\u4F5C\u6587\u3002
+I got my brother to help me move. \u2014\u2014\u6211\u8ACB\u6211\u54E5\u54E5\u5E6B\u6211\u642C\u5BB6\u3002
+I heard someone singing in the kitchen. \u2014\u2014\u6211\u807D\u5230\u6709\u4EBA\u5728\u5EDA\u623F\u5531\u6B4C\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C My parents let me to stay out late.
+\u2705 My parents let me stay out late.
+\u539F\u56E0\uFF1Amake\u3001let\u3001have \u5F8C\u9762\u7684\u52D5\u8A5E\u4E0D\u52A0 to\u3002
+
+\u274C She made me to laugh.
+\u2705 She made me laugh.
+\u539F\u56E0\uFF1A\u540C\u4E0A\u3002\u4F46\u88AB\u52D5\u8A9E\u614B\u6642\u8981\u52A0 to\uFF0C\u4F8B\u5982 I was made to wait\u3002
+
+\u53E6\u5916\uFF0CI saw him cross the road \u662F\u770B\u5230\u4ED6\u6574\u500B\u904E\u99AC\u8DEF\u7684\u904E\u7A0B\uFF0CI saw him crossing the road \u662F\u770B\u5230\u4ED6\u6B63\u5728\u904E\u99AC\u8DEF\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u52D5\u540D\u8A5E\u8207\u4E0D\u5B9A\u8A5E\u5165\u9580\uFF1A\u5165\u9580\u7BC7\u8655\u7406\u52D5\u8A5E\u5F8C\u76F4\u63A5\u63A5 -ing \u6216 to do\uFF1B\u9019\u4E00\u7BC7\u8655\u7406\u300C\u52D5\u8A5E + \u53D7\u8A5E + \u52D5\u8A5E\u300D\u3002`,
+  "wish-if-only": `**\u6838\u5FC3\u6982\u5FF5**
+wish \u548C if only \u7528\u4F86\u8868\u9054\u8207\u4E8B\u5BE6\u4E0D\u7B26\u7684\u9858\u671B\u6216\u907A\u61BE\u3002\u6642\u614B\u7684\u898F\u5247\u662F\u300C\u5F80\u5F8C\u9000\u4E00\u6B65\u300D\uFF1A\u5C0D\u73FE\u5728\u7684\u9858\u671B\u7528\u904E\u53BB\u5F0F\uFF0C\u5C0D\u904E\u53BB\u7684\u907A\u61BE\u7528\u904E\u53BB\u5B8C\u6210\u5F0F\u3002
+
+**\u53E5\u578B**
+\`I wish + \u904E\u53BB\u5F0F\`\uFF1A\u5C0D\u73FE\u5728\u4E8B\u5BE6\u7684\u9858\u671B\uFF0Cbe \u52D5\u8A5E\u5E38\u7528 were\u3002
+\`I wish + had + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u5C0D\u904E\u53BB\u7684\u907A\u61BE\u3002
+\`I wish + \u4E3B\u8A5E + would + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u5E0C\u671B\u5225\u4EBA\u6539\u8B8A\uFF0C\u6216\u8868\u9054\u4E0D\u6EFF\u3002
+
+**\u4F8B\u53E5**
+I wish I lived closer to my office. \u2014\u2014\u771F\u5E0C\u671B\u6211\u4F4F\u5F97\u96E2\u516C\u53F8\u8FD1\u4E00\u9EDE\u3002
+She wishes she had studied harder last year. \u2014\u2014\u5979\u5E0C\u671B\u81EA\u5DF1\u53BB\u5E74\u6709\u66F4\u7528\u529F\u5FF5\u66F8\u3002
+I wish the neighbors would turn the music down. \u2014\u2014\u771F\u5E0C\u671B\u9130\u5C45\u628A\u97F3\u6A02\u95DC\u5C0F\u8072\u4E00\u9EDE\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I wish I have a bigger house.
+\u2705 I wish I had a bigger house.
+\u539F\u56E0\uFF1A\u8207\u73FE\u5728\u4E8B\u5BE6\u76F8\u53CD\u7684\u9858\u671B\u8981\u7528\u904E\u53BB\u5F0F\uFF0C\u5373\u4F7F\u610F\u601D\u662F\u73FE\u5728\u3002
+
+\u274C I wish I would be taller.
+\u2705 I wish I were taller.
+\u539F\u56E0\uFF1Awish ... would \u7528\u65BC\u5E0C\u671B\u5225\u4EBA\u7684\u884C\u70BA\u6539\u8B8A\u6216\u8868\u9054\u4E0D\u6EFF\uFF0C\u4E0D\u9069\u7528\u65BC\u63CF\u8FF0\u81EA\u5DF1\u7684\u72C0\u614B\u3002
+
+\u53E6\u5916\uFF0CIf only \u7684\u8A9E\u6C23\u6BD4 I wish \u66F4\u5F37\uFF0C\u7528\u6CD5\u76F8\u540C\uFF0C\u4F8B\u5982 If only I had listened.
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u5047\u8A2D\u689D\u4EF6\u53E5\uFF1A\u5047\u8A2D\u689D\u4EF6\u53E5\u7684\u6642\u614B\u898F\u5247\u8207 wish \u76F8\u540C\uFF0C\u4F46\u662F\u7528 if \u5F15\u5C0E\u4E00\u500B\u5047\u8A2D\u7684\u60C5\u6CC1\uFF0C\u9019\u4E00\u7BC7\u662F\u76F4\u63A5\u8868\u9054\u9858\u671B\u3002`,
+  "phrasal-verbs": `**\u6838\u5FC3\u6982\u5FF5**
+\u7247\u8A9E\u52D5\u8A5E\u662F\u300C\u52D5\u8A5E + \u526F\u8A5E\u6216\u4ECB\u7CFB\u8A5E\u300D\u7684\u7D44\u5408\uFF0C\u610F\u601D\u5E38\u5E38\u4E0D\u80FD\u5F9E\u55AE\u5B57\u76F4\u63A5\u731C\u51FA\u4F86\uFF0C\u4F8B\u5982 give up \u662F\u653E\u68C4\uFF0C\u4E0D\u662F\u300C\u7D66\u4E0A\u53BB\u300D\u3002\u5B78\u7FD2\u6642\u8981\u9023\u540C\u53D7\u8A5E\u7684\u4F4D\u7F6E\u4E00\u8D77\u8A18\u3002
+
+**\u53E5\u578B**
+\`\u52D5\u8A5E + \u53D7\u8A5E + \u526F\u8A5E\` \u6216 \`\u52D5\u8A5E + \u526F\u8A5E + \u53D7\u8A5E\`\uFF1A\u53EF\u5206\u96E2\uFF0C\u4F8B\u5982 turn off the light\u3002
+\`\u52D5\u8A5E + \u4EE3\u540D\u8A5E + \u526F\u8A5E\`\uFF1A\u53D7\u8A5E\u662F\u4EE3\u540D\u8A5E\u6642\uFF0C\u4E00\u5B9A\u8981\u653E\u4E2D\u9593\u3002
+\`\u52D5\u8A5E + \u526F\u8A5E + \u4ECB\u7CFB\u8A5E + \u53D7\u8A5E\`\uFF1A\u4E09\u5B57\u7247\u8A9E\u52D5\u8A5E\uFF0C\u4E0D\u53EF\u5206\u96E2\uFF0C\u4F8B\u5982 look forward to\u3002
+
+**\u4F8B\u53E5**
+She gave up smoking two years ago. \u2014\u2014\u5979\u5169\u5E74\u524D\u6212\u83F8\u4E86\u3002
+Please turn it off before you leave. \u2014\u2014\u96E2\u958B\u524D\u8ACB\u628A\u5B83\u95DC\u6389\u3002
+We are looking forward to the holiday. \u2014\u2014\u6211\u5011\u5F88\u671F\u5F85\u9019\u500B\u5047\u671F\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C Please turn off it.
+\u2705 Please turn it off.
+\u539F\u56E0\uFF1A\u53EF\u5206\u96E2\u7684\u7247\u8A9E\u52D5\u8A5E\uFF0C\u53D7\u8A5E\u662F\u4EE3\u540D\u8A5E\u6642\u4E00\u5B9A\u8981\u653E\u5728\u52D5\u8A5E\u548C\u526F\u8A5E\u4E2D\u9593\u3002
+
+\u274C I'm looking forward to see you.
+\u2705 I'm looking forward to seeing you.
+\u539F\u56E0\uFF1A\u9019\u88E1\u7684 to \u662F\u4ECB\u7CFB\u8A5E\uFF0C\u5F8C\u9762\u8981\u63A5\u540D\u8A5E\u6216 -ing\u3002
+
+\u53E6\u5916\uFF0C\u6709\u4E9B\u7247\u8A9E\u52D5\u8A5E\u4E0D\u53EF\u5206\u96E2\uFF0C\u4F8B\u5982 look after\uFF08\u7167\u9867\uFF09\uFF0C\u53D7\u8A5E\u6C38\u9060\u653E\u5728\u5F8C\u9762\uFF1Alook after the baby\uFF0C\u4E5F\u8981\u8AAA look after her\u3002`,
+  "used-to-be-used-to": `**\u6838\u5FC3\u6982\u5FF5**
+used to\u3001be used to \u548C get used to \u9577\u5F97\u5F88\u50CF\uFF0C\u4F46\u6587\u6CD5\u8207\u610F\u601D\u90FD\u4E0D\u540C\u3002used to \u8AC7\u904E\u53BB\u7684\u7FD2\u6163\u6216\u72C0\u614B\uFF0Cbe used to \u8868\u793A\u300C\u5DF2\u7D93\u7FD2\u6163\u4E86\u300D\uFF0Cget used to \u8868\u793A\u300C\u9010\u6F38\u7FD2\u6163\u300D\u7684\u904E\u7A0B\u3002
+
+**\u53E5\u578B**
+\`used to + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u904E\u53BB\u7D93\u5E38\u505A\u3001\u73FE\u5728\u5DF2\u4E0D\u518D\u3002
+\`be used to + \u540D\u8A5E\uFF0F-ing\`\uFF1A\u5DF2\u7D93\u7FD2\u6163\u3002
+\`get used to + \u540D\u8A5E\uFF0F-ing\`\uFF1A\u9010\u6F38\u7FD2\u6163\u3002
+
+**\u4F8B\u53E5**
+We used to play outside until it got dark. \u2014\u2014\u6211\u5011\u4EE5\u524D\u5E38\u5728\u5916\u9762\u73A9\u5230\u5929\u9ED1\u3002
+I'm used to getting up early now. \u2014\u2014\u6211\u73FE\u5728\u5DF2\u7D93\u7FD2\u6163\u65E9\u8D77\u4E86\u3002
+She is getting used to living alone. \u2014\u2014\u5979\u6B63\u5728\u6162\u6162\u7FD2\u6163\u4E00\u500B\u4EBA\u4F4F\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I am used to get up early.
+\u2705 I am used to getting up early.
+\u539F\u56E0\uFF1Abe used to \u7684 to \u662F\u4ECB\u7CFB\u8A5E\uFF0C\u5F8C\u9762\u8981\u63A5 -ing \u6216\u540D\u8A5E\u3002
+
+\u274C He didn't used to smoke.
+\u2705 He didn't use to smoke.
+\u539F\u56E0\uFF1A\u52A0\u4E86 did \u4E4B\u5F8C\uFF0Cused \u8981\u6539\u56DE\u539F\u5F62 use\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u904E\u53BB\u7FD2\u6163 used to\uFF1A\u5165\u9580\u7BC7\u53EA\u8655\u7406 used to + \u539F\u5F62\u52D5\u8A5E\uFF1B\u9019\u4E00\u7BC7\u591A\u4E86 be used to \u8207 get used to\uFF0C\u8981\u7279\u5225\u7559\u610F\u5F8C\u9762\u7684\u52D5\u8A5E\u5F62\u5F0F\u3002`,
+  "question-tags": `**\u6838\u5FC3\u6982\u5FF5**
+\u9644\u52A0\u554F\u53E5\u662F\u5728\u53E5\u5C3E\u52A0\u4E00\u500B\u7C21\u77ED\u7684\u554F\u53E5\uFF0C\u7528\u4F86\u78BA\u8A8D\u8CC7\u8A0A\u6216\u5FB5\u6C42\u540C\u610F\u3002\u57FA\u672C\u898F\u5247\u662F\uFF1A\u524D\u9762\u662F\u80AF\u5B9A\u53E5\uFF0C\u5C3E\u5DF4\u7528\u5426\u5B9A\uFF1B\u524D\u9762\u662F\u5426\u5B9A\u53E5\uFF0C\u5C3E\u5DF4\u7528\u80AF\u5B9A\u3002\u8A9E\u8ABF\u4E0A\u63DA\u8868\u793A\u771F\u7684\u5728\u554F\uFF0C\u8A9E\u8ABF\u4E0B\u964D\u5247\u662F\u671F\u5F85\u5C0D\u65B9\u540C\u610F\u3002
+
+**\u53E5\u578B**
+\`\u80AF\u5B9A\u53E5, \u52A9\u52D5\u8A5E + n't + \u4EE3\u540D\u8A5E?\`\uFF1AYou like tea, don't you?
+\`\u5426\u5B9A\u53E5, \u52A9\u52D5\u8A5E + \u4EE3\u540D\u8A5E?\`\uFF1AShe isn't here, is she?
+\`\u6C92\u6709\u52A9\u52D5\u8A5E\u6642\`\uFF1A\u7528 do / does / did\uFF1B\u6709 be \u52D5\u8A5E\u6216\u60C5\u614B\u52D5\u8A5E\u5C31\u6CBF\u7528\u3002
+
+**\u4F8B\u53E5**
+It's a beautiful day, isn't it? \u2014\u2014\u4ECA\u5929\u5929\u6C23\u771F\u597D\uFF0C\u4E0D\u662F\u55CE\uFF1F
+You haven't met my sister, have you? \u2014\u2014\u4F60\u9084\u6C92\u898B\u904E\u6211\u59CA\u59CA\u5427\uFF1F
+They went home early, didn't they? \u2014\u2014\u4ED6\u5011\u5F88\u65E9\u5C31\u56DE\u5BB6\u4E86\uFF0C\u5C0D\u5427\uFF1F
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C You can swim, doesn't you?
+\u2705 You can swim, can't you?
+\u539F\u56E0\uFF1A\u9644\u52A0\u554F\u53E5\u7684\u52A9\u52D5\u8A5E\u8981\u6CBF\u7528\u524D\u53E5\u7684\u60C5\u614B\u52D5\u8A5E\uFF0C\u800C\u4E14\u8981\u914D\u5408\u4E3B\u8A5E\u3002
+
+\u274C He is late, is he?
+\u2705 He is late, isn't he?
+\u539F\u56E0\uFF1A\u80AF\u5B9A\u53E5\u5F8C\u9762\u8981\u63A5\u5426\u5B9A\u7684\u5C3E\u5DF4\uFF0C\u6975\u6027\u8981\u76F8\u53CD\uFF08\u5982\u679C\u771F\u7684\u60F3\u8868\u9054\u61F7\u7591\uFF0C\u624D\u6703\u7528\u76F8\u540C\u6975\u6027\uFF09\u3002
+
+\u53E6\u5916\uFF0CI am \u7684\u9644\u52A0\u554F\u53E5\u662F aren't I\uFF0C\u4F8B\u5982 I'm right, aren't I?\uFF1BLet's \u7684\u9644\u52A0\u554F\u53E5\u662F shall we\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u7591\u554F\u53E5\u8207\u5426\u5B9A\u53E5\uFF1A\u57FA\u672C\u7BC7\u8655\u7406 do / does / did \u7684\u7591\u554F\u8207\u5426\u5B9A\uFF1B\u9644\u52A0\u554F\u53E5\u5EF6\u7E8C\u540C\u6A23\u7684\u52A9\u52D5\u8A5E\u898F\u5247\u3002`,
+  "future-time-clauses": `**\u6838\u5FC3\u6982\u5FF5**
+\u5728 when\u3001after\u3001before\u3001until\u3001as soon as \u7B49\u6642\u9593\u9023\u63A5\u8A5E\u5F15\u5C0E\u7684\u5B50\u53E5\u88E1\uFF0C\u5373\u4F7F\u5728\u8AC7\u672A\u4F86\uFF0C\u52D5\u8A5E\u4E5F\u7528\u73FE\u5728\u5F0F\uFF0C\u4E0D\u7528 will\u3002will \u53EA\u653E\u5728\u4E3B\u8981\u5B50\u53E5\u3002
+
+**\u53E5\u578B**
+\`when / after / before + \u73FE\u5728\u5F0F, will + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u57FA\u672C\u7D50\u69CB\u3002
+\`until / as soon as + \u73FE\u5728\u5F0F\`\uFF1Auntil \u8868\u793A\u76F4\u5230\uFF0Cas soon as \u8868\u793A\u4E00\u2026\u2026\u5C31\u3002
+\`\u73FE\u5728\u5B8C\u6210\u5F0F\`\uFF1A\u5F37\u8ABF\u67D0\u4E8B\u5148\u5B8C\u6210\uFF0C\u4F8B\u5982 after I have finished\u3002
+
+**\u4F8B\u53E5**
+I will call you when I get home. \u2014\u2014\u6211\u5230\u5BB6\u6642\u6703\u6253\u7D66\u4F60\u3002
+We will leave as soon as the rain stops. \u2014\u2014\u96E8\u4E00\u505C\u6211\u5011\u5C31\u51FA\u767C\u3002
+Please wait here until the doctor comes. \u2014\u2014\u8ACB\u5728\u9019\u88E1\u7B49\u5230\u91AB\u751F\u4F86\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I will call you when I will get home.
+\u2705 I will call you when I get home.
+\u539F\u56E0\uFF1A\u6642\u9593\u5B50\u53E5\u4E0D\u4F7F\u7528 will\u3002
+
+\u274C I'll wait until she will arrive.
+\u2705 I'll wait until she arrives.
+\u539F\u56E0\uFF1Auntil \u5F15\u5C0E\u7684\u6642\u9593\u5B50\u53E5\u4E5F\u7528\u73FE\u5728\u5F0F\u8868\u793A\u672A\u4F86\u3002
+
+\u53E6\u5916\uFF0C\u5982\u679C when \u5F15\u5C0E\u7684\u662F\u540D\u8A5E\u5B50\u53E5\uFF08\u554F\u53E5\u7684\u5167\u5BB9\uFF09\uFF0C\u4F8B\u5982 I don't know when she will arrive\uFF0C\u9019\u88E1\u7684 will \u662F\u53EF\u4EE5\u7528\u7684\uFF0C\u4E0D\u8981\u6DF7\u6DC6\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u672A\u4F86\u8868\u9054\uFF1A\u57FA\u672C\u7BC7\u5B78\u7FD2 will \u8207 going to \u5728\u4E3B\u8981\u5B50\u53E5\u7684\u7528\u6CD5\uFF1B\u9019\u4E00\u7BC7\u8655\u7406\u6642\u9593\u5B50\u53E5\u5167\u7684\u52D5\u8A5E\u5F62\u5F0F\u3002`,
+  "noun-clauses": `**\u6838\u5FC3\u6982\u5FF5**
+\u540D\u8A5E\u5B50\u53E5\u662F\u6574\u500B\u5B50\u53E5\u7576\u4F5C\u4E00\u500B\u540D\u8A5E\u4F86\u7528\uFF0C\u53EF\u4EE5\u7576\u4E3B\u8A5E\u3001\u53D7\u8A5E\u6216\u88DC\u8A9E\u3002\u5E38\u898B\u7684\u5F15\u5C0E\u5B57\u6709 that\u3001whether / if \u548C\u7591\u554F\u8A5E\uFF08what\u3001where\u3001why \u7B49\uFF09\u3002
+
+**\u53E5\u578B**
+\`that + \u5B50\u53E5\`\uFF1AI think that he is right.\uFF08\u53E3\u8A9E\u5E38\u7701\u7565 that\uFF09
+\`\u7591\u554F\u8A5E + \u4E3B\u8A5E + \u52D5\u8A5E\`\uFF1A\u8A9E\u5E8F\u662F\u76F4\u8FF0\u53E5\uFF0C\u4E0D\u7528\u5012\u88DD\uFF0C\u4F8B\u5982 I don't know where she lives\u3002
+\`if / whether + \u5B50\u53E5\`\uFF1A\u8868\u793A\u300C\u662F\u5426\u300D\u3002
+
+**\u4F8B\u53E5**
+I believe that honesty is important. \u2014\u2014\u6211\u76F8\u4FE1\u8AA0\u5BE6\u5F88\u91CD\u8981\u3002
+Could you tell me where the station is? \u2014\u2014\u4F60\u53EF\u4EE5\u544A\u8A34\u6211\u8ECA\u7AD9\u5728\u54EA\u88E1\u55CE\uFF1F
+I'm not sure whether he will come. \u2014\u2014\u6211\u4E0D\u78BA\u5B9A\u4ED6\u6703\u4E0D\u6703\u4F86\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I don't know where is the station.
+\u2705 I don't know where the station is.
+\u539F\u56E0\uFF1A\u540D\u8A5E\u5B50\u53E5\u4E2D\u7684\u8A9E\u5E8F\u662F\u76F4\u8FF0\u53E5\uFF0C\u4E3B\u8A5E\u5728\u52D5\u8A5E\u524D\u9762\u3002
+
+\u274C She asked me what did I want.
+\u2705 She asked me what I wanted.
+\u539F\u56E0\uFF1A\u9593\u63A5\u554F\u53E5\u4E0D\u7528\u52A9\u52D5\u8A5E do\u3002
+
+\u53E6\u5916\uFF0Cwhether \u53EF\u4EE5\u63A5 or not\uFF0C\u4E5F\u80FD\u653E\u5728\u4ECB\u7CFB\u8A5E\u4E4B\u5F8C\uFF0Cif \u5247\u8F03\u53E3\u8A9E\uFF0C\u901A\u5E38\u53EA\u7528\u5728\u53D7\u8A5E\u4F4D\u7F6E\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+Wh- \u554F\u53E5\uFF1A\u76F4\u63A5\u554F\u53E5\u8981\u5012\u88DD\u8207\u7528\u52A9\u52D5\u8A5E\uFF1B\u540D\u8A5E\u5B50\u53E5\u88E1\u5247\u6062\u5FA9\u6210\u76F4\u8FF0\u53E5\u8A9E\u5E8F\u3002`,
+  "participle-clauses-intro": `**\u6838\u5FC3\u6982\u5FF5**
+\u5206\u8A5E\u5B50\u53E5\u662F\u628A\u4E00\u500B\u5B50\u53E5\u7C21\u5316\uFF0C\u7528 -ing \u6216 -ed \u958B\u982D\u7684\u7247\u8A9E\u4F86\u8868\u9054\u3002\u6700\u91CD\u8981\u7684\u898F\u5247\u662F\uFF1A\u5206\u8A5E\u7684\u610F\u7FA9\u4E3B\u8A5E\u5FC5\u9808\u548C\u4E3B\u53E5\u4E3B\u8A5E\u76F8\u540C\uFF0C\u5426\u5247\u53E5\u610F\u6703\u8B8A\u5F97\u5947\u602A\u3002
+
+**\u53E5\u578B**
+\`V-ing ..., \u4E3B\u53E5\`\uFF1A\u4E3B\u52D5\u3001\u540C\u6642\u6216\u63A5\u9023\u767C\u751F\uFF0C\u4F8B\u5982 Walking home, I met an old friend\u3002
+\`V-ed ..., \u4E3B\u53E5\`\uFF1A\u88AB\u52D5\uFF0C\u4F8B\u5982 Tired after work, she went to bed early\u3002
+\`Not + V-ing ...\`\uFF1A\u5426\u5B9A\u5F62\u5F0F\u3002
+
+**\u4F8B\u53E5**
+Opening the window, she felt the cool breeze. \u2014\u2014\u5979\u6253\u958B\u7A97\u6236\uFF0C\u611F\u89BA\u5230\u6DBC\u723D\u7684\u5FAE\u98A8\u3002
+Surprised by the noise, the child started to cry. \u2014\u2014\u5B69\u5B50\u88AB\u566A\u97F3\u5687\u5230\uFF0C\u54ED\u4E86\u8D77\u4F86\u3002
+Not knowing the way, we asked a passer-by. \u2014\u2014\u6211\u5011\u4E0D\u8A8D\u5F97\u8DEF\uFF0C\u6240\u4EE5\u554F\u4E86\u8DEF\u4EBA\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C Walking down the street, the rain started.
+\u2705 Walking down the street, I felt the rain start.
+\u539F\u56E0\uFF1A\u300C\u8D70\u8DEF\u300D\u7684\u4EBA\u5FC5\u9808\u662F\u4E3B\u53E5\u7684\u4E3B\u8A5E\uFF0C\u96E8\u4E0D\u6703\u8D70\u8DEF\u3002
+
+\u274C Surprising by the news, he sat down.
+\u2705 Surprised by the news, he sat down.
+\u539F\u56E0\uFF1A\u8868\u88AB\u52D5\u3001\u88AB\u67D0\u4E8B\u5F71\u97FF\u7684\u7528 -ed \u5206\u8A5E\uFF0C\u4E0D\u662F -ing\u3002
+
+\u9019\u7A2E\u5BEB\u6CD5\u504F\u66F8\u9762\uFF0C\u53E3\u8A9E\u4E2D\u901A\u5E38\u76F4\u63A5\u7528\u5B8C\u6574\u5B50\u53E5\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u5206\u8A5E\u8207\u7E2E\u6E1B\u5B50\u53E5\uFF1A\u90A3\u4E00\u7BC7\u8655\u7406\u66F4\u591A\u7E2E\u6E1B\u65B9\u5F0F\u8207\u9650\u5236\uFF0C\u9019\u4E00\u7BC7\u5148\u638C\u63E1\u4E3B\u8A5E\u4E00\u81F4\u7684\u57FA\u672C\u898F\u5247\u3002`,
+  "concession-contrast": `**\u6838\u5FC3\u6982\u5FF5**
+\u8B93\u6B65\u8207\u8F49\u6298\u7684\u8A5E\u90FD\u8868\u9054\u300C\u5118\u7BA1\u2026\u2026\u4F46\u662F\u2026\u2026\u300D\u7684\u5C0D\u6BD4\uFF0C\u4F46\u8A5E\u6027\u4E0D\u540C\uFF0C\u6240\u4EE5\u5F8C\u9762\u63A5\u7684\u6771\u897F\u548C\u6A19\u9EDE\u4E5F\u4E0D\u540C\u3002\u9078\u5C0D\u8A5E\u7684\u95DC\u9375\u662F\u770B\u5F8C\u9762\u63A5\u7684\u662F\u5B50\u53E5\u3001\u540D\u8A5E\uFF0C\u9084\u662F\u7368\u7ACB\u7684\u4E00\u53E5\u8A71\u3002
+
+**\u53E5\u578B**
+\`although / though + \u5B50\u53E5\`\uFF1A\u9023\u63A5\u8A5E\uFF0C\u5F8C\u9762\u63A5\u5B8C\u6574\u5B50\u53E5\u3002
+\`despite / in spite of + \u540D\u8A5E\u6216 -ing\`\uFF1A\u4ECB\u7CFB\u8A5E\u3002
+\`However, ...\` \uFF0F \`Nevertheless, ...\`\uFF1A\u9023\u63A5\u526F\u8A5E\uFF0C\u9023\u63A5\u5169\u500B\u7368\u7ACB\u7684\u53E5\u5B50\uFF0C\u524D\u9762\u7528\u53E5\u865F\u6216\u5206\u865F\uFF0C\u5F8C\u9762\u52A0\u9017\u865F\u3002
+
+**\u4F8B\u53E5**
+Although it was raining, we went for a walk. \u2014\u2014\u96D6\u7136\u4E0B\u8457\u96E8\uFF0C\u6211\u5011\u9084\u662F\u53BB\u6563\u6B65\u4E86\u3002
+Despite the rain, we went for a walk. \u2014\u2014\u5118\u7BA1\u4E0B\u96E8\uFF0C\u6211\u5011\u9084\u662F\u53BB\u6563\u6B65\u4E86\u3002
+It was raining. However, we went for a walk. \u2014\u2014\u6B63\u5728\u4E0B\u96E8\u3002\u7136\u800C\u6211\u5011\u9084\u662F\u53BB\u6563\u6B65\u4E86\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C Despite it was raining, we went out.
+\u2705 Despite the rain, we went out. / Although it was raining, we went out.
+\u539F\u56E0\uFF1Adespite \u662F\u4ECB\u7CFB\u8A5E\uFF0C\u5F8C\u9762\u63A5\u540D\u8A5E\u6216 -ing\uFF1B\u82E5\u8981\u63A5\u5B50\u53E5\u61C9\u6539\u7528 although\u3002
+
+\u274C Although it was cold, but he went swimming.
+\u2705 Although it was cold, he went swimming.
+\u539F\u56E0\uFF1Aalthough \u548C but \u4E0D\u80FD\u540C\u6642\u4F7F\u7528\uFF0C\u4E00\u53E5\u8A71\u88E1\u53EA\u9700\u8981\u4E00\u500B\u8F49\u6298\u8A5E\u3002
+
+\u53E6\u5916\uFF0Cdespite the fact that \u5F8C\u9762\u53EF\u4EE5\u63A5\u5B50\u53E5\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u57FA\u672C\u9023\u63A5\u8A5E\uFF1A\u57FA\u672C\u7BC7\u8655\u7406 and\u3001but\u3001because \u7B49\uFF1B\u9019\u4E00\u7BC7\u8655\u7406\u8868\u793A\u5C0D\u6BD4\u7684\u9032\u968E\u9023\u63A5\u8A5E\u3002`,
+  "negation-quantifiers-advanced": `**\u6838\u5FC3\u6982\u5FF5**
+\u6709\u4E9B\u5B57\u672C\u8EAB\u5C31\u5E36\u6709\u5426\u5B9A\u610F\u5473\uFF0C\u4E0D\u9700\u8981\u518D\u52A0 not\u3002\u9019\u4E00\u7BC7\u8981\u5206\u6E05\u695A\u300C\u5E7E\u4E4E\u6C92\u6709\u300D\u548C\u300C\u6709\u4E00\u4E9B\u300D\u7684\u5DEE\u5225\uFF1Afew \u8207 little \u504F\u5426\u5B9A\uFF0Ca few \u8207 a little \u504F\u80AF\u5B9A\u3002
+
+**\u53E5\u578B**
+\`hardly / scarcely + \u52D5\u8A5E\`\uFF1A\u5E7E\u4E4E\u4E0D\uFF0C\u672C\u8EAB\u5DF2\u662F\u5426\u5B9A\uFF0C\u4E0D\u518D\u52A0 not\u3002
+\`few / a few + \u53EF\u6578\u8907\u6578\u540D\u8A5E\`\uFF1Afew \u662F\u5E7E\u4E4E\u6C92\u6709\uFF0Ca few \u662F\u6709\u5E7E\u500B\u3002
+\`little / a little + \u4E0D\u53EF\u6578\u540D\u8A5E\`\uFF1Alittle \u662F\u5E7E\u4E4E\u6C92\u6709\uFF0Ca little \u662F\u6709\u4E00\u9EDE\u3002
+
+**\u4F8B\u53E5**
+I could hardly hear what she said. \u2014\u2014\u6211\u5E7E\u4E4E\u807D\u4E0D\u898B\u5979\u8AAA\u4E86\u4EC0\u9EBC\u3002
+Few people know about this small caf\xE9. \u2014\u2014\u5F88\u5C11\u6709\u4EBA\u77E5\u9053\u9019\u9593\u5C0F\u5496\u5561\u9928\u3002
+There is a little milk left, so we can make tea. \u2014\u2014\u9084\u5269\u4E00\u9EDE\u725B\u5976\uFF0C\u6240\u4EE5\u6211\u5011\u53EF\u4EE5\u6CE1\u8336\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I can't hardly see anything.
+\u2705 I can hardly see anything.
+\u539F\u56E0\uFF1Ahardly \u672C\u8EAB\u5DF2\u6709\u5426\u5B9A\u610F\u5473\uFF0C\u518D\u52A0 not \u5C31\u8B8A\u6210\u96D9\u91CD\u5426\u5B9A\u3002
+
+\u274C I have few money, so I can't buy it.
+\u2705 I have little money, so I can't buy it.
+\u539F\u56E0\uFF1Amoney \u662F\u4E0D\u53EF\u6578\u540D\u8A5E\uFF0C\u8981\u7528 little\uFF0C\u4E0D\u662F few\u3002
+
+\u53E6\u5916\uFF0Ca few \u5E36\u6709\u300C\u6709\u4E00\u4E9B\uFF0C\u8DB3\u5920\u300D\u7684\u6B63\u9762\u611F\u89BA\uFF0Cfew \u5247\u5F37\u8ABF\u300C\u4E0D\u5920\u300D\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u91CF\u8A5E\uFF1A\u57FA\u672C\u7BC7\u8655\u7406 some\u3001any\u3001much\u3001many\uFF1B\u9019\u4E00\u7BC7\u8655\u7406 few\u3001little \u7684\u5426\u5B9A\u610F\u5473\u8207\u7D30\u5FAE\u5DEE\u5225\u3002`,
+  "emphasis-do-so-such": `**\u6838\u5FC3\u6982\u5FF5**
+\u9019\u4E00\u7BC7\u4ECB\u7D39\u4E09\u7A2E\u52A0\u5F37\u8A9E\u6C23\u7684\u65B9\u6CD5\uFF1A\u5728\u80AF\u5B9A\u53E5\u7528\u52A9\u52D5\u8A5E do \u5F37\u8ABF\u52D5\u8A5E\uFF1B\u7528 so \u4FEE\u98FE\u5F62\u5BB9\u8A5E\u6216\u526F\u8A5E\u3001\u7528 such \u4FEE\u98FE\u540D\u8A5E\u4F86\u52A0\u5F37\u7A0B\u5EA6\uFF1B\u9084\u53EF\u4EE5\u63A5 that \u8AAA\u660E\u7D50\u679C\u3002
+
+**\u53E5\u578B**
+\`do / does / did + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u5F37\u8ABF\u52D5\u8A5E\uFF0C\u91CD\u97F3\u653E\u5728 do \u4E0A\u3002
+\`so + \u5F62\u5BB9\u8A5E\uFF0F\u526F\u8A5E\`\u3001\`such + (a/an) + (\u5F62\u5BB9\u8A5E) + \u540D\u8A5E\`\uFF1A\u5F37\u8ABF\u7A0B\u5EA6\u3002
+\`so / such ... that + \u7D50\u679C\`\uFF1A\u592A\u2026\u2026\u4EE5\u81F4\u65BC\u2026\u2026\u3002
+
+**\u4F8B\u53E5**
+I do like your new haircut. \u2014\u2014\u6211\u771F\u7684\u5F88\u559C\u6B61\u4F60\u7684\u65B0\u9AEE\u578B\u3002
+The coffee was so hot that I couldn't drink it. \u2014\u2014\u5496\u5561\u71D9\u5230\u6211\u6C92\u8FA6\u6CD5\u559D\u3002
+It was such a long movie that we fell asleep. \u2014\u2014\u90A3\u90E8\u96FB\u5F71\u9577\u5230\u6211\u5011\u90FD\u7761\u8457\u4E86\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C She does likes cooking.
+\u2705 She does like cooking.
+\u539F\u56E0\uFF1A\u52A9\u52D5\u8A5E does \u4E4B\u5F8C\uFF0C\u52D5\u8A5E\u7528\u539F\u5F62\u3002
+
+\u274C It was so a beautiful day that we went out.
+\u2705 It was such a beautiful day that we went out.
+\u539F\u56E0\uFF1Aso \u5F8C\u9762\u63A5\u5F62\u5BB9\u8A5E\uFF0C\u5F8C\u9762\u6709\u540D\u8A5E\u6642\u8981\u7528 such\u3002
+
+\u53E6\u5916\uFF0Cso much / so many \u642D\u914D\u540D\u8A5E\u6642\u4ECD\u7136\u7528 so\uFF1Aso many people\u3001so much noise\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u5206\u88C2\u53E5\uFF1A\u90A3\u4E00\u7BC7\u7528 It is ... that \u7684\u7D50\u69CB\u5F37\u8ABF\u53E5\u5B50\u4E2D\u7684\u67D0\u4E00\u90E8\u5206\uFF0C\u9019\u4E00\u7BC7\u7684\u5F37\u8ABF\u65B9\u6CD5\u6BD4\u8F03\u7C21\u55AE\u76F4\u63A5\u3002`,
+  "preposition-meaning": `**\u6838\u5FC3\u6982\u5FF5**
+\u4ECB\u7CFB\u8A5E\u7684\u62BD\u8C61\u7528\u6CD5\u770B\u4F3C\u96DC\u4E82\uFF0C\u5176\u5BE6\u591A\u534A\u662F\u5F9E\u5177\u9AD4\u7A7A\u9593\u95DC\u4FC2\u5EF6\u4F38\u51FA\u4F86\u7684\u3002\u6293\u4F4F\u6BCF\u500B\u4ECB\u7CFB\u8A5E\u7684\u6838\u5FC3\u610F\u601D\uFF0C\u6703\u6BD4\u6B7B\u80CC\u642D\u914D\u5BB9\u6613\u7406\u89E3\u3002
+
+**\u53E5\u578B**
+\`of\`\uFF1A\u5C6C\u65BC\u3001\u69CB\u6210\u3001\u90E8\u5206\u8207\u6574\u9AD4\uFF0C\u4F8B\u5982 a piece of cake\u3002
+\`for\`\uFF1A\u76EE\u7684\u3001\u5C0D\u8C61\u3001\u671F\u9593\uFF0C\u4F8B\u5982 a gift for you\u3002
+\`by\`\uFF1A\u9760\u8FD1\u3001\u7D93\u7531\u3001\u4E0D\u665A\u65BC\u3001\u88AB\u52D5\u7684\u65BD\u52D5\u8005\uFF0C\u4F8B\u5982 by bus\u3002
+\`with\`\uFF1A\u4F34\u96A8\u3001\u4F7F\u7528\u5DE5\u5177\uFF0C\u4F8B\u5982 cut it with a knife\u3002
+
+**\u4F8B\u53E5**
+She is the captain of the team. \u2014\u2014\u5979\u662F\u9019\u652F\u968A\u4F0D\u7684\u968A\u9577\u3002
+I bought flowers for my mother. \u2014\u2014\u6211\u8CB7\u4E86\u82B1\u7D66\u6211\u5ABD\u5ABD\u3002
+He opened the box with a screwdriver. \u2014\u2014\u4ED6\u7528\u87BA\u7D72\u8D77\u5B50\u6253\u958B\u4E86\u76D2\u5B50\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I go to school with bus.
+\u2705 I go to school by bus.
+\u539F\u56E0\uFF1Aby \u7528\u65BC\u4EA4\u901A\u65B9\u5F0F\uFF0Cwith \u7528\u65BC\u4F34\u96A8\u6216\u4F7F\u7528\u7684\u5DE5\u5177\u3002
+
+\u274C The book was written from a famous author.
+\u2705 The book was written by a famous author.
+\u539F\u56E0\uFF1A\u88AB\u52D5\u8A9E\u614B\u4E2D\u8868\u793A\u505A\u4E8B\u7684\u4EBA\uFF0C\u8981\u7528 by\u3002
+
+\u5EFA\u8B70\u9047\u5230\u65B0\u642D\u914D\u6642\uFF0C\u5148\u554F\u81EA\u5DF1\u9019\u500B\u4ECB\u7CFB\u8A5E\u7684\u6838\u5FC3\u610F\u601D\u662F\u4EC0\u9EBC\uFF0C\u518D\u5224\u65B7\u662F\u5426\u5408\u7406\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u6642\u9593\u8207\u5730\u9EDE\u4ECB\u7CFB\u8A5E\uFF1A\u57FA\u672C\u7BC7\u8655\u7406 in\u3001on\u3001at\uFF1B\u9019\u4E00\u7BC7\u5F9E\u66F4\u62BD\u8C61\u7684\u89D2\u5EA6\u7406\u89E3 of\u3001for\u3001by\u3001with\u3002
+\u4ECB\u7CFB\u8A5E\u7684\u62BD\u8C61\u95DC\u4FC2\uFF1A\u90A3\u4E00\u7BC7\u8655\u7406\u66F4\u8907\u96DC\u7684\u62BD\u8C61\u95DC\u4FC2\uFF0C\u9019\u4E00\u7BC7\u5148\u638C\u63E1\u56DB\u500B\u5E38\u7528\u4ECB\u7CFB\u8A5E\u7684\u6838\u5FC3\u610F\u601D\u3002`,
+  "unless-in-case-as-long-as": `**\u6838\u5FC3\u6982\u5FF5**
+\u9019\u4E09\u500B\u9023\u63A5\u8A5E\u90FD\u80FD\u5F15\u5C0E\u689D\u4EF6\uFF0C\u4F46\u610F\u601D\u4E0D\u540C\uFF1Aunless \u8868\u793A\u300C\u9664\u975E\u300D\uFF0C\u7B49\u65BC if ... not\uFF1Bin case \u8868\u793A\u300C\u4EE5\u9632\u842C\u4E00\u300D\uFF0C\u662F\u4E8B\u5148\u9810\u9632\uFF1Bas long as \u8868\u793A\u300C\u53EA\u8981\u300D\uFF0C\u5F37\u8ABF\u552F\u4E00\u7684\u689D\u4EF6\u3002
+
+**\u53E5\u578B**
+\`unless + \u73FE\u5728\u5F0F\`\uFF1A\u9664\u975E\uFF0C\u7B49\u65BC if not\u3002
+\`in case + \u73FE\u5728\u5F0F\`\uFF1A\u70BA\u4E86\u9810\u9632\u53EF\u80FD\u767C\u751F\u7684\u4E8B\uFF0C\u5148\u505A\u6E96\u5099\u3002
+\`as long as + \u73FE\u5728\u5F0F\`\uFF1A\u53EA\u8981\uFF0C\u689D\u4EF6\u6210\u7ACB\u5C31\u53EF\u4EE5\u3002
+
+**\u4F8B\u53E5**
+I won't go unless you come with me. \u2014\u2014\u9664\u975E\u4F60\u8DDF\u6211\u4E00\u8D77\uFF0C\u5426\u5247\u6211\u4E0D\u53BB\u3002
+Take an umbrella in case it rains. \u2014\u2014\u5E36\u628A\u5098\uFF0C\u4EE5\u9632\u4E0B\u96E8\u3002
+You can borrow my car as long as you drive carefully. \u2014\u2014\u53EA\u8981\u4F60\u5C0F\u5FC3\u958B\uFF0C\u5C31\u53EF\u4EE5\u501F\u6211\u7684\u8ECA\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C I'll take an umbrella in case it will rain.
+\u2705 I'll take an umbrella in case it rains.
+\u539F\u56E0\uFF1Ain case \u5B50\u53E5\u7528\u73FE\u5728\u5F0F\u8868\u793A\u672A\u4F86\uFF0C\u4E0D\u7528 will\u3002
+
+\u274C Unless you don't hurry, you'll be late.
+\u2705 Unless you hurry, you'll be late.
+\u539F\u56E0\uFF1Aunless \u672C\u8EAB\u5DF2\u6709\u5426\u5B9A\u610F\u5473\uFF0C\u5F8C\u9762\u4E0D\u518D\u52A0 not\u3002
+
+\u53E6\u5916\uFF0Cin case \u548C if \u7684\u5DEE\u5225\uFF1Ain case \u662F\u5148\u6E96\u5099\u518D\u8AAA\uFF0Cif \u662F\u4E8B\u60C5\u767C\u751F\u4E4B\u5F8C\u624D\u8655\u7406\u3002\u6BD4\u8F03 I'll take a coat in case it gets cold\uFF08\u5148\u5E36\uFF09\u8207 I'll put on a coat if it gets cold\uFF08\u8B8A\u51B7\u4E4B\u5F8C\u624D\u7A7F\uFF09\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u771F\u5BE6\u689D\u4EF6\u53E5\uFF1A\u771F\u5BE6\u689D\u4EF6\u53E5\u7528 if \u8AC7\u53EF\u80FD\u7684\u60C5\u6CC1\uFF1B\u9019\u4E00\u7BC7\u7684\u4E09\u500B\u9023\u63A5\u8A5E\u662F\u66F4\u7CBE\u78BA\u7684\u66FF\u4EE3\u8AAA\u6CD5\u3002`,
+  "all-both-each": `**\u6838\u5FC3\u6982\u5FF5**
+all\u3001both\u3001each \u90FD\u7528\u4F86\u8AC7\u4E00\u7FA4\u4EBA\u6216\u4E8B\u7269\uFF0C\u4F46\u8996\u89D2\u4E0D\u540C\uFF1Aall \u6307\u5168\u90E8\uFF08\u4E09\u500B\u4EE5\u4E0A\uFF09\uFF1Bboth \u6307\u5169\u8005\u90FD\uFF1Beach \u5F37\u8ABF\u4E00\u500B\u4E00\u500B\u3001\u500B\u5225\u5730\u770B\u3002
+
+**\u53E5\u578B**
+\`all + \u8907\u6578\u540D\u8A5E\uFF0F\u4E0D\u53EF\u6578\u540D\u8A5E\`\u3001\`all of the + \u540D\u8A5E\`\uFF1A\u5168\u90E8\u3002
+\`both + \u8907\u6578\u540D\u8A5E\`\u3001\`both of + them / the + \u540D\u8A5E\`\uFF1A\u5169\u8005\u90FD\u3002
+\`each + \u55AE\u6578\u540D\u8A5E + \u55AE\u6578\u52D5\u8A5E\`\uFF1A\u6BCF\u4E00\u500B\u3002
+
+**\u4F8B\u53E5**
+All the students passed the exam. \u2014\u2014\u6240\u6709\u5B78\u751F\u90FD\u901A\u904E\u4E86\u8003\u8A66\u3002
+Both of my parents are teachers. \u2014\u2014\u6211\u7684\u7236\u6BCD\u5169\u4EBA\u90FD\u662F\u8001\u5E2B\u3002
+Each child gets a small gift. \u2014\u2014\u6BCF\u500B\u5B69\u5B50\u90FD\u6703\u62FF\u5230\u4E00\u4EFD\u5C0F\u79AE\u7269\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+\u274C Each students has a book.
+\u2705 Each student has a book.
+\u539F\u56E0\uFF1Aeach \u5F8C\u9762\u63A5\u55AE\u6578\u540D\u8A5E\uFF0C\u52D5\u8A5E\u4E5F\u7528\u55AE\u6578\u3002
+
+\u274C Both my sisters is married.
+\u2705 Both my sisters are married.
+\u539F\u56E0\uFF1Aboth \u6307\u5169\u500B\u4EBA\uFF0C\u52D5\u8A5E\u7528\u8907\u6578\u3002
+
+\u53E6\u5916\uFF0Call \u8207 both \u4F5C\u4E3B\u8A5E\u7684\u540C\u4F4D\u8A9E\u6642\uFF0C\u4F4D\u7F6E\u5728\u52A9\u52D5\u8A5E\u4E4B\u5F8C\u3001\u4E00\u822C\u52D5\u8A5E\u4E4B\u524D\uFF0C\u4F8B\u5982 They all agreed\u3001We have both finished\u3002both \u53EA\u80FD\u7528\u65BC\u5169\u500B\uFF0C\u4E09\u500B\u4EE5\u4E0A\u6539\u7528 all\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+\u91CF\u8A5E\uFF1A\u57FA\u672C\u7BC7\u8655\u7406 some\u3001any\u3001much\u3001many\uFF1B\u9019\u4E00\u7BC7\u8655\u7406\u5168\u9AD4\u8207\u500B\u5225\u7684\u91CF\u8A5E\u3002`
+};
+
+// src/core/grammar/explanations/stage3.ts
+var STAGE3_EXPLANATIONS = {
+  "perfect-vs-progressive-nuance": `**\u6838\u5FC3\u6982\u5FF5**
+\u73FE\u5728\u5B8C\u6210\u5F0F\uFF08present perfect\uFF09\u548C\u73FE\u5728\u5B8C\u6210\u9032\u884C\u5F0F\uFF08present perfect continuous\uFF09\u5E38\u80FD\u63CF\u8FF0\u540C\u4E00\u6BB5\u6642\u9593\uFF0C\u5DEE\u5225\u5728\u8AAA\u8A71\u8005\u7684\u7126\u9EDE\uFF1A\u524D\u8005\u770B\u300C\u7D50\u679C\u3001\u6578\u91CF\u3001\u5B8C\u6210\u4E86\u6C92\u300D\uFF0C\u5F8C\u8005\u770B\u300C\u6D3B\u52D5\u672C\u8EAB\u3001\u904E\u7A0B\u3001\u6301\u7E8C\u6027\u300D\u3002\u9078\u54EA\u500B\uFF0C\u53D6\u6C7A\u65BC\u4F60\u60F3\u8B93\u807D\u8005\u6CE8\u610F\u4EC0\u9EBC\u3002
+
+**\u53E5\u578B**
+\`has/have + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u5F37\u8ABF\u5DF2\u5B8C\u6210\u7684\u7D50\u679C\u6216\u5DF2\u7D2F\u7A4D\u7684\u6578\u91CF\u3002
+\`has/have been + V-ing\`\uFF1A\u5F37\u8ABF\u6D3B\u52D5\u6301\u7E8C\u9032\u884C\uFF0C\u7D50\u679C\u4E0D\u4E00\u5B9A\u5B8C\u6210\uFF0C\u5E38\u5E36\u6709\u300C\u6700\u8FD1\u4E00\u76F4\u5728\u505A\u300D\u7684\u611F\u89BA\u3002
+
+**\u4F8B\u53E5**
+- I have repaired the bike. It works now.\u2014\u2014\u6211\u628A\u8173\u8E0F\u8ECA\u4FEE\u597D\u4E86\uFF0C\u73FE\u5728\u80FD\u9A0E\u3002
+- I have been repairing the bike all morning, and my hands are black.\u2014\u2014\u6211\u6574\u500B\u65E9\u4E0A\u90FD\u5728\u4FEE\u8173\u8E0F\u8ECA\uFF0C\u624B\u90FD\u9ED1\u4E86\u3002
+- She has read three chapters this week.\u2014\u2014\u5979\u9019\u9031\u8B80\u5B8C\u4E86\u4E09\u7AE0\u3002
+
+**\u8AAA\u8A71\u8005\u7684\u8996\u89D2**
+\u540C\u4E00\u4EF6\u4E8B\u53EF\u4EE5\u5169\u7A2E\u90FD\u5C0D\uFF1AShe has written the report.\uFF08\u91CD\u9EDE\u662F\u5831\u544A\u5BEB\u597D\u4E86\uFF09\uFF0FShe has been writing the report.\uFF08\u91CD\u9EDE\u662F\u5979\u82B1\u6642\u9593\u5728\u5BEB\uFF0C\u53EF\u80FD\u9084\u6C92\u5B8C\u6210\uFF09\u3002\u51FA\u73FE\u6578\u91CF\uFF08three chapters\uFF09\u6642\uFF0C\u901A\u5E38\u7528\u5B8C\u6210\u5F0F\uFF0C\u56E0\u70BA\u6578\u91CF\u4EE3\u8868\u6709\u7D50\u679C\u53EF\u6578\u3002
+
+**\u72C0\u614B\u52D5\u8A5E\u7684\u9650\u5236**
+\u72C0\u614B\u52D5\u8A5E\uFF08stative verb\uFF0C\u5982 know\u3001own\u3001belong\u3001understand\uFF09\u4E00\u822C\u4E0D\u7528\u9032\u884C\u5F0F\uFF0C\u8981\u8868\u9054\u300C\u6301\u7E8C\u5230\u73FE\u5728\u300D\u6642\u7528\u5B8C\u6210\u5F0F\uFF1AI have known him for years. \u4E0D\u8AAA I have been knowing him.
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I have been knowing her since 2015. \u2705 I have known her since 2015. \u539F\u56E0\uFF1Aknow \u662F\u72C0\u614B\u52D5\u8A5E\uFF0C\u4E0D\u7528\u9032\u884C\u5F0F\u3002
+- \u274C I have been finishing the report, so you can read it. \u2705 I have finished the report, so you can read it. \u539F\u56E0\uFF1A\u8981\u8AAA\u300C\u5DF2\u5B8C\u6210\u300D\uFF0C\u91CD\u9EDE\u5728\u7D50\u679C\uFF0C\u7528\u5B8C\u6210\u5F0F\u3002
+- \u274C She has been writing five emails today. \u2705 She has written five emails today. \u539F\u56E0\uFF1A\u660E\u78BA\u7684\u5B8C\u6210\u6578\u91CF\u642D\u914D\u5B8C\u6210\u5F0F\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u73FE\u5728\u5B8C\u6210\u5F0F\u8207\u904E\u53BB\u5F0F\uFF1A\u5F8C\u8005\u6307\u660E\u78BA\u7684\u904E\u53BB\u6642\u9593\u9EDE\uFF0C\u8207\u73FE\u5728\u7121\u76F4\u63A5\u9023\u7D50\uFF1B\u672C\u4E3B\u984C\u5247\u662F\u5728\u300C\u90FD\u9023\u5230\u73FE\u5728\u300D\u7684\u5169\u7A2E\u5F62\u5F0F\u4E2D\u9078\u64C7\u7126\u9EDE\u3002
+- \u73FE\u5728\u5B8C\u6210\u9032\u884C\u5F0F\uFF1A\u672C\u4E3B\u984C\u628A\u5B83\u548C\u7C21\u55AE\u7684\u5B8C\u6210\u5F0F\u4E26\u6392\u6BD4\u8F03\uFF0C\u91CD\u9EDE\u5728\u4F55\u6642\u6539\u9078\u5B8C\u6210\u5F0F\u3002`,
+  "future-in-the-past": `**\u6838\u5FC3\u6982\u5FF5**
+\u8AAA\u5230\u904E\u53BB\u67D0\u500B\u6642\u9593\u9EDE\uFF0C\u56DE\u982D\u8AC7\u300C\u7576\u6642\u5C0D\u672A\u4F86\u7684\u9810\u671F\u6216\u8A08\u756B\u300D\uFF0C\u5C31\u9700\u8981\u300C\u904E\u53BB\u89C0\u9EDE\u4E2D\u7684\u672A\u4F86\u300D\uFF08future in the past\uFF09\u3002\u5B83\u5E38\u51FA\u73FE\u5728\u6558\u4E8B\u8207\u8F49\u8FF0\u88E1\uFF0C\u628A\u539F\u672C\u7684 will\u3001going to \u5F80\u904E\u53BB\u63A8\u4E00\u6B65\u3002
+
+**\u53E5\u578B**
+\`was/were going to + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u7576\u6642\u7684\u8A08\u756B\u6216\u6253\u7B97\uFF0C\u5E38\u6697\u793A\u5F8C\u4F86\u6C92\u5BE6\u73FE\u3002
+\`would + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u5F9E\u904E\u53BB\u770B\u5230\u7684\u5F8C\u4F86\u767C\u751F\u7684\u4E8B\uFF0C\u591A\u7528\u65BC\u6558\u4E8B\u3002
+\`was/were about to + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u7576\u6642\u6B63\u8981\u505A\u67D0\u4E8B\uFF0C\u6642\u9593\u975E\u5E38\u63A5\u8FD1\u3002
+
+**\u4F8B\u53E5**
+- We were going to hike on Sunday, but it rained all day.\u2014\u2014\u6211\u5011\u539F\u672C\u6253\u7B97\u9031\u65E5\u5065\u884C\uFF0C\u7D50\u679C\u4E0B\u4E86\u4E00\u6574\u5929\u7684\u96E8\u3002
+- He didn't know then that he would become a famous chef.\u2014\u2014\u4ED6\u7576\u6642\u4E26\u4E0D\u77E5\u9053\u81EA\u5DF1\u5C07\u6210\u70BA\u6709\u540D\u7684\u5EDA\u5E2B\u3002
+- I was about to call you when you walked in.\u2014\u2014\u4F60\u8D70\u9032\u4F86\u6642\uFF0C\u6211\u6B63\u8981\u6253\u96FB\u8A71\u7D66\u4F60\u3002
+
+**was going to \u8207\u672A\u5BE6\u73FE\u7684\u8A08\u756B**
+was going to \u591A\u534A\u8868\u793A\u300C\u672C\u4F86\u6253\u7B97\u300D\uFF0C\u5E36\u6709\u5F8C\u4F86\u6C92\u505A\u6210\u7684\u610F\u5473\uFF0C\u5E38\u642D\u914D but \u5F15\u51FA\u5BE6\u969B\u60C5\u5F62\u3002\u4F46\u82E5\u6C92\u6709\u8F49\u6298\uFF0C\u4E5F\u53EF\u4EE5\u53EA\u662F\u4E2D\u6027\u5730\u63CF\u8FF0\u7576\u6642\u7684\u8A08\u756B\u3002
+
+**would \u8207\u5176\u4ED6\u8AAA\u6CD5**
+would \u7528\u5728\u6558\u4E8B\u88E1\uFF0C\u8AAA\u660E\u300C\u4E8B\u5F8C\u770B\u4F86\u63A5\u8457\u767C\u751F\u7684\u4E8B\u300D\uFF0C\u4E0D\u5F37\u8ABF\u4E8B\u524D\u7684\u8A08\u756B\u3002\u53E6\u5916 was to\uFF08\u5982 He was to arrive at noon\uFF09\u662F\u8F03\u6B63\u5F0F\u7684\u8AAA\u6CD5\uFF0C\u8868\u793A\u7576\u6642\u5B89\u6392\u597D\u7684\u4E8B\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C She said she will join us. \u2705 She said she would join us. \u539F\u56E0\uFF1A\u4E3B\u8981\u52D5\u8A5E\u662F\u904E\u53BB\u5F0F\uFF0C\u5F8C\u9762\u7684\u672A\u4F86\u8981\u9000\u6210 would\u3002
+- \u274C I was going to bought a gift. \u2705 I was going to buy a gift. \u539F\u56E0\uFF1Agoing to \u5F8C\u9762\u63A5\u539F\u5F62\u52D5\u8A5E\u3002
+- \u274C He was about to leaving when the phone rang. \u2705 He was about to leave when the phone rang. \u539F\u56E0\uFF1Aabout to \u5F8C\u9762\u4E5F\u63A5\u539F\u5F62\u52D5\u8A5E\u3002`,
+  "modals-nuance": `**\u6838\u5FC3\u6982\u5FF5**
+\u60C5\u614B\u52D5\u8A5E\uFF08modal verb\uFF09\u9664\u4E86\u8868\u793A\u80FD\u529B\uFF0C\u66F4\u7528\u4F86\u8868\u9054\u8AAA\u8A71\u8005\u7684\u628A\u63E1\u7A0B\u5EA6\u3001\u7FA9\u52D9\u8F15\u91CD\u8207\u79AE\u8C8C\u7A0B\u5EA6\u3002\u540C\u4E00\u500B\u53E5\u5B50\u63DB\u4E00\u500B\u60C5\u614B\u52D5\u8A5E\uFF0C\u610F\u601D\u5F37\u5F31\u548C\u8A9E\u6C23\u5C31\u8DDF\u8457\u8B8A\u3002\u9032\u968E\u5B78\u7FD2\u91CD\u9EDE\u662F\u5206\u8FA8\u5F37\u5EA6\uFF0C\u4E26\u5B78\u6703\u7528\u5B83\u5011\u8B93\u8A9E\u6C23\u59D4\u5A49\u3002
+
+**\u53E5\u578B**
+\`must / can't + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u5C0D\u73FE\u5728\u4E8B\u5BE6\u6709\u9AD8\u5EA6\u628A\u63E1\u7684\u63A8\u8AD6\u3002
+\`should / ought to / had better + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u5EFA\u8B70\u3001\u671F\u5F85\uFF0C\u5F37\u5EA6\u7531\u5F31\u5230\u5F37\u3002
+\`modal + have + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u5C0D\u904E\u53BB\u4E8B\u4EF6\u7684\u63A8\u8AD6\u3001\u8A55\u8AD6\u6216\u5F8C\u6094\u3002
+
+**\u4F8B\u53E5**
+- The lights are off, so they must be asleep.\u2014\u2014\u71C8\u90FD\u95DC\u4E86\uFF0C\u4ED6\u5011\u4E00\u5B9A\u7761\u4E86\u3002
+- Would you mind closing the window? It might be a little cold.\u2014\u2014\u53EF\u4EE5\u8ACB\u4F60\u628A\u7A97\u6236\u95DC\u4E0A\u55CE\uFF1F\u53EF\u80FD\u6709\u9EDE\u51B7\u3002
+- You should have told me earlier.\u2014\u2014\u4F60\u65E9\u8A72\u544A\u8A34\u6211\u7684\u3002
+
+**\u5F37\u5EA6\u8207\u59D4\u5A49**
+\u63A8\u8AD6\u7684\u628A\u63E1\u5EA6\u5927\u81F4\u662F must\uFF08\u5F88\u6709\u628A\u63E1\uFF09> should\uFF08\u5408\u7406\u9810\u671F\uFF09> may / might\uFF08\u53EA\u662F\u53EF\u80FD\uFF09\u3002\u8981\u63D0\u51FA\u8ACB\u6C42\u6216\u610F\u898B\u53C8\u4E0D\u60F3\u592A\u76F4\u63A5\u6642\uFF0Ccan \u6539\u6210 could\u3001will \u6539\u6210 would\uFF0C\u6216\u52A0\u4E0A might\u3001perhaps\uFF0C\u8A9E\u6C23\u90FD\u6703\u66F4\u67D4\u548C\u3002
+
+**\u5C0D\u904E\u53BB\u7684\u8A55\u8AD6**
+should have done \u8868\u793A\u300C\u7576\u6642\u61C9\u8A72\u505A\u537B\u6C92\u505A\u300D\uFF1Bcould have done \u8868\u793A\u300C\u7576\u6642\u6709\u53EF\u80FD\u505A\u5230\u300D\uFF1Bneedn't have done \u8868\u793A\u300C\u505A\u4E86\u5176\u5BE6\u6C92\u5FC5\u8981\u300D\uFF1Bmust have done \u8868\u793A\u5C0D\u904E\u53BB\u4E8B\u5BE6\u7684\u5F37\u70C8\u63A8\u8AD6\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C He must have forgot the meeting. \u2705 He must have forgotten the meeting. \u539F\u56E0\uFF1Ahave \u5F8C\u9762\u8981\u63A5\u904E\u53BB\u5206\u8A5E\u3002
+- \u274C You should to apologize. \u2705 You should apologize. \u539F\u56E0\uFF1Ashould \u5F8C\u9762\u76F4\u63A5\u63A5\u539F\u5F62\uFF0C\u4E0D\u52A0 to\u3002
+- \u274C She must be at home, but I'm not sure. \u2705 She may be at home, but I'm not sure. \u539F\u56E0\uFF1Amust \u4EE3\u8868\u5F88\u6709\u628A\u63E1\uFF0C\u548C\u300C\u4E0D\u78BA\u5B9A\u300D\u4E92\u76F8\u77DB\u76FE\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u60C5\u614B\u52D5\u8A5E\u7684\u63A8\u8AD6\uFF1A\u53EA\u8655\u7406 must\u3001might\u3001can't \u7B49\u731C\u6E2C\uFF1B\u672C\u4E3B\u984C\u518D\u52A0\u5165\u7FA9\u52D9\u3001\u79AE\u8C8C\u8207\u5C0D\u904E\u53BB\u7684\u8A55\u8AD6\u3002
+- must \u8207 have to\uFF1A\u53EA\u6BD4\u8F03\u7FA9\u52D9\u7684\u4F86\u6E90\uFF1B\u672C\u4E3B\u984C\u64F4\u53CA\u6574\u7D44\u60C5\u614B\u52D5\u8A5E\u7684\u5F37\u5EA6\u6392\u5E8F\u3002`,
+  "mixed-conditionals": `**\u6838\u5FC3\u6982\u5FF5**
+\u4E00\u822C\u7684\u5047\u8A2D\u689D\u4EF6\u53E5\uFF0C\u689D\u4EF6\u8207\u7D50\u679C\u767C\u751F\u5728\u540C\u4E00\u500B\u6642\u9593\u3002\u6DF7\u5408\u689D\u4EF6\u53E5\uFF08mixed conditional\uFF09\u5247\u662F\u5169\u8005\u6642\u9593\u4E0D\u540C\uFF1A\u4E00\u908A\u8AC7\u904E\u53BB\uFF0C\u53E6\u4E00\u908A\u8AC7\u73FE\u5728\uFF0C\u7528\u4F86\u8AAA\u660E\u300C\u904E\u53BB\u7684\u4E8B\u5982\u4F55\u5F71\u97FF\u73FE\u5728\u300D\u6216\u300C\u73FE\u5728\u7684\u72C0\u6CC1\u5982\u4F55\u6C7A\u5B9A\u904E\u53BB\u7684\u7D50\u679C\u300D\u3002
+
+**\u53E5\u578B**
+\`If + \u904E\u53BB\u5B8C\u6210\u5F0F, would + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u904E\u53BB\u7684\u689D\u4EF6\u9020\u6210\u73FE\u5728\u7684\u7D50\u679C\u3002
+\`If + \u904E\u53BB\u5F0F, would have + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u73FE\u5728\u7684\u72C0\u6CC1\u5F71\u97FF\u904E\u53BB\u7684\u7D50\u679C\u3002
+
+**\u4F8B\u53E5**
+- If I had taken that job, I would be living in Tokyo now.\u2014\u2014\u5982\u679C\u6211\u7576\u521D\u63A5\u4E86\u90A3\u4EFD\u5DE5\u4F5C\uFF0C\u73FE\u5728\u5C31\u4F4F\u5728\u6771\u4EAC\u4E86\u3002
+- If she were more careful, she wouldn't have lost the keys.\u2014\u2014\u5982\u679C\u5979\u66F4\u7D30\u5FC3\uFF0C\u5C31\u4E0D\u6703\u5F04\u4E1F\u9470\u5319\u4E86\u3002
+- If we had saved more, we could afford a bigger house today.\u2014\u2014\u5982\u679C\u6211\u5011\u4EE5\u524D\u591A\u5B58\u4E00\u9EDE\uFF0C\u4ECA\u5929\u5C31\u8CB7\u5F97\u8D77\u66F4\u5927\u7684\u623F\u5B50\u3002
+
+**\u6C92\u6709 if \u7684\u96B1\u542B\u689D\u4EF6**
+\u689D\u4EF6\u4E0D\u4E00\u5B9A\u5BEB\u51FA if\u3002\u50CF Without your help, I would have failed.\u3001With better planning, we wouldn't be in this mess. \u9019\u985E without\u3001with\u3001but for \u958B\u982D\u7684\u7247\u8A9E\uFF0C\u5176\u5BE6\u4E5F\u96B1\u542B\u4E00\u500B\u5047\u8A2D\u7684\u689D\u4EF6\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C If I would have known, I would have told you. \u2705 If I had known, I would have told you. \u539F\u56E0\uFF1Aif \u5B50\u53E5\u4E0D\u7528 would\uFF0C\u8981\u7528\u904E\u53BB\u5B8C\u6210\u5F0F\u3002
+- \u274C If I had a car yesterday, I would have driven you. \u2705 If I had had a car yesterday, I would have driven you. \u539F\u56E0\uFF1A\u8AC7\u904E\u53BB\u7684\u689D\u4EF6\u8981\u7528\u904E\u53BB\u5B8C\u6210\u5F0F\u3002
+- \u274C If I am taller, I would have joined the team. \u2705 If I were taller, I would have joined the team. \u539F\u56E0\uFF1A\u5047\u8A2D\u8207\u73FE\u5728\u4E8B\u5BE6\u76F8\u53CD\u7684\u72C0\u614B\uFF0C\u8981\u7528\u904E\u53BB\u5F0F were\uFF0C\u4E0D\u80FD\u7528 am\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u5047\u8A2D\u689D\u4EF6\u53E5\uFF1A\u689D\u4EF6\u8207\u7D50\u679C\u901A\u5E38\u540C\u4E00\u6642\u9593\uFF08\u73FE\u5728\u6216\u904E\u53BB\uFF09\uFF1B\u672C\u4E3B\u984C\u5247\u662F\u8DE8\u6642\u9593\u6DF7\u5408\u3002
+- \u6B63\u5F0F\u5047\u8A2D\u8207\u5012\u88DD\u689D\u4EF6\uFF1A\u5012\u88DD\u689D\u4EF6\u7701\u7565 if \u7684\u662F\u5F62\u5F0F\u554F\u984C\uFF0C\u53EF\u8207\u6DF7\u5408\u689D\u4EF6\u4E26\u7528\uFF0C\u5982 Had I accepted, I would be there now.`,
+  "impersonal-passive": `**\u6838\u5FC3\u6982\u5FF5**
+\u975E\u4EBA\u7A31\u88AB\u52D5\uFF08impersonal passive\uFF09\u7528\u4F86\u6B63\u5F0F\u5730\u8F49\u8FF0\u300C\u5927\u5BB6\u90FD\u8AAA\u300D\u3001\u300C\u666E\u904D\u8A8D\u70BA\u300D\uFF0C\u4E0D\u6307\u660E\u8AB0\u8AAA\u7684\u3002\u5E38\u898B\u65BC\u65B0\u805E\u3001\u5831\u544A\u8207\u5B78\u8853\u6587\u7AE0\u3002\u56E0\u70BA\u4E0D\u9EDE\u540D\u4F86\u6E90\uFF0C\u8A9E\u6C23\u5BA2\u89C0\uFF0C\u4E5F\u5F88\u9069\u5408\u8868\u9054\u672A\u7D93\u8B49\u5BE6\u7684\u8CC7\u8A0A\u3002
+
+**\u53E5\u578B**
+\`It + be + \u904E\u53BB\u5206\u8A5E + that + \u5B50\u53E5\`\uFF1AIt is said that the bridge is unsafe.
+\`\u4E3B\u8A5E + be + \u904E\u53BB\u5206\u8A5E + to + \u539F\u5F62\u52D5\u8A5E\`\uFF1AThe bridge is said to be unsafe.
+\`\u4E3B\u8A5E + be + \u904E\u53BB\u5206\u8A5E + to have + \u904E\u53BB\u5206\u8A5E\`\uFF1A\u8F03\u65E9\u767C\u751F\u7684\u4E8B\u3002
+
+**\u4F8B\u53E5**
+- It is believed that the manuscript was written in the 12th century.\u2014\u2014\u4EBA\u5011\u76F8\u4FE1\u9019\u4EFD\u624B\u7A3F\u5BEB\u65BC\u5341\u4E8C\u4E16\u7D00\u3002
+- The company is expected to announce its plan next week.\u2014\u2014\u9019\u5BB6\u516C\u53F8\u9810\u8A08\u4E0B\u9031\u5BA3\u5E03\u8A08\u756B\u3002
+- The painter is thought to have left the city in 1920.\u2014\u2014\u4E00\u822C\u8A8D\u70BA\u9019\u4F4D\u756B\u5BB6\u5728 1920 \u5E74\u96E2\u958B\u4E86\u9019\u5EA7\u57CE\u5E02\u3002
+
+**\u4E0D\u5B9A\u8A5E\u7684\u6642\u614B**
+to be \u8868\u793A\u548C\u8F49\u8FF0\u6642\u540C\u6642\u7684\u72C0\u614B\uFF1Bto have done \u8868\u793A\u6BD4\u8F49\u8FF0\u6642\u9593\u66F4\u65E9\u7684\u4E8B\u3002\u4F8B\u5982 He is said to be rich\uFF08\u73FE\u5728\u5BCC\u6709\uFF09\u8207 He is said to have been rich\uFF08\u904E\u53BB\u66FE\u7D93\u5BCC\u6709\uFF09\u610F\u601D\u4E0D\u540C\u3002
+
+**\u5E38\u7528\u52D5\u8A5E**
+say\u3001believe\u3001think\u3001report\u3001expect\u3001know\u3001consider\u3001understand \u90FD\u5E38\u7528\u5728\u9019\u7A2E\u53E5\u578B\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C It is said him to be honest. \u2705 He is said to be honest. \u539F\u56E0\uFF1A\u4E0D\u5B9A\u8A5E\u53E5\u578B\u7684\u4E3B\u8A5E\u8981\u653E\u5728\u53E5\u9996\u3002
+- \u274C She is believed to leave last year. \u2705 She is believed to have left last year. \u539F\u56E0\uFF1A\u8F03\u65E9\u7684\u4E8B\u8981\u7528 to have done\u3002
+- \u274C It is thought that he to be guilty. \u2705 It is thought that he is guilty. \u539F\u56E0\uFF1Athat \u5B50\u53E5\u8981\u7528\u5B8C\u6574\u7684\u52D5\u8A5E\uFF0C\u4E0D\u63A5\u4E0D\u5B9A\u8A5E\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u88AB\u52D5\u8A9E\u614B\u9032\u968E\uFF1A\u8655\u7406\u4E00\u822C\u88AB\u52D5\u7684\u5404\u7A2E\u5F62\u5F0F\uFF1B\u672C\u4E3B\u984C\u5C08\u6CE8\u65BC\u8F49\u8FF0\u770B\u6CD5\u7684\u56FA\u5B9A\u53E5\u578B\u3002
+- \u9593\u63A5\u5F15\u8FF0\uFF1A\u9593\u63A5\u5F15\u8FF0\u6709\u5177\u9AD4\u8AAA\u8A71\u8005\uFF0C\u672C\u4E3B\u984C\u5247\u523B\u610F\u4E0D\u6307\u660E\u4F86\u6E90\u3002`,
+  "negative-inversion": `**\u6838\u5FC3\u6982\u5FF5**
+\u7576 never\u3001rarely\u3001hardly \u7B49\u5426\u5B9A\u6216\u63A5\u8FD1\u5426\u5B9A\u7684\u526F\u8A5E\u653E\u5728\u53E5\u9996\uFF0C\u7528\u4F86\u52A0\u5F37\u8A9E\u6C23\u6642\uFF0C\u4E3B\u8A5E\u8207\u52A9\u52D5\u8A5E\u8981\u5012\u88DD\uFF08inversion\uFF09\uFF0C\u50CF\u7591\u554F\u53E5\u4E00\u6A23\u3002\u9019\u662F\u6B63\u5F0F\u3001\u6587\u5B78\u6216\u6F14\u8B1B\u4E2D\u5E38\u898B\u7684\u5F37\u8ABF\u624B\u6CD5\u3002
+
+**\u53E5\u578B**
+\`\u5426\u5B9A\u526F\u8A5E + \u52A9\u52D5\u8A5E + \u4E3B\u8A5E + \u52D5\u8A5E\`\uFF1ANever have I seen such a view.
+\`No sooner + had + \u4E3B\u8A5E + \u904E\u53BB\u5206\u8A5E + than ...\`\uFF1A\u4E00\u2026\u2026\u5C31\u2026\u2026
+\`Hardly + had + \u4E3B\u8A5E + \u904E\u53BB\u5206\u8A5E + when ...\`\uFF1A\u5E7E\u4E4E\u624D\u2026\u2026\u5C31\u2026\u2026
+
+**\u4F8B\u53E5**
+- Rarely do we get a chance like this.\u2014\u2014\u6211\u5011\u5F88\u5C11\u6709\u9019\u6A23\u7684\u6A5F\u6703\u3002
+- Not only did he apologize, but he also paid for the damage.\u2014\u2014\u4ED6\u4E0D\u50C5\u9053\u6B49\uFF0C\u9084\u8CE0\u511F\u4E86\u640D\u5931\u3002
+- No sooner had the meeting started than the power went out.\u2014\u2014\u6703\u8B70\u624D\u525B\u958B\u59CB\u5C31\u505C\u96FB\u4E86\u3002
+
+**\u89F8\u767C\u5012\u88DD\u7684\u8A5E**
+never\u3001rarely\u3001seldom\u3001hardly\u3001scarcely\u3001barely\u3001little\u3001not only\u3001not until\u3001only then \u7B49\u3002\u6CE8\u610F\uFF1A\u53EA\u6709\u653E\u5728\u53E5\u9996\u6642\u624D\u5012\u88DD\u3002\u6BD4\u8F03 I have never seen it\uFF08\u4E00\u822C\u8A9E\u5E8F\uFF09\u8207 Never have I seen it\uFF08\u5012\u88DD\uFF09\u3002
+
+**\u52A9\u52D5\u8A5E\u7684\u898F\u5247**
+\u53E5\u5B50\u672C\u4F86\u6709\u52A9\u52D5\u8A5E\u6216 be \u52D5\u8A5E\u5C31\u76F4\u63A5\u79FB\u5230\u4E3B\u8A5E\u524D\uFF1B\u82E5\u662F\u4E00\u822C\u52D5\u8A5E\u7684\u73FE\u5728\u5F0F\u6216\u904E\u53BB\u5F0F\uFF0C\u8981\u52A0 do / does / did\u3002no sooner \u5F8C\u9762\u7528 than\uFF0Chardly \u8207 scarcely \u5F8C\u9762\u7528 when\uFF08\u4E5F\u6709\u4EBA\u7528 before\uFF09\uFF0C\u5225\u6DF7\u5728\u4E00\u8D77\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C Never I have seen such a mess. \u2705 Never have I seen such a mess. \u539F\u56E0\uFF1A\u52A9\u52D5\u8A5E\u5FC5\u9808\u653E\u5728\u4E3B\u8A5E\u524D\u3002
+- \u274C Rarely she goes out. \u2705 Rarely does she go out. \u539F\u56E0\uFF1A\u4E00\u822C\u52D5\u8A5E\u9700\u8981\u501F does\uFF0C\u52D5\u8A5E\u6539\u56DE\u539F\u5F62\u3002
+- \u274C No sooner had he sat down when the phone rang. \u2705 No sooner had he sat down than the phone rang. \u539F\u56E0\uFF1Ano sooner \u642D\u914D than\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u8B93\u6B65\u5012\u88DD\uFF1A\u540C\u6A23\u662F\u5012\u88DD\uFF0C\u4F46\u90A3\u662F\u7528\u5728 Much as ... \u4E4B\u985E\u7684\u8B93\u6B65\u7D50\u69CB\uFF1B\u672C\u4E3B\u984C\u662F\u7531\u5426\u5B9A\u526F\u8A5E\u89F8\u767C\u3002`,
+  "cleft-sentences": `**\u6838\u5FC3\u6982\u5FF5**
+\u5206\u88C2\u53E5\uFF08cleft sentence\uFF09\u628A\u4E00\u500B\u666E\u901A\u53E5\u5B50\u62C6\u6210\u5169\u6BB5\uFF0C\u8B93\u60F3\u5F37\u8ABF\u7684\u90E8\u5206\u55AE\u7368\u6210\u70BA\u7126\u9EDE\u3002\u5B83\u4E0D\u6539\u8B8A\u57FA\u672C\u4E8B\u5BE6\uFF0C\u53EA\u6539\u8B8A\u8CC7\u8A0A\u7684\u91CD\u9EDE\u8207\u7BC0\u594F\uFF0C\u4E5F\u5E38\u7528\u4F86\u7CFE\u6B63\u6216\u5C0D\u6BD4\u3002
+
+**\u53E5\u578B**
+\`It + be + \u5F37\u8ABF\u6210\u5206 + that/who ...\`\uFF1Ait \u5206\u88C2\u53E5\uFF08it-cleft\uFF09\u3002
+\`What + \u4E3B\u8A5E + \u52D5\u8A5E + be + \u5F37\u8ABF\u6210\u5206\`\uFF1Awh- \u5206\u88C2\u53E5\uFF08wh-cleft\uFF0C\u53C8\u7A31 pseudo-cleft\uFF09\u3002
+
+**\u4F8B\u53E5**
+- It was Maria who suggested the new schedule.\u2014\u2014\u662F Maria \u63D0\u51FA\u4E86\u65B0\u7684\u6642\u7A0B\u3002
+- What I really need is a quiet weekend.\u2014\u2014\u6211\u771F\u6B63\u9700\u8981\u7684\u662F\u4E00\u500B\u5B89\u975C\u7684\u9031\u672B\u3002
+- It wasn't the price that bothered me, but the delay.\u2014\u2014\u56F0\u64FE\u6211\u7684\u4E0D\u662F\u50F9\u683C\uFF0C\u800C\u662F\u5EF6\u9072\u3002
+
+**\u7528\u5206\u88C2\u53E5\u8868\u9054\u5C0D\u6BD4**
+it \u5206\u88C2\u53E5\u53EF\u4EE5\u5F37\u8ABF\u4EBA\u3001\u7269\u3001\u6642\u9593\u3001\u5730\u9EDE\u6216\u539F\u56E0\uFF0C\u5F88\u9069\u5408\u7528 not X but Y \u7684\u5C0D\u6BD4\uFF1AIt was in May, not June, that we moved. wh- \u5206\u88C2\u53E5\u5247\u5E38\u7528\u4F86\u5F37\u8ABF\u52D5\u4F5C\u6216\u9700\u6C42\uFF1AWhat she did was call the manager.
+
+**\u6642\u614B\u8207\u52D5\u8A5E\u5F62\u5F0F**
+it \u5206\u88C2\u53E5\u4E2D\u7684 be \u52D5\u8A5E\u6642\u614B\u901A\u5E38\u4F9D\u4E8B\u4EF6\u7684\u6642\u9593\uFF0C\u5F8C\u9762\u7684 that \u53EF\u5728\u5F37\u8ABF\u4EBA\u6642\u63DB\u6210 who\u3002wh- \u5206\u88C2\u53E5\u7684\u5F8C\u534A\u5E38\u63A5\u539F\u5F62\u6216 to \u4E0D\u5B9A\u8A5E\uFF1AAll I want to do is sleep.
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C It was the manager what made the decision. \u2705 It was the manager who made the decision. \u539F\u56E0\uFF1A\u5F37\u8ABF\u4EBA\u6642\u7528 who \u6216 that\uFF0C\u4E0D\u7528 what\u3002
+- \u274C What I need are a rest. \u2705 What I need is a rest. \u539F\u56E0\uFF1Abe \u52D5\u8A5E\u8981\u548C\u5F8C\u9762\u7684\u88DC\u8A9E\u4E00\u81F4\uFF0C\u9019\u88E1\u662F\u55AE\u6578\u3002
+- \u274C It was yesterday when I met her. \u2705 It was yesterday that I met her. \u539F\u56E0\uFF1A\u5206\u88C2\u53E5\u4E00\u822C\u7528 that\uFF0C\u4E0D\u7528 when\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u5F37\u8ABF\uFF08do / so / such\uFF09\uFF1A\u5F8C\u8005\u662F\u7528 do\u3001so\u3001such \u52A0\u91CD\u8A9E\u6C23\uFF0C\u4E0D\u6539\u8B8A\u53E5\u5B50\u7D50\u69CB\uFF1B\u672C\u4E3B\u984C\u5247\u662F\u91CD\u7D44\u53E5\u5B50\uFF0C\u628A\u7126\u9EDE\u79FB\u5230\u7279\u5B9A\u6210\u5206\u3002`,
+  "formal-conditional-inversion": `**\u6838\u5FC3\u6982\u5FF5**
+\u5728\u6B63\u5F0F\u7684\u66F8\u9762\u8A9E\u6216\u6F14\u8B1B\u4E2D\uFF0C\u689D\u4EF6\u53E5\u53EF\u4EE5\u7701\u7565 if\uFF0C\u6539\u628A\u52A9\u52D5\u8A5E\u79FB\u5230\u4E3B\u8A5E\u524D\uFF0C\u9019\u53EB\u5012\u88DD\u689D\u4EF6\u53E5\uFF08conditional inversion\uFF09\u3002\u610F\u601D\u8207\u4E00\u822C\u689D\u4EF6\u53E5\u76F8\u540C\uFF0C\u4F46\u66F4\u7CBE\u7C21\u3001\u66F4\u6709\u6587\u6C23\u3002
+
+**\u53E5\u578B**
+\`Were + \u4E3B\u8A5E + to + \u539F\u5F62\u52D5\u8A5E, ...\`\uFF1A\u53D6\u4EE3 If + \u4E3B\u8A5E + were to / \u904E\u53BB\u5F0F\u3002
+\`Had + \u4E3B\u8A5E + \u904E\u53BB\u5206\u8A5E, ...\`\uFF1A\u53D6\u4EE3 If + \u4E3B\u8A5E + had + \u904E\u53BB\u5206\u8A5E\u3002
+\`Should + \u4E3B\u8A5E + \u539F\u5F62\u52D5\u8A5E, ...\`\uFF1A\u53D6\u4EE3 If + \u4E3B\u8A5E + should\uFF08\u842C\u4E00\uFF09\u3002
+
+**\u4F8B\u53E5**
+- Were the plan to fail, we would need an alternative.\u2014\u2014\u842C\u4E00\u8A08\u756B\u5931\u6557\uFF0C\u6211\u5011\u5C31\u9700\u8981\u5099\u6848\u3002
+- Had I known about the delay, I would have left earlier.\u2014\u2014\u5982\u679C\u6211\u65E9\u77E5\u9053\u6703\u5EF6\u8AA4\uFF0C\u5C31\u6703\u65E9\u9EDE\u51FA\u767C\u3002
+- Should you require further assistance, please contact us.\u2014\u2014\u5982\u6709\u9700\u8981\u9032\u4E00\u6B65\u5354\u52A9\uFF0C\u8ACB\u8207\u6211\u5011\u806F\u7D61\u3002
+
+**\u5404\u7A2E\u5012\u88DD\u7684\u7528\u6CD5**
+Were ... to \u8AC7\u4E0D\u592A\u53EF\u80FD\u6216\u7D14\u5047\u8A2D\u7684\u672A\u4F86\uFF1BHad \u8AC7\u8207\u904E\u53BB\u4E8B\u5BE6\u76F8\u53CD\u7684\u5047\u8A2D\uFF1BShould \u8868\u793A\u53EF\u80FD\u6027\u4E0D\u9AD8\u7684\u672A\u4F86\u72C0\u6CC1\uFF0C\u5F8C\u9762\u5E38\u63A5\u7948\u4F7F\u53E5\u6216 will\u3002
+
+**\u9069\u7528\u60C5\u5883**
+\u66F8\u4FE1\u3001\u516C\u544A\u3001\u5408\u7D04\u8207\u5B78\u8853\u5BEB\u4F5C\u6700\u5E38\u898B\u3002\u65E5\u5E38\u5C0D\u8A71\u4E2D\u986F\u5F97\u904E\u65BC\u6B63\u5F0F\uFF0C\u4E00\u822C\u4ECD\u7528 if\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C Had I known, I wouldn't have went. \u2705 Had I known, I wouldn't have gone. \u539F\u56E0\uFF1Ahave \u5F8C\u9762\u8981\u63A5\u904E\u53BB\u5206\u8A5E\u3002
+- \u274C If had I known, I would have called. \u2705 Had I known, I would have called. \u539F\u56E0\uFF1A\u5012\u88DD\u5F8C\u5C31\u4E0D\u80FD\u518D\u4FDD\u7559 if\u3002
+- \u274C Had I known not, ... \u2705 Had I not known, ... \u539F\u56E0\uFF1A\u5012\u88DD\u689D\u4EF6\u53E5\u7684\u5426\u5B9A\uFF0Cnot \u8981\u653E\u5728\u4E3B\u8A5E\u5F8C\u9762\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u5047\u8A2D\u689D\u4EF6\u53E5\uFF1A\u5F8C\u8005\u7528 if \u7684\u6A19\u6E96\u5F62\u5F0F\uFF0C\u672C\u4E3B\u984C\u53EA\u662F\u6539\u8B8A\u5F62\u5F0F\uFF0C\u6838\u5FC3\u610F\u601D\u76F8\u540C\u3002
+- \u6DF7\u5408\u689D\u4EF6\u53E5\uFF1A\u6DF7\u5408\u689D\u4EF6\u8AC7\u6642\u9593\u932F\u4F4D\uFF0C\u800C\u5012\u88DD\u53EA\u662F\u5F62\u5F0F\uFF1B\u5169\u8005\u53EF\u4EE5\u540C\u6642\u4F7F\u7528\uFF0C\u5982 Had I accepted the offer, I would be there now.`,
+  "formal-it-object": `**\u6838\u5FC3\u6982\u5FF5**
+\u82F1\u6587\u4E0D\u559C\u6B61\u53E5\u5B50\u982D\u91CD\u8173\u8F15\u3002\u7576\u4E3B\u8A5E\u6216\u53D7\u8A5E\u662F\u5F88\u9577\u7684\u4E0D\u5B9A\u8A5E\u6216\u5B50\u53E5\u6642\uFF0C\u6703\u5148\u7528 it \u66AB\u4EE3\u4F4D\u7F6E\uFF0C\u518D\u628A\u771F\u6B63\u7684\u5167\u5BB9\u79FB\u5230\u5F8C\u9762\u3002\u653E\u5728\u4E3B\u8A5E\u4F4D\u7F6E\u53EB\u5F62\u5F0F\u4E3B\u8A5E\uFF08formal subject\uFF09\uFF0C\u653E\u5728\u53D7\u8A5E\u4F4D\u7F6E\u53EB\u5F62\u5F0F\u53D7\u8A5E\uFF08formal object\uFF09\u3002
+
+**\u53E5\u578B**
+\`It + be + \u5F62\u5BB9\u8A5E + to + \u539F\u5F62\u52D5\u8A5E / that \u5B50\u53E5\`\uFF1A\u5F62\u5F0F\u4E3B\u8A5E\u3002
+\`\u4E3B\u8A5E + find/make/think/consider + it + \u5F62\u5BB9\u8A5E + to do\`\uFF1A\u5F62\u5F0F\u53D7\u8A5E\u3002
+
+**\u4F8B\u53E5**
+- It is essential that everyone arrive on time.\u2014\u2014\u6BCF\u500B\u4EBA\u90FD\u6E96\u6642\u5230\u662F\u5FC5\u8981\u7684\u3002
+- I find it difficult to concentrate in noisy places.\u2014\u2014\u6211\u89BA\u5F97\u5728\u5435\u9B27\u7684\u5730\u65B9\u5F88\u96E3\u5C08\u5FC3\u3002
+- The new rule makes it impossible to park here.\u2014\u2014\u65B0\u898F\u5B9A\u4F7F\u5F97\u9019\u88E1\u7121\u6CD5\u505C\u8ECA\u3002
+
+**\u5F62\u5F0F\u4E3B\u8A5E**
+\u771F\u6B63\u7684\u4E3B\u8A5E\u653E\u5728\u5F8C\u9762\uFF1AIt is nice to meet you. \u82E5\u76F4\u63A5\u5BEB To meet you is nice\uFF0C\u96D6\u7136\u6587\u6CD5\u4E0A\u53EF\u884C\uFF0C\u4F46\u807D\u8D77\u4F86\u751F\u786C\u3002
+
+**\u5F62\u5F0F\u53D7\u8A5E**
+\u5728 find\u3001make\u3001think\u3001consider \u9019\u985E\u52D5\u8A5E\u5F8C\uFF0C\u4E0D\u80FD\u76F4\u63A5\u628A\u9577\u7684\u4E0D\u5B9A\u8A5E\u653E\u5728\u53D7\u8A5E\u4F4D\u7F6E\uFF0C\u8981\u5148\u653E it\uFF1AI find it hard to say no. \u4E0D\u80FD\u8AAA I find to say no hard. \u53E6\u5916\uFF0C\u4E5F\u53EF\u4EE5\u7528\u5728 take it for granted that ... \u9019\u985E\u56FA\u5B9A\u8AAA\u6CD5\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I find hard to understand him. \u2705 I find it hard to understand him. \u539F\u56E0\uFF1A\u53D7\u8A5E\u4F4D\u7F6E\u4E0D\u80FD\u7A7A\u8457\uFF0C\u8981\u653E it\u3002
+- \u274C It is difficult that learn a language. \u2705 It is difficult to learn a language. \u539F\u56E0\uFF1A\u4E0D\u5B9A\u8A5E\u7528 to\uFF0Cthat \u5F8C\u9762\u624D\u63A5\u5B8C\u6574\u5B50\u53E5\u3002
+- \u274C She made possible to finish early. \u2705 She made it possible to finish early. \u539F\u56E0\uFF1Amake + \u5F62\u5BB9\u8A5E\u88DC\u8A9E\u6642\uFF0C\u9700\u8981\u5F62\u5F0F\u53D7\u8A5E it\u3002`,
+  "would-rather-had-better": `**\u6838\u5FC3\u6982\u5FF5**
+would rather \u8868\u9054\u500B\u4EBA\u7684\u504F\u597D\uFF1Bhad better \u8868\u9054\u5F37\u70C8\u7684\u5EFA\u8B70\uFF0C\u5E36\u6709\u300C\u4E0D\u7136\u6703\u6709\u4E0D\u597D\u7684\u5F8C\u679C\u300D\u7684\u8B66\u544A\u610F\u5473\u3002\u5169\u8005\u5F62\u5F0F\u4E0A\u90FD\u50CF\u60C5\u614B\u52D5\u8A5E\uFF0C\u5F8C\u9762\u63A5\u539F\u5F62\u52D5\u8A5E\uFF0C\u4F46\u610F\u601D\u548C\u8A9E\u6C23\u5F88\u4E0D\u540C\u3002
+
+**\u53E5\u578B**
+\`would rather + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u5BE7\u9858\u505A\u67D0\u4E8B\uFF08\u73FE\u5728\u6216\u672A\u4F86\uFF09\u3002
+\`would rather + \u4E3B\u8A5E + \u904E\u53BB\u5F0F\`\uFF1A\u5E0C\u671B\u5225\u4EBA\u505A\u67D0\u4E8B\uFF0C\u6216\u5C0D\u73FE\u5728\u7684\u4E8B\u8868\u793A\u907A\u61BE\u3002
+\`had better + \u539F\u5F62\u52D5\u8A5E\`\uFF1A\u6700\u597D\u505A\u67D0\u4E8B\uFF1B\u5426\u5B9A\u7528 had better not + \u539F\u5F62\u52D5\u8A5E\u3002
+
+**\u4F8B\u53E5**
+- I would rather stay home tonight.\u2014\u2014\u6211\u4ECA\u665A\u5BE7\u9858\u5F85\u5728\u5BB6\u3002
+- I would rather you didn't smoke here.\u2014\u2014\u6211\u5BE7\u53EF\u4F60\u4E0D\u8981\u5728\u9019\u88E1\u62BD\u83F8\u3002
+- You had better take an umbrella; it looks like rain.\u2014\u2014\u4F60\u6700\u597D\u5E36\u628A\u5098\uFF0C\u770B\u8D77\u4F86\u8981\u4E0B\u96E8\u4E86\u3002
+
+**\u8207 should\u3001ought to \u6BD4\u8F03**
+should \u8207 ought to \u662F\u6EAB\u548C\u7684\u5EFA\u8B70\u6216\u8CAC\u4EFB\uFF0C\u6C92\u6709\u660E\u986F\u7684\u5F8C\u679C\uFF1Bhad better \u5247\u6697\u793A\u82E5\u4E0D\u7167\u505A\uFF0C\u6703\u6709\u9EBB\u7169\uFF0C\u8A9E\u6C23\u8F03\u5F37\uFF0C\u4E0D\u9069\u5408\u7528\u5728\u9577\u8F29\u6216\u4E0D\u719F\u7684\u4EBA\u8EAB\u4E0A\u3002had better \u96D6\u7136\u7528 had\uFF0C\u4F46\u6307\u7684\u662F\u73FE\u5728\u6216\u672A\u4F86\uFF0C\u4E0D\u662F\u904E\u53BB\u3002
+
+**\u5426\u5B9A\u8207\u6BD4\u8F03**
+would rather \u7684\u5426\u5B9A\u662F would rather not\uFF1AI'd rather not go. \u6BD4\u8F03\u5169\u4EF6\u4E8B\u6642\u7528 than\uFF1AI would rather walk than take the bus.\uFF08than \u5F8C\u9762\u7684\u52D5\u8A5E\u4E5F\u7528\u539F\u5F62\uFF09\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I would rather to go home. \u2705 I would rather go home. \u539F\u56E0\uFF1Awould rather \u5F8C\u9762\u63A5\u539F\u5F62\uFF0C\u4E0D\u52A0 to\u3002
+- \u274C You had better not to be late. \u2705 You had better not be late. \u539F\u56E0\uFF1Ahad better not \u5F8C\u9762\u63A5\u539F\u5F62\u3002
+- \u274C I would rather you don't come. \u2705 I would rather you didn't come. \u539F\u56E0\uFF1A\u8981\u5225\u4EBA\u505A\u67D0\u4E8B\u6642\uFF0Cwould rather \u5F8C\u9762\u7684\u5B50\u53E5\u7528\u904E\u53BB\u5F0F\u3002`,
+  "advanced-relative-clauses": `**\u6838\u5FC3\u6982\u5FF5**
+\u9032\u968E\u7684\u95DC\u4FC2\u5B50\u53E5\uFF08relative clause\uFF09\u8B93\u4F60\u5728\u4E00\u53E5\u8A71\u88E1\u88DC\u5145\u66F4\u591A\u8CC7\u8A0A\uFF0C\u4E26\u80FD\u7CBE\u78BA\u6307\u51FA\u6240\u5C6C\u3001\u5C0D\u8C61\u6216\u6574\u4EF6\u4E8B\u3002\u5E38\u898B\u65BC\u6B63\u5F0F\u6587\u7AE0\uFF0C\u5305\u62EC whose\u3001\u4ECB\u7CFB\u8A5E\u52A0 whom / which\uFF0C\u4EE5\u53CA\u6307\u6574\u500B\u524D\u53E5\u7684 which\u3002
+
+**\u53E5\u578B**
+\`\u540D\u8A5E + whose + \u540D\u8A5E + \u52D5\u8A5E\`\uFF1A\u8868\u793A\u6240\u5C6C\u3002
+\`\u540D\u8A5E + \u4ECB\u7CFB\u8A5E + whom / which + \u5B50\u53E5\`\uFF1A\u4ECB\u7CFB\u8A5E\u524D\u7F6E\u3002
+\`, which + \u52D5\u8A5E\`\uFF1Awhich \u6307\u6574\u500B\u524D\u9762\u7684\u53E5\u5B50\uFF08\u9023\u7E8C\u6027\u7528\u6CD5\uFF09\u3002
+
+**\u4F8B\u53E5**
+- The author whose novel won the prize is giving a talk tonight.\u2014\u2014\u5C0F\u8AAA\u5F97\u734E\u7684\u90A3\u4F4D\u4F5C\u5BB6\u4ECA\u665A\u8981\u6F14\u8B1B\u3002
+- The colleague with whom I share an office is moving abroad.\u2014\u2014\u548C\u6211\u5171\u7528\u8FA6\u516C\u5BA4\u7684\u540C\u4E8B\u8981\u642C\u5230\u570B\u5916\u3002
+- She finished the project early, which surprised everyone.\u2014\u2014\u5979\u63D0\u65E9\u5B8C\u6210\u4E86\u5C08\u6848\uFF0C\u9019\u8B93\u5927\u5BB6\u90FD\u5F88\u610F\u5916\u3002
+
+**\u4ECB\u7CFB\u8A5E\u524D\u7F6E**
+\u4ECB\u7CFB\u8A5E\u653E\u5728 whom / which \u4E4B\u524D\u8F03\u6B63\u5F0F\uFF1Athe city in which I grew up\u3002\u53E3\u8A9E\u5E38\u628A\u4ECB\u7CFB\u8A5E\u7559\u5728\u53E5\u5C3E\uFF1Athe city which I grew up in\u3002\u6CE8\u610F\u524D\u7F6E\u6642\u53EA\u80FD\u7528 whom / which\uFF0C\u4E0D\u80FD\u7528 who \u6216 that\uFF0C\u4F8B\u5982\u4E0D\u8AAA the man with who I spoke\u3002
+
+**\u6307\u6574\u500B\u53E5\u5B50\u7684 which**
+\u9019\u7A2E which \u524D\u4E00\u5B9A\u6709\u9017\u865F\uFF0C\u4EE3\u8868\u524D\u9762\u6574\u4EF6\u4E8B\u3002\u6CE8\u610F\u4E0D\u80FD\u6539\u7528 that\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C The man who his car was stolen called the police. \u2705 The man whose car was stolen called the police. \u539F\u56E0\uFF1A\u8868\u6240\u5C6C\u8981\u7528 whose\u3002
+- \u274C The room in that we met was small. \u2705 The room in which we met was small. \u539F\u56E0\uFF1A\u4ECB\u7CFB\u8A5E\u5F8C\u9762\u4E0D\u80FD\u63A5 that\u3002
+- \u274C He passed the exam, that made his parents proud. \u2705 He passed the exam, which made his parents proud. \u539F\u56E0\uFF1A\u6307\u6574\u53E5\u6642\u7528\u9017\u865F\u52A0 which\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u9650\u5B9A\u8207\u975E\u9650\u5B9A\u95DC\u4FC2\u5B50\u53E5\uFF1A\u5F8C\u8005\u8655\u7406\u9017\u865F\u6709\u7121\u8207\u57FA\u672C\u7684 who / which / that\uFF1B\u672C\u4E3B\u984C\u5728\u6B64\u57FA\u790E\u4E0A\u52A0\u5165 whose\u3001\u524D\u7F6E\u4ECB\u7CFB\u8A5E\u8207\u6574\u53E5\u6307\u6D89\u3002`,
+  "nominalization": `**\u6838\u5FC3\u6982\u5FF5**
+\u540D\u8A5E\u5316\uFF08nominalization\uFF09\u662F\u628A\u52D5\u8A5E\u6216\u5F62\u5BB9\u8A5E\u6539\u6210\u540D\u8A5E\uFF0C\u8B93\u52D5\u4F5C\u8B8A\u6210\u300C\u6771\u897F\u300D\uFF0C\u518D\u7576\u4F5C\u4E3B\u8A5E\u6216\u53D7\u8A5E\u4F7F\u7528\u3002\u66F8\u9762\u8A9E\u3001\u5B78\u8853\u6587\u7AE0\u8207\u65B0\u805E\u5E38\u7528\u5B83\u4F86\u58D3\u7E2E\u8CC7\u8A0A\u3001\u986F\u5F97\u5BA2\u89C0\u3002
+
+**\u53E5\u578B**
+\`\u52D5\u8A5E \u2192 \u540D\u8A5E\`\uFF1Aexpand \u2192 expansion\u3001decide \u2192 decision\u3002
+\`\u5F62\u5BB9\u8A5E \u2192 \u540D\u8A5E\`\uFF1Aable \u2192 ability\u3001important \u2192 importance\u3002
+\`the + \u540D\u8A5E\u5316 + of + \u53D7\u8A5E\`\uFF1Athe rapid expansion of the market\u3002
+
+**\u4F8B\u53E5**
+- The rapid expansion of the city has put pressure on public transport.\u2014\u2014\u9019\u5EA7\u57CE\u5E02\u7684\u5FEB\u901F\u64F4\u5F35\u5C0D\u5927\u773E\u904B\u8F38\u9020\u6210\u58D3\u529B\u3002
+- Her refusal to compromise delayed the agreement.\u2014\u2014\u5979\u62D2\u7D55\u59A5\u5354\uFF0C\u4F7F\u5354\u8B70\u5EF6\u5F8C\u3002
+- An increase in demand led to higher prices.\u2014\u2014\u9700\u6C42\u589E\u52A0\u5C0E\u81F4\u50F9\u683C\u4E0A\u6F32\u3002
+
+**\u7528\u540D\u8A5E\u5316\u58D3\u7E2E\u8CC7\u8A0A**
+\u52D5\u8A5E\u53E5\uFF1ABecause prices rose sharply, many families cut spending. \u540D\u8A5E\u5316\u5F8C\uFF1AThe sharp rise in prices forced many families to cut spending. \u539F\u672C\u7684\u5B50\u53E5\u8B8A\u6210\u4E00\u500B\u540D\u8A5E\u7247\u8A9E\uFF0C\u53E5\u5B50\u66F4\u7CBE\u7C21\uFF0C\u8CC7\u8A0A\u5BC6\u5EA6\u66F4\u9AD8\u3002
+
+**\u9084\u539F\u95B1\u8B80**
+\u8B80\u5230\u5F88\u5BC6\u7684\u53E5\u5B50\u6642\uFF0C\u628A\u540D\u8A5E\u5316\u7684\u90E8\u5206\u9084\u539F\u6210\u52D5\u8A5E\uFF1Athe introduction of the policy \u5C31\u662F someone introduced the policy\u3002\u9019\u6A23\u80FD\u5FEB\u901F\u627E\u51FA\u300C\u8AB0\u505A\u4E86\u4EC0\u9EBC\u300D\u3002
+
+**\u6CE8\u610F**
+\u540D\u8A5E\u5316\u904E\u5EA6\u6703\u8B93\u6587\u5B57\u67AF\u71E5\u96E3\u61C2\uFF0C\u65E5\u5E38\u5C0D\u8A71\u8207\u6558\u4E8B\u4E2D\u4E0D\u5FC5\u6FEB\u7528\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C The decide of the committee was final. \u2705 The decision of the committee was final. \u539F\u56E0\uFF1A\u8981\u7528\u540D\u8A5E\u5F62\u5F0F decision\u3002
+- \u274C There was an increase of prices. \u2705 There was an increase in prices. \u539F\u56E0\uFF1Aincrease \u5F8C\u9762\u5E38\u642D\u914D in \u8868\u793A\u300C\u67D0\u65B9\u9762\u7684\u589E\u52A0\u300D\u3002
+- \u274C The analyze of the data took weeks. \u2705 The analysis of the data took weeks. \u539F\u56E0\uFF1Aanalyze \u662F\u52D5\u8A5E\uFF0C\u540D\u8A5E\u662F analysis\u3002`,
+  "participle-reduced-clauses": `**\u6838\u5FC3\u6982\u5FF5**
+\u5206\u8A5E\u53EF\u4EE5\u628A\u5B8C\u6574\u7684\u526F\u8A5E\u5B50\u53E5\u7E2E\u6E1B\u6210\u8F03\u77ED\u7684\u7247\u8A9E\uFF0C\u7528\u4F86\u8868\u9054\u6642\u9593\u3001\u539F\u56E0\u7B49\u95DC\u4FC2\uFF0C\u4F7F\u53E5\u5B50\u66F4\u7CBE\u7C21\u3002\u5B8C\u6210\u5206\u8A5E\uFF08perfect participle\uFF09\u7528\u4F86\u5F37\u8ABF\u300C\u9019\u500B\u52D5\u4F5C\u6BD4\u4E3B\u8981\u52D5\u4F5C\u66F4\u65E9\u767C\u751F\u300D\u3002
+
+**\u53E5\u578B**
+\`Having + \u904E\u53BB\u5206\u8A5E, \u4E3B\u8A5E + \u52D5\u8A5E\`\uFF1A\u5148\u767C\u751F\u7684\u52D5\u4F5C\uFF08\u6642\u9593\u3001\u539F\u56E0\uFF09\u3002
+\`V-ing, \u4E3B\u8A5E + \u52D5\u8A5E\`\uFF1A\u4E3B\u52D5\u4E14\u540C\u6642\u767C\u751F\u3002
+\`\u904E\u53BB\u5206\u8A5E, \u4E3B\u8A5E + \u52D5\u8A5E\`\uFF1A\u88AB\u52D5\u6216\u5DF2\u5B8C\u6210\u7684\u72C0\u614B\u3002
+
+**\u4F8B\u53E5**
+- Having finished the report, she went home.\u2014\u2014\u5BEB\u5B8C\u5831\u544A\u5F8C\uFF0C\u5979\u56DE\u5BB6\u4E86\u3002
+- Not knowing the way, we asked a passerby.\u2014\u2014\u56E0\u70BA\u4E0D\u77E5\u9053\u8DEF\uFF0C\u6211\u5011\u554F\u4E86\u8DEF\u4EBA\u3002
+- Surprised by the noise, the child began to cry.\u2014\u2014\u88AB\u566A\u97F3\u5687\u5230\uFF0C\u5B69\u5B50\u54ED\u4E86\u8D77\u4F86\u3002
+
+**\u7E2E\u6E1B\u526F\u8A5E\u5B50\u53E5**
+Because she had missed the bus, she walked. \u53EF\u7E2E\u6E1B\u6210 Having missed the bus, she walked. \u5426\u5B9A\u6642 not \u653E\u5728\u5206\u8A5E\u524D\uFF1ANot having eaten, he felt weak.
+
+**\u907F\u514D\u61F8\u5782\u5206\u8A5E**
+\u5206\u8A5E\u7684\u908F\u8F2F\u4E3B\u8A5E\u5FC5\u9808\u548C\u4E3B\u8981\u5B50\u53E5\u7684\u4E3B\u8A5E\u4E00\u81F4\u3002Walking down the street, a bird landed on my head.\uFF08\u61F8\u5782\u5206\u8A5E dangling participle\uFF09\u8B80\u8D77\u4F86\u50CF\u662F\u9CE5\u5728\u8D70\u8DEF\u3002\u6539\u6210 Walking down the street, I felt a bird land on my head.
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C Having wrote the email, he sent it. \u2705 Having written the email, he sent it. \u539F\u56E0\uFF1AHaving \u5F8C\u9762\u8981\u63A5\u904E\u53BB\u5206\u8A5E\u3002
+- \u274C Seeing from the hill, the town looks small. \u2705 Seen from the hill, the town looks small. \u539F\u56E0\uFF1Atown \u662F\u88AB\u770B\u7684\u5C0D\u8C61\uFF0C\u8981\u7528\u88AB\u52D5\u7684\u904E\u53BB\u5206\u8A5E\u3002
+- \u274C Being tired, the bed looked inviting. \u2705 Being tired, I found the bed inviting. \u539F\u56E0\uFF1A\u5206\u8A5E\u7684\u4E3B\u8A5E\u5FC5\u9808\u548C\u4E3B\u8981\u5B50\u53E5\u4E3B\u8A5E\u4E00\u81F4\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u5206\u8A5E\u5B50\u53E5\u5165\u9580\uFF1A\u5165\u9580\u7248\u8655\u7406\u57FA\u672C\u7684 V-ing \u8207\u904E\u53BB\u5206\u8A5E\uFF1B\u672C\u4E3B\u984C\u52A0\u5165\u5B8C\u6210\u5206\u8A5E\u8207\u4E3B\u8A5E\u4E00\u81F4\u7684\u6AA2\u67E5\u3002`,
+  "stance-adverbs": `**\u6838\u5FC3\u6982\u5FF5**
+\u7ACB\u5834\u526F\u8A5E\uFF08stance adverb\uFF09\u4E0D\u662F\u63CF\u8FF0\u52D5\u4F5C\u600E\u9EBC\u9032\u884C\uFF0C\u800C\u662F\u8868\u660E\u8AAA\u8A71\u8005\u6216\u4F5C\u8005\u300C\u600E\u9EBC\u770B\u9019\u4EF6\u4E8B\u300D\uFF0C\u5305\u62EC\u8CC7\u8A0A\u5F9E\u54EA\u88E1\u4F86\u3001\u6709\u591A\u78BA\u5B9A\uFF0C\u4EE5\u53CA\u5C0D\u9019\u4EF6\u4E8B\u6709\u4EC0\u9EBC\u614B\u5EA6\u3002\u65B0\u805E\u8207\u8A55\u8AD6\u6587\u7AE0\u975E\u5E38\u5E38\u7528\u3002
+
+**\u53E5\u578B**
+\`Allegedly / Reportedly, \u53E5\u5B50\`\uFF1A\u6A19\u793A\u8CC7\u8A0A\u4F86\u6E90\u6216\u5C1A\u672A\u8B49\u5BE6\u3002
+\`Surprisingly / Fortunately, \u53E5\u5B50\`\uFF1A\u8868\u9054\u4F5C\u8005\u7684\u614B\u5EA6\u3002
+\`\u4E3B\u8A5E + \u526F\u8A5E + \u52D5\u8A5E\`\uFF1A\u653E\u5728\u53E5\u4E2D\u4E5F\u53EF\u4EE5\u3002
+
+**\u4F8B\u53E5**
+- The factory was reportedly closed last month.\u2014\u2014\u64DA\u5831\u5C0E\uFF0C\u9019\u9593\u5DE5\u5EE0\u4E0A\u500B\u6708\u95DC\u9589\u4E86\u3002
+- Surprisingly, nobody complained about the delay.\u2014\u2014\u4EE4\u4EBA\u610F\u5916\u7684\u662F\uFF0C\u6C92\u6709\u4EBA\u62B1\u6028\u5EF6\u8AA4\u3002
+- The suspect has allegedly stolen several paintings.\u2014\u2014\u5ACC\u72AF\u64DA\u7A31\u5077\u4E86\u5E7E\u5E45\u756B\u3002
+
+**\u8CC7\u8A0A\u4F86\u6E90\u8207\u614B\u5EA6**
+reportedly\u3001allegedly\u3001supposedly \u8AAA\u660E\u8CC7\u8A0A\u662F\u8F49\u8FF0\u7684\uFF0C\u4F5C\u8005\u4E0D\u70BA\u771F\u5BE6\u6027\u8CA0\u8CAC\uFF1Bapparently \u5247\u4ECB\u65BC\u300C\u770B\u8D77\u4F86\u300D\u8207\u300C\u807D\u8AAA\u300D\u4E4B\u9593\u3002surprisingly\u3001unfortunately\u3001understandably \u5247\u8868\u9054\u4F5C\u8005\u7684\u611F\u53D7\u6216\u5224\u65B7\u3002
+
+**\u4F4D\u7F6E**
+\u53E5\u9996\uFF08\u5F8C\u9762\u63A5\u9017\u865F\uFF09\u6700\u9192\u76EE\uFF0C\u5F71\u97FF\u6574\u53E5\uFF1B\u653E\u5728\u52A9\u52D5\u8A5E\u5F8C\u3001\u52D5\u8A5E\u524D\uFF0C\u662F\u4E2D\u6027\u7684\u4F4D\u7F6E\uFF1AShe has apparently resigned. \u653E\u53E5\u5C3E\u901A\u5E38\u4E5F\u53EF\u4EE5\uFF0C\u4F46\u8F03\u5C11\u898B\uFF0C\u8A9E\u6C23\u4E5F\u8F03\u5F31\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C Allegedly the man is guilty. \u7576\u4F5C\u4E8B\u5BE6\u9673\u8FF0 \u2705 The man is allegedly guilty of fraud. \u539F\u56E0\uFF1Aallegedly \u8868\u793A\u6307\u63A7\u672A\u8B49\u5BE6\uFF0C\u4E0D\u8981\u7576\u6210\u80AF\u5B9A\u7684\u5224\u65B7\u3002
+- \u274C He surprisingly answered. \u2705 Surprisingly, he answered correctly. \u539F\u56E0\uFF1A\u8981\u8868\u9054\u4F5C\u8005\u614B\u5EA6\uFF0C\u901A\u5E38\u653E\u53E5\u9996\u4E26\u52A0\u9017\u865F\uFF0C\u907F\u514D\u88AB\u8B80\u6210\u4FEE\u98FE\u52D5\u8A5E\u7684\u65B9\u5F0F\u3002
+- \u274C Fortunate, we arrived on time. \u2705 Fortunately, we arrived on time. \u539F\u56E0\uFF1A\u9019\u88E1\u8981\u7528\u526F\u8A5E\uFF0C\u4E0D\u662F\u5F62\u5BB9\u8A5E\u3002`,
+  "ellipsis-substitution": `**\u6838\u5FC3\u6982\u5FF5**
+\u82F1\u6587\u8B1B\u7A76\u7C21\u6F54\uFF0C\u5DF2\u7D93\u51FA\u73FE\u904E\u7684\u6210\u5206\u53EF\u4EE5\u7701\u7565\uFF08ellipsis\uFF09\uFF0C\u6216\u7528\u66FF\u4EE3\u8A5E\uFF08substitution\uFF09\u4EE3\u66FF\u3002\u9019\u8B93\u6587\u53E5\u4E0D\u91CD\u8907\uFF0C\u4F46\u524D\u63D0\u662F\u8B80\u8005\u80FD\u5F9E\u4E0A\u4E0B\u6587\u88DC\u56DE\u610F\u601D\u3002
+
+**\u53E5\u578B**
+\`So + \u52A9\u52D5\u8A5E + \u4E3B\u8A5E\`\uFF1A\u80AF\u5B9A\u53E5\u7684\u9644\u548C\uFF08\u6211\u4E5F\u662F\uFF09\u3002
+\`Neither / Nor + \u52A9\u52D5\u8A5E + \u4E3B\u8A5E\`\uFF1A\u5426\u5B9A\u53E5\u7684\u9644\u548C\uFF08\u6211\u4E5F\u4E0D\uFF09\u3002
+\`do so / one / ones\`\uFF1A\u66FF\u4EE3\u524D\u9762\u5DF2\u7D93\u51FA\u73FE\u7684\u52D5\u4F5C\u6216\u540D\u8A5E\u3002
+
+**\u4F8B\u53E5**
+- She loves jazz, and so does her brother.\u2014\u2014\u5979\u611B\u7235\u58EB\u6A02\uFF0C\u5979\u54E5\u54E5\u4E5F\u662F\u3002
+- I haven't seen the film, and neither has Tom.\u2014\u2014\u6211\u6C92\u770B\u904E\u90A3\u90E8\u96FB\u5F71\uFF0CTom \u4E5F\u6C92\u6709\u3002
+- If you want to leave early, do so quietly.\u2014\u2014\u5982\u679C\u4F60\u60F3\u65E9\u9EDE\u96E2\u958B\uFF0C\u8ACB\u5B89\u975C\u5730\u96E2\u958B\u3002
+
+**\u9644\u548C\u7684\u898F\u5247**
+\u52A9\u52D5\u8A5E\u8981\u548C\u524D\u4E00\u53E5\u4E00\u81F4\uFF1A\u524D\u53E5\u7528 have\uFF0C\u5F8C\u53E5\u5C31\u7528 has / have\uFF1B\u524D\u53E5\u662F\u4E00\u822C\u52D5\u8A5E\uFF0C\u5C31\u7528 do / does / did\uFF1B\u524D\u53E5\u662F be \u52D5\u8A5E\uFF0C\u5C31\u7528 be\u3002\u4F8B\u5982 I'm tired.\u2014\u2014So am I.
+
+**\u7701\u7565\u8207\u66FF\u4EE3**
+one / ones \u4EE3\u66FF\u53EF\u6578\u540D\u8A5E\uFF1AI like the red one. do so \u4EE3\u66FF\u6574\u500B\u52D5\u4F5C\uFF0C\u8F03\u6B63\u5F0F\u3002\u7701\u7565\u4E5F\u53EF\u4EE5\u662F I wanted to go, but she didn't want to.\uFF08\u6216\u66F4\u7CBE\u7C21\u7684 but she didn't\uFF09\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I like tea, so I do. \u2705 I like tea, and so do I. \u539F\u56E0\uFF1Aso \u5F8C\u9762\u8981\u5012\u88DD\uFF0C\u52A9\u52D5\u8A5E\u653E\u5728\u4E3B\u8A5E\u524D\u3002
+- \u274C He can't swim, and neither can't I. \u2705 He can't swim, and neither can I. \u539F\u56E0\uFF1Aneither \u672C\u8EAB\u5DF2\u662F\u5426\u5B9A\uFF0C\u4E0D\u8981\u518D\u91CD\u8907 not\u3002
+- \u274C I prefer the blue one of these ones. \u2705 I prefer the blue one of these. \u539F\u56E0\uFF1Aone \u4E0D\u80FD\u76F4\u63A5\u63A5\u5728 these \u4E4B\u5F8C\uFF1Bones \u4E5F\u4E0D\u63A5\u5728\u6240\u6709\u683C\u5F8C\u3002`,
+  "agreement-difficult": `**\u6838\u5FC3\u6982\u5FF5**
+\u4E3B\u8A5E\u8207\u52D5\u8A5E\u4E00\u81F4\uFF08subject-verb agreement\uFF09\u5728\u4E00\u822C\u53E5\u5B50\u5F88\u76F4\u89BA\uFF0C\u4F46\u9047\u5230\u7279\u6B8A\u7684\u4E3B\u8A5E\uFF0C\u5C31\u4E0D\u5BB9\u6613\u5224\u65B7\u662F\u7528\u55AE\u6578\u9084\u662F\u8907\u6578\u3002\u8655\u7406\u7684\u539F\u5247\u662F\uFF1A\u5148\u627E\u51FA\u4E3B\u8A5E\u7684\u6838\u5FC3\u540D\u8A5E\uFF0C\u518D\u770B\u9019\u500B\u8A5E\u662F\u55AE\u6578\u3001\u8907\u6578\uFF0C\u6216\u662F\u96C6\u5408\u540D\u8A5E\u3002
+
+**\u53E5\u578B**
+\`A number of + \u8907\u6578\u540D\u8A5E + \u8907\u6578\u52D5\u8A5E\`\uFF1A\u8A31\u591A\u2026\u2026
+\`The number of + \u8907\u6578\u540D\u8A5E + \u55AE\u6578\u52D5\u8A5E\`\uFF1A\u2026\u2026\u7684\u6578\u91CF
+\`\u96C6\u5408\u540D\u8A5E + \u55AE\u6578\uFF0F\u8907\u6578\u52D5\u8A5E\`\uFF1A\u4F9D\u8A9E\u610F\u800C\u5B9A\u3002
+
+**\u4F8B\u53E5**
+- A number of students have signed up for the trip.\u2014\u2014\u6709\u4E0D\u5C11\u5B78\u751F\u5831\u540D\u4E86\u9019\u8D9F\u65C5\u884C\u3002
+- The number of students has doubled this year.\u2014\u2014\u5B78\u751F\u4EBA\u6578\u4ECA\u5E74\u589E\u52A0\u4E86\u4E00\u500D\u3002
+- The committee is meeting at noon.\u2014\u2014\u59D4\u54E1\u6703\u6B63\u5348\u958B\u6703\u3002
+
+**a number of \u8207 the number of**
+a number of \u76F8\u7576\u65BC many\uFF0C\u6240\u4EE5\u52D5\u8A5E\u7528\u8907\u6578\uFF1Bthe number of \u7684\u6838\u5FC3\u662F number\uFF08\u6578\u91CF\uFF09\uFF0C\u6240\u4EE5\u52D5\u8A5E\u7528\u55AE\u6578\u3002
+
+**\u96C6\u5408\u540D\u8A5E**
+team\u3001family\u3001committee \u7B49\u96C6\u5408\u540D\u8A5E\uFF08collective noun\uFF09\uFF1A\u628A\u5B83\u7576\u6210\u4E00\u500B\u6574\u9AD4\uFF0C\u52D5\u8A5E\u7528\u55AE\u6578\uFF1B\u5F37\u8ABF\u6210\u54E1\u5404\u81EA\u7684\u884C\u52D5\u6642\uFF0C\u82F1\u5F0F\u82F1\u8A9E\u5E38\u7528\u8907\u6578\uFF1AThe team are arguing among themselves. \u7F8E\u5F0F\u82F1\u8A9E\u901A\u5E38\u4ECD\u7528\u55AE\u6578\u3002
+
+**\u5F88\u9577\u7684\u4E3B\u8A5E**
+The quality of the products that the company exports to several countries has improved. \u6838\u5FC3\u540D\u8A5E\u662F quality\uFF0C\u6240\u4EE5\u52D5\u8A5E\u7528 has\u3002\u4E2D\u9593\u7684\u4FEE\u98FE\u8A9E\uFF08of ...\u3001that ...\uFF09\u4E0D\u5F71\u97FF\u52D5\u8A5E\u5F62\u5F0F\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C The number of errors are increasing. \u2705 The number of errors is increasing. \u539F\u56E0\uFF1A\u6838\u5FC3\u540D\u8A5E\u662F number\u3002
+- \u274C A number of people is waiting outside. \u2705 A number of people are waiting outside. \u539F\u56E0\uFF1Aa number of \u7B49\u65BC many\uFF0C\u7528\u8907\u6578\u3002
+- \u274C The list of items were missing. \u2705 The list of items was missing. \u539F\u56E0\uFF1A\u6838\u5FC3\u540D\u8A5E\u662F list\uFF0C\u4E0D\u662F items\u3002`,
+  "determiners-reference": `**\u6838\u5FC3\u6982\u5FF5**
+\u9650\u5B9A\u8A5E\uFF08determiner\uFF09\u6C7A\u5B9A\u540D\u8A5E\u6307\u7684\u662F\u500B\u9AD4\u3001\u7FA4\u9AD4\u9084\u662F\u5168\u90E8\uFF0C\u4E5F\u6703\u5F71\u97FF\u5F8C\u9762\u52D5\u8A5E\u7684\u5F62\u5F0F\u3002each\u3001every\u3001either\u3001neither \u770B\u8D77\u4F86\u76F8\u8FD1\uFF0C\u4F46\u6307\u6D89\u7684\u7BC4\u570D\u548C\u7528\u6CD5\u4E0D\u540C\uFF0C\u9700\u8981\u5206\u958B\u638C\u63E1\u3002
+
+**\u53E5\u578B**
+\`each / every + \u55AE\u6578\u540D\u8A5E + \u55AE\u6578\u52D5\u8A5E\`
+\`either / neither + \u55AE\u6578\u540D\u8A5E + \u55AE\u6578\u52D5\u8A5E\`
+\`either / neither of + the / \u6240\u6709\u683C + \u8907\u6578\u540D\u8A5E\`\uFF1A\u52D5\u8A5E\u901A\u5E38\u7528\u55AE\u6578\uFF0C\u53E3\u8A9E\u4E5F\u53EF\u7528\u8907\u6578\u3002
+
+**\u4F8B\u53E5**
+- Each student has a different project.\u2014\u2014\u6BCF\u4F4D\u5B78\u751F\u90FD\u6709\u4E0D\u540C\u7684\u5C08\u984C\u3002
+- Every seat was taken, so we stood.\u2014\u2014\u6BCF\u500B\u5EA7\u4F4D\u90FD\u88AB\u5360\u4E86\uFF0C\u6240\u4EE5\u6211\u5011\u7AD9\u8457\u3002
+- Neither of the answers is correct.\u2014\u2014\u5169\u500B\u7B54\u6848\u90FD\u4E0D\u5C0D\u3002
+
+**each \u8207 every**
+each \u5F37\u8ABF\u9010\u4E00\u770B\u5F85\u500B\u9AD4\uFF0C\u53EF\u7528\u65BC\u5169\u500B\u4EE5\u4E0A\uFF1Bevery \u5F37\u8ABF\u5168\u9AD4\u90FD\u7121\u4F8B\u5916\uFF0C\u5FC5\u9808\u662F\u4E09\u500B\u4EE5\u4E0A\uFF0C\u4E5F\u4E0D\u80FD\u55AE\u7368\u7576\u4EE3\u540D\u8A5E\u7528\u3002\u6BD4\u8F03 Each of the students \u8207 Every student\u3002
+
+**either \u8207 neither**
+\u5169\u8005\u90FD\u53EA\u7528\u65BC\u300C\u5169\u500B\u300D\u4E4B\u4E2D\u3002either \u662F\u300C\u5169\u8005\u5176\u4E00\u300D\u6216\u300C\u4EFB\u4E00\u300D\uFF0Cneither \u662F\u300C\u5169\u8005\u7686\u975E\u300D\u3002\u4E09\u500B\u4EE5\u4E0A\u8981\u6539\u7528 any\u3001none\u3002
+
+**\u5F8C\u9762\u7684\u52D5\u8A5E**
+\u5404\u9650\u5B9A\u8A5E\u5F8C\u9762\u63A5\u55AE\u6578\u540D\u8A5E\u6642\uFF0C\u52D5\u8A5E\u7528\u55AE\u6578\u3002\u542B of \u7684\u7D50\u69CB\uFF0C\u66F8\u9762\u8A9E\u591A\u7528\u55AE\u6578\uFF0C\u53E3\u8A9E\u5BB9\u8A31\u8907\u6578\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C Every students must register. \u2705 Every student must register. \u539F\u56E0\uFF1Aevery \u5F8C\u63A5\u55AE\u6578\u540D\u8A5E\u3002
+- \u274C Neither of the three options works. \u2705 None of the three options works. \u539F\u56E0\uFF1Aneither \u53EA\u7528\u65BC\u5169\u500B\u9078\u9805\u3002
+- \u274C I didn't like neither of them. \u2705 I liked neither of them. / I didn't like either of them. \u539F\u56E0\uFF1A\u907F\u514D\u96D9\u91CD\u5426\u5B9A\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u51A0\u8A5E\u9032\u968E\uFF1A\u8655\u7406 a / the / \u96F6\u51A0\u8A5E\u5C0D\u6307\u6D89\u7684\u5F71\u97FF\uFF1B\u672C\u4E3B\u984C\u8655\u7406 each\u3001every\u3001either\u3001neither \u7684\u7BC4\u570D\u3002
+- all / both / each\uFF1A\u5F8C\u8005\u4ECB\u7D39\u57FA\u672C\u7528\u6CD5\uFF1B\u672C\u4E3B\u984C\u52A0\u5165 every\u3001either\u3001neither \u8207\u52D5\u8A5E\u4E00\u81F4\u3002`,
+  "preposition-abstract": `**\u6838\u5FC3\u6982\u5FF5**
+\u4ECB\u7CFB\u8A5E\u7684\u672C\u610F\u591A\u534A\u4F86\u81EA\u7A7A\u9593\uFF1Ain \u662F\u300C\u5728\u7BC4\u570D\u5167\u300D\u3001on \u662F\u300C\u63A5\u89F8\u8868\u9762\u300D\u3001at \u662F\u300C\u67D0\u4E00\u9EDE\u300D\u3002\u9032\u5165\u62BD\u8C61\u6982\u5FF5\u5F8C\uFF0C\u9019\u4E9B\u610F\u8C61\u4ECD\u7136\u6709\u6548\uFF0C\u53EA\u662F\u7A7A\u9593\u8B8A\u6210\u6642\u9593\u3001\u72C0\u614B\u3001\u60C5\u7DD2\u6216\u95DC\u4FC2\u3002\u7406\u89E3\u610F\u8C61\u6BD4\u786C\u80CC\u642D\u914D\u66F4\u6709\u6548\u3002
+
+**\u53E5\u578B**
+\`in + \u72C0\u614B\uFF0F\u9818\u57DF\`\uFF1Ain trouble\u3001in love\u3001in the field of\u3002
+\`on + \u57FA\u790E\uFF0F\u4E3B\u984C\uFF0F\u9032\u884C\u4E2D\`\uFF1Aon purpose\u3001on the topic\u3001on sale\u3002
+\`at + \u4E00\u500B\u9EDE\uFF0F\u7A0B\u5EA6\`\uFF1Aat risk\u3001at peace\u3001at a low price\u3002
+
+**\u4F8B\u53E5**
+- The company is in serious trouble.\u2014\u2014\u9019\u5BB6\u516C\u53F8\u9677\u5165\u56B4\u91CD\u7684\u9EBB\u7169\u3002
+- She wrote a paper on climate policy.\u2014\u2014\u5979\u5BEB\u4E86\u4E00\u7BC7\u95DC\u65BC\u6C23\u5019\u653F\u7B56\u7684\u8AD6\u6587\u3002
+- Many young drivers are at risk of accidents.\u2014\u2014\u8A31\u591A\u5E74\u8F15\u99D5\u99DB\u6709\u767C\u751F\u4E8B\u6545\u7684\u98A8\u96AA\u3002
+
+**of \u8868\u793A\u7684\u5404\u7A2E\u95DC\u4FC2**
+of \u53EF\u8868\u793A\u6240\u5C6C\uFF08a friend of mine\uFF09\u3001\u90E8\u5206\u8207\u6574\u9AD4\uFF08a slice of cake\uFF09\u3001\u5167\u5BB9\uFF08a cup of tea\uFF09\u3001\u6027\u8CEA\uFF08a man of courage\uFF09\u3001\u52D5\u4F5C\u7684\u5C0D\u8C61\uFF08the fear of failure\uFF09\u3002
+
+**\u754C\u7DDA**
+\u610F\u601D\u76F8\u8FD1\u7684\u4ECB\u7CFB\u8A5E\u6703\u6709\u7D30\u5FAE\u5DEE\u7570\uFF1Ain the end\uFF08\u6700\u5F8C\uFF0C\u7D50\u679C\uFF09\u8207 at the end of\uFF08\u5728\u2026\u2026\u7684\u76E1\u982D\uFF09\uFF1Bon time\uFF08\u6E96\u6642\uFF09\u8207 in time\uFF08\u53CA\u6642\uFF09\uFF1Bat first\uFF08\u8D77\u521D\uFF09\u8207 in the first place\uFF08\u9996\u5148\u3001\u672C\u4F86\uFF09\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C She is good in math. \u2705 She is good at math. \u539F\u56E0\uFF1A\u8868\u793A\u80FD\u529B\u7684\u9EDE\uFF0C\u7528 at\u3002
+- \u274C He arrived on time to catch the train, just before it left. \u2705 He arrived in time to catch the train. \u539F\u56E0\uFF1Ain time \u662F\u300C\u53CA\u6642\u3001\u4F86\u5F97\u53CA\u300D\uFF0Con time \u662F\u300C\u6E96\u6642\u300D\u3002
+- \u274C We met in a Monday morning. \u2705 We met on Monday morning. \u539F\u56E0\uFF1A\u7279\u5B9A\u7684\u65E5\u5B50\u7528 on\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u4ECB\u7CFB\u8A5E\u7684\u8A9E\u610F\uFF1A\u8AAA\u660E\u4ECB\u7CFB\u8A5E\u5404\u81EA\u8868\u793A\u7684\u57FA\u672C\u610F\u601D\uFF1B\u672C\u4E3B\u984C\u628A\u9019\u4E9B\u610F\u8C61\u5EF6\u4F38\u5230\u62BD\u8C61\u6982\u5FF5\uFF0C\u4E26\u6BD4\u8F03\u76F8\u8FD1\u4ECB\u7CFB\u8A5E\u7684\u754C\u7DDA\u3002`,
+  "concessive-inversion": `**\u6838\u5FC3\u6982\u5FF5**
+\u8B93\u6B65\u5012\u88DD\uFF08concessive inversion\uFF09\u662F\u7528\u5012\u88DD\u6216\u524D\u7F6E\u7684\u7D50\u69CB\u8868\u9054\u300C\u5118\u7BA1\u2026\u2026\u300D\u7684\u610F\u601D\u3002\u8A9E\u6C23\u6B63\u5F0F\u3001\u6709\u6587\u5B78\u5473\uFF0C\u53EF\u4EE5\u628A\u539F\u672C\u653E\u5728\u5F8C\u9762\u7684\u8B93\u6B65\u5167\u5BB9\u63D0\u5230\u53E5\u9996\u3002
+
+**\u53E5\u578B**
+\`Much as + \u4E3B\u8A5E + \u52D5\u8A5E, ...\`\uFF1A\u96D6\u7136\u975E\u5E38\u2026\u2026
+\`\u5F62\u5BB9\u8A5E\uFF0F\u526F\u8A5E + as + \u4E3B\u8A5E + be\uFF0F\u52D5\u8A5E, ...\`\uFF1A\u5118\u7BA1\u591A\u9EBC\u2026\u2026
+\`Try as + \u4E3B\u8A5E + might, ...\`\uFF1A\u4E0D\u7BA1\u600E\u9EBC\u52AA\u529B\u2026\u2026
+
+**\u4F8B\u53E5**
+- Much as I admire her, I can't support this plan.\u2014\u2014\u5118\u7BA1\u6211\u5F88\u6B23\u8CDE\u5979\uFF0C\u6211\u7121\u6CD5\u652F\u6301\u9019\u500B\u8A08\u756B\u3002
+- Tired as he was, he kept working.\u2014\u2014\u5118\u7BA1\u4ED6\u5F88\u7D2F\uFF0C\u4ECD\u7E7C\u7E8C\u5DE5\u4F5C\u3002
+- Try as she might, she couldn't open the door.\u2014\u2014\u4E0D\u7BA1\u5979\u600E\u9EBC\u8A66\uFF0C\u5C31\u662F\u6253\u4E0D\u958B\u9580\u3002
+
+**much as**
+Much as I like it \u7B49\u540C Although I like it very much\u3002much \u8868\u793A\u7A0B\u5EA6\uFF0C\u56E0\u6B64\u591A\u642D\u914D like\u3001admire\u3001enjoy \u9019\u985E\u8868\u793A\u611F\u53D7\u7684\u52D5\u8A5E\u3002
+
+**\u5F62\u5BB9\u8A5E + as**
+Strange as it may seem, ... \u7B49\u65BC Although it may seem strange, ...\u3002\u5F62\u5BB9\u8A5E\u6216\u540D\u8A5E\u653E\u5728 as \u524D\uFF0C\u5F8C\u9762\u63A5\u4E3B\u8A5E\u8207\u52D5\u8A5E\u3002\u7F8E\u5F0F\u82F1\u8A9E\u4E5F\u53EF\u4EE5\u7528 though \u53D6\u4EE3 as\u3002
+
+**\u56FA\u5B9A\u7D50\u69CB**
+Try as he might\u3001Hard as I tried \u7B49\uFF0C\u662F\u5DF2\u56FA\u5B9A\u7684\u8AAA\u6CD5\uFF0C\u610F\u601D\u662F\u300C\u5118\u7BA1\u76E1\u529B\u300D\uFF0C\u5F8C\u9762\u63A5\u7D50\u679C\u8207\u671F\u671B\u76F8\u53CD\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C Although tired as he was, he continued. \u2705 Tired as he was, he continued. \u539F\u56E0\uFF1A\u7528\u4E86\u5012\u88DD\u7684 as \u5C31\u4E0D\u518D\u52A0 although\uFF0C\u5426\u5247\u91CD\u8907\u3002
+- \u274C As tired he was, he continued. \u2705 Tired as he was, he continued. \u539F\u56E0\uFF1A\u5F62\u5BB9\u8A5E\u8981\u653E\u5728 as \u4E4B\u524D\u3002
+- \u274C Much as I like the idea, but I can't agree. \u2705 Much as I like the idea, I can't agree. \u539F\u56E0\uFF1A\u82F1\u6587\u8B93\u6B65\u5B50\u53E5\u5F8C\u9762\u4E0D\u7528 but\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u8B93\u6B65\u8207\u5C0D\u6BD4\uFF1A\u5F8C\u8005\u8655\u7406 although\u3001however \u7B49\u4E00\u822C\u9023\u63A5\u8A5E\uFF1B\u672C\u4E3B\u984C\u662F\u66F4\u6B63\u5F0F\u7684\u5012\u88DD\u5BEB\u6CD5\u3002
+- \u5426\u5B9A\u526F\u8A5E\u5012\u88DD\uFF1A\u5169\u8005\u90FD\u6709\u5012\u88DD\uFF0C\u4F46\u90A3\u662F\u7531 never\u3001rarely \u7B49\u89F8\u767C\uFF1B\u672C\u4E3B\u984C\u662F as \u5F15\u5C0E\u7684\u8B93\u6B65\u7D50\u69CB\uFF0C\u4E3B\u8A5E\u8207\u52D5\u8A5E\u4E26\u4E0D\u662F\u7591\u554F\u53E5\u7684\u9806\u5E8F\u3002`,
+  "word-order-information-structure": `**\u6838\u5FC3\u6982\u5FF5**
+\u82F1\u6587\u7684\u8A9E\u5E8F\u9664\u4E86\u6587\u6CD5\u898F\u5247\uFF0C\u9084\u53D7\u8CC7\u8A0A\u7D50\u69CB\uFF08information structure\uFF09\u5F71\u97FF\uFF1A\u53E5\u5B50\u901A\u5E38\u5F9E\u8B80\u8005\u5DF2\u77E5\u7684\u820A\u8CC7\u8A0A\u958B\u59CB\uFF0C\u518D\u5E36\u51FA\u65B0\u8CC7\u8A0A\u3002\u60F3\u5F37\u8ABF\u6642\u53EF\u628A\u6210\u5206\u79FB\u5230\u53E5\u9996\uFF08fronting\uFF09\uFF0C\u53C8\u70BA\u4E86\u8B80\u8D77\u4F86\u9806\u66A2\uFF0C\u8F03\u9577\u7684\u6210\u5206\u653E\u5728\u53E5\u5C3E\uFF08end-weight\uFF09\u3002
+
+**\u53E5\u578B**
+\`\u820A\u8CC7\u8A0A + \u52D5\u8A5E + \u65B0\u8CC7\u8A0A\`\uFF1A\u4E00\u822C\u7684\u8CC7\u8A0A\u6D41\u5411\u3002
+\`\u53D7\u8A5E\uFF0F\u88DC\u8A9E\uFF0F\u526F\u8A5E\u7247\u8A9E + \u4E3B\u8A5E + \u52D5\u8A5E\`\uFF1A\u524D\u7F6E\u4EE5\u5F37\u8ABF\u6216\u5C0D\u6BD4\u3002
+\`\u4E3B\u8A5E + \u52D5\u8A5E + \u77ED\u7684\u6210\u5206 + \u9577\u7684\u6210\u5206\`\uFF1A\u9577\u6210\u5206\u653E\u5F8C\u9762\u3002
+
+**\u4F8B\u53E5**
+- I met a famous author yesterday. She had written a book about cities.\u2014\u2014\u6211\u6628\u5929\u9047\u898B\u4E00\u4F4D\u540D\u4F5C\u5BB6\u3002\u5979\u5BEB\u904E\u4E00\u672C\u95DC\u65BC\u57CE\u5E02\u7684\u66F8\u3002
+- This proposal I can support; that one I cannot.\u2014\u2014\u9019\u500B\u63D0\u6848\u6211\u80FD\u652F\u6301\uFF0C\u90A3\u4E00\u500B\u6211\u4E0D\u884C\u3002
+- She explained to the committee why the budget had to be cut.\u2014\u2014\u5979\u5411\u59D4\u54E1\u6703\u8AAA\u660E\u70BA\u4EC0\u9EBC\u9810\u7B97\u5FC5\u9808\u524A\u6E1B\u3002
+
+**\u820A\u5728\u524D\u3001\u65B0\u5728\u5F8C**
+\u7B2C\u4E8C\u53E5\u958B\u982D\u7528 She\uFF08\u5DF2\u63D0\u904E\u7684\u4EBA\uFF09\uFF0C\u81EA\u7136\u929C\u63A5\u4E0A\u4E00\u53E5\u3002\u82E5\u6539\u6210 A book about cities had been written by her\uFF0C\u65B0\u8CC7\u8A0A\u8DD1\u5230\u524D\u9762\uFF0C\u8B80\u8D77\u4F86\u7A81\u5140\u3002
+
+**\u524D\u7F6E\u5F37\u8ABF**
+\u628A\u53D7\u8A5E\u6216\u88DC\u8A9E\u79FB\u5230\u53E5\u9996\u53EF\u4EE5\u88FD\u9020\u5C0D\u6BD4\u6216\u5F37\u8ABF\uFF0C\u4F8B\u5982 This proposal I can support\u3002\u9019\u7A2E\u524D\u7F6E\u4E0D\u9700\u8981\u5012\u88DD\uFF0C\u4E3B\u8A5E\u548C\u52D5\u8A5E\u7DAD\u6301\u539F\u672C\u7684\u9806\u5E8F\uFF1B\u53EA\u6709 Rarely\u3001Never \u9019\u985E\u5426\u5B9A\u526F\u8A5E\u653E\u53E5\u9996\u6642\u624D\u8981\u5012\u88DD\uFF08\u898B\u5012\u88DD\u53E5\u4E3B\u984C\uFF09\u3002
+
+**\u53E5\u5C3E\u91CD\u91CF**
+\u8F03\u9577\u3001\u8F03\u8907\u96DC\u7684\u6210\u5206\u653E\u5F8C\u9762\uFF1AShe gave the book to her sister. \u53D7\u8A5E\u5F88\u77ED\u6642\u7167\u4E00\u822C\u9806\u5E8F\uFF1B\u53D7\u8A5E\u5F88\u9577\u6642\uFF0C\u53EF\u4EE5\u628A\u5B83\u79FB\u5230\u53E5\u5C3E\uFF1AShe gave to her sister the book that she had bought in Paris. \u9019\u6A23\u8B80\u8005\u4E0D\u7528\u6490\u8457\u4E00\u5927\u6BB5\u53D7\u8A5E\u624D\u770B\u5230 to her sister\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I made yesterday a cake. \u2705 I made a cake yesterday. \u539F\u56E0\uFF1A\u53D7\u8A5E\u8981\u7DCA\u8DDF\u5728\u52D5\u8A5E\u5F8C\uFF0C\u6642\u9593\u526F\u8A5E\u653E\u5F8C\u9762\u3002
+- \u274C She gave to him the book. \u2705 She gave him the book. \u539F\u56E0\uFF1A\u77ED\u7684\u9593\u63A5\u53D7\u8A5E\uFF08\u4EE3\u540D\u8A5E\uFF09\u76F4\u63A5\u653E\u5728\u52D5\u8A5E\u5F8C\u3002
+- \u274C She told that she was leaving to me. \u2705 She told me that she was leaving. \u539F\u56E0\uFF1Atell \u5F8C\u9762\u5148\u63A5\u4EBA\uFF0C\u518D\u63A5\u9577\u7684 that \u5B50\u53E5\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u5206\u88C2\u53E5\uFF1A\u4E5F\u662F\u8ABF\u6574\u7126\u9EDE\u7684\u624B\u6BB5\uFF0C\u4F46\u5B83\u91CD\u7D44\u53E5\u5B50\uFF1B\u672C\u4E3B\u984C\u8655\u7406\u4E00\u822C\u8A9E\u5E8F\u4E2D\u7684\u5B89\u6392\u3002`,
+  "discourse-connectors": `**\u6838\u5FC3\u6982\u5FF5**
+\u7BC7\u7AE0\u9023\u63A5\uFF08discourse connector\uFF09\u7528\u4F86\u9023\u7D50\u53E5\u5B50\u8207\u6BB5\u843D\u4E4B\u9593\u7684\u908F\u8F2F\u95DC\u4FC2\uFF0C\u4F8B\u5982\u5C0D\u6BD4\u3001\u8B93\u6B65\u3001\u7D50\u679C\u3002\u9078\u5C0D\u9023\u63A5\u8A5E\uFF0C\u6587\u7AE0\u7684\u8AD6\u8B49\u624D\u8B93\u8B80\u8005\u8DDF\u5F97\u4E0A\u3002\u9032\u968E\u5B78\u7FD2\u8005\u61C9\u638C\u63E1\u8F03\u6B63\u5F0F\u7684\u7528\u6CD5\uFF0C\u4E26\u6CE8\u610F\u5B83\u5011\u7684\u8A5E\u6027\u8207\u6A19\u9EDE\u3002
+
+**\u53E5\u578B**
+\`Clause 1, whereas / while + Clause 2\`\uFF1A\u5C0D\u6BD4\u3002
+\`Notwithstanding + \u540D\u8A5E, \u4E3B\u53E5\`\uFF1A\u5118\u7BA1\uFF08\u6B63\u5F0F\uFF09\u3002
+\`Clause 1. However / Nevertheless, Clause 2\`\uFF1A\u53E5\u9593\u7684\u8F49\u6298\u3002
+
+**\u4F8B\u53E5**
+- Some cities are expanding rapidly, whereas others are shrinking.\u2014\u2014\u6709\u4E9B\u57CE\u5E02\u5FEB\u901F\u64F4\u5F35\uFF0C\u53E6\u4E00\u4E9B\u5247\u5728\u7E2E\u5C0F\u3002
+- Notwithstanding the heavy rain, the match went ahead.\u2014\u2014\u5118\u7BA1\u4E0B\u5927\u96E8\uFF0C\u6BD4\u8CFD\u4ECD\u7167\u5E38\u9032\u884C\u3002
+- The results were promising; nevertheless, further tests are needed.\u2014\u2014\u7D50\u679C\u4EE4\u4EBA\u770B\u597D\uFF0C\u7136\u800C\u4ECD\u9700\u8981\u9032\u4E00\u6B65\u6E2C\u8A66\u3002
+
+**\u5C0D\u6BD4**
+whereas \u8207 while \u5F15\u5C0E\u7684\u5B50\u53E5\uFF0C\u7528\u4F86\u4E26\u5217\u5169\u7A2E\u5C0D\u6BD4\u7684\u60C5\u6CC1\u3002while \u4E5F\u6709\u300C\u7576\u2026\u2026\u6642\u300D\u7684\u610F\u601D\uFF0Cwhereas \u5247\u5C08\u9580\u8868\u793A\u5C0D\u6BD4\uFF0C\u8F03\u7121\u6B67\u7FA9\u3002
+
+**\u8B93\u6B65**
+notwithstanding \u662F\u4ECB\u7CFB\u8A5E\uFF0C\u610F\u601D\u8FD1\u4F3C despite\uFF0C\u53EF\u653E\u5728\u540D\u8A5E\u4E4B\u524D\u6216\u4E4B\u5F8C\u3002nevertheless\u3001nonetheless \u662F\u526F\u8A5E\uFF0C\u9023\u63A5\u5169\u500B\u7368\u7ACB\u7684\u53E5\u5B50\uFF0C\u524D\u9762\u5E38\u7528\u5206\u865F\u6216\u53E5\u865F\u3002
+
+**\u4F9D\u908F\u8F2F\u9078\u64C7**
+\u5148\u5224\u65B7\u5169\u53E5\u4E4B\u9593\u662F\u4EC0\u9EBC\u95DC\u4FC2\uFF08\u5C0D\u6BD4\u3001\u8B93\u6B65\u3001\u56E0\u679C\u3001\u88DC\u5145\uFF09\uFF0C\u518D\u9078\u7528\u9023\u63A5\u8A5E\u3002\u540C\u4E00\u500B\u4F4D\u7F6E\u82E5\u63DB\u6210\u4E0D\u540C\u95DC\u4FC2\u7684\u8A5E\uFF0C\u610F\u601D\u5C31\u4E0D\u540C\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C The plan was good, nevertheless it failed. \u2705 The plan was good; nevertheless, it failed. \u539F\u56E0\uFF1Anevertheless \u662F\u526F\u8A5E\uFF0C\u4E0D\u80FD\u55AE\u9760\u9017\u865F\u9023\u63A5\u5169\u500B\u7368\u7ACB\u53E5\u3002
+- \u274C Despite of the rain, we went out. \u2705 Despite the rain, we went out. \u539F\u56E0\uFF1Adespite \u5F8C\u9762\u4E0D\u52A0 of\uFF1Bin spite of \u624D\u6709 of\u3002
+- \u274C Although the price is high, but it sells well. \u2705 Although the price is high, it sells well. \u539F\u56E0\uFF1Aalthough \u8207 but \u4E0D\u80FD\u540C\u6642\u4F7F\u7528\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u8B93\u6B65\u8207\u5C0D\u6BD4\uFF1A\u8655\u7406 although\u3001but\u3001however \u7684\u57FA\u672C\u7528\u6CD5\uFF1B\u672C\u4E3B\u984C\u9032\u4E00\u6B65\u4F7F\u7528 whereas\u3001notwithstanding \u7B49\u8F03\u6B63\u5F0F\u7684\u9023\u63A5\u8A5E\uFF0C\u4E26\u8457\u91CD\u8AD6\u8FF0\u908F\u8F2F\u3002`,
+  "advanced-negation": `**\u6838\u5FC3\u6982\u5FF5**
+\u6709\u4E9B\u5426\u5B9A\u7D50\u69CB\u7684\u5B57\u9762\u548C\u5BE6\u969B\u610F\u601D\u4E26\u4E0D\u4E00\u81F4\uFF0C\u82E5\u6309\u7167\u5B57\u9762\u7406\u89E3\u5F88\u5BB9\u6613\u8B80\u932F\u3002anything but \u770B\u8D77\u4F86\u50CF\u300C\u4EFB\u4F55\u6771\u897F\uFF0C\u9664\u4E86\u2026\u2026\u300D\uFF0C\u5176\u5BE6\u662F\u5F37\u70C8\u7684\u5426\u5B9A\uFF1Bnot least \u770B\u8D77\u4F86\u5426\u5B9A\uFF0C\u537B\u662F\u300C\u5C24\u5176\u662F\u300D\u7684\u610F\u601D\u3002\u9032\u968E\u95B1\u8B80\u8981\u719F\u6089\u9019\u4E9B\u7D50\u69CB\u3002
+
+**\u53E5\u578B**
+\`anything but + \u540D\u8A5E\uFF0F\u5F62\u5BB9\u8A5E\`\uFF1A\u7D55\u4E0D\u662F\u2026\u2026
+\`far from + V-ing\uFF0F\u5F62\u5BB9\u8A5E\`\uFF1A\u9060\u975E\u2026\u2026
+\`not least\uFF0Fnot only ... but also\`\uFF1A\u5C24\u5176\u662F\uFF0F\u4E0D\u50C5\u2026\u2026\u9084\u2026\u2026
+
+**\u4F8B\u53E5**
+- The film was anything but boring.\u2014\u2014\u9019\u90E8\u96FB\u5F71\u4E00\u9EDE\u4E5F\u4E0D\u7121\u804A\u3002
+- The results are far from satisfactory.\u2014\u2014\u7D50\u679C\u9060\u4E0D\u80FD\u4EE4\u4EBA\u6EFF\u610F\u3002
+- Many people supported the plan, not least the local farmers.\u2014\u2014\u8A31\u591A\u4EBA\u652F\u6301\u9019\u500B\u8A08\u756B\uFF0C\u5C24\u5176\u662F\u7576\u5730\u7684\u8FB2\u6C11\u3002
+
+**anything but \u8207 far from**
+anything but \u7684\u610F\u601D\u662F\u300C\u5B8C\u5168\u4E0D\u662F\u300D\uFF1AHe is anything but honest \u8868\u793A\u4ED6\u4E00\u9EDE\u4E5F\u4E0D\u8AA0\u5BE6\uFF0C\u4E0D\u662F\u300C\u9664\u4E86\u8AA0\u5BE6\u4EE5\u5916\u7684\u4EFB\u4F55\u4E8B\u300D\u3002far from \u7684\u610F\u601D\u76F8\u8FD1\uFF0C\u8A9E\u6C23\u66F4\u504F\u5411\u300C\u5DEE\u5F97\u9060\u300D\u3002
+
+**not least \u8207 not only**
+not least \u662F\u300C\u5C24\u5176\u300D\uFF0C\u7528\u4F86\u5F37\u8ABF\u4E00\u500B\u91CD\u8981\u7684\u539F\u56E0\uFF0C\u4E26\u4E0D\u662F\u5426\u5B9A\u3002not only \u653E\u53E5\u9996\u6642\uFF0C\u5F8C\u9762\u8981\u5012\u88DD\uFF1ANot only did she win, but she also set a record.
+
+**\u96D9\u91CD\u5426\u5B9A\u8207\u96B1\u542B\u5426\u5B9A**
+not uncommon\uFF08\u76F8\u7576\u5E38\u898B\uFF09\u3001can't fail to\uFF08\u4E00\u5B9A\u6703\uFF09\u4F7F\u7528\u96D9\u91CD\u5426\u5B9A\uFF0C\u8A9E\u6C23\u6BD4\u76F4\u63A5\u80AF\u5B9A\u66F4\u4FDD\u5B88\u3002\u53E6\u5916 hardly\u3001scarcely\u3001barely \u672C\u8EAB\u5C31\u542B\u5426\u5B9A\u610F\u601D\uFF0C\u4E0D\u80FD\u518D\u52A0 not\u3002fail to\u3001deny \u4E5F\u5E36\u5426\u5B9A\u610F\u5473\uFF0C\u4F46\u53EF\u4EE5\u518D\u52A0 not \u5F62\u6210\u96D9\u91CD\u5426\u5B9A\uFF0C\u4F8B\u5982 He didn't deny it\uFF08\u4ED6\u6C92\u6709\u5426\u8A8D\uFF1D\u7B49\u65BC\u9ED8\u8A8D\uFF09\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C I can't hardly see it. \u2705 I can hardly see it. \u539F\u56E0\uFF1Ahardly \u672C\u8EAB\u5DF2\u7D93\u662F\u5426\u5B9A\u3002
+- \u274C He is anything but shy. \u8AA4\u8B80\u6210\u300C\u4ED6\u5F88\u5BB3\u7F9E\u300D \u2705 \u6B63\u78BA\u7406\u89E3\u662F\u300C\u4ED6\u4E00\u9EDE\u4E5F\u4E0D\u5BB3\u7F9E\u300D\u3002\u539F\u56E0\uFF1Aanything but \u662F\u5F37\u70C8\u5426\u5B9A\uFF0C\u4E0D\u662F\u5B57\u9762\u4E0A\u7684\u300C\u9664\u4E86\u300D\u3002
+- \u274C Not only she won, but also ... \u2705 Not only did she win, but she also ... \u539F\u56E0\uFF1Anot only \u653E\u53E5\u9996\u8981\u5012\u88DD\u3002
+
+**\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**
+- \u5426\u5B9A\u8207\u6578\u91CF\u8A5E\u9032\u968E\uFF1A\u8655\u7406 no\u3001none\u3001neither \u7B49\u6578\u91CF\u8A5E\u7684\u5426\u5B9A\uFF1B\u672C\u4E3B\u984C\u5C08\u6CE8\u65BC\u5BB9\u6613\u8AA4\u8B80\u7684\u6163\u7528\u7D50\u69CB\u3002`,
+  "register-choice": `**\u6838\u5FC3\u6982\u5FF5**
+\u8A9E\u9AD4\uFF08register\uFF09\u6307\u8AAA\u8A71\u6216\u5BEB\u4F5C\u7684\u6B63\u5F0F\u7A0B\u5EA6\u3002\u540C\u4E00\u500B\u610F\u601D\uFF0C\u5728\u4E0D\u540C\u5834\u5408\u8981\u9078\u4E0D\u540C\u7684\u8AAA\u6CD5\uFF1A\u7D66\u6559\u6388\u7684\u4FE1\u3001\u540C\u4E8B\u9593\u7684\u8A0A\u606F\u3001\u670B\u53CB\u7684\u9592\u804A\uFF0C\u7528\u8A5E\u8207\u53E5\u578B\u90FD\u4E0D\u4E00\u6A23\u3002\u9078\u932F\u8A9E\u9AD4\u4E0D\u4E00\u5B9A\u662F\u6587\u6CD5\u932F\u8AA4\uFF0C\u537B\u53EF\u80FD\u8B93\u4EBA\u89BA\u5F97\u5931\u79AE\u6216\u4E0D\u81EA\u7136\u3002
+
+**\u53E5\u578B**
+\`\u6B63\u5F0F\`\uFF1A\u88AB\u52D5\u3001\u540D\u8A5E\u5316\u3001\u8F03\u9577\u7684\u52D5\u8A5E\uFF08request\u3001obtain\u3001inform\uFF09\u3002
+\`\u4E2D\u6027\`\uFF1A\u4E00\u822C\u7684\u65E5\u5E38\u8AAA\u6CD5\u3002
+\`\u53E3\u8A9E\`\uFF1A\u7E2E\u5BEB\u3001\u7247\u8A9E\u52D5\u8A5E\uFF08ask for\u3001find out\uFF09\u3001\u7701\u7565\u3002
+
+**\u4F8B\u53E5**
+- I would be grateful if you could provide further details.\u2014\u2014\u5982\u679C\u60A8\u80FD\u63D0\u4F9B\u66F4\u591A\u7D30\u7BC0\uFF0C\u6211\u6703\u5F88\u611F\u6FC0\u3002
+- Could you send me a few more details?\u2014\u2014\u53EF\u4EE5\u8ACB\u4F60\u518D\u5BC4\u4E00\u4E9B\u7D30\u7BC0\u7D66\u6211\u55CE\uFF1F
+- Can you shoot me the details?\u2014\u2014\u53EF\u4EE5\u628A\u7D30\u7BC0\u50B3\u7D66\u6211\u55CE\uFF1F
+
+**\u8FA8\u5225\u6B63\u5F0F\u8207\u53E3\u8A9E**
+\u6B63\u5F0F\uFF1Apurchase\u3001assist\u3001commence\u3001regarding\uFF1B\u4E2D\u6027\uFF1Abuy\u3001help\u3001start\u3001about\uFF1B\u53E3\u8A9E\uFF1Agrab\u3001give a hand\u3001kick off\u3002\u7247\u8A9E\u52D5\u8A5E\u591A\u534A\u8F03\u53E3\u8A9E\uFF0C\u55AE\u5B57\u52D5\u8A5E\u901A\u5E38\u8F03\u6B63\u5F0F\u3002\u7E2E\u5BEB\uFF08don't\u3001I'm\uFF09\u5728\u53E3\u8A9E\u5E38\u898B\uFF0C\u6B63\u5F0F\u6587\u4EF6\u4E2D\u5E38\u5BEB\u5168\u3002
+
+**\u6539\u5BEB\u8207\u60C5\u5883**
+\u6539\u5BEB\u6642\u8981\u540C\u6642\u8ABF\u6574\u8A5E\u5F59\u8207\u53E5\u578B\uFF1A\u53E3\u8A9E We need to sort this out asap. \u6539\u6210\u6B63\u5F0F This matter requires urgent attention. \u5224\u65B7\u662F\u5426\u5408\u9069\uFF0C\u8981\u770B\u5C0D\u8C61\u3001\u5834\u5408\u8207\u76EE\u7684\uFF0C\u904E\u5EA6\u6B63\u5F0F\u6709\u6642\u53CD\u800C\u986F\u5F97\u751F\u786C\u3002
+
+**\u5BB9\u6613\u72AF\u7684\u932F**
+- \u274C Dear Professor Lin, I wanna ask about the exam. \u2705 Dear Professor Lin, I would like to ask about the exam. \u539F\u56E0\uFF1Awanna \u662F\u53E3\u8A9E\u7E2E\u7565\uFF0C\u4E0D\u9069\u5408\u6B63\u5F0F\u4FE1\u4EF6\u3002
+- \u274C We hereby kick off the ceremony. \u2705 We hereby open the ceremony. \u539F\u56E0\uFF1Ahereby \u5C6C\u65BC\u6B63\u5F0F\u8A9E\u9AD4\uFF0C\u4E0D\u8981\u548C\u53E3\u8A9E\u7247\u8A9E\u6DF7\u7528\u3002
+- \u274C Hey mate, I regret to inform you that the party is cancelled. \u2705 Hey mate, the party's cancelled. \u539F\u56E0\uFF1A\u670B\u53CB\u9593\u7684\u53E3\u8A9E\u4F7F\u7528\u904E\u65BC\u6B63\u5F0F\u7684\u63AA\u8FAD\uFF0C\u6703\u986F\u5F97\u7A81\u5140\u3002`
+};
+
+// src/core/grammar/explanations/index.ts
+var ALL = {
+  ...STAGE1_EXPLANATIONS,
+  ...STAGE2_EXPLANATIONS,
+  ...STAGE3_EXPLANATIONS
+};
+function builtInExplanation(topicId) {
+  return Object.prototype.hasOwnProperty.call(ALL, topicId) ? ALL[topicId] : void 0;
+}
+
+// src/services/ai/tasks/grammarExplain.ts
+var STAGE_LABEL = { 1: "\u57FA\u790E", 2: "\u4E2D\u7D1A", 3: "\u9032\u968E" };
+var GRAMMAR_EXPLAIN_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u6587\u6CD5\u8001\u5E2B\uFF0C\u6B63\u5728\u70BA\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u5BEB\u4E00\u500B\u6587\u6CD5\u4E3B\u984C\u7684\u300C\u8AAA\u660E\u300D\u3002\u3014\u6587\u6CD5\u4E3B\u984C\u3015\u662F\u9019\u4E00\u7BC7\u8981\u8B1B\u7684\u4E3B\u984C\u3002
+
+\u56DE\u7B54\u898F\u5247\uFF1A
+1. \u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u5BEB\uFF0C\u53E5\u578B\u548C\u4F8B\u53E5\u4FDD\u7559\u82F1\u6587\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u82E5\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\uFF0C\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
+2. \u53EA\u8B1B\u53EF\u9760\u3001\u5E38\u898B\u7684\u6587\u6CD5\u77E5\u8B58\u3002\u4E0D\u78BA\u5B9A\u5C31\u76F4\u63A5\u8AAA\u300C\u4E0D\u78BA\u5B9A\u300D\u6216\u300C\u8AAA\u6CD5\u4E0D\u4E00\u300D\uFF0C\u4E0D\u8981\u7DE8\u9020\u898F\u5247\u3001\u4F8B\u5916\u6216\u7528\u6CD5\u3002
+3. \u6240\u6709\u4F8B\u53E5\u90FD\u8981\u81EA\u5DF1\u539F\u5275\uFF0C\u4E0D\u8981\u5F15\u7528\u6216\u6A21\u4EFF\u4EFB\u4F55\u51FA\u7248\u6559\u6750\u3001\u8003\u984C\u6216\u6587\u7AE0\u88E1\u7684\u4F8B\u53E5\u3002
+4. \u76F4\u63A5\u5F9E\u5167\u5BB9\u958B\u59CB\uFF0C\u4E0D\u8981\u52A0\u524D\u8A00\u6216\u7D50\u5C3E\u5BA2\u5957\u8A71\u3002\u8F38\u51FA Markdown\uFF0C\u5404\u5C0F\u7BC0\u7528\u7C97\u9AD4\u7576\u6A19\u984C\uFF0C\u4E0D\u8981\u7528 # \u6216 ## \u6A19\u984C\u3002
+5. \u7528\u8A5E\u548C\u6DF1\u5EA6\u4F9D\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\u8ABF\u6574\uFF1A\u7A0B\u5EA6\u8F03\u4F4E\u5C31\u5C11\u7528\u8853\u8A9E\uFF0C\u7B2C\u4E00\u6B21\u51FA\u73FE\u7684\u6587\u6CD5\u8853\u8A9E\u9644\u4E0A\u4E2D\u82F1\u5C0D\u7167\u3002`;
+var USER_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5BEB\u300C{{title}}\u300D\u7684\u8AAA\u660E
+\u7167\u9019\u500B\u9806\u5E8F\uFF0C\u6BCF\u4E00\u7BC0\u4EE5\u7C97\u9AD4\u7576\u6A19\u984C\uFF1A
+1. **\u6838\u5FC3\u6982\u5FF5**\uFF1A2 \u5230 4 \u53E5\uFF0C\u8AAA\u660E\u9019\u500B\u4E3B\u984C\u89E3\u6C7A\u4EC0\u9EBC\u554F\u984C\u3001\u4EC0\u9EBC\u6642\u5019\u7528\u3002
+2. **\u53E5\u578B**\uFF1A\u7528 code \u683C\u5F0F\u5217\u51FA 1 \u5230 3 \u500B\u53E5\u578B\uFF08\u4F8B\u5982 \`have + \u904E\u53BB\u5206\u8A5E\`\uFF09\uFF0C\u6BCF\u500B\u4E00\u884C\uFF0C\u5F8C\u9762\u63A5\u4E00\u53E5\u4E2D\u6587\u8AAA\u660E\u3002
+3. **\u4F8B\u53E5**\uFF1A3 \u500B\u539F\u5275\u4F8B\u53E5\uFF0C\u6BCF\u53E5\u4E00\u884C\uFF0C\u82F1\u6587\u5F8C\u9762\u63A5\u300C\u2014\u2014\u300D\u518D\u63A5\u4E2D\u6587\u7FFB\u8B6F\u3002
+4. **\u5BB9\u6613\u72AF\u7684\u932F**\uFF1A2 \u5230 3 \u9EDE\uFF0C\u6BCF\u9EDE\u7528\u300C\u274C \u932F\u8AA4\u53E5\u300D\u300C\u2705 \u6B63\u78BA\u53E5\u300D\u5C0D\u7167\uFF0C\u518D\u7528\u4E00\u53E5\u8A71\u8AAA\u660E\u539F\u56E0\u3002
+{{#related}}5. **\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**\uFF1A{{related}}\u6BCF\u500B\u76F8\u95DC\u4E3B\u984C\u5404\u7528\u4E00\u53E5\u8A71\uFF0C\u8AAA\u660E\u548C\u300C{{title}}\u300D\u5DEE\u5728\u54EA\u88E1\u3002
+{{/related}}`;
+function line(t2) {
+  return `${t2.title}\uFF08${t2.pattern}\uFF09`;
+}
+function known(ids) {
+  return ids.map((id2) => topicById(id2)).filter((t2) => !!t2);
+}
+function topicBlock(topic) {
+  const prereq = known(topic.prerequisites);
+  const related = known(topic.related);
+  return [
+    "\u3014\u6587\u6CD5\u4E3B\u984C\u3015",
+    `\u540D\u7A31\uFF1A${topic.title}`,
+    `\u53E5\u578B\uFF1A${topic.pattern}`,
+    `\u7B49\u7D1A\uFF1A${STAGE_LABEL[topic.stage]}\uFF08\u96E3\u5EA6 ${topic.difficulty}/9\uFF09`,
+    `\u4E00\u53E5\u8A71\uFF1A${topic.summary}`,
+    "\u5B78\u7FD2\u76EE\u6A19\uFF1A",
+    ...topic.objectives.map((o) => `- ${o.text}`),
+    ...prereq.length ? [`\u524D\u7F6E\u4E3B\u984C\uFF1A${prereq.map(line).join("\uFF1B")}`] : [],
+    ...related.length ? [`\u76F8\u95DC\u4E3B\u984C\uFF1A${related.map(line).join("\uFF1B")}`] : []
+  ].join("\n");
+}
+function parseGrammarExplanation(r) {
+  let text = r.text.trim();
+  const fenced = /^```(?:markdown|md)?[ \t]*\n([\s\S]*?)\n```$/.exec(text);
+  if (fenced) text = fenced[1].trim();
+  if (!text) throw new AiError("bad_output", "empty explanation");
+  return text;
+}
+var grammarExplain = {
+  id: "grammar.explain",
+  version: 1,
+  surface: "grammar",
+  tier: "smart",
+  maxTokens: 4096,
+  // The learner's usual 300-character limit would cut a full explanation
+  // short; this task needs room for four sections and three examples.
+  answerChars: (_input, max) => Math.max(max, 900),
+  build(input, ctx) {
+    const { topic } = input;
+    const related = known(topic.related);
+    return composeRequest({
+      base: GRAMMAR_EXPLAIN_BASE_PROMPT,
+      context: [topicBlock(topic)],
+      profile: profileForTask(ctx.profile, grammarExplain, input),
+      history: [],
+      user: renderTemplate(USER_TEMPLATE, {
+        title: topic.title,
+        related: related.length ? `\u628A\u300C${topic.title}\u300D\u548C${related.map((t2) => `\u300C${t2.title}\u300D`).join("\u3001")}\u6BD4\u8F03\uFF0C` : ""
+      }),
+      tier: "smart",
+      maxTokens: 4096
+    });
+  },
+  parse: parseGrammarExplanation
+};
+var GRAMMAR_TASKS = [grammarExplain];
+
+// src/services/export/renderers/common.ts
+function roundsOf(turns) {
   const out = [];
-  while (out.length < size && rest.length) {
-    const tail = out.slice(-MAX_SAME_OBJECTIVE_RUN);
-    const runs = (q) => tail.length === MAX_SAME_OBJECTIVE_RUN && tail.every((t2) => t2.objectiveId === q.objectiveId);
-    const i = rest.findIndex((q) => !runs(q));
-    out.push(...rest.splice(i === -1 ? 0 : i, 1));
+  let pending = null;
+  for (const turn of turns) {
+    if (turn.deletedAt) continue;
+    if (turn.role === "user") {
+      pending = turn;
+      continue;
+    }
+    if (pending && stripGrammarTrailer(turn.content).trim() && (turn.status === "done" || turn.status === "aborted")) {
+      out.push({ question: pending, answer: turn });
+    }
+    pending = null;
   }
   return out;
 }
-function latestAttempts(attempts) {
-  const latest = /* @__PURE__ */ new Map();
-  for (const a2 of attempts) {
-    const prev = latest.get(a2.questionId);
-    if (!prev || ms5(a2.at) >= ms5(prev.at)) latest.set(a2.questionId, a2);
+function threadRounds(thread) {
+  return thread && !thread.deletedAt ? roundsOf(liveTurns(thread)) : [];
+}
+var FENCE = /^[ \t]*(`{3,}|~{3,})/;
+function balanceFences(markdown) {
+  let open = null;
+  for (const line2 of markdown.split("\n")) {
+    const m2 = FENCE.exec(line2);
+    if (!m2) continue;
+    const fence = m2[1];
+    if (open === null) open = fence;
+    else if (fence[0] === open[0] && fence.length >= open.length && line2.trim() === fence) open = null;
   }
-  return latest;
+  return open === null ? markdown : `${markdown.replace(/\n*$/, "")}
+${open}`;
 }
-function askable(pool) {
-  return pool.filter((q) => !q.retiredAt && !q.deletedAt && isAskable(q));
+function normalizeNewlines(text) {
+  return text.replace(/\r\n?/g, "\n");
 }
-function buildSession(pool, attempts, opts) {
+function blockquote(text) {
+  return normalizeNewlines(text.trim()).split("\n").map((l4) => l4.trim() ? `> ${l4}` : ">").join("\n");
+}
+function oneLine(text) {
+  return normalizeNewlines(text).replace(/\s*\n\s*/g, " ").trim();
+}
+function inlineCode(text) {
+  const s = oneLine(text);
+  return s.includes("`") ? `\`\` ${s} \`\`` : `\`${s}\``;
+}
+function italic(text) {
+  return `*${text}*`;
+}
+function wordRef(ctx, word, entryId) {
+  const target = ctx.pageLink(word, entryId);
+  return target ? `[[${target}|${word}]]` : word;
+}
+function renderRound(round, ctx, heading) {
   var _a;
-  const size = Math.max(0, Math.floor((_a = opts.size) != null ? _a : defaultSessionSize(opts.mode)));
-  const live = askable(pool);
-  if (opts.mode === "mistakes") {
-    const groups = mistakeGroups(live, attempts).filter((g) => !opts.errorTag || g.errorTag === opts.errorTag);
-    return spreadObjectives(
-      groups.flatMap((g) => g.items.map((i) => i.question)),
-      size
+  const { question, answer } = round;
+  const label = question.taskId ? ctx.taskLabel(question.taskId) : void 0;
+  const title = [ctx.formatDate(question.at), label].filter(Boolean).join(" \xB7 ");
+  const quote = [];
+  if ((_a = question.selection) == null ? void 0 : _a.trim()) quote.push(`\u300C${oneLine(question.selection)}\u300D`);
+  quote.push(`**Q** ${normalizeNewlines(question.content).trim()}`);
+  const parts = [`${heading} ${title}`, blockquote(quote.join("\n")), "", balanceFences(normalizeNewlines(stripGrammarTrailer(answer.content)).trim())];
+  if (answer.status === "aborted") parts.push("", italic(ctx.labels.aborted));
+  return parts.join("\n");
+}
+function renderRounds(rounds, ctx, heading) {
+  return rounds.map((r) => renderRound(r, ctx, heading)).join("\n\n");
+}
+function fill(template, vars) {
+  return template.replace(/\{(\w+)\}/g, (m2, k) => k in vars ? String(vars[k]) : m2);
+}
+var YAML_KEYWORDS = /^(true|false|yes|no|on|off|null|~)$/i;
+function yamlValue(v) {
+  return /^[a-z][\w-]*$/i.test(v) && !YAML_KEYWORDS.test(v) ? v : JSON.stringify(v);
+}
+function frontmatter(fields) {
+  return ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${yamlValue(v)}`), "---"].join("\n");
+}
+
+// src/services/grammar/topicPage.ts
+var GRAMMAR_PAGE_KIND = "grammar";
+var GRAMMAR_FOLDER = "Grammar";
+var EXPLAIN_HEADING = "## \u8AAA\u660E";
+var TOPIC_BLOCK = "vocab-grammar-topic";
+var PRACTICE_BLOCK = "vocab-grammar-practice";
+var BLOCK_PREFIX = "vocab-grammar-";
+var GrammarPageError = class extends Error {
+  constructor(code, message) {
+    super(message != null ? message : code);
+    this.code = code;
+    this.name = "GrammarPageError";
+  }
+};
+function isGrammarPageError(e) {
+  return e instanceof GrammarPageError;
+}
+function topicFileName(title, fallback) {
+  const name = title.replace(/[\\/:*?"<>|#^[\]]/g, "-").replace(/\s+/g, " ").replace(/[. ]+$/, "").trim();
+  return name || fallback;
+}
+function topicPagePath(entryFolder, title, topicId) {
+  return joinPath(joinPath(entryFolder, GRAMMAR_FOLDER), `${topicFileName(title, topicId)}.md`);
+}
+function renderTopicPage(topicId) {
+  const builtIn = builtInExplanation(topicId);
+  const explanation = builtIn ? sanitizeExplanation(builtIn) : "";
+  return [
+    frontmatter({ "vocab-tracker": GRAMMAR_PAGE_KIND, "vocab-tracker-id": topicId }),
+    "```" + TOPIC_BLOCK,
+    `id: ${topicId}`,
+    "```",
+    "",
+    EXPLAIN_HEADING,
+    "",
+    ...explanation ? [explanation, ""] : [],
+    "```" + PRACTICE_BLOCK,
+    `topic: ${topicId}`,
+    "```",
+    "",
+    "## \u6211\u7684\u7B46\u8A18",
+    ""
+  ].join("\n");
+}
+var FENCE_RE3 = /^\s*(`{3,}|~{3,})(.*)$/;
+var EXPLAIN_RE = /^##[ \t]+說明[ \t]*$/;
+var SECTION_END_RE = /^#{1,2}[ \t]/;
+function walk(lines4, visit) {
+  let fence = null;
+  lines4.forEach((line2, i) => {
+    const m2 = FENCE_RE3.exec(line2);
+    if (fence) {
+      visit(line2, i, true);
+      if (m2 && m2[1][0] === fence.char && m2[1].length >= fence.len && !m2[2].trim()) fence = null;
+      return;
+    }
+    if (m2) {
+      fence = { char: m2[1][0], len: m2[1].length };
+      visit(line2, i, true, m2[2].trim());
+      return;
+    }
+    visit(line2, i, false);
+  });
+}
+function findExplanationSection(text) {
+  const lines4 = text.replace(/\r\n?/g, "\n").split("\n");
+  let heading = -1;
+  let end = lines4.length;
+  walk(lines4, (line2, i, inFence) => {
+    if (inFence) return;
+    if (heading < 0) {
+      if (EXPLAIN_RE.test(line2)) heading = i;
+    } else if (end === lines4.length && SECTION_END_RE.test(line2)) {
+      end = i;
+    }
+  });
+  if (heading < 0) return null;
+  let own = false;
+  let ownBlock = false;
+  const body = lines4.slice(heading + 1, end);
+  walk(body, (line2, _i, inFence, opens) => {
+    if (opens !== void 0) ownBlock = opens.startsWith(BLOCK_PREFIX);
+    if (inFence ? !ownBlock : line2.trim() !== "") own = true;
+  });
+  return { heading, end, empty: !own };
+}
+function sanitizeExplanation(markdown) {
+  const lines4 = markdown.replace(/\r\n?/g, "\n").trim().split("\n");
+  walk(lines4, (line2, i, inFence) => {
+    if (!inFence) lines4[i] = line2.replace(/^#{1,2}(?=[ \t])/, "###");
+  });
+  return lines4.join("\n").trim();
+}
+function insertExplanation(text, markdown) {
+  const body = sanitizeExplanation(markdown);
+  if (!body) throw new GrammarPageError("empty-text");
+  const sec = findExplanationSection(text);
+  if (!sec) throw new GrammarPageError("no-section");
+  if (!sec.empty) throw new GrammarPageError("not-empty");
+  const lines4 = text.replace(/\r\n?/g, "\n").split("\n");
+  const head = lines4.slice(0, sec.heading + 1);
+  let rest = lines4.slice(sec.heading + 1);
+  while (rest.length && rest[0].trim() === "") rest = rest.slice(1);
+  return [...head, "", body, ...rest.length ? ["", ...rest] : [""]].join("\n");
+}
+
+// src/ui/blocks/grammarTopicModel.ts
+function parseTopicParams(source) {
+  var _a, _b;
+  const p = parseBlockParams(source);
+  const id2 = ((_b = (_a = p.id) != null ? _a : p.topic) != null ? _b : "").trim().replace(/^["']|["']$/g, "").trim();
+  return id2 ? { id: id2 } : {};
+}
+function topicMeta(topic) {
+  return { stage: stageLabel(topic.stage), difficulty: t("grammar.topic.difficulty", { n: topic.difficulty }) };
+}
+function objectiveRows(topic, attempts) {
+  const stats = objectiveStats(topic, attempts);
+  return topic.objectives.map((o) => {
+    var _a, _b;
+    const s = stats.find((x3) => x3.objectiveId === o.id);
+    const answered = (_a = s == null ? void 0 : s.answered) != null ? _a : 0;
+    const state = !s || answered === 0 ? "none" : isMastered([s]) ? "done" : "partial";
+    return { id: o.id, text: o.text, state, score: answered ? `${(_b = s == null ? void 0 : s.correct) != null ? _b : 0}/${answered}` : "\u2013" };
+  });
+}
+var SIGHTING_LIMIT = 5;
+var SNAPSHOT_CHARS = 120;
+function clipSnapshot(text, max = SNAPSHOT_CHARS) {
+  const flat = text.replace(/\s+/g, " ").replace(/\s*\^[\w-]+$/, "").trim();
+  const chars = [...flat];
+  return chars.length > max ? `${chars.slice(0, max).join("").trimEnd()}\u2026` : flat;
+}
+function noteName2(path) {
+  const base = path.slice(path.lastIndexOf("/") + 1);
+  return base.replace(/\.md$/i, "");
+}
+function sightingRows(sightings, topicId, limit = SIGHTING_LIMIT) {
+  return sightings.filter((s) => s.topicId === topicId).slice(0, limit).map((s) => ({ key: `${s.threadId}:${s.turnId}`, path: s.path, note: noteName2(s.path), snapshot: clipSnapshot(s.snapshot) }));
+}
+function topicChips(topic) {
+  const out = [];
+  const seen = /* @__PURE__ */ new Set([topic.id]);
+  const add3 = (ids, kind) => {
+    for (const id2 of ids) {
+      const found = topicById(id2);
+      if (!found || seen.has(id2)) continue;
+      seen.add(id2);
+      out.push({ topic: found, kind, label: t(kind === "prerequisite" ? "grammar.topic.kind.prerequisite" : "grammar.topic.kind.related") });
+    }
+  };
+  add3(topic.prerequisites, "prerequisite");
+  add3(topic.related, "related");
+  return out;
+}
+var PAGE_ERROR_KEY = {
+  "not-empty": "grammar.topic.err.notEmpty",
+  "no-section": "grammar.topic.err.noSection",
+  "empty-text": "grammar.topic.err.empty"
+};
+function pageErrorText(e) {
+  return isGrammarPageError(e) ? t(PAGE_ERROR_KEY[e.code]) : null;
+}
+
+// src/ui/blocks/grammarTopic.ts
+function renderGrammarTopic(deps, source, el, ctx) {
+  const explainEmpty = () => {
+    var _a, _b, _c;
+    const text = (_a = ctx.getSectionInfo(el)) == null ? void 0 : _a.text;
+    return text === void 0 ? void 0 : (_c = (_b = findExplanationSection(text)) == null ? void 0 : _b.empty) != null ? _c : false;
+  };
+  ctx.addChild(new GrammarTopicBlock(el, deps, parseTopicParams(source).id, explainEmpty));
+}
+function renderAiGate3(parent, status, onOpenSettings) {
+  if (status === "ready") return false;
+  if (status === "offline") {
+    parent.appendChild(inlineNote({ tone: "offline", text: t("learn.ai.offline") }));
+    return true;
+  }
+  parent.appendChild(
+    emptyState({
+      icon: status === "disabled" ? "sparkles" : "key-round",
+      title: t(status === "disabled" ? "learn.ai.disabled.title" : "learn.ai.noKey.title"),
+      body: t("learn.ai.body"),
+      action: { label: t("ai.action.openSettings"), icon: "settings", onClick: onOpenSettings }
+    })
+  );
+  return true;
+}
+var GrammarTopicBlock = class extends import_obsidian33.MarkdownRenderChild {
+  constructor(containerEl, deps, id2, explainEmpty) {
+    super(containerEl);
+    this.deps = deps;
+    this.id = id2;
+    this.explainEmpty = explainEmpty;
+    this.ready = false;
+    this.disposed = false;
+    // The explanation job: running, last error, or written just now.
+    this.ctrl = null;
+    this.error = null;
+    this.written = false;
+    this.topic = id2 ? topicById(id2) : void 0;
+  }
+  onload() {
+    this.containerEl.empty();
+    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-topic"] });
+    guardReadingClicks(this, this.root);
+    if (!this.topic) {
+      this.root.appendChild(
+        inlineNote({ tone: "error", text: this.id ? t("grammar.topic.unknown", { id: this.id }) : t("grammar.topic.noId") })
+      );
+      return;
+    }
+    this.root.createDiv({ cls: "vt-learn-loading", text: t("grammar.map.loading") });
+    const refresh = () => this.render();
+    this.register(this.deps.grammar.events.on("attempt:add", refresh));
+    this.register(this.deps.grammar.events.on("grammar:reloaded", refresh));
+    this.register(this.deps.threads.events.on("thread:upsert", refresh));
+    this.register(this.deps.threads.events.on("threads:reloaded", refresh));
+    this.register(() => {
+      var _a;
+      this.disposed = true;
+      (_a = this.ctrl) == null ? void 0 : _a.abort();
+    });
+    void Promise.all([this.deps.grammar.ensureLoaded(), this.deps.threads.ensureLoaded()]).then(() => {
+      this.ready = true;
+      this.render();
+    });
+  }
+  open(topicId) {
+    Promise.resolve(this.deps.openTopic(topicId)).catch((e) => {
+      new import_obsidian33.Notice(t("grammar.map.openFailed", { msg: e instanceof Error ? e.message : String(e) }));
+    });
+  }
+  render() {
+    const topic = this.topic;
+    if (this.disposed || !this.ready || !topic) return;
+    this.root.empty();
+    const meta = topicMeta(topic);
+    const head = this.root.createDiv({ cls: "vt-gr-topic-head" });
+    const tags = head.createDiv({ cls: "vt-gr-topic-tags" });
+    tags.createSpan({ cls: ["vt-gr-stage", `is-stage-${topic.stage}`], text: meta.stage });
+    tags.createSpan({ cls: "vt-gr-difficulty", text: meta.difficulty });
+    head.createDiv({ cls: "vt-gr-topic-title", text: topic.title });
+    head.createEl("code", { cls: "vt-gr-topic-pattern", text: topic.pattern });
+    head.createDiv({ cls: "vt-gr-topic-summary", text: topic.summary });
+    this.renderExplain();
+    this.renderObjectives(topic);
+    this.renderSightings(topic);
+    this.renderRelated(topic);
+  }
+  // ── 「✦ 生成說明」 ────────────────────────────────────────────
+  renderExplain() {
+    var _a, _b;
+    const box = this.root.createDiv({ cls: "vt-gr-explain" });
+    if (this.ctrl) {
+      const line2 = box.createDiv({ cls: "vt-learn-busy-text" });
+      (0, import_obsidian33.setIcon)(line2.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
+      line2.createSpan({ text: t("grammar.topic.generating") });
+      const ctrl = this.ctrl;
+      learnButton(box, { label: t("grammar.topic.stop"), icon: "square", onClick: () => ctrl.abort() });
+      return;
+    }
+    if (this.written) {
+      box.appendChild(inlineNote({ text: t("grammar.topic.written") }));
+      return;
+    }
+    if (this.error) {
+      box.appendChild(aiErrorBox({ text: this.error.text, error: this.error.cause }));
+    }
+    if (this.explainEmpty() === false) return;
+    if (builtInExplanation((_b = (_a = this.topic) == null ? void 0 : _a.id) != null ? _b : "")) {
+      const label = t("grammar.topic.fillBuiltIn");
+      learnButton(box, { label, icon: "file-plus", onClick: () => void this.fillBuiltIn() });
+      return;
+    }
+    if (renderAiGate3(box, this.deps.ai.status(), () => this.deps.openSettings())) return;
+    learnButton(box, { label: t("grammar.topic.generate"), icon: "sparkles", onClick: () => void this.generate() });
+  }
+  async fillBuiltIn() {
+    var _a;
+    const topic = this.topic;
+    if (!topic) return;
+    try {
+      await this.deps.pages.writeBuiltInExplanation(topic.id);
+      this.written = true;
+      this.error = null;
+    } catch (e) {
+      this.error = { text: (_a = pageErrorText(e)) != null ? _a : learnErrorText(e), cause: e };
+    }
+    this.render();
+  }
+  async generate() {
+    var _a;
+    const topic = this.topic;
+    if (!topic || this.ctrl) return;
+    const ctrl = new AbortController();
+    this.ctrl = ctrl;
+    this.error = null;
+    this.render();
+    try {
+      const result = await this.deps.ai.run(grammarExplain, { topic }, { signal: ctrl.signal });
+      const markdown = grammarExplain.parse ? grammarExplain.parse(result) : result.text;
+      await this.deps.pages.writeExplanation(topic.id, markdown);
+      this.written = true;
+    } catch (e) {
+      if (!isAbort(e)) this.error = { text: (_a = pageErrorText(e)) != null ? _a : learnErrorText(e), cause: e };
+    } finally {
+      this.ctrl = null;
+      this.render();
+    }
+  }
+  // ── Objectives / sightings / related ──────────────────────────
+  renderObjectives(topic) {
+    const sec = this.root.createDiv({ cls: "vt-gr-sec" });
+    sec.createDiv({ cls: "vt-gr-sec-title", text: t("grammar.topic.objectives") });
+    const list = sec.createDiv({ cls: "vt-gr-objectives" });
+    for (const o of objectiveRows(topic, this.deps.grammar.attempts(topic.id))) {
+      const row = list.createDiv({ cls: ["vt-gr-objective", `is-${o.state}`] });
+      row.createSpan({ cls: ["vt-gr-dot", `is-${o.state === "done" ? "mastered" : o.state === "partial" ? "learning" : "new"}`], attr: { "aria-hidden": "true" } });
+      row.createSpan({ cls: "vt-gr-objective-text", text: o.text });
+      row.createSpan({ cls: "vt-gr-objective-score", text: o.score });
+    }
+  }
+  renderSightings(topic) {
+    const sec = this.root.createDiv({ cls: "vt-gr-sec" });
+    sec.createDiv({ cls: "vt-gr-sec-title", text: t("grammar.topic.sightings") });
+    const all = grammarSightings(this.deps.threads.paragraphThreads());
+    const rows = sightingRows(all, topic.id);
+    if (!rows.length) {
+      sec.createDiv({ cls: "vt-gr-empty", text: t("grammar.topic.sightings.empty") });
+      return;
+    }
+    for (const r of rows) {
+      const btn = sec.createEl("button", { cls: "vt-gr-sighting", attr: { type: "button" } });
+      btn.createSpan({ cls: "vt-gr-sighting-text", text: `\u201C${r.snapshot}\u201D` });
+      btn.createSpan({ cls: "vt-gr-sighting-note", text: `\u2014 ${r.note}` });
+      btn.addEventListener("click", () => {
+        Promise.resolve(this.deps.openNote(r.path)).catch((e) => {
+          new import_obsidian33.Notice(learnErrorText(e));
+        });
+      });
+    }
+  }
+  renderRelated(topic) {
+    const chips = topicChips(topic);
+    if (!chips.length) return;
+    const sec = this.root.createDiv({ cls: "vt-gr-sec" });
+    sec.createDiv({ cls: "vt-gr-sec-title", text: t("grammar.topic.related") });
+    const row = sec.createDiv({ cls: "vt-gr-chips" });
+    for (const c2 of chips) {
+      const chip2 = row.createEl("button", { cls: ["vt-gr-chip", `is-${c2.kind}`], attr: { type: "button" } });
+      chip2.createSpan({ cls: ["vt-gr-stage", `is-stage-${c2.topic.stage}`, "is-dot"], attr: { "aria-hidden": "true" } });
+      chip2.createSpan({ text: c2.topic.title });
+      chip2.createSpan({ cls: "vt-gr-chip-kind", text: c2.label });
+      chip2.addEventListener("click", () => this.open(c2.topic.id));
+    }
+  }
+};
+
+// src/ui/blocks/practice.ts
+var import_obsidian34 = require("obsidian");
+
+// src/ui/blocks/practice/practiceModel.ts
+var TAB_KEY2 = "vocab-tracker:practice.tab";
+var ALIASES = {
+  vocab: "vocab",
+  \u55AE\u5B57: "vocab",
+  grammar: "grammar",
+  \u6587\u6CD5: "grammar",
+  poly: "poly",
+  \u5E38\u7528\u5B57: "poly",
+  mix: "mix",
+  \u6DF7\u5408: "mix"
+};
+function pickTab(tabs, wanted) {
+  var _a, _b;
+  const w = wanted.trim().replace(/^["']|["']$/g, "");
+  const id2 = (_b = (_a = ALIASES[w.toLowerCase()]) != null ? _a : ALIASES[w]) != null ? _b : w;
+  return tabs.find((t2) => t2.id === id2);
+}
+function rememberedTab(tabs, raw) {
+  return typeof raw === "string" ? tabs.find((t2) => t2.id === raw) : void 0;
+}
+
+// src/ui/blocks/practice/vocabFilterModel.ts
+var RECENT_DAYS = 7;
+function firstFolder(path) {
+  const i = (path != null ? path : "").indexOf("/");
+  return i > 0 ? path.slice(0, i + 1) : void 0;
+}
+function ranked(counts) {
+  return [...counts.entries()].sort((a2, b) => b[1] - a2[1] || a2[0].localeCompare(b[0])).map(([k]) => k);
+}
+function collectVocabOptions(entries) {
+  var _a;
+  const levels = /* @__PURE__ */ new Map();
+  const pos = /* @__PURE__ */ new Map();
+  const folders = /* @__PURE__ */ new Map();
+  const bump = (m2, k) => {
+    var _a2;
+    return m2.set(k, ((_a2 = m2.get(k)) != null ? _a2 : 0) + 1);
+  };
+  for (const e of entries) {
+    if (e.deletedAt || e.liked !== true) continue;
+    for (const l4 of new Set(splitTags(e.level))) bump(levels, l4);
+    for (const p of new Set(splitTags(e.partOfSpeech))) bump(pos, p);
+    const f = firstFolder((_a = e.source) == null ? void 0 : _a.path);
+    if (f) bump(folders, f);
+  }
+  return { levels: ranked(levels), pos: ranked(pos), folders: ranked(folders) };
+}
+function vocabGroups(opts) {
+  const mk = (id2, label, ids, multi) => ({
+    id: id2,
+    label: t(label),
+    multi,
+    options: ids.map((x3) => ({ id: x3, label: x3 }))
+  });
+  const groups = [
+    {
+      id: "status",
+      label: t("practice.vocab.status"),
+      multi: false,
+      options: [
+        { id: "due", label: t("practice.vocab.due") },
+        { id: "new", label: t("practice.vocab.new") },
+        { id: "all", label: t("practice.vocab.all") }
+      ]
+    },
+    { id: "added", label: t("practice.vocab.added"), multi: false, options: [{ id: "recent", label: t("practice.vocab.recent") }] }
+  ];
+  if (opts.levels.length > 0) groups.push(mk("level", "practice.vocab.level", opts.levels, true));
+  if (opts.pos.length > 0) groups.push(mk("pos", "practice.vocab.pos", opts.pos, true));
+  if (opts.folders.length > 0) groups.push(mk("folder", "practice.vocab.folder", opts.folders, false));
+  return groups;
+}
+function vocabQuickPicks() {
+  return [
+    { id: "due-today", label: t("practice.vocab.quickDue"), apply: () => ({ status: ["due"] }) },
+    { id: "recent", label: t("practice.vocab.quickRecent"), apply: () => ({ status: ["all"], added: ["recent"] }) }
+  ];
+}
+function statusOf(value) {
+  const s = selectedIds(value, "status")[0];
+  return s === "new" || s === "all" ? s : "due";
+}
+function vocabSummary(value, groups) {
+  var _a, _b;
+  const parts = [];
+  const statusGroup = groups.find((g) => g.id === "status");
+  parts.push((_b = (_a = statusGroup == null ? void 0 : statusGroup.options.find((o) => o.id === statusOf(value))) == null ? void 0 : _a.label) != null ? _b : t("practice.vocab.due"));
+  for (const g of groups) {
+    if (g.id === "status") continue;
+    const labels = selectedLabels(value, g);
+    if (labels.length > 0) parts.push(joinWords(labels));
+  }
+  return parts.join(" \xB7 ");
+}
+function toQueueFilter(value, now2) {
+  const out = { status: statusOf(value) };
+  const levels = selectedIds(value, "level");
+  if (levels.length > 0) out.levels = levels;
+  const pos = selectedIds(value, "pos");
+  if (pos.length > 0) out.pos = pos;
+  const folder = selectedIds(value, "folder")[0];
+  if (folder) out.source = folder;
+  if (selectedIds(value, "added")[0] === "recent") {
+    out.addedSince = new Date(now2.getTime() - RECENT_DAYS * 24 * 60 * 60 * 1e3).toISOString();
+  }
+  return out;
+}
+
+// src/ui/blocks/practice/vocabTab.ts
+function vocabTab(host) {
+  return {
+    id: "vocab",
+    label: t("practice.vocab.label"),
+    order: 0,
+    mount(el, ctx) {
+      const groups = vocabGroups(collectVocabOptions(host.store.entries));
+      let value = pruneValue(parseFilterValue(ctx.filters.get("vocab")), groups);
+      el.addClass("vt-pr-vocab");
+      const cardsEl = el.createDiv({ cls: "vt-pr-vocab-cards" });
+      const block = new FlashcardsBlock(
+        cardsEl,
+        host,
+        { ...parseFlashcardParams(""), mode: CARD_MODES[0] },
+        { filter: () => toQueueFilter(value, /* @__PURE__ */ new Date()) }
+      );
+      const barEl = createDiv();
+      el.insertBefore(barEl, cardsEl);
+      renderFilterBar(barEl, {
+        groups,
+        quick: vocabQuickPicks(),
+        value,
+        summary: (v) => vocabSummary(v, groups),
+        onChange: (next) => {
+          value = next;
+          ctx.filters.set("vocab", next);
+          block.restart();
+        }
+      });
+      ctx.component.addChild(block);
+    }
+  };
+}
+
+// src/ui/blocks/practice.ts
+function renderPractice(host, source, el, ctx) {
+  ctx.addChild(new PracticeBlock(el, host, source));
+}
+var PracticeBlock = class extends import_obsidian34.MarkdownRenderChild {
+  constructor(containerEl, host, source) {
+    super(containerEl);
+    this.host = host;
+    this.source = source;
+    this.tabs = [];
+    this.mounted = null;
+    this.locked = false;
+  }
+  onload() {
+    this.containerEl.empty();
+    const root2 = this.containerEl.createDiv({ cls: ["vt", "vt-pr"] });
+    this.registerDomEvent(root2, "click", (e) => e.stopPropagation());
+    const builtin = vocabTab(this.host);
+    const extra = this.host.tabs().filter((t2) => t2.id !== builtin.id);
+    this.tabs = [builtin, ...extra].sort((a2, b) => a2.order - b.order);
+    const wanted = parseBlockParams(this.source).tab;
+    const forced = wanted ? pickTab(this.tabs, wanted) : void 0;
+    this.locked = !!forced;
+    if (forced) this.tabs = [forced];
+    this.tabsEl = root2.createDiv({ cls: "vt-pr-tabs", attr: { role: "tablist" } });
+    if (this.locked) this.tabsEl.hide();
+    this.bodyEl = root2.createDiv({ cls: "vt-pr-body" });
+    const remembered = this.locked ? void 0 : rememberedTab(this.tabs, this.loadTab());
+    this.select(remembered != null ? remembered : this.tabs[0]);
+  }
+  onunload() {
+    this.mounted = null;
+  }
+  loadTab() {
+    const app = this.host.app;
+    return typeof app.loadLocalStorage === "function" ? app.loadLocalStorage(TAB_KEY2) : null;
+  }
+  select(tab) {
+    if (this.active === tab && this.mounted) return;
+    if (this.mounted) this.removeChild(this.mounted);
+    this.active = tab;
+    if (!this.locked && typeof this.host.app.saveLocalStorage === "function") {
+      this.host.app.saveLocalStorage(TAB_KEY2, tab.id);
+    }
+    this.renderTabs();
+    this.bodyEl.empty();
+    const component = new import_obsidian34.Component();
+    this.mounted = this.addChild(component);
+    tab.mount(this.bodyEl, { app: this.host.app, filters: this.host.filters, component });
+  }
+  renderTabs() {
+    this.tabsEl.empty();
+    for (const tab of this.tabs) {
+      const on = tab === this.active;
+      const btn = this.tabsEl.createEl("button", {
+        cls: "vt-pr-tab",
+        text: tab.label,
+        attr: { type: "button", role: "tab", "aria-selected": String(on) }
+      });
+      btn.toggleClass("is-active", on);
+      btn.addEventListener("click", () => this.select(tab));
+    }
+  }
+};
+
+// src/ui/blocks/practice/scenarioPlayerModel.ts
+function segmentBlanks(text) {
+  const out = [];
+  const parts = text.split(/_{3,}/);
+  parts.forEach((p, i) => {
+    if (p) out.push({ t: "text", text: p });
+    if (i < parts.length - 1) out.push({ t: "blank" });
+  });
+  return out;
+}
+function segmentTargets(text) {
+  const out = [];
+  const re = /\[\[(.+?)\]\]/g;
+  let last2 = 0;
+  let m2;
+  while (m2 = re.exec(text)) {
+    if (m2.index > last2) out.push({ t: "text", text: text.slice(last2, m2.index) });
+    out.push({ t: "target", text: m2[1] });
+    last2 = m2.index + m2[0].length;
+  }
+  if (last2 < text.length) out.push({ t: "text", text: text.slice(last2) });
+  return out;
+}
+function segmentFragments(text, options) {
+  const claimed = [];
+  for (const o of options) {
+    if (!o.text) continue;
+    let from = 0;
+    for (; ; ) {
+      const i = text.indexOf(o.text, from);
+      if (i < 0) break;
+      const end = i + o.text.length;
+      if (!claimed.some((c2) => i < c2.end && end > c2.start)) {
+        claimed.push({ start: i, end, optionId: o.id });
+        break;
+      }
+      from = i + 1;
+    }
+  }
+  claimed.sort((a2, b) => a2.start - b.start);
+  const out = [];
+  let pos = 0;
+  for (const c2 of claimed) {
+    if (c2.start > pos) out.push({ t: "text", text: text.slice(pos, c2.start) });
+    out.push({ t: "frag", text: text.slice(c2.start, c2.end), optionId: c2.optionId });
+    pos = c2.end;
+  }
+  if (pos < text.length) out.push({ t: "text", text: text.slice(pos) });
+  return out;
+}
+function questionSegments(q) {
+  switch (q.kind) {
+    case "find-error":
+      return segmentFragments(q.text, q.options);
+    case "which-sense":
+    case "same-sense":
+      return segmentTargets(q.text);
+    default:
+      return segmentBlanks(q.text);
+  }
+}
+function optionText(q, id2) {
+  var _a, _b;
+  return (_b = (_a = q.options.find((o) => o.id === id2)) == null ? void 0 : _a.text) != null ? _b : "";
+}
+function answeredParts(q) {
+  if (q.kind === "find-error") {
+    const wrong = optionText(q, q.answerId);
+    const parts = questionSegments(q).map((s) => {
+      if (s.t === "frag") return { t: s.optionId === q.answerId ? "strike" : "text", text: s.text };
+      return { t: "text", text: s.t === "blank" ? "" : s.text };
+    });
+    if (!parts.some((p) => p.t === "strike") && wrong) parts.push({ t: "strike", text: wrong });
+    if (q.answered && q.answered !== q.text) parts.push({ t: "fix", text: q.answered });
+    return parts;
+  }
+  if (q.answered) return [{ t: "text", text: q.answered }];
+  if (q.kind === "which-sense" || q.kind === "same-sense") {
+    return segmentTargets(q.text).map(
+      (s) => s.t === "target" ? { t: "target", text: s.text } : { t: "text", text: s.t === "text" ? s.text : "" }
     );
   }
-  if (opts.mode === "review") {
-    const latest2 = latestAttempts(attempts);
-    const missed2 = [];
-    const answered = [];
-    const fresh2 = [];
-    for (const q of live) {
-      const a2 = latest2.get(q.id);
-      if (!a2) fresh2.push(q);
-      else if (!a2.correct) missed2.push(q);
-      else answered.push(q);
-    }
-    const at2 = (q) => {
-      var _a2;
-      return ms5((_a2 = latest2.get(q.id)) == null ? void 0 : _a2.at);
-    };
-    missed2.sort((a2, b) => at2(a2) - at2(b));
-    answered.sort((a2, b) => at2(a2) - at2(b));
-    fresh2.sort((a2, b) => ms5(a2.createdAt) - ms5(b.createdAt));
-    return spreadObjectives([...missed2, ...answered, ...fresh2], size);
-  }
-  const candidates = opts.objectiveId ? live.filter((q) => q.objectiveId === opts.objectiveId) : live;
-  const latest = latestAttempts(attempts);
-  const fresh = [];
-  const missed = [];
-  const rest = [];
-  for (const q of candidates) {
-    const a2 = latest.get(q.id);
-    if (!a2) fresh.push(q);
-    else if (!a2.correct) missed.push(q);
-    else rest.push(q);
-  }
-  const at = (q) => {
-    var _a2;
-    return ms5((_a2 = latest.get(q.id)) == null ? void 0 : _a2.at);
+  const ans = optionText(q, q.answerId);
+  return [{ t: "text", text: q.text.replace(/_{3,}/g, ans) }];
+}
+function initialState() {
+  return { phase: "empty", current: null, hinted: false, hintShown: false, done: [], history: [], answered: 0, correctCount: 0 };
+}
+function pickNext(done, questions2) {
+  var _a;
+  return (_a = questions2.find((q) => !done.includes(q.id))) != null ? _a : null;
+}
+function withCurrent(s, q) {
+  return {
+    ...s,
+    current: q,
+    phase: q ? "asking" : "empty",
+    chosen: void 0,
+    correct: void 0,
+    hinted: false,
+    hintShown: false
   };
-  fresh.sort((a2, b) => ms5(a2.createdAt) - ms5(b.createdAt));
-  missed.sort((a2, b) => at(b) - at(a2));
-  rest.sort((a2, b) => at(a2) - at(b));
-  return spreadObjectives([...fresh, ...missed, ...rest], size);
+}
+function refreshState(s, questions2) {
+  if (s.current) {
+    if (s.phase === "feedback") return s;
+    if (questions2.some((q) => q.id === s.current.id)) return s;
+  }
+  const next = pickNext(s.done, questions2);
+  if (!next && !s.current) return s;
+  return withCurrent(s, next);
+}
+function canHint(s) {
+  var _a;
+  return s.phase === "asking" && !!((_a = s.current) == null ? void 0 : _a.hints) && Object.keys(s.current.hints).length > 0;
+}
+function showHint(s) {
+  if (!canHint(s)) return s;
+  return { ...s, hinted: true, hintShown: true };
+}
+function answerState(s, optionId) {
+  const q = s.current;
+  if (s.phase !== "asking" || !q || !q.options.some((o) => o.id === optionId)) return null;
+  const correct = optionId === q.answerId;
+  return {
+    correct,
+    state: {
+      ...s,
+      phase: "feedback",
+      chosen: optionId,
+      correct,
+      answered: s.answered + 1,
+      correctCount: s.correctCount + (correct ? 1 : 0)
+    }
+  };
+}
+function toHistory(q, skipped, withLine) {
+  var _a;
+  return {
+    qid: q.id,
+    scenarioId: q.scenarioId,
+    scene: q.scene,
+    lead: (_a = q.lead) != null ? _a : [],
+    speaker: q.speaker,
+    parts: withLine ? answeredParts(q) : void 0,
+    skipped
+  };
+}
+function advance(s, item, questions2) {
+  const done = [...s.done, item.qid];
+  return withCurrent({ ...s, done, history: [...s.history, item] }, pickNext(done, questions2));
+}
+function nextState(s, questions2) {
+  if (s.phase !== "feedback" || !s.current) return s;
+  return advance(s, toHistory(s.current, false, true), questions2);
+}
+function skipState(s, questions2) {
+  if (!s.current || s.phase === "empty") return { state: s, skipped: false };
+  if (s.phase === "feedback") return { state: nextState(s, questions2), skipped: false };
+  return { state: advance(s, toHistory(s.current, true, true), questions2), skipped: true };
+}
+function retireState(s, questions2) {
+  if (!s.current || s.phase === "empty") return s;
+  return advance(s, toHistory(s.current, false, s.phase === "feedback"), questions2);
+}
+function feedbackNote(s) {
+  var _a;
+  const q = s.current;
+  if (!q || s.phase !== "feedback" || s.correct || !s.chosen) return void 0;
+  return (_a = q.optionNotes) == null ? void 0 : _a[s.chosen];
+}
+function historyEntries(items) {
+  const out = [];
+  let sid;
+  for (const it of items) {
+    if (it.scenarioId && it.scenarioId !== sid && it.scene) out.push({ type: "scene", text: it.scene });
+    if (it.scenarioId) sid = it.scenarioId;
+    for (const l4 of it.lead) out.push({ type: "line", speaker: l4.speaker, parts: [{ t: "text", text: l4.text }], skipped: false, lead: true });
+    if (it.parts) out.push({ type: "line", speaker: it.speaker, parts: it.parts, skipped: it.skipped, lead: false });
+  }
+  return out;
+}
+function trimHistory2(entries, limit) {
+  const lineIdx = entries.flatMap((e, i) => e.type === "line" ? [i] : []);
+  if (limit <= 0 || lineIdx.length <= limit) return { shown: [...entries], hidden: 0 };
+  const firstKept = lineIdx[lineIdx.length - limit];
+  let start2 = firstKept;
+  if (start2 > 0 && entries[start2 - 1].type === "scene") start2 -= 1;
+  return { shown: entries.slice(start2), hidden: lineIdx.length - limit };
+}
+var MOBILE_HISTORY_LIMIT = 3;
+function speakerSides(speakers) {
+  const order = [];
+  for (const s of speakers) if (s && !order.includes(s)) order.push(s);
+  return (sp) => sp && order.indexOf(sp) === 1 ? "right" : "left";
+}
+function entrySpeakers(entries, current) {
+  var _a;
+  const out = [];
+  for (const e of entries) if (e.type === "line") out.push(e.speaker);
+  if (current) {
+    for (const l4 of (_a = current.lead) != null ? _a : []) out.push(l4.speaker);
+    out.push(current.speaker);
+  }
+  return out;
+}
+function statsLabel(s) {
+  return t("practice.player.stats", { n: s.answered, c: s.correctCount });
+}
+function optionColumns(kind, mobile) {
+  if (kind === "same-sense" || mobile) return 1;
+  return 2;
+}
+function keyAction(key5, s) {
+  if (!s.current || s.phase === "empty") return null;
+  if (/^[1-9]$/.test(key5)) {
+    const index2 = Number(key5) - 1;
+    return s.phase === "asking" && index2 < Math.min(4, s.current.options.length) ? { type: "pick", index: index2 } : null;
+  }
+  if (key5 === "Enter") return s.phase === "feedback" ? { type: "next" } : null;
+  const k = key5.toLowerCase();
+  if (k === "s") return { type: "skip" };
+  if (k === "h") return canHint(s) ? { type: "hint" } : null;
+  return null;
+}
+
+// src/ui/blocks/practice/scenarioPlayer.ts
+var isMobile = () => document.body.classList.contains("is-mobile");
+function mountScenarioPlayer(el, opts, owner) {
+  const root2 = el.createDiv({ cls: "vt-pr-player" });
+  root2.tabIndex = 0;
+  let state = initialState();
+  let expanded = false;
+  let emptyNotified = false;
+  let dead = false;
+  const questions2 = () => opts.questions();
+  function sync(next2) {
+    var _a, _b;
+    state = next2;
+    if (state.phase === "empty") {
+      if (!emptyNotified) {
+        emptyNotified = true;
+        (_b = (_a = opts.callbacks).onEmpty) == null ? void 0 : _b.call(_a);
+      }
+    } else emptyNotified = false;
+    render();
+  }
+  function pick(optionId) {
+    const r = answerState(state, optionId);
+    if (!r || !state.current) return;
+    const q = state.current;
+    state = r.state;
+    opts.callbacks.onAnswer({ question: q, optionId, correct: r.correct, hinted: state.hinted });
+    render();
+  }
+  function next() {
+    sync(nextState(state, questions2()));
+  }
+  function skip() {
+    const q = state.current;
+    const r = skipState(state, questions2());
+    if (r.skipped && q) opts.callbacks.onSkip(q);
+    sync(r.state);
+  }
+  function retire() {
+    const q = state.current;
+    if (!q) return;
+    opts.callbacks.onRetire(q);
+    sync(retireState(state, questions2()));
+  }
+  function hint() {
+    state = showHint(state);
+    render();
+  }
+  owner.registerDomEvent(root2, "keydown", (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const a2 = keyAction(e.key, state);
+    if (!a2) return;
+    e.preventDefault();
+    if (a2.type === "pick") pick(state.current.options[a2.index].id);
+    else if (a2.type === "next") next();
+    else if (a2.type === "skip") skip();
+    else hint();
+  });
+  function renderParts(parent, parts) {
+    for (const p of parts) {
+      if (p.t === "strike") parent.createEl("s", { cls: "vt-pr-strike", text: p.text });
+      else if (p.t === "fix") parent.createSpan({ cls: "vt-pr-fix", text: ` \u2192 ${p.text}` });
+      else if (p.t === "target") parent.createEl("strong", { cls: "vt-pr-target", text: p.text });
+      else parent.appendText(p.text);
+    }
+  }
+  function renderHistory(parent) {
+    const all = historyEntries(state.history);
+    if (!all.length) return;
+    const limited = isMobile() && !expanded;
+    const { shown, hidden } = limited ? trimHistory2(all, MOBILE_HISTORY_LIMIT) : { shown: all, hidden: 0 };
+    const side = speakerSides(entrySpeakers(all, state.current));
+    const box = parent.createDiv({ cls: "vt-pr-history" });
+    if (hidden > 0) {
+      const more = box.createEl("button", { cls: "vt-pr-more", text: `${t("practice.player.earlier")} (${hidden})` });
+      more.addEventListener("click", () => {
+        expanded = true;
+        render();
+      });
+    }
+    for (const e of shown) {
+      if (e.type === "scene") {
+        box.createDiv({ cls: "vt-pr-scene", text: e.text });
+        continue;
+      }
+      const bubble2 = !!e.speaker;
+      const line2 = box.createDiv({ cls: "vt-pr-line" });
+      if (e.lead) line2.addClass("is-lead");
+      if (e.skipped) line2.addClass("is-skipped");
+      if (bubble2) line2.addClass("is-bubble", side(e.speaker) === "right" ? "is-right" : "is-left");
+      if (bubble2) line2.createDiv({ cls: "vt-pr-speaker", text: e.speaker });
+      renderParts(line2.createDiv({ cls: "vt-pr-text" }), e.parts);
+    }
+  }
+  function renderCurrent(parent, q) {
+    var _a, _b, _c, _d;
+    const box = parent.createDiv({ cls: "vt-pr-current" });
+    if (q.tag) box.createDiv({ cls: "vt-pr-tag", text: q.tag });
+    const all = [...historyEntries(state.history)];
+    const side = speakerSides(entrySpeakers(all, q));
+    const wrap = (cls, speaker) => {
+      const d = box.createDiv({ cls });
+      if (speaker) d.addClass("is-bubble", side(speaker) === "right" ? "is-right" : "is-left");
+      if (speaker) d.createDiv({ cls: "vt-pr-speaker", text: speaker });
+      return d.createDiv({ cls: "vt-pr-text" });
+    };
+    for (const l4 of (_a = q.lead) != null ? _a : []) wrap("vt-pr-line is-lead", l4.speaker).appendText(l4.text);
+    const feedback = state.phase === "feedback";
+    const body = wrap("vt-pr-line is-question", q.speaker);
+    const fragMode = q.kind === "find-error";
+    for (const s of questionSegments(q)) {
+      if (s.t === "text") body.appendText(s.text);
+      else if (s.t === "blank") {
+        const b = body.createSpan({ cls: "vt-pr-blank" });
+        if (feedback) b.setText((_c = (_b = q.options.find((o) => o.id === q.answerId)) == null ? void 0 : _b.text) != null ? _c : "");
+        else b.setText("\xA0\xA0\xA0\xA0\xA0\xA0");
+      } else if (s.t === "target") body.createEl("strong", { cls: "vt-pr-target", text: s.text });
+      else {
+        const f = body.createEl("button", { cls: "vt-pr-frag", text: s.text, attr: { type: "button" } });
+        if (feedback) {
+          f.disabled = true;
+          if (s.optionId === q.answerId) f.addClass("is-answer");
+          else if (s.optionId === state.chosen) f.addClass("is-wrong");
+        } else f.addEventListener("click", () => pick(s.optionId));
+      }
+    }
+    const located = new Set(questionSegments(q).flatMap((s) => s.t === "frag" ? [s.optionId] : []));
+    const buttons2 = q.options.filter((o) => !fragMode || !located.has(o.id));
+    if (buttons2.length) {
+      const grid = box.createDiv({ cls: `vt-pr-options cols-${optionColumns(q.kind, isMobile())}` });
+      q.options.forEach((o, i) => {
+        var _a2;
+        if (!buttons2.includes(o)) return;
+        const b = grid.createEl("button", { cls: "vt-pr-option", attr: { type: "button" } });
+        b.createSpan({ cls: "vt-pr-key", text: String(i + 1) });
+        b.createSpan({ cls: "vt-pr-option-text", text: o.text });
+        if (feedback) {
+          b.disabled = true;
+          if (o.id === q.answerId) b.addClass("is-answer");
+          else if (o.id === state.chosen) b.addClass("is-wrong");
+        } else b.addEventListener("click", () => pick(o.id));
+        if (state.hintShown && ((_a2 = q.hints) == null ? void 0 : _a2[o.id])) b.createDiv({ cls: "vt-pr-hint", text: q.hints[o.id] });
+      });
+    }
+    if (state.hintShown && fragMode) {
+      const hl = box.createDiv({ cls: "vt-pr-hints" });
+      for (const o of q.options) if ((_d = q.hints) == null ? void 0 : _d[o.id]) hl.createDiv({ cls: "vt-pr-hint", text: `${o.text}: ${q.hints[o.id]}` });
+    }
+    const actions = box.createDiv({ cls: "vt-pr-actions" });
+    if (!feedback) learnButton(actions, { label: t("practice.player.skip"), ghost: true, onClick: skip });
+    if (canHint(state)) learnButton(actions, { label: t("practice.player.hint"), ghost: true, onClick: hint });
+    learnButton(actions, { label: t("practice.player.retire"), ghost: true, onClick: retire });
+    if (feedback) renderFeedback(box, q);
+  }
+  function renderFeedback(parent, q) {
+    var _a, _b;
+    const fb = parent.createDiv({ cls: `vt-pr-feedback ${state.correct ? "is-right" : "is-wrong"}` });
+    fb.createDiv({ cls: "vt-pr-verdict", text: state.correct ? t("practice.player.right") : t("practice.player.wrong") });
+    const ans = (_b = (_a = q.options.find((o) => o.id === q.answerId)) == null ? void 0 : _a.text) != null ? _b : "";
+    fb.createDiv({ cls: "vt-pr-answer", text: `${t("practice.player.answer")}: ${ans}` });
+    if (q.explanation) fb.createDiv({ cls: "vt-pr-explain", text: q.explanation });
+    const note = feedbackNote(state);
+    if (note) fb.createDiv({ cls: "vt-pr-note", text: note });
+    if (q.sentenceZh) fb.createDiv({ cls: "vt-pr-zh", text: q.sentenceZh });
+    const row = fb.createDiv({ cls: "vt-pr-actions" });
+    const nb = learnButton(row, { label: `${t("practice.player.next")}  \u21B5`, cta: true, onClick: next });
+    nb.addClass("vt-pr-next");
+  }
+  function render() {
+    var _a, _b;
+    if (dead) return;
+    const hadFocus = root2.contains(document.activeElement);
+    root2.empty();
+    root2.createDiv({ cls: "vt-pr-stats", text: statsLabel(state) });
+    renderHistory(root2);
+    if (state.current && state.phase !== "empty") renderCurrent(root2, state.current);
+    else root2.createDiv({ cls: "vt-pr-empty", text: (_b = (_a = opts.emptyText) == null ? void 0 : _a.call(opts)) != null ? _b : t("practice.player.empty") });
+    if (hadFocus) root2.focus({ preventScroll: true });
+  }
+  sync(refreshState(state, questions2()));
+  return {
+    refresh() {
+      if (dead) return;
+      sync(refreshState(state, questions2()));
+    },
+    unload() {
+      dead = true;
+      root2.remove();
+    }
+  };
+}
+
+// src/core/learner/weakness.ts
+var DAY_MS2 = 864e5;
+var HALF_LIFE_DAYS = 14;
+var CORRECT_RELIEF = 0.5;
+function weakFocuses(events, opts) {
+  var _a, _b, _c;
+  const nowMs = opts.now.getTime();
+  const since = nowMs - ((_a = opts.days) != null ? _a : 30) * DAY_MS2;
+  const limit = (_b = opts.limit) != null ? _b : 8;
+  const inWindow = events.filter((e) => {
+    if (e.result !== "correct" && e.result !== "wrong") return false;
+    if (opts.track && e.track !== opts.track) return false;
+    if (opts.scope && !opts.scope.has(e.focus.id)) return false;
+    const t2 = Date.parse(e.at);
+    return !Number.isNaN(t2) && t2 >= since;
+  }).sort((a2, b) => Date.parse(a2.at) - Date.parse(b.at));
+  const byFocus = /* @__PURE__ */ new Map();
+  for (const e of inWindow) {
+    const key5 = `${e.focus.kind}:${e.focus.id}`;
+    let acc = byFocus.get(key5);
+    if (!acc) {
+      acc = { focus: e.focus, track: e.track, score: 0, wrong: 0, lastWrongAt: "", correctSince: 0, given: /* @__PURE__ */ new Map() };
+      byFocus.set(key5, acc);
+    }
+    if (e.result === "wrong") {
+      const days = Math.max(0, (nowMs - Date.parse(e.at)) / DAY_MS2);
+      acc.score += Math.exp(-days / HALF_LIFE_DAYS);
+      acc.wrong++;
+      acc.lastWrongAt = e.at;
+      acc.track = e.track;
+      acc.correctSince = 0;
+      if (e.given) acc.given.set(e.given, ((_c = acc.given.get(e.given)) != null ? _c : 0) + 1);
+    } else {
+      acc.correctSince++;
+    }
+  }
+  const out = [];
+  for (const acc of byFocus.values()) {
+    if (acc.wrong === 0) continue;
+    const score2 = acc.score - CORRECT_RELIEF * acc.correctSince;
+    if (score2 <= 0) continue;
+    let common;
+    let best = 1;
+    for (const [g, n] of acc.given) {
+      if (n > best) {
+        best = n;
+        common = g;
+      }
+    }
+    const w = {
+      focus: acc.focus,
+      track: acc.track,
+      wrong: acc.wrong,
+      lastWrongAt: acc.lastWrongAt,
+      score: score2
+    };
+    if (common !== void 0) w.commonGiven = common;
+    out.push(w);
+  }
+  out.sort((a2, b) => b.score - a2.score || (a2.lastWrongAt < b.lastWrongAt ? 1 : a2.lastWrongAt > b.lastWrongAt ? -1 : 0));
+  return out.slice(0, limit).map(({ score: _s, ...w }) => w);
+}
+function mmdd(iso) {
+  const d = new Date(iso);
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+function weaknessDigest(weak, label) {
+  return weak.map((w) => {
+    const head = `${label ? label(w.focus) : w.focus.id}\uFF5C\u932F ${w.wrong} \u6B21\uFF08\u6700\u8FD1 ${mmdd(w.lastWrongAt)}\uFF09`;
+    return w.commonGiven ? `${head}\uFF5C\u5E38\u9078\u6210 ${w.commonGiven}` : head;
+  }).join("\n");
+}
+
+// src/ui/blocks/trivia.ts
+var import_obsidian35 = require("obsidian");
+
+// src/core/model/trivia.ts
+var TRIVIA_THREAD_ID = "trivia-session";
+
+// src/services/ai/context/triviaContext.ts
+var MAX_KNOWN_WORDS = 200;
+var MAX_TOLD = 40;
+var KNOWN_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015{{#capped}}\uFF08\u5171 {{total}} \u500B\uFF0C\u4EE5\u4E0B\u662F\u6700\u8FD1\u5B78\u7684 {{count}} \u500B\uFF09{{/capped}}
+{{words}}`;
+var SUBJECT_TEMPLATE = `\u3014\u9019\u6B21\u7684\u4E3B\u89D2\u3015{{word}}
+{{#phonetic}}\u97F3\u6A19\uFF1A{{phonetic}}
+{{/phonetic}}{{#partOfSpeech}}\u8A5E\u6027\uFF1A{{partOfSpeech}}
+{{/partOfSpeech}}{{#definitionZh}}\u4E2D\u6587\uFF1A{{definitionZh}}
+{{/definitionZh}}{{#definition}}\u82F1\u6587\u5B9A\u7FA9\uFF1A{{definition}}
+{{/definition}}{{#example}}\u5B78\u7FD2\u8005\u9047\u5230\u5B83\u7684\u53E5\u5B50\uFF1A{{example}}
+{{/example}}`;
+var TOLD_TEMPLATE = `\u3014\u5DF2\u8B1B\u904E\u7684\u51B7\u77E5\u8B58\u3015\uFF08\u4E0D\u8981\u91CD\u8907\u9019\u4E9B\u5167\u5BB9\uFF1B\u540C\u4E00\u500B\u5B57\u8981\u63DB\u4E00\u500B\u89D2\u5EA6\uFF09
+{{told}}`;
+function entryAddedMs2(e) {
+  const iso = e.createdAt ? Date.parse(e.createdAt) : NaN;
+  if (!Number.isNaN(iso)) return iso;
+  const legacy = e.added ? Date.parse(e.added.replace(" ", "T")) : NaN;
+  return Number.isNaN(legacy) ? 0 : legacy;
+}
+function knownWordList(entries, max = MAX_KNOWN_WORDS) {
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  const sorted = entries.filter((e) => !e.deletedAt).sort((a2, b) => entryAddedMs2(b) - entryAddedMs2(a2));
+  for (const e of sorted) {
+    const key5 = e.word.trim().toLowerCase();
+    if (!key5 || seen.has(key5)) continue;
+    seen.add(key5);
+    out.push(e.word.trim());
+    if (out.length >= max) break;
+  }
+  return out;
+}
+function buildTriviaContext(input) {
+  var _a, _b, _c, _d, _e, _f, _g, _h;
+  const s = input.subject;
+  const total = Math.max((_a = input.knownTotal) != null ? _a : 0, input.knownWords.length);
+  const told = ((_b = input.told) != null ? _b : []).slice(0, MAX_TOLD);
+  return {
+    knownBlock: renderTemplate(KNOWN_TEMPLATE, {
+      capped: total > input.knownWords.length ? "yes" : "",
+      total,
+      count: input.knownWords.length,
+      words: input.knownWords.join(", ")
+    }),
+    subjectBlock: s ? renderTemplate(SUBJECT_TEMPLATE, {
+      word: s.word,
+      phonetic: s.phonetic,
+      partOfSpeech: s.partOfSpeech,
+      definitionZh: s.definitionZh,
+      definition: s.definition,
+      example: (_c = s.example) == null ? void 0 : _c.trim()
+    }) : "",
+    toldBlock: told.length ? renderTemplate(TOLD_TEMPLATE, { told: told.map((t2) => `- ${t2.word}\uFF1A${t2.title}`).join("\n") }) : "",
+    slots: {
+      word: (_d = s == null ? void 0 : s.word) != null ? _d : "",
+      question: (_f = (_e = input.question) == null ? void 0 : _e.trim()) != null ? _f : "",
+      selection: (_h = (_g = input.selection) == null ? void 0 : _g.trim()) != null ? _h : ""
+    }
+  };
+}
+
+// src/services/ai/tasks/trivia.ts
+var TRIVIA_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u98A8\u8DA3\u3001\u56B4\u8B39\u7684\u82F1\u6587\u55AE\u5B57\u8AAA\u66F8\u4EBA\uFF0C\u7528\u300C\u51B7\u77E5\u8B58\u300D\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u8A18\u4F4F\u4ED6\u5B78\u904E\u7684\u55AE\u5B57\u3002\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u662F\u4ED6\u5B78\u904E\u7684\u5B57\uFF0C\u3014\u9019\u6B21\u7684\u4E3B\u89D2\u3015\u662F\u9019\u4E00\u5247\u8981\u8B1B\u7684\u5B57\u3002
+
+\u56DE\u7B54\u898F\u5247\uFF1A
+1. \u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u56DE\u7B54\uFF0C\u82F1\u6587\u55AE\u5B57\u8207\u4F8B\u53E5\u4FDD\u7559\u82F1\u6587\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u82E5\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\uFF0C\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
+2. \u53EA\u8B1B\u53EF\u9760\u3001\u6709\u6839\u64DA\u7684\u77E5\u8B58\u3002\u4E0D\u78BA\u5B9A\u5C31\u76F4\u63A5\u8AAA\u300C\u4E0D\u78BA\u5B9A\u300D\u6216\u300C\u8AAA\u6CD5\u4E0D\u4E00\u300D\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3001\u5E74\u4EE3\u3001\u4EBA\u540D\u3001\u6578\u64DA\u6216\u51FA\u8655\uFF1B\u6C92\u6709\u53EF\u9760\u7684\u5B57\u6E90\u6545\u4E8B\u6642\uFF0C\u6539\u8B1B\u7528\u6CD5\u3001\u642D\u914D\u6216\u5BB9\u6613\u6DF7\u6DC6\u7684\u5B57\uFF0C\u4E0D\u8981\u786C\u6E4A\u3002
+3. \u65B0\u7684\u4E00\u5247\uFF08\u4E0D\u662F\u8FFD\u554F\uFF09\u7B2C\u4E00\u884C\u56FA\u5B9A\u5BEB\u6A19\u984C\uFF0C\u683C\u5F0F\u662F\u300C**<\u6A19\u984C>**\u300D\uFF0C\u6A19\u984C 20 \u5B57\u4EE5\u5167\uFF1B\u7A7A\u4E00\u884C\u518D\u5BEB\u5167\u5BB9\u3002\u8FFD\u554F\u76F4\u63A5\u56DE\u7B54\uFF0C\u4E0D\u7528\u6A19\u984C\u3002
+4. \u6BCF\u5247\u5167\u5BB9 50 \u5230 200 \u5B57\uFF0C\u7528 Markdown\uFF0C\u91CD\u9EDE\u7528\u7C97\u9AD4\uFF0C\u4E0D\u8981\u7528\u6A19\u984C\uFF08#\uFF09\u3002
+5. \u53EF\u4EE5\u7684\u8A71\uFF0C\u81EA\u7136\u5730\u5E36\u5230 1 \u5230 2 \u500B\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u88E1\u7684\u5176\u4ED6\u5B57\uFF0C\u5E6B\u5B78\u7FD2\u8005\u8907\u7FD2\uFF1B\u4E0D\u8981\u786C\u585E\uFF0C\u4E5F\u4E0D\u8981\u5217\u6E05\u55AE\u3002
+6. \u4E0D\u8981\u91CD\u8907\u3014\u5DF2\u8B1B\u904E\u7684\u51B7\u77E5\u8B58\u3015\u88E1\u7684\u5167\u5BB9\uFF1B\u540C\u4E00\u500B\u5B57\u8B1B\u904E\u4E86\uFF0C\u5C31\u63DB\u4E00\u500B\u89D2\u5EA6\u3002`;
+var SELECTION_HEADER3 = `{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015
+{{selection}}
+
+{{/selection}}`;
+var TRIVIA_TEMPLATES = {
+  next: `\u4EFB\u52D9\uFF1A\u518D\u4F86\u4E00\u5247\u51B7\u77E5\u8B58\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
+\u8B1B\u4E00\u5247\u548C {{word}} \u6709\u95DC\u7684\u51B7\u77E5\u8B58\uFF0C\u5F9E\u5B57\u6E90\u3001\u7528\u6CD5\u7684\u6F14\u8B8A\u3001\u6587\u5316\u80CC\u666F\u3001\u5BB9\u6613\u6DF7\u6DC6\u7684\u5B57\u3001\u6709\u8DA3\u7684\u642D\u914D\u88E1\u6311\u4E00\u500B\u6700\u6709\u8A18\u61B6\u9EDE\u7684\u89D2\u5EA6\u3002`,
+  quiz: `\u4EFB\u52D9\uFF1A\u8003\u6211\u4E00\u984C\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
+\u51FA\u4E00\u984C\u95DC\u65BC {{word}} \u7684\u5C0F\u984C\u76EE\uFF1A\u9078\u64C7\u984C\uFF08\u6700\u591A\u56DB\u500B\u9078\u9805\uFF09\u6216\u586B\u7A7A\u984C\uFF0C\u7528\u82F1\u6587\u4F8B\u53E5\u6216\u60C5\u5883\u51FA\u984C\uFF0C\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u3002\u5148\u4E0D\u8981\u516C\u5E03\u7B54\u6848\uFF0C\u6700\u5F8C\u4E00\u884C\u5BEB\uFF1A\u300C\u56DE\u8986\u4F60\u7684\u7B54\u6848\uFF0C\u6211\u518D\u544A\u8A34\u4F60\u5C0D\u4E0D\u5C0D\u3002\u300D`,
+  etymology: `\u4EFB\u52D9\uFF1A\u5B57\u6E90\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
+\u8B1B {{word}} \u7684\u5B57\u6E90\u6216\u5B57\u6839\u5B57\u9996\uFF0C\u4EE5\u53CA\u5B83\u548C\u54EA\u4E9B\u5E38\u898B\u7684\u5B57\u6709\u95DC\u4FC2\u3002\u5B57\u6E90\u4E0D\u78BA\u5B9A\u3001\u6216\u5404\u5BB6\u8AAA\u6CD5\u4E0D\u4E00\u6642\uFF0C\u76F4\u63A5\u8AAA\u660E\uFF0C\u518D\u6539\u8B1B\u53EF\u9760\u7684\u69CB\u8A5E\u6216\u7528\u6CD5\uFF0C\u4E0D\u8981\u7DE8\u9020\u3002`,
+  joke: `\u4EFB\u52D9\uFF1A\u7B11\u8A71\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
+\u7528 {{word}} \u8AAA\u4E00\u500B\u7C21\u77ED\u7684\u7B11\u8A71\u3001\u96D9\u95DC\u6216\u6587\u5B57\u904A\u6232\uFF0C\u6700\u5F8C\u7528\u4E00\u5169\u53E5\u8AAA\u660E\u7B11\u9EDE\uFF0C\u4EE5\u53CA {{word}} \u5728\u9019\u88E1\u7684\u610F\u601D\u3002`,
+  followup: `${SELECTION_HEADER3}\u3014\u4F7F\u7528\u8005\u7684\u8FFD\u554F\u3015{{#word}}\uFF08\u76EE\u524D\u7684\u4E3B\u89D2\uFF1A{{word}}\uFF09{{/word}}
+{{question}}
+
+\u63A5\u8457\u524D\u9762\u7684\u5C0D\u8A71\u56DE\u7B54\uFF0C\u4E0D\u7528\u5BEB\u6A19\u984C\u3002\u5982\u679C\u662F\u5728\u56DE\u7B54\u524D\u9762\u51FA\u7684\u984C\u76EE\uFF0C\u5148\u8AAA\u5C0D\u6216\u4E0D\u5C0D\uFF0C\u518D\u89E3\u91CB\u3002`
+};
+var TITLE_MAX = 40;
+var BOLD_LINE_RE = /^\s*(?:#+\s*)?\*\*(.+?)\*\*\s*[:：]?\s*$/;
+var LABEL_LINE_RE = /^\s*(?:標題|title)\s*[:：]\s*(.+)$/i;
+function clip(s, max) {
+  return s.length > max ? `${s.slice(0, max - 1)}\u2026` : s;
+}
+function splitTrivia(text) {
+  var _a, _b, _c;
+  const trimmed = text.trim();
+  const nl = trimmed.indexOf("\n");
+  const first = nl === -1 ? trimmed : trimmed.slice(0, nl);
+  const rest = nl === -1 ? "" : trimmed.slice(nl + 1).trim();
+  const titled = (_a = BOLD_LINE_RE.exec(first)) != null ? _a : LABEL_LINE_RE.exec(first);
+  if (titled && rest) return { title: clip(titled[1].trim(), TITLE_MAX), body: rest };
+  const plain2 = trimmed.replace(/\*\*|__|`/g, "");
+  const sentence = (_c = (_b = /^[^。！？!?\n]+[。！？!?]?/.exec(plain2)) == null ? void 0 : _b[0]) != null ? _c : plain2;
+  return { title: clip(sentence.trim(), TITLE_MAX), body: trimmed };
+}
+function triviaTask(id2, opts) {
+  const task = {
+    id: `trivia.${id2}`,
+    version: 2,
+    surface: "trivia",
+    tier: "smart",
+    // Headroom for adaptive thinking on Sonnet 5; the visible answer is
+    // kept to 50–200 字 by the prompt.
+    maxTokens: 4096,
+    ...opts,
+    build(input, ctx) {
+      const c2 = buildTriviaContext(input);
+      return composeRequest({
+        base: TRIVIA_BASE_PROMPT,
+        cached: [c2.knownBlock],
+        profile: profileForTask(ctx.profile, task, input),
+        history: ctx.history,
+        // The subject and the told list change every round, so they ride
+        // in this round's message: kept in the system prompt they would
+        // break the history cache on every request (規劃書 06 §6.4.1 #5).
+        user: [c2.subjectBlock, c2.toldBlock, renderTemplate(TRIVIA_TEMPLATES[id2], c2.slots)].filter(Boolean).join("\n\n"),
+        tier: task.tier,
+        maxTokens: task.maxTokens
+      });
+    },
+    parse(r) {
+      return splitTrivia(r.text);
+    }
+  };
+  return task;
+}
+var TRIVIA_CHARS = 200;
+var capped = (_input, max) => Math.min(max, TRIVIA_CHARS);
+var triviaNext = triviaTask("next", { label: "ai.task.trivia.next", answerChars: capped });
+var triviaQuiz = triviaTask("quiz", { label: "ai.task.trivia.quiz", answerChars: capped });
+var triviaEtymology = triviaTask("etymology", { label: "ai.task.trivia.etymology", answerChars: capped });
+var triviaJoke = triviaTask("joke", { label: "ai.task.trivia.joke", answerChars: capped });
+var triviaFollowup = triviaTask("followup", {});
+var TRIVIA_TASKS = [triviaNext, triviaQuiz, triviaEtymology, triviaJoke, triviaFollowup];
+var TRIVIA_TASK_BY_KIND = {
+  next: triviaNext,
+  quiz: triviaQuiz,
+  etymology: triviaEtymology,
+  joke: triviaJoke
+};
+
+// src/services/learn/triviaPick.ts
+var RECENT_DAYS2 = 14;
+var EXCLUDE_LAST = 30;
+var RECENT_WEIGHT = 0.7;
+var DAY_MS3 = 24 * 60 * 60 * 1e3;
+function triviaRounds(thread) {
+  var _a;
+  if (!thread) return [];
+  const live = thread.turns.filter((t2) => !t2.deletedAt);
+  const out = [];
+  for (let i = live.length - 1; i >= 0; i--) {
+    const t2 = live[i];
+    if (t2.role !== "assistant" || t2.status === "error") continue;
+    if (!((_a = t2.taskId) == null ? void 0 : _a.startsWith("trivia.")) || t2.taskId === "trivia.followup") continue;
+    const q = live[i - 1];
+    out.push({ answer: t2, question: (q == null ? void 0 : q.role) === "user" ? q : void 0 });
+  }
+  return out;
+}
+function subjectOf(thread, turn) {
+  if (turn.subjectEntryId) return turn.subjectEntryId;
+  if (!thread) return void 0;
+  const i = thread.turns.indexOf(turn);
+  for (let j = i - 1; j >= 0; j--) {
+    const prev = thread.turns[j];
+    if (prev.deletedAt) continue;
+    return prev.role === "user" ? prev.subjectEntryId : void 0;
+  }
+  return void 0;
+}
+function recentSubjects(thread, n = EXCLUDE_LAST) {
+  var _a, _b;
+  const out = [];
+  for (const r of triviaRounds(thread).slice(0, n)) {
+    const id2 = (_b = r.answer.subjectEntryId) != null ? _b : (_a = r.question) == null ? void 0 : _a.subjectEntryId;
+    if (id2) out.push(id2);
+  }
+  return out;
+}
+function pickSubject(entries, recent, opts) {
+  var _a, _b, _c;
+  const live = entries.filter((e) => !e.deletedAt && e.word.trim() && e.liked === true);
+  if (!live.length) return void 0;
+  const excluded = new Set(recent.slice(0, (_a = opts.excludeLast) != null ? _a : EXCLUDE_LAST));
+  const candidates = live.filter((e) => !excluded.has(e.id));
+  if (!candidates.length) {
+    const lastTold = (e) => recent.indexOf(e.id);
+    return [...live].sort((a2, b) => lastTold(b) - lastTold(a2))[0];
+  }
+  const since = opts.now.getTime() - ((_b = opts.recentDays) != null ? _b : RECENT_DAYS2) * DAY_MS3;
+  const fresh = candidates.filter((e) => entryAddedMs2(e) >= since);
+  const older = candidates.filter((e) => entryAddedMs2(e) < since);
+  let pool;
+  if (!fresh.length) pool = older;
+  else if (!older.length) pool = fresh;
+  else pool = opts.random() < ((_c = opts.recentWeight) != null ? _c : RECENT_WEIGHT) ? fresh : older;
+  const i = Math.min(pool.length - 1, Math.floor(opts.random() * pool.length));
+  return pool[i];
+}
+
+// src/ui/blocks/triviaModel.ts
+var OFF = /* @__PURE__ */ new Set(["off", "false", "no", "0", "hide", "\u95DC", "\u5426"]);
+function parseTriviaParams(source) {
+  var _a, _b;
+  const p = parseBlockParams(source);
+  const out = { favorites: !OFF.has(((_a = p.favorites) != null ? _a : "").trim().toLowerCase()) };
+  const word = ((_b = p.word) != null ? _b : "").trim().replace(/^["']|["']$/g, "").trim();
+  if (word) out.word = word;
+  return out;
+}
+var KIND_BY_TASK = new Map(
+  Object.entries(TRIVIA_TASK_BY_KIND).map(([kind, task]) => [task.id, kind])
+);
+function triviaKindOf(taskId) {
+  return taskId ? KIND_BY_TASK.get(taskId) : void 0;
+}
+function triviaCall(req, pinnedEntryId) {
+  var _a;
+  const kind = triviaKindOf(req.taskId);
+  if (kind) return pinnedEntryId ? { type: "ask", kind, entryId: pinnedEntryId } : { type: "ask", kind };
+  const question = (_a = req.question) == null ? void 0 : _a.trim();
+  if (req.taskId !== triviaFollowup.id || !question) return null;
+  return req.selection ? { type: "followup", question, selection: req.selection } : { type: "followup", question };
+}
+function triviaTurnActions(turn, ctx) {
+  if (turn.role !== "assistant" || turn.status !== "done" || !turn.content.trim()) return [];
+  const out = [];
+  if (ctx.feedback) {
+    out.push({ kind: "up", label: "learn.trivia.up", icon: "thumbs-up", active: turn.feedback === "up", iconOnly: true });
+    out.push({ kind: "down", label: "learn.trivia.down", icon: "thumbs-down", active: turn.feedback === "down", iconOnly: true });
+  }
+  if (ctx.favorite) {
+    out.push({ kind: "unfavorite", label: "learn.trivia.favorited", icon: "bookmark-check", active: true, iconOnly: false });
+  } else if (ctx.subjectWord) {
+    const round = !!triviaKindOf(turn.taskId);
+    out.push(
+      round ? { kind: "favorite", label: "learn.trivia.favoriteTo", params: { word: ctx.subjectWord }, icon: "bookmark", active: false, iconOnly: false } : { kind: "favorite", label: "learn.trivia.favorite", icon: "bookmark", active: false, iconOnly: false }
+    );
+  }
+  return out;
+}
+function nextFeedback(current, clicked) {
+  return current === clicked ? void 0 : clicked;
+}
+function triviaTurnHeader(turn, subjectWord, labelOf) {
+  if (turn.role !== "assistant" || !subjectWord) return void 0;
+  const kind = triviaKindOf(turn.taskId);
+  return kind ? `${labelOf(kind)} \xB7 ${subjectWord}` : void 0;
+}
+function splitAround(text, marker) {
+  const i = text.indexOf(marker);
+  return i < 0 ? [text, ""] : [text.slice(0, i), text.slice(i + marker.length)];
+}
+function favoriteViews(items, wordOf, dateOf) {
+  return items.map((it) => {
+    const word = wordOf(it.entryId);
+    const date = dateOf(it.createdAt);
+    const updated = dateOf(it.updatedAt);
+    return {
+      id: it.id,
+      heading: word ? `${word} \xB7 ${it.title}` : it.title,
+      body: it.body,
+      date,
+      ...updated && updated !== date ? { updated } : {},
+      mentions: it.mentions.flatMap((entryId) => {
+        const w = wordOf(entryId);
+        return w ? [{ entryId, word: w }] : [];
+      })
+    };
+  });
+}
+
+// src/ui/blocks/trivia.ts
+function renderTrivia(plugin, source, el, ctx) {
+  ctx.addChild(new TriviaBlock(el, plugin, parseTriviaParams(source), ctx.sourcePath));
+}
+var WordPickModal = class extends import_obsidian35.FuzzySuggestModal {
+  constructor(app, entries, onPick) {
+    super(app);
+    this.entries = entries;
+    this.onPick = onPick;
+    this.setPlaceholder(t("learn.trivia.pick.placeholder"));
+  }
+  getItems() {
+    return this.entries;
+  }
+  getItemText(e) {
+    return e.definitionZh ? `${e.word}  ${e.definitionZh}` : e.word;
+  }
+  onChooseItem(e) {
+    this.onPick(e);
+  }
+};
+var TriviaBlock = class extends import_obsidian35.MarkdownRenderChild {
+  constructor(containerEl, plugin, params, sourcePath) {
+    super(containerEl);
+    this.plugin = plugin;
+    this.params = params;
+    this.sourcePath = sourcePath;
+    this.chipEl = null;
+    this.chatHost = null;
+    this.chat = null;
+    this.favEl = null;
+    this.favScope = null;
+    this.chatState = createChatUiState();
+    this.hasWords = false;
+    this.ready = false;
+    this.disposed = false;
+  }
+  onload() {
+    this.containerEl.empty();
+    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-trivia"] });
+    guardReadingClicks(this, this.root);
+    this.root.createDiv({ cls: "vt-learn-loading", text: t("learn.loading") });
+    this.register(this.plugin.store.events.on("data:changed", () => this.onStoreChanged()));
+    const favChanged = () => {
+      var _a;
+      if (!this.ready) return;
+      this.renderFavorites();
+      (_a = this.chat) == null ? void 0 : _a.refresh();
+    };
+    this.register(this.plugin.learn.events.on("trivia:upsert", favChanged));
+    this.register(this.plugin.learn.events.on("learn:reloaded", favChanged));
+    this.register(() => this.disposed = true);
+    void this.plugin.trivia.ensureLoaded().then(() => {
+      if (this.disposed) return;
+      this.ready = true;
+      this.build();
+    });
+  }
+  get entries() {
+    return this.plugin.store.entries;
+  }
+  // 1006 #24: 「從已學的 n 個字隨機」要跟 pickSubject() 的候選池一致——只數
+  // like 過的字，不是整個單字庫（否則一個考試字表匯進幾百個還沒學的字，
+  // 這裡顯示的 n 會跟實際抽到的範圍不一樣）。
+  get likedCount() {
+    return this.entries.filter((e) => e.liked === true).length;
+  }
+  pinned() {
+    return this.params.word ? new WordIndex(this.entries).find(this.params.word) : void 0;
+  }
+  entryById(id2) {
+    return id2 ? this.entries.find((e) => e.id === id2) : void 0;
+  }
+  onStoreChanged() {
+    if (!this.ready) return;
+    if (this.entries.length > 0 !== this.hasWords) return this.build();
+    this.updateChip();
+    this.renderFavorites();
+  }
+  // ── Layout ────────────────────────────────────────────────────
+  build() {
+    const root2 = this.root;
+    root2.empty();
+    this.chipEl = null;
+    this.chatHost = null;
+    this.favEl = null;
+    if (this.chat) this.removeChild(this.chat);
+    this.chat = null;
+    this.hasWords = this.entries.length > 0;
+    if (this.params.word && !this.pinned()) {
+      root2.appendChild(emptyState({ icon: "lightbulb", title: t("learn.notFound", { word: this.params.word }) }));
+    } else if (!this.hasWords) {
+      root2.appendChild(
+        emptyState({ icon: "lightbulb", title: t("learn.trivia.empty.title"), body: t("learn.trivia.empty.body") })
+      );
+    } else {
+      const card = root2.createDiv({ cls: "vt-trivia-card" });
+      const head = card.createDiv({ cls: "vt-trivia-head" });
+      const title = head.createSpan({ cls: "vt-trivia-title" });
+      (0, import_obsidian35.setIcon)(title.createSpan({ cls: "vt-trivia-title-icon" }), "lightbulb");
+      title.createSpan({ text: t("learn.trivia.title") });
+      this.chipEl = head.createEl("button", { cls: "vt-trivia-subject" });
+      this.chipEl.addEventListener("click", () => this.pickWord());
+      this.updateChip();
+      this.chatHost = card.createDiv({ cls: "vt-trivia-chat" });
+      this.mountChat();
+      card.createDiv({ cls: "vt-trivia-footer", text: t("learn.trivia.footer") });
+    }
+    if (this.params.favorites) {
+      this.favEl = root2.createDiv({ cls: "vt-trivia-favs" });
+      this.renderFavorites();
+    }
+  }
+  // 「從已學的 24 個字隨機 ⌄」 — a click picks the word for the next round.
+  updateChip() {
+    const chip2 = this.chipEl;
+    if (!chip2) return;
+    chip2.empty();
+    const pinned = this.pinned();
+    chip2.createSpan({
+      text: pinned ? t("learn.trivia.subject", { word: pinned.word }) : t("learn.trivia.random", { n: this.likedCount })
+    });
+    if (!pinned) (0, import_obsidian35.setIcon)(chip2.createSpan({ cls: "vt-trivia-subject-icon" }), "chevron-down");
+    chip2.disabled = !!pinned || this.plugin.ai.status() !== "ready";
+    chip2.title = pinned ? "" : t("learn.trivia.pick");
+  }
+  pickWord() {
+    if (this.pinned() || this.plugin.trivia.isBusy()) return;
+    new WordPickModal(this.plugin.app, [...this.entries], (e) => {
+      this.run({ type: "ask", kind: "next", entryId: e.id });
+    }).open();
+  }
+  mountChat() {
+    const host = this.chatHost;
+    if (!host) return;
+    if (this.chat) this.removeChild(this.chat);
+    host.empty();
+    const opts = {
+      app: this.plugin.app,
+      threads: this.plugin.threads,
+      ai: this.plugin.ai,
+      selection: this.plugin.selection,
+      threadId: TRIVIA_THREAD_ID,
+      surface: "trivia",
+      customTaskId: triviaFollowup.id,
+      sourcePath: this.sourcePath,
+      placeholder: t("learn.trivia.placeholder"),
+      state: this.chatState,
+      send: (req) => this.send(req),
+      retry: (turnId) => this.retry(turnId),
+      turnActions: (turn) => this.turnActions(turn),
+      turnHeader: (turn) => this.turnHeader(turn),
+      onOpenSettings: () => openPluginSettings(this.plugin.app, this.plugin.manifest.id)
+    };
+    this.chat = this.addChild(new ChatPanel(host, opts));
+  }
+  // ── Conversation ──────────────────────────────────────────────
+  async call(c2) {
+    if (c2.type === "followup") return this.plugin.trivia.followup(c2.question, c2.selection);
+    const result = await this.plugin.trivia.ask(c2.kind, c2.entryId ? { entryId: c2.entryId } : {});
+    if (!result && !this.plugin.trivia.isBusy()) new import_obsidian35.Notice(t("learn.trivia.noWords"));
+  }
+  run(c2) {
+    this.call(c2).catch((e) => {
+      console.error("Vocab Tracker: trivia request failed", e);
+      new import_obsidian35.Notice(learnErrorText(e));
+    });
+  }
+  async send(req) {
+    var _a;
+    const c2 = triviaCall(req, (_a = this.pinned()) == null ? void 0 : _a.id);
+    if (c2) await this.call(c2);
+  }
+  retry(turnId) {
+    return this.plugin.trivia.retry(turnId);
+  }
+  subjectWord(turn) {
+    var _a;
+    return (_a = this.entryById(subjectOf(this.plugin.trivia.thread(), turn))) == null ? void 0 : _a.word;
+  }
+  turnHeader(turn) {
+    const text = triviaTurnHeader(
+      turn,
+      this.subjectWord(turn),
+      (kind) => kind === "next" ? t("learn.trivia.turn.next") : t(`ai.task.trivia.${kind}`)
+    );
+    return text ? { text, icon: "lightbulb" } : void 0;
+  }
+  turnActions(turn) {
+    const { threads, trivia } = this.plugin;
+    const favorite = trivia.favoriteOf(turn.id);
+    const specs = triviaTurnActions(turn, { subjectWord: this.subjectWord(turn), favorite, feedback: false });
+    return specs.map((s) => {
+      const label = t(s.label, s.params);
+      const base = { label, icon: s.icon, active: s.active, iconOnly: s.iconOnly };
+      switch (s.kind) {
+        case "up":
+        case "down": {
+          const kind = s.kind;
+          return {
+            ...base,
+            onClick: () => void threads.setFeedback(TRIVIA_THREAD_ID, turn.id, nextFeedback(turn.feedback, kind))
+          };
+        }
+        case "favorite":
+          return {
+            ...base,
+            onClick: () => {
+              const item = this.plugin.trivia.favorite(turn.id);
+              if (!item) return void new import_obsidian35.Notice(t("learn.trivia.noWords"));
+              const entry = this.entryById(item.entryId);
+              if (!entry) return;
+              const page = this.plugin.exporter.wordPagePath(entry.id, entry.word);
+              new import_obsidian35.Notice(t("learn.trivia.savedTo", { path: page.split("/").slice(-2).join("/") }));
+            }
+          };
+        case "unfavorite":
+          return { ...base, onClick: () => favorite && this.plugin.trivia.unfavorite(favorite.id) };
+      }
+    });
+  }
+  // ── 收藏的冷知識 ───────────────────────────────────────────────
+  renderFavorites() {
+    const el = this.favEl;
+    if (!el) return;
+    el.empty();
+    if (this.favScope) this.removeChild(this.favScope);
+    const scope = this.favScope = this.addChild(new import_obsidian35.Component());
+    el.createDiv({ cls: "vt-trivia-favs-title", text: t("learn.trivia.favorites") });
+    const pinned = this.pinned();
+    const items = this.plugin.trivia.favorites(pinned == null ? void 0 : pinned.id);
+    const now2 = /* @__PURE__ */ new Date();
+    const views = favoriteViews(items, (id2) => {
+      var _a;
+      return (_a = this.entryById(id2)) == null ? void 0 : _a.word;
+    }, (iso) => dayLabel(iso, now2));
+    if (!views.length) {
+      el.createDiv({ cls: "vt-trivia-favs-empty", text: t("learn.trivia.favorites.empty") });
+      return;
+    }
+    for (const v of views) {
+      const card = el.createDiv({ cls: "vt-trivia-fav" });
+      const head = card.createDiv({ cls: "vt-trivia-fav-head" });
+      head.createSpan({ cls: "vt-trivia-fav-title", text: v.heading });
+      const remove2 = head.createEl("button", { cls: "vt-trivia-fav-remove clickable-icon" });
+      (0, import_obsidian35.setIcon)(remove2, "bookmark-minus");
+      remove2.setAttr("aria-label", t("learn.trivia.unfavorite"));
+      remove2.addEventListener("click", () => this.plugin.trivia.unfavorite(v.id));
+      const body = card.createDiv({ cls: "vt-trivia-fav-body" });
+      void import_obsidian35.MarkdownRenderer.render(this.plugin.app, v.body, body, this.sourcePath, scope);
+      if (v.date || v.mentions.length) this.renderFavoriteMeta(card.createDiv({ cls: "vt-trivia-fav-meta" }), v);
+    }
+  }
+  // 「收藏 10/03 · 也提到 napkin、kitchenware」 — each mentioned word opens its card.
+  renderFavoriteMeta(el, v) {
+    const dates = datesText({ added: v.date, updated: v.updated }, "saved");
+    if (dates) el.appendText(dates);
+    if (!v.mentions.length) return;
+    if (dates) el.appendText(" \xB7 ");
+    const marker = "\0";
+    const [before, after] = splitAround(t("learn.trivia.mentions", { words: marker }), marker);
+    el.appendText(before);
+    const sep = joinWords(["", ""]);
+    v.mentions.forEach((m2, i) => {
+      if (i) el.appendText(sep);
+      wordChip(el, this.plugin, this.entryById(m2.entryId), "vt-trivia-fav-mention").setText(m2.word);
+    });
+    el.appendText(after);
+  }
+};
+
+// src/ui/blocks/registry.ts
+function dnaDeps(plugin) {
+  return {
+    app: plugin.app,
+    manifestId: plugin.manifest.id,
+    vocab: plugin.store,
+    learn: plugin.learn,
+    morphemes: plugin.morphemes,
+    threads: plugin.threads,
+    ai: plugin.ai,
+    selection: plugin.selection,
+    openWord: (e) => void plugin.surfaces.openWordCard(e.id, "data"),
+    focus: plugin.dnaFocus,
+    pageContext: plugin.pageContext
+  };
+}
+function grammarMapDeps(plugin) {
+  return {
+    grammar: plugin.grammar,
+    level: () => {
+      var _a, _b;
+      return (_b = (_a = plugin.store.settings.learner) == null ? void 0 : _a.level) != null ? _b : "";
+    },
+    openTopic: (id2) => plugin.grammarPages.open(id2),
+    api: plugin.grammarQuestions,
+    mountPlayer: mountScenarioPlayer,
+    ...grammarRouting(plugin)
+  };
+}
+function grammarTopicDeps(plugin) {
+  return {
+    grammar: plugin.grammar,
+    threads: plugin.threads,
+    ai: plugin.ai,
+    pages: plugin.grammarPages,
+    openTopic: (id2) => plugin.grammarPages.open(id2),
+    openNote: (path) => plugin.openNote(path),
+    openSettings: () => openPluginSettings(plugin.app, plugin.manifest.id)
+  };
+}
+function grammarPracticeDeps(plugin) {
+  return { api: plugin.grammarQuestions, ready: () => grammarReady(plugin), ...grammarRouting(plugin) };
+}
+async function grammarReady(plugin) {
+  await Promise.all([plugin.grammar.ensureLoaded(), plugin.learner.ensureLoaded()]);
+}
+function grammarRouting(plugin) {
+  return {
+    setGrammarFilter: (f) => plugin.learner.setFilter("grammar", f),
+    openPractice: (track2) => void plugin.openPracticeTab(track2)
+  };
+}
+function practiceFilters(plugin) {
+  return {
+    get: (track2) => plugin.learner.filter(track2),
+    set: (track2, value) => plugin.learner.setFilter(track2, value)
+  };
+}
+function practiceHost(plugin) {
+  return {
+    app: plugin.app,
+    store: plugin.store,
+    srs: plugin.srs,
+    jumpToSource: (e) => plugin.jumpToSource(e),
+    openVocabFile: () => plugin.openVocabFile(),
+    tabs: () => [
+      grammarTab({
+        api: plugin.grammarQuestions,
+        mountPlayer: mountScenarioPlayer,
+        ready: () => grammarReady(plugin),
+        level: () => {
+          var _a, _b;
+          return (_b = (_a = plugin.store.settings.learner) == null ? void 0 : _a.level) != null ? _b : "";
+        },
+        sightings: () => grammarSightings(plugin.threads.paragraphThreads()),
+        progress: (id2) => plugin.grammar.progress(id2),
+        weakTopicIds: () => [
+          ...new Set(
+            weakFocuses(plugin.learner.learnEvents({ track: "grammar" }), { now: /* @__PURE__ */ new Date(), track: "grammar" }).map(
+              (w) => w.focus.id.split("/")[0]
+            )
+          )
+        ],
+        aiStatus: () => plugin.ai.status()
+      })
+    ],
+    filters: practiceFilters(plugin)
+  };
+}
+var BLOCKS = [
+  { lang: "vocab-dashboard", render: renderDashboard },
+  { lang: "vocab-flashcards", render: renderFlashcards },
+  // 1010 A: one name per page — the old block names above/below keep working.
+  { lang: "vocab-card", render: renderFlashcards },
+  // The plugin is the block's WordHeaderHost.
+  { lang: WORD_BLOCK_LANG, render: renderWordHeader },
+  // M7 (規劃書 06 §7): 字族樹, 動詞用法, 冷知識.
+  { lang: "vocab-families", render: renderFamilies },
+  // Same block under the name the galaxy redesign uses (09 〔A2〕).
+  { lang: "vocab-galaxy", render: renderFamilies },
+  { lang: "vocab-verbs", render: renderVerbs },
+  { lang: "vocab-usage", render: renderVerbs },
+  { lang: "vocab-trivia", render: renderTrivia },
+  { lang: "vocab-eureka", render: renderTrivia },
+  // Wave 9 (規劃書 09 §7): Word DNA — morpheme breakdown, timeline, 冷知識.
+  { lang: "vocab-dna", render: (plugin, source, el, ctx) => (
+    // Only the Word DNA entry file feeds the sidebar (規劃書 10 §2.1).
+    renderDna({ ...dnaDeps(plugin), isEntryFile: plugin.files.entryFilePath("dna") === ctx.sourcePath }, source, el, ctx)
+  ) },
+  { lang: "vocab-practice", render: (p, s, el, ctx) => renderPractice(practiceHost(p), s, el, ctx) },
+  // Wave 15: 文法學習.
+  { lang: "vocab-grammar", render: (p, s, el, ctx) => renderGrammarMap(grammarMapDeps(p), s, el, ctx) },
+  { lang: "vocab-grammar-topic", render: (p, s, el, ctx) => renderGrammarTopic(grammarTopicDeps(p), s, el, ctx) },
+  { lang: "vocab-grammar-practice", render: (p, s, el, ctx) => renderGrammarPractice(grammarPracticeDeps(p), s, el, ctx) }
+];
+function registerBlocks(plugin) {
+  for (const def of BLOCKS) {
+    plugin.registerMarkdownCodeBlockProcessor(
+      def.lang,
+      (source, el, ctx) => def.render(plugin, source, el, ctx)
+    );
+  }
 }
 
 // ../../../node_modules/ts-fsrs/dist/index.mjs
@@ -17680,9 +22194,9 @@ var AbstractScheduler = class {
     this.strategies = strategies;
     this.init();
   }
-  checkGrade(grade2) {
-    if (!Number.isFinite(grade2) || grade2 < 1 || grade2 > 4) {
-      throw new FSRSValidationError(`Invalid grade "${grade2}",expected 1-4`);
+  checkGrade(grade) {
+    if (!Number.isFinite(grade) || grade < 1 || grade > 4) {
+      throw new FSRSValidationError(`Invalid grade "${grade}",expected 1-4`);
     }
   }
   init() {
@@ -17714,24 +22228,24 @@ var AbstractScheduler = class {
     };
   }
   *previewIterator() {
-    for (const grade2 of Grades) {
-      yield this.review(grade2);
+    for (const grade of Grades) {
+      yield this.review(grade);
     }
   }
-  review(grade2) {
+  review(grade) {
     const { state } = this.last;
     let item;
-    this.checkGrade(grade2);
+    this.checkGrade(grade);
     switch (state) {
       case State.New:
-        item = this.newState(grade2);
+        item = this.newState(grade);
         break;
       case State.Learning:
       case State.Relearning:
-        item = this.learningState(grade2);
+        item = this.learningState(grade);
         break;
       case State.Review:
-        item = this.reviewState(grade2);
+        item = this.reviewState(grade);
         break;
     }
     return item;
@@ -18312,7 +22826,7 @@ var BasicScheduler = class extends AbstractScheduler {
     }
     this.learningStepsStrategy = learningStepStrategy;
   }
-  getLearningInfo(card, grade2) {
+  getLearningInfo(card, grade) {
     var _a, _b, _c, _d;
     const parameters = this.algorithm.parameters;
     card.learning_steps = card.learning_steps || 0;
@@ -18323,9 +22837,9 @@ var BasicScheduler = class extends AbstractScheduler {
     );
     const scheduled_minutes = Math.max(
       0,
-      (_b = (_a = steps_strategy[grade2]) == null ? void 0 : _a.scheduled_minutes) != null ? _b : 0
+      (_b = (_a = steps_strategy[grade]) == null ? void 0 : _a.scheduled_minutes) != null ? _b : 0
     );
-    const next_steps = Math.max(0, (_d = (_c = steps_strategy[grade2]) == null ? void 0 : _c.next_step) != null ? _d : 0);
+    const next_steps = Math.max(0, (_d = (_c = steps_strategy[grade]) == null ? void 0 : _c.next_step) != null ? _d : 0);
     return {
       scheduled_minutes,
       next_steps
@@ -18334,10 +22848,10 @@ var BasicScheduler = class extends AbstractScheduler {
   /**
    * @description This function applies the learning steps based on the current card's state and grade.
    */
-  applyLearningSteps(nextCard, grade2, to_state) {
+  applyLearningSteps(nextCard, grade, to_state) {
     const { scheduled_minutes, next_steps } = this.getLearningInfo(
       this.current,
-      grade2
+      grade
     );
     if (scheduled_minutes > 0 && scheduled_minutes < 1440) {
       nextCard.learning_steps = next_steps;
@@ -18371,41 +22885,41 @@ var BasicScheduler = class extends AbstractScheduler {
       }
     }
   }
-  newState(grade2) {
-    const exist = this.next.get(grade2);
+  newState(grade) {
+    const exist = this.next.get(grade);
     if (exist) {
       return exist;
     }
-    const next = this.next_ds(this.elapsed_days, grade2);
-    this.applyLearningSteps(next, grade2, State.Learning);
+    const next = this.next_ds(this.elapsed_days, grade);
+    this.applyLearningSteps(next, grade, State.Learning);
     const item = {
       card: next,
-      log: this.buildLog(grade2)
+      log: this.buildLog(grade)
     };
-    this.next.set(grade2, item);
+    this.next.set(grade, item);
     return item;
   }
-  learningState(grade2) {
-    const exist = this.next.get(grade2);
+  learningState(grade) {
+    const exist = this.next.get(grade);
     if (exist) {
       return exist;
     }
-    const next = this.next_ds(this.elapsed_days, grade2);
+    const next = this.next_ds(this.elapsed_days, grade);
     this.applyLearningSteps(
       next,
-      grade2,
+      grade,
       this.last.state
       /** Learning or Relearning */
     );
     const item = {
       card: next,
-      log: this.buildLog(grade2)
+      log: this.buildLog(grade)
     };
-    this.next.set(grade2, item);
+    this.next.set(grade, item);
     return item;
   }
-  reviewState(grade2) {
-    const exist = this.next.get(grade2);
+  reviewState(grade) {
+    const exist = this.next.get(grade);
     if (exist) {
       return exist;
     }
@@ -18442,7 +22956,7 @@ var BasicScheduler = class extends AbstractScheduler {
     this.next.set(Rating2.Hard, item_hard);
     this.next.set(Rating2.Good, item_good);
     this.next.set(Rating2.Easy, item_easy);
-    return this.next.get(grade2);
+    return this.next.get(grade);
   }
   /**
    * Review next_ds
@@ -18495,8 +23009,8 @@ var BasicScheduler = class extends AbstractScheduler {
   }
 };
 var LongTermScheduler = class extends AbstractScheduler {
-  newState(grade2) {
-    const exist = this.next.get(grade2);
+  newState(grade) {
+    const exist = this.next.get(grade);
     if (exist) {
       return exist;
     }
@@ -18516,7 +23030,7 @@ var LongTermScheduler = class extends AbstractScheduler {
     );
     this.next_state(next_again, next_hard, next_good, next_easy);
     this.update_next(next_again, next_hard, next_good, next_easy);
-    return this.next.get(grade2);
+    return this.next.get(grade);
   }
   next_ds(t2, g, r) {
     const next_state = this.algorithm.next_state(
@@ -18536,11 +23050,11 @@ var LongTermScheduler = class extends AbstractScheduler {
   /**
    * @see https://github.com/open-spaced-repetition/ts-fsrs/issues/98#issuecomment-2241923194
    */
-  learningState(grade2) {
-    return this.reviewState(grade2);
+  learningState(grade) {
+    return this.reviewState(grade);
   }
-  reviewState(grade2) {
-    const exist = this.next.get(grade2);
+  reviewState(grade) {
+    const exist = this.next.get(grade);
     if (exist) {
       return exist;
     }
@@ -18557,7 +23071,7 @@ var LongTermScheduler = class extends AbstractScheduler {
     this.next_state(next_again, next_hard, next_good, next_easy);
     next_again.lapses += 1;
     this.update_next(next_again, next_hard, next_good, next_easy);
-    return this.next.get(grade2);
+    return this.next.get(grade);
   }
   /**
    * Review/New next_interval
@@ -18946,9 +23460,9 @@ var FSRS = class extends FSRSAlgorithm {
    * const recordLogItem = f.repeat(card, new Date(), Rating.Again, nextAfterHandler);
    * ```
    */
-  next(card, now2, grade2, afterHandler) {
+  next(card, now2, grade, afterHandler) {
     const instance = this.getScheduler(card, now2);
-    const g = TypeConvert.rating(grade2);
+    const g = TypeConvert.rating(grade);
     if (g === Rating2.Manual) {
       throw new FSRSValidationError("Cannot review a manual rating");
     }
@@ -19237,2135 +23751,6 @@ function makeFsrs(retention, opts = {}) {
   );
 }
 
-// src/core/grammar/schedule.ts
-var MIN_EASY_ANSWERS = 6;
-function sessionRating(results) {
-  if (!results.length) return void 0;
-  const accuracy = results.filter((r) => r.correct).length / results.length;
-  if (accuracy >= 0.9) return results.length >= MIN_EASY_ANSWERS ? Rating.Easy : Rating.Good;
-  if (accuracy >= 0.7) return Rating.Good;
-  if (accuracy >= 0.5) return Rating.Hard;
-  return Rating.Again;
-}
-function scheduleTopic(progress, rating, now2, retention) {
-  const card = (progress == null ? void 0 : progress.srs) ? toFsrsCard(progress.srs) : createEmptyCard(now2);
-  return fromFsrsCard(makeFsrs(retention, { shortTerm: false }).next(card, now2, GRADE[rating]).card);
-}
-
-// src/ui/blocks/grammarPracticeModel.ts
-var MAX_SIZE = 20;
-var MISTAKE_MODES = /* @__PURE__ */ new Set(["mistakes", "mistake", "\u932F\u984C", "\u932F\u984C\u672C"]);
-var REVIEW_MODES = /* @__PURE__ */ new Set(["review", "\u8907\u7FD2"]);
-var LEARN_MODES = /* @__PURE__ */ new Set(["learn", "\u5B78\u7FD2"]);
-function parseGrammarPracticeParams(source) {
-  var _a, _b, _c, _d;
-  const p = parseBlockParams(source);
-  const out = {};
-  const mode = ((_a = p.mode) != null ? _a : "").trim().toLowerCase();
-  if (MISTAKE_MODES.has(mode)) out.mode = "mistakes";
-  else if (REVIEW_MODES.has(mode)) out.mode = "review";
-  else if (LEARN_MODES.has(mode)) out.mode = "learn";
-  const topic = ((_b = p.topic) != null ? _b : "").trim().replace(/^["']|["']$/g, "").trim();
-  if (topic) out.topic = topic;
-  const tag = ((_c = p.tag) != null ? _c : "").trim().toLowerCase();
-  if (ERROR_TAGS.includes(tag)) out.tag = tag;
-  const size = Number.parseInt((_d = p.size) != null ? _d : "", 10);
-  if (Number.isFinite(size) && size > 0) out.size = Math.min(size, MAX_SIZE);
-  return out;
-}
-function resolveMode(params, topicDue) {
-  if (params.mode) return params.mode;
-  return params.topic && topicDue ? "review" : "learn";
-}
-function resolveSize(params, mode) {
-  var _a;
-  return (_a = params.size) != null ? _a : defaultSessionSize(mode);
-}
-function startRound(questions2) {
-  return { questions: [...questions2], index: 0, phase: questions2.length ? "answering" : "summary", results: [] };
-}
-function currentQuestion(s) {
-  return s.phase === "summary" ? void 0 : s.questions[s.index];
-}
-function submitAnswer(s, given, correct) {
-  const q = currentQuestion(s);
-  if (s.phase !== "answering" || !q) return s;
-  return { ...s, phase: "feedback", results: [...s.results, { question: q, given, correct }] };
-}
-function submitOpen(s, given, useAi) {
-  const q = currentQuestion(s);
-  if (s.phase !== "answering" || !q || !given.trim()) return s;
-  return { ...s, phase: useAi ? "grading" : "selfcheck", pending: given };
-}
-function gradingFailed(s) {
-  return s.phase === "grading" ? { ...s, phase: "selfcheck" } : s;
-}
-function finishGrading(s, correct, ai) {
-  const q = currentQuestion(s);
-  if (s.phase !== "grading" || !q || s.pending === void 0) return s;
-  const { pending, ...rest } = s;
-  return { ...rest, phase: "feedback", results: [...s.results, { question: q, given: pending, correct, ai }] };
-}
-function selfAssess(s, correct) {
-  const q = currentQuestion(s);
-  if (s.phase !== "selfcheck" || !q || s.pending === void 0) return s;
-  const { pending, ...rest } = s;
-  return { ...rest, phase: "feedback", results: [...s.results, { question: q, given: pending, correct, selfAssessed: true }] };
-}
-function advance(s) {
-  const index2 = s.index + 1;
-  const next = { ...s, index: index2, phase: index2 >= s.questions.length ? "summary" : "answering" };
-  delete next.pending;
-  return next;
-}
-function nextQuestion(s) {
-  return s.phase === "feedback" ? advance(s) : s;
-}
-function retireCurrent(s) {
-  if (s.phase === "summary") return s;
-  if (s.phase === "feedback") {
-    const results = s.results.slice();
-    const last2 = results[results.length - 1];
-    if (last2) results[results.length - 1] = { ...last2, retired: true };
-    return advance({ ...s, results });
-  }
-  return advance(s);
-}
-function lastResult(s) {
-  return s.phase === "feedback" ? s.results[s.results.length - 1] : void 0;
-}
-function progressLabel(s) {
-  return { position: Math.min(s.index + 1, s.questions.length), total: s.questions.length };
-}
-function summarize(s) {
-  var _a;
-  const counted = s.results.filter((r) => !r.retired);
-  const tally = /* @__PURE__ */ new Map();
-  for (const r of counted) {
-    const t2 = (_a = tally.get(r.question.objectiveId)) != null ? _a : { objectiveId: r.question.objectiveId, answered: 0, correct: 0 };
-    t2.answered++;
-    if (r.correct) t2.correct++;
-    tally.set(r.question.objectiveId, t2);
-  }
-  const correct = counted.filter((r) => r.correct).length;
-  return {
-    answered: counted.length,
-    correct,
-    wrong: counted.length - correct,
-    retired: s.results.length - counted.length,
-    byObjective: [...tally.values()]
-  };
-}
-function scheduledResults(s) {
-  return s.results.filter((r) => !r.retired).map((r) => ({ correct: r.correct }));
-}
-function schedulesTopic(mode, s) {
-  return mode !== "mistakes" && sessionRating(scheduledResults(s)) !== void 0;
-}
-function nextReviewText2(due, now2) {
-  const d = typeof due === "string" ? new Date(due) : due;
-  const label = dueLabel(d, now2);
-  return t("grammar.practice.nextReview", { date: label.kind === "today" ? t("row.due.today") : label.text });
-}
-function needsMoreQuestions(available, size) {
-  return available < size;
-}
-function stemPieces(stem) {
-  const out = [];
-  stem.split(/_{3,}/).forEach((part, i) => {
-    if (i > 0) out.push({ kind: "blank" });
-    if (part) out.push({ kind: "text", text: part });
-  });
-  return out;
-}
-function findErrorPieces(stem, options) {
-  const spans = [];
-  options.forEach((opt, index2) => {
-    if (!opt) return;
-    let from = 0;
-    for (; ; ) {
-      const start2 = stem.indexOf(opt, from);
-      if (start2 === -1) return;
-      const end = start2 + opt.length;
-      if (!spans.some((s) => start2 < s.end && end > s.start)) {
-        spans.push({ start: start2, end, index: index2 });
-        return;
-      }
-      from = start2 + 1;
-    }
-  });
-  spans.sort((a2, b) => a2.start - b.start);
-  const out = [];
-  let at = 0;
-  for (const s of spans) {
-    if (s.start > at) out.push({ kind: "text", text: stem.slice(at, s.start) });
-    out.push({ kind: "option", text: stem.slice(s.start, s.end), index: s.index });
-    at = s.end;
-  }
-  if (at < stem.length) out.push({ kind: "text", text: stem.slice(at) });
-  return out;
-}
-function sourceName(path) {
-  var _a;
-  const base = (_a = path.split("/").pop()) != null ? _a : path;
-  return base.replace(/\.md$/i, "");
-}
-var norm = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
-function feedbackFor(q, given, correct, how = {}) {
-  var _a;
-  const out = { correct, given, answer: q.answer, explanation: q.explanation };
-  if (isOpenQuestion(q)) {
-    if (how.ai) {
-      out.aiFeedback = how.ai.feedback;
-      if (!correct && how.ai.corrected) out.corrected = how.ai.corrected;
-    }
-    if (how.selfAssessed) out.selfAssessed = true;
-    return out;
-  }
-  if (q.type === "find-error" && ((_a = q.accepted) == null ? void 0 : _a[0])) out.corrected = q.accepted[0];
-  if (!correct && q.distractors) {
-    const key5 = Object.keys(q.distractors).find((k) => norm(k) === norm(given));
-    if (key5) out.whyWrong = q.distractors[key5];
-  }
-  return out;
-}
-function keyAction(key5, ctx) {
-  if (ctx.phase === "summary") return null;
-  if (ctx.inInput) return ctx.phase === "answering" && key5 === "Enter" && !ctx.multiline ? { type: "submit" } : null;
-  if (ctx.phase === "grading" || ctx.phase === "selfcheck") return null;
-  if (ctx.onButton && (key5 === "Enter" || key5 === " ")) return null;
-  if (ctx.phase === "feedback") return key5 === "Enter" ? { type: "next" } : null;
-  if (/^[1-4]$/.test(key5)) {
-    const index2 = Number(key5) - 1;
-    return index2 < ctx.optionCount ? { type: "choose", index: index2 } : null;
-  }
-  return null;
-}
-
-// src/ui/blocks/grammarPractice.ts
-function l3(key5, params) {
-  return t(`grammar.practice.${key5}`, params);
-}
-function renderGrammarPractice(deps, source, el, ctx) {
-  ctx.addChild(new GrammarPracticeBlock(el, deps, parseGrammarPracticeParams(source)));
-}
-function mountGrammarPractice(parent, deps, params) {
-  const block = new GrammarPracticeBlock(parent, deps, params);
-  block.load();
-  return block;
-}
-var GrammarPracticeBlock = class extends import_obsidian31.MarkdownRenderChild {
-  constructor(containerEl, deps, params) {
-    super(containerEl);
-    this.deps = deps;
-    this.params = params;
-    this.ready = false;
-    this.disposed = false;
-    this.round = startRound([]);
-    this.input = null;
-    // The keyboard needs the block focused after a click re-drew its buttons.
-    this.refocus = false;
-    this.genError = null;
-    this.justAdded = 0;
-    // What this round runs as (the block's `mode:` or, by the topic's state,
-    // review / learn) and how long it is. Settled per round.
-    this.mode = "learn";
-    this.size = 0;
-    // The topic's new card once the round was scheduled (summary shows its date).
-    this.scheduled = null;
-    this.finished = false;
-    this.ctrl = null;
-    // The AI grading in flight (rewrite / translate). The token tells a late
-    // answer from one the learner already moved past.
-    this.gradeCtrl = null;
-    this.gradeToken = 0;
-    this.gradeError = null;
-    // What was typed into the multi-line box, kept across redraws.
-    this.draft = "";
-  }
-  onload() {
-    this.containerEl.empty();
-    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr-practice"] });
-    guardReadingClicks(this, this.root);
-    this.root.tabIndex = 0;
-    this.registerDomEvent(this.root, "keydown", (e) => this.onKey(e));
-    this.body = this.root.createDiv({ cls: "vt-gr-body" });
-    this.gen = this.root.createDiv({ cls: "vt-gr-gen" });
-    this.body.createDiv({ cls: "vt-learn-loading", text: l3("loading") });
-    const onBank = () => this.onBankChanged();
-    this.register(this.deps.grammar.events.on("question:upsert", onBank));
-    this.register(this.deps.grammar.events.on("grammar:reloaded", onBank));
-    this.register(
-      this.deps.questions.events.on("questions:busy", (e) => {
-        if (e.topicId === this.params.topic) this.renderGen();
-      })
-    );
-    this.register(() => {
-      this.disposed = true;
-      this.cancelGrade();
-    });
-    void this.deps.grammar.ensureLoaded().then(() => {
-      if (this.disposed) return;
-      this.ready = true;
-      this.newRound();
-    });
-  }
-  // ── Data ──────────────────────────────────────────────────────
-  topic() {
-    return this.params.topic ? topicById(this.params.topic) : void 0;
-  }
-  pool() {
-    return this.params.topic ? this.deps.questions.pool(this.params.topic) : this.deps.grammar.activeQuestions();
-  }
-  attempts() {
-    return this.deps.grammar.attempts(this.params.topic);
-  }
-  now() {
-    var _a, _b, _c;
-    return (_c = (_b = (_a = this.deps).now) == null ? void 0 : _b.call(_a)) != null ? _c : /* @__PURE__ */ new Date();
-  }
-  topicIsDue() {
-    var _a, _b;
-    const due = this.params.topic ? (_b = (_a = this.deps.grammar.progress(this.params.topic)) == null ? void 0 : _a.srs) == null ? void 0 : _b.due : void 0;
-    const at = due ? new Date(due).getTime() : NaN;
-    return Number.isFinite(at) && at <= this.now().getTime();
-  }
-  newRound() {
-    this.mode = resolveMode(this.params, this.topicIsDue());
-    this.size = resolveSize(this.params, this.mode);
-    const questions2 = buildSession(this.pool(), this.attempts(), {
-      size: this.size,
-      mode: this.mode,
-      errorTag: this.params.tag
-    });
-    this.round = startRound(questions2);
-    this.justAdded = 0;
-    this.scheduled = null;
-    this.finished = false;
-    this.draft = "";
-    this.gradeError = null;
-    this.render();
-  }
-  // The round just ended: this is one review of the topic (R1). Once per
-  // round — render() runs again for every redraw of the summary.
-  finishRound() {
-    var _a;
-    if (this.finished) return;
-    this.finished = true;
-    const topicId = this.params.topic;
-    if (!topicId || !schedulesTopic(this.mode, this.round)) return;
-    try {
-      this.scheduled = (_a = this.deps.questions.finishSession(topicId, scheduledResults(this.round), this.now(), this.mode)) != null ? _a : null;
-    } catch (e) {
-      console.error("Vocab Tracker: couldn't schedule grammar review", e);
-    }
-  }
-  // Sync or a finished generation put questions in the bank. A round in
-  // progress is left exactly as it is; only an empty screen picks them up.
-  onBankChanged() {
-    if (!this.ready || this.disposed) return;
-    if (this.round.questions.length === 0) this.newRound();
-  }
-  objectiveText(q) {
-    var _a, _b, _c;
-    return (_c = (_b = (_a = topicById(q.topicId)) == null ? void 0 : _a.objectives.find((o) => o.id === q.objectiveId)) == null ? void 0 : _b.text) != null ? _c : "";
-  }
-  // ── Render ────────────────────────────────────────────────────
-  render() {
-    var _a;
-    if (this.disposed) return;
-    const body = this.body;
-    body.empty();
-    this.input = null;
-    if (this.params.topic && !this.topic()) {
-      body.appendChild(inlineNote({ tone: "error", text: l3("noTopic") }));
-      this.gen.empty();
-      return;
-    }
-    const q = currentQuestion(this.round);
-    if (!q && this.round.questions.length > 0) this.finishRound();
-    if (this.mode === "review") body.createDiv({ cls: "vt-gr-review-tag", text: l3("reviewTag") });
-    if (!q && this.round.questions.length === 0) this.renderEmpty(body);
-    else if (!q) this.renderSummary(body);
-    else this.renderQuestion(body, q);
-    this.renderGen();
-    if (this.refocus) {
-      this.refocus = false;
-      ((_a = this.input) != null ? _a : this.root).focus({ preventScroll: true });
-    }
-  }
-  renderEmpty(parent) {
-    if (this.mode === "mistakes") {
-      parent.appendChild(emptyState({ icon: "check-circle", title: l3("noMistakes"), body: l3("noMistakesBody") }));
-      return;
-    }
-    parent.appendChild(emptyState({ icon: "list-checks", title: l3("emptyTitle"), body: l3("emptyBody") }));
-  }
-  renderHeader(parent, q) {
-    var _a;
-    const head = parent.createDiv({ cls: "vt-gr-head" });
-    const { position, total } = progressLabel(this.round);
-    head.createSpan({ cls: "vt-gr-count", text: `${position} / ${total}` });
-    const goal = head.createSpan({ cls: "vt-gr-goal" });
-    if (!this.params.topic) {
-      const title = (_a = topicById(q.topicId)) == null ? void 0 : _a.title;
-      if (title) goal.createSpan({ cls: "vt-gr-topic", text: title });
-    }
-    const text = this.objectiveText(q);
-    if (text) goal.createSpan({ text });
-    const bar = parent.createDiv({ cls: "vt-gr-bar" });
-    const done = this.round.results.length;
-    bar.createDiv({ cls: "vt-gr-bar-fill" }).style.width = `${Math.round(done / Math.max(1, total) * 100)}%`;
-  }
-  renderQuestion(parent, q) {
-    var _a, _b;
-    const fb = lastResult(this.round);
-    const answered = !!fb;
-    this.renderHeader(parent, q);
-    const card = parent.createDiv({ cls: "vt-gr-card" });
-    const stem = card.createDiv({ cls: "vt-gr-stem" });
-    if (isOpenQuestion(q)) {
-      stem.addClass("is-open");
-      stem.setText(q.stem);
-      if (q.source) this.renderSource(card, q.source);
-      this.renderOpen(card, q);
-      if (fb) this.renderFeedback(parent, q, fb.given, fb.correct);
-      return;
-    }
-    if (q.source) this.renderSource(card, q.source);
-    if (q.type === "find-error") {
-      const options = (_a = q.options) != null ? _a : [];
-      const pieces = findErrorPieces(q.stem, options);
-      const placed = /* @__PURE__ */ new Set();
-      for (const p of pieces) {
-        if (p.kind === "text") stem.appendText(p.text);
-        else if (p.kind === "option") {
-          placed.add(p.index);
-          this.fragment(stem, q, p.text, p.index, fb == null ? void 0 : fb.given);
-        }
-      }
-      card.createDiv({ cls: "vt-gr-hint", text: l3("pickOne") });
-      if (placed.size < options.length) {
-        const row = card.createDiv({ cls: "vt-gr-options" });
-        options.forEach((o, i) => {
-          if (!placed.has(i)) this.optionButton(row, q, o, i, fb == null ? void 0 : fb.given);
-        });
-      }
-    } else {
-      for (const p of stemPieces(q.stem)) {
-        if (p.kind === "text") stem.appendText(p.text);
-        else if (p.kind === "blank") {
-          const gap = stem.createSpan({ cls: "vt-gr-gap" });
-          if (answered) {
-            gap.addClass("is-filled");
-            gap.setText(q.answer);
-          }
-        }
-      }
-      if (q.type === "choice") {
-        const row = card.createDiv({ cls: "vt-gr-options" });
-        ((_b = q.options) != null ? _b : []).forEach((o, i) => this.optionButton(row, q, o, i, fb == null ? void 0 : fb.given));
-      } else {
-        this.renderBlankInput(card, q, fb == null ? void 0 : fb.given);
-      }
-    }
-    if (fb) this.renderFeedback(parent, q, fb.given, fb.correct);
-  }
-  // 「出自〈筆記名〉」 — the sentence this question was adapted from.
-  renderSource(card, source) {
-    const line2 = card.createDiv({ cls: "vt-gr-source" });
-    const name = sourceName(source.path);
-    const open = this.deps.openPath;
-    line2.title = source.sentence;
-    if (open) {
-      const link = line2.createEl("a", { cls: "vt-gr-source-link", text: l3("source", { name }), attr: { href: "#" } });
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        open(source.path);
-      });
-    } else {
-      line2.setText(l3("source", { name }));
-    }
-  }
-  // rewrite / translate: a multi-line box → (AI grading | self-check) →
-  // feedback. answering shows the box; the later phases keep the answer
-  // read-only above their own panel.
-  renderOpen(card, q) {
-    var _a;
-    const phase = this.round.phase;
-    const fb = lastResult(this.round);
-    const given = (_a = fb == null ? void 0 : fb.given) != null ? _a : this.round.pending;
-    const area = card.createEl("textarea", {
-      cls: "vt-gr-textarea",
-      attr: {
-        rows: "3",
-        placeholder: l3(q.type === "translate" ? "typeTranslation" : "typeRewrite"),
-        "aria-label": l3("typeAnswer"),
-        autocomplete: "off",
-        autocapitalize: "off",
-        autocorrect: "off",
-        spellcheck: "false"
-      }
-    });
-    if (given !== void 0) {
-      area.value = given;
-      area.readOnly = true;
-      if (fb) area.addClass(fb.correct ? "is-correct" : "is-wrong");
-    }
-    if (phase === "answering") {
-      area.value = this.draft;
-      this.input = area;
-      area.addEventListener("input", () => {
-        this.draft = area.value;
-      });
-      area.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter" || !(e.metaKey || e.ctrlKey) || e.isComposing) return;
-        e.preventDefault();
-        e.stopPropagation();
-        this.submitOpenAnswer();
-      });
-      const row = card.createDiv({ cls: "vt-gr-open-row" });
-      row.createSpan({
-        cls: "vt-gr-hint",
-        text: l3(this.deps.ai.status() === "ready" ? "openAiHint" : "openSelfHint")
-      });
-      learnButton(row, { label: l3("submit"), cta: true, onClick: () => this.submitOpenAnswer() });
-    } else if (phase === "grading") {
-      const box = card.createDiv({ cls: "vt-learn-busy" });
-      const line2 = box.createDiv({ cls: "vt-learn-busy-text" });
-      (0, import_obsidian31.setIcon)(line2.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
-      line2.createSpan({ text: l3("grading") });
-      learnButton(box, { label: l3("stop"), icon: "square", onClick: () => this.stopGrade() });
-    } else if (phase === "selfcheck") {
-      this.renderSelfCheck(card, q);
-    }
-  }
-  renderSelfCheck(card, q) {
-    var _a;
-    if (this.gradeError) {
-      card.appendChild(aiErrorBox({ text: this.gradeError.text, error: this.gradeError.cause }));
-      card.createDiv({ cls: "vt-gr-hint", text: l3("gradeFailed") });
-    }
-    const box = card.createDiv({ cls: "vt-gr-selfcheck" });
-    box.createDiv({ cls: "vt-gr-selfcheck-title", text: l3("sample") });
-    box.createDiv({ cls: "vt-gr-sample", text: q.answer });
-    for (const a2 of (_a = q.accepted) != null ? _a : []) box.createDiv({ cls: "vt-gr-sample is-alt", text: a2 });
-    box.createDiv({ cls: "vt-gr-explain", text: q.explanation });
-    box.createDiv({ cls: "vt-gr-hint", text: l3("selfAsk") });
-    const actions = box.createDiv({ cls: "vt-gr-actions" });
-    learnButton(actions, { label: l3("retire"), icon: "thumbs-down", ghost: true, onClick: () => this.retire() });
-    learnButton(actions, { label: l3("selfWrong"), icon: "x", onClick: () => this.selfMark(false) });
-    learnButton(actions, { label: l3("selfRight"), icon: "check", cta: true, onClick: () => this.selfMark(true) });
-  }
-  optionButton(row, q, text, index2, given) {
-    const btn = row.createEl("button", { cls: "vt-gr-opt", attr: { type: "button" } });
-    btn.createSpan({ cls: "vt-gr-key", text: String(index2 + 1) });
-    btn.createSpan({ cls: "vt-gr-opt-text", text });
-    this.markOption(btn, q, text, given);
-    btn.addEventListener("click", () => this.choose(index2));
-  }
-  fragment(stem, q, text, index2, given) {
-    const btn = stem.createEl("button", { cls: "vt-gr-frag", attr: { type: "button" } });
-    btn.createEl("sup", { cls: "vt-gr-key", text: String(index2 + 1) });
-    btn.appendText(text);
-    this.markOption(btn, q, text, given);
-    btn.addEventListener("click", () => this.choose(index2));
-  }
-  // After the answer: the right option green, a wrong pick red, all locked.
-  markOption(btn, q, text, given) {
-    if (given === void 0) return;
-    btn.disabled = true;
-    if (text === q.answer) btn.addClass("is-correct");
-    else if (text === given) btn.addClass("is-wrong");
-  }
-  renderBlankInput(card, q, given) {
-    const row = card.createDiv({ cls: "vt-gr-blank-row" });
-    const input = row.createEl("input", {
-      cls: "vt-gr-input",
-      attr: {
-        type: "text",
-        placeholder: l3("typeAnswer"),
-        autocomplete: "off",
-        autocapitalize: "off",
-        autocorrect: "off",
-        spellcheck: "false",
-        "aria-label": l3("typeAnswer")
-      }
-    });
-    if (given !== void 0) {
-      input.value = given;
-      input.readOnly = true;
-      const fb = lastResult(this.round);
-      input.addClass((fb == null ? void 0 : fb.correct) ? "is-correct" : "is-wrong");
-      return;
-    }
-    this.input = input;
-    learnButton(row, { label: l3("check"), cta: true, onClick: () => this.submitTyped() });
-  }
-  renderFeedback(parent, q, given, correct) {
-    const result = lastResult(this.round);
-    const m2 = feedbackFor(q, given, correct, result);
-    const box = parent.createDiv({ cls: ["vt-gr-feedback", correct ? "is-correct" : "is-wrong"] });
-    const line2 = box.createDiv({ cls: "vt-gr-verdict" });
-    (0, import_obsidian31.setIcon)(line2.createSpan({ cls: "vt-gr-verdict-icon" }), correct ? "check" : "x");
-    line2.createSpan({ cls: "vt-gr-verdict-text", text: correct ? l3("right") : l3("wrong") });
-    if (m2.selfAssessed) line2.createSpan({ cls: "vt-gr-self-tag", text: l3("selfTag") });
-    if (isOpenQuestion(q)) {
-      if (m2.aiFeedback) box.createDiv({ cls: "vt-gr-ai-feedback", text: m2.aiFeedback });
-      if (m2.corrected) box.createDiv({ cls: "vt-gr-fixed", text: l3("fixed", { s: m2.corrected }) });
-      box.createDiv({ cls: "vt-gr-answer", text: l3("sampleIs", { s: m2.answer }) });
-    } else if (!correct) {
-      const key5 = q.type === "blank" ? "youTyped" : q.type === "find-error" ? "youClicked" : "youPicked";
-      box.createDiv({
-        cls: "vt-gr-answer",
-        text: l3(key5, { a: m2.given, b: m2.answer })
-      });
-    } else if (q.type !== "blank") {
-      box.createDiv({ cls: "vt-gr-answer", text: m2.answer });
-    }
-    if (m2.corrected && !isOpenQuestion(q)) box.createDiv({ cls: "vt-gr-fixed", text: l3("fixed", { s: m2.corrected }) });
-    box.createDiv({ cls: "vt-gr-explain", text: m2.explanation });
-    if (m2.whyWrong) {
-      const why = box.createDiv({ cls: "vt-gr-why" });
-      why.createSpan({ cls: "vt-gr-why-opt", text: m2.given });
-      why.appendText(`\uFF1A${m2.whyWrong}`);
-    }
-    const actions = box.createDiv({ cls: "vt-gr-actions" });
-    learnButton(actions, { label: l3("retire"), icon: "thumbs-down", ghost: true, onClick: () => this.retire() });
-    const last2 = this.round.index >= this.round.questions.length - 1;
-    learnButton(actions, { label: l3(last2 ? "seeSummary" : "next"), icon: "arrow-right", cta: true, onClick: () => this.next() });
-  }
-  renderSummary(parent) {
-    var _a;
-    const sum = summarize(this.round);
-    const box = parent.createDiv({ cls: "vt-gr-summary" });
-    box.createDiv({ cls: "vt-gr-summary-title", text: l3("summaryTitle") });
-    box.createDiv({ cls: "vt-gr-score", text: l3("score", { c: sum.correct, n: sum.answered }) });
-    if (sum.byObjective.length) {
-      const list = box.createDiv({ cls: "vt-gr-tally" });
-      for (const t2 of sum.byObjective) {
-        const row = list.createDiv({ cls: "vt-gr-tally-row" });
-        const q = (_a = this.round.results.find((r) => r.question.objectiveId === t2.objectiveId)) == null ? void 0 : _a.question;
-        row.createSpan({ cls: "vt-gr-tally-text", text: q && this.objectiveText(q) || t2.objectiveId });
-        row.createSpan({
-          cls: t2.correct === t2.answered ? ["vt-gr-tally-score", "is-full"] : "vt-gr-tally-score",
-          text: `${t2.correct} / ${t2.answered}`
-        });
-      }
-    }
-    if (this.mode === "mistakes") box.createDiv({ cls: "vt-gr-summary-note", text: l3("mistakesHint") });
-    else if (sum.wrong > 0) box.createDiv({ cls: "vt-gr-summary-note", text: l3("wrongAdded", { n: sum.wrong }) });
-    else if (sum.answered > 0) box.createDiv({ cls: "vt-gr-summary-note", text: l3("allRight") });
-    if (sum.retired > 0) box.createDiv({ cls: "vt-gr-summary-note", text: l3("retired", { n: sum.retired }) });
-    if (this.scheduled) {
-      box.createDiv({ cls: "vt-gr-summary-note vt-gr-next-review", text: nextReviewText2(this.scheduled.due, this.now()) });
-    }
-    learnButton(box.createDiv({ cls: "vt-gr-actions" }), {
-      label: l3("again"),
-      icon: "rotate-ccw",
-      cta: true,
-      onClick: () => {
-        this.refocus = true;
-        this.newRound();
-      }
-    });
-  }
-  // 「✦ 生成新題目」 — its own area, so a generation finishing never redraws
-  // the question being answered.
-  renderGen() {
-    const host = this.gen;
-    host.empty();
-    const topicId = this.params.topic;
-    if (!topicId || this.mode === "mistakes" || !this.topic()) return;
-    const slot = this.round.questions.length === 0 ? "empty" : currentQuestion(this.round) ? "round" : "summary";
-    if (this.deps.questions.isBusy(topicId)) {
-      const box = host.createDiv({ cls: "vt-learn-busy" });
-      const line2 = box.createDiv({ cls: "vt-learn-busy-text" });
-      (0, import_obsidian31.setIcon)(line2.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
-      line2.createSpan({ text: l3("generating") });
-      learnButton(box, { label: l3("stop"), icon: "square", onClick: () => this.deps.questions.stop(topicId) });
-      return;
-    }
-    if (this.genError) host.appendChild(aiErrorBox({ text: this.genError.text, error: this.genError.cause }));
-    if (this.justAdded > 0 && slot === "round") {
-      host.appendChild(inlineNote({ text: l3("added", { n: this.justAdded }) }));
-    }
-    const available = this.pool().filter(isAskable).length;
-    if (!needsMoreQuestions(available, this.size)) return;
-    if (this.deps.ai.status() !== "ready") {
-      if (slot !== "round") renderLearnAiGate(host, this.gatePlugin());
-      return;
-    }
-    if (slot === "round" && available > 0) {
-      host.createDiv({ cls: "vt-gr-short", text: l3("short", { n: available }) });
-    }
-    learnButton(host.createDiv({ cls: "vt-gr-gen-row" }), {
-      label: l3("generate"),
-      cta: slot !== "round",
-      ghost: slot === "round",
-      onClick: () => void this.generate()
-    });
-  }
-  // renderLearnAiGate only reads ai.status(), app and manifest.id.
-  gatePlugin() {
-    const { ai, app, manifestId } = this.deps;
-    return { ai, app, manifest: { id: manifestId } };
-  }
-  // ── Actions ───────────────────────────────────────────────────
-  async generate() {
-    const topicId = this.params.topic;
-    if (!topicId || this.deps.questions.isBusy(topicId)) return;
-    this.genError = null;
-    this.justAdded = 0;
-    const running2 = this.round.questions.length > 0;
-    this.ctrl = new AbortController();
-    try {
-      const saved = await this.deps.questions.generate(topicId, { signal: this.ctrl.signal });
-      this.justAdded = running2 ? saved.length : 0;
-    } catch (e) {
-      if (!isAbort(e)) this.genError = { text: learnErrorText(e), cause: e };
-    }
-    this.ctrl = null;
-    if (this.disposed) return;
-    this.renderGen();
-  }
-  choose(index2) {
-    var _a;
-    const q = currentQuestion(this.round);
-    if (!q || this.round.phase !== "answering") return;
-    const given = (_a = q.options) == null ? void 0 : _a[index2];
-    if (given !== void 0) this.answer(q, given);
-  }
-  submitTyped() {
-    const q = currentQuestion(this.round);
-    if (!q || this.round.phase !== "answering" || q.type !== "blank" || !this.input) return;
-    const text = this.input.value;
-    if (!text.trim()) return;
-    this.answer(q, text);
-  }
-  answer(q, given) {
-    const g = grade(q, given);
-    this.record(q, g.normalizedGiven, g.correct);
-    this.round = submitAnswer(this.round, g.normalizedGiven, g.correct);
-    this.refocus = true;
-    this.render();
-  }
-  record(q, given, correct) {
-    try {
-      this.deps.questions.record(q, given, correct);
-    } catch (e) {
-      console.error("Vocab Tracker: couldn't record grammar attempt", e);
-    }
-  }
-  // 送出 on a rewrite / translate question. The AI is called only here, and
-  // only when it is on; otherwise the learner marks themselves.
-  submitOpenAnswer() {
-    const q = currentQuestion(this.round);
-    if (!q || !isOpenQuestion(q) || this.round.phase !== "answering" || !this.input) return;
-    const given = grade(q, this.input.value).normalizedGiven;
-    if (!given) return;
-    const useAi = this.deps.ai.status() === "ready";
-    this.gradeError = null;
-    this.draft = "";
-    this.round = submitOpen(this.round, given, useAi);
-    this.render();
-    if (useAi) void this.runGrade(q, given);
-  }
-  async runGrade(q, given) {
-    const token2 = ++this.gradeToken;
-    const ctrl = new AbortController();
-    this.gradeCtrl = ctrl;
-    try {
-      const v = await this.deps.questions.grade(q, given, ctrl.signal);
-      if (this.disposed || token2 !== this.gradeToken || this.round.phase !== "grading") return;
-      this.record(q, given, v.correct);
-      this.round = finishGrading(this.round, v.correct, { feedback: v.feedback, corrected: v.corrected });
-    } catch (e) {
-      if (this.disposed || token2 !== this.gradeToken || this.round.phase !== "grading") return;
-      if (!isAbort(e)) this.gradeError = { text: learnErrorText(e), cause: e };
-      this.round = gradingFailed(this.round);
-    } finally {
-      if (token2 === this.gradeToken) this.gradeCtrl = null;
-    }
-    this.refocus = true;
-    this.render();
-  }
-  stopGrade() {
-    var _a;
-    const q = currentQuestion(this.round);
-    if (q) this.deps.questions.stopGrade(q.id);
-    (_a = this.gradeCtrl) == null ? void 0 : _a.abort();
-  }
-  // Leaving the question (👎, closing): a grading still in flight is dropped.
-  cancelGrade() {
-    var _a;
-    this.gradeToken++;
-    (_a = this.gradeCtrl) == null ? void 0 : _a.abort();
-    this.gradeCtrl = null;
-  }
-  selfMark(correct) {
-    const q = currentQuestion(this.round);
-    const given = this.round.pending;
-    if (!q || this.round.phase !== "selfcheck" || given === void 0) return;
-    this.record(q, given, correct);
-    this.round = selfAssess(this.round, correct);
-    this.refocus = true;
-    this.render();
-  }
-  next() {
-    this.gradeError = null;
-    this.round = nextQuestion(this.round);
-    this.refocus = true;
-    this.render();
-  }
-  retire() {
-    const q = currentQuestion(this.round);
-    if (!q) return;
-    this.cancelGrade();
-    this.gradeError = null;
-    this.draft = "";
-    try {
-      this.deps.questions.retire(q.id);
-    } catch (e) {
-      console.error("Vocab Tracker: couldn't retire grammar question", e);
-    }
-    this.round = retireCurrent(this.round);
-    this.refocus = true;
-    this.render();
-  }
-  onKey(e) {
-    var _a, _b;
-    if (e.isComposing || e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
-    const q = currentQuestion(this.round);
-    if (!q) return;
-    const target = e.target;
-    const action = keyAction(e.key, {
-      phase: this.round.phase,
-      optionCount: (_b = (_a = q.options) == null ? void 0 : _a.length) != null ? _b : 0,
-      inInput: target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement,
-      multiline: target instanceof HTMLTextAreaElement,
-      onButton: (target == null ? void 0 : target.tagName) === "BUTTON"
-    });
-    if (!action) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (action.type === "choose") this.choose(action.index);
-    else if (action.type === "submit") this.submitTyped();
-    else this.next();
-  }
-};
-
-// src/ui/blocks/grammarMap.ts
-var pickedStage = /* @__PURE__ */ new Map();
-function renderGrammarMap(deps, source, el, ctx) {
-  ctx.addChild(new GrammarMapBlock(el, deps, source, ctx.sourcePath));
-}
-var GrammarMapBlock = class extends import_obsidian32.MarkdownRenderChild {
-  constructor(containerEl, deps, source, sourcePath) {
-    var _a, _b;
-    super(containerEl);
-    this.deps = deps;
-    this.sourcePath = sourcePath;
-    this.ready = false;
-    this.disposed = false;
-    this.mistakesOpen = false;
-    // The error tag whose redo is open under its group (one at a time) and
-    // the mounted practice. The host element is kept across re-renders so a
-    // redraw never throws away the round being played.
-    this.redoTag = null;
-    this.redo = null;
-    this.redoHost = null;
-    this.stage = (_b = (_a = pickedStage.get(sourcePath)) != null ? _a : parseMapParams(source).stage) != null ? _b : defaultStage(deps.level());
-  }
-  onload() {
-    this.containerEl.empty();
-    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-map"] });
-    guardReadingClicks(this, this.root);
-    this.root.createDiv({ cls: "vt-learn-loading", text: t("grammar.map.loading") });
-    const { events } = this.deps.grammar;
-    const refresh = () => {
-      if (!this.redoTag) this.render();
-    };
-    this.register(events.on("attempt:add", refresh));
-    this.register(events.on("progress:upsert", refresh));
-    this.register(events.on("question:upsert", refresh));
-    this.register(events.on("grammar:reloaded", refresh));
-    this.register(() => {
-      this.disposed = true;
-      this.closeRedo();
-    });
-    void this.deps.grammar.ensureLoaded().then(() => {
-      this.ready = true;
-      this.render();
-    });
-  }
-  open(topicId) {
-    Promise.resolve(this.deps.openTopic(topicId)).catch((e) => {
-      new import_obsidian32.Notice(t("grammar.map.openFailed", { msg: e instanceof Error ? e.message : String(e) }));
-    });
-  }
-  render() {
-    var _a, _b, _c, _d;
-    if (this.disposed || !this.ready) return;
-    const { grammar } = this.deps;
-    const now2 = (_c = (_b = (_a = this.deps).now) == null ? void 0 : _b.call(_a)) != null ? _c : /* @__PURE__ */ new Date();
-    const attempts = grammar.attempts();
-    const statuses = topicStatuses(GRAMMAR_TOPICS, attempts, (id2) => grammar.progress(id2), now2);
-    const statusOf = (id2) => {
-      var _a2;
-      return (_a2 = statuses.get(id2)) != null ? _a2 : "new";
-    };
-    (_d = this.redoHost) == null ? void 0 : _d.detach();
-    this.root.empty();
-    const head = this.root.createDiv({ cls: "vt-gr-head" });
-    head.createDiv({ cls: "vt-gr-title", text: t("grammar.map.title") });
-    segmented(head, {
-      options: STAGES.map((s) => ({ value: String(s), label: stageLabel(s) })),
-      value: String(this.stage),
-      ariaLabel: t("grammar.map.stage"),
-      onChange: (v) => {
-        this.stage = Number(v);
-        pickedStage.set(this.sourcePath, this.stage);
-        this.render();
-      }
-    });
-    const next = recommendNext(GRAMMAR_TOPICS, statusOf, this.deps.level());
-    if (next) {
-      const bar = this.root.createDiv({ cls: "vt-gr-bar vt-gr-next" });
-      bar.createSpan({ cls: "vt-gr-bar-label", text: `${t("grammar.map.next")}\uFF1A` });
-      bar.createSpan({ cls: "vt-gr-bar-main", text: next.title });
-      bar.createSpan({ cls: "vt-gr-bar-sub", text: next.pattern });
-      learnButton(bar, { label: t("grammar.map.start"), icon: "play", cta: true, onClick: () => this.open(next.id) });
-    }
-    const due = dueTopics(GRAMMAR_TOPICS, (id2) => grammar.progress(id2), now2);
-    if (due.length) {
-      const bar = this.root.createDiv({ cls: "vt-gr-bar vt-gr-due" });
-      bar.createSpan({ cls: "vt-gr-bar-main", text: t("grammar.map.due", { n: due.length }) });
-      learnButton(bar, { label: t("grammar.map.review"), icon: "repeat", onClick: () => this.open(due[0].id) });
-    }
-    const rows = mapRows(this.stage, GRAMMAR_TOPICS, statusOf, attempts);
-    const list = this.root.createDiv({ cls: "vt-gr-list" });
-    if (!rows.length) list.createDiv({ cls: "vt-gr-empty", text: t("grammar.map.empty") });
-    for (const row of rows) this.renderRow(list, row);
-    this.renderMistakes();
-  }
-  renderRow(list, row) {
-    const btn = list.createEl("button", { cls: ["vt-gr-row", `is-${row.status}`], attr: { type: "button" } });
-    btn.createSpan({ cls: ["vt-gr-dot", `is-${row.status}`], attr: { "aria-hidden": "true" } });
-    const text = btn.createSpan({ cls: "vt-gr-row-text" });
-    text.createSpan({ cls: "vt-gr-row-title", text: row.topic.title });
-    text.createSpan({ cls: "vt-gr-row-pattern", text: row.topic.pattern });
-    if (row.lockedBy.length) {
-      const tip = lockedTooltip(row.lockedBy);
-      const lock = btn.createSpan({ cls: "vt-gr-lock", text: "\u{1F512}", attr: { title: tip, "aria-label": tip } });
-      lock.setAttr("role", "img");
-    }
-    btn.createSpan({ cls: "vt-gr-row-status", text: row.statusText });
-    btn.addEventListener("click", () => this.open(row.topic.id));
-  }
-  renderMistakes() {
-    const { grammar } = this.deps;
-    const entries = mistakeEntries(grammar.questions(), grammar.attempts());
-    if (this.redoTag && !entries.some((e) => e.errorTag === this.redoTag)) {
-      entries.push({ errorTag: this.redoTag, label: errorTagLabel(this.redoTag), count: 0, topicId: "" });
-    }
-    const total = mistakeTotal(entries);
-    const box = this.root.createDiv({ cls: "vt-gr-mistakes" });
-    const toggle2 = box.createEl("button", { cls: "vt-gr-mistakes-toggle", attr: { type: "button" } });
-    toggle2.setAttr("aria-expanded", String(this.mistakesOpen));
-    toggle2.createSpan({ text: t("grammar.map.mistakes", { n: total }) });
-    const chevron = toggle2.createSpan({ cls: "vt-gr-chevron", text: "\u203A", attr: { "aria-hidden": "true" } });
-    chevron.toggleClass("is-open", this.mistakesOpen);
-    toggle2.addEventListener("click", () => {
-      this.mistakesOpen = !this.mistakesOpen;
-      if (!this.mistakesOpen) this.closeRedo();
-      this.render();
-    });
-    if (!this.mistakesOpen) return;
-    const body = box.createDiv({ cls: "vt-gr-mistakes-body" });
-    if (!entries.length) body.createDiv({ cls: "vt-gr-empty", text: t("grammar.map.mistakes.empty") });
-    for (const e of entries) {
-      const group = body.createDiv({ cls: "vt-gr-mistake-group" });
-      const row = group.createDiv({ cls: "vt-gr-mistake" });
-      const text = row.createDiv({ cls: "vt-gr-mistake-text" });
-      text.createSpan({ cls: "vt-gr-mistake-tag", text: e.label });
-      text.createSpan({ cls: "vt-gr-mistake-count", text: t("grammar.map.mistakes.count", { n: e.count }) });
-      const topic = topicById(e.topicId);
-      if (topic) text.createSpan({ cls: "vt-gr-mistake-topic", text: topic.title });
-      const isOpen2 = this.redoTag === e.errorTag;
-      row.toggleClass("is-open", isOpen2);
-      learnButton(row, {
-        label: t(isOpen2 ? "grammar.map.mistakes.collapse" : "grammar.map.mistakes.redo"),
-        icon: isOpen2 ? "chevron-up" : "rotate-ccw",
-        ghost: true,
-        onClick: () => this.deps.practice ? this.toggleRedo(e.errorTag) : this.open(e.topicId)
-      });
-      if (isOpen2 && this.redoHost) group.appendChild(this.redoHost);
-    }
-  }
-  toggleRedo(tag) {
-    const wasOpen = this.redoTag === tag;
-    this.closeRedo();
-    if (!wasOpen && this.deps.practice) {
-      this.redoTag = tag;
-      this.redoHost = createDiv({ cls: "vt-gr-redo" });
-      this.redo = mountGrammarPractice(this.redoHost, this.deps.practice, { mode: "mistakes", tag });
-      this.addChild(this.redo);
-    }
-    this.render();
-  }
-  closeRedo() {
-    var _a;
-    if (this.redo) this.removeChild(this.redo);
-    (_a = this.redoHost) == null ? void 0 : _a.detach();
-    this.redo = null;
-    this.redoHost = null;
-    this.redoTag = null;
-  }
-};
-
-// src/ui/blocks/grammarTopic.ts
-var import_obsidian33 = require("obsidian");
-
-// src/services/ai/tasks/grammarExplain.ts
-var STAGE_LABEL = { 1: "\u57FA\u790E", 2: "\u4E2D\u7D1A", 3: "\u9032\u968E" };
-var GRAMMAR_EXPLAIN_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u6587\u6CD5\u8001\u5E2B\uFF0C\u6B63\u5728\u70BA\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u5BEB\u4E00\u500B\u6587\u6CD5\u4E3B\u984C\u7684\u300C\u8AAA\u660E\u300D\u3002\u3014\u6587\u6CD5\u4E3B\u984C\u3015\u662F\u9019\u4E00\u7BC7\u8981\u8B1B\u7684\u4E3B\u984C\u3002
-
-\u56DE\u7B54\u898F\u5247\uFF1A
-1. \u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u5BEB\uFF0C\u53E5\u578B\u548C\u4F8B\u53E5\u4FDD\u7559\u82F1\u6587\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u82E5\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\uFF0C\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
-2. \u53EA\u8B1B\u53EF\u9760\u3001\u5E38\u898B\u7684\u6587\u6CD5\u77E5\u8B58\u3002\u4E0D\u78BA\u5B9A\u5C31\u76F4\u63A5\u8AAA\u300C\u4E0D\u78BA\u5B9A\u300D\u6216\u300C\u8AAA\u6CD5\u4E0D\u4E00\u300D\uFF0C\u4E0D\u8981\u7DE8\u9020\u898F\u5247\u3001\u4F8B\u5916\u6216\u7528\u6CD5\u3002
-3. \u6240\u6709\u4F8B\u53E5\u90FD\u8981\u81EA\u5DF1\u539F\u5275\uFF0C\u4E0D\u8981\u5F15\u7528\u6216\u6A21\u4EFF\u4EFB\u4F55\u51FA\u7248\u6559\u6750\u3001\u8003\u984C\u6216\u6587\u7AE0\u88E1\u7684\u4F8B\u53E5\u3002
-4. \u76F4\u63A5\u5F9E\u5167\u5BB9\u958B\u59CB\uFF0C\u4E0D\u8981\u52A0\u524D\u8A00\u6216\u7D50\u5C3E\u5BA2\u5957\u8A71\u3002\u8F38\u51FA Markdown\uFF0C\u5404\u5C0F\u7BC0\u7528\u7C97\u9AD4\u7576\u6A19\u984C\uFF0C\u4E0D\u8981\u7528 # \u6216 ## \u6A19\u984C\u3002
-5. \u7528\u8A5E\u548C\u6DF1\u5EA6\u4F9D\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\u8ABF\u6574\uFF1A\u7A0B\u5EA6\u8F03\u4F4E\u5C31\u5C11\u7528\u8853\u8A9E\uFF0C\u7B2C\u4E00\u6B21\u51FA\u73FE\u7684\u6587\u6CD5\u8853\u8A9E\u9644\u4E0A\u4E2D\u82F1\u5C0D\u7167\u3002`;
-var USER_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5BEB\u300C{{title}}\u300D\u7684\u8AAA\u660E
-\u7167\u9019\u500B\u9806\u5E8F\uFF0C\u6BCF\u4E00\u7BC0\u4EE5\u7C97\u9AD4\u7576\u6A19\u984C\uFF1A
-1. **\u6838\u5FC3\u6982\u5FF5**\uFF1A2 \u5230 4 \u53E5\uFF0C\u8AAA\u660E\u9019\u500B\u4E3B\u984C\u89E3\u6C7A\u4EC0\u9EBC\u554F\u984C\u3001\u4EC0\u9EBC\u6642\u5019\u7528\u3002
-2. **\u53E5\u578B**\uFF1A\u7528 code \u683C\u5F0F\u5217\u51FA 1 \u5230 3 \u500B\u53E5\u578B\uFF08\u4F8B\u5982 \`have + \u904E\u53BB\u5206\u8A5E\`\uFF09\uFF0C\u6BCF\u500B\u4E00\u884C\uFF0C\u5F8C\u9762\u63A5\u4E00\u53E5\u4E2D\u6587\u8AAA\u660E\u3002
-3. **\u4F8B\u53E5**\uFF1A3 \u500B\u539F\u5275\u4F8B\u53E5\uFF0C\u6BCF\u53E5\u4E00\u884C\uFF0C\u82F1\u6587\u5F8C\u9762\u63A5\u300C\u2014\u2014\u300D\u518D\u63A5\u4E2D\u6587\u7FFB\u8B6F\u3002
-4. **\u5BB9\u6613\u72AF\u7684\u932F**\uFF1A2 \u5230 3 \u9EDE\uFF0C\u6BCF\u9EDE\u7528\u300C\u274C \u932F\u8AA4\u53E5\u300D\u300C\u2705 \u6B63\u78BA\u53E5\u300D\u5C0D\u7167\uFF0C\u518D\u7528\u4E00\u53E5\u8A71\u8AAA\u660E\u539F\u56E0\u3002
-{{#related}}5. **\u548C\u76F8\u95DC\u4E3B\u984C\u7684\u5DEE\u5225**\uFF1A{{related}}\u6BCF\u500B\u76F8\u95DC\u4E3B\u984C\u5404\u7528\u4E00\u53E5\u8A71\uFF0C\u8AAA\u660E\u548C\u300C{{title}}\u300D\u5DEE\u5728\u54EA\u88E1\u3002
-{{/related}}`;
-function line(t2) {
-  return `${t2.title}\uFF08${t2.pattern}\uFF09`;
-}
-function known(ids) {
-  return ids.map((id2) => topicById(id2)).filter((t2) => !!t2);
-}
-function topicBlock(topic) {
-  const prereq = known(topic.prerequisites);
-  const related = known(topic.related);
-  return [
-    "\u3014\u6587\u6CD5\u4E3B\u984C\u3015",
-    `\u540D\u7A31\uFF1A${topic.title}`,
-    `\u53E5\u578B\uFF1A${topic.pattern}`,
-    `\u7B49\u7D1A\uFF1A${STAGE_LABEL[topic.stage]}\uFF08\u96E3\u5EA6 ${topic.difficulty}/9\uFF09`,
-    `\u4E00\u53E5\u8A71\uFF1A${topic.summary}`,
-    "\u5B78\u7FD2\u76EE\u6A19\uFF1A",
-    ...topic.objectives.map((o) => `- ${o.text}`),
-    ...prereq.length ? [`\u524D\u7F6E\u4E3B\u984C\uFF1A${prereq.map(line).join("\uFF1B")}`] : [],
-    ...related.length ? [`\u76F8\u95DC\u4E3B\u984C\uFF1A${related.map(line).join("\uFF1B")}`] : []
-  ].join("\n");
-}
-function parseGrammarExplanation(r) {
-  let text = r.text.trim();
-  const fenced = /^```(?:markdown|md)?[ \t]*\n([\s\S]*?)\n```$/.exec(text);
-  if (fenced) text = fenced[1].trim();
-  if (!text) throw new AiError("bad_output", "empty explanation");
-  return text;
-}
-var grammarExplain = {
-  id: "grammar.explain",
-  version: 1,
-  surface: "grammar",
-  tier: "smart",
-  maxTokens: 4096,
-  // The learner's usual 300-character limit would cut a full explanation
-  // short; this task needs room for four sections and three examples.
-  answerChars: (_input, max) => Math.max(max, 900),
-  build(input, ctx) {
-    const { topic } = input;
-    const related = known(topic.related);
-    return composeRequest({
-      base: GRAMMAR_EXPLAIN_BASE_PROMPT,
-      context: [topicBlock(topic)],
-      profile: profileForTask(ctx.profile, grammarExplain, input),
-      history: [],
-      user: renderTemplate(USER_TEMPLATE, {
-        title: topic.title,
-        related: related.length ? `\u628A\u300C${topic.title}\u300D\u548C${related.map((t2) => `\u300C${t2.title}\u300D`).join("\u3001")}\u6BD4\u8F03\uFF0C` : ""
-      }),
-      tier: "smart",
-      maxTokens: 4096
-    });
-  },
-  parse: parseGrammarExplanation
-};
-var GRAMMAR_TASKS = [grammarExplain];
-
-// src/services/export/renderers/common.ts
-function roundsOf(turns) {
-  const out = [];
-  let pending = null;
-  for (const turn of turns) {
-    if (turn.deletedAt) continue;
-    if (turn.role === "user") {
-      pending = turn;
-      continue;
-    }
-    if (pending && stripGrammarTrailer(turn.content).trim() && (turn.status === "done" || turn.status === "aborted")) {
-      out.push({ question: pending, answer: turn });
-    }
-    pending = null;
-  }
-  return out;
-}
-function threadRounds(thread) {
-  return thread && !thread.deletedAt ? roundsOf(liveTurns(thread)) : [];
-}
-var FENCE = /^[ \t]*(`{3,}|~{3,})/;
-function balanceFences(markdown) {
-  let open = null;
-  for (const line2 of markdown.split("\n")) {
-    const m2 = FENCE.exec(line2);
-    if (!m2) continue;
-    const fence = m2[1];
-    if (open === null) open = fence;
-    else if (fence[0] === open[0] && fence.length >= open.length && line2.trim() === fence) open = null;
-  }
-  return open === null ? markdown : `${markdown.replace(/\n*$/, "")}
-${open}`;
-}
-function normalizeNewlines(text) {
-  return text.replace(/\r\n?/g, "\n");
-}
-function blockquote(text) {
-  return normalizeNewlines(text.trim()).split("\n").map((l5) => l5.trim() ? `> ${l5}` : ">").join("\n");
-}
-function oneLine(text) {
-  return normalizeNewlines(text).replace(/\s*\n\s*/g, " ").trim();
-}
-function inlineCode(text) {
-  const s = oneLine(text);
-  return s.includes("`") ? `\`\` ${s} \`\`` : `\`${s}\``;
-}
-function italic(text) {
-  return `*${text}*`;
-}
-function wordRef(ctx, word, entryId) {
-  const target = ctx.pageLink(word, entryId);
-  return target ? `[[${target}|${word}]]` : word;
-}
-function renderRound(round, ctx, heading) {
-  var _a;
-  const { question, answer } = round;
-  const label = question.taskId ? ctx.taskLabel(question.taskId) : void 0;
-  const title = [ctx.formatDate(question.at), label].filter(Boolean).join(" \xB7 ");
-  const quote = [];
-  if ((_a = question.selection) == null ? void 0 : _a.trim()) quote.push(`\u300C${oneLine(question.selection)}\u300D`);
-  quote.push(`**Q** ${normalizeNewlines(question.content).trim()}`);
-  const parts = [`${heading} ${title}`, blockquote(quote.join("\n")), "", balanceFences(normalizeNewlines(stripGrammarTrailer(answer.content)).trim())];
-  if (answer.status === "aborted") parts.push("", italic(ctx.labels.aborted));
-  return parts.join("\n");
-}
-function renderRounds(rounds, ctx, heading) {
-  return rounds.map((r) => renderRound(r, ctx, heading)).join("\n\n");
-}
-function fill(template, vars) {
-  return template.replace(/\{(\w+)\}/g, (m2, k) => k in vars ? String(vars[k]) : m2);
-}
-var YAML_KEYWORDS = /^(true|false|yes|no|on|off|null|~)$/i;
-function yamlValue(v) {
-  return /^[a-z][\w-]*$/i.test(v) && !YAML_KEYWORDS.test(v) ? v : JSON.stringify(v);
-}
-function frontmatter(fields) {
-  return ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${yamlValue(v)}`), "---"].join("\n");
-}
-
-// src/services/grammar/topicPage.ts
-var GRAMMAR_PAGE_KIND = "grammar";
-var GRAMMAR_FOLDER = "Grammar";
-var EXPLAIN_HEADING = "## \u8AAA\u660E";
-var TOPIC_BLOCK = "vocab-grammar-topic";
-var PRACTICE_BLOCK = "vocab-grammar-practice";
-var BLOCK_PREFIX = "vocab-grammar-";
-var GrammarPageError = class extends Error {
-  constructor(code, message) {
-    super(message != null ? message : code);
-    this.code = code;
-    this.name = "GrammarPageError";
-  }
-};
-function isGrammarPageError(e) {
-  return e instanceof GrammarPageError;
-}
-function topicFileName(title, fallback) {
-  const name = title.replace(/[\\/:*?"<>|#^[\]]/g, "-").replace(/\s+/g, " ").replace(/[. ]+$/, "").trim();
-  return name || fallback;
-}
-function topicPagePath(entryFolder, title, topicId) {
-  return joinPath(joinPath(entryFolder, GRAMMAR_FOLDER), `${topicFileName(title, topicId)}.md`);
-}
-function renderTopicPage(topicId) {
-  return [
-    frontmatter({ "vocab-tracker": GRAMMAR_PAGE_KIND, "vocab-tracker-id": topicId }),
-    "```" + TOPIC_BLOCK,
-    `id: ${topicId}`,
-    "```",
-    "",
-    EXPLAIN_HEADING,
-    "",
-    "```" + PRACTICE_BLOCK,
-    `topic: ${topicId}`,
-    "```",
-    "",
-    "## \u6211\u7684\u7B46\u8A18",
-    ""
-  ].join("\n");
-}
-var FENCE_RE3 = /^\s*(`{3,}|~{3,})(.*)$/;
-var EXPLAIN_RE = /^##[ \t]+說明[ \t]*$/;
-var SECTION_END_RE = /^#{1,2}[ \t]/;
-function walk(lines4, visit) {
-  let fence = null;
-  lines4.forEach((line2, i) => {
-    const m2 = FENCE_RE3.exec(line2);
-    if (fence) {
-      visit(line2, i, true);
-      if (m2 && m2[1][0] === fence.char && m2[1].length >= fence.len && !m2[2].trim()) fence = null;
-      return;
-    }
-    if (m2) {
-      fence = { char: m2[1][0], len: m2[1].length };
-      visit(line2, i, true, m2[2].trim());
-      return;
-    }
-    visit(line2, i, false);
-  });
-}
-function findExplanationSection(text) {
-  const lines4 = text.replace(/\r\n?/g, "\n").split("\n");
-  let heading = -1;
-  let end = lines4.length;
-  walk(lines4, (line2, i, inFence) => {
-    if (inFence) return;
-    if (heading < 0) {
-      if (EXPLAIN_RE.test(line2)) heading = i;
-    } else if (end === lines4.length && SECTION_END_RE.test(line2)) {
-      end = i;
-    }
-  });
-  if (heading < 0) return null;
-  let own = false;
-  let ownBlock = false;
-  const body = lines4.slice(heading + 1, end);
-  walk(body, (line2, _i, inFence, opens) => {
-    if (opens !== void 0) ownBlock = opens.startsWith(BLOCK_PREFIX);
-    if (inFence ? !ownBlock : line2.trim() !== "") own = true;
-  });
-  return { heading, end, empty: !own };
-}
-function sanitizeExplanation(markdown) {
-  const lines4 = markdown.replace(/\r\n?/g, "\n").trim().split("\n");
-  walk(lines4, (line2, i, inFence) => {
-    if (!inFence) lines4[i] = line2.replace(/^#{1,2}(?=[ \t])/, "###");
-  });
-  return lines4.join("\n").trim();
-}
-function insertExplanation(text, markdown) {
-  const body = sanitizeExplanation(markdown);
-  if (!body) throw new GrammarPageError("empty-text");
-  const sec = findExplanationSection(text);
-  if (!sec) throw new GrammarPageError("no-section");
-  if (!sec.empty) throw new GrammarPageError("not-empty");
-  const lines4 = text.replace(/\r\n?/g, "\n").split("\n");
-  const head = lines4.slice(0, sec.heading + 1);
-  let rest = lines4.slice(sec.heading + 1);
-  while (rest.length && rest[0].trim() === "") rest = rest.slice(1);
-  return [...head, "", body, ...rest.length ? ["", ...rest] : [""]].join("\n");
-}
-
-// src/ui/blocks/grammarTopicModel.ts
-function parseTopicParams(source) {
-  var _a, _b;
-  const p = parseBlockParams(source);
-  const id2 = ((_b = (_a = p.id) != null ? _a : p.topic) != null ? _b : "").trim().replace(/^["']|["']$/g, "").trim();
-  return id2 ? { id: id2 } : {};
-}
-function topicMeta(topic) {
-  return { stage: stageLabel(topic.stage), difficulty: t("grammar.topic.difficulty", { n: topic.difficulty }) };
-}
-function objectiveRows(topic, attempts) {
-  const stats = objectiveStats(topic, attempts);
-  return topic.objectives.map((o) => {
-    var _a, _b;
-    const s = stats.find((x3) => x3.objectiveId === o.id);
-    const answered = (_a = s == null ? void 0 : s.answered) != null ? _a : 0;
-    const state = !s || answered === 0 ? "none" : isMastered([s]) ? "done" : "partial";
-    return { id: o.id, text: o.text, state, score: answered ? `${(_b = s == null ? void 0 : s.correct) != null ? _b : 0}/${answered}` : "\u2013" };
-  });
-}
-var SIGHTING_LIMIT = 5;
-var SNAPSHOT_CHARS = 120;
-function clipSnapshot(text, max = SNAPSHOT_CHARS) {
-  const flat = text.replace(/\s+/g, " ").replace(/\s*\^[\w-]+$/, "").trim();
-  const chars = [...flat];
-  return chars.length > max ? `${chars.slice(0, max).join("").trimEnd()}\u2026` : flat;
-}
-function noteName2(path) {
-  const base = path.slice(path.lastIndexOf("/") + 1);
-  return base.replace(/\.md$/i, "");
-}
-function sightingRows(sightings, topicId, limit = SIGHTING_LIMIT) {
-  return sightings.filter((s) => s.topicId === topicId).slice(0, limit).map((s) => ({ key: `${s.threadId}:${s.turnId}`, path: s.path, note: noteName2(s.path), snapshot: clipSnapshot(s.snapshot) }));
-}
-function topicChips(topic) {
-  const out = [];
-  const seen = /* @__PURE__ */ new Set([topic.id]);
-  const add3 = (ids, kind) => {
-    for (const id2 of ids) {
-      const found = topicById(id2);
-      if (!found || seen.has(id2)) continue;
-      seen.add(id2);
-      out.push({ topic: found, kind, label: t(kind === "prerequisite" ? "grammar.topic.kind.prerequisite" : "grammar.topic.kind.related") });
-    }
-  };
-  add3(topic.prerequisites, "prerequisite");
-  add3(topic.related, "related");
-  return out;
-}
-var PAGE_ERROR_KEY = {
-  "not-empty": "grammar.topic.err.notEmpty",
-  "no-section": "grammar.topic.err.noSection",
-  "empty-text": "grammar.topic.err.empty"
-};
-function pageErrorText(e) {
-  return isGrammarPageError(e) ? t(PAGE_ERROR_KEY[e.code]) : null;
-}
-
-// src/ui/blocks/grammarTopic.ts
-function renderGrammarTopic(deps, source, el, ctx) {
-  const explainEmpty = () => {
-    var _a, _b, _c;
-    const text = (_a = ctx.getSectionInfo(el)) == null ? void 0 : _a.text;
-    return text === void 0 ? void 0 : (_c = (_b = findExplanationSection(text)) == null ? void 0 : _b.empty) != null ? _c : false;
-  };
-  ctx.addChild(new GrammarTopicBlock(el, deps, parseTopicParams(source).id, explainEmpty));
-}
-function renderAiGate3(parent, status, onOpenSettings) {
-  if (status === "ready") return false;
-  if (status === "offline") {
-    parent.appendChild(inlineNote({ tone: "offline", text: t("learn.ai.offline") }));
-    return true;
-  }
-  parent.appendChild(
-    emptyState({
-      icon: status === "disabled" ? "sparkles" : "key-round",
-      title: t(status === "disabled" ? "learn.ai.disabled.title" : "learn.ai.noKey.title"),
-      body: t("learn.ai.body"),
-      action: { label: t("ai.action.openSettings"), icon: "settings", onClick: onOpenSettings }
-    })
-  );
-  return true;
-}
-var GrammarTopicBlock = class extends import_obsidian33.MarkdownRenderChild {
-  constructor(containerEl, deps, id2, explainEmpty) {
-    super(containerEl);
-    this.deps = deps;
-    this.id = id2;
-    this.explainEmpty = explainEmpty;
-    this.ready = false;
-    this.disposed = false;
-    // The explanation job: running, last error, or written just now.
-    this.ctrl = null;
-    this.error = null;
-    this.written = false;
-    this.topic = id2 ? topicById(id2) : void 0;
-  }
-  onload() {
-    this.containerEl.empty();
-    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-topic"] });
-    guardReadingClicks(this, this.root);
-    if (!this.topic) {
-      this.root.appendChild(
-        inlineNote({ tone: "error", text: this.id ? t("grammar.topic.unknown", { id: this.id }) : t("grammar.topic.noId") })
-      );
-      return;
-    }
-    this.root.createDiv({ cls: "vt-learn-loading", text: t("grammar.map.loading") });
-    const refresh = () => this.render();
-    this.register(this.deps.grammar.events.on("attempt:add", refresh));
-    this.register(this.deps.grammar.events.on("grammar:reloaded", refresh));
-    this.register(this.deps.threads.events.on("thread:upsert", refresh));
-    this.register(this.deps.threads.events.on("threads:reloaded", refresh));
-    this.register(() => {
-      var _a;
-      this.disposed = true;
-      (_a = this.ctrl) == null ? void 0 : _a.abort();
-    });
-    void Promise.all([this.deps.grammar.ensureLoaded(), this.deps.threads.ensureLoaded()]).then(() => {
-      this.ready = true;
-      this.render();
-    });
-  }
-  open(topicId) {
-    Promise.resolve(this.deps.openTopic(topicId)).catch((e) => {
-      new import_obsidian33.Notice(t("grammar.map.openFailed", { msg: e instanceof Error ? e.message : String(e) }));
-    });
-  }
-  render() {
-    const topic = this.topic;
-    if (this.disposed || !this.ready || !topic) return;
-    this.root.empty();
-    const meta = topicMeta(topic);
-    const head = this.root.createDiv({ cls: "vt-gr-topic-head" });
-    const tags = head.createDiv({ cls: "vt-gr-topic-tags" });
-    tags.createSpan({ cls: ["vt-gr-stage", `is-stage-${topic.stage}`], text: meta.stage });
-    tags.createSpan({ cls: "vt-gr-difficulty", text: meta.difficulty });
-    head.createDiv({ cls: "vt-gr-topic-title", text: topic.title });
-    head.createEl("code", { cls: "vt-gr-topic-pattern", text: topic.pattern });
-    head.createDiv({ cls: "vt-gr-topic-summary", text: topic.summary });
-    this.renderExplain();
-    this.renderObjectives(topic);
-    this.renderSightings(topic);
-    this.renderRelated(topic);
-  }
-  // ── 「✦ 生成說明」 ────────────────────────────────────────────
-  renderExplain() {
-    const box = this.root.createDiv({ cls: "vt-gr-explain" });
-    if (this.ctrl) {
-      const line2 = box.createDiv({ cls: "vt-learn-busy-text" });
-      (0, import_obsidian33.setIcon)(line2.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
-      line2.createSpan({ text: t("grammar.topic.generating") });
-      const ctrl = this.ctrl;
-      learnButton(box, { label: t("grammar.topic.stop"), icon: "square", onClick: () => ctrl.abort() });
-      return;
-    }
-    if (this.written) {
-      box.appendChild(inlineNote({ text: t("grammar.topic.written") }));
-      return;
-    }
-    if (this.error) {
-      box.appendChild(aiErrorBox({ text: this.error.text, error: this.error.cause }));
-    }
-    if (this.explainEmpty() === false) return;
-    if (renderAiGate3(box, this.deps.ai.status(), () => this.deps.openSettings())) return;
-    learnButton(box, { label: t("grammar.topic.generate"), icon: "sparkles", onClick: () => void this.generate() });
-  }
-  async generate() {
-    var _a;
-    const topic = this.topic;
-    if (!topic || this.ctrl) return;
-    const ctrl = new AbortController();
-    this.ctrl = ctrl;
-    this.error = null;
-    this.render();
-    try {
-      const result = await this.deps.ai.run(grammarExplain, { topic }, { signal: ctrl.signal });
-      const markdown = grammarExplain.parse ? grammarExplain.parse(result) : result.text;
-      await this.deps.pages.writeExplanation(topic.id, markdown);
-      this.written = true;
-    } catch (e) {
-      if (!isAbort(e)) this.error = { text: (_a = pageErrorText(e)) != null ? _a : learnErrorText(e), cause: e };
-    } finally {
-      this.ctrl = null;
-      this.render();
-    }
-  }
-  // ── Objectives / sightings / related ──────────────────────────
-  renderObjectives(topic) {
-    const sec = this.root.createDiv({ cls: "vt-gr-sec" });
-    sec.createDiv({ cls: "vt-gr-sec-title", text: t("grammar.topic.objectives") });
-    const list = sec.createDiv({ cls: "vt-gr-objectives" });
-    for (const o of objectiveRows(topic, this.deps.grammar.attempts(topic.id))) {
-      const row = list.createDiv({ cls: ["vt-gr-objective", `is-${o.state}`] });
-      row.createSpan({ cls: ["vt-gr-dot", `is-${o.state === "done" ? "mastered" : o.state === "partial" ? "learning" : "new"}`], attr: { "aria-hidden": "true" } });
-      row.createSpan({ cls: "vt-gr-objective-text", text: o.text });
-      row.createSpan({ cls: "vt-gr-objective-score", text: o.score });
-    }
-  }
-  renderSightings(topic) {
-    const sec = this.root.createDiv({ cls: "vt-gr-sec" });
-    sec.createDiv({ cls: "vt-gr-sec-title", text: t("grammar.topic.sightings") });
-    const all = grammarSightings(this.deps.threads.paragraphThreads());
-    const rows = sightingRows(all, topic.id);
-    if (!rows.length) {
-      sec.createDiv({ cls: "vt-gr-empty", text: t("grammar.topic.sightings.empty") });
-      return;
-    }
-    for (const r of rows) {
-      const btn = sec.createEl("button", { cls: "vt-gr-sighting", attr: { type: "button" } });
-      btn.createSpan({ cls: "vt-gr-sighting-text", text: `\u201C${r.snapshot}\u201D` });
-      btn.createSpan({ cls: "vt-gr-sighting-note", text: `\u2014 ${r.note}` });
-      btn.addEventListener("click", () => {
-        Promise.resolve(this.deps.openNote(r.path)).catch((e) => {
-          new import_obsidian33.Notice(learnErrorText(e));
-        });
-      });
-    }
-  }
-  renderRelated(topic) {
-    const chips = topicChips(topic);
-    if (!chips.length) return;
-    const sec = this.root.createDiv({ cls: "vt-gr-sec" });
-    sec.createDiv({ cls: "vt-gr-sec-title", text: t("grammar.topic.related") });
-    const row = sec.createDiv({ cls: "vt-gr-chips" });
-    for (const c2 of chips) {
-      const chip2 = row.createEl("button", { cls: ["vt-gr-chip", `is-${c2.kind}`], attr: { type: "button" } });
-      chip2.createSpan({ cls: ["vt-gr-stage", `is-stage-${c2.topic.stage}`, "is-dot"], attr: { "aria-hidden": "true" } });
-      chip2.createSpan({ text: c2.topic.title });
-      chip2.createSpan({ cls: "vt-gr-chip-kind", text: c2.label });
-      chip2.addEventListener("click", () => this.open(c2.topic.id));
-    }
-  }
-};
-
-// src/ui/blocks/trivia.ts
-var import_obsidian34 = require("obsidian");
-
-// src/core/model/trivia.ts
-var TRIVIA_THREAD_ID = "trivia-session";
-
-// src/services/ai/context/triviaContext.ts
-var MAX_KNOWN_WORDS = 200;
-var MAX_TOLD = 40;
-var KNOWN_TEMPLATE = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015{{#capped}}\uFF08\u5171 {{total}} \u500B\uFF0C\u4EE5\u4E0B\u662F\u6700\u8FD1\u5B78\u7684 {{count}} \u500B\uFF09{{/capped}}
-{{words}}`;
-var SUBJECT_TEMPLATE = `\u3014\u9019\u6B21\u7684\u4E3B\u89D2\u3015{{word}}
-{{#phonetic}}\u97F3\u6A19\uFF1A{{phonetic}}
-{{/phonetic}}{{#partOfSpeech}}\u8A5E\u6027\uFF1A{{partOfSpeech}}
-{{/partOfSpeech}}{{#definitionZh}}\u4E2D\u6587\uFF1A{{definitionZh}}
-{{/definitionZh}}{{#definition}}\u82F1\u6587\u5B9A\u7FA9\uFF1A{{definition}}
-{{/definition}}{{#example}}\u5B78\u7FD2\u8005\u9047\u5230\u5B83\u7684\u53E5\u5B50\uFF1A{{example}}
-{{/example}}`;
-var TOLD_TEMPLATE = `\u3014\u5DF2\u8B1B\u904E\u7684\u51B7\u77E5\u8B58\u3015\uFF08\u4E0D\u8981\u91CD\u8907\u9019\u4E9B\u5167\u5BB9\uFF1B\u540C\u4E00\u500B\u5B57\u8981\u63DB\u4E00\u500B\u89D2\u5EA6\uFF09
-{{told}}`;
-function entryAddedMs2(e) {
-  const iso = e.createdAt ? Date.parse(e.createdAt) : NaN;
-  if (!Number.isNaN(iso)) return iso;
-  const legacy = e.added ? Date.parse(e.added.replace(" ", "T")) : NaN;
-  return Number.isNaN(legacy) ? 0 : legacy;
-}
-function knownWordList(entries, max = MAX_KNOWN_WORDS) {
-  const seen = /* @__PURE__ */ new Set();
-  const out = [];
-  const sorted = entries.filter((e) => !e.deletedAt).sort((a2, b) => entryAddedMs2(b) - entryAddedMs2(a2));
-  for (const e of sorted) {
-    const key5 = e.word.trim().toLowerCase();
-    if (!key5 || seen.has(key5)) continue;
-    seen.add(key5);
-    out.push(e.word.trim());
-    if (out.length >= max) break;
-  }
-  return out;
-}
-function buildTriviaContext(input) {
-  var _a, _b, _c, _d, _e, _f, _g, _h;
-  const s = input.subject;
-  const total = Math.max((_a = input.knownTotal) != null ? _a : 0, input.knownWords.length);
-  const told = ((_b = input.told) != null ? _b : []).slice(0, MAX_TOLD);
-  return {
-    knownBlock: renderTemplate(KNOWN_TEMPLATE, {
-      capped: total > input.knownWords.length ? "yes" : "",
-      total,
-      count: input.knownWords.length,
-      words: input.knownWords.join(", ")
-    }),
-    subjectBlock: s ? renderTemplate(SUBJECT_TEMPLATE, {
-      word: s.word,
-      phonetic: s.phonetic,
-      partOfSpeech: s.partOfSpeech,
-      definitionZh: s.definitionZh,
-      definition: s.definition,
-      example: (_c = s.example) == null ? void 0 : _c.trim()
-    }) : "",
-    toldBlock: told.length ? renderTemplate(TOLD_TEMPLATE, { told: told.map((t2) => `- ${t2.word}\uFF1A${t2.title}`).join("\n") }) : "",
-    slots: {
-      word: (_d = s == null ? void 0 : s.word) != null ? _d : "",
-      question: (_f = (_e = input.question) == null ? void 0 : _e.trim()) != null ? _f : "",
-      selection: (_h = (_g = input.selection) == null ? void 0 : _g.trim()) != null ? _h : ""
-    }
-  };
-}
-
-// src/services/ai/tasks/trivia.ts
-var TRIVIA_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u98A8\u8DA3\u3001\u56B4\u8B39\u7684\u82F1\u6587\u55AE\u5B57\u8AAA\u66F8\u4EBA\uFF0C\u7528\u300C\u51B7\u77E5\u8B58\u300D\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u8A18\u4F4F\u4ED6\u5B78\u904E\u7684\u55AE\u5B57\u3002\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u662F\u4ED6\u5B78\u904E\u7684\u5B57\uFF0C\u3014\u9019\u6B21\u7684\u4E3B\u89D2\u3015\u662F\u9019\u4E00\u5247\u8981\u8B1B\u7684\u5B57\u3002
-
-\u56DE\u7B54\u898F\u5247\uFF1A
-1. \u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u56DE\u7B54\uFF0C\u82F1\u6587\u55AE\u5B57\u8207\u4F8B\u53E5\u4FDD\u7559\u82F1\u6587\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u82E5\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\uFF0C\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
-2. \u53EA\u8B1B\u53EF\u9760\u3001\u6709\u6839\u64DA\u7684\u77E5\u8B58\u3002\u4E0D\u78BA\u5B9A\u5C31\u76F4\u63A5\u8AAA\u300C\u4E0D\u78BA\u5B9A\u300D\u6216\u300C\u8AAA\u6CD5\u4E0D\u4E00\u300D\uFF0C\u4E0D\u8981\u7DE8\u9020\u5B57\u6E90\u3001\u5E74\u4EE3\u3001\u4EBA\u540D\u3001\u6578\u64DA\u6216\u51FA\u8655\uFF1B\u6C92\u6709\u53EF\u9760\u7684\u5B57\u6E90\u6545\u4E8B\u6642\uFF0C\u6539\u8B1B\u7528\u6CD5\u3001\u642D\u914D\u6216\u5BB9\u6613\u6DF7\u6DC6\u7684\u5B57\uFF0C\u4E0D\u8981\u786C\u6E4A\u3002
-3. \u65B0\u7684\u4E00\u5247\uFF08\u4E0D\u662F\u8FFD\u554F\uFF09\u7B2C\u4E00\u884C\u56FA\u5B9A\u5BEB\u6A19\u984C\uFF0C\u683C\u5F0F\u662F\u300C**<\u6A19\u984C>**\u300D\uFF0C\u6A19\u984C 20 \u5B57\u4EE5\u5167\uFF1B\u7A7A\u4E00\u884C\u518D\u5BEB\u5167\u5BB9\u3002\u8FFD\u554F\u76F4\u63A5\u56DE\u7B54\uFF0C\u4E0D\u7528\u6A19\u984C\u3002
-4. \u6BCF\u5247\u5167\u5BB9 50 \u5230 200 \u5B57\uFF0C\u7528 Markdown\uFF0C\u91CD\u9EDE\u7528\u7C97\u9AD4\uFF0C\u4E0D\u8981\u7528\u6A19\u984C\uFF08#\uFF09\u3002
-5. \u53EF\u4EE5\u7684\u8A71\uFF0C\u81EA\u7136\u5730\u5E36\u5230 1 \u5230 2 \u500B\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u88E1\u7684\u5176\u4ED6\u5B57\uFF0C\u5E6B\u5B78\u7FD2\u8005\u8907\u7FD2\uFF1B\u4E0D\u8981\u786C\u585E\uFF0C\u4E5F\u4E0D\u8981\u5217\u6E05\u55AE\u3002
-6. \u4E0D\u8981\u91CD\u8907\u3014\u5DF2\u8B1B\u904E\u7684\u51B7\u77E5\u8B58\u3015\u88E1\u7684\u5167\u5BB9\uFF1B\u540C\u4E00\u500B\u5B57\u8B1B\u904E\u4E86\uFF0C\u5C31\u63DB\u4E00\u500B\u89D2\u5EA6\u3002`;
-var SELECTION_HEADER3 = `{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015
-{{selection}}
-
-{{/selection}}`;
-var TRIVIA_TEMPLATES = {
-  next: `\u4EFB\u52D9\uFF1A\u518D\u4F86\u4E00\u5247\u51B7\u77E5\u8B58\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
-\u8B1B\u4E00\u5247\u548C {{word}} \u6709\u95DC\u7684\u51B7\u77E5\u8B58\uFF0C\u5F9E\u5B57\u6E90\u3001\u7528\u6CD5\u7684\u6F14\u8B8A\u3001\u6587\u5316\u80CC\u666F\u3001\u5BB9\u6613\u6DF7\u6DC6\u7684\u5B57\u3001\u6709\u8DA3\u7684\u642D\u914D\u88E1\u6311\u4E00\u500B\u6700\u6709\u8A18\u61B6\u9EDE\u7684\u89D2\u5EA6\u3002`,
-  quiz: `\u4EFB\u52D9\uFF1A\u8003\u6211\u4E00\u984C\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
-\u51FA\u4E00\u984C\u95DC\u65BC {{word}} \u7684\u5C0F\u984C\u76EE\uFF1A\u9078\u64C7\u984C\uFF08\u6700\u591A\u56DB\u500B\u9078\u9805\uFF09\u6216\u586B\u7A7A\u984C\uFF0C\u7528\u82F1\u6587\u4F8B\u53E5\u6216\u60C5\u5883\u51FA\u984C\uFF0C\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u3002\u5148\u4E0D\u8981\u516C\u5E03\u7B54\u6848\uFF0C\u6700\u5F8C\u4E00\u884C\u5BEB\uFF1A\u300C\u56DE\u8986\u4F60\u7684\u7B54\u6848\uFF0C\u6211\u518D\u544A\u8A34\u4F60\u5C0D\u4E0D\u5C0D\u3002\u300D`,
-  etymology: `\u4EFB\u52D9\uFF1A\u5B57\u6E90\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
-\u8B1B {{word}} \u7684\u5B57\u6E90\u6216\u5B57\u6839\u5B57\u9996\uFF0C\u4EE5\u53CA\u5B83\u548C\u54EA\u4E9B\u5E38\u898B\u7684\u5B57\u6709\u95DC\u4FC2\u3002\u5B57\u6E90\u4E0D\u78BA\u5B9A\u3001\u6216\u5404\u5BB6\u8AAA\u6CD5\u4E0D\u4E00\u6642\uFF0C\u76F4\u63A5\u8AAA\u660E\uFF0C\u518D\u6539\u8B1B\u53EF\u9760\u7684\u69CB\u8A5E\u6216\u7528\u6CD5\uFF0C\u4E0D\u8981\u7DE8\u9020\u3002`,
-  joke: `\u4EFB\u52D9\uFF1A\u7B11\u8A71\uFF08\u4E3B\u89D2\uFF1A{{word}}\uFF09
-\u7528 {{word}} \u8AAA\u4E00\u500B\u7C21\u77ED\u7684\u7B11\u8A71\u3001\u96D9\u95DC\u6216\u6587\u5B57\u904A\u6232\uFF0C\u6700\u5F8C\u7528\u4E00\u5169\u53E5\u8AAA\u660E\u7B11\u9EDE\uFF0C\u4EE5\u53CA {{word}} \u5728\u9019\u88E1\u7684\u610F\u601D\u3002`,
-  followup: `${SELECTION_HEADER3}\u3014\u4F7F\u7528\u8005\u7684\u8FFD\u554F\u3015{{#word}}\uFF08\u76EE\u524D\u7684\u4E3B\u89D2\uFF1A{{word}}\uFF09{{/word}}
-{{question}}
-
-\u63A5\u8457\u524D\u9762\u7684\u5C0D\u8A71\u56DE\u7B54\uFF0C\u4E0D\u7528\u5BEB\u6A19\u984C\u3002\u5982\u679C\u662F\u5728\u56DE\u7B54\u524D\u9762\u51FA\u7684\u984C\u76EE\uFF0C\u5148\u8AAA\u5C0D\u6216\u4E0D\u5C0D\uFF0C\u518D\u89E3\u91CB\u3002`
-};
-var TITLE_MAX = 40;
-var BOLD_LINE_RE = /^\s*(?:#+\s*)?\*\*(.+?)\*\*\s*[:：]?\s*$/;
-var LABEL_LINE_RE = /^\s*(?:標題|title)\s*[:：]\s*(.+)$/i;
-function clip(s, max) {
-  return s.length > max ? `${s.slice(0, max - 1)}\u2026` : s;
-}
-function splitTrivia(text) {
-  var _a, _b, _c;
-  const trimmed = text.trim();
-  const nl = trimmed.indexOf("\n");
-  const first = nl === -1 ? trimmed : trimmed.slice(0, nl);
-  const rest = nl === -1 ? "" : trimmed.slice(nl + 1).trim();
-  const titled = (_a = BOLD_LINE_RE.exec(first)) != null ? _a : LABEL_LINE_RE.exec(first);
-  if (titled && rest) return { title: clip(titled[1].trim(), TITLE_MAX), body: rest };
-  const plain2 = trimmed.replace(/\*\*|__|`/g, "");
-  const sentence = (_c = (_b = /^[^。！？!?\n]+[。！？!?]?/.exec(plain2)) == null ? void 0 : _b[0]) != null ? _c : plain2;
-  return { title: clip(sentence.trim(), TITLE_MAX), body: trimmed };
-}
-function triviaTask(id2, opts) {
-  const task = {
-    id: `trivia.${id2}`,
-    version: 2,
-    surface: "trivia",
-    tier: "smart",
-    // Headroom for adaptive thinking on Sonnet 5; the visible answer is
-    // kept to 50–200 字 by the prompt.
-    maxTokens: 4096,
-    ...opts,
-    build(input, ctx) {
-      const c2 = buildTriviaContext(input);
-      return composeRequest({
-        base: TRIVIA_BASE_PROMPT,
-        cached: [c2.knownBlock],
-        profile: profileForTask(ctx.profile, task, input),
-        history: ctx.history,
-        // The subject and the told list change every round, so they ride
-        // in this round's message: kept in the system prompt they would
-        // break the history cache on every request (規劃書 06 §6.4.1 #5).
-        user: [c2.subjectBlock, c2.toldBlock, renderTemplate(TRIVIA_TEMPLATES[id2], c2.slots)].filter(Boolean).join("\n\n"),
-        tier: task.tier,
-        maxTokens: task.maxTokens
-      });
-    },
-    parse(r) {
-      return splitTrivia(r.text);
-    }
-  };
-  return task;
-}
-var TRIVIA_CHARS = 200;
-var capped = (_input, max) => Math.min(max, TRIVIA_CHARS);
-var triviaNext = triviaTask("next", { label: "ai.task.trivia.next", answerChars: capped });
-var triviaQuiz = triviaTask("quiz", { label: "ai.task.trivia.quiz", answerChars: capped });
-var triviaEtymology = triviaTask("etymology", { label: "ai.task.trivia.etymology", answerChars: capped });
-var triviaJoke = triviaTask("joke", { label: "ai.task.trivia.joke", answerChars: capped });
-var triviaFollowup = triviaTask("followup", {});
-var TRIVIA_TASKS = [triviaNext, triviaQuiz, triviaEtymology, triviaJoke, triviaFollowup];
-var TRIVIA_TASK_BY_KIND = {
-  next: triviaNext,
-  quiz: triviaQuiz,
-  etymology: triviaEtymology,
-  joke: triviaJoke
-};
-
-// src/services/learn/triviaPick.ts
-var RECENT_DAYS = 14;
-var EXCLUDE_LAST = 30;
-var RECENT_WEIGHT = 0.7;
-var DAY_MS2 = 24 * 60 * 60 * 1e3;
-function triviaRounds(thread) {
-  var _a;
-  if (!thread) return [];
-  const live = thread.turns.filter((t2) => !t2.deletedAt);
-  const out = [];
-  for (let i = live.length - 1; i >= 0; i--) {
-    const t2 = live[i];
-    if (t2.role !== "assistant" || t2.status === "error") continue;
-    if (!((_a = t2.taskId) == null ? void 0 : _a.startsWith("trivia.")) || t2.taskId === "trivia.followup") continue;
-    const q = live[i - 1];
-    out.push({ answer: t2, question: (q == null ? void 0 : q.role) === "user" ? q : void 0 });
-  }
-  return out;
-}
-function subjectOf(thread, turn) {
-  if (turn.subjectEntryId) return turn.subjectEntryId;
-  if (!thread) return void 0;
-  const i = thread.turns.indexOf(turn);
-  for (let j = i - 1; j >= 0; j--) {
-    const prev = thread.turns[j];
-    if (prev.deletedAt) continue;
-    return prev.role === "user" ? prev.subjectEntryId : void 0;
-  }
-  return void 0;
-}
-function recentSubjects(thread, n = EXCLUDE_LAST) {
-  var _a, _b;
-  const out = [];
-  for (const r of triviaRounds(thread).slice(0, n)) {
-    const id2 = (_b = r.answer.subjectEntryId) != null ? _b : (_a = r.question) == null ? void 0 : _a.subjectEntryId;
-    if (id2) out.push(id2);
-  }
-  return out;
-}
-function pickSubject(entries, recent, opts) {
-  var _a, _b, _c;
-  const live = entries.filter((e) => !e.deletedAt && e.word.trim() && e.liked === true);
-  if (!live.length) return void 0;
-  const excluded = new Set(recent.slice(0, (_a = opts.excludeLast) != null ? _a : EXCLUDE_LAST));
-  const candidates = live.filter((e) => !excluded.has(e.id));
-  if (!candidates.length) {
-    const lastTold = (e) => recent.indexOf(e.id);
-    return [...live].sort((a2, b) => lastTold(b) - lastTold(a2))[0];
-  }
-  const since = opts.now.getTime() - ((_b = opts.recentDays) != null ? _b : RECENT_DAYS) * DAY_MS2;
-  const fresh = candidates.filter((e) => entryAddedMs2(e) >= since);
-  const older = candidates.filter((e) => entryAddedMs2(e) < since);
-  let pool;
-  if (!fresh.length) pool = older;
-  else if (!older.length) pool = fresh;
-  else pool = opts.random() < ((_c = opts.recentWeight) != null ? _c : RECENT_WEIGHT) ? fresh : older;
-  const i = Math.min(pool.length - 1, Math.floor(opts.random() * pool.length));
-  return pool[i];
-}
-
-// src/ui/blocks/triviaModel.ts
-var OFF = /* @__PURE__ */ new Set(["off", "false", "no", "0", "hide", "\u95DC", "\u5426"]);
-function parseTriviaParams(source) {
-  var _a, _b;
-  const p = parseBlockParams(source);
-  const out = { favorites: !OFF.has(((_a = p.favorites) != null ? _a : "").trim().toLowerCase()) };
-  const word = ((_b = p.word) != null ? _b : "").trim().replace(/^["']|["']$/g, "").trim();
-  if (word) out.word = word;
-  return out;
-}
-var KIND_BY_TASK = new Map(
-  Object.entries(TRIVIA_TASK_BY_KIND).map(([kind, task]) => [task.id, kind])
-);
-function triviaKindOf(taskId) {
-  return taskId ? KIND_BY_TASK.get(taskId) : void 0;
-}
-function triviaCall(req, pinnedEntryId) {
-  var _a;
-  const kind = triviaKindOf(req.taskId);
-  if (kind) return pinnedEntryId ? { type: "ask", kind, entryId: pinnedEntryId } : { type: "ask", kind };
-  const question = (_a = req.question) == null ? void 0 : _a.trim();
-  if (req.taskId !== triviaFollowup.id || !question) return null;
-  return req.selection ? { type: "followup", question, selection: req.selection } : { type: "followup", question };
-}
-function triviaTurnActions(turn, ctx) {
-  if (turn.role !== "assistant" || turn.status !== "done" || !turn.content.trim()) return [];
-  const out = [];
-  if (ctx.feedback) {
-    out.push({ kind: "up", label: "learn.trivia.up", icon: "thumbs-up", active: turn.feedback === "up", iconOnly: true });
-    out.push({ kind: "down", label: "learn.trivia.down", icon: "thumbs-down", active: turn.feedback === "down", iconOnly: true });
-  }
-  if (ctx.favorite) {
-    out.push({ kind: "unfavorite", label: "learn.trivia.favorited", icon: "bookmark-check", active: true, iconOnly: false });
-  } else if (ctx.subjectWord) {
-    const round = !!triviaKindOf(turn.taskId);
-    out.push(
-      round ? { kind: "favorite", label: "learn.trivia.favoriteTo", params: { word: ctx.subjectWord }, icon: "bookmark", active: false, iconOnly: false } : { kind: "favorite", label: "learn.trivia.favorite", icon: "bookmark", active: false, iconOnly: false }
-    );
-  }
-  return out;
-}
-function nextFeedback(current, clicked) {
-  return current === clicked ? void 0 : clicked;
-}
-function triviaTurnHeader(turn, subjectWord, labelOf) {
-  if (turn.role !== "assistant" || !subjectWord) return void 0;
-  const kind = triviaKindOf(turn.taskId);
-  return kind ? `${labelOf(kind)} \xB7 ${subjectWord}` : void 0;
-}
-function splitAround(text, marker) {
-  const i = text.indexOf(marker);
-  return i < 0 ? [text, ""] : [text.slice(0, i), text.slice(i + marker.length)];
-}
-function favoriteViews(items, wordOf, dateOf) {
-  return items.map((it) => {
-    const word = wordOf(it.entryId);
-    const date = dateOf(it.createdAt);
-    const updated = dateOf(it.updatedAt);
-    return {
-      id: it.id,
-      heading: word ? `${word} \xB7 ${it.title}` : it.title,
-      body: it.body,
-      date,
-      ...updated && updated !== date ? { updated } : {},
-      mentions: it.mentions.flatMap((entryId) => {
-        const w = wordOf(entryId);
-        return w ? [{ entryId, word: w }] : [];
-      })
-    };
-  });
-}
-
-// src/ui/blocks/trivia.ts
-function renderTrivia(plugin, source, el, ctx) {
-  ctx.addChild(new TriviaBlock(el, plugin, parseTriviaParams(source), ctx.sourcePath));
-}
-var WordPickModal = class extends import_obsidian34.FuzzySuggestModal {
-  constructor(app, entries, onPick) {
-    super(app);
-    this.entries = entries;
-    this.onPick = onPick;
-    this.setPlaceholder(t("learn.trivia.pick.placeholder"));
-  }
-  getItems() {
-    return this.entries;
-  }
-  getItemText(e) {
-    return e.definitionZh ? `${e.word}  ${e.definitionZh}` : e.word;
-  }
-  onChooseItem(e) {
-    this.onPick(e);
-  }
-};
-var TriviaBlock = class extends import_obsidian34.MarkdownRenderChild {
-  constructor(containerEl, plugin, params, sourcePath) {
-    super(containerEl);
-    this.plugin = plugin;
-    this.params = params;
-    this.sourcePath = sourcePath;
-    this.chipEl = null;
-    this.chatHost = null;
-    this.chat = null;
-    this.favEl = null;
-    this.favScope = null;
-    this.chatState = createChatUiState();
-    this.hasWords = false;
-    this.ready = false;
-    this.disposed = false;
-  }
-  onload() {
-    this.containerEl.empty();
-    this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-trivia"] });
-    guardReadingClicks(this, this.root);
-    this.root.createDiv({ cls: "vt-learn-loading", text: t("learn.loading") });
-    this.register(this.plugin.store.events.on("data:changed", () => this.onStoreChanged()));
-    const favChanged = () => {
-      var _a;
-      if (!this.ready) return;
-      this.renderFavorites();
-      (_a = this.chat) == null ? void 0 : _a.refresh();
-    };
-    this.register(this.plugin.learn.events.on("trivia:upsert", favChanged));
-    this.register(this.plugin.learn.events.on("learn:reloaded", favChanged));
-    this.register(() => this.disposed = true);
-    void this.plugin.trivia.ensureLoaded().then(() => {
-      if (this.disposed) return;
-      this.ready = true;
-      this.build();
-    });
-  }
-  get entries() {
-    return this.plugin.store.entries;
-  }
-  // 1006 #24: 「從已學的 n 個字隨機」要跟 pickSubject() 的候選池一致——只數
-  // like 過的字，不是整個單字庫（否則一個考試字表匯進幾百個還沒學的字，
-  // 這裡顯示的 n 會跟實際抽到的範圍不一樣）。
-  get likedCount() {
-    return this.entries.filter((e) => e.liked === true).length;
-  }
-  pinned() {
-    return this.params.word ? new WordIndex(this.entries).find(this.params.word) : void 0;
-  }
-  entryById(id2) {
-    return id2 ? this.entries.find((e) => e.id === id2) : void 0;
-  }
-  onStoreChanged() {
-    if (!this.ready) return;
-    if (this.entries.length > 0 !== this.hasWords) return this.build();
-    this.updateChip();
-    this.renderFavorites();
-  }
-  // ── Layout ────────────────────────────────────────────────────
-  build() {
-    const root2 = this.root;
-    root2.empty();
-    this.chipEl = null;
-    this.chatHost = null;
-    this.favEl = null;
-    if (this.chat) this.removeChild(this.chat);
-    this.chat = null;
-    this.hasWords = this.entries.length > 0;
-    if (this.params.word && !this.pinned()) {
-      root2.appendChild(emptyState({ icon: "lightbulb", title: t("learn.notFound", { word: this.params.word }) }));
-    } else if (!this.hasWords) {
-      root2.appendChild(
-        emptyState({ icon: "lightbulb", title: t("learn.trivia.empty.title"), body: t("learn.trivia.empty.body") })
-      );
-    } else {
-      const card = root2.createDiv({ cls: "vt-trivia-card" });
-      const head = card.createDiv({ cls: "vt-trivia-head" });
-      const title = head.createSpan({ cls: "vt-trivia-title" });
-      (0, import_obsidian34.setIcon)(title.createSpan({ cls: "vt-trivia-title-icon" }), "lightbulb");
-      title.createSpan({ text: t("learn.trivia.title") });
-      this.chipEl = head.createEl("button", { cls: "vt-trivia-subject" });
-      this.chipEl.addEventListener("click", () => this.pickWord());
-      this.updateChip();
-      this.chatHost = card.createDiv({ cls: "vt-trivia-chat" });
-      this.mountChat();
-      card.createDiv({ cls: "vt-trivia-footer", text: t("learn.trivia.footer") });
-    }
-    if (this.params.favorites) {
-      this.favEl = root2.createDiv({ cls: "vt-trivia-favs" });
-      this.renderFavorites();
-    }
-  }
-  // 「從已學的 24 個字隨機 ⌄」 — a click picks the word for the next round.
-  updateChip() {
-    const chip2 = this.chipEl;
-    if (!chip2) return;
-    chip2.empty();
-    const pinned = this.pinned();
-    chip2.createSpan({
-      text: pinned ? t("learn.trivia.subject", { word: pinned.word }) : t("learn.trivia.random", { n: this.likedCount })
-    });
-    if (!pinned) (0, import_obsidian34.setIcon)(chip2.createSpan({ cls: "vt-trivia-subject-icon" }), "chevron-down");
-    chip2.disabled = !!pinned || this.plugin.ai.status() !== "ready";
-    chip2.title = pinned ? "" : t("learn.trivia.pick");
-  }
-  pickWord() {
-    if (this.pinned() || this.plugin.trivia.isBusy()) return;
-    new WordPickModal(this.plugin.app, [...this.entries], (e) => {
-      this.run({ type: "ask", kind: "next", entryId: e.id });
-    }).open();
-  }
-  mountChat() {
-    const host = this.chatHost;
-    if (!host) return;
-    if (this.chat) this.removeChild(this.chat);
-    host.empty();
-    const opts = {
-      app: this.plugin.app,
-      threads: this.plugin.threads,
-      ai: this.plugin.ai,
-      selection: this.plugin.selection,
-      threadId: TRIVIA_THREAD_ID,
-      surface: "trivia",
-      customTaskId: triviaFollowup.id,
-      sourcePath: this.sourcePath,
-      placeholder: t("learn.trivia.placeholder"),
-      state: this.chatState,
-      send: (req) => this.send(req),
-      retry: (turnId) => this.retry(turnId),
-      turnActions: (turn) => this.turnActions(turn),
-      turnHeader: (turn) => this.turnHeader(turn),
-      onOpenSettings: () => openPluginSettings(this.plugin.app, this.plugin.manifest.id)
-    };
-    this.chat = this.addChild(new ChatPanel(host, opts));
-  }
-  // ── Conversation ──────────────────────────────────────────────
-  async call(c2) {
-    if (c2.type === "followup") return this.plugin.trivia.followup(c2.question, c2.selection);
-    const result = await this.plugin.trivia.ask(c2.kind, c2.entryId ? { entryId: c2.entryId } : {});
-    if (!result && !this.plugin.trivia.isBusy()) new import_obsidian34.Notice(t("learn.trivia.noWords"));
-  }
-  run(c2) {
-    this.call(c2).catch((e) => {
-      console.error("Vocab Tracker: trivia request failed", e);
-      new import_obsidian34.Notice(learnErrorText(e));
-    });
-  }
-  async send(req) {
-    var _a;
-    const c2 = triviaCall(req, (_a = this.pinned()) == null ? void 0 : _a.id);
-    if (c2) await this.call(c2);
-  }
-  retry(turnId) {
-    return this.plugin.trivia.retry(turnId);
-  }
-  subjectWord(turn) {
-    var _a;
-    return (_a = this.entryById(subjectOf(this.plugin.trivia.thread(), turn))) == null ? void 0 : _a.word;
-  }
-  turnHeader(turn) {
-    const text = triviaTurnHeader(
-      turn,
-      this.subjectWord(turn),
-      (kind) => kind === "next" ? t("learn.trivia.turn.next") : t(`ai.task.trivia.${kind}`)
-    );
-    return text ? { text, icon: "lightbulb" } : void 0;
-  }
-  turnActions(turn) {
-    const { threads, trivia } = this.plugin;
-    const favorite = trivia.favoriteOf(turn.id);
-    const specs = triviaTurnActions(turn, { subjectWord: this.subjectWord(turn), favorite, feedback: false });
-    return specs.map((s) => {
-      const label = t(s.label, s.params);
-      const base = { label, icon: s.icon, active: s.active, iconOnly: s.iconOnly };
-      switch (s.kind) {
-        case "up":
-        case "down": {
-          const kind = s.kind;
-          return {
-            ...base,
-            onClick: () => void threads.setFeedback(TRIVIA_THREAD_ID, turn.id, nextFeedback(turn.feedback, kind))
-          };
-        }
-        case "favorite":
-          return {
-            ...base,
-            onClick: () => {
-              const item = this.plugin.trivia.favorite(turn.id);
-              if (!item) return void new import_obsidian34.Notice(t("learn.trivia.noWords"));
-              const entry = this.entryById(item.entryId);
-              if (!entry) return;
-              const page = this.plugin.exporter.wordPagePath(entry.id, entry.word);
-              new import_obsidian34.Notice(t("learn.trivia.savedTo", { path: page.split("/").slice(-2).join("/") }));
-            }
-          };
-        case "unfavorite":
-          return { ...base, onClick: () => favorite && this.plugin.trivia.unfavorite(favorite.id) };
-      }
-    });
-  }
-  // ── 收藏的冷知識 ───────────────────────────────────────────────
-  renderFavorites() {
-    const el = this.favEl;
-    if (!el) return;
-    el.empty();
-    if (this.favScope) this.removeChild(this.favScope);
-    const scope = this.favScope = this.addChild(new import_obsidian34.Component());
-    el.createDiv({ cls: "vt-trivia-favs-title", text: t("learn.trivia.favorites") });
-    const pinned = this.pinned();
-    const items = this.plugin.trivia.favorites(pinned == null ? void 0 : pinned.id);
-    const now2 = /* @__PURE__ */ new Date();
-    const views = favoriteViews(items, (id2) => {
-      var _a;
-      return (_a = this.entryById(id2)) == null ? void 0 : _a.word;
-    }, (iso) => dayLabel(iso, now2));
-    if (!views.length) {
-      el.createDiv({ cls: "vt-trivia-favs-empty", text: t("learn.trivia.favorites.empty") });
-      return;
-    }
-    for (const v of views) {
-      const card = el.createDiv({ cls: "vt-trivia-fav" });
-      const head = card.createDiv({ cls: "vt-trivia-fav-head" });
-      head.createSpan({ cls: "vt-trivia-fav-title", text: v.heading });
-      const remove2 = head.createEl("button", { cls: "vt-trivia-fav-remove clickable-icon" });
-      (0, import_obsidian34.setIcon)(remove2, "bookmark-minus");
-      remove2.setAttr("aria-label", t("learn.trivia.unfavorite"));
-      remove2.addEventListener("click", () => this.plugin.trivia.unfavorite(v.id));
-      const body = card.createDiv({ cls: "vt-trivia-fav-body" });
-      void import_obsidian34.MarkdownRenderer.render(this.plugin.app, v.body, body, this.sourcePath, scope);
-      if (v.date || v.mentions.length) this.renderFavoriteMeta(card.createDiv({ cls: "vt-trivia-fav-meta" }), v);
-    }
-  }
-  // 「收藏 10/03 · 也提到 napkin、kitchenware」 — each mentioned word opens its card.
-  renderFavoriteMeta(el, v) {
-    const dates = datesText({ added: v.date, updated: v.updated }, "saved");
-    if (dates) el.appendText(dates);
-    if (!v.mentions.length) return;
-    if (dates) el.appendText(" \xB7 ");
-    const marker = "\0";
-    const [before, after] = splitAround(t("learn.trivia.mentions", { words: marker }), marker);
-    el.appendText(before);
-    const sep = joinWords(["", ""]);
-    v.mentions.forEach((m2, i) => {
-      if (i) el.appendText(sep);
-      wordChip(el, this.plugin, this.entryById(m2.entryId), "vt-trivia-fav-mention").setText(m2.word);
-    });
-    el.appendText(after);
-  }
-};
-
-// src/ui/blocks/registry.ts
-function dnaDeps(plugin) {
-  return {
-    app: plugin.app,
-    manifestId: plugin.manifest.id,
-    vocab: plugin.store,
-    learn: plugin.learn,
-    morphemes: plugin.morphemes,
-    threads: plugin.threads,
-    ai: plugin.ai,
-    selection: plugin.selection,
-    openWord: (e) => void plugin.surfaces.openWordCard(e.id, "data"),
-    focus: plugin.dnaFocus,
-    pageContext: plugin.pageContext
-  };
-}
-function grammarMapDeps(plugin) {
-  return {
-    grammar: plugin.grammar,
-    level: () => {
-      var _a, _b;
-      return (_b = (_a = plugin.store.settings.learner) == null ? void 0 : _a.level) != null ? _b : "";
-    },
-    openTopic: (id2) => plugin.grammarPages.open(id2),
-    // R1: 錯題本「重做這組」 opens the practice in place.
-    practice: grammarPracticeDeps(plugin)
-  };
-}
-function grammarTopicDeps(plugin) {
-  return {
-    grammar: plugin.grammar,
-    threads: plugin.threads,
-    ai: plugin.ai,
-    pages: plugin.grammarPages,
-    openTopic: (id2) => plugin.grammarPages.open(id2),
-    openNote: (path) => plugin.openNote(path),
-    openSettings: () => openPluginSettings(plugin.app, plugin.manifest.id)
-  };
-}
-function grammarPracticeDeps(plugin) {
-  return {
-    app: plugin.app,
-    manifestId: plugin.manifest.id,
-    grammar: plugin.grammar,
-    questions: plugin.grammarQuestions,
-    ai: plugin.ai,
-    // R2: 「出自〈筆記名〉」 opens the note the sentence came from.
-    openPath: (p) => void plugin.openNote(p)
-  };
-}
-var BLOCKS = [
-  { lang: "vocab-dashboard", render: renderDashboard },
-  { lang: "vocab-flashcards", render: renderFlashcards },
-  // 1010 A: one name per page — the old block names above/below keep working.
-  { lang: "vocab-card", render: renderFlashcards },
-  // The plugin is the block's WordHeaderHost.
-  { lang: WORD_BLOCK_LANG, render: renderWordHeader },
-  // M7 (規劃書 06 §7): 字族樹, 動詞用法, 冷知識.
-  { lang: "vocab-families", render: renderFamilies },
-  // Same block under the name the galaxy redesign uses (09 〔A2〕).
-  { lang: "vocab-galaxy", render: renderFamilies },
-  { lang: "vocab-verbs", render: renderVerbs },
-  { lang: "vocab-usage", render: renderVerbs },
-  { lang: "vocab-trivia", render: renderTrivia },
-  { lang: "vocab-eureka", render: renderTrivia },
-  // Wave 9 (規劃書 09 §7): Word DNA — morpheme breakdown, timeline, 冷知識.
-  { lang: "vocab-dna", render: (plugin, source, el, ctx) => (
-    // Only the Word DNA entry file feeds the sidebar (規劃書 10 §2.1).
-    renderDna({ ...dnaDeps(plugin), isEntryFile: plugin.files.entryFilePath("dna") === ctx.sourcePath }, source, el, ctx)
-  ) },
-  // Wave 15: 文法學習.
-  { lang: "vocab-grammar", render: (p, s, el, ctx) => renderGrammarMap(grammarMapDeps(p), s, el, ctx) },
-  { lang: "vocab-grammar-topic", render: (p, s, el, ctx) => renderGrammarTopic(grammarTopicDeps(p), s, el, ctx) },
-  { lang: "vocab-grammar-practice", render: (p, s, el, ctx) => renderGrammarPractice(grammarPracticeDeps(p), s, el, ctx) }
-];
-function registerBlocks(plugin) {
-  for (const def of BLOCKS) {
-    plugin.registerMarkdownCodeBlockProcessor(
-      def.lang,
-      (source, el, ctx) => def.render(plugin, source, el, ctx)
-    );
-  }
-}
-
 // src/core/store/reviewLogs.ts
 var REVIEW_LOG_RETENTION_DAYS = 90;
 function mergeReviewLogs(a2, b) {
@@ -21379,7 +23764,7 @@ function pruneReviewLogs(logs, now2, days = REVIEW_LOG_RETENTION_DAYS) {
   return logs.filter((log) => new Date(log.at).getTime() >= cutoff);
 }
 function reviewLogsFingerprint(logs) {
-  return logs.map((l5) => l5.id).sort().join("\n");
+  return logs.map((l4) => l4.id).sort().join("\n");
 }
 
 // src/services/srs/SrsService.ts
@@ -21463,7 +23848,7 @@ var SrsService = class {
     const ids = new Set(
       this.deps.store.vocabData.entries.filter((e) => matchesFilter(e, { source: filter2.source })).map((e) => e.id)
     );
-    return this.logs.filter((l5) => ids.has(l5.entryId) && new Date(l5.at).getTime() >= dayStart).length;
+    return this.logs.filter((l4) => ids.has(l4.entryId) && new Date(l4.at).getTime() >= dayStart).length;
   }
   // When this entry is next due, or null for a card that's never been
   // scheduled (shown as "new" rather than a date).
@@ -21563,7 +23948,7 @@ var SrsService = class {
 };
 
 // src/ui/reading/locateWord.ts
-var import_obsidian35 = require("obsidian");
+var import_obsidian36 = require("obsidian");
 
 // src/core/text/occurrences.ts
 var WORD_RE3 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
@@ -21637,10 +24022,10 @@ var SKIP = [
   `.${FLASH_CLS}`
 ].join(", ");
 function activeMarkdownView(app) {
-  const active2 = app.workspace.getActiveViewOfType(import_obsidian35.MarkdownView);
+  const active2 = app.workspace.getActiveViewOfType(import_obsidian36.MarkdownView);
   if (active2) return active2;
   const leaf = app.workspace.getMostRecentLeaf();
-  return (leaf == null ? void 0 : leaf.view) instanceof import_obsidian35.MarkdownView ? leaf.view : null;
+  return (leaf == null ? void 0 : leaf.view) instanceof import_obsidian36.MarkdownView ? leaf.view : null;
 }
 function isSourceMode(view) {
   return view.getMode() === "source";
@@ -21726,7 +24111,7 @@ function createWordLocator(app, opts) {
     const markdown = view.getViewData();
     const occurrences = findOccurrences(markdown, entry.word, opts.inflections());
     if (occurrences.length === 0) {
-      new import_obsidian35.Notice(t("locate.notInNote"));
+      new import_obsidian36.Notice(t("locate.notInNote"));
       return null;
     }
     return { view, path, occurrences };
@@ -21754,14 +24139,14 @@ function createWordLocator(app, opts) {
 }
 
 // src/ui/reading/returnNav.ts
-var import_obsidian36 = require("obsidian");
+var import_obsidian37 = require("obsidian");
 function createReturnNav(app, locator) {
   let pending = null;
   let left = false;
   function restore(p) {
     var _a;
     const view = p.leaf.view;
-    if (view instanceof import_obsidian36.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === p.path) {
+    if (view instanceof import_obsidian37.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === p.path) {
       try {
         view.currentMode.applyScroll(p.scroll);
       } catch (e) {
@@ -21781,7 +24166,7 @@ function createReturnNav(app, locator) {
     if (!leaf || leaf !== current.leaf) return;
     const view = leaf.view;
     pending = null;
-    if (view instanceof import_obsidian36.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === current.path) {
+    if (view instanceof import_obsidian37.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === current.path) {
       restore(current);
     }
   }
@@ -21912,11 +24297,11 @@ var BrowserNetwork = class {
 };
 
 // src/platform/ObsidianRequest.ts
-var import_obsidian37 = require("obsidian");
+var import_obsidian38 = require("obsidian");
 var ObsidianRequest = class {
   async request(req) {
     var _a;
-    const res = await (0, import_obsidian37.requestUrl)({
+    const res = await (0, import_obsidian38.requestUrl)({
       url: req.url,
       method: req.method,
       headers: req.headers,
@@ -23277,118 +25662,136 @@ var grammarGrade = {
 var GRAMMAR_TASKS2 = [grammarGrade];
 
 // src/services/ai/tasks/grammarQuestions.ts
-var DEFAULT_QUESTION_COUNT = 8;
+var DEFAULT_QUESTION_COUNT = 6;
+var MAX_QUESTION_COUNT = 10;
 var MAX_WORDS = 30;
 var MAX_AVOID_STEMS = 40;
-var LOCAL_GENERATED_TYPES = ["choice", "blank", "find-error"];
-var OPEN_GENERATED_TYPES = ["rewrite", "translate"];
-var GENERATED_TYPES = [...LOCAL_GENERATED_TYPES, ...OPEN_GENERATED_TYPES];
-var OPEN_MIN_DIFFICULTY = 4;
-var MAX_OPEN_QUESTIONS = 2;
 var MAX_SENTENCES = 3;
+var MAX_LEAD = 3;
 var MAX_SENTENCE_CHARS = 300;
-function allowsOpenQuestions(topic) {
-  return topic.difficulty >= OPEN_MIN_DIFFICULTY;
-}
-function grammarQuestionsSchema(openTypes) {
-  const types = openTypes ? [...GENERATED_TYPES] : [...LOCAL_GENERATED_TYPES];
-  return {
-    type: "object",
-    additionalProperties: false,
-    required: ["questions"],
-    properties: {
-      questions: {
-        type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          required: ["objectiveId", "type", "stem", "options", "answer", "accepted", "explanation", "distractors", "errorTag", "sourceIndex"],
-          properties: {
-            objectiveId: { type: "string", description: "\u8003\u7684\u662F\u54EA\u500B\u5B78\u7FD2\u76EE\u6A19\uFF08\u7528\u6E05\u55AE\u88E1\u7684 id\uFF09" },
-            type: { type: "string", enum: types },
-            stem: {
-              type: "string",
-              description: "\u984C\u5E79\u3002blank \u6070\u597D\u6709\u4E00\u500B ___\uFF1Bfind-error \u662F\u5B8C\u6574\u7684\u4E00\u53E5\u8A71\uFF1Brewrite \u662F\u8981\u6C42\u52A0\u539F\u53E5\uFF1Btranslate \u662F\u4E2D\u6587\u53E5\u5B50"
-            },
-            options: {
-              type: "array",
-              items: { type: "string" },
-              description: "choice\uFF1A3\u20134 \u500B\u9078\u9805\uFF1Bfind-error\uFF1A3\u20134 \u500B\u6A19\u5728\u53E5\u5B50\u88E1\u7684\u7247\u6BB5\uFF08\u539F\u6587\u7167\u6284\uFF09\uFF1Bblank\uFF0Frewrite\uFF0Ftranslate\uFF1A\u7A7A\u9663\u5217"
-            },
-            answer: {
-              type: "string",
-              description: "choice\uFF0Fblank\uFF1A\u6B63\u89E3\uFF1Bfind-error\uFF1A\u932F\u7684\u90A3\u500B\u7247\u6BB5\uFF08\u5FC5\u9808\u662F options \u5176\u4E2D\u4E00\u500B\uFF09\uFF1Brewrite\uFF0Ftranslate\uFF1A\u4E00\u500B\u7BC4\u4F8B\u7B54\u6848\uFF08\u5B8C\u6574\u7684\u4E00\u53E5\u82F1\u6587\uFF09"
-            },
-            accepted: {
-              type: "array",
-              items: { type: "string" },
-              description: "blank\uFF1A\u5176\u4ED6\u540C\u6A23\u6B63\u78BA\u7684\u5BEB\u6CD5\uFF1Bfind-error\uFF1Aaccepted[0] \u662F\u6539\u6B63\u5F8C\u7684\u5BEB\u6CD5\uFF1Brewrite\uFF0Ftranslate\uFF1A\u5176\u4ED6\u540C\u6A23\u6B63\u78BA\u7684\u5BEB\u6CD5\uFF1Bchoice\uFF1A\u7A7A\u9663\u5217"
-            },
-            explanation: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\uFF0C\u70BA\u4EC0\u9EBC\u9019\u500B\u7B54\u6848\u5C0D\uFF0860 \u5B57\u4EE5\u5167\uFF09" },
-            distractors: {
-              type: "array",
-              description: "\u6BCF\u500B\u932F\u8AA4\u9078\u9805\uFF08blank \u5247\u662F\u5B78\u7FD2\u8005\u5E38\u898B\u7684\u932F\u8AA4\u586B\u6CD5\uFF09\u70BA\u4EC0\u9EBC\u932F",
-              items: {
-                type: "object",
-                additionalProperties: false,
-                required: ["option", "why"],
-                properties: {
-                  option: { type: "string" },
-                  why: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\uFF0C30 \u5B57\u4EE5\u5167" }
+var SCENARIO_TYPES = ["choice", "find-error"];
+var SCENARIO_FORMS = ["dialogue", "story"];
+var GAP = "____";
+var GRAMMAR_QUESTIONS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["scene", "form", "speakers", "turns"],
+  properties: {
+    scene: { type: "string", description: "\u4E00\u53E5\u8A71\u4EA4\u4EE3\u60C5\u5883\uFF08\u7E41\u9AD4\u4E2D\u6587\uFF09\uFF0C\u4F8B\u5982\u300C\u5728\u5496\u5561\u5E97\u9EDE\u9910\u300D" },
+    form: { type: "string", enum: [...SCENARIO_FORMS] },
+    speakers: { type: "array", items: { type: "string" }, description: "\u5C0D\u8A71\u7684\u4EBA\u7269\u540D\u5B57\uFF1B\u77ED\u6587\u586B\u7A7A\u9663\u5217" },
+    turns: {
+      type: "array",
+      description: "\u4F9D\u6642\u9593\u9806\u5E8F\u7684\u53E5\u5B50\uFF0C\u6BCF\u4E00\u53E5\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["speaker", "text", "ask"],
+        properties: {
+          speaker: { type: "string", description: "\u9019\u4E00\u53E5\u662F\u8AB0\u8AAA\u7684\uFF1B\u77ED\u6587\u586B\u7A7A\u5B57\u4E32" },
+          text: { type: "string", description: "\u4E32\u5834\u53E5\uFF08\u4E0D\u51FA\u984C\uFF09\u7684\u82F1\u6587\u53E5\u5B50\uFF1B\u6709 ask \u6642\u586B\u7A7A\u5B57\u4E32" },
+          ask: {
+            type: "array",
+            description: "\u9019\u4E00\u53E5\u8981\u51FA\u984C\u5C31\u653E\u4E00\u500B\u984C\u76EE\uFF0C\u4E0D\u51FA\u984C\u653E\u7A7A\u9663\u5217",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: [
+                "objectiveId",
+                "topicId",
+                "type",
+                "stem",
+                "options",
+                "answer",
+                "accepted",
+                "explanation",
+                "distractors",
+                "sentenceZh",
+                "errorTag",
+                "sourceIndex"
+              ],
+              properties: {
+                objectiveId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u958B\u982D\u300C\u4E3B\u984Cid/\u76EE\u6A19id\u300D\u88E1\u300C/\u300D\u5F8C\u9762\u7684\u76EE\u6A19 id" },
+                topicId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u958B\u982D\u300C/\u300D\u524D\u9762\u7684\u4E3B\u984C id" },
+                type: { type: "string", enum: [...SCENARIO_TYPES] },
+                stem: {
+                  type: "string",
+                  description: "\u984C\u5E79\u3002choice\uFF1A\u9019\u4E00\u53E5\u82F1\u6587\uFF0C\u6070\u597D\u6709\u4E00\u500B ____\uFF1Bfind-error\uFF1A\u5B8C\u6574\u7684\u4E00\u53E5\u82F1\u6587\uFF08\u88E1\u9762\u6709\u4E00\u8655\u932F\uFF09"
+                },
+                options: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "choice\uFF1A3\u20134 \u500B\u9078\u9805\uFF1Bfind-error\uFF1A3\u20134 \u500B\u6A19\u5728\u53E5\u5B50\u88E1\u7684\u7247\u6BB5\uFF08\u539F\u6587\u7167\u6284\uFF09"
+                },
+                answer: { type: "string", description: "choice\uFF1A\u6B63\u89E3\uFF1Bfind-error\uFF1A\u932F\u7684\u90A3\u500B\u7247\u6BB5\uFF08\u5FC5\u9808\u662F options \u5176\u4E2D\u4E00\u500B\uFF09" },
+                accepted: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "find-error\uFF1Aaccepted[0] \u662F\u6539\u6B63\u5F8C\u7684\u5BEB\u6CD5\uFF1Bchoice\uFF1A\u7A7A\u9663\u5217"
+                },
+                explanation: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\uFF0C60 \u5B57\u4EE5\u5167" },
+                distractors: {
+                  type: "array",
+                  description: "\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\uFF0825 \u5B57\u4EE5\u5167\uFF09",
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["option", "why"],
+                    properties: { option: { type: "string" }, why: { type: "string" } }
+                  }
+                },
+                sentenceZh: { type: "string", description: "\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F" },
+                errorTag: { type: "string", enum: [...ERROR_TAGS], description: "\u5B78\u7FD2\u8005\u7B54\u932F\u6642\u6700\u53EF\u80FD\u72AF\u7684\u932F\u8AA4\u985E\u578B" },
+                sourceIndex: {
+                  type: "integer",
+                  description: "\u9019\u984C\u6539\u7DE8\u81EA\u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015\u7684\u7B2C\u5E7E\u53E5\uFF08\u5F9E 1 \u958B\u59CB\uFF09\uFF1B\u4E0D\u662F\u6539\u7DE8\u7684\u984C\u76EE\u586B 0"
                 }
               }
-            },
-            errorTag: { type: "string", enum: [...ERROR_TAGS], description: "\u5B78\u7FD2\u8005\u7B54\u932F\u6642\u6700\u53EF\u80FD\u72AF\u7684\u932F\u8AA4\u985E\u578B" },
-            sourceIndex: {
-              type: "integer",
-              description: "\u9019\u984C\u6539\u7DE8\u81EA\u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015\u7684\u7B2C\u5E7E\u53E5\uFF08\u5F9E 1 \u958B\u59CB\uFF09\uFF1B\u4E0D\u662F\u6539\u7DE8\u7684\u984C\u76EE\u586B 0"
             }
           }
         }
       }
     }
-  };
-}
-var GRAMMAR_QUESTIONS_SCHEMA = grammarQuestionsSchema(true);
-var GRAMMAR_QUESTIONS_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u6587\u6CD5\u8001\u5E2B\uFF0C\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u5BEB\u6587\u6CD5\u7DF4\u7FD2\u984C\u3002\u3014\u6587\u6CD5\u4E3B\u984C\u3015\u662F\u9019\u6B21\u8981\u7DF4\u7FD2\u7684\u5167\u5BB9\u3002
+  }
+};
+var GRAMMAR_QUESTIONS_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u8001\u5E2B\uFF0C\u7528\u4E00\u6BB5\u9023\u7E8C\u7684\u60C5\u5883\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u505A\u9078\u64C7\u984C\u7DF4\u7FD2\u3002\u3014\u51FA\u984C\u53C3\u8003\u3015\u662F\u9019\u6B21\u8981\u8003\u7684\u91CD\u9EDE\uFF0C\u6BCF\u500B\u91CD\u9EDE\u6709\u56FA\u5B9A\u7684 id\u3002
 
 \u898F\u5247\uFF1A
-1. \u53EA\u8003\u3014\u6587\u6CD5\u4E3B\u984C\u3015\u5217\u51FA\u7684\u5B78\u7FD2\u76EE\u6A19\uFF0C\u4E00\u984C\u53EA\u8003\u4E00\u500B\u76EE\u6A19\uFF1B\u6BCF\u500B\u5B78\u7FD2\u76EE\u6A19\u81F3\u5C11\u51FA\u4E00\u984C\uFF0C\u5176\u9918\u7684\u984C\u6578\u5E73\u5747\u5206\u914D\u3002\u4E0D\u8981\u8003\u751F\u5B57\u3001\u62FC\u5B57\u6216\u6587\u5316\u5E38\u8B58\u3002
-2. \u5E38\u614B\u984C\u578B\u6709\u4E09\u7A2E\uFF0C\u76E1\u91CF\u6DF7\u5408\u4F7F\u7528\uFF1A
-   - choice\uFF1A\u9078\u64C7\u984C\u3002\u984C\u5E79\u88E1\u7684\u7A7A\u683C\u5BEB\u6210 ___\uFF0Coptions \u653E 3 \u5230 4 \u500B\u9078\u9805\uFF0Canswer \u662F\u5176\u4E2D\u4E00\u500B\u3002
-   - blank\uFF1A\u586B\u7A7A\u984C\u3002\u984C\u5E79\u6070\u597D\u6709\u4E00\u500B ___\uFF0C\u5B78\u7FD2\u8005\u81EA\u5DF1\u6253\u5B57\uFF1Banswer \u662F\u6A19\u6E96\u7B54\u6848\uFF0C\u5176\u4ED6\u540C\u6A23\u6B63\u78BA\u7684\u5BEB\u6CD5\u5168\u90E8\u653E\u9032 accepted\uFF08\u5305\u542B\u5E38\u898B\u7684\u7E2E\u5BEB\u5BEB\u6CD5\uFF09\u3002
-   - find-error\uFF1A\u627E\u932F\u984C\u3002stem \u662F\u4E00\u53E5\u5B8C\u6574\u7684\u53E5\u5B50\uFF0C\u88E1\u9762\u6709\u4E00\u8655\u6587\u6CD5\u932F\u8AA4\uFF1Boptions \u662F 3 \u5230 4 \u500B\u5F9E\u53E5\u5B50\u88E1\u539F\u6587\u7167\u6284\u7684\u7247\u6BB5\uFF08\u9010\u5B57\u76F8\u540C\u3001\u5305\u542B\u90A3\u500B\u932F\u8AA4\u7684\u7247\u6BB5\uFF09\uFF0Canswer \u662F\u932F\u7684\u90A3\u500B\u7247\u6BB5\uFF0Caccepted \u7684\u7B2C\u4E00\u9805\u662F\u6539\u6B63\u5F8C\u7684\u5BEB\u6CD5\u3002
-   \u53E6\u5916\u5169\u7A2E\u958B\u653E\u984C\u578B\uFF0C\u53EA\u6709\u4EFB\u52D9\u8AAA\u660E\u660E\u78BA\u5141\u8A31\u6642\u624D\u51FA\uFF0C\u5426\u5247\u4E00\u5F8B\u4E0D\u8981\u51FA\uFF1A
-   - rewrite\uFF1A\u6539\u5BEB\u984C\u3002stem \u5148\u7528\u7E41\u9AD4\u4E2D\u6587\u5BEB\u51FA\u6539\u5BEB\u8981\u6C42\uFF08\u4F8B\u5982\u300C\u7528 Not until \u958B\u982D\u6539\u5BEB\u300D\uFF09\uFF0C\u63DB\u884C\u5F8C\u9644\u4E0A\u539F\u53E5\uFF1Boptions \u662F\u7A7A\u9663\u5217\uFF0Canswer \u662F\u4E00\u500B\u7BC4\u4F8B\u7B54\u6848\uFF08\u5B8C\u6574\u7684\u4E00\u53E5\u82F1\u6587\uFF09\uFF0Caccepted \u653E\u5176\u4ED6\u540C\u6A23\u6B63\u78BA\u7684\u5BEB\u6CD5\u3002
-   - translate\uFF1A\u7FFB\u8B6F\u984C\u3002stem \u662F\u4E00\u53E5\u81EA\u7136\u7684\u4E2D\u6587\uFF0C\u8981\u5B78\u7FD2\u8005\u8B6F\u6210\u82F1\u6587\u4E26\u7528\u5230\u3014\u6587\u6CD5\u4E3B\u984C\u3015\uFF1Boptions \u662F\u7A7A\u9663\u5217\uFF0Canswer \u662F\u4E00\u500B\u7BC4\u4F8B\u7B54\u6848\uFF08\u5B8C\u6574\u7684\u4E00\u53E5\u82F1\u6587\uFF09\uFF0Caccepted \u653E\u5176\u4ED6\u540C\u6A23\u6B63\u78BA\u7684\u5BEB\u6CD5\u3002
-3. \u6BCF\u4E00\u984C\u7684\u7B54\u6848\u5FC5\u9808\u552F\u4E00\u3002\u5982\u679C\u6709\u5169\u7A2E\u4EE5\u4E0A\u90FD\u5408\u7406\u7684\u7B54\u6848\uFF0C\u8981\u561B\u5168\u90E8\u653E\u9032 accepted\uFF08blank\uFF09\uFF0C\u8981\u561B\u6539\u5BEB\u984C\u76EE\uFF0C\u8B93\u7B54\u6848\u53EA\u5269\u4E00\u500B\uFF1B\u4E0D\u78BA\u5B9A\u7684\u984C\u76EE\u5BE7\u53EF\u4E0D\u51FA\u3002
-4. \u53E5\u5B50\u8981\u81EA\u7136\uFF0C\u50CF\u771F\u5BE6\u7684\u82F1\u6587\u6587\u7AE0\u3001\u5C0D\u8A71\u6216\u65E5\u5E38\u5834\u666F\u6703\u51FA\u73FE\u7684\u53E5\u5B50\uFF0C\u9577\u5EA6 6 \u5230 18 \u500B\u5B57\uFF0C\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u8207\u4E3B\u984C\u7684\u96E3\u5EA6\uFF1B\u4E0D\u8981\u7528\u51B7\u50FB\u5B57\u3002\u53E5\u5B50\u88E1\u7684\u5176\u4ED6\u6587\u6CD5\u4E0D\u8981\u6BD4\u4E3B\u984C\u66F4\u96E3\u3002
-5. \u932F\u8AA4\u7684\u9078\u9805\u8981\u4F86\u81EA\u9019\u4F4D\u5B78\u7FD2\u8005\u771F\u5BE6\u5E38\u72AF\u7684\u932F\uFF08\u4E2D\u6587\u601D\u7DAD\u7684\u76F4\u8B6F\u3001\u6DF7\u6DC6\u76F8\u4F3C\u7D50\u69CB\uFF09\uFF0C\u4E0D\u8981\u653E\u4E00\u770B\u5C31\u8352\u8B2C\u7684\u9078\u9805\u3002
-6. \u984C\u76EE\u8981\u539F\u5275\uFF0C\u4E0D\u8981\u6284\u5BEB\u6216\u6539\u5BEB\u4EFB\u4F55\u51FA\u7248\u6559\u6750\u3001\u8003\u53E4\u984C\u88E1\u7684\u984C\u76EE\u3002
-7. explanation \u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u8AAA\u660E\u70BA\u4EC0\u9EBC\u6B63\u89E3\u662F\u5C0D\u7684\uFF1Bdistractors \u5C0D\u6BCF\u500B\u932F\u8AA4\u9078\u9805\uFF08blank \u5247\u662F\u5E38\u898B\u7684\u932F\u8AA4\u586B\u6CD5\uFF0C\u81F3\u5C11\u4E00\u500B\uFF09\u5404\u5BEB\u4E00\u53E5\u70BA\u4EC0\u9EBC\u932F\u3002
-8. errorTag \u5F9E\u56FA\u5B9A\u6E05\u55AE\u6311\u4E00\u500B\u6700\u8CBC\u8FD1\u7684\uFF1A${ERROR_TAGS.join("\u3001")}\u3002
-9. \u3014\u907F\u514D\u91CD\u8907\u3015\u5217\u51FA\u7684\u984C\u5E79\u9019\u500B\u4E3B\u984C\u5DF2\u7D93\u6709\u4E86\uFF0C\u65B0\u984C\u76EE\u7684\u53E5\u5B50\u3001\u60C5\u5883\u90FD\u8981\u4E0D\u4E00\u6A23\u3002
-10. \u3014\u5B78\u7FD2\u8005\u7684\u55AE\u5B57\u3015\u5982\u679C\u6709\uFF0C\u76E1\u91CF\u7528\u9019\u4E9B\u5B57\u9020\u53E5\uFF0C\u4F46\u4E0D\u8981\u8B93\u55AE\u5B57\u8B8A\u6210\u984C\u76EE\u7684\u96E3\u9EDE\uFF1B\u6C92\u6709\u5408\u9069\u7684\u5C31\u4E0D\u7528\u3002
-11. \u3014\u5DF2\u5B78\u904E\u7684\u6587\u6CD5\u3015\u88E1\u7684\u7D50\u69CB\u53EF\u4EE5\u81EA\u7531\u51FA\u73FE\u5728\u53E5\u5B50\u88E1\u3002
-12. \u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015\u5982\u679C\u6709\uFF0C\u9019\u662F\u5B78\u7FD2\u8005\u5728\u6587\u7AE0\u88E1\u8B80\u5230\u3001\u554F\u904E\u6587\u6CD5\u7684\u53E5\u5B50\uFF1A\u81F3\u5C11\u6709\u4E00\u984C\u8981\u6539\u7DE8\u81EA\u5176\u4E2D\u4E00\u53E5\uFF08\u53EF\u4EE5\u6316\u7A7A\u3001\u6539\u6210\u9078\u64C7\u984C\uFF0C\u6216\u5728\u53E5\u5B50\u88E1\u88FD\u9020\u4E00\u8655\u932F\u8AA4\u6539\u6210\u627E\u932F\u984C\uFF1B\u5167\u5BB9\u53EF\u4EE5\u5FAE\u8ABF\uFF09\uFF0C\u4E26\u5728\u8A72\u984C\u7684 sourceIndex \u586B\u53E5\u5B50\u7684\u7DE8\u865F\u3002\u5176\u4ED6\u984C sourceIndex \u586B 0\u3002\u4E0D\u8981\u7167\u6284\u539F\u53E5\u7576\u6210\u7B54\u6848\u5DF2\u7D93\u9732\u51FA\u7684\u984C\u76EE\u3002
-13. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
-var TOPIC_BLOCK_TEMPLATE = `\u3014\u6587\u6CD5\u4E3B\u984C\u3015{{title}}\uFF08{{pattern}}\uFF09
-\u4E00\u53E5\u8A71\uFF1A{{summary}}
-\u96E3\u5EA6\uFF1A{{difficulty}} / 9
-\u5B78\u7FD2\u76EE\u6A19\uFF1A
-{{objectives}}
-{{#hint}}\u51FA\u984C\u8981\u6C42\uFF1A{{hint}}
-{{/hint}}`;
+1. \u53EA\u8003\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u7684\u91CD\u9EDE\uFF1B\u6BCF\u4E00\u984C\u7684 objectiveId \u5FC5\u9808\u662F\u6E05\u55AE\u88E1\u7684 id\uFF0C\u4E0D\u8981\u81EA\u5DF1\u767C\u660E\u3002
+2. \u9023\u8CAB\uFF1A\u5168\u90E8\u984C\u76EE\u767C\u751F\u5728\u540C\u4E00\u500B\u60C5\u5883\uFF0C\u4F9D\u6642\u9593\u9806\u5E8F\u5F80\u4E0B\u8D70\uFF0C\u6BCF\u4E00\u53E5\u90FD\u63A5\u5F97\u4E0A\u524D\u4E00\u53E5\uFF1B\u8B80\u5B8C\u5C31\u662F\u4E00\u6BB5\u5B8C\u6574\u7684\u5C0D\u8A71\u6216\u77ED\u6587\u3002\u6709\u3014\u4E0A\u4E00\u6BB5\u3015\u6642\uFF0C\u5F9E\u5B83\u7684\u6700\u5F8C\u4E00\u53E5\u76F4\u63A5\u63A5\u8457\u5BEB\uFF0C\u4EBA\u7269\u548C\u5834\u666F\u4E0D\u8B8A\u3002\u53EF\u4EE5\u7A7F\u63D2\u4E0D\u51FA\u984C\u7684\u4E32\u5834\u53E5\uFF0C\u4E00\u7D44\u6700\u591A 3 \u53E5\u3002
+3. \u53EA\u51FA\u9EDE\u9078\u7684\u984C\u578B\uFF08choice\u3001find-error\uFF09\uFF0C\u5B78\u7FD2\u8005\u4E0D\u9700\u8981\u6253\u4EFB\u4F55\u5B57\u3002
+4. \u6709\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015\u6642\uFF0C\u5148\u8003\u5F31\u9EDE\u88E1\u3001\u800C\u4E14\u5728\u3014\u51FA\u984C\u53C3\u8003\u3015\u5167\u7684\u91CD\u9EDE\uFF0C\u6700\u591A\u5360\u4E00\u534A\u984C\u6578\uFF1B\u5176\u9918\u5E73\u5747\u5206\u914D\u3002\u540C\u4E00\u500B\u91CD\u9EDE\u6700\u591A\u5169\u984C\uFF0C\u540C\u4E00\u500B\u91CD\u9EDE\u4E0D\u8981\u9023\u7E8C\u51FA\u4E09\u984C\u3002
+5. \u6BCF\u984C\u53EA\u6709\u4E00\u500B\u6B63\u78BA\u7B54\u6848\u3002\u932F\u8AA4\u9078\u9805\u8981\u300C\u770B\u8D77\u4F86\u53EF\u80FD\u5C0D\uFF0C\u4F46\u653E\u5728\u9019\u500B\u53E5\u5B50\u88E1\u4E0D\u5C0D\u300D\uFF1B\u9700\u8981\u7684\u8A71\u7528\u524D\u5F8C\u6587\u628A\u7B54\u6848\u9396\u4F4F\u3002
+6. \u7B54\u984C\u5F8C\u7684\u89E3\u8AAA\uFF1A
+   - explanation\uFF1A60 \u5B57\u4EE5\u5167\uFF0C\u5148\u9EDE\u51FA\u53E5\u5B50\u88E1\u7684\u5224\u65B7\u4F9D\u64DA\uFF0C\u518D\u8AAA\u70BA\u4EC0\u9EBC\u662F\u9019\u500B\u7B54\u6848\u3002
+   - distractors\uFF1A\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C25 \u5B57\u4EE5\u5167\uFF0C\u8AAA\u5B83\u5728\u4EC0\u9EBC\u60C5\u6CC1\u4E0B\u624D\u5C0D\u3002
+   - sentenceZh\uFF1A\u7B54\u6848\u653E\u56DE\u53BB\u4E4B\u5F8C\u6574\u53E5\u7684\u4E2D\u6587\u7FFB\u8B6F\u3002
+7. errorTag \u53EA\u80FD\u5F9E\u4EFB\u52D9\u5217\u51FA\u7684\u6E05\u55AE\u9078\u3002
+8. \u53E5\u5B50\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF0C\u76EE\u6A19\u4EE5\u5916\u7684\u751F\u5B57\u8D8A\u5C11\u8D8A\u597D\uFF1B\u6709\u3014\u5DF2\u5B78\u55AE\u5B57\u3015\u6642\u512A\u5148\u7528\u88E1\u9762\u7684\u5B57\uFF0C\u4F46\u4E0D\u8981\u786C\u585E\u3002
+9. \u4E0D\u8981\u91CD\u8907\u3014\u907F\u514D\u91CD\u8907\u3015\u88E1\u7684\u984C\u5E79\u3002\u53EA\u7528\u81EA\u7136\u3001\u5E38\u898B\u7684\u82F1\u6587\uFF0C\u4E0D\u78BA\u5B9A\u7684\u7528\u6CD5\u4E0D\u8981\u51FA\u3002\u6240\u6709\u53E5\u5B50\u90FD\u8981\u539F\u5275\uFF0C\u4E0D\u8981\u5F15\u7528\u51FA\u7248\u6559\u6750\u6216\u8003\u984C\u3002
+10. \u4E2D\u6587\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u6307\u5B9A\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\u6642\u7167\u5B83\u3002
+11. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
+var REFERENCE_BLOCK_TEMPLATE = `\u3014\u51FA\u984C\u53C3\u8003\u3015
+{{lines}}`;
+var WEAKNESS_BLOCK_TEMPLATE = `\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015
+{{weakness}}`;
+var PREVIOUS_BLOCK_TEMPLATE = `\u3014\u4E0A\u4E00\u6BB5\u3015
+\u5834\u666F\uFF1A{{scene}}
+\u6700\u5F8C\u5169\u53E5\uFF1A
+{{lines}}`;
 var SENTENCES_BLOCK_TEMPLATE = `\u3014\u8B80\u8005\u8B80\u904E\u7684\u53E5\u5B50\u3015
 {{sentences}}`;
 var KNOWN_BLOCK_TEMPLATE = `\u3014\u5DF2\u5B78\u904E\u7684\u6587\u6CD5\u3015{{titles}}`;
-var WORDS_BLOCK_TEMPLATE2 = `\u3014\u5B78\u7FD2\u8005\u7684\u55AE\u5B57\u3015{{words}}`;
-var AVOID_BLOCK_TEMPLATE = `\u3014\u907F\u514D\u91CD\u8907\u3015\u9019\u500B\u4E3B\u984C\u5DF2\u7D93\u6709\u7684\u984C\u5E79\uFF1A
+var WORDS_BLOCK_TEMPLATE2 = `\u3014\u5DF2\u5B78\u55AE\u5B57\u3015{{words}}`;
+var AVOID_BLOCK_TEMPLATE = `\u3014\u907F\u514D\u91CD\u8907\u3015\u5DF2\u7D93\u51FA\u904E\u7684\u984C\u5E79\uFF1A
 {{stems}}`;
-var GRAMMAR_QUESTIONS_TEMPLATE = `\u4EFB\u52D9\uFF1A\u51FA {{count}} \u984C\u300C{{title}}\u300D\u7684\u7DF4\u7FD2\u984C
-\u5B78\u7FD2\u76EE\u6A19 id \u53EA\u80FD\u7528\uFF1A{{ids}}\u3002{{#cover}}\u6BCF\u500B\u76EE\u6A19\u81F3\u5C11\u4E00\u984C\uFF0C{{/cover}}\u4E09\u7A2E\u5E38\u614B\u984C\u578B\u6DF7\u5408\u3002
-{{#open}}\u9019\u500B\u4E3B\u984C\u53EF\u4EE5\u53E6\u5916\u51FA 1 \u5230 2 \u984C\u958B\u653E\u984C\u578B\uFF08rewrite \u6216 translate\uFF09\uFF0C\u5176\u9918\u984C\u76EE\u4ECD\u7528\u5E38\u614B\u984C\u578B\u3002{{/open}}
-{{^open}}\u9019\u6B21\u4E0D\u8981\u51FA rewrite\u3001translate\u3002{{/open}}`;
+var GRAMMAR_QUESTIONS_TEMPLATE = `\u4EFB\u52D9\uFF1A\u6587\u6CD5\u60C5\u5883\u7DF4\u7FD2\uFF08{{topics}}\uFF09
+\u51FA {{count}} \u984C\u3002type \u53EF\u4EE5\u7528\uFF1Achoice\uFF08\u53E5\u5B50\u88E1\u4E00\u500B ____\uFF0B3\u20134 \u500B\u9078\u9805\uFF09\u3001find-error\uFF08\u53E5\u5B50\u88E1\u6A19\u51FA 3\u20134 \u500B\u7247\u6BB5\uFF0C\u9078\u51FA\u932F\u7684\u90A3\u500B\uFF09\u3002
+\u3014\u51FA\u984C\u53C3\u8003\u3015\u6BCF\u884C\u662F objectiveId\uFF5C\u5B78\u7FD2\u76EE\u6A19\uFF5C\u4E3B\u984C\uFF08\u53E5\u578B\uFF09\u3002
+errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
+function objectiveRef(topicId, objectiveId) {
+  return `${topicId}/${objectiveId}`;
+}
 function cleanSentences(list) {
   var _a;
   const out = [];
@@ -23414,11 +25817,14 @@ function clean(list, max) {
   }
   return out;
 }
-function objectiveIdsFor(input) {
-  const all = input.topic.objectives.map((o) => o.id);
-  const want = new Set(input.objectiveIds);
-  const ids = all.filter((id2) => want.has(id2));
-  return ids.length ? ids : all;
+function targetRefs(targets) {
+  const out = [];
+  for (const t2 of targets) {
+    const want = new Set(t2.objectiveIds);
+    const objs = t2.topic.objectives.filter((o) => want.has(o.id));
+    for (const objective of objs.length ? objs : t2.topic.objectives) out.push({ topic: t2.topic, objective });
+  }
+  return out;
 }
 function isObj4(v) {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -23434,7 +25840,7 @@ function uniq(list) {
   for (const s of list) if (!out.includes(s)) out.push(s);
   return out;
 }
-var BLANK_RE = /_{3,}/g;
+var GAP_RE = /_{3,}/g;
 function parseDistractors(v) {
   const out = {};
   if (Array.isArray(v)) {
@@ -23453,45 +25859,33 @@ function parseDistractors(v) {
   }
   return out;
 }
-function parseGrammarQuestion(raw, opts = {}) {
-  const { objectiveIds, allowOpen = true, sentences } = opts;
-  const q = parseQuestionBody(raw, objectiveIds, allowOpen);
-  if (!q) return null;
-  const idx = isObj4(raw) ? Number(raw.sourceIndex) : NaN;
-  const src = Number.isInteger(idx) && idx >= 1 ? sentences == null ? void 0 : sentences[idx - 1] : void 0;
-  if (src) q.source = { path: src.path, sentence: src.sentence };
-  return q;
+function resolveRef(raw, refs) {
+  let topicId = str4(raw.topicId);
+  let objectiveId = str4(raw.objectiveId);
+  if (objectiveId.includes("/")) {
+    const [t2, ...rest] = objectiveId.split("/");
+    const o = rest.join("/");
+    if (!topicId) topicId = t2;
+    if (topicId === t2) objectiveId = o;
+  }
+  if (!objectiveId) return null;
+  if (!refs) return topicId ? { topicId, objectiveId } : null;
+  if (topicId) return refs.has(objectiveRef(topicId, objectiveId)) ? { topicId, objectiveId } : null;
+  const hits = [...refs].filter((r) => r.endsWith(`/${objectiveId}`));
+  if (hits.length !== 1) return null;
+  return { topicId: hits[0].slice(0, hits[0].length - objectiveId.length - 1), objectiveId };
 }
-function parseQuestionBody(raw, objectiveIds, allowOpen) {
+function parseScenarioQuestion(raw, opts = {}) {
+  var _a;
   if (!isObj4(raw)) return null;
   const type = str4(raw.type);
-  if (!GENERATED_TYPES.includes(type)) return null;
-  if (!allowOpen && OPEN_GENERATED_TYPES.includes(type)) return null;
-  const objectiveId = str4(raw.objectiveId);
-  if (!objectiveId || objectiveIds && !objectiveIds.has(objectiveId)) return null;
+  if (!SCENARIO_TYPES.includes(type)) return null;
+  const ref = resolveRef(raw, opts.refs);
+  if (!ref) return null;
   let stem = str4(raw.stem);
   let answer = str4(raw.answer);
   const explanation = str4(raw.explanation);
   if (!stem || !answer || !explanation) return null;
-  const errorTag = normalizeErrorTag(raw.errorTag);
-  const distractorsAll = parseDistractors(raw.distractors);
-  if (type === "rewrite" || type === "translate") {
-    const accepted2 = uniq(strList(raw.accepted)).filter((a2) => a2 !== answer);
-    const q2 = { objectiveId, type, stem, answer, explanation, errorTag };
-    if (accepted2.length) q2.accepted = accepted2;
-    return q2;
-  }
-  if (type === "blank") {
-    const blanks = stem.match(BLANK_RE);
-    if (!blanks || blanks.length !== 1) return null;
-    stem = stem.replace(BLANK_RE, "___");
-    const accepted2 = uniq(strList(raw.accepted)).filter((a2) => a2 !== answer);
-    const distractors2 = Object.fromEntries(Object.entries(distractorsAll).filter(([k]) => k !== answer));
-    const q2 = { objectiveId, type, stem, answer, explanation, errorTag };
-    if (accepted2.length) q2.accepted = accepted2;
-    if (Object.keys(distractors2).length) q2.distractors = distractors2;
-    return q2;
-  }
   const options = uniq(strList(raw.options));
   if (options.length < 3 || options.length > 4) return null;
   if (!options.includes(answer)) {
@@ -23500,68 +25894,108 @@ function parseQuestionBody(raw, objectiveIds, allowOpen) {
     answer = hit;
   }
   if (type === "choice") {
-    stem = stem.replace(BLANK_RE, "___");
+    const gaps = stem.match(GAP_RE);
+    if (!gaps || gaps.length !== 1) return null;
+    stem = stem.replace(GAP_RE, GAP);
   } else {
+    if (stem.match(GAP_RE)) return null;
     if (!options.every((o) => stem.includes(o))) return null;
   }
   const distractors = Object.fromEntries(
-    Object.entries(distractorsAll).filter(([k]) => k !== answer && options.includes(k))
+    Object.entries(parseDistractors(raw.distractors)).filter(([k]) => k !== answer && options.includes(k))
   );
-  const q = { objectiveId, type, stem, options, answer, explanation, errorTag };
+  const q = {
+    topicId: ref.topicId,
+    objectiveId: ref.objectiveId,
+    type,
+    stem,
+    options,
+    answer,
+    explanation,
+    errorTag: normalizeErrorTag(raw.errorTag)
+  };
   const accepted = uniq(strList(raw.accepted));
   if (type === "find-error" && accepted.length) q.accepted = accepted;
   if (Object.keys(distractors).length) q.distractors = distractors;
+  const zh = str4(raw.sentenceZh);
+  if (zh) q.sentenceZh = zh;
+  const idx = Number(raw.sourceIndex);
+  const src = Number.isInteger(idx) && idx >= 1 ? (_a = opts.sentences) == null ? void 0 : _a[idx - 1] : void 0;
+  if (src) q.source = { path: src.path, sentence: src.sentence };
   return q;
 }
-function parseGrammarQuestions(json, opts = {}) {
-  if (!isObj4(json) || !Array.isArray(json.questions)) {
-    throw new AiError("bad_output", "grammar.questions: expected { questions: [...] }");
+function askOf(turn) {
+  const a2 = turn.ask;
+  if (Array.isArray(a2)) return a2.length ? a2[0] : void 0;
+  return isObj4(a2) ? a2 : void 0;
+}
+function parseGrammarScenario(json, opts = {}) {
+  if (!isObj4(json) || !Array.isArray(json.turns)) {
+    throw new AiError("bad_output", "grammar.questions: expected { scene, form, turns: [...] }");
   }
-  const parseOpts = { ...opts, objectiveIds: opts.objectiveIds ? new Set(opts.objectiveIds) : void 0 };
-  const out = [];
+  const parseOpts = { ...opts, refs: opts.refs ? new Set(opts.refs) : void 0 };
+  const scene = str4(json.scene);
+  if (!scene) throw new AiError("bad_output", "grammar.questions: no scene");
+  const speakers = uniq(strList(json.speakers));
+  const form = SCENARIO_FORMS.includes(str4(json.form)) ? str4(json.form) : speakers.length ? "dialogue" : "story";
+  const questions2 = [];
   const seen = /* @__PURE__ */ new Set();
-  let open = 0;
-  for (const raw of json.questions) {
-    const q = parseGrammarQuestion(raw, parseOpts);
+  let asked = 0;
+  let lead = [];
+  for (const t2 of json.turns) {
+    if (!isObj4(t2)) continue;
+    const speaker = str4(t2.speaker);
+    const ask = askOf(t2);
+    if (ask === void 0) {
+      const text = str4(t2.text);
+      if (text) lead.push(speaker ? { speaker, text } : { text });
+      continue;
+    }
+    asked++;
+    const q = parseScenarioQuestion(ask, parseOpts);
     if (!q) continue;
     const key5 = q.stem.toLowerCase();
     if (seen.has(key5)) continue;
-    if (q.type === "rewrite" || q.type === "translate") {
-      if (open >= MAX_OPEN_QUESTIONS) continue;
-      open++;
-    }
     seen.add(key5);
-    out.push(q);
+    if (speaker) q.speaker = speaker;
+    if (lead.length) q.lead = lead.slice(-MAX_LEAD);
+    lead = [];
+    questions2.push(q);
   }
-  if (!out.length) throw new AiError("bad_output", "grammar.questions: no usable questions");
+  if (!questions2.length || questions2.length * 2 < asked) {
+    throw new AiError("bad_output", `grammar.questions: only ${questions2.length} of ${asked} questions usable`);
+  }
+  const out = { scene, form, questions: questions2 };
+  if (speakers.length) out.speakers = speakers;
   return out;
 }
 var grammarQuestions = {
   id: "grammar.questions",
-  version: 2,
+  version: 3,
   surface: "grammar",
   tier: "smart",
   maxTokens: 8192,
   answerChars: () => 0,
   build(input, ctx) {
     var _a, _b;
-    const { topic } = input;
-    const ids = objectiveIdsFor(input);
-    const objectives = topic.objectives.filter((o) => ids.includes(o.id));
-    const count = Math.max(1, Math.min(20, Math.floor((_a = input.count) != null ? _a : DEFAULT_QUESTION_COUNT)));
+    const refs = targetRefs(input.targets);
+    const count = Math.max(1, Math.min(MAX_QUESTION_COUNT, Math.floor((_a = input.count) != null ? _a : DEFAULT_QUESTION_COUNT)));
     const known2 = clean(input.knownTopicTitles, 60);
     const words = clean(input.words, MAX_WORDS);
     const avoid = clean(input.avoidStems, MAX_AVOID_STEMS);
     const sentences = cleanSentences(input.sentences);
+    const weakness = ((_b = input.weakness) != null ? _b : "").trim();
+    const prev = input.previous;
+    const titles = [...new Set(refs.map((r) => r.topic.title))];
     const context = [
-      renderTemplate(TOPIC_BLOCK_TEMPLATE, {
-        title: topic.title,
-        pattern: topic.pattern,
-        summary: topic.summary,
-        difficulty: topic.difficulty,
-        objectives: objectives.map((o) => `- ${o.id}\uFF1A${o.text}`).join("\n"),
-        hint: (_b = topic.promptHint) == null ? void 0 : _b.trim()
+      renderTemplate(REFERENCE_BLOCK_TEMPLATE, {
+        lines: refs.map((r) => `${objectiveRef(r.topic.id, r.objective.id)}\uFF5C${r.objective.text}\uFF5C${r.topic.title}\uFF08${r.topic.pattern}\uFF09`).join("\n")
       }),
+      weakness ? renderTemplate(WEAKNESS_BLOCK_TEMPLATE, { weakness }) : "",
+      prev && prev.scene.trim() ? renderTemplate(PREVIOUS_BLOCK_TEMPLATE, {
+        scene: prev.scene.trim(),
+        lines: prev.lastLines.slice(-2).map((l4) => `- ${l4}`).join("\n")
+      }) : "",
       known2.length ? renderTemplate(KNOWN_BLOCK_TEMPLATE, { titles: known2.join("\u3001") }) : "",
       words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE2, { words: words.join(", ") }) : "",
       avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE, { stems: avoid.map((s) => `- ${s}`).join("\n") }) : "",
@@ -23570,30 +26004,28 @@ var grammarQuestions = {
     return composeRequest({
       base: GRAMMAR_QUESTIONS_BASE_PROMPT,
       context,
-      profile: profileForTask(ctx.profile, grammarQuestions, input),
+      profile: ctx.profile,
       history: [],
       user: renderTemplate(GRAMMAR_QUESTIONS_TEMPLATE, {
+        topics: titles.join("\u3001"),
         count,
-        title: topic.title,
-        ids: ids.join("\u3001"),
-        cover: count >= ids.length ? "1" : "",
-        open: allowsOpenQuestions(topic) ? "1" : ""
+        errorTags: ERROR_TAGS.join("\u3001")
       }),
       tier: grammarQuestions.tier,
       maxTokens: grammarQuestions.maxTokens,
-      output: { name: "grammar_questions", schema: grammarQuestionsSchema(allowsOpenQuestions(topic)) }
+      output: { name: "grammar_questions", schema: GRAMMAR_QUESTIONS_SCHEMA }
     });
   },
   parse(r) {
-    return parseGrammarQuestions(structuredJson(r));
+    return parseGrammarScenario(structuredJson(r));
   }
 };
-function grammarQuestionsFor(topic, sentences = []) {
-  const ids = topic.objectives.map((o) => o.id);
+function grammarQuestionsFor(targets, sentences = []) {
+  const refs = targetRefs(targets).map((r) => objectiveRef(r.topic.id, r.objective.id));
   const sent = cleanSentences(sentences);
   return {
     ...grammarQuestions,
-    parse: (r) => parseGrammarQuestions(structuredJson(r), { objectiveIds: ids, allowOpen: allowsOpenQuestions(topic), sentences: sent })
+    parse: (r) => parseGrammarScenario(structuredJson(r), { refs, sentences: sent })
   };
 }
 var GRAMMAR_TASKS3 = [grammarQuestions];
@@ -24213,7 +26645,7 @@ function createAiService(store, ports) {
 }
 
 // src/ui/settings/SettingsTab.ts
-var import_obsidian38 = require("obsidian");
+var import_obsidian39 = require("obsidian");
 function scrollableChain(start2) {
   const out = [start2];
   for (let el = start2.parentElement; el; el = el.parentElement) {
@@ -24221,7 +26653,7 @@ function scrollableChain(start2) {
   }
   return out;
 }
-var VocabSettingsTab = class extends import_obsidian38.PluginSettingTab {
+var VocabSettingsTab = class extends import_obsidian39.PluginSettingTab {
   constructor(app, plugin, ctx, sections) {
     super(app, plugin);
     this.ctx = ctx;
@@ -24239,7 +26671,7 @@ var VocabSettingsTab = class extends import_obsidian38.PluginSettingTab {
     containerEl.addClass("vt-settings");
     const ctx = { ...this.ctx, redisplay: () => this.render(true) };
     for (const section3 of this.sections) {
-      new import_obsidian38.Setting(containerEl).setName(t(section3.title)).setHeading();
+      new import_obsidian39.Setting(containerEl).setName(t(section3.title)).setHeading();
       section3.render(containerEl.createDiv({ cls: `vt-settings-section vt-settings-${section3.id}` }), ctx);
     }
     const restore = () => {
@@ -24255,7 +26687,7 @@ function parseNonNegativeInt(value) {
 }
 
 // src/ui/settings/sections/ai.ts
-var import_obsidian39 = require("obsidian");
+var import_obsidian40 = require("obsidian");
 
 // src/ui/settings/traceView.ts
 function prettyBody(body) {
@@ -24307,14 +26739,14 @@ function renderProviderFields(el, ctx, id2) {
   const update = (mutate) => ctx.store.updateSettings((s) => mutate(s.ai.providers[id2]));
   const keyDesc = [t(ctx.keys.usesSecretStorage ? "settings.ai.key.descSecret" : "settings.ai.key.descData")];
   if (def.key === "optional") keyDesc.unshift(t("settings.ai.key.optional"));
-  new import_obsidian39.Setting(el).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
+  new import_obsidian40.Setting(el).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
     text.inputEl.type = "password";
     text.inputEl.autocomplete = "off";
     text.setPlaceholder(id2 === "anthropic" ? "sk-ant-\u2026" : "sk-\u2026").setValue(ctx.keys.get(id2));
     text.onChange((v) => void ctx.keys.set(id2, v));
   });
   if (def.editableBaseUrl) {
-    const baseUrl = new import_obsidian39.Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
+    const baseUrl = new import_obsidian40.Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
     baseUrl.settingEl.addClass("vt-settings-baseurl");
     baseUrl.addText((text) => {
       text.inputEl.addClass("vt-settings-wide");
@@ -24330,7 +26762,7 @@ function renderProviderFields(el, ctx, id2) {
       );
     }
   }
-  const modelSetting = new import_obsidian39.Setting(el).setName(t("settings.ai.model.name")).setDesc(t("settings.ai.model.desc"));
+  const modelSetting = new import_obsidian40.Setting(el).setName(t("settings.ai.model.name")).setDesc(t("settings.ai.model.desc"));
   const options = (_b = def.models) == null ? void 0 : _b.smart;
   if (options) {
     const cur = cfg().smartModel || cfg().fastModel;
@@ -24344,7 +26776,7 @@ function renderProviderFields(el, ctx, id2) {
       (text) => text.setPlaceholder(t("settings.ai.model.placeholder")).setValue(cfg().smartModel || cfg().fastModel).onChange((v) => void update((c2) => c2.smartModel = v.trim()))
     );
   }
-  const testSetting = new import_obsidian39.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
+  const testSetting = new import_obsidian40.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
   const result = el.createDiv({ cls: "vt-settings-test-result" });
   const trace = el.createDiv();
   testSetting.addButton((b) => {
@@ -24386,14 +26818,14 @@ var aiSection = {
   title: "settings.section.ai",
   render(el, ctx) {
     const ai = () => ctx.store.settings.ai;
-    new import_obsidian39.Setting(el).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle(
+    new import_obsidian40.Setting(el).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle(
       (tg) => tg.setValue(ai().enabled).onChange(async (v) => {
         var _a;
         await ctx.store.updateSettings((s) => s.ai.enabled = v);
         (_a = ctx.onAiEnabledChanged) == null ? void 0 : _a.call(ctx);
       })
     );
-    new import_obsidian39.Setting(el).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
+    new import_obsidian40.Setting(el).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
       for (const p of PROVIDERS) d.addOption(p.id, t(p.label));
       d.setValue(ai().provider).onChange(async (v) => {
         await ctx.store.updateSettings((s) => s.ai.provider = v);
@@ -24401,7 +26833,7 @@ var aiSection = {
       });
     });
     renderProviderFields(el, ctx, ai().provider);
-    new import_obsidian39.Setting(el).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
+    new import_obsidian40.Setting(el).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setPlaceholder("0").setValue(ai().monthlyTokenBudget ? String(ai().monthlyTokenBudget) : "");
       text.onChange((v) => {
@@ -24409,7 +26841,7 @@ var aiSection = {
         if (n !== null) void ctx.store.updateSettings((s) => s.ai.monthlyTokenBudget = n);
       });
     });
-    new import_obsidian39.Setting(el).setName(t("settings.ai.dnaDailyBatches.name")).addText((text) => {
+    new import_obsidian40.Setting(el).setName(t("settings.ai.dnaDailyBatches.name")).addText((text) => {
       var _a;
       text.inputEl.inputMode = "numeric";
       text.setPlaceholder("10").setValue(String((_a = ai().dnaDailyBatches) != null ? _a : 10));
@@ -24418,7 +26850,7 @@ var aiSection = {
         if (n !== null) void ctx.store.updateSettings((s) => s.ai.dnaDailyBatches = n);
       });
     });
-    const usage = new import_obsidian39.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
+    const usage = new import_obsidian40.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
     ctx.ai.usageSummary().then((u) => {
       const desc = createFragment((f) => {
         f.createDiv({ text: t("settings.ai.usage.value", { month: fmt(u.monthWeighted), today: fmt(u.today.input + u.today.output) }) });
@@ -24440,12 +26872,12 @@ var aiSection = {
 };
 
 // src/ui/settings/sections/general.ts
-var import_obsidian40 = require("obsidian");
+var import_obsidian41 = require("obsidian");
 var generalSection = {
   id: "general",
   title: "settings.section.general",
   render(el, ctx) {
-    new import_obsidian40.Setting(el).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
+    new import_obsidian41.Setting(el).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
       (d) => d.addOptions({ auto: t("settings.general.locale.auto"), "zh-TW": "\u7E41\u9AD4\u4E2D\u6587", en: "English" }).setValue(ctx.store.settings.ui.locale).onChange(async (v) => {
         await ctx.store.updateSettings((s) => {
           s.ui.locale = v;
@@ -24458,7 +26890,7 @@ var generalSection = {
 };
 
 // src/ui/settings/sections/learner.ts
-var import_obsidian41 = require("obsidian");
+var import_obsidian42 = require("obsidian");
 var learnerSection = {
   id: "learner",
   title: "settings.section.learner",
@@ -24470,32 +26902,32 @@ var learnerSection = {
       await ctx.store.updateSettings((s) => mutate(s.learner));
       preview2.setText(renderProfile(profile()));
     };
-    new import_obsidian41.Setting(el).setName(t("settings.learner.level.name")).addDropdown((d) => {
+    new import_obsidian42.Setting(el).setName(t("settings.learner.level.name")).addDropdown((d) => {
       d.addOption("", t("settings.learner.level.none"));
       for (const lv of CEFR_LEVELS) d.addOption(lv, lv);
       d.setValue(profile().level).onChange((v) => void update((p) => p.level = v));
     });
-    new import_obsidian41.Setting(el).setName(t("settings.learner.goal.name")).addDropdown((d) => {
+    new import_obsidian42.Setting(el).setName(t("settings.learner.goal.name")).addDropdown((d) => {
       for (const g of LEARNER_GOALS) d.addOption(g, t(`settings.learner.goal.${g}`));
       d.setValue(profile().goal).onChange((v) => void update((p) => p.goal = v));
     });
-    new import_obsidian41.Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
-      for (const l5 of ANSWER_LANGUAGES) d.addOption(l5, t(`settings.learner.language.${l5}`));
+    new import_obsidian42.Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
+      for (const l4 of ANSWER_LANGUAGES) d.addOption(l4, t(`settings.learner.language.${l4}`));
       d.setValue(profile().answerLanguage).onChange((v) => void update((p) => p.answerLanguage = v));
     });
-    new import_obsidian41.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
+    new import_obsidian42.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setValue(String(profile().maxAnswerChars)).onChange((v) => {
         const n = parseNonNegativeInt(v);
         if (n !== null) void update((p) => p.maxAnswerChars = n);
       });
     });
-    new import_obsidian41.Setting(el).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
+    new import_obsidian42.Setting(el).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
       ta.inputEl.rows = 3;
       ta.inputEl.addClass("vt-settings-wide");
       ta.setValue(profile().extra).onChange((v) => void update((p) => p.extra = v));
     });
-    new import_obsidian41.Setting(el).setName(t("settings.grammar.useMyWords.name")).setDesc(t("settings.grammar.useMyWords.desc")).addToggle(
+    new import_obsidian42.Setting(el).setName(t("settings.grammar.useMyWords.name")).setDesc(t("settings.grammar.useMyWords.desc")).addToggle(
       (tg) => tg.setValue(resolveGrammarSettings(ctx.store.settings.grammar).useMyWords).onChange(
         (v) => void ctx.store.updateSettings((s) => {
           var _a;
@@ -24503,7 +26935,7 @@ var learnerSection = {
         })
       )
     );
-    new import_obsidian41.Setting(el).setName(t("settings.grammar.useMySentences.name")).setDesc(t("settings.grammar.useMySentences.desc")).addToggle(
+    new import_obsidian42.Setting(el).setName(t("settings.grammar.useMySentences.name")).setDesc(t("settings.grammar.useMySentences.desc")).addToggle(
       (tg) => tg.setValue(resolveGrammarSettings(ctx.store.settings.grammar).useMySentences).onChange(
         (v) => void ctx.store.updateSettings((s) => {
           var _a;
@@ -24511,24 +26943,24 @@ var learnerSection = {
         })
       )
     );
-    const previewSetting = new import_obsidian41.Setting(el).setName(t("settings.learner.preview.name"));
+    const previewSetting = new import_obsidian42.Setting(el).setName(t("settings.learner.preview.name"));
     previewSetting.settingEl.addClass("vt-settings-preview-row");
     el.appendChild(preview2);
   }
 };
 
 // src/ui/settings/sections/srs.ts
-var import_obsidian42 = require("obsidian");
+var import_obsidian43 = require("obsidian");
 var srsSection = {
   id: "srs",
   title: "settings.section.srs",
   render(el, ctx) {
     const current = () => resolveSrsSettings(ctx.store.settings.srs);
     const update = (patch) => ctx.store.updateSettings((s) => s.srs = { ...current(), ...patch });
-    new import_obsidian42.Setting(el).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
+    new import_obsidian43.Setting(el).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
       (s) => s.setLimits(0.7, 0.99, 0.01).setValue(current().retention).setDynamicTooltip().onChange((v) => void update({ retention: v }))
     );
-    new import_obsidian42.Setting(el).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
+    new import_obsidian43.Setting(el).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setValue(String(current().dailyNew)).onChange((v) => {
         const n = parseNonNegativeInt(v);
@@ -24539,7 +26971,7 @@ var srsSection = {
 };
 
 // src/ui/settings/sections/wordlists.ts
-var import_obsidian43 = require("obsidian");
+var import_obsidian44 = require("obsidian");
 var wordlistsSection = {
   id: "wordlists",
   title: "settings.section.wordlists",
@@ -24554,19 +26986,19 @@ var wordlistsSection = {
       return update({ tags: { ...tags, [tag]: { ...tags[tag], ...patch } } }, "display");
     };
     el.createDiv({ cls: "setting-item-description", text: t("settings.wordlists.desc") });
-    new import_obsidian43.Setting(el).setName(t("settings.wordlists.folder.name")).setDesc(t("settings.wordlists.folder.desc")).addText((text) => {
+    new import_obsidian44.Setting(el).setName(t("settings.wordlists.folder.name")).setDesc(t("settings.wordlists.folder.desc")).addText((text) => {
       text.setValue(current().folder);
       text.inputEl.addEventListener("change", () => void update({ folder: text.getValue() }, "reload"));
     });
-    new import_obsidian43.Setting(el).setName(t("settings.wordlists.highlight.name")).setDesc(t("settings.wordlists.highlight.desc")).addToggle((tg) => tg.setValue(current().highlight).onChange((v) => void update({ highlight: v }, "display")));
-    new import_obsidian43.Setting(el).setName(t("settings.wordlists.inflections.name")).setDesc(t("settings.wordlists.inflections.desc")).addToggle(
+    new import_obsidian44.Setting(el).setName(t("settings.wordlists.highlight.name")).setDesc(t("settings.wordlists.highlight.desc")).addToggle((tg) => tg.setValue(current().highlight).onChange((v) => void update({ highlight: v }, "display")));
+    new import_obsidian44.Setting(el).setName(t("settings.wordlists.inflections.name")).setDesc(t("settings.wordlists.inflections.desc")).addToggle(
       (tg) => tg.setValue(current().inflections).onChange((v) => void update({ inflections: v }, "scan"))
     );
-    new import_obsidian43.Setting(el).setName(t("settings.wordlists.autoImport.name")).setDesc(t("settings.wordlists.autoImport.desc")).addToggle(
+    new import_obsidian44.Setting(el).setName(t("settings.wordlists.autoImport.name")).setDesc(t("settings.wordlists.autoImport.desc")).addToggle(
       (tg) => tg.setValue(current().autoImport).onChange((v) => void update({ autoImport: v }, "display"))
     );
     const lists = ctx.wordlists.index.lists;
-    new import_obsidian43.Setting(el).setName(t("settings.wordlists.loaded.name")).setDesc(
+    new import_obsidian44.Setting(el).setName(t("settings.wordlists.loaded.name")).setDesc(
       lists.length === 0 ? t("settings.wordlists.loaded.none", { folder: current().folder }) : t("settings.wordlists.loaded.some", { n: lists.length })
     ).addButton(
       (b) => b.setButtonText(t("settings.wordlists.reload")).onClick(async () => {
@@ -24576,14 +27008,14 @@ var wordlistsSection = {
     );
     const s = current();
     for (const list of lists) {
-      const row = new import_obsidian43.Setting(el).setName(tagLabel(list.tag)).setDesc(t("settings.wordlists.list.desc", { n: list.words.toLocaleString(), paths: list.paths.join(", ") })).addColorPicker((c2) => c2.setValue(tagColor(s, list.tag)).onChange((v) => void updateTag(list.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list.tag)).onChange((v) => void updateTag(list.tag, { enabled: v })));
+      const row = new import_obsidian44.Setting(el).setName(tagLabel(list.tag)).setDesc(t("settings.wordlists.list.desc", { n: list.words.toLocaleString(), paths: list.paths.join(", ") })).addColorPicker((c2) => c2.setValue(tagColor(s, list.tag)).onChange((v) => void updateTag(list.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list.tag)).onChange((v) => void updateTag(list.tag, { enabled: v })));
       row.settingEl.addClass("vt-wordlist-row");
     }
   }
 };
 
 // src/ui/settings/sections/files.ts
-var import_obsidian44 = require("obsidian");
+var import_obsidian45 = require("obsidian");
 
 // src/services/files/settings.ts
 var DEFAULT_FILES_SETTINGS = {
@@ -24629,7 +27061,7 @@ var filesSection = {
     const update = (patch) => ctx.store.updateSettings((s) => s.files = { ...current(), ...patch });
     el.createDiv({ cls: "setting-item-description", text: t("settings.files.desc") });
     for (const field of FIELDS) {
-      new import_obsidian44.Setting(el).setName(t(field.name)).setDesc(t(field.desc)).addText((text) => {
+      new import_obsidian45.Setting(el).setName(t(field.name)).setDesc(t(field.desc)).addText((text) => {
         text.setValue(current()[field.key]);
         text.inputEl.addEventListener("change", async () => {
           await update({ [field.key]: text.getValue() });
@@ -24641,12 +27073,12 @@ var filesSection = {
 };
 
 // src/ui/settings/sections/paragraphs.ts
-var import_obsidian45 = require("obsidian");
+var import_obsidian46 = require("obsidian");
 var paragraphsSection = {
   id: "paragraphs",
   title: "settings.section.paragraphs",
   render(el, ctx) {
-    new import_obsidian45.Setting(el).setName(t("settings.paragraphs.hashMode.name")).setDesc(t("settings.paragraphs.hashMode.desc")).addToggle(
+    new import_obsidian46.Setting(el).setName(t("settings.paragraphs.hashMode.name")).setDesc(t("settings.paragraphs.hashMode.desc")).addToggle(
       (tg) => tg.setValue(resolveAnchorSettings(ctx.store.settings).mode === "hash").onChange(
         (on) => ctx.store.updateSettings((s) => patchAnchorSettings(s, { mode: on ? "hash" : "block", blockIdNoticeSeen: true }))
       )
@@ -24655,7 +27087,7 @@ var paragraphsSection = {
 };
 
 // src/ui/settings/sections/reading.ts
-var import_obsidian46 = require("obsidian");
+var import_obsidian47 = require("obsidian");
 function tapOptions() {
   const out = {};
   for (const a2 of TAP_ACTIONS) out[a2] = t(`settings.reading.tap.${a2}`);
@@ -24682,19 +27114,19 @@ var readingSection = {
   title: "settings.section.reading",
   render(el, ctx) {
     const prefs = resolveUiPrefs(ctx.store.settings.ui);
-    new import_obsidian46.Setting(el).setName(t("settings.reading.tapAction.name")).setDesc(t("settings.reading.tapAction.desc")).addDropdown(
+    new import_obsidian47.Setting(el).setName(t("settings.reading.tapAction.name")).setDesc(t("settings.reading.tapAction.desc")).addDropdown(
       (d) => d.addOptions(tapOptions()).setValue(prefs.tapAction).onChange((v) => setWordTapAction(ctx, v))
     );
-    new import_obsidian46.Setting(el).setName(t("settings.reading.pronounceSource.name")).setDesc(t("settings.reading.pronounceSource.desc")).addDropdown(
+    new import_obsidian47.Setting(el).setName(t("settings.reading.pronounceSource.name")).setDesc(t("settings.reading.pronounceSource.desc")).addDropdown(
       (d) => d.addOptions(pronounceOptions()).setValue(prefs.pronounceSource).onChange((v) => setPref(ctx, "pronounceSource", v))
     );
-    new import_obsidian46.Setting(el).setName(t("settings.reading.livePreviewHint.name")).setDesc(t("settings.reading.livePreviewHint.desc")).addToggle((tg) => tg.setValue(prefs.livePreviewHint).onChange((on) => setPref(ctx, "livePreviewHint", on)));
-    new import_obsidian46.Setting(el).setName(t("settings.reading.sidebarOnPhone.name")).setDesc(t("settings.reading.sidebarOnPhone.desc")).addToggle((tg) => tg.setValue(prefs.sidebarOnPhone).onChange((on) => setPref(ctx, "sidebarOnPhone", on)));
+    new import_obsidian47.Setting(el).setName(t("settings.reading.livePreviewHint.name")).setDesc(t("settings.reading.livePreviewHint.desc")).addToggle((tg) => tg.setValue(prefs.livePreviewHint).onChange((on) => setPref(ctx, "livePreviewHint", on)));
+    new import_obsidian47.Setting(el).setName(t("settings.reading.sidebarOnPhone.name")).setDesc(t("settings.reading.sidebarOnPhone.desc")).addToggle((tg) => tg.setValue(prefs.sidebarOnPhone).onChange((on) => setPref(ctx, "sidebarOnPhone", on)));
   }
 };
 
 // src/ui/settings/sections/backup.ts
-var import_obsidian48 = require("obsidian");
+var import_obsidian49 = require("obsidian");
 
 // src/ui/settings/backupText.ts
 function pad2(n) {
@@ -24767,19 +27199,19 @@ function deviceLines() {
 }
 
 // src/ui/settings/RestoreModal.ts
-var import_obsidian47 = require("obsidian");
+var import_obsidian48 = require("obsidian");
 
 // src/services/learn/learnMerge.ts
 var TOMBSTONE_TTL_MS = 30 * 24 * 60 * 60 * 1e3;
-function ms6(iso) {
+function ms5(iso) {
   const t2 = iso ? new Date(iso).getTime() : 0;
   return Number.isNaN(t2) ? 0 : t2;
 }
 function pickNewer2(local, remote) {
   var _a, _b;
-  const l5 = ms6(local.updatedAt);
-  const r = ms6(remote.updatedAt);
-  if (l5 !== r) return r > l5 ? remote : local;
+  const l4 = ms5(local.updatedAt);
+  const r = ms5(remote.updatedAt);
+  if (l4 !== r) return r > l4 ? remote : local;
   return ((_a = remote.rev) != null ? _a : 0) > ((_b = local.rev) != null ? _b : 0) ? remote : local;
 }
 function mergeRecords(local, remote, pick = pickNewer2) {
@@ -24805,7 +27237,7 @@ function pickFamily(local, remote) {
   return winner;
 }
 function dropOldTombstones(records, now2) {
-  return records.filter((r) => !r.deletedAt || now2 - ms6(r.deletedAt) < TOMBSTONE_TTL_MS);
+  return records.filter((r) => !r.deletedAt || now2 - ms5(r.deletedAt) < TOMBSTONE_TTL_MS);
 }
 function emptyLearnShard() {
   return { families: [], trivia: [], verbs: [], morphemes: [], wordMeta: [] };
@@ -24882,8 +27314,8 @@ function dedupeMorphemes(list) {
       const av = a2.verified ? 0 : 1;
       const bv = b.verified ? 0 : 1;
       if (av !== bv) return av - bv;
-      const ac = ms6(a2.createdAt);
-      const bc = ms6(b.createdAt);
+      const ac = ms5(a2.createdAt);
+      const bc = ms5(b.createdAt);
       if (ac !== bc) return ac - bc;
       return a2.id < b.id ? -1 : a2.id > b.id ? 1 : 0;
     })[0];
@@ -24927,7 +27359,7 @@ function pickWordMeta(local, remote) {
   }
   const lb = local.breakdown;
   const rb = remote.breakdown;
-  out.breakdown = !lb ? rb : !rb ? lb : ms6(lb.generatedAt) >= ms6(rb.generatedAt) ? lb : rb;
+  out.breakdown = !lb ? rb : !rb ? lb : ms5(lb.generatedAt) >= ms5(rb.generatedAt) ? lb : rb;
   return out;
 }
 function mergeLearn(local, remote) {
@@ -24942,7 +27374,7 @@ function mergeLearn(local, remote) {
 }
 
 // src/services/grammar/grammarMerge.ts
-function ms7(iso) {
+function ms6(iso) {
   const t2 = iso ? new Date(iso).getTime() : 0;
   return Number.isNaN(t2) ? 0 : t2;
 }
@@ -24951,6 +27383,22 @@ function emptyGrammarShard() {
 }
 var str6 = (v) => typeof v === "string" && v !== "";
 var isObj6 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+function normalizeScenario(raw) {
+  if (!isObj6(raw) || !str6(raw.id) || !str6(raw.scene)) return null;
+  const seq = typeof raw.seq === "number" && Number.isFinite(raw.seq) && raw.seq >= 0 ? Math.floor(raw.seq) : null;
+  if (seq === null) return null;
+  const out = { id: raw.id, scene: raw.scene, seq };
+  if (str6(raw.speaker)) out.speaker = raw.speaker;
+  if (Array.isArray(raw.lead)) {
+    const lead = [];
+    for (const l4 of raw.lead) {
+      if (!isObj6(l4) || !str6(l4.text)) continue;
+      lead.push(str6(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
+    }
+    if (lead.length) out.lead = lead;
+  }
+  return out;
+}
 function normalizeQuestion(raw) {
   if (!isObj6(raw) || !str6(raw.id) || !str6(raw.topicId) || !str6(raw.objectiveId)) return null;
   if (typeof raw.stem !== "string" || typeof raw.answer !== "string") return null;
@@ -24970,6 +27418,11 @@ function normalizeQuestion(raw) {
   if (accepted) q.accepted = accepted;
   else delete q.accepted;
   if (!isObj6(raw.distractors)) delete q.distractors;
+  const scenario = normalizeScenario(raw.scenario);
+  if (scenario) q.scenario = scenario;
+  else delete q.scenario;
+  if (str6(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
+  else delete q.sentenceZh;
   return q;
 }
 function normalizeAttempt(raw) {
@@ -25009,13 +27462,13 @@ function normalizeGrammarShard(raw) {
   };
 }
 function sortAttempts(list) {
-  return list.sort((a2, b) => ms7(a2.at) - ms7(b.at) || (a2.id < b.id ? -1 : a2.id > b.id ? 1 : 0));
+  return list.sort((a2, b) => ms6(a2.at) - ms6(b.at) || (a2.id < b.id ? -1 : a2.id > b.id ? 1 : 0));
 }
 function mergeGrammar(local, remote) {
   return {
     questions: mergeRecords(local.questions, remote.questions),
     // An attempt never changes once written: the local copy stands.
-    attempts: sortAttempts(mergeRecords(local.attempts, remote.attempts, (l5) => l5)),
+    attempts: sortAttempts(mergeRecords(local.attempts, remote.attempts, (l4) => l4)),
     progress: mergeRecords(local.progress, remote.progress)
   };
 }
@@ -25034,9 +27487,138 @@ function pruneGrammar(shard, now2) {
   };
 }
 
+// src/core/model/learner.ts
+var TRACKS = ["grammar", "poly", "vocab", "mix"];
+var FOCUS_KINDS = ["grammar-objective", "sense", "word"];
+var LEARN_RESULTS = ["correct", "wrong", "skipped", "hinted", "retired"];
+
+// src/services/learner/learnerMerge.ts
+var DAY_MS4 = 864e5;
+var POOL_TOMBSTONE_TTL_MS = 30 * DAY_MS4;
+var MISTAKE_RESOLVED_TTL_MS = 90 * DAY_MS4;
+var EVENT_TTL_MS = 365 * DAY_MS4;
+function ms7(iso) {
+  const t2 = iso ? Date.parse(iso) : 0;
+  return Number.isNaN(t2) ? 0 : t2;
+}
+function emptyLearnerShard() {
+  return { events: [], pool: [], mistakes: [], filters: [], meta: {} };
+}
+var str7 = (v) => typeof v === "string" && v !== "";
+var isObj7 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var isIso = (v) => str7(v) && !Number.isNaN(Date.parse(v));
+var isTrack = (v) => TRACKS.includes(v);
+var REASONS = ["answered", "skipped", "retired", "filtered"];
+function focusOf(raw) {
+  if (!isObj7(raw) || !str7(raw.id) || !FOCUS_KINDS.includes(raw.kind)) return null;
+  return { kind: raw.kind, id: raw.id };
+}
+function normalizeEvent(raw) {
+  if (!isObj7(raw) || !str7(raw.id) || !isIso(raw.at) || !isTrack(raw.track)) return null;
+  const focus = focusOf(raw.focus);
+  if (!focus || !LEARN_RESULTS.includes(raw.result)) return null;
+  const e = { id: raw.id, at: raw.at, track: raw.track, focus, result: raw.result };
+  if (typeof raw.given === "string") e.given = raw.given;
+  if (str7(raw.errorTag)) e.errorTag = raw.errorTag;
+  if (str7(raw.questionId)) e.questionId = raw.questionId;
+  return e;
+}
+function normalizePool(raw) {
+  if (!isObj7(raw) || !str7(raw.id) || !isTrack(raw.track) || !str7(raw.questionId)) return null;
+  if (!isIso(raw.addedAt)) return null;
+  const p = {
+    id: raw.id,
+    track: raw.track,
+    questionId: raw.questionId,
+    seq: typeof raw.seq === "number" && Number.isFinite(raw.seq) ? raw.seq : 0,
+    addedAt: raw.addedAt,
+    updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : raw.addedAt
+  };
+  if (str7(raw.scenarioId)) p.scenarioId = raw.scenarioId;
+  if (isIso(raw.removedAt)) {
+    p.removedAt = raw.removedAt;
+    p.removeReason = REASONS.includes(raw.removeReason) ? raw.removeReason : "answered";
+  }
+  return p;
+}
+function normalizeMistake(raw) {
+  if (!isObj7(raw) || !str7(raw.id) || !isTrack(raw.track) || !str7(raw.questionId)) return null;
+  const focus = focusOf(raw.focus);
+  if (!focus || !isIso(raw.lastWrongAt)) return null;
+  const addedAt = isIso(raw.addedAt) ? raw.addedAt : raw.lastWrongAt;
+  const m2 = {
+    id: raw.id,
+    track: raw.track,
+    questionId: raw.questionId,
+    focus,
+    addedAt,
+    lastWrongAt: raw.lastWrongAt,
+    updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : raw.lastWrongAt
+  };
+  if (isIso(raw.resolvedAt)) m2.resolvedAt = raw.resolvedAt;
+  return m2;
+}
+function normalizeFilter(raw) {
+  if (!isObj7(raw) || !isTrack(raw.id)) return null;
+  return { id: raw.id, value: raw.value, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : "" };
+}
+function normList2(raw, one2) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const r of raw) {
+    const v = one2(r);
+    if (v) out.push(v);
+  }
+  return out;
+}
+function normalizeLearnerShard(raw) {
+  const s = isObj7(raw) ? raw : {};
+  const meta = isObj7(s.meta) && isIso(s.meta.grammarMigratedAt) ? { grammarMigratedAt: s.meta.grammarMigratedAt } : {};
+  return {
+    events: sortEvents(normList2(s.events, normalizeEvent)),
+    pool: normList2(s.pool, normalizePool),
+    mistakes: normList2(s.mistakes, normalizeMistake),
+    filters: normList2(s.filters, normalizeFilter),
+    meta
+  };
+}
+function sortEvents(list) {
+  return list.sort((a2, b) => ms7(a2.at) - ms7(b.at) || (a2.id < b.id ? -1 : a2.id > b.id ? 1 : 0));
+}
+function mergeLearner(local, remote) {
+  const a2 = local.meta.grammarMigratedAt;
+  const b = remote.meta.grammarMigratedAt;
+  const migrated = a2 && b ? ms7(a2) <= ms7(b) ? a2 : b : a2 != null ? a2 : b;
+  return {
+    events: sortEvents(mergeRecords(local.events, remote.events, (l4) => l4)),
+    pool: mergeRecords(local.pool, remote.pool),
+    mistakes: mergeRecords(local.mistakes, remote.mistakes),
+    filters: mergeRecords(local.filters, remote.filters),
+    meta: migrated ? { grammarMigratedAt: migrated } : {}
+  };
+}
+function learnerFingerprint(shard) {
+  var _a, _b, _c;
+  const rows = [`m|${(_a = shard.meta.grammarMigratedAt) != null ? _a : ""}`];
+  for (const e of shard.events) rows.push(`e|${e.id}`);
+  for (const p of shard.pool) rows.push(`p|${p.id}|${p.updatedAt}|${(_b = p.removedAt) != null ? _b : ""}`);
+  for (const m2 of shard.mistakes) rows.push(`x|${m2.id}|${m2.updatedAt}|${(_c = m2.resolvedAt) != null ? _c : ""}`);
+  for (const f of shard.filters) rows.push(`f|${f.id}|${f.updatedAt}`);
+  return rows.sort().join("\n");
+}
+function pruneLearner(shard, now2) {
+  return {
+    events: shard.events.filter((e) => now2 - ms7(e.at) < EVENT_TTL_MS),
+    pool: shard.pool.filter((p) => !p.removedAt || now2 - ms7(p.removedAt) < POOL_TOMBSTONE_TTL_MS),
+    mistakes: shard.mistakes.filter((m2) => !m2.resolvedAt || now2 - ms7(m2.resolvedAt) < MISTAKE_RESOLVED_TTL_MS),
+    filters: shard.filters,
+    meta: shard.meta
+  };
+}
+
 // src/services/backup/format.ts
 var FULL_BACKUP_FORMAT = 1;
-var RESTORABLE_SHARDS = ["threads", "learn", "grammar", "reviews", "imports", "files"];
+var RESTORABLE_SHARDS = ["threads", "learn", "grammar", "learner", "reviews", "imports", "files"];
 function isObject(v) {
   return !!v && typeof v === "object" && !Array.isArray(v);
 }
@@ -25061,6 +27643,7 @@ function snapshotOf(shards) {
   if ("threads" in shards) out.threads = arrayField(shards.threads, "threads");
   if ("learn" in shards) out.learn = normalizeLearnShard(shards.learn);
   if ("grammar" in shards) out.grammar = normalizeGrammarShard(shards.grammar);
+  if ("learner" in shards) out.learner = normalizeLearnerShard(shards.learner);
   if ("reviews" in shards) out.reviews = arrayField(shards.reviews, "logs");
   if ("imports" in shards) out.imports = stringMap(isObject(shards.imports) ? shards.imports.notes : void 0);
   if ("files" in shards) out.files = stringMap(isObject(shards.files) ? shards.files.seeded : void 0);
@@ -25113,7 +27696,7 @@ function liveQuestions(thread) {
   if (thread.deletedAt) return 0;
   return thread.turns.filter((t2) => t2.role === "user" && !t2.deletedAt).length;
 }
-function summarize2(s) {
+function summarize(s) {
   var _a, _b, _c;
   const out = { words: ((_b = (_a = s.data) == null ? void 0 : _a.entries) != null ? _b : []).filter((e) => !e.deletedAt).length };
   if (s.threads) {
@@ -25290,7 +27873,7 @@ function unionAttempts(current, backup, counts) {
   return added.length ? sortAttempts([...current, ...added]) : [...current];
 }
 function currentShard(current, shard) {
-  var _a, _b, _c, _d, _e, _f, _g;
+  var _a, _b, _c, _d, _e, _f, _g, _h;
   switch (shard) {
     case "data":
       return (_a = current.data) != null ? _a : emptyData();
@@ -25300,12 +27883,14 @@ function currentShard(current, shard) {
       return (_c = current.learn) != null ? _c : { families: [], trivia: [], verbs: [] };
     case "grammar":
       return (_d = current.grammar) != null ? _d : emptyGrammarShard();
+    case "learner":
+      return (_e = current.learner) != null ? _e : emptyLearnerShard();
     case "reviews":
-      return { logs: (_e = current.reviews) != null ? _e : [] };
+      return { logs: (_f = current.reviews) != null ? _f : [] };
     case "imports":
-      return { notes: (_f = current.imports) != null ? _f : {} };
+      return { notes: (_g = current.imports) != null ? _g : {} };
     case "files":
-      return { seeded: (_g = current.files) != null ? _g : {} };
+      return { seeded: (_h = current.files) != null ? _h : {} };
   }
 }
 function newest(iso, acc) {
@@ -25334,7 +27919,7 @@ function emptyData() {
   return { schemaVersion: 2, settings: { schemaVersion: 2 }, entries: [] };
 }
 function planRestore(current, backup, opts) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
   const counts = {
     words: zero2(),
     threads: zero2(),
@@ -25381,15 +27966,16 @@ function planRestore(current, backup, opts) {
       progress: rebaseRecords(cur.progress, backup.grammar.progress, opts, counts.grammar, [])
     };
   } else missing.push("grammar");
+  if (backup.learner) shards.learner = mergeLearner((_g = current.learner) != null ? _g : emptyLearnerShard(), backup.learner);
   if (backup.reviews) {
-    const cur = (_g = current.reviews) != null ? _g : [];
+    const cur = (_h = current.reviews) != null ? _h : [];
     const logs = pruneReviewLogs(mergeReviewLogs(cur, backup.reviews), new Date(opts.now));
-    const had = new Set(cur.map((l5) => l5.id));
-    counts.reviewsAdded = logs.filter((l5) => !had.has(l5.id)).length;
+    const had = new Set(cur.map((l4) => l4.id));
+    counts.reviewsAdded = logs.filter((l4) => !had.has(l4.id)).length;
     shards.reviews = { logs };
   } else missing.push("reviews");
-  if (backup.imports) shards.imports = { notes: { ...backup.imports, ...(_h = current.imports) != null ? _h : {} } };
-  if (backup.files) shards.files = { seeded: { ...backup.files, ...(_i = current.files) != null ? _i : {} } };
+  if (backup.imports) shards.imports = { notes: { ...backup.imports, ...(_i = current.imports) != null ? _i : {} } };
+  if (backup.files) shards.files = { seeded: { ...backup.files, ...(_j = current.files) != null ? _j : {} } };
   return { shards, data, counts, missing, changes };
 }
 
@@ -25435,7 +28021,7 @@ var BackupService = class {
     const parsed = await this.load(name);
     const base = { name, path: this.pathOf(name) };
     if (!parsed) return { ...base, kind: "unreadable", createdAt: stampFromName(name), reason: "unknown", summary: null };
-    return { ...base, kind: parsed.kind, createdAt: parsed.createdAt, reason: parsed.reason, summary: summarize2(parsed.snapshot) };
+    return { ...base, kind: parsed.kind, createdAt: parsed.createdAt, reason: parsed.reason, summary: summarize(parsed.snapshot) };
   }
   // 立即備份: everything on disk right now. Resolves to the file's path.
   async create() {
@@ -25505,7 +28091,7 @@ var BackupService = class {
 };
 
 // src/ui/settings/RestoreModal.ts
-var RestoreModal = class extends import_obsidian47.Modal {
+var RestoreModal = class extends import_obsidian48.Modal {
   constructor(app, backups, item, onDone) {
     super(app);
     this.backups = backups;
@@ -25543,7 +28129,7 @@ var RestoreModal = class extends import_obsidian47.Modal {
     if (text.extras) {
       el.createEl("h4", { text: t("backup.restore.extras.title") });
       el.createEl("p", { text: text.extras });
-      const remove2 = new import_obsidian47.Setting(el).setName(t("backup.restore.extras.remove")).addToggle(
+      const remove2 = new import_obsidian48.Setting(el).setName(t("backup.restore.extras.remove")).addToggle(
         (toggle2) => toggle2.setValue(this.removeExtras).onChange((v) => this.removeExtras = v)
       );
       if (item.reason === "before-restore") remove2.setDesc(t("backup.restore.extras.undoHint"));
@@ -25552,7 +28138,7 @@ var RestoreModal = class extends import_obsidian47.Modal {
     el.createEl("h4", { text: t("backup.restore.devices.title") });
     const devices = el.createEl("ul");
     for (const line2 of deviceLines()) devices.createEl("li", { text: line2 });
-    new import_obsidian47.Setting(el).addButton((b) => b.setButtonText(t("backup.restore.cancel")).onClick(() => this.close())).addButton(
+    new import_obsidian48.Setting(el).addButton((b) => b.setButtonText(t("backup.restore.cancel")).onClick(() => this.close())).addButton(
       (b) => b.setButtonText(t("backup.restore.confirm")).setWarning().onClick(async () => {
         if (this.running) return;
         this.running = true;
@@ -25564,11 +28150,11 @@ var RestoreModal = class extends import_obsidian47.Modal {
   async restore() {
     try {
       const result = await this.backups.restore(this.item.name, { removeExtras: this.removeExtras });
-      new import_obsidian47.Notice(t("backup.restore.done", { path: result.safetyPath }), 1e4);
+      new import_obsidian48.Notice(t("backup.restore.done", { path: result.safetyPath }), 1e4);
       this.onDone(result);
     } catch (e) {
       const key5 = e instanceof BackupError && e.code === "safety-failed" ? "backup.restore.safetyFailed" : "backup.restore.failed";
-      new import_obsidian47.Notice(t(key5, { error: errorMessage(e) }), 1e4);
+      new import_obsidian48.Notice(t(key5, { error: errorMessage(e) }), 1e4);
       console.error("Vocab Tracker: restore failed", e);
     } finally {
       this.close();
@@ -25590,21 +28176,21 @@ var backupSection = {
     }
     const listEl = createDiv();
     const fill2 = () => void renderList(listEl, backups, ctx);
-    new import_obsidian48.Setting(el).setName(t("settings.backup.create.name")).setDesc(t("settings.backup.create.desc")).addButton(
+    new import_obsidian49.Setting(el).setName(t("settings.backup.create.name")).setDesc(t("settings.backup.create.desc")).addButton(
       (b) => b.setButtonText(t("settings.backup.create.button")).onClick(async () => {
         b.setDisabled(true);
         try {
           const path = await backups.create();
-          new import_obsidian48.Notice(t("settings.backup.created", { path }), 8e3);
+          new import_obsidian49.Notice(t("settings.backup.created", { path }), 8e3);
           fill2();
         } catch (e) {
-          new import_obsidian48.Notice(t("settings.backup.failed", { error: errorMessage(e) }), 8e3);
+          new import_obsidian49.Notice(t("settings.backup.failed", { error: errorMessage(e) }), 8e3);
         } finally {
           b.setDisabled(false);
         }
       })
     );
-    new import_obsidian48.Setting(el).setName(t("settings.backup.list.name")).addExtraButton((b) => b.setIcon("refresh-cw").setTooltip(t("settings.backup.list.reload")).onClick(fill2));
+    new import_obsidian49.Setting(el).setName(t("settings.backup.list.name")).addExtraButton((b) => b.setIcon("refresh-cw").setTooltip(t("settings.backup.list.reload")).onClick(fill2));
     el.appendChild(listEl);
     fill2();
   }
@@ -25626,7 +28212,7 @@ async function renderList(listEl, backups, ctx) {
     return;
   }
   for (const item of items) {
-    const row = new import_obsidian48.Setting(listEl).setName(backupTitle(item)).setDesc(backupDesc(item));
+    const row = new import_obsidian49.Setting(listEl).setName(backupTitle(item)).setDesc(backupDesc(item));
     if (item.kind === "unreadable") continue;
     row.addButton(
       (b) => b.setButtonText(t("settings.backup.restore.button")).onClick(
@@ -25653,14 +28239,14 @@ var SETTINGS_SECTIONS2 = [
 ];
 
 // src/platform/ObsidianNotes.ts
-var import_obsidian49 = require("obsidian");
+var import_obsidian50 = require("obsidian");
 var ObsidianNotes = class {
   constructor(app) {
     this.app = app;
   }
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian49.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian50.TFile ? this.app.vault.cachedRead(file) : null;
   }
 };
 
@@ -25975,7 +28561,7 @@ var ThreadService = class {
   async askWord(entry, req) {
     var _a;
     const source = await findWordSource(entry, this.deps.notes);
-    const display2 = this.displayFor(req);
+    const display = this.displayFor(req);
     const anchor = { kind: "word", entryId: entry.id };
     if ((_a = entry.source) == null ? void 0 : _a.path) anchor.origin = { path: entry.source.path };
     await this.ask({
@@ -25983,7 +28569,7 @@ var ThreadService = class {
       anchor,
       taskId: req.taskId,
       input: wordInput(entry, source, { question: req.question, selection: req.selection }),
-      display: display2,
+      display,
       question: req.question,
       selection: req.selection
     });
@@ -26720,6 +29306,264 @@ var GrammarStore = class {
   }
 };
 
+// src/core/practice/pool.ts
+var POOL_SIZE = 10;
+var REFILL_AT = 4;
+function livePool(items, track2) {
+  return items.filter((i) => i.track === track2 && !i.removedAt).sort((a2, b) => a2.seq - b.seq);
+}
+function needsRefill(items, track2) {
+  return livePool(items, track2).length <= REFILL_AT;
+}
+function poolRoom(items, track2) {
+  return Math.max(0, POOL_SIZE - livePool(items, track2).length);
+}
+function addToPool(items, track2, add3, now2) {
+  const seen = new Set(items.filter((i) => i.track === track2).map((i) => i.questionId));
+  let seq = items.reduce((m2, i) => i.track === track2 ? Math.max(m2, i.seq) : m2, 0);
+  let room = poolRoom(items, track2);
+  const iso = now2.toISOString();
+  const out = [];
+  for (const a2 of add3) {
+    if (room <= 0) break;
+    if (seen.has(a2.questionId)) continue;
+    seen.add(a2.questionId);
+    room--;
+    const item = {
+      id: `${track2}:${a2.questionId}`,
+      track: track2,
+      questionId: a2.questionId,
+      seq: ++seq,
+      addedAt: iso,
+      updatedAt: iso
+    };
+    if (a2.scenarioId) item.scenarioId = a2.scenarioId;
+    out.push(item);
+  }
+  return out;
+}
+function removeFromPool(item, reason, now2) {
+  const iso = now2.toISOString();
+  return { ...item, removedAt: iso, removeReason: reason, updatedAt: iso };
+}
+
+// src/core/learner/migrateGrammar.ts
+var created = (q) => {
+  var _a;
+  const t2 = Date.parse((_a = q.createdAt) != null ? _a : "");
+  return Number.isNaN(t2) ? 0 : t2;
+};
+function migrateGrammar(questions2, attempts, now2, existingPool = []) {
+  const qById = new Map(questions2.map((q) => [q.id, q]));
+  const sorted = [...attempts].sort((a2, b) => Date.parse(a2.at) - Date.parse(b.at) || (a2.id < b.id ? -1 : a2.id > b.id ? 1 : 0));
+  const events = sorted.map((a2) => {
+    var _a;
+    const e = {
+      id: `g:${a2.id}`,
+      at: a2.at,
+      track: "grammar",
+      focus: { kind: "grammar-objective", id: `${a2.topicId}/${a2.objectiveId}` },
+      result: a2.correct ? "correct" : "wrong",
+      given: a2.given,
+      questionId: a2.questionId
+    };
+    const tag = (_a = qById.get(a2.questionId)) == null ? void 0 : _a.errorTag;
+    if (!a2.correct && tag) e.errorTag = tag;
+    return e;
+  });
+  const byQuestion = /* @__PURE__ */ new Map();
+  for (const a2 of sorted) {
+    const list = byQuestion.get(a2.questionId);
+    if (list) list.push(a2);
+    else byQuestion.set(a2.questionId, [a2]);
+  }
+  const usable = questions2.filter((q) => !q.retiredAt && !q.deletedAt);
+  const mistakes = [];
+  for (const q of usable) {
+    const list = byQuestion.get(q.id);
+    if (!list || list[list.length - 1].correct) continue;
+    const wrongs = list.filter((a2) => !a2.correct);
+    mistakes.push({
+      id: `grammar:${q.id}`,
+      track: "grammar",
+      questionId: q.id,
+      focus: { kind: "grammar-objective", id: `${q.topicId}/${q.objectiveId}` },
+      addedAt: wrongs[0].at,
+      lastWrongAt: wrongs[wrongs.length - 1].at,
+      updatedAt: wrongs[wrongs.length - 1].at
+    });
+  }
+  const fresh = usable.filter((q) => !byQuestion.has(q.id)).sort((a2, b) => created(a2) - created(b)).map((q) => ({ questionId: q.id }));
+  const pool = addToPool(existingPool, "grammar", fresh, now2);
+  return { events, mistakes, pool };
+}
+
+// src/core/practice/mistakes.ts
+function recordWrong(existing, track2, questionId, focus, now2) {
+  const iso = now2.toISOString();
+  if (existing) {
+    const reopened = { ...existing, focus, lastWrongAt: iso, updatedAt: iso };
+    delete reopened.resolvedAt;
+    return reopened;
+  }
+  return { id: `${track2}:${questionId}`, track: track2, questionId, focus, addedAt: iso, lastWrongAt: iso, updatedAt: iso };
+}
+function resolveMistake(item, now2) {
+  const iso = now2.toISOString();
+  return { ...item, resolvedAt: iso, updatedAt: iso };
+}
+function openMistakes(items, track2) {
+  return items.filter((m2) => !m2.resolvedAt && (track2 === void 0 || m2.track === track2)).sort((a2, b) => a2.lastWrongAt < b.lastWrongAt ? 1 : a2.lastWrongAt > b.lastWrongAt ? -1 : 0);
+}
+
+// src/services/learner/LearnerStore.ts
+var LEARNER_SHARD = "learner";
+var WRITE_DEBOUNCE_MS6 = 500;
+var LearnerStore = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.events = new TypedEmitter();
+    this.data = emptyLearnerShard();
+    this.loading = null;
+    this.ready = false;
+    this.writeTimer = null;
+    this.pendingWrite = Promise.resolve();
+    var _a;
+    this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
+  }
+  ensureLoaded() {
+    if (!this.loading) {
+      this.loading = this.readDisk().then((disk) => {
+        this.data = mergeLearner(this.data, disk);
+        this.ready = true;
+      });
+    }
+    return this.loading;
+  }
+  get loaded() {
+    return this.loading !== null;
+  }
+  async reload() {
+    if (!this.loading) return;
+    await this.loading;
+    const disk = await this.readDisk();
+    this.data = mergeLearner(this.data, disk);
+    this.events.emit("learner:reloaded", void 0);
+    if (learnerFingerprint(this.data) !== learnerFingerprint(disk)) this.scheduleWrite();
+  }
+  async readDisk() {
+    try {
+      return normalizeLearnerShard(await this.deps.storage.readShard(LEARNER_SHARD));
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't read learner data", e);
+      return emptyLearnerShard();
+    }
+  }
+  // ── Events (append-only) ──────────────────────────────────────
+  // Ignored when an event with the same id is already stored.
+  addEvent(e) {
+    if (this.data.events.some((x3) => x3.id === e.id)) return;
+    this.data.events = sortEvents([...this.data.events, e]);
+    this.events.emit("event:add", e);
+    this.scheduleWrite();
+  }
+  // Oldest first.
+  learnEvents(opts = {}) {
+    return this.data.events.filter(
+      (e) => (opts.track === void 0 || e.track === opts.track) && (opts.focusId === void 0 || e.focus.id === opts.focusId)
+    );
+  }
+  // ── Pool ──────────────────────────────────────────────────────
+  pool(track2) {
+    return livePool(this.data.pool, track2);
+  }
+  // Every stored pool item (removed ones included), for addToPool's de-dupe.
+  allPool() {
+    return [...this.data.pool];
+  }
+  upsertPool(items) {
+    if (items.length === 0) return;
+    const tracks = /* @__PURE__ */ new Set();
+    for (const it of items) {
+      this.upsert(this.data.pool, it);
+      tracks.add(it.track);
+    }
+    for (const t2 of tracks) this.events.emit("pool:change", t2);
+    this.scheduleWrite();
+  }
+  // ── Mistakes ──────────────────────────────────────────────────
+  mistakes(track2) {
+    return openMistakes(this.data.mistakes, track2);
+  }
+  // Resolved ones included.
+  mistake(id2) {
+    return this.data.mistakes.find((m2) => m2.id === id2);
+  }
+  upsertMistake(m2) {
+    this.upsert(this.data.mistakes, m2);
+    this.events.emit("mistake:change", m2);
+    this.scheduleWrite();
+  }
+  // ── Filters ───────────────────────────────────────────────────
+  filter(track2) {
+    var _a;
+    return (_a = this.data.filters.find((f) => f.id === track2)) == null ? void 0 : _a.value;
+  }
+  setFilter(track2, value) {
+    this.upsert(this.data.filters, { id: track2, value, updatedAt: this.clock().toISOString() });
+    this.events.emit("filter:change", track2);
+    this.scheduleWrite();
+  }
+  // ── Migration ─────────────────────────────────────────────────
+  // Call after ensureLoaded() (and after the GrammarStore has loaded).
+  // Returns false — doing nothing — when it already ran, or the store isn't
+  // loaded yet (so a missing disk copy can't be mistaken for "never ran").
+  migrateFromGrammar(questions2, attempts) {
+    if (!this.ready || this.data.meta.grammarMigratedAt) return false;
+    const now2 = this.clock();
+    const m2 = migrateGrammar(questions2, attempts, now2, this.data.pool);
+    const known2 = new Set(this.data.events.map((e) => e.id));
+    this.data.events = sortEvents([...this.data.events, ...m2.events.filter((e) => !known2.has(e.id))]);
+    for (const x3 of m2.mistakes) if (!this.data.mistakes.some((y3) => y3.id === x3.id)) this.data.mistakes.push(x3);
+    this.data.pool.push(...m2.pool);
+    this.data.meta = { ...this.data.meta, grammarMigratedAt: now2.toISOString() };
+    if (m2.pool.length) this.events.emit("pool:change", "grammar");
+    for (const x3 of m2.mistakes) this.events.emit("mistake:change", x3);
+    this.scheduleWrite();
+    return true;
+  }
+  // ── Persistence ───────────────────────────────────────────────
+  upsert(list, rec) {
+    const i = list.findIndex((x3) => x3.id === rec.id);
+    if (i === -1) list.push(rec);
+    else list[i] = rec;
+  }
+  scheduleWrite() {
+    if (this.writeTimer) clearTimeout(this.writeTimer);
+    this.writeTimer = setTimeout(() => {
+      this.writeTimer = null;
+      this.pendingWrite = this.write();
+    }, WRITE_DEBOUNCE_MS6);
+  }
+  async write() {
+    try {
+      const merged = mergeLearner(this.data, await this.readDisk());
+      this.data = pruneLearner(merged, this.clock().getTime());
+      await this.deps.storage.writeShard(LEARNER_SHARD, this.data);
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't save learner data", e);
+    }
+  }
+  async flush() {
+    if (this.writeTimer) {
+      clearTimeout(this.writeTimer);
+      this.writeTimer = null;
+      this.pendingWrite = this.write();
+    }
+    await this.pendingWrite;
+  }
+};
+
 // src/services/grammar/GrammarPages.ts
 var GrammarPages = class {
   constructor(deps) {
@@ -26747,13 +29591,32 @@ var GrammarPages = class {
     const { vault } = this.deps;
     await ((_a = vault.ready) == null ? void 0 : _a.call(vault));
     const path = this.pathOf(topicId);
-    if (vault.exists(path)) return path;
+    if (vault.exists(path)) {
+      await this.fillBuiltIn(path, topicId);
+      return path;
+    }
     try {
       await vault.create(path, renderTopicPage(topicId));
     } catch (e) {
       if (!vault.exists(path)) throw e;
     }
     return path;
+  }
+  async fillBuiltIn(path, topicId) {
+    const markdown = builtInExplanation(topicId);
+    if (!markdown) return;
+    try {
+      await this.deps.vault.process(path, (text) => insertExplanation(text, markdown));
+    } catch (e) {
+      if (!isGrammarPageError(e)) throw e;
+    }
+  }
+  // The 「填入說明」 button: ensure() puts the built-in explanation into an
+  // empty section (and leaves a written one alone). "empty-text" when the
+  // topic has no built-in explanation.
+  async writeBuiltInExplanation(topicId) {
+    if (!builtInExplanation(topicId)) throw new GrammarPageError("empty-text");
+    await this.ensure(topicId);
   }
   // openGrammarTopic (the wave-15 cross-task interface).
   async open(topicId) {
@@ -26853,6 +29716,21 @@ function topicSentences(sightings, topicId, max = DEFAULT_MAX_SENTENCES) {
   return out;
 }
 
+// src/core/grammar/schedule.ts
+var MIN_EASY_ANSWERS = 6;
+function sessionRating(results) {
+  if (!results.length) return void 0;
+  const accuracy = results.filter((r) => r.correct).length / results.length;
+  if (accuracy >= 0.9) return results.length >= MIN_EASY_ANSWERS ? Rating.Easy : Rating.Good;
+  if (accuracy >= 0.7) return Rating.Good;
+  if (accuracy >= 0.5) return Rating.Hard;
+  return Rating.Again;
+}
+function scheduleTopic(progress, rating, now2, retention) {
+  const card = (progress == null ? void 0 : progress.srs) ? toFsrsCard(progress.srs) : createEmptyCard(now2);
+  return fromFsrsCard(makeFsrs(retention, { shortTerm: false }).next(card, now2, GRADE[rating]).card);
+}
+
 // src/services/learn/structured.ts
 function rawOutput(r) {
   if (r.text.trim()) return r.text;
@@ -26893,6 +29771,7 @@ async function runStructured(ai, task, input, opts = {}) {
 function questionThreadId(topicId) {
   return `grammar:${topicId}`;
 }
+var REFILL_THREAD_ID = "grammar:pool";
 function gradeThreadId(questionId) {
   return `grammar-grade:${questionId}`;
 }
@@ -26900,11 +29779,29 @@ function defaultId3(now2) {
   return `${now2.getTime().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 var stemKey = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
+var MAX_SCENARIO_TOPICS = 3;
+var MAX_WEAK_TOPICS = 2;
+var GRAMMAR = "grammar";
+var CLICK_TYPES = /* @__PURE__ */ new Set(["choice", "find-error"]);
+var poolItemId = (questionId) => `${GRAMMAR}:${questionId}`;
+var focusOf2 = (q) => ({
+  kind: "grammar-objective",
+  id: `${q.topicId}/${q.objectiveId}`
+});
+var isClickable = (q) => CLICK_TYPES.has(q.type) && !q.retiredAt && !q.deletedAt;
+function questionLine(q) {
+  var _a, _b;
+  let text = q.stem;
+  if (q.type === "choice") text = q.stem.replace(/_{3,}/, q.answer);
+  else if (q.type === "find-error" && ((_a = q.accepted) == null ? void 0 : _a[0]) && q.stem.includes(q.answer)) text = q.stem.replace(q.answer, q.accepted[0]);
+  return ((_b = q.scenario) == null ? void 0 : _b.speaker) ? `${q.scenario.speaker}: ${text}` : text;
+}
 var QuestionService = class {
   constructor(deps) {
     this.deps = deps;
     this.events = new TypedEmitter();
     this.busy = /* @__PURE__ */ new Set();
+    this.refilling = false;
     var _a, _b;
     this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
     this.newId = (_b = deps.newId) != null ? _b : (() => defaultId3(this.clock()));
@@ -26919,46 +29816,321 @@ var QuestionService = class {
   pool(topicId) {
     return this.deps.grammar.activeQuestions(topicId);
   }
-  // Asks the AI for a batch, stores what's usable and returns it. A batch
-  // whose every question is already in the bank is bad_output.
+  // ── Scenario generation ───────────────────────────────────────
+  // One AI call → one scenario, stored in the bank (not the pool). Returns
+  // what was saved, in scenario order.
+  async makeScenario(targets, count, threadId, extra) {
+    const { grammar } = this.deps;
+    const topicIds = targets.map((t2) => t2.topic.id);
+    const bank = topicIds.flatMap((id2) => grammar.questions(id2));
+    const input = {
+      targets,
+      count,
+      weakness: extra.weakness,
+      previous: extra.previous,
+      knownTopicTitles: this.knownTitles(),
+      words: this.words(),
+      avoidStems: [...bank].sort((a2, b) => {
+        var _a, _b;
+        return ((_a = b.createdAt) != null ? _a : "").localeCompare((_b = a2.createdAt) != null ? _b : "");
+      }).slice(0, MAX_AVOID_STEMS).map((q) => q.stem),
+      sentences: topicIds.flatMap((id2) => this.sentences(id2))
+    };
+    const { value: scenario } = await runStructured(this.deps.ai, grammarQuestionsFor(targets, input.sentences), input, {
+      threadId,
+      signal: extra.signal
+    });
+    const taken = new Set(bank.map((q) => stemKey(q.stem)));
+    const scenarioId = `sc-${this.newId()}`;
+    const saved = [];
+    for (const d of scenario.questions) {
+      const key5 = stemKey(d.stem);
+      if (taken.has(key5)) continue;
+      taken.add(key5);
+      const { speaker, lead, ...rest } = d;
+      const info = { id: scenarioId, scene: scenario.scene, seq: saved.length + 1 };
+      if (speaker) info.speaker = speaker;
+      if (lead == null ? void 0 : lead.length) info.lead = lead;
+      saved.push(grammar.upsertQuestion({ ...rest, id: this.newId(), scenario: info }));
+    }
+    if (!saved.length) throw new AiError("bad_output", "grammar.questions: every question was already in the bank");
+    return saved;
+  }
+  // Older entry point (the 主題頁 block until H replaces it): a scenario on
+  // one topic, kept in the bank only.
   async generate(topicId, opts = {}) {
     var _a, _b;
     const topic = topicById(topicId);
     if (!topic) throw new Error(`Unknown grammar topic "${topicId}"`);
     if (this.busy.has(topicId)) throw new Error(`Already generating questions for "${topicId}"`);
     await this.deps.grammar.ensureLoaded();
-    const bank = this.deps.grammar.questions(topicId);
-    const input = {
-      topic,
-      objectiveIds: ((_a = opts.objectiveIds) == null ? void 0 : _a.length) ? opts.objectiveIds : topic.objectives.map((o) => o.id),
-      count: (_b = opts.count) != null ? _b : DEFAULT_QUESTION_COUNT,
-      knownTopicTitles: this.knownTitles(),
-      words: this.words(),
-      avoidStems: [...bank].sort((a2, b) => {
-        var _a2, _b2;
-        return ((_a2 = b.createdAt) != null ? _a2 : "").localeCompare((_b2 = a2.createdAt) != null ? _b2 : "");
-      }).slice(0, MAX_AVOID_STEMS).map((q) => q.stem),
-      sentences: this.sentences(topicId)
-    };
     this.setBusy(topicId, true);
     try {
-      const { value: drafts } = await runStructured(this.deps.ai, grammarQuestionsFor(topic, input.sentences), input, {
-        threadId: questionThreadId(topicId),
+      const ids = ((_a = opts.objectiveIds) == null ? void 0 : _a.length) ? opts.objectiveIds : topic.objectives.map((o) => o.id);
+      return await this.makeScenario([{ topic, objectiveIds: ids }], (_b = opts.count) != null ? _b : DEFAULT_QUESTION_COUNT, questionThreadId(topicId), {
         signal: opts.signal
       });
-      const taken = new Set(bank.map((q) => stemKey(q.stem)));
-      const saved = [];
-      for (const d of drafts) {
-        const key5 = stemKey(d.stem);
-        if (taken.has(key5)) continue;
-        taken.add(key5);
-        saved.push(this.deps.grammar.upsertQuestion({ ...d, id: this.newId(), topicId }));
-      }
-      if (!saved.length) throw new AiError("bad_output", "grammar.questions: every question was already in the bank");
-      return saved;
     } finally {
       this.setBusy(topicId, false);
     }
+  }
+  isRefilling() {
+    return this.refilling;
+  }
+  async refill(filter2, opts = {}) {
+    const learner = this.deps.learner;
+    if (!learner || this.refilling) return;
+    this.refilling = true;
+    let started = false;
+    try {
+      await Promise.all([learner.ensureLoaded(), this.deps.grammar.ensureLoaded()]);
+      this.dropUnaskable();
+      if (!needsRefill(learner.pool(GRAMMAR), GRAMMAR)) return;
+      if (!this.aiReady()) return;
+      const room = poolRoom(learner.pool(GRAMMAR), GRAMMAR);
+      const count = Math.min(DEFAULT_QUESTION_COUNT, room);
+      if (count <= 0) return;
+      const f = parseGrammarFilter(filter2);
+      const targets = this.chooseTargets(f);
+      if (!targets.length) return;
+      started = true;
+      this.events.emit("refill:start", void 0);
+      const saved = await this.makeScenario(targets, count, REFILL_THREAD_ID, {
+        weakness: this.weakness(targets),
+        previous: this.previousScenario(),
+        signal: opts.signal
+      });
+      const added = addToPool(
+        learner.pool(GRAMMAR),
+        GRAMMAR,
+        saved.map((q) => {
+          var _a;
+          return { questionId: q.id, scenarioId: (_a = q.scenario) == null ? void 0 : _a.id };
+        }),
+        this.clock()
+      );
+      if (added.length) learner.upsertPool(added);
+      this.refilling = false;
+      this.events.emit("refill:end", {});
+      this.events.emit("pool:change", void 0);
+    } catch (e) {
+      this.refilling = false;
+      if (started) this.events.emit("refill:end", { error: e });
+    } finally {
+      this.refilling = false;
+    }
+  }
+  aiReady() {
+    const status = this.deps.ai.status;
+    if (!status) return true;
+    try {
+      return status.call(this.deps.ai) === "ready";
+    } catch (e) {
+      return false;
+    }
+  }
+  // Topics for the next scenario: up to MAX_WEAK_TOPICS with a weak spot,
+  // then the least-practised ones, MAX_SCENARIO_TOPICS in all.
+  chooseTargets(filter2) {
+    var _a, _b, _c;
+    const topics = topicsInFilter(filter2, (_c = (_b = (_a = this.deps).level) == null ? void 0 : _b.call(_a)) != null ? _c : "").map((id2) => topicById(id2)).filter((t2) => !!t2);
+    if (!topics.length) return [];
+    const scope = new Set(topics.flatMap((t2) => t2.objectives.map((o) => objectiveRef(t2.id, o.id))));
+    const weak = weakFocuses(this.deps.learner.learnEvents({ track: GRAMMAR }), {
+      now: this.clock(),
+      track: GRAMMAR,
+      scope,
+      limit: 8
+    });
+    const weakIds = [];
+    for (const w of weak) {
+      const id2 = w.focus.id.split("/")[0];
+      if (!weakIds.includes(id2)) weakIds.push(id2);
+    }
+    const rest = topics.filter((t2) => !weakIds.includes(t2.id)).map((t2, i) => ({ t: t2, i, n: this.deps.grammar.attempts(t2.id).length })).sort((a2, b) => a2.n - b.n || a2.i - b.i).map((x3) => x3.t.id);
+    const order = [...weakIds.slice(0, MAX_WEAK_TOPICS), ...rest, ...weakIds.slice(MAX_WEAK_TOPICS)];
+    return order.slice(0, MAX_SCENARIO_TOPICS).flatMap((id2) => {
+      const topic = topicById(id2);
+      return topic ? [{ topic, objectiveIds: topic.objectives.map((o) => o.id) }] : [];
+    });
+  }
+  // 〔學習弱點〕: grammar only, scoped to this scenario's objectives.
+  weakness(targets) {
+    const scope = new Set(targets.flatMap((t2) => t2.topic.objectives.map((o) => objectiveRef(t2.topic.id, o.id))));
+    const weak = weakFocuses(this.deps.learner.learnEvents({ track: GRAMMAR }), {
+      now: this.clock(),
+      track: GRAMMAR,
+      scope,
+      limit: 5
+    });
+    return weaknessDigest(weak, (f) => {
+      const [tid, oid] = f.id.split("/");
+      const topic = topicById(tid);
+      const obj = topic == null ? void 0 : topic.objectives.find((o) => o.id === oid);
+      return obj ? `${f.id}\uFF08${obj.text}\uFF09` : f.id;
+    });
+  }
+  // 〔上一段〕: the scene and last two sentences of the scenario at the end
+  // of the pool, so the next one carries on from it.
+  previousScenario() {
+    var _a;
+    const live = this.deps.learner.pool(GRAMMAR);
+    for (let i = live.length - 1; i >= 0; i--) {
+      const last2 = (_a = this.deps.grammar.question(live[i].questionId)) == null ? void 0 : _a.scenario;
+      if (!last2) continue;
+      const lines4 = this.deps.grammar.questions().filter((q) => {
+        var _a2;
+        return ((_a2 = q.scenario) == null ? void 0 : _a2.id) === last2.id;
+      }).sort((x3, y3) => {
+        var _a2, _b, _c, _d;
+        return ((_b = (_a2 = x3.scenario) == null ? void 0 : _a2.seq) != null ? _b : 0) - ((_d = (_c = y3.scenario) == null ? void 0 : _c.seq) != null ? _d : 0);
+      }).flatMap((q) => {
+        var _a2, _b;
+        return [...((_b = (_a2 = q.scenario) == null ? void 0 : _a2.lead) != null ? _b : []).map((l4) => l4.speaker ? `${l4.speaker}: ${l4.text}` : l4.text), questionLine(q)];
+      });
+      return { scene: last2.scene, lastLines: lines4.slice(-2) };
+    }
+    return void 0;
+  }
+  // Pool entries whose question is gone, retired or can't be clicked
+  // (a migrated blank / rewrite / translate) leave the pool, so they don't
+  // hold a place or block a refill.
+  dropUnaskable() {
+    const learner = this.deps.learner;
+    if (!learner) return;
+    const now2 = this.clock();
+    const out = learner.pool(GRAMMAR).filter((i) => {
+      var _a;
+      return !isClickable((_a = this.deps.grammar.question(i.questionId)) != null ? _a : { type: "blank", retiredAt: "x" });
+    }).map((i) => {
+      var _a;
+      return removeFromPool(i, ((_a = this.deps.grammar.question(i.questionId)) == null ? void 0 : _a.retiredAt) ? "retired" : "filtered", now2);
+    });
+    if (out.length) learner.upsertPool(out);
+  }
+  // ── Pool / 錯題區 for the practice tab ────────────────────────
+  poolQuestions() {
+    const learner = this.deps.learner;
+    if (!learner) return [];
+    const out = [];
+    for (const i of learner.pool(GRAMMAR)) {
+      const q = this.deps.grammar.question(i.questionId);
+      if (q && isClickable(q)) out.push(q);
+    }
+    return out;
+  }
+  mistakeQuestions() {
+    const learner = this.deps.learner;
+    if (!learner) return [];
+    const out = [];
+    for (const m2 of learner.mistakes(GRAMMAR)) {
+      const q = this.deps.grammar.question(m2.questionId);
+      if (q && isClickable(q)) out.push(q);
+    }
+    return out;
+  }
+  applyFilter(filter2) {
+    var _a, _b, _c;
+    const learner = this.deps.learner;
+    if (!learner) return;
+    const allowed = new Set(topicsInFilter(parseGrammarFilter(filter2), (_c = (_b = (_a = this.deps).level) == null ? void 0 : _b.call(_a)) != null ? _c : ""));
+    const now2 = this.clock();
+    const items = learner.pool(GRAMMAR);
+    const gone = items.filter((i) => {
+      const q = this.deps.grammar.question(i.questionId);
+      return !q || !allowed.has(q.topicId);
+    });
+    if (!gone.length) return;
+    learner.upsertPool(gone.map((i) => removeFromPool(i, "filtered", now2)));
+    for (const sid of new Set(gone.map((i) => i.scenarioId).filter((x3) => !!x3))) this.finishIfLast(sid, items, gone);
+    this.events.emit("pool:change", void 0);
+  }
+  answer(q, optionText2, correct, opts) {
+    const attempt = this.record(q, optionText2, correct);
+    const learner = this.deps.learner;
+    if (!learner) return;
+    const result = opts.hinted ? "hinted" : correct ? "correct" : "wrong";
+    const e = {
+      id: `g:${attempt.id}`,
+      at: attempt.at,
+      track: GRAMMAR,
+      focus: focusOf2(q),
+      result,
+      given: optionText2,
+      questionId: q.id
+    };
+    if (!correct) e.errorTag = q.errorTag;
+    learner.addEvent(e);
+    const now2 = this.clock();
+    const existing = learner.mistake(poolItemId(q.id));
+    if (!correct) {
+      learner.upsertMistake(recordWrong(existing, GRAMMAR, q.id, focusOf2(q), now2));
+    } else if (opts.fromMistakes && !opts.hinted && existing && !existing.resolvedAt) {
+      learner.upsertMistake(resolveMistake(existing, now2));
+    }
+    if (!opts.fromMistakes) this.leavePool(q, "answered");
+  }
+  skip(q) {
+    const learner = this.deps.learner;
+    if (!learner) return;
+    learner.addEvent(this.plainEvent(q, "skipped", `g:skip:${this.newId()}`));
+    this.leavePool(q, "skipped");
+  }
+  // 👎: the question is retired for good (attempts keep pointing at it).
+  retire(q) {
+    const id2 = typeof q === "string" ? q : q.id;
+    const stored = this.deps.grammar.question(id2);
+    if (!stored) return void 0;
+    const retired = stored.retiredAt ? stored : this.deps.grammar.upsertQuestion({ ...stored, retiredAt: this.clock().toISOString() });
+    const learner = this.deps.learner;
+    if (learner) {
+      learner.addEvent(this.plainEvent(retired, "retired", `g:retired:${id2}`));
+      const m2 = learner.mistake(poolItemId(id2));
+      if (m2 && !m2.resolvedAt) learner.upsertMistake(resolveMistake(m2, this.clock()));
+      this.leavePool(retired, "retired");
+    }
+    return retired;
+  }
+  plainEvent(q, result, id2) {
+    return { id: id2, at: this.clock().toISOString(), track: GRAMMAR, focus: focusOf2(q), result, questionId: q.id };
+  }
+  // Takes the question's pool item out. When it was the last one of its
+  // scenario in the pool, the scenario's topics each get one finishSession.
+  leavePool(q, reason) {
+    const learner = this.deps.learner;
+    if (!learner) return;
+    const items = learner.pool(GRAMMAR);
+    const item = items.find((i) => i.questionId === q.id);
+    if (!item) return;
+    learner.upsertPool([removeFromPool(item, reason, this.clock())]);
+    if (item.scenarioId) this.finishIfLast(item.scenarioId, items, [item]);
+    this.events.emit("pool:change", void 0);
+  }
+  finishIfLast(scenarioId, before, leaving) {
+    const gone = new Set(leaving.map((i) => i.id));
+    if (before.some((i) => i.scenarioId === scenarioId && !gone.has(i.id))) return;
+    this.finishScenario(scenarioId);
+  }
+  // The scenario's answers (each question's first attempt; 👎 ones don't
+  // count) rate every topic that appeared in it, once.
+  finishScenario(scenarioId) {
+    var _a;
+    const { grammar } = this.deps;
+    const qs = grammar.questions().filter((q) => {
+      var _a2;
+      return ((_a2 = q.scenario) == null ? void 0 : _a2.id) === scenarioId;
+    });
+    const first = /* @__PURE__ */ new Map();
+    for (const a2 of grammar.attempts()) if (!first.has(a2.questionId)) first.set(a2.questionId, a2);
+    const byTopic = /* @__PURE__ */ new Map();
+    for (const q of qs) {
+      const a2 = first.get(q.id);
+      if (!a2) continue;
+      const list = (_a = byTopic.get(q.topicId)) != null ? _a : [];
+      list.push({ correct: a2.correct, retired: !!q.retiredAt });
+      byTopic.set(q.topicId, list);
+    }
+    for (const [topicId, results] of byTopic) this.finishSession(topicId, results, this.clock());
   }
   // AI grades a rewrite / translate answer (R2). Only called when the
   // learner pressed 送出; the caller records the attempt with the verdict
@@ -26972,12 +30144,6 @@ var QuestionService = class {
   }
   stopGrade(questionId) {
     this.deps.ai.cancel(gradeThreadId(questionId));
-  }
-  // 👎 這題有問題: stays stored (attempts point at it) but is never asked again.
-  retire(questionId) {
-    const q = this.deps.grammar.question(questionId);
-    if (!q || q.retiredAt) return q;
-    return this.deps.grammar.upsertQuestion({ ...q, retiredAt: this.clock().toISOString() });
   }
   // Writes the answer into the attempt log and stamps the topic's progress.
   record(question, given, correct) {
@@ -28351,7 +31517,7 @@ var MorphemeService = class {
 };
 
 // src/ui/chat/SelectionTracker.ts
-var import_obsidian50 = require("obsidian");
+var import_obsidian51 = require("obsidian");
 var MAX_SELECTION_CHARS = 1500;
 var SelectionTracker = class {
   constructor(app) {
@@ -28375,7 +31541,7 @@ var SelectionTracker = class {
     if (!sel || !node) return;
     const el = node instanceof HTMLElement ? node : node.parentElement;
     if (!(el == null ? void 0 : el.closest('.workspace-leaf-content[data-type="markdown"]'))) return;
-    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian50.MarkdownView && v.containerEl.contains(el));
+    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian51.MarkdownView && v.containerEl.contains(el));
     const raw = (view == null ? void 0 : view.getMode()) === "source" ? view.editor.getSelection() : sel.toString();
     const text = raw.replace(/\s+/g, " ").trim().slice(0, MAX_SELECTION_CHARS);
     if (!text) {
@@ -28392,10 +31558,10 @@ var SelectionTracker = class {
 };
 
 // src/platform/ObsidianWordlists.ts
-var import_obsidian51 = require("obsidian");
+var import_obsidian52 = require("obsidian");
 var EXTENSIONS = /* @__PURE__ */ new Set(["md", "txt", "csv", "tsv"]);
 function inFolder(path, folder) {
-  return path.startsWith((0, import_obsidian51.normalizePath)(folder) + "/");
+  return path.startsWith((0, import_obsidian52.normalizePath)(folder) + "/");
 }
 var ObsidianWordlists = class {
   constructor(app) {
@@ -28406,7 +31572,7 @@ var ObsidianWordlists = class {
   }
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian51.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian52.TFile ? this.app.vault.cachedRead(file) : null;
   }
 };
 
@@ -28571,7 +31737,7 @@ var WordlistService = class extends TypedEmitter {
 };
 
 // src/ui/reading/examHighlight.ts
-var import_obsidian52 = require("obsidian");
+var import_obsidian53 = require("obsidian");
 var EXAM_WORD_CLS = "vt-exam-word";
 var SKIP2 = [
   "code",
@@ -28615,7 +31781,7 @@ function highlightExamWords(el, lookup, colorOf) {
       const span = frag.createSpan({ cls: EXAM_WORD_CLS, text: seg.word });
       span.dataset.vtTags = seg.tags.join(" ");
       span.style.setProperty("--vt-exam-color", colorOf(seg.tags[0]));
-      (0, import_obsidian52.setTooltip)(span, seg.tags.map(tagLabel).join(" \xB7 "), { delay: 300 });
+      (0, import_obsidian53.setTooltip)(span, seg.tags.map(tagLabel).join(" \xB7 "), { delay: 300 });
     }
     node.replaceWith(frag);
   }
@@ -28903,7 +32069,7 @@ async function refreshStaleDictionary(entry, dictionary) {
 }
 
 // src/platform/ObsidianVault.ts
-var import_obsidian53 = require("obsidian");
+var import_obsidian54 = require("obsidian");
 var Unchanged = class {
   constructor(text) {
     this.text = text;
@@ -28928,7 +32094,7 @@ var ObsidianVault = class {
   // ── shared ────────────────────────────────────────────────────────────
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian53.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian54.TFile ? this.app.vault.cachedRead(file) : null;
   }
   // ── task G ────────────────────────────────────────────────────────────
   // vault.process(file, fn). Rethrow whatever `fn` throws unchanged:
@@ -28938,7 +32104,7 @@ var ObsidianVault = class {
   // minAppVersion ≥ 1.1.0 in manifest.json.
   async process(path, fn) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian53.TFile)) throw new Error(`File not found: ${path}`);
+    if (!(file instanceof import_obsidian54.TFile)) throw new Error(`File not found: ${path}`);
     try {
       return await this.app.vault.process(file, (text) => {
         const next = fn(text);
@@ -28984,19 +32150,19 @@ var ObsidianVault = class {
     component.registerEvent(
       vault.on("delete", (file) => {
         var _a, _b;
-        if (file instanceof import_obsidian53.TFolder) (_a = this.managed) == null ? void 0 : _a.deleteUnder(file.path);
+        if (file instanceof import_obsidian54.TFolder) (_a = this.managed) == null ? void 0 : _a.deleteUnder(file.path);
         else (_b = this.managed) == null ? void 0 : _b.delete(file.path);
       })
     );
     if (workspace.layoutReady) this.markResolved();
   }
   exists(path) {
-    return this.app.vault.getAbstractFileByPath((0, import_obsidian53.normalizePath)(path)) !== null;
+    return this.app.vault.getAbstractFileByPath((0, import_obsidian54.normalizePath)(path)) !== null;
   }
   // Creates missing parent folders; rejects when the file already exists.
   async create(path, content) {
     var _a;
-    const target = (0, import_obsidian53.normalizePath)(path);
+    const target = (0, import_obsidian54.normalizePath)(path);
     if (this.app.vault.getAbstractFileByPath(target)) throw new Error(`File already exists: ${target}`);
     await this.ensureFolder(parentOf(target));
     const file = await this.app.vault.create(target, content);
@@ -29007,8 +32173,8 @@ var ObsidianVault = class {
   // target exists (never overwrites).
   async rename(from, to) {
     var _a;
-    const source = (0, import_obsidian53.normalizePath)(from);
-    const target = (0, import_obsidian53.normalizePath)(to);
+    const source = (0, import_obsidian54.normalizePath)(from);
+    const target = (0, import_obsidian54.normalizePath)(to);
     const file = this.app.vault.getAbstractFileByPath(source);
     if (!file) throw new Error(`File not found: ${source}`);
     if (source === target) return;
@@ -29064,11 +32230,11 @@ var ObsidianVault = class {
     var _a;
     const index2 = this.managed;
     if (!index2) return;
-    if (file instanceof import_obsidian53.TFolder) {
+    if (file instanceof import_obsidian54.TFolder) {
       index2.moveUnder(oldPath, file.path);
     } else if (index2.has(oldPath)) {
       index2.move(oldPath, file.path);
-    } else if (file instanceof import_obsidian53.TFile) {
+    } else if (file instanceof import_obsidian54.TFile) {
       index2.set(file.path, managedRefOf((_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter));
     }
   }
@@ -29090,12 +32256,12 @@ var ObsidianVault = class {
     for (let i = 1; i <= parts.length; i++) {
       const path = parts.slice(0, i).join("/");
       const existing = this.app.vault.getAbstractFileByPath(path);
-      if (existing instanceof import_obsidian53.TFolder) continue;
+      if (existing instanceof import_obsidian54.TFolder) continue;
       if (existing) throw new Error(`Not a folder: ${path}`);
       try {
         await this.app.vault.createFolder(path);
       } catch (e) {
-        if (!(this.app.vault.getAbstractFileByPath(path) instanceof import_obsidian53.TFolder)) throw e;
+        if (!(this.app.vault.getAbstractFileByPath(path) instanceof import_obsidian54.TFolder)) throw e;
       }
     }
   }
@@ -29248,7 +32414,7 @@ function findManagedBlock(text, name) {
 }
 function bodyLines(body) {
   if (body === "") return [];
-  return body.replace(/\r\n?/g, "\n").split("\n").map((l5) => MARKER_LINE.test(l5) ? l5.replace("%%", "\\%%") : l5);
+  return body.replace(/\r\n?/g, "\n").split("\n").map((l4) => MARKER_LINE.test(l4) ? l4.replace("%%", "\\%%") : l4);
 }
 function detectEol(text) {
   const nl = text.indexOf("\n");
@@ -29331,7 +32497,7 @@ function unquote2(raw) {
   return raw;
 }
 function lines3(text) {
-  return text.split(/(?<=\n)/).filter((l5) => l5 !== "");
+  return text.split(/(?<=\n)/).filter((l4) => l4 !== "");
 }
 function readFrontmatter(text) {
   const at = locate(text);
@@ -30120,7 +33286,10 @@ var ENTRY_FILES = [
   // Grammar map (第十五波 M, 1013 §3.1). New since the 1010 rename, so no
   // old default name: legacyName = name makes planEntryRenames skip it
   // (a user's own 文法.md in the folder must never be renamed).
-  { id: "grammar", name: "Grammar", block: "vocab-grammar", legacyName: "Grammar" }
+  { id: "grammar", name: "Grammar", block: "vocab-grammar", legacyName: "Grammar" },
+  // Practice hub (第十六波 E). New, so legacyName = name for the same
+  // reason as Grammar above; Card.md stays as it is.
+  { id: "practice", name: "Practice", block: "vocab-practice", legacyName: "Practice" }
 ];
 var LIST_FILE_NAME = "List";
 var LIST_FILE_LEGACY_NAME = "vocab-list";
@@ -30351,8 +33520,8 @@ var SeedRecord = class {
 };
 
 // src/ui/blocks/wordReview.ts
-var import_obsidian54 = require("obsidian");
-var WordReviewModal = class extends import_obsidian54.Modal {
+var import_obsidian55 = require("obsidian");
+var WordReviewModal = class extends import_obsidian55.Modal {
   constructor(host, entry) {
     super(host.app);
     this.host = host;
@@ -30383,8 +33552,8 @@ function openWordReview(host, entry) {
 }
 
 // src/ui/reading/WordPageDecorator.ts
-var import_obsidian55 = require("obsidian");
-function l4(key5, vars) {
+var import_obsidian56 = require("obsidian");
+function l3(key5, vars) {
   return t(`wordPage.${key5}`, vars);
 }
 var SECTIONS = ["families", "usage", "trivia", "discussion"];
@@ -30425,7 +33594,7 @@ function syncTriviaCard(h, entry, deps, ctx) {
   const head = card.createDiv({ cls: "vt-wp-trivia-pending-head" });
   head.createSpan({ cls: "vt-wp-trivia-pending-badge", text: t("wordPage.trivia.pending.badge") });
   const save = head.createEl("button", { cls: "vt-wp-btn" });
-  (0, import_obsidian55.setIcon)(save.createSpan({ cls: "vt-wp-btn-icon" }), "bookmark");
+  (0, import_obsidian56.setIcon)(save.createSpan({ cls: "vt-wp-btn-icon" }), "bookmark");
   save.createSpan({ text: t("learn.trivia.favorite") });
   save.addEventListener("click", (e) => {
     e.preventDefault();
@@ -30436,9 +33605,9 @@ function syncTriviaCard(h, entry, deps, ctx) {
   });
   if (pending.title) card.createDiv({ cls: "vt-wp-trivia-pending-title", text: pending.title });
   const body = card.createDiv({ cls: "vt-wp-trivia-pending-body" });
-  const scope = new import_obsidian55.MarkdownRenderChild(body);
+  const scope = new import_obsidian56.MarkdownRenderChild(body);
   ctx.addChild(scope);
-  void import_obsidian55.MarkdownRenderer.render(deps.app, pending.body, body, ctx.sourcePath, scope);
+  void import_obsidian56.MarkdownRenderer.render(deps.app, pending.body, body, ctx.sourcePath, scope);
   card.createDiv({ cls: "vt-wp-trivia-pending-hint", text: t("wordPage.trivia.pending.hint") });
   h.insertAdjacentElement("afterend", card);
 }
@@ -30483,7 +33652,7 @@ function foldHeading(h, section3, entryId, deps) {
   h.tabIndex = 0;
   const open = isOpenStored(deps.app, entryId, FOLD_OF[section3]);
   const chev = createSpan({ cls: ["vt", "vt-wp-fold-chev"] });
-  (0, import_obsidian55.setIcon)(chev, "chevron-right");
+  (0, import_obsidian56.setIcon)(chev, "chevron-right");
   h.insertBefore(chev, h.firstChild);
   h.toggleClass("is-open", open);
   h.setAttr("aria-expanded", String(open));
@@ -30546,28 +33715,28 @@ function actionFor(section3, entry, deps, h, ctx) {
     case "families":
       return {
         icon: "git-fork",
-        label: l4("findFamilies"),
+        label: l3("findFamilies"),
         run: async () => {
           const candidates = await deps.families.generate({ seedEntryIds: [entry.id] });
-          if (!candidates.length) return deps.notify(l4("familiesNone"));
+          if (!candidates.length) return deps.notify(l3("familiesNone"));
           const { families } = await deps.families.save(candidates);
-          deps.notify(l4("familiesSaved", { n: families.length }));
+          deps.notify(l3("familiesSaved", { n: families.length }));
         }
       };
     case "usage":
       if (!deps.verbs.canGenerate(entry)) return null;
       return {
         icon: "sparkles",
-        label: l4("generateUsage"),
+        label: l3("generateUsage"),
         run: async () => {
           await deps.verbs.generateAll(entry);
-          deps.notify(l4("usageSaved"));
+          deps.notify(l3("usageSaved"));
         }
       };
     case "trivia":
       return {
         icon: "lightbulb",
-        label: l4("trivia"),
+        label: l3("trivia"),
         run: async () => {
           var _a, _b, _c;
           const result = await deps.trivia.ask("next", { entryId: entry.id });
@@ -30576,20 +33745,20 @@ function actionFor(section3, entry, deps, h, ctx) {
             deps.notify(t("wordPage.trivia.fetched", { word: entry.word }));
           } else if ((result == null ? void 0 : result.error) || (result == null ? void 0 : result.errorMessage)) {
             const message = aiErrorText(new AiError((_c = result.error) != null ? _c : "network", result.errorMessage));
-            deps.notify(l4("failed", { error: message }));
+            deps.notify(l3("failed", { error: message }));
           }
           if (h.isConnected) syncTriviaCard(h, entry, deps, ctx);
         }
       };
     case "discussion":
-      return { icon: "panel-right", label: l4("openSidebar"), run: () => deps.openInSidebar(entry, "ai") };
+      return { icon: "panel-right", label: l3("openSidebar"), run: () => deps.openInSidebar(entry, "ai") };
   }
 }
 function attachButton(h, key5, action, deps) {
   h.addClass("vt-wp-heading");
   const box = h.createSpan({ cls: ["vt", "vt-wp-actions"] });
   const btn = box.createEl("button", { cls: "vt-wp-btn" });
-  (0, import_obsidian55.setIcon)(btn.createSpan({ cls: "vt-wp-btn-icon" }), action.icon);
+  (0, import_obsidian56.setIcon)(btn.createSpan({ cls: "vt-wp-btn-icon" }), action.icon);
   btn.createSpan({ text: action.label });
   const setBusy = (busy) => {
     btn.toggleClass("is-busy", busy);
@@ -30608,7 +33777,7 @@ function attachButton(h, key5, action, deps) {
       if (debug) console.error(`Vocab Tracker: unreadable AI answer
 
 ${debugReportText(debug)}`);
-      deps.notify(l4("failed", { error: message }));
+      deps.notify(l3("failed", { error: message }));
     }).finally(() => {
       running.delete(key5);
       if (btn.isConnected) setBusy(false);
@@ -30624,17 +33793,17 @@ function decorateUsagePos(h, pos, entry, deps) {
   if (!deps.verbs.canGenerate(entry)) return;
   const action = {
     icon: "sparkles",
-    label: l4("regenerateUsage"),
+    label: l3("regenerateUsage"),
     run: async () => {
       await deps.verbs.regenerate(entry, pos);
-      deps.notify(l4("usageSaved"));
+      deps.notify(l3("usageSaved"));
     }
   };
   attachButton(h, `${entry.id}:usage:${pos}`, action, deps);
 }
 
 // src/ui/reading/PluginNoteChrome.ts
-var import_obsidian56 = require("obsidian");
+var import_obsidian57 = require("obsidian");
 
 // src/ui/reading/pluginNote.ts
 var KINDS = ["word", "entry", "ai-note", "grammar"];
@@ -30702,7 +33871,7 @@ var PluginNoteChrome = class {
     if (this.disposed) return;
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
       const view = leaf.view;
-      if (!(view instanceof import_obsidian56.MarkdownView)) continue;
+      if (!(view instanceof import_obsidian57.MarkdownView)) continue;
       const file = view.file;
       const cache2 = file ? this.app.metadataCache.getFileCache(file) : null;
       const el = view.containerEl;
@@ -30724,7 +33893,7 @@ var PluginNoteChrome = class {
 };
 
 // src/ui/reading/openInPreview.ts
-var import_obsidian57 = require("obsidian");
+var import_obsidian58 = require("obsidian");
 function isInFolder(path, folder) {
   if (!/\.md$/i.test(path)) return false;
   const trimmed = folder.replace(/^\/+/, "").replace(/\/+$/, "");
@@ -30749,7 +33918,7 @@ function installOpenInPreview(plugin, folder) {
   let lastActive = null;
   const processLeaf = (leaf) => {
     const view = leaf.view;
-    if (!(view instanceof import_obsidian57.MarkdownView) || !view.file) return;
+    if (!(view instanceof import_obsidian58.MarkdownView) || !view.file) return;
     const next = { leafId: idOf(leaf), path: view.file.path };
     const switchNow = shouldSwitchToPreview(lastActive, next, folder());
     lastActive = next;
@@ -30759,7 +33928,7 @@ function installOpenInPreview(plugin, folder) {
       var _a;
       if (attempt > 20) return;
       const currentView = leaf.view;
-      if (!(currentView instanceof import_obsidian57.MarkdownView) || ((_a = currentView.file) == null ? void 0 : _a.path) !== stable.path) return;
+      if (!(currentView instanceof import_obsidian58.MarkdownView) || ((_a = currentView.file) == null ? void 0 : _a.path) !== stable.path) return;
       if (currentView.getMode() !== "source") return;
       const viewState = leaf.getViewState();
       void leaf.setViewState({ ...viewState, state: { ...viewState.state, mode: "preview" } }).then(() => {
@@ -30786,7 +33955,7 @@ function installOpenInPreview(plugin, folder) {
 }
 
 // src/ui/reading/ParagraphBadges.ts
-var import_obsidian58 = require("obsidian");
+var import_obsidian59 = require("obsidian");
 var BADGE_CLS = "vt-pbadge";
 var BADGE_HOST_CLS = "vt-pbadge-host";
 var ANCHORABLE_TAGS = /* @__PURE__ */ new Set(["P", "UL", "OL", "BLOCKQUOTE"]);
@@ -30831,7 +34000,7 @@ var ParagraphBadges = class {
         this.draw(handle);
         this.track(handle);
       }
-      const child = new import_obsidian58.MarkdownRenderChild(el);
+      const child = new import_obsidian59.MarkdownRenderChild(el);
       child.register(() => handles.forEach((h) => this.untrack(h)));
       ctx.addChild(child);
     };
@@ -30918,7 +34087,7 @@ ${id2}`);
       badge.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") open(e);
       });
-      (0, import_obsidian58.setIcon)(badge.createSpan({ cls: "vt-pbadge-icon" }), "sparkles");
+      (0, import_obsidian59.setIcon)(badge.createSpan({ cls: "vt-pbadge-icon" }), "sparkles");
       badge.createSpan({ cls: "vt-pbadge-count" });
     }
     const countEl = badge.querySelector(".vt-pbadge-count");
@@ -30947,10 +34116,10 @@ function planTap(action, tracked) {
 }
 
 // src/ui/mobile/WordSheet.ts
-var import_obsidian60 = require("obsidian");
+var import_obsidian61 = require("obsidian");
 
 // src/ui/mobile/BottomSheet.ts
-var import_obsidian59 = require("obsidian");
+var import_obsidian60 = require("obsidian");
 
 // src/ui/mobile/sheetGeometry.ts
 var TAP_SLOP_PX = 6;
@@ -31091,7 +34260,7 @@ var BottomSheet = class {
     grab.createDiv({ cls: "vt-sheet-grab" });
     const close = grab.createEl("button", { cls: "vt-sheet-close clickable-icon" });
     close.setAttr("aria-label", opts.closeLabel);
-    (0, import_obsidian59.setIcon)(close, "x");
+    (0, import_obsidian60.setIcon)(close, "x");
     close.addEventListener("click", () => this.close());
     grab.addEventListener("pointerdown", this.onPointerDown);
     grab.addEventListener("pointermove", this.onPointerMove);
@@ -31235,7 +34404,7 @@ function isTextInput(target) {
 
 // src/ui/mobile/WordSheet.ts
 var KEYBOARD_PROBE_PATH = "Vocab Tracker \u9375\u76E4\u8A3A\u65B7.md";
-var WordSheet = class extends import_obsidian60.Component {
+var WordSheet = class extends import_obsidian61.Component {
   constructor(plugin, opts = {}) {
     super();
     this.plugin = plugin;
@@ -31490,12 +34659,12 @@ ${block}`);
     this.cancelRebind();
     try {
       if (!await this.plugin.threads.rebindParagraph(threadId, ref)) return;
-      new import_obsidian60.Notice(t("paragraph.rebind.done"));
+      new import_obsidian61.Notice(t("paragraph.rebind.done"));
       this.view = { kind: "paragraph", route: { name: "paragraph", threadId } };
       this.show();
     } catch (e) {
       console.error("Vocab Tracker: rebind failed", e);
-      new import_obsidian60.Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian61.Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
 };
@@ -31720,7 +34889,7 @@ function snapshot(e) {
 }
 
 // src/ui/word/DeleteEntryModal.ts
-var import_obsidian61 = require("obsidian");
+var import_obsidian62 = require("obsidian");
 
 // src/ui/word/deleteEntryImpact.ts
 function deletionImpactLines(impact) {
@@ -31734,7 +34903,7 @@ function deletionImpactLines(impact) {
 }
 
 // src/ui/word/DeleteEntryModal.ts
-var DeleteEntryModal = class extends import_obsidian61.Modal {
+var DeleteEntryModal = class extends import_obsidian62.Modal {
   constructor(app, word, impact, onResult) {
     super(app);
     this.word = word;
@@ -31763,11 +34932,11 @@ var DeleteEntryModal = class extends import_obsidian61.Modal {
       el.createEl("p", { text: t("deleteEntry.noLinks"), cls: "vt-settings-muted" });
     }
     if (this.impact.wordPageExists) {
-      new import_obsidian61.Setting(el).setName(t("deleteEntry.trashWordPage")).addToggle(
+      new import_obsidian62.Setting(el).setName(t("deleteEntry.trashWordPage")).addToggle(
         (toggle2) => toggle2.setValue(this.trashWordPage).onChange((v) => this.trashWordPage = v)
       );
     }
-    new import_obsidian61.Setting(el).addButton((b) => b.setButtonText(t("deleteEntry.cancel")).onClick(() => this.close())).addButton(
+    new import_obsidian62.Setting(el).addButton((b) => b.setButtonText(t("deleteEntry.cancel")).onClick(() => this.close())).addButton(
       (b) => b.setButtonText(t("deleteEntry.confirm")).setWarning().onClick(() => {
         this.confirmed = true;
         this.onResult({ trashWordPage: this.trashWordPage });
@@ -31802,7 +34971,7 @@ function saveDnaBudget(v) {
   } catch (e) {
   }
 }
-var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
+var VocabTrackerPlugin = class extends import_obsidian63.Plugin {
   constructor() {
     super(...arguments);
     this.vocabData = { entries: [] };
@@ -31841,10 +35010,10 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
       storage: this.storage,
       host: {
         flush: async () => {
-          await Promise.all([this.store.flush(), this.srs.flush(), this.threads.flush(), this.learn.flush(), this.grammar.flush()]);
+          await Promise.all([this.store.flush(), this.srs.flush(), this.threads.flush(), this.learn.flush(), this.grammar.flush(), this.learner.flush()]);
         },
         reload: async () => {
-          await Promise.all([this.threads.reload(), this.learn.reload(), this.grammar.reload(), this.srs.reloadLogs(), this.noteImports.load()]);
+          await Promise.all([this.threads.reload(), this.learn.reload(), this.grammar.reload(), this.learner.reload(), this.srs.reloadLogs(), this.noteImports.load()]);
         },
         applyData: (data) => {
           this.vocabData = data;
@@ -31879,6 +35048,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
     this.threads = new ThreadService({ storage: this.storage, store: this.store, ai, notes: this.notes, anchors: this.anchors });
     this.learn = new LearnStore({ storage: this.storage });
     this.grammar = new GrammarStore({ storage: this.storage });
+    this.learner = new LearnerStore({ storage: this.storage });
     this.grammarQuestions = new QuestionService({
       grammar: this.grammar,
       ai,
@@ -31887,7 +35057,14 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
       retention: () => this.srs.settings().retention,
       // R2: sentences the learner read, from the 文法解析 answers.
       sightings: () => grammarSightings(this.threads.paragraphThreads()),
-      useMySentences: () => resolveGrammarSettings(this.store.settings.grammar).useMySentences
+      useMySentences: () => resolveGrammarSettings(this.store.settings.grammar).useMySentences,
+      // 第十六波 G: 待答池, 錯題區 and learning events; the learner's level
+      // picks the starting stage when the filter names none.
+      learner: this.learner,
+      level: () => {
+        var _a, _b;
+        return (_b = (_a = this.store.settings.learner) == null ? void 0 : _a.level) != null ? _b : "";
+      }
     });
     this.families = new FamilyService({
       ai,
@@ -31952,6 +35129,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
       void this.threads.reload();
       void this.learn.reload();
       void this.grammar.reload();
+      void this.learner.reload();
       void this.srs.reloadLogs();
     });
     this.exporter = new ExportService({
@@ -31986,9 +35164,9 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
       openPath: (p) => this.openNote(p)
     });
     this.registerEvent(
-      this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof import_obsidian62.TFolder))
+      this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof import_obsidian63.TFolder))
     );
-    this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof import_obsidian62.TFolder)));
+    this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof import_obsidian63.TFolder)));
     this.linkage = new EntryLinkageService({
       learn: this.learn,
       vocab: this.store,
@@ -32008,7 +35186,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
         trivia: this.trivia,
         // The bottom sheet on iPhone.
         openInSidebar: (entry) => this.surfaces.openWordCard(entry.id, "ai"),
-        notify: (m2) => new import_obsidian62.Notice(m2)
+        notify: (m2) => new import_obsidian63.Notice(m2)
       })
     );
     new PluginNoteChrome(this.app).attach(this);
@@ -32045,7 +35223,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
         var _a;
         for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
           const view = leaf.view;
-          if (view instanceof import_obsidian62.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === path && view.getMode() === "preview") {
+          if (view instanceof import_obsidian63.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === path && view.getMode() === "preview") {
             view.previewMode.rerender(true);
           }
         }
@@ -32132,7 +35310,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
     );
     this.registerEvent(
       this.app.vault.on("rename", async (file, oldPath) => {
-        if (!(file instanceof import_obsidian62.TFile)) return;
+        if (!(file instanceof import_obsidian63.TFile)) return;
         const changed = updateSourcePaths(this.vocabData.entries, oldPath, file.path);
         if (changed.length) await this.store.touchMany(changed);
         await this.noteImports.rename(oldPath, file.path);
@@ -32144,6 +35322,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
       }
       void this.ensureVocabFile();
       void this.files.ensureAll();
+      void this.loadLearner();
       this.registerWordlistEvents();
       void this.wordlists.reload();
       const timer2 = window.setTimeout(
@@ -32161,7 +35340,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
   // So a debounced write (VocabStore's 500ms coalescing) isn't lost if
   // Obsidian closes right after an edit, before the timer fires.
   async onunload() {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
     disposePronouncer();
     this.unloaded = true;
     flushUndoables();
@@ -32170,9 +35349,17 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
     (_c = this.returnNav) == null ? void 0 : _c.dispose();
     (_d = this.threads) == null ? void 0 : _d.dispose();
     (_e = this.ai) == null ? void 0 : _e.dispose();
-    await Promise.all([this.store.flush(), this.srs.flush(), (_f = this.threads) == null ? void 0 : _f.flush(), (_g = this.learn) == null ? void 0 : _g.flush(), (_h = this.grammar) == null ? void 0 : _h.flush()]);
-    await ((_i = this.exporter) == null ? void 0 : _i.flush());
-    (_j = this.exporter) == null ? void 0 : _j.dispose();
+    await Promise.all([this.store.flush(), this.srs.flush(), (_f = this.threads) == null ? void 0 : _f.flush(), (_g = this.learn) == null ? void 0 : _g.flush(), (_h = this.grammar) == null ? void 0 : _h.flush(), (_i = this.learner) == null ? void 0 : _i.flush()]);
+    await ((_j = this.exporter) == null ? void 0 : _j.flush());
+    (_k = this.exporter) == null ? void 0 : _k.dispose();
+  }
+  async loadLearner() {
+    try {
+      await Promise.all([this.grammar.ensureLoaded(), this.learner.ensureLoaded()]);
+      this.learner.migrateFromGrammar(this.grammar.questions(), this.grammar.attempts());
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't load learner data", e);
+    }
   }
   // Interface language: the user's setting, or Obsidian's language on "auto".
   applyLocale() {
@@ -32187,6 +35374,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
     void this.threads.reload();
     void this.learn.reload();
     void this.grammar.reload();
+    void this.learner.reload();
     void this.noteImports.load();
     const disk = await this.storage.readShard("data");
     if (!disk) return;
@@ -32279,7 +35467,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
       const result = (_a = opts.result) != null ? _a : await this.wordlists.scan(file.path, file.stat.mtime, () => this.app.vault.cachedRead(file));
       const plan = planImport(result.hits, this.examWordIndex, (tags) => this.examLabels(tags), { now: Date.now() });
       const base = Date.now();
-      const created = plan.create.map(
+      const created2 = plan.create.map(
         (w, i) => this.newEntry(`${base}-${i}`, w.word, {
           level: w.level,
           example: w.example,
@@ -32288,17 +35476,17 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
           liked: false
         })
       );
-      if (created.length) await this.store.addEntries(created);
+      if (created2.length) await this.store.addEntries(created2);
       for (const r of plan.retag) r.entry.level = r.level;
       if (plan.retag.length) await this.store.touchMany(plan.retag.map((r) => r.entry));
       await this.noteImports.mark(file.path, nowIso());
-      if (created.length || plan.retag.length) {
-        new import_obsidian62.Notice(
-          t("exam.import.done", { note: file.basename, added: created.length, tagged: plan.retag.length })
+      if (created2.length || plan.retag.length) {
+        new import_obsidian63.Notice(
+          t("exam.import.done", { note: file.basename, added: created2.length, tagged: plan.retag.length })
         );
         this.renderSidebar();
       }
-      this.enqueueEnrich(created);
+      this.enqueueEnrich(created2);
     } finally {
       this.importing.delete(file.path);
     }
@@ -32343,7 +35531,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
     (_a = this.sidebarView()) == null ? void 0 : _a.render();
   }
   registerWordlistEvents() {
-    const reload = (0, import_obsidian62.debounce)(() => void this.wordlists.reload(), 800, true);
+    const reload = (0, import_obsidian63.debounce)(() => void this.wordlists.reload(), 800, true);
     const inLists = (path) => inFolder(path, this.wordlistSettings().folder);
     const onChange = (file, oldPath) => {
       if (inLists(file.path) || oldPath && inLists(oldPath)) reload();
@@ -32351,7 +35539,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
     this.registerEvent(this.app.vault.on("create", (f) => onChange(f)));
     this.registerEvent(this.app.vault.on("delete", (f) => onChange(f)));
     this.registerEvent(this.app.vault.on("rename", (f, oldPath) => onChange(f, oldPath)));
-    const rescanActive = (0, import_obsidian62.debounce)(() => this.refreshExamStrip(), 1500, true);
+    const rescanActive = (0, import_obsidian63.debounce)(() => this.refreshExamStrip(), 1500, true);
     this.registerEvent(
       this.app.vault.on("modify", (f) => {
         var _a;
@@ -32375,7 +35563,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
     var _a;
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
       const view = leaf.view;
-      if (view instanceof import_obsidian62.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
+      if (view instanceof import_obsidian63.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
     }
   }
   refreshExamStrip() {
@@ -32415,7 +35603,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
   }
   // Live Preview hint's 「切換到閱讀模式」.
   async switchToReadingView() {
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian62.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian63.MarkdownView);
     if (!view) return;
     await view.setState({ ...view.getState(), mode: "preview" }, { history: false });
   }
@@ -32436,12 +35624,17 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
     this.dnaFocus.focus(morphemeId);
     void this.openEntryFile("dna", "tab");
   }
+  // 第十六波: Practice.md on the given tab (the hub reads the remembered tab).
+  async openPracticeTab(track2) {
+    if (typeof this.app.saveLocalStorage === "function") this.app.saveLocalStorage(TAB_KEY2, track2);
+    await this.openEntryFile("practice");
+  }
   async openEntryFile(id2, where = "current") {
     try {
       await this.openNote(await this.files.ensure(id2), where);
     } catch (e) {
       console.error(`Vocab Tracker: couldn't open the ${id2} entry file`, e);
-      new import_obsidian62.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian63.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   // The 「單字頁」 button: the word's page, created now if it has none.
@@ -32453,7 +35646,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
       if (path) await this.openNote(path);
     } catch (e) {
       console.error("Vocab Tracker: couldn't open the word page", e);
-      new import_obsidian62.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian63.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   // "tab": a new tab, or the tab already showing the note.
@@ -32465,12 +35658,12 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
   }
   async openNote(path, where = "current") {
     const file = this.app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian62.TFile)) return;
+    if (!(file instanceof import_obsidian63.TFile)) return;
     const { workspace } = this.app;
     if (where === "tab") {
       const open = workspace.getLeavesOfType("markdown").find((leaf) => {
         var _a;
-        return leaf.view instanceof import_obsidian62.MarkdownView && ((_a = leaf.view.file) == null ? void 0 : _a.path) === path;
+        return leaf.view instanceof import_obsidian63.MarkdownView && ((_a = leaf.view.file) == null ? void 0 : _a.path) === path;
       });
       if (open) {
         workspace.setActiveLeaf(open, { focus: true });
@@ -32507,13 +35700,13 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
       (p) => !!this.app.vault.getAbstractFileByPath(p)
     );
     const old = rename ? this.app.vault.getAbstractFileByPath(rename[0]) : null;
-    if (rename && old instanceof import_obsidian62.TFile) await this.app.fileManager.renameFile(old, rename[1]);
+    if (rename && old instanceof import_obsidian63.TFile) await this.app.fileManager.renameFile(old, rename[1]);
     if (this.app.vault.getAbstractFileByPath(VOCAB_FILE)) return;
     if (!this.app.vault.getAbstractFileByPath(VOCAB_FOLDER)) {
       await this.app.vault.createFolder(VOCAB_FOLDER);
     }
     const legacy = this.app.vault.getAbstractFileByPath(VOCAB_FILE_LEGACY);
-    if (legacy instanceof import_obsidian62.TFile) {
+    if (legacy instanceof import_obsidian63.TFile) {
       await this.app.fileManager.renameFile(legacy, VOCAB_FILE);
       return;
     }
@@ -32557,13 +35750,13 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
     }
   }
   showWordMenu(evt, word, ctx, exists) {
-    const menu = new import_obsidian62.Menu();
+    const menu = new import_obsidian63.Menu();
     menu.addItem((item) => {
       item.setTitle(t(exists ? "mobile.menu.open" : "mobile.menu.add", { word }));
       item.setIcon(exists ? "book-open" : "plus");
       item.onClick(async () => {
         const added = await this.addWordToVocab(word, ctx);
-        if (added) new import_obsidian62.Notice(t("mobile.menu.added", { word }));
+        if (added) new import_obsidian63.Notice(t("mobile.menu.added", { word }));
       });
     });
     menu.showAtMouseEvent(evt);
@@ -32583,13 +35776,13 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
           await this.deleteEntry(entry);
           this.renderSidebar();
         },
-        notify: (text, actions) => (actions == null ? void 0 : actions.length) ? actionNotice(text, actions) : new import_obsidian62.Notice(text)
+        notify: (text, actions) => (actions == null ? void 0 : actions.length) ? actionNotice(text, actions) : new import_obsidian63.Notice(text)
       });
       this.renderSidebar();
       (_a = this.sidebarView()) == null ? void 0 : _a.locateWord(word);
     } catch (e) {
       console.error("Vocab Tracker: couldn't save the word", e);
-      new import_obsidian62.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian63.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   getWordContext(x3, y3) {
@@ -32695,7 +35888,7 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
     if (!entry.source || !entry.source.path) return;
     const file = this.app.vault.getAbstractFileByPath(entry.source.path);
     if (!file) {
-      new import_obsidian62.Notice("Source note not found: " + entry.source.path);
+      new import_obsidian63.Notice("Source note not found: " + entry.source.path);
       return;
     }
     const leaf = this.app.workspace.getLeaf(false);
@@ -32719,11 +35912,11 @@ var VocabTrackerPlugin = class extends import_obsidian62.Plugin {
       await this.store.touch(entry);
       if (opts.quiet) return;
       this.renderSidebar();
-      if (opts.verbose) new import_obsidian62.Notice(`Vocab Tracker: fetched "${entry.word}"`);
+      if (opts.verbose) new import_obsidian63.Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
       if (opts.quiet) return;
-      new import_obsidian62.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
+      new import_obsidian63.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
     }
   }
   refreshSidebar() {
