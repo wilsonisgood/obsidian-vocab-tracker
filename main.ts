@@ -48,6 +48,10 @@ import type { Track } from "./src/core/model/learner";
 import { TAB_KEY as PRACTICE_TAB_KEY } from "./src/ui/blocks/practice/practiceModel";
 import { GrammarPages } from "./src/services/grammar/GrammarPages";
 import { QuestionService } from "./src/services/grammar/QuestionService";
+import { ScenarioService } from "./src/services/practice/ScenarioService";
+import { LearnerModel } from "./src/services/learner/LearnerModel";
+import { setProfileDeps } from "./src/services/ai/context/profile";
+import { Rating } from "./src/core/model/srs";
 import { knownWordList } from "./src/services/ai/context/triviaContext";
 import { createDnaFocus } from "./src/ui/dna/dnaModel";
 import { PageContextHub } from "./src/ui/page/pageContext";
@@ -170,6 +174,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   learner!: LearnerStore;
   grammarPages!: GrammarPages;
   grammarQuestions!: QuestionService;
+  scenario!: ScenarioService;
+  learnerModel!: LearnerModel;
   families!: FamilyService;
   emoji!: EmojiService;
   // A morpheme picked on a word page, for the vocab-dna block (09 §7.1).
@@ -311,6 +317,26 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       learner: this.learner,
       level: () => this.store.settings.learner?.level ?? "",
     });
+    // 第十七波: 常用字 / 單字情境 / 混合 share one scenario service.
+    this.scenario = new ScenarioService({
+      ai,
+      learner: this.learner,
+      recentWords: () => this.recentWords(),
+      level: () => this.store.settings.learner?.level ?? "",
+      // C6: a scenario word answered wrong is one FSRS Again.
+      rateVocabAgain: (id) => {
+        const entry = this.store.entries.find((e) => e.id === id);
+        if (entry) void this.srs.rate(entry, Rating.Again, "en-zh");
+      },
+    });
+    // 第十七波 Z: the one read point for how far the learner has got.
+    this.learnerModel = new LearnerModel({
+      vocab: () => this.store.entries,
+      grammar: this.grammar,
+      learner: this.learner,
+      level: () => this.store.settings.learner?.level ?? "",
+    });
+    setProfileDeps({ learnerModel: this.learnerModel });
     this.families = new FamilyService({
       ai,
       vocab: this.store,
