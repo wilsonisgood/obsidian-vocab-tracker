@@ -96,3 +96,28 @@ describe("verbUsageRows", () => {
     expect(rows[0].word).toBe("verb14");
   });
 });
+
+import { grammarPlan } from "../../../src/ui/sidebar/grammarRows";
+
+describe("grammarPlan (wave 14 U)", () => {
+  it("Usage page visible: rows switch its word, uncapped", () => {
+    expect(grammarPlan(true)).toEqual({ click: "select", limit: null });
+  });
+  it("otherwise: rows open the word page, capped", () => {
+    expect(grammarPlan(false)).toEqual({ click: "openWord", limit: RECENT_VERB_USAGE });
+  });
+});
+
+describe("verbUsageRows anyPos", () => {
+  const noFav = (): VerbUsageFavorite | undefined => undefined;
+  const noun = verb("n1", "table", {
+    partOfSpeech: "noun",
+    usages: { n: { patterns: [], related: [], generatedAt: "2026-10-05T00:00:00Z", model: "m" } },
+  } as Partial<VocabEntry>);
+  it("skips non-verbs by default, lists them with anyPos", () => {
+    expect(verbUsageRows([noun], noFav)).toHaveLength(0);
+    const rows = verbUsageRows([noun], noFav, true);
+    expect(rows.map((r) => r.entryId)).toEqual(["n1"]);
+    expect(rows[0].lastAt).toBe("2026-10-05T00:00:00Z");
+  });
+});

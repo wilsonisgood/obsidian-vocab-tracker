@@ -3,7 +3,7 @@ import { t } from "../../core/i18n";
 import type { LearnStore } from "../../services/learn/LearnStore";
 import type { VerbUsageService } from "../../services/learn/VerbUsageService";
 import { shortDate } from "./paragraphRows";
-import { RECENT_VERB_USAGE, verbUsageRows, type VerbUsageRow } from "./grammarRows";
+import { grammarPlan, verbUsageRows, type VerbUsageRow } from "./grammarRows";
 
 // The sidebar's 「文法（n）」 section body (Wave 6 W). Today it's just one
 // subsection — 動詞用法: the most recently generated/regenerated/saved
@@ -16,6 +16,15 @@ import { RECENT_VERB_USAGE, verbUsageRows, type VerbUsageRow } from "./grammarRo
 export interface GrammarSectionDeps {
   verbs: Pick<VerbUsageService, "verbs" | "events">;
   learn: Pick<LearnStore, "verbFavorite" | "events" | "ensureLoaded">;
+  // Wave 14 U: the visible Usage page (desktop, not `word=`), if any, and
+  // a subscription for when it opens/closes/changes word.
+  usagePage?: {
+    current(): { selectedId(): string | undefined; select(entryId: string): void } | null;
+    subscribe(cb: () => void): () => void;
+  };
+  // Rows for "every word with any usage" (Usage page mode); defaults to the
+  // verbs() list when absent.
+  usageEntries?: () => ReturnType<GrammarSectionDeps["verbs"]["verbs"]>;
 }
 
 export interface GrammarSectionActions {
@@ -47,12 +56,19 @@ export class GrammarSection extends Component {
     this.register(verbs.events.on("verb:usage", () => this.refresh()));
     this.register(learn.events.on("verbFavorite:upsert", () => this.refresh()));
     this.register(learn.events.on("learn:reloaded", () => this.refresh()));
+    if (this.deps.usagePage) this.register(this.deps.usagePage.subscribe(() => this.refresh()));
     this.refresh();
     void learn.ensureLoaded().then(() => this.refresh());
   }
 
+  private page() {
+    return this.deps.usagePage?.current() ?? null;
+  }
+
   private rows(): VerbUsageRow[] {
-    return verbUsageRows(this.deps.verbs.verbs(), (id) => this.deps.learn.verbFavorite(id));
+    const fav = (id: string) => this.deps.learn.verbFavorite(id);
+    if (this.page() && this.deps.usageEntries) return verbUsageRows(this.deps.usageEntries(), fav, true);
+    return verbUsageRows(this.deps.verbs.verbs(), fav);
   }
 
   refresh(): void {
@@ -64,11 +80,16 @@ export class GrammarSection extends Component {
 
   private draw(rows: VerbUsageRow[]): void {
     this.el.empty();
+    const page = this.page();
+    const plan = grammarPlan(!!page);
+    const selected = page?.selectedId();
     this.el.createDiv({ cls: "vt-glist-sub", text: t("sidebar.grammar.verbs") });
     if (!rows.length) {
       this.el.createDiv({ cls: "vt-plist-hint", text: t("sidebar.grammar.empty") });
     } else {
-      for (const row of rows.slice(0, RECENT_VERB_USAGE)) this.drawRow(row);
+      for (const row of plan.limit === null ? rows : rows.slice(0, plan.limit)) {
+        this.drawRow(row, plan.click === "select" ? selected === row.entryId : false, plan.click === "select" ? (id) => page?.select(id) : undefined);
+      }
     }
     const more = this.el.createEl("button", { cls: "vt-glist-more", text: t("sidebar.grammar.viewAll") });
     more.addEventListener("click", (e) => {
@@ -77,12 +98,13 @@ export class GrammarSection extends Component {
     });
   }
 
-  private drawRow(row: VerbUsageRow): void {
+  private drawRow(row: VerbUsageRow, active: boolean, select?: (id: string) => void): void {
     const el = this.el.createDiv({ cls: "vt-glist-row" });
     el.setAttr("role", "button");
     el.setAttr("tabindex", "0");
     el.setAttr("data-entry-id", row.entryId);
-    const open = () => this.actions.openWord(row.entryId);
+    el.toggleClass("is-active", active);
+    const open = () => (select ? select(row.entryId) : this.actions.openWord(row.entryId));
     el.addEventListener("click", open);
     el.addEventListener("keydown", (e) => {
       if (e.key === "Enter") open();

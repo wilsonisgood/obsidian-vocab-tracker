@@ -36,19 +36,28 @@ function later(a: string | undefined, b: string | undefined): string | undefined
 
 // `favoriteOf` mirrors LearnStore.verbFavorite: undefined when the verb
 // isn't (currently) saved.
+//
+// `anyPos` (wave 14 U): while a Usage page is the visible main tab, the
+// sidebar is its word list, so it lists every word with a usage block of
+// any part of speech (what the page's old left column listed), not just
+// verbs.
 export function verbUsageRows(
   entries: readonly VocabEntry[],
-  favoriteOf: (entryId: string) => VerbUsageFavorite | undefined
+  favoriteOf: (entryId: string) => VerbUsageFavorite | undefined,
+  anyPos = false
 ): VerbUsageRow[] {
   const rows: VerbUsageRow[] = [];
   for (const e of entries) {
     // Wave 8 U1 (1006-2 #21): usage is per pos now; this section only
     // ever listed verbs, so it still only cares about pos "v" (merges
     // the legacy entry.usage field in — usagesOf()).
-    const usage = usagesOf(e).v;
-    if (e.deletedAt || !usage) continue;
+    const all = usagesOf(e);
+    const blocks = anyPos ? Object.values(all) : all.v ? [all.v] : [];
+    if (e.deletedAt || !blocks.length) continue;
     const fav = favoriteOf(e.id);
-    const lastAt = later(usage.generatedAt, fav?.updatedAt) ?? usage.generatedAt;
+    let gen: string | undefined;
+    for (const b of blocks) gen = later(gen, b?.generatedAt);
+    const lastAt = later(gen, fav?.updatedAt) ?? "";
     rows.push({ entryId: e.id, word: e.word, favorited: !!fav, lastAt });
   }
   return rows.sort((a, b) => ms(b.lastAt) - ms(a.lastAt) || a.entryId.localeCompare(b.entryId));
@@ -58,3 +67,18 @@ export function verbUsageRows(
 // to 動詞用法.md, not a show-more toggle — the full, alphabetical list
 // lives there).
 export const RECENT_VERB_USAGE = 10;
+
+// Wave 14 U: with a Usage page (not `word=` mode) visible as the main tab,
+// a row switches that page's word and the list is uncapped (the page has no
+// left column any more, so words past the cap would be unreachable);
+// otherwise a row opens the word page and the list is capped as before.
+export interface GrammarPlan {
+  click: "select" | "openWord";
+  limit: number | null;
+}
+
+export function grammarPlan(usagePageVisible: boolean): GrammarPlan {
+  return usagePageVisible
+    ? { click: "select", limit: null }
+    : { click: "openWord", limit: RECENT_VERB_USAGE };
+}
