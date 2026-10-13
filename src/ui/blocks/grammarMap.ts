@@ -1,19 +1,19 @@
 import { MarkdownRenderChild, Notice, type MarkdownPostProcessorContext } from "obsidian";
+import { t } from "../../core/i18n";
 import { GRAMMAR_TOPICS, topicById } from "../../core/grammar/catalog";
 import { dueTopics, recommendNext, topicStatuses } from "../../core/grammar/progress";
 import type { GrammarStage } from "../../core/model/grammar";
 import type { CefrLevel } from "../../core/model/settings";
 import type { GrammarStore } from "../../services/grammar/GrammarStore";
+import { stageLabel } from "../grammar/labels";
 import { segmented } from "../kit/segmented";
 import {
   defaultStage,
-  gl,
   lockedTooltip,
   mapRows,
   mistakeEntries,
   mistakeTotal,
   parseMapParams,
-  stageLabel,
   STAGES,
   type MapRow,
 } from "./grammarMapModel";
@@ -72,7 +72,7 @@ class GrammarMapBlock extends MarkdownRenderChild {
     this.containerEl.empty();
     this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-map"] });
     guardReadingClicks(this, this.root);
-    this.root.createDiv({ cls: "vt-learn-loading", text: gl("map.loading") });
+    this.root.createDiv({ cls: "vt-learn-loading", text: t("grammar.map.loading") });
 
     const { events } = this.deps.grammar;
     const refresh = () => this.render();
@@ -90,7 +90,7 @@ class GrammarMapBlock extends MarkdownRenderChild {
 
   private open(topicId: string): void {
     Promise.resolve(this.deps.openTopic(topicId)).catch((e: unknown) => {
-      new Notice(gl("map.openFailed", { msg: e instanceof Error ? e.message : String(e) }));
+      new Notice(t("grammar.map.openFailed", { msg: e instanceof Error ? e.message : String(e) }));
     });
   }
 
@@ -105,11 +105,11 @@ class GrammarMapBlock extends MarkdownRenderChild {
     this.root.empty();
 
     const head = this.root.createDiv({ cls: "vt-gr-head" });
-    head.createDiv({ cls: "vt-gr-title", text: gl("map.title") });
+    head.createDiv({ cls: "vt-gr-title", text: t("grammar.map.title") });
     segmented(head, {
       options: STAGES.map((s) => ({ value: String(s), label: stageLabel(s) })),
       value: String(this.stage),
-      ariaLabel: gl("map.stage"),
+      ariaLabel: t("grammar.map.stage"),
       onChange: (v) => {
         this.stage = Number(v) as GrammarStage;
         pickedStage.set(this.sourcePath, this.stage);
@@ -120,22 +120,22 @@ class GrammarMapBlock extends MarkdownRenderChild {
     const next = recommendNext(GRAMMAR_TOPICS, statusOf, this.deps.level());
     if (next) {
       const bar = this.root.createDiv({ cls: "vt-gr-bar vt-gr-next" });
-      bar.createSpan({ cls: "vt-gr-bar-label", text: `${gl("map.next")}：` });
+      bar.createSpan({ cls: "vt-gr-bar-label", text: `${t("grammar.map.next")}：` });
       bar.createSpan({ cls: "vt-gr-bar-main", text: next.title });
       bar.createSpan({ cls: "vt-gr-bar-sub", text: next.pattern });
-      learnButton(bar, { label: gl("map.start"), icon: "play", cta: true, onClick: () => this.open(next.id) });
+      learnButton(bar, { label: t("grammar.map.start"), icon: "play", cta: true, onClick: () => this.open(next.id) });
     }
 
     const due = dueTopics(GRAMMAR_TOPICS, (id) => grammar.progress(id), now);
     if (due.length) {
       const bar = this.root.createDiv({ cls: "vt-gr-bar vt-gr-due" });
-      bar.createSpan({ cls: "vt-gr-bar-main", text: gl("map.due", { n: due.length }) });
-      learnButton(bar, { label: gl("map.review"), icon: "repeat", onClick: () => this.open(due[0].id) });
+      bar.createSpan({ cls: "vt-gr-bar-main", text: t("grammar.map.due", { n: due.length }) });
+      learnButton(bar, { label: t("grammar.map.review"), icon: "repeat", onClick: () => this.open(due[0].id) });
     }
 
     const rows = mapRows(this.stage, GRAMMAR_TOPICS, statusOf, attempts);
     const list = this.root.createDiv({ cls: "vt-gr-list" });
-    if (!rows.length) list.createDiv({ cls: "vt-gr-empty", text: gl("map.empty") });
+    if (!rows.length) list.createDiv({ cls: "vt-gr-empty", text: t("grammar.map.empty") });
     for (const row of rows) this.renderRow(list, row);
 
     this.renderMistakes();
@@ -163,7 +163,7 @@ class GrammarMapBlock extends MarkdownRenderChild {
     const box = this.root.createDiv({ cls: "vt-gr-mistakes" });
     const toggle = box.createEl("button", { cls: "vt-gr-mistakes-toggle", attr: { type: "button" } });
     toggle.setAttr("aria-expanded", String(this.mistakesOpen));
-    toggle.createSpan({ text: gl("map.mistakes", { n: total }) });
+    toggle.createSpan({ text: t("grammar.map.mistakes", { n: total }) });
     const chevron = toggle.createSpan({ cls: "vt-gr-chevron", text: "›", attr: { "aria-hidden": "true" } });
     chevron.toggleClass("is-open", this.mistakesOpen);
     toggle.addEventListener("click", () => {
@@ -173,17 +173,17 @@ class GrammarMapBlock extends MarkdownRenderChild {
     if (!this.mistakesOpen) return;
 
     const body = box.createDiv({ cls: "vt-gr-mistakes-body" });
-    if (!entries.length) body.createDiv({ cls: "vt-gr-empty", text: gl("map.mistakes.empty") });
+    if (!entries.length) body.createDiv({ cls: "vt-gr-empty", text: t("grammar.map.mistakes.empty") });
     for (const e of entries) {
       const row = body.createDiv({ cls: "vt-gr-mistake" });
       const text = row.createDiv({ cls: "vt-gr-mistake-text" });
       text.createSpan({ cls: "vt-gr-mistake-tag", text: e.label });
-      text.createSpan({ cls: "vt-gr-mistake-count", text: gl("map.mistakes.count", { n: e.count }) });
+      text.createSpan({ cls: "vt-gr-mistake-count", text: t("grammar.map.mistakes.count", { n: e.count }) });
       const topic = topicById(e.topicId);
       if (topic) text.createSpan({ cls: "vt-gr-mistake-topic", text: topic.title });
       // First version: the group's biggest topic page; P's practice block
       // takes over with `mode: mistakes`.
-      learnButton(row, { label: gl("map.mistakes.redo"), icon: "rotate-ccw", ghost: true, onClick: () => this.open(e.topicId) });
+      learnButton(row, { label: t("grammar.map.mistakes.redo"), icon: "rotate-ccw", ghost: true, onClick: () => this.open(e.topicId) });
     }
   }
 }

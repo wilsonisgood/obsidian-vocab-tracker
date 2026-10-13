@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { chipsLabel, displayContent, grammarChips, stageLabel } from "../../../src/ui/chat/grammarChips";
+import { beforeEach, describe, expect, it } from "vitest";
+import { setLocale } from "../../../src/core/i18n";
+import { chipsLabel, displayContent, grammarChips } from "../../../src/ui/chat/grammarChips";
+import { stageLabel } from "../../../src/ui/grammar/labels";
 import { GRAMMAR_TASK_ID } from "../../../src/core/grammar/sightings";
 import { topicById } from "../../../src/core/grammar/catalog";
 import type { Turn } from "../../../src/core/model/thread";
@@ -7,6 +9,8 @@ import type { Turn } from "../../../src/core/model/thread";
 function answer(content: string, extra: Partial<Turn> = {}): Turn {
   return { id: "a", role: "assistant", content, at: "2026-10-13T00:00:00Z", status: "done", taskId: GRAMMAR_TASK_ID, ...extra };
 }
+
+beforeEach(() => setLocale("zh-TW"));
 
 describe("displayContent (shown, copied)", () => {
   it("removes the trailer line and trailing whitespace", () => {
@@ -30,16 +34,17 @@ describe("grammarChips", () => {
   const ids = ["past-simple", "present-perfect-vs-past", "passive-basic"];
 
   it("one chip per known topic, in trailer order, labelled title · stage", () => {
-    const chips = grammarChips(answer(`x\n<!-- vt-grammar: ${ids.join(", ")} -->`), "zh-TW");
+    const chips = grammarChips(answer(`x\n<!-- vt-grammar: ${ids.join(", ")} -->`));
     expect(chips.map((c) => c.topicId)).toEqual(ids);
     const t = topicById("present-perfect-vs-past")!;
-    expect(chips[1]).toEqual({ topicId: t.id, label: `${t.title} · ${stageLabel(t.stage, "zh-TW")}`, stage: t.stage });
+    expect(chips[1]).toEqual({ topicId: t.id, label: `${t.title} · ${stageLabel(t.stage)}`, stage: t.stage });
     expect(chips.every((c) => /· (基礎|中級|進階)$/.test(c.label))).toBe(true);
   });
 
-  it("stage names", () => {
-    expect([1, 2, 3].map((s) => stageLabel(s as 1 | 2 | 3, "zh-TW"))).toEqual(["基礎", "中級", "進階"]);
-    expect(chipsLabel("zh-TW")).toBeTruthy();
+  it("the chip row label", () => {
+    expect(chipsLabel()).toBe("這句用到的文法");
+    setLocale("en");
+    expect(chipsLabel()).toBe("Grammar in this sentence");
   });
 
   it("drops unknown ids and an empty trailer gives no chips", () => {

@@ -1,8 +1,9 @@
+import { t, type I18nKey } from "../../core/i18n";
 import { topicById } from "../../core/grammar/catalog";
 import { isMastered, objectiveStats } from "../../core/grammar/progress";
 import type { GrammarAttempt, GrammarSighting, GrammarTopic } from "../../core/model/grammar";
 import { isGrammarPageError, type GrammarPageErrorCode } from "../../services/grammar/topicPage";
-import { gl, stageLabel } from "./grammarMapModel";
+import { stageLabel } from "../grammar/labels";
 import { parseBlockParams } from "./params";
 
 // View-models for the vocab-grammar-topic block (第十五波 M, 1013 §3.2).
@@ -21,7 +22,7 @@ export function parseTopicParams(source: string): TopicParams {
 
 // 「基礎 · 難度 2」.
 export function topicMeta(topic: GrammarTopic): { stage: string; difficulty: string } {
-  return { stage: stageLabel(topic.stage), difficulty: gl("topic.difficulty", { n: topic.difficulty }) };
+  return { stage: stageLabel(topic.stage), difficulty: t("grammar.topic.difficulty", { n: topic.difficulty }) };
 }
 
 // ── Objectives ───────────────────────────────────────────────────
@@ -97,10 +98,10 @@ export function topicChips(topic: GrammarTopic): TopicChip[] {
   const seen = new Set<string>([topic.id]);
   const add = (ids: readonly string[], kind: ChipKind) => {
     for (const id of ids) {
-      const t = topicById(id);
-      if (!t || seen.has(id)) continue;
+      const found = topicById(id);
+      if (!found || seen.has(id)) continue;
       seen.add(id);
-      out.push({ topic: t, kind, label: gl(kind === "prerequisite" ? "topic.kind.prerequisite" : "topic.kind.related") });
+      out.push({ topic: found, kind, label: t(kind === "prerequisite" ? "grammar.topic.kind.prerequisite" : "grammar.topic.kind.related") });
     }
   };
   add(topic.prerequisites, "prerequisite");
@@ -111,13 +112,13 @@ export function topicChips(topic: GrammarTopic): TopicChip[] {
 // ── Explanation errors ───────────────────────────────────────────
 
 const PAGE_ERROR_KEY = {
-  "not-empty": "topic.err.notEmpty",
-  "no-section": "topic.err.noSection",
-  "empty-text": "topic.err.empty",
-} as const satisfies Record<GrammarPageErrorCode, Parameters<typeof gl>[0]>;
+  "not-empty": "grammar.topic.err.notEmpty",
+  "no-section": "grammar.topic.err.noSection",
+  "empty-text": "grammar.topic.err.empty",
+} as const satisfies Record<GrammarPageErrorCode, I18nKey>;
 
 // What the page says when writing the explanation failed; null for an error
 // that isn't GrammarPages' own (the AI's, shown with the shared wording).
 export function pageErrorText(e: unknown): string | null {
-  return isGrammarPageError(e) ? gl(PAGE_ERROR_KEY[e.code]) : null;
+  return isGrammarPageError(e) ? t(PAGE_ERROR_KEY[e.code]) : null;
 }

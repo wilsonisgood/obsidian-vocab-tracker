@@ -1,22 +1,18 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { GRAMMAR_TOPICS, topicById } from "../../../src/core/grammar/catalog";
 import { topicStatuses } from "../../../src/core/grammar/progress";
-import { setLocale } from "../../../src/core/i18n";
+import { setLocale, t } from "../../../src/core/i18n";
 import type { GrammarAttempt, GrammarQuestion, GrammarTopicStatus } from "../../../src/core/model/grammar";
 import {
   defaultStage,
-  errorTagLabel,
-  gl,
   lockedTooltip,
   mapRows,
   mistakeEntries,
   mistakeTotal,
   parseMapParams,
-  stageLabel,
   stageOfDifficulty,
   topicOfGroup,
 } from "../../../src/ui/blocks/grammarMapModel";
-import { ERROR_TAGS } from "../../../src/core/model/grammar";
 
 beforeEach(() => setLocale("zh-TW"));
 
@@ -48,7 +44,6 @@ describe("stages", () => {
   it("maps difficulty and CEFR level to a stage (rule 3)", () => {
     expect([1, 3, 4, 6, 7, 9].map(stageOfDifficulty)).toEqual([1, 1, 2, 2, 3, 3]);
     expect(["", "A1", "A2", "B1", "B2", "C1", "C2"].map((l) => defaultStage(l as never))).toEqual([1, 1, 1, 2, 2, 3, 3]);
-    expect([1, 2, 3].map((s) => stageLabel(s as 1 | 2 | 3))).toEqual(["基礎", "中級", "進階"]);
   });
 
   it("reads the optional stage parameter", () => {
@@ -142,22 +137,13 @@ describe("mistakes", () => {
     };
     expect(topicOfGroup(group)).toBe(t2.id);
   });
-
-  it("has a label for every error tag in both languages", () => {
-    for (const tag of ERROR_TAGS) {
-      setLocale("zh-TW");
-      expect(errorTagLabel(tag)).toBeTruthy();
-      setLocale("en");
-      expect(errorTagLabel(tag)).toMatch(/^[A-Z]/);
-    }
-  });
 });
 
 describe("strings", () => {
   it("fills params in both languages", () => {
-    expect(gl("map.due", { n: 3 })).toBe("今天待複習 3 個主題");
+    expect(t("grammar.map.due", { n: 3 })).toBe("今天待複習 3 個主題");
     setLocale("en");
-    expect(gl("map.due", { n: 3 })).toBe("3 topics to review today");
-    expect(gl("map.mistakes", { n: 12 })).toBe("Mistakes (12)");
+    expect(t("grammar.map.due", { n: 3 })).toBe("3 topics to review today");
+    expect(t("grammar.map.mistakes", { n: 12 })).toBe("Mistakes (12)");
   });
 });

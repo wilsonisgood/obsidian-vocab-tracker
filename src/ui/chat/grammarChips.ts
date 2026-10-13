@@ -1,30 +1,19 @@
-import { getLocale } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import { GRAMMAR_TASK_ID } from "../../core/grammar/sightings";
 import { topicById } from "../../core/grammar/catalog";
 import { parseGrammarTrailer, stripGrammarTrailer } from "../../core/grammar/trailer";
 import type { GrammarStage } from "../../core/model/grammar";
 import type { Turn } from "../../core/model/thread";
+import { stageLabel } from "../grammar/labels";
 
 // What a 文法解析 answer shows (wave 15 S, 1013 §3.5): the text without its
 // machine-readable `<!-- vt-grammar: … -->` trailer, and a chip per topic
 // the trailer named. Pure, so the display rules are unit-tested; ChatPanel
 // draws them.
 
-// Wave 15 rule 11: new strings live in the file that uses them until
-// integration moves them into i18n.
-const L = {
-  "zh-TW": { stage1: "基礎", stage2: "中級", stage3: "進階", chips: "這句用到的文法" },
-  en: { stage1: "Basic", stage2: "Intermediate", stage3: "Advanced", chips: "Grammar in this sentence" },
-} as const;
-
-type Lang = keyof typeof L;
-
-export function stageLabel(stage: GrammarStage, lang: Lang = getLocale()): string {
-  return L[lang][`stage${stage}`];
-}
-
-export function chipsLabel(lang: Lang = getLocale()): string {
-  return L[lang].chips;
+// The 「這句用到的文法」 row label (aria) for a chip row.
+export function chipsLabel(): string {
+  return t("grammar.chip.label");
 }
 
 export interface GrammarChip {
@@ -43,12 +32,12 @@ export function displayContent(content: string): string {
 
 // Chips for a finished 文法解析 answer; empty for any other turn, an answer
 // that's still streaming/failed, or a trailer with no known topic.
-export function grammarChips(turn: Pick<Turn, "role" | "taskId" | "status" | "content">, lang: Lang = getLocale()): GrammarChip[] {
+export function grammarChips(turn: Pick<Turn, "role" | "taskId" | "status" | "content">): GrammarChip[] {
   if (turn.role !== "assistant" || turn.taskId !== GRAMMAR_TASK_ID || turn.status !== "done") return [];
   const out: GrammarChip[] = [];
   for (const id of parseGrammarTrailer(turn.content)) {
     const topic = topicById(id);
-    if (topic) out.push({ topicId: id, label: `${topic.title} · ${stageLabel(topic.stage, lang)}`, stage: topic.stage });
+    if (topic) out.push({ topicId: id, label: `${topic.title} · ${stageLabel(topic.stage)}`, stage: topic.stage });
   }
   return out;
 }

@@ -12,7 +12,6 @@ import type { ThreadService } from "../../services/threads/ThreadService";
 import { aiErrorBox } from "../kit/aiDebug";
 import { emptyState } from "../kit/emptyState";
 import { inlineNote } from "../kit/inlineNote";
-import { gl } from "./grammarMapModel";
 import { objectiveRows, pageErrorText, parseTopicParams, sightingRows, topicChips, topicMeta } from "./grammarTopicModel";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText } from "./learnUi";
 
@@ -103,11 +102,11 @@ class GrammarTopicBlock extends MarkdownRenderChild {
 
     if (!this.topic) {
       this.root.appendChild(
-        inlineNote({ tone: "error", text: this.id ? gl("topic.unknown", { id: this.id }) : gl("topic.noId") })
+        inlineNote({ tone: "error", text: this.id ? t("grammar.topic.unknown", { id: this.id }) : t("grammar.topic.noId") })
       );
       return;
     }
-    this.root.createDiv({ cls: "vt-learn-loading", text: gl("map.loading") });
+    this.root.createDiv({ cls: "vt-learn-loading", text: t("grammar.map.loading") });
 
     const refresh = () => this.render();
     this.register(this.deps.grammar.events.on("attempt:add", refresh));
@@ -127,7 +126,7 @@ class GrammarTopicBlock extends MarkdownRenderChild {
 
   private open(topicId: string): void {
     Promise.resolve(this.deps.openTopic(topicId)).catch((e: unknown) => {
-      new Notice(gl("map.openFailed", { msg: e instanceof Error ? e.message : String(e) }));
+      new Notice(t("grammar.map.openFailed", { msg: e instanceof Error ? e.message : String(e) }));
     });
   }
 
@@ -158,13 +157,13 @@ class GrammarTopicBlock extends MarkdownRenderChild {
     if (this.ctrl) {
       const line = box.createDiv({ cls: "vt-learn-busy-text" });
       setIcon(line.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
-      line.createSpan({ text: gl("topic.generating") });
+      line.createSpan({ text: t("grammar.topic.generating") });
       const ctrl = this.ctrl;
-      learnButton(box, { label: gl("topic.stop"), icon: "square", onClick: () => ctrl.abort() });
+      learnButton(box, { label: t("grammar.topic.stop"), icon: "square", onClick: () => ctrl.abort() });
       return;
     }
     if (this.written) {
-      box.appendChild(inlineNote({ text: gl("topic.written") }));
+      box.appendChild(inlineNote({ text: t("grammar.topic.written") }));
       return;
     }
     if (this.error) {
@@ -174,7 +173,7 @@ class GrammarTopicBlock extends MarkdownRenderChild {
     // written by the learner there's nothing to offer.
     if (this.explainEmpty() === false) return;
     if (renderAiGate(box, this.deps.ai.status(), () => this.deps.openSettings())) return;
-    learnButton(box, { label: gl("topic.generate"), icon: "sparkles", onClick: () => void this.generate() });
+    learnButton(box, { label: t("grammar.topic.generate"), icon: "sparkles", onClick: () => void this.generate() });
   }
 
   private async generate(): Promise<void> {
@@ -201,7 +200,7 @@ class GrammarTopicBlock extends MarkdownRenderChild {
 
   private renderObjectives(topic: GrammarTopic): void {
     const sec = this.root.createDiv({ cls: "vt-gr-sec" });
-    sec.createDiv({ cls: "vt-gr-sec-title", text: gl("topic.objectives") });
+    sec.createDiv({ cls: "vt-gr-sec-title", text: t("grammar.topic.objectives") });
     const list = sec.createDiv({ cls: "vt-gr-objectives" });
     for (const o of objectiveRows(topic, this.deps.grammar.attempts(topic.id))) {
       const row = list.createDiv({ cls: ["vt-gr-objective", `is-${o.state}`] });
@@ -213,11 +212,11 @@ class GrammarTopicBlock extends MarkdownRenderChild {
 
   private renderSightings(topic: GrammarTopic): void {
     const sec = this.root.createDiv({ cls: "vt-gr-sec" });
-    sec.createDiv({ cls: "vt-gr-sec-title", text: gl("topic.sightings") });
+    sec.createDiv({ cls: "vt-gr-sec-title", text: t("grammar.topic.sightings") });
     const all: GrammarSighting[] = grammarSightings(this.deps.threads.paragraphThreads());
     const rows = sightingRows(all, topic.id);
     if (!rows.length) {
-      sec.createDiv({ cls: "vt-gr-empty", text: gl("topic.sightings.empty") });
+      sec.createDiv({ cls: "vt-gr-empty", text: t("grammar.topic.sightings.empty") });
       return;
     }
     for (const r of rows) {
@@ -236,7 +235,7 @@ class GrammarTopicBlock extends MarkdownRenderChild {
     const chips = topicChips(topic);
     if (!chips.length) return;
     const sec = this.root.createDiv({ cls: "vt-gr-sec" });
-    sec.createDiv({ cls: "vt-gr-sec-title", text: gl("topic.related") });
+    sec.createDiv({ cls: "vt-gr-sec-title", text: t("grammar.topic.related") });
     const row = sec.createDiv({ cls: "vt-gr-chips" });
     for (const c of chips) {
       const chip = row.createEl("button", { cls: ["vt-gr-chip", `is-${c.kind}`], attr: { type: "button" } });
