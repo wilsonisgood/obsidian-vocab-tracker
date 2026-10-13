@@ -37,6 +37,9 @@ export interface ParagraphPaneHost {
   // The article's 討論串/<文章>.ai.md, when it exists (M6 ExportService).
   exporter: { aiNotePath(articlePath: string): Promise<string | null> };
   openNote(path: string, where?: "current" | "tab"): Promise<void>;
+  // Wave 15 S: GrammarPages (M) — a 文法解析 chip opens its topic page.
+  // Absent until main.ts wires it up; then no chips are drawn.
+  grammarPages?: { open(topicId: string): Promise<void> | void };
 }
 
 export interface ParagraphPaneNav {
@@ -262,6 +265,9 @@ export class ParagraphThreadPane extends Component {
         send: (req) => friendlyErrors(route.name === "paragraph-draft" ? this.sendDraft(route.section, req) : this.sendThread(threadId, req)),
         retry: (turnId) => friendlyErrors(threads.retryParagraph(threadId, turnId)),
         onOpenSettings: () => openPluginSettings(app, manifest.id),
+        onGrammarTopic: this.host.grammarPages
+          ? (topicId) => void Promise.resolve(this.host.grammarPages?.open(topicId)).catch((e) => console.error("Vocab Tracker: open grammar topic failed", e))
+          : undefined,
       })
     );
   }

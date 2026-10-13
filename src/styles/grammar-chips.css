@@ -1,0 +1,106 @@
+/* Wave 15 S: grammar topic chips under a 文法解析 answer (ChatPanel) and
+   the sidebar 文法 section's 本篇用到的文法 / 待複習 rows.
+   Stage colours (wave 15 rule 2): 基礎 red, 中級 blue, 進階 black; every
+   colour is a variable with a dark-theme counterpart so it reads on both. */
+
+body {
+  --vt-gr-stage-1: #c0392b;
+  --vt-gr-stage-2: #2563b0;
+  --vt-gr-stage-3: #1c1c1c;
+}
+
+body.theme-dark {
+  --vt-gr-stage-1: #ff7b6b;
+  --vt-gr-stage-2: #7ab2ff;
+  --vt-gr-stage-3: #e8e8e8;
+}
+
+.vt-gr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.vt-gr-chip {
+  height: auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: var(--font-ui-smaller);
+  background: var(--background-primary);
+  border: 1px solid var(--vt-gr-stage-color, var(--background-modifier-border));
+  color: var(--vt-gr-stage-color, var(--text-normal));
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.vt-gr-chip.is-stage-1 {
+  --vt-gr-stage-color: var(--vt-gr-stage-1);
+}
+
+.vt-gr-chip.is-stage-2 {
+  --vt-gr-stage-color: var(--vt-gr-stage-2);
+}
+
+.vt-gr-chip.is-stage-3 {
+  --vt-gr-stage-color: var(--vt-gr-stage-3);
+}
+
+.vt-gr-chip:hover {
+  background: var(--background-modifier-hover);
+}
+
+/* Sidebar rows: 本篇用到的文法 (title ×n) and 待複習 (title + 練習). */
+.vt-gr-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: var(--radius-m, 8px);
+  cursor: pointer;
+}
+
+.vt-gr-row:hover,
+.vt-gr-row:focus-visible {
+  background: var(--background-modifier-hover);
+}
+
+.vt-gr-row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--vt-gr-stage-color, var(--text-normal));
+}
+
+.vt-gr-row.is-stage-1 {
+  --vt-gr-stage-color: var(--vt-gr-stage-1);
+}
+
+.vt-gr-row.is-stage-2 {
+  --vt-gr-stage-color: var(--vt-gr-stage-2);
+}
+
+.vt-gr-row.is-stage-3 {
+  --vt-gr-stage-color: var(--vt-gr-stage-3);
+}
+
+.vt-gr-row-count {
+  flex-shrink: 0;
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+
+.vt-gr-row-btn {
+  flex-shrink: 0;
+  font-size: 0.8em;
+}
+
+body.is-mobile .vt-gr-chip,
+body.is-mobile .vt-gr-row,
+body.is-mobile .vt-gr-row-btn {
+  min-height: 44px;
+}

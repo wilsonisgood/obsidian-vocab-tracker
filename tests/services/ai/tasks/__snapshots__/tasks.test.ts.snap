@@ -143,11 +143,99 @@ exports[`composed AiRequest snapshots > paragraph.grammar — with selection 1`]
 
 ¶3 To the honorees and everyone who came today — I am elated to be here.
 
-── system[2] ──
+── system[2] (cache) ──
+〔文法主題清單〕
+be-verb — be 動詞（am / is / are）
+personal-pronouns — 人稱代名詞（I / me / my / mine）
+noun-plurals — 名詞單複數（book / books）
+articles-basic — 冠詞（a / an / the）
+demonstratives — 指示詞（this / that / these / those）
+there-is-are — 存在句（there is / there are）
+present-simple — 一般現在式（I work / she works）
+present-continuous — 現在進行式（I am working）
+past-simple — 一般過去式（I worked / went）
+do-does-did-questions — 疑問句與否定句（do / does / did）
+possessive-s — 所有格 's（Tom's book）
+wh-questions — 疑問詞問句（what / where / who / how）
+have-got — have got（I've got / she hasn't got）
+imperatives — 命令句（Open the door.）
+can-cant — 情態動詞入門（can / can't）
+future-will-going-to — 未來表達（will / be going to）
+prepositions-time-place — 時間與地點介系詞（in / on / at）
+some-any-much-many — 量詞（some / any / much / many）
+countable-uncountable — 可數與不可數名詞（a book / some water）
+comparatives-superlatives — 比較級與最高級（bigger / the biggest）
+frequency-adverbs — 頻率副詞（always / usually）
+adjectives-adverbs — 形容詞與副詞（careful / carefully）
+used-to-past-habit — 過去習慣 used to（I used to play）
+present-perfect-intro — 現在完成式入門（have done）
+gerund-infinitive-intro — 動名詞與不定詞入門（enjoy doing / want to do）
+relative-clauses-basic — 基本關係子句（who / which / that）
+basic-conjunctions — 基本連接詞（and / but / because / so）
+passive-basic — 基本被動語態（is made / was built）
+conditionals-basic — 基本條件句（If it rains, ...）
+reflexive-pronouns — 反身代名詞（myself / themselves）
+purpose-to-infinitive — 表目的的 to do（I went out to buy milk.）
+present-perfect-vs-past — 現在完成式與過去式（have done / did）
+present-perfect-continuous — 現在完成進行式（have been doing）
+past-perfect — 過去完成式（had done）
+future-continuous-perfect — 未來進行式與未來完成式（will be doing / will have done）
+modals-deduction — 情態動詞的推論（must / might / can't）
+passive-advanced — 被動語態進階（has been done）
+conditionals-real — 真實條件句（zero / first conditional）
+conditionals-unreal — 假設條件句（second / third conditional）
+gerund-vs-infinitive-meaning — 動名詞與不定詞的意思差異（stop doing / stop to do）
+relative-clauses-defining-non — 限定與非限定關係子句（defining / non-defining）
+reported-speech — 間接引述（reported speech）
+must-vs-have-to — must 與 have to（must / have to / don't have to）
+articles-advanced — 冠詞進階（a / the / zero article）
+verb-preposition — 動詞加介系詞（depend on / belong to）
+adjective-preposition — 形容詞加介系詞（interested in / afraid of）
+participle-adjectives — 分詞形容詞（boring / bored）
+comparison-advanced — 比較結構進階（as ... as / less ... than）
+causative-perception-verbs — 使役與感官動詞（make / let / have / get）
+wish-if-only — 願望與遺憾（wish / if only）
+phrasal-verbs — 片語動詞（give up / carry out）
+used-to-be-used-to — used to / be used to / get used to（used to / be used to / get used to）
+question-tags — 附加問句（isn't it? / don't you?）
+future-time-clauses — 未來時間子句（when I get home）
+noun-clauses — 名詞子句（what / whether / that）
+participle-clauses-intro — 分詞子句入門（Walking down the street, ...）
+concession-contrast — 讓步與轉折（although / despite / however）
+negation-quantifiers-advanced — 否定與量詞進階（hardly / few / little）
+emphasis-do-so-such — 強調（do / so / such）
+preposition-meaning — 介系詞的語意（of / for / by / with）
+unless-in-case-as-long-as — 條件連接詞（unless / in case / as long as）
+all-both-each — all / both / each（all / both / each）
+perfect-vs-progressive-nuance — 完成式與進行式的細微差異（has done / has been doing）
+future-in-the-past — 過去觀點中的未來（was going to / would）
+modals-nuance — 情態動詞的細微語意（must / should / would）
+mixed-conditionals — 混合條件句（mixed conditionals）
+impersonal-passive — 非人稱被動與報導結構（It is believed that ...）
+negative-inversion — 否定副詞倒裝（Rarely have I ...）
+cleft-sentences — 分裂句（What I need is ... / It was ... that）
+formal-conditional-inversion — 正式假設與倒裝條件（were to / had I known）
+formal-it-object — 形式主詞與形式受詞 it（I find it hard to ...）
+would-rather-had-better — would rather 與 had better（would rather / had better）
+advanced-relative-clauses — 高級關係子句（whose / whom / preposition + which）
+nominalization — 名詞化（the rapid expansion of ...）
+participle-reduced-clauses — 分詞與縮減子句（Having completed ..., ...）
+stance-adverbs — 引述立場副詞（allegedly / reportedly）
+ellipsis-substitution — 省略與替代（do so / neither / so do I）
+agreement-difficult — 主詞動詞一致的難點（a number of / the number of）
+determiners-reference — 限定詞與指涉範圍（each / every / either / neither）
+preposition-abstract — 介系詞的抽象關係（of / in / on / at）
+concessive-inversion — 讓步倒裝（Much as I like ..., Try as he might ...）
+word-order-information-structure — 語序與資訊結構（fronting / end-weight）
+discourse-connectors — 篇章連接（whereas / notwithstanding）
+advanced-negation — 高級否定（not least / anything but）
+register-choice — 語體選擇（formal / neutral / informal）
+
+── system[3] ──
 〔目前段落〕¶2
 Last time I was in a stadium this size, I was dancing in heels and wearing a glittery leotard. This ensemble is much more my speed.
 
-── system[3] ──
+── system[4] ──
 〔學習者設定〕
 我是一個以閱讀英文文章為主的英文學習者。請用繁體中文（台灣用語）回答，簡明扼要，盡量在 300 字以內完成說明（英文原文與例句不計入字數）。
 
@@ -157,7 +245,8 @@ glittery leotard
 
 任務：文法解析（¶2）
 範圍：〔選取的文字〕所在的那一句。
-請拆解句子結構（主要子句、從屬子句、片語各自修飾誰），點出關鍵文法（時態、語態、假設語氣、倒裝、省略等）在這裡的作用，最後用一句話說明這句的意思。"
+請拆解句子結構（主要子句、從屬子句、片語各自修飾誰），點出關鍵文法（時態、語態、假設語氣、倒裝、省略等）在這裡的作用，最後用一句話說明這句的意思。
+最後另起一行，用 \`<!-- vt-grammar: id1, id2 -->\` 列出這句用到、而且在〔文法主題清單〕裡的 1–3 個主題 id，依重要性排序；清單裡沒有適合的就寫 \`<!-- vt-grammar: -->\`。這一行不要解釋。"
 `;
 
 exports[`composed AiRequest snapshots > paragraph.translate — whole paragraph 1`] = `

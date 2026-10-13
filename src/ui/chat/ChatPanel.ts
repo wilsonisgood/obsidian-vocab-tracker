@@ -9,6 +9,7 @@ import { aiErrorText, renderAiGate } from "../kit/aiState";
 import { bubble } from "../kit/bubble";
 import type { KitAction } from "../kit/emptyState";
 import { runUndoable } from "../kit/undoable";
+import { chipsLabel, displayContent, grammarChips } from "./grammarChips";
 import type { SelectionTracker } from "./SelectionTracker";
 
 // Discussion panel shared by word (A2, M4), paragraph (A1, M5) and trivia
@@ -59,6 +60,10 @@ export interface ChatPanelOptions {
   // Extra meta-line text that needs I/O, e.g. 「出自 ¶12」.
   origin?: Promise<string | undefined>;
   onOpenSettings(): void;
+  // Wave 15 S (1013 §3.5): a 文法解析 answer shows a chip per grammar topic
+  // it used; clicking one calls this (open the topic page). Without it, no
+  // chips are drawn.
+  onGrammarTopic?: (topicId: string) => void;
 }
 
 function shortDate(iso: string): string {
@@ -286,9 +291,11 @@ export class ChatPanel extends Component {
     if (turn.status === "error") {
       actions.push({ label: t("ai.action.retry"), icon: "rotate-ccw", onClick: () => this.run(() => this.opts.retry(turn.id)) });
     }
-    if (turn.content.trim()) {
+    // The 文法解析 trailer is machine data: never shown, never copied.
+    const text = displayContent(turn.content);
+    if (text.trim()) {
       if (turn.status === "done") actions.push(...(this.opts.turnActions?.(turn) ?? []));
-      actions.push({ label: t("chat.action.copy"), icon: "copy", onClick: () => this.copy(turn.content) });
+      actions.push({ label: t("chat.action.copy"), icon: "copy", onClick: () => this.copy(text) });
     }
 
     let error: string | undefined;
@@ -300,10 +307,29 @@ export class ChatPanel extends Component {
       error = t("chat.truncated");
     }
 
-    const el = bubble({ role: "assistant", text: turn.content, render, actions, error });
+    const el = bubble({ role: "assistant", text, render, actions, error });
     el.toggleClass("is-muted-error", turn.status === "aborted");
-    if (!turn.content.trim()) el.addClass("is-empty");
+    if (!text.trim()) el.addClass("is-empty");
+    this.grammarChipRow(el, turn);
     return this.withHeader(el, turn);
+  }
+
+  // 文法解析 chips (1013 §3.5): under the answer, above its action bar.
+  private grammarChipRow(el: HTMLElement, turn: Turn): void {
+    const open = this.opts.onGrammarTopic;
+    if (!open) return;
+    const chips = grammarChips(turn);
+    if (!chips.length) return;
+    const row = createDiv({ cls: "vt-gr-chips" });
+    row.setAttr("aria-label", chipsLabel());
+    for (const chip of chips) {
+      const btn = row.createEl("button", { cls: `vt-gr-chip is-stage-${chip.stage}`, text: chip.label, attr: { type: "button" } });
+      btn.dataset.topicId = chip.topicId;
+      btn.addEventListener("click", () => open(chip.topicId));
+    }
+    const body = el.querySelector(".vt-bubble-body");
+    if (body) body.after(row);
+    else el.appendChild(row);
   }
 
   private withHeader(el: HTMLElement, turn: Turn): HTMLElement {
@@ -330,7 +356,9 @@ export class ChatPanel extends Component {
   private paint(): void {
     const body = this.streamBody;
     if (!body) return;
-    if (!this.streamText) {
+    // Hide the trailer while it streams in (it may be half written).
+    const text = displayContent(this.streamText);
+    if (!text) {
       body.setText(t("ai.bubble.streaming"));
       body.addClass("vt-chat-waiting");
       return;
@@ -340,7 +368,7 @@ export class ChatPanel extends Component {
     if (this.streamScope) this.removeChild(this.streamScope);
     const scope = (this.streamScope = this.addChild(new Component()));
     const tmp = createDiv();
-    void MarkdownRenderer.render(this.opts.app, this.streamText, tmp, this.opts.sourcePath, scope).then(() => {
+    void MarkdownRenderer.render(this.opts.app, text, tmp, this.opts.sourcePath, scope).then(() => {
       if (seq !== this.paintSeq || this.streamBody !== body) return;
       body.replaceChildren(...Array.from(tmp.childNodes));
     });

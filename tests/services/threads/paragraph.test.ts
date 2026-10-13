@@ -173,7 +173,9 @@ describe("ThreadService.askParagraph", () => {
     vault.files.delete(PATH);
     expect(await threads.paragraphStatus(id)).toEqual({ status: "orphan", reason: "missing-file" });
     await threads.askParagraph({ threadId: id }, { taskId: "paragraph.grammar" });
-    expect(ai.requests[1].system[2].text).toBe("〔目前段落〕¶1\nHi. Hello. Hi.");
+    // paragraph.grammar also carries the 〔文法主題清單〕 block (wave 15 S),
+    // so find the focus block by its header instead of by position.
+    expect(ai.requests[1].system.find((b) => b.text.startsWith("〔目前段落〕"))?.text).toBe("〔目前段落〕¶1\nHi. Hello. Hi.");
   });
 
   it("keeps the badge index in step", async () => {

@@ -15,6 +15,7 @@ import {
   paragraphParaphrase,
   paragraphTranslate,
   paragraphVocab,
+  grammarTopicBlock,
 } from "../../../../src/services/ai/tasks/paragraph";
 import { defaultTaskRegistry } from "../../../../src/services/ai/tasks/registry";
 import {
@@ -198,13 +199,37 @@ describe("prompt structure invariants", () => {
   const input: ParagraphInput = { article: ARTICLE, paragraphIndex: 1, selection: "glittery", question: "?" };
 
   it("every paragraph task shares the same cached prefix (base + article)", () => {
-    const prefixes = PARAGRAPH_TASKS.map((t) =>
-      JSON.stringify(t.build(input, ctx()).system.filter((b) => b.cache))
-    );
+    // Wave 15 S: only paragraph.grammar appends a block (the topic list) to
+    // the cached prefix; the other tasks' requests are unchanged.
+    const others = PARAGRAPH_TASKS.filter((t) => t !== paragraphGrammar);
+    const prefixes = others.map((t) => JSON.stringify(t.build(input, ctx()).system.filter((b) => b.cache)));
     expect(new Set(prefixes).size).toBe(1);
-    const first = PARAGRAPH_TASKS[0].build(input, ctx()).system;
+    const first = others[0].build(input, ctx()).system;
     expect(first[0]).toEqual({ text: PARAGRAPH_BASE_PROMPT, cache: true });
     expect(first[1].cache).toBe(true);
+    expect(first.filter((b) => b.cache)).toHaveLength(2);
+  });
+
+  it("paragraph.grammar carries the topic list right after the shared prefix, and only it does", () => {
+    const shared = paragraphVocab.build(input, ctx()).system.filter((b) => b.cache);
+    const grammar = paragraphGrammar.build(input, ctx()).system.filter((b) => b.cache);
+    expect(grammar.slice(0, 2)).toEqual(shared);
+    expect(grammar).toHaveLength(3);
+    expect(grammar[2]).toEqual({ text: grammarTopicBlock(), cache: true });
+    expect(grammar[2].text.startsWith("〔文法主題清單〕\n")).toBe(true);
+    expect(grammar[2].text).toContain("present-perfect-vs-past");
+    for (const t of PARAGRAPH_TASKS.filter((t) => t !== paragraphGrammar)) {
+      expect(JSON.stringify(t.build(input, ctx()))).not.toContain("〔文法主題清單〕");
+    }
+  });
+
+  it("paragraph.grammar asks for the closing vt-grammar line; the others do not", () => {
+    expect(paragraphGrammar.build(input, ctx()).messages.at(-1)?.content).toContain("<!-- vt-grammar: id1, id2 -->");
+    for (const t of PARAGRAPH_TASKS.filter((t) => t !== paragraphGrammar)) {
+      expect(t.build(input, ctx()).messages.at(-1)?.content).not.toContain("vt-grammar");
+    }
+    expect(paragraphGrammar.version).toBe(3);
+    for (const t of PARAGRAPH_TASKS.filter((t) => t !== paragraphGrammar)) expect(t.version).toBe(2);
   });
 
   it("every word task starts with the same cached base prompt", () => {
