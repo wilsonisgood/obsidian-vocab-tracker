@@ -3,20 +3,17 @@ import { topicById } from "../../../core/grammar/catalog";
 import { t } from "../../../core/i18n";
 import type { PolySense } from "../../../core/model/poly";
 import type { AiStatus } from "../../../services/ai/AiService";
-import { renderFilterBar } from "./filterBar";
 import type { MountPlayer } from "./grammarTab";
 import {
   buildMixRequest,
   categoryOfTag,
   emptyTally,
-  mixFilterToValue,
   mixFocusIds,
-  mixGroups,
-  mixSummary,
+  mixTags,
   parseMixFilter,
   recordAnswer,
   tallyText,
-  valueToMixFilter,
+  toggleMixCategory,
   type MixFilter,
   type MixSources,
 } from "./mixTabModel";
@@ -88,18 +85,28 @@ function start(
     pane?.setRequest(req, mixFocusIds(req, deps.vocabScopeIds?.()));
   };
 
-  const barEl = el.createDiv();
-  const bar = renderFilterBar(barEl, {
-    groups: mixGroups(),
-    value: mixFilterToValue(filter),
-    summary: (v) => mixSummary(valueToMixFilter(v), sources()),
-    onChange: (v) => {
-      filter = valueToMixFilter(v);
-      filters.set("mix", filter);
-      bar.update(mixFilterToValue(filter));
-      apply();
-    },
-  });
+  // 「出題參考」+ one clickable tag per category (第十八波 R).
+  const barEl = el.createDiv({ cls: "vt-pr-mix-tags" });
+  const drawTags = () => {
+    barEl.empty();
+    barEl.createSpan({ cls: "vt-pr-mix-tags-label", text: t("practice.filter.title") });
+    for (const tag of mixTags(filter, sources())) {
+      const b = barEl.createEl("button", {
+        cls: "vt-pr-mix-tag",
+        text: tag.label,
+        attr: { type: "button", "aria-pressed": String(tag.on) },
+      });
+      b.toggleClass("is-on", tag.on);
+      b.disabled = tag.disabled;
+      b.addEventListener("click", () => {
+        filter = toggleMixCategory(filter, tag.id);
+        filters.set("mix", filter);
+        drawTags();
+        apply();
+      });
+    }
+  };
+  drawTags();
 
   pane = mountScenarioPane(el, {
     track: "mix",

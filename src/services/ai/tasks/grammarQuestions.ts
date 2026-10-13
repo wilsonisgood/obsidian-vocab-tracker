@@ -4,6 +4,7 @@ import { AiError } from "../errors";
 import type { AiResult, JsonSchema } from "../providers/types";
 import { composeRequest } from "./compose";
 import { structuredJson } from "./family";
+import { isFullSentence } from "./sentenceCheck";
 import type { AiTask, TaskContext } from "./types";
 
 // grammar.questions (第十六波 G, 規劃書 12 §3): one structured call writes
@@ -172,7 +173,9 @@ export const GRAMMAR_QUESTIONS_BASE_PROMPT = `你是一位英文老師，用一�
 8. 句子難度符合〔學習者設定〕的程度，目標以外的生字越少越好；有〔已學單字〕時優先用裡面的字，但不要硬塞。
 9. 不要重複〔避免重複〕裡的題幹。只用自然、常見的英文，不確定的用法不要出。所有句子都要原創，不要引用出版教材或考題。
 10. 中文用繁體中文（台灣用語）；〔學習者設定〕指定其他回答語言時照它。
-11. 只輸出符合 schema 的 JSON。`;
+11. 只輸出符合 schema 的 JSON。
+12. 每題的 stem 必須是情境裡一句完整、自然的英文句子（含主詞和動詞、至少 6 個英文字，不含中文）。不要把提問寫進 stem，提問由畫面顯示。
+13. ____ 前後都要有足夠的上下文，____ 不能是句子的最後一個字（後面至少還有一個英文字）；介系詞、小品詞的空格後面一定要接它的受詞或補語。`;
 
 export const REFERENCE_BLOCK_TEMPLATE = `〔出題參考〕
 {{lines}}`;
@@ -332,11 +335,13 @@ export function parseScenarioQuestion(raw: unknown, opts: ParseOptions = {}): Gr
     const gaps = stem.match(GAP_RE);
     if (!gaps || gaps.length !== 1) return null;
     stem = stem.replace(GAP_RE, GAP);
+    if (!isFullSentence(stem)) return null;
   } else {
     // find-error: every option is a piece of the sentence as written, and
     // the sentence has no gap.
     if (stem.match(GAP_RE)) return null;
     if (!options.every((o) => stem.includes(o))) return null;
+    if (!isFullSentence(stem)) return null;
   }
 
   const distractors = Object.fromEntries(

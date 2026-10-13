@@ -207,3 +207,15 @@ export function toggleExcluded(f: PolyFilter, senseId: string): PolyFilter {
 export function testedSenseIds(f: PolyFilter): Set<string> {
   return new Set(sensesInFilter(f).tested.map((s: PolySense) => s.id));
 }
+
+// Word sections of the sense map fold (第十八波 R): with several words they
+// start folded, a lone word starts open. `overrides` holds what the learner
+// toggled this session (screen state only, not part of the filter).
+export function wordCollapsed(word: string, wordCount: number, overrides: ReadonlyMap<string, boolean>): boolean {
+  return overrides.get(word) ?? wordCount > 1;
+}
+
+// 「已勾 2/5 個意思」: ticked senses that are also inside the chosen levels.
+export function wordCheckedSummary(sec: WordSection): { checked: number; total: number } {
+  return { checked: sec.rows.filter((r) => r.checked && !r.outOfLevel).length, total: sec.rows.length };
+}

@@ -3,7 +3,7 @@ import { t } from "../../../core/i18n";
 import type { PracticeQuestion, ScenarioTrack } from "../../../core/model/practice";
 import { learnButton } from "../learnUi";
 import type { MountPlayer } from "./grammarTab";
-import { groupPracticeMistakes, mistakeKey, practiceMistakeCount } from "./mistakesPanelModel";
+import { groupPracticeMistakes, mistakeKey, mistakeLine, practiceMistakeCount } from "./mistakesPanelModel";
 import type { PlayerHandle, PlayerQuestion } from "./playerTypes";
 import type { ScenarioPracticeApi } from "./scenarioTypes";
 
@@ -63,6 +63,9 @@ export function renderMistakesPanel(
       const row = group.createDiv({ cls: "vt-pr-mistake" });
       row.createSpan({ cls: "vt-pr-mistake-tag", text: g.label });
       row.createSpan({ cls: "vt-pr-mistake-count", text: t("practice.mistakes.count", { n: g.questions.length }) });
+      // Every mistake of the group, one line each (第十八波 R).
+      const list = group.createEl("ul", { cls: "vt-pr-mistake-list" });
+      for (const q of g.questions) list.createEl("li", { cls: "vt-pr-mistake-item", text: mistakeLine(q.text) });
       const isOpen = redoKey === g.key;
       learnButton(row, {
         label: isOpen ? t("practice.mistakes.fold") : t("practice.mistakes.redo"),

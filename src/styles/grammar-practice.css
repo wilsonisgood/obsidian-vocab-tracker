@@ -118,3 +118,7 @@
 
 body.is-mobile .vt-pr-mistakes-toggle,
 body.is-mobile .vt-pr-mistake { min-height: 44px; }
+
+/* 錯題區 expanded list (第十八波 R) */
+.vt-pr-mistake-list { margin: 2px 0 6px; padding: 0 0 0 20px; font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.vt-pr-mistake-item { overflow-wrap: anywhere; }

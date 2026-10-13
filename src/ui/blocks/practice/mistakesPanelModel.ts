@@ -58,3 +58,12 @@ export function groupPracticeMistakes(questions: readonly PracticeQuestion[]): P
 export function practiceMistakeCount(groups: readonly PracticeMistakeGroup[]): number {
   return groups.reduce((n, g) => n + g.questions.length, 0);
 }
+
+export const MISTAKE_LINE_MAX = 60;
+
+// One line of the expanded group list (第十八波 R): the question sentence
+// without [[ ]] marks, cut to `max` characters.
+export function mistakeLine(text: string, max = MISTAKE_LINE_MAX): string {
+  const flat = text.replace(/\[\[|\]\]/g, "").replace(/\s+/g, " ").trim();
+  return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}…` : flat;
+}

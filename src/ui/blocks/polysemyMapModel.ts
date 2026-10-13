@@ -6,15 +6,28 @@ import { progressDot, type SenseStats } from "./practice/polyTabModel";
 
 export type MapCategory = PolyCategory | "all";
 
-// Category segment + search box. The query matches the word (substring,
-// case-insensitive) or any sense's Chinese meaning.
+const HAS_CJK = /[\u3400-\u9fff\uf900-\ufaff]/;
+// The part of a meaning outside half- and full-width brackets: the English
+// in 「以防（just in case）」 must not match a query.
+const stripBrackets = (zh: string): string => zh.replace(/[（(][^）)]*[）)]/g, "");
+
+// Category segment + search box (第十八波 R). An English (ASCII) query
+// matches the word itself only — the exact word first, then words starting
+// with it. A query
+// with Chinese matches the Chinese meanings, brackets removed.
 export function filterPolyWords(category: MapCategory, query: string, words: readonly PolyWord[] = POLY_WORDS): PolyWord[] {
   const q = query.trim().toLowerCase();
-  return words.filter((w) => {
-    if (category !== "all" && w.category !== category) return false;
-    if (q === "") return true;
-    return w.word.includes(q) || w.senses.some((s) => s.zh.includes(q));
-  });
+  const inCat = words.filter((w) => category === "all" || w.category === category);
+  if (q === "") return inCat;
+  if (!HAS_CJK.test(q)) {
+    const rank = (w: PolyWord): number => (w.word === q ? 0 : w.word.startsWith(q) ? 1 : 2);
+    return inCat
+      .map((w) => ({ w, r: rank(w) }))
+      .filter((x) => x.r < 2)
+      .sort((a, b) => a.r - b.r)
+      .map((x) => x.w);
+  }
+  return inCat.filter((w) => w.senses.some((s) => stripBrackets(s.zh).includes(q)));
 }
 
 // How many of a word's senses are settled (● : last three right).

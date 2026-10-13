@@ -149,8 +149,8 @@ describe("parseScenarioQuestion", () => {
   });
 
   it("de-duplicates options and normalises the gap", () => {
-    const q = parseScenarioQuestion(ask({ stem: "I _____ my keys.", options: ["lost", "lost", "have lost", "had lost"] }))!;
-    expect(q.stem).toBe("I ____ my keys.");
+    const q = parseScenarioQuestion(ask({ stem: "I _____ my keys on the train.", options: ["lost", "lost", "have lost", "had lost"] }))!;
+    expect(q.stem).toBe("I ____ my keys on the train.");
     expect(q.options).toEqual(["lost", "have lost", "had lost"]);
   });
 
@@ -234,5 +234,14 @@ describe("parseGrammarScenario", () => {
     // an objective the request did not offer: PS objective not asked for PP-only targets
     const onlyPp = grammarQuestionsFor([{ topic: PP, objectiveIds: ["present-link"] }]);
     expect(() => onlyPp.parse!(aiResult(JSON.stringify(body([turn(FIND)]))))).toThrow(/usable/);
+  });
+});
+
+describe("grammar stem completeness (1013-3)", () => {
+  it("drops short stems, Chinese, and a gap at the end", () => {
+    expect(parseScenarioQuestion(ask({ stem: "I ____ my keys." }))).toBeNull();
+    expect(parseScenarioQuestion(ask({ stem: "他說 I ____ my keys on the train." }))).toBeNull();
+    expect(parseScenarioQuestion(ask({ stem: "We left the house and then we ____." }))).toBeNull();
+    expect(parseScenarioQuestion(ask({ stem: "I ____ my keys on the train." }))).not.toBeNull();
   });
 });

@@ -8,7 +8,7 @@ import type { PlayerHandle, PlayerOptions, PlayerQuestion } from "./playerTypes"
 import {
   MOBILE_HISTORY_LIMIT, answerState, canHint, entrySpeakers, feedbackNote, historyEntries,
   initialState, keyAction, nextState, optionColumns, questionSegments, refreshState, retireState,
-  showHint, skipState, speakerSides, statsLabel, trimHistory,
+  showHint, skipState, speakerSides, askLine, trimHistory,
   type AnsweredPart, type PlayerState,
 } from "./scenarioPlayerModel";
 
@@ -145,6 +145,8 @@ export function mountScenarioPlayer(el: HTMLElement, opts: PlayerOptions, owner:
       }
     }
 
+    box.createDiv({ cls: "vt-pr-ask", text: askLine(q) });
+
     // Options (find-error taps the sentence; fragments that could not be
     // located in the text fall back to buttons).
     const located = new Set(questionSegments(q).flatMap((s) => (s.t === "frag" ? [s.optionId] : [])));
@@ -195,7 +197,6 @@ export function mountScenarioPlayer(el: HTMLElement, opts: PlayerOptions, owner:
     if (dead) return;
     const hadFocus = root.contains(document.activeElement);
     root.empty();
-    root.createDiv({ cls: "vt-pr-stats", text: statsLabel(state) });
     renderHistory(root);
     if (state.current && state.phase !== "empty") renderCurrent(root, state.current);
     else {

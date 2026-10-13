@@ -25,7 +25,7 @@ function scenario(n = 6, extra: { lead?: boolean; blank?: number } = {}) {
           objectiveId: OBJECTIVES[(k - 1) % 3],
           topicId: TOPIC,
           type: extra.blank === k ? "blank" : "choice",
-          stem: `Sentence ${k} ____ here.`,
+          stem: `Sentence number ${k} said that she ____ here every day.`,
           options: ["a", "b", "c"],
           answer: "a",
           accepted: [],
@@ -181,7 +181,7 @@ describe("QuestionService.refill", () => {
 
   it("drops blank questions the AI still writes", async () => {
     const ctx = await filled(scenario(6, { blank: 3 }));
-    expect(ctx.service.poolQuestions().map((q) => q.stem)).not.toContain("Sentence 3 ____ here.");
+    expect(ctx.service.poolQuestions().map((q) => q.stem)).not.toContain("Sentence number 3 said that she ____ here every day.");
     expect(ctx.service.poolQuestions()).toHaveLength(5);
   });
 
@@ -191,10 +191,10 @@ describe("QuestionService.refill", () => {
     ctx.service.answer(first, "b", false, { hinted: false, fromMistakes: false });
     ctx.service.answer(second, "a", true, { hinted: false, fromMistakes: false });
     expect(rest).toHaveLength(4);
-    ctx.ai.script = () => result(JSON.stringify({ ...scenario(6), turns: scenario(6).turns.map((t, i) => ({ ...(t as object), ask: [{ ...(t as { ask: object[] }).ask[0], stem: `Next ${i} ____ now.` }] })) }));
+    ctx.ai.script = () => result(JSON.stringify({ ...scenario(6), turns: scenario(6).turns.map((t, i) => ({ ...(t as object), ask: [{ ...(t as { ask: object[] }).ask[0], stem: `Next ${i} thing she ____ right now today.` }] })) }));
     await ctx.service.refill(FILTER);
     const sys = ctx.ai.requests[1].system.map((b) => b.text).join("\n");
-    expect(sys).toContain("〔上一段〕\n場景：在咖啡店\n最後兩句：\n- Amy: Sentence 5 a here.\n- Ben: Sentence 6 a here.");
+    expect(sys).toContain("〔上一段〕\n場景：在咖啡店\n最後兩句：\n- Amy: Sentence number 5 said that she a here every day.\n- Ben: Sentence number 6 said that she a here every day.");
     expect(sys).toContain(`〔學習弱點〕\n${TOPIC}/present-link（`);
     expect(sys).toContain("錯 1 次");
     expect(ctx.service.poolQuestions()).toHaveLength(10);
@@ -391,7 +391,7 @@ describe("QuestionService scenario end", () => {
     const ctx = await filled();
     const first = ctx.service.poolQuestions();
     for (const q of first.slice(0, 3)) ctx.service.skip(q);
-    ctx.ai.script = () => result(JSON.stringify({ ...scenario(6), turns: scenario(6).turns.map((t, i) => ({ ...(t as object), ask: [{ ...(t as { ask: object[] }).ask[0], stem: `Second ${i} ____ now.` }] })) }));
+    ctx.ai.script = () => result(JSON.stringify({ ...scenario(6), turns: scenario(6).turns.map((t, i) => ({ ...(t as object), ask: [{ ...(t as { ask: object[] }).ask[0], stem: `Second ${i} thing she ____ right now today.` }] })) }));
     await ctx.service.refill(FILTER);
     // the first scenario's 3 left are still there -> not closed
     for (const q of first.slice(3)) ctx.service.answer(q, "a", true, { hinted: false, fromMistakes: false });

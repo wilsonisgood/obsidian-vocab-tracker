@@ -1,6 +1,6 @@
 /* 共用情境播放器 (第十六波 P). Import in index.css at integration. */
 .vt-pr-player { display: flex; flex-direction: column; gap: 12px; outline: none; }
-.vt-pr-stats { font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.vt-pr-ask { font-size: var(--font-ui-smaller); color: var(--text-muted); margin: 4px 0 8px; }
 .vt-pr-history { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px dashed var(--background-modifier-border); }
 .vt-pr-more { align-self: center; background: transparent; box-shadow: none; border: 0; color: var(--text-accent); font-size: var(--font-ui-smaller); cursor: pointer; }
 .vt-pr-scene { font-size: var(--font-ui-smaller); font-weight: 600; color: var(--text-muted); text-transform: none; margin-top: 4px; }

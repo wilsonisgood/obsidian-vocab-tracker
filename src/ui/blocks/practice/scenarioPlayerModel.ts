@@ -292,8 +292,24 @@ export function entrySpeakers(entries: readonly HistoryEntry[], current?: Player
 
 // ---------- misc ----------
 
-export function statsLabel(s: Pick<PlayerState, "answered" | "correctCount">): string {
-  return t("practice.player.stats", { n: s.answered, c: s.correctCount });
+// The question shown under the sentence (第十八波 R): the sentence itself
+// never carries it.
+export function askLine(q: PlayerQuestion): string {
+  switch (q.kind) {
+    case "which-sense": {
+      const word = questionSegments(q).find((s) => s.t === "target");
+      return t("practice.player.ask.which-sense", { word: word && word.t === "target" ? word.text : "" });
+    }
+    case "same-sense": {
+      const word = questionSegments(q).find((s) => s.t === "target");
+      return t("practice.player.ask.same-sense", { word: word && word.t === "target" ? word.text : "" });
+    }
+    case "pick-word":
+    case "choice":
+      return t("practice.player.ask.pick");
+    case "find-error":
+      return t("practice.player.ask.find-error");
+  }
 }
 
 // same-sense options are sentences → always one column.

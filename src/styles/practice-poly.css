@@ -224,3 +224,11 @@ body.is-mobile .vt-pr-poly-sense input[type="checkbox"] {
   height: 22px;
   margin-top: 2px;
 }
+
+/* Foldable word section of the sense map (第十八波 R) */
+.vt-pr-poly-word-title { display: flex; align-items: center; gap: 6px; }
+.vt-pr-poly-fold {
+  min-width: 44px; min-height: 44px; padding: 0; background: transparent; border: 0;
+  box-shadow: none; color: var(--text-muted); cursor: pointer; font-size: var(--font-ui-medium);
+}
+.vt-pr-poly-fold-sum { font-weight: normal; font-size: var(--font-ui-smaller); color: var(--text-muted); }

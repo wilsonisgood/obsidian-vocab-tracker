@@ -47,3 +47,22 @@ body.is-mobile .vt-pr-filter-head,
 body.is-mobile .vt-pr-chip,
 body.is-mobile .vt-pr-filter .vt-learn-btn { min-height: 44px; }
 body.is-mobile .vt-pr-chip { padding: 8px 16px; }
+
+/* 混合 tab: 出題參考 + category tags (第十八波 R) */
+.vt-pr-mix-tags {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding: 8px 12px; border: 1px solid var(--background-modifier-border); border-radius: 8px;
+  background: var(--background-secondary);
+}
+.vt-pr-mix-tags-label { color: var(--text-muted); margin-right: 4px; }
+.vt-pr-mix-tag {
+  border-radius: 999px; padding: 4px 12px; font-size: var(--font-ui-small);
+  background: var(--background-primary); border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted); cursor: pointer; box-shadow: none;
+}
+.vt-pr-mix-tag.is-on {
+  background: var(--interactive-accent); border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.vt-pr-mix-tag:disabled { opacity: 0.45; cursor: default; border-style: dashed; }
+body.is-mobile .vt-pr-mix-tag { min-height: 44px; padding: 8px 16px; }

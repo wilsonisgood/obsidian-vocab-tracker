@@ -6,11 +6,11 @@ import {
   categoryOfTag,
   emptyTally,
   mixFocusIds,
-  mixSummary,
   parseMixFilter,
   recordAnswer,
   tallyText,
-  valueToMixFilter,
+  mixTags,
+  toggleMixCategory,
   type MixSources,
 } from "../../../../src/ui/blocks/practice/mixTabModel";
 
@@ -35,18 +35,24 @@ describe("filter", () => {
   it("defaults to everything, keeps a stored empty list", () => {
     expect(all.include).toEqual(["vocab", "grammar", "poly"]);
     expect(parseMixFilter({ include: [] }).include).toEqual([]);
-    expect(valueToMixFilter({}).include).toEqual([]);
     expect(parseMixFilter({ include: ["poly", "junk"] }).include).toEqual(["poly"]);
   });
 });
 
-describe("mixSummary", () => {
-  it("lists each category", () => {
-    expect(mixSummary(all, src())).toBe("單字 12 字 · 文法 3 個主題 · 常用字 get, of");
+describe("mixTags", () => {
+  it("counts each category and marks included ones", () => {
+    const tags = mixTags(all, src());
+    expect(tags.map((x) => x.label)).toEqual(["單字 12", "文法 3", "常用字 2"]);
+    expect(tags.every((x) => x.on && !x.disabled)).toBe(true);
   });
-  it("marks empty ones and skips unticked", () => {
-    expect(mixSummary(all, src({ vocab: [] }))).toBe("單字（未設定） · 文法 3 個主題 · 常用字 get, of");
-    expect(mixSummary({ include: ["poly"] }, src())).toBe("常用字 get, of");
+  it("empty category is disabled and never on; unticked is off", () => {
+    const tags = mixTags({ include: ["vocab", "grammar", "poly"] }, src({ vocab: [] }));
+    expect(tags[0]).toMatchObject({ label: "單字 0", disabled: true, on: false });
+    expect(mixTags({ include: ["poly"] }, src())[0].on).toBe(false);
+  });
+  it("toggle flips inclusion, keeps order", () => {
+    expect(toggleMixCategory(all, "grammar").include).toEqual(["vocab", "poly"]);
+    expect(toggleMixCategory({ include: ["poly"] }, "vocab").include).toEqual(["vocab", "poly"]);
   });
 });
 

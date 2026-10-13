@@ -12,6 +12,7 @@ import {
   type GrammarQuestionLike,
 } from "../../grammar/practiceTypes";
 import { learnButton } from "../learnUi";
+import { mistakeLine } from "./mistakesPanelModel";
 import { renderFilterBar } from "./filterBar";
 import type { FilterGroup } from "./filterBarModel";
 import {
@@ -301,6 +302,8 @@ class GrammarTabView {
         const row = group.createDiv({ cls: "vt-pr-mistake" });
         row.createSpan({ cls: "vt-pr-mistake-tag", text: g.label });
         row.createSpan({ cls: "vt-pr-mistake-count", text: t("practice.grammar.count", { n: g.questions.length }) });
+        const list = group.createEl("ul", { cls: "vt-pr-mistake-list" });
+        for (const q of g.questions) list.createEl("li", { cls: "vt-pr-mistake-item", text: mistakeLine(q.stem) });
         const isOpen = redoTag === g.errorTag;
         learnButton(row, {
           label: isOpen ? t("practice.grammar.fold") : t("practice.grammar.redo"),

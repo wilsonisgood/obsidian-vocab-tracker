@@ -4,7 +4,7 @@ import type { PlayerQuestion } from "../../../src/ui/blocks/practice/playerTypes
 import {
   answerState, answeredText, canHint, historyEntries, initialState, keyAction, nextState, optionColumns,
   questionSegments, refreshState, retireState, segmentBlanks, segmentFragments, segmentTargets, showHint,
-  skipState, speakerSides, statsLabel, trimHistory, entrySpeakers, feedbackNote,
+  skipState, speakerSides, askLine, trimHistory, entrySpeakers, feedbackNote,
 } from "../../../src/ui/blocks/practice/scenarioPlayerModel";
 
 beforeEach(() => setLocale("zh-TW"));
@@ -156,6 +156,7 @@ describe("misc", () => {
     expect(optionColumns("choice", false)).toBe(2);
     expect(optionColumns("choice", true)).toBe(1);
     expect(optionColumns("same-sense", false)).toBe(1);
-    expect(statsLabel({ answered: 3, correctCount: 2 })).toBe("今天這裡答了 3 題 · 對 2");
+    expect(askLine({ kind: "which-sense", text: "She sat by the [[bank]] of the river.", options: [] } as never)).toBe("「bank」在這句中是什麼意思？");
+    expect(askLine({ kind: "pick-word", text: "I ____ tea.", options: [] } as never)).toBe("選出最適合填入空格的字");
   });
 });

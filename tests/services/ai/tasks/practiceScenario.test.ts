@@ -33,7 +33,7 @@ const MIX: ScenarioRequest = {
 const polyAsk = (extra: Record<string, unknown> = {}) => ({
   focusId: "get.arrive",
   kind: "which-sense",
-  text: "When did you [[get]] home?",
+  text: "When did you [[get]] home last night?",
   options: [
     { id: "get.arrive", text: "到達" },
     { id: "get.obtain", text: "得到" },
@@ -52,7 +52,7 @@ const reply = (turns: unknown[]) => ({ scene: "回家路上", form: "dialogue", 
 describe("parsePracticeScenario", () => {
   it("parses poly questions, keeps notes and hangs lead lines on the next question", () => {
     const d = parsePracticeScenario(
-      reply([turn([], "Hi there."), turn([], "How was work?", "Ben"), turn([polyAsk()]), turn([polyAsk({ text: "Did you [[get]] the job?", focusId: "get.obtain", answerId: "get.obtain" })])]),
+      reply([turn([], "Hi there."), turn([], "How was work?", "Ben"), turn([polyAsk()]), turn([polyAsk({ text: "Did you [[get]] the job you wanted?", focusId: "get.obtain", answerId: "get.obtain" })])]),
       refsOf(POLY)
     );
     expect(d.questions).toHaveLength(2);
@@ -81,7 +81,7 @@ describe("parsePracticeScenario", () => {
         { id: "get.obtain", text: "得到" },
       ],
     });
-    const d = parsePracticeScenario(reply([turn([bad]), turn([polyAsk({ text: "Let me [[get]] there." })])]), refsOf(POLY));
+    const d = parsePracticeScenario(reply([turn([bad]), turn([polyAsk({ text: "Let me [[get]] there before the rain starts." })])]), refsOf(POLY));
     expect(d.questions).toHaveLength(1);
     expect(parsePracticeQuestion(bad, refsOf(POLY))).toBeNull();
   });
@@ -104,18 +104,18 @@ describe("parsePracticeScenario", () => {
     const r = refsOf(POLY);
     const pick = polyAsk({
       kind: "pick-word",
-      text: "I ____ home at six.",
+      text: "I ____ home at six every day.",
       options: ["get", "make", "do", "put"].map((w) => ({ id: w, text: w })),
       answerId: "get",
     });
-    expect(parsePracticeQuestion(pick, r)?.text).toBe("I ____ home at six.");
-    expect(parsePracticeQuestion({ ...pick, text: "I ________ home at six." }, r)?.text).toBe("I ____ home at six.");
+    expect(parsePracticeQuestion(pick, r)?.text).toBe("I ____ home at six every day.");
+    expect(parsePracticeQuestion({ ...pick, text: "I ________ home at six every day." }, r)?.text).toBe("I ____ home at six every day.");
     expect(parsePracticeQuestion({ ...pick, text: "I ____ home ____." }, r)).toBeNull();
     expect(parsePracticeQuestion({ ...pick, text: "I got home." }, r)).toBeNull();
     const same = polyAsk({
       kind: "same-sense",
-      text: "I [[get]] home at six.",
-      options: ["I got to Taipei.", "I got a gift.", "I got angry."].map((t, i) => ({ id: `o${i}`, text: t })),
+      text: "I [[get]] home at six every day.",
+      options: ["I got to Taipei.", "I got a gift.", "I got really angry."].map((t, i) => ({ id: `o${i}`, text: t })),
       answerId: "o0",
     });
     expect(parsePracticeQuestion(same, r)?.kind).toBe("same-sense");
@@ -126,7 +126,7 @@ describe("parsePracticeScenario", () => {
     const q = {
       focusId: "e1",
       kind: "which-sense",
-      text: "He was [[reluctant]] to go.",
+      text: "He was [[reluctant]] to go there alone.",
       options: ["a", "b", "c"].map((id, i) => ({ id, text: ["不情願的", "熱心的", "生氣的"][i] })),
       answerId: "a",
       explanation: "to go 前面。",
@@ -147,7 +147,7 @@ describe("parsePracticeScenario", () => {
     const choice = {
       focusId: "past-simple/regular",
       kind: "choice",
-      text: "She ____ yesterday.",
+      text: "She ____ to the market yesterday afternoon.",
       options: ["walked", "walks", "walk"].map((t) => ({ id: t, text: t })),
       answerId: "walked",
       explanation: "yesterday。",
@@ -157,7 +157,7 @@ describe("parsePracticeScenario", () => {
     expect(g.focus).toEqual({ kind: "grammar-objective", id: "past-simple/regular" });
     expect(g.errorTag).toBe("other");
     expect(parsePracticeQuestion({ ...choice, kind: "which-sense" }, r)).toBeNull();
-    const fe = { ...choice, kind: "find-error", text: "She walk yesterday.", options: ["She", "walk", "yesterday"].map((t) => ({ id: t, text: t })), answerId: "walk" };
+    const fe = { ...choice, kind: "find-error", text: "She walk to the market yesterday.", options: ["She", "walk", "yesterday"].map((t) => ({ id: t, text: t })), answerId: "walk" };
     expect(parsePracticeQuestion(fe, r)?.kind).toBe("find-error");
     expect(parsePracticeQuestion({ ...fe, options: [{ id: "x", text: "nope" }, ...fe.options.slice(1)] }, r)).toBeNull();
     expect(parsePracticeQuestion(polyAsk({ focusId: "get.obtain", answerId: "get.arrive" }), r)).toBeNull();
@@ -170,7 +170,7 @@ describe("parsePracticeScenario", () => {
     expect(() => parsePracticeScenario(reply([turn([polyAsk()]), turn([bad]), turn([bad])]), r)).toThrow(/only 1 of 3/);
     expect(() => parsePracticeScenario(reply([turn([bad])]), r)).toThrow();
     expect(() => parsePracticeScenario({ scene: "x" }, r)).toThrow();
-    expect(parsePracticeScenario(reply([turn([polyAsk()]), turn([polyAsk({ text: "How to [[get]] there?" })]), turn([bad])]), r).questions).toHaveLength(2);
+    expect(parsePracticeScenario(reply([turn([polyAsk()]), turn([polyAsk({ text: "How to [[get]] there from the old station?" })]), turn([bad])]), r).questions).toHaveLength(2);
   });
 
   it("dedupes repeated sentences; the bare parser infers the category from the id", () => {
@@ -247,5 +247,47 @@ describe("practiceScenario.build", () => {
     expect(sys).toContain("【單字】");
     expect(sys).not.toContain("【文法】");
     expect(sys).not.toContain("【常用字】");
+  });
+});
+
+describe("sentence completeness (1013-3)", () => {
+  const r = refsOf(POLY);
+  const pick = {
+    focusId: "get.arrive",
+    kind: "pick-word",
+    text: "For the visitors, we should prepare a cup ____ tea.",
+    options: ["of", "in", "on", "at"].map((t) => ({ id: t, text: t })),
+    answerId: "of",
+    explanation: "a cup of tea。",
+  };
+  it("drops a question written into text", () => {
+    expect(parsePracticeQuestion(polyAsk({ text: "[[get]] 在這句中是什麼意思？" }), r)).toBeNull();
+    expect(parsePracticeQuestion(polyAsk({ text: "What does [[get]] mean here?" }), r)).toBeNull();
+  });
+  it("drops a gap at the end of the sentence, keeps one with a complement", () => {
+    expect(parsePracticeQuestion({ ...pick, text: "For the visitors, we should prepare a cup ____." }, r)).toBeNull();
+    expect(parsePracticeQuestion({ ...pick, text: "For the visitors, we should prepare a cup ____" }, r)).toBeNull();
+    expect(parsePracticeQuestion(pick, r)).not.toBeNull();
+  });
+  it("drops too-short sentences and sentences with Chinese", () => {
+    expect(parsePracticeQuestion({ ...pick, text: "A cup ____ tea." }, r)).toBeNull();
+    expect(parsePracticeQuestion({ ...pick, text: "For the visitors, 我們 should prepare a cup ____ tea." }, r)).toBeNull();
+  });
+  it("[[ ]] must be the target word (or a form of it)", () => {
+    expect(parsePracticeQuestion(polyAsk({ text: "When did you [[reach]] home last night?" }), r)).toBeNull();
+    expect(parsePracticeQuestion(polyAsk({ text: "When did you [[got]] home last night?" }), r)).not.toBeNull();
+    const v = refsOf(VOCAB);
+    const base = { focusId: "e1", kind: "which-sense", text: "She felt [[eager]] to leave the old town.", options: ["a", "b", "c"].map((t) => ({ id: t, text: t })), answerId: "a", explanation: "x" };
+    expect(parsePracticeQuestion(base, v)).toBeNull();
+    expect(parsePracticeQuestion({ ...base, text: "She felt [[reluctant]] to leave the old town." }, v)).not.toBeNull();
+  });
+  it("same-sense options need 4+ English words holding the target", () => {
+    const same = polyAsk({
+      kind: "same-sense",
+      text: "I [[get]] home at six every day.",
+      options: ["I got to Taipei.", "I got a gift.", "Go now."].map((t, i) => ({ id: `o${i}`, text: t })),
+      answerId: "o0",
+    });
+    expect(parsePracticeQuestion(same, r)).toBeNull();
   });
 });

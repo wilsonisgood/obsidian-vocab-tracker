@@ -5,6 +5,7 @@ import {
   groupPracticeMistakes,
   mistakeKey,
   mistakeLabel,
+  mistakeLine,
   practiceMistakeCount,
 } from "../../../../src/ui/blocks/practice/mistakesPanelModel";
 
@@ -40,5 +41,22 @@ describe("mistakes panel model", () => {
     expect(mistakeLabel("sense-confusion")).toBe("意思混淆");
     expect(mistakeLabel(mistakeKey(q("1", undefined, "pick-word")))).toBe("選用字");
     expect(mistakeLabel("weird")).toBe("weird");
+  });
+});
+
+describe("mistakeLine and full lists (1013-3)", () => {
+  it("a group lists every question, no cap", () => {
+    const qs = ["a", "b", "c", "d", "e"].map((id) => q(id, "sense-confusion"));
+    const groups = groupPracticeMistakes(qs);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].questions.map((x) => x.id)).toEqual(["a", "b", "c", "d", "e"]);
+    expect(practiceMistakeCount(groups)).toBe(5);
+  });
+  it("one line: marks removed, cut to 60", () => {
+    expect(mistakeLine("She sat by the [[bank]] today.")).toBe("She sat by the bank today.");
+    const long = "word ".repeat(30);
+    const out = mistakeLine(long);
+    expect(out.length).toBe(60);
+    expect(out.endsWith("…")).toBe(true);
   });
 });

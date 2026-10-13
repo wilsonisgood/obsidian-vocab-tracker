@@ -13,6 +13,8 @@ import {
   testedSenseIds,
   toggleExcluded,
   valueToFilter,
+  wordCheckedSummary,
+  wordCollapsed,
 } from "../../../../src/ui/blocks/practice/polyTabModel";
 
 beforeEach(() => setLocale("zh-TW"));
@@ -91,5 +93,18 @@ describe("sense map", () => {
     const other = ([1, 2, 3] as const).find((x) => x !== l)!;
     const rows = senseSections({ ...f, levels: [other] }, () => undefined)[0].rows;
     expect(rows[0].outOfLevel).toBe(true);
+  });
+});
+
+describe("word fold (1013-3)", () => {
+  it("lone word starts open, several start folded, overrides win", () => {
+    expect(wordCollapsed("of", 1, new Map())).toBe(false);
+    expect(wordCollapsed("of", 3, new Map())).toBe(true);
+    expect(wordCollapsed("of", 3, new Map([["of", false]]))).toBe(false);
+    expect(wordCollapsed("of", 1, new Map([["of", true]]))).toBe(true);
+  });
+  it("counts ticked senses", () => {
+    const [sec] = senseSections({ words: [W.word], levels: [], excluded: [W.senses[0].id] }, () => undefined);
+    expect(wordCheckedSummary(sec)).toEqual({ checked: W.senses.length - 1, total: W.senses.length });
   });
 });

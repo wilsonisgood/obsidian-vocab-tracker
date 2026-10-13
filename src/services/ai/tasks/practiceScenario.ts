@@ -6,6 +6,7 @@ import { renderTemplate } from "../../../core/text/template";
 import type { GrammarRef, ScenarioRequest, VocabRef } from "../../practice/scenarioApi";
 import { AiError } from "../errors";
 import type { AiResult, JsonSchema } from "../providers/types";
+import { isFullSentence, isOptionSentence, isTargetForm } from "./sentenceCheck";
 import { composeRequest } from "./compose";
 import { structuredJson } from "./family";
 import {
@@ -69,7 +70,9 @@ export const PRACTICE_SCENARIO_BASE_PROMPT = `你是一位英文老師，用一�
 8. 句子難度符合〔學習者設定〕的程度，目標以外的生字越少越好；有〔已學單字〕時優先用裡面的字，但不要硬塞。
 9. 不要重複〔已出過的句子〕。只用自然、常見的英文，不確定的用法不要出。所有句子都要原創。
 10. 中文用繁體中文（台灣用語）；〔學習者設定〕指定其他回答語言時照它。
-11. 只輸出符合 schema 的 JSON。`;
+11. 只輸出符合 schema 的 JSON。
+12. 每題的 text 必須是情境裡一句完整、自然的英文句子（含主詞和動詞、至少 6 個英文字，不含中文）。不要把提問（例如「X 在這句中是什麼意思」「選出適合的字」）寫進 text，提問由畫面顯示。
+13. ____ 前後都要有足夠的上下文，____ 不能是句子的最後一個字（後面至少還有一個英文字）；介系詞、小品詞的空格後面一定要接它的受詞或補語（例：We should prepare a cup ____ tea.）。`;
 
 export const POLY_TEMPLATE = `任務：常用多義詞情境練習（{{words}}）
 出 {{count}} 題。kind 可以用：which-sense（句子裡用 [[ ]] 標出目標字一次，options 是同一個字的 3–4 個意思，選項 id 用意思的 id、文字用中文意思）、pick-word（句子裡一個 ____，4 個英文字或片語，其中一個是練習的字）、same-sense（目標句用 [[ ]] 標出目標字，options 是 3–4 個用到同一個字的英文短句，只有一句意思相同）。比例約 4:4:2。
@@ -107,6 +110,8 @@ export interface FocusInfo {
 export interface ScenarioRefs {
   tested: Map<string, FocusInfo>;
   senseWord: Map<string, string>;
+  // vocab id → the English word (for the [[marked]] word check).
+  vocabWord?: Map<string, string>;
 }
 
 export function refsOf(req: ScenarioRequest): ScenarioRefs {
@@ -117,9 +122,13 @@ export function refsOf(req: ScenarioRequest): ScenarioRefs {
   const grammar = req.track === "mix" ? req.grammar : undefined;
   for (const s of poly?.tested ?? []) tested.set(s.id, { category: "poly", kind: "sense" });
   for (const s of [...(poly?.tested ?? []), ...(poly?.reference ?? [])]) senseWord.set(s.id, s.word);
-  for (const v of vocab ?? []) tested.set(v.id, { category: "vocab", kind: "word" });
+  const vocabWord = new Map<string, string>();
+  for (const v of vocab ?? []) {
+    tested.set(v.id, { category: "vocab", kind: "word" });
+    vocabWord.set(v.id, v.word);
+  }
   for (const g of grammar ?? []) tested.set(objectiveRef(g.topicId, g.objectiveId), { category: "grammar", kind: "grammar-objective" });
-  return { tested, senseWord };
+  return { tested, senseWord, vocabWord };
 }
 
 export function scenarioTrack(req: ScenarioRequest): ScenarioTrack {
@@ -302,13 +311,24 @@ export function parsePracticeQuestion(raw: unknown, refs?: ScenarioRefs): Practi
   if (kind === "which-sense" || kind === "same-sense") {
     if ((text.match(MARK_RE) ?? []).length !== 1) return null;
     if (/\[\[|\]\]/.test(text.replace(MARK_RE, ""))) return null;
+    if (!isFullSentence(text)) return null;
+    // The [[ ]] word has to be the target word (or a form of it).
+    const target =
+      info.category === "poly"
+        ? (refs?.senseWord.get(focusId) ?? focusId.split(".")[0])
+        : refs?.vocabWord?.get(focusId);
+    const marked = /\[\[([^[\]]+)\]\]/.exec(text)?.[1] ?? "";
+    if (target && !isTargetForm(marked, target)) return null;
+    if (kind === "same-sense" && !options.every((o) => isOptionSentence(o.text, target))) return null;
   } else if (kind === "pick-word" || kind === "choice") {
     if ((text.match(GAP_RE) ?? []).length !== 1) return null;
     text = text.replace(GAP_RE, "____");
+    if (!isFullSentence(text)) return null;
   } else {
     // find-error: every option is a piece of the sentence as written.
     if (/_{3,}/.test(text)) return null;
     if (!options.every((o) => text.includes(o.text))) return null;
+    if (!isFullSentence(text)) return null;
   }
 
   if (info.category === "poly" && kind === "which-sense") {

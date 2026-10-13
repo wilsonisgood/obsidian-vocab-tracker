@@ -1,6 +1,5 @@
 import { t } from "../../../core/i18n";
 import type { PolySense } from "../../../core/model/poly";
-import type { FilterGroup, FilterValue } from "./filterBarModel";
 import type { GrammarRef, MixCategory, ScenarioRequest, VocabRef } from "./mixTypes";
 
 // Pure logic of the 混合 tab (第十七波 V): which categories to mix, the
@@ -19,27 +18,8 @@ export function parseMixFilter(raw: unknown): MixFilter {
   return { include: MIX_CATEGORIES.filter((c) => inc.includes(c)) };
 }
 
-export function mixFilterToValue(f: MixFilter): FilterValue {
-  return f.include.length > 0 ? { include: [...f.include] } : {};
-}
-
-export function valueToMixFilter(v: FilterValue): MixFilter {
-  return parseMixFilter({ include: v.include ?? [] });
-}
-
 export function categoryLabel(c: MixCategory): string {
   return t(c === "vocab" ? "practice.mix.catVocab" : c === "grammar" ? "practice.mix.catGrammar" : "practice.mix.catPoly");
-}
-
-export function mixGroups(): FilterGroup[] {
-  return [
-    {
-      id: "include",
-      label: t("practice.mix.include"),
-      multi: true,
-      options: MIX_CATEGORIES.map((c) => ({ id: c, label: categoryLabel(c) })),
-    },
-  ];
 }
 
 export interface MixSources {
@@ -48,25 +28,33 @@ export interface MixSources {
   poly: { tested: readonly PolySense[]; reference: readonly PolySense[] };
 }
 
-// 「單字 12 字 · 文法 3 個主題 · 常用字 get, of」; a chosen category with
-// nothing to ask about reads 「文法（未設定）」.
-export function mixSummary(f: MixFilter, src: MixSources): string {
-  if (f.include.length === 0) return t("practice.mix.none");
-  const parts: string[] = [];
-  for (const c of MIX_CATEGORIES) {
-    if (!f.include.includes(c)) continue;
-    const label = categoryLabel(c);
-    if (c === "vocab") {
-      parts.push(src.vocab.length > 0 ? t("practice.mix.sumVocab", { n: src.vocab.length }) : label + t("practice.mix.unset"));
-    } else if (c === "grammar") {
-      const topics = new Set(src.grammar.map((g) => g.topicId)).size;
-      parts.push(topics > 0 ? t("practice.mix.sumGrammar", { n: topics }) : label + t("practice.mix.unset"));
-    } else {
-      const words = [...new Set(src.poly.tested.map((s) => s.word))];
-      parts.push(words.length > 0 ? t("practice.mix.sumPoly", { words: words.join(", ") }) : label + t("practice.mix.unset"));
-    }
-  }
-  return parts.join(" · ");
+// The 出題參考 tags of the 混合 tab (第十八波 R): 「單字 12」「文法 4」
+// 「常用字 3」. The number is what the category currently offers (vocab
+// words, grammar topics, poly words); a category with none is disabled.
+export interface MixTag {
+  id: MixCategory;
+  label: string;
+  count: number;
+  on: boolean;
+  disabled: boolean;
+}
+
+export function mixCount(c: MixCategory, src: MixSources): number {
+  if (c === "vocab") return src.vocab.length;
+  if (c === "grammar") return new Set(src.grammar.map((g) => g.topicId)).size;
+  return new Set(src.poly.tested.map((s) => s.word)).size;
+}
+
+export function mixTags(f: MixFilter, src: MixSources): MixTag[] {
+  return MIX_CATEGORIES.map((c) => {
+    const count = mixCount(c, src);
+    return { id: c, label: `${categoryLabel(c)} ${count}`, count, on: f.include.includes(c) && count > 0, disabled: count === 0 };
+  });
+}
+
+// Clicking a tag flips whether the category is mixed in.
+export function toggleMixCategory(f: MixFilter, c: MixCategory): MixFilter {
+  return { include: MIX_CATEGORIES.filter((x) => (x === c ? !f.include.includes(c) : f.include.includes(x))) };
 }
 
 // Empty categories are left out; null when nothing is left.

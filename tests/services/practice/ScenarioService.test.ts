@@ -21,7 +21,7 @@ const VOCAB: ScenarioRequest = { track: "vocab", words: [{ id: "e1", word: "relu
 const polyAsk = (k: number) => ({
   focusId: k % 2 ? "get.arrive" : "get.obtain",
   kind: "which-sense",
-  text: `Sentence ${k}: [[get]] it.`,
+  text: `Sentence number ${k}: please [[get]] it done today.`,
   options: [ARRIVE, OBTAIN, BECOME].map((s) => ({ id: s.id, text: s.zh })),
   answerId: k % 2 ? "get.arrive" : "get.obtain",
   explanation: `解釋 ${k}`,
@@ -32,7 +32,7 @@ const polyAsk = (k: number) => ({
 const vocabAsk = (k: number) => ({
   focusId: "e1",
   kind: "which-sense",
-  text: `He was [[reluctant]] number ${k}.`,
+  text: `He was [[reluctant]] to leave the party number ${k}.`,
   options: ["a", "b", "c"].map((id, i) => ({ id, text: ["不情願的", "熱心的", "生氣的"][i] })),
   answerId: "a",
   explanation: "解釋",
@@ -119,7 +119,7 @@ describe("ScenarioService.refill", () => {
     // 〔上一段〕 carried the end of the first scenario
     const sys = ctx.ai.requests[1].system.slice(1).map((b) => b.text).join("\n");
     expect(sys).toContain("〔上一段〕\n場景：回家路上");
-    expect(sys).toContain("- Amy: Sentence 5: get it.");
+    expect(sys).toContain("- Amy: Sentence number 5: please get it done today.");
     expect(sys).toContain("〔已出過的句子〕");
     expect(sys).toContain("〔已學單字〕apron");
   });

@@ -22,6 +22,8 @@ import {
   senseSections,
   testedSenseIds,
   toggleExcluded,
+  wordCheckedSummary,
+  wordCollapsed,
   valueToFilter,
   type SenseStats,
 } from "./polyTabModel";
@@ -72,6 +74,8 @@ class PolyTabView {
   private noteEl!: HTMLElement;
   private mapEl!: HTMLElement;
   private mapOpen = true;
+  // Per-word fold state the learner changed (screen only).
+  private wordFold = new Map<string, boolean>();
   private alive = true;
   private byId = new Map<string, PracticeQuestion>();
 
@@ -231,7 +235,23 @@ class PolyTabView {
     const body = el.createDiv({ cls: "vt-pr-poly-map-body" });
     for (const sec of sections) {
       const box = body.createDiv({ cls: "vt-pr-poly-word" });
-      box.createDiv({ cls: "vt-pr-poly-word-title", text: sec.word });
+      const folded = wordCollapsed(sec.word, sections.length, this.wordFold);
+      const title = box.createDiv({ cls: "vt-pr-poly-word-title" });
+      const fold = title.createEl("button", {
+        cls: "vt-pr-poly-fold",
+        text: folded ? "▸" : "▾",
+        attr: { type: "button", "aria-expanded": String(!folded), "aria-label": sec.word },
+      });
+      fold.addEventListener("click", () => {
+        this.wordFold.set(sec.word, !folded);
+        this.renderMap();
+      });
+      title.createSpan({ text: sec.word });
+      if (folded) {
+        const sum = wordCheckedSummary(sec);
+        title.createSpan({ cls: "vt-pr-poly-fold-sum", text: t("practice.poly.wordChecked", { x: sum.checked, y: sum.total }) });
+        continue;
+      }
       for (const r of sec.rows) {
         const row = box.createEl("label", { cls: "vt-pr-poly-sense" });
         row.toggleClass("is-off", !r.checked || r.outOfLevel);
