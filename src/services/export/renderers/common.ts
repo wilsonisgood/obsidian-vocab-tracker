@@ -1,3 +1,4 @@
+import { stripGrammarTrailer } from "../../../core/grammar/trailer";
 import { liveTurns, type Thread, type Turn } from "../../../core/model/thread";
 import type { RenderContext } from "../types";
 
@@ -21,7 +22,7 @@ export function roundsOf(turns: readonly Turn[]): Round[] {
       pending = turn;
       continue;
     }
-    if (pending && turn.content.trim() && (turn.status === "done" || turn.status === "aborted")) {
+    if (pending && stripGrammarTrailer(turn.content).trim() && (turn.status === "done" || turn.status === "aborted")) {
       out.push({ question: pending, answer: turn });
     }
     pending = null;
@@ -97,7 +98,7 @@ export function renderRound(round: Round, ctx: RenderContext, heading: string): 
   const quote: string[] = [];
   if (question.selection?.trim()) quote.push(`「${oneLine(question.selection)}」`);
   quote.push(`**Q** ${normalizeNewlines(question.content).trim()}`);
-  const parts = [`${heading} ${title}`, blockquote(quote.join("\n")), "", balanceFences(normalizeNewlines(answer.content).trim())];
+  const parts = [`${heading} ${title}`, blockquote(quote.join("\n")), "", balanceFences(normalizeNewlines(stripGrammarTrailer(answer.content)).trim())];
   if (answer.status === "aborted") parts.push("", italic(ctx.labels.aborted));
   return parts.join("\n");
 }

@@ -21,6 +21,9 @@ import { ParagraphThreadPane, type ParagraphPaneNav } from "./ParagraphThreadPan
 import { DiscussionList } from "./DiscussionList";
 import { discussionRows } from "./discussionRows";
 import { GrammarSection, type GrammarSectionDeps } from "./GrammarSection";
+import { dueGrammarRows, grammarTotal, noteGrammarRows } from "./grammarRows";
+import { GRAMMAR_TOPICS } from "../../core/grammar/catalog";
+import { grammarSightings } from "../../core/grammar/sightings";
 import { verbUsageRows } from "./grammarRows";
 import { onUsagePageChange, visibleUsagePage } from "../blocks/verbs";
 import { entriesWithUsage } from "../blocks/verbsModel";
@@ -34,6 +37,15 @@ import { renderPageGroups } from "./pageGroups";
 import { pageGroupEntryIds, pageScopedEntries, resetPageCollapsed, uniquePageWordCount } from "./pageGroupsModel";
 
 export const VOCAB_VIEW_TYPE = "vocab-tracker-sidebar";
+
+// Wave 15 S: what the 文法 section needs from the plugin beyond today's
+// VocabTrackerPlugin. main.ts adds `grammar` (GrammarStore) and
+// `grammarPages` (GrammarPages, M) at integration; until then both are
+// undefined and the 本篇用到的文法 / 待複習 subsections stay hidden.
+export interface GrammarSidebarHost {
+  grammar?: GrammarSectionDeps["grammar"];
+  grammarPages?: { open(topicId: string): Promise<void> | void };
+}
 
 // Re-reading a note after an edit waits for typing to settle.
 const NOTE_REFRESH_MS = 400;
@@ -829,11 +841,15 @@ export class VocabSidebarView extends ItemView {
               const allowed = new Set(this.scopedEntries().map((e) => e.id));
               return entriesWithUsage(this.plugin.store.entries).filter((e) => allowed.has(e.id));
             },
+            threads: this.plugin.threads,
+            grammar: this.grammarHost().grammar,
+            path: () => this.plugin.app.workspace.getActiveFile()?.path ?? null,
           },
           {
             openWord: (entryId) => void this.plugin.openWordPage(entryId),
             viewAll: () => void this.plugin.openEntryFile("verbs"),
             counted: (n) => gCounter.el?.setText(t("sidebar.section.grammar", { n })),
+            openGrammarTopic: this.openGrammarTopicFn(),
           }
         )
       );
@@ -843,15 +859,49 @@ export class VocabSidebarView extends ItemView {
       const { verbs, learn } = this.plugin;
       const recount = () => {
         if (!gCounter.el?.isConnected) return;
-        const n = verbUsageRows(this.scopedVerbs().verbs(), (id) => learn.verbFavorite(id)).length;
+        const verbRows = verbUsageRows(this.scopedVerbs().verbs(), (id) => learn.verbFavorite(id)).length;
+        const n = grammarTotal(this.noteGrammarCount(), this.dueGrammarCount(), verbRows);
         gCounter.el.setText(t("sidebar.section.grammar", { n }));
       };
       this.grammarRecount = recount;
+      const { threads } = this.plugin;
+      scope.register(threads.events.on("thread:upsert", recount));
+      scope.register(threads.events.on("threads:reloaded", recount));
+      const gs = this.grammarHost().grammar;
+      if (gs) {
+        scope.register(gs.events.on("progress:upsert", recount));
+        scope.register(gs.events.on("grammar:reloaded", recount));
+        void gs.ensureLoaded().then(recount);
+      }
       scope.register(verbs.events.on("verb:usage", recount));
       scope.register(learn.events.on("verbFavorite:upsert", recount));
       scope.register(learn.events.on("learn:reloaded", recount));
       void learn.ensureLoaded().then(recount);
     }
+  }
+
+  private grammarHost(): GrammarSidebarHost {
+    return this.plugin as unknown as GrammarSidebarHost;
+  }
+
+  // undefined (no 本篇用到的文法 / 待複習) until GrammarPages is wired up.
+  private openGrammarTopicFn(): ((topicId: string) => void) | undefined {
+    const pages = this.grammarHost().grammarPages;
+    if (!pages) return undefined;
+    return (topicId) => void Promise.resolve(pages.open(topicId)).catch((e) => console.error("Vocab Tracker: open grammar topic failed", e));
+  }
+
+  // The same row counts GrammarSection reports, for the folded heading.
+  private noteGrammarCount(): number {
+    const path = this.plugin.app.workspace.getActiveFile()?.path;
+    if (!this.grammarHost().grammarPages || !path) return 0;
+    return noteGrammarRows(grammarSightings(this.plugin.threads.paragraphThreads(path)), path).length;
+  }
+
+  private dueGrammarCount(): number {
+    const { grammar, grammarPages } = this.grammarHost();
+    if (!grammar || !grammarPages) return 0;
+    return dueGrammarRows(GRAMMAR_TOPICS, (id) => grammar.progress(id), new Date()).length;
   }
 
   // 動詞用法（文法區）也套第 7 點的篩選（1006report.md #7, #8）: a live

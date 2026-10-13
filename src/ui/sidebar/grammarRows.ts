@@ -1,3 +1,7 @@
+import { topicById } from "../../core/grammar/catalog";
+import { dueTopics } from "../../core/grammar/progress";
+import { sightingsByTopic, sightingsOfPath } from "../../core/grammar/sightings";
+import type { GrammarProgress, GrammarSighting, GrammarStage, GrammarTopic } from "../../core/model/grammar";
 import type { VocabEntry } from "../../core/model/entry";
 import { usagesOf } from "../../core/model/usage";
 
@@ -81,4 +85,55 @@ export function grammarPlan(usagePageVisible: boolean): GrammarPlan {
   return usagePageVisible
     ? { click: "select", limit: null }
     : { click: "openWord", limit: RECENT_VERB_USAGE };
+}
+
+// ── 本篇用到的文法 / 待複習 (wave 15 S, 1013 §3.4) ─────────────────────
+
+export const MAX_NOTE_GRAMMAR = 8;
+export const MAX_DUE_GRAMMAR = 5;
+
+export interface GrammarTopicRow {
+  topicId: string;
+  title: string;
+  stage: GrammarStage;
+}
+
+export interface NoteGrammarRow extends GrammarTopicRow {
+  // How many 文法解析 answers in this note named the topic.
+  count: number;
+}
+
+// The topics the note's 文法解析 answers named, most-met first (then by
+// stage / order), capped at `limit`. A topic that is no longer in the
+// catalog is dropped.
+export function noteGrammarRows(
+  sightings: readonly GrammarSighting[],
+  path: string | null,
+  limit = MAX_NOTE_GRAMMAR
+): NoteGrammarRow[] {
+  if (!path) return [];
+  const rows: { row: NoteGrammarRow; order: number }[] = [];
+  for (const [topicId, list] of sightingsByTopic(sightingsOfPath(sightings, path))) {
+    const topic = topicById(topicId);
+    if (topic) rows.push({ row: { topicId, title: topic.title, stage: topic.stage, count: list.length }, order: topic.order });
+  }
+  rows.sort((a, b) => b.row.count - a.row.count || a.row.stage - b.row.stage || a.order - b.order);
+  return rows.slice(0, limit).map((r) => r.row);
+}
+
+// Topics whose review is due, earliest due first, capped at `limit`.
+export function dueGrammarRows(
+  topics: readonly GrammarTopic[],
+  progressOf: (topicId: string) => GrammarProgress | undefined,
+  now: Date,
+  limit = MAX_DUE_GRAMMAR
+): GrammarTopicRow[] {
+  return dueTopics(topics, progressOf, now)
+    .slice(0, limit)
+    .map((t) => ({ topicId: t.id, title: t.title, stage: t.stage }));
+}
+
+// The 文法（n）heading counts every row in all three subsections.
+export function grammarTotal(noteRows: number, dueRows: number, verbRows: number): number {
+  return noteRows + dueRows + verbRows;
 }

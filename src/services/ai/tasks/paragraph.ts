@@ -1,3 +1,4 @@
+import { catalogPromptList } from "../../../core/grammar/catalog";
 import { renderTemplate } from "../../../core/text/template";
 import { buildParagraphContext, type ParagraphInput } from "../context/paragraphContext";
 import { composeRequest } from "./compose";
@@ -41,7 +42,8 @@ const SELECTION_HEADER = `{{#selection}}〔選取的文字〕
 export const PARAGRAPH_TEMPLATES = {
   grammar: `${SELECTION_HEADER}任務：文法解析（¶{{paragraphNumber}}）
 範圍：{{#selection}}〔選取的文字〕所在的那一句。{{/selection}}{{^selection}}〔目前段落〕裡結構最值得學的一句；段落只有一句時就是那一句。{{/selection}}
-請拆解句子結構（主要子句、從屬子句、片語各自修飾誰），點出關鍵文法（時態、語態、假設語氣、倒裝、省略等）在這裡的作用，最後用一句話說明這句的意思。`,
+請拆解句子結構（主要子句、從屬子句、片語各自修飾誰），點出關鍵文法（時態、語態、假設語氣、倒裝、省略等）在這裡的作用，最後用一句話說明這句的意思。
+最後另起一行，用 \`<!-- vt-grammar: id1, id2 -->\` 列出這句用到、而且在〔文法主題清單〕裡的 1–3 個主題 id，依重要性排序；清單裡沒有適合的就寫 \`<!-- vt-grammar: -->\`。這一行不要解釋。`,
 
   translate: `${SELECTION_HEADER}任務：翻譯（¶{{paragraphNumber}}）
 範圍：{{#selection}}〔選取的文字〕所在的句子。{{/selection}}{{^selection}}整段。{{/selection}}
@@ -64,6 +66,15 @@ export const PARAGRAPH_TEMPLATES = {
 
 type ParagraphTaskId = keyof typeof PARAGRAPH_TEMPLATES;
 
+// 〔文法主題清單〕: the built-in grammar topics, one `id — title（pattern）`
+// per line, so 文法解析 can name the topics a sentence used in its trailer
+// (wave 15 S, 1013 §3.5). Static, so it sits in the cached prefix right
+// after the article; only paragraph.grammar carries it — every other
+// paragraph task's request stays byte-for-byte as before.
+export function grammarTopicBlock(): string {
+  return `〔文法主題清單〕\n${catalogPromptList()}`;
+}
+
 function paragraphTask(
   id: ParagraphTaskId,
   opts: Pick<AiTask<ParagraphInput>, "tier" | "maxTokens" | "label" | "answerChars">
@@ -71,14 +82,16 @@ function paragraphTask(
   const task: AiTask<ParagraphInput> = {
     id: `paragraph.${id}`,
     // v2: follow-ups skip a repeated 「你問的是」 line (規劃書 06 §6.4.1 #3).
-    version: 2,
+    // grammar v3: the 〔文法主題清單〕 block + the closing vt-grammar line
+    // (wave 15 S); the other tasks stay at v2 (their requests didn't change).
+    version: id === "grammar" ? 3 : 2,
     surface: "paragraph",
     ...opts,
     build(input: ParagraphInput, ctx: TaskContext) {
       const c = buildParagraphContext(input);
       return composeRequest({
         base: PARAGRAPH_BASE_PROMPT,
-        cached: [c.articleBlock],
+        cached: id === "grammar" ? [c.articleBlock, grammarTopicBlock()] : [c.articleBlock],
         context: [c.focusBlock],
         profile: profileForTask(ctx.profile, task, input),
         history: ctx.history,
