@@ -40,10 +40,10 @@ export const ENTRY_FILES: readonly EntryFileDef[] = [
   { id: "trivia", name: "Eureka", block: "vocab-eureka", params: "favorites: off", legacyName: "冷知識" },
   // Word DNA (規劃書 09 §7).
   { id: "dna", name: "DNA", block: "vocab-dna", legacyName: "Word DNA" },
-  // Grammar map (第十五波 M, 1013 §3.1). legacyName "文法" is the name the
-  // 1013 report used for it; migrateName only renames a file that already
-  // has that name in the plugin folder (it never existed as a default).
-  { id: "grammar", name: "Grammar", block: "vocab-grammar", legacyName: "文法" },
+  // Grammar map (第十五波 M, 1013 §3.1). New since the 1010 rename, so no
+  // old default name: legacyName = name makes planEntryRenames skip it
+  // (a user's own 文法.md in the folder must never be renamed).
+  { id: "grammar", name: "Grammar", block: "vocab-grammar", legacyName: "Grammar" },
 ];
 
 // The word list's starter note (main.ts) is not an entry file (no
