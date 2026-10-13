@@ -29,3 +29,11 @@ describe("stage-1 built-in explanations", () => {
     expect(builtInExplanation("toString")).toBeUndefined();
   });
 });
+
+describe("every catalog topic has a built-in explanation", () => {
+  it("covers all topics and nothing else", async () => {
+    const { GRAMMAR_TOPICS } = await import("../../../src/core/grammar/catalog");
+    const { builtInExplanationIds } = await import("../../../src/core/grammar/explanations");
+    expect([...builtInExplanationIds()].sort()).toEqual(GRAMMAR_TOPICS.map((t) => t.id).sort());
+  });
+});
