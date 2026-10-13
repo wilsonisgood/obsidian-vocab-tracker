@@ -997,6 +997,11 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     openWordReview(this, entry);
   }
 
+  // 「查字典」 on a word page with no dictionary data yet (1010-2 A4).
+  async enrich(entry: VocabEntry): Promise<void> {
+    await this.enrichEntry(entry, { verbose: true });
+  }
+
   // 字族樹 / 動詞用法 / 冷知識 chips of learned words: the word's card on
   // its data tab — the bottom sheet on iPhone, the sidebar elsewhere.
   async openWordCard(entry: VocabEntry) {

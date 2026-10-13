@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { getLocale, t } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { originFamilyId, type Family } from "../../core/model/family";
 import type { BreakdownPart, WordBreakdown } from "../../core/model/morpheme";
@@ -30,12 +30,6 @@ export { hasDictionaryData };
 // subscription is dropped when the block goes away (MarkdownRenderChild).
 
 // 1010-2 W new strings (move into i18n at integration).
-const L = {
-  senses: () => (getLocale() === "zh-TW" ? "詞義" : "Senses"),
-  lookup: () => (getLocale() === "zh-TW" ? "查字典" : "Look up"),
-  lookingUp: () => (getLocale() === "zh-TW" ? "查詢中…" : "Looking up…"),
-};
-
 export const WORD_BLOCK_LANG = "vocab-word";
 
 type Key = "missing" | "speak" | "source" | "sourceTitle" | "dueNew" | "dueToday" | "dueOn" | "reviewed" | "review";
@@ -337,7 +331,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
       this.fold(root, entry, "info", t("word.tab.data"), (body) => {
         if (vis.senses.length) {
           const row = body.createDiv({ cls: "vt-wh-inforow" });
-          row.createSpan({ cls: "vt-wh-inforow-label", text: L.senses() });
+          row.createSpan({ cls: "vt-wh-inforow-label", text: t("wordHeader.senses") });
           const lines = row.createDiv({ cls: "vt-wh-senses" });
           for (const line of vis.senses) lines.createDiv({ cls: "vt-wh-sense", text: line });
         }
@@ -359,7 +353,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
   private renderLookup(parent: HTMLElement, entry: VocabEntry, enrich: NonNullable<WordHeaderHost["enrich"]>): void {
     const btn = parent.createEl("button", { cls: ["vt-wh-lookup"], attr: { type: "button" } });
     setIcon(btn.createSpan({ cls: "vt-wh-btn-icon" }), "book-open");
-    btn.createSpan({ text: this.lookingUp ? L.lookingUp() : L.lookup() });
+    btn.createSpan({ text: this.lookingUp ? t("wordHeader.lookingUp") : t("wordHeader.lookup") });
     btn.disabled = this.lookingUp;
     btn.addEventListener("click", () => {
       if (this.lookingUp) return;
