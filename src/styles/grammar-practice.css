@@ -10,8 +10,12 @@
   outline: none;
 }
 
+/* Focused so 1–4 / Enter work (it is focused after every answer). The ring
+   sits outside the content with room to spare — a box-shadow hugging the
+   text looked like a frame with no padding (1013-3). */
 .vt-gr-practice:focus-visible {
-  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+  outline: 2px solid var(--background-modifier-border-focus);
+  outline-offset: 8px;
   border-radius: var(--vt-radius);
 }
 
@@ -27,7 +31,7 @@
 }
 
 /* 3 / 8 · objective */
-.vt-gr-head {
+.vt-gr-q-head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -46,19 +50,25 @@
   text-align: right;
 }
 
+/* Topic and objective wrap as whole pieces, not mid-phrase (1013-3: a
+   lone 「式」 used to drop to its own line on a phone). */
+.vt-gr-goal > span {
+  display: inline-block;
+}
+
 .vt-gr-topic {
   margin-right: 8px;
   color: var(--vt-accent-text);
 }
 
-.vt-gr-bar {
+.vt-gr-progress {
   height: 3px;
   border-radius: 2px;
   background: var(--background-modifier-border);
   overflow: hidden;
 }
 
-.vt-gr-bar-fill {
+.vt-gr-progress-fill {
   height: 100%;
   background: var(--vt-accent);
   transition: width 0.2s ease;
@@ -269,7 +279,7 @@
   color: var(--vt-muted);
 }
 
-.vt-gr-explain {
+.vt-gr-q-explain {
   line-height: 1.6;
 }
 

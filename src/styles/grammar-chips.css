@@ -15,14 +15,14 @@ body.theme-dark {
   --vt-gr-stage-3: #e8e8e8;
 }
 
-.vt-gr-chips {
+.vt-gr-ai-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 8px;
 }
 
-.vt-gr-chip {
+.vt-gr-ai-chip {
   height: auto;
   padding: 3px 10px;
   border-radius: 999px;
@@ -34,24 +34,24 @@ body.theme-dark {
   cursor: pointer;
 }
 
-.vt-gr-chip.is-stage-1 {
+.vt-gr-ai-chip.is-stage-1 {
   --vt-gr-stage-color: var(--vt-gr-stage-1);
 }
 
-.vt-gr-chip.is-stage-2 {
+.vt-gr-ai-chip.is-stage-2 {
   --vt-gr-stage-color: var(--vt-gr-stage-2);
 }
 
-.vt-gr-chip.is-stage-3 {
+.vt-gr-ai-chip.is-stage-3 {
   --vt-gr-stage-color: var(--vt-gr-stage-3);
 }
 
-.vt-gr-chip:hover {
+.vt-gr-ai-chip:hover {
   background: var(--background-modifier-hover);
 }
 
 /* Sidebar rows: 本篇用到的文法 (title ×n) and 待複習 (title + 練習). */
-.vt-gr-row {
+.vt-gr-side-row {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -60,12 +60,12 @@ body.theme-dark {
   cursor: pointer;
 }
 
-.vt-gr-row:hover,
-.vt-gr-row:focus-visible {
+.vt-gr-side-row:hover,
+.vt-gr-side-row:focus-visible {
   background: var(--background-modifier-hover);
 }
 
-.vt-gr-row-title {
+.vt-gr-side-row-title {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -76,31 +76,31 @@ body.theme-dark {
   color: var(--vt-gr-stage-color, var(--text-normal));
 }
 
-.vt-gr-row.is-stage-1 {
+.vt-gr-side-row.is-stage-1 {
   --vt-gr-stage-color: var(--vt-gr-stage-1);
 }
 
-.vt-gr-row.is-stage-2 {
+.vt-gr-side-row.is-stage-2 {
   --vt-gr-stage-color: var(--vt-gr-stage-2);
 }
 
-.vt-gr-row.is-stage-3 {
+.vt-gr-side-row.is-stage-3 {
   --vt-gr-stage-color: var(--vt-gr-stage-3);
 }
 
-.vt-gr-row-count {
+.vt-gr-side-row-count {
   flex-shrink: 0;
   font-size: 0.8em;
   color: var(--text-muted);
 }
 
-.vt-gr-row-btn {
+.vt-gr-side-row-btn {
   flex-shrink: 0;
   font-size: 0.8em;
 }
 
-body.is-mobile .vt-gr-chip,
-body.is-mobile .vt-gr-row,
-body.is-mobile .vt-gr-row-btn {
+body.is-mobile .vt-gr-ai-chip,
+body.is-mobile .vt-gr-side-row,
+body.is-mobile .vt-gr-side-row-btn {
   min-height: 44px;
 }

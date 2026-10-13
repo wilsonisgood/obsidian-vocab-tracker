@@ -320,10 +320,10 @@ export class ChatPanel extends Component {
     if (!open) return;
     const chips = grammarChips(turn);
     if (!chips.length) return;
-    const row = createDiv({ cls: "vt-gr-chips" });
+    const row = createDiv({ cls: "vt-gr-ai-chips" });
     row.setAttr("aria-label", chipsLabel());
     for (const chip of chips) {
-      const btn = row.createEl("button", { cls: `vt-gr-chip is-stage-${chip.stage}`, text: chip.label, attr: { type: "button" } });
+      const btn = row.createEl("button", { cls: `vt-gr-ai-chip is-stage-${chip.stage}`, text: chip.label, attr: { type: "button" } });
       btn.dataset.topicId = chip.topicId;
       btn.addEventListener("click", () => open(chip.topicId));
     }

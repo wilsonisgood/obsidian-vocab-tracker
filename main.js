@@ -5079,10 +5079,10 @@ var ChatPanel = class extends import_obsidian9.Component {
     if (!open) return;
     const chips = grammarChips(turn);
     if (!chips.length) return;
-    const row = createDiv({ cls: "vt-gr-chips" });
+    const row = createDiv({ cls: "vt-gr-ai-chips" });
     row.setAttr("aria-label", chipsLabel());
     for (const chip2 of chips) {
-      const btn = row.createEl("button", { cls: `vt-gr-chip is-stage-${chip2.stage}`, text: chip2.label, attr: { type: "button" } });
+      const btn = row.createEl("button", { cls: `vt-gr-ai-chip is-stage-${chip2.stage}`, text: chip2.label, attr: { type: "button" } });
       btn.dataset.topicId = chip2.topicId;
       btn.addEventListener("click", () => open(chip2.topicId));
     }
@@ -8014,7 +8014,7 @@ var GrammarSection = class extends import_obsidian17.Component {
       var _a, _b;
       return (_b = (_a = this.actions).openGrammarTopic) == null ? void 0 : _b.call(_a, row.topicId);
     };
-    const el = this.el.createDiv({ cls: `vt-gr-row is-stage-${row.stage}` });
+    const el = this.el.createDiv({ cls: `vt-gr-side-row is-stage-${row.stage}` });
     el.setAttr("role", "button");
     el.setAttr("tabindex", "0");
     el.setAttr("data-topic-id", row.topicId);
@@ -8022,12 +8022,12 @@ var GrammarSection = class extends import_obsidian17.Component {
     el.addEventListener("keydown", (e) => {
       if (e.key === "Enter") open();
     });
-    el.createSpan({ cls: "vt-gr-row-title", text: row.title });
+    el.createSpan({ cls: "vt-gr-side-row-title", text: row.title });
     if (count !== void 0) {
-      el.createSpan({ cls: "vt-gr-row-count", text: `\xD7${count}` });
+      el.createSpan({ cls: "vt-gr-side-row-count", text: `\xD7${count}` });
       return;
     }
-    const btn = el.createEl("button", { cls: "vt-gr-row-btn", text: t("grammar.sidebar.practice"), attr: { type: "button" } });
+    const btn = el.createEl("button", { cls: "vt-gr-side-row-btn", text: t("grammar.sidebar.practice"), attr: { type: "button" } });
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       open();
@@ -19567,7 +19567,7 @@ var GrammarPracticeBlock = class extends import_obsidian31.MarkdownRenderChild {
   }
   renderHeader(parent, q) {
     var _a;
-    const head = parent.createDiv({ cls: "vt-gr-head" });
+    const head = parent.createDiv({ cls: "vt-gr-q-head" });
     const { position, total } = progressLabel(this.round);
     head.createSpan({ cls: "vt-gr-count", text: `${position} / ${total}` });
     const goal = head.createSpan({ cls: "vt-gr-goal" });
@@ -19577,9 +19577,9 @@ var GrammarPracticeBlock = class extends import_obsidian31.MarkdownRenderChild {
     }
     const text = this.objectiveText(q);
     if (text) goal.createSpan({ text });
-    const bar = parent.createDiv({ cls: "vt-gr-bar" });
+    const bar = parent.createDiv({ cls: "vt-gr-progress" });
     const done = this.round.results.length;
-    bar.createDiv({ cls: "vt-gr-bar-fill" }).style.width = `${Math.round(done / Math.max(1, total) * 100)}%`;
+    bar.createDiv({ cls: "vt-gr-progress-fill" }).style.width = `${Math.round(done / Math.max(1, total) * 100)}%`;
   }
   renderQuestion(parent, q) {
     var _a, _b;
@@ -19714,7 +19714,7 @@ var GrammarPracticeBlock = class extends import_obsidian31.MarkdownRenderChild {
     box.createDiv({ cls: "vt-gr-selfcheck-title", text: l3("sample") });
     box.createDiv({ cls: "vt-gr-sample", text: q.answer });
     for (const a2 of (_a = q.accepted) != null ? _a : []) box.createDiv({ cls: "vt-gr-sample is-alt", text: a2 });
-    box.createDiv({ cls: "vt-gr-explain", text: q.explanation });
+    box.createDiv({ cls: "vt-gr-q-explain", text: q.explanation });
     box.createDiv({ cls: "vt-gr-hint", text: l3("selfAsk") });
     const actions = box.createDiv({ cls: "vt-gr-actions" });
     learnButton(actions, { label: l3("retire"), icon: "thumbs-down", ghost: true, onClick: () => this.retire() });
@@ -19788,7 +19788,7 @@ var GrammarPracticeBlock = class extends import_obsidian31.MarkdownRenderChild {
       box.createDiv({ cls: "vt-gr-answer", text: m2.answer });
     }
     if (m2.corrected && !isOpenQuestion(q)) box.createDiv({ cls: "vt-gr-fixed", text: l3("fixed", { s: m2.corrected }) });
-    box.createDiv({ cls: "vt-gr-explain", text: m2.explanation });
+    box.createDiv({ cls: "vt-gr-q-explain", text: m2.explanation });
     if (m2.whyWrong) {
       const why = box.createDiv({ cls: "vt-gr-why" });
       why.createSpan({ cls: "vt-gr-why-opt", text: m2.given });

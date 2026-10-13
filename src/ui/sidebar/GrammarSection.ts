@@ -165,7 +165,7 @@ export class GrammarSection extends Component {
   // the topic page.
   private drawTopicRow(row: GrammarTopicRow, count?: number): void {
     const open = () => this.actions.openGrammarTopic?.(row.topicId);
-    const el = this.el.createDiv({ cls: `vt-gr-row is-stage-${row.stage}` });
+    const el = this.el.createDiv({ cls: `vt-gr-side-row is-stage-${row.stage}` });
     el.setAttr("role", "button");
     el.setAttr("tabindex", "0");
     el.setAttr("data-topic-id", row.topicId);
@@ -173,12 +173,12 @@ export class GrammarSection extends Component {
     el.addEventListener("keydown", (e) => {
       if (e.key === "Enter") open();
     });
-    el.createSpan({ cls: "vt-gr-row-title", text: row.title });
+    el.createSpan({ cls: "vt-gr-side-row-title", text: row.title });
     if (count !== undefined) {
-      el.createSpan({ cls: "vt-gr-row-count", text: `×${count}` });
+      el.createSpan({ cls: "vt-gr-side-row-count", text: `×${count}` });
       return;
     }
-    const btn = el.createEl("button", { cls: "vt-gr-row-btn", text: t("grammar.sidebar.practice"), attr: { type: "button" } });
+    const btn = el.createEl("button", { cls: "vt-gr-side-row-btn", text: t("grammar.sidebar.practice"), attr: { type: "button" } });
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       open();

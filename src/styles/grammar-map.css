@@ -119,6 +119,7 @@
   color: var(--text-normal);
   font: inherit;
   text-align: left;
+  white-space: normal;
   cursor: pointer;
 }
 
@@ -139,14 +140,20 @@
   gap: 0 10px;
 }
 
+/* Not enough room on one line: the title stays whole and the pattern
+   drops to a second line (1013-3) — never cut to 「…」. */
 .vt-gr-row-title {
   font-weight: 500;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .vt-gr-row-pattern {
+  min-width: 0;
   color: var(--vt-muted);
   font-family: var(--font-monospace);
   font-size: var(--font-ui-smaller);
+  overflow-wrap: anywhere;
 }
 
 .vt-gr-lock {

@@ -3932,6 +3932,7 @@ button.vt-dna-base {
   color: var(--text-normal);
   font: inherit;
   text-align: left;
+  white-space: normal;
   cursor: pointer;
 }
 .vt-gr-row:last-child {
@@ -3950,11 +3951,15 @@ button.vt-dna-base {
 }
 .vt-gr-row-title {
   font-weight: 500;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .vt-gr-row-pattern {
+  min-width: 0;
   color: var(--vt-muted);
   font-family: var(--font-monospace);
   font-size: var(--font-ui-smaller);
+  overflow-wrap: anywhere;
 }
 .vt-gr-lock {
   flex: none;
@@ -4188,13 +4193,13 @@ body.theme-dark {
   --vt-gr-stage-2: #7ab2ff;
   --vt-gr-stage-3: #e8e8e8;
 }
-.vt-gr-chips {
+.vt-gr-ai-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 8px;
 }
-.vt-gr-chip {
+.vt-gr-ai-chip {
   height: auto;
   padding: 3px 10px;
   border-radius: 999px;
@@ -4205,19 +4210,19 @@ body.theme-dark {
   box-shadow: none;
   cursor: pointer;
 }
-.vt-gr-chip.is-stage-1 {
+.vt-gr-ai-chip.is-stage-1 {
   --vt-gr-stage-color: var(--vt-gr-stage-1);
 }
-.vt-gr-chip.is-stage-2 {
+.vt-gr-ai-chip.is-stage-2 {
   --vt-gr-stage-color: var(--vt-gr-stage-2);
 }
-.vt-gr-chip.is-stage-3 {
+.vt-gr-ai-chip.is-stage-3 {
   --vt-gr-stage-color: var(--vt-gr-stage-3);
 }
-.vt-gr-chip:hover {
+.vt-gr-ai-chip:hover {
   background: var(--background-modifier-hover);
 }
-.vt-gr-row {
+.vt-gr-side-row {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -4225,11 +4230,11 @@ body.theme-dark {
   border-radius: var(--radius-m, 8px);
   cursor: pointer;
 }
-.vt-gr-row:hover,
-.vt-gr-row:focus-visible {
+.vt-gr-side-row:hover,
+.vt-gr-side-row:focus-visible {
   background: var(--background-modifier-hover);
 }
-.vt-gr-row-title {
+.vt-gr-side-row-title {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -4239,27 +4244,27 @@ body.theme-dark {
   font-weight: 600;
   color: var(--vt-gr-stage-color, var(--text-normal));
 }
-.vt-gr-row.is-stage-1 {
+.vt-gr-side-row.is-stage-1 {
   --vt-gr-stage-color: var(--vt-gr-stage-1);
 }
-.vt-gr-row.is-stage-2 {
+.vt-gr-side-row.is-stage-2 {
   --vt-gr-stage-color: var(--vt-gr-stage-2);
 }
-.vt-gr-row.is-stage-3 {
+.vt-gr-side-row.is-stage-3 {
   --vt-gr-stage-color: var(--vt-gr-stage-3);
 }
-.vt-gr-row-count {
+.vt-gr-side-row-count {
   flex-shrink: 0;
   font-size: 0.8em;
   color: var(--text-muted);
 }
-.vt-gr-row-btn {
+.vt-gr-side-row-btn {
   flex-shrink: 0;
   font-size: 0.8em;
 }
-body.is-mobile .vt-gr-chip,
-body.is-mobile .vt-gr-row,
-body.is-mobile .vt-gr-row-btn {
+body.is-mobile .vt-gr-ai-chip,
+body.is-mobile .vt-gr-side-row,
+body.is-mobile .vt-gr-side-row-btn {
   min-height: 44px;
 }
 
@@ -4270,7 +4275,8 @@ body.is-mobile .vt-gr-row-btn {
   outline: none;
 }
 .vt-gr-practice:focus-visible {
-  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+  outline: 2px solid var(--background-modifier-border-focus);
+  outline-offset: 8px;
   border-radius: var(--vt-radius);
 }
 .vt-gr-body,
@@ -4282,7 +4288,7 @@ body.is-mobile .vt-gr-row-btn {
 .vt-gr-gen:empty {
   display: none;
 }
-.vt-gr-head {
+.vt-gr-q-head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -4298,17 +4304,20 @@ body.is-mobile .vt-gr-row-btn {
   font-size: var(--font-ui-small);
   text-align: right;
 }
+.vt-gr-goal > span {
+  display: inline-block;
+}
 .vt-gr-topic {
   margin-right: 8px;
   color: var(--vt-accent-text);
 }
-.vt-gr-bar {
+.vt-gr-progress {
   height: 3px;
   border-radius: 2px;
   background: var(--background-modifier-border);
   overflow: hidden;
 }
-.vt-gr-bar-fill {
+.vt-gr-progress-fill {
   height: 100%;
   background: var(--vt-accent);
   transition: width 0.2s ease;
@@ -4483,7 +4492,7 @@ body.is-mobile .vt-gr-row-btn {
 .vt-gr-fixed {
   color: var(--vt-muted);
 }
-.vt-gr-explain {
+.vt-gr-q-explain {
   line-height: 1.6;
 }
 .vt-gr-why {

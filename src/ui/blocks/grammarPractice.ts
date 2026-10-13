@@ -282,7 +282,7 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
   }
 
   private renderHeader(parent: HTMLElement, q: GrammarQuestion): void {
-    const head = parent.createDiv({ cls: "vt-gr-head" });
+    const head = parent.createDiv({ cls: "vt-gr-q-head" });
     const { position, total } = progressLabel(this.round);
     head.createSpan({ cls: "vt-gr-count", text: `${position} / ${total}` });
     const goal = head.createSpan({ cls: "vt-gr-goal" });
@@ -292,9 +292,9 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     }
     const text = this.objectiveText(q);
     if (text) goal.createSpan({ text });
-    const bar = parent.createDiv({ cls: "vt-gr-bar" });
+    const bar = parent.createDiv({ cls: "vt-gr-progress" });
     const done = this.round.results.length;
-    bar.createDiv({ cls: "vt-gr-bar-fill" }).style.width = `${Math.round((done / Math.max(1, total)) * 100)}%`;
+    bar.createDiv({ cls: "vt-gr-progress-fill" }).style.width = `${Math.round((done / Math.max(1, total)) * 100)}%`;
   }
 
   private renderQuestion(parent: HTMLElement, q: GrammarQuestion): void {
@@ -433,7 +433,7 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     box.createDiv({ cls: "vt-gr-selfcheck-title", text: l("sample") });
     box.createDiv({ cls: "vt-gr-sample", text: q.answer });
     for (const a of q.accepted ?? []) box.createDiv({ cls: "vt-gr-sample is-alt", text: a });
-    box.createDiv({ cls: "vt-gr-explain", text: q.explanation });
+    box.createDiv({ cls: "vt-gr-q-explain", text: q.explanation });
     box.createDiv({ cls: "vt-gr-hint", text: l("selfAsk") });
     const actions = box.createDiv({ cls: "vt-gr-actions" });
     learnButton(actions, { label: l("retire"), icon: "thumbs-down", ghost: true, onClick: () => this.retire() });
@@ -512,7 +512,7 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
       box.createDiv({ cls: "vt-gr-answer", text: m.answer });
     }
     if (m.corrected && !isOpenQuestion(q)) box.createDiv({ cls: "vt-gr-fixed", text: l("fixed", { s: m.corrected }) });
-    box.createDiv({ cls: "vt-gr-explain", text: m.explanation });
+    box.createDiv({ cls: "vt-gr-q-explain", text: m.explanation });
     if (m.whyWrong) {
       const why = box.createDiv({ cls: "vt-gr-why" });
       why.createSpan({ cls: "vt-gr-why-opt", text: m.given });
