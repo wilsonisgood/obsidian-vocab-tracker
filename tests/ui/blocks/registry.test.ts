@@ -18,6 +18,10 @@ describe("block registry names", () => {
     expect(renderer(next)).toBe(renderer(old));
   });
 
+  it("registers the three grammar blocks", () => {
+    for (const lang of ["vocab-grammar", "vocab-grammar-topic", "vocab-grammar-practice"]) expect(renderer(lang)).toBeDefined();
+  });
+
   it("registers no language twice", () => {
     const langs = BLOCKS.map((b) => b.lang);
     expect(new Set(langs).size).toBe(langs.length);

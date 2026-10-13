@@ -4,6 +4,10 @@ import { renderDashboard } from "./dashboard";
 import { renderDna, type DnaBlockDeps } from "./dna";
 import { renderFamilies } from "./families";
 import { renderFlashcards } from "./flashcards";
+import { renderGrammarMap, type GrammarMapDeps } from "./grammarMap";
+import { renderGrammarPractice, type GrammarPracticeDeps } from "./grammarPractice";
+import { renderGrammarTopic, type GrammarTopicDeps } from "./grammarTopic";
+import { openPluginSettings } from "../kit/openSettings";
 import { renderTrivia } from "./trivia";
 import { renderVerbs } from "./verbs";
 import { renderWordHeader, WORD_BLOCK_LANG } from "./wordHeader";
@@ -24,6 +28,31 @@ function dnaDeps(plugin: VocabTrackerPlugin): DnaBlockDeps {
     focus: plugin.dnaFocus,
     pageContext: plugin.pageContext,
   };
+}
+
+// 文法學習 (Wave 15): 文法地圖, 主題頁, 練習.
+function grammarMapDeps(plugin: VocabTrackerPlugin): GrammarMapDeps {
+  return {
+    grammar: plugin.grammar,
+    level: () => plugin.store.settings.learner?.level ?? "",
+    openTopic: (id) => plugin.grammarPages.open(id),
+  };
+}
+
+function grammarTopicDeps(plugin: VocabTrackerPlugin): GrammarTopicDeps {
+  return {
+    grammar: plugin.grammar,
+    threads: plugin.threads,
+    ai: plugin.ai,
+    pages: plugin.grammarPages,
+    openTopic: (id) => plugin.grammarPages.open(id),
+    openNote: (path) => plugin.openNote(path),
+    openSettings: () => openPluginSettings(plugin.app, plugin.manifest.id),
+  };
+}
+
+function grammarPracticeDeps(plugin: VocabTrackerPlugin): GrammarPracticeDeps {
+  return { app: plugin.app, manifestId: plugin.manifest.id, grammar: plugin.grammar, questions: plugin.grammarQuestions, ai: plugin.ai };
 }
 
 // Every vocab-* code block (規劃書 06 §9.6). The block body is its params
@@ -54,6 +83,10 @@ export const BLOCKS: readonly BlockDef[] = [
   { lang: "vocab-dna", render: (plugin, source, el, ctx) =>
       // Only the Word DNA entry file feeds the sidebar (規劃書 10 §2.1).
       renderDna({ ...dnaDeps(plugin), isEntryFile: plugin.files.entryFilePath("dna") === ctx.sourcePath }, source, el, ctx) },
+  // Wave 15: 文法學習.
+  { lang: "vocab-grammar", render: (p, s, el, ctx) => renderGrammarMap(grammarMapDeps(p), s, el, ctx) },
+  { lang: "vocab-grammar-topic", render: (p, s, el, ctx) => renderGrammarTopic(grammarTopicDeps(p), s, el, ctx) },
+  { lang: "vocab-grammar-practice", render: (p, s, el, ctx) => renderGrammarPractice(grammarPracticeDeps(p), s, el, ctx) },
 ];
 
 export function registerBlocks(plugin: VocabTrackerPlugin): void {
