@@ -805,4 +805,9 @@ export const zhTW: Record<keyof typeof en, string> = {
   "grammar.practiceCard.noMistakes": "這個主題沒有待重做的錯題",
   "grammar.practiceCard.noTopic": "找不到這個主題，請檢查 topic: 的 id。",
   "grammar.topic.fillBuiltIn": "填入說明",
+  // 第十七波 Z — 學習概況（AI 學習者區塊）
+  "learner.summary.prefix": "目前學習概況：",
+  "learner.summary.vocab": "已學單字 {n}（熟練 {mature}）",
+  "learner.summary.grammar": "文法已掌握 {n} 個主題",
+  "learner.summary.poly": "常用字練過 {n} 個意思",
 };

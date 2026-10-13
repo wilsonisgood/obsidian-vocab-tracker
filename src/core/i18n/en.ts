@@ -814,4 +814,9 @@ export const en = {
   "grammar.practiceCard.noMistakes": "No mistakes to redo in this topic",
   "grammar.practiceCard.noTopic": "Topic not found; check the topic: id.",
   "grammar.topic.fillBuiltIn": "Fill in explanation",
+  // Wave 17 Z — learning summary (AI learner block)
+  "learner.summary.prefix": "Current progress: ",
+  "learner.summary.vocab": "{n} words learned ({mature} mature)",
+  "learner.summary.grammar": "{n} grammar topics mastered",
+  "learner.summary.poly": "{n} common-word senses practised",
 } as const;
