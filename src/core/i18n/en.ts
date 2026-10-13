@@ -883,4 +883,9 @@ export const en = {
   "practice.mix.unset": " (not set)",
   "practice.mix.none": "Pick at least one category to mix.",
   "practice.mix.nothing": "Nothing to ask about yet; set the filters on the other tabs first.",
+  // Wave 17 Z — learning summary (AI learner block)
+  "learner.summary.prefix": "Current progress: ",
+  "learner.summary.vocab": "{n} words learned ({mature} mature)",
+  "learner.summary.grammar": "{n} grammar topics mastered",
+  "learner.summary.poly": "{n} common-word senses practised",
 } as const;

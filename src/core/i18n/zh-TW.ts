@@ -874,4 +874,9 @@ export const zhTW: Record<keyof typeof en, string> = {
   "practice.mix.unset": "（未設定）",
   "practice.mix.none": "請至少選一個要混的類別。",
   "practice.mix.nothing": "選的類別都還沒有可出題的內容，先到各頁籤設定篩選。",
+  // 第十七波 Z — 學習概況（AI 學習者區塊）
+  "learner.summary.prefix": "目前學習概況：",
+  "learner.summary.vocab": "已學單字 {n}（熟練 {mature}）",
+  "learner.summary.grammar": "文法已掌握 {n} 個主題",
+  "learner.summary.poly": "常用字練過 {n} 個意思",
 };

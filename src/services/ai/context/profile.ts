@@ -1,4 +1,6 @@
 import type { AnswerLanguage, CefrLevel, LearnerGoal, LearnerProfile } from "../../../core/model/settings";
+import type { LearnerSnapshot } from "../../learner/LearnerModel";
+import { t } from "../../../core/i18n";
 import { renderTemplate } from "../../../core/text/template";
 
 // The learner-profile system block appended to every AI request. Kept as
@@ -33,15 +35,40 @@ const LANGUAGE_PHRASE: Record<AnswerLanguage, string> = {
   bilingual: "中英對照（以繁體中文為主，關鍵處附英文）",
 };
 
-export function renderProfile(p: LearnerProfile): string {
+// Optional: lets the block carry a one-line learning summary. Without it
+// the output is exactly what it was before (wave 17 Z).
+export interface ProfileDeps {
+  learnerModel?: { snapshot(): LearnerSnapshot };
+}
+
+// composeRequest() calls renderProfile(profile) with no deps, so main.ts
+// registers the model once here; an explicit deps argument still wins.
+let defaultDeps: ProfileDeps = {};
+export function setProfileDeps(deps: ProfileDeps): void {
+  defaultDeps = deps;
+}
+
+// One short line, only the parts that have something to say; "" when empty.
+export function renderLearnerSummary(s: LearnerSnapshot): string {
+  const parts: string[] = [];
+  const learned = s.vocab.learning + s.vocab.mature;
+  if (learned > 0) parts.push(t("learner.summary.vocab", { n: learned, mature: s.vocab.mature }));
+  if (s.grammar.mastered > 0) parts.push(t("learner.summary.grammar", { n: s.grammar.mastered }));
+  if (s.poly.practisedSenses > 0) parts.push(t("learner.summary.poly", { n: s.poly.practisedSenses }));
+  return parts.length ? t("learner.summary.prefix") + parts.join(" · ") : "";
+}
+
+export function renderProfile(p: LearnerProfile, deps: ProfileDeps = defaultDeps): string {
   const parts: string[] = [];
   // Leading space so the Latin level reads 「一個 A1（入門）程度」.
   if (p.level) parts.push(` ${LEVEL_LABEL[p.level]}程度`);
   parts.push(GOAL_PHRASE[p.goal] ?? GOAL_PHRASE.general);
-  return renderTemplate(PROFILE_TEMPLATE, {
+  const base = renderTemplate(PROFILE_TEMPLATE, {
     who: `一個${parts.join("、")}`,
     language: LANGUAGE_PHRASE[p.answerLanguage] ?? LANGUAGE_PHRASE["zh-TW"],
     maxChars: p.maxAnswerChars > 0 ? p.maxAnswerChars : undefined,
     extra: p.extra.trim(),
   });
+  const summary = deps.learnerModel ? renderLearnerSummary(deps.learnerModel.snapshot()) : "";
+  return summary ? `${base}\n${summary}` : base;
 }
