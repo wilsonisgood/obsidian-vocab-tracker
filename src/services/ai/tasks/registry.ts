@@ -1,6 +1,8 @@
 import { DNA_TASKS } from "./dna";
 import { EMOJI_TASKS } from "./emoji";
 import { FAMILY_TASKS } from "./family";
+import { GRAMMAR_TASKS as GRAMMAR_EXPLAIN_TASKS } from "./grammarExplain";
+import { GRAMMAR_TASKS as GRAMMAR_QUESTION_TASKS } from "./grammarQuestions";
 import { PARAGRAPH_TASKS } from "./paragraph";
 import { TRIVIA_TASKS } from "./trivia";
 import type { AiTask, Surface } from "./types";
@@ -49,5 +51,7 @@ export function defaultTaskRegistry(): TaskRegistry {
     ...VERB_TASKS,
     ...TRIVIA_TASKS,
     ...DNA_TASKS,
+    ...GRAMMAR_EXPLAIN_TASKS,
+    ...GRAMMAR_QUESTION_TASKS,
   ]);
 }

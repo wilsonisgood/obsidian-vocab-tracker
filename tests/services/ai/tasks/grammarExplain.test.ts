@@ -68,7 +68,8 @@ describe("grammar.explain", () => {
     }
   });
 
-  it("isn't in the default registry yet (registry.ts is wired in the integration)", () => {
-    expect(defaultTaskRegistry().get("grammar.explain")).toBeUndefined();
+  it("is in the default registry, with grammar.questions", () => {
+    expect(defaultTaskRegistry().get("grammar.explain")).toBe(grammarExplain);
+    expect(defaultTaskRegistry().forSurface("grammar").map((t) => t.id)).toEqual(["grammar.explain", "grammar.questions"]);
   });
 });

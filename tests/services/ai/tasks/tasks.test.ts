@@ -413,6 +413,9 @@ describe("task registry", () => {
       "dna.examples",
       "dna.compare",
       "dna.followup",
+      // 文法 (Wave 15): the grammar page/block call these directly.
+      "grammar.explain",
+      "grammar.questions",
     ]);
     for (const t of defaultTaskRegistry().all()) {
       expect(t.version).toBeGreaterThanOrEqual(1);
