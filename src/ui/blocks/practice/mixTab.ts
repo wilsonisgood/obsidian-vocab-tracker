@@ -1,4 +1,5 @@
 import type { Component } from "obsidian";
+import { topicById } from "../../../core/grammar/catalog";
 import { t } from "../../../core/i18n";
 import type { PolySense } from "../../../core/model/poly";
 import type { AiStatus } from "../../../services/ai/AiService";
@@ -7,7 +8,6 @@ import type { MountPlayer } from "./grammarTab";
 import {
   buildMixRequest,
   categoryOfTag,
-  categoryTag,
   emptyTally,
   mixFilterToValue,
   mixFocusIds,
@@ -21,13 +21,12 @@ import {
   type MixSources,
 } from "./mixTabModel";
 import {
-  toPlayerQuestion,
   type GrammarRef,
-  type MixCategory,
   type MountMistakes,
   type ScenarioPracticeApi,
   type VocabRef,
 } from "./mixTypes";
+import { toPlayerQuestion } from "./scenarioQuestionView";
 import { mountScenarioPane, type ScenarioPane } from "./scenarioPane";
 import type { PracticeTabDef } from "./types";
 
@@ -45,8 +44,6 @@ export interface MixTabDeps {
   vocabRefs(): VocabRef[];
   grammarRefs(): GrammarRef[];
   polySenses(): { tested: PolySense[]; reference: PolySense[] };
-  // Display name for a vocab focus id (entry id → word) for the tag.
-  wordOf?(entryId: string): string | undefined;
   aiStatus(): AiStatus;
 }
 
@@ -102,20 +99,13 @@ function start(
     },
   });
 
-  const tagOf = (q: Parameters<typeof toPlayerQuestion>[0]): string => {
-    const cat: MixCategory = q.focus.kind === "sense" ? "poly" : q.focus.kind === "word" ? "vocab" : "grammar";
-    if (cat === "poly") return categoryTag(cat, q.focus.id.split(".")[0] ?? "");
-    if (cat === "vocab") return categoryTag(cat, deps.wordOf?.(q.focus.id) ?? "");
-    return categoryTag(cat, "");
-  };
-
   pane = mountScenarioPane(el, {
     track: "mix",
     api: deps.api,
     mountPlayer: deps.mountPlayer,
     mountMistakes: deps.mountMistakes,
     owner,
-    toPlayer: (q) => toPlayerQuestion(q, tagOf),
+    toPlayer: (q) => toPlayerQuestion(q, { topicTitle: (id) => topicById(id)?.title ?? "" }),
     aiStatus: deps.aiStatus,
     idleText: () => (filter.include.length === 0 ? t("practice.mix.none") : t("practice.mix.nothing")),
     onAnswer: (a) => {

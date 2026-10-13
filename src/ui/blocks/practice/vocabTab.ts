@@ -8,7 +8,8 @@ import { t } from "../../../core/i18n";
 import { renderFilterBar } from "./filterBar";
 import { parseFilterValue, pruneValue, type FilterValue } from "./filterBarModel";
 import type { MountPlayer } from "./grammarTab";
-import { toPlayerQuestion, type MountMistakes, type ScenarioPracticeApi } from "./mixTypes";
+import type { MountMistakes, ScenarioPracticeApi } from "./mixTypes";
+import { toPlayerQuestion } from "./scenarioQuestionView";
 import { mountScenarioPane } from "./scenarioPane";
 import type { PracticeTabDef } from "./types";
 import {
@@ -94,20 +95,18 @@ export function vocabTab(host: FlashcardsHost, scenario?: VocabScenarioDeps): Pr
         owner.register(() => (alive = false));
         void s.ready().then(() => {
           if (!alive) return;
-          const names = new Map<string, string>();
           const pane = mountScenarioPane(box, {
             track: "vocab",
             api: s.api,
             mountPlayer: s.mountPlayer,
             mountMistakes: s.mountMistakes,
             owner,
-            toPlayer: (q) => toPlayerQuestion(q, (x) => names.get(x.focus.id) ?? ""),
+            toPlayer: (q) => toPlayerQuestion(q),
             aiStatus: s.aiStatus,
             idleText: () => t("practice.vocab.scenarioFew"),
           });
           const apply = () => {
             const r = refs();
-            for (const x of r) names.set(x.id, x.word);
             const req = vocabScenarioRequest(r);
             pane.setRequest(req, new Set(r.map((x) => x.id)));
           };

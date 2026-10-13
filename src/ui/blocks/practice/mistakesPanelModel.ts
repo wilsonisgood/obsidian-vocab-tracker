@@ -1,5 +1,6 @@
 import { t, type I18nKey } from "../../../core/i18n";
 import { ERROR_TAGS } from "../../../core/model/grammar";
+import { POLY_ERROR_TAGS, VOCAB_ERROR_TAGS } from "../../../services/ai/tasks/practiceScenario";
 import type { PracticeKind, PracticeQuestion } from "../../../core/model/practice";
 import { errorTagLabel } from "../../grammar/labels";
 import type { ErrorTag } from "../../../core/model/grammar";
@@ -26,14 +27,15 @@ const KIND_LABEL: Record<PracticeKind, I18nKey> = {
   "find-error": "practice.mistakes.kind.find-error",
 };
 
-const POLY_TAGS = ["wrong-sense", "collocation", "similar-sense", "literal", "preposition-sense", "other"] as const;
+// S's lists (practiceScenario task): the tags the scenario AI may put on a miss.
+const POLY_TAGS: readonly string[] = [...new Set<string>([...POLY_ERROR_TAGS, ...VOCAB_ERROR_TAGS])];
 
 // 中文標籤: grammar tags use the shared grammar names, the 常用字 tags a
 // small table here, a question without a tag its kind, anything else the
 // raw tag.
 export function mistakeLabel(key: string): string {
   if (key.startsWith("kind:")) return t(KIND_LABEL[key.slice(5) as PracticeKind] ?? "practice.mistakes.kind.other");
-  if ((POLY_TAGS as readonly string[]).includes(key)) return t(`practice.mistakes.tag.${key}` as I18nKey);
+  if (POLY_TAGS.includes(key)) return t(`practice.mistakes.tag.${key}` as I18nKey);
   if ((ERROR_TAGS as readonly string[]).includes(key)) return errorTagLabel(key as ErrorTag);
   return key;
 }
