@@ -200,3 +200,61 @@ describe("QuestionService bank", () => {
     expect(ai.requests[0].system.map((b) => b.text).join("\n")).toContain("〔已學過的文法〕be 動詞");
   });
 });
+
+describe("QuestionService.finishSession", () => {
+  const NOW = new Date("2026-10-13T08:00:00Z");
+  const run = (correct: number, total: number) => Array.from({ length: total }, (_, i) => ({ correct: i < correct }));
+
+  it("rates the round and writes progress.srs", () => {
+    const { grammar, service } = setup();
+    const srs = service.finishSession(TOPIC, run(6, 6), NOW)!;
+    expect(grammar.progress(TOPIC)).toMatchObject({ srs, lastPracticedAt: NOW.toISOString() });
+    expect(new Date(srs.due).getTime()).toBeGreaterThan(NOW.getTime() + 86_400_000);
+    expect(srs.reps).toBe(1);
+  });
+
+  it("only counts answers that stayed in the round (👎 ones are left out)", () => {
+    const { service } = setup();
+    // 6 right + 3 wrong that were all retired = a perfect, Easy-sized round
+    const withRetired = service.finishSession(TOPIC, [...run(6, 6), ...Array.from({ length: 3 }, () => ({ correct: false, retired: true }))], NOW)!;
+    const clean = setup().service.finishSession(TOPIC, run(6, 6), NOW)!;
+    expect(withRetired.due).toBe(clean.due);
+    // nothing but retired answers = nothing to schedule
+    const { grammar, service: s2 } = setup();
+    expect(s2.finishSession(TOPIC, [{ correct: true, retired: true }], NOW)).toBeUndefined();
+    expect(grammar.progress(TOPIC)).toBeUndefined();
+  });
+
+  it("does not schedule a mistakes round, an empty round or an unknown topic", () => {
+    const { grammar, service } = setup();
+    expect(service.finishSession(TOPIC, run(5, 5), NOW, "mistakes")).toBeUndefined();
+    expect(service.finishSession(TOPIC, [], NOW)).toBeUndefined();
+    expect(service.finishSession("nope", run(5, 5), NOW)).toBeUndefined();
+    expect(grammar.progress(TOPIC)).toBeUndefined();
+  });
+
+  it("a review round builds on the stored card and uses the retention setting", () => {
+    const first = setup().service.finishSession(TOPIC, run(5, 5), NOW)!;
+    const later = new Date(first.due);
+    const mk = (retention?: () => number) => {
+      const storage = new MemoryStorage();
+      const grammar = new GrammarStore({ storage });
+      grammar.upsertProgress({ id: TOPIC, srs: first });
+      return new QuestionService({ grammar, ai: new FakePreparingAi(() => result("{}")), retention });
+    };
+    const normal = mk().finishSession(TOPIC, run(5, 5), later, "review")!;
+    expect(normal.reps).toBe(2);
+    expect(new Date(normal.due).getTime() - later.getTime()).toBeGreaterThan(new Date(first.due).getTime() - NOW.getTime());
+    const strict = mk(() => 0.97).finishSession(TOPIC, run(5, 5), later, "review")!;
+    expect(new Date(strict.due).getTime()).toBeLessThan(new Date(normal.due).getTime());
+    // a nonsense retention falls back to the default
+    expect(mk(() => 5).finishSession(TOPIC, run(5, 5), later, "review")!.due).toBe(normal.due);
+  });
+
+  it("the topic reads as due once its card falls due", () => {
+    const { grammar, service } = setup();
+    const srs = service.finishSession(TOPIC, run(5, 5), NOW)!;
+    expect(new Date(srs.due).getTime()).toBeGreaterThan(NOW.getTime());
+    expect(grammar.progress(TOPIC)?.srs?.due).toBe(srs.due);
+  });
+});

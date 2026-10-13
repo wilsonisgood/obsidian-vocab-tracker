@@ -1,9 +1,10 @@
-import { MarkdownRenderChild, setIcon, type App, type MarkdownPostProcessorContext } from "obsidian";
+import { MarkdownRenderChild, setIcon, type App, type Component, type MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import { t, type I18nKey } from "../../core/i18n";
 import { topicById } from "../../core/grammar/catalog";
 import { canGradeLocally, grade } from "../../core/grammar/grading";
 import { buildSession } from "../../core/grammar/session";
+import type { SrsCard } from "../../core/model/srs";
 import type { GrammarQuestion } from "../../core/model/grammar";
 import type { AiService } from "../../services/ai/AiService";
 import type { GrammarStore } from "../../services/grammar/GrammarStore";
@@ -19,13 +20,19 @@ import {
   lastResult,
   needsMoreQuestions,
   nextQuestion,
+  nextReviewText,
   parseGrammarPracticeParams,
   progressLabel,
+  resolveMode,
+  resolveSize,
   retireCurrent,
+  scheduledResults,
+  schedulesTopic,
   startRound,
   stemPieces,
   submitAnswer,
   summarize,
+  type PracticeMode,
   type PracticeParams,
   type RoundState,
 } from "./grammarPracticeModel";
@@ -35,10 +42,13 @@ import { guardReadingClicks, isAbort, learnButton, learnErrorText, renderLearnAi
 //
 //   ```vocab-grammar-practice
 //   topic: present-perfect-vs-past
-//   mode: learn            # or mistakes (the 錯題本)
-//   tag: tense-choice      # mistakes: only this error tag
-//   size: 8
+//   mode: learn            # or mistakes (the 錯題本) / review; default review when the topic is due
+//   tag: tense-choice      # mistakes: only this error tag (no `topic:` = across all topics)
+//   size: 8                # review: 6
 //   ```
+//
+// A finished learn / review round rates the topic and schedules its next
+// review (FSRS); a mistakes round never does (R1).
 //
 // One question at a time out of the stored bank (choice / blank /
 // find-error, graded locally); answer → feedback → next → summary. Keys
@@ -61,6 +71,7 @@ export interface GrammarPracticeDeps {
   questions: QuestionService;
   // Only status() is used: the AI gate for 「生成新題目」.
   ai: Pick<AiService, "status">;
+  now?(): Date;
 }
 
 export function renderGrammarPractice(
@@ -70,6 +81,15 @@ export function renderGrammarPractice(
   ctx: MarkdownPostProcessorContext
 ): void {
   ctx.addChild(new GrammarPracticeBlock(el, deps, parseGrammarPracticeParams(source)));
+}
+
+// The practice, mounted into any element (the 錯題本 redo opens one under
+// its group). Returns the loaded component: the caller adds it as a child
+// of its own owner (so it unloads with it) and unloads/removes it to close.
+export function mountGrammarPractice(parent: HTMLElement, deps: GrammarPracticeDeps, params: PracticeParams): Component {
+  const block = new GrammarPracticeBlock(parent, deps, params);
+  block.load();
+  return block;
 }
 
 type GenSlot = "empty" | "summary" | "round";
@@ -86,6 +106,13 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
   private refocus = false;
   private genError: { text: string; cause: unknown } | null = null;
   private justAdded = 0;
+  // What this round runs as (the block's `mode:` or, by the topic's state,
+  // review / learn) and how long it is. Settled per round.
+  private mode: PracticeMode = "learn";
+  private size = 0;
+  // The topic's new card once the round was scheduled (summary shows its date).
+  private scheduled: SrsCard | null = null;
+  private finished = false;
   private ctrl: AbortController | null = null;
 
   constructor(
@@ -142,15 +169,44 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     return this.deps.grammar.attempts(this.params.topic);
   }
 
+  private now(): Date {
+    return this.deps.now?.() ?? new Date();
+  }
+
+  private topicIsDue(): boolean {
+    const due = this.params.topic ? this.deps.grammar.progress(this.params.topic)?.srs?.due : undefined;
+    const at = due ? new Date(due).getTime() : NaN;
+    return Number.isFinite(at) && at <= this.now().getTime();
+  }
+
   private newRound(): void {
+    this.mode = resolveMode(this.params, this.topicIsDue());
+    this.size = resolveSize(this.params, this.mode);
     const questions = buildSession(this.pool(), this.attempts(), {
-      size: this.params.size,
-      mode: this.params.mode,
+      size: this.size,
+      mode: this.mode,
       errorTag: this.params.tag,
     });
     this.round = startRound(questions);
     this.justAdded = 0;
+    this.scheduled = null;
+    this.finished = false;
     this.render();
+  }
+
+  // The round just ended: this is one review of the topic (R1). Once per
+  // round — render() runs again for every redraw of the summary.
+  private finishRound(): void {
+    if (this.finished) return;
+    this.finished = true;
+    const topicId = this.params.topic;
+    if (!topicId || !schedulesTopic(this.mode, this.round)) return;
+    try {
+      this.scheduled =
+        this.deps.questions.finishSession(topicId, scheduledResults(this.round), this.now(), this.mode) ?? null;
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't schedule grammar review", e);
+    }
   }
 
   // Sync or a finished generation put questions in the bank. A round in
@@ -179,6 +235,8 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     }
 
     const q = currentQuestion(this.round);
+    if (!q && this.round.questions.length > 0) this.finishRound();
+    if (this.mode === "review") body.createDiv({ cls: "vt-gr-review-tag", text: l("reviewTag") });
     if (!q && this.round.questions.length === 0) this.renderEmpty(body);
     else if (!q) this.renderSummary(body);
     else this.renderQuestion(body, q);
@@ -191,7 +249,7 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
   }
 
   private renderEmpty(parent: HTMLElement): void {
-    if (this.params.mode === "mistakes") {
+    if (this.mode === "mistakes") {
       parent.appendChild(emptyState({ icon: "check-circle", title: l("noMistakes"), body: l("noMistakesBody") }));
       return;
     }
@@ -355,10 +413,13 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
         });
       }
     }
-    if (this.params.mode === "mistakes") box.createDiv({ cls: "vt-gr-summary-note", text: l("mistakesHint") });
+    if (this.mode === "mistakes") box.createDiv({ cls: "vt-gr-summary-note", text: l("mistakesHint") });
     else if (sum.wrong > 0) box.createDiv({ cls: "vt-gr-summary-note", text: l("wrongAdded", { n: sum.wrong }) });
     else if (sum.answered > 0) box.createDiv({ cls: "vt-gr-summary-note", text: l("allRight") });
     if (sum.retired > 0) box.createDiv({ cls: "vt-gr-summary-note", text: l("retired", { n: sum.retired }) });
+    if (this.scheduled) {
+      box.createDiv({ cls: "vt-gr-summary-note vt-gr-next-review", text: nextReviewText(this.scheduled.due, this.now()) });
+    }
     learnButton(box.createDiv({ cls: "vt-gr-actions" }), {
       label: l("again"),
       icon: "rotate-ccw",
@@ -376,7 +437,7 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     const host = this.gen;
     host.empty();
     const topicId = this.params.topic;
-    if (!topicId || this.params.mode !== "learn" || !this.topic()) return;
+    if (!topicId || this.mode === "mistakes" || !this.topic()) return;
     const slot: GenSlot =
       this.round.questions.length === 0 ? "empty" : currentQuestion(this.round) ? "round" : "summary";
 
@@ -394,7 +455,7 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     }
 
     const available = this.pool().filter(canGradeLocally).length;
-    if (!needsMoreQuestions(available, this.params.size)) return;
+    if (!needsMoreQuestions(available, this.size)) return;
     if (this.deps.ai.status() !== "ready") {
       // Mid-round the gate would only be noise; the empty and summary
       // screens are where the learner is looking for more.

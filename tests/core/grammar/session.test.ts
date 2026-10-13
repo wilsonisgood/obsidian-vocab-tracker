@@ -111,3 +111,50 @@ describe("buildSession — mistakes", () => {
     expect(buildSession([q("b")], [], { mode: "mistakes" })).toEqual([]);
   });
 });
+
+describe("buildSession — cross-topic mistakes", () => {
+  it("takes a pool that spans topics and filters by tag only", () => {
+    n = 0;
+    const pool = [
+      q("a1", "o1", { topicId: "t1", errorTag: "article" }),
+      q("b1", "o2", { topicId: "t2", errorTag: "article" }),
+      q("c1", "o3", { topicId: "t2", errorTag: "voice" }),
+    ];
+    const attempts = [
+      att("a1", false, "2026-10-10T00:00:00Z", { topicId: "t1" }),
+      att("b1", false, "2026-10-11T00:00:00Z", { topicId: "t2" }),
+      att("c1", false, "2026-10-12T00:00:00Z", { topicId: "t2" }),
+    ];
+    expect(ids(buildSession(pool, attempts, { mode: "mistakes", errorTag: "article" }))).toEqual(["b1", "a1"]);
+  });
+});
+
+describe("buildSession — review", () => {
+  it("puts last-time misses first, then the stalest answered, then never-asked", () => {
+    n = 0;
+    const pool = [q("fresh", "a"), q("old-ok", "b"), q("recent-ok", "c"), q("missed", "d"), q("older-miss", "e")];
+    const attempts = [
+      att("old-ok", true, "2026-09-01T00:00:00Z"),
+      att("recent-ok", true, "2026-10-10T00:00:00Z"),
+      att("missed", false, "2026-10-05T00:00:00Z"),
+      att("older-miss", false, "2026-09-20T00:00:00Z"),
+    ];
+    expect(ids(buildSession(pool, attempts, { mode: "review" }))).toEqual(["older-miss", "missed", "old-ok", "recent-ok", "fresh"]);
+  });
+
+  it("uses the latest attempt, defaults to 6 and honours size", () => {
+    n = 0;
+    const pool = Array.from({ length: 10 }, (_, i) => q(`q${i}`, `o${i % 5}`));
+    expect(buildSession(pool, [], { mode: "review" })).toHaveLength(6);
+    expect(buildSession(pool, [], { mode: "review", size: 3 })).toHaveLength(3);
+    const attempts = [att("q0", false, "2026-10-01T00:00:00Z"), att("q0", true, "2026-10-02T00:00:00Z"), att("q1", true, "2026-10-01T00:00:00Z"), att("q1", false, "2026-10-03T00:00:00Z")];
+    // q1's latest is a miss (first); q0's latest is a pass, answered after the miss
+    expect(ids(buildSession(pool, attempts, { mode: "review", size: 3 }))).toEqual(["q1", "q0", "q2"]);
+  });
+
+  it("skips retired questions and is empty for an empty bank", () => {
+    n = 0;
+    expect(ids(buildSession([q("a", "x", { retiredAt: "2026-10-01T00:00:00Z" }), q("b", "x")], [], { mode: "review" }))).toEqual(["b"]);
+    expect(buildSession([], [], { mode: "review" })).toEqual([]);
+  });
+});

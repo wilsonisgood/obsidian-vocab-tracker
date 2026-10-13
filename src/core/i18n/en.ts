@@ -739,6 +739,7 @@ export const en = {
   "grammar.map.mistakes.empty": "No mistakes right now.",
   "grammar.map.mistakes.count": "{n} questions",
   "grammar.map.mistakes.redo": "Redo this group",
+  "grammar.map.mistakes.collapse": "Collapse",
   "grammar.map.openFailed": "Couldn't open the topic page: {msg}",
   "grammar.map.status.new": "Not started",
   "grammar.map.status.learning": "Learning",
@@ -792,4 +793,6 @@ export const en = {
   "grammar.practice.again": "Another round",
   "grammar.practice.pickOne": "Click the error",
   "grammar.practice.objective": "Goal",
+  "grammar.practice.nextReview": "Next review: {date}",
+  "grammar.practice.reviewTag": "🔁 Due for review",
 } as const;

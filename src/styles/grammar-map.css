@@ -225,11 +225,20 @@
   gap: 10px;
   min-height: var(--vt-tap);
   padding: 4px 12px;
+}
+
+/* One 錯題本 group: its row plus, when 「重做這組」 is open, the practice. */
+.vt-gr-mistake-group {
   border-bottom: 1px solid var(--vt-border);
 }
 
-.vt-gr-mistake:last-child {
+.vt-gr-mistake-group:last-child {
   border-bottom: 0;
+}
+
+.vt-gr-redo {
+  padding: 8px 12px 14px;
+  border-top: 1px dashed var(--vt-border);
 }
 
 .vt-gr-mistake-text {

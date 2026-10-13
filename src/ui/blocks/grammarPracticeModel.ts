@@ -1,5 +1,8 @@
 import { ERROR_TAGS, type ErrorTag, type GrammarQuestion } from "../../core/model/grammar";
-import { DEFAULT_SESSION_SIZE } from "../../core/grammar/session";
+import { sessionRating } from "../../core/grammar/schedule";
+import { defaultSessionSize, type SessionMode } from "../../core/grammar/session";
+import { dueLabel } from "../../core/text/dueLabel";
+import { t } from "../../core/i18n";
 import { parseBlockParams } from "./params";
 
 // View-model for the vocab-grammar-practice block (wave 15 P, 1013 §3.3):
@@ -9,31 +12,37 @@ import { parseBlockParams } from "./params";
 
 // ── Parameters ────────────────────────────────────────────────────
 
-export type PracticeMode = "learn" | "mistakes";
+export type PracticeMode = SessionMode;
 
+// mode / size are left out when the block doesn't write them, so the page
+// can tell "not said" (a due topic defaults to review, a round's size
+// follows its mode) from an explicit choice, which always wins.
 export interface PracticeParams {
   topic?: string;
-  mode: PracticeMode;
+  mode?: PracticeMode;
   tag?: ErrorTag;
-  size: number;
+  size?: number;
 }
 
 export const MAX_SIZE = 20;
 
 const MISTAKE_MODES = new Set(["mistakes", "mistake", "錯題", "錯題本"]);
+const REVIEW_MODES = new Set(["review", "複習"]);
+const LEARN_MODES = new Set(["learn", "學習"]);
 
 //   ```vocab-grammar-practice
 //   topic: present-perfect-vs-past
-//   mode: learn        # or mistakes
+//   mode: learn        # or mistakes, review (default: review when the topic is due, else learn)
 //   tag: tense-choice  # mistakes only
-//   size: 8
+//   size: 8            # default 8, review 6
 //   ```
 export function parseGrammarPracticeParams(source: string): PracticeParams {
   const p = parseBlockParams(source);
-  const out: PracticeParams = {
-    mode: MISTAKE_MODES.has((p.mode ?? "").trim().toLowerCase()) ? "mistakes" : "learn",
-    size: DEFAULT_SESSION_SIZE,
-  };
+  const out: PracticeParams = {};
+  const mode = (p.mode ?? "").trim().toLowerCase();
+  if (MISTAKE_MODES.has(mode)) out.mode = "mistakes";
+  else if (REVIEW_MODES.has(mode)) out.mode = "review";
+  else if (LEARN_MODES.has(mode)) out.mode = "learn";
   const topic = (p.topic ?? "").trim().replace(/^["']|["']$/g, "").trim();
   if (topic) out.topic = topic;
   const tag = (p.tag ?? "").trim().toLowerCase();
@@ -41,6 +50,17 @@ export function parseGrammarPracticeParams(source: string): PracticeParams {
   const size = Number.parseInt(p.size ?? "", 10);
   if (Number.isFinite(size) && size > 0) out.size = Math.min(size, MAX_SIZE);
   return out;
+}
+
+// The mode a round runs in: the block's own `mode:` if it has one,
+// otherwise review when its topic is due, else learn.
+export function resolveMode(params: PracticeParams, topicDue: boolean): PracticeMode {
+  if (params.mode) return params.mode;
+  return params.topic && topicDue ? "review" : "learn";
+}
+
+export function resolveSize(params: PracticeParams, mode: PracticeMode): number {
+  return params.size ?? defaultSessionSize(mode);
 }
 
 // ── The round ─────────────────────────────────────────────────────
@@ -143,6 +163,25 @@ export function summarize(s: RoundState): RoundSummary {
     retired: s.results.length - counted.length,
     byObjective: [...tally.values()],
   };
+}
+
+// What the round tells the topic's FSRS card: the answers that stayed in
+// the round (👎 ones left out). Empty = nothing to schedule.
+export function scheduledResults(s: RoundState): { correct: boolean }[] {
+  return s.results.filter((r) => !r.retired).map((r) => ({ correct: r.correct }));
+}
+
+// Whether the finished round should be scheduled at all: only a round that
+// answered something, and never a 錯題本 redo.
+export function schedulesTopic(mode: PracticeMode, s: RoundState): boolean {
+  return mode !== "mistakes" && sessionRating(scheduledResults(s)) !== undefined;
+}
+
+// 「下次複習：今天／10/05」 — the same day label as a word row.
+export function nextReviewText(due: string | Date, now: Date): string {
+  const d = typeof due === "string" ? new Date(due) : due;
+  const label = dueLabel(d, now);
+  return t("grammar.practice.nextReview", { date: label.kind === "today" ? t("row.due.today") : label.text });
 }
 
 // 「✦ 生成新題目」: when the bank can't fill a whole round.

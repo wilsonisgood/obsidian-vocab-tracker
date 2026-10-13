@@ -1,13 +1,5 @@
-import {
-  createEmptyCard,
-  fsrs,
-  generatorParameters,
-  Rating as FsrsRating,
-  type Card,
-  type FSRS,
-  type Grade,
-  type State,
-} from "ts-fsrs";
+import type { Card, FSRS } from "ts-fsrs";
+import { createEmptyCard, fromFsrsCard, GRADE, makeFsrs, toFsrsCard } from "../../core/srs/fsrsCard";
 import type { VocabEntry } from "../../core/model/entry";
 import {
   RATINGS,
@@ -62,44 +54,6 @@ export interface SrsServiceDeps {
   // Injected so tests can pin "now"; production passes nothing.
   clock?: () => Date;
   newId?: () => string;
-}
-
-const GRADE: Record<Rating, Grade> = {
-  1: FsrsRating.Again,
-  2: FsrsRating.Hard,
-  3: FsrsRating.Good,
-  4: FsrsRating.Easy,
-};
-
-function toFsrsCard(card: SrsCard): Card {
-  return {
-    due: new Date(card.due),
-    stability: card.stability,
-    difficulty: card.difficulty,
-    elapsed_days: card.elapsedDays,
-    scheduled_days: card.scheduledDays,
-    learning_steps: card.learningSteps ?? 0,
-    reps: card.reps,
-    lapses: card.lapses,
-    state: card.state as number as State,
-    last_review: card.lastReview ? new Date(card.lastReview) : undefined,
-  };
-}
-
-function fromFsrsCard(card: Card): SrsCard {
-  const out: SrsCard = {
-    due: card.due.toISOString(),
-    stability: card.stability,
-    difficulty: card.difficulty,
-    elapsedDays: card.elapsed_days,
-    scheduledDays: card.scheduled_days,
-    learningSteps: card.learning_steps,
-    reps: card.reps,
-    lapses: card.lapses,
-    state: card.state as number as SrsState,
-  };
-  if (card.last_review) out.lastReview = card.last_review.toISOString();
-  return out;
 }
 
 function defaultId(now: Date): string {
@@ -284,12 +238,8 @@ export class SrsService {
   private fsrs(): FSRS {
     const { retention } = this.settings();
     if (!this.scheduler || this.scheduler.retention !== retention) {
-      // enable_fuzz stays off: fuzz randomizes the interval per call, which
-      // would make preview() and rate() disagree.
-      this.scheduler = {
-        retention,
-        f: fsrs(generatorParameters({ request_retention: retention, enable_fuzz: false })),
-      };
+      // Fuzz stays off (see makeFsrs), so preview() and rate() agree.
+      this.scheduler = { retention, f: makeFsrs(retention) };
     }
     return this.scheduler.f;
   }

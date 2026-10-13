@@ -1,11 +1,11 @@
-import { MarkdownRenderChild, Notice, type MarkdownPostProcessorContext } from "obsidian";
+import { MarkdownRenderChild, Notice, type Component, type MarkdownPostProcessorContext } from "obsidian";
 import { t } from "../../core/i18n";
 import { GRAMMAR_TOPICS, topicById } from "../../core/grammar/catalog";
 import { dueTopics, recommendNext, topicStatuses } from "../../core/grammar/progress";
-import type { GrammarStage } from "../../core/model/grammar";
+import type { ErrorTag, GrammarStage } from "../../core/model/grammar";
 import type { CefrLevel } from "../../core/model/settings";
 import type { GrammarStore } from "../../services/grammar/GrammarStore";
-import { stageLabel } from "../grammar/labels";
+import { errorTagLabel, stageLabel } from "../grammar/labels";
 import { segmented } from "../kit/segmented";
 import {
   defaultStage,
@@ -17,6 +17,7 @@ import {
   STAGES,
   type MapRow,
 } from "./grammarMapModel";
+import { mountGrammarPractice, type GrammarPracticeDeps } from "./grammarPractice";
 import { guardReadingClicks, learnButton } from "./learnUi";
 
 // ── vocab-grammar code block (第十五波 M, 1013 §3.1) ───────────────
@@ -40,6 +41,9 @@ export interface GrammarMapDeps {
   level(): CefrLevel | "";
   // GrammarPages.open: the topic's page, created on first use.
   openTopic(topicId: string): void | Promise<void>;
+  // What the in-place 錯題本 redo needs (R1). Without it 「重做這組」 falls
+  // back to opening the group's biggest topic page.
+  practice?: GrammarPracticeDeps;
   now?(): Date;
 }
 
@@ -57,6 +61,12 @@ class GrammarMapBlock extends MarkdownRenderChild {
   private disposed = false;
   private stage: GrammarStage;
   private mistakesOpen = false;
+  // The error tag whose redo is open under its group (one at a time) and
+  // the mounted practice. The host element is kept across re-renders so a
+  // redraw never throws away the round being played.
+  private redoTag: ErrorTag | null = null;
+  private redo: Component | null = null;
+  private redoHost: HTMLElement | null = null;
 
   constructor(
     containerEl: HTMLElement,
@@ -75,12 +85,20 @@ class GrammarMapBlock extends MarkdownRenderChild {
     this.root.createDiv({ cls: "vt-learn-loading", text: t("grammar.map.loading") });
 
     const { events } = this.deps.grammar;
-    const refresh = () => this.render();
+    // While a redo is open its own answers fire these events; redrawing the
+    // map under it would jump the page, so it waits (closing the redo
+    // redraws).
+    const refresh = () => {
+      if (!this.redoTag) this.render();
+    };
     this.register(events.on("attempt:add", refresh));
     this.register(events.on("progress:upsert", refresh));
     this.register(events.on("question:upsert", refresh));
     this.register(events.on("grammar:reloaded", refresh));
-    this.register(() => (this.disposed = true));
+    this.register(() => {
+      this.disposed = true;
+      this.closeRedo();
+    });
 
     void this.deps.grammar.ensureLoaded().then(() => {
       this.ready = true;
@@ -102,6 +120,7 @@ class GrammarMapBlock extends MarkdownRenderChild {
     const statuses = topicStatuses(GRAMMAR_TOPICS, attempts, (id) => grammar.progress(id), now);
     const statusOf = (id: string) => statuses.get(id) ?? "new";
 
+    this.redoHost?.detach();
     this.root.empty();
 
     const head = this.root.createDiv({ cls: "vt-gr-head" });
@@ -159,6 +178,12 @@ class GrammarMapBlock extends MarkdownRenderChild {
   private renderMistakes(): void {
     const { grammar } = this.deps;
     const entries = mistakeEntries(grammar.questions(), grammar.attempts());
+    // The group being redone stays on screen even after its last mistake
+    // was fixed, so the round (and its summary) isn't pulled out from under
+    // the learner.
+    if (this.redoTag && !entries.some((e) => e.errorTag === this.redoTag)) {
+      entries.push({ errorTag: this.redoTag, label: errorTagLabel(this.redoTag), count: 0, topicId: "" });
+    }
     const total = mistakeTotal(entries);
     const box = this.root.createDiv({ cls: "vt-gr-mistakes" });
     const toggle = box.createEl("button", { cls: "vt-gr-mistakes-toggle", attr: { type: "button" } });
@@ -168,6 +193,7 @@ class GrammarMapBlock extends MarkdownRenderChild {
     chevron.toggleClass("is-open", this.mistakesOpen);
     toggle.addEventListener("click", () => {
       this.mistakesOpen = !this.mistakesOpen;
+      if (!this.mistakesOpen) this.closeRedo();
       this.render();
     });
     if (!this.mistakesOpen) return;
@@ -175,15 +201,45 @@ class GrammarMapBlock extends MarkdownRenderChild {
     const body = box.createDiv({ cls: "vt-gr-mistakes-body" });
     if (!entries.length) body.createDiv({ cls: "vt-gr-empty", text: t("grammar.map.mistakes.empty") });
     for (const e of entries) {
-      const row = body.createDiv({ cls: "vt-gr-mistake" });
+      const group = body.createDiv({ cls: "vt-gr-mistake-group" });
+      const row = group.createDiv({ cls: "vt-gr-mistake" });
       const text = row.createDiv({ cls: "vt-gr-mistake-text" });
       text.createSpan({ cls: "vt-gr-mistake-tag", text: e.label });
       text.createSpan({ cls: "vt-gr-mistake-count", text: t("grammar.map.mistakes.count", { n: e.count }) });
       const topic = topicById(e.topicId);
       if (topic) text.createSpan({ cls: "vt-gr-mistake-topic", text: topic.title });
-      // First version: the group's biggest topic page; P's practice block
-      // takes over with `mode: mistakes`.
-      learnButton(row, { label: t("grammar.map.mistakes.redo"), icon: "rotate-ccw", ghost: true, onClick: () => this.open(e.topicId) });
+      const isOpen = this.redoTag === e.errorTag;
+      row.toggleClass("is-open", isOpen);
+      // 重做這組 plays the group right here (any topic, mode: mistakes, one
+      // group at a time); again to fold it. No practice deps: the page.
+      learnButton(row, {
+        label: t(isOpen ? "grammar.map.mistakes.collapse" : "grammar.map.mistakes.redo"),
+        icon: isOpen ? "chevron-up" : "rotate-ccw",
+        ghost: true,
+        onClick: () => (this.deps.practice ? this.toggleRedo(e.errorTag) : this.open(e.topicId)),
+      });
+      if (isOpen && this.redoHost) group.appendChild(this.redoHost);
     }
   }
+
+  private toggleRedo(tag: ErrorTag): void {
+    const wasOpen = this.redoTag === tag;
+    this.closeRedo();
+    if (!wasOpen && this.deps.practice) {
+      this.redoTag = tag;
+      this.redoHost = createDiv({ cls: "vt-gr-redo" });
+      this.redo = mountGrammarPractice(this.redoHost, this.deps.practice, { mode: "mistakes", tag });
+      this.addChild(this.redo);
+    }
+    this.render();
+  }
+
+  private closeRedo(): void {
+    if (this.redo) this.removeChild(this.redo);
+    this.redoHost?.detach();
+    this.redo = null;
+    this.redoHost = null;
+    this.redoTag = null;
+  }
 }
+
