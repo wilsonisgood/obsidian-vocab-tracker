@@ -67,13 +67,14 @@ function grammarPracticeDeps(plugin: VocabTrackerPlugin): GrammarPracticeDeps {
   };
 }
 
-// 練習中心 (Wave 16 E). TEMPORARY: the filter values live in memory until
-// integration wires FilterStore to LearnerStore.filter / setFilter (F).
-const memoryFilters = new Map<string, unknown>();
-const filters: FilterStore = {
-  get: (track) => memoryFilters.get(track),
-  set: (track, value) => void memoryFilters.set(track, value),
-};
+// 練習中心 (Wave 16 E). Filter values are learning data, so they live in
+// the learner shard and sync (1013-card-tabs C5).
+function practiceFilters(plugin: VocabTrackerPlugin): FilterStore {
+  return {
+    get: (track) => plugin.learner.filter(track),
+    set: (track, value) => plugin.learner.setFilter(track, value),
+  };
+}
 
 function practiceHost(plugin: VocabTrackerPlugin): PracticeHost {
   // The other tabs join through tabs() at integration.
@@ -84,7 +85,7 @@ function practiceHost(plugin: VocabTrackerPlugin): PracticeHost {
     jumpToSource: (e) => plugin.jumpToSource(e),
     openVocabFile: () => plugin.openVocabFile(),
     tabs: () => [],
-    filters,
+    filters: practiceFilters(plugin),
   };
 }
 

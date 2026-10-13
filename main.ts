@@ -43,6 +43,7 @@ import { ObsidianNotes } from "./src/platform/ObsidianNotes";
 import { ThreadService } from "./src/services/threads/ThreadService";
 import { LearnStore } from "./src/services/learn/LearnStore";
 import { GrammarStore } from "./src/services/grammar/GrammarStore";
+import { LearnerStore } from "./src/services/learner/LearnerStore";
 import { GrammarPages } from "./src/services/grammar/GrammarPages";
 import { QuestionService } from "./src/services/grammar/QuestionService";
 import { knownWordList } from "./src/services/ai/context/triviaContext";
@@ -163,6 +164,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   learn!: LearnStore;
   // 文法學習 (Wave 15): progress/questions store, topic pages, AI question maker.
   grammar!: GrammarStore;
+  // Wave 16 F: learning events, 待答池, 錯題區 (規劃書 12 §1).
+  learner!: LearnerStore;
   grammarPages!: GrammarPages;
   grammarQuestions!: QuestionService;
   families!: FamilyService;
@@ -244,10 +247,10 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       storage: this.storage,
       host: {
         flush: async () => {
-          await Promise.all([this.store.flush(), this.srs.flush(), this.threads.flush(), this.learn.flush(), this.grammar.flush()]);
+          await Promise.all([this.store.flush(), this.srs.flush(), this.threads.flush(), this.learn.flush(), this.grammar.flush(), this.learner.flush()]);
         },
         reload: async () => {
-          await Promise.all([this.threads.reload(), this.learn.reload(), this.grammar.reload(), this.srs.reloadLogs(), this.noteImports.load()]);
+          await Promise.all([this.threads.reload(), this.learn.reload(), this.grammar.reload(), this.learner.reload(), this.srs.reloadLogs(), this.noteImports.load()]);
         },
         applyData: (data) => {
           this.vocabData = data;
@@ -291,6 +294,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // the first time one of them is used.
     this.learn = new LearnStore({ storage: this.storage });
     this.grammar = new GrammarStore({ storage: this.storage });
+    this.learner = new LearnerStore({ storage: this.storage });
     this.grammarQuestions = new QuestionService({
       grammar: this.grammar,
       ai,
@@ -368,6 +372,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       void this.threads.reload();
       void this.learn.reload();
       void this.grammar.reload();
+      void this.learner.reload();
       void this.srs.reloadLogs();
     });
 
@@ -616,6 +621,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       void this.ensureVocabFile();
       // Entry files never created before (one the user deleted stays deleted).
       void this.files.ensureAll();
+      // Wave 16 F: the learner shard (練習中心 filters read it) and the
+      // one-time move of grammar answers into it.
+      void this.loadLearner();
       this.registerWordlistEvents();
       void this.wordlists.reload();
       // Words whose dictionary fetch never finished (closed mid-queue,
@@ -651,10 +659,19 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // so far, before ai.dispose() aborts the requests.
     this.threads?.dispose();
     this.ai?.dispose();
-    await Promise.all([this.store.flush(), this.srs.flush(), this.threads?.flush(), this.learn?.flush(), this.grammar?.flush()]);
+    await Promise.all([this.store.flush(), this.srs.flush(), this.threads?.flush(), this.learn?.flush(), this.grammar?.flush(), this.learner?.flush()]);
     // Last: the steps above can still announce changes (stopped answers).
     await this.exporter?.flush();
     this.exporter?.dispose();
+  }
+
+  private async loadLearner(): Promise<void> {
+    try {
+      await Promise.all([this.grammar.ensureLoaded(), this.learner.ensureLoaded()]);
+      this.learner.migrateFromGrammar(this.grammar.questions(), this.grammar.attempts());
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't load learner data", e);
+    }
   }
 
   // Interface language: the user's setting, or Obsidian's language on "auto".
@@ -673,6 +690,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     void this.threads.reload();
     void this.learn.reload();
     void this.grammar.reload();
+    void this.learner.reload();
     void this.noteImports.load();
 
     const disk = await this.storage.readShard<VocabData>("data");

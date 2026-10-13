@@ -4,8 +4,8 @@ import type { FlashcardsHost } from "../flashcards";
 // 練習中心 (第十六波 E, 規劃書 12). Shared contracts of the hub shell; the
 // tabs other tasks add (文法, 常用字, 混合) register through PracticeHost.tabs().
 
-// Same as core/model/learner's Track (F); switched to that import when F merges.
-export type Track = "grammar" | "poly" | "vocab" | "mix";
+import type { Track } from "../../../core/model/learner";
+export type { Track };
 
 // A track's filter value, synced across devices (LearnerStore.filter /
 // setFilter once F is merged). Never localStorage.
