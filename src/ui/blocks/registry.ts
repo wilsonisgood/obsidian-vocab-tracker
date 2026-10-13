@@ -38,8 +38,8 @@ function grammarMapDeps(plugin: VocabTrackerPlugin): GrammarMapDeps {
     grammar: plugin.grammar,
     level: () => plugin.store.settings.learner?.level ?? "",
     openTopic: (id) => plugin.grammarPages.open(id),
-    // R1: 錯題本「重做這組」 opens the practice in place.
-    practice: grammarPracticeDeps(plugin),
+    // 第十六波 H: api / mountPlayer / setGrammarFilter / openPractice join at
+    // integration (see .claude/tmp/w16-h.md).
   };
 }
 
@@ -55,16 +55,9 @@ function grammarTopicDeps(plugin: VocabTrackerPlugin): GrammarTopicDeps {
   };
 }
 
-function grammarPracticeDeps(plugin: VocabTrackerPlugin): GrammarPracticeDeps {
-  return {
-    app: plugin.app,
-    manifestId: plugin.manifest.id,
-    grammar: plugin.grammar,
-    questions: plugin.grammarQuestions,
-    ai: plugin.ai,
-    // R2: 「出自〈筆記名〉」 opens the note the sentence came from.
-    openPath: (p) => void plugin.openNote(p),
-  };
+// The card needs api / ready / setGrammarFilter / openPractice at integration.
+function grammarPracticeDeps(_plugin: VocabTrackerPlugin): GrammarPracticeDeps {
+  return {};
 }
 
 // 練習中心 (Wave 16 E). Filter values are learning data, so they live in

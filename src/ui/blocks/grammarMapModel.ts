@@ -1,16 +1,13 @@
 import { getLocale, t, type I18nKey } from "../../core/i18n";
-import { isMastered, mistakeGroups, objectiveStats, startDifficulty, type MistakeGroup } from "../../core/grammar/progress";
+import { isMastered, objectiveStats, startDifficulty } from "../../core/grammar/progress";
 import { topicById } from "../../core/grammar/catalog";
 import type {
-  ErrorTag,
   GrammarAttempt,
-  GrammarQuestion,
   GrammarStage,
   GrammarTopic,
   GrammarTopicStatus,
 } from "../../core/model/grammar";
 import type { CefrLevel } from "../../core/model/settings";
-import { errorTagLabel } from "../grammar/labels";
 import { parseBlockParams } from "./params";
 
 // View-models for the vocab-grammar map and topic blocks (第十五波 M, 1013
@@ -97,38 +94,4 @@ export function mapRows(
 
 export function lockedTooltip(lockedBy: readonly GrammarTopic[]): string {
   return t("grammar.map.locked", { list: lockedBy.map((t) => t.title).join(getLocale() === "zh-TW" ? "、" : ", ") });
-}
-
-// ── Mistakes ─────────────────────────────────────────────────────
-
-export interface MistakeEntry {
-  errorTag: ErrorTag;
-  label: string;
-  count: number;
-  // The topic with most of the group's questions: where 「重做這組」 goes
-  // (first version; P's practice block takes `mode: mistakes` later).
-  topicId: string;
-}
-
-// Most questions in the group win; a tie goes to the topic of the newest
-// mistake (groups list newest first).
-export function topicOfGroup(group: MistakeGroup): string {
-  const counts = new Map<string, number>();
-  for (const { question } of group.items) counts.set(question.topicId, (counts.get(question.topicId) ?? 0) + 1);
-  let best = group.items[0]?.question.topicId ?? "";
-  for (const [id, n] of counts) if (n > (counts.get(best) ?? 0)) best = id;
-  return best;
-}
-
-export function mistakeEntries(questions: readonly GrammarQuestion[], attempts: readonly GrammarAttempt[]): MistakeEntry[] {
-  return mistakeGroups(questions, attempts).map((g) => ({
-    errorTag: g.errorTag,
-    label: errorTagLabel(g.errorTag),
-    count: g.items.length,
-    topicId: topicOfGroup(g),
-  }));
-}
-
-export function mistakeTotal(entries: readonly MistakeEntry[]): number {
-  return entries.reduce((n, e) => n + e.count, 0);
 }
