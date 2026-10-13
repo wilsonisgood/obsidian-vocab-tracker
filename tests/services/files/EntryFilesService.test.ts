@@ -187,6 +187,7 @@ describe("EntryFilesService.ensureAll", () => {
       "vocab-list/DNA.md",
       "vocab-list/Grammar.md",
       "vocab-list/Practice.md",
+      "vocab-list/Polysemy.md",
     ]);
     expect([...vault.files.keys()].sort()).toEqual([...created].sort());
   });

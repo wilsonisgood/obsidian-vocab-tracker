@@ -30,6 +30,13 @@ vocab-tracker-id: grammar
 \`\`\`vocab-grammar
 \`\`\`
 ",
+  "polysemy": "---
+vocab-tracker: entry
+vocab-tracker-id: polysemy
+---
+\`\`\`vocab-polysemy
+\`\`\`
+",
   "practice": "---
 vocab-tracker: entry
 vocab-tracker-id: practice
