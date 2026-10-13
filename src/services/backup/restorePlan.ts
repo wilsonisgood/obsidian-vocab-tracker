@@ -8,6 +8,7 @@ import { mergeReviewLogs, pruneReviewLogs } from "../../core/store/reviewLogs";
 import type { GrammarAttempt, GrammarProgress, GrammarQuestion, GrammarShard } from "../../core/model/grammar";
 import type { LearnShard } from "../learn/learnMerge";
 import { emptyGrammarShard, sortAttempts } from "../grammar/grammarMerge";
+import { emptyLearnerShard, mergeLearner } from "../learner/learnerMerge";
 import type { Snapshot } from "./format";
 import type { RestoreChanges } from "../../core/ports";
 
@@ -77,7 +78,7 @@ export interface RestoreCounts {
   reviewsAdded: number;
 }
 
-export type PlannedShard = "data" | "threads" | "learn" | "grammar" | "reviews" | "imports" | "files";
+export type PlannedShard = "data" | "threads" | "learn" | "grammar" | "learner" | "reviews" | "imports" | "files";
 
 export interface RestorePlan {
   // Shard name → content to write (only the shards the restore covers).
@@ -309,6 +310,8 @@ export function currentShard(current: Snapshot, shard: PlannedShard): unknown {
       return current.learn ?? { families: [], trivia: [], verbs: [] };
     case "grammar":
       return current.grammar ?? emptyGrammarShard();
+    case "learner":
+      return current.learner ?? emptyLearnerShard();
     case "reviews":
       return { logs: current.reviews ?? [] };
     case "imports":
@@ -400,6 +403,11 @@ export function planRestore(current: Snapshot, backup: Snapshot, opts: RestoreOp
       progress: rebaseRecords<GrammarProgress>(cur.progress, backup.grammar.progress, opts, counts.grammar, []),
     } satisfies GrammarShard;
   } else missing.push("grammar");
+
+  // Learning events, 待答池, 錯題區 and filters (wave 16 F): unioned like a
+  // sync — events are append-only, the rest newest-wins — so a restore brings
+  // back what the backup knew without undoing anything done since.
+  if (backup.learner) shards.learner = mergeLearner(current.learner ?? emptyLearnerShard(), backup.learner);
 
   if (backup.reviews) {
     const cur = current.reviews ?? [];
