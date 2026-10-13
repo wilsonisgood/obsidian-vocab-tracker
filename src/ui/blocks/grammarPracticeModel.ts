@@ -1,0 +1,256 @@
+import { ERROR_TAGS, type ErrorTag, type GrammarQuestion } from "../../core/model/grammar";
+import { DEFAULT_SESSION_SIZE } from "../../core/grammar/session";
+import { parseBlockParams } from "./params";
+
+// View-model for the vocab-grammar-practice block (wave 15 P, 1013 §3.3):
+// block parameters, the one-question-at-a-time state machine, how a stem is
+// cut into pieces for drawing, the feedback texts and the keyboard map.
+// Pure — no "obsidian" import — so it's unit-tested.
+
+// ── Parameters ────────────────────────────────────────────────────
+
+export type PracticeMode = "learn" | "mistakes";
+
+export interface PracticeParams {
+  topic?: string;
+  mode: PracticeMode;
+  tag?: ErrorTag;
+  size: number;
+}
+
+export const MAX_SIZE = 20;
+
+const MISTAKE_MODES = new Set(["mistakes", "mistake", "錯題", "錯題本"]);
+
+//   ```vocab-grammar-practice
+//   topic: present-perfect-vs-past
+//   mode: learn        # or mistakes
+//   tag: tense-choice  # mistakes only
+//   size: 8
+//   ```
+export function parseGrammarPracticeParams(source: string): PracticeParams {
+  const p = parseBlockParams(source);
+  const out: PracticeParams = {
+    mode: MISTAKE_MODES.has((p.mode ?? "").trim().toLowerCase()) ? "mistakes" : "learn",
+    size: DEFAULT_SESSION_SIZE,
+  };
+  const topic = (p.topic ?? "").trim().replace(/^["']|["']$/g, "").trim();
+  if (topic) out.topic = topic;
+  const tag = (p.tag ?? "").trim().toLowerCase();
+  if ((ERROR_TAGS as readonly string[]).includes(tag)) out.tag = tag as ErrorTag;
+  const size = Number.parseInt(p.size ?? "", 10);
+  if (Number.isFinite(size) && size > 0) out.size = Math.min(size, MAX_SIZE);
+  return out;
+}
+
+// ── The round ─────────────────────────────────────────────────────
+
+export type RoundPhase = "answering" | "feedback" | "summary";
+
+export interface RoundResult {
+  question: GrammarQuestion;
+  given: string;
+  correct: boolean;
+  // 👎: left out of the summary.
+  retired?: boolean;
+}
+
+export interface RoundState {
+  questions: GrammarQuestion[];
+  index: number;
+  phase: RoundPhase;
+  // One per answered question, in order.
+  results: RoundResult[];
+}
+
+export function startRound(questions: readonly GrammarQuestion[]): RoundState {
+  return { questions: [...questions], index: 0, phase: questions.length ? "answering" : "summary", results: [] };
+}
+
+export function currentQuestion(s: RoundState): GrammarQuestion | undefined {
+  return s.phase === "summary" ? undefined : s.questions[s.index];
+}
+
+// The answer to the question on screen (already graded by the caller).
+// Ignored outside the answering phase, so a double click can't answer twice.
+export function submitAnswer(s: RoundState, given: string, correct: boolean): RoundState {
+  const q = currentQuestion(s);
+  if (s.phase !== "answering" || !q) return s;
+  return { ...s, phase: "feedback", results: [...s.results, { question: q, given, correct }] };
+}
+
+function advance(s: RoundState): RoundState {
+  const index = s.index + 1;
+  return index >= s.questions.length ? { ...s, index, phase: "summary" } : { ...s, index, phase: "answering" };
+}
+
+// 下一題 (or 看小結 after the last one).
+export function nextQuestion(s: RoundState): RoundState {
+  return s.phase === "feedback" ? advance(s) : s;
+}
+
+// 👎 這題有問題: straight on to the next question. After an answer the
+// attempt is already stored; the summary just doesn't count it.
+export function retireCurrent(s: RoundState): RoundState {
+  if (s.phase === "summary") return s;
+  if (s.phase === "feedback") {
+    const results = s.results.slice();
+    const last = results[results.length - 1];
+    if (last) results[results.length - 1] = { ...last, retired: true };
+    return advance({ ...s, results });
+  }
+  return advance(s);
+}
+
+export function lastResult(s: RoundState): RoundResult | undefined {
+  return s.phase === "feedback" ? s.results[s.results.length - 1] : undefined;
+}
+
+// 3 / 8: the place of the question on screen.
+export function progressLabel(s: RoundState): { position: number; total: number } {
+  return { position: Math.min(s.index + 1, s.questions.length), total: s.questions.length };
+}
+
+export interface ObjectiveTally {
+  objectiveId: string;
+  answered: number;
+  correct: number;
+}
+
+export interface RoundSummary {
+  answered: number;
+  correct: number;
+  // Wrong answers, i.e. what the 錯題本 just gained (learn) or still holds (mistakes).
+  wrong: number;
+  retired: number;
+  byObjective: ObjectiveTally[];
+}
+
+export function summarize(s: RoundState): RoundSummary {
+  const counted = s.results.filter((r) => !r.retired);
+  const tally = new Map<string, ObjectiveTally>();
+  for (const r of counted) {
+    const t = tally.get(r.question.objectiveId) ?? { objectiveId: r.question.objectiveId, answered: 0, correct: 0 };
+    t.answered++;
+    if (r.correct) t.correct++;
+    tally.set(r.question.objectiveId, t);
+  }
+  const correct = counted.filter((r) => r.correct).length;
+  return {
+    answered: counted.length,
+    correct,
+    wrong: counted.length - correct,
+    retired: s.results.length - counted.length,
+    byObjective: [...tally.values()],
+  };
+}
+
+// 「✦ 生成新題目」: when the bank can't fill a whole round.
+export function needsMoreQuestions(available: number, size: number): boolean {
+  return available < size;
+}
+
+// ── Drawing a stem ────────────────────────────────────────────────
+
+export type StemPiece =
+  | { kind: "text"; text: string }
+  // The gap of a choice / blank question.
+  | { kind: "blank" }
+  // find-error: a piece of the sentence that is one of the options.
+  | { kind: "option"; text: string; index: number };
+
+// choice / blank: the stem with its ___ as gaps.
+export function stemPieces(stem: string): StemPiece[] {
+  const out: StemPiece[] = [];
+  stem.split(/_{3,}/).forEach((part, i) => {
+    if (i > 0) out.push({ kind: "blank" });
+    if (part) out.push({ kind: "text", text: part });
+  });
+  return out;
+}
+
+// find-error: the sentence cut so every option shows up where it sits in
+// the sentence. Each option claims its first occurrence that doesn't overlap
+// an earlier one; an option that can't be placed is left out (it is still
+// offered as a button by the view).
+export function findErrorPieces(stem: string, options: readonly string[]): StemPiece[] {
+  const spans: { start: number; end: number; index: number }[] = [];
+  options.forEach((opt, index) => {
+    if (!opt) return;
+    let from = 0;
+    for (;;) {
+      const start = stem.indexOf(opt, from);
+      if (start === -1) return;
+      const end = start + opt.length;
+      if (!spans.some((s) => start < s.end && end > s.start)) {
+        spans.push({ start, end, index });
+        return;
+      }
+      from = start + 1;
+    }
+  });
+  spans.sort((a, b) => a.start - b.start);
+  const out: StemPiece[] = [];
+  let at = 0;
+  for (const s of spans) {
+    if (s.start > at) out.push({ kind: "text", text: stem.slice(at, s.start) });
+    out.push({ kind: "option", text: stem.slice(s.start, s.end), index: s.index });
+    at = s.end;
+  }
+  if (at < stem.length) out.push({ kind: "text", text: stem.slice(at) });
+  return out;
+}
+
+// ── Feedback ──────────────────────────────────────────────────────
+
+export interface FeedbackModel {
+  correct: boolean;
+  given: string;
+  // What the right answer reads as.
+  answer: string;
+  // find-error: the sentence put right.
+  corrected?: string;
+  explanation: string;
+  // Why the chosen wrong option is wrong, when the question says.
+  whyWrong?: string;
+}
+
+const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+
+export function feedbackFor(q: GrammarQuestion, given: string, correct: boolean): FeedbackModel {
+  const out: FeedbackModel = { correct, given, answer: q.answer, explanation: q.explanation };
+  if (q.type === "find-error" && q.accepted?.[0]) out.corrected = q.accepted[0];
+  if (!correct && q.distractors) {
+    const key = Object.keys(q.distractors).find((k) => norm(k) === norm(given));
+    if (key) out.whyWrong = q.distractors[key];
+  }
+  return out;
+}
+
+// ── Keyboard (only while the block has focus) ─────────────────────
+
+export type KeyAction = { type: "choose"; index: number } | { type: "submit" } | { type: "next" } | null;
+
+export interface KeyContext {
+  phase: RoundPhase;
+  // Options of the question on screen (0 for a blank question).
+  optionCount: number;
+  // The key landed in the text box of a blank question.
+  inInput: boolean;
+  // A button has focus: Enter / Space belong to it.
+  onButton: boolean;
+}
+
+// 1–4 pick an option; Enter checks a typed answer or goes on to the next
+// question. The text box keeps its digits and Space.
+export function keyAction(key: string, ctx: KeyContext): KeyAction {
+  if (ctx.phase === "summary") return null;
+  if (ctx.inInput) return ctx.phase === "answering" && key === "Enter" ? { type: "submit" } : null;
+  if (ctx.onButton && (key === "Enter" || key === " ")) return null;
+  if (ctx.phase === "feedback") return key === "Enter" ? { type: "next" } : null;
+  if (/^[1-4]$/.test(key)) {
+    const index = Number(key) - 1;
+    return index < ctx.optionCount ? { type: "choose", index } : null;
+  }
+  return null;
+}
