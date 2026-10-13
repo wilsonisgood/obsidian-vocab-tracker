@@ -12,8 +12,9 @@ export function recordWrong(
 ): MistakeItem {
   const iso = now.toISOString();
   if (existing) {
-    const { resolvedAt: _resolved, ...rest } = existing;
-    return { ...rest, focus, lastWrongAt: iso, updatedAt: iso };
+    const reopened: MistakeItem = { ...existing, focus, lastWrongAt: iso, updatedAt: iso };
+    delete reopened.resolvedAt;
+    return reopened;
   }
   return { id: `${track}:${questionId}`, track, questionId, focus, addedAt: iso, lastWrongAt: iso, updatedAt: iso };
 }

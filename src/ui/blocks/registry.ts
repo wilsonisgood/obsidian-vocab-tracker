@@ -8,6 +8,11 @@ import { renderGrammarMap, type GrammarMapDeps } from "./grammarMap";
 import { renderGrammarPractice, type GrammarPracticeDeps } from "./grammarPractice";
 import { renderGrammarTopic, type GrammarTopicDeps } from "./grammarTopic";
 import { renderPractice } from "./practice";
+import { grammarTab } from "./practice/grammarTab";
+import { mountScenarioPlayer } from "./practice/scenarioPlayer";
+import { grammarSightings } from "../../core/grammar/sightings";
+import { weakFocuses } from "../../core/learner/weakness";
+import type { GrammarFilter } from "../../core/grammar/practiceFilter";
 import type { FilterStore, PracticeHost } from "./practice/types";
 import { openPluginSettings } from "../kit/openSettings";
 import { renderTrivia } from "./trivia";
@@ -38,8 +43,9 @@ function grammarMapDeps(plugin: VocabTrackerPlugin): GrammarMapDeps {
     grammar: plugin.grammar,
     level: () => plugin.store.settings.learner?.level ?? "",
     openTopic: (id) => plugin.grammarPages.open(id),
-    // 第十六波 H: api / mountPlayer / setGrammarFilter / openPractice join at
-    // integration (see .claude/tmp/w16-h.md).
+    api: plugin.grammarQuestions,
+    mountPlayer: mountScenarioPlayer,
+    ...grammarRouting(plugin),
   };
 }
 
@@ -56,8 +62,25 @@ function grammarTopicDeps(plugin: VocabTrackerPlugin): GrammarTopicDeps {
 }
 
 // The card needs api / ready / setGrammarFilter / openPractice at integration.
-function grammarPracticeDeps(_plugin: VocabTrackerPlugin): GrammarPracticeDeps {
-  return {};
+function grammarPracticeDeps(plugin: VocabTrackerPlugin): GrammarPracticeDeps {
+  return { api: plugin.grammarQuestions, ready: () => grammarReady(plugin), ...grammarRouting(plugin) };
+}
+
+// 第十六波: the grammar stores both load before a grammar practice surface draws.
+async function grammarReady(plugin: VocabTrackerPlugin): Promise<void> {
+  await Promise.all([plugin.grammar.ensureLoaded(), plugin.learner.ensureLoaded()]);
+}
+
+// 第十六波 (12 §0, w16 第二批 rule 5): 「練這個主題」 sets the shared grammar
+// filter to the topic and opens the hub's 文法 tab.
+export function grammarRouting(plugin: VocabTrackerPlugin): {
+  setGrammarFilter(f: GrammarFilter): void;
+  openPractice(track: "grammar"): void;
+} {
+  return {
+    setGrammarFilter: (f) => plugin.learner.setFilter("grammar", f),
+    openPractice: (track) => void plugin.openPracticeTab(track),
+  };
 }
 
 // 練習中心 (Wave 16 E). Filter values are learning data, so they live in
@@ -70,14 +93,30 @@ function practiceFilters(plugin: VocabTrackerPlugin): FilterStore {
 }
 
 function practiceHost(plugin: VocabTrackerPlugin): PracticeHost {
-  // The other tabs join through tabs() at integration.
   return {
     app: plugin.app,
     store: plugin.store,
     srs: plugin.srs,
     jumpToSource: (e) => plugin.jumpToSource(e),
     openVocabFile: () => plugin.openVocabFile(),
-    tabs: () => [],
+    tabs: () => [
+      grammarTab({
+        api: plugin.grammarQuestions,
+        mountPlayer: mountScenarioPlayer,
+        ready: () => grammarReady(plugin),
+        level: () => plugin.store.settings.learner?.level ?? "",
+        sightings: () => grammarSightings(plugin.threads.paragraphThreads()),
+        progress: (id) => plugin.grammar.progress(id),
+        weakTopicIds: () => [
+          ...new Set(
+            weakFocuses(plugin.learner.learnEvents({ track: "grammar" }), { now: new Date(), track: "grammar" }).map(
+              (w) => w.focus.id.split("/")[0]
+            )
+          ),
+        ],
+        aiStatus: () => plugin.ai.status(),
+      }),
+    ],
     filters: practiceFilters(plugin),
   };
 }

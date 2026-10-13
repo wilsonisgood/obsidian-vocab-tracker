@@ -44,6 +44,8 @@ import { ThreadService } from "./src/services/threads/ThreadService";
 import { LearnStore } from "./src/services/learn/LearnStore";
 import { GrammarStore } from "./src/services/grammar/GrammarStore";
 import { LearnerStore } from "./src/services/learner/LearnerStore";
+import type { Track } from "./src/core/model/learner";
+import { TAB_KEY as PRACTICE_TAB_KEY } from "./src/ui/blocks/practice/practiceModel";
 import { GrammarPages } from "./src/services/grammar/GrammarPages";
 import { QuestionService } from "./src/services/grammar/QuestionService";
 import { knownWordList } from "./src/services/ai/context/triviaContext";
@@ -304,6 +306,10 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       // R2: sentences the learner read, from the 文法解析 answers.
       sightings: () => grammarSightings(this.threads.paragraphThreads()),
       useMySentences: () => resolveGrammarSettings(this.store.settings.grammar).useMySentences,
+      // 第十六波 G: 待答池, 錯題區 and learning events; the learner's level
+      // picks the starting stage when the filter names none.
+      learner: this.learner,
+      level: () => this.store.settings.learner?.level ?? "",
     });
     this.families = new FamilyService({
       ai,
@@ -986,6 +992,12 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   openMorpheme(morphemeId: string) {
     this.dnaFocus.focus(morphemeId);
     void this.openEntryFile("dna", "tab");
+  }
+
+  // 第十六波: Practice.md on the given tab (the hub reads the remembered tab).
+  async openPracticeTab(track: Track): Promise<void> {
+    if (typeof this.app.saveLocalStorage === "function") this.app.saveLocalStorage(PRACTICE_TAB_KEY, track);
+    await this.openEntryFile("practice");
   }
 
   async openEntryFile(id: EntryFileId, where: "current" | "tab" = "current") {

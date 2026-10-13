@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { GRAMMAR_TOPICS, topicById } from "../../../src/core/grammar/catalog";
 import { topicStatuses } from "../../../src/core/grammar/progress";
 import { setLocale, t } from "../../../src/core/i18n";
-import type { GrammarAttempt, GrammarQuestion, GrammarTopicStatus } from "../../../src/core/model/grammar";
+import type { GrammarAttempt, GrammarTopicStatus } from "../../../src/core/model/grammar";
 import {
   defaultStage,
   lockedTooltip,
@@ -23,19 +23,6 @@ const attempt = (topicId: string, objectiveId: string, correct: boolean, at = "2
   correct,
   given: "x",
 });
-
-const question = (id: string, topicId: string, errorTag: GrammarQuestion["errorTag"]): GrammarQuestion => ({
-  id,
-  topicId,
-  objectiveId: topicById(topicId)!.objectives[0].id,
-  type: "choice",
-  stem: "s",
-  answer: "a",
-  explanation: "e",
-  errorTag,
-  updatedAt: "2026-10-01T00:00:00Z",
-  rev: 1,
-} as GrammarQuestion);
 
 describe("stages", () => {
   it("maps difficulty and CEFR level to a stage (rule 3)", () => {
