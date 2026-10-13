@@ -14061,7 +14061,7 @@ var GalaxyGraph = class {
       if (Math.abs(r.width - this.width) > RESIZE_THRESHOLD || Math.abs(r.height - this.height) > RESIZE_THRESHOLD) this.recenter();
     }) : null;
     (_a = this.resizeObserver) == null ? void 0 : _a.observe(svg);
-    if (opts.embedded) this.stopFit = autoFitGalaxy(svg);
+    this.stopFit = autoFitGalaxy(svg);
   }
   measure() {
     const r = this.svgEl.getBoundingClientRect();
@@ -14516,8 +14516,6 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
     this.galaxySvgEl = null;
     this.galaxyGraphFamilyId = null;
     this.lastGalaxyModel = null;
-    this.viewportObserver = null;
-    this.viewportEl = null;
   }
   onload() {
     this.containerEl.empty();
@@ -14548,9 +14546,7 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
     });
   }
   onunload() {
-    var _a;
     this.disposed = true;
-    (_a = this.viewportObserver) == null ? void 0 : _a.disconnect();
     if (this.generating) this.plugin.families.stop();
     for (const ctrl of this.galaxyExpandCtrl.values()) ctrl.abort();
     this.destroyGalaxyGraph();
@@ -14831,7 +14827,6 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
     const stage = bench.createDiv({ cls: "vt-gx-stage" });
     this.renderGalaxyToolbar(stage, selected, entry);
     const graphHost = stage.createDiv({ cls: "vt-gx-graph" });
-    this.fitGalaxyHeight(graphHost);
     const sameFamily = this.galaxyGraphFamilyId === selected.id && this.galaxyGraph && this.galaxySvgEl;
     if (sameFamily) {
       graphHost.appendChild(this.galaxySvgEl);
@@ -14859,42 +14854,6 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
     this.lastGalaxyModel = model;
     graph.setData(model, { recenter: true });
     if (this.galaxySelected) graph.select(this.galaxySelected, { silent: true });
-  }
-  // 1010 #G1：嵌入時把窗戶高度撐到可視區底部（最少 400px）。用「捲到頂時」
-  // 的位置算（scrollTop 加回去），捲動不會變；容器 resize 時重算。全畫面不套用。
-  fitGalaxyHeight(host) {
-    var _a;
-    if (this.opts.fullscreen) return;
-    const scroller = (_a = host.closest(".markdown-preview-view")) != null ? _a : host.closest(".view-content");
-    let top;
-    let bottom;
-    if (scroller) {
-      top = host.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
-      bottom = scroller.clientHeight;
-    } else {
-      top = host.getBoundingClientRect().top + window.scrollY;
-      bottom = window.innerHeight;
-    }
-    const h = galaxyFillHeight(bottom - 16, top);
-    host.style.height = `${h}px`;
-    host.style.minHeight = `${h}px`;
-    this.observeViewport(scroller);
-  }
-  observeViewport(scroller) {
-    var _a;
-    const el = scroller != null ? scroller : null;
-    if (el === this.viewportEl && this.viewportObserver) return;
-    (_a = this.viewportObserver) == null ? void 0 : _a.disconnect();
-    this.viewportEl = el;
-    if (typeof ResizeObserver !== "function") return;
-    const redo = () => {
-      var _a2;
-      const host = (_a2 = this.root) == null ? void 0 : _a2.querySelector(".vt-gx-graph");
-      if (host && !this.disposed) this.fitGalaxyHeight(host);
-    };
-    this.viewportObserver = new ResizeObserver(redo);
-    if (el) this.viewportObserver.observe(el);
-    else this.viewportObserver.observe(document.body);
   }
   // 點節點本身（不是點愛心）(1007-2 #7/#10, 1009 #8)：單字庫裡有的字（不論
   // 有沒有 like）展開側欄單字卡；建議字（不在庫）沒有卡可開，改成通知側欄
@@ -19562,8 +19521,13 @@ var GrammarPracticeBlock = class extends import_obsidian31.MarkdownRenderChild {
   }
   // Sync or a finished generation put questions in the bank. A round in
   // progress is left exactly as it is; only an empty screen picks them up.
+  // While this topic's batch is still being saved (one question:upsert per
+  // question) wait for all of it — starting on the first event gave a
+  // one-question round; generate() starts the round once the batch is in.
   onBankChanged() {
     if (!this.ready || this.disposed) return;
+    const topicId = this.params.topic;
+    if (topicId && this.deps.questions.isBusy(topicId)) return;
     if (this.round.questions.length === 0) this.newRound();
   }
   objectiveText(q) {
@@ -19927,7 +19891,8 @@ var GrammarPracticeBlock = class extends import_obsidian31.MarkdownRenderChild {
     }
     this.ctrl = null;
     if (this.disposed) return;
-    this.renderGen();
+    if (!running2 && this.round.questions.length === 0 && this.pool().length) this.newRound();
+    else this.renderGen();
   }
   choose(index2) {
     var _a;

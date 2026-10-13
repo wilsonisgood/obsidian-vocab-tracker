@@ -1,7 +1,8 @@
 import { galaxyFillHeight, galaxyViewBottom } from "./galaxyHeight";
 
-// 1010-2 W#4: keep an embedded Galaxy window stretched to the bottom of what
-// the user can actually see. Why the wave-12 version (families.ts
+// 1010-2 W#4: keep the Galaxy window (embedded, and since 1013-2 the
+// full-screen view too) stretched to the bottom of what the user can
+// actually see. Why the wave-12 version (families.ts
 // fitGalaxyHeight) still left a gap: it measured once, when the block was
 // drawn, and only re-measured when the scroller itself resized. But (a) the
 // block can be drawn before it is attached (closest() finds no scroller, so

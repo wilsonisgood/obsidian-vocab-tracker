@@ -231,8 +231,13 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
 
   // Sync or a finished generation put questions in the bank. A round in
   // progress is left exactly as it is; only an empty screen picks them up.
+  // While this topic's batch is still being saved (one question:upsert per
+  // question) wait for all of it — starting on the first event gave a
+  // one-question round; generate() starts the round once the batch is in.
   private onBankChanged(): void {
     if (!this.ready || this.disposed) return;
+    const topicId = this.params.topic;
+    if (topicId && this.deps.questions.isBusy(topicId)) return;
     if (this.round.questions.length === 0) this.newRound();
   }
 
@@ -610,7 +615,7 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     this.genError = null;
     this.justAdded = 0;
     // Only a round that is already running leaves the new questions for
-    // later; an empty screen starts one with them at once (onBankChanged).
+    // later; an empty screen starts one with the whole batch below.
     const running = this.round.questions.length > 0;
     this.ctrl = new AbortController();
     try {
@@ -621,9 +626,10 @@ class GrammarPracticeBlock extends MarkdownRenderChild {
     }
     this.ctrl = null;
     if (this.disposed) return;
-    // The empty screen starts a round by itself (onBankChanged); everything
-    // else just refreshes this area.
-    this.renderGen();
+    // The empty screen starts a round with the whole batch; everything else
+    // just refreshes this area.
+    if (!running && this.round.questions.length === 0 && this.pool().length) this.newRound();
+    else this.renderGen();
   }
 
   private choose(index: number): void {

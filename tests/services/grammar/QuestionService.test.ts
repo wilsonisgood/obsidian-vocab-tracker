@@ -135,6 +135,17 @@ describe("QuestionService.generate", () => {
     await expect(service.generate("nope")).rejects.toThrow(/Unknown grammar topic/);
   });
 
+  // The practice block waits out these events (1013-2): starting a round on
+  // the first one gave a one-question round.
+  it("is still busy while each question of the batch is saved", async () => {
+    const { grammar, service } = setup();
+    const seen: boolean[] = [];
+    grammar.events.on("question:upsert", () => seen.push(service.isBusy(TOPIC)));
+    await service.generate(TOPIC);
+    expect(seen).toEqual([true, true]);
+    expect(service.isBusy(TOPIC)).toBe(false);
+  });
+
   it("clears busy when the AI fails", async () => {
     const storage = new MemoryStorage();
     const service = new QuestionService({

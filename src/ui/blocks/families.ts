@@ -11,7 +11,6 @@ import { buildTopics, resolveAddWord, type GalaxyTopic, type GalaxyViewMode } fr
 import type { PageContext, PageWord } from "../page/pageContext";
 import { unlikeEntry } from "../word/likeAction";
 import { actionNotice } from "../mobile/actionNotice";
-import { galaxyFillHeight } from "../galaxy/galaxyHeight";
 import { aiErrorBox } from "../kit/aiDebug";
 import { datesText } from "../kit/dates";
 import { dragScroll } from "../kit/dragScroll";
@@ -190,7 +189,6 @@ export class FamiliesBlock extends MarkdownRenderChild {
 
   onunload(): void {
     this.disposed = true;
-    this.viewportObserver?.disconnect();
     if (this.generating) this.plugin.families.stop();
     for (const ctrl of this.galaxyExpandCtrl.values()) ctrl.abort();
     this.destroyGalaxyGraph();
@@ -516,8 +514,8 @@ export class FamiliesBlock extends MarkdownRenderChild {
 
     const stage = bench.createDiv({ cls: "vt-gx-stage" });
     this.renderGalaxyToolbar(stage, selected, entry);
+    // Height: GalaxyGraph stretches it to the visible bottom (galaxyFit.ts).
     const graphHost = stage.createDiv({ cls: "vt-gx-graph" });
-    this.fitGalaxyHeight(graphHost);
 
     // #7：拿掉詳情卡 — 已學節點改成直接開側欄卡片 (openSelectedKnownNode)，
     // 所以這裡不再需要 detail host／GalaxyDetail 實例。
@@ -556,43 +554,6 @@ export class FamiliesBlock extends MarkdownRenderChild {
     this.lastGalaxyModel = model;
     graph.setData(model, { recenter: true });
     if (this.galaxySelected) graph.select(this.galaxySelected, { silent: true });
-  }
-
-  // 1010 #G1：嵌入時把窗戶高度撐到可視區底部（最少 400px）。用「捲到頂時」
-  // 的位置算（scrollTop 加回去），捲動不會變；容器 resize 時重算。全畫面不套用。
-  private fitGalaxyHeight(host: HTMLElement): void {
-    if (this.opts.fullscreen) return;
-    const scroller = (host.closest(".markdown-preview-view") ?? host.closest(".view-content")) as HTMLElement | null;
-    let top: number;
-    let bottom: number;
-    if (scroller) {
-      top = host.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
-      bottom = scroller.clientHeight;
-    } else {
-      top = host.getBoundingClientRect().top + window.scrollY;
-      bottom = window.innerHeight;
-    }
-    const h = galaxyFillHeight(bottom - 16, top);
-    host.style.height = `${h}px`;
-    host.style.minHeight = `${h}px`;
-    this.observeViewport(scroller);
-  }
-
-  private viewportObserver: ResizeObserver | null = null;
-  private viewportEl: HTMLElement | null = null;
-  private observeViewport(scroller: HTMLElement | null): void {
-    const el = scroller ?? null;
-    if (el === this.viewportEl && this.viewportObserver) return;
-    this.viewportObserver?.disconnect();
-    this.viewportEl = el;
-    if (typeof ResizeObserver !== "function") return;
-    const redo = () => {
-      const host = this.root?.querySelector<HTMLElement>(".vt-gx-graph");
-      if (host && !this.disposed) this.fitGalaxyHeight(host);
-    };
-    this.viewportObserver = new ResizeObserver(redo);
-    if (el) this.viewportObserver.observe(el);
-    else this.viewportObserver.observe(document.body);
   }
 
   // 點節點本身（不是點愛心）(1007-2 #7/#10, 1009 #8)：單字庫裡有的字（不論
