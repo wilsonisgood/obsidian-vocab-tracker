@@ -297,33 +297,52 @@ body.is-mobile .vt-wh-speak {
   line-height: 1.6;
 }
 
-/* Collapsible category inside the vocab-word block (Info, 字根). */
+/* Collapsible category inside the vocab-word block (Info, 字根) and the
+   managed sections' h2 (字族, 用法 …) share ONE row style (1010-2 W #1).
+   The h2 used to lose to Obsidian's `.markdown-rendered h2` (size, weight,
+   margin), so it is doubled up (.x.x) to out-rank it; a <button> in turn
+   brings its own font, so both set every value explicitly. */
 .vt-wp-fold {
-  border-bottom: 1px solid var(--background-modifier-border);
+  border: 0;
 }
 
-.vt-wp-fold-head {
+.vt-wp-fold-head,
+.vt-wp-fold-h.vt-wp-fold-h {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
-  height: 48px;
+  min-height: 48px;
+  margin: 0;
   padding: 0;
   background: transparent;
   box-shadow: none;
   border: 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+  border-radius: 0;
   color: var(--text-normal);
-  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: normal;
   text-align: left;
+  cursor: pointer;
+}
+
+.vt-wp-fold-head {
+  height: auto;
 }
 
 .vt-wp-fold-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
 }
 
 .vt-wp-fold-chev {
   display: inline-flex;
+  flex: none;
   color: var(--text-faint);
   transition: transform 0.12s ease;
 }
@@ -345,7 +364,7 @@ body.is-mobile .vt-wh-speak {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 0 0 16px 28px;
+  padding: 12px 0 16px 28px;
   font-size: 14px;
   line-height: 1.6;
 }
@@ -359,25 +378,6 @@ body.is-mobile .vt-wh-speak {
 
 .vt-wh-inforow-label {
   line-height: 32px;
-}
-
-/* Managed sections in reading view: the h2 is the category row. */
-.vt-wp-fold-h {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.vt-wp-fold-h .vt-wp-fold-chev {
-  display: inline-flex;
-  color: var(--text-faint);
-  transition: transform 0.12s ease;
 }
 
 .vt-wp-fold-h.is-open .vt-wp-fold-chev {
@@ -394,11 +394,8 @@ body.is-mobile .vt-wh-speak {
 }
 
 /* Touch (iPad and iPhone share this; only widths differ) */
-body.is-mobile .vt-wp-fold-head {
-  height: 52px;
-}
-
-body.is-mobile .vt-wp-fold-h {
+body.is-mobile .vt-wp-fold-head,
+body.is-mobile .vt-wp-fold-h.vt-wp-fold-h {
   min-height: 52px;
 }
 
@@ -416,8 +413,8 @@ body.is-phone .vt-word-header .vt-wh-word {
   font-size: 28px;
 }
 
-body.is-phone .vt-wp-fold-title,
-body.is-phone .vt-wp-fold-h {
+body.is-phone .vt-wp-fold-head,
+body.is-phone .vt-wp-fold-h.vt-wp-fold-h {
   font-size: 16px;
 }
 
@@ -431,4 +428,33 @@ body.is-phone .vt-wh-inforow .vt-field-box {
 body.is-phone .vt-wh-inforow {
   grid-template-columns: 56px minmax(0, 1fr);
   column-gap: 12px;
+}
+
+/* 1010-2 W: formOf label, 詞義 lines, 查字典 button */
+.vt-wh-formof {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.vt-wh-senses {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  line-height: 1.6;
+}
+
+.vt-wh-inforow:has(> .vt-wh-senses) .vt-wh-inforow-label {
+  line-height: 1.6;
+}
+
+.vt-wh-lookup {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.is-mobile .vt-wh-lookup {
+  min-height: 44px;
 }

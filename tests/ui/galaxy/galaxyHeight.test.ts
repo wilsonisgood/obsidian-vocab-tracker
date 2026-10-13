@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { galaxyFillHeight } from "../../../src/ui/galaxy/galaxyHeight";
+import { galaxyFillHeight, galaxyViewBottom } from "../../../src/ui/galaxy/galaxyHeight";
 
 describe("galaxyFillHeight", () => {
   it("fills from graph top to viewport bottom", () => {
@@ -17,5 +17,12 @@ describe("galaxyFillHeight", () => {
   });
   it("custom min", () => {
     expect(galaxyFillHeight(300, 200, 150)).toBe(150);
+  });
+});
+
+describe("galaxyViewBottom", () => {
+  it("takes the smallest sane candidate", () => {
+    expect(galaxyViewBottom([900, 800, null, undefined, NaN, 0])).toBe(800);
+    expect(galaxyViewBottom([])).toBe(0);
   });
 });
