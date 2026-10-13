@@ -62,7 +62,8 @@ import { likeBackfillDecider } from "./src/services/like/backfill";
 import { tagLabel } from "./src/core/wordlists/parse";
 import type { ScanResult } from "./src/core/wordlists/scan";
 import { nowIso } from "./src/core/nowIso";
-import { entriesMissingDefinition } from "./src/core/store/needsEnrich";
+import { entriesMissingDefinition, entriesNeedingRefresh } from "./src/core/store/needsEnrich";
+import { refreshStaleDictionary } from "./src/services/dictionary/refresh";
 import { ObsidianVault } from "./src/platform/ObsidianVault";
 import { ExportService } from "./src/services/export/ExportService";
 import { createExportData } from "./src/services/export/exportData";
@@ -593,7 +594,10 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       // Words whose dictionary fetch never finished (closed mid-queue,
       // offline…) get another try every startup.
       const timer = window.setTimeout(
-        () => this.enqueueEnrich(entriesMissingDefinition(this.store.entries)),
+        () => {
+          this.enqueueEnrich(entriesMissingDefinition(this.store.entries));
+          void this.refreshStaleDictionaries();
+        },
         RESUME_ENRICH_DELAY_MS
       );
       this.register(() => window.clearTimeout(timer));
@@ -808,6 +812,22 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       await new Promise((r) => setTimeout(r, ENRICH_GAP_MS));
     }
     this.enriching = false;
+    if (done) this.renderSidebar();
+  }
+
+  // 1010-2 A3: words looked up by an older version (long machine-translated
+  // gloss, or a bare "plural of …" definition) are re-fetched once in the
+  // background; refreshStaleDictionary leaves hand-edited fields alone.
+  private async refreshStaleDictionaries() {
+    let done = 0;
+    for (const entry of entriesNeedingRefresh(this.store.entries)) {
+      if (this.unloaded) return;
+      if (await refreshStaleDictionary(entry, this.dictionary)) {
+        await this.store.touch(entry);
+        done++;
+      }
+      await new Promise((r) => setTimeout(r, ENRICH_GAP_MS));
+    }
     if (done) this.renderSidebar();
   }
 
@@ -1230,6 +1250,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       if (!entry.partOfSpeech) entry.partOfSpeech = data.partOfSpeech;
       if (!entry.definition) entry.definition = data.definition;
       if (!entry.definitionZh) entry.definitionZh = data.definitionZh;
+      if (!entry.formOf) entry.formOf = data.formOf ?? "";
+      if (entry.sensesZh === undefined) entry.sensesZh = data.sensesZh ?? "";
       if (!entry.synonyms) entry.synonyms = data.synonyms.join(", ");
       if (!entry.antonyms) entry.antonyms = data.antonyms.join(", ");
       await this.store.touch(entry);
