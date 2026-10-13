@@ -90,3 +90,27 @@ describe("normalizeGrammarShard", () => {
     expect(s.progress).toEqual([{ id: "t" }]);
   });
 });
+
+describe("normalizeGrammarShard — scenario fields (第十六波 G)", () => {
+  const norm = (extra: Record<string, unknown>) =>
+    normalizeGrammarShard({ questions: [{ ...q("q1"), ...extra }] }).questions[0];
+
+  it("keeps a good scenario and sentenceZh", () => {
+    const scenario = { id: "sc1", scene: "在咖啡店", seq: 2, speaker: "Amy", lead: [{ speaker: "Ben", text: "Hi." }, { text: "Hello." }] };
+    expect(norm({ scenario, sentenceZh: " 我弄丟了。 " })).toMatchObject({ scenario, sentenceZh: "我弄丟了。" });
+  });
+
+  it("drops bad values instead of the question", () => {
+    for (const scenario of [null, "x", { id: "s", scene: "a" }, { id: "s", scene: "a", seq: -1 }, { id: "", scene: "a", seq: 1 }, { id: "s", scene: "", seq: 1 }]) {
+      const out = norm({ scenario, sentenceZh: 5 });
+      expect(out).toBeDefined();
+      expect("scenario" in out).toBe(false);
+      expect("sentenceZh" in out).toBe(false);
+    }
+  });
+
+  it("cleans a half-broken lead list", () => {
+    const out = norm({ scenario: { id: "s", scene: "a", seq: 0, speaker: 3, lead: [{ text: "" }, "x", { speaker: "A", text: "ok" }] } });
+    expect(out.scenario).toEqual({ id: "s", scene: "a", seq: 0, lead: [{ speaker: "A", text: "ok" }] });
+  });
+});

@@ -1,25 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { topicById } from "../../../../src/core/grammar/catalog";
-import { defaultLearnerProfile, type LearnerProfile } from "../../../../src/core/model/settings";
+import { defaultLearnerProfile } from "../../../../src/core/model/settings";
 import type { AiRequest, AiResult } from "../../../../src/services/ai/providers/types";
 import {
+  GRAMMAR_QUESTIONS_SCHEMA,
   grammarQuestions,
   grammarQuestionsFor,
-  GRAMMAR_QUESTIONS_SCHEMA,
-  parseGrammarQuestion,
-  parseGrammarQuestions,
+  parseGrammarScenario,
+  parseScenarioQuestion,
   type GrammarQuestionsInput,
 } from "../../../../src/services/ai/tasks/grammarQuestions";
 
-const B1: LearnerProfile = { level: "B1", goal: "general", answerLanguage: "zh-TW", maxAnswerChars: 300, extra: "" };
-const TOPIC = topicById("present-perfect-vs-past")!;
-const ctx = (profile: LearnerProfile = defaultLearnerProfile()) => ({ profile, history: [] });
+const PP = topicById("present-perfect-vs-past")!;
+const PS = topicById("past-simple")!;
+const ctx = () => ({ profile: defaultLearnerProfile(), history: [] });
 
 function render(req: AiRequest): string {
   const sys = req.system.map((b, i) => `── system[${i}]${b.cache ? " (cache)" : ""} ──\n${b.text}`);
   const msgs = req.messages.map((m) => `── ${m.role} ──\n${m.content}`);
-  const out = req.output ? [`output=${req.output.name}`] : [];
-  return [`tier=${req.tier} maxTokens=${req.maxTokens}`, ...out, ...sys, ...msgs].join("\n\n");
+  return [...sys, ...msgs].join("\n\n");
 }
 
 function aiResult(text: string, extra: Partial<AiResult> = {}): AiResult {
@@ -27,301 +26,213 @@ function aiResult(text: string, extra: Partial<AiResult> = {}): AiResult {
 }
 
 const INPUT: GrammarQuestionsInput = {
-  topic: TOPIC,
-  objectiveIds: ["present-link", "just-already-yet"],
-  count: 6,
-  knownTopicTitles: ["be 動詞", "一般過去式"],
-  words: ["glittery", "apron"],
-  avoidStems: ["I ___ my keys. I can't get in now."],
+  targets: [
+    { topic: PP, objectiveIds: ["present-link", "just-already-yet"] },
+    { topic: PS, objectiveIds: [] },
+  ],
+  knownTopicTitles: ["be 動詞"],
+  words: ["apron"],
+  avoidStems: ["I ____ my keys."],
 };
 
-const CHOICE = {
+const ask = (extra: Record<string, unknown> = {}) => ({
   objectiveId: "present-link",
+  topicId: PP.id,
   type: "choice",
-  stem: "I ___ my keys. I can't get in now.",
-  options: ["lost", "have lost", "had lost", "was losing"],
+  stem: "I ____ my keys. I can't get in now.",
+  options: ["lost", "have lost", "had lost"],
   answer: "have lost",
   accepted: [],
-  explanation: "現在進不去，是過去動作的結果。",
-  distractors: [
-    { option: "lost", why: "只說過去，沒連到現在" },
-    { option: "had lost", why: "過去完成式要有更晚的過去時間" },
-  ],
+  explanation: "現在進不去。",
+  distractors: [{ option: "lost", why: "只說過去" }],
+  sentenceZh: "我弄丟鑰匙了，現在進不去。",
   errorTag: "tense-choice",
-};
-const BLANK = {
-  objectiveId: "just-already-yet",
-  type: "blank",
-  stem: "She ____ already finished her homework.",
-  options: [],
-  answer: "has",
-  accepted: ["'s"],
-  explanation: "already 搭配完成式。",
-  distractors: [{ option: "did", why: "already 在這裡連到現在" }],
-  errorTag: "aspect",
-};
-const FIND = {
+  sourceIndex: 0,
+  ...extra,
+});
+const FIND = ask({
   objectiveId: "finished-time",
   type: "find-error",
   stem: "We have visited Kyoto last year.",
   options: ["have visited", "Kyoto", "last year"],
   answer: "have visited",
   accepted: ["visited"],
-  explanation: "last year 是明確的過去時間。",
-  distractors: [{ option: "Kyoto", why: "地名沒有錯" }],
-  errorTag: "tense-choice",
-};
+  distractors: [{ option: "Kyoto", why: "地名沒錯" }],
+});
+const turn = (a?: unknown, text = "", speaker = "") => ({ speaker, text, ask: a === undefined ? [] : [a] });
 
 describe("grammar.questions request", () => {
-  it("builds the full request (snapshot)", () => {
-    expect(render(grammarQuestions.build(INPUT, ctx(B1)))).toMatchSnapshot();
+  it("lists the objectives with their ids, one per line", () => {
+    const text = render(grammarQuestions.build(INPUT, ctx()));
+    expect(text).toContain("〔出題參考〕");
+    expect(text).toContain(`${PP.id}/present-link｜${PP.objectives.find((o) => o.id === "present-link")!.text}｜${PP.title}（${PP.pattern}）`);
+    // only the objectives named; none named = all of the topic
+    expect(text).not.toContain(`${PP.id}/finished-time`);
+    for (const o of PS.objectives) expect(text).toContain(`${PS.id}/${o.id}`);
+    expect(text).toContain(`任務：文法情境練習（${PP.title}、${PS.title}）`);
+    expect(text).toContain("出 6 題");
+    expect(text).toContain("errorTag 清單：tense-choice");
   });
 
-  it("leaves out empty context blocks and defaults the count to 8", () => {
-    const req = grammarQuestions.build(
-      { topic: TOPIC, objectiveIds: [], knownTopicTitles: [], words: [], avoidStems: [] },
-      ctx()
+  it("puts 〔學習弱點〕 and 〔上一段〕 in only when there is something to say", () => {
+    const plain = grammarQuestions.build(INPUT, ctx());
+    const t0 = render(plain);
+    expect(t0).not.toContain("〔學習弱點〕\n");
+    expect(t0).not.toContain("〔上一段〕\n");
+    const full = render(
+      grammarQuestions.build(
+        { ...INPUT, weakness: `${PP.id}/present-link（連到現在）｜錯 2 次`, previous: { scene: "在咖啡店點餐", lastLines: ["A: Hi.", "B: Hello.", "A: Order?"] } },
+        ctx()
+      )
     );
-    const text = render(req);
-    expect(text).toMatchSnapshot();
-    // base prompt, topic block and learner profile only
-    expect(req.system).toHaveLength(3);
-    expect(text).toContain("出 8 題");
-    // every objective of the topic when none is named
-    for (const o of TOPIC.objectives) expect(text).toContain(o.id);
+    expect(full).toContain(`〔學習弱點〕\n${PP.id}/present-link（連到現在）｜錯 2 次`);
+    expect(full).toContain("〔上一段〕\n場景：在咖啡店點餐\n最後兩句：\n- B: Hello.\n- A: Order?");
+    expect(full).not.toContain("- A: Hi.");
+  });
+
+  it("is a click-only prompt (no blank / rewrite / translate) and schema", () => {
+    const text = render(grammarQuestions.build(INPUT, ctx()));
+    expect(text).toContain("只出點選的題型（choice、find-error）");
+    const types = JSON.stringify(GRAMMAR_QUESTIONS_SCHEMA);
+    expect(types).toContain('"enum":["choice","find-error"]');
+    expect(types).not.toContain("translate");
+    const req = grammarQuestions.build(INPUT, ctx());
+    expect(grammarQuestions).toMatchObject({ id: "grammar.questions", surface: "grammar", tier: "smart", maxTokens: 8192 });
+    expect(req.output).toEqual({ name: "grammar_questions", schema: GRAMMAR_QUESTIONS_SCHEMA });
   });
 
   it("caps words at 30 and avoid-stems at 40", () => {
     const words = Array.from({ length: 50 }, (_, i) => `w${i}`);
     const avoid = Array.from({ length: 60 }, (_, i) => `Stem number ${i}.`);
     const text = render(grammarQuestions.build({ ...INPUT, words, avoidStems: avoid }, ctx()));
+    expect(text).toContain("〔已學單字〕");
     expect(text).toContain("w29");
     expect(text).not.toContain("w30");
     expect(text).toContain("Stem number 39.");
     expect(text).not.toContain("Stem number 40.");
   });
 
-  it("is a smart structured task on the grammar surface", () => {
-    const req = grammarQuestions.build(INPUT, ctx());
-    expect(grammarQuestions).toMatchObject({ id: "grammar.questions", surface: "grammar", tier: "smart", maxTokens: 8192 });
-    expect(req.output).toEqual({ name: "grammar_questions", schema: GRAMMAR_QUESTIONS_SCHEMA });
-    expect(req.tier).toBe("smart");
+  it("numbers the reading sentences", () => {
+    const text = render(grammarQuestions.build({ ...INPUT, sentences: [{ path: "a.md", sentence: "I have lost my keys." }] }, ctx()));
+    expect(text).toContain("〔讀者讀過的句子〕\n1. I have lost my keys.");
+    expect(text).not.toContain("a.md");
   });
 });
 
-describe("parseGrammarQuestions", () => {
-  it("accepts the three question types", () => {
-    const out = parseGrammarQuestions({ questions: [CHOICE, BLANK, FIND] });
-    expect(out.map((q) => q.type)).toEqual(["choice", "blank", "find-error"]);
-    expect(out[0].distractors).toEqual({ lost: "只說過去，沒連到現在", "had lost": "過去完成式要有更晚的過去時間" });
-    expect(out[1]).toMatchObject({ stem: "She ___ already finished her homework.", accepted: ["'s"] });
-    expect(out[1].options).toBeUndefined();
-    expect(out[2]).toMatchObject({ answer: "have visited", accepted: ["visited"] });
+describe("parseScenarioQuestion", () => {
+  it("accepts choice and find-error, keeping distractors, sentenceZh and accepted[0]", () => {
+    const c = parseScenarioQuestion(ask())!;
+    expect(c).toMatchObject({ topicId: PP.id, objectiveId: "present-link", type: "choice", answer: "have lost", sentenceZh: "我弄丟鑰匙了，現在進不去。" });
+    expect(c.distractors).toEqual({ lost: "只說過去" });
+    expect(c.accepted).toBeUndefined();
+    const f = parseScenarioQuestion(FIND)!;
+    expect(f).toMatchObject({ type: "find-error", answer: "have visited", accepted: ["visited"] });
   });
 
-  it("works through the task's parse (plain JSON text, fenced JSON, json field)", () => {
-    const body = JSON.stringify({ questions: [CHOICE] });
-    expect(grammarQuestions.parse!(aiResult(body))).toHaveLength(1);
-    expect(grammarQuestions.parse!(aiResult("```json\n" + body + "\n```"))).toHaveLength(1);
-    expect(grammarQuestions.parse!(aiResult("", { json: { questions: [CHOICE] } }))).toHaveLength(1);
+  it("refuses blank, rewrite, translate and unknown types", () => {
+    for (const type of ["blank", "rewrite", "translate", "match"]) expect(parseScenarioQuestion(ask({ type }))).toBeNull();
   });
 
-  it("drops bad questions one by one", () => {
+  it("refuses broken questions", () => {
     const bad = [
-      { ...CHOICE, options: ["lost", "have lost"] }, // too few options
-      { ...CHOICE, options: ["a", "b", "c", "d", "e"], answer: "a" }, // too many
-      { ...CHOICE, answer: "has lost" }, // answer not among the options
-      { ...BLANK, stem: "She has already finished." }, // no gap
-      { ...BLANK, stem: "She ___ already ___ it." }, // two gaps
-      { ...FIND, options: ["have visited", "Osaka", "last year"] }, // option not in the stem
-      { ...FIND, answer: "yesterday" }, // answer not an option
-      { ...CHOICE, type: "match" }, // not a generated type
-      { ...CHOICE, type: "essay" },
-      { ...CHOICE, stem: "" },
-      { ...CHOICE, explanation: "" },
-      "not an object",
-      null,
+      ask({ options: ["lost", "have lost"] }), // too few
+      ask({ options: ["a", "b", "c", "d", "e"], answer: "a" }),
+      ask({ answer: "zzz" }), // answer not among them
+      ask({ stem: "I lost my keys." }), // no gap
+      ask({ stem: "I ____ my ____ keys." }), // two gaps
+      { ...FIND, options: ["have visited", "Osaka", "last year"] },
+      { ...FIND, stem: "We have ____ Kyoto last year.", options: ["have", "Kyoto", "last year"], answer: "have" }, // gap in find-error
+      ask({ explanation: "" }),
     ];
-    const good = { ...CHOICE, stem: "He ___ here since 2020.", answer: "has lived", options: ["lived", "has lived", "is living"] };
-    const out = parseGrammarQuestions({ questions: [...bad, good] });
-    expect(out).toHaveLength(1);
-    expect(out[0].stem).toBe("He ___ here since 2020.");
+    for (const b of bad) expect(parseScenarioQuestion(b)).toBeNull();
+    expect(parseScenarioQuestion(null)).toBeNull();
   });
 
-  it("throws bad_output when nothing is usable", () => {
-    expect(() => parseGrammarQuestions({ questions: [{ ...CHOICE, options: [] }] })).toThrowError(/no usable/);
-    expect(() => parseGrammarQuestions({ questions: [] })).toThrowError(/no usable/);
-    expect(() => parseGrammarQuestions({ nope: 1 })).toThrowError(/expected/);
-    expect(() => parseGrammarQuestions("text")).toThrowError(/expected/);
-    try {
-      parseGrammarQuestions({});
-    } catch (e) {
-      expect((e as { code?: string }).code).toBe("bad_output");
-    }
+  it("de-duplicates options and normalises the gap", () => {
+    const q = parseScenarioQuestion(ask({ stem: "I _____ my keys.", options: ["lost", "lost", "have lost", "had lost"] }))!;
+    expect(q.stem).toBe("I ____ my keys.");
+    expect(q.options).toEqual(["lost", "have lost", "had lost"]);
   });
 
-  it("drops questions whose objective isn't in the topic", () => {
-    const stray = { ...CHOICE, objectiveId: "made-up", stem: "Another ___ one." };
-    const ids = TOPIC.objectives.map((o) => o.id);
-    expect(parseGrammarQuestions({ questions: [CHOICE, stray] }, { objectiveIds: ids }).map((q) => q.objectiveId)).toEqual(["present-link"]);
-    expect(() => parseGrammarQuestions({ questions: [stray] }, { objectiveIds: ids })).toThrowError(/no usable/);
-    // the per-topic task applies the same filter
-    const task = grammarQuestionsFor(TOPIC);
-    expect(task.id).toBe("grammar.questions");
-    expect(task.parse!(aiResult(JSON.stringify({ questions: [stray, CHOICE] })))).toHaveLength(1);
+  it("checks the objective against the offered list", () => {
+    const refs = new Set([`${PP.id}/present-link`]);
+    expect(parseScenarioQuestion(ask(), { refs })).not.toBeNull();
+    expect(parseScenarioQuestion(ask({ objectiveId: "nope" }), { refs })).toBeNull();
+    expect(parseScenarioQuestion(ask({ topicId: "other" }), { refs })).toBeNull();
+    // a combined "topic/objective" id, or no topicId when only one topic has it
+    expect(parseScenarioQuestion(ask({ objectiveId: `${PP.id}/present-link`, topicId: "" }), { refs })).not.toBeNull();
+    expect(parseScenarioQuestion(ask({ topicId: "" }), { refs })?.topicId).toBe(PP.id);
   });
 
-  it("maps unknown error tags to other", () => {
-    expect(parseGrammarQuestion({ ...CHOICE, errorTag: "wrong-tense" })!.errorTag).toBe("other");
-    expect(parseGrammarQuestion({ ...CHOICE, errorTag: "Tense-Choice" })!.errorTag).toBe("tense-choice");
-    expect(parseGrammarQuestion({ ...CHOICE, errorTag: undefined })!.errorTag).toBe("other");
-  });
-
-  it("tidies what it keeps", () => {
-    const q = parseGrammarQuestion({
-      ...CHOICE,
-      stem: "  I _____ my keys.  ",
-      answer: "Have lost",
-      options: ["lost", "have lost", "have lost", "had lost"],
-      accepted: ["have lost"],
-      distractors: { "have lost": "the right one", lost: "too early", "not an option": "x" },
-    })!;
-    expect(q.stem).toBe("I ___ my keys.");
-    expect(q.options).toEqual(["lost", "have lost", "had lost"]); // duplicate removed
-    expect(q.answer).toBe("have lost"); // snapped to the option's own spelling
-    expect(q.accepted).toBeUndefined(); // a choice has exactly one answer
-    expect(q.distractors).toEqual({ lost: "too early" }); // answer and strangers removed
-  });
-
-  it("keeps blank alternatives apart from the answer and drops repeated stems", () => {
-    const q = parseGrammarQuestion({ ...BLANK, accepted: ["has", "'s", "'s", " "] })!;
-    expect(q.accepted).toEqual(["'s"]);
-    const out = parseGrammarQuestions({ questions: [CHOICE, { ...CHOICE, stem: "I ___ MY keys. I can't get in now." }] });
-    expect(out).toHaveLength(1);
+  it("maps sourceIndex back to the sentences sent", () => {
+    const q = parseScenarioQuestion(ask({ sourceIndex: 1 }), { sentences: [{ path: "a.md", sentence: "S." }] })!;
+    expect(q.source).toEqual({ path: "a.md", sentence: "S." });
+    expect(parseScenarioQuestion(ask({ sourceIndex: 2 }), { sentences: [{ path: "a.md", sentence: "S." }] })!.source).toBeUndefined();
   });
 });
 
-// ── R2: rewrite / translate, reading sentences ────────────────────
-
-const REWRITE = {
-  objectiveId: "present-link",
-  type: "rewrite",
-  stem: "用 Not until 開頭改寫：He didn't leave until she arrived.",
-  options: [],
-  answer: "Not until she arrived did he leave.",
-  accepted: ["Not until she had arrived did he leave.", "Not until she arrived did he leave."],
-  explanation: "Not until 放句首時，主要子句倒裝。",
-  distractors: [],
-  errorTag: "inversion",
-};
-const TRANSLATE = {
-  objectiveId: "finished-time",
-  type: "translate",
-  stem: "我昨天才第一次見到她。",
-  options: ["ignored"],
-  answer: "I met her for the first time yesterday.",
-  accepted: [],
-  explanation: "yesterday 是明確的過去時間。",
-  distractors: [{ option: "x", why: "y" }],
-  errorTag: "tense-choice",
-};
-const LOW = topicById("past-simple")!;
-
-describe("grammar.questions — open types (R2)", () => {
-  it("is at version 2", () => {
-    expect(grammarQuestions.version).toBe(2);
+describe("parseGrammarScenario", () => {
+  const body = (turns: unknown[], extra: Record<string, unknown> = {}) => ({
+    scene: "在咖啡店",
+    form: "dialogue",
+    speakers: ["Amy", "Ben"],
+    turns,
+    ...extra,
   });
 
-  it("allows rewrite / translate in the request only at difficulty >= 4", () => {
-    expect(TOPIC.difficulty).toBeGreaterThanOrEqual(4);
-    expect(LOW.difficulty).toBeLessThan(4);
-    const high = grammarQuestions.build(INPUT, ctx());
-    const low = grammarQuestions.build({ ...INPUT, topic: LOW, objectiveIds: [] }, ctx());
-    expect(render(high)).toContain("可以另外出 1 到 2 題開放題型");
-    expect(render(low)).toContain("這次不要出 rewrite、translate");
-    const types = (r: AiRequest) =>
-      (r.output!.schema as { properties: { questions: { items: { properties: { type: { enum: string[] } } } } } }).properties.questions.items.properties.type.enum;
-    expect(types(high)).toEqual(["choice", "blank", "find-error", "rewrite", "translate"]);
-    expect(types(low)).toEqual(["choice", "blank", "find-error"]);
-  });
-
-  it("parses a rewrite and a translate: stem + sample answer, nothing else", () => {
-    const out = parseGrammarQuestions({ questions: [REWRITE, TRANSLATE] });
-    expect(out[0]).toEqual({
-      objectiveId: "present-link",
-      type: "rewrite",
-      stem: REWRITE.stem,
-      answer: REWRITE.answer,
-      accepted: ["Not until she had arrived did he leave."],
-      explanation: REWRITE.explanation,
-      errorTag: "inversion",
-    });
-    expect(out[1]).toMatchObject({ type: "translate", answer: "I met her for the first time yesterday." });
-    expect(out[1].options).toBeUndefined();
-    expect(out[1].distractors).toBeUndefined();
-  });
-
-  it("drops open questions with an empty stem or sample answer", () => {
-    expect(() => parseGrammarQuestions({ questions: [{ ...REWRITE, stem: " " }] })).toThrowError(/no usable/);
-    expect(() => parseGrammarQuestions({ questions: [{ ...TRANSLATE, answer: "" }] })).toThrowError(/no usable/);
-  });
-
-  it("keeps at most two open questions", () => {
-    const three = [REWRITE, TRANSLATE, { ...REWRITE, stem: "用 Hardly 開頭改寫：He had hardly sat down when it rang." }];
-    expect(parseGrammarQuestions({ questions: [CHOICE, ...three] }).map((q) => q.type)).toEqual(["choice", "rewrite", "translate"]);
-  });
-
-  it("grammarQuestionsFor drops open questions below difficulty 4", () => {
-    const low = (id: string) => ({ ...REWRITE, objectiveId: id });
-    const r = aiResult(JSON.stringify({ questions: [low(LOW.objectives[0].id), { ...CHOICE, objectiveId: LOW.objectives[0].id }] }), {
-      json: { questions: [low(LOW.objectives[0].id), { ...CHOICE, objectiveId: LOW.objectives[0].id }] },
-    });
-    expect(grammarQuestionsFor(LOW).parse!(r).map((q) => q.type)).toEqual(["choice"]);
-    const high = aiResult("", { json: { questions: [REWRITE, CHOICE] } });
-    expect(grammarQuestionsFor(TOPIC).parse!(high).map((q) => q.type)).toEqual(["rewrite", "choice"]);
-  });
-});
-
-describe("grammar.questions — reading sentences (R2)", () => {
-  const SENTENCES = [
-    { path: "Books/Dune.md", sentence: "He has never seen the desert at night before." },
-    { path: "News/Sea.md", sentence: "They lived by the sea when they were children." },
-  ];
-
-  it("adds a numbered 〔讀者讀過的句子〕 block, without the note paths (snapshot)", () => {
-    const text = render(grammarQuestions.build({ ...INPUT, sentences: SENTENCES }, ctx(B1)));
-    expect(text).toMatchSnapshot();
-    expect(text).toContain("1. He has never seen the desert at night before.");
-    expect(text).toContain("2. They lived by the sea");
-    expect(text).not.toContain("Dune");
-    expect(text).not.toContain("News/");
-  });
-
-  it("sends at most 3 distinct sentences, trimmed", () => {
-    const many = Array.from({ length: 6 }, (_, i) => ({ path: `p${i}.md`, sentence: `  Sentence   number ${i}.  ` }));
-    const text = render(grammarQuestions.build({ ...INPUT, sentences: [many[0], many[0], ...many] }, ctx()));
-    expect(text).toContain("1. Sentence number 0.");
-    expect(text).toContain("3. Sentence number 2.");
-    expect(text).not.toContain("number 3");
-  });
-
-  it("has no sentences block when there are none", () => {
-    expect(render(grammarQuestions.build({ ...INPUT, sentences: [] }, ctx()))).not.toContain("〔讀者讀過的句子〕\n");
-  });
-
-  it("turns sourceIndex into source", () => {
-    const out = parseGrammarQuestions(
-      { questions: [{ ...CHOICE, sourceIndex: 2 }, { ...BLANK, sourceIndex: 0 }, { ...FIND, sourceIndex: 9 }] },
-      { sentences: SENTENCES }
+  it("hangs lead-in lines on the next question and keeps the speaker", () => {
+    const s = parseGrammarScenario(
+      body([
+        turn(undefined, "Hi, Amy!", "Ben"),
+        turn(undefined, "Hello.", "Amy"),
+        turn(ask(), "", "Amy"),
+        turn(FIND, "", "Ben"),
+        turn(undefined, "See you.", "Amy"),
+      ])
     );
-    expect(out[0].source).toEqual(SENTENCES[1]);
-    expect(out[1].source).toBeUndefined();
-    expect(out[2].source).toBeUndefined();
+    expect(s).toMatchObject({ scene: "在咖啡店", form: "dialogue", speakers: ["Amy", "Ben"] });
+    expect(s.questions).toHaveLength(2);
+    expect(s.questions[0]).toMatchObject({ speaker: "Amy", lead: [{ speaker: "Ben", text: "Hi, Amy!" }, { speaker: "Amy", text: "Hello." }] });
+    expect(s.questions[1].lead).toBeUndefined();
   });
 
-  it("grammarQuestionsFor maps sourceIndex onto the sentences it was given", () => {
-    const r = aiResult("", { json: { questions: [{ ...CHOICE, sourceIndex: 1 }] } });
-    expect(grammarQuestionsFor(TOPIC, SENTENCES).parse!(r)[0].source).toEqual(SENTENCES[0]);
-    expect(grammarQuestionsFor(TOPIC).parse!(r)[0].source).toBeUndefined();
+  it("drops bad questions one by one but keeps the order", () => {
+    const s = parseGrammarScenario(body([turn(ask()), turn(ask({ type: "blank" })), turn(FIND)]));
+    expect(s.questions.map((q) => q.type)).toEqual(["choice", "find-error"]);
+  });
+
+  it("is bad_output when fewer than half survive, when none do, or the shape is wrong", () => {
+    const bad = (t: unknown) => () => parseGrammarScenario(t);
+    expect(bad(body([turn(ask()), turn(ask({ type: "blank" })), turn(ask({ type: "rewrite" }))]))).toThrow(/usable/);
+    expect(bad(body([turn(ask({ type: "blank" }))]))).toThrowError(expect.objectContaining({ code: "bad_output" }));
+    expect(bad(body([]))).toThrowError(expect.objectContaining({ code: "bad_output" }));
+    expect(bad({ turns: [turn(ask())] })).toThrowError(expect.objectContaining({ code: "bad_output" })); // no scene
+    expect(bad("nope")).toThrowError(expect.objectContaining({ code: "bad_output" }));
+    // exactly half is fine
+    expect(parseGrammarScenario(body([turn(ask()), turn(ask({ type: "blank" }))])).questions).toHaveLength(1);
+  });
+
+  it("skips a repeated stem, and accepts ask as a plain object", () => {
+    const s = parseGrammarScenario(body([{ speaker: "", text: "", ask: ask() }, turn(ask()), turn(FIND)]));
+    expect(s.questions).toHaveLength(2);
+  });
+
+  it("defaults form from the speakers", () => {
+    expect(parseGrammarScenario(body([turn(ask())], { form: "x" })).form).toBe("dialogue");
+    expect(parseGrammarScenario(body([turn(ask())], { form: "x", speakers: [] })).form).toBe("story");
+  });
+
+  it("works through the task's parse and the per-request variant", () => {
+    const text = JSON.stringify(body([turn(ask())]));
+    expect(grammarQuestions.parse!(aiResult(text)).questions).toHaveLength(1);
+    expect(grammarQuestions.parse!(aiResult("```json\n" + text + "\n```")).questions).toHaveLength(1);
+    expect(grammarQuestions.parse!(aiResult("", { json: body([turn(ask())]) })).questions).toHaveLength(1);
+    const task = grammarQuestionsFor([{ topic: PP, objectiveIds: [] }], [{ path: "a.md", sentence: "I lost my keys." }]);
+    const mixed = JSON.stringify(body([turn(ask({ sourceIndex: 1 })), turn(ask({ objectiveId: "nope", stem: "x ____ y." })), turn(FIND)]));
+    expect(task.parse!(aiResult(mixed)).questions).toHaveLength(2);
+    expect(task.parse!(aiResult(mixed)).questions[0].source).toEqual({ path: "a.md", sentence: "I lost my keys." });
+    // an objective the request did not offer: PS objective not asked for PP-only targets
+    const onlyPp = grammarQuestionsFor([{ topic: PP, objectiveIds: ["present-link"] }]);
+    expect(() => onlyPp.parse!(aiResult(JSON.stringify(body([turn(FIND)]))))).toThrow(/usable/);
   });
 });

@@ -1,204 +1,436 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { topicById } from "../../../src/core/grammar/catalog";
+import { migrateGrammar } from "../../../src/core/learner/migrateGrammar";
 import type { GrammarQuestion, GrammarSighting } from "../../../src/core/model/grammar";
 import { GRAMMAR_SHARD, GrammarStore } from "../../../src/services/grammar/GrammarStore";
-import { gradeThreadId, QuestionService, questionThreadId } from "../../../src/services/grammar/QuestionService";
+import { gradeThreadId, questionLine, QuestionService, REFILL_THREAD_ID, questionThreadId } from "../../../src/services/grammar/QuestionService";
+import { LearnerStore } from "../../../src/services/learner/LearnerStore";
 import { MemoryStorage } from "../ai/fakes";
 import { FakePreparingAi, result } from "../learn/fakes";
 
 const TOPIC = "present-perfect-vs-past";
+const FILTER = { stages: [2 as const], topics: [TOPIC] };
+const OBJECTIVES = ["present-link", "just-already-yet", "finished-time"];
 
-const CHOICE = {
-  objectiveId: "present-link",
-  type: "choice",
-  stem: "I ___ my keys. I can't get in now.",
-  options: ["lost", "have lost", "had lost"],
-  answer: "have lost",
-  accepted: [],
-  explanation: "現在進不去。",
-  distractors: [{ option: "lost", why: "沒連到現在" }],
-  errorTag: "tense-choice",
-};
-const BLANK = {
-  objectiveId: "just-already-yet",
-  type: "blank",
-  stem: "She ___ already left.",
-  options: [],
-  answer: "has",
-  accepted: ["'s"],
-  explanation: "already 搭配完成式。",
-  distractors: [],
-  errorTag: "aspect",
-};
-const STRAY = { ...CHOICE, objectiveId: "nope", stem: "Stray ___ one." };
+// A scenario reply with n choice questions "Sentence k ____ here."
+function scenario(n = 6, extra: { lead?: boolean; blank?: number } = {}) {
+  const turns: unknown[] = [];
+  if (extra.lead) turns.push({ speaker: "Ben", text: "Hi Amy, how are you?", ask: [] });
+  for (let k = 1; k <= n; k++) {
+    turns.push({
+      speaker: k % 2 ? "Amy" : "Ben",
+      text: "",
+      ask: [
+        {
+          objectiveId: OBJECTIVES[(k - 1) % 3],
+          topicId: TOPIC,
+          type: extra.blank === k ? "blank" : "choice",
+          stem: `Sentence ${k} ____ here.`,
+          options: ["a", "b", "c"],
+          answer: "a",
+          accepted: [],
+          explanation: `解釋 ${k}`,
+          distractors: [{ option: "b", why: "不對" }],
+          sentenceZh: `第 ${k} 句`,
+          errorTag: "tense-choice",
+          sourceIndex: 0,
+        },
+      ],
+    });
+  }
+  return { scene: "在咖啡店", form: "dialogue", speakers: ["Amy", "Ben"], turns };
+}
 
-function setup(reply: unknown = { questions: [CHOICE, BLANK] }, words: string[] = ["apron"]) {
+class StatusAi extends FakePreparingAi {
+  state = "ready";
+  status() {
+    return this.state;
+  }
+}
+
+function setup(reply: unknown = scenario(), opts: { sightings?: () => GrammarSighting[]; useMySentences?: () => boolean } = {}) {
   const storage = new MemoryStorage();
   let tick = Date.parse("2026-10-13T08:00:00Z");
   const clock = () => new Date((tick += 1000));
   const grammar = new GrammarStore({ storage, clock });
-  const ai = new FakePreparingAi(() => result(JSON.stringify(reply)));
+  const learner = new LearnerStore({ storage, clock });
+  const ai = new StatusAi(() => result(JSON.stringify(typeof reply === "function" ? (reply as () => unknown)() : reply)));
   let seq = 0;
-  const service = new QuestionService({ grammar, ai, recentWords: () => words, clock, newId: () => `id${++seq}` });
-  return { storage, grammar, ai, service };
+  const events: string[] = [];
+  const service = new QuestionService({ grammar, learner, ai, level: () => "B1", clock, newId: () => `id${++seq}`, recentWords: () => ["apron"], ...opts });
+  service.events.on("pool:change", () => events.push("pool"));
+  service.events.on("refill:start", () => events.push("start"));
+  service.events.on("refill:end", (e) => events.push(e.error ? "end:error" : "end"));
+  return { storage, grammar, learner, ai, service, events };
 }
 
-describe("QuestionService.generate", () => {
-  afterEach(() => vi.useRealTimers());
+async function filled(reply?: unknown) {
+  const ctx = setup(reply);
+  await ctx.learner.ensureLoaded();
+  await ctx.service.refill(FILTER);
+  return ctx;
+}
 
-  it("asks the AI and stores the questions", async () => {
-    const { grammar, ai, service } = setup();
-    const out = await service.generate(TOPIC);
-    expect(out.map((q) => q.id)).toEqual(["id1", "id2"]);
-    expect(out[0]).toMatchObject({ topicId: TOPIC, objectiveId: "present-link", type: "choice", rev: 1 });
-    expect(out[0].createdAt).toBeTruthy();
-    expect(grammar.questions(TOPIC)).toHaveLength(2);
-    expect(service.pool(TOPIC)).toHaveLength(2);
-    // thread id + the request it built
-    expect(ai.threadIds).toEqual([questionThreadId(TOPIC)]);
-    const text = ai.requests[0].system.map((b) => b.text).join("\n");
-    expect(text).toContain("現在完成式與過去式");
-    expect(text).toContain("〔學習者的單字〕apron");
-    expect(ai.requests[0].messages[0].content).toContain("出 8 題");
+const events = (l: LearnerStore) => l.learnEvents({ track: "grammar" });
+
+describe("QuestionService.refill", () => {
+  it("asks for one scenario, stores it and puts it in the pool", async () => {
+    const { grammar, learner, ai, service, events: ev } = await filled(scenario(6, { lead: true }));
+    expect(ai.threadIds).toEqual([REFILL_THREAD_ID]);
+    const pool = service.poolQuestions();
+    expect(pool.map((q) => q.id)).toEqual(["id2", "id3", "id4", "id5", "id6", "id7"]);
+    expect(pool[0]).toMatchObject({
+      topicId: TOPIC,
+      type: "choice",
+      sentenceZh: "第 1 句",
+      scenario: { id: "id1".replace("id1", pool[0].scenario!.id), scene: "在咖啡店", seq: 1, speaker: "Amy", lead: [{ speaker: "Ben", text: "Hi Amy, how are you?" }] },
+    });
+    expect(pool[0].scenario!.id).toMatch(/^sc-/);
+    expect(new Set(pool.map((q) => q.scenario!.id)).size).toBe(1);
+    expect(pool.map((q) => q.scenario!.seq)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(grammar.questions(TOPIC)).toHaveLength(6);
+    expect(learner.pool("grammar").map((i) => i.questionId)).toEqual(pool.map((q) => q.id));
+    expect(learner.pool("grammar")[0].scenarioId).toBe(pool[0].scenario!.id);
+    expect(ev).toEqual(["start", "end", "pool"]);
+    // prompt: the objectives and words reach the AI
+    const text = ai.requests[0].system.map((b) => b.text).join("\n") + ai.requests[0].messages[0].content;
+    expect(text).toContain(`${TOPIC}/present-link｜`);
+    expect(text).toContain("〔已學單字〕apron");
+    expect(ai.requests[0].messages[0].content).toContain("出 6 題");
   });
 
-  it("sends no words when the callback gives none", async () => {
-    const { ai, service } = setup(undefined, []);
-    await service.generate(TOPIC);
-    expect(ai.requests[0].system.map((b) => b.text).join("\n")).not.toContain("〔學習者的單字〕apron");
-    expect(ai.requests[0].system.some((b) => b.text.startsWith("〔學習者的單字〕"))).toBe(false);
+  it("does nothing while the pool holds more than 4, when AI is off, or without a learner", async () => {
+    const ctx = await filled();
+    await ctx.service.refill(FILTER);
+    expect(ctx.ai.requests).toHaveLength(1);
+    // down to 5: still no refill
+    ctx.service.skip(ctx.service.poolQuestions()[0]);
+    await ctx.service.refill(FILTER);
+    expect(ctx.ai.requests).toHaveLength(1);
+
+    const off = setup();
+    await off.learner.ensureLoaded();
+    off.ai.state = "off";
+    await off.service.refill(FILTER);
+    expect(off.ai.requests).toHaveLength(0);
+    expect(off.events).toEqual([]);
+
+    const bare = new QuestionService({ grammar: new GrammarStore({ storage: new MemoryStorage() }), ai: off.ai });
+    await bare.refill(FILTER);
+    expect(bare.poolQuestions()).toEqual([]);
   });
 
-  it("caps the words at 30", async () => {
-    const many = Array.from({ length: 45 }, (_, i) => `word${i}`);
-    const { ai, service } = setup(undefined, many);
-    await service.generate(TOPIC);
-    const block = ai.requests[0].system.find((b) => b.text.startsWith("〔學習者的單字〕"))!.text;
-    expect(block).toContain("word29");
-    expect(block).not.toContain("word30");
+  it("refills again at 4 or fewer, only up to the room left (max 6 a time)", async () => {
+    const ctx = await filled();
+    for (const q of ctx.service.poolQuestions().slice(0, 2)) ctx.service.skip(q);
+    expect(ctx.service.poolQuestions()).toHaveLength(4);
+    ctx.ai.script = () => result(JSON.stringify(scenario(6)));
+    // the new batch repeats the old stems -> every question is a repeat
+    await ctx.service.refill(FILTER);
+    expect(ctx.ai.requests).toHaveLength(2);
+    expect(ctx.events.at(-1)).toBe("end:error");
   });
 
-  it("passes the topic's earlier stems so they aren't repeated, and skips repeats in the answer", async () => {
-    const { grammar, ai, service } = setup({ questions: [CHOICE, BLANK] });
-    await grammar.ensureLoaded();
-    grammar.upsertQuestion({ id: "old", topicId: TOPIC, objectiveId: "present-link", type: "choice", stem: "I ___ MY keys.   I can't get in now.", options: ["a", "b", "c"], answer: "a", explanation: "x", errorTag: "other", retiredAt: "2026-10-01T00:00:00Z" });
-    const out = await service.generate(TOPIC);
-    // CHOICE matches the retired one ignoring case and spacing -> only BLANK is new
-    expect(out.map((q) => q.stem)).toEqual(["She ___ already left."]);
-    expect(ai.requests[0].system.map((b) => b.text).join("\n")).toContain("- I ___ MY keys. I can't get in now.");
-  });
-
-  it("is bad_output when every question is a repeat", async () => {
-    const { grammar, service } = setup({ questions: [CHOICE] });
-    await grammar.ensureLoaded();
-    grammar.upsertQuestion({ id: "old", topicId: TOPIC, objectiveId: "present-link", type: "choice", stem: CHOICE.stem, options: ["a", "b", "c"], answer: "a", explanation: "x", errorTag: "other" });
-    await expect(service.generate(TOPIC)).rejects.toMatchObject({ code: "bad_output" });
-  });
-
-  it("drops questions for objectives outside the topic; none left is bad_output with the debug info", async () => {
-    const mixed = setup({ questions: [STRAY, CHOICE] });
-    expect((await mixed.service.generate(TOPIC)).map((q) => q.objectiveId)).toEqual(["present-link"]);
-    const bad = setup({ questions: [STRAY] });
-    await expect(bad.service.generate(TOPIC)).rejects.toMatchObject({ code: "bad_output" });
-    expect(bad.grammar.questions()).toEqual([]);
-  });
-
-  it("restricts the objectives and count it asks for", async () => {
-    const { ai, service } = setup();
-    await service.generate(TOPIC, { objectiveIds: ["present-link"], count: 4 });
-    const user = ai.requests[0].messages[0].content;
-    expect(user).toContain("出 4 題");
-    expect(user).toContain("學習目標 id 只能用：present-link。");
-  });
-
-  it("reports busy while it runs and rejects an unknown topic", async () => {
+  it("never runs two refills at once", async () => {
     let release!: () => void;
     const gate = new Promise<void>((r) => (release = r));
-    const storage = new MemoryStorage();
-    const grammar = new GrammarStore({ storage });
-    const ai = new FakePreparingAi(async () => {
+    const ctx = setup();
+    await ctx.learner.ensureLoaded();
+    ctx.ai.script = async () => {
       await gate;
-      return result(JSON.stringify({ questions: [CHOICE] }));
-    });
-    const service = new QuestionService({ grammar, ai });
-    const busy: boolean[] = [];
-    service.events.on("questions:busy", (e) => busy.push(e.busy));
-    const p = service.generate(TOPIC);
-    await vi.waitFor(() => expect(service.isBusy(TOPIC)).toBe(true));
-    await expect(service.generate(TOPIC)).rejects.toThrow(/Already generating/);
-    service.stop(TOPIC);
-    expect(ai.cancelled).toEqual([questionThreadId(TOPIC)]);
+      return result(JSON.stringify(scenario()));
+    };
+    const a = ctx.service.refill(FILTER);
+    await vi.waitFor(() => expect(ctx.service.isRefilling()).toBe(true));
+    await ctx.service.refill(FILTER);
     release();
-    await p;
-    expect(service.isBusy(TOPIC)).toBe(false);
-    expect(busy).toEqual([true, false]);
-    await expect(service.generate("nope")).rejects.toThrow(/Unknown grammar topic/);
+    await a;
+    expect(ctx.ai.requests).toHaveLength(1);
+    expect(ctx.service.isRefilling()).toBe(false);
   });
 
-  it("clears busy when the AI fails", async () => {
-    const storage = new MemoryStorage();
-    const service = new QuestionService({
-      grammar: new GrammarStore({ storage }),
-      ai: new FakePreparingAi(() => result("not json at all")),
-    });
+  it("reports a failure through refill:end instead of throwing", async () => {
+    const ctx = setup("not json");
+    await ctx.learner.ensureLoaded();
+    await expect(ctx.service.refill(FILTER)).resolves.toBeUndefined();
+    expect(ctx.events).toEqual(["start", "end:error"]);
+    expect(ctx.service.isRefilling()).toBe(false);
+    expect(ctx.service.poolQuestions()).toEqual([]);
+  });
+
+  it("drops blank questions the AI still writes", async () => {
+    const ctx = await filled(scenario(6, { blank: 3 }));
+    expect(ctx.service.poolQuestions().map((q) => q.stem)).not.toContain("Sentence 3 ____ here.");
+    expect(ctx.service.poolQuestions()).toHaveLength(5);
+  });
+
+  it("carries on from the pool's last scenario and sends the learner's weak spots", async () => {
+    const ctx = await filled();
+    const [first, second, ...rest] = ctx.service.poolQuestions();
+    ctx.service.answer(first, "b", false, { hinted: false, fromMistakes: false });
+    ctx.service.answer(second, "a", true, { hinted: false, fromMistakes: false });
+    expect(rest).toHaveLength(4);
+    ctx.ai.script = () => result(JSON.stringify({ ...scenario(6), turns: scenario(6).turns.map((t, i) => ({ ...(t as object), ask: [{ ...(t as { ask: object[] }).ask[0], stem: `Next ${i} ____ now.` }] })) }));
+    await ctx.service.refill(FILTER);
+    const sys = ctx.ai.requests[1].system.map((b) => b.text).join("\n");
+    expect(sys).toContain("〔上一段〕\n場景：在咖啡店\n最後兩句：\n- Amy: Sentence 5 a here.\n- Ben: Sentence 6 a here.");
+    expect(sys).toContain(`〔學習弱點〕\n${TOPIC}/present-link（`);
+    expect(sys).toContain("錯 1 次");
+    expect(ctx.service.poolQuestions()).toHaveLength(10);
+  });
+
+  it("only sends reading sentences when the setting allows", async () => {
+    const sighting: GrammarSighting = { topicId: TOPIC, threadId: "t", turnId: "a", path: "Books/Dune.md", snapshot: "I have lost my keys and I cannot get into the house tonight.", at: "2026-10-01T00:00:00Z" };
+    const on = setup(scenario(), { sightings: () => [sighting] });
+    await on.learner.ensureLoaded();
+    await on.service.refill(FILTER);
+    const sys = on.ai.requests[0].system.map((b) => b.text).join("\n");
+    expect(sys).toContain("〔讀者讀過的句子〕\n1. I have lost my keys");
+    expect(sys).not.toContain("Dune");
+    const off = setup(scenario(), { sightings: () => [sighting], useMySentences: () => false });
+    await off.learner.ensureLoaded();
+    await off.service.refill(FILTER);
+    expect(off.ai.requests[0].system.map((b) => b.text).join("\n")).not.toContain("〔讀者讀過的句子〕\n");
+  });
+
+  it("migrated blank / retired questions leave the pool so they don't block a refill", async () => {
+    const ctx = setup();
+    await ctx.learner.ensureLoaded();
+    await ctx.grammar.ensureLoaded();
+    for (let i = 0; i < 5; i++) {
+      ctx.grammar.upsertQuestion({ id: `old${i}`, topicId: TOPIC, objectiveId: "present-link", type: "blank", stem: `Old ${i} ___.`, answer: "x", explanation: "", errorTag: "other" });
+    }
+    ctx.learner.migrateFromGrammar(ctx.grammar.questions(), []);
+    expect(ctx.learner.pool("grammar")).toHaveLength(5);
+    expect(ctx.service.poolQuestions()).toEqual([]);
+    await ctx.service.refill(FILTER);
+    expect(ctx.ai.requests).toHaveLength(1);
+    expect(ctx.learner.pool("grammar")).toHaveLength(6);
+  });
+});
+
+describe("QuestionService.answer", () => {
+  it("a wrong answer: attempt + event + out of the pool + into the 錯題區", async () => {
+    const { grammar, learner, service } = await filled();
+    const q = service.poolQuestions()[0];
+    service.answer(q, "b", false, { hinted: false, fromMistakes: false });
+    const [attempt] = grammar.attempts(TOPIC);
+    expect(attempt).toMatchObject({ questionId: q.id, correct: false, given: "b" });
+    expect(events(learner)).toEqual([
+      { id: `g:${attempt.id}`, at: attempt.at, track: "grammar", focus: { kind: "grammar-objective", id: `${TOPIC}/present-link` }, result: "wrong", given: "b", errorTag: "tense-choice", questionId: q.id },
+    ]);
+    expect(service.poolQuestions().map((x) => x.id)).not.toContain(q.id);
+    expect(service.mistakeQuestions().map((x) => x.id)).toEqual([q.id]);
+    expect(learner.pool("grammar")).toHaveLength(5);
+  });
+
+  it("a right answer leaves the pool and makes no mistake; hinted records 'hinted'", async () => {
+    const { learner, service } = await filled();
+    const [a, b] = service.poolQuestions();
+    service.answer(a, "a", true, { hinted: false, fromMistakes: false });
+    service.answer(b, "a", true, { hinted: true, fromMistakes: false });
+    expect(events(learner).map((e) => e.result)).toEqual(["correct", "hinted"]);
+    expect(events(learner)[0].errorTag).toBeUndefined();
+    expect(service.mistakeQuestions()).toEqual([]);
+    expect(service.poolQuestions()).toHaveLength(4);
+  });
+
+  it("a redo from the 錯題區 resolves on a right answer and never touches the pool", async () => {
+    const { learner, service } = await filled();
+    const q = service.poolQuestions()[0];
+    service.answer(q, "b", false, { hinted: false, fromMistakes: false });
+    const before = learner.pool("grammar").length;
+    // wrong again: stays open
+    service.answer(q, "c", false, { hinted: false, fromMistakes: true });
+    expect(service.mistakeQuestions()).toHaveLength(1);
+    // right but with a hint: stays open
+    service.answer(q, "a", true, { hinted: true, fromMistakes: true });
+    expect(service.mistakeQuestions()).toHaveLength(1);
+    service.answer(q, "a", true, { hinted: false, fromMistakes: true });
+    expect(service.mistakeQuestions()).toEqual([]);
+    expect(learner.pool("grammar")).toHaveLength(before);
+    // wrong later: the same mistake opens again
+    service.answer(q, "b", false, { hinted: false, fromMistakes: true });
+    expect(service.mistakeQuestions().map((x) => x.id)).toEqual([q.id]);
+    expect(learner.mistake(`grammar:${q.id}`)?.resolvedAt).toBeUndefined();
+  });
+
+  it("event ids follow the migration's scheme (g:<attempt id>), so a migration run never duplicates them", async () => {
+    const { grammar, learner, service } = await filled();
+    const q = service.poolQuestions()[0];
+    service.answer(q, "b", false, { hinted: false, fromMistakes: false });
+    const m = migrateGrammar(grammar.questions(), grammar.attempts(), new Date());
+    expect(m.events.map((e) => e.id)).toEqual(events(learner).map((e) => e.id));
+    expect(m.events[0]).toMatchObject({ result: "wrong", given: "b", errorTag: "tense-choice", questionId: q.id });
+  });
+
+  it("works with the older QuestionService callers (no learner): only the attempt is written", () => {
+    const grammar = new GrammarStore({ storage: new MemoryStorage() });
+    const service = new QuestionService({ grammar, ai: new FakePreparingAi(() => result("{}")) });
+    const q = grammar.upsertQuestion({ id: "q", topicId: TOPIC, objectiveId: "present-link", type: "choice", stem: "x ____", options: ["a", "b", "c"], answer: "a", explanation: "", errorTag: "other" });
+    service.answer(q, "a", true, { hinted: false, fromMistakes: false });
+    expect(grammar.attempts()).toHaveLength(1);
+  });
+});
+
+describe("QuestionService skip / retire / applyFilter", () => {
+  it("skip writes a skipped event and takes the question out of the pool, with no attempt", async () => {
+    const { grammar, learner, service, events: ev } = await filled();
+    const q = service.poolQuestions()[0];
+    ev.length = 0;
+    service.skip(q);
+    expect(events(learner)).toMatchObject([{ result: "skipped", questionId: q.id, focus: { id: `${TOPIC}/present-link` } }]);
+    expect(grammar.attempts()).toEqual([]);
+    expect(learner.pool("grammar")).toHaveLength(5);
+    expect(ev).toEqual(["pool"]);
+    // skipping it again changes nothing in the pool
+    service.skip(q);
+    expect(learner.pool("grammar")).toHaveLength(5);
+  });
+
+  it("retire (a question or its id) keeps the old behaviour and also leaves pool and 錯題區", async () => {
+    const { grammar, learner, service } = await filled();
+    const [a, b] = service.poolQuestions();
+    service.answer(a, "b", false, { hinted: false, fromMistakes: false });
+    expect(service.mistakeQuestions()).toHaveLength(1);
+    const retired = service.retire(a)!;
+    expect(retired.retiredAt).toBeTruthy();
+    expect(service.mistakeQuestions()).toEqual([]);
+    service.retire(b.id);
+    expect(grammar.question(b.id)!.retiredAt).toBeTruthy();
+    expect(service.poolQuestions().map((q) => q.id)).not.toContain(b.id);
+    expect(events(learner).map((e) => e.result)).toEqual(["wrong", "retired", "retired"]);
+    // again / unknown: nothing more
+    expect(service.retire(a)!.retiredAt).toBe(retired.retiredAt);
+    expect(service.retire("missing")).toBeUndefined();
+    expect(grammar.questions(TOPIC)).toHaveLength(6);
+  });
+
+  it("applyFilter moves pool questions outside the filter out as 'filtered', without events", async () => {
+    const { learner, grammar, service, events: ev } = await filled();
+    const q = service.poolQuestions()[0];
+    grammar.upsertQuestion({ ...q, topicId: "past-simple", objectiveId: topicById("past-simple")!.objectives[0].id });
+    ev.length = 0;
+    service.applyFilter(FILTER);
+    expect(service.poolQuestions()).toHaveLength(5);
+    expect(learner.pool("grammar")).toHaveLength(5);
+    expect(events(learner)).toEqual([]);
+    expect(ev).toEqual(["pool"]);
+    // nothing outside any more: no change event
+    ev.length = 0;
+    service.applyFilter(FILTER);
+    expect(ev).toEqual([]);
+    // the whole stage-2 list also keeps it out of stage 1
+    service.applyFilter({ stages: [3], topics: [] });
+    expect(service.poolQuestions()).toEqual([]);
+  });
+});
+
+describe("QuestionService scenario end", () => {
+  it("the last question leaving the pool schedules each topic of the scenario once", async () => {
+    const { grammar, service } = await filled();
+    const qs = service.poolQuestions();
+    for (const q of qs.slice(0, 5)) service.answer(q, "a", true, { hinted: false, fromMistakes: false });
+    expect(grammar.progress(TOPIC)?.srs).toBeUndefined();
+    service.answer(qs[5], "a", true, { hinted: false, fromMistakes: false });
+    const srs = grammar.progress(TOPIC)?.srs;
+    expect(srs?.reps).toBe(1);
+    // the pool is empty now, nothing more is scheduled by leaving again
+    service.skip(qs[5]);
+    expect(grammar.progress(TOPIC)?.srs?.reps).toBe(1);
+  });
+
+  it("a skipped or retired last question also closes the scenario; 👎 answers don't count", async () => {
+    const { grammar, service } = await filled();
+    const qs = service.poolQuestions();
+    service.answer(qs[0], "b", false, { hinted: false, fromMistakes: false });
+    service.retire(qs[0]);
+    for (const q of qs.slice(1, 5)) service.answer(q, "a", true, { hinted: false, fromMistakes: false });
+    service.skip(qs[5]);
+    // 4 right answers, the wrong one was retired, one skipped
+    expect(grammar.progress(TOPIC)?.srs?.reps).toBe(1);
+  });
+
+  it("a redo from the 錯題區 doesn't close anything", async () => {
+    const { grammar, service } = await filled();
+    const qs = service.poolQuestions();
+    service.answer(qs[0], "b", false, { hinted: false, fromMistakes: false });
+    service.answer(qs[0], "a", true, { hinted: false, fromMistakes: true });
+    expect(grammar.progress(TOPIC)?.srs).toBeUndefined();
+  });
+
+  it("two scenarios in the pool close one after the other", async () => {
+    const ctx = await filled();
+    const first = ctx.service.poolQuestions();
+    for (const q of first.slice(0, 3)) ctx.service.skip(q);
+    ctx.ai.script = () => result(JSON.stringify({ ...scenario(6), turns: scenario(6).turns.map((t, i) => ({ ...(t as object), ask: [{ ...(t as { ask: object[] }).ask[0], stem: `Second ${i} ____ now.` }] })) }));
+    await ctx.service.refill(FILTER);
+    // the first scenario's 3 left are still there -> not closed
+    for (const q of first.slice(3)) ctx.service.answer(q, "a", true, { hinted: false, fromMistakes: false });
+    expect(ctx.grammar.progress(TOPIC)?.srs?.reps).toBe(1);
+    for (const q of ctx.service.poolQuestions()) ctx.service.answer(q, "a", true, { hinted: false, fromMistakes: false });
+    expect(ctx.grammar.progress(TOPIC)?.srs?.reps).toBe(2);
+  });
+});
+
+describe("QuestionService.generate (older entry point)", () => {
+  it("stores a scenario for one topic in the bank without touching the pool", async () => {
+    const { grammar, learner, ai, service } = setup(scenario(4));
+    const out = await service.generate(TOPIC, { count: 4 });
+    expect(out).toHaveLength(4);
+    expect(grammar.questions(TOPIC)).toHaveLength(4);
+    expect(service.pool(TOPIC)).toHaveLength(4);
+    expect(learner.pool("grammar")).toEqual([]);
+    expect(ai.threadIds).toEqual([questionThreadId(TOPIC)]);
+    expect(ai.requests[0].messages[0].content).toContain("出 4 題");
+  });
+
+  it("is bad_output when every question is a repeat; busy is reported and cleared", async () => {
+    const { service } = setup(scenario(2));
+    const busy: boolean[] = [];
+    service.events.on("questions:busy", (e) => busy.push(e.busy));
+    await service.generate(TOPIC);
     await expect(service.generate(TOPIC)).rejects.toMatchObject({ code: "bad_output" });
     expect(service.isBusy(TOPIC)).toBe(false);
+    expect(busy).toEqual([true, false, true, false]);
+    await expect(service.generate("nope")).rejects.toThrow(/Unknown grammar topic/);
+  });
+});
+
+describe("questionLine / mapping", () => {
+  it("puts the answer back and names the speaker", () => {
+    const base = { id: "q", topicId: TOPIC, objectiveId: "x", explanation: "", errorTag: "other" as const };
+    expect(questionLine({ ...base, type: "choice", stem: "I ____ it.", answer: "saw", scenario: { id: "s", scene: "x", seq: 1, speaker: "Amy" } })).toBe("Amy: I saw it.");
+    expect(questionLine({ ...base, type: "find-error", stem: "He go home.", answer: "go", accepted: ["goes"] })).toBe("He goes home.");
   });
 });
 
 describe("QuestionService bank", () => {
-  async function withBank() {
-    const ctx = setup();
-    await ctx.service.generate(TOPIC);
-    return ctx;
-  }
-
-  it("retire hides a question from the pool but keeps it stored", async () => {
-    const { grammar, service } = await withBank();
-    const retired = service.retire("id1")!;
-    expect(retired.retiredAt).toBeTruthy();
-    expect(service.pool(TOPIC).map((q) => q.id)).toEqual(["id2"]);
-    expect(grammar.questions(TOPIC)).toHaveLength(2);
-    // retiring twice or an unknown id changes nothing
-    const again = service.retire("id1")!;
-    expect(again.retiredAt).toBe(retired.retiredAt);
-    expect(service.retire("missing")).toBeUndefined();
-  });
-
   it("record stores the attempt and stamps the topic's progress", async () => {
-    const { grammar, service } = await withBank();
-    const q = grammar.question("id1") as GrammarQuestion;
+    const { grammar, service } = await filled();
+    const q = grammar.question(service.poolQuestions()[0].id) as GrammarQuestion;
     const a = service.record(q, "lost", false);
-    expect(a).toMatchObject({ questionId: "id1", topicId: TOPIC, objectiveId: "present-link", correct: false, given: "lost" });
-    expect(grammar.attempts(TOPIC)).toHaveLength(1);
+    expect(a).toMatchObject({ questionId: q.id, topicId: TOPIC, correct: false, given: "lost" });
     expect(grammar.progress(TOPIC)?.lastPracticedAt).toBe(a.at);
-    // an srs card already on the progress row is kept
     grammar.upsertProgress({ id: TOPIC, srs: { due: "2026-11-01T00:00:00Z" } as never, lastPracticedAt: "2026-10-01T00:00:00Z" });
     const b = service.record(q, "have lost", true);
     expect(grammar.progress(TOPIC)).toMatchObject({ lastPracticedAt: b.at, srs: { due: "2026-11-01T00:00:00Z" } });
-    expect(grammar.attempts(TOPIC).map((x) => x.correct)).toEqual([false, true]);
   });
 
-  it("everything reaches grammar.json", async () => {
+  it("everything reaches grammar.json and learner.json", async () => {
     vi.useFakeTimers();
-    const { storage, grammar, service } = setup();
-    await service.generate(TOPIC);
-    service.record(grammar.question("id1")!, "lost", false);
+    const { storage, grammar, learner, service } = setup();
+    await learner.ensureLoaded();
+    await service.refill(FILTER);
+    service.answer(service.poolQuestions()[0], "b", false, { hinted: false, fromMistakes: false });
     await vi.advanceTimersByTimeAsync(500);
     await grammar.flush();
-    const saved = storage.shards.get(GRAMMAR_SHARD) as { questions: unknown[]; attempts: unknown[]; progress: unknown[] };
-    expect([saved.questions.length, saved.attempts.length, saved.progress.length]).toEqual([2, 1, 1]);
+    await learner.flush();
+    const g = storage.shards.get(GRAMMAR_SHARD) as { questions: unknown[]; attempts: unknown[] };
+    expect([g.questions.length, g.attempts.length]).toEqual([6, 1]);
+    const l = storage.shards.get("learner") as { events: unknown[]; pool: unknown[]; mistakes: unknown[] };
+    expect([l.events.length, l.pool.length, l.mistakes.length]).toEqual([1, 6, 1]);
     vi.useRealTimers();
-  });
-
-  it("the knownTopicTitles it sends come from what the learner has practised", async () => {
-    const { grammar, ai, service } = setup();
-    await service.generate(TOPIC);
-    grammar.addAttempt({ id: "a1", questionId: "x", topicId: "be-verb", objectiveId: "subject-be", at: "2026-10-01T00:00:00Z", correct: true, given: "x" });
-    ai.requests.length = 0;
-    // second batch is all repeats -> rejected, but the request was still built from the bank
-    await expect(service.generate(TOPIC)).rejects.toMatchObject({ code: "bad_output" });
-    expect(ai.requests[0].system.map((b) => b.text).join("\n")).toContain("〔已學過的文法〕be 動詞");
   });
 });
 
@@ -260,102 +492,6 @@ describe("QuestionService.finishSession", () => {
   });
 });
 
-// ── R2 ────────────────────────────────────────────────────────────
-
-const READ = "I have lost my keys and I cannot get into the house tonight.";
-const sighting = (extra: Partial<GrammarSighting> = {}): GrammarSighting => ({
-  topicId: TOPIC,
-  threadId: "t1",
-  turnId: "a1",
-  path: "Books/Dune.md",
-  snapshot: READ,
-  at: "2026-10-01T00:00:00Z",
-  ...extra,
-});
-
-describe("QuestionService.generate — reading sentences", () => {
-  function withSentences(reply: unknown, opts: { use?: () => boolean; sightings?: () => GrammarSighting[] } = {}) {
-    const storage = new MemoryStorage();
-    const grammar = new GrammarStore({ storage });
-    const ai = new FakePreparingAi(() => result(JSON.stringify(reply)));
-    let seq = 0;
-    const service = new QuestionService({
-      grammar,
-      ai,
-      newId: () => `id${++seq}`,
-      sightings: opts.sightings ?? (() => [sighting()]),
-      useMySentences: opts.use,
-    });
-    return { ai, grammar, service };
-  }
-
-  it("puts the sentences in the prompt and stores the source of a question that names one", async () => {
-    const { ai, service } = withSentences({ questions: [{ ...CHOICE, sourceIndex: 1 }, BLANK] });
-    const out = await service.generate(TOPIC);
-    const text = ai.requests[0].system.map((b) => b.text).join("\n");
-    expect(text).toContain(`〔讀者讀過的句子〕\n1. ${READ}`);
-    expect(text).not.toContain("Dune");
-    expect(out[0].source).toEqual({ path: "Books/Dune.md", sentence: READ });
-    expect(out[1].source).toBeUndefined();
-  });
-
-  it("sends no sentence when the setting is off (and doesn't even read the sightings)", async () => {
-    const sightings = vi.fn(() => [sighting()]);
-    const { ai, service } = withSentences({ questions: [CHOICE] }, { use: () => false, sightings });
-    await service.generate(TOPIC);
-    expect(ai.requests[0].system.map((b) => b.text).join("\n")).not.toContain("〔讀者讀過的句子〕\n");
-    expect(sightings).not.toHaveBeenCalled();
-  });
-
-  it("is on by default, and a sightings source that throws just means no sentences", async () => {
-    const on = withSentences({ questions: [CHOICE] });
-    await on.service.generate(TOPIC);
-    expect(on.ai.requests[0].system.some((b) => b.text.startsWith("〔讀者讀過的句子〕"))).toBe(true);
-    const broken = withSentences({ questions: [CHOICE] }, {
-      sightings: () => {
-        throw new Error("boom");
-      },
-    });
-    await broken.service.generate(TOPIC);
-    expect(broken.ai.requests[0].system.some((b) => b.text.startsWith("〔讀者讀過的句子〕"))).toBe(false);
-  });
-
-  it("ignores sightings of other topics", async () => {
-    const { ai, service } = withSentences({ questions: [CHOICE] }, { sightings: () => [sighting({ topicId: "past-simple" })] });
-    await service.generate(TOPIC);
-    expect(ai.requests[0].system.some((b) => b.text.startsWith("〔讀者讀過的句子〕"))).toBe(false);
-  });
-});
-
-describe("QuestionService.generate — open questions", () => {
-  const REWRITE = {
-    objectiveId: "present-link",
-    type: "rewrite",
-    stem: "改寫成現在完成式：I lost my keys.",
-    options: [],
-    answer: "I have lost my keys.",
-    accepted: [],
-    explanation: "結果連到現在。",
-    distractors: [],
-    errorTag: "tense-choice",
-    sourceIndex: 0,
-  };
-
-  it("stores a rewrite question from a topic of difficulty >= 4", async () => {
-    const { service, grammar } = setup({ questions: [CHOICE, REWRITE] });
-    const out = await service.generate(TOPIC);
-    expect(out.map((q) => q.type)).toEqual(["choice", "rewrite"]);
-    expect(grammar.question(out[1].id)).toMatchObject({ type: "rewrite", answer: "I have lost my keys." });
-  });
-
-  it("drops it on a topic below difficulty 4", async () => {
-    const low = topicById("past-simple")!;
-    const objective = low.objectives[0].id;
-    const { service } = setup({ questions: [{ ...REWRITE, objectiveId: objective }, { ...CHOICE, objectiveId: objective }] });
-    const out = await service.generate(low.id);
-    expect(out.map((q) => q.type)).toEqual(["choice"]);
-  });
-});
 
 describe("QuestionService.grade", () => {
   const OPEN: GrammarQuestion = {
