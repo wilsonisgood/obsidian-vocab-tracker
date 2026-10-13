@@ -99,6 +99,25 @@ export class LearnerModel {
     return lastAt ? { correct, wrong, lastAt } : { correct, wrong };
   }
 
+  // For the 常用字 sense map (Q's progressDot): hinted is not a "right"
+  // answer, so it counts on the wrong side; skipped / retired don't count.
+  // `recent` = the last 3 outcomes, newest last.
+  senseStats(id: string): { correct: number; wrong: number; recent: boolean[] } {
+    let correct = 0;
+    let wrong = 0;
+    const seq: { at: number; ok: boolean }[] = [];
+    for (const e of this.deps.learner.learnEvents({ focusId: id })) {
+      if (e.focus.kind !== "sense") continue;
+      if (e.result !== "correct" && e.result !== "wrong" && e.result !== "hinted") continue;
+      const ok = e.result === "correct";
+      if (ok) correct++;
+      else wrong++;
+      seq.push({ at: Date.parse(e.at), ok });
+    }
+    seq.sort((a, b) => a.at - b.at);
+    return { correct, wrong, recent: seq.slice(-3).map((x) => x.ok) };
+  }
+
   private vocab(now: Date): LearnerSnapshot["vocab"] {
     const out = { total: 0, learning: 0, mature: 0, due: 0 };
     for (const e of this.deps.vocab()) {

@@ -109,6 +109,25 @@ describe("LearnerModel.focusStats", () => {
   });
 });
 
+describe("LearnerModel.senseStats", () => {
+  it("keeps the last 3 outcomes newest last; hinted is not right; skipped / retired ignored", () => {
+    const m = make({
+      events: [
+        ev("1", "s", "wrong", "2026-10-01T00:00:00Z"),
+        ev("2", "s", "correct", "2026-10-04T00:00:00Z"),
+        ev("3", "s", "skipped", "2026-10-05T00:00:00Z"),
+        ev("4", "s", "hinted", "2026-10-03T00:00:00Z"),
+        ev("5", "s", "correct", "2026-10-06T00:00:00Z"),
+        ev("6", "s", "retired", "2026-10-07T00:00:00Z"),
+        ev("7", "w", "correct", "2026-10-06T00:00:00Z", "word"),
+      ],
+    });
+    expect(m.senseStats("s")).toEqual({ correct: 2, wrong: 2, recent: [false, true, true] });
+    expect(m.senseStats("w")).toEqual({ correct: 0, wrong: 0, recent: [] });
+    expect(m.senseStats("none")).toEqual({ correct: 0, wrong: 0, recent: [] });
+  });
+});
+
 describe("renderProfile learner summary", () => {
   afterEach(() => setProfileDeps({}));
   setLocale("zh-TW");
