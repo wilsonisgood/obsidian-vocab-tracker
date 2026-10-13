@@ -861,12 +861,17 @@ describe("events, flush and dispose", () => {
     await vi.advanceTimersByTimeAsync(1000);
     expect(vault.exists(GLITTERY_PAGE)).toBe(false);
 
-    // An existing page picks up the breakdown's「## 字根」section.
-    vault.files.set(GLITTERY_PAGE, "---\nvocab-tracker: word\n---\n");
+    // An existing page drops the retired「## 字根」section an older version
+    // wrote (1010-2) — the header's 字根 fold shows the breakdown now.
+    vault.files.set(
+      GLITTERY_PAGE,
+      "---\nvocab-tracker: word\n---\n%% vt:begin morphemes %%\n## 字根\n\nold\n%% vt:end morphemes %%\n\nmy notes\n"
+    );
     learn.emit("wordMeta:upsert", { id: GLITTERY.id, breakdown: data.breakdownMap.get(GLITTERY.id) });
     await vi.advanceTimersByTimeAsync(1000);
-    expect(vault.files.get(GLITTERY_PAGE)).toContain("## 字根");
-    expect(vault.files.get(GLITTERY_PAGE)).toContain("glitter（閃光） → 閃亮的");
+    expect(vault.files.get(GLITTERY_PAGE)).not.toContain("## 字根");
+    expect(vault.files.get(GLITTERY_PAGE)).not.toContain("vt:begin morphemes");
+    expect(vault.files.get(GLITTERY_PAGE)).toContain("my notes");
   });
 
   it("a renewed family also updates the pages of members it dropped (1005 #14)", () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyManagedBlocks,
+  removeManagedBlock,
   beginMarker,
   buildManagedFile,
   endMarker,
@@ -385,5 +386,20 @@ describe("replaceManagedBlock — generated documents", () => {
       if (!nested) expect(contentOf(again, "b")).toBe(contentOf(out, "b"));
       expect(replaceManagedBlock(again, sec("a", "second"))).toBe(again);
     }
+  });
+});
+
+describe("removeManagedBlock", () => {
+  it("drops both markers, the body and one blank line after, keeping the rest byte for byte", () => {
+    const text = "head\n\n%% vt:begin old %%\n## 字根\n\nx\n%% vt:end old %%\n\n%% vt:begin keep %%\nk\n%% vt:end keep %%\n";
+    expect(removeManagedBlock(text, "old")).toBe("head\n\n%% vt:begin keep %%\nk\n%% vt:end keep %%\n");
+  });
+
+  it("handles CRLF and a block at the very end without a trailing newline", () => {
+    expect(removeManagedBlock("a\r\n%% vt:begin old %%\r\nx\r\n%% vt:end old %%", "old")).toBe("a\r\n");
+  });
+
+  it("returns the text unchanged when the section isn't there", () => {
+    expect(removeManagedBlock("a\nb\n", "old")).toBe("a\nb\n");
   });
 });

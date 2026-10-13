@@ -1,7 +1,7 @@
 import type { Thread } from "../../core/model/thread";
 import { joinPath, linkTarget, MAX_NAME_BYTES, noteBasename, slugify, utf8Bytes, wordSlug } from "../../core/text/slug";
 import { exportLabels } from "./labels";
-import { applyManagedBlocks, type ManagedSection } from "./managedBlock";
+import { applyManagedBlocks, removeManagedBlock, type ManagedSection } from "./managedBlock";
 import type { CreateMode, VaultPort } from "../../core/ports";
 import { DEFAULT_EXPORT_FOLDERS, type ExportDataPort, type ExportFolders } from "./ports";
 import {
@@ -23,6 +23,7 @@ import {
   mentionsEntry,
   renderWordPageFile,
   renderWordPageSections,
+  RETIRED_WORD_PAGE_SECTIONS,
   type WordPageInput,
 } from "./renderers/wordPage";
 import type { ExportFamily, ExportLabels, ExportTrivia, ExportVerbFavorite, RenderContext } from "./types";
@@ -403,7 +404,12 @@ export class ExportService {
   // Updates the managed sections of an existing file, or creates the file
   // when allowed. If the file appears between the check and the create
   // (another device's sync, the user), falls back to updating it.
-  private async write(path: string, sections: ManagedSection[], create: (() => string) | null): Promise<void> {
+  private async write(
+    path: string,
+    sections: ManagedSection[],
+    create: (() => string) | null,
+    retired: readonly string[] = []
+  ): Promise<void> {
     const { vault } = this.deps;
     if (!vault.exists(path)) {
       if (!create) return;
@@ -414,7 +420,9 @@ export class ExportService {
         if (!vault.exists(path)) throw e;
       }
     }
-    await vault.process(path, (text) => applyManagedBlocks(text, sections));
+    await vault.process(path, (text) =>
+      retired.reduce((t, name) => removeManagedBlock(t, name), applyManagedBlocks(text, sections))
+    );
   }
 
   private async writeWord(path: string, entryId: string, create: CreateMode): Promise<void> {
@@ -433,7 +441,12 @@ export class ExportService {
     };
     const ctx = this.context();
     const allowed = create === "always" || (create === "ifContent" && hasWordPageContent(input));
-    await this.write(path, renderWordPageSections(input, ctx), allowed ? () => renderWordPageFile(input, ctx) : null);
+    await this.write(
+      path,
+      renderWordPageSections(input, ctx),
+      allowed ? () => renderWordPageFile(input, ctx) : null,
+      RETIRED_WORD_PAGE_SECTIONS
+    );
   }
 
   // Finds the article's note — where it was last seen, by its frontmatter

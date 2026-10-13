@@ -160,6 +160,20 @@ export function applyManagedBlocks(text: string, sections: readonly ManagedSecti
   return out;
 }
 
+// Drops a retired section — both markers and everything between — plus
+// one blank line after it, so the gap it leaves doesn't grow. A file
+// without the section is returned as is.
+export function removeManagedBlock(text: string, name: string): string {
+  const range = findManagedBlock(text, name);
+  if (!range) return text;
+  const start = text.lastIndexOf("\n", range.contentStart - 2) + 1;
+  const nl = text.indexOf("\n", range.contentEnd);
+  let end = nl === -1 ? text.length : nl + 1;
+  const blank = /^[ \t]*\r?\n/.exec(text.slice(end));
+  if (blank) end += blank[0].length;
+  return text.slice(0, start) + text.slice(end);
+}
+
 // A brand-new file: `head` (frontmatter, code blocks…), then each section,
 // then `tail` (e.g. the hint above the user's own notes).
 export function buildManagedFile(head: string, sections: readonly ManagedSection[], tail = ""): string {

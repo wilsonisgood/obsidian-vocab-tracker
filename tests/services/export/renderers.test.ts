@@ -11,6 +11,7 @@ import {
   renderMorphemeList,
   renderWordPageFile,
   renderWordPageSections,
+  RETIRED_WORD_PAGE_SECTIONS,
   triviaAbout,
   triviaMentioning,
   type WordPageInput,
@@ -219,16 +220,11 @@ describe("morphemes section (09 §7.1)", () => {
     expect(renderMorphemeList(parts)).toEqual(["- ex-：出", "- pel：推", "- -ful：充滿"]);
   });
 
-  it("only puts a「## 字根」section in when the breakdown is status: ok", () => {
+  it("never puts a「## 字根」section in — the header's 字根 fold shows it (1010-2)", () => {
     const names = (b?: WordBreakdown) => renderWordPageSections({ ...FULL, breakdown: b }, ctx()).map((s) => s.name);
     expect(names(undefined)).toEqual(["families", "usage", "trivia", "discussion"]);
-    expect(names({ ...BREAKDOWN_OK, status: "none", parts: [] })).toEqual(["families", "usage", "trivia", "discussion"]);
-    expect(names(BREAKDOWN_OK)).toEqual(["families", "morphemes", "usage", "trivia", "discussion"]);
-  });
-
-  it("renders the section body (snapshot)", () => {
-    const body = renderWordPageSections({ ...FULL, breakdown: BREAKDOWN_OK }, ctx()).find((s) => s.name === "morphemes")!.body;
-    expect(body).toMatchSnapshot();
+    expect(names(BREAKDOWN_OK)).toEqual(["families", "usage", "trivia", "discussion"]);
+    expect(RETIRED_WORD_PAGE_SECTIONS).toContain("morphemes");
   });
 });
 

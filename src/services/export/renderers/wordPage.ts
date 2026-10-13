@@ -218,19 +218,19 @@ export function renderMorphemes(breakdown: Pick<WordBreakdown, "parts" | "gloss"
   return [renderBreakdownLine(breakdown), ...renderMorphemeList(breakdown.parts)].join("\n");
 }
 
+// Sections earlier versions wrote to 單字頁 that exports now remove.
+export const RETIRED_WORD_PAGE_SECTIONS: readonly string[] = ["morphemes"];
+
 export function renderWordPageSections(input: WordPageInput, ctx: RenderContext): ManagedSection[] {
-  const sections: ManagedSection[] = [section("families", ctx.labels.families, renderFamilies(input, ctx))];
-  // Only a completed, splittable breakdown gets a section at all — "none"
-  // and "never analyzed" both leave 單字頁 exactly as before M9 (決定 1/5).
-  if (input.breakdown?.status === "ok") {
-    sections.push(section("morphemes", ctx.labels.morphemes, renderMorphemes(input.breakdown)));
-  }
-  sections.push(
+  // No "morphemes" section any more (1010-2): the vocab-word header's 字根
+  // fold shows the breakdown, and the plain-markdown copy sat unfolded at
+  // the bottom of the page. Old pages lose it via RETIRED_WORD_PAGE_SECTIONS.
+  return [
+    section("families", ctx.labels.families, renderFamilies(input, ctx)),
     section("usage", ctx.labels.usage, renderUsage(input, ctx)),
     section("trivia", ctx.labels.trivia, renderTrivia(input, ctx)),
-    section("discussion", ctx.labels.discussion, renderDiscussion(input, ctx))
-  );
-  return sections;
+    section("discussion", ctx.labels.discussion, renderDiscussion(input, ctx)),
+  ];
 }
 
 // The whole file, for when the page doesn't exist yet. Later exports only
