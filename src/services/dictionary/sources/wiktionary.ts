@@ -19,6 +19,9 @@ interface Sense {
   // A {{lb}} label (dialectal, obsolete, slang…) on the sense itself. The
   // REST API blanks the label text, so only its presence is known.
   labeled: boolean;
+  // Lemma of a form-of sense ("plural of stress" → "stress"), read from the
+  // form-of-definition-link before toText strips the markup (1010-2 A1).
+  baseForm?: string;
 }
 
 // One raw sense → plain text. Nested <ol>/<ul> sub-senses are dropped —
@@ -32,7 +35,10 @@ function parseSense(partOfSpeech: string, html: string): Sense | null {
   if (/^<i>[\s\S]*<\/i>$/.test(head) || /^<span class="use-with-mention"[^>]*>[^<]*<\/span>$/.test(head)) return null;
   const definition = toText(head);
   if (!definition) return null;
-  return { partOfSpeech, definition, labeled: head.includes("usage-label-sense") };
+  const base = /class="form-of-definition-link"[\s\S]*?title="([^"]+)"/.exec(head)?.[1];
+  const sense: Sense = { partOfSpeech, definition, labeled: head.includes("usage-label-sense") };
+  if (base) sense.baseForm = toText(base);
+  return sense;
 }
 
 function toText(html: string): string {
@@ -79,7 +85,7 @@ export function pickWiktionarySense(entries: WiktionaryEntry[]): Sense | null {
 export async function fetchWiktionaryDefinition(
   http: HttpPort,
   w: string
-): Promise<{ definition: string; partOfSpeech: string }> {
+): Promise<{ definition: string; partOfSpeech: string; baseForm?: string }> {
   let res;
   try {
     res = await http.get(`https://en.wiktionary.org/api/rest_v1/page/definition/${http.encodeQueryParam(w)}`);
@@ -98,5 +104,10 @@ export async function fetchWiktionaryDefinition(
   const sense = pickWiktionarySense(Array.isArray(data?.en) ? data.en : []);
   if (!sense) throw new Error(`"${w}" not found in dictionary`);
 
-  return { definition: sense.definition, partOfSpeech: sense.partOfSpeech };
+  const out: { definition: string; partOfSpeech: string; baseForm?: string } = {
+    definition: sense.definition,
+    partOfSpeech: sense.partOfSpeech,
+  };
+  if (sense.baseForm) out.baseForm = sense.baseForm;
+  return out;
 }

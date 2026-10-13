@@ -25,6 +25,8 @@ describe("DictionaryService.fetchDictionary", () => {
       partOfSpeech: "noun",
       definition: "a test thing",
       definitionZh: "測試",
+      formOf: "",
+      sensesZh: "",
       synonyms: ["exam"],
       antonyms: ["disorder"],
     });

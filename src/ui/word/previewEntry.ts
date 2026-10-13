@@ -50,6 +50,8 @@ export function mergeDictionaryInto(entry: VocabEntry, data: DictionaryResult): 
   if (!entry.partOfSpeech) entry.partOfSpeech = data.partOfSpeech;
   if (!entry.definition) entry.definition = data.definition;
   if (!entry.definitionZh) entry.definitionZh = data.definitionZh;
+  if (!entry.formOf) entry.formOf = data.formOf ?? "";
+  if (!entry.sensesZh) entry.sensesZh = data.sensesZh ?? "";
   if (!entry.synonyms) entry.synonyms = data.synonyms.join(", ");
   if (!entry.antonyms) entry.antonyms = data.antonyms.join(", ");
 }

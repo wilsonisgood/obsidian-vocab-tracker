@@ -146,3 +146,15 @@ describe("loadPreviewDictionary (session cache)", () => {
     expect(state.error).toBe(boom);
   });
 });
+
+describe("mergeDictionaryInto formOf / sensesZh (1010-2)", () => {
+  it("copies the new fields when empty, keeps existing ones", () => {
+    const e = draftEntry("stresses");
+    mergeDictionaryInto(e, dict({ formOf: "plural of stress", sensesZh: "n. 壓力" }));
+    expect(e.formOf).toBe("plural of stress");
+    expect(e.sensesZh).toBe("n. 壓力");
+    mergeDictionaryInto(e, dict({ formOf: "other", sensesZh: "v. 別的" }));
+    expect(e.formOf).toBe("plural of stress");
+    expect(e.sensesZh).toBe("n. 壓力");
+  });
+});

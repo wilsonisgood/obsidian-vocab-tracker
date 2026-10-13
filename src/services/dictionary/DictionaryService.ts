@@ -3,7 +3,7 @@ import type { DictionaryResult } from "../../core/model/dictionary";
 import { errorMessage } from "../../core/errorMessage";
 import { fetchWiktionaryDefinition } from "./sources/wiktionary";
 import { fetchDatamuseDefinition, fetchDatamuseRelated } from "./sources/datamuse";
-import { translateWithGoogle } from "./translate/google";
+import { translateWithGoogle, translateWithGoogleSenses } from "./translate/google";
 import { translateWithMyMemory } from "./translate/mymemory";
 
 export class DictionaryService {
@@ -18,17 +18,40 @@ export class DictionaryService {
     const synPromise = fetchDatamuseRelated(this.http, w, "rel_syn");
     const antPromise = fetchDatamuseRelated(this.http, w, "rel_ant");
 
-    const { definition, partOfSpeech } = await defPromise;
+    const found = await defPromise;
+    let { definition, partOfSpeech } = found;
+    // 1010-2 A1: "plural of stress" → define the lemma, keep the form-of
+    // sentence as formOf. Lemma lookup failing keeps the sentence.
+    let formOf = "";
+    if (found.baseForm && found.baseForm.toLowerCase() !== w) {
+      try {
+        const base = await fetchWiktionaryDefinition(this.http, found.baseForm.toLowerCase());
+        formOf = definition;
+        definition = base.definition;
+        partOfSpeech = base.partOfSpeech;
+      } catch {
+        // keep the form-of sentence as the definition
+      }
+    }
     // 1010-2: translate the word itself (attic → 閣樓, scudded → its
     // meaning) — translating the long definition gave wordy, pointless
     // glosses. Falls back to the definition when Google echoes the word.
-    const wordZh = await this.translateToZhTW(w);
+    const { text: wordZh, sensesZh } = await this.translateWordWithSenses(w);
     const definitionZh =
       wordZh && wordZh.trim().toLowerCase() !== w ? wordZh : await this.translateToZhTW(definition);
     const synonyms = await synPromise;
     const antonyms = await antPromise;
 
-    return { phonetic: "", audio: "", partOfSpeech, definition, definitionZh, synonyms, antonyms };
+    return { phonetic: "", audio: "", partOfSpeech, definition, definitionZh, synonyms, antonyms, formOf, sensesZh };
+  }
+
+  // Google with the dt=bd senses; MyMemory fallback has none ("").
+  private async translateWordWithSenses(w: string): Promise<{ text: string; sensesZh: string }> {
+    try {
+      return await translateWithGoogleSenses(this.http, w);
+    } catch {
+      return { text: await this.translateToZhTW(w), sensesZh: "" };
+    }
   }
 
   // Translation is a bonus — failure here must not sink the definition
@@ -47,7 +70,7 @@ export class DictionaryService {
     }
   }
 
-  private async fetchDefinition(w: string): Promise<{ definition: string; partOfSpeech: string }> {
+  private async fetchDefinition(w: string): Promise<{ definition: string; partOfSpeech: string; baseForm?: string }> {
     try {
       return await fetchWiktionaryDefinition(this.http, w);
     } catch (primaryErr) {
