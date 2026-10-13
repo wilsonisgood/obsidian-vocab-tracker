@@ -75,7 +75,7 @@ describe("BackupService.create", () => {
     expect(calls).toEqual(["flush"]);
     expect(path).toBe(".obsidian/plugins/vocab-tracker/backup/full-2026-10-01T10-00-00.000Z-manual.json");
     const file = storage.backups.get("full-2026-10-01T10-00-00.000Z-manual.json") as { shards: Record<string, unknown> };
-    expect(Object.keys(file.shards).sort()).toEqual(["data", "files", "grammar", "imports", "learn", "reviews", "threads", "usage"]);
+    expect(Object.keys(file.shards).sort()).toEqual(["data", "files", "grammar", "imports", "learn", "learner", "reviews", "threads", "usage"]);
   });
 });
 
