@@ -56,3 +56,12 @@ describe("ObsidianStorage — backups", () => {
     });
   });
 });
+
+describe("ObsidianStorage — grammar shard", () => {
+  it("reads and writes store/grammar.json", async () => {
+    const { storage: s } = storage();
+    expect(await s.readShard("grammar")).toBeNull();
+    await s.writeShard("grammar", { v: 1 });
+    expect(await s.readShard("grammar")).toEqual({ v: 1 });
+  });
+});
