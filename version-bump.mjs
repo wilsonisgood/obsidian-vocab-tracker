@@ -8,7 +8,7 @@
 // 之後 "version" script 會 `git add package.json manifest.json versions.json`。
 //
 // .npmrc 設了 git-tag-version=false：npm version 只改檔、不自動 commit / 打 tag，
-// 打 tag 是發版時另外手動做的一步（見 docs/plans/05-brat-release-guide.md）。
+// 打 tag 由發版腳本另外做（見 release.sh）。
 import { readFileSync, writeFileSync } from "fs";
 import process from "process";
 

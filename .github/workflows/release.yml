@@ -6,7 +6,7 @@
 #   不同版本的 esbuild / typescript / ts-fsrs，build 出來的 main.js 跟本機測過、
 #   已 commit 的不一樣。所以這裡直接上傳 tag 指向的 commit 裡的 main.js、
 #   styles.css、manifest.json —— 也就是在本機跑過 `npm run check`、實際測過的
-#   那一份。發版前請在本機確認 build 產物已 commit（見 docs/plans/05-brat-release-guide.md）。
+#   那一份。release.sh 會先 npm run check 再把 build 產物 commit 進去。
 #
 # 版號規則（BRAT 以 tag 為準，tag、release 名稱、manifest.json 的 version 要一字不差）：
 #   - 版號只用純數字 X.Y.Z（例如 2.0.0），不接受帶 "-" 的版號（2.0.0-beta.1 這類）

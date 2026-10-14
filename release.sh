@@ -156,6 +156,10 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   die "已追蹤的檔案有未 commit 的修改，請先 commit 或還原（untracked 檔案不受影響）。"
 fi
 
+# 沒有 workflow，推了 tag 也不會有 release，只會白等 5 分鐘。
+git cat-file -e HEAD:.github/workflows/release.yml 2>/dev/null \
+  || die ".github/workflows/release.yml 還沒 commit 進目前分支，推 tag 不會產生 release。"
+
 if printf '%s\n' "$ALL_REMOTE_TAGS" | grep -qx "$NEW_VERSION"; then
   die "tag ${NEW_VERSION} 在 origin 上已經存在。"
 fi
@@ -183,13 +187,14 @@ if [ "$DRY_RUN" = true ]; then
   echo "（--dry-run，以下步驟在正式執行時才會做）"
   cat <<EOF
   1. npm run check  （typecheck + lint + test + build；失敗就停，版號不動）
-  2. npm version ${NEW_VERSION}  （改 package.json / manifest.json / versions.json）
+  2. npm version ${NEW_VERSION}  （改 package.json / manifest.json / versions.json；
+     版號跟目前一樣時跳過）
   3. git add package.json manifest.json versions.json main.js styles.css（逐檔）
-     git commit -m "chore: release ${NEW_VERSION}"
+     git commit -m "chore: release ${NEW_VERSION}"（沒有變動就不 commit）
   4. git push origin HEAD
      git tag ${NEW_VERSION}
      git push origin ${NEW_VERSION}
-  5. 每 10 秒查一次 GitHub release，最多 5 分鐘
+  5. 每 15 秒查一次 GitHub release，最多 5 分鐘
 EOF
   exit 0
 fi
@@ -206,7 +211,11 @@ restore_version() {
   git reset -q HEAD -- package.json manifest.json versions.json
   git checkout -- package.json manifest.json versions.json
 }
-if ! npm version "$NEW_VERSION"; then
+if [ "$NEW_VERSION" = "$OLD_VERSION" ]; then
+  # npm version 遇到同版號會報 "Version not changed"。例如上次發版 commit 完、
+  # tag 卻沒推上去，版號已經改好了，重跑時就是這種情況。
+  echo "版號沒變（${NEW_VERSION}），跳過 npm version。"
+elif ! npm version "$NEW_VERSION"; then
   restore_version
   die "npm version 失敗，版號檔已還原。"
 fi
@@ -216,7 +225,11 @@ git add manifest.json
 git add versions.json
 git add main.js
 git add styles.css
-git commit -m "chore: release ${NEW_VERSION}"
+if git diff --cached --quiet; then
+  echo "版號檔與 build 產物都沒有變動，不另外 commit，直接在 HEAD 打 tag。"
+else
+  git commit -m "chore: release ${NEW_VERSION}"
+fi
 
 git push origin HEAD
 git tag "$NEW_VERSION"
@@ -228,10 +241,41 @@ OWNER_REPO=$(printf '%s' "$REMOTE_URL" | sed -E 's#^git@github\.com:##; s#^https
 
 echo
 echo "等 GitHub Actions 發佈 ${NEW_VERSION}（最多等 5 分鐘）..."
+# 查 GitHub API 時帶上 git push 用的同一組憑證（git credential helper，例如 macOS
+# 鑰匙圈）：有身分每小時 5000 次，匿名只有 60 次、而且整個 IP 共用。
+# 拿不到就退回匿名。GIT_TERMINAL_PROMPT=0：沒存憑證時不要停下來問帳密。
+# token 經由 stdin 交給 curl（-H @-），不出現在指令列／ps 裡，也不印出來。
+GH_TOKEN=$(printf 'protocol=https\nhost=github.com\n\n' \
+  | GIT_TERMINAL_PROMPT=0 git credential fill 2>/dev/null \
+  | sed -n 's/^password=//p' || true)
+if [ -n "$GH_TOKEN" ]; then
+  echo "用 git 存的 GitHub 憑證查詢。"
+else
+  c_yellow "拿不到 git 存的 GitHub 憑證，改用匿名查詢（每小時 60 次、IP 共用）。"
+fi
+
+github_api() {
+  if [ -n "$GH_TOKEN" ]; then
+    printf 'Authorization: Bearer %s\n' "$GH_TOKEN" | curl -s -H @- "$1"
+  else
+    curl -s "$1"
+  fi
+}
+
+# 15 秒查一次（最多 20 次）；額度用完就不再查，直接給 Actions 頁的連結。
 DEADLINE=$(($(date +%s) + 300))
 FOUND=false
 while [ "$(date +%s)" -lt "$DEADLINE" ]; do
-  RESP=$(curl -s "https://api.github.com/repos/${OWNER_REPO}/releases/tags/${NEW_VERSION}" || true)
+  RESP=$(github_api "https://api.github.com/repos/${OWNER_REPO}/releases/tags/${NEW_VERSION}" || true)
+  if printf '%s' "$RESP" | grep -q '"Bad credentials"'; then
+    c_yellow "git 存的 GitHub 憑證被 API 拒絕（過期或權限不足），改用匿名查詢。"
+    GH_TOKEN=""
+    continue
+  fi
+  if printf '%s' "$RESP" | grep -q 'API rate limit exceeded'; then
+    c_yellow "GitHub API 額度用完，停止查詢。"
+    break
+  fi
   DRAFT=$(printf '%s' "$RESP" | jq -r '.draft // empty' 2>/dev/null || true)
   HTML_URL=$(printf '%s' "$RESP" | jq -r '.html_url // empty' 2>/dev/null || true)
   if [ -n "$HTML_URL" ] && [ "$DRAFT" = "false" ]; then
@@ -239,9 +283,9 @@ while [ "$(date +%s)" -lt "$DEADLINE" ]; do
     FOUND=true
     break
   fi
-  sleep 10
+  sleep 15
 done
 
 if [ "$FOUND" = false ]; then
-  c_yellow "逾時還沒看到正式 release，請到 Actions 頁看進度：https://github.com/${OWNER_REPO}/actions"
+  c_yellow "還沒看到正式 release，請到 Actions 頁看進度：https://github.com/${OWNER_REPO}/actions"
 fi
