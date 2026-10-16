@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { getLocale, t } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { originFamilyId, type Family } from "../../core/model/family";
 import type { BreakdownPart, WordBreakdown } from "../../core/model/morpheme";
@@ -320,7 +320,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
     // 筆記 (= the grammar field): always open, no heading (1016 #3). Empty,
     // it shows a faint hint; a click turns it into the input.
     const notes = root.createDiv({ cls: "vt-wh-notes" });
-    this.field(notes, entry, "grammar", L.notesPlaceholder(), { multiline: true });
+    this.field(notes, entry, "grammar", t("wordPage.notes.placeholder"), { multiline: true });
 
     if (vis.showLookup && this.host.enrich) this.renderLookup(root, entry, this.host.enrich);
     // Info and 字根 are managed sections of the page now (1016 #1): see
@@ -456,12 +456,6 @@ function chip(parent: HTMLElement, icon: string, text: string): HTMLElement {
 
 // ── shared with wordSections.ts (1016 #1) ───────────────────────────
 
-// Faint hint inside an empty 筆記 box (1016 #3). Temporary — move into
-// i18n at integration (key suggestion: wordPage.notes.placeholder).
-export function notesPlaceholder(): string {
-  return getLocale() === "zh-TW" ? "寫些對這單字的想法" : "Write your thoughts on this word";
-}
-const L = { notesPlaceholder };
 
 // One editable field (1006-2 #12) — same save path as WordRow's own
 // fields (rowModel.ts's commitEntryField: first edit on an unliked word

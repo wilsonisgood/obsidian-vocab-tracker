@@ -482,6 +482,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         app: this.app,
         entry: (id) => this.store.entries.find((e) => e.id === id),
         frontmatterOf: (p) => this.frontmatterOf(p),
+        counts: (entry) => this.exporter.wordSectionCounts(entry.id) ?? undefined,
         families: this.families,
         verbs: this.verbs,
         trivia: this.trivia,
