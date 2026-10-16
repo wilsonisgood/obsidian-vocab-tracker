@@ -13,6 +13,7 @@ export const DEFAULT_FILES_SETTINGS: FilesSettings = {
   folder: "vocab-list",
   wordsFolder: "單字",
   threadsFolder: "討論串",
+  diaryFolder: "日記",
 };
 
 // Folder path as typed by the user → vault path: no leading/trailing
@@ -33,6 +34,7 @@ export function resolveFilesSettings(raw?: Partial<FilesSettings> | null): Files
     folder: cleanFolder(raw?.folder) ?? DEFAULT_FILES_SETTINGS.folder,
     wordsFolder: cleanFolder(raw?.wordsFolder) ?? DEFAULT_FILES_SETTINGS.wordsFolder,
     threadsFolder: cleanFolder(raw?.threadsFolder) ?? DEFAULT_FILES_SETTINGS.threadsFolder,
+    diaryFolder: cleanFolder(raw?.diaryFolder) ?? DEFAULT_FILES_SETTINGS.diaryFolder,
   };
 }
 
@@ -40,6 +42,7 @@ export interface FilesPaths {
   folder: string;
   words: string;
   threads: string;
+  diary: string;
 }
 
 export function filesPaths(s: FilesSettings): FilesPaths {
@@ -47,6 +50,7 @@ export function filesPaths(s: FilesSettings): FilesPaths {
     folder: s.folder,
     words: joinPath(s.folder, s.wordsFolder),
     threads: joinPath(s.folder, s.threadsFolder),
+    diary: joinPath(s.folder, s.diaryFolder),
   };
 }
 

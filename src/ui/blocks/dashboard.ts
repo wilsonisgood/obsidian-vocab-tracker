@@ -4,6 +4,7 @@ import type { VocabEntry } from "../../core/model/entry";
 import type { ExpandState } from "../word/WordRow";
 import { renderGroupedVocabList } from "../word/GroupedWordList";
 import { t } from "../../core/i18n";
+import { renderDiaryCard } from "./dashboardDiary";
 import { WordUi } from "../word/wordUi";
 import { isListed, type IsListedContext } from "../../core/model/like";
 import { likeChipOn, resolveWordlistSettings, tagEnabled } from "../../core/model/wordlists";
@@ -65,6 +66,7 @@ export function renderDashboard(
   // once (not inside drawStats/drawList, which redraw on every toggle).
   const reviewSlot = el.createDiv();
   renderReviewButton(plugin, reviewSlot, ctx);
+  renderDiaryCard(plugin, el.createDiv(), ctx);
 
   // #6: 跟側欄共用的 chip 列（標籤＋Like）取代舊的「只看 Like」切換。
   // updateWordlistSettings()（chip 的 onClick 最終都走到這）會

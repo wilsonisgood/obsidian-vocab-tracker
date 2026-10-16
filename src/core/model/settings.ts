@@ -150,6 +150,8 @@ export interface FilesSettings extends SectionStamp {
   wordsFolder: string;
   // Paragraph discussions (<文章>.ai.md), under `folder`.
   threadsFolder: string;
+  // Daily diaries (第十九波 D2b), under `folder`.
+  diaryFolder: string;
 }
 
 // Paragraph discussion anchors (規劃書 06 §5.1). Read through
@@ -182,6 +184,27 @@ export function resolveGrammarSettings(raw: Partial<GrammarSettings> | undefined
   return out;
 }
 
+// 每日日記 (第十九波 D2b, 1016 #10 A11). Read through resolveDiarySettings().
+export interface DiarySettings extends SectionStamp {
+  // Write yesterday's diary on the first open of the day.
+  enabled: boolean;
+  // Roughly every N diaries is a quote / place one; 0 = never on purpose
+  // (too little or too repetitive material still switches).
+  specialEvery: number;
+}
+
+export const DEFAULT_DIARY_SETTINGS: Readonly<DiarySettings> = { enabled: true, specialEvery: 5 };
+
+export function resolveDiarySettings(raw: Partial<DiarySettings> | undefined): DiarySettings {
+  const n = raw?.specialEvery;
+  const out: DiarySettings = {
+    enabled: typeof raw?.enabled === "boolean" ? raw.enabled : DEFAULT_DIARY_SETTINGS.enabled,
+    specialEvery: typeof n === "number" && Number.isFinite(n) && n >= 0 ? Math.floor(n) : DEFAULT_DIARY_SETTINGS.specialEvery,
+  };
+  if (typeof raw?.updatedAt === "string") out.updatedAt = raw.updatedAt;
+  return out;
+}
+
 export interface PluginSettings {
   schemaVersion: 2;
   // Set to the same stamp as the section(s) an edit changed; never newer
@@ -205,10 +228,12 @@ export interface PluginSettings {
   anchors?: Partial<AnchorSettings>;
   // Read through resolveGrammarSettings() above; absent = defaults.
   grammar?: Partial<GrammarSettings>;
+  // Read through resolveDiarySettings(); absent = defaults.
+  diary?: Partial<DiarySettings>;
 }
 
 // The sections merged independently, each with its own updatedAt.
-export const SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists", "files", "anchors", "grammar"] as const;
+export const SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists", "files", "anchors", "grammar", "diary"] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 export type ResolvedSettings = PluginSettings & {
