@@ -2394,6 +2394,28 @@ body.is-mobile button.vt-verb-related-chip {
 .vt-verbs-row-icon.is-saved {
   color: var(--vt-accent-text);
 }
+.vt-dash-diary {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+}
+.vt-dash-diary-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.vt-dash-diary-line {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+.vt-dash-diary-reason {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  margin-top: 4px;
+}
+.vt-dash-diary-btn {
+  margin-top: 8px;
+}
 
 /* src/styles/usage8.css */
 .vt-verb-pos {
