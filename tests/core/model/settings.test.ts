@@ -187,6 +187,7 @@ describe("VocabStore.updateSettings per-section stamps", () => {
       folder: "英文/vocab",
       wordsFolder: "單字",
       threadsFolder: "討論串",
+      diaryFolder: "日記",
     });
   });
 });

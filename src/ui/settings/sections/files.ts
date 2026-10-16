@@ -3,12 +3,13 @@ import { t, type I18nKey } from "../../../core/i18n";
 import { resolveFilesSettings, type FilesSettings } from "../../../services/files/settings";
 import type { SettingsSection } from "../SettingsTab";
 
-type FolderKey = "folder" | "wordsFolder" | "threadsFolder";
+type FolderKey = "folder" | "wordsFolder" | "threadsFolder" | "diaryFolder";
 
 const FIELDS: { key: FolderKey; name: I18nKey; desc: I18nKey }[] = [
   { key: "folder", name: "settings.files.folder.name", desc: "settings.files.folder.desc" },
   { key: "wordsFolder", name: "settings.files.wordsFolder.name", desc: "settings.files.wordsFolder.desc" },
   { key: "threadsFolder", name: "settings.files.threadsFolder.name", desc: "settings.files.threadsFolder.desc" },
+  { key: "diaryFolder", name: "settings.files.diaryFolder.name", desc: "settings.files.diaryFolder.desc" },
 ];
 
 // Where the plugin's notes go (規劃書 06 §8.3): the entry files' folder and

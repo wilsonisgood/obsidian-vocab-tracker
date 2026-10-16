@@ -57,6 +57,8 @@ import { Rating } from "./src/core/model/srs";
 import { knownWordList } from "./src/services/ai/context/triviaContext";
 import { createDnaFocus } from "./src/ui/dna/dnaModel";
 import { PageContextHub } from "./src/ui/page/pageContext";
+import { DiaryService } from "./src/services/diary/DiaryService";
+import { resolveDiarySettings } from "./src/core/model/settings";
 import { EmojiService } from "./src/services/learn/EmojiService";
 import { FamilyService } from "./src/services/learn/FamilyService";
 import { VerbUsageService } from "./src/services/learn/VerbUsageService";
@@ -181,6 +183,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   learnerModel!: LearnerModel;
   families!: FamilyService;
   emoji!: EmojiService;
+  // 第十九波 D2b (1016 #9–#13): daily diary.
+  diary!: DiaryService;
   // A morpheme picked on a word page, for the vocab-dna block (09 §7.1).
   readonly dnaFocus = createDnaFocus();
   // 字族樹／Word DNA 頁面 ↔ 側欄「本篇」（規劃書 10 §2.1）.
@@ -357,6 +361,31 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       examLabelsFor: (w) => this.examLabels(this.wordlists.match(w)?.tags ?? []),
     });
     this.emoji = new EmojiService({ ai, vocab: this.store, learn: this.learn, aiReady: () => this.ai.status() === "ready" });
+    this.diary = new DiaryService({
+      ai,
+      aiReady: () => this.ai.status() === "ready",
+      learner: this.learner,
+      vocab: this.store,
+      learn: this.learn,
+      vault: {
+        exists: (p) => this.vault.exists(p),
+        create: (p, c) => this.vault.create(p, c),
+        process: (p, fn) => this.vault.process(p, fn),
+        read: (p) => this.vault.read(p),
+        list: (folder) => {
+          const f = this.app.vault.getAbstractFileByPath(folder);
+          return f instanceof TFolder ? f.children.map((c) => c.path) : [];
+        },
+        frontmatterOf: (p) => this.frontmatterOf(p),
+      },
+      folder: () => this.files.paths().diary,
+      level: () => this.store.settings.learner?.level ?? "",
+      settings: () => resolveDiarySettings(this.store.settings.diary),
+      labels: () => ({ subtitleFrom: "", disclaimer: t("diary.disclaimer") }),
+      ready: async () => {
+        await Promise.all([this.learner.ensureLoaded(), this.learn.ensureLoaded()]);
+      },
+    });
     // Word DNA (規劃書 09 §7, A8/A9): splits liked words into morphemes in
     // the background and backs the vocab-dna block's chat.
     this.morphemes = new MorphemeService({
@@ -667,6 +696,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       // Wave 16 F: the learner shard (練習中心 filters read it) and the
       // one-time move of grammar answers into it.
       void this.loadLearner();
+      // 第十九波 D2b: yesterday's diary, once per day (skipped when it exists).
+      void this.diary.maybeWriteYesterday();
       this.registerWordlistEvents();
       void this.wordlists.reload();
       // Words whose dictionary fetch never finished (closed mid-queue,
