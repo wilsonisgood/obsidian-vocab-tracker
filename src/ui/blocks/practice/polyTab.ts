@@ -179,6 +179,7 @@ class PolyTabView {
     const quick = polyQuickPicks({ saved: deps.savedWords(), weakSenseIds: deps.weakSenseIds() });
     const bar = renderFilterBar(barEl, {
       groups,
+      groupsFor: (v) => polyGroups(valueToFilter(v, this.filter).category),
       quick,
       value: filterToValue(this.filter, this.category),
       summary: (v) => polySummary(valueToFilter(v, this.filter).filter),

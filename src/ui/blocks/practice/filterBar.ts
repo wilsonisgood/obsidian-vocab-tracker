@@ -1,6 +1,6 @@
 import { t } from "../../../core/i18n";
 import { learnButton } from "../learnUi";
-import { toggleOption, type FilterGroup, type FilterValue, type QuickPick } from "./filterBarModel";
+import { pruneValue, sameFilter, toggleOption, type FilterGroup, type FilterValue, type QuickPick } from "./filterBarModel";
 
 export type { FilterGroup, QuickPick } from "./filterBarModel";
 
@@ -8,8 +8,13 @@ export type { FilterGroup, QuickPick } from "./filterBarModel";
 // Collapsed it's one line 「出題參考 · <summary> ›」; open it shows the chip
 // groups and the quick picks. Phones start collapsed.
 
+// TODO(整合): move into i18n — practice.filter.apply / practice.filter.unapplied
+const L = { apply: "按條件重新出題", unapplied: "（未套用）" };
+
 export interface FilterBarOptions {
   groups: FilterGroup[];
+  // Groups that depend on the draft (e.g. 字 chips follow the category).
+  groupsFor?(value: FilterValue): FilterGroup[];
   quick?: QuickPick[];
   value: FilterValue;
   summary(value: FilterValue): string;
@@ -18,23 +23,27 @@ export interface FilterBarOptions {
 
 export function renderFilterBar(el: HTMLElement, opts: FilterBarOptions): { update(value: FilterValue): void } {
   const root = el.createDiv({ cls: "vt-pr-filter" });
-  let value = opts.value;
+  let applied = opts.value;
+  let draft = opts.value;
   let open = !document.body.classList.contains("is-mobile");
 
-  const change = (next: FilterValue) => {
-    value = next;
+  const groupsOf = () => (opts.groupsFor ? opts.groupsFor(draft) : opts.groups);
+
+  // Chips and quick picks only edit the draft; the button applies it.
+  const edit = (next: FilterValue) => {
+    draft = opts.groupsFor ? pruneValue(next, opts.groupsFor(next)) : next;
     render();
-    opts.onChange(next);
   };
 
   const render = () => {
     root.empty();
     root.toggleClass("is-open", open);
+    const dirty = !sameFilter(draft, applied);
     const head = root.createEl("button", {
       cls: "vt-pr-filter-head",
       attr: { type: "button", "aria-expanded": String(open) },
     });
-    head.createSpan({ cls: "vt-pr-filter-title", text: `${t("practice.filter.title")} · ${opts.summary(value)}` });
+    head.createSpan({ cls: "vt-pr-filter-title", text: `${t("practice.filter.title")} · ${opts.summary(draft)}${dirty ? L.unapplied : ""}` });
     head.createSpan({ cls: "vt-pr-filter-caret", text: "›" });
     head.addEventListener("click", () => {
       open = !open;
@@ -43,11 +52,12 @@ export function renderFilterBar(el: HTMLElement, opts: FilterBarOptions): { upda
     if (!open) return;
 
     const body = root.createDiv({ cls: "vt-pr-filter-body" });
-    for (const g of opts.groups) {
+    const groups = groupsOf();
+    for (const g of groups) {
       const row = body.createDiv({ cls: "vt-pr-filter-group" });
       row.createSpan({ cls: "vt-pr-filter-label", text: g.label });
       const chips = row.createDiv({ cls: "vt-pr-chips" });
-      const sel = value[g.id] ?? [];
+      const sel = draft[g.id] ?? [];
       for (const o of g.options) {
         const on = sel.includes(o.id);
         const chip = chips.createEl("button", {
@@ -56,7 +66,7 @@ export function renderFilterBar(el: HTMLElement, opts: FilterBarOptions): { upda
           attr: { type: "button", "aria-pressed": String(on) },
         });
         chip.toggleClass("is-on", on);
-        chip.addEventListener("click", () => change(toggleOption(value, g, o.id)));
+        chip.addEventListener("click", () => edit(toggleOption(draft, g, o.id)));
       }
     }
     if (opts.quick && opts.quick.length > 0) {
@@ -64,15 +74,28 @@ export function renderFilterBar(el: HTMLElement, opts: FilterBarOptions): { upda
       row.createSpan({ cls: "vt-pr-filter-label", text: t("practice.filter.quick") });
       const btns = row.createDiv({ cls: "vt-pr-chips" });
       for (const q of opts.quick) {
-        learnButton(btns, { label: q.label, ghost: true, onClick: () => change(q.apply(value)) });
+        learnButton(btns, { label: q.label, ghost: true, onClick: () => edit(q.apply(draft)) });
       }
+    }
+    if (dirty) {
+      const foot = body.createDiv({ cls: "vt-pr-filter-apply" });
+      learnButton(foot, {
+        label: L.apply,
+        cta: true,
+        onClick: () => {
+          applied = draft;
+          render();
+          opts.onChange(draft);
+        },
+      });
     }
   };
 
   render();
   return {
     update(next) {
-      value = next;
+      applied = next;
+      draft = next;
       render();
     },
   };

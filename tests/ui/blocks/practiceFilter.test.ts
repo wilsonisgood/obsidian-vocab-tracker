@@ -5,6 +5,7 @@ import {
   hasSelection,
   parseFilterValue,
   pruneValue,
+  sameFilter,
   toggleOption,
   type FilterGroup,
 } from "../../../src/ui/blocks/practice/filterBarModel";
@@ -91,5 +92,18 @@ describe("tabs", () => {
     expect(pickTab(tabs, "混合")).toBeUndefined();
     expect(rememberedTab(tabs, "grammar")?.id).toBe("grammar");
     expect(rememberedTab(tabs, "mix")).toBeUndefined();
+  });
+});
+
+describe("sameFilter (第十九波 P)", () => {
+  it("ignores array order and empty groups", () => {
+    expect(sameFilter({ a: ["x", "y"] }, { a: ["y", "x"] })).toBe(true);
+    expect(sameFilter({ a: ["x"], b: [] }, { a: ["x"] })).toBe(true);
+    expect(sameFilter({}, {})).toBe(true);
+  });
+  it("detects differences", () => {
+    expect(sameFilter({ a: ["x"] }, { a: ["x", "y"] })).toBe(false);
+    expect(sameFilter({ a: ["x"] }, { b: ["x"] })).toBe(false);
+    expect(sameFilter({ a: ["x"] }, {})).toBe(false);
   });
 });

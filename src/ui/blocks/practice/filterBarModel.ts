@@ -69,3 +69,15 @@ export function pruneValue(value: FilterValue, groups: readonly FilterGroup[]): 
   }
   return out;
 }
+
+// Draft vs applied (第十九波 P): same selection, ignoring array order and
+// empty groups.
+export function sameFilter(a: FilterValue, b: FilterValue): boolean {
+  const norm = (v: FilterValue) =>
+    Object.keys(v)
+      .filter((k) => v[k].length > 0)
+      .sort()
+      .map((k) => `${k}=${[...new Set(v[k])].sort().join(",")}`)
+      .join("|");
+  return norm(a) === norm(b);
+}
