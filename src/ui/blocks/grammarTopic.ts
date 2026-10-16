@@ -25,8 +25,9 @@ import { guardReadingClicks, isAbort, learnButton, learnErrorText } from "./lear
 // The top of a grammar topic page: stage + difficulty, title, pattern,
 // summary; the learning objectives with their scores; 「在你的文章裡」 (the
 // reader's own sentences, from the paragraph 文法解析 answers); related
-// topic chips; and, while the page's 「## 說明」 is empty, the
-// 「✦ 生成說明」 button that has the AI write it once. The practice block
+// topic chips; and, while the page's 「## 說明」 is empty, the built-in
+// explanation written in by itself (or, for a topic without one, the
+// 「✦ 生成說明」 button that has the AI write it once). The practice block
 // (vocab-grammar-practice) is another block further down the page.
 //
 // Dependencies come bundled as GrammarTopicDeps (registry.ts builds them,
@@ -85,6 +86,9 @@ class GrammarTopicBlock extends MarkdownRenderChild {
   private ctrl: AbortController | null = null;
   private error: { text: string; cause?: unknown } | null = null;
   private written = false;
+  // The built-in explanation is written by itself the first time the
+  // block sees an empty 「## 說明」 (no button to press); once per block.
+  private autoFilled = false;
 
   constructor(
     containerEl: HTMLElement,
@@ -173,21 +177,32 @@ class GrammarTopicBlock extends MarkdownRenderChild {
     // Only an empty 「## 說明」 can be filled; with the section missing or
     // written by the learner there's nothing to offer.
     if (this.explainEmpty() === false) return;
-    // Built-in explanation (1013-2): no AI, just fill the empty section.
+    // Built-in explanation (1013-2): no AI, the empty section is filled
+    // as soon as the page shows. insertExplanation never overwrites, so an
+    // unknown 「empty?」 (no section info yet) is safe to try too. The button
+    // is left only as a retry after a failed write.
     if (builtInExplanation(this.topic?.id ?? "")) {
+      if (!this.autoFilled) {
+        this.autoFilled = true;
+        void this.fillBuiltIn(true);
+        return;
+      }
       const label = t("grammar.topic.fillBuiltIn");
-      learnButton(box, { label, icon: "file-plus", onClick: () => void this.fillBuiltIn() });
+      learnButton(box, { label, icon: "file-plus", onClick: () => void this.fillBuiltIn(false) });
       return;
     }
     if (renderAiGate(box, this.deps.ai.status(), () => this.deps.openSettings())) return;
     learnButton(box, { label: t("grammar.topic.generate"), icon: "sparkles", onClick: () => void this.generate() });
   }
 
-  private async fillBuiltIn(): Promise<void> {
+  // `quiet`: the automatic fill — the note re-renders with the explanation
+  // in it, so there's no 「已寫入」 line to show.
+  private async fillBuiltIn(quiet: boolean): Promise<void> {
     const topic = this.topic;
     if (!topic) return;
     try {
       await this.deps.pages.writeBuiltInExplanation(topic.id);
+      if (quiet) return;
       this.written = true;
       this.error = null;
     } catch (e) {
