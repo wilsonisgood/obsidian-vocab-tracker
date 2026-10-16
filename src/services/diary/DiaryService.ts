@@ -1,3 +1,4 @@
+import { topicById } from "../../core/grammar/catalog";
 import { chooseDiaryKind, materialSources, RECENT_DIARIES } from "../../core/diary/choose";
 import { renderDiaryFile } from "../../core/diary/file";
 import type { DiaryArticle, DiaryKind, DiaryMaterial, DiaryPoint, DiaryRecent } from "../../core/diary/types";
@@ -141,7 +142,9 @@ export class DiaryService {
     for (const ev of this.deps.learner.learnEvents()) {
       if (ev.track !== "grammar" || dayOfStamp(ev.at) !== day) continue;
       if (ev.result !== "wrong" && ev.result !== "correct") continue;
-      const label = ev.focus.id.split("/").pop()?.replace(/[-_]+/g, " ") ?? ev.focus.id;
+      // focus.id is `${topicId}/${objectiveId}` (QuestionService): name the topic.
+      const topic = topicById(ev.focus.id.split("/")[0]);
+      const label = topic ? `${topic.title} (${topic.pattern})` : ev.focus.id.split("/").pop()?.replace(/[-_]+/g, " ") ?? ev.focus.id;
       out.push({ kind: ev.result === "wrong" ? "grammar-wrong" : "grammar-right", label, day });
     }
     for (const tv of this.deps.learn.trivia()) {
