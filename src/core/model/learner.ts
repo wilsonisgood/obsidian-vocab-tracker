@@ -70,8 +70,37 @@ export interface LearnerShard {
   // Scenario questions of 常用字 / 單字情境 / 混合 (第十七波 S).
   questions: PracticeQuestion[];
   meta: LearnerMeta;
+  // 第十九波 D1; absent in older files.
+  reading?: ReadingVisit[];
+  diaryPicks?: DiaryPick[];
 }
 
 export const TRACKS: readonly Track[] = ["grammar", "poly", "vocab", "mix"];
 export const FOCUS_KINDS: readonly FocusKind[] = ["grammar-objective", "sense", "word"];
 export const LEARN_RESULTS: readonly LearnResult[] = ["correct", "wrong", "skipped", "hinted", "retired"];
+
+// Reading log (第十九波 D1, 1016 #6-#8): which articles the learner
+// interacted with, per local day. Titles only, never body text.
+export type ReadingKind = "word" | "paragraph" | "add";
+export const READING_KINDS: readonly ReadingKind[] = ["word", "paragraph", "add"];
+export interface ReadingVisit {
+  id: string; // `${day}|${path}|${heading ?? ""}`
+  day: string; // local date YYYY-MM-DD
+  at: string; // first interaction (ISO)
+  updatedAt: string; // last interaction (ISO)
+  path: string;
+  title: string; // H1, else the file name
+  heading?: string; // nearest H2/H3 above the interaction
+  kinds: ReadingKind[];
+}
+
+// Quotes / places the diary already used, so they aren't picked again.
+export type DiaryPickKind = "quote" | "place";
+export const DIARY_PICK_KINDS: readonly DiaryPickKind[] = ["quote", "place"];
+export interface DiaryPick {
+  id: string; // `${kind}|${key}`
+  kind: DiaryPickKind;
+  key: string; // normalized (see normalizePickKey)
+  day: string; // the diary day it was used on
+  at: string;
+}

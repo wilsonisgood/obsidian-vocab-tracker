@@ -1,13 +1,17 @@
 import { PRACTICE_KINDS } from "../../core/model/practice";
 import type { PracticeQuestion, ScenarioTrack } from "../../core/model/practice";
-import { FOCUS_KINDS, LEARN_RESULTS, TRACKS } from "../../core/model/learner";
+import { DIARY_PICK_KINDS, FOCUS_KINDS, LEARN_RESULTS, READING_KINDS, TRACKS } from "../../core/model/learner";
+import { mergeReading, readingCutoffDay, sortKinds } from "../../core/learner/reading";
 import type {
+  DiaryPick,
   FocusRef,
   LearnEvent,
   LearnerShard,
   MistakeItem,
   PoolItem,
   PoolRemoveReason,
+  ReadingKind,
+  ReadingVisit,
   Track,
   TrackFilter,
 } from "../../core/model/learner";
@@ -32,7 +36,7 @@ function ms(iso: string | undefined): number {
 }
 
 export function emptyLearnerShard(): LearnerShard {
-  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {} };
+  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [] };
 }
 
 const str = (v: unknown): v is string => typeof v === "string" && v !== "";
@@ -153,6 +157,40 @@ function normalizeQuestion(raw: unknown): PracticeQuestion | null {
   return q;
 }
 
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function normalizeVisit(raw: unknown): ReadingVisit | null {
+  if (!isObj(raw) || !str(raw.id) || !str(raw.path) || !str(raw.day) || !DAY_RE.test(raw.day) || !isIso(raw.at)) return null;
+  const kinds = Array.isArray(raw.kinds) ? sortKinds(raw.kinds.filter((k): k is ReadingKind => READING_KINDS.includes(k as ReadingKind))) : [];
+  if (kinds.length === 0) return null;
+  const v: ReadingVisit = {
+    id: raw.id,
+    day: raw.day,
+    at: raw.at,
+    updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : raw.at,
+    path: raw.path,
+    title: typeof raw.title === "string" ? raw.title : "",
+    kinds,
+  };
+  if (str(raw.heading)) v.heading = raw.heading;
+  return v;
+}
+
+function normalizePick(raw: unknown): DiaryPick | null {
+  if (!isObj(raw) || !str(raw.id) || !str(raw.key) || !str(raw.day) || !isIso(raw.at)) return null;
+  if (!DIARY_PICK_KINDS.includes(raw.kind as DiaryPick["kind"])) return null;
+  return { id: raw.id, kind: raw.kind as DiaryPick["kind"], key: raw.key, day: raw.day, at: raw.at };
+}
+
+function mergePicks(a: readonly DiaryPick[], b: readonly DiaryPick[]): DiaryPick[] {
+  const map = new Map<string, DiaryPick>();
+  for (const p of [...a, ...b]) {
+    const cur = map.get(p.id);
+    if (!cur || ms(p.at) < ms(cur.at)) map.set(p.id, p);
+  }
+  return [...map.values()];
+}
+
 function normList<T>(raw: unknown, one: (r: unknown) => T | null): T[] {
   if (!Array.isArray(raw)) return [];
   const out: T[] = [];
@@ -173,6 +211,8 @@ export function normalizeLearnerShard(raw: unknown): LearnerShard {
     filters: normList(s.filters, normalizeFilter),
     questions: normList(s.questions, normalizeQuestion),
     meta,
+    reading: normList(s.reading, normalizeVisit),
+    diaryPicks: normList(s.diaryPicks, normalizePick),
   };
 }
 
@@ -191,6 +231,8 @@ export function mergeLearner(local: LearnerShard, remote: LearnerShard): Learner
     filters: mergeRecords(local.filters, remote.filters),
     questions: mergeRecords(local.questions, remote.questions),
     meta: migrated ? { grammarMigratedAt: migrated } : {},
+    reading: mergeReading(local.reading ?? [], remote.reading ?? []),
+    diaryPicks: mergePicks(local.diaryPicks ?? [], remote.diaryPicks ?? []),
   };
 }
 
@@ -202,10 +244,13 @@ export function learnerFingerprint(shard: LearnerShard): string {
   for (const m of shard.mistakes) rows.push(`x|${m.id}|${m.updatedAt}|${m.resolvedAt ?? ""}`);
   for (const f of shard.filters) rows.push(`f|${f.id}|${f.updatedAt}`);
   for (const q of shard.questions) rows.push(`q|${q.id}|${q.updatedAt}`);
+  for (const r of shard.reading ?? []) rows.push(`r|${r.id}|${r.at}|${r.updatedAt}|${r.kinds.join(",")}`);
+  for (const d of shard.diaryPicks ?? []) rows.push(`d|${d.id}|${d.at}`);
   return rows.sort().join("\n");
 }
 
 export function pruneLearner(shard: LearnerShard, now: number): LearnerShard {
+  const cutoff = readingCutoffDay(now);
   return {
     events: shard.events.filter((e) => now - ms(e.at) < EVENT_TTL_MS),
     pool: shard.pool.filter((p) => !p.removedAt || now - ms(p.removedAt) < POOL_TOMBSTONE_TTL_MS),
@@ -213,6 +258,8 @@ export function pruneLearner(shard: LearnerShard, now: number): LearnerShard {
     filters: shard.filters,
     questions: pruneQuestions(shard, now),
     meta: shard.meta,
+    reading: (shard.reading ?? []).filter((r) => r.day >= cutoff),
+    diaryPicks: shard.diaryPicks ?? [],
   };
 }
 

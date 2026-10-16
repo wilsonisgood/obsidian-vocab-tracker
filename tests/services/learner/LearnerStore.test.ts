@@ -150,3 +150,23 @@ describe("LearnerStore", () => {
     expect(saved(storage).questions.map((x) => x.id).sort()).toEqual(["a", "b"]);
   });
 });
+
+describe("LearnerStore reading log", () => {
+  it("merges same day/path/heading and answers range queries", () => {
+    const { store } = setup();
+    store.recordReading({ path: "a.md", title: "T", heading: "H", kind: "word" });
+    store.recordReading({ path: "a.md", title: "T", heading: "H", kind: "add" });
+    store.recordReading({ path: "a.md", title: "T", kind: "paragraph" });
+    const day = store.readingBetween("2000-01-01", "2999-01-01");
+    expect(day).toHaveLength(2);
+    expect(day[0].kinds).toEqual(["word", "add"]);
+    expect(store.readingOn("1999-01-01")).toEqual([]);
+  });
+  it("records a diary pick once, normalized", () => {
+    const { store } = setup();
+    store.recordDiaryPick({ kind: "place", key: "Kyoto!", day: "2026-10-16" });
+    store.recordDiaryPick({ kind: "place", key: "kyoto", day: "2026-10-17" });
+    expect(store.diaryPicks()).toHaveLength(1);
+    expect(store.diaryPicks()[0].key).toBe("kyoto");
+  });
+});

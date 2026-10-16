@@ -44,6 +44,8 @@ import { ThreadService } from "./src/services/threads/ThreadService";
 import { LearnStore } from "./src/services/learn/LearnStore";
 import { GrammarStore } from "./src/services/grammar/GrammarStore";
 import { LearnerStore } from "./src/services/learner/LearnerStore";
+import { ReadingTracker } from "./src/services/learner/ReadingTracker";
+import { pluginNoteKind } from "./src/ui/reading/pluginNote";
 import type { Track } from "./src/core/model/learner";
 import { TAB_KEY as PRACTICE_TAB_KEY } from "./src/ui/blocks/practice/practiceModel";
 import { GrammarPages } from "./src/services/grammar/GrammarPages";
@@ -172,6 +174,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   grammar!: GrammarStore;
   // Wave 16 F: learning events, 待答池, 錯題區 (規劃書 12 §1).
   learner!: LearnerStore;
+  reading!: ReadingTracker;
   grammarPages!: GrammarPages;
   grammarQuestions!: QuestionService;
   scenario!: ScenarioService;
@@ -303,6 +306,14 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.learn = new LearnStore({ storage: this.storage });
     this.grammar = new GrammarStore({ storage: this.storage });
     this.learner = new LearnerStore({ storage: this.storage });
+    // 第十九波 D1 (1016 #6-#8): reading log.
+    this.reading = new ReadingTracker(
+      {
+        isPluginNote: (path) => pluginNoteKind(this.frontmatterOf(path)) !== null,
+        read: (path) => this.notes.read(path),
+      },
+      this.learner
+    );
     this.grammarQuestions = new QuestionService({
       grammar: this.grammar,
       ai,
@@ -990,6 +1001,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   // A reading-view ✦ was clicked: that paragraph's discussion in the
   // sidebar (the bottom sheet on iPhone).
   async openParagraph(ref: SectionRef) {
+    void this.reading.note(ref.path, ref.lineStart, "paragraph");
     await this.surfaces.openParagraph(ref);
   }
 
@@ -1153,6 +1165,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     const ctx = this.getWordContext(evt.clientX, evt.clientY);
     if (!ctx.word) return;
     const word = ctx.word;
+    void this.noteReadingClick(word, ctx.sentence);
 
     const exists = this.store.entries.some(
       (e) => e.word.toLowerCase() === word.toLowerCase()
@@ -1169,6 +1182,19 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         // 1005 回饋 3: an open sidebar follows a tracked word (a menu tap never opens it).
         if (exists && wordSurface(currentFormFactor()) !== "sheet") this.sidebarView()?.locateWord(word);
         this.showWordMenu(evt, word, ctx, exists);
+    }
+  }
+
+  // 1016 #6: a clicked word counts as reading interaction (not a plugin page).
+  private async noteReadingClick(word: string, sentence?: string): Promise<void> {
+    try {
+      const file = this.app.workspace.getActiveFile();
+      if (!file || file.extension !== "md") return;
+      const content = await this.app.vault.read(file);
+      const line = findSourceLine(content, word, sentence);
+      await this.reading.note(file.path, line < 0 ? null : line, "word");
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't record reading", e);
     }
   }
 
@@ -1271,6 +1297,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       const content = await this.app.vault.read(file);
       const line = findSourceLine(content, word, ctx.sentence);
       source = { path: file.path, line: line < 0 ? 0 : line };
+      void this.reading.note(file.path, line < 0 ? null : line, "add");
 
       // Highlight the word in the note so it stays visible
       const updated = wrapOutsideCode(content, buildWordRe(word));

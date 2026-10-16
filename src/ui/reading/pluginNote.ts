@@ -11,8 +11,8 @@ import { legacyTitleHeading, type HeadingCacheLike } from "../../services/files/
 // frontmatter `vocab-tracker:` values the plugin writes. Its own notes
 // carry one of these plus a `vocab-tracker-id`; anything else is the
 // user's note and is never touched.
-export type PluginNoteKind = "word" | "entry" | "ai-note" | "grammar";
-const KINDS: readonly string[] = ["word", "entry", "ai-note", "grammar"];
+export type PluginNoteKind = "word" | "entry" | "ai-note" | "grammar" | "diary";
+const KINDS: readonly string[] = ["word", "entry", "ai-note", "grammar", "diary"];
 
 export function pluginNoteKind(frontmatter: Record<string, unknown> | null | undefined): PluginNoteKind | null {
   const kind = frontmatter?.["vocab-tracker"];

@@ -123,3 +123,33 @@ describe("learnerMerge: scenario questions (第十七波 S)", () => {
     expect(pruneLearner(s, now).questions.map((x) => x.id).sort()).toEqual(["fresh", "oldMistake", "oldPooled"]);
   });
 });
+
+describe("reading log merge / prune", () => {
+  const vis = (id: string, day: string, kinds: ("word" | "add")[], updatedAt = "2026-10-16T00:00:00Z") => ({
+    id, day, at: "2026-10-16T00:00:00Z", updatedAt, path: "a.md", title: "T", kinds,
+  });
+  it("unions reading and diaryPicks, fingerprint sees them", () => {
+    const a = shard({ reading: [vis("1", "2026-10-16", ["word"])], diaryPicks: [{ id: "quote|x", kind: "quote", key: "x", day: "2026-10-16", at: "2026-10-16T00:00:00Z" }] });
+    const b = shard({ reading: [vis("1", "2026-10-16", ["add"], "2026-10-16T05:00:00Z"), vis("2", "2026-10-15", ["word"])] });
+    const m = mergeLearner(a, b);
+    expect(m.reading).toHaveLength(2);
+    expect(m.reading!.find((r) => r.id === "1")!.kinds).toEqual(["word", "add"]);
+    expect(m.diaryPicks).toHaveLength(1);
+    expect(learnerFingerprint(m)).not.toBe(learnerFingerprint(b));
+  });
+  it("prunes reading older than 90 days but keeps diaryPicks", () => {
+    const now = new Date(2026, 9, 16, 12).getTime();
+    const s = shard({
+      reading: [vis("old", "2026-07-17", ["word"]), vis("edge", "2026-07-18", ["word"])],
+      diaryPicks: [{ id: "place|p", kind: "place", key: "p", day: "2025-01-01", at: "2025-01-01T00:00:00Z" }],
+    });
+    const p = pruneLearner(s, now);
+    expect(p.reading!.map((r) => r.id)).toEqual(["edge"]);
+    expect(p.diaryPicks).toHaveLength(1);
+  });
+  it("normalize keeps valid rows only", () => {
+    const n = normalizeLearnerShard({ reading: [vis("1", "2026-10-16", ["word"]), { id: "bad" }], diaryPicks: [{ id: "bad" }] });
+    expect(n.reading).toHaveLength(1);
+    expect(n.diaryPicks).toEqual([]);
+  });
+});

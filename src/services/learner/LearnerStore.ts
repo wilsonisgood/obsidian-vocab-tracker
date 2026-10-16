@@ -1,7 +1,8 @@
 import { TypedEmitter } from "../../core/events";
 import { migrateGrammar } from "../../core/learner/migrateGrammar";
 import type { GrammarAttempt, GrammarQuestion } from "../../core/model/grammar";
-import type { LearnEvent, LearnerShard, MistakeItem, PoolItem, Track } from "../../core/model/learner";
+import { localDayOf, normalizePickKey, readingId, sortKinds } from "../../core/learner/reading";
+import type { DiaryPick, DiaryPickKind, LearnEvent, LearnerShard, MistakeItem, PoolItem, ReadingKind, ReadingVisit, Track } from "../../core/model/learner";
 import type { PracticeQuestion, ScenarioTrack } from "../../core/model/practice";
 import type { StoragePort } from "../../core/ports";
 import { livePool } from "../../core/practice/pool";
@@ -166,6 +167,53 @@ export class LearnerStore {
     this.upsert(this.data.filters, { id: track, value, updatedAt: this.clock().toISOString() });
     this.events.emit("filter:change", track);
     this.scheduleWrite();
+  }
+
+  // ── Reading log (第十九波 D1) ──────────────────────────────────
+
+  // One row per local day + path + heading; repeats add kinds and bump updatedAt.
+  recordReading(input: { path: string; title: string; heading?: string; kind: ReadingKind }): void {
+    const now = this.clock();
+    const iso = now.toISOString();
+    const day = localDayOf(now);
+    const id = readingId(day, input.path, input.heading);
+    const list = (this.data.reading ??= []);
+    const cur = list.find((r) => r.id === id);
+    if (cur) {
+      cur.kinds = sortKinds([...cur.kinds, input.kind]);
+      cur.updatedAt = iso;
+      if (input.title) cur.title = input.title;
+    } else {
+      const v: ReadingVisit = { id, day, at: iso, updatedAt: iso, path: input.path, title: input.title, kinds: [input.kind] };
+      if (input.heading) v.heading = input.heading;
+      list.push(v);
+    }
+    this.scheduleWrite();
+  }
+
+  readingOn(day: string): ReadingVisit[] {
+    return this.readingBetween(day, day);
+  }
+
+  // Both ends included; oldest first.
+  readingBetween(fromDay: string, toDay: string): ReadingVisit[] {
+    return (this.data.reading ?? [])
+      .filter((r) => r.day >= fromDay && r.day <= toDay)
+      .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+  }
+
+  recordDiaryPick(p: { kind: DiaryPickKind; key: string; day: string }): void {
+    const key = normalizePickKey(p.key);
+    if (!key) return;
+    const id = `${p.kind}|${key}`;
+    const list = (this.data.diaryPicks ??= []);
+    if (list.some((x) => x.id === id)) return;
+    list.push({ id, kind: p.kind, key, day: p.day, at: this.clock().toISOString() });
+    this.scheduleWrite();
+  }
+
+  diaryPicks(): DiaryPick[] {
+    return [...(this.data.diaryPicks ?? [])];
   }
 
   // ── Migration ─────────────────────────────────────────────────
