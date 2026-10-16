@@ -21797,6 +21797,9 @@ var GrammarTopicBlock = class extends import_obsidian34.MarkdownRenderChild {
     this.ctrl = null;
     this.error = null;
     this.written = false;
+    // The built-in explanation is written by itself the first time the
+    // block sees an empty 「## 說明」 (no button to press); once per block.
+    this.autoFilled = false;
     this.topic = id2 ? topicById(id2) : void 0;
   }
   onload() {
@@ -21868,19 +21871,27 @@ var GrammarTopicBlock = class extends import_obsidian34.MarkdownRenderChild {
     }
     if (this.explainEmpty() === false) return;
     if (builtInExplanation((_b = (_a = this.topic) == null ? void 0 : _a.id) != null ? _b : "")) {
+      if (!this.autoFilled) {
+        this.autoFilled = true;
+        void this.fillBuiltIn(true);
+        return;
+      }
       const label = t("grammar.topic.fillBuiltIn");
-      learnButton(box, { label, icon: "file-plus", onClick: () => void this.fillBuiltIn() });
+      learnButton(box, { label, icon: "file-plus", onClick: () => void this.fillBuiltIn(false) });
       return;
     }
     if (renderAiGate3(box, this.deps.ai.status(), () => this.deps.openSettings())) return;
     learnButton(box, { label: t("grammar.topic.generate"), icon: "sparkles", onClick: () => void this.generate() });
   }
-  async fillBuiltIn() {
+  // `quiet`: the automatic fill — the note re-renders with the explanation
+  // in it, so there's no 「已寫入」 line to show.
+  async fillBuiltIn(quiet) {
     var _a;
     const topic = this.topic;
     if (!topic) return;
     try {
       await this.deps.pages.writeBuiltInExplanation(topic.id);
+      if (quiet) return;
       this.written = true;
       this.error = null;
     } catch (e) {
