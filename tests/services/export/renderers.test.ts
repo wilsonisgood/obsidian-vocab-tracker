@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { WordBreakdown } from "../../../src/core/model/morpheme";
 import { findManagedBlock } from "../../../src/services/export/managedBlock";
 import { hasAiNoteContent, renderAiNoteFile, renderAiNoteSections, type AiNoteInput } from "../../../src/services/export/renderers/aiNote";
-import { balanceFences, blockquote, frontmatter, inlineCode, roundsOf } from "../../../src/services/export/renderers/common";
+import { balanceFences, blockquote, frontmatter, inlineCode, roundsOf, threadRounds } from "../../../src/services/export/renderers/common";
 import { renderTriviaFavoritesFile, renderTriviaFavoritesSections } from "../../../src/services/export/renderers/triviaFavorites";
 import {
   familiesOf,
@@ -14,6 +14,7 @@ import {
   RETIRED_WORD_PAGE_SECTIONS,
   triviaAbout,
   triviaMentioning,
+  wordSectionCounts,
   type WordPageInput,
 } from "../../../src/services/export/renderers/wordPage";
 import { ARTICLE, ctx, labelsIn, FAMILIES, GLITTERY, GLITTERY_THREAD, LEOTARD, TRIVIA, turn, USAGE } from "./fixtures";
@@ -84,7 +85,7 @@ const NOTE: AiNoteInput = {
 describe("word page renderer", () => {
   it("renders every section (snapshot)", () => {
     const sections = renderWordPageSections(FULL, ctx());
-    expect(sections.map((s) => s.name)).toEqual(["families", "usage", "trivia", "discussion"]);
+    expect(sections.map((s) => s.name)).toEqual(["info", "dna", "families", "usage", "trivia", "discussion"]);
     expect(sections.map((s) => `[${s.name}]\n${s.body}`).join("\n\n")).toMatchSnapshot();
   });
 
@@ -206,6 +207,42 @@ describe("word page renderer", () => {
   });
 });
 
+describe("info / dna live sections (1016 #1, #4)", () => {
+  it("writes a heading and one small code block each, above 字族", () => {
+    const [info, dna, families] = renderWordPageSections(FULL, ctx());
+    expect(info.body).toBe("## Info\n\n```vocab-word-info\n```");
+    expect(dna.body).toBe("## 字根\n\n```vocab-word-dna\n```");
+    expect(info.before).toBe("families");
+    expect(dna.before).toBe("families");
+    expect(families.before).toBeUndefined();
+  });
+
+  it("counts from data: families, usage parts of speech, own + mentioning trivia (no double count), discussion rounds", () => {
+    const counts = wordSectionCounts(FULL);
+    expect(counts.families).toBe(familiesOf(FAMILIES, GLITTERY).length);
+    expect(counts.usage).toBe(1);
+    expect(counts.trivia).toBe(new Set([...triviaAbout(TRIVIA, GLITTERY.id), ...triviaMentioning(TRIVIA, GLITTERY)].map((t) => t.id)).size);
+    expect(counts.discussion).toBe(threadRounds(GLITTERY_THREAD).length);
+    expect(wordSectionCounts(EMPTY)).toEqual({ families: 0, usage: 0, trivia: 0, discussion: 0 });
+  });
+
+  it("counts a part of speech only when it has patterns or related phrases", () => {
+    const blank = { ...USAGE, patterns: [], related: [] };
+    expect(wordSectionCounts({ ...FULL, usages: { v: USAGE, n: blank } }).usage).toBe(1);
+    expect(wordSectionCounts({ ...FULL, usages: { n: blank } }).usage).toBe(0);
+  });
+
+  it("counts trivia about the word plus trivia mentioning it, each once", () => {
+    const mk = (id: string, entryId: string, mentions: string[]) => ({ id, entryId, mentions, title: id, body: "b" });
+    const input: WordPageInput = {
+      entry: { id: "w", word: "glow" },
+      families: [],
+      trivia: [mk("a", "w", []), mk("b", "w", ["glow"]), mk("c", "z", ["glow"]), mk("d", "z", ["w"]), mk("e", "z", [])],
+    };
+    expect(wordSectionCounts(input).trivia).toBe(4);
+  });
+});
+
 describe("morphemes section (09 §7.1)", () => {
   it("formats the breakdown line: parts joined by ＋, inflection bare, then → gloss", () => {
     expect(renderBreakdownLine(BREAKDOWN_OK)).toBe("ex（出）＋ pel（推）＋ led → 推出去");
@@ -222,8 +259,11 @@ describe("morphemes section (09 §7.1)", () => {
 
   it("never puts a「## 字根」section in — the header's 字根 fold shows it (1010-2)", () => {
     const names = (b?: WordBreakdown) => renderWordPageSections({ ...FULL, breakdown: b }, ctx()).map((s) => s.name);
-    expect(names(undefined)).toEqual(["families", "usage", "trivia", "discussion"]);
-    expect(names(BREAKDOWN_OK)).toEqual(["families", "usage", "trivia", "discussion"]);
+    // "dna" is the live-block section (1016 #1), not the retired "morphemes".
+    const all = ["info", "dna", "families", "usage", "trivia", "discussion"];
+    expect(names(undefined)).toEqual(all);
+    expect(names(BREAKDOWN_OK)).toEqual(all);
+    expect(names(BREAKDOWN_OK)).not.toContain("morphemes");
     expect(RETIRED_WORD_PAGE_SECTIONS).toContain("morphemes");
   });
 });

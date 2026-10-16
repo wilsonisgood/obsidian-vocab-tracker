@@ -869,7 +869,12 @@ describe("events, flush and dispose", () => {
     );
     learn.emit("wordMeta:upsert", { id: GLITTERY.id, breakdown: data.breakdownMap.get(GLITTERY.id) });
     await vi.advanceTimersByTimeAsync(1000);
-    expect(vault.files.get(GLITTERY_PAGE)).not.toContain("## 字根");
+    // The retired plain-markdown copy is gone; the new live 「dna」 section
+    // (1016 #1) holds only the block.
+    const page = vault.files.get(GLITTERY_PAGE) ?? "";
+    expect(page).not.toContain("old");
+    expect(page).not.toContain("vt:begin morphemes");
+    expect(page).toContain("%% vt:begin dna %%\n## 字根\n\n```vocab-word-dna\n```\n%% vt:end dna %%");
     expect(vault.files.get(GLITTERY_PAGE)).not.toContain("vt:begin morphemes");
     expect(vault.files.get(GLITTERY_PAGE)).toContain("my notes");
   });

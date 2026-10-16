@@ -81,3 +81,32 @@ export function toggleStored(app: FoldStorage | undefined, entryId: string, sect
 export function isOpenStored(app: FoldStorage | undefined, entryId: string, section: FoldSection): boolean {
   return isOpen(loadFolds(app), entryId, section);
 }
+
+// ── Sections with nothing to show (1016 #1) ──
+//
+// 「## Info」 and 「## 字根」 are always written to the page, but when the
+// word has nothing for them (no dictionary info; no usable breakdown) the
+// heading and body are hidden. The live block knows (it redraws on data
+// changes) while the heading is decorated separately and in either order,
+// so both sides meet in this set: the block writes it, the decorator reads
+// it when it draws a heading or body.
+
+const emptySections = new Set<string>();
+
+export function setSectionEmpty(entryId: string, section: FoldSection, empty: boolean): void {
+  const key = `${entryId}:${section}`;
+  if (empty) emptySections.add(key);
+  else emptySections.delete(key);
+}
+
+export function isSectionEmpty(entryId: string, section: FoldSection): boolean {
+  return emptySections.has(`${entryId}:${section}`);
+}
+
+// ── The number after a collapsed heading (1016 #4) ──
+//
+// Shown only while folded, after the title, from data (never counted off
+// the DOM). Info and 字根 have none, and 0 shows nothing.
+export function countLabel(count: number | undefined): string | null {
+  return typeof count === "number" && Number.isFinite(count) && count > 0 ? String(Math.floor(count)) : null;
+}

@@ -30,6 +30,7 @@ import { openPluginSettings } from "../kit/openSettings";
 import { renderTrivia } from "./trivia";
 import { renderVerbs } from "./verbs";
 import { renderWordHeader, WORD_BLOCK_LANG } from "./wordHeader";
+import { renderWordDna, renderWordInfo, WORD_DNA_LANG, WORD_INFO_LANG } from "./wordSections";
 
 // Word DNA (規劃書 09 §7): bundles the concrete services the block only
 // knows through DnaBlockDeps (see dna.ts's header comment).
@@ -229,6 +230,9 @@ export const BLOCKS: readonly BlockDef[] = [
   { lang: "vocab-card", render: renderFlashcards },
   // The plugin is the block's WordHeaderHost.
   { lang: WORD_BLOCK_LANG, render: renderWordHeader },
+  // 1016 #1: the word page's 「## Info」/「## 字根」 sections.
+  { lang: WORD_INFO_LANG, render: renderWordInfo },
+  { lang: WORD_DNA_LANG, render: renderWordDna },
   // M7 (規劃書 06 §7): 字族樹, 動詞用法, 冷知識.
   { lang: "vocab-families", render: renderFamilies },
   // Same block under the name the galaxy redesign uses (09 〔A2〕).

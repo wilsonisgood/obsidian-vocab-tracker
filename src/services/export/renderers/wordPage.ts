@@ -6,10 +6,16 @@ import type { ExportFamily, ExportTrivia, ExportUsage, ExportVerbFavorite, Rende
 import { fill, frontmatter, inlineCode, italic, normalizeNewlines, oneLine, renderRounds, threadRounds, wordRef } from "./common";
 
 // 單字/<word>.md (規劃書 06 §8.1–§8.2, screen W1): a `vocab-word` header
-// block (rendered live by the plugin), then four managed sections, then
+// block (rendered live by the plugin), then six managed sections (info, dna, families, usage, trivia, discussion), then
 // the user's own notes.
 
 export const WORD_PAGE_KIND = "word";
+
+// The two live sections (1016 #1): each holds one small code block that the
+// plugin draws from the store; the heading, fold, and count come from
+// WordPageDecorator like every other section.
+export const WORD_INFO_BLOCK = "vocab-word-info";
+export const WORD_DNA_BLOCK = "vocab-word-dna";
 
 export interface WordPageInput {
   entry: { id: string; word: string };
@@ -80,8 +86,37 @@ export function hasWordPageContent(input: WordPageInput): boolean {
   );
 }
 
-function section(name: string, heading: string, body: string): ManagedSection {
-  return { name, body: `## ${heading}\n\n${body}` };
+function section(name: string, heading: string, body: string, before?: string): ManagedSection {
+  return { name, body: `## ${heading}\n\n${body}`, ...(before ? { before } : {}) };
+}
+
+// 「## Info」/「## 字根」 hold only a live block, never generated text.
+function liveBlock(lang: string): string {
+  return ["```" + lang, "```"].join("\n");
+}
+
+// The number shown after a collapsed heading (1016 #4), from data, not DOM.
+// Info and 字根 have none; 0 means "show nothing".
+export interface WordSectionCounts {
+  families: number;
+  usage: number;
+  trivia: number;
+  discussion: number;
+}
+
+export function wordSectionCounts(input: WordPageInput): WordSectionCounts {
+  const usages = input.usages ?? {};
+  const own = triviaAbout(input.trivia, input.entry.id);
+  const mentioned = triviaMentioning(input.trivia, input.entry);
+  return {
+    families: familiesOf(input.families, input.entry).length,
+    usage: POS_KEYS.filter((pos) => {
+      const u = usages[pos];
+      return !!u && (u.patterns.length > 0 || u.related.length > 0);
+    }).length,
+    trivia: new Set([...own, ...mentioned].map((t) => t.id)).size,
+    discussion: threadRounds(input.thread).length,
+  };
 }
 
 function renderFamilies(input: WordPageInput, ctx: RenderContext): string {
@@ -222,10 +257,15 @@ export function renderMorphemes(breakdown: Pick<WordBreakdown, "parts" | "gloss"
 export const RETIRED_WORD_PAGE_SECTIONS: readonly string[] = ["morphemes"];
 
 export function renderWordPageSections(input: WordPageInput, ctx: RenderContext): ManagedSection[] {
-  // No "morphemes" section any more (1010-2): the vocab-word header's 字根
-  // fold shows the breakdown, and the plain-markdown copy sat unfolded at
-  // the bottom of the page. Old pages lose it via RETIRED_WORD_PAGE_SECTIONS.
+  // No "morphemes" section any more (1010-2): the plain-markdown copy sat
+  // unfolded at the bottom of the page. Old pages lose it via
+  // RETIRED_WORD_PAGE_SECTIONS. The 「dna」 section is a different one: a
+  // live block like 「info」 (1016 #1).
   return [
+    // New sections sit above 字族; an old page without them gets them
+    // inserted there (ManagedSection.before), not at the end of the file.
+    section("info", ctx.labels.info, liveBlock(WORD_INFO_BLOCK), "families"),
+    section("dna", ctx.labels.dna, liveBlock(WORD_DNA_BLOCK), "families"),
     section("families", ctx.labels.families, renderFamilies(input, ctx)),
     section("usage", ctx.labels.usage, renderUsage(input, ctx)),
     section("trivia", ctx.labels.trivia, renderTrivia(input, ctx)),

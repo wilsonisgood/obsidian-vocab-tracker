@@ -9,7 +9,7 @@ import type { TriviaService } from "../../services/learn/TriviaService";
 import type { VerbUsageService } from "../../services/learn/VerbUsageService";
 import { debugReportText } from "../kit/aiDebug";
 import { aiErrorText } from "../kit/aiState";
-import { isOpenStored, toggleStored, type FoldSection } from "./wordPageFolds";
+import { countLabel, isOpenStored, isSectionEmpty, toggleStored, type FoldSection } from "./wordPageFolds";
 
 // ── Word page heading buttons (規劃書 06 §8.2, W1/W2) ──
 //
@@ -36,8 +36,13 @@ function l(key: Key, vars?: Record<string, string | number>): string {
   return t(`wordPage.${key}`, vars);
 }
 
-export type WordSection = "families" | "usage" | "trivia" | "discussion";
-const SECTIONS: readonly WordSection[] = ["families", "usage", "trivia", "discussion"];
+// info / dna (1016 #1) are live-block sections: the heading folds and
+// counts like the others but has no action button.
+export type WordSection = "info" | "dna" | "families" | "usage" | "trivia" | "discussion";
+const SECTIONS: readonly WordSection[] = ["info", "dna", "families", "usage", "trivia", "discussion"];
+
+// The numbers after collapsed headings (1016 #4); a missing key shows none.
+export type WordSectionCounts = Partial<Record<WordSection, number>>;
 
 export interface WordPageDeps {
   // For MarkdownRenderer.render() on the pending trivia round below (1006
@@ -52,6 +57,9 @@ export interface WordPageDeps {
   // The round shows right under the heading, 未收藏, until `favorite`
   // writes it into the file (the same flow 冷知識.md's own 收藏 uses).
   trivia: Pick<TriviaService, "ask" | "favorite">;
+  // Counts for the collapsed headings, from data (ExportService.
+  // wordSectionCounts). Optional: without it no numbers show.
+  counts?(entry: VocabEntry): WordSectionCounts | null | undefined;
   // The word's card in the sidebar, on its AI tab.
   openInSidebar(entry: VocabEntry, tab: "ai"): unknown;
   notify(message: string): void;
@@ -170,6 +178,8 @@ export function sectionContaining(text: string, lineStart: number): { section: W
 }
 
 const FOLD_OF: Record<WordSection, FoldSection> = {
+  info: "info",
+  dna: "dna",
   families: "families",
   usage: "usage",
   trivia: "trivia",
@@ -188,16 +198,36 @@ function applyFold(root: ParentNode, section: WordSection, open: boolean): void 
   });
 }
 
-function foldHeading(h: HTMLElement, section: WordSection, entryId: string, deps: WordPageDeps): void {
+// Hides (or shows) a section's heading and body when its live block has
+// nothing to show (1016 #1); see wordPageFolds.ts's setSectionEmpty.
+export function applySectionEmpty(root: ParentNode, section: WordSection, empty: boolean): void {
+  root.querySelectorAll<HTMLElement>(`[data-vt-section="${section}"]`).forEach((n) => {
+    if (n.hasClass("vt-wp-fold-h") || n.hasClass("vt-wp-sec-body")) n.toggleClass("is-empty", empty);
+  });
+}
+
+function foldHeading(
+  h: HTMLElement,
+  section: WordSection,
+  entry: VocabEntry,
+  deps: WordPageDeps
+): void {
   if (h.hasClass("vt-wp-fold-h")) return;
+  const entryId = entry.id;
   h.addClass("vt-wp-fold-h");
   h.dataset.vtSection = section;
+  if (isSectionEmpty(entryId, FOLD_OF[section])) h.addClass("is-empty");
   h.setAttr("role", "button");
   h.tabIndex = 0;
   const open = isOpenStored(deps.app, entryId, FOLD_OF[section]);
   const chev = createSpan({ cls: ["vt", "vt-wp-fold-chev"] });
   setIcon(chev, "chevron-right");
   h.insertBefore(chev, h.firstChild);
+  // 「字族 3」: shown by CSS only while the section is closed, never for
+  // 0 (1016 #4). Appended now, so the action button added later lands
+  // after it.
+  const n = countLabel(deps.counts?.(entry)?.[section]);
+  if (n) h.createSpan({ cls: "vt-wp-fold-count", text: n });
   h.toggleClass("is-open", open);
   h.setAttr("aria-expanded", String(open));
   const flip = () => {
@@ -233,6 +263,7 @@ export function createWordPageDecorator(deps: WordPageDeps) {
         el.addClass("vt-wp-sec-body");
         el.dataset.vtSection = at.section;
         el.toggleClass("is-collapsed", !isOpenStored(deps.app, entryId, FOLD_OF[at.section]));
+        el.toggleClass("is-empty", isSectionEmpty(entryId, FOLD_OF[at.section]));
       }
     }
     const headings = [...(el.matches("h2, h3") ? [el] : []), ...Array.from(el.querySelectorAll<HTMLElement>("h2, h3"))];
@@ -255,7 +286,7 @@ export function createWordPageDecorator(deps: WordPageDeps) {
       }
       const section = info ? sectionAtHeading(info.text, info.lineStart) : sectionByTitle(h.textContent ?? "");
       if (!section) continue;
-      foldHeading(h, section, entryId, deps);
+      foldHeading(h, section, entry, deps);
       decorate(h, section, entry, deps, ctx);
       if (section === "trivia") syncTriviaCard(h, entry, deps, ctx);
     }
@@ -321,6 +352,9 @@ function actionFor(
           if (h.isConnected) syncTriviaCard(h, entry, deps, ctx);
         },
       };
+    case "info":
+    case "dna":
+      return null;
     case "discussion":
       return { icon: "panel-right", label: l("openSidebar"), run: () => deps.openInSidebar(entry, "ai") };
   }

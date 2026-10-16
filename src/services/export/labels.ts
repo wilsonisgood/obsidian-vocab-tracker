@@ -62,7 +62,7 @@ export function posOfUsageHeading(title: string): PosKey | null {
 // string>, not a plain string like the rest) — excluded here so the loop
 // assignment below stays a plain string→string write instead of widening
 // to the intersection of every ExportLabels value type.
-const KEYS: Exclude<keyof ExportLabels, "usagePosHeading">[] = [
+const KEYS: Exclude<keyof ExportLabels, "usagePosHeading" | "info" | "dna">[] = [
   "families",
   "familiesEmpty",
   "usage",
@@ -91,5 +91,8 @@ export function exportLabels(): ExportLabels {
   const labels = {} as ExportLabels;
   for (const key of KEYS) labels[key] = t(`export.${key}` as I18nKey);
   labels.usagePosHeading = usagePosHeadings();
+  // Same words the word page's folds always used (1016 #1).
+  labels.info = t("word.tab.data");
+  labels.dna = t("wordPage.section.dna");
   return labels;
 }

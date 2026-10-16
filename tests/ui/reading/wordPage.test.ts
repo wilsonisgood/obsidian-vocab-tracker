@@ -42,6 +42,8 @@ describe("WordPageDecorator", () => {
     const lines = page.split("\n");
     const found = lines.flatMap((line, i) => (line.startsWith("## ") ? [[line.slice(3), sectionAtHeading(page, i)]] : []));
     expect(found).toEqual([
+      [labels.info, "info"],
+      [labels.dna, "dna"],
       [labels.families, "families"],
       [labels.usage, "usage"],
       [labels.trivia, "trivia"],

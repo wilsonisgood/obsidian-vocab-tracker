@@ -403,3 +403,44 @@ describe("removeManagedBlock", () => {
     expect(removeManagedBlock("a\nb\n", "old")).toBe("a\nb\n");
   });
 });
+
+// 1016 #1: an old word page gets 「info」/「dna」 above 「families」.
+describe("sections inserted before another (ManagedSection.before)", () => {
+  const info: ManagedSection = { name: "info", body: "## Info", before: "families" };
+  const dna: ManagedSection = { name: "dna", body: "## 字根", before: "families" };
+  const old = `---\nvocab-tracker: word\n---\n\n\`\`\`vocab-word\n\`\`\`\n\n${B("families")}\n## 字族\n${E("families")}\n\n${B("usage")}\n## 用法\n${E("usage")}\n\nmy notes\n`;
+
+  it("lands right above the anchor's begin marker, in call order", () => {
+    const out = applyManagedBlocks(old, [info, dna]);
+    const names = [...out.matchAll(/vt:begin ([a-z-]+)/g)].map((m) => m[1]);
+    expect(names).toEqual(["info", "dna", "families", "usage"]);
+    expect(out.startsWith("---\nvocab-tracker: word\n---\n\n```vocab-word\n```\n\n")).toBe(true);
+    // Everything else is byte-identical: removing the new sections gives the original back.
+    expect(removeManagedBlock(removeManagedBlock(out, "info"), "dna")).toBe(old);
+    expect(out).toContain(`${E("dna")}\n\n${B("families")}`);
+  });
+
+  it("is idempotent: a second pass changes nothing", () => {
+    const once = applyManagedBlocks(old, [info, dna]);
+    expect(applyManagedBlocks(once, [info, dna])).toBe(once);
+  });
+
+  it("appends at the end when the anchor is missing too", () => {
+    const text = "my notes\n";
+    const out = applyManagedBlocks(text, [info]);
+    expect(out.startsWith(text)).toBe(true);
+    expect(out.endsWith(`${E("info")}\n`)).toBe(true);
+  });
+
+  it("ignores a lone begin marker for the anchor (no complete block)", () => {
+    const text = `a\n${B("families")}\nb\n`;
+    expect(applyManagedBlocks(text, [info]).startsWith(text)).toBe(true);
+  });
+
+  it("keeps CRLF line breaks", () => {
+    const crlf = old.replace(/\n/g, "\r\n");
+    const out = applyManagedBlocks(crlf, [info]);
+    expect(out.replace(/\r\n/g, "")).not.toContain("\n");
+    expect(out).toContain(`${E("info")}\r\n\r\n${B("families")}`);
+  });
+});
