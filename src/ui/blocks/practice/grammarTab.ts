@@ -178,6 +178,7 @@ class GrammarTabView {
     );
     const bar = renderFilterBar(barEl, {
       groups,
+      groupsFor: (v) => grammarGroups(valueToFilter(v, level), level),
       quick,
       value: filterToValue(this.filter),
       summary: (v) => grammarSummary(valueToFilter(v, level), level),

@@ -31,6 +31,7 @@
 .vt-pr-filter-body { padding: 4px 12px 12px; display: flex; flex-direction: column; gap: 10px; }
 .vt-pr-filter-group { display: flex; flex-direction: column; gap: 6px; }
 .vt-pr-filter-label { font-size: var(--font-ui-smaller); color: var(--text-faint); }
+.vt-pr-filter-apply { display: flex; justify-content: flex-end; }
 .vt-pr-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .vt-pr-chip {
   border-radius: 999px; padding: 4px 12px; font-size: var(--font-ui-small);
