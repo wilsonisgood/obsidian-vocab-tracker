@@ -1,3 +1,4 @@
+import { diaryWrite } from "./diary";
 import { DNA_TASKS } from "./dna";
 import { EMOJI_TASKS } from "./emoji";
 import { FAMILY_TASKS } from "./family";
@@ -57,5 +58,6 @@ export function defaultTaskRegistry(): TaskRegistry {
     ...GRAMMAR_QUESTION_TASKS,
     ...GRAMMAR_GRADE_TASKS,
     ...PRACTICE_TASKS,
+    diaryWrite,
   ]);
 }
