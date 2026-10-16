@@ -65,6 +65,9 @@ export interface ExportTrivia {
 }
 
 export interface ExportLabels {
+  // 「## Info」/「## 字根」 (1016 #1): headings of the two live-block sections.
+  info: string;
+  dna: string;
   families: string;
   familiesEmpty: string;
   usage: string;

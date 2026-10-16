@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hasDictionaryData } from "../../../src/ui/blocks/wordHeaderModel";
-import { isOpen, parseFolds, toggle, toggleStored, type FoldState } from "../../../src/ui/reading/wordPageFolds";
+import { countLabel, isOpen, isSectionEmpty, parseFolds, setSectionEmpty, toggle, toggleStored, type FoldState } from "../../../src/ui/reading/wordPageFolds";
 
 describe("fold state", () => {
   it("defaults to info open, everything else closed", () => {
@@ -63,5 +63,28 @@ describe("hasDictionaryData", () => {
     for (const k of ["definition", "definitionZh", "phonetic", "partOfSpeech", "synonyms", "antonyms", "example"] as const) {
       expect(hasDictionaryData({ ...empty, [k]: "x" })).toBe(true);
     }
+  });
+});
+
+describe("count label (1016 #4)", () => {
+  it("shows a positive whole number, nothing for 0 or no data", () => {
+    expect(countLabel(3)).toBe("3");
+    expect(countLabel(12)).toBe("12");
+    expect(countLabel(0)).toBeNull();
+    expect(countLabel(undefined)).toBeNull();
+    expect(countLabel(-1)).toBeNull();
+    expect(countLabel(Number.NaN)).toBeNull();
+  });
+});
+
+describe("empty sections (1016 #1)", () => {
+  it("remembers per word and section whether the live block had nothing to show", () => {
+    expect(isSectionEmpty("w1", "info")).toBe(false);
+    setSectionEmpty("w1", "info", true);
+    expect(isSectionEmpty("w1", "info")).toBe(true);
+    expect(isSectionEmpty("w1", "dna")).toBe(false);
+    expect(isSectionEmpty("w2", "info")).toBe(false);
+    setSectionEmpty("w1", "info", false);
+    expect(isSectionEmpty("w1", "info")).toBe(false);
   });
 });

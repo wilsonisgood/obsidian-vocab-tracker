@@ -23,6 +23,8 @@ import {
   mentionsEntry,
   renderWordPageFile,
   renderWordPageSections,
+  wordSectionCounts,
+  type WordSectionCounts,
   RETIRED_WORD_PAGE_SECTIONS,
   type WordPageInput,
 } from "./renderers/wordPage";
@@ -425,12 +427,11 @@ export class ExportService {
     );
   }
 
-  private async writeWord(path: string, entryId: string, create: CreateMode): Promise<void> {
-    await this.deps.data.ready?.();
+  private wordInput(entryId: string): WordPageInput | null {
     const { data } = this.deps;
     const entry = data.entry(entryId);
-    if (!entry) return;
-    const input: WordPageInput = {
+    if (!entry) return null;
+    return {
       entry,
       families: data.families(),
       usages: data.usages(entryId),
@@ -439,6 +440,20 @@ export class ExportService {
       thread: data.wordThread(entryId),
       breakdown: data.wordBreakdown?.(entryId),
     };
+  }
+
+  // The numbers after collapsed headings on a word page (1016 #4), from
+  // the same data the page is written from. Sync: WordPageDecorator calls
+  // it while drawing.
+  wordSectionCounts(entryId: string): WordSectionCounts | null {
+    const input = this.wordInput(entryId);
+    return input ? wordSectionCounts(input) : null;
+  }
+
+  private async writeWord(path: string, entryId: string, create: CreateMode): Promise<void> {
+    await this.deps.data.ready?.();
+    const input = this.wordInput(entryId);
+    if (!input) return;
     const ctx = this.context();
     const allowed = create === "always" || (create === "ifContent" && hasWordPageContent(input));
     await this.write(

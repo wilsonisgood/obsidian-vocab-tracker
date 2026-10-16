@@ -18,6 +18,11 @@ export interface ManagedSection {
   name: string;
   // Markdown between the markers, without a trailing newline.
   body: string;
+  // When this section's markers are missing, insert it right above the
+  // begin marker of the section named here (if that one exists) instead of
+  // at the end of the file (1016 #1: an old word page gets 「## Info」 above
+  // 「## 字族」). Falls back to appending when that section is missing too.
+  before?: string;
 }
 
 const NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
@@ -138,7 +143,26 @@ export function replaceManagedBlock(text: string, section: ManagedSection): stri
     if (text.slice(range.contentStart, range.contentEnd) === content) return text;
     return text.slice(0, range.contentStart) + content + text.slice(range.contentEnd);
   }
+  if (section.before) {
+    const placed = insertBeforeBlock(text, section, section.before);
+    if (placed !== null) return placed;
+  }
   return appendSection(text, section);
+}
+
+// Puts the whole section (markers included) on its own lines right above
+// the begin line of block `anchor`, followed by one blank line. Null when
+// `anchor` has no complete block. Text before the insertion point is
+// untouched, so the original stays a prefix + suffix of the result.
+export function insertBeforeBlock(text: string, section: ManagedSection, anchor: string): string | null {
+  const range = findManagedBlock(text, anchor);
+  if (!range) return null;
+  // The begin marker line is the one just above contentStart.
+  const all = lines(text);
+  const begin = all.find((l) => l.end === range.contentStart);
+  if (!begin) return null;
+  const eol = range.eol;
+  return text.slice(0, begin.start) + renderSection(section, eol) + eol + eol + text.slice(begin.start);
 }
 
 // Appends after everything that's there, separated by one blank line.

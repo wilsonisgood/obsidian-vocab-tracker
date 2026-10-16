@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Notice, setIcon, type MarkdownPostProcessorContext } from "obsidian";
-import { t } from "../../core/i18n";
+import { getLocale, t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
 import { originFamilyId, type Family } from "../../core/model/family";
 import type { BreakdownPart, WordBreakdown } from "../../core/model/morpheme";
@@ -13,7 +13,7 @@ import { inlineNote } from "../kit/inlineNote";
 import { bindPronounceButton } from "../kit/pronounce";
 import { autoGrowTextarea, commitEntryField, type EditableField, type FieldStore } from "../word/rowModel";
 import { familyTitle, focusFamily } from "./familiesModel";
-import { isOpenStored, toggleStored, type FoldSection, type FoldStorage } from "../reading/wordPageFolds";
+import type { FoldStorage } from "../reading/wordPageFolds";
 import { hasDictionaryData, headerVisibility } from "./wordHeaderModel";
 import { parseBlockParams } from "./params";
 
@@ -218,9 +218,6 @@ class WordHeaderBlock extends MarkdownRenderChild {
   // 09 §7.1: the emoji button becomes an inline text input while editing
   // (same click-to-edit treatment as the fields below it).
   private editingEmoji = false;
-  // Tracks this block's own analyzeNow() call, not MorphemeService's
-  // system-wide auto-batch progress() — only this word's button cares.
-  private analyzingBreakdown = false;
   private lookingUp = false;
 
   constructor(
@@ -320,34 +317,14 @@ class WordHeaderBlock extends MarkdownRenderChild {
       btn.addEventListener("click", () => void review.call(this.host, entry));
     }
 
-    // 筆記 (= the grammar field): always open, fixed position.
+    // 筆記 (= the grammar field): always open, no heading (1016 #3). Empty,
+    // it shows a faint hint; a click turns it into the input.
     const notes = root.createDiv({ cls: "vt-wh-notes" });
-    notes.createDiv({ cls: "vt-wh-notes-label", text: t("row.field.grammar") });
-    this.field(notes, entry, "grammar", t("row.field.grammar"), { multiline: true });
+    this.field(notes, entry, "grammar", L.notesPlaceholder(), { multiline: true });
 
     if (vis.showLookup && this.host.enrich) this.renderLookup(root, entry, this.host.enrich);
-
-    if (vis.showInfo) {
-      this.fold(root, entry, "info", t("word.tab.data"), (body) => {
-        if (vis.senses.length) {
-          const row = body.createDiv({ cls: "vt-wh-inforow" });
-          row.createSpan({ cls: "vt-wh-inforow-label", text: t("wordHeader.senses") });
-          const lines = row.createDiv({ cls: "vt-wh-senses" });
-          for (const line of vis.senses) lines.createDiv({ cls: "vt-wh-sense", text: line });
-        }
-        for (const key of vis.infoRows) {
-          const label = t(`row.field.${key}`);
-          const row = body.createDiv({ cls: "vt-wh-inforow" });
-          row.createSpan({ cls: "vt-wh-inforow-label", text: label });
-          this.field(row, entry, key, label, { multiline: true });
-        }
-      });
-    }
-
-    const morphemes = this.host.morphemes;
-    if (morphemes && breakdownDisplay(morphemes.breakdownOf(entry.id)) !== "none") {
-      this.fold(root, entry, "dna", t("wordPage.section.dna"), (body) => this.renderBreakdown(body, entry, morphemes));
-    }
+    // Info and 字根 are managed sections of the page now (1016 #1): see
+    // wordSections.ts. Nothing more is drawn here.
   }
 
   private renderLookup(parent: HTMLElement, entry: VocabEntry, enrich: NonNullable<WordHeaderHost["enrich"]>): void {
@@ -366,33 +343,6 @@ class WordHeaderBlock extends MarkdownRenderChild {
           this.lookingUp = false;
           if (!this.disposed) this.render();
         });
-    });
-  }
-
-  // One collapsible category (arrow + name, nothing on the right). Open
-  // state is per word and per category, kept in the device's localStorage.
-  private fold(
-    parent: HTMLElement,
-    entry: VocabEntry,
-    section: FoldSection,
-    title: string,
-    build: (body: HTMLElement) => void
-  ): void {
-    const open = isOpenStored(this.host.app, entry.id, section);
-    const box = parent.createDiv({ cls: ["vt-wp-fold", open ? "is-open" : "is-closed"] });
-    const head = box.createEl("button", {
-      cls: "vt-wp-fold-head",
-      attr: { type: "button", "aria-expanded": String(open) },
-    });
-    setIcon(head.createSpan({ cls: "vt-wp-fold-chev" }), "chevron-right");
-    head.createSpan({ cls: "vt-wp-fold-title", text: title });
-    const body = box.createDiv({ cls: "vt-wp-fold-content" });
-    build(body);
-    head.addEventListener("click", () => {
-      const now = toggleStored(this.host.app, entry.id, section);
-      box.toggleClass("is-open", now);
-      box.toggleClass("is-closed", !now);
-      head.setAttr("aria-expanded", String(now));
     });
   }
 
@@ -434,45 +384,6 @@ class WordHeaderBlock extends MarkdownRenderChild {
     });
   }
 
-  // The strand under the fields, or a 「拆字」button when the word hasn't
-  // been analyzed yet (09 §7.1). Nothing renders at all when it was
-  // analyzed and came back "none" (決定 5 — no morphemes worth showing).
-  private renderBreakdown(parent: HTMLElement, entry: VocabEntry, morphemes: NonNullable<WordHeaderHost["morphemes"]>): void {
-    const breakdown = morphemes.breakdownOf(entry.id);
-    const display = breakdownDisplay(breakdown);
-    if (display === "none") return;
-    if (display === "strand") {
-      renderStrand(parent, breakdown!, {
-        onPart: (part: BreakdownPart) => {
-          if (part.morphemeId) this.host.openMorpheme?.(part.morphemeId);
-        },
-      });
-      return;
-    }
-    const btn = parent.createEl("button", { cls: ["vt-wh-breakdown-btn"], attr: { type: "button" } });
-    btn.setText(breakdownButtonLabel(this.analyzingBreakdown));
-    btn.disabled = this.analyzingBreakdown;
-    btn.addEventListener("click", () => {
-      if (this.analyzingBreakdown) return;
-      this.analyzingBreakdown = true;
-      this.render();
-      morphemes
-        .analyzeNow([entry.id])
-        .catch(() => new Notice(t("wordPage.dna.breakdownFailed")))
-        .finally(() => {
-          this.analyzingBreakdown = false;
-          if (!this.disposed) this.render();
-        });
-    });
-  }
-
-  // One editable field (1006-2 #12) — same save path as WordRow's own
-  // fields (rowModel.ts's commitEntryField: first edit on an unliked word
-  // also likes it, same as any other auto-like trigger). The container's
-  // own click listener (onload above) already stops a click from reaching
-  // the plugin's reading-mode handler, so fields here don't need their
-  // own stopPropagation the way WordRow's do sitting inside a clickable
-  // row header.
   private field(
     parent: HTMLElement,
     entry: VocabEntry,
@@ -480,31 +391,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
     placeholder: string,
     opts: { multiline?: boolean } = {}
   ): void {
-    const value = entry[key] ?? "";
-    const wrap = parent.createDiv({ cls: "vt-field" });
-    if (value) wrap.addClass("is-filled");
-    const cls = ["vt-input", "vt-field-box"];
-    if (opts.multiline) cls.push("vt-textarea");
-
-    const commit = (next: string) => {
-      void commitEntryField(this.host.store, entry, key, next).then(() => this.render());
-    };
-
-    if (opts.multiline) {
-      const inp = wrap.createEl("textarea", { cls });
-      inp.rows = 1;
-      inp.value = value;
-      inp.placeholder = placeholder;
-      autoGrowTextarea(inp);
-      inp.addEventListener("input", () => autoGrowTextarea(inp));
-      inp.onchange = () => commit(inp.value);
-    } else {
-      const inp = wrap.createEl("input", { cls });
-      inp.type = "text";
-      inp.value = value;
-      inp.placeholder = placeholder;
-      inp.onchange = () => commit(inp.value);
-    }
+    renderEntryField(parent, this.host.store, entry, key, placeholder, opts, () => this.render());
   }
 
   // 「來源：字族樹 clothing 服裝 › 舞台」 — a word added from a family; a
@@ -564,4 +451,97 @@ function chip(parent: HTMLElement, icon: string, text: string): HTMLElement {
   setIcon(el.createSpan({ cls: "vt-chip-icon" }), icon);
   el.createSpan({ cls: "vt-chip-text", text });
   return el;
+}
+
+
+// ── shared with wordSections.ts (1016 #1) ───────────────────────────
+
+// Faint hint inside an empty 筆記 box (1016 #3). Temporary — move into
+// i18n at integration (key suggestion: wordPage.notes.placeholder).
+export function notesPlaceholder(): string {
+  return getLocale() === "zh-TW" ? "寫些對這單字的想法" : "Write your thoughts on this word";
+}
+const L = { notesPlaceholder };
+
+// One editable field (1006-2 #12) — same save path as WordRow's own
+// fields (rowModel.ts's commitEntryField: first edit on an unliked word
+// also likes it, same as any other auto-like trigger). The container's
+// own click listener already stops a click from reaching the plugin's
+// reading-mode handler, so fields here don't need their own
+// stopPropagation the way WordRow's do sitting inside a clickable row
+// header. `after` runs once the edit is saved (the caller redraws).
+export function renderEntryField(
+  parent: HTMLElement,
+  store: FieldStore,
+  entry: VocabEntry,
+  key: EditableField,
+  placeholder: string,
+  opts: { multiline?: boolean } = {},
+  after: () => void
+): void {
+  const value = entry[key] ?? "";
+  const wrap = parent.createDiv({ cls: "vt-field" });
+  if (value) wrap.addClass("is-filled");
+  const cls = ["vt-input", "vt-field-box"];
+  if (opts.multiline) cls.push("vt-textarea");
+
+  const commit = (next: string) => {
+    void commitEntryField(store, entry, key, next).then(after);
+  };
+
+  if (opts.multiline) {
+    const inp = wrap.createEl("textarea", { cls });
+    inp.rows = 1;
+    inp.value = value;
+    inp.placeholder = placeholder;
+    autoGrowTextarea(inp);
+    inp.addEventListener("input", () => autoGrowTextarea(inp));
+    inp.onchange = () => commit(inp.value);
+  } else {
+    const inp = wrap.createEl("input", { cls });
+    inp.type = "text";
+    inp.value = value;
+    inp.placeholder = placeholder;
+    inp.onchange = () => commit(inp.value);
+  }
+}
+
+// The strand under the fields, or a 「拆字」button when the word hasn't
+// been analyzed yet (09 §7.1). Nothing renders at all when it was
+// analyzed and came back "none" (決定 5 — no morphemes worth showing).
+// `state.busy` is the caller's own flag for this word's analyzeNow() call.
+export function renderBreakdownArea(
+  parent: HTMLElement,
+  entry: VocabEntry,
+  morphemes: NonNullable<WordHeaderHost["morphemes"]>,
+  state: { busy: boolean },
+  openMorpheme: ((morphemeId: string) => unknown) | undefined,
+  rerender: () => void
+): void {
+  const breakdown = morphemes.breakdownOf(entry.id);
+  const display = breakdownDisplay(breakdown);
+  if (display === "none") return;
+  if (display === "strand") {
+    renderStrand(parent, breakdown!, {
+      onPart: (part: BreakdownPart) => {
+        if (part.morphemeId) openMorpheme?.(part.morphemeId);
+      },
+    });
+    return;
+  }
+  const btn = parent.createEl("button", { cls: ["vt-wh-breakdown-btn"], attr: { type: "button" } });
+  btn.setText(breakdownButtonLabel(state.busy));
+  btn.disabled = state.busy;
+  btn.addEventListener("click", () => {
+    if (state.busy) return;
+    state.busy = true;
+    rerender();
+    morphemes
+      .analyzeNow([entry.id])
+      .catch(() => new Notice(t("wordPage.dna.breakdownFailed")))
+      .finally(() => {
+        state.busy = false;
+        rerender();
+      });
+  });
 }

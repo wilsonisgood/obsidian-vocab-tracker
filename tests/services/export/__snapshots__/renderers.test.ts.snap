@@ -136,6 +136,20 @@ vocab-tracker-id: x
 \`\`\`vocab-word
 \`\`\`
 
+%% vt:begin info %%
+## Info
+
+\`\`\`vocab-word-info
+\`\`\`
+%% vt:end info %%
+
+%% vt:begin dna %%
+## Roots
+
+\`\`\`vocab-word-dna
+\`\`\`
+%% vt:end dna %%
+
 %% vt:begin families %%
 ## Word families
 
@@ -172,6 +186,20 @@ vocab-tracker-id: x
 \`\`\`vocab-word
 \`\`\`
 
+%% vt:begin info %%
+## Info
+
+\`\`\`vocab-word-info
+\`\`\`
+%% vt:end info %%
+
+%% vt:begin dna %%
+## 字根
+
+\`\`\`vocab-word-dna
+\`\`\`
+%% vt:end dna %%
+
 %% vt:begin families %%
 ## 字族
 
@@ -201,7 +229,19 @@ vocab-tracker-id: x
 `;
 
 exports[`word page renderer > renders every section (snapshot) 1`] = `
-"[families]
+"[info]
+## Info
+
+\`\`\`vocab-word-info
+\`\`\`
+
+[dna]
+## 字根
+
+\`\`\`vocab-word-dna
+\`\`\`
+
+[families]
 ## 字族
 
 ### clothing · 服裝
@@ -269,6 +309,20 @@ vocab-tracker-id: "1721900000000"
 ---
 \`\`\`vocab-word
 \`\`\`
+
+%% vt:begin info %%
+## Info
+
+\`\`\`vocab-word-info
+\`\`\`
+%% vt:end info %%
+
+%% vt:begin dna %%
+## 字根
+
+\`\`\`vocab-word-dna
+\`\`\`
+%% vt:end dna %%
 
 %% vt:begin families %%
 ## 字族
