@@ -757,6 +757,8 @@ export const zhTW: Record<keyof typeof en, string> = {
   // 第十六波：練習中心、播放器、文法頁籤
   "practice.filter.title": "出題參考",
   "practice.filter.quick": "快選",
+  "practice.filter.apply": "按條件重新出題",
+  "practice.filter.unapplied": "（未套用）",
   "practice.vocab.label": "單字",
   "practice.vocab.status": "狀態",
   "practice.vocab.due": "到期",

@@ -8,8 +8,6 @@ export type { FilterGroup, QuickPick } from "./filterBarModel";
 // Collapsed it's one line 「出題參考 · <summary> ›」; open it shows the chip
 // groups and the quick picks. Phones start collapsed.
 
-// TODO(整合): move into i18n — practice.filter.apply / practice.filter.unapplied
-const L = { apply: "按條件重新出題", unapplied: "（未套用）" };
 
 export interface FilterBarOptions {
   groups: FilterGroup[];
@@ -43,7 +41,7 @@ export function renderFilterBar(el: HTMLElement, opts: FilterBarOptions): { upda
       cls: "vt-pr-filter-head",
       attr: { type: "button", "aria-expanded": String(open) },
     });
-    head.createSpan({ cls: "vt-pr-filter-title", text: `${t("practice.filter.title")} · ${opts.summary(draft)}${dirty ? L.unapplied : ""}` });
+    head.createSpan({ cls: "vt-pr-filter-title", text: `${t("practice.filter.title")} · ${opts.summary(draft)}${dirty ? t("practice.filter.unapplied") : ""}` });
     head.createSpan({ cls: "vt-pr-filter-caret", text: "›" });
     head.addEventListener("click", () => {
       open = !open;
@@ -80,7 +78,7 @@ export function renderFilterBar(el: HTMLElement, opts: FilterBarOptions): { upda
     if (dirty) {
       const foot = body.createDiv({ cls: "vt-pr-filter-apply" });
       learnButton(foot, {
-        label: L.apply,
+        label: t("practice.filter.apply"),
         cta: true,
         onClick: () => {
           applied = draft;

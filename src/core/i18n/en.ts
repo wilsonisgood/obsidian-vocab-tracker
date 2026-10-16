@@ -766,6 +766,8 @@ export const en = {
   // 第十六波：練習中心、播放器、文法頁籤
   "practice.filter.title": "Question filter",
   "practice.filter.quick": "Quick picks",
+  "practice.filter.apply": "Regenerate with these filters",
+  "practice.filter.unapplied": " (not applied)",
   "practice.vocab.label": "Vocab",
   "practice.vocab.status": "Status",
   "practice.vocab.due": "Due",
