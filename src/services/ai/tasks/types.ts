@@ -2,7 +2,7 @@ import type { I18nKey } from "../../../core/i18n";
 import type { LearnerProfile } from "../../../core/model/settings";
 import type { AiRequest, AiResult, ChatMessage, Tier } from "../providers/types";
 
-export type Surface = "paragraph" | "word" | "family" | "verb" | "trivia" | "morpheme" | "grammar";
+export type Surface = "paragraph" | "word" | "family" | "verb" | "trivia" | "morpheme" | "grammar" | "diary";
 
 export interface TaskContext {
   profile: LearnerProfile;
