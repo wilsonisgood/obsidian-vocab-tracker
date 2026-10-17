@@ -104,6 +104,7 @@ import { WordSheet } from "./src/ui/mobile/WordSheet";
 import { WordSurfaces } from "./src/ui/mobile/WordSurfaces";
 import { quickSave } from "./src/ui/mobile/quickSave";
 import { actionNotice } from "./src/ui/mobile/actionNotice";
+import { restoreArticle } from "./src/services/anchors/restoreArticle";
 import { LivePreviewHint } from "./src/ui/mobile/livePreviewHint";
 import { sharedSpeaker, type Speaker } from "./src/ui/mobile/speech";
 import { configurePronouncer, disposePronouncer } from "./src/ui/kit/pronounce";
@@ -489,6 +490,16 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof TFolder))
     );
     this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof TFolder)));
+    // 1017: an article deleted and loaded again (Reading Feed) gets its ^vt
+    // ids and ==word== highlights back. After layout-ready: the vault's
+    // initial load fires "create" for every file.
+    this.app.workspace.onLayoutReady(() => {
+      this.registerEvent(
+        this.app.vault.on("create", (file) => {
+          if (file instanceof TFile && file.extension === "md") void this.restoreArticle(file);
+        })
+      );
+    });
 
     // Keeps families / saved trivia / saved verb usages in step with a
     // word deleted, renamed or just learned (規劃書 06 §4.1, W6).
@@ -1465,6 +1476,29 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       const path = this.exporter.wordPagePath(entry.id, entry.word);
       const file = this.app.vault.getAbstractFileByPath(path);
       if (file) await this.app.fileManager.trashFile(file);
+    }
+  }
+
+  // See the "create" listener in onload (services/anchors/restoreArticle.ts).
+  async restoreArticle(file: TFile) {
+    try {
+      await this.threads.ensureLoaded();
+      const anchors = this.threads
+        .paragraphThreads(file.path)
+        .flatMap((th) => (th.anchor.kind === "paragraph" ? [th.anchor] : []));
+      const words = this.store.entries.filter((e) => !e.deletedAt && e.source?.path === file.path).map((e) => e.word);
+      if (!anchors.some((a) => a.blockId) && !words.length) return;
+      let result: { rebound: number; highlighted: number } = { rebound: 0, highlighted: 0 };
+      await this.app.vault.process(file, (content) => {
+        const r = restoreArticle(content, anchors, words);
+        result = r;
+        return r.content;
+      });
+      if (result.rebound || result.highlighted) {
+        new Notice(t("article.restored", { threads: result.rebound, words: result.highlighted }));
+      }
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't restore the article's anchors", e);
     }
   }
 

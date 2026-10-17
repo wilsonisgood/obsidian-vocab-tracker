@@ -422,6 +422,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "paragraph.rebind.cancel": "取消",
   "paragraph.rebind.done": "已重新綁定到新的段落",
   "paragraph.rebind.failed": "無法綁定到這一段：{error}",
+  "article.restored": "已接回這篇的 {threads} 串段落討論、{words} 個單字標記",
   "paragraph.deleted": "已刪除段落討論",
   "paragraph.badge.open": "討論這一段",
   "paragraph.badge.count": "這一段有 {n} 則討論",

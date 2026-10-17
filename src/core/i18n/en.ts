@@ -426,6 +426,7 @@ export const en = {
   "paragraph.rebind.cancel": "Cancel",
   "paragraph.rebind.done": "Discussion moved to the new paragraph",
   "paragraph.rebind.failed": "Couldn't attach to that paragraph: {error}",
+  "article.restored": "Reconnected {threads} paragraph discussions and {words} word highlights in this note",
   "paragraph.deleted": "Paragraph discussion deleted",
   "paragraph.badge.open": "Discuss this paragraph",
   "paragraph.badge.count": "{n} questions about this paragraph",

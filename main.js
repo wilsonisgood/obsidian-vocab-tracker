@@ -1415,6 +1415,7 @@ var en = {
   "paragraph.rebind.cancel": "Cancel",
   "paragraph.rebind.done": "Discussion moved to the new paragraph",
   "paragraph.rebind.failed": "Couldn't attach to that paragraph: {error}",
+  "article.restored": "Reconnected {threads} paragraph discussions and {words} word highlights in this note",
   "paragraph.deleted": "Paragraph discussion deleted",
   "paragraph.badge.open": "Discuss this paragraph",
   "paragraph.badge.count": "{n} questions about this paragraph",
@@ -2288,6 +2289,7 @@ var zhTW = {
   "paragraph.rebind.cancel": "\u53D6\u6D88",
   "paragraph.rebind.done": "\u5DF2\u91CD\u65B0\u7D81\u5B9A\u5230\u65B0\u7684\u6BB5\u843D",
   "paragraph.rebind.failed": "\u7121\u6CD5\u7D81\u5B9A\u5230\u9019\u4E00\u6BB5\uFF1A{error}",
+  "article.restored": "\u5DF2\u63A5\u56DE\u9019\u7BC7\u7684 {threads} \u4E32\u6BB5\u843D\u8A0E\u8AD6\u3001{words} \u500B\u55AE\u5B57\u6A19\u8A18",
   "paragraph.deleted": "\u5DF2\u522A\u9664\u6BB5\u843D\u8A0E\u8AD6",
   "paragraph.badge.open": "\u8A0E\u8AD6\u9019\u4E00\u6BB5",
   "paragraph.badge.count": "\u9019\u4E00\u6BB5\u6709 {n} \u5247\u8A0E\u8AD6",
@@ -38917,6 +38919,31 @@ async function quickSave(word, deps) {
   return entry;
 }
 
+// src/services/anchors/restoreArticle.ts
+function restoreArticle(content, anchors, words) {
+  let out = content;
+  let rebound = 0;
+  const present = blockIdsIn(out);
+  for (const a2 of anchors) {
+    if (!a2.blockId || present.has(a2.blockId)) continue;
+    const section3 = noteSections(out).find(
+      (s) => isAnchorable(s.type) && paragraphHash(s.text) === a2.hash && !trailingBlockId(ownBlockIdText(s))
+    );
+    if (!section3) continue;
+    out = withBlockId(out, ownBlockIdLine(section3), a2.blockId);
+    present.add(a2.blockId);
+    rebound++;
+  }
+  let highlighted = 0;
+  for (const word of new Set(words.map((w2) => w2.toLowerCase()))) {
+    const next = wrapOutsideCode(out, buildWordRe(word));
+    if (next === out) continue;
+    out = next;
+    highlighted++;
+  }
+  return { content: out, rebound, highlighted };
+}
+
 // src/ui/mobile/livePreviewHint.ts
 function isLivePreviewText(target) {
   if (!target.closest(".markdown-source-view.is-live-preview .cm-content")) return false;
@@ -39425,6 +39452,13 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
       this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof import_obsidian68.TFolder))
     );
     this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof import_obsidian68.TFolder)));
+    this.app.workspace.onLayoutReady(() => {
+      this.registerEvent(
+        this.app.vault.on("create", (file) => {
+          if (file instanceof import_obsidian68.TFile && file.extension === "md") void this.restoreArticle(file);
+        })
+      );
+    });
     this.linkage = new EntryLinkageService({
       learn: this.learn,
       vocab: this.store,
@@ -40238,6 +40272,29 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
       const path = this.exporter.wordPagePath(entry.id, entry.word);
       const file = this.app.vault.getAbstractFileByPath(path);
       if (file) await this.app.fileManager.trashFile(file);
+    }
+  }
+  // See the "create" listener in onload (services/anchors/restoreArticle.ts).
+  async restoreArticle(file) {
+    try {
+      await this.threads.ensureLoaded();
+      const anchors = this.threads.paragraphThreads(file.path).flatMap((th) => th.anchor.kind === "paragraph" ? [th.anchor] : []);
+      const words = this.store.entries.filter((e) => {
+        var _a;
+        return !e.deletedAt && ((_a = e.source) == null ? void 0 : _a.path) === file.path;
+      }).map((e) => e.word);
+      if (!anchors.some((a2) => a2.blockId) && !words.length) return;
+      let result = { rebound: 0, highlighted: 0 };
+      await this.app.vault.process(file, (content) => {
+        const r = restoreArticle(content, anchors, words);
+        result = r;
+        return r.content;
+      });
+      if (result.rebound || result.highlighted) {
+        new import_obsidian68.Notice(t("article.restored", { threads: result.rebound, words: result.highlighted }));
+      }
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't restore the article's anchors", e);
     }
   }
   async unhighlightWord(word, path) {

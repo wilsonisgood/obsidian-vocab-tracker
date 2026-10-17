@@ -41,6 +41,12 @@ export async function startSession(port: number): Promise<E2eSession> {
       await cdp.evaluate(
         `(async () => {
           app.plugins.setEnable(true);
+          // 1017：Obsidian 自己可能正在載入 plugin。這時再 enable 一次，第二個
+          // instance 會因為 view type 已註冊而 onload 失敗，留在 app.plugins 裡的
+          // 就是這個壞掉的 instance。先等 layout ready（開機載入的 plugin 都在
+          // 這之前跑完 onload）再判斷要不要自己 enable。
+          const start = Date.now();
+          while (!app.workspace.layoutReady && Date.now() - start < 20000) await new Promise((r) => setTimeout(r, 200));
           if (!app.plugins.plugins["vocab-tracker"]) {
             await app.plugins.enablePluginAndSave("vocab-tracker");
           }
