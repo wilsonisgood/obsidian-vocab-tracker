@@ -80,6 +80,26 @@ interface BadgeHandle {
   ref: SectionRef;
   host: HTMLElement;
   badge: HTMLElement | null;
+  // The section's ref as reading mode sees it now (null: not readable right
+  // now — keep the old one). A snapshot taken at render time goes stale.
+  fresh: () => SectionRef | null;
+}
+
+// 1017: on iPhone a section can be post-processed before reading mode has
+// its text — getSectionInfo(el) hands back "" (or lines the text doesn't
+// have yet). Reading Feed notes hit it every time a first question's ^vt
+// write re-renders the note: every ✦ below got an empty ref, so its count
+// vanished and asking failed with "missing-paragraph" until the note was
+// reopened. Such a section is retried a little later instead.
+export const NOT_READY_RETRY_MS = 100;
+export const NOT_READY_MAX_TRIES = 30;
+
+export function sectionReady(info: Pick<MarkdownSectionInformation, "text" | "lineEnd">): boolean {
+  if (!info.text) return false;
+  // Cheap line count without splitting the whole note.
+  let lines = 1;
+  for (let i = info.text.indexOf("\n"); i >= 0 && lines <= info.lineEnd; i = info.text.indexOf("\n", i + 1)) lines++;
+  return info.lineEnd < lines;
 }
 
 export type BadgeState = { kind: "count"; count: number } | { kind: "ghost"; quiet: boolean };
@@ -109,7 +129,10 @@ export class ParagraphBadges {
   refresh(paths?: readonly string[]): void {
     const targets = paths ?? [...this.live.keys()];
     for (const path of targets) {
-      for (const h of this.live.get(path) ?? []) this.draw(h);
+      for (const h of this.live.get(path) ?? []) {
+        h.ref = h.fresh() ?? h.ref;
+        this.draw(h);
+      }
       this.healStale(path);
     }
   }
@@ -136,19 +159,41 @@ export class ParagraphBadges {
     if (wordPageEntryId(fm)) return;
     // Grammar topic pages (第十五波 M) are the plugin's own too: no ✦.
     if (fm?.["vocab-tracker"] === "grammar") return;
-    const info = ctx.getSectionInfo(el);
-    if (!info) return;
-    const text = this.lines.slice(info);
-    const handles = this.handlesFor(ctx.sourcePath, el, first, info.lineStart, info.lineEnd, text);
-    for (const handle of handles) {
-      this.draw(handle);
-      this.track(handle);
-    }
+    if (!ctx.getSectionInfo(el)) return;
 
+    let handles: BadgeHandle[] = [];
+    let unloaded = false;
+    let timer = 0;
     // Unloaded when reading view drops or re-renders this section.
     const child = new MarkdownRenderChild(el);
-    child.register(() => handles.forEach((h) => this.untrack(h)));
+    child.register(() => {
+      unloaded = true;
+      if (timer) window.clearTimeout(timer);
+      handles.forEach((h) => this.untrack(h));
+    });
     ctx.addChild(child);
+
+    const attach = (tries: number) => {
+      if (unloaded) return;
+      const info = ctx.getSectionInfo(el);
+      if (!info) return;
+      if (!sectionReady(info)) {
+        if (tries < NOT_READY_MAX_TRIES) timer = window.setTimeout(() => attach(tries + 1), NOT_READY_RETRY_MS);
+        return;
+      }
+      handles = this.handlesFor(ctx.sourcePath, el, first, info.lineStart, info.lineEnd, this.lines.slice(info));
+      handles.forEach((h, i) => {
+        h.fresh = () => {
+          const now = ctx.getSectionInfo(el);
+          if (!now || !sectionReady(now)) return null;
+          const again = this.handlesFor(ctx.sourcePath, el, first, now.lineStart, now.lineEnd, this.lines.slice(now));
+          return again.length === handles.length ? again[i].ref : null;
+        };
+        this.draw(h);
+        this.track(h);
+      });
+    };
+    attach(0);
   };
 
   // One handle per top-level `<li>` when this list was split (see class
@@ -164,7 +209,7 @@ export class ParagraphBadges {
     lineEnd: number,
     text: string
   ): BadgeHandle[] {
-    const whole = (): BadgeHandle[] => [{ ref: { path, lineStart, lineEnd, text }, host: el, badge: null }];
+    const whole = (): BadgeHandle[] => [{ ref: { path, lineStart, lineEnd, text }, host: el, badge: null, fresh: () => null }];
     const tag = first?.tagName?.toUpperCase();
     if (tag !== "UL" && tag !== "OL") return whole();
     const lines = text.split("\n");
@@ -176,6 +221,7 @@ export class ParagraphBadges {
       ref: { path, lineStart: item.lineStart, lineEnd: item.lineEnd, text: item.text },
       host: lis[i] as unknown as HTMLElement,
       badge: null,
+      fresh: () => null,
     }));
   }
 
@@ -208,6 +254,7 @@ export class ParagraphBadges {
         // Keeps main.ts's reading-mode word click (document listener) from
         // opening its "add word" menu too.
         e.stopPropagation();
+        h.ref = h.fresh() ?? h.ref;
         this.deps.onOpen(h.ref);
       };
       badge.addEventListener("click", open);

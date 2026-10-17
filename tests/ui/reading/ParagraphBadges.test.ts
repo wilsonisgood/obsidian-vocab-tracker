@@ -20,7 +20,7 @@ import type { MarkdownPostProcessorContext } from "obsidian";
 import { TypedEmitter } from "../../../src/core/events";
 import type { ParagraphIndexEvents } from "../../../src/services/anchors/ParagraphIndex";
 import type { SectionRef } from "../../../src/services/anchors/ParagraphAnchorService";
-import { ParagraphBadges, SectionLines, badgeState, isAnchorableTag } from "../../../src/ui/reading/ParagraphBadges";
+import { NOT_READY_MAX_TRIES, NOT_READY_RETRY_MS, ParagraphBadges, SectionLines, badgeState, isAnchorableTag, sectionReady } from "../../../src/ui/reading/ParagraphBadges";
 
 // Minimal stand-in for Obsidian's HTMLElement helpers.
 class FakeEl {
@@ -131,6 +131,62 @@ describe("ParagraphBadges", () => {
     (s.ctx as unknown as { getSectionInfo: () => null }).getSectionInfo = () => null;
     badges.process(s.el as unknown as HTMLElement, s.ctx);
     expect(s.el.badge()).toBeNull();
+  });
+
+  // 1017 (iPhone, Reading Feed notes): after a first question's ^vt write
+  // re-renders the note, sections are post-processed before reading mode
+  // has their text — every ✦ below got an empty ref and failed with
+  // "missing-paragraph".
+  it("waits for the section's text instead of keeping an empty ref", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", globalThis);
+    try {
+      const { badges, opened } = setup({ "Second paragraph. ^vt-aaaaaa": 1 });
+      const s = section("P", 4, 4);
+      let text = "";
+      (s.ctx as unknown as { getSectionInfo: () => unknown }).getSectionInfo = () => ({ text, lineStart: 4, lineEnd: 4 });
+      badges.process(s.el as unknown as HTMLElement, s.ctx);
+      expect(s.el.badge()).toBeNull();
+
+      text = NOTE;
+      vi.advanceTimersByTime(NOT_READY_RETRY_MS);
+      expect(s.el.badge()?.classes.has("has-count")).toBe(true);
+      s.el.badge()?.listeners.click[0]({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
+      expect(opened).toEqual([{ path: "a.md", lineStart: 4, lineEnd: 4, text: "Second paragraph. ^vt-aaaaaa" }]);
+    } finally {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("gives up retrying once the section unloads", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", globalThis);
+    try {
+      const { badges } = setup();
+      const s = section("P", 2, 2);
+      const info = vi.fn(() => ({ text: "", lineStart: 2, lineEnd: 2 }));
+      (s.ctx as unknown as { getSectionInfo: () => unknown }).getSectionInfo = info;
+      badges.process(s.el as unknown as HTMLElement, s.ctx);
+      s.unload();
+      const calls = info.mock.calls.length;
+      vi.advanceTimersByTime(NOT_READY_RETRY_MS * NOT_READY_MAX_TRIES);
+      expect(info.mock.calls.length).toBe(calls);
+    } finally {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("opens with the section's lines as reading mode sees them at click time", () => {
+    const { badges, opened } = setup();
+    const s = section("P", 2, 2);
+    badges.process(s.el as unknown as HTMLElement, s.ctx);
+    // The note changed above this paragraph after it was rendered.
+    const moved = "# Title\n\nNew line.\n\nFirst paragraph.";
+    (s.ctx as unknown as { getSectionInfo: () => unknown }).getSectionInfo = () => ({ text: moved, lineStart: 4, lineEnd: 4 });
+    s.el.badge()?.listeners.click[0]({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
+    expect(opened).toEqual([{ path: "a.md", lineStart: 4, lineEnd: 4, text: "First paragraph." }]);
   });
 
   it("opens the section it belongs to and keeps the click from reaching the page", () => {
@@ -276,5 +332,13 @@ describe("helpers", () => {
     ids.push("vt-bbbbbb");
     events.emit("paragraph-index:change", { paths: ["a.md"] });
     expect(rerender).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("sectionReady", () => {
+  it("needs text that reaches the section's last line", () => {
+    expect(sectionReady({ text: "", lineEnd: 0 })).toBe(false);
+    expect(sectionReady({ text: "a\nb", lineEnd: 1 })).toBe(true);
+    expect(sectionReady({ text: "a\nb", lineEnd: 2 })).toBe(false);
   });
 });
