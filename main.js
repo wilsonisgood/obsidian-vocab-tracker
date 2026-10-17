@@ -250,6 +250,25 @@ var ObsidianStorage = class {
   }
 };
 
+// src/services/dictionary/errors.ts
+var DictionaryError = class extends Error {
+  constructor(kind, message, options) {
+    super(message, options);
+    this.kind = kind;
+    this.name = "DictionaryError";
+  }
+};
+function dictionaryErrorKind(e) {
+  return e instanceof DictionaryError ? e.kind : "other";
+}
+function combinedKind(a2, b) {
+  const ka = dictionaryErrorKind(a2);
+  const kb = dictionaryErrorKind(b);
+  if (ka === "notFound" || kb === "notFound") return "notFound";
+  if (ka === "network" && kb === "network") return "network";
+  return "other";
+}
+
 // src/core/errorMessage.ts
 function errorMessage(e) {
   return e instanceof Error ? e.message : String(e);
@@ -294,9 +313,9 @@ async function fetchWiktionaryDefinition(http, w2) {
   try {
     res = await http.get(`https://en.wiktionary.org/api/rest_v1/page/definition/${http.encodeQueryParam(w2)}`);
   } catch (e) {
-    throw new Error(`Wiktionary request failed (${errorMessage(e)})`, { cause: e });
+    throw new DictionaryError("network", `Wiktionary request failed (${errorMessage(e)})`, { cause: e });
   }
-  if (res.status === 404) throw new Error(`"${w2}" not found in dictionary`);
+  if (res.status === 404) throw new DictionaryError("notFound", `"${w2}" not found in dictionary`);
   if (res.status !== 200) throw new Error(`Wiktionary API returned HTTP ${res.status}`);
   let data;
   try {
@@ -305,7 +324,7 @@ async function fetchWiktionaryDefinition(http, w2) {
     throw new Error("couldn't parse Wiktionary response", { cause: e });
   }
   const sense = pickWiktionarySense(Array.isArray(data == null ? void 0 : data.en) ? data.en : []);
-  if (!sense) throw new Error(`"${w2}" not found in dictionary`);
+  if (!sense) throw new DictionaryError("notFound", `"${w2}" not found in dictionary`);
   const out = {
     definition: sense.definition,
     partOfSpeech: sense.partOfSpeech
@@ -328,7 +347,7 @@ async function fetchDatamuseDefinition(http, w2) {
   try {
     res = await http.get(`https://api.datamuse.com/words?sp=${http.encodeQueryParam(w2)}&md=d&max=1`);
   } catch (e) {
-    throw new Error(`Datamuse request failed (${errorMessage(e)})`, { cause: e });
+    throw new DictionaryError("network", `Datamuse request failed (${errorMessage(e)})`, { cause: e });
   }
   if (res.status !== 200) throw new Error(`Datamuse API returned HTTP ${res.status}`);
   let arr;
@@ -338,7 +357,7 @@ async function fetchDatamuseDefinition(http, w2) {
     throw new Error("couldn't parse Datamuse response", { cause: e });
   }
   const defs = Array.isArray(arr) && Array.isArray((_a = arr[0]) == null ? void 0 : _a.defs) ? arr[0].defs : [];
-  if (defs.length === 0) throw new Error(`"${w2}" not found in dictionary`);
+  if (defs.length === 0) throw new DictionaryError("notFound", `"${w2}" not found in dictionary`);
   const [posTag, definition] = defs[0].split("	");
   const partOfSpeech = (_c = (_b = POS_MAP[posTag]) != null ? _b : posTag) != null ? _c : "";
   return { definition: (definition || "").trim(), partOfSpeech };
@@ -492,7 +511,8 @@ var DictionaryService = class {
       try {
         return await fetchDatamuseDefinition(this.http, w2);
       } catch (fallbackErr) {
-        throw new Error(
+        throw new DictionaryError(
+          combinedKind(primaryErr, fallbackErr),
           `${errorMessage(primaryErr)}; fallback also failed: ${errorMessage(fallbackErr)}`,
           { cause: fallbackErr }
         );
@@ -1415,6 +1435,9 @@ var en = {
   "paragraph.rebind.cancel": "Cancel",
   "paragraph.rebind.done": "Discussion moved to the new paragraph",
   "paragraph.rebind.failed": "Couldn't attach to that paragraph: {error}",
+  "dictionary.error.network": `Couldn't reach the dictionary for "{word}": this network blocked the secure connection (common on public or work Wi-Fi, or with a VPN). It'll be filled in on another network, or tap \u{1F504} to retry.`,
+  "dictionary.error.notFound": `"{word}" isn't in the dictionary \u2014 add a definition yourself, or ask the AI.`,
+  "dictionary.error.other": `Couldn't fetch dictionary data for "{word}". Tap \u{1F504} to try again later.`,
   "article.restored": "Reconnected {threads} paragraph discussions and {words} word highlights in this note",
   "paragraph.deleted": "Paragraph discussion deleted",
   "paragraph.badge.open": "Discuss this paragraph",
@@ -2289,6 +2312,9 @@ var zhTW = {
   "paragraph.rebind.cancel": "\u53D6\u6D88",
   "paragraph.rebind.done": "\u5DF2\u91CD\u65B0\u7D81\u5B9A\u5230\u65B0\u7684\u6BB5\u843D",
   "paragraph.rebind.failed": "\u7121\u6CD5\u7D81\u5B9A\u5230\u9019\u4E00\u6BB5\uFF1A{error}",
+  "dictionary.error.network": "\u6293\u4E0D\u5230\u300C{word}\u300D\u7684\u5B57\u5178\u8CC7\u6599\uFF1A\u76EE\u524D\u7684\u7DB2\u8DEF\u64CB\u4F4F\u4E86\u5B89\u5168\u9023\u7DDA\uFF08\u5E38\u898B\u65BC\u516C\u5171 Wi-Fi\u3001\u516C\u53F8\u7DB2\u8DEF\u6216 VPN\uFF09\u3002\u63DB\u500B\u7DB2\u8DEF\u5F8C\u6703\u81EA\u52D5\u88DC\u4E0A\uFF0C\u4E5F\u53EF\u4EE5\u6309 \u{1F504} \u91CD\u6293\u3002",
+  "dictionary.error.notFound": "\u5B57\u5178\u88E1\u67E5\u4E0D\u5230\u300C{word}\u300D\uFF0C\u53EF\u4EE5\u81EA\u5DF1\u586B\u5B9A\u7FA9\uFF0C\u6216\u554F AI\u3002",
+  "dictionary.error.other": "\u6293\u4E0D\u5230\u300C{word}\u300D\u7684\u5B57\u5178\u8CC7\u6599\uFF0C\u7A0D\u5F8C\u6309 \u{1F504} \u518D\u8A66\u4E00\u6B21\u3002",
   "article.restored": "\u5DF2\u63A5\u56DE\u9019\u7BC7\u7684 {threads} \u4E32\u6BB5\u843D\u8A0E\u8AD6\u3001{words} \u500B\u55AE\u5B57\u6A19\u8A18",
   "paragraph.deleted": "\u5DF2\u522A\u9664\u6BB5\u843D\u8A0E\u8AD6",
   "paragraph.badge.open": "\u8A0E\u8AD6\u9019\u4E00\u6BB5",
@@ -5538,11 +5564,13 @@ async function promotePreview(host, word, ctx, dict) {
   }
   return entry;
 }
+var PREVIEW_ERROR_TTL_MS = 3e4;
 var cache = /* @__PURE__ */ new Map();
 function loadPreviewDictionary(dict, word, onSettled) {
+  var _a;
   const key5 = word.toLowerCase();
   const hit = cache.get(key5);
-  if (hit) return hit;
+  if (hit && !(hit.status === "error" && Date.now() - ((_a = hit.failedAt) != null ? _a : 0) > PREVIEW_ERROR_TTL_MS)) return hit;
   const entry = { status: "loading" };
   cache.set(key5, entry);
   dict.fetchDictionary(word).then((data) => {
@@ -5551,6 +5579,7 @@ function loadPreviewDictionary(dict, word, onSettled) {
   }).catch((error) => {
     entry.status = "error";
     entry.error = error;
+    entry.failedAt = Date.now();
   }).finally(onSettled);
   return entry;
 }
@@ -39199,6 +39228,7 @@ var VOCAB_FILE_OLD = `${VOCAB_FOLDER}/${LIST_FILE_LEGACY_NAME}.md`;
 var VOCAB_FILE_LEGACY = "vocab-list.md";
 var ENRICH_GAP_MS = 400;
 var RESUME_ENRICH_DELAY_MS = 5e3;
+var NETWORK_RETRY_GAP_MS = 2 * 6e4;
 var DNA_AUTO_START_DELAY_MS = 1e4;
 var DNA_BUDGET_KEY = "vt:dna-budget";
 function loadDnaBudget() {
@@ -39228,6 +39258,11 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
     this.importing = /* @__PURE__ */ new Set();
     this.enrichQueue = [];
     this.enriching = false;
+    // 1017: words whose lookup couldn't reach the dictionary (offline, a
+    // Wi-Fi that intercepts HTTPS…) — tried again when the app comes back
+    // to the foreground or the network returns.
+    this.unreachable = /* @__PURE__ */ new Set();
+    this.lastNetworkRetry = 0;
     this.unloaded = false;
   }
   async onload() {
@@ -39643,6 +39678,10 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
       void this.diary.maybeWriteYesterday();
       this.registerWordlistEvents();
       void this.wordlists.reload();
+      this.registerDomEvent(window, "online", () => this.retryUnreachable());
+      this.registerDomEvent(document, "visibilitychange", () => {
+        if (document.visibilityState === "visible") this.retryUnreachable();
+      });
       const timer2 = window.setTimeout(
         () => {
           this.enqueueEnrich(entriesMissingDefinition(this.store.entries));
@@ -40248,9 +40287,20 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
       if (opts.verbose) new import_obsidian68.Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
+      const kind = dictionaryErrorKind(e);
+      if (kind === "network") this.unreachable.add(entry.id);
       if (opts.quiet) return;
-      new import_obsidian68.Notice(`Vocab Tracker: couldn't fetch "${entry.word}" \u2014 ${(e == null ? void 0 : e.message) || e}`);
+      new import_obsidian68.Notice(t(`dictionary.error.${kind}`, { word: entry.word }), kind === "network" ? 8e3 : void 0);
     }
+  }
+  // See `unreachable`. At most every NETWORK_RETRY_GAP_MS: iPhone fires
+  // visibilitychange on every app switch.
+  retryUnreachable() {
+    if (!this.unreachable.size || Date.now() - this.lastNetworkRetry < NETWORK_RETRY_GAP_MS) return;
+    this.lastNetworkRetry = Date.now();
+    const ids = this.unreachable;
+    this.unreachable = /* @__PURE__ */ new Set();
+    this.enqueueEnrich(entriesMissingDefinition(this.store.entries.filter((e) => ids.has(e.id))));
   }
   refreshSidebar() {
     var _a;

@@ -1,4 +1,5 @@
 import type { HttpPort } from "../../../core/ports";
+import { DictionaryError } from "../errors";
 import { errorMessage } from "../../../core/errorMessage";
 
 interface WiktionaryEntry {
@@ -90,9 +91,9 @@ export async function fetchWiktionaryDefinition(
   try {
     res = await http.get(`https://en.wiktionary.org/api/rest_v1/page/definition/${http.encodeQueryParam(w)}`);
   } catch (e) {
-    throw new Error(`Wiktionary request failed (${errorMessage(e)})`, { cause: e });
+    throw new DictionaryError("network", `Wiktionary request failed (${errorMessage(e)})`, { cause: e });
   }
-  if (res.status === 404) throw new Error(`"${w}" not found in dictionary`);
+  if (res.status === 404) throw new DictionaryError("notFound", `"${w}" not found in dictionary`);
   if (res.status !== 200) throw new Error(`Wiktionary API returned HTTP ${res.status}`);
 
   let data: WiktionaryResponse;
@@ -102,7 +103,7 @@ export async function fetchWiktionaryDefinition(
     throw new Error("couldn't parse Wiktionary response", { cause: e });
   }
   const sense = pickWiktionarySense(Array.isArray(data?.en) ? data.en : []);
-  if (!sense) throw new Error(`"${w}" not found in dictionary`);
+  if (!sense) throw new DictionaryError("notFound", `"${w}" not found in dictionary`);
 
   const out: { definition: string; partOfSpeech: string; baseForm?: string } = {
     definition: sense.definition,

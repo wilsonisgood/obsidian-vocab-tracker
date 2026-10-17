@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DictionaryService } from "../../../src/services/dictionary/DictionaryService";
 import { FakeHttpPort, jsonResponse } from "./fakeHttp";
+import { dictionaryErrorKind } from "../../../src/services/dictionary/errors";
 
 describe("DictionaryService.fetchDictionary", () => {
   it("combines Wiktionary, Google Translate and Datamuse synonyms/antonyms", async () => {
@@ -98,5 +99,39 @@ describe("DictionaryService.translateToZhTW", () => {
     const http = new FakeHttpPort(() => jsonResponse(500, {}));
     const dict = new DictionaryService(http);
     expect(await dict.translateToZhTW("hello")).toBe("");
+  });
+});
+
+// 1017: an iPhone on a Wi-Fi that intercepts HTTPS — neither source answers.
+describe("DictionaryService error kinds", () => {
+  const fetchKind = async (router: (url: string) => ReturnType<typeof jsonResponse>) => {
+    try {
+      await new DictionaryService(new FakeHttpPort(router)).fetchDictionary("impatiently");
+      return "ok";
+    } catch (e) {
+      return dictionaryErrorKind(e);
+    }
+  };
+
+  it("is 'network' when neither dictionary could be reached", async () => {
+    expect(
+      await fetchKind((url) => {
+        if (url.includes("wiktionary.org") || url.includes("md=d")) throw new Error("Request failed. TLS錯誤導致安全連線失敗。");
+        return jsonResponse(200, []);
+      })
+    ).toBe("network");
+  });
+
+  it("is 'notFound' when a dictionary answered without the word", async () => {
+    expect(
+      await fetchKind((url) => {
+        if (url.includes("wiktionary.org")) throw new Error("TLS");
+        return jsonResponse(200, []);
+      })
+    ).toBe("notFound");
+  });
+
+  it("is 'other' for a server error", async () => {
+    expect(await fetchKind(() => jsonResponse(500, {}))).toBe("other");
   });
 });

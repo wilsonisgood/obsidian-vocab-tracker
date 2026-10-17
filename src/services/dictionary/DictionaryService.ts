@@ -1,4 +1,5 @@
 import type { HttpPort } from "../../core/ports";
+import { DictionaryError, combinedKind } from "./errors";
 import type { DictionaryResult } from "../../core/model/dictionary";
 import { errorMessage } from "../../core/errorMessage";
 import { fetchWiktionaryDefinition } from "./sources/wiktionary";
@@ -77,7 +78,8 @@ export class DictionaryService {
       try {
         return await fetchDatamuseDefinition(this.http, w);
       } catch (fallbackErr) {
-        throw new Error(
+        throw new DictionaryError(
+          combinedKind(primaryErr, fallbackErr),
           `${errorMessage(primaryErr)}; fallback also failed: ${errorMessage(fallbackErr)}`,
           { cause: fallbackErr }
         );

@@ -1,4 +1,5 @@
 import type { HttpPort } from "../../../core/ports";
+import { DictionaryError } from "../errors";
 import { errorMessage } from "../../../core/errorMessage";
 
 const POS_MAP: Record<string, string> = {
@@ -26,7 +27,7 @@ export async function fetchDatamuseDefinition(
   try {
     res = await http.get(`https://api.datamuse.com/words?sp=${http.encodeQueryParam(w)}&md=d&max=1`);
   } catch (e) {
-    throw new Error(`Datamuse request failed (${errorMessage(e)})`, { cause: e });
+    throw new DictionaryError("network", `Datamuse request failed (${errorMessage(e)})`, { cause: e });
   }
   if (res.status !== 200) throw new Error(`Datamuse API returned HTTP ${res.status}`);
 
@@ -37,7 +38,7 @@ export async function fetchDatamuseDefinition(
     throw new Error("couldn't parse Datamuse response", { cause: e });
   }
   const defs = Array.isArray(arr) && Array.isArray(arr[0]?.defs) ? arr[0].defs! : [];
-  if (defs.length === 0) throw new Error(`"${w}" not found in dictionary`);
+  if (defs.length === 0) throw new DictionaryError("notFound", `"${w}" not found in dictionary`);
 
   const [posTag, definition] = defs[0].split("\t");
   const partOfSpeech = POS_MAP[posTag] ?? posTag ?? "";

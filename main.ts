@@ -104,6 +104,7 @@ import { WordSheet } from "./src/ui/mobile/WordSheet";
 import { WordSurfaces } from "./src/ui/mobile/WordSurfaces";
 import { quickSave } from "./src/ui/mobile/quickSave";
 import { actionNotice } from "./src/ui/mobile/actionNotice";
+import { dictionaryErrorKind } from "./src/services/dictionary/errors";
 import { lostParts, restoreArticle, type RestoreAnchor } from "./src/services/anchors/restoreArticle";
 import { LivePreviewHint } from "./src/ui/mobile/livePreviewHint";
 import { sharedSpeaker, type Speaker } from "./src/ui/mobile/speech";
@@ -131,6 +132,8 @@ const ENRICH_GAP_MS = 400;
 // Wait after startup before retrying words with no definition, so the
 // fetches don't compete with Obsidian loading the workspace.
 const RESUME_ENRICH_DELAY_MS = 5000;
+// retryUnreachable(): at most this often.
+const NETWORK_RETRY_GAP_MS = 2 * 60_000;
 // Word DNA (規劃書 09 §2 決定 5, A8): give the workspace a moment to settle
 // before the background auto-拆字 batch starts spending its daily budget.
 const DNA_AUTO_START_DELAY_MS = 10_000;
@@ -221,6 +224,11 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   private importing = new Set<string>();
   private enrichQueue: VocabEntry[] = [];
   private enriching = false;
+  // 1017: words whose lookup couldn't reach the dictionary (offline, a
+  // Wi-Fi that intercepts HTTPS…) — tried again when the app comes back
+  // to the foreground or the network returns.
+  private unreachable = new Set<string>();
+  private lastNetworkRetry = 0;
   private unloaded = false;
 
   async onload() {
@@ -716,6 +724,10 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       void this.wordlists.reload();
       // Words whose dictionary fetch never finished (closed mid-queue,
       // offline…) get another try every startup.
+      this.registerDomEvent(window, "online", () => this.retryUnreachable());
+      this.registerDomEvent(document, "visibilitychange", () => {
+        if (document.visibilityState === "visible") this.retryUnreachable();
+      });
       const timer = window.setTimeout(
         () => {
           this.enqueueEnrich(entriesMissingDefinition(this.store.entries));
@@ -1429,9 +1441,21 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       if (opts.verbose) new Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e: any) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
+      const kind = dictionaryErrorKind(e);
+      if (kind === "network") this.unreachable.add(entry.id);
       if (opts.quiet) return;
-      new Notice(`Vocab Tracker: couldn't fetch "${entry.word}" — ${e?.message || e}`);
+      new Notice(t(`dictionary.error.${kind}`, { word: entry.word }), kind === "network" ? 8000 : undefined);
     }
+  }
+
+  // See `unreachable`. At most every NETWORK_RETRY_GAP_MS: iPhone fires
+  // visibilitychange on every app switch.
+  retryUnreachable() {
+    if (!this.unreachable.size || Date.now() - this.lastNetworkRetry < NETWORK_RETRY_GAP_MS) return;
+    this.lastNetworkRetry = Date.now();
+    const ids = this.unreachable;
+    this.unreachable = new Set();
+    this.enqueueEnrich(entriesMissingDefinition(this.store.entries.filter((e) => ids.has(e.id))));
   }
 
   refreshSidebar() {

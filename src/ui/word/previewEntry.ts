@@ -102,7 +102,14 @@ export interface PreviewDictState {
   status: "loading" | "ready" | "error";
   data?: DictionaryResult;
   error?: unknown;
+  // When it failed (Date.now()).
+  failedAt?: number;
 }
+
+// 1017: a failed fetch is kept only this long — long enough for the
+// caller's re-derive right after onSettled, short enough that opening the
+// word again on a working network fetches it again.
+export const PREVIEW_ERROR_TTL_MS = 30_000;
 
 export interface DictionarySource {
   fetchDictionary(word: string): Promise<DictionaryResult>;
@@ -118,7 +125,7 @@ const cache = new Map<string, PreviewDictState>();
 export function loadPreviewDictionary(dict: DictionarySource, word: string, onSettled: () => void): PreviewDictState {
   const key = word.toLowerCase();
   const hit = cache.get(key);
-  if (hit) return hit;
+  if (hit && !(hit.status === "error" && Date.now() - (hit.failedAt ?? 0) > PREVIEW_ERROR_TTL_MS)) return hit;
   const entry: PreviewDictState = { status: "loading" };
   cache.set(key, entry);
   dict
@@ -130,6 +137,7 @@ export function loadPreviewDictionary(dict: DictionarySource, word: string, onSe
     .catch((error) => {
       entry.status = "error";
       entry.error = error;
+      entry.failedAt = Date.now();
     })
     .finally(onSettled);
   return entry;

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DictionaryResult } from "../../../src/core/model/dictionary";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import {
+  PREVIEW_ERROR_TTL_MS,
   _resetPreviewDictionaryCache,
   draftEntry,
   loadPreviewDictionary,
@@ -144,6 +145,26 @@ describe("loadPreviewDictionary (session cache)", () => {
     const state = loadPreviewDictionary(source, "apron", vi.fn());
     expect(state.status).toBe("error");
     expect(state.error).toBe(boom);
+  });
+
+  it("tries a failed word again once the error is old (another network by now)", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchDictionary = vi.fn(async (): Promise<DictionaryResult> => {
+        throw new Error("TLS");
+      });
+      loadPreviewDictionary({ fetchDictionary }, "apron", vi.fn());
+      await vi.advanceTimersByTimeAsync(0);
+      expect(loadPreviewDictionary({ fetchDictionary }, "apron", vi.fn()).status).toBe("error");
+      expect(fetchDictionary).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(PREVIEW_ERROR_TTL_MS + 1);
+      fetchDictionary.mockImplementation(async () => dict());
+      expect(loadPreviewDictionary({ fetchDictionary }, "apron", vi.fn()).status).toBe("loading");
+      expect(fetchDictionary).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
