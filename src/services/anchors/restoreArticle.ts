@@ -1,8 +1,8 @@
 import { blockIdsIn, trailingBlockId, withBlockId } from "../../core/text/blockId";
-import { paragraphHash } from "../../core/text/hash";
+import { normalizeParagraph, paragraphHash } from "../../core/text/hash";
 import { wrapOutsideCode } from "../../core/text/outsideCode";
 import { buildWordRe } from "../../core/text/wordRe";
-import { isAnchorable, noteSections, ownBlockIdLine, ownBlockIdText } from "./sections";
+import { isAnchorable, noteSections, ownBlockIdLine, ownBlockIdText, type NoteSection } from "./sections";
 
 // 1017: an article deleted and loaded again (Reading Feed writes it back to
 // the same path) comes back as the plain original — without the ^vt ids our
@@ -16,6 +16,8 @@ import { isAnchorable, noteSections, ownBlockIdLine, ownBlockIdText } from "./se
 export interface RestoreAnchor {
   blockId?: string;
   hash: string;
+  // plainParagraph() of the paragraph when the discussion started.
+  snapshot?: string;
 }
 
 export interface RestoreResult {
@@ -26,6 +28,29 @@ export interface RestoreResult {
   highlighted: number;
 }
 
+// Text compared when the hash doesn't match: without %%comments%% (Reading
+// Feed's %%rf:<seconds>%% timestamps), highlights and block ids.
+function bare(text: string): string {
+  return normalizeParagraph(text.replace(/%%[\s\S]*?%%/g, " "));
+}
+
+// Shortest paragraph start trusted to identify where an old paragraph begins.
+const MIN_PREFIX = 20;
+
+// Reading Feed's rf-schema 2 (2026-10-14) re-cuts a talk into sentence-sized
+// paragraphs with their own timestamps, so a paragraph from a note loaded
+// before that is several paragraphs in the same note loaded again — no
+// hash matches. The discussion goes to the first of them: the paragraph
+// the old one starts with.
+function firstPiece(sections: readonly NoteSection[], snapshot: string): NoteSection | undefined {
+  const want = bare(snapshot);
+  if (!want) return undefined;
+  return sections.find((s) => {
+    const have = bare(s.text);
+    return have === want || (have.length >= MIN_PREFIX && want.startsWith(have));
+  });
+}
+
 export function restoreArticle(content: string, anchors: readonly RestoreAnchor[], words: readonly string[]): RestoreResult {
   let out = content;
   let rebound = 0;
@@ -33,9 +58,8 @@ export function restoreArticle(content: string, anchors: readonly RestoreAnchor[
   for (const a of anchors) {
     if (!a.blockId || present.has(a.blockId)) continue;
     // Re-split each time: the previous write changed a section's text.
-    const section = noteSections(out).find(
-      (s) => isAnchorable(s.type) && paragraphHash(s.text) === a.hash && !trailingBlockId(ownBlockIdText(s))
-    );
+    const free = noteSections(out).filter((s) => isAnchorable(s.type) && !trailingBlockId(ownBlockIdText(s)));
+    const section = free.find((s) => paragraphHash(s.text) === a.hash) ?? (a.snapshot ? firstPiece(free, a.snapshot) : undefined);
     if (!section) continue;
     out = withBlockId(out, ownBlockIdLine(section), a.blockId);
     present.add(a.blockId);
@@ -50,4 +74,21 @@ export function restoreArticle(content: string, anchors: readonly RestoreAnchor[
     highlighted++;
   }
   return { content: out, rebound, highlighted };
+}
+
+// For a note that's already there (loaded again before restoring existed):
+// only what was clearly lost wholesale — every ^vt id gone, or not one
+// saved word highlighted. A note where some survive was edited by hand,
+// and is left alone.
+export function lostParts(
+  content: string,
+  anchors: readonly RestoreAnchor[],
+  words: readonly string[]
+): { anchors: RestoreAnchor[]; words: string[] } {
+  const ids = anchors.filter((a) => a.blockId);
+  const present = blockIdsIn(content);
+  const idsLost = ids.length > 0 && ids.every((a) => !present.has(a.blockId as string));
+  const marked = (w: string) => new RegExp(`==${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}==`, "i").test(content);
+  const wordsLost = words.length > 0 && !words.some(marked);
+  return { anchors: idsLost ? ids : [], words: wordsLost ? [...words] : [] };
 }

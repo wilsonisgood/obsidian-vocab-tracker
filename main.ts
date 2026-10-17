@@ -104,7 +104,7 @@ import { WordSheet } from "./src/ui/mobile/WordSheet";
 import { WordSurfaces } from "./src/ui/mobile/WordSurfaces";
 import { quickSave } from "./src/ui/mobile/quickSave";
 import { actionNotice } from "./src/ui/mobile/actionNotice";
-import { restoreArticle } from "./src/services/anchors/restoreArticle";
+import { lostParts, restoreArticle, type RestoreAnchor } from "./src/services/anchors/restoreArticle";
 import { LivePreviewHint } from "./src/ui/mobile/livePreviewHint";
 import { sharedSpeaker, type Speaker } from "./src/ui/mobile/speech";
 import { configurePronouncer, disposePronouncer } from "./src/ui/kit/pronounce";
@@ -499,6 +499,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
           if (file instanceof TFile && file.extension === "md") void this.restoreArticle(file);
         })
       );
+      // Out of the way of startup.
+      window.setTimeout(() => void this.restoreLostArticles().catch((e) => console.error("Vocab Tracker: restore sweep failed", e)), 5000);
     });
 
     // Keeps families / saved trivia / saved verb usages in step with a
@@ -1480,16 +1482,19 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   }
 
   // See the "create" listener in onload (services/anchors/restoreArticle.ts).
-  async restoreArticle(file: TFile) {
+  // `onlyLost`: a note that has been there a while — touch only what was
+  // lost wholesale (lostParts).
+  async restoreArticle(file: TFile, onlyLost = false) {
     try {
       await this.threads.ensureLoaded();
-      const anchors = this.threads
+      let anchors: RestoreAnchor[] = this.threads
         .paragraphThreads(file.path)
         .flatMap((th) => (th.anchor.kind === "paragraph" ? [th.anchor] : []));
-      const words = this.store.entries.filter((e) => !e.deletedAt && e.source?.path === file.path).map((e) => e.word);
+      let words = this.store.entries.filter((e) => !e.deletedAt && e.source?.path === file.path).map((e) => e.word);
       if (!anchors.some((a) => a.blockId) && !words.length) return;
       let result: { rebound: number; highlighted: number } = { rebound: 0, highlighted: 0 };
       await this.app.vault.process(file, (content) => {
+        if (onlyLost) ({ anchors, words } = lostParts(content, anchors, words));
         const r = restoreArticle(content, anchors, words);
         result = r;
         return r.content;
@@ -1499,6 +1504,19 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       }
     } catch (e) {
       console.error("Vocab Tracker: couldn't restore the article's anchors", e);
+    }
+  }
+
+  // Notes loaded again before restoreArticle existed (1017): once per
+  // start, every note a discussion or a saved word points at.
+  async restoreLostArticles() {
+    await this.threads.ensureLoaded();
+    const paths = new Set<string>();
+    for (const th of this.threads.paragraphThreads()) if (th.anchor.kind === "paragraph" && th.anchor.blockId) paths.add(th.anchor.path);
+    for (const e of this.store.entries) if (!e.deletedAt && e.source?.path) paths.add(e.source.path);
+    for (const path of paths) {
+      const file = this.app.vault.getAbstractFileByPath(path);
+      if (file instanceof TFile && file.extension === "md") await this.restoreArticle(file, true);
     }
   }
 

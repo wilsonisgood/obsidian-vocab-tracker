@@ -68,9 +68,16 @@ describe("刪除文章再重新載入後，討論與單字標記自動接回", (
       await sleep(1500);
       const after = await app.vault.read(file);
       const status = await plugin.threads.paragraphStatus(threadId);
-      return JSON.stringify({ before, after, threadId, via: status?.status === "found" ? status.via : status?.status });
+
+      // Loaded again before restoring existed: plain text, no "create" event.
+      await app.vault.modify(file, ${JSON.stringify(BODY)});
+      await sleep(300);
+      await plugin.restoreLostArticles();
+      await sleep(300);
+      const swept = await app.vault.read(file);
+      return JSON.stringify({ before, after, swept, threadId, via: status?.status === "found" ? status.via : status?.status });
     })()`);
-    const { before, after, threadId, via } = JSON.parse(r) as { before: string; after: string; threadId: string; via: string };
+    const { before, after, swept, threadId, via } = JSON.parse(r) as { before: string; after: string; swept: string; threadId: string; via: string };
     console.log("[before]", JSON.stringify(before));
     console.log("[after]", JSON.stringify(after));
     expect(threadId).toBeTruthy();
@@ -78,5 +85,6 @@ describe("刪除文章再重新載入後，討論與單字標記自動接回", (
     expect(before).toContain("==ravages==");
     expect(after).toBe(before);
     expect(via).toBe("blockId");
+    expect(swept).toBe(before);
   }, 180000);
 });

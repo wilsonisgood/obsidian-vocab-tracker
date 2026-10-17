@@ -38920,15 +38920,27 @@ async function quickSave(word, deps) {
 }
 
 // src/services/anchors/restoreArticle.ts
+function bare(text) {
+  return normalizeParagraph(text.replace(/%%[\s\S]*?%%/g, " "));
+}
+var MIN_PREFIX = 20;
+function firstPiece(sections, snapshot2) {
+  const want = bare(snapshot2);
+  if (!want) return void 0;
+  return sections.find((s) => {
+    const have = bare(s.text);
+    return have === want || have.length >= MIN_PREFIX && want.startsWith(have);
+  });
+}
 function restoreArticle(content, anchors, words) {
+  var _a;
   let out = content;
   let rebound = 0;
   const present = blockIdsIn(out);
   for (const a2 of anchors) {
     if (!a2.blockId || present.has(a2.blockId)) continue;
-    const section3 = noteSections(out).find(
-      (s) => isAnchorable(s.type) && paragraphHash(s.text) === a2.hash && !trailingBlockId(ownBlockIdText(s))
-    );
+    const free = noteSections(out).filter((s) => isAnchorable(s.type) && !trailingBlockId(ownBlockIdText(s)));
+    const section3 = (_a = free.find((s) => paragraphHash(s.text) === a2.hash)) != null ? _a : a2.snapshot ? firstPiece(free, a2.snapshot) : void 0;
     if (!section3) continue;
     out = withBlockId(out, ownBlockIdLine(section3), a2.blockId);
     present.add(a2.blockId);
@@ -38942,6 +38954,14 @@ function restoreArticle(content, anchors, words) {
     highlighted++;
   }
   return { content: out, rebound, highlighted };
+}
+function lostParts(content, anchors, words) {
+  const ids = anchors.filter((a2) => a2.blockId);
+  const present = blockIdsIn(content);
+  const idsLost = ids.length > 0 && ids.every((a2) => !present.has(a2.blockId));
+  const marked = (w2) => new RegExp(`==${w2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}==`, "i").test(content);
+  const wordsLost = words.length > 0 && !words.some(marked);
+  return { anchors: idsLost ? ids : [], words: wordsLost ? [...words] : [] };
 }
 
 // src/ui/mobile/livePreviewHint.ts
@@ -39458,6 +39478,7 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
           if (file instanceof import_obsidian68.TFile && file.extension === "md") void this.restoreArticle(file);
         })
       );
+      window.setTimeout(() => void this.restoreLostArticles().catch((e) => console.error("Vocab Tracker: restore sweep failed", e)), 5e3);
     });
     this.linkage = new EntryLinkageService({
       learn: this.learn,
@@ -40275,17 +40296,20 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
     }
   }
   // See the "create" listener in onload (services/anchors/restoreArticle.ts).
-  async restoreArticle(file) {
+  // `onlyLost`: a note that has been there a while — touch only what was
+  // lost wholesale (lostParts).
+  async restoreArticle(file, onlyLost = false) {
     try {
       await this.threads.ensureLoaded();
-      const anchors = this.threads.paragraphThreads(file.path).flatMap((th) => th.anchor.kind === "paragraph" ? [th.anchor] : []);
-      const words = this.store.entries.filter((e) => {
+      let anchors = this.threads.paragraphThreads(file.path).flatMap((th) => th.anchor.kind === "paragraph" ? [th.anchor] : []);
+      let words = this.store.entries.filter((e) => {
         var _a;
         return !e.deletedAt && ((_a = e.source) == null ? void 0 : _a.path) === file.path;
       }).map((e) => e.word);
       if (!anchors.some((a2) => a2.blockId) && !words.length) return;
       let result = { rebound: 0, highlighted: 0 };
       await this.app.vault.process(file, (content) => {
+        if (onlyLost) ({ anchors, words } = lostParts(content, anchors, words));
         const r = restoreArticle(content, anchors, words);
         result = r;
         return r.content;
@@ -40295,6 +40319,19 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
       }
     } catch (e) {
       console.error("Vocab Tracker: couldn't restore the article's anchors", e);
+    }
+  }
+  // Notes loaded again before restoreArticle existed (1017): once per
+  // start, every note a discussion or a saved word points at.
+  async restoreLostArticles() {
+    var _a;
+    await this.threads.ensureLoaded();
+    const paths = /* @__PURE__ */ new Set();
+    for (const th of this.threads.paragraphThreads()) if (th.anchor.kind === "paragraph" && th.anchor.blockId) paths.add(th.anchor.path);
+    for (const e of this.store.entries) if (!e.deletedAt && ((_a = e.source) == null ? void 0 : _a.path)) paths.add(e.source.path);
+    for (const path of paths) {
+      const file = this.app.vault.getAbstractFileByPath(path);
+      if (file instanceof import_obsidian68.TFile && file.extension === "md") await this.restoreArticle(file, true);
     }
   }
   async unhighlightWord(word, path) {
