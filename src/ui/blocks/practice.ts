@@ -1,6 +1,6 @@
-import { Component, MarkdownRenderChild, type MarkdownPostProcessorContext } from "obsidian";
+import { Component, MarkdownRenderChild, type Events, type MarkdownPostProcessorContext } from "obsidian";
 import { parseBlockParams } from "./params";
-import { pickTab, rememberedTab, TAB_KEY, type TabLike } from "./practice/practiceModel";
+import { pickTab, rememberedTab, TAB_EVENT, TAB_KEY, type TabLike } from "./practice/practiceModel";
 import type { PracticeHost, PracticeTabDef } from "./practice/types";
 import { vocabTab } from "./practice/vocabTab";
 
@@ -10,7 +10,7 @@ import { vocabTab } from "./practice/vocabTab";
 //   tab: vocab     # optional: lock to one tab, no tab bar
 //   ```
 //
-// Practice.md: a tab bar (單字／文法／常用字／混合) over the active tab.
+// Practice.md: a tab bar (單字／文法／常用字／混合／換句話說) over the active tab.
 // Only the vocab tab is built in; the others register through
 // PracticeHost.tabs() and a tab nobody registered isn't shown. The last
 // tab is remembered on this device only (localStorage).
@@ -58,6 +58,18 @@ class PracticeBlock extends MarkdownRenderChild {
 
     const remembered = this.locked ? undefined : rememberedTab(this.tabs, this.loadTab());
     this.select(remembered ?? this.tabs[0]);
+
+    // 「練這個主題」/「用這段練換句話說」 while this hub is already open.
+    // A custom event, so Workspace's typed overloads don't cover it.
+    const workspace = this.host.app.workspace as unknown as Events;
+    if (!this.locked && typeof workspace?.on === "function") {
+      this.registerEvent(
+        workspace.on(TAB_EVENT, (id: unknown) => {
+          const tab = rememberedTab(this.tabs, id);
+          if (tab) this.select(tab);
+        })
+      );
+    }
   }
 
   onunload(): void {

@@ -5,16 +5,16 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __defNormalProp = (obj, key5, value) => key5 in obj ? __defProp(obj, key5, { enumerable: true, configurable: true, writable: true, value }) : obj[key5] = value;
+var __defNormalProp = (obj, key6, value) => key6 in obj ? __defProp(obj, key6, { enumerable: true, configurable: true, writable: true, value }) : obj[key6] = value;
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key5 of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key5) && key5 !== except)
-        __defProp(to, key5, { get: () => from[key5], enumerable: !(desc = __getOwnPropDesc(from, key5)) || desc.enumerable });
+    for (let key6 of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key6) && key6 !== except)
+        __defProp(to, key6, { get: () => from[key6], enumerable: !(desc = __getOwnPropDesc(from, key6)) || desc.enumerable });
   }
   return to;
 };
@@ -27,7 +27,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __publicField = (obj, key5, value) => __defNormalProp(obj, typeof key5 !== "symbol" ? key5 + "" : key5, value);
+var __publicField = (obj, key6, value) => __defNormalProp(obj, typeof key6 !== "symbol" ? key6 + "" : key6, value);
 
 // main.ts
 var main_exports = {};
@@ -70,8 +70,8 @@ function wrapOutsideCode(content, re) {
 }
 
 // src/core/text/sentence.ts
-function extractSentence(text, start3, end, node) {
-  let s = start3;
+function extractSentence(text, start4, end, node) {
+  let s = start4;
   let e = end;
   while (s > 0 && !/[.!?\n]/.test(text[s - 1])) s--;
   while (e < text.length && !/[.!?\n]/.test(text[e])) e++;
@@ -613,8 +613,8 @@ function legacyStamp(s) {
 function carryLegacyStamp(s) {
   const legacy = legacyStamp(s);
   if (!legacy) return;
-  for (const key5 of SETTINGS_SECTIONS) {
-    const section3 = s[key5];
+  for (const key6 of SETTINGS_SECTIONS) {
+    const section3 = s[key6];
     if (section3 && typeof section3 === "object" && stampMs(section3.updatedAt) < legacy.ms) section3.updatedAt = legacy.iso;
   }
 }
@@ -673,22 +673,22 @@ function sectionFingerprint(section3) {
 }
 function snapshotSettingsSections(s) {
   const out = {};
-  for (const key5 of SETTINGS_SECTIONS) {
-    const section3 = s[key5];
-    out[key5] = { fingerprint: sectionFingerprint(section3), updatedAt: section3 == null ? void 0 : section3.updatedAt };
+  for (const key6 of SETTINGS_SECTIONS) {
+    const section3 = s[key6];
+    out[key6] = { fingerprint: sectionFingerprint(section3), updatedAt: section3 == null ? void 0 : section3.updatedAt };
   }
   return out;
 }
 function stampChangedSections(s, before, stamp) {
   const changed = [];
-  for (const key5 of SETTINGS_SECTIONS) {
-    const section3 = s[key5];
+  for (const key6 of SETTINGS_SECTIONS) {
+    const section3 = s[key6];
     if (!section3 || typeof section3 !== "object") continue;
-    if (sectionFingerprint(section3) !== before[key5].fingerprint) {
+    if (sectionFingerprint(section3) !== before[key6].fingerprint) {
       section3.updatedAt = stamp;
-      changed.push(key5);
-    } else if (before[key5].updatedAt !== void 0) {
-      section3.updatedAt = before[key5].updatedAt;
+      changed.push(key6);
+    } else if (before[key6].updatedAt !== void 0) {
+      section3.updatedAt = before[key6].updatedAt;
     } else {
       delete section3.updatedAt;
     }
@@ -952,7 +952,7 @@ function pickSection(local, remote, localLegacy, remoteLegacy, lTop, rTop) {
 }
 function restFingerprint(s) {
   const rest = { ...s };
-  for (const key5 of SETTINGS_SECTIONS) delete rest[key5];
+  for (const key6 of SETTINGS_SECTIONS) delete rest[key6];
   return sectionFingerprint(rest);
 }
 function mergeSettings(local, remote) {
@@ -964,10 +964,10 @@ function mergeSettings(local, remote) {
   const out = { ...remoteNewer ? remote : local };
   const localLegacy = legacyStamp(local);
   const remoteLegacy = legacyStamp(remote);
-  for (const key5 of SETTINGS_SECTIONS) {
-    const picked2 = pickSection(local[key5], remote[key5], localLegacy, remoteLegacy, l4, r);
-    if (picked2 === void 0) delete out[key5];
-    else out[key5] = picked2;
+  for (const key6 of SETTINGS_SECTIONS) {
+    const picked2 = pickSection(local[key6], remote[key6], localLegacy, remoteLegacy, l4, r);
+    if (picked2 === void 0) delete out[key6];
+    else out[key6] = picked2;
   }
   return out;
 }
@@ -1888,6 +1888,26 @@ var en = {
   "practice.mix.unset": " (not set)",
   "practice.mix.none": "Pick at least one category to mix.",
   "practice.mix.nothing": "Nothing to ask about yet; set the filters on the other tabs first.",
+  // Paraphrase (questions from paragraph discussions)
+  "practice.para.label": "Paraphrase",
+  "practice.para.tag": "Paragraph",
+  "practice.para.scope": "Questions from",
+  "practice.para.scopeAll": "All paragraph discussions ({n})",
+  "practice.para.scopeNote": "{title} ({n})",
+  "practice.para.scopeThread": "Only this one: {text}",
+  "practice.para.empty": "No paragraph discussions yet. Once you've asked the AI about a paragraph (\u2726), its sentences turn into paraphrase questions here.",
+  "practice.para.nothing": "The paragraphs here have no English sentence to ask about.",
+  "practice.player.ask.paraphrase": "Which sentence means the same as the one above?",
+  "practice.mistakes.kind.paraphrase": "Paraphrase",
+  "practice.mistakes.tag.para-negation": "Negation",
+  "practice.mistakes.tag.para-cause": "Cause and condition",
+  "practice.mistakes.tag.para-scope": "Scope and degree",
+  "practice.mistakes.tag.para-time": "Time and order",
+  "practice.mistakes.tag.para-actor": "Who did what",
+  "practice.mistakes.tag.para-certainty": "Certainty",
+  "practice.mistakes.tag.para-detail": "Added or missing detail",
+  "practice.mistakes.tag.para-word": "Word meaning",
+  "paragraph.pane.practice": "Practise paraphrasing this paragraph",
   // Wave 17 Z — learning summary (AI learner block)
   "learner.summary.prefix": "Current progress: ",
   "learner.summary.vocab": "{n} words learned ({mature} mature)",
@@ -2764,6 +2784,26 @@ var zhTW = {
   "practice.mix.unset": "\uFF08\u672A\u8A2D\u5B9A\uFF09",
   "practice.mix.none": "\u8ACB\u81F3\u5C11\u9078\u4E00\u500B\u8981\u6DF7\u7684\u985E\u5225\u3002",
   "practice.mix.nothing": "\u9078\u7684\u985E\u5225\u90FD\u9084\u6C92\u6709\u53EF\u51FA\u984C\u7684\u5167\u5BB9\uFF0C\u5148\u5230\u5404\u9801\u7C64\u8A2D\u5B9A\u7BE9\u9078\u3002",
+  // 換句話說（段落討論出題）
+  "practice.para.label": "\u63DB\u53E5\u8A71\u8AAA",
+  "practice.para.tag": "\u6BB5\u843D",
+  "practice.para.scope": "\u51FA\u984C\u7BC4\u570D",
+  "practice.para.scopeAll": "\u5168\u90E8\u6BB5\u843D\u8A0E\u8AD6\uFF08{n} \u6BB5\uFF09",
+  "practice.para.scopeNote": "{title}\uFF08{n} \u6BB5\uFF09",
+  "practice.para.scopeThread": "\u53EA\u7DF4\u9019\u6BB5\uFF1A{text}",
+  "practice.para.empty": "\u9084\u6C92\u6709\u6BB5\u843D\u8A0E\u8AD6\u3002\u5728\u6587\u7AE0\u88E1\u5C0D\u6BB5\u843D\u6309 \u2726 \u554F\u904E AI \u4E4B\u5F8C\uFF0C\u9019\u88E1\u5C31\u6703\u7528\u90A3\u4E9B\u6BB5\u843D\u51FA\u63DB\u53E5\u8A71\u8AAA\u984C\u3002",
+  "practice.para.nothing": "\u9019\u500B\u7BC4\u570D\u88E1\u7684\u6BB5\u843D\u6C92\u6709\u53EF\u4EE5\u51FA\u984C\u7684\u82F1\u6587\u53E5\u5B50\u3002",
+  "practice.player.ask.paraphrase": "\u54EA\u4E00\u53E5\u7684\u610F\u601D\u8DDF\u4E0A\u9762\u9019\u53E5\u76F8\u540C\uFF1F",
+  "practice.mistakes.kind.paraphrase": "\u63DB\u53E5\u8A71\u8AAA",
+  "practice.mistakes.tag.para-negation": "\u5426\u5B9A\u610F\u601D",
+  "practice.mistakes.tag.para-cause": "\u56E0\u679C\u8207\u689D\u4EF6",
+  "practice.mistakes.tag.para-scope": "\u7BC4\u570D\u8207\u7A0B\u5EA6",
+  "practice.mistakes.tag.para-time": "\u6642\u9593\u8207\u9806\u5E8F",
+  "practice.mistakes.tag.para-actor": "\u8AB0\u505A\u4E86\u4EC0\u9EBC",
+  "practice.mistakes.tag.para-certainty": "\u78BA\u5B9A\u7A0B\u5EA6",
+  "practice.mistakes.tag.para-detail": "\u591A\u52A0\u6216\u6F0F\u6389\u8CC7\u8A0A",
+  "practice.mistakes.tag.para-word": "\u5B57\u8A5E\u610F\u601D",
+  "paragraph.pane.practice": "\u7528\u9019\u6BB5\u7DF4\u63DB\u53E5\u8A71\u8AAA",
   // 第十七波 Z — 學習概況（AI 學習者區塊）
   "learner.summary.prefix": "\u76EE\u524D\u5B78\u7FD2\u6982\u6CC1\uFF1A",
   "learner.summary.vocab": "\u5DF2\u5B78\u55AE\u5B57 {n}\uFF08\u719F\u7DF4 {mature}\uFF09",
@@ -2805,9 +2845,9 @@ function resolveLocale(setting, appLanguage) {
 function joinWords(words) {
   return words.join(activeLocale === "zh-TW" ? "\u3001" : ", ");
 }
-function t(key5, params) {
+function t(key6, params) {
   var _a;
-  const template = (_a = dictionaries[activeLocale][key5]) != null ? _a : dictionaries.en[key5];
+  const template = (_a = dictionaries[activeLocale][key6]) != null ? _a : dictionaries.en[key6];
   if (!params) return template;
   return template.replace(
     /\{(\w+)\}/g,
@@ -3043,11 +3083,11 @@ var Pronouncer = class {
     );
     this.cache.set(url, c2);
     const max = (_a = this.deps.cacheSize) != null ? _a : DEFAULT_CACHE_SIZE;
-    for (const [key5, old] of this.cache) {
+    for (const [key6, old] of this.cache) {
       if (this.cache.size <= max) break;
       if (old === c2 || ((_b = this.current) == null ? void 0 : _b.clip) === old.clip) continue;
       this.drop(old);
-      this.cache.delete(key5);
+      this.cache.delete(key6);
     }
     return c2;
   }
@@ -3395,23 +3435,23 @@ function paint() {
     applyPronounceState(b.el, active && active.key === b.key ? active.state : "idle");
   }
 }
-function track(el, key5) {
+function track(el, key6) {
   if (buttons.size > 100) {
     for (const b of buttons) if (!b.el.isConnected) buttons.delete(b);
   }
-  buttons.add({ el, key: key5 });
+  buttons.add({ el, key: key6 });
   el.addClass("vt-pronounce");
-  applyPronounceState(el, active && active.key === key5 ? active.state : "idle");
+  applyPronounceState(el, active && active.key === key6 ? active.state : "idle");
 }
 function pronounce(entry) {
-  const key5 = keyOf(entry);
+  const key6 = keyOf(entry);
   const mine = ++token;
   return pronouncer().pronounce(entry, (state) => {
     if (state === "idle") {
       if ((active == null ? void 0 : active.token) !== mine) return;
       active = null;
     } else {
-      active = { key: key5, state, token: mine };
+      active = { key: key6, state, token: mine };
     }
     paint();
   }).then((via) => {
@@ -3436,9 +3476,9 @@ function preloadPronunciation(entry) {
 }
 function stopPronouncingIn(root2) {
   if (!active) return;
-  const key5 = active.key;
+  const key6 = active.key;
   for (const b of buttons) {
-    if (b.key === key5 && root2.contains(b.el)) {
+    if (b.key === key6 && root2.contains(b.el)) {
       shared2 == null ? void 0 : shared2.stop();
       return;
     }
@@ -3831,16 +3871,16 @@ function splitParagraphSpans(markdown) {
     if (close > 0) i = close + 1;
   }
   const out = [];
-  let start3 = -1;
+  let start4 = -1;
   const flush = (end) => {
-    if (start3 < 0) return;
-    const block = lines4.slice(start3, end + 1);
+    if (start4 < 0) return;
+    const block = lines4.slice(start4, end + 1);
     if (LIST_MARKER_RE.test(block[0]) && shouldSplitList(block)) {
-      for (const item of splitListItems(block, start3)) out.push(item);
+      for (const item of splitListItems(block, start4)) out.push(item);
     } else {
-      out.push({ text: block.join("\n"), lineStart: start3, lineEnd: end });
+      out.push({ text: block.join("\n"), lineStart: start4, lineEnd: end });
     }
-    start3 = -1;
+    start4 = -1;
   };
   for (; i < lines4.length; i++) {
     const line2 = lines4[i];
@@ -3864,7 +3904,7 @@ function splitParagraphSpans(markdown) {
       out.push({ text: line2, lineStart: i, lineEnd: i });
       continue;
     }
-    if (start3 < 0) start3 = i;
+    if (start4 < 0) start4 = i;
   }
   flush(lines4.length - 1);
   return out;
@@ -5048,8 +5088,8 @@ function isPartialTrailer(tail) {
 }
 function stripGrammarTrailer(content) {
   let out = content.replace(GRAMMAR_TRAILER_RE, "");
-  const cut = out.lastIndexOf("<!-");
-  if (cut !== -1 && !out.slice(cut).includes("-->") && isPartialTrailer(out.slice(cut))) out = out.slice(0, cut);
+  const cut2 = out.lastIndexOf("<!-");
+  if (cut2 !== -1 && !out.slice(cut2).includes("-->") && isPartialTrailer(out.slice(cut2))) out = out.slice(0, cut2);
   return out.trimEnd();
 }
 
@@ -5069,10 +5109,10 @@ function grammarSightings(threads) {
       }
       if (turn.taskId !== GRAMMAR_TASK_ID || turn.status !== "done") continue;
       for (const topicId of parseGrammarTrailer(turn.content)) {
-        const key5 = `${thread.id}\0${topicId}`;
-        const prev = out.get(key5);
+        const key6 = `${thread.id}\0${topicId}`;
+        const prev = out.get(key6);
         if (prev && Date.parse(prev.at) > Date.parse(turn.at)) continue;
-        out.set(key5, {
+        out.set(key6, {
           topicId,
           threadId: thread.id,
           turnId: turn.id,
@@ -5427,11 +5467,11 @@ var ChatPanel = class extends import_obsidian9.Component {
     input.setAttr("enterkeyhint", "send");
     input.placeholder = this.opts.placeholder;
     input.disabled = offline;
-    const key5 = this.opts.threadId;
-    input.value = (_a = this.opts.state.drafts.get(key5)) != null ? _a : "";
+    const key6 = this.opts.threadId;
+    input.value = (_a = this.opts.state.drafts.get(key6)) != null ? _a : "";
     autoGrow(input);
     input.addEventListener("input", () => {
-      this.opts.state.drafts.set(key5, input.value);
+      this.opts.state.drafts.set(key6, input.value);
       autoGrow(input);
     });
     input.addEventListener("keydown", (e) => {
@@ -5439,7 +5479,7 @@ var ChatPanel = class extends import_obsidian9.Component {
       e.preventDefault();
       if (!this.busy) this.submit(this.opts.customTaskId, input.value);
     });
-    input.addEventListener("focus", () => this.opts.state.focused = key5);
+    input.addEventListener("focus", () => this.opts.state.focused = key6);
     input.addEventListener("blur", () => {
       if (input.isConnected) this.opts.state.focused = null;
     });
@@ -5449,7 +5489,7 @@ var ChatPanel = class extends import_obsidian9.Component {
       if (this.busy) this.opts.threads.stop(this.opts.threadId);
       else this.submit(this.opts.customTaskId, input.value);
     });
-    if (this.opts.state.focused === key5 && !offline) {
+    if (this.opts.state.focused === key6 && !offline) {
       input.focus();
       input.setSelectionRange(input.value.length, input.value.length);
     }
@@ -5568,11 +5608,11 @@ var PREVIEW_ERROR_TTL_MS = 3e4;
 var cache = /* @__PURE__ */ new Map();
 function loadPreviewDictionary(dict, word, onSettled) {
   var _a;
-  const key5 = word.toLowerCase();
-  const hit = cache.get(key5);
+  const key6 = word.toLowerCase();
+  const hit = cache.get(key6);
   if (hit && !(hit.status === "error" && Date.now() - ((_a = hit.failedAt) != null ? _a : 0) > PREVIEW_ERROR_TTL_MS)) return hit;
   const entry = { status: "loading" };
-  cache.set(key5, entry);
+  cache.set(key6, entry);
   dict.fetchDictionary(word).then((data) => {
     entry.status = "ready";
     entry.data = data;
@@ -5798,8 +5838,8 @@ function definitionClamp(scrollHeight, lineHeightPx) {
 }
 
 // src/ui/word/rowModel.ts
-async function commitEntryField(store, entry, key5, value) {
-  entry[key5] = value;
+async function commitEntryField(store, entry, key6, value) {
+  entry[key6] = value;
   if (!entry.liked) await store.setLiked(entry, true);
   else await store.touch(entry);
 }
@@ -5941,17 +5981,17 @@ function renderVocabRow(plugin, container, entry, initialState2, setState, refre
       renderFooter(body, plugin, entry, opts, scope, tab, () => redraw(), sheet ? like : void 0);
       return rowEl;
     }
-    const commitField = async (key5, value) => {
-      await commitEntryField(plugin.store, entry, key5, value);
+    const commitField = async (key6, value) => {
+      await commitEntryField(plugin.store, entry, key6, value);
       redraw();
     };
-    const mkField = (label, key5, fieldOpts = {}) => {
+    const mkField = (label, key6, fieldOpts = {}) => {
       var _a2;
-      const value = (_a2 = entry[key5]) != null ? _a2 : "";
+      const value = (_a2 = entry[key6]) != null ? _a2 : "";
       const wrap = body.createEl("div", { cls: "vt-field" });
       if (value) wrap.addClass("is-filled");
-      if (sheet && value && !editingFields.has(key5)) {
-        const expanded = expandedFields.has(key5);
+      if (sheet && value && !editingFields.has(key6)) {
+        const expanded = expandedFields.has(key6);
         const box = wrap.createDiv({ cls: "vt-field-clamp", text: value });
         box.toggleClass("is-expanded", expanded);
         const measure2 = () => {
@@ -5967,10 +6007,10 @@ function renderVocabRow(plugin, container, entry, initialState2, setState, refre
         box.onclick = (e) => {
           e.stopPropagation();
           if (!expanded && box.hasClass("is-truncated")) {
-            expandedFields.add(key5);
+            expandedFields.add(key6);
           } else if (!opts.preview) {
-            editingFields.add(key5);
-            focusField = key5;
+            editingFields.add(key6);
+            focusField = key6;
           } else {
             return;
           }
@@ -5987,7 +6027,7 @@ function renderVocabRow(plugin, container, entry, initialState2, setState, refre
         inp.placeholder = t("row.field.placeholder", { label: label.toLowerCase() });
         inp.onclick = (e) => e.stopPropagation();
         autoGrowTextarea(inp);
-        if (focusField === key5) {
+        if (focusField === key6) {
           focusField = null;
           requestAnimationFrame(() => inp.focus());
         }
@@ -5995,9 +6035,9 @@ function renderVocabRow(plugin, container, entry, initialState2, setState, refre
           inp.disabled = true;
         } else {
           inp.addEventListener("input", () => autoGrowTextarea(inp));
-          inp.onchange = () => commitField(key5, inp.value);
+          inp.onchange = () => commitField(key6, inp.value);
           inp.onblur = () => {
-            if (editingFields.delete(key5)) redraw();
+            if (editingFields.delete(key6)) redraw();
           };
         }
       } else {
@@ -6007,7 +6047,7 @@ function renderVocabRow(plugin, container, entry, initialState2, setState, refre
         inp.placeholder = t("row.field.placeholder", { label: label.toLowerCase() });
         inp.onclick = (e) => e.stopPropagation();
         if (opts.preview) inp.disabled = true;
-        else inp.onchange = () => commitField(key5, inp.value);
+        else inp.onchange = () => commitField(key6, inp.value);
       }
     };
     const loadingSheet = sheet && ((_d = opts.preview) == null ? void 0 : _d.status) === "loading";
@@ -6144,12 +6184,12 @@ function normalizeForm(s) {
   return s.toLowerCase().replace(/[-\s]/g, "");
 }
 function matchMorpheme(list, type, form) {
-  const key5 = normalizeForm(form);
+  const key6 = normalizeForm(form);
   return list.find((m2) => {
     if (m2.deletedAt || m2.mergedInto) return false;
     if (m2.type !== type) return false;
-    if (normalizeForm(m2.form) === key5) return true;
-    return m2.variants.some((v) => normalizeForm(v) === key5);
+    if (normalizeForm(m2.form) === key6) return true;
+    return m2.variants.some((v) => normalizeForm(v) === key6);
   });
 }
 function resolveMorphemeId(list, id2) {
@@ -6268,12 +6308,12 @@ function renderGroupedVocabList(plugin, container, rows, collapsedGroups, expand
   const groups = groupEntries(rows, (_a = groupOpts.order) != null ? _a : "title", (g) => groupTitle(g, learn, false));
   const pendingTitles = [];
   for (const group of groups) {
-    const { key: key5 } = group;
-    const isCollapsed = collapsedGroups.has(key5);
+    const { key: key6 } = group;
+    const isCollapsed = collapsedGroups.has(key6);
     const known2 = group.kind !== "family" || !!learn.family(group.familyId);
     const title = groupTitle(group, learn, known2);
     const heading = container.createEl("div", { cls: "vt-group-heading" });
-    heading.setAttr("data-group-key", key5);
+    heading.setAttr("data-group-key", key6);
     const arrow = heading.createEl("span", { cls: "vt-group-arrow" });
     (0, import_obsidian11.setIcon)(arrow, isCollapsed ? "chevron-up" : "chevron-down");
     const titleEl = heading.createEl("span", { text: title, cls: "vt-group-title", attr: { "aria-label": title } });
@@ -6299,8 +6339,8 @@ function renderGroupedVocabList(plugin, container, rows, collapsedGroups, expand
     heading.createEl("span", { cls: "vt-group-spacer" });
     heading.createEl("span", { text: String(group.entries.length), cls: "vt-group-count" });
     heading.onclick = () => {
-      if (isCollapsed) collapsedGroups.delete(key5);
-      else collapsedGroups.add(key5);
+      if (isCollapsed) collapsedGroups.delete(key6);
+      else collapsedGroups.add(key6);
       refresh();
     };
     if (isCollapsed) continue;
@@ -6647,17 +6687,17 @@ function noteSections(markdown) {
     const close = lines4.indexOf("---", 1);
     if (close > 0) i = close + 1;
   }
-  let start3 = -1;
+  let start4 = -1;
   const flush = (end) => {
-    if (start3 < 0) return;
-    const block = lines4.slice(start3, end + 1);
+    if (start4 < 0) return;
+    const block = lines4.slice(start4, end + 1);
     const type = classify(block);
     if (type === "list" && shouldSplitList(block)) {
-      for (const item of splitListItems(block, start3)) out.push({ type: "list", ...item });
+      for (const item of splitListItems(block, start4)) out.push({ type: "list", ...item });
     } else {
-      out.push({ type, lineStart: start3, lineEnd: end, text: block.join("\n") });
+      out.push({ type, lineStart: start4, lineEnd: end, text: block.join("\n") });
     }
-    start3 = -1;
+    start4 = -1;
   };
   for (; i < lines4.length; i++) {
     const line2 = lines4[i];
@@ -6681,7 +6721,7 @@ function noteSections(markdown) {
       out.push({ type: "heading", lineStart: i, lineEnd: i, text: line2 });
       continue;
     }
-    if (start3 < 0) start3 = i;
+    if (start4 < 0) start4 = i;
   }
   flush(lines4.length - 1);
   return out;
@@ -6740,7 +6780,7 @@ var Index = class {
     const line2 = this.blockLines.get(id2);
     return line2 === void 0 ? void 0 : sectionAt(this.sections, line2);
   }
-  sectionOfHash(hash) {
+  sectionOfHash(hash2) {
     if (!this.hashes) {
       const map = /* @__PURE__ */ new Map();
       for (const s of this.sections) {
@@ -6750,7 +6790,7 @@ var Index = class {
       }
       this.hashes = map;
     }
-    const hit = this.hashes.get(hash);
+    const hit = this.hashes.get(hash2);
     if (hit) return hit;
     if (!this.groupHashes) {
       const map = /* @__PURE__ */ new Map();
@@ -6760,7 +6800,7 @@ var Index = class {
       }
       this.groupHashes = map;
     }
-    return this.groupHashes.get(hash);
+    return this.groupHashes.get(hash2);
   }
 };
 var last = null;
@@ -6787,19 +6827,19 @@ function locateSection(content, ref) {
     if (s && s.lineStart === ref.lineStart && s.lineEnd === ref.lineEnd) return s;
     return { type: (_a = s == null ? void 0 : s.type) != null ? _a : "paragraph", lineStart: ref.lineStart, lineEnd: ref.lineEnd, text: atRange };
   }
-  const hash = paragraphHash(ref.text);
-  return (_b = sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === hash)) != null ? _b : shiftedRange(content, ref, want, sections);
+  const hash2 = paragraphHash(ref.text);
+  return (_b = sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === hash2)) != null ? _b : shiftedRange(content, ref, want, sections);
 }
 function shiftedRange(content, ref, want, sections) {
   var _a, _b;
   const lines4 = content.replace(/\r\n?/g, "\n").split("\n");
   const span = ref.lineEnd - ref.lineStart;
   for (let d = 1; d < lines4.length; d++) {
-    for (const start3 of [ref.lineStart - d, ref.lineStart + d]) {
-      if (start3 < 0 || start3 + span >= lines4.length || !lines4[start3].trim()) continue;
-      const text = lines4.slice(start3, start3 + span + 1).join("\n");
+    for (const start4 of [ref.lineStart - d, ref.lineStart + d]) {
+      if (start4 < 0 || start4 + span >= lines4.length || !lines4[start4].trim()) continue;
+      const text = lines4.slice(start4, start4 + span + 1).join("\n");
       if (normalizeParagraph(text) !== want) continue;
-      return { type: (_b = (_a = sectionAt(sections, start3 + span)) == null ? void 0 : _a.type) != null ? _b : "paragraph", lineStart: start3, lineEnd: start3 + span, text };
+      return { type: (_b = (_a = sectionAt(sections, start4 + span)) == null ? void 0 : _a.type) != null ? _b : "paragraph", lineStart: start4, lineEnd: start4 + span, text };
     }
   }
   return null;
@@ -7048,7 +7088,7 @@ function shortDate2(iso) {
 
 // src/ui/sidebar/ParagraphThreadList.ts
 function rowMeta(row) {
-  const parts = row.labels.map((key5) => t(key5));
+  const parts = row.labels.map((key6) => t(key6));
   parts.push(t("paragraph.list.count", { n: row.count }));
   const date = shortDate2(row.lastAt);
   if (date) parts.push(date);
@@ -7593,8 +7633,20 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     const head = this.root.createDiv({ cls: "vt-ppane-head" });
     this.titleEl = head.createSpan({ cls: "vt-ppane-title", text: t("paragraph.pane.titleNoNumber") });
     const id2 = this.threadId;
+    const tools = head.createSpan({ cls: "vt-ppane-tools" });
+    if (id2 && this.host.practiceParagraph) {
+      const practice = tools.createSpan({ cls: "vt-ppane-practice clickable-icon" });
+      (0, import_obsidian15.setIcon)(practice, "list-checks");
+      practice.setAttr("aria-label", t("paragraph.pane.practice"));
+      practice.setAttr("role", "button");
+      practice.addEventListener("click", () => {
+        var _a, _b, _c, _d;
+        (_b = (_a = this.host).practiceParagraph) == null ? void 0 : _b.call(_a, id2);
+        (_d = (_c = this.nav).jumped) == null ? void 0 : _d.call(_c);
+      });
+    }
     if (id2) {
-      const del = head.createSpan({ cls: "vt-ppane-delete clickable-icon" });
+      const del = tools.createSpan({ cls: "vt-ppane-delete clickable-icon" });
       (0, import_obsidian15.setIcon)(del, "trash-2");
       del.setAttr("aria-label", t("paragraph.pane.delete"));
       let armed = false;
@@ -7669,8 +7721,8 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     const bar = el.createDiv({ cls: "vt-ppane-notice-actions" });
     const ok = bar.createEl("button", { cls: "mod-cta", text: t("paragraph.notice.ok") });
     ok.addEventListener("click", () => void this.dismissNotice(false));
-    const hash = bar.createEl("button", { text: t("paragraph.notice.useHash") });
-    hash.addEventListener("click", () => void this.dismissNotice(true));
+    const hash2 = bar.createEl("button", { text: t("paragraph.notice.useHash") });
+    hash2.addEventListener("click", () => void this.dismissNotice(true));
   }
   async dismissNotice(useHash) {
     var _a;
@@ -7728,7 +7780,7 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     }
     const busyBefore = new Set(threads.paragraphThreads(section3.path).filter((th) => threads.isBusy(th.id)).map((th) => th.id));
     let started = false;
-    const start3 = (id2) => {
+    const start4 = (id2) => {
       if (started) return;
       started = true;
       off();
@@ -7736,11 +7788,11 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     };
     const off = threads.events.on("thread:upsert", (th) => {
       if (th.anchor.kind !== "paragraph" || th.anchor.path !== section3.path) return;
-      if (threads.isBusy(th.id) && !busyBefore.has(th.id)) start3(th.id);
+      if (threads.isBusy(th.id) && !busyBefore.has(th.id)) start4(th.id);
     });
     try {
       const id2 = await threads.askParagraph(section3, req);
-      if (id2) start3(id2);
+      if (id2) start4(id2);
     } finally {
       off();
     }
@@ -8041,14 +8093,14 @@ function bySequence(a2, b) {
   return a2.stage - b.stage || a2.order - b.order;
 }
 function recommendNext(topics, statusOf2, level) {
-  const start3 = startDifficulty(level);
+  const start4 = startDifficulty(level);
   const sorted = [...topics].sort(bySequence);
   const byId = new Map(sorted.map((t2) => [t2.id, t2]));
   const prereqOk = (t2) => t2.prerequisites.every((id2) => {
     const p = byId.get(id2);
-    return !p || p.difficulty < start3 || statusOf2(id2) !== "new";
+    return !p || p.difficulty < start4 || statusOf2(id2) !== "new";
   });
-  const next = sorted.find((t2) => t2.difficulty >= start3 && statusOf2(t2.id) !== "mastered" && prereqOk(t2));
+  const next = sorted.find((t2) => t2.difficulty >= start4 && statusOf2(t2.id) !== "mastered" && prereqOk(t2));
   if (next) return next;
   return sorted.find((t2) => statusOf2(t2.id) === "learning");
 }
@@ -8116,9 +8168,9 @@ function parseBlockParams(source) {
     if (!line2 || line2.startsWith("#") || line2.startsWith("//")) continue;
     const i = line2.indexOf(":");
     if (i <= 0) continue;
-    const key5 = line2.slice(0, i).trim().toLowerCase();
+    const key6 = line2.slice(0, i).trim().toLowerCase();
     const value = line2.slice(i + 1).trim();
-    if (key5) out[key5] = value;
+    if (key6) out[key6] = value;
   }
   return out;
 }
@@ -8693,7 +8745,7 @@ var KEYS = [
 ];
 function exportLabels() {
   const labels = {};
-  for (const key5 of KEYS) labels[key5] = t(`export.${key5}`);
+  for (const key6 of KEYS) labels[key6] = t(`export.${key6}`);
   labels.usagePosHeading = usagePosHeadings();
   labels.info = t("word.tab.data");
   labels.dna = t("wordPage.section.dna");
@@ -8800,8 +8852,8 @@ var WordIndex = class {
 
 // src/ui/kit/aiDebug.ts
 var import_obsidian18 = require("obsidian");
-function debugText(key5) {
-  return t(`ai.debug.${key5}`);
+function debugText(key6) {
+  return t(`ai.debug.${key6}`);
 }
 function debugReportText(d) {
   return aiDebugReport(d, { prompt: debugText("prompt"), output: debugText("output"), empty: debugText("empty") });
@@ -8904,8 +8956,8 @@ function learnButton(parent, opts) {
 }
 
 // src/ui/kit/dates.ts
-function dateLabel(key5, date) {
-  return t(`learn.dates.${key5}`, { date });
+function dateLabel(key6, date) {
+  return t(`learn.dates.${key6}`, { date });
 }
 var pad = (n) => String(n).padStart(2, "0");
 function dayLabel(iso, now2 = /* @__PURE__ */ new Date()) {
@@ -9011,8 +9063,8 @@ function usageDates(usage, now2 = /* @__PURE__ */ new Date()) {
 }
 
 // src/ui/blocks/verbs.ts
-function l(key5, path) {
-  return path === void 0 ? t(`learn.verb.${key5}`) : t(`learn.verb.${key5}`, { path });
+function l(key6, path) {
+  return path === void 0 ? t(`learn.verb.${key6}`) : t(`learn.verb.${key6}`, { path });
 }
 var POS_ABBR2 = {
   n: "n.",
@@ -9486,8 +9538,8 @@ var ScanAccumulator = class {
       const hit = this.match(m2[0]);
       if (!hit) continue;
       if (!this.hits.has(hit.base)) {
-        const start3 = m2.index;
-        const sentence = extractSentence(text, start3, start3 + m2[0].length, null);
+        const start4 = m2.index;
+        const sentence = extractSentence(text, start4, start4 + m2[0].length, null);
         this.hits.set(hit.base, { word: hit.base, tags: hit.tags, line: line2, sentence });
       }
       for (const tag of hit.tags) {
@@ -9572,11 +9624,11 @@ function tierPageWords(words, entryById, tagsOf) {
   const byKey = /* @__PURE__ */ new Map();
   let order = 0;
   for (const w2 of words) {
-    const key5 = w2.word.toLowerCase();
-    let rec = byKey.get(key5);
+    const key6 = w2.word.toLowerCase();
+    let rec = byKey.get(key6);
     if (!rec) {
       rec = { word: w2, morphemeLabels: [], order: order++ };
-      byKey.set(key5, rec);
+      byKey.set(key6, rec);
     }
     const label = (_a = w2.morpheme) == null ? void 0 : _a.label;
     if (label && !rec.morphemeLabels.includes(label)) rec.morphemeLabels.push(label);
@@ -9691,8 +9743,8 @@ function suggestKey(groupKey, word) {
   return `${groupKey}::${word.word.toLowerCase()}`;
 }
 function renderSuggestRow(container, page, group, row, deps) {
-  const key5 = suggestKey(group.key, row.word);
-  const busy = deps.busy.has(key5);
+  const key6 = suggestKey(group.key, row.word);
+  const busy = deps.busy.has(key6);
   const el = container.createDiv({ cls: ["vt-row", "vt-page-suggest"] });
   el.setAttr("data-word", row.word.word.toLowerCase());
   if (row.word.emoji) el.createSpan({ text: row.word.emoji, cls: "vt-page-suggest-emoji" });
@@ -9709,10 +9761,10 @@ function renderSuggestRow(container, page, group, row, deps) {
   if (!busy) {
     addBtn.onclick = (e) => {
       e.stopPropagation();
-      deps.busy.add(key5);
+      deps.busy.add(key6);
       deps.onBusyChange();
       void page.addWord(group.key, row.word).finally(() => {
-        deps.busy.delete(key5);
+        deps.busy.delete(key6);
         deps.onBusyChange();
       });
     };
@@ -10957,11 +11009,11 @@ function bindIndex(parent, group, enter, update, exit, data) {
     }
   }
 }
-function bindKey(parent, group, enter, update, exit, data, key5) {
+function bindKey(parent, group, enter, update, exit, data, key6) {
   var i, node, nodeByKeyValue = /* @__PURE__ */ new Map(), groupLength = group.length, dataLength = data.length, keyValues = new Array(groupLength), keyValue;
   for (i = 0; i < groupLength; ++i) {
     if (node = group[i]) {
-      keyValues[i] = keyValue = key5.call(node, node.__data__, i, group) + "";
+      keyValues[i] = keyValue = key6.call(node, node.__data__, i, group) + "";
       if (nodeByKeyValue.has(keyValue)) {
         exit[i] = node;
       } else {
@@ -10970,7 +11022,7 @@ function bindKey(parent, group, enter, update, exit, data, key5) {
     }
   }
   for (i = 0; i < dataLength; ++i) {
-    keyValue = key5.call(parent, data[i], i, data) + "";
+    keyValue = key6.call(parent, data[i], i, data) + "";
     if (node = nodeByKeyValue.get(keyValue)) {
       update[i] = node;
       node.__data__ = data[i];
@@ -10988,13 +11040,13 @@ function bindKey(parent, group, enter, update, exit, data, key5) {
 function datum(node) {
   return node.__data__;
 }
-function data_default(value, key5) {
+function data_default(value, key6) {
   if (!arguments.length) return Array.from(this, datum);
-  var bind = key5 ? bindKey : bindIndex, parents = this._parents, groups = this._groups;
+  var bind = key6 ? bindKey : bindIndex, parents = this._parents, groups = this._groups;
   if (typeof value !== "function") value = constant_default(value);
   for (var m2 = groups.length, update = new Array(m2), enter = new Array(m2), exit = new Array(m2), j = 0; j < m2; ++j) {
     var parent = parents[j], group = groups[j], groupLength = group.length, data = arraylike(value.call(parent, parent && parent.__data__, j, parents)), dataLength = data.length, enterGroup = enter[j] = new Array(dataLength), updateGroup = update[j] = new Array(dataLength), exitGroup = exit[j] = new Array(groupLength);
-    bind(parent, group, enterGroup, updateGroup, exitGroup, data, key5);
+    bind(parent, group, enterGroup, updateGroup, exitGroup, data, key6);
     for (var i0 = 0, i1 = 0, previous, next; i0 < dataLength; ++i0) {
       if (previous = enterGroup[i0]) {
         if (i0 >= i1) i1 = i0 + 1;
@@ -12673,16 +12725,16 @@ function create(node, id2, self) {
   self.timer = timer(schedule, 0, self.time);
   function schedule(elapsed) {
     self.state = SCHEDULED;
-    self.timer.restart(start3, self.delay, self.time);
-    if (self.delay <= elapsed) start3(elapsed - self.delay);
+    self.timer.restart(start4, self.delay, self.time);
+    if (self.delay <= elapsed) start4(elapsed - self.delay);
   }
-  function start3(elapsed) {
+  function start4(elapsed) {
     var i, j, n, o;
     if (self.state !== SCHEDULED) return stop();
     for (i in schedules) {
       o = schedules[i];
       if (o.name !== self.name) continue;
-      if (o.state === STARTED) return timeout_default(start3);
+      if (o.state === STARTED) return timeout_default(start4);
       if (o.state === RUNNING) {
         o.state = ENDED;
         o.timer.stop();
@@ -12766,7 +12818,7 @@ function define_default(constructor, factory, prototype) {
 }
 function extend(parent, definition) {
   var prototype = Object.create(parent.prototype);
-  for (var key5 in definition) prototype[key5] = definition[key5];
+  for (var key6 in definition) prototype[key6] = definition[key6];
   return prototype;
 }
 
@@ -13156,14 +13208,14 @@ function nogamma(a2, b) {
 // node_modules/d3-interpolate/src/rgb.js
 var rgb_default = (function rgbGamma(y3) {
   var color2 = gamma(y3);
-  function rgb2(start3, end) {
-    var r = color2((start3 = rgb(start3)).r, (end = rgb(end)).r), g = color2(start3.g, end.g), b = color2(start3.b, end.b), opacity = nogamma(start3.opacity, end.opacity);
+  function rgb2(start4, end) {
+    var r = color2((start4 = rgb(start4)).r, (end = rgb(end)).r), g = color2(start4.g, end.g), b = color2(start4.b, end.b), opacity = nogamma(start4.opacity, end.opacity);
     return function(t2) {
-      start3.r = r(t2);
-      start3.g = g(t2);
-      start3.b = b(t2);
-      start3.opacity = opacity(t2);
-      return start3 + "";
+      start4.r = r(t2);
+      start4.g = g(t2);
+      start4.b = b(t2);
+      start4.opacity = opacity(t2);
+      return start4 + "";
     };
   }
   rgb2.gamma = rgbGamma;
@@ -13532,12 +13584,12 @@ function attrTween(name, value) {
   return tween;
 }
 function attrTween_default(name, value) {
-  var key5 = "attr." + name;
-  if (arguments.length < 2) return (key5 = this.tween(key5)) && key5._value;
-  if (value == null) return this.tween(key5, null);
+  var key6 = "attr." + name;
+  if (arguments.length < 2) return (key6 = this.tween(key6)) && key6._value;
+  if (value == null) return this.tween(key6, null);
   if (typeof value !== "function") throw new Error();
   var fullname = namespace_default(name);
-  return this.tween(key5, (fullname.local ? attrTweenNS : attrTween)(fullname, value));
+  return this.tween(key6, (fullname.local ? attrTweenNS : attrTween)(fullname, value));
 }
 
 // node_modules/d3-transition/src/transition/delay.js
@@ -13730,9 +13782,9 @@ function styleFunction2(name, interpolate, value) {
   };
 }
 function styleMaybeRemove(id2, name) {
-  var on0, on1, listener0, key5 = "style." + name, event = "end." + key5, remove2;
+  var on0, on1, listener0, key6 = "style." + name, event = "end." + key6, remove2;
   return function() {
-    var schedule = set2(this, id2), on = schedule.on, listener = schedule.value[key5] == null ? remove2 || (remove2 = styleRemove2(name)) : void 0;
+    var schedule = set2(this, id2), on = schedule.on, listener = schedule.value[key6] == null ? remove2 || (remove2 = styleRemove2(name)) : void 0;
     if (on !== on0 || listener0 !== listener) (on1 = (on0 = on).copy()).on(event, listener0 = listener);
     schedule.on = on1;
   };
@@ -13759,11 +13811,11 @@ function styleTween(name, value, priority) {
   return tween;
 }
 function styleTween_default(name, value, priority) {
-  var key5 = "style." + (name += "");
-  if (arguments.length < 2) return (key5 = this.tween(key5)) && key5._value;
-  if (value == null) return this.tween(key5, null);
+  var key6 = "style." + (name += "");
+  if (arguments.length < 2) return (key6 = this.tween(key6)) && key6._value;
+  if (value == null) return this.tween(key6, null);
   if (typeof value !== "function") throw new Error();
-  return this.tween(key5, styleTween(name, value, priority == null ? "" : priority));
+  return this.tween(key6, styleTween(name, value, priority == null ? "" : priority));
 }
 
 // node_modules/d3-transition/src/transition/text.js
@@ -13799,11 +13851,11 @@ function textTween(value) {
   return tween;
 }
 function textTween_default(value) {
-  var key5 = "text";
-  if (arguments.length < 1) return (key5 = this.tween(key5)) && key5._value;
-  if (value == null) return this.tween(key5, null);
+  var key6 = "text";
+  if (arguments.length < 1) return (key6 = this.tween(key6)) && key6._value;
+  if (value == null) return this.tween(key6, null);
   if (typeof value !== "function") throw new Error();
-  return this.tween(key5, textTween(value));
+  return this.tween(key6, textTween(value));
 }
 
 // node_modules/d3-transition/src/transition/transition.js
@@ -14142,10 +14194,10 @@ function zoom_default2() {
       }
       return this;
     },
-    zoom: function(key5, transform2) {
-      if (this.mouse && key5 !== "mouse") this.mouse[1] = transform2.invert(this.mouse[0]);
-      if (this.touch0 && key5 !== "touch") this.touch0[1] = transform2.invert(this.touch0[0]);
-      if (this.touch1 && key5 !== "touch") this.touch1[1] = transform2.invert(this.touch1[0]);
+    zoom: function(key6, transform2) {
+      if (this.mouse && key6 !== "mouse") this.mouse[1] = transform2.invert(this.mouse[0]);
+      if (this.touch0 && key6 !== "touch") this.touch0[1] = transform2.invert(this.touch0[0]);
+      if (this.touch1 && key6 !== "touch") this.touch1[1] = transform2.invert(this.touch1[0]);
       this.that.__zoom = transform2;
       this.emit("zoom");
       return this;
@@ -15393,9 +15445,9 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
       const family = this.plugin.families.families().find((f) => f.id === familyId);
       const word = family && resolveAddWord(nodeId, family);
       if (!word) return;
-      const key5 = `${familyId}\0${word.toLowerCase()}`;
-      if (this.adding.has(key5)) return;
-      this.adding.add(key5);
+      const key6 = `${familyId}\0${word.toLowerCase()}`;
+      if (this.adding.has(key6)) return;
+      this.adding.add(key6);
       try {
         const entry2 = await this.plugin.families.addSuggested(familyId, word);
         if (entry2) {
@@ -15409,7 +15461,7 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
         console.error("Vocab Tracker: adding a galaxy word failed", e);
         new import_obsidian23.Notice(learnErrorText(e));
       } finally {
-        this.adding.delete(key5);
+        this.adding.delete(key6);
         if (!this.disposed) this.render();
       }
       return;
@@ -16117,8 +16169,8 @@ var DnaBlock = class extends import_obsidian29.MarkdownRenderChild {
     return this.deps.vocab.entries.find((e) => e.id === id2);
   }
   findEntryByWord(word) {
-    const key5 = word.trim().toLowerCase();
-    return this.deps.vocab.entries.find((e) => e.word.trim().toLowerCase() === key5);
+    const key6 = word.trim().toLowerCase();
+    return this.deps.vocab.entries.find((e) => e.word.trim().toLowerCase() === key6);
   }
   // 1007-2 #14: 側欄點「本篇」裡的字 → 切分頁、選字素、換焦點字。
   selectWord(groupKey, w2) {
@@ -16622,11 +16674,11 @@ function headerVisibility(entry) {
 
 // src/ui/blocks/wordHeader.ts
 var WORD_BLOCK_LANG = "vocab-word";
-function l2(key5, vars) {
-  return t(`wordPage.${key5}`, vars);
+function l2(key6, vars) {
+  return t(`wordPage.${key6}`, vars);
 }
-function lo(key5, name) {
-  return name === void 0 ? t(`wordPage.${key5}`) : t(`wordPage.${key5}`, { name });
+function lo(key6, name) {
+  return name === void 0 ? t(`wordPage.${key6}`) : t(`wordPage.${key6}`, { name });
 }
 function breakdownDisplay(breakdown) {
   if (!breakdown) return "button";
@@ -16825,8 +16877,8 @@ var WordHeaderBlock = class extends import_obsidian30.MarkdownRenderChild {
       this.render();
     });
   }
-  field(parent, entry, key5, placeholder, opts = {}) {
-    renderEntryField(parent, this.host.store, entry, key5, placeholder, opts, () => this.render());
+  field(parent, entry, key6, placeholder, opts = {}) {
+    renderEntryField(parent, this.host.store, entry, key6, placeholder, opts, () => this.render());
   }
   // 「來源：字族樹 clothing 服裝 › 舞台」 — a word added from a family; a
   // click opens 字族樹.md on that family with the word highlighted.
@@ -16854,9 +16906,9 @@ var WordHeaderBlock = class extends import_obsidian30.MarkdownRenderChild {
     });
   }
   renderSource(parent, entry, path, line2) {
-    const key5 = `${path}
+    const key6 = `${path}
 ${line2}`;
-    const known2 = this.paragraphs.get(key5);
+    const known2 = this.paragraphs.get(key6);
     const el = chip(parent, "file-text", sourceLabel(path, known2 != null ? known2 : null));
     el.addClass("is-link");
     el.setAttr("title", l2("sourceTitle"));
@@ -16868,11 +16920,11 @@ ${line2}`;
     });
     const read = this.host.readNote;
     if (known2 !== void 0 || !read || line2 < 0) return;
-    this.paragraphs.set(key5, null);
+    this.paragraphs.set(key6, null);
     void read.call(this.host, path).then((text) => {
       var _a;
       const n = text === null ? null : paragraphNumber(text, line2);
-      this.paragraphs.set(key5, n);
+      this.paragraphs.set(key6, n);
       if (n !== null && !this.disposed) (_a = el.querySelector(".vt-chip-text")) == null ? void 0 : _a.setText(sourceLabel(path, n));
     }).catch(() => void 0);
   }
@@ -16883,15 +16935,15 @@ function chip(parent, icon, text) {
   el.createSpan({ cls: "vt-chip-text", text });
   return el;
 }
-function renderEntryField(parent, store, entry, key5, placeholder, opts = {}, after) {
+function renderEntryField(parent, store, entry, key6, placeholder, opts = {}, after) {
   var _a;
-  const value = (_a = entry[key5]) != null ? _a : "";
+  const value = (_a = entry[key6]) != null ? _a : "";
   const wrap = parent.createDiv({ cls: "vt-field" });
   if (value) wrap.addClass("is-filled");
   const cls = ["vt-input", "vt-field-box"];
   if (opts.multiline) cls.push("vt-textarea");
   const commit = (next) => {
-    void commitEntryField(store, entry, key5, next).then(after);
+    void commitEntryField(store, entry, key6, next).then(after);
   };
   if (opts.multiline) {
     const inp = wrap.createEl("textarea", { cls });
@@ -17559,71 +17611,6 @@ function tile(container, value, label) {
 // src/ui/blocks/grammarMap.ts
 var import_obsidian32 = require("obsidian");
 
-// src/core/model/practice.ts
-var PRACTICE_KINDS = ["which-sense", "pick-word", "same-sense", "choice", "find-error"];
-
-// src/services/ai/tasks/sentenceCheck.ts
-var MIN_SENTENCE_WORDS = 6;
-var MIN_OPTION_WORDS = 4;
-var WORD_RE3 = /[A-Za-z]+(?:['’-][A-Za-z]+)*/g;
-var CJK_RE2 = /[\u3400-\u9fff\uf900-\ufaff\u3001-\u303f\uff00-\uffef]/;
-var GAP_ANY = /_{3,}/g;
-var englishWords = (s) => {
-  var _a;
-  return (_a = s.match(WORD_RE3)) != null ? _a : [];
-};
-var hasCjk = (s) => CJK_RE2.test(s);
-function sentenceWordCount(text) {
-  return englishWords(text.replace(/\[\[|\]\]/g, "").replace(GAP_ANY, " ")).length;
-}
-function isFullSentence(text) {
-  if (hasCjk(text)) return false;
-  if (sentenceWordCount(text) < MIN_SENTENCE_WORDS) return false;
-  const i = text.search(GAP_ANY);
-  if (i >= 0) {
-    const after = text.slice(i).replace(GAP_ANY, " ");
-    if (englishWords(after).length === 0) return false;
-  }
-  return true;
-}
-var MAX_EDITS = 2;
-function editDistance(a2, b) {
-  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
-  for (let i = 1; i <= a2.length; i++) {
-    const cur = [i];
-    for (let j = 1; j <= b.length; j++) {
-      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a2[i - 1] === b[j - 1] ? 0 : 1));
-    }
-    prev = cur;
-  }
-  return prev[b.length];
-}
-var IRREGULAR = {
-  go: ["went", "gone"],
-  do: ["did"],
-  get: ["gotten"],
-  take: ["took"],
-  break: ["broke", "broken"],
-  catch: ["caught"],
-  bring: ["brought"]
-};
-function isTargetForm(marked, target) {
-  var _a, _b, _c;
-  const a2 = ((_a = englishWords(marked)[0]) != null ? _a : "").toLowerCase();
-  const b = ((_b = englishWords(target)[0]) != null ? _b : "").toLowerCase();
-  if (!a2 || !b) return false;
-  if ((_c = IRREGULAR[b]) == null ? void 0 : _c.includes(a2)) return true;
-  if (a2.startsWith(b) || b.startsWith(a2)) return true;
-  return Math.min(a2.length, b.length) >= 3 && a2[0] === b[0] && editDistance(a2, b) <= MAX_EDITS;
-}
-function isOptionSentence(text, target) {
-  if (hasCjk(text)) return false;
-  const words = englishWords(text);
-  if (words.length < MIN_OPTION_WORDS) return false;
-  if (target && !words.some((w2) => isTargetForm(w2, target))) return false;
-  return true;
-}
-
 // src/services/ai/transport/sse.ts
 var SseParser = class {
   constructor() {
@@ -17742,14 +17729,14 @@ function parseJson(text) {
 function extractJson(text) {
   const fenced = /```(?:json)?\s*([\s\S]*?)```/i.exec(text);
   const candidate = (fenced ? fenced[1] : text).trim();
-  const start3 = candidate.search(/[[{]/);
-  if (start3 === -1) throw new AiError("bad_output", "No JSON found in model output");
-  const open = candidate[start3];
+  const start4 = candidate.search(/[[{]/);
+  if (start4 === -1) throw new AiError("bad_output", "No JSON found in model output");
+  const open = candidate[start4];
   const close = open === "{" ? "}" : "]";
   const end = candidate.lastIndexOf(close);
-  if (end <= start3) throw new AiError("bad_output", "Unterminated JSON in model output");
+  if (end <= start4) throw new AiError("bad_output", "Unterminated JSON in model output");
   try {
-    return JSON.parse(candidate.slice(start3, end + 1));
+    return JSON.parse(candidate.slice(start4, end + 1));
   } catch (e) {
     throw new AiError("bad_output", "Model output is not valid JSON", { cause: e });
   }
@@ -17862,9 +17849,9 @@ function parseFamilies(json) {
       for (const m2 of g.members) {
         if (!isObj(m2)) throw new AiError("bad_output", "family.generate: malformed member");
         const word = str(m2.word);
-        const key5 = word.toLowerCase();
-        if (!word || seen.has(key5)) continue;
-        seen.add(key5);
+        const key6 = word.toLowerCase();
+        if (!word || seen.has(key6)) continue;
+        seen.add(key6);
         members.push({ word, zh: str(m2.zh), emoji: str(m2.emoji) });
       }
       if (members.length) groups.push({ label: str(g.label), members });
@@ -17956,9 +17943,9 @@ function parseFamilyExpandMembers(json) {
   for (const m2 of json.members) {
     if (!isObj(m2)) throw new AiError("bad_output", "family.expand: malformed member");
     const word = str(m2.word);
-    const key5 = word.toLowerCase();
-    if (!word || seen.has(key5)) continue;
-    seen.add(key5);
+    const key6 = word.toLowerCase();
+    if (!word || seen.has(key6)) continue;
+    seen.add(key6);
     out.push({ group: str(m2.group), word, zh: str(m2.zh), emoji: str(m2.emoji) });
   }
   return out;
@@ -17991,6 +17978,68 @@ var familyExpand = {
   }
 };
 var FAMILY_TASKS = [familyGenerate, familyExpand];
+
+// src/services/ai/tasks/sentenceCheck.ts
+var MIN_SENTENCE_WORDS = 6;
+var MIN_OPTION_WORDS = 4;
+var WORD_RE3 = /[A-Za-z]+(?:['’-][A-Za-z]+)*/g;
+var CJK_RE2 = /[\u3400-\u9fff\uf900-\ufaff\u3001-\u303f\uff00-\uffef]/;
+var GAP_ANY = /_{3,}/g;
+var englishWords = (s) => {
+  var _a;
+  return (_a = s.match(WORD_RE3)) != null ? _a : [];
+};
+var hasCjk = (s) => CJK_RE2.test(s);
+function sentenceWordCount(text) {
+  return englishWords(text.replace(/\[\[|\]\]/g, "").replace(GAP_ANY, " ")).length;
+}
+function isFullSentence(text) {
+  if (hasCjk(text)) return false;
+  if (sentenceWordCount(text) < MIN_SENTENCE_WORDS) return false;
+  const i = text.search(GAP_ANY);
+  if (i >= 0) {
+    const after = text.slice(i).replace(GAP_ANY, " ");
+    if (englishWords(after).length === 0) return false;
+  }
+  return true;
+}
+var MAX_EDITS = 2;
+function editDistance(a2, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a2.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a2[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+var IRREGULAR = {
+  go: ["went", "gone"],
+  do: ["did"],
+  get: ["gotten"],
+  take: ["took"],
+  break: ["broke", "broken"],
+  catch: ["caught"],
+  bring: ["brought"]
+};
+function isTargetForm(marked, target) {
+  var _a, _b, _c;
+  const a2 = ((_a = englishWords(marked)[0]) != null ? _a : "").toLowerCase();
+  const b = ((_b = englishWords(target)[0]) != null ? _b : "").toLowerCase();
+  if (!a2 || !b) return false;
+  if ((_c = IRREGULAR[b]) == null ? void 0 : _c.includes(a2)) return true;
+  if (a2.startsWith(b) || b.startsWith(a2)) return true;
+  return Math.min(a2.length, b.length) >= 3 && a2[0] === b[0] && editDistance(a2, b) <= MAX_EDITS;
+}
+function isOptionSentence(text, target) {
+  if (hasCjk(text)) return false;
+  const words = englishWords(text);
+  if (words.length < MIN_OPTION_WORDS) return false;
+  if (target && !words.some((w2) => isTargetForm(w2, target))) return false;
+  return true;
+}
 
 // src/services/ai/tasks/grammarQuestions.ts
 var DEFAULT_QUESTION_COUNT = 6;
@@ -18289,9 +18338,9 @@ function parseGrammarScenario(json, opts = {}) {
     asked++;
     const q = parseScenarioQuestion(ask, parseOpts);
     if (!q) continue;
-    const key5 = q.stem.toLowerCase();
-    if (seen.has(key5)) continue;
-    seen.add(key5);
+    const key6 = q.stem.toLowerCase();
+    if (seen.has(key6)) continue;
+    seen.add(key6);
     if (speaker) q.speaker = speaker;
     if (lead.length) q.lead = lead.slice(-MAX_LEAD);
     lead = [];
@@ -18380,6 +18429,7 @@ var POLY_ERROR_TAGS = [
   "register"
 ];
 var VOCAB_ERROR_TAGS = ["meaning", "form", "collocation", "confusable"];
+var SCENARIO_KINDS = ["which-sense", "pick-word", "same-sense", "choice", "find-error"];
 var KINDS_BY_CATEGORY = {
   vocab: ["which-sense", "pick-word"],
   poly: ["which-sense", "pick-word", "same-sense"],
@@ -18477,7 +18527,7 @@ var PRACTICE_SCENARIO_SCHEMA = {
               required: ["focusId", "kind", "text", "options", "answerId", "explanation", "optionNotes", "sentenceZh", "errorTag"],
               properties: {
                 focusId: { type: "string", description: "\u3014\u51FA\u984C\u53C3\u8003\u3015\u88E1\u6A19\u300C\u8003\u300D\u7684 id\uFF08\u539F\u6A23\u7167\u6284\uFF09" },
-                kind: { type: "string", enum: [...PRACTICE_KINDS] },
+                kind: { type: "string", enum: [...SCENARIO_KINDS] },
                 text: {
                   type: "string",
                   description: "\u984C\u5E79\u3002which-sense\uFF0Fsame-sense\uFF1A\u6070\u597D\u4E00\u7D44 [[\u76EE\u6A19\u5B57]]\uFF1Bpick-word\uFF0Fchoice\uFF1A\u6070\u597D\u4E00\u500B ____\uFF1Bfind-error\uFF1A\u5B8C\u6574\u4E00\u53E5\uFF08\u88E1\u9762\u6709\u4E00\u8655\u932F\uFF09"
@@ -18545,9 +18595,9 @@ function parseOptions(v) {
 }
 function parseNotes(v, options, answerId) {
   const out = {};
-  const put = (key5, note) => {
+  const put = (key6, note) => {
     var _a;
-    const opt = (_a = options.find((o) => o.id === key5)) != null ? _a : options.find((o) => o.text === key5);
+    const opt = (_a = options.find((o) => o.id === key6)) != null ? _a : options.find((o) => o.text === key6);
     if (opt && opt.id !== answerId && note) out[opt.id] = note;
   };
   if (Array.isArray(v)) {
@@ -18647,9 +18697,9 @@ function parsePracticeScenario(json, refs) {
     asked++;
     const q = parsePracticeQuestion(ask, refs);
     if (!q) continue;
-    const key5 = q.text.toLowerCase();
-    if (seen.has(key5)) continue;
-    seen.add(key5);
+    const key6 = q.text.toLowerCase();
+    if (seen.has(key6)) continue;
+    seen.add(key6);
     if (speaker) q.speaker = speaker;
     if (lead.length) q.lead = lead.slice(-MAX_LEAD);
     lead = [];
@@ -18746,6 +18796,201 @@ function practiceScenarioFor(req) {
 }
 var PRACTICE_TASKS = [practiceScenario];
 
+// src/services/ai/tasks/paraphrase.ts
+var PARAPHRASE_ERROR_TAGS = [
+  "para-negation",
+  "para-cause",
+  "para-scope",
+  "para-time",
+  "para-actor",
+  "para-certainty",
+  "para-detail",
+  "para-word"
+];
+var MAX_PARAPHRASE_COUNT = 6;
+var MIN_OPTION_WORDS2 = 4;
+var PARAPHRASE_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u95B1\u8B80\u8001\u5E2B\uFF0C\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u7DF4\u7FD2\u300C\u63DB\u53E5\u8A71\u8AAA\u300D\uFF08paraphrase\uFF09\uFF1A\u5F9E\u4ED6\u8B80\u904E\u3001\u800C\u4E14\u8A0E\u8AD6\u904E\u7684\u6587\u7AE0\u6BB5\u843D\u6311\u53E5\u5B50\uFF0C\u51FA\u300C\u54EA\u4E00\u53E5\u7684\u610F\u601D\u8DDF\u539F\u53E5\u76F8\u540C\u300D\u7684\u9078\u64C7\u984C\u3002
+
+\u898F\u5247\uFF1A
+1. \u53EA\u80FD\u5F9E\u3014\u6BB5\u843D\u53E5\u5B50\u3015\u6311\u53E5\u5B50\u51FA\u984C\uFF0C\u6BCF\u984C\u7528 sourceIndex \u6A19\u51FA\u662F\u7B2C\u5E7E\u53E5\uFF08\u7167\u6284\u7DE8\u865F\uFF09\uFF1B\u540C\u4E00\u53E5\u53EA\u51FA\u4E00\u984C\u3002
+2. \u6709\u3014\u8A0E\u8AD6\u904E\u7684\u5730\u65B9\u3015\u6642\uFF0C\u512A\u5148\u6311\u542B\u6709\u90A3\u4E9B\u5B57\u8A5E\u6216\u53E5\u578B\u7684\u53E5\u5B50\uFF1B\u932F\u8AA4\u9078\u9805\u4E5F\u512A\u5148\u91DD\u5C0D\u90A3\u4E9B\u5730\u65B9\u8A2D\u8A08\uFF08\u4F8B\u5982\u5B78\u7FD2\u8005\u554F\u904E hardly\uFF0C\u5C31\u505A\u4E00\u500B\u628A\u5426\u5B9A\u610F\u601D\u5F04\u53CD\u7684\u9078\u9805\uFF09\u3002
+3. \u6BCF\u984C 4 \u500B\u82F1\u6587\u9078\u9805\uFF0C\u90FD\u662F\u5B8C\u6574\u7684\u53E5\u5B50\uFF1A
+   - \u6B63\u89E3\uFF1A\u610F\u601D\u548C\u539F\u53E5\u5B8C\u5168\u76F8\u540C\uFF0C\u4F46\u4E3B\u8981\u7684\u5B57\u8A5E\u548C\u53E5\u578B\u90FD\u63DB\u904E\uFF08\u540C\u7FA9\u5B57\u3001\u4E3B\u52D5\u88AB\u52D5\u3001\u5B50\u53E5\u6539\u5BEB\u3001\u8A5E\u6027\u8F49\u63DB\u3001\u62C6\u53E5\u6216\u5408\u53E5\uFF09\uFF0C\u4E0D\u8981\u53EA\u63DB\u4E00\u5169\u500B\u5B57\uFF1B\u4E0D\u589E\u52A0\u3001\u4E5F\u4E0D\u7701\u7565\u4EFB\u4F55\u8CC7\u8A0A\u3002
+   - 3 \u500B\u932F\u8AA4\u9078\u9805\uFF1A\u4E4D\u770B\u5F88\u50CF\u6B63\u89E3\uFF0C\u4F46\u610F\u601D\u6709\u4E00\u8655\u95DC\u9375\u4E0D\u540C\u2014\u2014\u5426\u5B9A\u5F04\u53CD\u3001\u56E0\u679C\u6216\u689D\u4EF6\u985B\u5012\u3001\u7BC4\u570D\u6216\u7A0B\u5EA6\u6539\u8B8A\uFF08all\uFF0Fsome\u3001always\uFF0Foften\uFF09\u3001\u6642\u9593\u5148\u5F8C\u6539\u8B8A\u3001\u8AB0\u505A\u4E86\u4EC0\u9EBC\u5C0D\u8ABF\u3001\u78BA\u5B9A\u7A0B\u5EA6\u6539\u8B8A\uFF08may\uFF0Fmust\uFF09\u3001\u591A\u52A0\u6216\u6F0F\u6389\u91CD\u8981\u8CC7\u8A0A\u3001\u95DC\u9375\u5B57\u8A5E\u7406\u89E3\u932F\u3002\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u53EA\u932F\u4E00\u8655\u3002
+   - \u56DB\u500B\u9078\u9805\u7684\u9577\u5EA6\u3001\u96E3\u5EA6\u76F8\u8FD1\uFF0C\u4E0D\u80FD\u9760\u9577\u77ED\u6216\u7528\u5B57\u731C\u51FA\u7B54\u6848\uFF1B\u4E0D\u8981\u76F4\u63A5\u7167\u6284\u539F\u53E5\u3002
+4. \u9078\u9805\u7684\u96E3\u5EA6\u7B26\u5408\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF0C\u4E0D\u8981\u6BD4\u539F\u53E5\u66F4\u96E3\u3002
+5. \u6709\u3014\u5B78\u7FD2\u5F31\u9EDE\u3015\u6642\uFF0C\u591A\u51FA\u90A3\u5E7E\u985E\u7684\u932F\u8AA4\u9078\u9805\u3002
+6. \u7B54\u984C\u5F8C\u7684\u89E3\u8AAA\uFF1A
+   - explanation\uFF1A80 \u5B57\u4EE5\u5167\uFF0C\u5148\u9EDE\u51FA\u539F\u53E5\u7684\u95DC\u9375\u610F\u601D\uFF0C\u518D\u8AAA\u6B63\u89E3\u600E\u9EBC\u63DB\u53E5\u8A71\u8AAA\u3001\u610F\u601D\u9084\u662F\u4E00\u6A23\u3002
+   - optionNotes\uFF1A\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0830 \u5B57\u4EE5\u5167\uFF09\uFF0C\u8AAA\u5B83\u54EA\u88E1\u8DDF\u539F\u53E5\u610F\u601D\u4E0D\u540C\u3002
+   - sentenceZh\uFF1A\u539F\u53E5\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F\u3002
+7. errorTag\uFF1A\u5B78\u7FD2\u8005\u5982\u679C\u9078\u932F\uFF0C\u6700\u53EF\u80FD\u662F\u54EA\u4E00\u985E\uFF0C\u53EA\u80FD\u5F9E\u4EFB\u52D9\u5217\u51FA\u7684\u6E05\u55AE\u9078\u3002
+8. \u4E2D\u6587\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u6307\u5B9A\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\u6642\u7167\u5B83\u3002
+9. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
+var PARAPHRASE_TEMPLATE = `\u4EFB\u52D9\uFF1A\u6BB5\u843D\u63DB\u53E5\u8A71\u8AAA\u7DF4\u7FD2\uFF08\u51FA\u81EA\u3008{{title}}\u3009\uFF09
+\u51FA {{count}} \u984C\uFF08\u53E5\u5B50\u4E0D\u5920\u6642\u53EF\u4EE5\u5C11\u51FA\uFF09\uFF0C\u4F9D\u53E5\u5B50\u5728\u6BB5\u843D\u88E1\u7684\u9806\u5E8F\u6392\u3002
+errorTag \u6E05\u55AE\uFF1A{{errorTags}}\uFF08negation \u5426\u5B9A\u3001cause \u56E0\u679C\u689D\u4EF6\u3001scope \u7BC4\u570D\u7A0B\u5EA6\u3001time \u6642\u9593\u9806\u5E8F\u3001actor \u8AB0\u505A\u4E86\u4EC0\u9EBC\u3001certainty \u78BA\u5B9A\u7A0B\u5EA6\u3001detail \u591A\u52A0\u6216\u6F0F\u6389\u8CC7\u8A0A\u3001word \u5B57\u8A5E\u610F\u601D\uFF09`;
+var SENTENCES_BLOCK_TEMPLATE2 = `\u3014\u6BB5\u843D\u53E5\u5B50\u3015
+{{lines}}`;
+var DISCUSSED_BLOCK_TEMPLATE = `\u3014\u8A0E\u8AD6\u904E\u7684\u5730\u65B9\u3015\uFF08\u5B78\u7FD2\u8005\u5728\u9019\u6BB5\u7684\u8A0E\u8AD6\u88E1\u9078\u53D6\u6216\u554F\u904E\u7684\uFF09
+{{lines}}`;
+var ASKED_BLOCK_TEMPLATE = `\u3014\u5DF2\u51FA\u904E\u7684\u53E5\u5B50\u3015\u7B2C {{asked}} \u53E5\u5DF2\u7D93\u51FA\u904E\u984C\uFF0C\u76E1\u91CF\u6311\u5225\u7684\u53E5\u5B50\uFF1B\u90FD\u51FA\u904E\u6642\u53EF\u4EE5\u518D\u51FA\uFF0C\u4F46\u9078\u9805\u8981\u5B8C\u5168\u63DB\u904E\u3002`;
+var PARAPHRASE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["questions"],
+  properties: {
+    questions: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["sourceIndex", "options", "answerId", "explanation", "optionNotes", "sentenceZh", "errorTag"],
+        properties: {
+          sourceIndex: { type: "integer", description: "\u3014\u6BB5\u843D\u53E5\u5B50\u3015\u88E1\u7684\u7DE8\u865F\uFF08\u5F9E 1 \u958B\u59CB\uFF09" },
+          options: {
+            type: "array",
+            description: "4 \u500B\u82F1\u6587\u53E5\u5B50\uFF0C\u4E00\u500B\u610F\u601D\u548C\u539F\u53E5\u76F8\u540C\uFF0C\u4E09\u500B\u6709\u4E00\u8655\u95DC\u9375\u4E0D\u540C",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["id", "text"],
+              properties: { id: { type: "string", description: "a\uFF0Fb\uFF0Fc\uFF0Fd" }, text: { type: "string" } }
+            }
+          },
+          answerId: { type: "string", description: "\u610F\u601D\u548C\u539F\u53E5\u76F8\u540C\u7684\u9078\u9805 id" },
+          explanation: { type: "string", description: "\u7E41\u9AD4\u4E2D\u6587\uFF0C80 \u5B57\u4EE5\u5167" },
+          optionNotes: {
+            type: "array",
+            description: "\u6BCF\u500B\u932F\u8AA4\u9078\u9805\u4E00\u53E5\uFF0C\u8AAA\u5B83\u54EA\u88E1\u8DDF\u539F\u53E5\u610F\u601D\u4E0D\u540C\uFF0830 \u5B57\u4EE5\u5167\uFF09",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["id", "note"],
+              properties: { id: { type: "string", description: "\u932F\u8AA4\u9078\u9805\u7684 id" }, note: { type: "string" } }
+            }
+          },
+          sentenceZh: { type: "string", description: "\u539F\u53E5\u7684\u7E41\u9AD4\u4E2D\u6587\u7FFB\u8B6F" },
+          errorTag: { type: "string", enum: [...PARAPHRASE_ERROR_TAGS] }
+        }
+      }
+    }
+  }
+};
+function isObj4(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+var str4 = (v) => typeof v === "string" ? v.trim() : "";
+var key2 = (s) => s.replace(/[\s.,;:!?"'“”‘’]+/g, " ").trim().toLowerCase();
+function hash(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+var isOptionSentence2 = (s) => !hasCjk(s) && englishWords(s).length >= MIN_OPTION_WORDS2;
+function parseParaphraseQuestion(raw, p) {
+  if (!isObj4(raw)) return null;
+  const n = typeof raw.sourceIndex === "number" ? raw.sourceIndex : Number(str4(raw.sourceIndex));
+  if (!Number.isInteger(n) || n < 1 || n > p.sentences.length) return null;
+  const text = p.sentences[n - 1];
+  const explanation = str4(raw.explanation);
+  if (!explanation) return null;
+  const options = parseOptions(raw.options);
+  if (!options || options.length < 3 || options.length > 4) return null;
+  if (new Set(options.map((o) => o.id)).size !== options.length) return null;
+  if (new Set(options.map((o) => key2(o.text))).size !== options.length) return null;
+  if (!options.every((o) => isOptionSentence2(o.text))) return null;
+  if (options.some((o) => key2(o.text) === key2(text))) return null;
+  const answerId = str4(raw.answerId);
+  if (!options.some((o) => o.id === answerId)) return null;
+  options.sort((a2, b) => hash(a2.text) - hash(b.text));
+  const q = {
+    sourceIndex: n,
+    focus: { kind: "paragraph", id: p.threadId },
+    kind: "paraphrase",
+    text,
+    options,
+    answerId,
+    explanation
+  };
+  const notes = parseNotes(raw.optionNotes, options, answerId);
+  if (Object.keys(notes).length) q.optionNotes = notes;
+  const zh = str4(raw.sentenceZh);
+  if (zh) q.sentenceZh = zh;
+  const tag = str4(raw.errorTag).toLowerCase();
+  if (PARAPHRASE_ERROR_TAGS.includes(tag)) q.errorTag = tag;
+  return q;
+}
+function parseParaphrase(json, p) {
+  if (!isObj4(json) || !Array.isArray(json.questions)) {
+    throw new AiError("bad_output", "practice.paraphrase: expected { questions: [...] }");
+  }
+  const byIndex = /* @__PURE__ */ new Map();
+  for (const raw of json.questions) {
+    const q = parseParaphraseQuestion(raw, p);
+    if (q && !byIndex.has(q.sourceIndex)) byIndex.set(q.sourceIndex, q);
+  }
+  const asked = json.questions.length;
+  if (!byIndex.size || byIndex.size * 2 < asked) {
+    throw new AiError("bad_output", `practice.paraphrase: only ${byIndex.size} of ${asked} questions usable`);
+  }
+  const questions2 = [];
+  let prev = 0;
+  for (const n of [...byIndex.keys()].sort((a2, b) => a2 - b)) {
+    const q = { ...byIndex.get(n) };
+    delete q.sourceIndex;
+    const lead = p.sentences.slice(prev, n - 1).slice(-MAX_LEAD);
+    if (lead.length) q.lead = lead.map((text) => ({ text }));
+    questions2.push(q);
+    prev = n;
+  }
+  return { scene: `\u3008${p.title}\u3009`, form: "story", questions: questions2 };
+}
+function paraphraseCount(input) {
+  var _a;
+  const want = Math.floor((_a = input.count) != null ? _a : MAX_PARAPHRASE_COUNT);
+  return Math.max(1, Math.min(MAX_PARAPHRASE_COUNT, want, input.paragraph.sentences.length));
+}
+var practiceParaphrase = {
+  id: "practice.paraphrase",
+  version: 1,
+  // No surface of its own (no button); the base prompt is passed in explicitly.
+  surface: "grammar",
+  tier: "smart",
+  maxTokens: 6144,
+  answerChars: () => 0,
+  build(input, ctx) {
+    var _a, _b;
+    const p = input.paragraph;
+    const weakness = ((_a = input.weakness) != null ? _a : "").trim();
+    const asked = [...new Set((_b = input.asked) != null ? _b : [])].filter((n) => n >= 1 && n <= p.sentences.length).sort((a2, b) => a2 - b);
+    const context = [
+      renderTemplate(SENTENCES_BLOCK_TEMPLATE2, { lines: p.sentences.map((s, i) => `${i + 1}. ${s}`).join("\n") }),
+      p.discussed.length ? renderTemplate(DISCUSSED_BLOCK_TEMPLATE, { lines: p.discussed.map((d) => `- ${d}`).join("\n") }) : "",
+      weakness ? renderTemplate(WEAKNESS_BLOCK_TEMPLATE, { weakness }) : "",
+      asked.length ? renderTemplate(ASKED_BLOCK_TEMPLATE, { asked: asked.join("\u3001") }) : ""
+    ];
+    return composeRequest({
+      base: PARAPHRASE_BASE_PROMPT,
+      context,
+      profile: ctx.profile,
+      history: [],
+      user: renderTemplate(PARAPHRASE_TEMPLATE, {
+        title: p.title,
+        count: paraphraseCount(input),
+        errorTags: PARAPHRASE_ERROR_TAGS.join("\u3001")
+      }),
+      tier: practiceParaphrase.tier,
+      maxTokens: practiceParaphrase.maxTokens,
+      output: { name: "practice_paraphrase", schema: PARAPHRASE_SCHEMA }
+    });
+  }
+};
+function practiceParaphraseFor(p) {
+  return { ...practiceParaphrase, parse: (r) => parseParaphrase(structuredJson(r), p) };
+}
+var PARAPHRASE_TASKS = [practiceParaphrase];
+
 // src/ui/blocks/practice/mistakesPanelModel.ts
 function mistakeKey(q) {
   return q.errorTag ? q.errorTag : `kind:${q.kind}`;
@@ -18755,33 +19000,36 @@ var KIND_LABEL = {
   "pick-word": "practice.mistakes.kind.pick-word",
   "same-sense": "practice.mistakes.kind.same-sense",
   choice: "practice.mistakes.kind.choice",
-  "find-error": "practice.mistakes.kind.find-error"
+  "find-error": "practice.mistakes.kind.find-error",
+  paraphrase: "practice.mistakes.kind.paraphrase"
 };
-var POLY_TAGS = [.../* @__PURE__ */ new Set([...POLY_ERROR_TAGS, ...VOCAB_ERROR_TAGS])];
-function mistakeLabel(key5) {
+var POLY_TAGS = [
+  .../* @__PURE__ */ new Set([...POLY_ERROR_TAGS, ...VOCAB_ERROR_TAGS, ...PARAPHRASE_ERROR_TAGS])
+];
+function mistakeLabel(key6) {
   var _a;
-  if (key5.startsWith("kind:")) return t((_a = KIND_LABEL[key5.slice(5)]) != null ? _a : "practice.mistakes.kind.other");
-  if (POLY_TAGS.includes(key5)) return t(`practice.mistakes.tag.${key5}`);
-  if (ERROR_TAGS.includes(key5)) return errorTagLabel(key5);
-  return key5;
+  if (key6.startsWith("kind:")) return t((_a = KIND_LABEL[key6.slice(5)]) != null ? _a : "practice.mistakes.kind.other");
+  if (POLY_TAGS.includes(key6)) return t(`practice.mistakes.tag.${key6}`);
+  if (ERROR_TAGS.includes(key6)) return errorTagLabel(key6);
+  return key6;
 }
 function groupPracticeMistakes(questions2) {
   const groups = /* @__PURE__ */ new Map();
   for (const q of questions2) {
-    const key5 = mistakeKey(q);
-    const l4 = groups.get(key5);
+    const key6 = mistakeKey(q);
+    const l4 = groups.get(key6);
     if (l4) l4.push(q);
-    else groups.set(key5, [q]);
+    else groups.set(key6, [q]);
   }
-  return [...groups.entries()].map(([key5, qs]) => ({ key: key5, label: mistakeLabel(key5), questions: qs })).sort((a2, b) => b.questions.length - a2.questions.length);
+  return [...groups.entries()].map(([key6, qs]) => ({ key: key6, label: mistakeLabel(key6), questions: qs })).sort((a2, b) => b.questions.length - a2.questions.length);
 }
 function practiceMistakeCount(groups) {
   return groups.reduce((n, g) => n + g.questions.length, 0);
 }
 var MISTAKE_LINE_MAX = 60;
 function mistakeLine(text, max = MISTAKE_LINE_MAX) {
-  const flat = text.replace(/\[\[|\]\]/g, "").replace(/\s+/g, " ").trim();
-  return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}\u2026` : flat;
+  const flat2 = text.replace(/\[\[|\]\]/g, "").replace(/\s+/g, " ").trim();
+  return flat2.length > max ? `${flat2.slice(0, max - 1).trimEnd()}\u2026` : flat2;
 }
 
 // src/ui/blocks/practice/filterBar.ts
@@ -21756,9 +22004,9 @@ function objectiveRows(topic, attempts) {
 var SIGHTING_LIMIT = 5;
 var SNAPSHOT_CHARS = 120;
 function clipSnapshot(text, max = SNAPSHOT_CHARS) {
-  const flat = text.replace(/\s+/g, " ").replace(/\s*\^[\w-]+$/, "").trim();
-  const chars = [...flat];
-  return chars.length > max ? `${chars.slice(0, max).join("").trimEnd()}\u2026` : flat;
+  const flat2 = text.replace(/\s+/g, " ").replace(/\s*\^[\w-]+$/, "").trim();
+  const chars = [...flat2];
+  return chars.length > max ? `${chars.slice(0, max).join("").trimEnd()}\u2026` : flat2;
 }
 function noteName2(path) {
   const base = path.slice(path.lastIndexOf("/") + 1);
@@ -22003,6 +22251,7 @@ var import_obsidian36 = require("obsidian");
 
 // src/ui/blocks/practice/practiceModel.ts
 var TAB_KEY2 = "vocab-tracker:practice.tab";
+var TAB_EVENT = "vocab-tracker:practice-tab";
 var ALIASES = {
   vocab: "vocab",
   \u55AE\u5B57: "vocab",
@@ -22011,7 +22260,10 @@ var ALIASES = {
   poly: "poly",
   \u5E38\u7528\u5B57: "poly",
   mix: "mix",
-  \u6DF7\u5408: "mix"
+  \u6DF7\u5408: "mix",
+  para: "para",
+  \u63DB\u53E5\u8A71\u8AAA: "para",
+  \u6BB5\u843D: "para"
 };
 function pickTab(tabs, wanted) {
   var _a, _b;
@@ -22868,6 +23120,8 @@ function questionTag(q, labels = {}) {
       const title = (_c = labels.topicTitle) == null ? void 0 : _c.call(labels, q.focus.id.split("/")[0]);
       return title ? `${t("practice.grammar.tag")} \xB7 ${title}` : t("practice.grammar.tag");
     }
+    case "paragraph":
+      return `${t("practice.para.tag")} \xB7 ${q.scenario.scene}`;
   }
 }
 function questionHints(q) {
@@ -23297,6 +23551,15 @@ var PracticeBlock = class extends import_obsidian36.MarkdownRenderChild {
     this.bodyEl = root2.createDiv({ cls: "vt-pr-body" });
     const remembered = this.locked ? void 0 : rememberedTab(this.tabs, this.loadTab());
     this.select(remembered != null ? remembered : this.tabs[0]);
+    const workspace = this.host.app.workspace;
+    if (!this.locked && typeof (workspace == null ? void 0 : workspace.on) === "function") {
+      this.registerEvent(
+        workspace.on(TAB_EVENT, (id2) => {
+          const tab = rememberedTab(this.tabs, id2);
+          if (tab) this.select(tab);
+        })
+      );
+    }
   }
   onunload() {
     this.mounted = null;
@@ -23471,6 +23734,272 @@ function start2(el, deps, filters, owner) {
   apply();
 }
 
+// src/core/grammar/sentences.ts
+var MIN_WORDS = 8;
+var MAX_WORDS2 = 40;
+var DEFAULT_MAX_SENTENCES = 3;
+var WORD_RE4 = /[A-Za-z][A-Za-z'’-]*/g;
+var CJK_RE3 = /[぀-ヿ㐀-鿿가-힯]/g;
+var PLACEHOLDERS = /* @__PURE__ */ new Set(["do", "doing", "done", "ing", "pp", "vs", "or", "and", "ed", "en", "v"]);
+function plain(text) {
+  return text.replace(/```[\s\S]*?```/g, "\n\n").replace(/`([^`]*)`/g, "$1").replace(/!\[\[[^\]]*\]\]/g, " ").replace(/!\[[^\]]*\]\([^)]*\)/g, " ").replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, "$2").replace(/\[\[([^\]]*)\]\]/g, "$1").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/<[^>]+>/g, " ").replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, "").replace(/^[ \t]*(?:[-*+]|\d+[.)])[ \t]+/gm, "").replace(/^[ \t]*>+[ \t]?/gm, "").replace(/(\*\*|__|\*|~~|==)/g, "").replace(/[ \t]+/g, " ");
+}
+function splitSentences(text) {
+  const out = [];
+  for (const block of plain(text).split(/\n\s*\n/)) {
+    const flat2 = block.replace(/\s*\n\s*/g, " ").trim();
+    if (!flat2) continue;
+    for (const part of flat2.split(/(?<=[.!?…]["'”’)\]]?)\s+(?=["'“‘([]?[A-Z0-9])/)) {
+      const s = part.trim();
+      if (s) out.push(s);
+    }
+  }
+  return out;
+}
+function englishWords2(s) {
+  var _a;
+  return (_a = s.match(WORD_RE4)) != null ? _a : [];
+}
+function isUsableSentence(s) {
+  var _a;
+  const n = englishWords2(s).length;
+  if (n < MIN_WORDS || n > MAX_WORDS2) return false;
+  const cjk = ((_a = s.match(CJK_RE3)) != null ? _a : []).length;
+  return cjk <= s.length * 0.1;
+}
+var key3 = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
+function patternWords(pattern) {
+  var _a;
+  const out = [];
+  for (const w2 of (_a = pattern.toLowerCase().match(/[a-z]+/g)) != null ? _a : []) {
+    if (w2.length < 2 || PLACEHOLDERS.has(w2) || out.includes(w2)) continue;
+    out.push(w2);
+  }
+  return out;
+}
+function score(sentence, words) {
+  if (!words.length) return 0;
+  const have = new Set(englishWords2(sentence).map((w2) => w2.toLowerCase().replace(/’/g, "'")));
+  return words.reduce((n, w2) => n + (have.has(w2) ? 1 : 0), 0);
+}
+function pickSentence(candidates, pattern) {
+  const words = patternWords(pattern);
+  let best;
+  for (const s of candidates) {
+    if (!isUsableSentence(s)) continue;
+    const cur = { s, score: score(s, words), len: englishWords2(s).length };
+    if (!best || cur.score > best.score || cur.score === best.score && cur.len > best.len) best = cur;
+  }
+  return best == null ? void 0 : best.s;
+}
+function candidatesOf(s) {
+  var _a;
+  const sel = (_a = s.selection) == null ? void 0 : _a.trim();
+  const all = splitSentences(s.snapshot);
+  if (!sel) return all;
+  const flatSel = key3(plain(sel));
+  const inside = all.filter((x3) => key3(x3).includes(flatSel));
+  if (inside.length) return inside;
+  const own = splitSentences(sel);
+  return own.some(isUsableSentence) ? own : all;
+}
+function topicSentences(sightings, topicId, max = DEFAULT_MAX_SENTENCES) {
+  var _a, _b, _c;
+  const pattern = (_b = (_a = topicById(topicId)) == null ? void 0 : _a.pattern) != null ? _b : "";
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const s of sightings) {
+    if (out.length >= max) break;
+    if (s.topicId !== topicId) continue;
+    const sentence = (_c = pickSentence(candidatesOf(s), pattern)) != null ? _c : pickSentence(splitSentences(s.snapshot), pattern);
+    if (!sentence || seen.has(key3(sentence))) continue;
+    seen.add(key3(sentence));
+    out.push({ path: s.path, sentence });
+  }
+  return out;
+}
+
+// src/core/practice/paraphrase.ts
+var PARA_MIN_WORDS = 6;
+var PARA_MAX_WORDS = 60;
+var MAX_PARA_SENTENCES = 12;
+var MAX_DISCUSSED = 8;
+var MAX_POINT_CHARS = 80;
+var WORD_RE5 = /[A-Za-z][A-Za-z'’-]*/g;
+var CJK_RE4 = /[぀-ヿ㐀-鿿가-힯]/g;
+function isParaphrasable(s) {
+  var _a, _b;
+  const n = ((_a = s.match(WORD_RE5)) != null ? _a : []).length;
+  if (n < PARA_MIN_WORDS || n > PARA_MAX_WORDS) return false;
+  return ((_b = s.match(CJK_RE4)) != null ? _b : []).length <= s.length * 0.1;
+}
+function paragraphSentences(snapshot2) {
+  return splitSentences(snapshot2).filter(isParaphrasable).slice(0, MAX_PARA_SENTENCES);
+}
+var flat = (s) => s.replace(/\s+/g, " ").trim();
+var cut = (s) => s.length > MAX_POINT_CHARS ? `${s.slice(0, MAX_POINT_CHARS - 1).trimEnd()}\u2026` : s;
+function discussedPoints(thread) {
+  var _a, _b;
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  const turns = thread.turns.filter((t2) => t2.role === "user" && !t2.deletedAt);
+  for (let i = turns.length - 1; i >= 0 && out.length < MAX_DISCUSSED; i--) {
+    const sel = cut(flat((_a = turns[i].selection) != null ? _a : ""));
+    const q = cut(flat((_b = turns[i].question) != null ? _b : ""));
+    const line2 = sel && q ? `\u300C${sel}\u300D\uFF5C${q}` : sel ? `\u300C${sel}\u300D` : q;
+    if (!line2 || seen.has(line2.toLowerCase())) continue;
+    seen.add(line2.toLowerCase());
+    out.push(line2);
+  }
+  return out;
+}
+function noteTitle2(path) {
+  var _a;
+  return ((_a = path.split("/").pop()) != null ? _a : path).replace(/\.md$/i, "");
+}
+function paragraphRef(thread) {
+  if (thread.deletedAt || thread.anchor.kind !== "paragraph") return null;
+  const sentences = paragraphSentences(thread.anchor.snapshot);
+  if (!sentences.length) return null;
+  const path = thread.anchor.path;
+  return { threadId: thread.id, path, title: noteTitle2(path), sentences, discussed: discussedPoints(thread) };
+}
+function parseParaFilter(raw) {
+  if (typeof raw === "object" && raw !== null) {
+    const r = raw;
+    if (r.scope === "note" && typeof r.path === "string" && r.path) return { scope: "note", path: r.path };
+    if (r.scope === "thread" && typeof r.threadId === "string" && r.threadId) {
+      return { scope: "thread", threadId: r.threadId };
+    }
+  }
+  return { scope: "all" };
+}
+var lastTouched = (th) => {
+  var _a, _b;
+  let at = (_b = (_a = th.updatedAt) != null ? _a : th.createdAt) != null ? _b : "";
+  for (const t2 of th.turns) if (!t2.deletedAt && t2.at > at) at = t2.at;
+  return at;
+};
+function paragraphsInFilter(threads, filter2) {
+  const picked2 = threads.filter((th) => {
+    if (th.deletedAt || th.anchor.kind !== "paragraph") return false;
+    if (filter2.scope === "note") return th.anchor.path === filter2.path;
+    if (filter2.scope === "thread") return th.id === filter2.threadId;
+    return true;
+  });
+  return [...picked2].sort((a2, b) => lastTouched(b).localeCompare(lastTouched(a2))).map(paragraphRef).filter((r) => r !== null);
+}
+function paraScopeOptions(threads) {
+  var _a;
+  const refs = paragraphsInFilter(threads, { scope: "all" });
+  const byPath = /* @__PURE__ */ new Map();
+  for (const r of refs) byPath.set(r.path, ((_a = byPath.get(r.path)) != null ? _a : 0) + 1);
+  const notes = [...byPath.entries()].map(([path, count]) => ({ filter: { scope: "note", path }, key: path, title: noteTitle2(path), count })).sort((a2, b) => b.count - a2.count || a2.title.localeCompare(b.title));
+  return { all: refs.length, notes };
+}
+function filterKey(f) {
+  return f.scope === "all" ? "all" : f.scope === "note" ? `note:${f.path}` : `thread:${f.threadId}`;
+}
+function nextParagraph(refs, asked) {
+  let best;
+  let bestN = Infinity;
+  for (const r of refs) {
+    const n = asked(r.threadId);
+    if (n < bestN) {
+      best = r;
+      bestN = n;
+    }
+  }
+  return best;
+}
+function excerpt(text, max = 40) {
+  const s = flat(text);
+  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}\u2026` : s;
+}
+
+// src/ui/blocks/practice/paraTab.ts
+function paraTab(deps) {
+  return {
+    id: "para",
+    label: t("practice.para.label"),
+    order: 4,
+    mount(el, ctx) {
+      el.addClass("vt-pr-para");
+      let alive = true;
+      ctx.component.register(() => alive = false);
+      void deps.ready().then(() => {
+        if (!alive) return;
+        start3(el, deps, ctx.filters, ctx.component);
+      });
+    }
+  };
+}
+function start3(el, deps, filters, owner) {
+  let filter2 = parseParaFilter(filters.get("para"));
+  let pane = null;
+  const effective = () => filter2.scope !== "all" && paragraphsInFilter(deps.threads(), filter2).length === 0 ? { scope: "all" } : filter2;
+  const bar = el.createDiv({ cls: "vt-pr-para-scope" });
+  bar.createSpan({ cls: "vt-pr-mix-tags-label", text: t("practice.para.scope") });
+  const select = bar.createEl("select", { cls: "dropdown vt-pr-para-select" });
+  const choices = /* @__PURE__ */ new Map();
+  const drawScope = () => {
+    select.empty();
+    choices.clear();
+    const threads = deps.threads();
+    const { all, notes } = paraScopeOptions(threads);
+    const add3 = (f, text) => {
+      const key6 = filterKey(f);
+      choices.set(key6, f);
+      select.createEl("option", { text, attr: { value: key6 } });
+    };
+    add3({ scope: "all" }, t("practice.para.scopeAll", { n: all }));
+    const cur = effective();
+    if (cur.scope === "thread") {
+      const th = threads.find((x3) => x3.id === cur.threadId);
+      const text = (th == null ? void 0 : th.anchor.kind) === "paragraph" ? excerpt(th.anchor.snapshot) : cur.threadId;
+      add3(cur, t("practice.para.scopeThread", { text }));
+    }
+    for (const n of notes) add3(n.filter, t("practice.para.scopeNote", { title: n.title, n: n.count }));
+    select.value = filterKey(cur);
+    select.disabled = all === 0;
+  };
+  const apply = () => {
+    const refs = paragraphsInFilter(deps.threads(), effective());
+    pane == null ? void 0 : pane.setRequest(refs.length ? { track: "para", paragraphs: refs } : null, new Set(refs.map((r) => r.threadId)));
+  };
+  select.addEventListener("change", () => {
+    const next = choices.get(select.value);
+    if (!next) return;
+    filter2 = next;
+    filters.set("para", filter2);
+    drawScope();
+    apply();
+  });
+  if (deps.onFilterChange) {
+    owner.register(
+      deps.onFilterChange(() => {
+        const next = parseParaFilter(filters.get("para"));
+        if (filterKey(next) === filterKey(filter2)) return;
+        filter2 = next;
+        drawScope();
+        apply();
+      })
+    );
+  }
+  pane = mountScenarioPane(el, {
+    track: "para",
+    api: deps.api,
+    mountPlayer: deps.mountPlayer,
+    mountMistakes: deps.mountMistakes,
+    owner,
+    toPlayer: (q) => toPlayerQuestion2(q),
+    aiStatus: deps.aiStatus,
+    idleText: () => deps.threads().length === 0 ? t("practice.para.empty") : t("practice.para.nothing")
+  });
+  drawScope();
+  apply();
+}
+
 // src/ui/blocks/practice/mistakesPanel.ts
 function renderMistakesPanel(el, deps, owner) {
   const { api } = deps;
@@ -23522,7 +24051,7 @@ function renderMistakesPanel(el, deps, owner) {
       if (isOpen2) redoHandle = mountRedo(group.createDiv({ cls: "vt-pr-redo" }), g.key);
     }
   };
-  const mountRedo = (host, key5) => {
+  const mountRedo = (host, key6) => {
     const done = /* @__PURE__ */ new Set();
     const byId = /* @__PURE__ */ new Map();
     return deps.mountPlayer(
@@ -23532,7 +24061,7 @@ function renderMistakesPanel(el, deps, owner) {
           byId.clear();
           const out = [];
           for (const q of api.mistakeQuestions(deps.track)) {
-            if (mistakeKey(q) !== key5 || done.has(q.id)) continue;
+            if (mistakeKey(q) !== key6 || done.has(q.id)) continue;
             byId.set(q.id, q);
             out.push(deps.toPlayer(q));
           }
@@ -24300,9 +24829,9 @@ function trimHistory2(entries, limit) {
   const lineIdx = entries.flatMap((e, i) => e.type === "line" ? [i] : []);
   if (limit <= 0 || lineIdx.length <= limit) return { shown: [...entries], hidden: 0 };
   const firstKept = lineIdx[lineIdx.length - limit];
-  let start3 = firstKept;
-  if (start3 > 0 && entries[start3 - 1].type === "scene") start3 -= 1;
-  return { shown: entries.slice(start3), hidden: lineIdx.length - limit };
+  let start4 = firstKept;
+  if (start4 > 0 && entries[start4 - 1].type === "scene") start4 -= 1;
+  return { shown: entries.slice(start4), hidden: lineIdx.length - limit };
 }
 var MOBILE_HISTORY_LIMIT = 3;
 function speakerSides(speakers) {
@@ -24320,6 +24849,51 @@ function entrySpeakers(entries, current) {
   }
   return out;
 }
+var MIN_SHARED_WORDS = 3;
+var normWord = (w2) => w2.toLowerCase().replace(/[^\p{L}\p{N}']+/gu, "");
+function lcsPairs(a2, b) {
+  const dp = Array.from({ length: a2.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = a2.length - 1; i >= 0; i--) {
+    for (let j = b.length - 1; j >= 0; j--) {
+      dp[i][j] = a2[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  const out = [];
+  for (let i = 0, j = 0; i < a2.length && j < b.length; ) {
+    if (a2[i] === b[j]) out.push([i++, j++]);
+    else if (dp[i + 1][j] >= dp[i][j + 1]) i++;
+    else j++;
+  }
+  return out;
+}
+var isSpace = (t2) => /^\s+$/.test(t2);
+function optionDiffParts(options) {
+  var _a;
+  const tokens2 = options.map((o) => o.text.split(/(\s+)/).filter((t2) => t2 !== ""));
+  const words = tokens2.map((ts) => ts.filter((t2) => !isSpace(t2)).map(normWord));
+  let shared3 = (_a = words[0]) != null ? _a : [];
+  for (const w2 of words.slice(1)) shared3 = lcsPairs(shared3, w2).map(([i]) => shared3[i]);
+  if (options.length < 2 || shared3.filter(Boolean).length < MIN_SHARED_WORDS) {
+    return options.map((o) => [{ text: o.text, diff: false }]);
+  }
+  return tokens2.map((ts, k) => {
+    const same = new Set(lcsPairs(words[k], shared3).map(([i]) => i));
+    const differs = (wi2) => !same.has(wi2) && words[k][wi2] !== "";
+    const parts = [];
+    let wi = 0;
+    for (const t2 of ts) {
+      if (isSpace(t2)) {
+        push(parts, t2, parts.length > 0 && parts[parts.length - 1].diff && wi < words[k].length && differs(wi));
+      } else push(parts, t2, differs(wi++));
+    }
+    return parts;
+  });
+}
+function push(parts, text, diff) {
+  const last2 = parts[parts.length - 1];
+  if (last2 && last2.diff === diff) last2.text += text;
+  else parts.push({ text, diff });
+}
 function askLine(q) {
   switch (q.kind) {
     case "which-sense": {
@@ -24335,20 +24909,22 @@ function askLine(q) {
       return t("practice.player.ask.pick");
     case "find-error":
       return t("practice.player.ask.find-error");
+    case "paraphrase":
+      return t("practice.player.ask.paraphrase");
   }
 }
 function optionColumns(kind, mobile) {
-  if (kind === "same-sense" || mobile) return 1;
+  if (kind === "same-sense" || kind === "paraphrase" || mobile) return 1;
   return 2;
 }
-function keyAction(key5, s) {
+function keyAction(key6, s) {
   if (!s.current || s.phase === "empty") return null;
-  if (/^[1-9]$/.test(key5)) {
-    const index2 = Number(key5) - 1;
+  if (/^[1-9]$/.test(key6)) {
+    const index2 = Number(key6) - 1;
     return s.phase === "asking" && index2 < Math.min(4, s.current.options.length) ? { type: "pick", index: index2 } : null;
   }
-  if (key5 === "Enter") return s.phase === "feedback" ? { type: "next" } : null;
-  const k = key5.toLowerCase();
+  if (key6 === "Enter") return s.phase === "feedback" ? { type: "next" } : null;
+  const k = key6.toLowerCase();
   if (k === "s") return { type: "skip" };
   if (k === "h") return canHint(s) ? { type: "hint" } : null;
   return null;
@@ -24485,12 +25061,20 @@ function mountScenarioPlayer(el, opts, owner) {
     const buttons2 = q.options.filter((o) => !fragMode || !located.has(o.id));
     if (buttons2.length) {
       const grid = box.createDiv({ cls: `vt-pr-options cols-${optionColumns(q.kind, isMobile())}` });
+      const diffs = q.kind === "paraphrase" ? optionDiffParts(q.options) : null;
       q.options.forEach((o, i) => {
         var _a2;
         if (!buttons2.includes(o)) return;
         const b = grid.createEl("button", { cls: "vt-pr-option", attr: { type: "button" } });
         b.createSpan({ cls: "vt-pr-key", text: String(i + 1) });
-        b.createSpan({ cls: "vt-pr-option-text", text: o.text });
+        const textEl = b.createSpan({ cls: "vt-pr-option-text" });
+        if (!diffs) textEl.setText(o.text);
+        else {
+          for (const p of diffs[i]) {
+            if (p.diff) textEl.createSpan({ cls: "vt-pr-diff", text: p.text });
+            else textEl.appendText(p.text);
+          }
+        }
         if (feedback) {
           b.disabled = true;
           if (o.id === q.answerId) b.addClass("is-answer");
@@ -24568,11 +25152,11 @@ function weakFocuses(events, opts) {
   }).sort((a2, b) => Date.parse(a2.at) - Date.parse(b.at));
   const byFocus = /* @__PURE__ */ new Map();
   for (const e of inWindow) {
-    const key5 = `${e.focus.kind}:${e.focus.id}`;
-    let acc = byFocus.get(key5);
+    const key6 = `${e.focus.kind}:${e.focus.id}`;
+    let acc = byFocus.get(key6);
     if (!acc) {
       acc = { focus: e.focus, track: e.track, score: 0, wrong: 0, lastWrongAt: "", correctSince: 0, given: /* @__PURE__ */ new Map() };
-      byFocus.set(key5, acc);
+      byFocus.set(key6, acc);
     }
     if (e.result === "wrong") {
       const days = Math.max(0, (nowMs - Date.parse(e.at)) / DAY_MS2);
@@ -24654,9 +25238,9 @@ function knownWordList(entries, max = MAX_KNOWN_WORDS) {
   const out = [];
   const sorted = entries.filter((e) => !e.deletedAt).sort((a2, b) => entryAddedMs2(b) - entryAddedMs2(a2));
   for (const e of sorted) {
-    const key5 = e.word.trim().toLowerCase();
-    if (!key5 || seen.has(key5)) continue;
-    seen.add(key5);
+    const key6 = e.word.trim().toLowerCase();
+    if (!key6 || seen.has(key6)) continue;
+    seen.add(key6);
     out.push(e.word.trim());
     if (out.length >= max) break;
   }
@@ -25249,9 +25833,9 @@ function isOpenStored(app, entryId, section3) {
 }
 var emptySections = /* @__PURE__ */ new Set();
 function setSectionEmpty(entryId, section3, empty2) {
-  const key5 = `${entryId}:${section3}`;
-  if (empty2) emptySections.add(key5);
-  else emptySections.delete(key5);
+  const key6 = `${entryId}:${section3}`;
+  if (empty2) emptySections.add(key6);
+  else emptySections.delete(key6);
 }
 function isSectionEmpty(entryId, section3) {
   return emptySections.has(`${entryId}:${section3}`);
@@ -25261,8 +25845,8 @@ function countLabel(count) {
 }
 
 // src/ui/reading/WordPageDecorator.ts
-function l3(key5, vars) {
-  return t(`wordPage.${key5}`, vars);
+function l3(key6, vars) {
+  return t(`wordPage.${key6}`, vars);
 }
 var SECTIONS = ["info", "dna", "families", "usage", "trivia", "discussion"];
 function wordPageEntryId(frontmatter2) {
@@ -25478,7 +26062,7 @@ function actionFor(section3, entry, deps, h, ctx) {
       return { icon: "panel-right", label: l3("openSidebar"), run: () => deps.openInSidebar(entry, "ai") };
   }
 }
-function attachButton(h, key5, action, deps) {
+function attachButton(h, key6, action, deps) {
   h.addClass("vt-wp-heading");
   const box = h.createSpan({ cls: ["vt", "vt-wp-actions"] });
   const btn = box.createEl("button", { cls: "vt-wp-btn" });
@@ -25488,12 +26072,12 @@ function attachButton(h, key5, action, deps) {
     btn.toggleClass("is-busy", busy);
     btn.disabled = busy;
   };
-  setBusy(running.has(key5));
+  setBusy(running.has(key6));
   btn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (running.has(key5)) return;
-    running.add(key5);
+    if (running.has(key6)) return;
+    running.add(key6);
     setBusy(true);
     void Promise.resolve().then(action.run).catch((err) => {
       const message = isAiError(err) ? aiErrorText(err) : err instanceof Error ? err.message : String(err);
@@ -25503,7 +26087,7 @@ function attachButton(h, key5, action, deps) {
 ${debugReportText(debug)}`);
       deps.notify(l3("failed", { error: message }));
     }).finally(() => {
-      running.delete(key5);
+      running.delete(key6);
       if (btn.isConnected) setBusy(false);
     });
   });
@@ -25614,11 +26198,11 @@ var WordSectionBlock = class extends import_obsidian40.MarkdownRenderChild {
       const lines4 = row.createDiv({ cls: "vt-wh-senses" });
       for (const line2 of vis.senses) lines4.createDiv({ cls: "vt-wh-sense", text: line2 });
     }
-    for (const key5 of vis.infoRows) {
-      const label = t(`row.field.${key5}`);
+    for (const key6 of vis.infoRows) {
+      const label = t(`row.field.${key6}`);
       const row = root2.createDiv({ cls: "vt-wh-inforow" });
       row.createSpan({ cls: "vt-wh-inforow-label", text: label });
-      renderEntryField(row, this.host.store, entry, key5, label, { multiline: true }, () => this.render());
+      renderEntryField(row, this.host.store, entry, key6, label, { multiline: true }, () => this.render());
     }
     return true;
   }
@@ -25787,6 +26371,17 @@ function practiceHost(plugin) {
         vocabScopeIds: () => vocabScopeIds(plugin.store.entries, parseFilterValue(plugin.learner.filter("vocab")), /* @__PURE__ */ new Date()),
         grammarRefs: () => mixGrammarRefs(plugin),
         polySenses: () => sensesInFilter(parsePolyFilter(plugin.learner.filter("poly"))),
+        aiStatus: () => plugin.ai.status()
+      }),
+      paraTab({
+        api: plugin.scenario,
+        mountPlayer: mountScenarioPlayer,
+        mountMistakes: mountMistakes(plugin),
+        ready: async () => {
+          await Promise.all([scenarioReady(plugin), plugin.threads.ensureLoaded()]);
+        },
+        threads: () => plugin.threads.paragraphThreads(),
+        onFilterChange: (fn) => plugin.learner.events.on("filter:change", (track2) => track2 === "para" && fn()),
         aiStatus: () => plugin.ai.status()
       })
     ],
@@ -26580,8 +27175,8 @@ var FSRSAlgorithm = class {
   }
   update_parameters(params) {
     const _params = this.prepare_parameters(params);
-    for (const key5 in _params) {
-      const paramKey = key5;
+    for (const key6 in _params) {
+      const paramKey = key6;
       this.param[paramKey] = _params[paramKey];
     }
   }
@@ -27925,7 +28520,7 @@ var SrsService = class {
 var import_obsidian41 = require("obsidian");
 
 // src/core/text/occurrences.ts
-var WORD_RE4 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
+var WORD_RE6 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
 function matchesWord(candidate, target, inflections) {
   const lower2 = candidate.toLowerCase();
   if (lower2 === target) return true;
@@ -27937,7 +28532,7 @@ function findOccurrences(markdown, word, inflections) {
   if (!target) return out;
   const lines4 = proseLines(markdown);
   for (let line2 = 0; line2 < lines4.length; line2++) {
-    for (const m2 of lines4[line2].matchAll(WORD_RE4)) {
+    for (const m2 of lines4[line2].matchAll(WORD_RE6)) {
       if (matchesWord(m2[0], target, inflections)) {
         out.push({ line: line2, ch: m2.index, length: m2[0].length });
       }
@@ -27974,7 +28569,7 @@ function occurrenceIndexInLine(occurrences, index2) {
 var FLASH_MS2 = 3e3;
 var FLASH_CLS = "vt-locate-flash";
 var RENDER_RETRY_LIMIT = 8;
-var WORD_RE5 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
+var WORD_RE7 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
 var SKIP = [
   "code",
   "pre",
@@ -28024,7 +28619,7 @@ function findNthMatch(root2, target, inflections, k) {
   let seen = 0;
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
     const text = (_a = n.nodeValue) != null ? _a : "";
-    for (const m2 of text.matchAll(WORD_RE5)) {
+    for (const m2 of text.matchAll(WORD_RE7)) {
       if (!matchesWord(m2[0], target, inflections)) continue;
       if (seen === k) return { node: n, start: m2.index, length: m2[0].length };
       seen++;
@@ -28032,12 +28627,12 @@ function findNthMatch(root2, target, inflections, k) {
   }
   return null;
 }
-function wrapRange(node, start3, length) {
+function wrapRange(node, start4, length) {
   var _a;
   const text = (_a = node.nodeValue) != null ? _a : "";
-  const before = text.slice(0, start3);
-  const hit = text.slice(start3, start3 + length);
-  const after = text.slice(start3 + length);
+  const before = text.slice(0, start4);
+  const hit = text.slice(start4, start4 + length);
+  const after = text.slice(start4 + length);
   const parent = node.parentNode;
   if (!parent) throw new Error("text node has no parent");
   const span = document.createElement("span");
@@ -28226,25 +28821,25 @@ var ObsidianDeviceState = class {
   }
   // app.loadLocalStorage/saveLocalStorage (1.8.7+) scope keys per vault;
   // older apps fall back to plain localStorage with a plugin prefix.
-  get(key5) {
+  get(key6) {
     if (typeof this.app.loadLocalStorage === "function") {
-      const v = this.app.loadLocalStorage(LS_PREFIX + key5);
+      const v = this.app.loadLocalStorage(LS_PREFIX + key6);
       return typeof v === "string" ? v : null;
     }
     try {
-      return window.localStorage.getItem(LS_PREFIX + key5);
+      return window.localStorage.getItem(LS_PREFIX + key6);
     } catch (e) {
       return null;
     }
   }
-  set(key5, value) {
+  set(key6, value) {
     if (typeof this.app.saveLocalStorage === "function") {
-      this.app.saveLocalStorage(LS_PREFIX + key5, value);
+      this.app.saveLocalStorage(LS_PREFIX + key6, value);
       return;
     }
     try {
-      if (value === null) window.localStorage.removeItem(LS_PREFIX + key5);
-      else window.localStorage.setItem(LS_PREFIX + key5, value);
+      if (value === null) window.localStorage.removeItem(LS_PREFIX + key6);
+      else window.localStorage.setItem(LS_PREFIX + key6, value);
     } catch (e) {
     }
   }
@@ -28760,8 +29355,8 @@ function providerDef(id2) {
   var _a;
   return (_a = PROVIDERS.find((p) => p.id === id2)) != null ? _a : PROVIDERS[0];
 }
-function isMissingKey(id2, key5) {
-  return providerDef(id2).key === "required" && !key5;
+function isMissingKey(id2, key6) {
+  return providerDef(id2).key === "required" && !key6;
 }
 
 // src/services/ai/tasks/diary.ts
@@ -28983,7 +29578,7 @@ var ANALYZE_TEMPLATE = `\u3014\u5DF2\u77E5\u5B57\u7D20\u3015\uFF08{{knownCount}}
 
 \u3014\u8981\u5206\u6790\u7684\u55AE\u5B57\u3015\uFF08{{count}} \u500B\uFF09
 {{words}}`;
-function isObj4(v) {
+function isObj5(v) {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 function isStrArr(v) {
@@ -28992,13 +29587,13 @@ function isStrArr(v) {
 var PART_TYPES = /* @__PURE__ */ new Set(["prefix", "root", "suffix", "inflection"]);
 var MORPHEME_TYPES = /* @__PURE__ */ new Set(["prefix", "root", "suffix"]);
 function parsePart(p) {
-  if (!isObj4(p) || typeof p.text !== "string" || typeof p.type !== "string" || !PART_TYPES.has(p.type) || typeof p.meaningZh !== "string" || typeof p.morphemeRef !== "string") {
+  if (!isObj5(p) || typeof p.text !== "string" || typeof p.type !== "string" || !PART_TYPES.has(p.type) || typeof p.meaningZh !== "string" || typeof p.morphemeRef !== "string") {
     throw new AiError("bad_output", "dna.analyze: malformed part");
   }
   return { text: p.text, type: p.type, meaningZh: p.meaningZh, morphemeRef: p.morphemeRef };
 }
 function parseWord(w2) {
-  if (!isObj4(w2) || typeof w2.word !== "string" || !w2.word.trim() || typeof w2.emoji !== "string" || w2.status !== "ok" && w2.status !== "none" || !Array.isArray(w2.parts) || typeof w2.gloss !== "string") {
+  if (!isObj5(w2) || typeof w2.word !== "string" || !w2.word.trim() || typeof w2.emoji !== "string" || w2.status !== "ok" && w2.status !== "none" || !Array.isArray(w2.parts) || typeof w2.gloss !== "string") {
     throw new AiError("bad_output", "dna.analyze: malformed word");
   }
   return { word: w2.word.trim(), emoji: w2.emoji, status: w2.status, parts: w2.parts.map(parsePart), gloss: w2.gloss };
@@ -29006,7 +29601,7 @@ function parseWord(w2) {
 function parseTimeline2(v) {
   if (!Array.isArray(v)) throw new AiError("bad_output", "dna.analyze: malformed timeline");
   return v.map((t2) => {
-    if (!isObj4(t2) || typeof t2.stage !== "string" || typeof t2.form !== "string") {
+    if (!isObj5(t2) || typeof t2.stage !== "string" || typeof t2.form !== "string") {
       throw new AiError("bad_output", "dna.analyze: malformed timeline entry");
     }
     return { stage: t2.stage, form: t2.form };
@@ -29017,19 +29612,19 @@ function parseSuggestedWords(v, errPrefix) {
   const out = [];
   const seen = /* @__PURE__ */ new Set();
   for (const s of v) {
-    if (!isObj4(s) || typeof s.word !== "string" || typeof s.zh !== "string" || typeof s.emoji !== "string") {
+    if (!isObj5(s) || typeof s.word !== "string" || typeof s.zh !== "string" || typeof s.emoji !== "string") {
       throw new AiError("bad_output", `${errPrefix}: malformed suggested entry`);
     }
     const word = s.word.trim();
-    const key5 = word.toLowerCase();
-    if (!word || seen.has(key5)) continue;
-    seen.add(key5);
+    const key6 = word.toLowerCase();
+    if (!word || seen.has(key6)) continue;
+    seen.add(key6);
     out.push({ word, zh: s.zh, emoji: s.emoji });
   }
   return out;
 }
 function parseMorpheme(m2) {
-  if (!isObj4(m2) || typeof m2.ref !== "string" || !m2.ref.trim() || typeof m2.type !== "string" || !MORPHEME_TYPES.has(m2.type) || typeof m2.form !== "string" || !m2.form.trim() || !isStrArr(m2.variants) || typeof m2.meaningZh !== "string" || typeof m2.origin !== "string" || typeof m2.factTitle !== "string" || typeof m2.factBody !== "string") {
+  if (!isObj5(m2) || typeof m2.ref !== "string" || !m2.ref.trim() || typeof m2.type !== "string" || !MORPHEME_TYPES.has(m2.type) || typeof m2.form !== "string" || !m2.form.trim() || !isStrArr(m2.variants) || typeof m2.meaningZh !== "string" || typeof m2.origin !== "string" || typeof m2.factTitle !== "string" || typeof m2.factBody !== "string") {
     throw new AiError("bad_output", "dna.analyze: malformed morpheme");
   }
   return {
@@ -29046,7 +29641,7 @@ function parseMorpheme(m2) {
   };
 }
 function parseDnaAnalyze(json) {
-  if (!isObj4(json) || !Array.isArray(json.words) || !Array.isArray(json.morphemes)) {
+  if (!isObj5(json) || !Array.isArray(json.words) || !Array.isArray(json.morphemes)) {
     throw new AiError("bad_output", "dna.analyze: expected { words, morphemes }");
   }
   return { words: json.words.map(parseWord), morphemes: json.morphemes.map(parseMorpheme) };
@@ -29111,7 +29706,7 @@ var EXPAND_TEMPLATE = `\u4EFB\u52D9\uFF1A\u5EF6\u4F38\u5B57
 
 {{#exclude}}\u3014\u5DF2\u7D93\u6709\u7684\u5B57\u3015\uFF08\u4E0D\u8981\u91CD\u8907\uFF09\uFF1A{{exclude}}{{/exclude}}`;
 function parseDnaExpand(json) {
-  if (!isObj4(json) || !Array.isArray(json.words)) throw new AiError("bad_output", "dna.expand: expected { words }");
+  if (!isObj5(json) || !Array.isArray(json.words)) throw new AiError("bad_output", "dna.expand: expected { words }");
   return { words: parseSuggestedWords(json.words, "dna.expand") };
 }
 var dnaExpand = {
@@ -29243,25 +29838,25 @@ function wordLine3(w2) {
   const zh = (_b = w2.zh) == null ? void 0 : _b.trim();
   return `- ${w2.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
 }
-function isObj5(v) {
+function isObj6(v) {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
-function str4(v) {
+function str5(v) {
   return typeof v === "string" ? v.trim() : "";
 }
 function parseWordEmojiItems(json) {
-  if (!isObj5(json) || !Array.isArray(json.items)) {
+  if (!isObj6(json) || !Array.isArray(json.items)) {
     throw new AiError("bad_output", "word.emoji: expected { items: [...] }");
   }
   const out = [];
   const seen = /* @__PURE__ */ new Set();
   for (const it of json.items) {
-    if (!isObj5(it)) throw new AiError("bad_output", "word.emoji: malformed item");
-    const word = str4(it.word);
-    const key5 = word.toLowerCase();
-    if (!word || seen.has(key5)) continue;
-    seen.add(key5);
-    out.push({ word, emoji: str4(it.emoji) });
+    if (!isObj6(it)) throw new AiError("bad_output", "word.emoji: malformed item");
+    const word = str5(it.word);
+    const key6 = word.toLowerCase();
+    if (!word || seen.has(key6)) continue;
+    seen.add(key6);
+    out.push({ word, emoji: str5(it.emoji) });
   }
   return out;
 }
@@ -29326,7 +29921,7 @@ var GRAMMAR_GRADE_TEMPLATE = `\u3014\u5B78\u7FD2\u8005\u7684\u4F5C\u7B54\u3015
 
 \u4EFB\u52D9\uFF1A\u6279\u6539\u9019\u500B\u4F5C\u7B54\u3002`;
 var KIND = { rewrite: "\u6539\u5BEB\u984C", translate: "\u7FFB\u8B6F\u984C" };
-function str5(v) {
+function str6(v) {
   return typeof v === "string" ? v.trim() : "";
 }
 function parseGrammarGrade(json) {
@@ -29335,11 +29930,11 @@ function parseGrammarGrade(json) {
   }
   const o = json;
   if (typeof o.correct !== "boolean") throw new AiError("bad_output", "grammar.grade: correct must be true or false");
-  let feedback = str5(o.feedback);
+  let feedback = str6(o.feedback);
   if (!feedback) throw new AiError("bad_output", "grammar.grade: empty feedback");
   if (feedback.length > MAX_FEEDBACK_CHARS) feedback = `${feedback.slice(0, MAX_FEEDBACK_CHARS - 1)}\u2026`;
   const out = { correct: o.correct, feedback };
-  const corrected = str5(o.corrected);
+  const corrected = str6(o.corrected);
   if (!o.correct && corrected) out.corrected = corrected;
   return out;
 }
@@ -29441,33 +30036,33 @@ var VERB_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u
 8. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
 var VERB_TEMPLATE = `\u4EFB\u52D9\uFF1A\u7528\u6CD5\uFF08{{word}}\uFF09
 \u5217\u51FA {{word}} \u5E38\u898B\u7684\u8A5E\u6027\uFF0C\u6574\u7406\u6BCF\u500B\u8A5E\u6027\u7684\u5E38\u898B\u53E5\u578B\u8207\u76F8\u8FD1\u8AAA\u6CD5\u3002{{#onlyPos}}\u9019\u6B21\u53EA\u9700\u8981 {{onlyPos}} \u9019\u500B\u8A5E\u6027\u7684\u7528\u6CD5\uFF0Centries \u53EA\u8981\u4E00\u9805\u3002{{/onlyPos}}{{#hasSource}}\u3014\u51FA\u8655\u6BB5\u843D\u3015\u6216\u3014\u51FA\u8655\u53E5\u5B50\u3015\u88E1\u7684\u7528\u6CD5\u5982\u679C\u5C6C\u65BC\u5176\u4E2D\u4E00\u7A2E\uFF0C\u628A\u90A3\u500B\u53E5\u578B\u6392\u5728\u7B2C\u4E00\u500B\u3002{{/hasSource}}`;
-function isObj6(v) {
+function isObj7(v) {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
-function str6(v) {
+function str7(v) {
   return typeof v === "string" ? v.trim() : "";
 }
 function parseVerbUsage(json) {
-  if (!isObj6(json) || !Array.isArray(json.entries)) {
+  if (!isObj7(json) || !Array.isArray(json.entries)) {
     throw new AiError("bad_output", "verb.usage: expected { entries: [...] }");
   }
   const entries = [];
   for (const raw of json.entries) {
-    if (!isObj6(raw)) continue;
-    const [pos] = parsePos(str6(raw.pos));
+    if (!isObj7(raw)) continue;
+    const [pos] = parsePos(str7(raw.pos));
     if (!pos) continue;
     const patterns = [];
     for (const p of Array.isArray(raw.patterns) ? raw.patterns : []) {
-      if (!isObj6(p)) continue;
-      const pattern = str6(p.pattern);
-      if (pattern) patterns.push({ pattern, meaningZh: str6(p.meaningZh), example: str6(p.example) });
+      if (!isObj7(p)) continue;
+      const pattern = str7(p.pattern);
+      if (pattern) patterns.push({ pattern, meaningZh: str7(p.meaningZh), example: str7(p.example) });
     }
     if (!patterns.length) continue;
     const related = [];
     for (const r of Array.isArray(raw.related) ? raw.related : []) {
-      if (!isObj6(r)) continue;
-      const phrase = str6(r.phrase);
-      if (phrase) related.push({ phrase, zh: str6(r.zh) });
+      if (!isObj7(r)) continue;
+      const phrase = str7(r.phrase);
+      if (phrase) related.push({ phrase, zh: str7(r.zh) });
     }
     entries.push({ pos, patterns, related });
   }
@@ -29535,6 +30130,7 @@ function defaultTaskRegistry() {
     ...GRAMMAR_TASKS,
     ...GRAMMAR_TASKS3,
     ...PRACTICE_TASKS,
+    ...PARAPHRASE_TASKS,
     diaryWrite
   ]);
 }
@@ -29869,8 +30465,8 @@ var ApiKeys = class _ApiKeys {
     }
     return this.settings().ai.providers[provider].apiKey;
   }
-  async set(provider, key5) {
-    const trimmed = key5.trim();
+  async set(provider, key6) {
+    const trimmed = key6.trim();
     if (this.secrets.available) {
       this.secrets.set(_ApiKeys.secretId(provider), trimmed);
       if (this.settings().ai.providers[provider].apiKey) {
@@ -29934,8 +30530,8 @@ var UsageTracker = class {
       const shard = await this.load();
       const id2 = this.deviceId();
       const days = (_b = (_a = shard.devices)[id2]) != null ? _b : _a[id2] = {};
-      const key5 = localDayKey(this.now());
-      days[key5] = add2((_c = days[key5]) != null ? _c : emptyDay(), {
+      const key6 = localDayKey(this.now());
+      days[key6] = add2((_c = days[key6]) != null ? _c : emptyDay(), {
         input: u.input,
         output: u.output,
         cacheRead: u.cacheRead,
@@ -30001,9 +30597,9 @@ function createAiService(store, ports) {
 
 // src/ui/settings/SettingsTab.ts
 var import_obsidian44 = require("obsidian");
-function scrollableChain(start3) {
-  const out = [start3];
-  for (let el = start3.parentElement; el; el = el.parentElement) {
+function scrollableChain(start4) {
+  const out = [start4];
+  for (let el = start4.parentElement; el; el = el.parentElement) {
     if (el.scrollHeight > el.clientHeight && el.scrollTop > 0) out.push(el);
   }
   return out;
@@ -30457,9 +31053,9 @@ function pronounceOptions() {
   for (const s of PRONOUNCE_SOURCES) out[s] = t(`settings.reading.pronounceSource.${s}`);
   return out;
 }
-async function setPref(ctx, key5, value) {
+async function setPref(ctx, key6, value) {
   await ctx.store.updateSettings((s) => {
-    const patch = { [key5]: value };
+    const patch = { [key6]: value };
     Object.assign(s.ui, patch);
   });
 }
@@ -30707,9 +31303,9 @@ function dedupeMorphemes(list) {
     const variants = [...canonical2.variants];
     for (const o of others) {
       for (const v of [o.form, ...o.variants]) {
-        const key5 = normalizeForm(v);
-        if (key5 !== canonicalFormKey && !variantKeys.has(key5)) {
-          variantKeys.add(key5);
+        const key6 = normalizeForm(v);
+        if (key6 !== canonicalFormKey && !variantKeys.has(key6)) {
+          variantKeys.add(key6);
           variants.push(v);
         }
       }
@@ -30718,9 +31314,9 @@ function dedupeMorphemes(list) {
     const suggested = [...canonical2.suggested];
     for (const o of others) {
       for (const s of o.suggested) {
-        const key5 = s.word.toLowerCase();
-        if (!suggestedKeys.has(key5)) {
-          suggestedKeys.add(key5);
+        const key6 = s.word.toLowerCase();
+        if (!suggestedKeys.has(key6)) {
+          suggestedKeys.add(key6);
           suggested.push(s);
         }
       }
@@ -30763,26 +31359,26 @@ function ms6(iso) {
 function emptyGrammarShard() {
   return { questions: [], attempts: [], progress: [] };
 }
-var str7 = (v) => typeof v === "string" && v !== "";
-var isObj7 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var str8 = (v) => typeof v === "string" && v !== "";
+var isObj8 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 function normalizeScenario(raw) {
-  if (!isObj7(raw) || !str7(raw.id) || !str7(raw.scene)) return null;
+  if (!isObj8(raw) || !str8(raw.id) || !str8(raw.scene)) return null;
   const seq = typeof raw.seq === "number" && Number.isFinite(raw.seq) && raw.seq >= 0 ? Math.floor(raw.seq) : null;
   if (seq === null) return null;
   const out = { id: raw.id, scene: raw.scene, seq };
-  if (str7(raw.speaker)) out.speaker = raw.speaker;
+  if (str8(raw.speaker)) out.speaker = raw.speaker;
   if (Array.isArray(raw.lead)) {
     const lead = [];
     for (const l4 of raw.lead) {
-      if (!isObj7(l4) || !str7(l4.text)) continue;
-      lead.push(str7(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
+      if (!isObj8(l4) || !str8(l4.text)) continue;
+      lead.push(str8(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
     }
     if (lead.length) out.lead = lead;
   }
   return out;
 }
 function normalizeQuestion(raw) {
-  if (!isObj7(raw) || !str7(raw.id) || !str7(raw.topicId) || !str7(raw.objectiveId)) return null;
+  if (!isObj8(raw) || !str8(raw.id) || !str8(raw.topicId) || !str8(raw.objectiveId)) return null;
   if (typeof raw.stem !== "string" || typeof raw.answer !== "string") return null;
   const type = GRAMMAR_QUESTION_TYPES.includes(raw.type) ? raw.type : null;
   if (!type) return null;
@@ -30799,17 +31395,17 @@ function normalizeQuestion(raw) {
   const accepted = strings(raw.accepted);
   if (accepted) q.accepted = accepted;
   else delete q.accepted;
-  if (!isObj7(raw.distractors)) delete q.distractors;
+  if (!isObj8(raw.distractors)) delete q.distractors;
   const scenario = normalizeScenario(raw.scenario);
   if (scenario) q.scenario = scenario;
   else delete q.scenario;
-  if (str7(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
+  if (str8(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
   else delete q.sentenceZh;
   return q;
 }
 function normalizeAttempt(raw) {
-  if (!isObj7(raw) || !str7(raw.id) || !str7(raw.questionId) || !str7(raw.topicId) || !str7(raw.objectiveId)) return null;
-  if (!str7(raw.at) || Number.isNaN(Date.parse(raw.at))) return null;
+  if (!isObj8(raw) || !str8(raw.id) || !str8(raw.questionId) || !str8(raw.topicId) || !str8(raw.objectiveId)) return null;
+  if (!str8(raw.at) || Number.isNaN(Date.parse(raw.at))) return null;
   return {
     id: raw.id,
     questionId: raw.questionId,
@@ -30821,9 +31417,9 @@ function normalizeAttempt(raw) {
   };
 }
 function normalizeProgress(raw) {
-  if (!isObj7(raw) || !str7(raw.id)) return null;
+  if (!isObj8(raw) || !str8(raw.id)) return null;
   const p = { ...raw };
-  if (!isObj7(p.srs)) delete p.srs;
+  if (!isObj8(p.srs)) delete p.srs;
   return p;
 }
 function normList(raw, one2) {
@@ -30836,7 +31432,7 @@ function normList(raw, one2) {
   return out;
 }
 function normalizeGrammarShard(raw) {
-  const s = isObj7(raw) ? raw : {};
+  const s = isObj8(raw) ? raw : {};
   return {
     questions: normList(s.questions, normalizeQuestion),
     attempts: normList(s.attempts, normalizeAttempt),
@@ -30869,9 +31465,19 @@ function pruneGrammar(shard, now2) {
   };
 }
 
+// src/core/model/practice.ts
+var PRACTICE_KINDS = [
+  "which-sense",
+  "pick-word",
+  "same-sense",
+  "choice",
+  "find-error",
+  "paraphrase"
+];
+
 // src/core/model/learner.ts
-var TRACKS = ["grammar", "poly", "vocab", "mix"];
-var FOCUS_KINDS = ["grammar-objective", "sense", "word"];
+var TRACKS = ["grammar", "poly", "vocab", "mix", "para"];
+var FOCUS_KINDS = ["grammar-objective", "sense", "word", "paragraph"];
 var LEARN_RESULTS = ["correct", "wrong", "skipped", "hinted", "retired"];
 var READING_KINDS = ["word", "paragraph", "add"];
 var DIARY_PICK_KINDS = ["quote", "place"];
@@ -30977,27 +31583,27 @@ function ms7(iso) {
 function emptyLearnerShard() {
   return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [] };
 }
-var str8 = (v) => typeof v === "string" && v !== "";
-var isObj8 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
-var isIso = (v) => str8(v) && !Number.isNaN(Date.parse(v));
+var str9 = (v) => typeof v === "string" && v !== "";
+var isObj9 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var isIso = (v) => str9(v) && !Number.isNaN(Date.parse(v));
 var isTrack = (v) => TRACKS.includes(v);
 var REASONS = ["answered", "skipped", "retired", "filtered"];
 function focusOf(raw) {
-  if (!isObj8(raw) || !str8(raw.id) || !FOCUS_KINDS.includes(raw.kind)) return null;
+  if (!isObj9(raw) || !str9(raw.id) || !FOCUS_KINDS.includes(raw.kind)) return null;
   return { kind: raw.kind, id: raw.id };
 }
 function normalizeEvent(raw) {
-  if (!isObj8(raw) || !str8(raw.id) || !isIso(raw.at) || !isTrack(raw.track)) return null;
+  if (!isObj9(raw) || !str9(raw.id) || !isIso(raw.at) || !isTrack(raw.track)) return null;
   const focus = focusOf(raw.focus);
   if (!focus || !LEARN_RESULTS.includes(raw.result)) return null;
   const e = { id: raw.id, at: raw.at, track: raw.track, focus, result: raw.result };
   if (typeof raw.given === "string") e.given = raw.given;
-  if (str8(raw.errorTag)) e.errorTag = raw.errorTag;
-  if (str8(raw.questionId)) e.questionId = raw.questionId;
+  if (str9(raw.errorTag)) e.errorTag = raw.errorTag;
+  if (str9(raw.questionId)) e.questionId = raw.questionId;
   return e;
 }
 function normalizePool(raw) {
-  if (!isObj8(raw) || !str8(raw.id) || !isTrack(raw.track) || !str8(raw.questionId)) return null;
+  if (!isObj9(raw) || !str9(raw.id) || !isTrack(raw.track) || !str9(raw.questionId)) return null;
   if (!isIso(raw.addedAt)) return null;
   const p = {
     id: raw.id,
@@ -31007,7 +31613,7 @@ function normalizePool(raw) {
     addedAt: raw.addedAt,
     updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : raw.addedAt
   };
-  if (str8(raw.scenarioId)) p.scenarioId = raw.scenarioId;
+  if (str9(raw.scenarioId)) p.scenarioId = raw.scenarioId;
   if (isIso(raw.removedAt)) {
     p.removedAt = raw.removedAt;
     p.removeReason = REASONS.includes(raw.removeReason) ? raw.removeReason : "answered";
@@ -31015,7 +31621,7 @@ function normalizePool(raw) {
   return p;
 }
 function normalizeMistake(raw) {
-  if (!isObj8(raw) || !str8(raw.id) || !isTrack(raw.track) || !str8(raw.questionId)) return null;
+  if (!isObj9(raw) || !str9(raw.id) || !isTrack(raw.track) || !str9(raw.questionId)) return null;
   const focus = focusOf(raw.focus);
   if (!focus || !isIso(raw.lastWrongAt)) return null;
   const addedAt = isIso(raw.addedAt) ? raw.addedAt : raw.lastWrongAt;
@@ -31032,20 +31638,20 @@ function normalizeMistake(raw) {
   return m2;
 }
 function normalizeFilter(raw) {
-  if (!isObj8(raw) || !isTrack(raw.id)) return null;
+  if (!isObj9(raw) || !isTrack(raw.id)) return null;
   return { id: raw.id, value: raw.value, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : "" };
 }
-var SCENARIO_TRACKS = ["poly", "vocab", "mix"];
+var SCENARIO_TRACKS = ["poly", "vocab", "mix", "para"];
 function normalizeQuestion2(raw) {
-  if (!isObj8(raw) || !str8(raw.id) || !SCENARIO_TRACKS.includes(raw.track)) return null;
+  if (!isObj9(raw) || !str9(raw.id) || !SCENARIO_TRACKS.includes(raw.track)) return null;
   if (!PRACTICE_KINDS.includes(raw.kind)) return null;
-  if (!str8(raw.text) || !str8(raw.answerId) || !str8(raw.explanation)) return null;
+  if (!str9(raw.text) || !str9(raw.answerId) || !str9(raw.explanation)) return null;
   const focus = focusOf(raw.focus);
-  if (!focus || !isObj8(raw.scenario) || !str8(raw.scenario.id) || !str8(raw.scenario.scene)) return null;
+  if (!focus || !isObj9(raw.scenario) || !str9(raw.scenario.id) || !str9(raw.scenario.scene)) return null;
   if (!Array.isArray(raw.options)) return null;
   const options = [];
   for (const o of raw.options) {
-    if (isObj8(o) && str8(o.id) && typeof o.text === "string" && o.text !== "") options.push({ id: o.id, text: o.text });
+    if (isObj9(o) && str9(o.id) && typeof o.text === "string" && o.text !== "") options.push({ id: o.id, text: o.text });
   }
   if (options.length < 2 || !options.some((o) => o.id === raw.answerId)) return null;
   const sc = raw.scenario;
@@ -31054,12 +31660,12 @@ function normalizeQuestion2(raw) {
     scene: sc.scene,
     seq: typeof sc.seq === "number" && Number.isFinite(sc.seq) ? sc.seq : 0
   };
-  if (str8(sc.speaker)) scenario.speaker = sc.speaker;
+  if (str9(sc.speaker)) scenario.speaker = sc.speaker;
   if (Array.isArray(sc.lead)) {
     const lead = [];
     for (const l4 of sc.lead) {
-      if (!isObj8(l4) || !str8(l4.text)) continue;
-      lead.push(str8(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
+      if (!isObj9(l4) || !str9(l4.text)) continue;
+      lead.push(str9(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
     }
     if (lead.length) scenario.lead = lead;
   }
@@ -31077,19 +31683,19 @@ function normalizeQuestion2(raw) {
     createdAt,
     updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : createdAt
   };
-  if (isObj8(raw.optionNotes)) {
+  if (isObj9(raw.optionNotes)) {
     const notes = {};
-    for (const [k, v] of Object.entries(raw.optionNotes)) if (str8(v)) notes[k] = v;
+    for (const [k, v] of Object.entries(raw.optionNotes)) if (str9(v)) notes[k] = v;
     if (Object.keys(notes).length) q.optionNotes = notes;
   }
-  if (str8(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh;
-  if (str8(raw.errorTag)) q.errorTag = raw.errorTag;
+  if (str9(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh;
+  if (str9(raw.errorTag)) q.errorTag = raw.errorTag;
   if (isIso(raw.retiredAt)) q.retiredAt = raw.retiredAt;
   return q;
 }
 var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 function normalizeVisit(raw) {
-  if (!isObj8(raw) || !str8(raw.id) || !str8(raw.path) || !str8(raw.day) || !DAY_RE.test(raw.day) || !isIso(raw.at)) return null;
+  if (!isObj9(raw) || !str9(raw.id) || !str9(raw.path) || !str9(raw.day) || !DAY_RE.test(raw.day) || !isIso(raw.at)) return null;
   const kinds = Array.isArray(raw.kinds) ? sortKinds(raw.kinds.filter((k) => READING_KINDS.includes(k))) : [];
   if (kinds.length === 0) return null;
   const v = {
@@ -31101,11 +31707,11 @@ function normalizeVisit(raw) {
     title: typeof raw.title === "string" ? raw.title : "",
     kinds
   };
-  if (str8(raw.heading)) v.heading = raw.heading;
+  if (str9(raw.heading)) v.heading = raw.heading;
   return v;
 }
 function normalizePick(raw) {
-  if (!isObj8(raw) || !str8(raw.id) || !str8(raw.key) || !str8(raw.day) || !isIso(raw.at)) return null;
+  if (!isObj9(raw) || !str9(raw.id) || !str9(raw.key) || !str9(raw.day) || !isIso(raw.at)) return null;
   if (!DIARY_PICK_KINDS.includes(raw.kind)) return null;
   return { id: raw.id, kind: raw.kind, key: raw.key, day: raw.day, at: raw.at };
 }
@@ -31127,8 +31733,8 @@ function normList2(raw, one2) {
   return out;
 }
 function normalizeLearnerShard(raw) {
-  const s = isObj8(raw) ? raw : {};
-  const meta = isObj8(s.meta) && isIso(s.meta.grammarMigratedAt) ? { grammarMigratedAt: s.meta.grammarMigratedAt } : {};
+  const s = isObj9(raw) ? raw : {};
+  const meta = isObj9(s.meta) && isIso(s.meta.grammarMigratedAt) ? { grammarMigratedAt: s.meta.grammarMigratedAt } : {};
   return {
     events: sortEvents(normList2(s.events, normalizeEvent)),
     pool: normList2(s.pool, normalizePool),
@@ -31204,8 +31810,8 @@ function stringMap(v) {
   for (const [k, x3] of Object.entries(v)) if (typeof x3 === "string") out[k] = x3;
   return out;
 }
-function arrayField(shard, key5) {
-  const v = isObject(shard) ? shard[key5] : void 0;
+function arrayField(shard, key6) {
+  const v = isObject(shard) ? shard[key6] : void 0;
   return Array.isArray(v) ? v : [];
 }
 function parseData(raw) {
@@ -31729,8 +32335,8 @@ var RestoreModal = class extends import_obsidian54.Modal {
       new import_obsidian54.Notice(t("backup.restore.done", { path: result.safetyPath }), 1e4);
       this.onDone(result);
     } catch (e) {
-      const key5 = e instanceof BackupError && e.code === "safety-failed" ? "backup.restore.safetyFailed" : "backup.restore.failed";
-      new import_obsidian54.Notice(t(key5, { error: errorMessage(e) }), 1e4);
+      const key6 = e instanceof BackupError && e.code === "safety-failed" ? "backup.restore.safetyFailed" : "backup.restore.failed";
+      new import_obsidian54.Notice(t(key6, { error: errorMessage(e) }), 1e4);
       console.error("Vocab Tracker: restore failed", e);
     } finally {
       this.close();
@@ -31899,7 +32505,7 @@ function settleStaleTurns(threads) {
 }
 
 // src/services/anchors/paragraphInput.ts
-function noteTitle2(path) {
+function noteTitle3(path) {
   var _a;
   return ((_a = path.split("/").pop()) != null ? _a : path).replace(/\.md$/i, "");
 }
@@ -31908,10 +32514,10 @@ function knownWordsIn(paragraph, words) {
   const out = [];
   for (const w2 of words) {
     const word = w2.trim();
-    const key5 = word.toLowerCase();
-    if (!word || seen.has(key5)) continue;
+    const key6 = word.toLowerCase();
+    if (!word || seen.has(key6)) continue;
     if (buildWordRe(word).test(paragraph)) {
-      seen.add(key5);
+      seen.add(key6);
       out.push(word);
     }
   }
@@ -31933,7 +32539,7 @@ function paragraphInput(anchor, where, extra = {}) {
     paragraphIndex = 0;
   }
   const focus = paragraphs[paragraphIndex];
-  const input = { article: { title: noteTitle2(anchor.path), paragraphs }, paragraphIndex };
+  const input = { article: { title: noteTitle3(anchor.path), paragraphs }, paragraphIndex };
   if (extra.selection) input.selection = extra.selection;
   if (extra.question) input.question = extra.question;
   const known2 = knownWordsIn(focus, (_a = extra.knownWords) != null ? _a : []);
@@ -33136,12 +33742,12 @@ var LearnerStore = class {
   }
   recordDiaryPick(p) {
     var _a, _b;
-    const key5 = normalizePickKey(p.key);
-    if (!key5) return;
-    const id2 = `${p.kind}|${key5}`;
+    const key6 = normalizePickKey(p.key);
+    if (!key6) return;
+    const id2 = `${p.kind}|${key6}`;
     const list = (_b = (_a = this.data).diaryPicks) != null ? _b : _a.diaryPicks = [];
     if (list.some((x3) => x3.id === id2)) return;
-    list.push({ id: id2, kind: p.kind, key: key5, day: p.day, at: this.clock().toISOString() });
+    list.push({ id: id2, kind: p.kind, key: key6, day: p.day, at: this.clock().toISOString() });
     this.scheduleWrite();
   }
   diaryPicks() {
@@ -33235,16 +33841,16 @@ function endMarker(name) {
 var MARKER_LINE = /^[ \t]*%%[ \t]*vt:(begin|end)[ \t]+([a-z0-9][a-z0-9-]*)[ \t]*%%[ \t]*$/;
 function lines2(text) {
   const out = [];
-  let start3 = 0;
-  while (start3 <= text.length) {
-    const nl = text.indexOf("\n", start3);
+  let start4 = 0;
+  while (start4 <= text.length) {
+    const nl = text.indexOf("\n", start4);
     if (nl < 0) {
-      out.push({ start: start3, textEnd: text.length, end: text.length, eol: "" });
+      out.push({ start: start4, textEnd: text.length, end: text.length, eol: "" });
       break;
     }
-    const cr = nl > start3 && text[nl - 1] === "\r";
-    out.push({ start: start3, textEnd: cr ? nl - 1 : nl, end: nl + 1, eol: cr ? "\r\n" : "\n" });
-    start3 = nl + 1;
+    const cr = nl > start4 && text[nl - 1] === "\r";
+    out.push({ start: start4, textEnd: cr ? nl - 1 : nl, end: nl + 1, eol: cr ? "\r\n" : "\n" });
+    start4 = nl + 1;
   }
   return out;
 }
@@ -33318,12 +33924,12 @@ function applyManagedBlocks(text, sections) {
 function removeManagedBlock(text, name) {
   const range = findManagedBlock(text, name);
   if (!range) return text;
-  const start3 = text.lastIndexOf("\n", range.contentStart - 2) + 1;
+  const start4 = text.lastIndexOf("\n", range.contentStart - 2) + 1;
   const nl = text.indexOf("\n", range.contentEnd);
   let end = nl === -1 ? text.length : nl + 1;
   const blank = /^[ \t]*\r?\n/.exec(text.slice(end));
   if (blank) end += blank[0].length;
-  return text.slice(0, start3) + text.slice(end);
+  return text.slice(0, start4) + text.slice(end);
 }
 function buildManagedFile(head, sections, tail = "") {
   const parts = [head.replace(/\n+$/, ""), ...sections.map((s) => renderSection(s)), tail.replace(/\n+$/, "")];
@@ -33525,91 +34131,6 @@ var GrammarPages = class {
   }
 };
 
-// src/core/grammar/sentences.ts
-var MIN_WORDS = 8;
-var MAX_WORDS2 = 40;
-var DEFAULT_MAX_SENTENCES = 3;
-var WORD_RE6 = /[A-Za-z][A-Za-z'’-]*/g;
-var CJK_RE3 = /[぀-ヿ㐀-鿿가-힯]/g;
-var PLACEHOLDERS = /* @__PURE__ */ new Set(["do", "doing", "done", "ing", "pp", "vs", "or", "and", "ed", "en", "v"]);
-function plain(text) {
-  return text.replace(/```[\s\S]*?```/g, "\n\n").replace(/`([^`]*)`/g, "$1").replace(/!\[\[[^\]]*\]\]/g, " ").replace(/!\[[^\]]*\]\([^)]*\)/g, " ").replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, "$2").replace(/\[\[([^\]]*)\]\]/g, "$1").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/<[^>]+>/g, " ").replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, "").replace(/^[ \t]*(?:[-*+]|\d+[.)])[ \t]+/gm, "").replace(/^[ \t]*>+[ \t]?/gm, "").replace(/(\*\*|__|\*|~~|==)/g, "").replace(/[ \t]+/g, " ");
-}
-function splitSentences(text) {
-  const out = [];
-  for (const block of plain(text).split(/\n\s*\n/)) {
-    const flat = block.replace(/\s*\n\s*/g, " ").trim();
-    if (!flat) continue;
-    for (const part of flat.split(/(?<=[.!?…]["'”’)\]]?)\s+(?=["'“‘([]?[A-Z0-9])/)) {
-      const s = part.trim();
-      if (s) out.push(s);
-    }
-  }
-  return out;
-}
-function englishWords2(s) {
-  var _a;
-  return (_a = s.match(WORD_RE6)) != null ? _a : [];
-}
-function isUsableSentence(s) {
-  var _a;
-  const n = englishWords2(s).length;
-  if (n < MIN_WORDS || n > MAX_WORDS2) return false;
-  const cjk = ((_a = s.match(CJK_RE3)) != null ? _a : []).length;
-  return cjk <= s.length * 0.1;
-}
-var key2 = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
-function patternWords(pattern) {
-  var _a;
-  const out = [];
-  for (const w2 of (_a = pattern.toLowerCase().match(/[a-z]+/g)) != null ? _a : []) {
-    if (w2.length < 2 || PLACEHOLDERS.has(w2) || out.includes(w2)) continue;
-    out.push(w2);
-  }
-  return out;
-}
-function score(sentence, words) {
-  if (!words.length) return 0;
-  const have = new Set(englishWords2(sentence).map((w2) => w2.toLowerCase().replace(/’/g, "'")));
-  return words.reduce((n, w2) => n + (have.has(w2) ? 1 : 0), 0);
-}
-function pickSentence(candidates, pattern) {
-  const words = patternWords(pattern);
-  let best;
-  for (const s of candidates) {
-    if (!isUsableSentence(s)) continue;
-    const cur = { s, score: score(s, words), len: englishWords2(s).length };
-    if (!best || cur.score > best.score || cur.score === best.score && cur.len > best.len) best = cur;
-  }
-  return best == null ? void 0 : best.s;
-}
-function candidatesOf(s) {
-  var _a;
-  const sel = (_a = s.selection) == null ? void 0 : _a.trim();
-  const all = splitSentences(s.snapshot);
-  if (!sel) return all;
-  const flatSel = key2(plain(sel));
-  const inside = all.filter((x3) => key2(x3).includes(flatSel));
-  if (inside.length) return inside;
-  const own = splitSentences(sel);
-  return own.some(isUsableSentence) ? own : all;
-}
-function topicSentences(sightings, topicId, max = DEFAULT_MAX_SENTENCES) {
-  var _a, _b, _c;
-  const pattern = (_b = (_a = topicById(topicId)) == null ? void 0 : _a.pattern) != null ? _b : "";
-  const out = [];
-  const seen = /* @__PURE__ */ new Set();
-  for (const s of sightings) {
-    if (out.length >= max) break;
-    if (s.topicId !== topicId) continue;
-    const sentence = (_c = pickSentence(candidatesOf(s), pattern)) != null ? _c : pickSentence(splitSentences(s.snapshot), pattern);
-    if (!sentence || seen.has(key2(sentence))) continue;
-    seen.add(key2(sentence));
-    out.push({ path: s.path, sentence });
-  }
-  return out;
-}
-
 // src/core/grammar/schedule.ts
 var MIN_EASY_ANSWERS = 6;
 function sessionRating(results) {
@@ -33742,9 +34263,9 @@ var QuestionService = class {
     const scenarioId = `sc-${this.newId()}`;
     const saved = [];
     for (const d of scenario.questions) {
-      const key5 = stemKey(d.stem);
-      if (taken.has(key5)) continue;
-      taken.add(key5);
+      const key6 = stemKey(d.stem);
+      if (taken.has(key6)) continue;
+      taken.add(key6);
       const { speaker, lead, ...rest } = d;
       const info = { id: scenarioId, scene: scenario.scene, seq: saved.length + 1 };
       if (speaker) info.speaker = speaker;
@@ -34142,6 +34663,11 @@ function defaultId4(now2) {
 }
 var poolItemId2 = (track2, questionId) => `${track2}:${questionId}`;
 var textKey = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
+var questionKey = (q) => {
+  var _a, _b;
+  return q.kind === "paraphrase" ? `${textKey(q.text)}|${textKey((_b = (_a = q.options.find((o) => o.id === q.answerId)) == null ? void 0 : _a.text) != null ? _b : "")}` : textKey(q.text);
+};
+var PARA_WEAK_DAYS = 30;
 var unmark = (s) => s.replace(/\[\[([^[\]]+)\]\]/g, "$1");
 function practiceLine(q) {
   var _a;
@@ -34189,24 +34715,13 @@ var ScenarioService = class {
       if (!this.aiReady()) return;
       const count = Math.min(SCENARIO_REFILL_COUNT, poolRoom(learner.pool(track2), track2));
       if (count <= 0) return;
-      const refs = refsOf(req);
-      if (!refs.tested.size) return;
+      const job = req.track === "para" ? this.paraJob(req, count) : this.storyJob(req, count);
+      if (!job) return;
       started = true;
       this.events.emit("refill:start", track2);
-      const input = {
-        request: req,
-        count,
-        weakness: this.weakness(req),
-        previous: this.previousScenario(track2),
-        words: this.words(),
-        avoid: this.avoid(track2)
-      };
-      const { value: draft } = await runStructured(this.deps.ai, practiceScenarioFor(req), input, {
-        threadId: refillThreadId(track2),
-        signal: opts.signal
-      });
+      const draft = await job(opts.signal);
       const now2 = this.clock().toISOString();
-      const taken = new Set(learner.practiceQuestions(track2).map((q) => textKey(q.text)));
+      const taken = new Set(learner.practiceQuestions(track2).map(questionKey));
       const scenarioId = `sc-${this.newId()}`;
       const saved = [];
       const scope = this.scopeVersion(track2) !== version0 ? this.scopes.get(track2) : void 0;
@@ -34216,9 +34731,9 @@ var ScenarioService = class {
           outOfScope++;
           continue;
         }
-        const key5 = textKey(d.text);
-        if (taken.has(key5)) continue;
-        taken.add(key5);
+        const key6 = questionKey(d);
+        if (taken.has(key6)) continue;
+        taken.add(key6);
         const scenario = { id: scenarioId, scene: draft.scene, seq: saved.length + 1 };
         if (d.speaker) scenario.speaker = d.speaker;
         if ((_a = d.lead) == null ? void 0 : _a.length) scenario.lead = d.lead;
@@ -34263,6 +34778,41 @@ var ScenarioService = class {
     } finally {
       this.refilling.delete(track2);
     }
+  }
+  storyJob(req, count) {
+    if (!refsOf(req).tested.size) return null;
+    const track2 = req.track;
+    const input = {
+      request: req,
+      count,
+      weakness: this.weakness(req),
+      previous: this.previousScenario(track2),
+      words: this.words(),
+      avoid: this.avoid(track2)
+    };
+    return async (signal) => (await runStructured(this.deps.ai, practiceScenarioFor(req), input, { threadId: refillThreadId(track2), signal })).value;
+  }
+  // 換句話說: one paragraph per refill — the one asked about least so far —
+  // with the numbers of its sentences that already have a question.
+  paraJob(req, count) {
+    const stored = this.deps.learner.practiceQuestions("para");
+    const paragraph = nextParagraph(req.paragraphs, (id2) => stored.filter((q) => q.focus.id === id2).length);
+    if (!paragraph) return null;
+    const mine = new Set(stored.filter((q) => q.focus.id === paragraph.threadId).map((q) => textKey(q.text)));
+    const asked = paragraph.sentences.flatMap((s, i) => mine.has(textKey(s)) ? [i + 1] : []);
+    const input = { paragraph, count, weakness: this.paraWeakness(), asked };
+    return async (signal) => (await runStructured(this.deps.ai, practiceParaphraseFor(paragraph), input, { threadId: refillThreadId("para"), signal })).value;
+  }
+  // 〔學習弱點〕 of 換句話說: the error types missed most in the last 30 days.
+  paraWeakness() {
+    var _a;
+    const since = new Date(this.clock().getTime() - PARA_WEAK_DAYS * 864e5).toISOString();
+    const counts = /* @__PURE__ */ new Map();
+    for (const e of this.deps.learner.learnEvents({ track: "para" })) {
+      if (e.result !== "wrong" || !e.errorTag || e.at < since) continue;
+      counts.set(e.errorTag, ((_a = counts.get(e.errorTag)) != null ? _a : 0) + 1);
+    }
+    return [...counts.entries()].sort((a2, b) => b[1] - a2[1]).slice(0, 3).map(([tag, n]) => `${tag}\uFF5C\u6700\u8FD1 ${PARA_WEAK_DAYS} \u5929\u932F ${n} \u6B21`).join("\n");
   }
   aiReady() {
     const status = this.deps.ai.status;
@@ -34606,14 +35156,14 @@ function splitSentences2(text) {
   const t2 = text.replace(/\s+/g, " ").trim();
   if (!t2) return [];
   const out = [];
-  let start3 = 0;
+  let start4 = 0;
   for (const m2 of t2.matchAll(BREAK_RE2)) {
     const idx = (_a = m2.index) != null ? _a : 0;
-    if (m2[1] === "." && isAbbreviation(t2.slice(start3, idx))) continue;
-    out.push(t2.slice(start3, idx + m2[1].length + m2[2].length));
-    start3 = idx + m2[0].length;
+    if (m2[1] === "." && isAbbreviation(t2.slice(start4, idx))) continue;
+    out.push(t2.slice(start4, idx + m2[1].length + m2[2].length));
+    start4 = idx + m2[0].length;
   }
-  if (start3 < t2.length) out.push(t2.slice(start3));
+  if (start4 < t2.length) out.push(t2.slice(start4));
   return out;
 }
 function segmentParagraph(text) {
@@ -34765,10 +35315,10 @@ var DiaryService = class {
     const seen = /* @__PURE__ */ new Set();
     return out.filter((p) => {
       var _a2;
-      const key5 = `${p.kind}|${p.label.toLowerCase()}`;
+      const key6 = `${p.kind}|${p.label.toLowerCase()}`;
       const n = (_a2 = perKind.get(p.kind)) != null ? _a2 : 0;
-      if (seen.has(key5) || n >= MAX_PER_KIND) return false;
-      seen.add(key5);
+      if (seen.has(key6) || n >= MAX_PER_KIND) return false;
+      seen.add(key6);
       perKind.set(p.kind, n + 1);
       return true;
     });
@@ -35020,7 +35570,7 @@ function candidateScope(c2) {
 function toWord(e) {
   return { word: e.word, partOfSpeech: e.partOfSpeech, zh: e.definitionZh };
 }
-var key3 = (w2) => w2.trim().toLowerCase();
+var key4 = (w2) => w2.trim().toLowerCase();
 var FamilyService = class {
   constructor(deps) {
     this.deps = deps;
@@ -35106,8 +35656,8 @@ var FamilyService = class {
     const out = [];
     for (const c2 of candidates) {
       for (const m2 of c2.groups.flatMap((g) => g.members)) {
-        if (m2.entryId || seen.has(key3(m2.word))) continue;
-        seen.add(key3(m2.word));
+        if (m2.entryId || seen.has(key4(m2.word))) continue;
+        seen.add(key4(m2.word));
         out.push(m2);
       }
     }
@@ -35121,20 +35671,20 @@ var FamilyService = class {
     await this.ensureLoaded();
     const renewed = /* @__PURE__ */ new Set();
     if (opts.replace) {
-      const topics = new Set(candidates.map((c2) => key3(c2.topic)));
+      const topics = new Set(candidates.map((c2) => key4(c2.topic)));
       for (const f of this.regroupable()) {
-        if (topics.has(key3(f.topic))) renewed.add(f.id);
+        if (topics.has(key4(f.topic))) renewed.add(f.id);
         else this.deps.learn.deleteFamily(f.id, "regroup");
       }
     }
     const count = this.deps.vocab.entries.length;
     const families = candidates.map((c2) => this.toFamily(c2, count, renewed));
-    const wanted = new Set(((_a = opts.addWords) != null ? _a : []).map(key3));
+    const wanted = new Set(((_a = opts.addWords) != null ? _a : []).map(key4));
     const toAdd = /* @__PURE__ */ new Map();
     for (const f of families) {
       for (const m2 of familyMembers(f)) {
-        if (!m2.entryId && wanted.has(key3(m2.word)) && !toAdd.has(key3(m2.word))) {
-          toAdd.set(key3(m2.word), { word: m2.word, zh: m2.zh, familyId: f.id, emoji: m2.emoji });
+        if (!m2.entryId && wanted.has(key4(m2.word)) && !toAdd.has(key4(m2.word))) {
+          toAdd.set(key4(m2.word), { word: m2.word, zh: m2.zh, familyId: f.id, emoji: m2.emoji });
         }
       }
     }
@@ -35155,7 +35705,7 @@ var FamilyService = class {
   async addSuggested(familyId, word) {
     await this.ensureLoaded();
     const f = this.deps.learn.family(familyId);
-    const m2 = f && familyMembers(f).find((x3) => key3(x3.word) === key3(word));
+    const m2 = f && familyMembers(f).find((x3) => key4(x3.word) === key4(word));
     if (!f || !m2) return void 0;
     const index2 = new WordIndex(this.deps.vocab.entries);
     const existing = index2.find(m2.word);
@@ -35188,7 +35738,7 @@ var FamilyService = class {
     await this.ensureLoaded();
     const f = this.deps.learn.family(familyId);
     if (!f) return [];
-    const existingWords = new Set(familyMembers(f).map((m2) => key3(m2.word)));
+    const existingWords = new Set(familyMembers(f).map((m2) => key4(m2.word)));
     const known2 = this.deps.vocab.entries.filter((e) => e.liked === true).sort((a2, b) => entryAddedMs2(b) - entryAddedMs2(a2)).slice(0, MAX_FAMILY_CONTEXT).map(toWord);
     const { value: drafts } = await runStructured(
       this.deps.ai,
@@ -35204,18 +35754,18 @@ var FamilyService = class {
       },
       { threadId: familyExpandThreadId(familyId), signal }
     );
-    const groupByKey = new Map(f.groups.map((g) => [key3(g.label), g]));
+    const groupByKey = new Map(f.groups.map((g) => [key4(g.label), g]));
     const added = [];
     for (const d of drafts) {
-      if (existingWords.has(key3(d.word))) continue;
-      existingWords.add(key3(d.word));
-      let group = groupByKey.get(key3(d.group));
+      if (existingWords.has(key4(d.word))) continue;
+      existingWords.add(key4(d.word));
+      let group = groupByKey.get(key4(d.group));
       if (!group) {
-        group = groupByKey.get(key3(t("family.aiSuggestedGroup")));
+        group = groupByKey.get(key4(t("family.aiSuggestedGroup")));
         if (!group) {
           group = { label: t("family.aiSuggestedGroup"), members: [] };
           f.groups.push(group);
-          groupByKey.set(key3(t("family.aiSuggestedGroup")), group);
+          groupByKey.set(key4(t("family.aiSuggestedGroup")), group);
         }
       }
       const member = { word: d.word, zh: d.zh, emoji: d.emoji };
@@ -35229,7 +35779,7 @@ var FamilyService = class {
     return added;
   }
   toFamily(c2, entryCount, renewed = /* @__PURE__ */ new Set()) {
-    const existing = this.families().find((f) => key3(f.topic) === key3(c2.topic));
+    const existing = this.families().find((f) => key4(f.topic) === key4(c2.topic));
     if (existing && renewed.has(existing.id)) {
       renewed.delete(existing.id);
       return {
@@ -35351,12 +35901,12 @@ function mergeFamily(f, c2) {
   var _a, _b;
   const groups = f.groups.map((g) => ({ label: g.label, members: [...g.members] }));
   for (const cg of c2.groups) {
-    let g = groups.find((x3) => key3(x3.label) === key3(cg.label));
+    let g = groups.find((x3) => key4(x3.label) === key4(cg.label));
     if (!g) {
       g = { label: cg.label, members: [] };
       groups.push(g);
     }
-    for (const m2 of cg.members) if (!g.members.some((x3) => key3(x3.word) === key3(m2.word))) g.members.push({ ...m2 });
+    for (const m2 of cg.members) if (!g.members.some((x3) => key4(x3.word) === key4(m2.word))) g.members.push({ ...m2 });
   }
   const seeds = [.../* @__PURE__ */ new Set([...(_a = f.seedEntryIds) != null ? _a : [], ...c2.seedEntryIds])];
   const scope = familyScope(f) === "word" || candidateScope(c2) === "word" ? "word" : "list";
@@ -35672,7 +36222,7 @@ ${body}`, /* @__PURE__ */ new Set([subject.id]));
 };
 
 // src/services/learn/MorphemeService.ts
-var key4 = (w2) => w2.trim().toLowerCase();
+var key5 = (w2) => w2.trim().toLowerCase();
 var DNA_ANALYZE_THREAD = "dna:analyze";
 var DNA_EXPAND_THREAD = "dna:expand";
 function findExistingMorpheme(list, type, form, variants) {
@@ -35869,9 +36419,9 @@ var MorphemeService = class {
       const resolved = existing ? this.mergeIntoExisting(existing, dm) : this.createMorpheme(dm, list);
       refToId.set(dm.ref, resolved.id);
     }
-    const byWord2 = new Map(value.words.map((w2) => [key4(w2.word), w2]));
+    const byWord2 = new Map(value.words.map((w2) => [key5(w2.word), w2]));
     for (const entry of entries) {
-      const w2 = byWord2.get(key4(entry.word));
+      const w2 = byWord2.get(key5(entry.word));
       if (!w2) continue;
       const parts = w2.status === "ok" ? w2.parts.map((p) => this.toBreakdownPart(p, refToId)) : [];
       const breakdown = { status: w2.status, parts, gloss: w2.gloss, word: entry.word, generatedAt, model };
@@ -35915,8 +36465,8 @@ var MorphemeService = class {
   }
   // verified 絕不覆蓋 (只補 suggested 沒有的字); 未 verified 只補空欄位。
   mergeIntoExisting(target, dm) {
-    const already = new Set(target.suggested.map((s) => key4(s.word)));
-    const extraSuggested = dm.suggested.filter((s) => s.word.trim() && !already.has(key4(s.word)));
+    const already = new Set(target.suggested.map((s) => key5(s.word)));
+    const extraSuggested = dm.suggested.filter((s) => s.word.trim() && !already.has(key5(s.word)));
     if (target.verified) {
       if (!extraSuggested.length) return target;
       const merged = { ...target, suggested: [...target.suggested, ...extraSuggested] };
@@ -35979,8 +36529,8 @@ var MorphemeService = class {
     for (const m2 of live) {
       const learned = (_a = learnedMap.get(m2.id)) != null ? _a : [];
       if (!learned.length) continue;
-      const learnedWords = new Set(learned.map((e) => key4(e.word)));
-      out.push({ morpheme: m2, learned, suggested: m2.suggested.filter((s) => !learnedWords.has(key4(s.word))) });
+      const learnedWords = new Set(learned.map((e) => key5(e.word)));
+      out.push({ morpheme: m2, learned, suggested: m2.suggested.filter((s) => !learnedWords.has(key5(s.word))) });
     }
     out.sort((a2, b) => b.learned.length - a2.learned.length);
     return out;
@@ -35991,7 +36541,7 @@ var MorphemeService = class {
     for (const meta of this.deps.learn.allWordMeta()) {
       const e = this.entry(meta.id);
       if (!e || e.liked !== true || !meta.breakdown) continue;
-      if (meta.breakdown.parts.some((p) => p.morphemeId && resolveMorphemeId(list, p.morphemeId) === morphemeId)) out.add(key4(e.word));
+      if (meta.breakdown.parts.some((p) => p.morphemeId && resolveMorphemeId(list, p.morphemeId) === morphemeId)) out.add(key5(e.word));
     }
     return out;
   }
@@ -36002,14 +36552,14 @@ var MorphemeService = class {
     const m2 = this.deps.learn.morpheme(resolveMorphemeId(list, id2));
     if (!m2) return [];
     const exclude = this.learnedWordsFor(m2.id);
-    for (const s of m2.suggested) exclude.add(key4(s.word));
+    for (const s of m2.suggested) exclude.add(key5(s.word));
     const { value } = await runStructured(
       this.deps.ai,
       dnaExpand,
       { morpheme: { type: m2.type, form: m2.form, variants: m2.variants, meaningZh: m2.meaningZh }, exclude: [...exclude] },
       { threadId: DNA_EXPAND_THREAD, signal }
     );
-    const fresh = value.words.filter((w2) => w2.word.trim() && !exclude.has(key4(w2.word)));
+    const fresh = value.words.filter((w2) => w2.word.trim() && !exclude.has(key5(w2.word)));
     if (fresh.length) this.deps.learn.putMorpheme({ ...m2, suggested: [...m2.suggested, ...fresh] });
     return fresh;
   }
@@ -36020,7 +36570,7 @@ var MorphemeService = class {
     await this.deps.learn.ensureLoaded();
     const resolvedId = resolveMorphemeId(this.deps.learn.morphemes(), id2);
     const m2 = this.deps.learn.morpheme(resolvedId);
-    const match = m2 == null ? void 0 : m2.suggested.find((s) => key4(s.word) === key4(word));
+    const match = m2 == null ? void 0 : m2.suggested.find((s) => key5(s.word) === key5(word));
     const w2 = (_a = match == null ? void 0 : match.word) != null ? _a : word;
     const zh = (_b = match == null ? void 0 : match.zh) != null ? _b : "";
     const index2 = new WordIndex(this.deps.vocab.entries);
@@ -36255,8 +36805,8 @@ var WordlistIndex = class {
   // inflected) belongs to, or null when it's in no list.
   match(word, inflections = true) {
     const lower2 = word.toLowerCase();
-    const key5 = inflections ? lower2 : `=${lower2}`;
-    const memo = this.memo.get(key5);
+    const key6 = inflections ? lower2 : `=${lower2}`;
+    const memo = this.memo.get(key6);
     if (memo !== void 0) return memo;
     let hit = null;
     const exact = this.byWord.get(lower2);
@@ -36270,7 +36820,7 @@ var WordlistIndex = class {
         }
       }
     }
-    this.memo.set(key5, hit);
+    this.memo.set(key6, hit);
     return hit;
   }
   // Just the tags; empty when the word is in no list.
@@ -36475,11 +37025,11 @@ function cleanSentence(text) {
 function buildEntryLookup(entries) {
   const byWord2 = /* @__PURE__ */ new Map();
   for (const e of entries) {
-    const key5 = e.word.trim().toLowerCase();
-    if (!key5) continue;
-    const list = byWord2.get(key5);
+    const key6 = e.word.trim().toLowerCase();
+    if (!key6) continue;
+    const list = byWord2.get(key6);
     if (list) list.push(e);
-    else byWord2.set(key5, [e]);
+    else byWord2.set(key6, [e]);
   }
   const forWord = (word) => byWord2.get(word.trim().toLowerCase());
   return {
@@ -36755,12 +37305,12 @@ var ObsidianVault = class {
   // Any markdown file whose metadataCache blocks already have this id.
   // metadataCache keys block ids in lower case.
   blockIdTaken(id2) {
-    const key5 = id2.toLowerCase();
+    const key6 = id2.toLowerCase();
     const { metadataCache, vault } = this.app;
     return vault.getMarkdownFiles().some((f) => {
       var _a;
       const blocks = (_a = metadataCache.getFileCache(f)) == null ? void 0 : _a.blocks;
-      return !!blocks && (Object.prototype.hasOwnProperty.call(blocks, key5) || Object.prototype.hasOwnProperty.call(blocks, id2));
+      return !!blocks && (Object.prototype.hasOwnProperty.call(blocks, key6) || Object.prototype.hasOwnProperty.call(blocks, id2));
     });
   }
   // Subscribes the managed-note index to the vault and metadata cache.
@@ -36950,24 +37500,24 @@ var ManagedIndex = class {
   set(path, ref) {
     this.delete(path);
     if (!ref) return;
-    const key5 = refKey(ref.kind, ref.id);
-    this.byPath.set(path, key5);
-    let paths = this.byRef.get(key5);
-    if (!paths) this.byRef.set(key5, paths = /* @__PURE__ */ new Set());
+    const key6 = refKey(ref.kind, ref.id);
+    this.byPath.set(path, key6);
+    let paths = this.byRef.get(key6);
+    if (!paths) this.byRef.set(key6, paths = /* @__PURE__ */ new Set());
     paths.add(path);
   }
   delete(path) {
-    const key5 = this.byPath.get(path);
-    if (key5 === void 0) return;
+    const key6 = this.byPath.get(path);
+    if (key6 === void 0) return;
     this.byPath.delete(path);
-    const paths = this.byRef.get(key5);
+    const paths = this.byRef.get(key6);
     paths == null ? void 0 : paths.delete(path);
-    if (paths && !paths.size) this.byRef.delete(key5);
+    if (paths && !paths.size) this.byRef.delete(key6);
   }
   move(from, to) {
-    const key5 = this.byPath.get(from);
-    if (key5 === void 0) return;
-    const [kind, id2] = splitKey(key5);
+    const key6 = this.byPath.get(from);
+    if (key6 === void 0) return;
+    const [kind, id2] = splitKey(key6);
     this.delete(from);
     this.set(to, { kind, id: id2 });
   }
@@ -36988,9 +37538,9 @@ var ManagedIndex = class {
     return [...paths].sort((a2, b) => a2.length - b.length || (a2 < b ? -1 : a2 > b ? 1 : 0))[0];
   }
 };
-function splitKey(key5) {
-  const i = key5.indexOf("\n");
-  return [key5.slice(0, i), key5.slice(i + 1)];
+function splitKey(key6) {
+  const i = key6.indexOf("\n");
+  return [key6.slice(0, i), key6.slice(i + 1)];
 }
 function parentOf(path) {
   const i = path.lastIndexOf("/");
@@ -37064,15 +37614,15 @@ function editFrontmatter(text, fields, opts = {}) {
   let insertAt = -1;
   for (let i = 0; i < body.length; i++) {
     const line2 = body[i];
-    const key5 = (_c = LINE.exec(line2.replace(/\r?\n$/, ""))) == null ? void 0 : _c[1];
-    if (key5 !== void 0 && key5 in fields && !done.has(key5)) {
-      done.add(key5);
-      out.push(`${key5}: ${yamlValue(fields[key5])}${(_e = (_d = /\r?\n$/.exec(line2)) == null ? void 0 : _d[0]) != null ? _e : eol}`);
+    const key6 = (_c = LINE.exec(line2.replace(/\r?\n$/, ""))) == null ? void 0 : _c[1];
+    if (key6 !== void 0 && key6 in fields && !done.has(key6)) {
+      done.add(key6);
+      out.push(`${key6}: ${yamlValue(fields[key6])}${(_e = (_d = /\r?\n$/.exec(line2)) == null ? void 0 : _d[0]) != null ? _e : eol}`);
       while (i + 1 < body.length && /^([ \t]|- )/.test(body[i + 1])) i++;
     } else {
       out.push(line2);
     }
-    if (key5 !== void 0 && key5 === opts.after) insertAt = out.length;
+    if (key6 !== void 0 && key6 === opts.after) insertAt = out.length;
   }
   if (opts.add) {
     const added = Object.keys(fields).filter((k) => !done.has(k)).map((k) => `${k}: ${yamlValue(fields[k])}${eol}`);
@@ -37507,11 +38057,11 @@ var ExportService = class {
   // The 「單字頁」 button: creates the page now if needed (no debounce) and
   // returns its path, or null when the entry doesn't exist.
   async openWordPage(entryId) {
-    const key5 = jobKey({ kind: "word", entryId, create: "always" });
-    const pending = this.timers.get(key5);
+    const key6 = jobKey({ kind: "word", entryId, create: "always" });
+    const pending = this.timers.get(key6);
     if (pending) {
       clearTimeout(pending.timer);
-      this.timers.delete(key5);
+      this.timers.delete(key6);
     }
     return this.run({ kind: "word", entryId, create: "always" });
   }
@@ -37534,9 +38084,9 @@ var ExportService = class {
   }
   // Runs every pending export now and waits for all writes to land.
   async flush() {
-    for (const [key5, { timer: timer2 }] of [...this.timers]) {
+    for (const [key6, { timer: timer2 }] of [...this.timers]) {
       clearTimeout(timer2);
-      this.fire(key5);
+      this.fire(key6);
     }
     await Promise.all([...this.queues.values()]);
   }
@@ -37552,16 +38102,16 @@ var ExportService = class {
   schedule(job) {
     if (this.disposed) return;
     if (this.deps.enabled && !this.deps.enabled(job.kind)) return;
-    const key5 = jobKey(job);
-    const pending = this.timers.get(key5);
+    const key6 = jobKey(job);
+    const pending = this.timers.get(key6);
     if (pending) clearTimeout(pending.timer);
     const merged = pending ? mergeJobs(pending.job, job) : job;
-    this.timers.set(key5, { timer: setTimeout(() => this.fire(key5), this.debounceMs), job: merged });
+    this.timers.set(key6, { timer: setTimeout(() => this.fire(key6), this.debounceMs), job: merged });
   }
-  fire(key5) {
-    const pending = this.timers.get(key5);
+  fire(key6) {
+    const pending = this.timers.get(key6);
     if (!pending) return;
-    this.timers.delete(key5);
+    this.timers.delete(key6);
     void this.run(pending.job);
   }
   enqueue(path, task) {
@@ -39982,10 +40532,18 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
     this.dnaFocus.focus(morphemeId);
     void this.openEntryFile("dna", "tab");
   }
-  // 第十六波: Practice.md on the given tab (the hub reads the remembered tab).
-  async openPracticeTab(track2) {
+  // 第十六波: Practice.md on the given tab (the hub reads the remembered tab;
+  // a hub that's already open switches through PRACTICE_TAB_EVENT).
+  async openPracticeTab(track2, where = "current") {
     if (typeof this.app.saveLocalStorage === "function") this.app.saveLocalStorage(TAB_KEY2, track2);
-    await this.openEntryFile("practice");
+    this.app.workspace.trigger(TAB_EVENT, track2);
+    await this.openEntryFile("practice", where);
+  }
+  // 換句話說 (ParagraphPaneHost): the practice hub's 換句話說 tab on just this
+  // paragraph, in its own tab so the article stays open.
+  practiceParagraph(threadId) {
+    this.learner.setFilter("para", { scope: "thread", threadId });
+    void this.openPracticeTab("para", "tab");
   }
   async openEntryFile(id2, where = "current") {
     try {
@@ -40176,23 +40734,23 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
     if (!node || node.nodeType !== Node.TEXT_NODE) return { word: "", sentence: "" };
     const text = node.textContent || "";
     const isWordChar = (c2) => c2 !== void 0 && /[A-Za-z'\-]/.test(c2);
-    let start3 = offset;
+    let start4 = offset;
     let end = offset;
-    while (start3 > 0 && isWordChar(text[start3 - 1])) start3--;
+    while (start4 > 0 && isWordChar(text[start4 - 1])) start4--;
     while (end < text.length && isWordChar(text[end])) end++;
-    const word = text.slice(start3, end).replace(/^[-']+|[-']+$/g, "");
+    const word = text.slice(start4, end).replace(/^[-']+|[-']+$/g, "");
     if (!/^[A-Za-z][A-Za-z'\-]*$/.test(word)) return { word: "", sentence: "" };
     const examSpan = (_a = node.parentElement) == null ? void 0 : _a.closest(`.${EXAM_WORD_CLS}`);
     const block = examSpan == null ? void 0 : examSpan.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
     if (examSpan && block) {
       const range = document.createRange();
       range.setStart(block, 0);
-      range.setEnd(node, start3);
+      range.setEnd(node, start4);
       const before = range.toString().length;
       const blockText = block.textContent || "";
-      return { word, sentence: extractSentence(blockText, before, before + (end - start3), null) };
+      return { word, sentence: extractSentence(blockText, before, before + (end - start4), null) };
     }
-    const sentence = extractSentence(text, start3, end, node);
+    const sentence = extractSentence(text, start4, end, node);
     return { word, sentence };
   }
   // `reveal` (default): show the word afterwards — sidebar, or the bottom

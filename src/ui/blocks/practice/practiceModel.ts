@@ -1,6 +1,8 @@
 // Pure helpers of the hub shell (第十六波 E).
 
 export const TAB_KEY = "vocab-tracker:practice.tab";
+// Workspace event (track id): an open hub switches to that tab.
+export const TAB_EVENT = "vocab-tracker:practice-tab";
 
 export interface TabLike {
   id: string;
@@ -16,6 +18,9 @@ const ALIASES: Record<string, string> = {
   常用字: "poly",
   mix: "mix",
   混合: "mix",
+  para: "para",
+  換句話說: "para",
+  段落: "para",
 };
 
 // The tab a `tab:` param names (id, or its Chinese label), if registered.

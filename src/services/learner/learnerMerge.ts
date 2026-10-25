@@ -103,7 +103,7 @@ function normalizeFilter(raw: unknown): TrackFilter | null {
   return { id: raw.id, value: raw.value, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : "" };
 }
 
-const SCENARIO_TRACKS: readonly ScenarioTrack[] = ["poly", "vocab", "mix"];
+const SCENARIO_TRACKS: readonly ScenarioTrack[] = ["poly", "vocab", "mix", "para"];
 
 function normalizeQuestion(raw: unknown): PracticeQuestion | null {
   if (!isObj(raw) || !str(raw.id) || !SCENARIO_TRACKS.includes(raw.track as ScenarioTrack)) return null;

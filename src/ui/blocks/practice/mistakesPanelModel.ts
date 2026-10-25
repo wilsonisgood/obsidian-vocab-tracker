@@ -1,5 +1,6 @@
 import { t, type I18nKey } from "../../../core/i18n";
 import { ERROR_TAGS } from "../../../core/model/grammar";
+import { PARAPHRASE_ERROR_TAGS } from "../../../services/ai/tasks/paraphrase";
 import { POLY_ERROR_TAGS, VOCAB_ERROR_TAGS } from "../../../services/ai/tasks/practiceScenario";
 import type { PracticeKind, PracticeQuestion } from "../../../core/model/practice";
 import { errorTagLabel } from "../../grammar/labels";
@@ -25,10 +26,13 @@ const KIND_LABEL: Record<PracticeKind, I18nKey> = {
   "same-sense": "practice.mistakes.kind.same-sense",
   choice: "practice.mistakes.kind.choice",
   "find-error": "practice.mistakes.kind.find-error",
+  paraphrase: "practice.mistakes.kind.paraphrase",
 };
 
 // S's lists (practiceScenario task): the tags the scenario AI may put on a miss.
-const POLY_TAGS: readonly string[] = [...new Set<string>([...POLY_ERROR_TAGS, ...VOCAB_ERROR_TAGS])];
+const POLY_TAGS: readonly string[] = [
+  ...new Set<string>([...POLY_ERROR_TAGS, ...VOCAB_ERROR_TAGS, ...PARAPHRASE_ERROR_TAGS]),
+];
 
 // 中文標籤: grammar tags use the shared grammar names, the 常用字 tags a
 // small table here, a question without a tag its kind, anything else the

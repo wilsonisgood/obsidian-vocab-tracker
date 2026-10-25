@@ -8,10 +8,19 @@ import type { FocusRef, Track } from "./learner";
 // which-sense: [[word]] in `text`, pick its meaning (options are Chinese);
 // pick-word / choice: one "____" in `text`, pick the English that fits;
 // same-sense: pick the sentence where [[word]] means the same;
-// find-error: the options are fragments of `text`, pick the wrong one.
-export type PracticeKind = "which-sense" | "pick-word" | "same-sense" | "choice" | "find-error";
+// find-error: the options are fragments of `text`, pick the wrong one;
+// paraphrase: `text` is a sentence of the learner's own paragraph, pick the
+// English sentence that means the same.
+export type PracticeKind = "which-sense" | "pick-word" | "same-sense" | "choice" | "find-error" | "paraphrase";
 
-export const PRACTICE_KINDS: readonly PracticeKind[] = ["which-sense", "pick-word", "same-sense", "choice", "find-error"];
+export const PRACTICE_KINDS: readonly PracticeKind[] = [
+  "which-sense",
+  "pick-word",
+  "same-sense",
+  "choice",
+  "find-error",
+  "paraphrase",
+];
 
 export type ScenarioTrack = Exclude<Track, "grammar">;
 
@@ -36,8 +45,8 @@ export interface PracticeQuestion {
   // Wrong option id → why it's wrong here / when it would be right.
   optionNotes?: Record<string, string>;
   sentenceZh?: string;
-  // What the question is about: a sense (常用字), a word (單字) or a grammar
-  // objective (混合).
+  // What the question is about: a sense (常用字), a word (單字), a grammar
+  // objective (混合) or a paragraph discussion (換句話說).
   focus: FocusRef;
   errorTag?: string;
   createdAt: string;
