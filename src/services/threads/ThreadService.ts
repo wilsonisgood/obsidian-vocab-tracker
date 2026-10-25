@@ -57,6 +57,9 @@ export interface ThreadServiceDeps {
   newId?: () => string;
   // 規劃書 15 §2.1: told once per finished round (done, error or stopped).
   onAsked?: (e: AskEvent) => void;
+  // 學習夥伴: the learner's background text (buddyContext()), read fresh on
+  // every question. Without it the buddy gets an empty context.
+  buddyContext?: () => Promise<string>;
 }
 
 export interface AskParams {
@@ -89,6 +92,13 @@ export interface ParagraphAsk {
 export type ParagraphTarget = { threadId: string } | SectionRef;
 
 const PARAGRAPH_THREAD_PREFIX = "paragraph:";
+const BUDDY_THREAD_PREFIX = "buddy:";
+
+export interface BuddyAsk {
+  taskId: string;
+  question?: string;
+  selection?: string;
+}
 
 function defaultId(now: Date): string {
   return `${now.getTime().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -337,6 +347,53 @@ export class ThreadService {
     }
     this.changed(thread);
     return question;
+  }
+
+  // ─── 學習夥伴 (規劃書 15 §7) ─────────────────────────────────────────────
+
+  // Live buddy conversations, most recently updated first.
+  buddyThreads(): Thread[] {
+    return this.threads
+      .filter((th) => !th.deletedAt && th.anchor.kind === "buddy")
+      .sort((a, b) => (b.updatedAt ?? b.createdAt ?? "").localeCompare(a.updatedAt ?? a.createdAt ?? ""));
+  }
+
+  // An id for a conversation that doesn't exist yet; the thread is created
+  // by its first askBuddy().
+  newBuddyThreadId(): string {
+    return BUDDY_THREAD_PREFIX + this.newId();
+  }
+
+  // Asks the buddy. `null` starts a new conversation; an id continues that
+  // one (or starts it, when nothing is stored under it yet). Resolves to the
+  // thread id, or null when the id belongs to another kind of thread.
+  async askBuddy(threadId: string | null, req: BuddyAsk): Promise<string | null> {
+    await this.ensureLoaded();
+    const id = threadId ?? this.newBuddyThreadId();
+    const existing = this.threads.find((th) => th.id === id && !th.deletedAt);
+    if (existing && existing.anchor.kind !== "buddy") return null;
+    let context = "";
+    try {
+      context = (await this.deps.buddyContext?.()) ?? "";
+    } catch (e) {
+      console.error("Vocab Tracker: buddy context failed", e);
+    }
+    await this.ask({
+      threadId: id,
+      anchor: { kind: "buddy" },
+      taskId: req.taskId,
+      input: { context, question: req.question, selection: req.selection },
+      display: this.displayFor(req),
+      question: req.question,
+      selection: req.selection,
+    });
+    return id;
+  }
+
+  async retryBuddy(threadId: string, turnId: string): Promise<void> {
+    const question = this.dropFailedRound(this.get(threadId), turnId);
+    if (!question?.taskId) return;
+    await this.askBuddy(threadId, { taskId: question.taskId, question: question.question, selection: question.selection });
   }
 
   // ─── Paragraph discussions (規劃書 06 §5.1, M5) ──────────────────────────

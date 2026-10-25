@@ -2,6 +2,13 @@
 
 exports[`entry file content > matches the snapshots 1`] = `
 {
+  "buddy": "---
+vocab-tracker: entry
+vocab-tracker-id: buddy
+---
+\`\`\`vocab-buddy
+\`\`\`
+",
   "dna": "---
 vocab-tracker: entry
 vocab-tracker-id: dna

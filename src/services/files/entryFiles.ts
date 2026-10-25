@@ -12,7 +12,7 @@ import type { RenderContext } from "../export/types";
 
 export const ENTRY_FILE_KIND = "entry";
 
-export type EntryFileId = "flashcards" | "families" | "verbs" | "trivia" | "dna" | "grammar" | "practice" | "polysemy";
+export type EntryFileId = "flashcards" | "families" | "verbs" | "trivia" | "dna" | "grammar" | "practice" | "polysemy" | "buddy";
 
 export interface EntryFileDef {
   id: EntryFileId;
@@ -49,6 +49,8 @@ export const ENTRY_FILES: readonly EntryFileDef[] = [
   { id: "practice", name: "Practice", block: "vocab-practice", legacyName: "Practice" },
   // Polysemy sense map (第十七波 Q). New, so legacyName = name (as Grammar).
   { id: "polysemy", name: "Polysemy", block: "vocab-polysemy", legacyName: "Polysemy" },
+  // Learning buddy chat (第二十一波 R5). New, so legacyName = name (as Grammar).
+  { id: "buddy", name: "Buddy", block: "vocab-buddy", legacyName: "Buddy" },
 ];
 
 // The word list's starter note (main.ts) is not an entry file (no
