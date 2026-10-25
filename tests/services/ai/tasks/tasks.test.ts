@@ -423,6 +423,8 @@ describe("task registry", () => {
       "practice.paraphrase",
       // 第十九波: DiaryService calls this directly.
       "diary.write",
+      // 第二十波: ReportService calls this directly.
+      "report.advise",
     ]);
     for (const t of defaultTaskRegistry().all()) {
       expect(t.version).toBeGreaterThanOrEqual(1);

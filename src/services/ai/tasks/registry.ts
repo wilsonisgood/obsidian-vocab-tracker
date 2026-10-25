@@ -5,6 +5,7 @@ import { FAMILY_TASKS } from "./family";
 import { GRAMMAR_TASKS as GRAMMAR_EXPLAIN_TASKS } from "./grammarExplain";
 import { GRAMMAR_TASKS as GRAMMAR_GRADE_TASKS } from "./grammarGrade";
 import { GRAMMAR_TASKS as GRAMMAR_QUESTION_TASKS } from "./grammarQuestions";
+import { reportAdvise } from "./report";
 import { PARAGRAPH_TASKS } from "./paragraph";
 import { PARAPHRASE_TASKS } from "./paraphrase";
 import { PRACTICE_TASKS } from "./practiceScenario";
@@ -61,5 +62,6 @@ export function defaultTaskRegistry(): TaskRegistry {
     ...PRACTICE_TASKS,
     ...PARAPHRASE_TASKS,
     diaryWrite,
+    reportAdvise,
   ]);
 }
