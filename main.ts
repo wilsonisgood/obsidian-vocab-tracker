@@ -61,6 +61,7 @@ import { DiaryService } from "./src/services/diary/DiaryService";
 import { resolveDiarySettings, resolveReportSettings } from "./src/core/model/settings";
 import { ReportService } from "./src/services/report/ReportService";
 import { previousWeek } from "./src/core/learner/period";
+import { buddyContext } from "./src/core/learner/buddyContext";
 import { EmojiService } from "./src/services/learn/EmojiService";
 import { FamilyService } from "./src/services/learn/FamilyService";
 import { VerbUsageService } from "./src/services/learn/VerbUsageService";
@@ -319,7 +320,20 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       vault: this.vault,
       mode: () => resolveAnchorSettings(this.store.settings).mode,
     });
-    this.threads = new ThreadService({ storage: this.storage, store: this.store, ai, notes: this.notes, anchors: this.anchors, onAsked: (e) => this.learner?.recordAsk(e) });
+    this.threads = new ThreadService({
+      storage: this.storage,
+      store: this.store,
+      ai,
+      notes: this.notes,
+      anchors: this.anchors,
+      // 學習夥伴 (規劃書 15 §7.3): what the buddy knows about the learner.
+      buddyContext: async () => {
+        const latest = await this.report?.latest();
+        const md = latest ? ((await this.readNote(latest.path)) ?? "") : "";
+        return buddyContext(this.learnerModel.snapshot(), md);
+      },
+      onAsked: (e) => this.learner?.recordAsk(e),
+    });
 
     // M7: word families, verb usage and trivia. learn.json loads lazily,
     // the first time one of them is used.
@@ -422,6 +436,15 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       aiReady: () => this.ai.status() === "ready",
       // asks[] is backfilled from threads.json in loadLearner().
       ready: () => this.loadLearner(),
+      // 詳細分析／回顧 (規劃書 15 §6): the discussions, wrong answers' questions, report notes.
+      threads: () => this.threads.allThreads(),
+      practiceQuestion: (id) => {
+        const q = this.learner.practiceQuestion(id);
+        if (q) return { prompt: q.text, answer: q.options.find((o) => o.id === q.answerId)?.text ?? "" };
+        const g = this.grammar.question(id);
+        return g ? { prompt: g.stem, answer: g.answer } : undefined;
+      },
+      read: (p) => this.readNote(p),
     });
     // Word DNA (規劃書 09 §7, A8/A9): splits liked words into morphemes in
     // the background and backs the vocab-dna block's chat.
@@ -681,6 +704,11 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       id: "open-trivia",
       name: t("command.openTrivia"),
       callback: () => this.openEntryFile("trivia"),
+    });
+    this.addCommand({
+      id: "open-buddy",
+      name: t("command.buddy.open"),
+      callback: () => this.openEntryFile("buddy"),
     });
     this.addCommand({
       id: "open-dna",
