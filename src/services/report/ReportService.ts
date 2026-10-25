@@ -1,13 +1,18 @@
-import { previousWeek, shiftRange, weekRange } from "../../core/learner/period";
+import { collectAnalysisMaterial, collectReviewMaterial } from "../../core/learner/analysisMaterial";
+import { monthKeyOf, monthRange, previousWeek, quarterKeyOf, quarterRange, shiftRange, weekRange } from "../../core/learner/period";
 import { localDayOf } from "../../core/learner/reading";
 import { buildReport, type LevelAdvice, type ReportData } from "../../core/learner/report";
-import { renderReportFile, reportDigest, verdictHeadline } from "../../core/learner/reportMarkdown";
+import { renderReportFile, renderReviewFile, reportDigest, verdictHeadline } from "../../core/learner/reportMarkdown";
 import type { VocabEntry } from "../../core/model/entry";
 import type { CefrLevel } from "../../core/model/settings";
+import type { Thread } from "../../core/model/thread";
 import { reportAdvise } from "../ai/tasks/report";
+import { reportAnalyze } from "../ai/tasks/reportAnalyze";
+import { reportReview } from "../ai/tasks/reportReview";
 import type { LearnAi } from "../learn/ports";
 import { runStructured } from "../learn/structured";
 import type { LearnerModel } from "../learner/LearnerModel";
+import { applyAnalysis } from "./applyAnalysis";
 
 // Learning report writer (規劃書 15 §4): fills in last week's report the
 // first time Obsidian opens in a new week, as `<folder>/vocab-report-<key>.md`.
@@ -45,7 +50,16 @@ export interface ReportServiceDeps {
   // Resolves once the lazily loaded shards are in.
   ready?: () => Promise<void>;
   now?: () => Date;
+  // 詳細分析／回顧 (第二十一波 R4).
+  // Every thread, tombstones included.
+  threads?: () => readonly Thread[];
+  practiceQuestion?: (id: string) => { prompt: string; answer: string } | undefined;
+  // Text of a report note (null when it can't be read).
+  read?: (path: string) => Promise<string | null>;
 }
+
+export type ReportAnalyzeResult = "written" | "busy" | "missing" | "no-ai" | "failed";
+export type ReportReviewResult = "written" | "busy" | "empty" | "no-ai" | "failed";
 
 const REPORT_FILE = /^vocab-report-(\d{4}-W\d{2})\.md$/;
 const VERDICTS = new Set<LevelAdvice["verdict"]>(["up", "keep", "down", "insufficient"]);
@@ -80,9 +94,17 @@ export class ReportService {
     return () => this.listeners.delete(cb);
   }
 
+  private notify(): void {
+    for (const l of this.listeners) l();
+  }
+
   private setState(s: ReportStatus): void {
     this.state = s;
-    for (const l of this.listeners) l();
+    this.notify();
+  }
+
+  isAnalyzing(key: string): boolean {
+    return this.running.has(`analyze:${key}`);
   }
 
   private reportKeys(): string[] {
@@ -174,6 +196,95 @@ export class ReportService {
       return "off";
     }
     return this.write(previousWeek(this.today()).key);
+  }
+
+  // 詳細分析 (規劃書 15 §6): reads the period's AI discussions, wrong answers
+  // and word touches, and writes the answer into the report's managed block.
+  async analyze(key: string): Promise<ReportAnalyzeResult> {
+    const path = this.pathOf(key);
+    const id = `analyze:${key}`;
+    if (this.running.has(id)) return "busy";
+    if (!this.deps.vault.exists(path)) return "missing";
+    if (!this.deps.aiReady()) return "no-ai";
+    this.running.add(id);
+    this.notify();
+    try {
+      await this.deps.ready?.();
+      const fm = this.deps.vault.frontmatterOf(path);
+      const m = /^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/.exec(String(fm?.period ?? ""));
+      const range = m ? { from: m[1], to: m[2] } : weekRange(key);
+      const data = this.collect(range.from, range.to);
+      const act = this.deps.model.activity(range.from, range.to);
+      const vocab = this.deps.vocab.entries;
+      const material = collectAnalysisMaterial({
+        period: range,
+        threads: this.deps.threads?.() ?? [],
+        events: act.events,
+        ...(this.deps.practiceQuestion ? { questionOf: this.deps.practiceQuestion } : {}),
+        entryLabel: (id) => {
+          const e = vocab.find((x) => x.id === id);
+          if (!e) return undefined;
+          const zh = e.definitionZh || e.sensesZh;
+          return zh ? `${e.word}（${zh}）` : e.word;
+        },
+        words: data.words,
+        digest: reportDigest(data),
+        level: this.deps.model.level(),
+      });
+      const { value } = await runStructured(this.deps.ai, reportAnalyze, { material: material.text, level: this.deps.model.level() });
+      const stamp = this.now().toISOString();
+      await this.deps.vault.process(path, (t) => applyAnalysis(t, value, stamp));
+      return "written";
+    } catch (e) {
+      console.error("Vocab Tracker: report analysis failed", e);
+      return "failed";
+    } finally {
+      this.running.delete(id);
+      this.notify();
+    }
+  }
+
+  // 月／季回顧: summarises the weekly reports whose Sunday falls in the
+  // month / quarter the user is in now (up to today).
+  async review(scope: "month" | "quarter"): Promise<{ result: ReportReviewResult; path?: string }> {
+    const today = this.today();
+    const key = scope === "month" ? monthKeyOf(today) : quarterKeyOf(today);
+    const full = scope === "month" ? monthRange(key) : quarterRange(key);
+    const range = { from: full.from, to: full.to < today ? full.to : today };
+    const id = `review:${key}`;
+    if (this.running.has(id)) return { result: "busy" };
+    if (!this.deps.aiReady()) return { result: "no-ai" };
+    this.running.add(id);
+    this.notify();
+    try {
+      await this.deps.ready?.();
+      const weeks: { key: string; text: string }[] = [];
+      for (const k of this.reportKeys()) {
+        const sunday = weekRange(k).to;
+        if (sunday < range.from || sunday > range.to) continue;
+        const text = await this.deps.read?.(this.pathOf(k));
+        if (text) weeks.push({ key: k, text });
+      }
+      if (!weeks.length) return { result: "empty" };
+      const material = collectReviewMaterial(weeks);
+      const { value } = await runStructured(this.deps.ai, reportReview, {
+        material: material.text,
+        span: scope === "month" ? "這個月" : "這一季",
+        level: this.deps.model.level(),
+      });
+      const f = this.deps.folder();
+      const path = f ? `${f}/vocab-review-${key}.md` : `vocab-review-${key}.md`;
+      const content = renderReviewFile(key, range, value);
+      if (this.deps.vault.exists(path)) await this.deps.vault.process(path, () => content);
+      else await this.deps.vault.create(path, content);
+      return { result: "written", path };
+    } catch (e) {
+      console.error("Vocab Tracker: report review failed", e);
+      return { result: "failed" };
+    } finally {
+      this.running.delete(id);
+      this.notify();
+    }
   }
 
   // The newest report, for the dashboard card.

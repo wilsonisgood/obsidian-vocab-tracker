@@ -967,4 +967,19 @@ export const en = {
   "command.report.write": "Write last week's learning report",
   "dashboard.diary.written": "Diary written: {day}",
   "diary.disclaimer": "The source is provided by AI and may be wrong.",
+
+  // 第二十一波 R4
+  "report.analyze.run": "Detailed analysis",
+  "report.analyze.rerun": "Analyze again",
+  "report.analyze.running": "Analyzing…",
+  "report.analyze.done": "Detailed analysis of {key} written",
+  "report.analyze.missing": "Report {key} not found",
+  "report.analyze.busy": "Already analyzing",
+  "report.analyze.failed": "The analysis failed, please try again later",
+  "report.analyze.noAi": "AI is off, cannot analyze",
+  "report.analyze.badKey": "vocab-report-analyze needs a key (e.g. key: 2026-W43)",
+  "report.review.month": "Review this month",
+  "report.review.quarter": "Review this quarter",
+  "report.review.done": "Review written: {path}",
+  "report.review.empty": "No weekly reports in this period yet",
 } as const;

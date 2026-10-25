@@ -68,3 +68,35 @@ export function shiftRange(r: DayRange, days?: number): DayRange {
   const n = days ?? daysInRange(r);
   return { from: addDays(r.from, -n), to: addDays(r.to, -n) };
 }
+
+// Month / quarter keys for the 回顧 notes (第二十一波 R4): "2026-10", "2026-Q4".
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+export function monthKeyOf(day: string): string {
+  return day.slice(0, 7);
+}
+
+export function quarterKeyOf(day: string): string {
+  const [y, m] = day.split("-").map(Number);
+  return `${y}-Q${Math.floor((m - 1) / 3) + 1}`;
+}
+
+function lastDayOfMonth(y: number, m: number): string {
+  return `${y}-${pad2(m)}-${pad2(new Date(y, m, 0).getDate())}`;
+}
+
+export function monthRange(key: string): DayRange {
+  const m = /^(\d{4})-(\d{2})$/.exec(key);
+  if (!m || Number(m[2]) < 1 || Number(m[2]) > 12) throw new Error(`bad month key: ${key}`);
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  return { from: `${y}-${pad2(mo)}-01`, to: lastDayOfMonth(y, mo) };
+}
+
+export function quarterRange(key: string): DayRange {
+  const m = /^(\d{4})-Q([1-4])$/.exec(key);
+  if (!m) throw new Error(`bad quarter key: ${key}`);
+  const y = Number(m[1]);
+  const first = (Number(m[2]) - 1) * 3 + 1;
+  return { from: `${y}-${pad2(first)}-01`, to: lastDayOfMonth(y, first + 2) };
+}

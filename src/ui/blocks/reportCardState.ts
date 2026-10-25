@@ -29,3 +29,49 @@ export function writeButtonKey(status: ReportStatus, existsLastWeek: boolean): I
 export function reasonKey(status: ReportStatus): I18nKey | null {
   return status === "off" ? "dashboard.report.off" : status === "failed" ? "dashboard.report.failed" : null;
 }
+
+// ── 詳細分析／回顧 buttons (第二十一波 R4) ──
+
+// The `vocab-report-analyze` block body: `key: 2026-W43`.
+export function parseAnalyzeKey(source: string): string | null {
+  for (const raw of source.split(/\r?\n/)) {
+    const m = /^\s*key\s*:\s*(\d{4}-W\d{1,2})\s*$/i.exec(raw);
+    if (m) return m[1].replace(/-W(\d)$/, "-W0$1");
+  }
+  return null;
+}
+
+export function analyzeButtonKey(analyzing: boolean, analyzed: boolean): I18nKey {
+  if (analyzing) return "report.analyze.running";
+  return analyzed ? "report.analyze.rerun" : "report.analyze.run";
+}
+
+export function analyzeNoticeKey(result: "written" | "busy" | "missing" | "no-ai" | "failed"): I18nKey {
+  switch (result) {
+    case "written":
+      return "report.analyze.done";
+    case "busy":
+      return "report.analyze.busy";
+    case "missing":
+      return "report.analyze.missing";
+    case "no-ai":
+      return "report.analyze.noAi";
+    default:
+      return "report.analyze.failed";
+  }
+}
+
+export function reviewNoticeKey(result: "written" | "busy" | "empty" | "no-ai" | "failed"): I18nKey {
+  switch (result) {
+    case "written":
+      return "report.review.done";
+    case "busy":
+      return "report.analyze.busy";
+    case "empty":
+      return "report.review.empty";
+    case "no-ai":
+      return "report.analyze.noAi";
+    default:
+      return "report.analyze.failed";
+  }
+}

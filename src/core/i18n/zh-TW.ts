@@ -958,4 +958,19 @@ export const zhTW: Record<keyof typeof en, string> = {
   "command.report.write": "產生上週學習報告",
   "dashboard.diary.written": "日記寫好了：{day}",
   "diary.disclaimer": "出處由 AI 提供，可能有誤。",
+
+  // 第二十一波 R4
+  "report.analyze.run": "詳細分析",
+  "report.analyze.rerun": "重新分析",
+  "report.analyze.running": "分析中…",
+  "report.analyze.done": "已寫好 {key} 的詳細分析",
+  "report.analyze.missing": "找不到 {key} 的報告",
+  "report.analyze.busy": "正在分析中",
+  "report.analyze.failed": "分析沒有成功，請稍後再試",
+  "report.analyze.noAi": "AI 沒有開啟，無法分析",
+  "report.analyze.badKey": "vocab-report-analyze 需要 key（例如 key: 2026-W43）",
+  "report.review.month": "回顧這個月",
+  "report.review.quarter": "回顧這一季",
+  "report.review.done": "已寫好回顧：{path}",
+  "report.review.empty": "這段期間還沒有週報可以回顧",
 };

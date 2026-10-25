@@ -22,3 +22,13 @@
   margin-top: 8px;
   margin-right: 6px;
 }
+
+/* 詳細分析／回顧 (第二十一波 R4) */
+.vt-report-analyze {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.vt-report-analyze .vt-dash-report-btn {
+  margin-right: 0;
+}

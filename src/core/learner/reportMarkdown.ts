@@ -143,7 +143,40 @@ export function renderReportFile(data: ReportData, meta: ReportMeta): string {
   body.push("## 給你的建議", "");
   if (meta.advice?.length) body.push(...meta.advice.flatMap((p) => [p, ""]));
   else body.push(`<span style="color: gray">${meta.aiNote ?? "AI 這次沒寫成功"}</span>`, "");
+  // 詳細分析 buttons (第二十一波 R4); the analysis itself is written above it.
+  body.push(analyzeFence(meta.key), "");
   return [...fm, ...body].join("\n").replace(/\n+$/, "\n");
+}
+
+export const ANALYZE_LANG = "vocab-report-analyze";
+export const ANALYSIS_HEADING = "## 詳細分析";
+
+export function analyzeFence(key: string): string {
+  return ["```" + ANALYZE_LANG, `key: ${key}`, "```"].join("\n");
+}
+
+export function setFrontmatterField(text: string, key: string, value: string): string {
+  const m = /^---\r?\n([\s\S]*?)\r?\n---(\r?\n|$)/.exec(text);
+  if (!m) return `---\n${key}: ${value}\n---\n\n${text}`;
+  const re = new RegExp(`^${key}:.*$`, "m");
+  const fm = re.test(m[1]) ? m[1].replace(re, `${key}: ${value}`) : `${m[1]}\n${key}: ${value}`;
+  return text.slice(0, m.index) + `---\n${fm}\n---` + m[2] + text.slice(m.index + m[0].length);
+}
+
+export function renderReviewFile(key: string, period: { from: string; to: string }, body: string): string {
+  const label = key.includes("Q") ? "季" : "月";
+  return [
+    "---",
+    "vocab-tracker: report",
+    `vocab-tracker-id: review-${key}`,
+    `period: ${period.from}~${period.to}`,
+    "---",
+    "",
+    `# 學習回顧 ${key}（${period.from} ～ ${period.to}，這${label}）`,
+    "",
+    body.trim(),
+    "",
+  ].join("\n");
 }
 
 // Plain-text summary for the advice prompt. Numbers only: no article text,

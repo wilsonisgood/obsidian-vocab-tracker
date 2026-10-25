@@ -3,10 +3,11 @@ import type VocabTrackerPlugin from "../../../main";
 import { t } from "../../core/i18n";
 import { previousWeek } from "../../core/learner/period";
 import type { CefrLevel } from "../../core/model/settings";
+import { drawAnalyzeButtons, type ReportAnalyzeHost } from "./reportAnalyze";
 import { applyLevelOffer, reasonKey, writeButtonKey, type ReportCardLatest, type ReportStatus } from "./reportCardState";
 
 // ReportService, as far as this card needs it.
-export interface ReportCardHost {
+export interface ReportCardHost extends ReportAnalyzeHost {
   status(): ReportStatus;
   onChange(cb: () => void): () => void;
   today(): string;
@@ -56,6 +57,8 @@ export function renderReportCard(plugin: VocabTrackerPlugin, el: HTMLElement, ct
         else if (r === "empty") new Notice(t("dashboard.report.empty"));
       });
     };
+
+    if (latest) drawAnalyzeButtons(plugin, svc, card, latest.key, () => void draw());
 
     const level = applyLevelOffer(latest, plugin.store.settings.learner.level);
     if (level) {

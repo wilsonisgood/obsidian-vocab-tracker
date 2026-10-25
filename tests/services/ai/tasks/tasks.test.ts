@@ -425,6 +425,9 @@ describe("task registry", () => {
       "diary.write",
       // 第二十波: ReportService calls this directly.
       "report.advise",
+      // 第二十一波 R4: ReportService calls these directly.
+      "report.analyze",
+      "report.review",
     ]);
     for (const t of defaultTaskRegistry().all()) {
       expect(t.version).toBeGreaterThanOrEqual(1);

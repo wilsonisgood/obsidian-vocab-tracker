@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyLevelOffer, reasonKey, writeButtonKey, type ReportCardLatest } from "../../../src/ui/blocks/reportCardState";
+import { analyzeButtonKey, parseAnalyzeKey, applyLevelOffer, reasonKey, writeButtonKey, type ReportCardLatest } from "../../../src/ui/blocks/reportCardState";
 
 const L = (p: Partial<ReportCardLatest>): ReportCardLatest => ({ key: "2026-W43", path: "p", verdict: "up", suggestedLevel: "B2", headline: "h", ...p });
 
@@ -30,5 +30,22 @@ describe("writeButtonKey / reasonKey", () => {
     expect(reasonKey("failed")).toBe("dashboard.report.failed");
     expect(reasonKey("idle")).toBeNull();
     expect(reasonKey("writing")).toBeNull();
+  });
+});
+
+describe("parseAnalyzeKey", () => {
+  it("reads the week key", () => {
+    expect(parseAnalyzeKey("key: 2026-W43")).toBe("2026-W43");
+    expect(parseAnalyzeKey("\n  KEY :  2026-W4 \n")).toBe("2026-W04");
+  });
+  it("returns null without a valid key", () => {
+    expect(parseAnalyzeKey("")).toBeNull();
+    expect(parseAnalyzeKey("key: 2026-10")).toBeNull();
+    expect(parseAnalyzeKey("week: 2026-W43")).toBeNull();
+  });
+  it("labels the button", () => {
+    expect(analyzeButtonKey(false, false)).toBe("report.analyze.run");
+    expect(analyzeButtonKey(false, true)).toBe("report.analyze.rerun");
+    expect(analyzeButtonKey(true, true)).toBe("report.analyze.running");
   });
 });
