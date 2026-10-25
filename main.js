@@ -18937,7 +18937,8 @@ function parseParaphrase(json, p) {
   const questions2 = [];
   let prev = 0;
   for (const n of [...byIndex.keys()].sort((a2, b) => a2 - b)) {
-    const { sourceIndex: _, ...q } = byIndex.get(n);
+    const q = { ...byIndex.get(n) };
+    delete q.sourceIndex;
     const lead = p.sentences.slice(prev, n - 1).slice(-MAX_LEAD);
     if (lead.length) q.lead = lead.map((text) => ({ text }));
     questions2.push(q);
@@ -24848,6 +24849,51 @@ function entrySpeakers(entries, current) {
   }
   return out;
 }
+var MIN_SHARED_WORDS = 3;
+var normWord = (w2) => w2.toLowerCase().replace(/[^\p{L}\p{N}']+/gu, "");
+function lcsPairs(a2, b) {
+  const dp = Array.from({ length: a2.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = a2.length - 1; i >= 0; i--) {
+    for (let j = b.length - 1; j >= 0; j--) {
+      dp[i][j] = a2[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  const out = [];
+  for (let i = 0, j = 0; i < a2.length && j < b.length; ) {
+    if (a2[i] === b[j]) out.push([i++, j++]);
+    else if (dp[i + 1][j] >= dp[i][j + 1]) i++;
+    else j++;
+  }
+  return out;
+}
+var isSpace = (t2) => /^\s+$/.test(t2);
+function optionDiffParts(options) {
+  var _a;
+  const tokens2 = options.map((o) => o.text.split(/(\s+)/).filter((t2) => t2 !== ""));
+  const words = tokens2.map((ts) => ts.filter((t2) => !isSpace(t2)).map(normWord));
+  let shared3 = (_a = words[0]) != null ? _a : [];
+  for (const w2 of words.slice(1)) shared3 = lcsPairs(shared3, w2).map(([i]) => shared3[i]);
+  if (options.length < 2 || shared3.filter(Boolean).length < MIN_SHARED_WORDS) {
+    return options.map((o) => [{ text: o.text, diff: false }]);
+  }
+  return tokens2.map((ts, k) => {
+    const same = new Set(lcsPairs(words[k], shared3).map(([i]) => i));
+    const differs = (wi2) => !same.has(wi2) && words[k][wi2] !== "";
+    const parts = [];
+    let wi = 0;
+    for (const t2 of ts) {
+      if (isSpace(t2)) {
+        push(parts, t2, parts.length > 0 && parts[parts.length - 1].diff && wi < words[k].length && differs(wi));
+      } else push(parts, t2, differs(wi++));
+    }
+    return parts;
+  });
+}
+function push(parts, text, diff) {
+  const last2 = parts[parts.length - 1];
+  if (last2 && last2.diff === diff) last2.text += text;
+  else parts.push({ text, diff });
+}
 function askLine(q) {
   switch (q.kind) {
     case "which-sense": {
@@ -25015,12 +25061,20 @@ function mountScenarioPlayer(el, opts, owner) {
     const buttons2 = q.options.filter((o) => !fragMode || !located.has(o.id));
     if (buttons2.length) {
       const grid = box.createDiv({ cls: `vt-pr-options cols-${optionColumns(q.kind, isMobile())}` });
+      const diffs = q.kind === "paraphrase" ? optionDiffParts(q.options) : null;
       q.options.forEach((o, i) => {
         var _a2;
         if (!buttons2.includes(o)) return;
         const b = grid.createEl("button", { cls: "vt-pr-option", attr: { type: "button" } });
         b.createSpan({ cls: "vt-pr-key", text: String(i + 1) });
-        b.createSpan({ cls: "vt-pr-option-text", text: o.text });
+        const textEl = b.createSpan({ cls: "vt-pr-option-text" });
+        if (!diffs) textEl.setText(o.text);
+        else {
+          for (const p of diffs[i]) {
+            if (p.diff) textEl.createSpan({ cls: "vt-pr-diff", text: p.text });
+            else textEl.appendText(p.text);
+          }
+        }
         if (feedback) {
           b.disabled = true;
           if (o.id === q.answerId) b.addClass("is-answer");

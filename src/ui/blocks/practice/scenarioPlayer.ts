@@ -7,7 +7,7 @@ import { learnButton } from "../learnUi";
 import type { PlayerHandle, PlayerOptions, PlayerQuestion } from "./playerTypes";
 import {
   MOBILE_HISTORY_LIMIT, answerState, canHint, entrySpeakers, feedbackNote, historyEntries,
-  initialState, keyAction, nextState, optionColumns, questionSegments, refreshState, retireState,
+  initialState, keyAction, nextState, optionColumns, optionDiffParts, questionSegments, refreshState, retireState,
   showHint, skipState, speakerSides, askLine, trimHistory,
   type AnsweredPart, type PlayerState,
 } from "./scenarioPlayerModel";
@@ -153,11 +153,20 @@ export function mountScenarioPlayer(el: HTMLElement, opts: PlayerOptions, owner:
     const buttons = q.options.filter((o) => !fragMode || !located.has(o.id));
     if (buttons.length) {
       const grid = box.createDiv({ cls: `vt-pr-options cols-${optionColumns(q.kind, isMobile())}` });
+      // 換句話說: the words where the four sentences differ are underlined.
+      const diffs = q.kind === "paraphrase" ? optionDiffParts(q.options) : null;
       q.options.forEach((o, i) => {
         if (!buttons.includes(o)) return;
         const b = grid.createEl("button", { cls: "vt-pr-option", attr: { type: "button" } });
         b.createSpan({ cls: "vt-pr-key", text: String(i + 1) });
-        b.createSpan({ cls: "vt-pr-option-text", text: o.text });
+        const textEl = b.createSpan({ cls: "vt-pr-option-text" });
+        if (!diffs) textEl.setText(o.text);
+        else {
+          for (const p of diffs[i]) {
+            if (p.diff) textEl.createSpan({ cls: "vt-pr-diff", text: p.text });
+            else textEl.appendText(p.text);
+          }
+        }
         if (feedback) {
           b.disabled = true;
           if (o.id === q.answerId) b.addClass("is-answer");

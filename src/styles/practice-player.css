@@ -32,6 +32,8 @@
 .vt-pr-option.is-wrong { border-color: var(--text-error); background: rgba(var(--color-red-rgb), 0.15); }
 .vt-pr-hint { flex-basis: 100%; font-size: var(--font-ui-smaller); color: var(--text-muted); }
 .vt-pr-hints { display: flex; flex-direction: column; gap: 2px; }
+/* 換句話說: where the options differ from each other. */
+.vt-pr-diff { text-decoration: underline; text-decoration-color: var(--text-accent); text-decoration-thickness: 2px; text-underline-offset: 3px; }
 
 .vt-pr-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .vt-pr-feedback { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 8px; background: var(--background-secondary); border-left: 4px solid var(--background-modifier-border); }

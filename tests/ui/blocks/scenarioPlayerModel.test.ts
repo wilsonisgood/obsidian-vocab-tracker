@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { setLocale } from "../../../src/core/i18n";
 import type { PlayerQuestion } from "../../../src/ui/blocks/practice/playerTypes";
 import {
-  answerState, answeredText, canHint, historyEntries, initialState, keyAction, nextState, optionColumns,
+  answerState, answeredText, canHint, historyEntries, initialState, keyAction, nextState, optionColumns, optionDiffParts,
   questionSegments, refreshState, retireState, segmentBlanks, segmentFragments, segmentTargets, showHint,
   skipState, speakerSides, askLine, trimHistory, entrySpeakers, feedbackNote,
 } from "../../../src/ui/blocks/practice/scenarioPlayerModel";
@@ -159,5 +159,40 @@ describe("misc", () => {
     expect(optionColumns("paraphrase", false)).toBe(1);
     expect(askLine({ kind: "which-sense", text: "She sat by the [[bank]] of the river.", options: [] } as never)).toBe("「bank」在這句中是什麼意思？");
     expect(askLine({ kind: "pick-word", text: "I ____ tea.", options: [] } as never)).toBe("選出最適合填入空格的字");
+  });
+});
+
+describe("optionDiffParts (換句話說)", () => {
+  const opts = [
+    "After visiting Ellis Island, I knew it merely as a name; before seeing it, I experienced it as an entrance formed from brick, wind, and hope.",
+    "Before visiting Ellis Island, I knew it merely as a name; after seeing it, I experienced it as an entrance formed from brick, wind, and hope.",
+    "Before visiting Ellis Island, I knew it merely as a name; after seeing it, I experienced it as an entrance formed from brick, wind, and fear.",
+    "Before visiting Ellis Island, I knew it merely as a name; after seeing it, everyone experienced it as an entrance formed from brick, wind, and hope.",
+  ].map((text) => ({ text }));
+  const marked = (parts: { text: string; diff: boolean }[]) => parts.filter((p) => p.diff).map((p) => p.text);
+
+  // Every slot where any option differs is underlined in all four, so the
+  // right answer doesn't stand out as the one with no marks.
+  it("underlines every slot where the four differ, and keeps the text intact", () => {
+    const d = optionDiffParts(opts);
+    expect(d.map((parts) => parts.map((p) => p.text).join(""))).toEqual(opts.map((o) => o.text));
+    expect(marked(d[0])).toEqual(["After", "before", "I", "hope."]);
+    expect(marked(d[1])).toEqual(["Before", "after", "I", "hope."]);
+    expect(marked(d[2])).toEqual(["Before", "after", "I", "fear."]);
+    expect(marked(d[3])).toEqual(["Before", "after", "everyone", "hope."]);
+  });
+
+  it("joins neighbouring different words into one run", () => {
+    const d = optionDiffParts([
+      { text: "The committee rarely agrees to spend more." },
+      { text: "The committee very often agrees to spend more." },
+      { text: "The committee never agrees to spend more." },
+    ]);
+    expect(marked(d[1])).toEqual(["very often"]);
+  });
+
+  it("marks nothing when the sentences have too little in common", () => {
+    const d = optionDiffParts([{ text: "Cats sleep a lot." }, { text: "Dogs bark at night." }]);
+    expect(d.flat().every((p) => !p.diff)).toBe(true);
   });
 });

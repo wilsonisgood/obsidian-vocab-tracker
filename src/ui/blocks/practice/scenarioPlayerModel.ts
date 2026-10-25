@@ -290,6 +290,75 @@ export function entrySpeakers(entries: readonly HistoryEntry[], current?: Player
   return out;
 }
 
+// ---------- paraphrase option differences ----------
+
+// 換句話說: the options are near-identical sentences, so the words where
+// they differ are underlined. A word is "shared" when it is part of the
+// longest word sequence common to every option (case and punctuation
+// ignored); everything else in an option is a difference.
+
+export interface OptionPart {
+  text: string;
+  diff: boolean;
+}
+
+const MIN_SHARED_WORDS = 3;
+
+const normWord = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}']+/gu, "");
+
+// Index pairs [i in a, j in b] of one longest common subsequence.
+function lcsPairs(a: readonly string[], b: readonly string[]): [number, number][] {
+  const dp: number[][] = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
+  for (let i = a.length - 1; i >= 0; i--) {
+    for (let j = b.length - 1; j >= 0; j--) {
+      dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  const out: [number, number][] = [];
+  for (let i = 0, j = 0; i < a.length && j < b.length; ) {
+    if (a[i] === b[j]) out.push([i++, j++]);
+    else if (dp[i + 1][j] >= dp[i][j + 1]) i++;
+    else j++;
+  }
+  return out;
+}
+
+const isSpace = (t: string) => /^\s+$/.test(t);
+
+// Each option split into parts; neighbouring different words make one
+// underlined run (the space between them included). Options with too
+// little in common (unrelated sentences) aren't marked at all.
+export function optionDiffParts(options: readonly { text: string }[]): OptionPart[][] {
+  const tokens = options.map((o) => o.text.split(/(\s+)/).filter((t) => t !== ""));
+  const words = tokens.map((ts) => ts.filter((t) => !isSpace(t)).map(normWord));
+  let shared = words[0] ?? [];
+  for (const w of words.slice(1)) shared = lcsPairs(shared, w).map(([i]) => shared[i]);
+  if (options.length < 2 || shared.filter(Boolean).length < MIN_SHARED_WORDS) {
+    return options.map((o) => [{ text: o.text, diff: false }]);
+  }
+
+  return tokens.map((ts, k) => {
+    const same = new Set(lcsPairs(words[k], shared).map(([i]) => i));
+    // Punctuation-only "words" never count as a difference.
+    const differs = (wi: number) => !same.has(wi) && words[k][wi] !== "";
+    const parts: OptionPart[] = [];
+    let wi = 0;
+    for (const t of ts) {
+      if (isSpace(t)) {
+        // wi is the next word here: a space is underlined only between two different words.
+        push(parts, t, parts.length > 0 && parts[parts.length - 1].diff && wi < words[k].length && differs(wi));
+      } else push(parts, t, differs(wi++));
+    }
+    return parts;
+  });
+}
+
+function push(parts: OptionPart[], text: string, diff: boolean): void {
+  const last = parts[parts.length - 1];
+  if (last && last.diff === diff) last.text += text;
+  else parts.push({ text, diff });
+}
+
 // ---------- misc ----------
 
 // The question shown under the sentence (第十八波 R): the sentence itself

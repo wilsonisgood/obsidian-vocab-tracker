@@ -187,7 +187,8 @@ export function parseParaphrase(json: unknown, p: ParagraphRef): PracticeScenari
   const questions: PracticeQuestionDraft[] = [];
   let prev = 0;
   for (const n of [...byIndex.keys()].sort((a, b) => a - b)) {
-    const { sourceIndex: _, ...q } = byIndex.get(n)!;
+    const q: PracticeQuestionDraft & { sourceIndex?: number } = { ...byIndex.get(n)! };
+    delete q.sourceIndex;
     const lead = p.sentences.slice(prev, n - 1).slice(-MAX_LEAD);
     if (lead.length) q.lead = lead.map((text) => ({ text }));
     questions.push(q);

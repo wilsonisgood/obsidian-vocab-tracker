@@ -4751,6 +4751,12 @@ body.is-mobile .vt-pr-mix-tag {
   flex-direction: column;
   gap: 2px;
 }
+.vt-pr-diff {
+  text-decoration: underline;
+  text-decoration-color: var(--text-accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
 .vt-pr-actions {
   display: flex;
   flex-wrap: wrap;
