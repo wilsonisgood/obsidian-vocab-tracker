@@ -16620,7 +16620,13 @@ function vocabLevelFromTiers(profile) {
   const n = leveled(both);
   if (n < TIER_SAMPLE_MIN) return null;
   let edge = 0;
-  for (let i = 0; i < CEFR_TIERS.length; i++) if (both[CEFR_TIERS[i]] >= both[CEFR_TIERS[edge]]) edge = i;
+  for (let i = 0, run = 0; i < CEFR_TIERS.length; i++) {
+    run += both[CEFR_TIERS[i]];
+    if (run * 2 > n) {
+      edge = i;
+      break;
+    }
+  }
   let lo2 = Math.max(0, edge - 1);
   let hi = edge;
   let label = tierLabel(lo2, hi);

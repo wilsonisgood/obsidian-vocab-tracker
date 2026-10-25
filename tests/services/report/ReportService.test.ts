@@ -257,7 +257,8 @@ describe("ReportService: word levels (第二十三波 R7)", () => {
     expect(saved).toEqual([]);
     expect(vault.files.get(PATH)).toContain('"?":2');
     // 8 leveled words → judged by the tiers, not marked 粗估
-    expect(vault.files.get(PATH)).toContain("| 字彙量 | 約 A1（估 500–700 字） | 你查／問的字：A1 38%");
+    // A1 3、A2 1、B1 2、B2 2: half is passed at B1 → A2–B1
+    expect(vault.files.get(PATH)).toContain("| 字彙量 | 約 A2–B1（估 1,000–2,500 字） | 你查／問的字：A1 38%");
   });
 
   it("words tagged earlier are not sent again", async () => {
