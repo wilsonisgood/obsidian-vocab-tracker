@@ -158,6 +158,8 @@ export interface FilesSettings extends SectionStamp {
   threadsFolder: string;
   // Daily diaries (第十九波 D2b), under `folder`.
   diaryFolder: string;
+  // Weekly learning reports (第二十波), under `folder`.
+  reportFolder: string;
 }
 
 // Paragraph discussion anchors (規劃書 06 §5.1). Read through
@@ -211,6 +213,22 @@ export function resolveDiarySettings(raw: Partial<DiarySettings> | undefined): D
   return out;
 }
 
+// 每週學習報告 (第二十波). Read through resolveReportSettings().
+export interface ReportSettings extends SectionStamp {
+  // Write last week's report on the first open of the week.
+  enabled: boolean;
+}
+
+export const DEFAULT_REPORT_SETTINGS: Readonly<ReportSettings> = { enabled: true };
+
+export function resolveReportSettings(raw: Partial<ReportSettings> | undefined): ReportSettings {
+  const out: ReportSettings = {
+    enabled: typeof raw?.enabled === "boolean" ? raw.enabled : DEFAULT_REPORT_SETTINGS.enabled,
+  };
+  if (typeof raw?.updatedAt === "string") out.updatedAt = raw.updatedAt;
+  return out;
+}
+
 export interface PluginSettings {
   schemaVersion: 2;
   // Set to the same stamp as the section(s) an edit changed; never newer
@@ -236,10 +254,12 @@ export interface PluginSettings {
   grammar?: Partial<GrammarSettings>;
   // Read through resolveDiarySettings(); absent = defaults.
   diary?: Partial<DiarySettings>;
+  // Read through resolveReportSettings(); absent = defaults.
+  report?: Partial<ReportSettings>;
 }
 
 // The sections merged independently, each with its own updatedAt.
-export const SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists", "files", "anchors", "grammar", "diary"] as const;
+export const SETTINGS_SECTIONS = ["ui", "ai", "learner", "srs", "wordlists", "files", "anchors", "grammar", "diary", "report"] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 export type ResolvedSettings = PluginSettings & {

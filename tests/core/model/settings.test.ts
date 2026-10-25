@@ -6,6 +6,8 @@ import {
   resolveGrammarSettings,
   snapshotSettingsSections,
   stampChangedSections,
+  resolveReportSettings,
+  SETTINGS_SECTIONS,
   withSettingsDefaults,
   type PluginSettings,
 } from "../../../src/core/model/settings";
@@ -188,6 +190,7 @@ describe("VocabStore.updateSettings per-section stamps", () => {
       wordsFolder: "單字",
       threadsFolder: "討論串",
       diaryFolder: "日記",
+      reportFolder: "Report",
     });
   });
 });
@@ -298,5 +301,20 @@ describe("resolveGrammarSettings", () => {
     expect(resolveGrammarSettings({ useMySentences: false }).useMySentences).toBe(false);
     expect(resolveGrammarSettings({ useMyWords: "no" as unknown as boolean }).useMyWords).toBe(true);
     expect(resolveGrammarSettings({ useMySentences: "no" as unknown as boolean }).useMySentences).toBe(true);
+  });
+});
+
+describe("resolveReportSettings", () => {
+  it("defaults to enabled and keeps a valid boolean and stamp", () => {
+    expect(resolveReportSettings(undefined)).toEqual({ enabled: true });
+    expect(resolveReportSettings({ enabled: false, updatedAt: "2026-10-01T00:00:00.000Z" })).toEqual({ enabled: false, updatedAt: "2026-10-01T00:00:00.000Z" });
+    expect(resolveReportSettings({ enabled: "no" as unknown as boolean })).toEqual({ enabled: true });
+  });
+  it("is a merged settings section, stamped when changed", () => {
+    expect(SETTINGS_SECTIONS).toContain("report");
+    const s = withSettingsDefaults({ schemaVersion: 2 });
+    const before = snapshotSettingsSections(s);
+    s.report = { enabled: false };
+    expect(stampChangedSections(s, before, "2026-10-01T00:00:00.000Z")).toEqual(["report"]);
   });
 });

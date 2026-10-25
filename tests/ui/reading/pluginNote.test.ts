@@ -7,6 +7,13 @@ import { chromeState, pluginNoteKind } from "../../../src/ui/reading/pluginNote"
 
 const h = (heading: string, line: number, level = 1) => ({ heading, level, position: { start: { line } } });
 
+describe("pluginNoteKind report", () => {
+  it("treats a report note as the plugin's own", () => {
+    expect(pluginNoteKind({ "vocab-tracker": "report", "vocab-tracker-id": "2026-W43" })).toBe("report");
+    expect(pluginNoteKind({ "vocab-tracker": "report" })).toBeNull();
+  });
+});
+
 describe("pluginNoteKind", () => {
   it("knows the plugin's notes by their frontmatter", () => {
     expect(pluginNoteKind({ "vocab-tracker": "entry", "vocab-tracker-id": "families" })).toBe("entry");
