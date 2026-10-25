@@ -4699,7 +4699,7 @@ body.is-mobile .vt-pr-mix-tag {
 .vt-pr-option {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
   text-align: left;
   height: auto;
@@ -4709,9 +4709,14 @@ body.is-mobile .vt-pr-mix-tag {
   justify-content: flex-start;
 }
 .vt-pr-key {
+  flex: none;
   font-size: var(--font-ui-smaller);
   color: var(--text-faint);
   min-width: 1em;
+}
+.vt-pr-option-text {
+  flex: 1 1 0;
+  min-width: 0;
 }
 .vt-pr-option.is-answer {
   border-color: var(--color-green);

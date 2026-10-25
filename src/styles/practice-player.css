@@ -26,8 +26,10 @@
 .vt-pr-options { display: grid; gap: 8px; }
 .vt-pr-options.cols-1 { grid-template-columns: 1fr; }
 .vt-pr-options.cols-2 { grid-template-columns: 1fr 1fr; }
-.vt-pr-option { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; text-align: left; height: auto; min-height: 40px; padding: 8px 12px; white-space: normal; justify-content: flex-start; }
-.vt-pr-key { font-size: var(--font-ui-smaller); color: var(--text-faint); min-width: 1em; }
+.vt-pr-option { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; text-align: left; height: auto; min-height: 40px; padding: 8px 12px; white-space: normal; justify-content: flex-start; }
+.vt-pr-key { flex: none; font-size: var(--font-ui-smaller); color: var(--text-faint); min-width: 1em; }
+/* A long option (a sentence) wraps inside its own column, beside the key. */
+.vt-pr-option-text { flex: 1 1 0; min-width: 0; }
 .vt-pr-option.is-answer { border-color: var(--color-green); background: rgba(var(--color-green-rgb), 0.18); }
 .vt-pr-option.is-wrong { border-color: var(--text-error); background: rgba(var(--color-red-rgb), 0.15); }
 .vt-pr-hint { flex-basis: 100%; font-size: var(--font-ui-smaller); color: var(--text-muted); }
