@@ -84,7 +84,7 @@ function numbers(data: ReportData): string[] {
     const l = [`- 共 ${ai.total} 次${ai.prevTotal !== null ? `（上期 ${ai.prevTotal}${delta(ai.total, ai.prevTotal)}）` : ""}，其中自問 ${ai.custom} 次`];
     for (const t of ai.byTask) l.push(`- ${taskName(t.key)}：${t.count}`);
     if (ai.topWords.length) l.push(`- 最常問的字：${ai.topWords.map((w) => `${w.word}（${w.count}）`).join("、")}`);
-    out.push(...section("AI 求助", l));
+    out.push(...section("AI 討論", l));
   }
 
   const w = data.words;
@@ -152,7 +152,7 @@ export function reportDigest(data: ReportData): string {
   const L: string[] = [`期間：${data.period.from} ～ ${data.period.to}`];
   const a = data.activity;
   L.push(`活躍 ${a.activeDays} 天，讀 ${a.articles} 篇文章`);
-  if (data.ai.total) L.push(`AI 求助 ${data.ai.total} 次：${data.ai.byTask.map((t) => `${taskName(t.key)} ${t.count}`).join("、")}`);
+  if (data.ai.total) L.push(`AI 討論 ${data.ai.total} 次：${data.ai.byTask.map((t) => `${taskName(t.key)} ${t.count}`).join("、")}`);
   const w = data.words;
   if (w.lookups) L.push(`查字 ${w.lookups} 次`);
   if (w.repeated.length) L.push(`反覆查的字：${w.repeated.map((x) => x.word).join("、")}`);

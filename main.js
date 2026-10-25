@@ -36100,13 +36100,13 @@ function levelSignals(input, period) {
       signals.push({
         kind: "paragraph",
         direction: "down",
-        reason: `\u6BB5\u843D\u6C42\u52A9 ${para.length} \u6B21\u4E2D\u6709 ${translate} \u6B21\u662F\u7FFB\u8B6F\uFF08${pct(translate / para.length)}\uFF09\uFF0C\u95B1\u8B80\u6750\u6599\u53EF\u80FD\u504F\u96E3`
+        reason: `\u6BB5\u843D\u8A0E\u8AD6 ${para.length} \u6B21\u4E2D\u6709 ${translate} \u6B21\u662F\u7FFB\u8B6F\uFF08${pct(translate / para.length)}\uFF09\uFF0C\u95B1\u8B80\u6750\u6599\u53EF\u80FD\u504F\u96E3`
       });
     } else if (refine / para.length >= PARA_REFINE_UP) {
       signals.push({
         kind: "paragraph",
         direction: "up",
-        reason: `\u6BB5\u843D\u6C42\u52A9 ${para.length} \u6B21\u4E2D\u6709 ${refine} \u6B21\u662F\u6587\u6CD5\uFF0F\u63DB\u53E5\u8A71\u8AAA\uFF08${pct(refine / para.length)}\uFF09\uFF0C\u7406\u89E3\u6C92\u554F\u984C\uFF0C\u5728\u7CBE\u9032\u8868\u9054`
+        reason: `\u6BB5\u843D\u8A0E\u8AD6 ${para.length} \u6B21\u4E2D\u6709 ${refine} \u6B21\u662F\u6587\u6CD5\uFF0F\u63DB\u53E5\u8A71\u8AAA\uFF08${pct(refine / para.length)}\uFF09\uFF0C\u7406\u89E3\u6C92\u554F\u984C\uFF0C\u5728\u7CBE\u9032\u8868\u9054`
       });
     }
   }
@@ -36221,7 +36221,7 @@ function numbers(data) {
     const l4 = [`- \u5171 ${ai.total} \u6B21${ai.prevTotal !== null ? `\uFF08\u4E0A\u671F ${ai.prevTotal}${delta(ai.total, ai.prevTotal)}\uFF09` : ""}\uFF0C\u5176\u4E2D\u81EA\u554F ${ai.custom} \u6B21`];
     for (const t2 of ai.byTask) l4.push(`- ${taskName(t2.key)}\uFF1A${t2.count}`);
     if (ai.topWords.length) l4.push(`- \u6700\u5E38\u554F\u7684\u5B57\uFF1A${ai.topWords.map((w3) => `${w3.word}\uFF08${w3.count}\uFF09`).join("\u3001")}`);
-    out.push(...section2("AI \u6C42\u52A9", l4));
+    out.push(...section2("AI \u8A0E\u8AD6", l4));
   }
   const w2 = data.words;
   const wl = [];
@@ -36285,7 +36285,7 @@ function reportDigest(data) {
   const L = [`\u671F\u9593\uFF1A${data.period.from} \uFF5E ${data.period.to}`];
   const a2 = data.activity;
   L.push(`\u6D3B\u8E8D ${a2.activeDays} \u5929\uFF0C\u8B80 ${a2.articles} \u7BC7\u6587\u7AE0`);
-  if (data.ai.total) L.push(`AI \u6C42\u52A9 ${data.ai.total} \u6B21\uFF1A${data.ai.byTask.map((t2) => `${taskName(t2.key)} ${t2.count}`).join("\u3001")}`);
+  if (data.ai.total) L.push(`AI \u8A0E\u8AD6 ${data.ai.total} \u6B21\uFF1A${data.ai.byTask.map((t2) => `${taskName(t2.key)} ${t2.count}`).join("\u3001")}`);
   const w2 = data.words;
   if (w2.lookups) L.push(`\u67E5\u5B57 ${w2.lookups} \u6B21`);
   if (w2.repeated.length) L.push(`\u53CD\u8986\u67E5\u7684\u5B57\uFF1A${w2.repeated.map((x3) => x3.word).join("\u3001")}`);

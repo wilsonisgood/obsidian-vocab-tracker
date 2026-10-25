@@ -78,7 +78,7 @@ describe("ReportService.write", () => {
     expect(text).toContain("verdict: ");
     expect(text).toContain("# 到目前為止的學習報告（2026-10-20 ～ 2026-10-25）"); // first report
     expect(text).toContain("## 這週的數字");
-    expect(text).toContain("AI 求助");
+    expect(text).toContain("AI 討論");
     expect(text).toContain("翻譯：1");
     expect(text).toContain("## 程度建議");
     expect(text).toContain("## 給你的建議");

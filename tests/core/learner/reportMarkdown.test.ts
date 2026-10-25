@@ -52,7 +52,7 @@ describe("verdictHeadline", () => {
 describe("reportDigest", () => {
   it("has numbers but no article titles or paths", () => {
     const d = reportDigest(data);
-    expect(d).toContain("AI 求助 3 次");
+    expect(d).toContain("AI 討論 3 次");
     expect(d).not.toContain("SECRET");
     expect(d).not.toContain("Coral");
   });

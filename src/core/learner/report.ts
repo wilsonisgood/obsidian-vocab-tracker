@@ -370,13 +370,13 @@ export function levelSignals(input: ReportInput, period: Period): LevelAdvice {
       signals.push({
         kind: "paragraph",
         direction: "down",
-        reason: `段落求助 ${para.length} 次中有 ${translate} 次是翻譯（${pct(translate / para.length)}），閱讀材料可能偏難`,
+        reason: `段落討論 ${para.length} 次中有 ${translate} 次是翻譯（${pct(translate / para.length)}），閱讀材料可能偏難`,
       });
     } else if (refine / para.length >= PARA_REFINE_UP) {
       signals.push({
         kind: "paragraph",
         direction: "up",
-        reason: `段落求助 ${para.length} 次中有 ${refine} 次是文法／換句話說（${pct(refine / para.length)}），理解沒問題，在精進表達`,
+        reason: `段落討論 ${para.length} 次中有 ${refine} 次是文法／換句話說（${pct(refine / para.length)}），理解沒問題，在精進表達`,
       });
     }
   }
