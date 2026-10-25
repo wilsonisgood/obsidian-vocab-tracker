@@ -5,8 +5,7 @@ import { previousWeek } from "../../core/learner/period";
 import type { CefrLevel } from "../../core/model/settings";
 import { applyLevelOffer, reasonKey, writeButtonKey, type ReportCardLatest, type ReportStatus } from "./reportCardState";
 
-// R3a's ReportService, as far as this card needs it. main.ts will declare
-// `report: ReportService`; until then it is read through a type assertion.
+// ReportService, as far as this card needs it.
 export interface ReportCardHost {
   status(): ReportStatus;
   onChange(cb: () => void): () => void;
@@ -19,8 +18,8 @@ export interface ReportCardHost {
 // 「學習報告」卡片 (第二十波): the newest report (key link + headline), plus
 // 產生上週報告 and, when the report suggests it, 把程度改成 X.
 export function renderReportCard(plugin: VocabTrackerPlugin, el: HTMLElement, ctx: MarkdownPostProcessorContext): void {
-  const svc = (plugin as unknown as { report?: ReportCardHost }).report;
-  // Not wired by main.ts yet (or a harness without it): no card.
+  const svc: ReportCardHost | undefined = plugin.report;
+  // A test harness without the service: no card.
   if (!svc) return;
   const card = el.createDiv({ cls: "vt-dash-report" });
   const child = new MarkdownRenderChild(card);

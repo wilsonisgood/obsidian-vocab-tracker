@@ -5075,6 +5075,31 @@ body.is-mobile .vt-pr-poly-sense input[type=checkbox] {
   display: none;
 }
 
+/* src/styles/report.css */
+.vt-dash-report {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+}
+.vt-dash-report-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.vt-dash-report-line {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+.vt-dash-report-reason {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  margin-top: 4px;
+}
+.vt-dash-report-btn {
+  margin-top: 8px;
+  margin-right: 6px;
+}
+
 /* src/styles/mobile.css */
 .vt-sheet-layer {
   --vt-sheet-lift: max(var(--vt-sheet-kb, 0px), var(--vt-sheet-kb-native, 0px), var(--keyboard-height, 0px));

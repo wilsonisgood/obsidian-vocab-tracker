@@ -58,7 +58,9 @@ import { knownWordList } from "./src/services/ai/context/triviaContext";
 import { createDnaFocus } from "./src/ui/dna/dnaModel";
 import { PageContextHub } from "./src/ui/page/pageContext";
 import { DiaryService } from "./src/services/diary/DiaryService";
-import { resolveDiarySettings } from "./src/core/model/settings";
+import { resolveDiarySettings, resolveReportSettings } from "./src/core/model/settings";
+import { ReportService } from "./src/services/report/ReportService";
+import { previousWeek } from "./src/core/learner/period";
 import { EmojiService } from "./src/services/learn/EmojiService";
 import { FamilyService } from "./src/services/learn/FamilyService";
 import { VerbUsageService } from "./src/services/learn/VerbUsageService";
@@ -190,6 +192,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   emoji!: EmojiService;
   // 第十九波 D2b (1016 #9–#13): daily diary.
   diary!: DiaryService;
+  // 第二十波 (規劃書 15): weekly learning report.
+  report!: ReportService;
   // A morpheme picked on a word page, for the vocab-dna block (09 §7.1).
   readonly dnaFocus = createDnaFocus();
   // 字族樹／Word DNA 頁面 ↔ 側欄「本篇」（規劃書 10 §2.1）.
@@ -398,6 +402,26 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       ready: async () => {
         await Promise.all([this.learner.ensureLoaded(), this.learn.ensureLoaded()]);
       },
+    });
+    this.report = new ReportService({
+      model: this.learnerModel,
+      vocab: this.store,
+      vault: {
+        exists: (p) => this.vault.exists(p),
+        create: (p, c) => this.vault.create(p, c),
+        process: (p, fn) => this.vault.process(p, fn),
+        list: (folder) => {
+          const f = this.app.vault.getAbstractFileByPath(folder);
+          return f instanceof TFolder ? f.children.map((c) => c.path) : [];
+        },
+        frontmatterOf: (p) => this.frontmatterOf(p),
+      },
+      folder: () => this.files.paths().report,
+      enabled: () => resolveReportSettings(this.store.settings.report).enabled,
+      ai,
+      aiReady: () => this.ai.status() === "ready",
+      // asks[] is backfilled from threads.json in loadLearner().
+      ready: () => this.loadLearner(),
     });
     // Word DNA (規劃書 09 §7, A8/A9): splits liked words into morphemes in
     // the background and backs the vocab-dna block's chat.
@@ -628,6 +652,17 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     // vocab-* code blocks (dashboard, flashcards, word header…; §9.6)
     registerBlocks(this);
     this.addCommand({
+      id: "write-last-week-report",
+      name: t("command.report.write"),
+      callback: () => {
+        const key = previousWeek(this.report.today()).key;
+        void this.report.write(key, { overwrite: true }).then((r) => {
+          if (r === "written") new Notice(t("dashboard.report.written", { key }));
+          else if (r === "empty") new Notice(t("dashboard.report.empty"));
+        });
+      },
+    });
+    this.addCommand({
       id: "open-flashcards",
       name: t("command.openFlashcards"),
       callback: () => this.openFlashcards(),
@@ -736,6 +771,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       void this.loadLearner();
       // 第十九波 D2b: yesterday's diary, once per day (skipped when it exists).
       void this.diary.maybeWriteYesterday();
+      // 第二十波: last week's learning report, once per week (skipped when it exists).
+      void this.report.maybeWriteLastWeek();
       this.registerWordlistEvents();
       void this.wordlists.reload();
       // Words whose dictionary fetch never finished (closed mid-queue,
@@ -781,7 +818,13 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.exporter?.dispose();
   }
 
-  private async loadLearner(): Promise<void> {
+  // Memoized: startup and the weekly report (its ready()) both wait on it.
+  private learnerLoad: Promise<void> | null = null;
+  private loadLearner(): Promise<void> {
+    return (this.learnerLoad ??= this.loadLearnerOnce());
+  }
+
+  private async loadLearnerOnce(): Promise<void> {
     try {
       await Promise.all([this.grammar.ensureLoaded(), this.learner.ensureLoaded()]);
       this.learner.migrateFromGrammar(this.grammar.questions(), this.grammar.attempts());
