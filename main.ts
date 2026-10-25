@@ -419,6 +419,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     });
     this.report = new ReportService({
       model: this.learnerModel,
+      // 第二十三波 R7: levels the AI gave to words outside the CEFR-J list.
+      setWordCefr: (entries) => this.learner.setWordCefr(entries),
       vocab: this.store,
       vault: {
         exists: (p) => this.vault.exists(p),

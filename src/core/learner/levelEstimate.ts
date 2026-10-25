@@ -1,5 +1,7 @@
 import type { CefrLevel } from "../model/settings";
 import type { ReportData } from "./report";
+import { vocabLevelFromTiers } from "./vocabTiers";
+import { num, VOCAB_SIZE } from "./vocabSize";
 
 // 各面向的程度推估 (第二十二波 R6). The AI decides when it can; these are
 // the rough fallbacks (every row marked 粗估) when it's off or failed.
@@ -19,17 +21,6 @@ export const UNKNOWN_LEVEL = "還看不出來";
 export const GRAMMAR_MIN_QUESTIONS = 10;
 const BAND_PASS = 0.7;
 const BAND_MIN = 3;
-
-// Typical vocabulary size per CEFR level, a range.
-const VOCAB_SIZE: Record<CefrLevel, [number, number]> = {
-  A1: [500, 700],
-  A2: [1000, 1500],
-  B1: [2000, 2500],
-  B2: [4000, 5000],
-  C1: [8000, 10000],
-  C2: [16000, 20000],
-};
-const num = (n: number) => n.toLocaleString("en-US");
 
 const GRAMMAR_BAND_LEVEL = ["A1–A2", "B1–B2", "C1"] as const;
 const pct = (r: number) => `${Math.round(r * 100)}%`;
@@ -57,20 +48,26 @@ function grammarLevel(data: ReportData): LevelEstimate {
   };
 }
 
-function vocabLevel(selfLevel: CefrLevel | "", mature?: number): LevelEstimate {
+const TIER_SHORT_NOTE = "（查／問的字還不夠多，暫以自述程度粗估）";
+
+function vocabLevel(selfLevel: CefrLevel | "", mature?: number, data?: ReportData): LevelEstimate {
   const area = "字彙量";
+  // Enough looked-up / asked words with a known level: judge by those.
+  const tiered = data?.tiers ? vocabLevelFromTiers(data.tiers) : null;
+  if (tiered) return tiered;
+  const note = data?.tiers ? TIER_SHORT_NOTE : "";
   const size = selfLevel ? VOCAB_SIZE[selfLevel] : undefined;
   if (!size) return { area, level: UNKNOWN_LEVEL, basis: "還沒有設定自述程度", rough: true };
   return {
     area,
     level: `約 ${selfLevel}`,
     detail: `估 ${num(size[0])}–${num(size[1])} 字`,
-    basis: mature !== undefined ? `以自述程度＋熟練 ${mature} 字粗估` : "以自述程度粗估",
+    basis: (mature !== undefined ? `以自述程度＋熟練 ${mature} 字粗估` : "以自述程度粗估") + note,
     rough: true,
   };
 }
 
 export function baselineLevels(data: ReportData, selfLevel: CefrLevel | "", mature?: number): LevelEstimate[] {
   const unknown = (area: string): LevelEstimate => ({ area, level: UNKNOWN_LEVEL, basis: "這週的紀錄還不夠", rough: true });
-  return [vocabLevel(selfLevel, mature), grammarLevel(data), unknown("多義字熟悉度"), unknown("長句理解"), unknown("寫作"), unknown("閱讀")];
+  return [vocabLevel(selfLevel, mature, data), grammarLevel(data), unknown("多義字熟悉度"), unknown("長句理解"), unknown("寫作"), unknown("閱讀")];
 }

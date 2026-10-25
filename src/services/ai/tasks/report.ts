@@ -1,4 +1,5 @@
 import type { LevelEstimate } from "../../../core/learner/levelEstimate";
+import { isCefrTier, type CefrTier } from "../../../core/wordlists/cefr";
 import type { RadarAxis } from "../../../core/learner/radar";
 import type { ReportAdvice } from "../../../core/learner/reportAdvice";
 import type { CefrLevel } from "../../../core/model/settings";
@@ -21,12 +22,16 @@ export interface ReportAdviceInput {
   baselineLevels: LevelEstimate[];
   // Titles of notes read in the period and the 30 days before, ≤ 30.
   readingTitles: string[];
+  // Level distribution of the words asked / looked up / mastered (vocabTiers.tierSummary).
+  tierSummary?: string;
+  // Words with no known level, for the AI to tag (≤ 60).
+  unknownWords?: string[];
 }
 
 export const REPORT_ADVICE_SCHEMA: JsonSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["letter", "axes", "levels", "focus", "tryNext", "reading"],
+  required: ["letter", "axes", "levels", "focus", "tryNext", "reading", "wordLevels"],
   properties: {
     letter: { type: "string" },
     axes: {
@@ -60,6 +65,18 @@ export const REPORT_ADVICE_SCHEMA: JsonSchema = {
     focus: { type: "array", items: { type: "string" } },
     tryNext: { type: "array", items: { type: "string" } },
     reading: { type: "array", items: { type: "string" } },
+    wordLevels: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["word", "level"],
+        properties: {
+          word: { type: "string" },
+          level: { type: "string", enum: ["A1", "A2", "B1", "B2", "C1", "C2"] },
+        },
+      },
+    },
   },
 };
 
@@ -76,11 +93,13 @@ ${WARM_TONE}
 2. levels（各面向的程度推估）：
    - 一定要列：字彙量、文法全面性、多義字熟悉度；其他面向依證據增減（長句理解、寫作、閱讀…）。
    - level 用 CEFR（可以寫區間，例如「約 B1」「A2–B1」）；字彙量的 detail 附估計字數區間（例如「估 2,000–2,500 字」），其他面向 detail 給空字串。
+   - 字彙量以〔字的階層分布〕為主要依據（他查／問的字多落在哪一級，熟練的字多在哪一級），估計字數只是輔助；basis 引用階層分布的比例。階層樣本不夠時才用自述程度和字數。
    - 沒有證據就寫「還看不出來」，不要硬猜；basis 用一句話說明具體依據（引用數字或自述程度）。
 3. focus（照你的程度可以加強，3 到 6 條）：依各面向推估的程度，點名該程度該補的具體文法點或技巧，並說怎麼練。例：B1 的現在完成式和過去式怎麼分、長句拆解先找主要動詞再括出子句。每條一兩句，可以直接照做。
 4. tryNext（下週一起試試，3 到 5 條）：可以勾選完成的小任務，至少一條用來試探「還看不出來」的面向。
 5. reading（適合你的閱讀，2 到 3 條）：依〔讀過的筆記標題〕推測他的興趣和文章類型，給「方向＋可以直接搜尋的關鍵字」，例如「TED 教育類、語速較慢的講者，搜尋：TED-Ed ___」。不要點名具體的文章或演講標題；沒有標題可參考時，依程度給通用方向。
-6. letter（信）：2 到 4 句，一段，像朋友說話；說看到的進步或困難，和下週最值得做的一件事。不要重複列數字。
+6. wordLevels（字的 CEFR 等級）：〔未知等級的字〕列出的字，每個標上 A1 到 C2 的等級（以一般英語學習者的常見程度判斷）；專有名詞、縮寫、非英文的字略過；只標清單裡的字，沒有清單就回空陣列。
+7. letter（信）：2 到 4 句，一段，像朋友說話；說看到的進步或困難，和下週最值得做的一件事。不要重複列數字。
 
 只根據資料寫，不要編造資料裡沒有的事。`;
 
@@ -116,7 +135,14 @@ export function parseReportAdvice(json: unknown): ReportAdvice {
     const detail = str(l.detail);
     levels.push({ area, level, ...(detail ? { detail } : {}), basis: str(l.basis) });
   }
-  return { letter: str(o.letter), axes, levels, focus: strings(o.focus, 6), tryNext: strings(o.tryNext, 5), reading: strings(o.reading, 3) };
+  const wordLevels: { word: string; level: CefrTier }[] = [];
+  for (const w of Array.isArray(o.wordLevels) ? o.wordLevels : []) {
+    if (!isObj(w)) continue;
+    const word = str(w.word).toLowerCase();
+    const level = str(w.level).toUpperCase();
+    if (word && isCefrTier(level)) wordLevels.push({ word, level });
+  }
+  return { letter: str(o.letter), axes, levels, focus: strings(o.focus, 6), tryNext: strings(o.tryNext, 5), reading: strings(o.reading, 3), wordLevels };
 }
 
 // Fewer than 3 axes can't draw a polygon, no levels is no table: fall back.
@@ -145,12 +171,14 @@ function userMessage(input: ReportAdviceInput): string {
     `〔活躍度基準〕\n${axes}`,
     `〔程度粗估（規則算的，僅供參考）〕\n${levels}`,
     `〔讀過的筆記標題〕\n${titles}`,
+    ...(input.tierSummary ? [`〔字的階層分布（CEFR-J 字表＋已標的等級）〕\n${input.tierSummary}`] : []),
+    `〔未知等級的字〕\n${input.unknownWords?.length ? input.unknownWords.join("、") : "（沒有）"}`,
   ].join("\n\n");
 }
 
 export const reportAdvise: AiTask<ReportAdviceInput, ReportAdvice> = {
   id: "report.advise",
-  version: 3,
+  version: 4,
   surface: "report",
   tier: "smart",
   maxTokens: 6144,

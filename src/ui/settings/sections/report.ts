@@ -17,5 +17,6 @@ export const reportSection: SettingsSection = {
       .setName(t("settings.report.enabled.name"))
       .setDesc(t("settings.report.enabled.desc"))
       .addToggle((tg) => tg.setValue(current().enabled).onChange((v) => void update({ enabled: v })));
+    el.createEl("p", { cls: "setting-item-description vt-report-source", text: t("settings.report.source") });
   },
 };

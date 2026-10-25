@@ -1,8 +1,10 @@
+import { vocabTierProfile, tierExamples, tierSummary } from "../../core/learner/vocabTiers";
+import type { CefrTier } from "../../core/wordlists/cefr";
 import { collectAnalysisMaterial, collectReviewMaterial } from "../../core/learner/analysisMaterial";
 import { addDays, isoWeekKey, monthKeyOf, monthRange, previousWeek, quarterKeyOf, quarterRange, shiftRange, weekRange } from "../../core/learner/period";
 import { localDayOf } from "../../core/learner/reading";
-import { buildReport, type LevelAdvice, type ReportData } from "../../core/learner/report";
-import { baselineLevels } from "../../core/learner/levelEstimate";
+import { buildReport, type LevelAdvice, type ReportData, type ReportInput } from "../../core/learner/report";
+import { baselineLevels, type LevelEstimate } from "../../core/learner/levelEstimate";
 import { baselineAxes } from "../../core/learner/radar";
 import { collectReadingTitles } from "../../core/learner/reportAdvice";
 import { removeFrontmatterField, renderReportFile, renderReviewFile, reportDigest, setFrontmatterField, verdictHeadline, type ReportMeta } from "../../core/learner/reportMarkdown";
@@ -43,7 +45,9 @@ export interface ReportVaultPort {
 }
 
 export interface ReportServiceDeps {
-  model: Pick<LearnerModel, "activity" | "snapshot" | "level">;
+  model: Pick<LearnerModel, "activity" | "snapshot" | "level"> & Partial<Pick<LearnerModel, "wordCefr">>;
+  // Stores the levels the AI tagged for words outside the built-in list (learner.json).
+  setWordCefr?: (entries: { word: string; level: CefrTier }[]) => void;
   vocab: { readonly entries: readonly VocabEntry[] };
   vault: ReportVaultPort;
   folder: () => string;
@@ -141,40 +145,56 @@ export class ReportService {
     return valid.length ? valid.sort()[0] : null;
   }
 
-  private collect(from: string, to: string): ReportData {
+  private reportInput(from: string, to: string): { input: ReportInput; period: { from: string; to: string }; prev: { from: string; to: string } } {
     const prev = shiftRange({ from, to });
     const act = this.deps.model.activity(prev.from, to);
-    return buildReport(
-      {
+    return {
+      input: {
         level: this.deps.model.level(),
         ...act,
         vocab: this.deps.vocab.entries,
         grammarMastered: this.deps.model.snapshot().grammar.mastered,
       },
-      { from, to },
-      prev
-    );
+      period: { from, to },
+      prev,
+    };
   }
 
-  private async advice(data: ReportData): Promise<Pick<ReportMeta, "advice" | "aiNote" | "axes" | "levels">> {
+  private collect(from: string, to: string): ReportData {
+    const { input, period, prev } = this.reportInput(from, to);
+    const data = buildReport(input, period, prev);
+    return { ...data, tiers: vocabTierProfile(input, period, this.deps.model.wordCefr?.()) };
+  }
+
+  private async advice(
+    data: ReportData
+  ): Promise<Pick<ReportMeta, "advice" | "aiNote" | "axes" | "levels"> & { wordLevels?: { word: string; level: CefrTier }[]; baseline: LevelEstimate[] }> {
     const level = this.deps.model.level();
     const baseline = baselineAxes(data);
     const levels = baselineLevels(data, level, this.deps.model.snapshot().vocab?.mature);
-    if (!this.deps.aiReady()) return { aiNote: "AI 沒有開啟，這段略過", axes: baseline, levels };
+    if (!this.deps.aiReady()) return { aiNote: "AI 沒有開啟，這段略過", axes: baseline, levels, baseline: levels };
     try {
       const readingTitles = collectReadingTitles(this.deps.model.activity(addDays(data.period.from, -30), data.period.to).reading, data.period);
+      const unknownWords = data.tiers?.unknownWords ?? [];
       const { value } = await runStructured(this.deps.ai, reportAdvise, {
         digest: reportDigest(data),
         level,
         baseline,
         baselineLevels: levels,
         readingTitles,
+        ...(data.tiers ? { tierSummary: tierSummary(data.tiers) } : {}),
+        unknownWords,
       });
-      if (!isEmptyAdvice(value)) return { advice: resolveAdvice(value, baseline, levels) };
+      if (!isEmptyAdvice(value)) {
+        // Only words that were asked about count; whatever else the AI tagged is dropped.
+        const asked = new Set(unknownWords);
+        const wordLevels = (value.wordLevels ?? []).filter((w) => asked.has(w.word));
+        return { advice: resolveAdvice(value, baseline, levels), wordLevels, baseline: levels };
+      }
     } catch (e) {
       console.error("Vocab Tracker: report advice failed", e);
     }
-    return { aiNote: "AI 這次沒寫成功", axes: baseline, levels };
+    return { aiNote: "AI 這次沒寫成功", axes: baseline, levels, baseline: levels };
   }
 
   async write(key: string, opts: { overwrite?: boolean } = {}): Promise<ReportWriteResult> {
@@ -197,7 +217,17 @@ export class ReportService {
         this.setState("idle");
         return "empty";
       }
-      const content = renderReportFile(data, { key, first, ...(await this.advice(data)) });
+      const { wordLevels, baseline, ...meta } = await this.advice(data);
+      let shown = data;
+      if (wordLevels?.length && this.deps.setWordCefr) {
+        // Store the AI's levels, then count again so this very report uses them.
+        this.deps.setWordCefr(wordLevels);
+        shown = this.collect(from, week.to);
+        const fresh = baselineLevels(shown, this.deps.model.level(), this.deps.model.snapshot().vocab?.mature);
+        if (meta.levels) meta.levels = fresh;
+        else if (meta.advice && meta.advice.levels === baseline) meta.advice = { ...meta.advice, levels: fresh };
+      }
+      const content = renderReportFile(shown, { key, first, ...meta });
       if (this.deps.vault.exists(path)) await this.deps.vault.process(path, () => content);
       else await this.deps.vault.create(path, content);
       this.setState("idle");
@@ -269,6 +299,7 @@ export class ReportService {
         range = { from: fm["analyzed-from"], to: own.to };
       }
       const data = this.collect(range.from, range.to);
+      const { input } = this.reportInput(range.from, range.to);
       const act = this.deps.model.activity(range.from, range.to);
       const vocab = this.deps.vocab.entries;
       const material = collectAnalysisMaterial({
@@ -283,6 +314,7 @@ export class ReportService {
           return zh ? `${e.word}（${zh}）` : e.word;
         },
         words: data.words,
+        ...(data.tiers ? { tiers: { profile: data.tiers, examples: tierExamples(input, { from: range.from, to: range.to }, this.deps.model.wordCefr?.()) } } : {}),
         digest: reportDigest(data),
         level: this.deps.model.level(),
       });

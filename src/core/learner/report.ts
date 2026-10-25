@@ -6,6 +6,7 @@ import { TRACKS } from "../model/learner";
 import { CEFR_LEVELS, type CefrLevel } from "../model/settings";
 import { Rating, type ReviewLog } from "../model/srs";
 import { localDayOf } from "./reading";
+import type { TierProfile } from "./vocabTiers";
 import { weakFocuses, type WeakFocus } from "./weakness";
 
 // Learning report numbers (規劃書 15 §3). Pure: the caller hands in the data
@@ -107,6 +108,8 @@ export interface ReportData {
   grammar: GrammarStats;
   tags: Counted[];
   advice: LevelAdvice;
+  // 字彙的階層分布 (第二十三波 R7); filled in by the report service.
+  tiers?: TierProfile;
 }
 
 // Thresholds (規劃書 15 §3.1).
@@ -132,7 +135,7 @@ function dayOfField(s: string | undefined): string | null {
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
   return dayOfIso(s);
 }
-const atIn = <T extends { at: string }>(xs: readonly T[], p: Period): T[] =>
+export const atIn = <T extends { at: string }>(xs: readonly T[], p: Period): T[] =>
   xs.filter((x) => {
     const d = dayOfIso(x.at);
     return d !== null && inRange(d, p);
@@ -243,7 +246,7 @@ function wordsOf(touches: Map<string, WordAgg>): WordStats {
 const recallOf = (rs: readonly ReviewLog[]): number | null =>
   rs.length === 0 ? null : rs.filter((r) => r.rating >= Rating.Good).length / rs.length;
 
-function newSavedOf(vocab: readonly VocabEntry[], p: Period): VocabEntry[] {
+export function newSavedOf(vocab: readonly VocabEntry[], p: Period): VocabEntry[] {
   return vocab.filter((v) => {
     if (v.deletedAt || v.liked !== true) return false;
     const d = dayOfField(v.added) ?? dayOfField(v.createdAt);

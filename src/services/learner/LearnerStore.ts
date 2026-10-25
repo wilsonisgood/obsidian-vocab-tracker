@@ -6,6 +6,7 @@ import { asksFromThreads } from "../../core/learner/asks";
 import type { Thread } from "../../core/model/thread";
 import type { AskEvent, DiaryPick, DiaryPickKind, LearnEvent, LearnerShard, MistakeItem, PoolItem, ReadingKind, ReadingVisit, Track, WordTouch } from "../../core/model/learner";
 import type { PracticeQuestion, ScenarioTrack } from "../../core/model/practice";
+import { isCefrTier, type CefrTier } from "../../core/wordlists/cefr";
 import type { StoragePort } from "../../core/ports";
 import { livePool } from "../../core/practice/pool";
 import { openMistakes } from "../../core/practice/mistakes";
@@ -252,6 +253,32 @@ export class LearnerStore {
 
   wordTouches(): WordTouch[] {
     return [...(this.data.wordTouches ?? [])];
+  }
+
+  // ── AI-tagged word levels (第二十三波 R7) ──────────────────────
+
+  wordCefr(): Map<string, CefrTier> {
+    return new Map((this.data.wordCefr ?? []).map((w) => [w.id, w.level]));
+  }
+
+  // Words outside the CEFR-J list that the AI gave a level; kept for good so
+  // they aren't asked again. A level already stored is replaced only when it differs.
+  setWordCefr(entries: readonly { word: string; level: CefrTier }[]): void {
+    const list = (this.data.wordCefr ??= []);
+    const at = this.clock().toISOString();
+    let changed = false;
+    for (const e of entries) {
+      const id = e.word.trim().toLowerCase();
+      if (!id || !isCefrTier(e.level)) continue;
+      const cur = list.find((w) => w.id === id);
+      if (cur?.level === e.level) continue;
+      if (cur) {
+        cur.level = e.level;
+        cur.at = at;
+      } else list.push({ id, level: e.level, at });
+      changed = true;
+    }
+    if (changed) this.scheduleWrite();
   }
 
   // ── Migration ─────────────────────────────────────────────────

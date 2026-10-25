@@ -1,6 +1,7 @@
 import type { ReadingVisit } from "../model/learner";
 import type { LevelEstimate } from "./levelEstimate";
 import { addDays, type DayRange } from "./period";
+import type { CefrTier } from "../wordlists/cefr";
 import type { RadarAxis } from "./radar";
 
 // What report.advise hands back (第二十二波 R6), after parse + fallbacks.
@@ -11,6 +12,8 @@ export interface ReportAdvice {
   focus: string[];
   tryNext: string[];
   reading: string[];
+  // Levels the AI gave to the unknown words (第二十三波 R7).
+  wordLevels?: { word: string; level: CefrTier }[];
 }
 
 export const READING_TITLE_LOOKBACK_DAYS = 30;

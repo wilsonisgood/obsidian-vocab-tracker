@@ -1,3 +1,4 @@
+import type { CefrTier } from "../wordlists/cefr";
 import type { PracticeQuestion } from "./practice";
 // Learner layer (規劃書 12 §1): one LearnEvent per answered question; mastery
 // and weaknesses are computed from events, never stored. Pool and mistake
@@ -66,6 +67,13 @@ export interface LearnerMeta {
   asksMigratedAt?: string;
 }
 
+// A word's CEFR level as tagged by the AI; never pruned (asked once, kept).
+export interface WordCefr {
+  id: string; // lowercased word
+  level: CefrTier;
+  at: string; // ISO
+}
+
 export interface LearnerShard {
   events: LearnEvent[];
   pool: PoolItem[];
@@ -80,6 +88,8 @@ export interface LearnerShard {
   // 規劃書 15 R1; absent in older files.
   asks?: AskEvent[];
   wordTouches?: WordTouch[];
+  // 第二十三波 R7: levels the AI gave to words outside the CEFR-J list.
+  wordCefr?: WordCefr[];
 }
 
 export const TRACKS: readonly Track[] = ["grammar", "poly", "vocab", "mix", "para"];

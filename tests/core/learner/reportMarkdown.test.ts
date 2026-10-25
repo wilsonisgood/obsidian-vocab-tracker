@@ -148,3 +148,24 @@ describe("frontmatter fields", () => {
     expect(removeFrontmatterField(t, "zzz")).toBe(t);
   });
 });
+
+describe("renderReportFile: vocab-report-tiers block (第二十三波 R7)", () => {
+  const z = { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0, "?": 0 };
+  const withTiers = { ...data, tiers: { asked: { ...z, B1: 2 }, looked: { ...z, B1: 1, B2: 1 }, saved: z, mature: { ...z, A2: 3 }, unknownWords: [] } };
+
+  it("puts the block inside the 現在的程度 callout, right under the level table", () => {
+    const text = renderReportFile(withTiers, { key: "2026-W43", advice: ADVICE });
+    const lines = text.split("\n");
+    const i = lines.indexOf("> ```vocab-report-tiers");
+    expect(i).toBeGreaterThan(0);
+    expect(lines[i + 1]).toBe('> {"asked":{"A1":0,"A2":0,"B1":3,"B2":1,"C1":0,"C2":0,"?":0},"mature":{"A1":0,"A2":3,"B1":0,"B2":0,"C1":0,"C2":0,"?":0}}');
+    expect(lines[i + 2]).toBe("> ```");
+    expect(lines.findIndex((l) => l.startsWith("> | 字彙量"))).toBeLessThan(i);
+    expect(i).toBeLessThan(lines.indexOf("> #### 程度建議"));
+  });
+
+  it("no block without tiers or without any words", () => {
+    expect(renderReportFile(data, { key: "2026-W43", advice: ADVICE })).not.toContain("vocab-report-tiers");
+    expect(renderReportFile({ ...data, tiers: { ...withTiers.tiers, asked: z, looked: z, mature: z } }, { key: "2026-W43" })).not.toContain("vocab-report-tiers");
+  });
+});

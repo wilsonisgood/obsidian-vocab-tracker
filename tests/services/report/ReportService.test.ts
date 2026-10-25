@@ -42,7 +42,8 @@ class FakeVault {
   };
 }
 
-function setup(opts: { reading?: never[]; asks?: AskEvent[]; touches?: WordTouch[]; aiReady?: boolean; enabled?: boolean; reply?: string; failAi?: boolean } = {}) {
+function setup(opts: { wordCefr?: Map<string, "A1" | "A2" | "B1" | "B2" | "C1" | "C2">; saved?: { word: string; level: string }[][]; reading?: never[]; asks?: AskEvent[]; touches?: WordTouch[]; aiReady?: boolean; enabled?: boolean; reply?: string; failAi?: boolean } = {}) {
+  const extra = opts.wordCefr ?? new Map<string, "A1" | "A2" | "B1" | "B2" | "C1" | "C2">();
   const vault = new FakeVault();
   const asks = opts.asks ?? [];
   const touches = opts.touches ?? [];
@@ -63,9 +64,14 @@ function setup(opts: { reading?: never[]; asks?: AskEvent[]; touches?: WordTouch
     }),
     snapshot: () => ({ grammar: { started: 0, mastered: 2, due: 0 }, vocab: { total: 0, learning: 0, mature: 5, due: 0 } }) as never,
     level: () => "B1",
+    wordCefr: () => extra,
   };
   const svc = new ReportService({
     model,
+    setWordCefr: (entries) => {
+      opts.saved?.push(entries);
+      for (const e of entries) extra.set(e.word, e.level as "C1");
+    },
     vocab: { entries: [] },
     vault,
     folder: () => FOLDER,
@@ -209,5 +215,56 @@ describe("ReportService status and latest", () => {
     const l = await svc.latest();
     expect(l).toMatchObject({ key: "2026-W43", path: `${FOLDER}/vocab-report-2026-W43.md`, verdict: "up", suggestedLevel: "B2" });
     expect(l?.headline).toBe("可以往上一級試試（建議 B2）");
+  });
+});
+
+describe("ReportService: word levels (第二十三波 R7)", () => {
+  const WORDS = ["walk", "book", "blue", "basket", "anxiety", "apology", "arena", "arrogant", "ubiquitous", "pug"];
+  const touches = WORDS.map((w) => touch("2026-10-21", w));
+  const reply = (extra: object = {}) => JSON.stringify({ ...JSON.parse(ADVICE_JSON), ...extra });
+
+  it("sends the unknown words and the tier summary to the AI", async () => {
+    const { svc, ai } = setup({ asks: busyWeek, touches });
+    await svc.write("2026-W43");
+    const sent = JSON.stringify(ai.requests[0]);
+    expect(sent).toContain("ubiquitous、pug");
+    expect(sent).toContain("字的階層分布");
+    expect(sent).not.toContain("walk、"); // known words are not asked about
+  });
+
+  it("stores the AI's levels (only for words asked about) and counts them in the same report", async () => {
+    const saved: { word: string; level: string }[][] = [];
+    const { svc, vault } = setup({
+      asks: busyWeek,
+      touches,
+      saved,
+      reply: reply({ wordLevels: [{ word: "ubiquitous", level: "C1" }, { word: "pug", level: "B2" }, { word: "walk", level: "C2" }] }),
+    });
+    await svc.write("2026-W43");
+    expect(saved).toEqual([[{ word: "ubiquitous", level: "C1" }, { word: "pug", level: "B2" }]]);
+    const text = vault.files.get(PATH) as string;
+    const block = /vocab-report-tiers\n> (\{.*\})/.exec(text);
+    expect(block).not.toBeNull();
+    const asked = JSON.parse((block as RegExpExecArray)[1]).asked;
+    // before the AI answered "?" was 2; afterwards the two words sit at C1 and B2
+    expect(asked).toMatchObject({ A1: 3, A2: 1, B1: 2, B2: 3, C1: 1, "?": 0 });
+  });
+
+  it("without AI nothing is stored and unknown words stay as ?", async () => {
+    const saved: { word: string; level: string }[][] = [];
+    const { svc, vault } = setup({ asks: busyWeek, touches, saved, aiReady: false });
+    await svc.write("2026-W43");
+    expect(saved).toEqual([]);
+    expect(vault.files.get(PATH)).toContain('"?":2');
+    // 8 leveled words → judged by the tiers, not marked 粗估
+    expect(vault.files.get(PATH)).toContain("| 字彙量 | 約 A1（估 500–700 字） | 你查／問的字：A1 38%");
+  });
+
+  it("words tagged earlier are not sent again", async () => {
+    const { svc, ai } = setup({ asks: busyWeek, touches, wordCefr: new Map([["ubiquitous", "C1" as const]]) });
+    await svc.write("2026-W43");
+    const sent = JSON.stringify(ai.requests[0]);
+    expect(sent).toContain("pug");
+    expect(sent).not.toContain("ubiquitous、");
   });
 });

@@ -1,5 +1,6 @@
 import { renderReportAnalyze } from "./reportAnalyze";
 import { renderReportRadar } from "./reportRadar";
+import { renderReportTiers } from "./reportTiers";
 import type { MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import { renderDashboard } from "./dashboard";
@@ -242,6 +243,7 @@ export const BLOCKS: readonly BlockDef[] = [
   { lang: "vocab-dashboard", render: renderDashboard },
   { lang: "vocab-report-analyze", render: renderReportAnalyze },
   { lang: "vocab-report-radar", render: renderReportRadar },
+  { lang: "vocab-report-tiers", render: renderReportTiers },
   { lang: "vocab-flashcards", render: renderFlashcards },
   // 1010 A: one name per page — the old block names above/below keep working.
   { lang: "vocab-card", render: renderFlashcards },

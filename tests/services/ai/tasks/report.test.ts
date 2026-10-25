@@ -19,9 +19,9 @@ const levels = baselineLevels(data, "B1", 12);
 describe("report.advise", () => {
   const input = { digest: "活躍 3 天", level: "B1" as const, baseline: base, baselineLevels: levels, readingTitles: ["TED talk on sleep", "Coral Reefs"] };
 
-  it("is a smart structured report task, version 3, with the warm tone", () => {
+  it("is a smart structured report task, version 4, with the warm tone", () => {
     expect(reportAdvise.id).toBe("report.advise");
-    expect(reportAdvise.version).toBe(3);
+    expect(reportAdvise.version).toBe(4);
     expect(reportAdvise.surface).toBe("report");
     expect(defaultTaskRegistry().get("report.advise")).toBe(reportAdvise);
     const req = reportAdvise.build(input, { profile: defaultLearnerProfile(), history: [] });
@@ -72,9 +72,27 @@ describe("parseReportAdvice", () => {
     expect(isEmptyAdvice(a)).toBe(false);
   });
 
+  it("wordLevels: keeps valid levels, lowercases words, drops junk", () => {
+    const a = parseReportAdvice({
+      letter: "x",
+      wordLevels: [{ word: "Ubiquitous", level: "c1" }, { word: "foo", level: "Z9" }, { word: "", level: "A1" }, "junk", { word: "pug", level: "B2" }],
+    });
+    expect(a.wordLevels).toEqual([{ word: "ubiquitous", level: "C1" }, { word: "pug", level: "B2" }]);
+    expect(parseReportAdvice({ letter: "x", wordLevels: "nope" }).wordLevels).toEqual([]);
+  });
+
+  it("sends the tier summary and the unknown words, and asks for wordLevels", () => {
+    const input = { digest: "d", level: "B1" as const, baseline: base, baselineLevels: levels, readingTitles: [] };
+    const req = reportAdvise.build({ ...input, tierSummary: "- 查／問的字（9 字）：B1 9", unknownWords: ["ubiquitous", "pug"] }, { profile: defaultLearnerProfile(), history: [] });
+    const text = JSON.stringify(req);
+    expect(text).toContain("字的階層分布");
+    expect(text).toContain("ubiquitous、pug");
+    expect(text).toContain("wordLevels");
+  });
+
   it("missing fields become empty", () => {
     const a = parseReportAdvice({ letter: "hi" });
-    expect(a).toEqual({ letter: "hi", axes: [], levels: [], focus: [], tryNext: [], reading: [] });
+    expect(a).toEqual({ letter: "hi", axes: [], levels: [], focus: [], tryNext: [], reading: [], wordLevels: [] });
     expect(parseReportAdvice(null).letter).toBe("");
     expect(isEmptyAdvice(parseReportAdvice("junk"))).toBe(true);
   });

@@ -215,6 +215,10 @@ achieve,達成,v.
 - 字表資料夾和 `vocab-list/` 裡的筆記不會被匯入。
 - 新加入的字會在背景逐一查字典（每個字間隔約 0.4 秒），所以一次匯入很多字時，定義會慢慢補上。
 
+## 資料來源
+
+- 字彙等級：**CEFR-J Wordlist Version 1.5**（A1–B2，7,019 字）。Compiled by Yukio Tono, Tokyo University of Foreign Studies. Retrieved from http://www.cefr-j.org/download.html（經 github.com/openlanguageprofiles/olp-en-cefrj 取得）。此字表免費供研究與商業使用，使用時須註明出處；版權屬東京外國語大學投野研究室（TUFS Tono Laboratory）。字表之外的字（C1／C2 與字表沒收的字）在寫學習週報時由 AI 標示等級，結果存在 `store/learner.json`，同一個字不會重問。
+
 ## English summary
 
 **Vocab Tracker** lets you click English words in reading view to build a vocabulary list, auto-fetches definitions, reviews them with FSRS flashcards, underlines exam-list words, and (optionally) discusses words with an AI tutor.

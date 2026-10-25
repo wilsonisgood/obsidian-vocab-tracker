@@ -4,6 +4,7 @@ import { baselineLevels, type LevelEstimate } from "./levelEstimate";
 import { baselineAxes, type RadarAxis } from "./radar";
 import type { ReportData, LevelAdvice } from "./report";
 import type { ReportAdvice } from "./reportAdvice";
+import { hasTierData, tiersFenceJson } from "./vocabTiers";
 
 // Report file text (規劃書 15 §4). Pure; Traditional Chinese is hard-coded.
 
@@ -128,6 +129,7 @@ function numbers(data: ReportData): string[] {
 }
 
 export const RADAR_LANG = "vocab-report-radar";
+export const TIERS_LANG = "vocab-report-tiers";
 const GREY = (text: string) => `<span style="color: gray">${text}</span>`;
 
 // Every line of a callout starts with ">" (blank ones are a bare ">").
@@ -176,7 +178,8 @@ export function renderReportFile(data: ReportData, meta: ReportMeta): string {
   if (ai?.letter) body.push(ai.letter, "");
 
   // 現在的程度
-  const now: string[] = [...radarFence(axes), "", ...levelTable(levels), "", "#### 程度建議", "", `**${verdictHeadline(adv.verdict, adv.suggestedLevel)}**`, ""];
+  const tiers = data.tiers && hasTierData(data.tiers) ? ["", "```" + TIERS_LANG, tiersFenceJson(data.tiers), "```"] : [];
+  const now: string[] = [...radarFence(axes), "", ...levelTable(levels), ...tiers, "", "#### 程度建議", "", `**${verdictHeadline(adv.verdict, adv.suggestedLevel)}**`, ""];
   for (const s of adv.signals) now.push(`- ${s.reason}`);
   body.push(...calloutLines("abstract", "+", "現在的程度", now), "");
 

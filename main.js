@@ -1945,6 +1945,7 @@ var en = {
   "settings.section.report": "Learning report",
   "settings.report.enabled.name": "Weekly learning report",
   "settings.report.enabled.desc": "The first time you open Obsidian each week, write last week's learning report into the Report folder",
+  "settings.report.source": "Word levels: CEFR-J Wordlist Version 1.5 (Yukio Tono, Tokyo University of Foreign Studies), A1\u2013B2; words outside it are leveled by the AI.",
   "settings.files.reportFolder.name": "Learning report folder",
   "settings.files.reportFolder.desc": "Inside the entry files folder. One note per week: vocab-report-<week>.md. Default: Report",
   "dashboard.report.title": "Learning report",
@@ -1974,6 +1975,11 @@ var en = {
   "report.analyze.onlyThis": "This week only",
   "report.analyze.withPrev": "Include the previous {n} weeks",
   "report.radar.bad": "Chart data could not be read",
+  "report.tiers.bad": "Chart data could not be read",
+  "report.tiers.asked": "Looked up / asked",
+  "report.tiers.mature": "Well known",
+  "report.tiers.unknown": "Unleveled",
+  "report.tiers.tip": "{tier} \xB7 {n} words",
   "report.analyze.badKey": "vocab-report-analyze needs a key (e.g. key: 2026-W43)",
   "report.review.month": "Review this month",
   "report.review.quarter": "Review this quarter",
@@ -2892,6 +2898,7 @@ var zhTW = {
   "settings.section.report": "\u5B78\u7FD2\u5831\u544A",
   "settings.report.enabled.name": "\u6BCF\u9031\u5B78\u7FD2\u5831\u544A",
   "settings.report.enabled.desc": "\u6BCF\u9031\u7B2C\u4E00\u6B21\u958B Obsidian \u6642\uFF0C\u5728 Report \u8CC7\u6599\u593E\u5BEB\u4E0A\u4E00\u9031\u7684\u5B78\u7FD2\u5831\u544A",
+  "settings.report.source": "\u5B57\u5F59\u7B49\u7D1A\u8CC7\u6599\uFF1ACEFR-J Wordlist Version 1.5\uFF08\u6295\u91CE\u7531\u7D00\u592B\uFF0C\u6771\u4EAC\u5916\u570B\u8A9E\u5927\u5B78\uFF09\uFF0CA1\u2013B2\uFF1B\u5B57\u8868\u5916\u7684\u5B57\u7531 AI \u6A19\u793A\u7B49\u7D1A\u3002",
   "settings.files.reportFolder.name": "\u5B78\u7FD2\u5831\u544A\u8CC7\u6599\u593E",
   "settings.files.reportFolder.desc": "\u5728\u5165\u53E3\u6A94\u8CC7\u6599\u593E\u5E95\u4E0B\u3002\u6BCF\u9031\u4E00\u4EFD\uFF1Avocab-report-<\u9031>.md\u3002\u9810\u8A2D\uFF1AReport",
   "dashboard.report.title": "\u5B78\u7FD2\u5831\u544A",
@@ -2921,6 +2928,11 @@ var zhTW = {
   "report.analyze.onlyThis": "\u53EA\u5206\u6790\u9019\u9031",
   "report.analyze.withPrev": "\u9023\u524D {n} \u9031\u4E00\u8D77",
   "report.radar.bad": "\u5716\u8868\u8CC7\u6599\u8B80\u4E0D\u5230",
+  "report.tiers.bad": "\u5716\u8868\u8CC7\u6599\u8B80\u4E0D\u5230",
+  "report.tiers.asked": "\u67E5\uFF0F\u554F\u7684\u5B57",
+  "report.tiers.mature": "\u719F\u7DF4\u7684\u5B57",
+  "report.tiers.unknown": "\u672A\u5206\u7D1A",
+  "report.tiers.tip": "{tier} \xB7 {n} \u5B57",
   "report.analyze.badKey": "vocab-report-analyze \u9700\u8981 key\uFF08\u4F8B\u5982 key: 2026-W43\uFF09",
   "report.review.month": "\u56DE\u9867\u9019\u500B\u6708",
   "report.review.quarter": "\u56DE\u9867\u9019\u4E00\u5B63",
@@ -4243,9 +4255,9 @@ function bubble(opts) {
   if (opts.streaming) el.createSpan({ cls: "vt-cursor" });
   if (opts.error) el.createDiv({ cls: "vt-bubble-error", text: opts.error });
   if ((_a = opts.actions) == null ? void 0 : _a.length) {
-    const bar = el.createDiv({ cls: "vt-bubble-actions" });
+    const bar2 = el.createDiv({ cls: "vt-bubble-actions" });
     for (const a2 of opts.actions) {
-      const btn = bar.createEl("button", { cls: "vt-bubble-action clickable-icon" });
+      const btn = bar2.createEl("button", { cls: "vt-bubble-action clickable-icon" });
       if (a2.icon) (0, import_obsidian7.setIcon)(btn.createSpan(), a2.icon);
       if (a2.iconOnly && a2.icon) btn.setAttr("aria-label", a2.label);
       else btn.createSpan({ text: a2.label });
@@ -4271,9 +4283,9 @@ function actionNotice(text, actions, durationMs = 5e3, onTap) {
         onTap();
       });
     }
-    const bar = wrap.createDiv({ cls: "vt-action-notice-actions" });
+    const bar2 = wrap.createDiv({ cls: "vt-action-notice-actions" });
     for (const a2 of actions) {
-      const btn = bar.createEl("button", { cls: "vt-action-notice-btn", text: a2.label });
+      const btn = bar2.createEl("button", { cls: "vt-action-notice-btn", text: a2.label });
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         notice.hide();
@@ -6583,14 +6595,14 @@ function renderFilterChips(root2, chips) {
     chip2.onclick = spec.onClick;
   }
 }
-function tagChipSpecs(plugin, tags, settings, countOf) {
+function tagChipSpecs(plugin, tags, settings, countOf2) {
   return tags.map((tag) => {
     const on = settings.highlight && tagEnabled(settings, tag);
     const label = tagLabel(tag);
     return {
       key: tag,
       label,
-      count: countOf(tag),
+      count: countOf2(tag),
       on,
       color: tagColor(settings, tag),
       ariaOn: t("exam.strip.hide", { tag: label }),
@@ -7254,8 +7266,8 @@ function deleteButton(parent, el, threadId, actions) {
   });
 }
 function rebindButton(parent, threadId, actions) {
-  const bar = parent.createDiv({ cls: "vt-plist-actions" });
-  const rebind = bar.createEl("button", { cls: "vt-plist-action", text: t("paragraph.action.rebind") });
+  const bar2 = parent.createDiv({ cls: "vt-plist-actions" });
+  const rebind = bar2.createEl("button", { cls: "vt-plist-action", text: t("paragraph.action.rebind") });
   rebind.addEventListener("click", (e) => {
     e.stopPropagation();
     actions.rebind(threadId);
@@ -7424,9 +7436,9 @@ var AllNotesThreadList = class extends import_obsidian14.Component {
   draw(groups) {
     var _a;
     this.el.empty();
-    const total = groups.reduce((n, g) => n + g.rows.length, 0);
-    (_a = this.onCount) == null ? void 0 : _a.call(this, total);
-    if (!total) {
+    const total2 = groups.reduce((n, g) => n + g.rows.length, 0);
+    (_a = this.onCount) == null ? void 0 : _a.call(this, total2);
+    if (!total2) {
       this.el.createDiv({ cls: "vt-plist-hint", text: t("paragraph.list.hint") });
       return;
     }
@@ -7837,10 +7849,10 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     if (!needsBlockIdNotice(settings, section4.text)) return;
     const el = this.noticeEl = this.root.createDiv({ cls: "vt-ppane-notice" });
     el.appendChild(inlineNote({ tone: "info", icon: "hash", text: t("paragraph.notice.blockId") }));
-    const bar = el.createDiv({ cls: "vt-ppane-notice-actions" });
-    const ok = bar.createEl("button", { cls: "mod-cta", text: t("paragraph.notice.ok") });
+    const bar2 = el.createDiv({ cls: "vt-ppane-notice-actions" });
+    const ok = bar2.createEl("button", { cls: "mod-cta", text: t("paragraph.notice.ok") });
     ok.addEventListener("click", () => void this.dismissNotice(false));
-    const hash2 = bar.createEl("button", { text: t("paragraph.notice.useHash") });
+    const hash2 = bar2.createEl("button", { text: t("paragraph.notice.useHash") });
     hash2.addEventListener("click", () => void this.dismissNotice(true));
   }
   async dismissNotice(useHash) {
@@ -7955,11 +7967,11 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     const missingFile = (where == null ? void 0 : where.status) === "orphan" && where.reason === "missing-file";
     const note = inlineNote({ tone: "error", icon: "unlink", text: t(missingFile ? "paragraph.pane.orphanFile" : "paragraph.pane.orphanParagraph") });
     this.notesEl.appendChild(note);
-    const bar = this.notesEl.createDiv({ cls: "vt-plist-actions" });
-    const rebind = bar.createEl("button", { cls: "vt-plist-action", text: t("paragraph.action.rebind") });
+    const bar2 = this.notesEl.createDiv({ cls: "vt-plist-actions" });
+    const rebind = bar2.createEl("button", { cls: "vt-plist-action", text: t("paragraph.action.rebind") });
     const id2 = route.threadId;
     rebind.addEventListener("click", () => this.nav.rebind(id2));
-    confirmButton(bar, t("paragraph.action.delete"), t("paragraph.action.confirmDelete"), () => {
+    confirmButton(bar2, t("paragraph.action.delete"), t("paragraph.action.confirmDelete"), () => {
       void this.host.threads.deleteThread(id2).then(() => new import_obsidian15.Notice(t("paragraph.deleted")));
     });
   }
@@ -8357,8 +8369,8 @@ function mapRows(stage, topics, statusOf2, attempts) {
     const status = statusOf2(topic.id);
     let statusText = statusLabel(status);
     if (status === "learning") {
-      const { reached, total } = objectivesReached(topic, attempts);
-      statusText = `${statusText} ${reached}/${total}`;
+      const { reached, total: total2 } = objectivesReached(topic, attempts);
+      statusText = `${statusText} ${reached}/${total2}`;
     }
     const lockedBy = status === "new" ? topic.prerequisites.map((id2) => topicById(id2)).filter((p) => !!p && statusOf2(p.id) === "new") : [];
     return { topic, status, statusText, lockedBy };
@@ -8989,9 +9001,9 @@ function aiDebugDetails(d) {
   const summary = details.createEl("summary", { cls: "vt-ai-debug-summary" });
   (0, import_obsidian18.setIcon)(summary.createSpan({ cls: "vt-ai-debug-icon" }), "bug");
   summary.createSpan({ text: debugText("summary") });
-  const bar = details.createDiv({ cls: "vt-ai-debug-bar" });
-  bar.createSpan({ cls: "vt-ai-debug-hint", text: debugText("hint") });
-  const copy = bar.createEl("button", { cls: "vt-btn vt-ai-debug-copy", attr: { type: "button" } });
+  const bar2 = details.createDiv({ cls: "vt-ai-debug-bar" });
+  bar2.createSpan({ cls: "vt-ai-debug-hint", text: debugText("hint") });
+  const copy = bar2.createEl("button", { cls: "vt-btn vt-ai-debug-copy", attr: { type: "button" } });
   (0, import_obsidian18.setIcon)(copy.createSpan({ cls: "vt-btn-icon" }), "copy");
   copy.createSpan({ text: debugText("copy") });
   copy.addEventListener("click", (e) => {
@@ -14555,7 +14567,7 @@ function buildGalaxyModel(family, lookup, opts) {
   });
   const allWords = groupWordNodes.flat();
   const known2 = allWords.filter((n) => n.kind === "known").length;
-  const total = allWords.length;
+  const total2 = allWords.length;
   const visible = opts.onlyKnown ? groupWordNodes.map((list) => list.filter((n) => n.kind === "known")) : groupWordNodes;
   const nodes = [hub];
   const links = [];
@@ -14588,7 +14600,7 @@ function buildGalaxyModel(family, lookup, opts) {
       }
     }
   }
-  return { nodes, links, counts: { known: known2, unknown: total - known2, total } };
+  return { nodes, links, counts: { known: known2, unknown: total2 - known2, total: total2 } };
 }
 function heartState(node) {
   if (node.kind === "known") return "liked";
@@ -15380,9 +15392,9 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
   // Family chips + 重新分群 (L5) / 找字族 (word page) — 清單模式專用，不變；
   // 星系模式用主題清單＋⋯選單取代這一排 (renderGalaxyToolbar 下方)。
   renderToolbar(families, entry) {
-    const bar = this.root.createDiv({ cls: "vt-fam-toolbar" });
+    const bar2 = this.root.createDiv({ cls: "vt-fam-toolbar" });
     for (const f of families) {
-      const chip2 = bar.createEl("button", { cls: "vt-fam-tab", text: familyTitle(f) });
+      const chip2 = bar2.createEl("button", { cls: "vt-fam-tab", text: familyTitle(f) });
       chip2.toggleClass("is-active", f.id === this.selectedId);
       chip2.setAttr("aria-pressed", String(f.id === this.selectedId));
       chip2.addEventListener("click", () => {
@@ -15393,7 +15405,7 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
       });
     }
     const ready = this.plugin.ai.status() === "ready";
-    const btn = learnButton(bar, {
+    const btn = learnButton(bar2, {
       label: t(entry ? "learn.family.generate" : "learn.family.regroup"),
       icon: entry ? "sparkles" : "refresh-cw",
       ghost: true,
@@ -15402,10 +15414,10 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
     btn.addClass("vt-fam-toolbar-action");
     btn.disabled = !ready;
     if (!ready) btn.title = t(this.plugin.ai.status() === "offline" ? "learn.ai.offline" : "learn.ai.body");
-    this.renderModeSwitch(bar);
+    this.renderModeSwitch(bar2);
   }
-  renderModeSwitch(bar) {
-    segmented(bar, {
+  renderModeSwitch(bar2) {
+    segmented(bar2, {
       ariaLabel: t("galaxy.viewAria"),
       value: this.viewMode,
       options: [
@@ -15610,20 +15622,20 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
     });
   }
   renderGalaxyToolbar(stage, selected, entry) {
-    const bar = stage.createDiv({ cls: "vt-gx-toolbar" });
-    this.register(dragScroll(bar));
+    const bar2 = stage.createDiv({ cls: "vt-gx-toolbar" });
+    this.register(dragScroll(bar2));
     const expanding = this.galaxyExpandCtrl.has(selected.id);
-    const aiBtn = bar.createEl("button", { cls: ["vt-gx-pill", "is-ai"], attr: { type: "button" }, text: expanding ? t("galaxy.stop") : t("galaxy.aiExpand") });
+    const aiBtn = bar2.createEl("button", { cls: ["vt-gx-pill", "is-ai"], attr: { type: "button" }, text: expanding ? t("galaxy.stop") : t("galaxy.aiExpand") });
     aiBtn.disabled = !expanding && this.plugin.ai.status() !== "ready";
     aiBtn.addEventListener("click", () => this.toggleExpand(selected));
-    this.renderModeSwitch(bar);
-    const recenterBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t("galaxy.recenter") });
+    this.renderModeSwitch(bar2);
+    const recenterBtn = bar2.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t("galaxy.recenter") });
     recenterBtn.addEventListener("click", () => {
       var _a;
       return (_a = this.galaxyGraph) == null ? void 0 : _a.recenter();
     });
     const ready = this.plugin.ai.status() === "ready";
-    const regenBtn = bar.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t(entry ? "learn.family.generate" : "learn.family.regroup") });
+    const regenBtn = bar2.createEl("button", { cls: "vt-gx-pill", attr: { type: "button" }, text: t(entry ? "learn.family.generate" : "learn.family.regroup") });
     regenBtn.disabled = !ready;
     if (!ready) regenBtn.title = t(this.plugin.ai.status() === "offline" ? "learn.ai.offline" : "learn.ai.body");
     regenBtn.addEventListener("click", () => void this.generate(!entry, entry));
@@ -16028,56 +16040,51 @@ function renderReportRadar(_plugin, source, el, _ctx) {
   drawRadar(el, axes);
 }
 
-// src/ui/blocks/dashboard.ts
-var import_obsidian29 = require("obsidian");
+// src/core/wordlists/cefrjData.ts
+var CEFRJ_WORDS = {
+  A1: "'m|'re|'s|a|a.m.|about|above|action|activity|actor|add|address|aeroplane|afraid|after|afternoon|again|age|ago|agree|airplane|airport|album|all|all right|almost|alone|along|already|also|always|am|an|and|angry|animal|another|answer|any|anybody|anyone|anything|apple|april|apron|are|arm|around|arrive|art|article|as|ask|at|august|aunt|autumn|awake|away|baby|back|bad|bag|ball|banana|band|bank|bar|baseball|basketball|bat|bath|bathroom|be|beach|bean|bear|beautiful|because|become|bed|bedroom|bee|beef|before|begin|behind|believe|bell|below|beside|best|better|between|bicycle|big|bike|bird|birth|birthday|biscuit|black|blank|block|blow|blue|board|boat|body|bone|book|bookstore|boring|borrow|both|bottle|bottom|bowl|box|boy|boyfriend|brain|bread|break|breakfast|breathe|bridge|bright|bring|broken|brother|brown|brush|bucket|build|building|burger|bus|business|busy|but|butter|butterfly|button|buy|by|bye|cafe|caf\xE9|cake|call|camera|camp|can|candy|cap|car|card|care|careful|carefully|carry|cartoon|case|cat|catch|cd|cd player|celebrate|celebration|chair|change|character|check|cheese|chicken|child|chocolate|choose|church|cinema|circle|city|class|classmate|classroom|clean|clever|climb|clock|close|closed|cloth|clothes|cloud|cloudy|club|coach|coat|code|coffee|coke|cold|collect|collection|college|color|colour|come|computer|concert|contest|conversation|cook|cookie|cool|cop|copy|corn|corner|correct|couch|could|course|cousin|cover|cow|cream|credit card|cry|culture|cup|cut|cute|dad|daddy|dance|dancing|dark|date|daughter|day|dear|december|delicious|describe|design|desk|dictionary|did|difference|different|difficult|dig|dining room|dinner|dirty|discuss|dish|do|doctor|does|dog|doing|doll|dollar|door|down|dr|dr.|drama|draw|dream|dress|drink|drive|driver|drop|drum|dry|due|dvd|e-mail|each|each other|ear|early|easy|eat|egg|eight|eighteen|eighty|either|elementary|eleven|else|email|end|engineer|enjoy|evening|event|every|everybody|everyday|everyone|everything|everywhere|example|excellent|excited|exciting|excuse|exercise|expensive|eye|face|factory|fair|fairy|false|family|famous|fan|farm|farmer|fast|fat|father|favorite|favourite|february|feed|feel|feeling|festival|fever|field|fifteen|fifty|fight|file|fill|find|fine|finish|fire|first|fish|fishing|five|flag|flat|floor|flower|fly|focus|foggy|following|food|football|for|foreign|foreigner|forget|form|forty|four|fourteen|free|friday|friend|frog|from|front|fruit|full|fun|funny|future|game|garbage|garden|get|ghost|gift|girl|girlfriend|give|glad|glass|glasses|go|goal|gold|good|good afternoon|good morning|good night|grade|grammar|grandfather|grandma|grandmother|grandpa|grandparent|grape|grass|gray|great|green|greet|grey|ground|group|grow|guess|guest|guitar|guy|habit|had|hair|haircut|half|hall|hamburger|hand|handsome|happen|happy|hard|has|hat|have|have to|he|head|headache|health|healthy|hear|heart|heavy|hello|help|her|here|hers|hi|hide|high|hill|him|his|history|hobby|hold|hole|holiday|home|hometown|homework|hope|horse|hospital|hot|hotel|hour|house|how|hungry|hurry|hurt|husband|i|ice|ice cream|idea|ideal|if|imagine|important|in|information|inside|interested|interesting|internet|interview|interviewer|into|introduce|is|island|it|item|its|jacket|january|jeans|jet|jewellery|jewelry|job|join|judge|juice|july|jump|june|just|keep|key|kick|kid|kill|kind|king|kiss|kitchen|kite|knee|knife|know|lady|language|large|last name|late|later|laugh|lazy|leader|leaf|learn|leave|left|leg|lesson|let|letter|library|life|light|like|lily|line|lion|list|listen|little|live|living|living room|lonely|long|look|lot|love|lovely|luck|lucky|lunch|machine|magazine|mail|make|man|many|map|march|match|math|maths|matter|may|maybe|me|meal|mean|meat|medicine|meet|meeting|memory|merry|message|middle|milk|mind|mine|minute|miss|mobile|mobile phone|mom|moment|mommie|mommy|monday|money|monkey|month|moon|more|morning|most|mother|mountain|mouse|mouth|move|movie|mr|mr.|mrs|mrs.|much|mum|music|musician|must|my|name|nationality|near|neck|need|neighbor|neighbour|never|new|news|newspaper|nice|night|nine|nineteen|ninety|no|noise|nose|not|note|notebook|nothing|november|now|number|nurse|o'clock|october|of|off|office|officer|often|ok|okay|old|olympics|on|once|one|only|open|opera|or|orange|order|other|our|ours|out|outside|over|own|owner|p.m.|page|paint|painting|pair|palace|pants|paper|paragraph|pardon|parent|park|partner|party|past|pay|peace|pen|pencil|people|period|person|personal|pet|phone|photo|piano|pick|picnic|picture|piece|pig|pink|pizza|place|plan|plane|play|player|please|pleasure|pm|pocket|poem|point|pollution|pool|poor|pop|post|poster|potato|practice|practise|pray|present|pretty|price|prince|princess|problem|program|programme|purple|push|put|quarter|question|quickly|quiet|rabbit|radio|rain|rainy|rat|read|reader|reading|ready|real|really|reason|red|remember|repeat|reporter|restaurant|result|review|ribbon|rice|rich|ride|right|ring|river|role|room|rose|row|rude|rule|ruler|run|sad|sailor|salad|sale|same|sandwich|saturday|save|saw|say|school|science|scientist|sea|seat|second|section|see|self|sell|sentence|september|set|seven|seventeen|seventy|shake|share|she|sheep|shelf|ship|shirt|shoe|shop|shopping|short|should|shoulder|show|shower|shy|sick|side|sight|sign|sing|singer|sir|sister|sit|site|six|sixteen|sixty|size|skill|skirt|sky|sleep|slow|small|smart|smell|smile|smith|smoke|smoking|snake|snow|snowy|so|soccer|social|sofa|solve|some|someone|something|son|song|soon|sorry|soup|speak|special|speech|spell|spend|sport|spot|spring|spy|stage|stand|star|start|station|stay|step|still|stone|stop|store|story|straight|strange|street|strict|strong|student|study|subject|subway|successful|sugar|suggestion|sum|summer|sun|sunday|sunny|sunshine|super|supermarket|sure|surf|surprise|survey|sweet|swim|swimming|swimming pool|t-shirt|table|take|talk|tall|taxi|tea|teach|teacher|team|technology|tee-shirt|telephone|television|tell|temple|ten|tennis|terrible|test|than|thank|thanks|that|the|theater|theatre|their|them|then|there|these|they|thick|thin|thing|think|thirteen|thirty|this|those|three|through|throw|thursday|ticket|tiger|tight|time|tired|to|today|together|toilet|tomato|tomorrow|tonight|too|tool|tooth|top|topic|touch|towel|tower|town|toy|train|travel|tree|trip|trousers|truck|true|try|tube|tuesday|turkey|turn|tv|twelve|twenty|two|type|ugly|umbrella|uncle|under|underline|until|up|us|use|usually|vacation|vase|vegetable|very|video|visit|volleyball|vote|wait|waiter|waitress|wake|walk|wall|want|war|warm|was|wash|watch|water|way|we|wear|weather|wednesday|week|weekend|welcome|well|were|what|wheel|when|where|which|white|who|whose|why|wife|will|win|wind|window|winter|wish|with|woman|wonderful|word|work|worker|world|worry|would|write|writer|wrong|yard|year|yellow|yes|yesterday|yet|yoghurt|yogurt|you|young|your|yours|yourself|zoo",
+  A2: "ability|abroad|accept|acceptable|accident|account|achieve|across|act|actually|addition|additional|adjective|adjust|admire|admit|adult|advanced|advantage|adventure|advertisement|advertising|advice|advise|affair|against|aged|agency|agent|ahead|air|aisle|alarm|alarm clock|alive|allow|alright|although|ambition|among|amused|amusement|ancestor|ancient|angel|angrily|ankle|anniversary|annoy|annoying|anxious|anymore|anyway|anywhere|apart|apartment|apologise|apologize|apparently|appear|appearance|apply|appointment|appreciate|appropriate|architecture|area|argue|argument|armchair|armed|artificial|asleep|assistant|association|astronaut|athlete|atom|attack|attempt|attention|attitude|attractive|audience|audio|author|automatic|automatically|average|avoid|award|awful|background|badly|badminton|bake|balcony|balloon|banking|barbecue|barber|bargain|base|basic|basically|basket|batch|battery|bay|beauty|been|beer|beg|beginner|beginning|behavior|behaviour|being|belly|belong|belt|bench|bend|besides|beyond|bill|bit|bite|blackboard|blame|blanket|blonde|blood|bloom|board game|boil|boiled|bonus|bookcase|bookshelf|bookshop|bored|boss|bother|bra|brainstorm|brake|branch|brand|brave|breeze|bride|brilliant|budget|bug|bulb|burn|bury|bus station|bus stop|bush|businessman|businesswoman|cab|cafeteria|calendar|camping|campus|capital|capital letter|captain|car park|carrot|cash|cassette|castle|cause|cent|center|centimeter|centimetre|centre|century|cereal|certain|certainly|chain|chairman|challenge|champagne|championship|chance|chapter|chart|chat|cheap|cheek|cheer|chef|chemical|cheque|chess|chest|childhood|chili|chilli|chimpanzee|chin|chirp|choice|cigarette|citizen|claim|classic|classical music|cleaner|clear|clearly|clerk|click|climbing|clone|clown|clue|coast|coin|cola|colorful|colourful|column|comb|comfortable|comic|commitment|committee|common|communicate|communication|company|comparative|compare|competition|complain|complaint|complete|composer|concentrate|concern|condition|confident|confuse|confused|consequence|consider|consist|contact|container|context|continent|continue|contrast|control|convenience|convenient|cooker|cooking|cooler|correctly|cost|count|country|countryside|couple|court|crazy|create|creative|creativity|creature|credit|cricket|crime|crisp|criticise|criticize|cross|crowd|crowded|crown|cruise|cupboard|curry|curse|custom|customer|cycling|daily|dam|dancer|danger|dangerous|daylight|dead|deal|death|debate|decide|deep|deeply|degree|delay|dentist|department store|depend|description|desert|dessert|destroy|detail|develop|developed|diamond|diary|die|diet|differently|difficulty|digital camera|dinosaur|direct|direction|director|disadvantage|disagree|disappear|disappointed|disappointing|disco|discover|discussion|dishonest|dislike|display|disturb|divide|dizzy|done|double|doubt|download|downstairs|downtown|drawer|drawing|dressed|drill|driver's license|driving licence|drug|drugstore|duck|during|dust|earn|earring|earth|earthquake|easily|east|editor|education|educational|effect|effort|elderly|electric|elephant|elevator|elsewhere|embarrassing|emergency|empty|encourage|endangered|ending|energetic|enormous|enough|enter|entertainment|entrance|envelope|envy|episode|error|escalator|escape|especially|essay|establish|euro|even|ever|evidence|exactly|exam|except|exchange|exhibition|exist|expect|experience|expert|explain|explanation|explore|express|expression|extra|extremely|fact|fail|fairly|fall|familiar|fancy|fantastic|far|fare|fascinating|fashion|fast food|fault|favor|favour|fear|feather|feature|fee|female|fence|few|fiction|fighter|figure|film|final|finally|first name|fisherman|fit|fix|flea|flight|float|flood|flour|fog|folder|follow|fool|footballer|forbid|force|forest|forever|fork|fortunately|fortune|forward|frame|frank|freedom|freeze|fresh|fridge|fried|friendship|frighten|frightened|frightening|fry|fully|function|furniture|further|gallery|garage|garlic|gas|gate|gather|gender|generation|gentle|given|globe|glove|golden|golf|good-looking|government|grace|gradually|graduate|gram|gramme|grandchild|granddad|granddaughter|grandson|granny|grateful|greatly|greedy|grilled|grocery store|guard|guidebook|gun|half-price|ham|handbag|handicapped|handle|happily|happiness|hardly|harm|harmful|harmony|harvest|hate|headphone|headteacher|heat|heating|heavily|helpful|hero|herself|hey|high school|highway|hike|hiking|himself|hip hop|hip-hop|hiphop|hit|hockey|honey|honor|honour|horror|host|however|hug|human|hundred|hunter|id|id card|ill|illegal|image|imagination|impact|impatient|importance|importantly|impossible|impress|improve|inch|include|increase|indeed|independence|indicate|indoor|inexpensive|influence|injure|inner|insect|inspiration|instant|instead|instrument|intelligence|intelligent|interest|international|invade|invent|invention|invite|issue|itself|jam|jelly|joke|journey|joy|junior|junk|killer|kilo|kilogram|kilogramme|kilometer|kilometre|kindly|kingdom|kit|knock|knowledge|labor|labour|lack|lake|lamp|land|landscape|lane|last|latest|latter|law|lawyer|laziness|lead|learner|least|leather|left-hand|leisure|lemon|lemonade|lend|less|level|liberty|licence|license|lie|lifestyle|likely|lip|liter|litre|lively|load|local|lock|logical|loose|lose|lost|loudly|lover|low|luckily|lunchtime|lyric|mad|magic|main course|mainly|major|make-up|maker|male|mall|manage|manager|manner|mark|market|married|marry|marvellous|marvelous|material|max|meaning|medal|medical|melon|member|mention|menu|metal|meter|method|metre|midday|midnight|might|military|million|mineral water|mirror|missing|mistake|mix|model|modern|mood|mosque|mostly|motorway|ms|ms.|mug|murder|museum|mushroom|musical|myself|mysterious|mystery|napkin|nation|national|native|natural|nature|nearly|necessary|negative|nervous|net|next|next to|no one|nobody|noisy|noon|normal|north|notice|noun|novel|nowadays|oak|occupation|offer|official|oil|olive oil|olympic|omelet|omelette|onion|online|operate|opinion|opportunity|oppose|opposite|organise|organised|organize|organized|original|orphan|ourselves|out of|oven|overseas|overweight|pacific|pack|painter|pal|pan|panic|part|partly|pass|passage|passenger|pasta|path|patient|pc|pea|peaceful|pear|pen friend|pence|penfriend|pepper|perfect|perfectly|perform|performance|perfume|perhaps|permission|personality|petrol|petrol station|photograph|photographer|photography|physical|physically|pile|pilgrim|pill|pilot|pity|planet|plant|plastic|plate|playful|playground|pleasant|pleased|pleasing|plenty|plural|plus|police|police officer|police station|policeman|policewoman|polite|political|pollute|popular|population|portrait|position|possible|possibly|post office|pour|power|powerful|precise|predict|prediction|prefer|prepare|pressure|pretend|prevent|pride|principal|print|printer|private|pro|probably|produce|product|production|professional|progressive|promise|pronounce|pronunciation|proper|provide|psychologist|public|publish|pull|punctuation|purpose|pursue|quality|queen|quick|quietly|quit|quite|quiz|racket|raincoat|raise|range|rap|rate|rather|rating|raw|ray|reach|realise|realize|receipt|receive|recent|recently|receptionist|record|recycle|refer|reflect|refrigerator|regret|regular|regularly|relax|relaxed|release|remain|remind|remote|rent|repair|replace|reply|report|represent|request|research|response|retire|retired|return|reunion|reveal|rhythm|right-hand|road|roast|rob|robbery|robin|rock|roll|romance|romantic|roof|root|rope|roughly|round|roundabout|royal|rugby|ruin|rumor|rumour|runner|running|rush|sadly|safe|sailing|sake|salt|sample|sandy|satisfy|sauce|sausage|scale|scarf|scene|scenery|schedule|schoolchild|schoolwork|scientific|scissors|scream|screen|screw|script|seafood|search|seaside|secret|secretary|seed|seek|seem|semester|send|senior|sense|separate|seriously|serve|several|sew|shade|shadow|shall|shampoo|shape|shell|shine|shock|shoot|shop assistant|shore|shorts|shot|shout|shut|sightseeing|significant|silence|silently|silly|silver|similar|simple|simply|since|singing|single|singular|sink|sitting room|situation|skate|skateboarding|skating|ski|skiing|slave|sleepless|sleepy|slice|slide|slim|slowly|smooth|smoothly|snack|snowboarding|soap|society|sock|soda|soft|soft drink|softly|software|soldier|solution|somebody|someday|somewhere|sound|source|south|space|spaceship|spaghetti|speaker|specific|speed|spill|splash|split|spoon|sports center|sports centre|spread|square|stadium|staff|stair|stamp|state|statement|statue|steak|steal|stomach|stomachache|storm|stove|stranger|strategy|strength|strike|string|strongly|structure|stuff|style|succeed|success|successfully|such|sudden|suggest|suit|suitable|suitcase|summary|sunflower|sunglasses|sunlight|superlative|superstar|supper|support|surfing|surname|surprised|surprising|survive|swallow|sweat|sweater|sweetheart|swimming costume|swimsuit|symbol|symphony|system|table tennis|tablespoon|talent|tap|tape|target|task|tear|teenage|teenager|temperature|terrify|terrorist|text|text message|textbook|theirs|themselves|therefore|thief|third|thirsty|though|thought|thousand|thunderstorm|tidy|tie|tights|till|timetable|tip|title|toast|toe|tone|toothache|toothbrush|tour|tour guide|tourist|toward|towards|track|trade|tradition|traditional|traffic|traffic light|training|tram|trap|traveler|traveller|treasure|trick|trouble|truly|trust|truth|tune|twice|uncertain|uncomfortable|understand|underwater|uneasy|unfair|unforgettable|unfortunately|unhappy|unhealthy|uniform|unimportant|unit|university|unknown|unlike|unnecessary|unpleasant|unusual|upon|upset|upstairs|used|useful|usual|valley|value|verb|video game|view|village|violent|violin|visitor|vocabulary|voice|walking|wallet|wander|washing machine|washing-up|wave|weak|wealth|web|web page|website|wedding|weekday|weekly|weep|weigh|weight|well-known|west|wet|whatever|wheelchair|while|whole|whom|wide|widely|wild|windy|wine|winner|wisdom|wise|within|without|wonder|wood|wooden|wool|worldwide|worried|worse|worst|writing|yeah|youth|zone",
+  B1: "abandon|able|abnormal|aboard|aborigine|absence|absent|absolute|absolutely|absorb|abstract|abundance|abundant|academic|academy|accent|acceptance|access|accessible|accessory|accidental|accidentally|accompany|accomplish|according to|accountant|accuracy|accurate|accurately|accuse|accustom|ache|achievement|acknowledge|acknowledgement|acknowledgment|acquaintance|acquire|active|actress|ad|adapt|addressee|administration|admiration|admission|adopt|adorable|advance|adverb|adverbial|advert|advertise|adviser|advisor|aerobics|affect|affection|afford|afterward|afterwards|agenda|aggressive|agreement|agricultural|agriculture|aid|aim|air conditioning|air force|airline|alcohol|alcoholic|alike|allergic|allowance|aloud|alphabet|alternative|altogether|amazed|amazing|ambitious|ambulance|amount|amusing|analyse|analysis|analyze|anger|angle|animated|animation|announce|announcement|annoyance|annoyed|annual|annually|ant|anti|antique|antonym|anxiety|anxiously|anyhow|ape|apology|apparent|appeal|appetite|applaud|applause|application|appoint|appreciation|approach|approval|approve|approximately|architect|arise|arithmetic|army|arrange|arrangement|arrest|arrival|arrow|artist|artistic|ashamed|aside|aspect|aspirin|assign|assignment|assist|assistance|associate|assume|astronomer|athletic|atlantic|atmosphere|atomic|attach|attachment|attain|attend|attract|attraction|authority|auxiliary|available|avenue|aware|awareness|awesome|awkward|babysit|babysitter|backache|backpack|backpacker|backpacking|bacon|baggage|baker|bakery|balance|bald|bandage|bang|bank account|bare|barely|bark|barman|barrel|basement|basin|basis|bathe|battle|beard|beast|beat|beautifully|beaver|because of|bedside|behalf|behave|belief|beloved|beneath|benefit|bent|bet|bilingual|bin|biochemistry|biography|biology|bishop|bitter|bleed|blend|bless|blessing|blind|blog|blogger|blush|boast|bold|boldly|bomb|bond|booking|boom|boot|border|bore|boredom|bounce|bound|bow|boxing|bracelet|brainstorming|brand-new|brass|bravely|breakthrough|breast|breath|breathless|breed|breeding|brick|brief|briefly|brightly|broad|broadcast|broccoli|bronze|brotherhood|bubble|buddy|builder|bull|bullet|bulletin|bump|bunch|burden|bureau|burglar|burning|burst|bust|butcher|buyer|cabbage|cabin|cage|calculate|calculation|calculator|calf|caller|calm|calmness|camel|campsite|canal|cancel|cancer|candle|canned|canteen|capable|capacity|capsule|capture|career|careless|carelessly|carelessness|carpet|carriage|carton|cashpoint|casual|categorise|categorize|category|cattle|caution|cautious|cave|cd-rom|celebrity|cell|central|central heating|ceremony|certainty|challenging|champion|channel|chaos|characterise|characteristic|characterize|charge|chariot|charity|charm|chase|chat show|check-in|check-in counter|check-in desk|checkout|cheerful|chemist|chemistry|cherish|chest of drawers|chewing gum|chief|choir|choke|christian|chronological|chuckle|circular|circus|citizenship|civil|civilisation|civilization|classical|classify|cliff|climate|climber|clinic|clip|closely|coal|coastal|cod|coffin|collapse|collar|columnist|combination|combine|comedian|comedy|comet|comfort|comma|command|comment|commercial|commit|common sense|commonly|companion|comparison|compete|competitive|competitor|complement|completely|complex|complicate|complicated|compliment|compose|composition|compound|compromise|concentration|concept|concerned|conclude|conclusion|conduct|confidence|confirm|confirmation|conflict|confusing|confusion|congratulate|connect|connection|connexion|conquer|conscious|consequently|conservation|conservative|considerable|consideration|consonant|constantly|constitute|constitution|construct|construction|consume|consumer|consumption|contain|content|continual|continually|continuous|continuously|contrary|contribute|contribution|controversial|convey|convince|copyright|correction|cotton|cough|council|counseling|counselling|counter|countless|county|courage|courageous|courgette|craft|crash|creator|criminal|crisis|critic|critical|crop|crossing|crossroads|crow|cruel|crush|cucumber|cultivate|cultural|cure|curiosity|curious|curiously|curly|currency|current|currently|curriculum|curtain|curve|cushion|customs|cv|cycle|daisy|damage|damaged|damp|dangerously|dare|darkness|dating|daze|dazzle|deadline|deadly|deaf|dealer|debris|debt|decision|declaration|declare|decline|decrease|dedicate|deed|defeat|defence|defend|defender|defense|deficiency|define|definite|definite article|definitely|definition|delete|delicate|delight|delighted|delightful|deliver|delivery|demand|democracy|democratic|demonstrate|demonstration|deny|depart|department|departure|dependent|deposit|depressed|depressing|depression|deprive|depth|derive|deserve|designer|desire|despair|desperate|despite|destination|destruction|destructive|detective|determination|determine|devastate|devastating|development|device|devotion|diagram|dial|dialog|dialogue|diameter|diaper|differ|digital|diligence|diligent|dioxide|directly|dirt|disability|disable|disabled|disagreement|disappoint|disappointment|disaster|disastrous|disc|disc jockey|discomfort|discount|discourage|discovery|discrimination|disease|disgusting|dishwasher|disk|disk jockey|dissolve|distance|distant|distinction|distinctly|distinguish|distribute|distribution|district|disturbance|dive|diver|diverse|divine|diving|divorced|dj|doc|document|documentary|dolphin|dot|downward|doze|dozen|drag|dramatic|drown|drunk|dude|dull|dump|dustbin|dusty|duty|duty-free|duvet|dynasty|eager|eagerness|earache|earnest|eastern|easy-going|easygoing|eco|ecological|ecology|economic|economics|economy|ecosystem|ecstasy|edge|edition|educate|effective|efficiency|efficient|elbow|election|electrical|electricity|electron|electronic|element|eliminate|embarrass|embarrassed|embarrassment|emerge|emotion|emotional|emotionally|emperor|emphasis|emphasize|empire|employment|enable|enclose|encounter|encouragement|encouraging|encyclopaedia|encyclopedia|endanger|endless|endure|enemy|engage|engaged|engine|engineering|englishman|enjoyable|enjoyment|enquiry|enrich|ensure|entertain|entertainer|enthusiasm|enthusiast|enthusiastic|entire|entirely|entry|environmental|environmentalist|equal|equality|equally|equipment|era|essence|essential|establishment|estimate|eternal|eternity|evenly|eventually|evident|exact|examination|examine|examiner|excellence|excess|exchange rate|excitedly|excitement|exclusive|exhausted|existence|exit|expand|expense|experienced|experiment|exploration|explosion|expose|extend|extensively|extent|extinct|extinction|extraordinary|extreme|extreme sports|eyesight|face to face|face-to-face|facility|fade|failure|faint|faithful|fake|fallen|fantasy|faraway|farewell|farming|farmland|farther|farthest|fascinate|fashionable|fasten|favorable|favourable|fax|feast|fellow|ferry|festive|fetch|feverishly|fifth|filling|film-maker|filter|finance|financial|finding|finger|fire station|firefighter|firework|firm|firmly|first floor|first lady|first-floor|fitness|flash|flavor|flavour|flock|flow|flu|fluent|fluently|flunk|flute|fold|folk|fond|fondness|foolish|foot|forbidden|forecast|forehead|forgive|formal|formally|format|former|formula|forth|fortnight|fortunate|foundation|fountain|fragment|freely|freezer|freezing|frequency|frequent|frequently|freshman|friendliness|fright|frost|frozen|frustrated|frustration|frying pan|fuel|full stop|full-time|fund|funeral|fur|furnish|furthermore|furthest|fuss|gain|gall|gallon|gaol|gap|gardening|garment|gay|gee|gene|general|generally|generate|generous|genetic|genetically|genetics|gentleman|geographical|geography|geology|gesture|giant|gifted|giggle|ginger|giraffe|glance|glide|glimpse|glint|global|glorious|glory|goalkeeper|goddess|golfer|goodness|goods|gorgeous|gorilla|gossip|govern|governor|gown|grab|graceful|graduation|grant|graph|graphic|graphics|gratitude|grave|gravy|greenhouse|greeting|grill|groom|ground floor|grouping|growth|guarantee|guidance|guide|guilt|guilty|guitarist|gym|gymnastics|habitat|hairdresser|hairdryer|hammer|hand-held|handball|handkerchief|handshake|handwriting|handy|hang|hanging|harbor|harbour|hard-working|hardship|harness|hasty|hatch|hatred|haunt|haven|hazard|headline|heal|healing|hearing|heart attack|hearted|hearty|heater|heaven|heavenly|heel|height|helmet|helpless|herd|hesitate|hidden|highlight|highly|hip|hire|historian|historic|historical|hiv|holy|homeless|honest|honestly|honesty|honeymoon|hop|hopeful|hopefully|hopeless|horizon|horn|horrible|horrify|hostel|household|housework|huge|humanity|humid|humor|humorous|humour|hunger|hunt|hurriedly|hut|ice hockey|ice skating|identity|identity card|idiom|idol|ignore|illegally|illness|illuminate|imaginary|imitate|immediate|immediately|immigrate|immigration|impair|impression|impressive|improper|improvement|incident|including|income|inconvenient|incorrect|increasingly|incredible|incredibly|indefinite article|independent|indirect|indirectly|individual|indoors|industrial|industry|inevitable|infection|infinitive|inform|informative|ingredient|inhabitant|inhale|initial|initially|inject|injury|ink|innermost|innocent|innovator|inquiry|insane|inscribe|inscription|insight|insist|inspection|inspire|instal|install|instance|instead of|institute|instruction|instructor|insurance|intend|intense|intensive|intention|intentionally|interact|interaction|intermediate|intermission|internal|internationally|interrupt|interval|interviewee|introduction|invasion|invest|investigation|invitation|involuntarily|involve|involved|iron|ironing|irregular|irritate|isle|isolation|ivory|jade|jail|jar|jazz|jealous|jewel|jog|jogging|joint|journal|journalist|judgement|judgment|jug|juicy|jumper|jungle|justice|kettle|keyboard|killing|kindness|kitten|knit|lab|laboratory|ladder|lamb|landlord|largely|lasting|latecomer|lately|laughter|launch|lawful|lay|layer|leadership|leading|league|lean|leap|lecture|legal|legally|length|lessen|lettuce|liar|liberate|liberation|librarian|lifeguard|lifelong|lift|lighter|lightly|lightning|likeness|limit|limitation|limited|limp|link|liquid|literary|literature|liver|loaf|locate|location|lodge|log|logic|logo|lorry|loss|lottery|loud|loudspeaker|lovingly|loyal|loyalty|luggage|lung|luxury|magical|magician|magnificent|mailbox|main|maintain|maintenance|majority|management|mankind|maple|marble|marine|marked|marriage|mash|mass|massive|mathematician|mathematics|maximum|mayor|meaningful|meanwhile|measure|measurement|mechanic|mechanical|meditate|meditation|mediterranean|medium|melt|membership|memorable|memorise|memorize|mend|mental|mentally|merchant|mere|merely|mess|message board|messy|middle-aged|mild|mile|mineral|minimise|minimize|minimum|minor|minority|minus|miracle|mischief|miserable|misery|mislead|mission|misty|misunderstanding|mixing bowl|modal|modal verb|modem|moderate|modify|moisture|molecule|monitor|monk|monster|monthly|monument|moral|moreover|mosquito|moss|motherland|motionless|motivate|motivation|motive|motor|motorcycle|motto|mount|mountaintop|mourn|movement|mud|mule|murderer|muscle|mustard|mutual|myth|nail|naked|nap|narrate|narrative|narrow|nasty|nationalist|naturally|navy blue|nearby|necklace|nectar|needle|negotiate|negotiation|neighborhood|neighbourhood|nephew|nervousness|ness|network|neutral|nevertheless|newborn|newcomer|newly|next door|next-door|nickname|niece|nightlife|nod|noisily|none|nonetheless|nonsense|nor|normally|northeast|northeastern|northern|northwest|northwestern|noticeable|noticeboard|notion|notorious|novelist|nowhere|nuclear|nucleus|numerous|nutrient|nutrition|nutritious|object|objection|objective|observation|observe|obstacle|obtain|obvious|obviously|occasion|occasional|occasionally|occupy|occur|ocean|offensive|officially|oily|old-fashioned|on to|oneself|onstage|onto|opening|operation|opposition|oppress|oppression|option|oral|orbit|orchestra|orderly|ordinary|organ|organic|organisation|organism|organization|origin|otherwise|ought to|out-of-date|outdoor|outdoors|outer|outlaw|outline|outstanding|outward|outweigh|overcome|overjoyed|overnight|overwhelm|overwhelming|overwork|owe|owing|oxygen|pace|package|packing|paddle|paid|pain|painful|pale|palm|parachute|paradise|paralyse|paralyze|parcel|parental|parking|parrot|part-time|partial|participant|participate|participle|particularly|passion|passive|passport|password|patience|patrol|pattern|pause|peanut|peculiar|penniless|penny|per|per cent|percent|performer|permanent|permanently|permit|personally|persuade|persuasive|phantom|pharmacy|phenomenon|philosopher|philosophy|phoenix|photocopy|phrasal verb|phrase|physics|pie|piety|pillow|pin|pineapple|pipe|pit|plain|platform|pleasantly|plug|pocket money|poet|poetry|poison|poisonous|pole|policy|politely|politician|politics|pollutant|pond|popcorn|pork|port|positive|positively|possess|possession|possessive|possibility|postcard|postman|pot|potential|pottery|pound|poverty|powder|practical|praise|prayer|precious|preference|prefix|pregnant|prejudice|preparation|prepared|preposition|preschool|prescription|presence|presentation|preservation|preserve|president|press|previous|priest|primarily|primary school|primitive|principle|prison|prisoner|privacy|prize|probability|proceed|process|proclaim|procrastination|producer|productive|profession|professor|progress|prohibition|prominent|promote|promotion|pronoun|proof|properly|property|proportion|proposal|propose|prosperity|prosperous|protect|protection|protective|protest|proud|prove|proverb|provided|psychological|pub|public transport|publicly|publisher|pullover|pump|punish|punishment|pupil|puppy|pure|purify|purse|puzzle|quake|qualified|qualify|quantity|question mark|questionnaire|queue|race|racial|radiation|rage|rail|railroad|railway|rainfall|rainforest|rank|rapid|rapidly|rare|rarely|raspberry|ration|rational|razor|react|realistic|reality|rearrange|reasonable|rebuild|recall|reception|recite|reclaim|recognise|recognize|recommend|recording|recover|recovery|recycled|recycling|reduce|reduction|reef|referee|reflection|refreshments|refund|refusal|refuse|regain|regard|regarding|region|regional|register|registration|regulation|reject|relate|relation|relationship|relative|relatively|relaxing|reliable|religion|religious|rely|remainder|remark|remarkable|remedy|remembrance|remote control|remove|renew|repay|repeatedly|representative|reproduce|republic|reputation|require|requirement|rescue|researcher|resemble|reservation|reserve|resident|residential|resist|resolve|resort|resource|respect|respectable|respond|responsibility|responsible|rest|restore|restrict|retail|retain|retell|retrospect|reunification|reunify|revise|revision|reward|rewrite|rid|riddle|ridiculous|ripe|rise|risk|roadside|robot|rolling|rotten|rough|routine|rubber|rubbish|rudely|runaway|runway|sacred|sadness|safari|safeguard|safely|safety|salesman|salmon|sand|sandal|satellite|satisfaction|satisfied|saucepan|saucer|scan|scare|scared|scary|scatter|scenic|scholar|scholarship|schoolmate|schoolteacher|science fiction|scold|scope|score|scratch|sculpture|season|seawater|seaweed|second-hand|secondary school|secretly|secure|security|seize|select|selection|self-service|selfish|sensation|separation|sequence|series|serious|server|service|session|setting|settle|settlement|settler|severe|severely|sex|shadowy|shallow|shame|shameful|sharp|shave|sheer|sheet|shelter|sheriff|shift|shiny|shiver|shocked|shocking|shopper|shortage|shortly|shrimp|sickness|sidewalk|sigh|signal|signature|significance|signpost|silent|silk|similarity|similarly|simplify|simultaneously|skeleton|skin|skyscraper|slavery|sleeve|slight|slightly|slip|slogan|slope|slot|smoker|sneeze|snowboard|snowstorm|soap opera|social networking|socially|soil|solid|somehow|someplace|sometime|sometimes|soothe|sophomore|sore|sorrow|sort|soul|sour|southeast|southern|southwest|souvenir|sparkle|specialise|specialist|specialize|specially|spectacular|spectator|spelling|sphere|spice|spicy|spider|spinach|spiral|spirit|spiritual|spoil|sponge|sponsor|sports|sportsmanship|stable|stall|standard|stare|status|steadily|steady|steam|steel|steep|stem|stick|sticker|sticky|stir|storage|stormy|storyteller|strain|strangely|strategic|straw|strawberry|stream|strengthen|stress|stressed|stressful|stretch|stricken|strip|stripe|struggle|stubborn|stuck|studio|stuffed|stumble|stun|stunning|stupid|stylish|subconscious|submarine|substantial|substitute|suddenly|suffer|sufficient|suffix|suicide|summarise|summarize|summit|sunbathe|sundial|sunrise|sunset|superior|superstition|supply|supporter|supportive|suppose|supposedly|surely|surface|surgeon|surgery|surprisingly|surround|surrounding|survival|survivor|suspect|suspicion|swarm|swear|sweatshirt|swell|swimmer|switch|swollen|sword|sympathy|symptom|syndrome|systematic|tablet|take-off|takeaway|takeoff|tale|talented|talkative|tank|taste|tasteless|tasty|tax|teaching|teammate|teamwork|tease|technique|technological|teen|telecommunications|telegram|teller|temper|temporary|tempt|tend|tendency|tense|tension|tent|term|terminal|terribly|terrific|terrified|terror|terrorism|thankful|theft|theory|thirst|thorough|threat|threatening|thriller|throughout|thumb|thump|thunder|thunderous|thus|tick|tide|tighten|tightly|tile|timely|tin|tiny|tire|tiring|tissue|tobacco|tongue|toothpaste|tornado|toss|total|totally|tourism|tournament|trace|tracksuit|traditionally|traffic jam|tragedy|tragic|trail|transfer|transform|transformation|transitional|translate|transport|transportation|trash|travel agent|treat|treatment|tremble|tremendous|trend|trigger|trim|triumph|tropical|trumpet|trustworthy|tumble|tuna|turbulence|turning|turtle|twin|twist|typical|typically|unable|unafraid|unbelievable|uncertainty|unclear|uncontrollable|uncover|underage|undergo|underneath|underpants|undo|undress|unemployed|unemployment|unexpected|unexpectedly|unfairly|unfit|unfold|unfortunate|unfriendly|unheard|unify|uninterested|uninteresting|union|unique|unite|universe|unless|unlikely|unlucky|unpack|unpredictable|unrelated|untidy|unusually|unwanted|unwell|up-to-date|update|uplifted|upload|upper|upward|urge|urgent|usage|used to|useless|vacancy|vague|vain|valuable|van|variety|various|vary|vast|vegetarian|vehicle|vein|vessel|vet|via|vice|vice president|victim|victory|video clip|viewpoint|violence|violently|virtual|virus|visa|visible|vision|visual|visually|vivid|vividly|volcano|volume|volunteer|vowel|voyage|wagon|ward|wardrobe|warmly|warmth|warn|warning|warranty|warrior|washbowl|waste|wasteful|waterfall|wax|weakness|weapon|weather forecast|webcam|weird|well-dressed|westward|wetland|whale|whenever|wherever|whether|whichever|whisper|whistle|whoever|widespread|wildlife|wildly|willingness|windscreen|windsurfing|wing|wire|wither|witness|wizard|working|workout|workplace|workshop|worn|worth|worthwhile|worthy|wound|wrap|wrapping|wrist|wristwatch|written|yell|yoga",
+  B2: "abandoned|abnormally|abolish|aboriginal|abruptly|absentee|absurd|abuse|accessibility|accommodation|accordingly|accumulate|accusation|achievable|acid|acquisition|actively|actual|acute|adaptable|addict|addicted|addiction|additionally|adequate|adequately|adjustment|administrative|admirable|admiringly|admittedly|adopted|adoption|adore|adorn|advancement|advent|adventurous|adverse|adversely|adversity|affectionate|affectionately|affordable|ageless|aggressively|agonise|agonize|agony|aircraft|aircrew|alcoholism|alert|allegation|alliance|ally|alongside|alphabetical|altar|alter|alternate|alternatively|altitude|aluminium|aluminum|amaze|amazement|amazingly|ambassador|ambiguity|ambiguous|ammonia|amongst|ample|amplifier|amplify|amuse|analogy|analyst|anchor|anchorage|anchorman|anchorperson|anguish|animate|anonymous|antiaircraft|antibacterial|anticancer|anticipate|anticipation|antipollution|antistatic|antivirus|apostrophe|applicant|appreciative|appropriately|approximate|arch|archaeologist|archeologist|arctic|arena|aristocracy|armful|arouse|arrogant|artery|articulate|artificially|artistry|ash|aspiration|aspire|assault|assemble|assembly|assert|assess|assessment|assumption|assurance|assure|astonish|astonished|astonishing|astonishment|astronomy|athletics|attached|attainable|attainment|attendance|attentive|attentively|attractiveness|attribute|atypical|aubergine|audit|audition|authorise|authoritative|authorize|availability|await|awe|ax|axe|axis|backup|backward|backwards|backyard|bad-tempered|badge|balanced|balky|ballad|ballet|ballot|ban|banker|bankrupt|bankruptcy|barbershop|barley|barn|barometer|barren|barrier|bartender|bathhouse|battlefield|beagle|beak|beam|bearing|beautify|bellow|belongings|beneficial|benevolence|benevolent|berry|bestow|bestseller|betray|bewilder|bewilderment|bid|bidding|bikini|billion|bind|bio|biological|biotechnology|birdcage|birthplace|bitterly|bizarre|blade|blast|blaze|blindly|blindness|blink|bloodstream|bloody|blooming|blossom|blur|blurt|boiling|bolt|bombard|bomber|bombing|bony|bookish|booklet|bookmark|boost|booth|bossy|botany|bothered|bothersome|bourbon|boxer|bracket|brag|bravery|breakable|breakdown|breakup|breathtaking|breezy|brewery|brilliantly|broadband|broadcaster|broaden|broadly|brochure|brother-in-law|browse|browser|bruise|bud|bulimia|bully|bum|bumper|bun|burdensome|bureaucracy|burglary|burgle|burial|bustle|bustling|buzz|cabinet|cable|calmly|campaign|candidate|cane|cannonball|canon|capability|caption|captive|caravan|carbon|carbon dioxide|carbon footprint|carbon monoxide|cardboard|cardigan|carefree|caring|carnival|carpool|carve|cascade|cast|casually|catalog|catalogue|catalyst|catastrophe|catastrophic|catchy|categorisation|categorization|catering|cathedral|cease|ceiling|cellar|cellist|cello|cemetery|centigrade|certificate|certification|certify|chancellor|chaotic|charming|cheat|checkpoint|cheeky|cheerfully|cheerfulness|chemotherapy|cherished|cherry|chew|childish|chimney|chip|chop|chunk|circuit|circuitry|circumstance|citywide|clam|clap|clarify|classification|clause|clearness|clerical|client|climate change|clog|closure|clothing|clumsy|coaching|coalition|coarse|coastline|cocktail|cocoa|coconut|coherence|coherent|coincide|coincidence|colleague|collector|collocation|colon|colonial|coma|comfortably|commander|commemorate|commerce|commission|commonwealth|communicative|community|commute|compassion|compassionate|compatible|compensate|compensation|competence|competent|compile|completion|complexion|complexity|component|comprehension|comprehensive|compress|compression|compulsory|compute|conceal|concede|conceit|conceivable|conceive|conception|concerning|concession|concrete|condemn|conductor|cone|conference|conferencing|confess|confession|confidently|confine|confront|conjunction|conquest|conscience|consciousness|consensus|consent|considerably|considering|consistent|consolation|console|constant|consult|consultant|contaminate|contemporary|contempt|contract|contradict|contradiction|contradictory|controversy|conveniently|convention|conventional|converse|conversely|conversion|convert|convinced|cooperate|cooperation|cooperative|cope|copper|coral|core|cornerstone|cornet|corona|corporal|corporate|corporation|correctness|correspond|correspondence|correspondent|corresponding|corridor|corrupt|corruption|cosiness|costly|costume|cosy|cottage|countryman|countrywide|courtesy|coward|cowardly|coziness|cozy|crab|crack|craftsman|crater|crawl|crease|creation|creatively|creek|creepy|crew|cripple|critically|criticism|crocodile|crossly|crucial|cruelly|cruelty|crystallise|crystallize|cube|cubism|cuff|culmination|culturally|curl|cursor|cyberaddict|cybercafe|cybercaf\xE9|cybercrime|cyberpet|cyberschool|cyberspace|cyclist|daft|damn|dandelion|darling|dash|data|database|dated|daughter-in-law|dawn|daytime|de facto|dearly|debit|debit card|decade|decay|deceive|decent|deceptive|decisive|deck|decomposition|decorate|decoration|decorative|dedication|deduce|deduction|deem|deer|deficit|deforestation|defy|dehumanise|dehumanize|delegate|deliberate|deliberately|delicacy|delicately|demanding|demolish|denim|dense|densely|dental|dependable|deputy|descend|descriptive|desirable|desktop|desolation|desperately|desperation|despise|destiny|detach|detachment|detailed|detect|determined|determiner|developing|devil|devote|devoted|diarrhea|diarrhoea|dictator|digest|dignify|dignity|dilemma|dim|dime|dimension|dip|diphtheria|diploma|diplomat|disappearance|disapproval|disapprove|discharge|disciple|discipline|disconnect|discredit|discriminate|disgrace|disguise|dishonesty|disillusion|dismiss|disorder|disorderly|disorganised|disorganized|dispensable|displace|displeasure|disposal|disposition|dispute|disqualify|disregard|disrupt|dissatisfaction|dissatisfied|dissident|distinguished|distortion|distract|distraction|distressing|distributor|diversion|divert|divided|division|divorce|dna|dock|domestic|dominate|donate|donation|donkey|doom|doorkeeper|doorway|dorm|dormitory|dose|doubly|doubtful|dove|downfall|downsize|dowry|draft|drain|dramatically|drapery|draught|dread|dreadful|dreamy|drinkable|droop|dropout|drought|duel|dumb|duplicate|duplication|dwarf|dye|dynamic|eagerly|eagle|earnings|ease|eastward|ecologically|ecologist|economical|economist|ecstatic|edit|editorial|educated|educator|effectively|effectiveness|elect|elective|electrician|electronically|electronics|elegance|elegant|elegantly|elemental|eligible|elite|eloquence|eloquent|embassy|embrace|emergence|emphatically|employ|employee|employer|endeavor|endeavour|endlessly|endorse|endurance|enduring|energy|enforce|engagement|engulf|enhance|enquire|enrol|enroll|enterprise|entertaining|enthusiastically|entitle|entrepreneur|environment|environmentally|environmentally friendly|equation|equip|equity|erect|erupt|eruption|essayist|essentially|estate|estimated|eternally|ethic|ethnic|evacuate|evacuation|evaluate|evaluation|everlasting|evidently|evil|evolution|evolve|exactness|exaggerate|exaggeration|exalt|examinee|exceed|excel|exception|exceptional|exceptionally|excessive|exclaim|exclamation mark|exclude|exclusion|exclusively|excursion|execute|execution|executive|exhaust|exhausting|exhaustion|exhibit|exile|existing|exotic|expansion|expectation|expected|expedition|explode|exploit|explorer|explosive|export|expressive|exquisite|extension|extensive|external|extract|extraordinarily|exultant|eyebrow|eyelash|eyelid|fabric|fabulous|facilitate|facilities|factor|faculty|faith|falter|fame|familiarise|familiarize|fantastically|fascinated|fascination|fatal|fate|father-in-law|faulty|fearsome|feat|fed up|federal|feedback|ferryboat|fiber|fibre|fictional|fierce|fighting|figurative|filial|financially|finely|fingernail|fire brigade|firearm|fireplace|firmness|first language|first person|firstly|fiscal|fixed|flame|flap|flaw|flawless|flax|flee|fleet|flesh|flexibility|flexible|flexibly|flip|fluency|fluid|flutter|follower|folly|fondly|foolishly|footnote|forcefully|foreman|foresee|forestry|formation|formerly|formidable|forthcoming|foul|found|fox|fragrance|frankly|frantically|fraud|freak|friendly|frigate|frontier|frugal|fulfil|fulfill|fume|functional|functionality|fundamental|funk|funky|furious|furiously|furor|furore|gaiety|gambling|gang|gangster|gardener|gasp|gateway|gaudy|gaze|gear|generalisation|generalise|generalization|generalize|generosity|generously|genius|genre|gently|genuine|genuinely|geographic|germ|getaway|ghetto|giveaway|glacis|glamorous|glamourous|glare|gleam|glee|global warming|globally|glocal|gloomy|glorify|glow|goat|god|godly|goodwill|gook|gorge|governmental|gracefulness|gradual|grain|grand|graphically|grasp|gravestone|gravitation|greatness|grief|grieve|grim|grin|grip|gross|growing|grown-up|guerrilla|guideline|gulp|gum|gunshot|guts|gymnastic|habitant|hail|hairy|handicap|handicraft|handout|handrail|hard drive|hardware|harmless|harrow|haste|hastily|hatching|haunting|hay|hazardous|headquarters|health care|heap|heart-warming|heartbreaking|heartwarming|hedge|helicopter|hell|helper|hemp|herb|heritage|hesitation|hi-tech|high-tech|hijack|hilarious|hint|holder|hollow|holocaust|homeward|hone|honorable|honourable|hood|hook|hospice|hospitable|hospitalise|hospitality|hospitalize|hourly|housekeeper|housemaster|housewife|hover|hugely|human rights|humane|humanise|humanist|humanize|humble|humbug|humiliate|humiliating|humiliation|hunting|hush|hybrid|hygiene|hyperbole|hyphen|iceman|icon|icy|ideally|identical|identification|identify|ideology|idiot|idle|idolise|idolize|ignorance|ignorant|illustrate|illustration|imagery|imitation|immerse|immigrant|immoral|immortal|immortality|impartial|impatiently|imperative|impermanent|implement|implication|imply|impolite|impolitely|import|impose|impossibility|impractical|impressed|impressionism|impressionist|imprison|imprisonment|improbable|improperly|improved|impulse|impulsive|inaccurate|inadequate|inanimate|inborn|incense|incentive|incur|incurable|indebted|indent|independently|indescribable|index|indifferent|indignity|indispensable|indulge|indulgent|industrialise|industrialize|ineffective|inert|inexperienced|infant|infect|infected|infectious|infer|inference|inflammation|inflammatory|inflate|inflation|influential|influenza|informal|infringe|infringement|inhabit|inherit|initiative|injection|injured|innate|innocently|innovation|innovative|input|inquire|inseparable|inspect|inspector|inspirational|instantly|instil|instill|instinct|institution|instruct|insufficient|insult|integrate|intellectual|intent|interactive|interfere|interior|interpersonal|interpret|interpretation|interpreter|interruption|intersection|intimate|intransitive|intravenous|intrude|intruder|intrusion|invariable|invariably|inventor|inverted commas|investigate|investigator|investment|investor|invisible|invitingly|invoke|involvement|ironically|irrational|irresistible|irresistibly|irresponsible|irritated|irritating|irritation|islander|italicise|italicize|itch|jaw|jealously|jeopardise|jeopardize|jeweler|jeweller|journalism|judo|junk food|juror|jury|justify|kangaroo|karaoke|keen|keeper|kerosene|keystroke|kneel|knot|knowingly|known|label|laborer|labourer|lame|lance|landing|landlady|landslide|lap|laptop|lark|laser|last minute|last-minute|lastly|laundry|lava|lawmaker|lawn|lawsuit|layabout|leaflet|leak|learning|lease|leash|lecturer|leek|legend|legendary|legislate|legislation|legislative|legislator|legislature|legitimate|leisurely|lengthen|lengthy|leopard|lest|liberal|lick|lid|lifeless|lifetime|lighten|lighting|likewise|limb|linen|liner|ling|linger|listener|literal|literally|litter|loan|lobby|loneliness|long-distance|long-term|loosely|lousy|lower|lowland|lucrative|lush|luxurious|lyrics|madam|madame|madness|maestro|magnify|malady|malaria|mama|mamma|mango|manipulate|mansion|manual|manufacture|manufacturer|manufacturing|marathon|margin|marketing|martial art|mask|massacre|massage|masseur|master|masterpiece|mastery|mate|mathematical|mature|mausoleum|means|mechanise|mechanize|media|mediaeval|medication|medieval|mediocre|melody|memorial|mentor|merchandise|mercy|merge|merger|messenger|metaphor|metric|micro|microbe|microcomputer|micrometer|micrometre|microorganism|microphone|microscope|microscopic|microscopy|microwave|midst|mighty|migration|mill|millimeter|millimetre|millionaire|mimic|miniature|minister|mint|misconception|misfortune|misleading|missile|mist|mistreat|mistrustful|misunderstand|mixture|mobility|mock|modernisation|modernise|modernization|modernize|modest|modification|mogul|mold|momentarily|momentary|monastery|moody|moonlight|moonscape|morality|morally|mortal|mortar|mortgage|mortify|mother-in-law|motion|motivated|motorbike|motorist|mould|mournful|moustache|mover|moving|muddy|multiple|multiply|mumble|murmur|muse|mustache|mutability|mutable|mutter|mutton|mystify|nano|narcissistic|narrator|narrowly|nationwide|native speaker|naughty|naval|navigate|navigation|navy|neat|necessarily|necessity|needless|needy|negatively|neglect|neighboring|neighbouring|neither|nerve|nerves|nervously|net surfer|netsurfer|neurosis|newscaster|newsworthy|nicely|nightclub|nightmare|nobility|noble|nobleman|nomad|nomination|nominee|non-smoking|nonprofessional|northward|nostril|nought|nourish|nourishment|novelty|nuisance|numerical|nursery|nut|nutshell|oath|obedience|obedient|obey|obituary|obligation|observer|obsess|obsession|obsessive|odd|offence|offend|offender|offense|offhand|offshore|ointment|olive|olympia|olympiad|openly|operator|opponent|optimism|optimist|optimistic|optional|orator|orchestral|orchid|organiser|organizer|originality|originally|originate|ornament|ounce|outback|outbreak|outcome|outdistance|outdo|outfit|outgrow|outing|outlet|outlive|outlook|outpatient|output|outrage|outrageous|outshine|outsider|outskirts|outwardly|oval|overall|overboard|overbook|overcoat|overemphasise|overemphasize|overestimate|overhear|overlap|overlook|overly|overshadow|oversize|overstep|overtake|overthrow|overtime|overturn|ow|owing to|owl|ox|ozone|pa|packed|packet|pad|paintbrush|pajamas|pallet|pancake|pandemic|panel|papaya|paperless|paperwork|parade|paradox|paralysis|paramedic|paratrooper|parliament|participation|particle|particular|partisan|partnership|passionate|passionately|pastor|pastoral|patch|patiently|patriot|patriotic|patriotism|patron|pave|pavement|paw|pawnbroker|pawnshop|payment|peacefully|peach|peak|pearl|pebble|pedal|pedantic|pedestrian|pee|peel|peep|peer|peg|penalise|penalize|penalty|penetrate|penguin|penicillin|pension|pentagon|perceive|percentage|perception|permanence|permeate|perseverance|persist|persistence|persistent|personification|personify|personnel|perspective|perspiration|persuasion|pessimist|pessimistic|petrified|petty|ph|pharmacist|phase|philosophical|physician|pi|pickle|picky|picturesque|pillowcase|pine|pint|piracy|pirate|pitch|plague|planning|playmate|playwright|plead|plot|pluck|plum|plumber|pneumonia|point of view|pointless|polar bear|polio|polish|politeness|politically|polity|polo|ponder|popularise|popularity|popularize|porch|portion|pose|posh|possessed|postal|postpone|potent|potentially|powerfully|practicality|practically|prance|prawn|precede|precisely|predicament|predicate|predicative|predictable|predictive|predictor|prefect|preferable|preferably|prehistoric|prehuman|preindustrial|prejudge|preliminary|preoccupy|prescribe|presenter|presidency|presidential|prestige|prestigious|presumably|prevail|prevention|preventive|previously|priceless|prick|primary|prime|prime minister|prior|priority|privately|privilege|probable|probe|procedure|profile|profit|profitable|programmer|programming|prohibit|project|projection|prom|prominence|prompt|promptly|proponent|proposed|prose|prosecute|prospect|prosper|proudly|proven|province|provision|proximity|psychologically|psychology|publication|publicise|publicity|publicize|pudding|pulse|pumpkin|punch|punctual|punctuality|purchase|purposeful|pursuit|puzzled|pyjamas|qualification|quantify|quarantine|quarrel|quarrelsome|queer|query|quotable|quotation|quote|racism|racist|rack|radar|radiate|radical|radically|radium|rafter|rag|rainbow|rainstorm|rally|ram|ramp|ranger|rape|rash|rattle|ravage|reaction|readily|real estate|realisation|realization|rear|reasonably|rebel|rebellious|recession|recipe|reckon|recognition|recollect|recollection|recommendable|recommendation|reconsider|recreation|recruit|rectangular|redo|redundant|reed|reference|referent|refinery|reflective|reform|refrain|refresh|refuge|refugee|refute|regardless|reggae|regime|regrettably|regulate|rehearsal|reinforce|reinforcement|rejection|rejoin|related|relativity|relaxation|relay|relevant|relic|relief|relieve|relieved|reluctant|remaining|remains|remarkably|reminder|rental|reorganise|reorganize|repaint|repertoire|repetition|replacement|replica|repress|repression|reprint|reprove|residence|resign|resignation|resistance|resolution|resonant|respectably|respected|respiration|respiratory|restriction|resume|retailer|retard|retina|retirement|retreat|retrieve|revelation|revenge|revenue|reverence|reverse|revival|revive|revolution|revolutionary|revolutionise|revolutionize|revolve|rhinoceros|rhyme|rhythmic|rib|rider|ridge|righteousness|rightly|rim|rip|risky|rite|ritual|rival|roam|roar|rocket|rocky|roommate|rosy|route|royalty|rub|rubble|rug|ruinous|rural|rush hour|rusty|sack|sag|sage|sail|salary|salesmanship|salesperson|saleswoman|salon|salsa|salty|sandstone|sanitary|sanitation|satisfactory|saving|savings|scandal|scar|scarcely|scarlet|scent|scheduled|scheme|scholasticism|schoolgirl|scientifically|scooter|scramble|scribble|scrooge|scuba|scythe|seal|seasonal|second person|secondary|secondly|sector|seesaw|segment|seldom|self-confidence|self-confident|selfless|seller|semi-final|semicolon|seminar|senator|sensible|sensitive|separately|serene|serial|servant|setback|sexism|sexual|sexy|shabby|shaken|shakespearean|shaky|sharply|shatter|shed|shield|shipping|shipwreck|shooting|shopkeeper|shoplift|shoplifter|shoplifting|short-term|shortness|showbiz|showcase|shrink|shrug|significantly|signify|silverware|simplification|simultaneous|sincere|sincerity|sister-in-law|skateboard|skateboarder|sketch|skilful|skilfully|skilled|skillful|skillfully|skim|skip|skylark|skyward|slam|slang|slap|slash|slaughter|sliver|sloppy|smash|smokestack|snap|sneak|sneer|sniff|snore|snowball|so-called|soak|soaked|soaking|soar|sob|sociable|socialise|socialize|softness|solar|solidity|soliloquy|solo|solvent|somewhat|son-in-law|sonnet|sophisticated|soundtrack|southward|soviet|soybean|spa|span|spare|sparerib|spark|sparkling|sparrow|specialty|species|specifically|specify|spectacle|speeder|spellbound|spin|spite|splatter|spokesman|spokeswoman|spray|spreadsheet|sprint|spur|squad|squash|squeeze|stab|stability|stack|stagger|stain|stake|stammer|standby|standstill|stanza|startle|starvation|starve|starving|statesman|statewide|statistics|steely|steer|steering wheel|stepfather|stepmother|stereotype|stern|stew|stiff|stimulant|stimulate|stimulation|stingy|stink|stitch|stock|stock market|stockpile|stonework|stool|stopover|stopwatch|straighten|straightforward|strait|strand|strangle|strictly|stride|striking|strive|stroke|stubbornly|stylist|subcontinent|subculture|subdivision|subjunctive|submit|subplot|subside|substance|subtitle|subtle|subtract|suburb|successive|suck|sue|suffering|sufficiently|suitably|sulfur|sulphur|sunbeam|superb|superintendent|supernatural|supervise|supervision|supervisor|supplement|supplier|suppress|surge|surrender|surroundings|surveillance|suspend|suspicious|suspiciously|sustain|swan|sweep|swift|swing|syllable|symbolic|sympathetic|sympathise|sympathize|synonym|tablecloth|tabloid|tack|tackle|tactile|tag|tail|tame|tan|tanned|tatter|tattoo|taunt|teaspoon|technical|technically|telescope|temperate|temporarily|temptation|tender|tenderly|tenderness|terrace|terrifying|territory|testify|testimony|theme|theorist|therapist|therapy|thereafter|thermometer|thesis|thickly|thickness|thigh|thinker|third person|thirdly|thoroughly|thoughtful|thoughtless|thread|threaten|thrill|thrilled|thrilling|throat|tickle|tightrope|timeless|timeliness|times|timing|tiptoe|tiredness|tiresome|toenail|toil|tolerant|tolerate|toll|tomb|ton|torch|tortoiseshell|torture|tough|toxic|trader|trailer|trainee|trainer|trait|traitor|tramp|trample|transcript|transfusion|transient|transistor|transition|transitive|translation|translator|transmission|transmit|transparent|traverse|tray|tread|treaty|trek|tremendously|tremor|trial|triangle|tribe|tricky|trio|trivial|trolley|troop|trophy|tropic|troublesome|trunk|trusty|truthful|truthfulness|tub|tuberculosis|tug|tuition|tulip|tumor|tumour|tunnel|turbulent|tutor|twinkle|twisted|typhoid|tyranny|tyrant|ultimate|ultimately|unacceptable|unashamedly|unattractive|unauthorised|unauthorized|unavailable|unaware|unbearable|unbeatable|unchanged|uncharacteristic|unclearly|uncomfortably|uncommon|unconcerned|unconscious|underestimate|undergraduate|underground|undersea|understandable|understanding|undertake|underwear|undoubtedly|undreamed|undressed|unease|uneasily|unenthusiastic|uneven|unfamiliar|unfashionable|unforeseen|ungodly|unhappiness|unhelpful|unimaginable|unimaginably|united|universal|unjustly|unkind|unlimited|unload|unlock|unmistakable|unmistakably|unnatural|unofficial|unpopular|unrealistic|unreasonable|unreliable|unrest|unsafe|unsatisfactory|unselfish|unstoppable|unsuccessful|unsuitable|unsure|untalented|unthinkably|untie|unto|untreated|untrimmed|unusualness|unwilling|unwise|unworldly|upbringing|upgrade|upright|upside down|urban|urgently|user|usher|utilise|utility|utilize|utter|utterly|vacant|vaccine|valentine|valid|vanish|vanity|variation|varied|venture|venue|verbal|verbally|verse|version|versus|veteran|vibrate|vibration|viewer|vigor|vigorous|vigorously|vigour|villa|villager|vinegar|violate|virtual reality|virtually|virtue|visibly|vital|vitamin|vocalist|vomit|voter|vow|wage|waist|waistcoat|walkabout|walker|wallboard|walnut|warship|wartime|wasp|waterproof|weaken|weakly|wealthy|wearisome|weary|weave|wed|weed|welfare|well-balanced|well-built|well-organised|well-organized|well-paid|western|wheat|whereas|whip|whiskey|whisky|widen|widow|width|wilderness|willing|willingly|winding|windshield|wink|wipe|wit|withdraw|withdrawal|witty|wolf|wondrous|woodcarving|wordlessly|workaholic|workbench|workman|worktable|worldly|worldview|worm|worn out|worn-out|wornout|worrying|worsen|worship|worthless|wreck|wrongly|x-ray|yacht|yawn|yearn|yield|youthful|yummy|zebra|zip|zoom"
+};
 
-// src/ui/blocks/dashboardDiary.ts
-var import_obsidian27 = require("obsidian");
-function renderDiaryCard(plugin, el, ctx) {
-  const card = el.createDiv({ cls: "vt-dash-diary" });
-  const child = new import_obsidian27.MarkdownRenderChild(card);
-  ctx.addChild(child);
-  let alive = true;
-  child.register(() => alive = false);
-  const draw = async () => {
-    const svc = plugin.diary;
-    const latest = await svc.latest();
-    if (!alive) return;
-    card.empty();
-    card.createDiv({ cls: "vt-dash-diary-title", text: t("dashboard.diary.title") });
-    const status = svc.status();
-    if (latest) {
-      const link = card.createEl("a", { cls: "vt-dash-diary-link", text: latest.day });
-      link.onclick = (ev) => {
-        ev.preventDefault();
-        void plugin.app.workspace.openLinkText(latest.path, "", false);
-      };
-      for (const l4 of latest.lines) card.createDiv({ cls: "vt-dash-diary-line", text: l4 });
-    } else {
-      card.createDiv({ cls: "vt-dash-diary-line", text: t("dashboard.diary.none") });
-    }
-    const reason = status === "no-ai" ? "dashboard.diary.reason.noAi" : status === "off" ? "dashboard.diary.reason.off" : status === "failed" ? "dashboard.diary.reason.failed" : null;
-    if (reason) card.createDiv({ cls: "vt-dash-diary-reason", text: t(reason) });
-    const today = svc.today();
-    const wroteToday = plugin.app.vault.getAbstractFileByPath(svc.pathOf(today)) !== null;
-    const writing = status === "writing";
-    const btn = card.createEl("button", {
-      cls: "vt-dash-diary-btn",
-      text: t(writing ? "dashboard.diary.writing" : wroteToday ? "dashboard.diary.rewrite" : "dashboard.diary.write")
-    });
-    btn.disabled = writing;
-    btn.onclick = () => {
-      void svc.write(today, { overwrite: wroteToday }).then((r) => {
-        if (r === "written") new import_obsidian27.Notice(t("dashboard.diary.written", { day: today }));
-      });
-    };
-  };
-  void draw();
-  child.register(plugin.diary.onChange(() => void draw()));
+// src/core/wordlists/cefr.ts
+var CEFR_TIERS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+var isCefrTier = (v) => typeof v === "string" && CEFR_TIERS.includes(v);
+var listed = null;
+function table() {
+  if (listed) return listed;
+  const m2 = /* @__PURE__ */ new Map();
+  for (const level of ["A1", "A2", "B1", "B2"]) {
+    for (const w2 of CEFRJ_WORDS[level].split("|")) if (w2 && !m2.has(w2)) m2.set(w2, level);
+  }
+  listed = m2;
+  return m2;
+}
+function cefrOf(word, extra) {
+  var _a;
+  const w2 = word.trim().toLowerCase();
+  if (!w2) return void 0;
+  const t2 = table();
+  const hit = t2.get(w2);
+  if (hit) return hit;
+  const forms = lemmaCandidates(w2);
+  for (const f of forms) {
+    const h = t2.get(f);
+    if (h) return h;
+  }
+  if (extra) return (_a = extra.get(w2)) != null ? _a : forms.map((f) => extra.get(f)).find((x3) => x3 !== void 0);
+  return void 0;
 }
 
-// src/ui/blocks/dashboardReport.ts
-var import_obsidian28 = require("obsidian");
+// src/core/model/learner.ts
+var TRACKS = ["grammar", "poly", "vocab", "mix", "para"];
+var FOCUS_KINDS = ["grammar-objective", "sense", "word", "paragraph"];
+var LEARN_RESULTS = ["correct", "wrong", "skipped", "hinted", "retired"];
+var READING_KINDS = ["word", "paragraph", "add"];
+var DIARY_PICK_KINDS = ["quote", "place"];
+var ASK_SURFACES = ["word", "paragraph", "trivia", "morpheme", "grammar", "buddy", "other"];
+var ASK_TEXT_MAX = 80;
 
 // src/core/learner/reading.ts
 var READING_KEEP_DAYS = 90;
@@ -16166,6 +16173,632 @@ function mergeReading(local, remote) {
   }
   return [...map.values()];
 }
+
+// src/core/learner/weakness.ts
+var DAY_MS = 864e5;
+var HALF_LIFE_DAYS = 14;
+var CORRECT_RELIEF = 0.5;
+function weakFocuses(events, opts) {
+  var _a, _b, _c;
+  const nowMs = opts.now.getTime();
+  const since = nowMs - ((_a = opts.days) != null ? _a : 30) * DAY_MS;
+  const limit = (_b = opts.limit) != null ? _b : 8;
+  const inWindow = events.filter((e) => {
+    if (e.result !== "correct" && e.result !== "wrong") return false;
+    if (opts.track && e.track !== opts.track) return false;
+    if (opts.scope && !opts.scope.has(e.focus.id)) return false;
+    const t2 = Date.parse(e.at);
+    return !Number.isNaN(t2) && t2 >= since;
+  }).sort((a2, b) => Date.parse(a2.at) - Date.parse(b.at));
+  const byFocus = /* @__PURE__ */ new Map();
+  for (const e of inWindow) {
+    const key6 = `${e.focus.kind}:${e.focus.id}`;
+    let acc = byFocus.get(key6);
+    if (!acc) {
+      acc = { focus: e.focus, track: e.track, score: 0, wrong: 0, lastWrongAt: "", correctSince: 0, given: /* @__PURE__ */ new Map() };
+      byFocus.set(key6, acc);
+    }
+    if (e.result === "wrong") {
+      const days = Math.max(0, (nowMs - Date.parse(e.at)) / DAY_MS);
+      acc.score += Math.exp(-days / HALF_LIFE_DAYS);
+      acc.wrong++;
+      acc.lastWrongAt = e.at;
+      acc.track = e.track;
+      acc.correctSince = 0;
+      if (e.given) acc.given.set(e.given, ((_c = acc.given.get(e.given)) != null ? _c : 0) + 1);
+    } else {
+      acc.correctSince++;
+    }
+  }
+  const out = [];
+  for (const acc of byFocus.values()) {
+    if (acc.wrong === 0) continue;
+    const score2 = acc.score - CORRECT_RELIEF * acc.correctSince;
+    if (score2 <= 0) continue;
+    let common;
+    let best = 1;
+    for (const [g, n] of acc.given) {
+      if (n > best) {
+        best = n;
+        common = g;
+      }
+    }
+    const w2 = {
+      focus: acc.focus,
+      track: acc.track,
+      wrong: acc.wrong,
+      lastWrongAt: acc.lastWrongAt,
+      score: score2
+    };
+    if (common !== void 0) w2.commonGiven = common;
+    out.push(w2);
+  }
+  out.sort((a2, b) => b.score - a2.score || (a2.lastWrongAt < b.lastWrongAt ? 1 : a2.lastWrongAt > b.lastWrongAt ? -1 : 0));
+  return out.slice(0, limit).map(({ score: _s, ...w2 }) => w2);
+}
+function mmdd(iso) {
+  const d = new Date(iso);
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+function weaknessDigest(weak, label) {
+  return weak.map((w2) => {
+    const head = `${label ? label(w2.focus) : w2.focus.id}\uFF5C\u932F ${w2.wrong} \u6B21\uFF08\u6700\u8FD1 ${mmdd(w2.lastWrongAt)}\uFF09`;
+    return w2.commonGiven ? `${head}\uFF5C\u5E38\u9078\u6210 ${w2.commonGiven}` : head;
+  }).join("\n");
+}
+
+// src/core/learner/report.ts
+var GRAMMAR_MIN_N = 20;
+var GRAMMAR_UP = 0.85;
+var GRAMMAR_DOWN = 0.6;
+var PARA_MIN_N = 5;
+var PARA_TRANSLATE_DOWN = 0.6;
+var PARA_REFINE_UP = 0.7;
+var VOCAB_LOW = 0.7;
+var VOCAB_REPEATED_MIN = 3;
+var VOCAB_HIGH = 0.9;
+var VOCAB_HIGH_MIN_REVIEWS = 30;
+var pct = (r) => `${Math.round(r * 100)}%`;
+var inRange = (day, p) => day >= p.from && day <= p.to;
+var dayOfIso = (at) => {
+  const t2 = Date.parse(at);
+  return Number.isNaN(t2) ? null : localDayOf(new Date(t2));
+};
+function dayOfField(s) {
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  return dayOfIso(s);
+}
+var atIn = (xs, p) => xs.filter((x3) => {
+  const d = dayOfIso(x3.at);
+  return d !== null && inRange(d, p);
+});
+function ranked(m2, limit) {
+  const out = [...m2].map(([key6, count2]) => ({ key: key6, count: count2 }));
+  out.sort((a2, b) => b.count - a2.count || (a2.key < b.key ? -1 : a2.key > b.key ? 1 : 0));
+  return limit === void 0 ? out : out.slice(0, limit);
+}
+var bump = (m2, k, n = 1) => {
+  var _a;
+  return m2.set(k, ((_a = m2.get(k)) != null ? _a : 0) + n);
+};
+function activityOf(input, p) {
+  const days = /* @__PURE__ */ new Set();
+  for (const a2 of atIn(input.asks, p)) days.add(dayOfIso(a2.at));
+  for (const e of atIn(input.events, p)) days.add(dayOfIso(e.at));
+  for (const r of atIn(input.reviews, p)) days.add(dayOfIso(r.at));
+  for (const w2 of input.wordTouches) if (inRange(w2.day, p)) days.add(w2.day);
+  const reading = input.reading.filter((r) => inRange(r.day, p));
+  for (const r of reading) days.add(r.day);
+  return {
+    activeDays: days.size,
+    articles: new Set(reading.map((r) => r.path)).size,
+    sections: reading.length
+  };
+}
+function aiOf(input, p, prev) {
+  const asks = atIn(input.asks, p).filter((a2) => a2.ok);
+  const byTask = /* @__PURE__ */ new Map();
+  const bySurface = /* @__PURE__ */ new Map();
+  const byEntry = /* @__PURE__ */ new Map();
+  const byPath = /* @__PURE__ */ new Map();
+  let custom = 0;
+  for (const a2 of asks) {
+    bump(byTask, a2.taskId);
+    bump(bySurface, a2.surface);
+    if (a2.custom) custom++;
+    if (a2.entryId) bump(byEntry, a2.entryId);
+    if (a2.path) bump(byPath, a2.path);
+  }
+  const wordOf = new Map(input.vocab.map((v) => [v.id, v.word]));
+  const topWords = [];
+  for (const { key: key6, count: count2 } of ranked(byEntry)) {
+    const word = wordOf.get(key6);
+    if (!word) continue;
+    topWords.push({ entryId: key6, word, count: count2 });
+    if (topWords.length === 5) break;
+  }
+  return {
+    total: asks.length,
+    byTask: ranked(byTask),
+    bySurface: ranked(bySurface),
+    custom,
+    prevTotal: prev ? atIn(input.asks, prev).filter((a2) => a2.ok).length : null,
+    topWords,
+    topPaths: ranked(byPath, 3)
+  };
+}
+function touchesOf(input, p) {
+  const m2 = /* @__PURE__ */ new Map();
+  for (const t2 of input.wordTouches) {
+    if (!inRange(t2.day, p)) continue;
+    let a2 = m2.get(t2.word);
+    if (!a2) {
+      a2 = { word: t2.word, days: /* @__PURE__ */ new Set(), lookups: 0, pronounce: 0, saved: false };
+      m2.set(t2.word, a2);
+    }
+    if (t2.lookup > 0) a2.days.add(t2.day);
+    a2.lookups += t2.lookup;
+    a2.pronounce += t2.pronounce;
+    if (t2.saved && t2.lookup > 0) a2.saved = true;
+  }
+  return m2;
+}
+var byWord = (a2, b) => a2.word < b.word ? -1 : a2.word > b.word ? 1 : 0;
+function wordsOf(touches) {
+  const all = [...touches.values()];
+  return {
+    lookups: all.reduce((s, a2) => s + a2.lookups, 0),
+    repeated: all.filter((a2) => a2.days.size >= 2).map((a2) => ({ word: a2.word, days: a2.days.size, lookups: a2.lookups })).sort((a2, b) => b.days - a2.days || b.lookups - a2.lookups || byWord(a2, b)).slice(0, 10),
+    savedStillLooked: all.filter((a2) => a2.saved && a2.lookups > 0).map((a2) => ({ word: a2.word, lookups: a2.lookups })).sort((a2, b) => b.lookups - a2.lookups || byWord(a2, b)).slice(0, 10),
+    mostPronounced: all.filter((a2) => a2.pronounce > 0).map((a2) => ({ word: a2.word, pronounce: a2.pronounce })).sort((a2, b) => b.pronounce - a2.pronounce || byWord(a2, b)).slice(0, 5)
+  };
+}
+var recallOf = (rs) => rs.length === 0 ? null : rs.filter((r) => r.rating >= Rating.Good).length / rs.length;
+function newSavedOf(vocab, p) {
+  return vocab.filter((v) => {
+    var _a;
+    if (v.deletedAt || v.liked !== true) return false;
+    const d = (_a = dayOfField(v.added)) != null ? _a : dayOfField(v.createdAt);
+    return d !== null && inRange(d, p);
+  });
+}
+function vocabOf(input, p, prev) {
+  const rs = atIn(input.reviews, p);
+  const avg = rs.length === 0 ? null : Math.round(rs.reduce((s, r) => s + r.elapsedMs, 0) / rs.length / 1e3 * 10) / 10;
+  return {
+    newSaved: newSavedOf(input.vocab, p).length,
+    reviews: rs.length,
+    recallRate: recallOf(rs),
+    avgSeconds: avg,
+    prevRecallRate: prev ? recallOf(atIn(input.reviews, prev)) : null
+  };
+}
+function rateByTrack(events) {
+  var _a;
+  const m2 = /* @__PURE__ */ new Map();
+  for (const e of events) {
+    if (e.result !== "correct" && e.result !== "wrong") continue;
+    const a2 = (_a = m2.get(e.track)) != null ? _a : { total: 0, correct: 0 };
+    a2.total++;
+    if (e.result === "correct") a2.correct++;
+    m2.set(e.track, a2);
+  }
+  return m2;
+}
+function endOfDay(day) {
+  const [y3, m2, d] = day.split("-").map(Number);
+  return new Date(y3, m2 - 1, d, 23, 59, 59);
+}
+function practiceOf(input, p, prev) {
+  const cur = rateByTrack(atIn(input.events, p));
+  const old = prev ? rateByTrack(atIn(input.events, prev)) : /* @__PURE__ */ new Map();
+  const tracks = [];
+  for (const t2 of TRACKS) {
+    const a2 = cur.get(t2);
+    if (!a2) continue;
+    const o = old.get(t2);
+    tracks.push({ track: t2, total: a2.total, correct: a2.correct, rate: a2.correct / a2.total, prevRate: o ? o.correct / o.total : null });
+  }
+  return { tracks, weak: weakFocuses(input.events, { now: endOfDay(p.to), limit: 5 }) };
+}
+var BANDS = [
+  [1, 3],
+  [4, 6],
+  [7, 9]
+];
+function grammarOf(input, p) {
+  const bands = BANDS.map(([min, max]) => ({ label: `${min}\u2013${max}`, min, max, total: 0, correct: 0, rate: null }));
+  for (const e of atIn(input.events, p)) {
+    if (e.track !== "grammar" || e.focus.kind !== "grammar-objective") continue;
+    if (e.result !== "correct" && e.result !== "wrong") continue;
+    const topic = topicById(e.focus.id.split("/")[0]);
+    if (!topic) continue;
+    const band = bands.find((b) => topic.difficulty >= b.min && topic.difficulty <= b.max);
+    if (!band) continue;
+    band.total++;
+    if (e.result === "correct") band.correct++;
+  }
+  for (const b of bands) b.rate = b.total === 0 ? null : b.correct / b.total;
+  return { mastered: input.grammarMastered, bands };
+}
+function tagsOf(input, p, touches) {
+  const picked2 = /* @__PURE__ */ new Map();
+  for (const v of newSavedOf(input.vocab, p)) picked2.set(v.id, v);
+  const byWordKey = /* @__PURE__ */ new Map();
+  for (const v of input.vocab) if (!v.deletedAt) byWordKey.set(v.word.toLowerCase(), v);
+  for (const a2 of touches.values()) {
+    if (!a2.saved || a2.lookups === 0) continue;
+    const v = byWordKey.get(a2.word);
+    if (v) picked2.set(v.id, v);
+  }
+  const m2 = /* @__PURE__ */ new Map();
+  for (const v of picked2.values()) {
+    const tags = new Set(
+      v.level.split(/[,，、]/).map((s) => s.trim()).filter(Boolean)
+    );
+    for (const t2 of tags) bump(m2, t2);
+  }
+  return ranked(m2);
+}
+function suggestLevel(level, verdict) {
+  if (!level || verdict !== "up" && verdict !== "down") return void 0;
+  const i = CEFR_LEVELS.indexOf(level);
+  const j = Math.min(CEFR_LEVELS.length - 1, Math.max(0, i + (verdict === "up" ? 1 : -1)));
+  return CEFR_LEVELS[j];
+}
+function levelSignals(input, period) {
+  const signals = [];
+  let judged = false;
+  const start4 = startDifficulty(input.level);
+  const band = grammarOf(input, period).bands.find((b) => start4 >= b.min && start4 <= b.max);
+  if (band && band.rate !== null && band.total >= GRAMMAR_MIN_N) {
+    judged = true;
+    const text = `\u6587\u6CD5 ${band.label} \u7D1A\u7B54\u5C0D\u7387 ${pct(band.rate)}\uFF08${band.total} \u984C\uFF09`;
+    if (band.rate >= GRAMMAR_UP) signals.push({ kind: "grammar", direction: "up", reason: `${text}\uFF0C\u5DF2\u9054 ${pct(GRAMMAR_UP)} \u4EE5\u4E0A` });
+    else if (band.rate < GRAMMAR_DOWN) signals.push({ kind: "grammar", direction: "down", reason: `${text}\uFF0C\u4F4E\u65BC ${pct(GRAMMAR_DOWN)}` });
+  }
+  const para = atIn(input.asks, period).filter((a2) => a2.ok && a2.surface === "paragraph");
+  if (para.length >= PARA_MIN_N) {
+    judged = true;
+    const translate = para.filter((a2) => a2.taskId === "paragraph.translate").length;
+    const refine = para.filter((a2) => a2.taskId === "paragraph.grammar" || a2.taskId === "paragraph.paraphrase").length;
+    if (translate / para.length > PARA_TRANSLATE_DOWN) {
+      signals.push({
+        kind: "paragraph",
+        direction: "down",
+        reason: `\u6BB5\u843D\u8A0E\u8AD6 ${para.length} \u6B21\u4E2D\u6709 ${translate} \u6B21\u662F\u7FFB\u8B6F\uFF08${pct(translate / para.length)}\uFF09\uFF0C\u95B1\u8B80\u6750\u6599\u53EF\u80FD\u504F\u96E3`
+      });
+    } else if (refine / para.length >= PARA_REFINE_UP) {
+      signals.push({
+        kind: "paragraph",
+        direction: "up",
+        reason: `\u6BB5\u843D\u8A0E\u8AD6 ${para.length} \u6B21\u4E2D\u6709 ${refine} \u6B21\u662F\u6587\u6CD5\uFF0F\u63DB\u53E5\u8A71\u8AAA\uFF08${pct(refine / para.length)}\uFF09\uFF0C\u7406\u89E3\u6C92\u554F\u984C\uFF0C\u5728\u7CBE\u9032\u8868\u9054`
+      });
+    }
+  }
+  const touches = touchesOf(input, period);
+  const words = wordsOf(touches);
+  const rs = atIn(input.reviews, period);
+  const recall = recallOf(rs);
+  const repeatedAll = [...touches.values()].filter((a2) => a2.days.size >= 2).length;
+  if (recall !== null && recall < VOCAB_LOW && repeatedAll >= VOCAB_REPEATED_MIN) {
+    judged = true;
+    signals.push({
+      kind: "vocab",
+      direction: "down",
+      reason: `\u55AE\u5B57\u8A18\u4F4F\u7387 ${pct(recall)}\uFF0C\u4E14\u6709 ${repeatedAll} \u500B\u5B57\u53CD\u8986\u67E5\uFF0C\u65B0\u5B57\u9032\u4F86\u592A\u5FEB\uFF0C\u5EFA\u8B70\u653E\u6162`
+    });
+  } else if (recall !== null && rs.length >= VOCAB_HIGH_MIN_REVIEWS) {
+    judged = true;
+    if (recall > VOCAB_HIGH) {
+      signals.push({ kind: "vocab", direction: "up", reason: `\u55AE\u5B57\u8A18\u4F4F\u7387 ${pct(recall)}\uFF08\u8907\u7FD2 ${rs.length} \u6B21\uFF09\uFF0C\u53EF\u4EE5\u52A0\u91CF` });
+    }
+  }
+  const tags = tagsOf(input, period, touches);
+  if (tags.length > 0 && words.lookups > 0) {
+    signals.push({ kind: "tags", direction: "info", reason: `\u67E5\u7684\u5B57\u591A\u534A\u5728 ${tags[0].key}\uFF08${tags[0].count} \u500B\uFF09` });
+  }
+  const up = signals.filter((s) => s.direction === "up").length;
+  const down = signals.filter((s) => s.direction === "down").length;
+  let verdict;
+  if (up >= 2 && down === 0) verdict = "up";
+  else if (down > 0 && down >= up) verdict = "down";
+  else if (up === 0 && down === 0 && !judged) verdict = "insufficient";
+  else verdict = "keep";
+  const suggestedLevel = suggestLevel(input.level, verdict);
+  return suggestedLevel ? { verdict, suggestedLevel, signals } : { verdict, signals };
+}
+function buildReport(input, period, prev) {
+  const touches = touchesOf(input, period);
+  return {
+    period,
+    activity: activityOf(input, period),
+    ai: aiOf(input, period, prev),
+    words: wordsOf(touches),
+    vocab: vocabOf(input, period, prev),
+    practice: practiceOf(input, period, prev),
+    grammar: grammarOf(input, period),
+    tags: tagsOf(input, period, touches),
+    advice: levelSignals(input, period)
+  };
+}
+
+// src/core/learner/vocabSize.ts
+var VOCAB_SIZE = {
+  A1: [500, 700],
+  A2: [1e3, 1500],
+  B1: [2e3, 2500],
+  B2: [4e3, 5e3],
+  C1: [8e3, 1e4],
+  C2: [16e3, 2e4]
+};
+var num = (n) => n.toLocaleString("en-US");
+
+// src/core/learner/vocabTiers.ts
+var UNKNOWN_WORDS_MAX = 60;
+var TIER_SAMPLE_MIN = 8;
+var TIER_MATURE_MIN = 3;
+var TIER_EXAMPLES_MAX = 10;
+var MATURE_STABILITY_DAYS = 21;
+var TIER_KEYS = [...CEFR_TIERS, "?"];
+var emptyTierCount = () => ({ A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0, "?": 0 });
+var WORD = /^[a-z][a-z'’-]*$/;
+function single(raw) {
+  const w2 = raw == null ? void 0 : raw.trim().toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, "");
+  return w2 && WORD.test(w2) ? w2 : null;
+}
+function collectWords(input, period) {
+  const out = { asked: /* @__PURE__ */ new Set(), looked: /* @__PURE__ */ new Set(), saved: /* @__PURE__ */ new Set(), mature: /* @__PURE__ */ new Set() };
+  const wordOf = new Map(input.vocab.map((v) => [v.id, v.word]));
+  for (const a2 of atIn(input.asks, period)) {
+    if (!a2.ok) continue;
+    const w2 = single(a2.entryId ? wordOf.get(a2.entryId) : a2.selection);
+    if (w2) out.asked.add(w2);
+  }
+  for (const t2 of input.wordTouches) {
+    if (t2.lookup <= 0 || t2.day < period.from || t2.day > period.to) continue;
+    const w2 = single(t2.word);
+    if (w2) out.looked.add(w2);
+  }
+  for (const v of newSavedOf(input.vocab, period)) {
+    const w2 = single(v.word);
+    if (w2) out.saved.add(w2);
+  }
+  for (const v of input.vocab) {
+    if (v.deletedAt || v.liked !== true || !v.srs) continue;
+    if (v.srs.state !== SrsState.Review || v.srs.stability < MATURE_STABILITY_DAYS) continue;
+    const w2 = single(v.word);
+    if (w2) out.mature.add(w2);
+  }
+  return out;
+}
+function countOf(words, extra, unknown) {
+  const c2 = emptyTierCount();
+  for (const w2 of words) {
+    const t2 = cefrOf(w2, extra);
+    if (t2) c2[t2]++;
+    else {
+      c2["?"]++;
+      unknown.add(w2);
+    }
+  }
+  return c2;
+}
+function vocabTierProfile(input, period, extra) {
+  const w2 = collectWords(input, period);
+  const unknown = /* @__PURE__ */ new Set();
+  const asked = countOf(w2.asked, extra, unknown);
+  const looked = countOf(w2.looked, extra, unknown);
+  const saved = countOf(w2.saved, extra, unknown);
+  const mature = countOf(w2.mature, extra, unknown);
+  return { asked, looked, saved, mature, unknownWords: [...unknown].slice(0, UNKNOWN_WORDS_MAX) };
+}
+function tierExamples(input, period, extra, max = TIER_EXAMPLES_MAX) {
+  const w2 = collectWords(input, period);
+  const out = Object.fromEntries(CEFR_TIERS.map((t2) => [t2, []]));
+  for (const word of [...w2.asked, ...w2.looked]) {
+    const t2 = cefrOf(word, extra);
+    if (t2 && out[t2].length < max && !out[t2].includes(word)) out[t2].push(word);
+  }
+  return out;
+}
+var sumTiers = (a2, b) => {
+  const c2 = emptyTierCount();
+  for (const k of TIER_KEYS) c2[k] = a2[k] + b[k];
+  return c2;
+};
+var askedAndLooked = (p) => sumTiers(p.asked, p.looked);
+var leveled = (c2) => CEFR_TIERS.reduce((s, t2) => s + c2[t2], 0);
+var total = (c2) => leveled(c2) + c2["?"];
+var pct2 = (r) => `${Math.round(r * 100)}%`;
+function tierLabel(lo2, hi) {
+  return lo2 === hi ? CEFR_TIERS[lo2] : `${CEFR_TIERS[lo2]}\u2013${CEFR_TIERS[hi]}`;
+}
+function vocabLevelFromTiers(profile) {
+  const both = askedAndLooked(profile);
+  const n = leveled(both);
+  if (n < TIER_SAMPLE_MIN) return null;
+  let edge = 0;
+  for (let i = 0; i < CEFR_TIERS.length; i++) if (both[CEFR_TIERS[i]] >= both[CEFR_TIERS[edge]]) edge = i;
+  let lo2 = Math.max(0, edge - 1);
+  let hi = edge;
+  let label = tierLabel(lo2, hi);
+  const m2 = leveled(profile.mature);
+  let promoted = false;
+  if (m2 >= TIER_MATURE_MIN) {
+    const atOrAbove = CEFR_TIERS.slice(edge).reduce((s, t2) => s + profile.mature[t2], 0);
+    if (atOrAbove / m2 > 0.5) {
+      promoted = true;
+      if (edge === 0) {
+        lo2 = 0;
+        hi = 1;
+      } else lo2 = hi;
+      label = tierLabel(lo2, hi);
+    }
+  }
+  const parts = CEFR_TIERS.filter((t2) => both[t2] > 0).map((t2) => `${t2} ${pct2(both[t2] / n)}`);
+  let basis2 = `\u4F60\u67E5\uFF0F\u554F\u7684\u5B57\uFF1A${parts.join("\u3001")}`;
+  if (m2 >= TIER_MATURE_MIN) basis2 += `\uFF1B\u719F\u7DF4\u7684\u5B57\u591A\u5728 ${matureSpan(profile.mature)}`;
+  if (promoted) basis2 += "\uFF08\u719F\u7DF4\u7684\u5B57\u591A\u5DF2\u5728\u9019\u4E00\u7D1A\u4EE5\u4E0A\uFF0C\u7A0B\u5EA6\u5F80\u4E0A\u4FEE\u534A\u7D1A\uFF09";
+  const size = `\u4F30 ${num(VOCAB_SIZE[CEFR_LEVELS[lo2]][0])}\u2013${num(VOCAB_SIZE[CEFR_LEVELS[hi]][1])} \u5B57`;
+  return { area: "\u5B57\u5F59\u91CF", level: `\u7D04 ${label}`, detail: size, basis: basis2 };
+}
+function matureSpan(c2) {
+  let best = 0;
+  let bestSum = -1;
+  for (let i = 0; i < CEFR_TIERS.length - 1; i++) {
+    const s = c2[CEFR_TIERS[i]] + c2[CEFR_TIERS[i + 1]];
+    if (s >= bestSum) {
+      bestSum = s;
+      best = i;
+    }
+  }
+  const a2 = c2[CEFR_TIERS[best]];
+  const b = c2[CEFR_TIERS[best + 1]];
+  if (a2 === 0) return CEFR_TIERS[best + 1];
+  if (b === 0) return CEFR_TIERS[best];
+  return `${CEFR_TIERS[best]}\u2013${CEFR_TIERS[best + 1]}`;
+}
+function tierSummary(profile) {
+  const line2 = (label, c2) => {
+    const parts = TIER_KEYS.filter((k) => c2[k] > 0).map((k) => `${k === "?" ? "\u4E0D\u660E" : k} ${c2[k]}`);
+    return `- ${label}\uFF08${total(c2)} \u5B57\uFF09\uFF1A${parts.join("\u3001") || "\u6C92\u6709"}`;
+  };
+  return [line2("\u67E5\uFF0F\u554F\u7684\u5B57", askedAndLooked(profile)), line2("\u719F\u7DF4\u7684\u5B57", profile.mature), line2("\u9019\u671F\u65B0\u6536\u85CF\u7684\u5B57", profile.saved)].join("\n");
+}
+function tierSegments(c2) {
+  const sum = total(c2);
+  if (sum === 0) return [];
+  const out = [];
+  let at = 0;
+  for (const k of TIER_KEYS) {
+    if (c2[k] <= 0) continue;
+    const percent = c2[k] / sum * 100;
+    out.push({ tier: k, count: c2[k], percent, start: at });
+    at += percent;
+  }
+  return out;
+}
+function tiersFenceJson(profile) {
+  const trim = (c2) => Object.fromEntries(TIER_KEYS.map((k) => [k, c2[k]]));
+  return JSON.stringify({ asked: trim(askedAndLooked(profile)), mature: trim(profile.mature) });
+}
+function countFrom(raw) {
+  const c2 = emptyTierCount();
+  if (typeof raw !== "object" || raw === null) return c2;
+  for (const k of TIER_KEYS) {
+    const v = Number(raw[k]);
+    if (Number.isFinite(v) && v > 0) c2[k] = Math.floor(v);
+  }
+  return c2;
+}
+function parseTiersSource(source) {
+  let json;
+  try {
+    json = JSON.parse(source);
+  } catch (e) {
+    return null;
+  }
+  if (typeof json !== "object" || json === null || Array.isArray(json)) return null;
+  const o = json;
+  const bars = { asked: countFrom(o.asked), mature: countFrom(o.mature) };
+  return total(bars.asked) + total(bars.mature) === 0 ? null : bars;
+}
+var hasTierData = (p) => total(askedAndLooked(p)) + total(p.mature) > 0;
+
+// src/ui/blocks/reportTiers.ts
+var TIER_ALPHA = { A1: 0.22, A2: 0.38, B1: 0.54, B2: 0.7, C1: 0.85, C2: 1, "?": 0 };
+var TIER_ORDER2 = ["A1", "A2", "B1", "B2", "C1", "C2", "?"];
+function paint2(el, tier) {
+  if (tier === "?") el.addClass("is-unknown");
+  else el.style.setProperty("--vt-tier-alpha", `${Math.round(TIER_ALPHA[tier] * 100)}%`);
+}
+function bar(host, label, counts, tip) {
+  const segs = tierSegments(counts);
+  if (!segs.length) return;
+  const row = host.createDiv({ cls: "vt-tiers-row" });
+  row.createDiv({ cls: "vt-tiers-label", text: label });
+  const track2 = row.createDiv({ cls: "vt-tiers-bar" });
+  for (const s of segs) {
+    const text = t("report.tiers.tip", { tier: s.tier === "?" ? t("report.tiers.unknown") : s.tier, n: s.count });
+    const seg = track2.createDiv({ cls: "vt-tiers-seg", attr: { title: text, "aria-label": text } });
+    seg.style.width = `${s.percent}%`;
+    paint2(seg, s.tier);
+    seg.addEventListener("click", () => tip.setText(text));
+  }
+}
+function renderReportTiers(_plugin, source, el, _ctx) {
+  const bars = parseTiersSource(source);
+  if (!bars) {
+    el.createDiv({ cls: "vt-radar-bad", text: t("report.tiers.bad") });
+    return;
+  }
+  const host = el.createDiv({ cls: "vt-report-tiers" });
+  const barsBox = host.createDiv({ cls: "vt-tiers-bars" });
+  const tip = host.createDiv({ cls: "vt-tiers-tip" });
+  bar(barsBox, t("report.tiers.asked"), bars.asked, tip);
+  bar(barsBox, t("report.tiers.mature"), bars.mature, tip);
+  const legend = host.createDiv({ cls: "vt-tiers-legend" });
+  const used = TIER_ORDER2.filter((k) => bars.asked[k] > 0 || bars.mature[k] > 0);
+  for (const k of used) {
+    const item = legend.createSpan({ cls: "vt-tiers-key" });
+    const dot = item.createSpan({ cls: "vt-tiers-dot" });
+    paint2(dot, k);
+    item.createSpan({ text: k === "?" ? t("report.tiers.unknown") : k });
+  }
+}
+
+// src/ui/blocks/dashboard.ts
+var import_obsidian29 = require("obsidian");
+
+// src/ui/blocks/dashboardDiary.ts
+var import_obsidian27 = require("obsidian");
+function renderDiaryCard(plugin, el, ctx) {
+  const card = el.createDiv({ cls: "vt-dash-diary" });
+  const child = new import_obsidian27.MarkdownRenderChild(card);
+  ctx.addChild(child);
+  let alive = true;
+  child.register(() => alive = false);
+  const draw = async () => {
+    const svc = plugin.diary;
+    const latest = await svc.latest();
+    if (!alive) return;
+    card.empty();
+    card.createDiv({ cls: "vt-dash-diary-title", text: t("dashboard.diary.title") });
+    const status = svc.status();
+    if (latest) {
+      const link = card.createEl("a", { cls: "vt-dash-diary-link", text: latest.day });
+      link.onclick = (ev) => {
+        ev.preventDefault();
+        void plugin.app.workspace.openLinkText(latest.path, "", false);
+      };
+      for (const l4 of latest.lines) card.createDiv({ cls: "vt-dash-diary-line", text: l4 });
+    } else {
+      card.createDiv({ cls: "vt-dash-diary-line", text: t("dashboard.diary.none") });
+    }
+    const reason = status === "no-ai" ? "dashboard.diary.reason.noAi" : status === "off" ? "dashboard.diary.reason.off" : status === "failed" ? "dashboard.diary.reason.failed" : null;
+    if (reason) card.createDiv({ cls: "vt-dash-diary-reason", text: t(reason) });
+    const today = svc.today();
+    const wroteToday = plugin.app.vault.getAbstractFileByPath(svc.pathOf(today)) !== null;
+    const writing = status === "writing";
+    const btn = card.createEl("button", {
+      cls: "vt-dash-diary-btn",
+      text: t(writing ? "dashboard.diary.writing" : wroteToday ? "dashboard.diary.rewrite" : "dashboard.diary.write")
+    });
+    btn.disabled = writing;
+    btn.onclick = () => {
+      void svc.write(today, { overwrite: wroteToday }).then((r) => {
+        if (r === "written") new import_obsidian27.Notice(t("dashboard.diary.written", { day: today }));
+      });
+    };
+  };
+  void draw();
+  child.register(plugin.diary.onChange(() => void draw()));
+}
+
+// src/ui/blocks/dashboardReport.ts
+var import_obsidian28 = require("obsidian");
 
 // src/core/learner/period.ts
 function parseDay(day) {
@@ -17603,11 +18236,11 @@ function timingText(timing) {
       return t("flashcards.single.early", { date: (_a = shortDate3(timing.due.toISOString())) != null ? _a : "" });
   }
 }
-var DAY_MS = 24 * 60 * 60 * 1e3;
+var DAY_MS2 = 24 * 60 * 60 * 1e3;
 function nextReviewText(due, now2, interval2) {
   var _a;
   const ms9 = due.getTime() - now2.getTime();
-  if (ms9 < DAY_MS) return t("flashcards.single.nextSoon", { interval: interval2(ms9) });
+  if (ms9 < DAY_MS2) return t("flashcards.single.nextSoon", { interval: interval2(ms9) });
   return t("flashcards.single.next", { date: (_a = shortDate3(due.toISOString())) != null ? _a : "", interval: interval2(ms9) });
 }
 
@@ -17831,8 +18464,8 @@ var FlashcardsBlock = class extends import_obsidian33.MarkdownRenderChild {
   }
   renderToolbar() {
     var _a;
-    const bar = this.root.createDiv({ cls: "vt-fc-toolbar" });
-    const modes = bar.createDiv({ cls: "vt-fc-modes" });
+    const bar2 = this.root.createDiv({ cls: "vt-fc-toolbar" });
+    const modes = bar2.createDiv({ cls: "vt-fc-modes" });
     for (const mode of CARD_MODES) {
       const b = modes.createEl("button", {
         text: t(`flashcards.mode.${mode}`),
@@ -17846,7 +18479,7 @@ var FlashcardsBlock = class extends import_obsidian33.MarkdownRenderChild {
         this.startSession(void 0, { speak: true });
       };
     }
-    const src = bar.createDiv({ cls: "vt-fc-source" });
+    const src = bar2.createDiv({ cls: "vt-fc-source" });
     (0, import_obsidian33.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), this.single ? "crosshair" : "folder");
     src.createSpan({
       text: this.single ? t("flashcards.single.source") : (_a = this.params.source) != null ? _a : t("flashcards.source.all")
@@ -19889,7 +20522,7 @@ var GrammarTabView = class {
       },
       level
     );
-    const bar = renderFilterBar(barEl, {
+    const bar2 = renderFilterBar(barEl, {
       groups,
       groupsFor: (v) => grammarGroups(valueToFilter(v, level), level),
       quick,
@@ -19899,7 +20532,7 @@ var GrammarTabView = class {
         this.filter = valueToFilter(v, level);
         this.filters.set("grammar", this.filter);
         groups.splice(0, groups.length, ...grammarGroups(this.filter, level));
-        bar.update(filterToValue(this.filter));
+        bar2.update(filterToValue(this.filter));
         this.clearError();
         deps.api.applyFilter(this.filter);
         this.sweep();
@@ -20153,17 +20786,17 @@ var GrammarMapBlock = class extends import_obsidian34.MarkdownRenderChild {
     });
     const next = recommendNext(GRAMMAR_TOPICS, statusOf2, this.deps.level());
     if (next) {
-      const bar = this.root.createDiv({ cls: "vt-gr-bar vt-gr-next" });
-      bar.createSpan({ cls: "vt-gr-bar-label", text: `${t("grammar.map.next")}\uFF1A` });
-      bar.createSpan({ cls: "vt-gr-bar-main", text: next.title });
-      bar.createSpan({ cls: "vt-gr-bar-sub", text: next.pattern });
-      learnButton(bar, { label: t("grammar.map.start"), icon: "play", cta: true, onClick: () => this.practice(next.id) });
+      const bar2 = this.root.createDiv({ cls: "vt-gr-bar vt-gr-next" });
+      bar2.createSpan({ cls: "vt-gr-bar-label", text: `${t("grammar.map.next")}\uFF1A` });
+      bar2.createSpan({ cls: "vt-gr-bar-main", text: next.title });
+      bar2.createSpan({ cls: "vt-gr-bar-sub", text: next.pattern });
+      learnButton(bar2, { label: t("grammar.map.start"), icon: "play", cta: true, onClick: () => this.practice(next.id) });
     }
     const due = dueTopics(GRAMMAR_TOPICS, (id2) => grammar.progress(id2), now2);
     if (due.length) {
-      const bar = this.root.createDiv({ cls: "vt-gr-bar vt-gr-due" });
-      bar.createSpan({ cls: "vt-gr-bar-main", text: t("grammar.map.due", { n: due.length }) });
-      learnButton(bar, { label: t("grammar.map.review"), icon: "repeat", onClick: () => this.practice(due[0].id) });
+      const bar2 = this.root.createDiv({ cls: "vt-gr-bar vt-gr-due" });
+      bar2.createSpan({ cls: "vt-gr-bar-main", text: t("grammar.map.due", { n: due.length }) });
+      learnButton(bar2, { label: t("grammar.map.review"), icon: "repeat", onClick: () => this.practice(due[0].id) });
     }
     const rows = mapRows(this.stage, GRAMMAR_TOPICS, statusOf2, attempts);
     const list = this.root.createDiv({ cls: "vt-gr-list" });
@@ -20192,11 +20825,11 @@ var GrammarMapBlock = class extends import_obsidian34.MarkdownRenderChild {
     if (this.redoTag && !entries.some((e) => e.errorTag === this.redoTag)) {
       entries.push({ errorTag: this.redoTag, label: errorTagLabel(this.redoTag), questions: [], topicId: "" });
     }
-    const total = mistakeCount(entries);
+    const total2 = mistakeCount(entries);
     const box = this.root.createDiv({ cls: "vt-gr-mistakes" });
     const toggle2 = box.createEl("button", { cls: "vt-gr-mistakes-toggle", attr: { type: "button" } });
     toggle2.setAttr("aria-expanded", String(this.mistakesOpen));
-    toggle2.createSpan({ text: t("grammar.map.mistakes", { n: total }) });
+    toggle2.createSpan({ text: t("grammar.map.mistakes", { n: total2 }) });
     const chevron = toggle2.createSpan({ cls: "vt-gr-chevron", text: "\u203A", attr: { "aria-hidden": "true" } });
     chevron.toggleClass("is-open", this.mistakesOpen);
     toggle2.addEventListener("click", () => {
@@ -23657,10 +24290,10 @@ var POLY_WORDS = [
 
 // src/core/poly/catalog.ts
 var POLY_CATEGORIES = ["A", "B", "C", "D", "E"];
-var byWord = new Map(POLY_WORDS.map((w2) => [w2.word, w2]));
+var byWord2 = new Map(POLY_WORDS.map((w2) => [w2.word, w2]));
 var bySense = new Map(POLY_WORDS.flatMap((w2) => w2.senses.map((s) => [s.id, s])));
 function polyWord(word) {
-  return byWord.get(word.trim().toLowerCase());
+  return byWord2.get(word.trim().toLowerCase());
 }
 function senseById(id2) {
   return bySense.get(id2);
@@ -23674,7 +24307,7 @@ function parsePolyFilter(v) {
   if (!v || typeof v !== "object") return out;
   const o = v;
   if (Array.isArray(o.words)) {
-    out.words = [...new Set(o.words.filter((x3) => typeof x3 === "string" && byWord.has(x3)))];
+    out.words = [...new Set(o.words.filter((x3) => typeof x3 === "string" && byWord2.has(x3)))];
   }
   if (Array.isArray(o.levels)) out.levels = [...new Set(o.levels.filter(isLevel))].sort();
   if (Array.isArray(o.excluded)) {
@@ -23876,7 +24509,7 @@ function firstFolder(path) {
   const i = (path != null ? path : "").indexOf("/");
   return i > 0 ? path.slice(0, i + 1) : void 0;
 }
-function ranked(counts) {
+function ranked2(counts) {
   return [...counts.entries()].sort((a2, b) => b[1] - a2[1] || a2[0].localeCompare(b[0])).map(([k]) => k);
 }
 function collectVocabOptions(entries) {
@@ -23895,7 +24528,7 @@ function collectVocabOptions(entries) {
     const f = firstFolder((_a = e.source) == null ? void 0 : _a.path);
     if (f) bump2(folders, f);
   }
-  return { levels: ranked(levels), pos: ranked(pos), folders: ranked(folders) };
+  return { levels: ranked2(levels), pos: ranked2(pos), folders: ranked2(folders) };
 }
 function vocabGroups(opts) {
   const mk = (id2, label, ids, multi) => ({
@@ -24077,7 +24710,7 @@ function vocabTab(host, scenario) {
         if (mode === "scenario" && scenario) mountScenario(bodyEl, comp, scenario);
         else mountCards(bodyEl, comp);
       };
-      const bar = renderFilterBar(barEl, {
+      const bar2 = renderFilterBar(barEl, {
         groups,
         quick: vocabQuickPicks(),
         value,
@@ -24088,7 +24721,7 @@ function vocabTab(host, scenario) {
           onFilter();
         }
       });
-      void bar;
+      void bar2;
       if (switchEl) {
         const buttons2 = [
           ["cards", t("practice.vocab.scenarioCards")],
@@ -24099,18 +24732,18 @@ function vocabTab(host, scenario) {
             if (mode === m2) return;
             mode = m2;
             saveMode(m2);
-            paint2();
+            paint3();
             draw();
           });
           return [m2, b];
         });
-        const paint2 = () => {
+        const paint3 = () => {
           for (const [m2, b] of buttons2) {
             b.toggleClass("is-active", m2 === mode);
             b.setAttr("aria-pressed", String(m2 === mode));
           }
         };
-        paint2();
+        paint3();
       }
       draw();
     }
@@ -24534,9 +25167,9 @@ function start3(el, deps, filters, owner) {
   let filter2 = parseParaFilter(filters.get("para"));
   let pane = null;
   const effective = () => filter2.scope !== "all" && paragraphsInFilter(deps.threads(), filter2).length === 0 ? { scope: "all" } : filter2;
-  const bar = el.createDiv({ cls: "vt-pr-para-scope" });
-  bar.createSpan({ cls: "vt-pr-mix-tags-label", text: t("practice.para.scope") });
-  const select = bar.createEl("select", { cls: "dropdown vt-pr-para-select" });
+  const bar2 = el.createDiv({ cls: "vt-pr-para-scope" });
+  bar2.createSpan({ cls: "vt-pr-mix-tags-label", text: t("practice.para.scope") });
+  const select = bar2.createEl("select", { cls: "dropdown vt-pr-para-select" });
   const choices = /* @__PURE__ */ new Map();
   const drawScope = () => {
     select.empty();
@@ -24947,7 +25580,7 @@ var PolyTabView = class {
     const { deps } = this;
     const groups = polyGroups(this.category);
     const quick = polyQuickPicks({ saved: deps.savedWords(), weakSenseIds: deps.weakSenseIds() });
-    const bar = renderFilterBar(barEl, {
+    const bar2 = renderFilterBar(barEl, {
       groups,
       groupsFor: (v) => polyGroups(valueToFilter2(v, this.filter).category),
       quick,
@@ -24959,7 +25592,7 @@ var PolyTabView = class {
         this.category = next.category;
         this.filters.set("poly", this.filter);
         groups.splice(0, groups.length, ...polyGroups(this.category));
-        bar.update(filterToValue2(this.filter, this.category));
+        bar2.update(filterToValue2(this.filter, this.category));
         this.onFilterChanged();
       }
     });
@@ -25136,8 +25769,8 @@ var PolysemyMapBlock = class extends import_obsidian39.MarkdownRenderChild {
     const root2 = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-pm"] });
     guardReadingClicks(this, root2);
     root2.createDiv({ cls: "vt-gr-title", text: t("poly.map.title") });
-    const bar = root2.createDiv({ cls: "vt-pm-bar" });
-    const segHost = bar.createDiv({ cls: "vt-pm-seg" });
+    const bar2 = root2.createDiv({ cls: "vt-pm-bar" });
+    const segHost = bar2.createDiv({ cls: "vt-pm-seg" });
     const drawSeg = () => {
       segHost.empty();
       segmented(segHost, {
@@ -25156,7 +25789,7 @@ var PolysemyMapBlock = class extends import_obsidian39.MarkdownRenderChild {
       });
     };
     drawSeg();
-    const search = bar.createEl("input", {
+    const search = bar2.createEl("input", {
       cls: "vt-pm-search",
       attr: { type: "search", placeholder: t("poly.map.search"), "aria-label": t("poly.map.search") }
     });
@@ -25205,9 +25838,9 @@ var PolysemyMapBlock = class extends import_obsidian39.MarkdownRenderChild {
     });
     if (!isOpen2) return;
     const body = card.createDiv({ cls: "vt-pm-card-body" });
-    const table = body.createDiv({ cls: "vt-pm-senses" });
+    const table2 = body.createDiv({ cls: "vt-pm-senses" });
     for (const s of w2.senses) {
-      const row = table.createDiv({ cls: "vt-pm-sense" });
+      const row = table2.createDiv({ cls: "vt-pm-sense" });
       const main = row.createDiv({ cls: "vt-pm-sense-main" });
       const top = main.createDiv({ cls: "vt-pm-sense-top" });
       top.createSpan({ cls: "vt-pm-zh", text: s.zh });
@@ -25730,79 +26363,6 @@ function mountScenarioPlayer(el, opts, owner) {
   };
 }
 
-// src/core/learner/weakness.ts
-var DAY_MS2 = 864e5;
-var HALF_LIFE_DAYS = 14;
-var CORRECT_RELIEF = 0.5;
-function weakFocuses(events, opts) {
-  var _a, _b, _c;
-  const nowMs = opts.now.getTime();
-  const since = nowMs - ((_a = opts.days) != null ? _a : 30) * DAY_MS2;
-  const limit = (_b = opts.limit) != null ? _b : 8;
-  const inWindow = events.filter((e) => {
-    if (e.result !== "correct" && e.result !== "wrong") return false;
-    if (opts.track && e.track !== opts.track) return false;
-    if (opts.scope && !opts.scope.has(e.focus.id)) return false;
-    const t2 = Date.parse(e.at);
-    return !Number.isNaN(t2) && t2 >= since;
-  }).sort((a2, b) => Date.parse(a2.at) - Date.parse(b.at));
-  const byFocus = /* @__PURE__ */ new Map();
-  for (const e of inWindow) {
-    const key6 = `${e.focus.kind}:${e.focus.id}`;
-    let acc = byFocus.get(key6);
-    if (!acc) {
-      acc = { focus: e.focus, track: e.track, score: 0, wrong: 0, lastWrongAt: "", correctSince: 0, given: /* @__PURE__ */ new Map() };
-      byFocus.set(key6, acc);
-    }
-    if (e.result === "wrong") {
-      const days = Math.max(0, (nowMs - Date.parse(e.at)) / DAY_MS2);
-      acc.score += Math.exp(-days / HALF_LIFE_DAYS);
-      acc.wrong++;
-      acc.lastWrongAt = e.at;
-      acc.track = e.track;
-      acc.correctSince = 0;
-      if (e.given) acc.given.set(e.given, ((_c = acc.given.get(e.given)) != null ? _c : 0) + 1);
-    } else {
-      acc.correctSince++;
-    }
-  }
-  const out = [];
-  for (const acc of byFocus.values()) {
-    if (acc.wrong === 0) continue;
-    const score2 = acc.score - CORRECT_RELIEF * acc.correctSince;
-    if (score2 <= 0) continue;
-    let common;
-    let best = 1;
-    for (const [g, n] of acc.given) {
-      if (n > best) {
-        best = n;
-        common = g;
-      }
-    }
-    const w2 = {
-      focus: acc.focus,
-      track: acc.track,
-      wrong: acc.wrong,
-      lastWrongAt: acc.lastWrongAt,
-      score: score2
-    };
-    if (common !== void 0) w2.commonGiven = common;
-    out.push(w2);
-  }
-  out.sort((a2, b) => b.score - a2.score || (a2.lastWrongAt < b.lastWrongAt ? 1 : a2.lastWrongAt > b.lastWrongAt ? -1 : 0));
-  return out.slice(0, limit).map(({ score: _s, ...w2 }) => w2);
-}
-function mmdd(iso) {
-  const d = new Date(iso);
-  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
-}
-function weaknessDigest(weak, label) {
-  return weak.map((w2) => {
-    const head = `${label ? label(w2.focus) : w2.focus.id}\uFF5C\u932F ${w2.wrong} \u6B21\uFF08\u6700\u8FD1 ${mmdd(w2.lastWrongAt)}\uFF09`;
-    return w2.commonGiven ? `${head}\uFF5C\u5E38\u9078\u6210 ${w2.commonGiven}` : head;
-  }).join("\n");
-}
-
 // src/ui/blocks/buddy.ts
 var import_obsidian40 = require("obsidian");
 
@@ -26054,12 +26614,12 @@ function knownWordList(entries, max = MAX_KNOWN_WORDS) {
 function buildTriviaContext(input) {
   var _a, _b, _c, _d, _e, _f, _g, _h;
   const s = input.subject;
-  const total = Math.max((_a = input.knownTotal) != null ? _a : 0, input.knownWords.length);
+  const total2 = Math.max((_a = input.knownTotal) != null ? _a : 0, input.knownWords.length);
   const told = ((_b = input.told) != null ? _b : []).slice(0, MAX_TOLD);
   return {
     knownBlock: renderTemplate(KNOWN_TEMPLATE, {
-      capped: total > input.knownWords.length ? "yes" : "",
-      total,
+      capped: total2 > input.knownWords.length ? "yes" : "",
+      total: total2,
       count: input.knownWords.length,
       words: input.knownWords.join(", ")
     }),
@@ -27204,6 +27764,7 @@ var BLOCKS = [
   { lang: "vocab-dashboard", render: renderDashboard },
   { lang: "vocab-report-analyze", render: renderReportAnalyze },
   { lang: "vocab-report-radar", render: renderReportRadar },
+  { lang: "vocab-report-tiers", render: renderReportTiers },
   { lang: "vocab-flashcards", render: renderFlashcards },
   // 1010 A: one name per page — the old block names above/below keep working.
   { lang: "vocab-card", render: renderFlashcards },
@@ -29348,9 +29909,9 @@ function findOccurrences(markdown, word, inflections) {
   }
   return out;
 }
-function nextOccurrenceIndex(current, total) {
-  if (total <= 0) return -1;
-  return (current + 1) % total;
+function nextOccurrenceIndex(current, total2) {
+  if (total2 <= 0) return -1;
+  return (current + 1) % total2;
 }
 function nearestOccurrenceIndex(occurrences, nearLine) {
   let best = -1;
@@ -30250,10 +30811,10 @@ function parseDiaryAnswer(text) {
   const paragraphs = bodyLines2.join("\n").split(/\n\s*\n/).map((p) => p.replace(/\s*\n\s*/g, " ").trim()).filter((p) => p && !/^(?:\*\*|__)[^.?!]*(?:\*\*|__)$/.test(p));
   const out = { paragraphs };
   if (pick && pick !== "-" && pick !== "\u2014") {
-    const bar = pick.indexOf("|");
-    if (bar >= 0) {
-      const author = cleanPick(pick.slice(0, bar));
-      const quote2 = cleanPick(pick.slice(bar + 1));
+    const bar2 = pick.indexOf("|");
+    if (bar2 >= 0) {
+      const author = cleanPick(pick.slice(0, bar2));
+      const quote2 = cleanPick(pick.slice(bar2 + 1));
       if (author && quote2) out.quote = { text: quote2, author };
     } else {
       const place = cleanPick(pick);
@@ -30790,7 +31351,7 @@ var GRAMMAR_TASKS3 = [grammarGrade];
 var REPORT_ADVICE_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["letter", "axes", "levels", "focus", "tryNext", "reading"],
+  required: ["letter", "axes", "levels", "focus", "tryNext", "reading", "wordLevels"],
   properties: {
     letter: { type: "string" },
     axes: {
@@ -30823,7 +31384,19 @@ var REPORT_ADVICE_SCHEMA = {
     },
     focus: { type: "array", items: { type: "string" } },
     tryNext: { type: "array", items: { type: "string" } },
-    reading: { type: "array", items: { type: "string" } }
+    reading: { type: "array", items: { type: "string" } },
+    wordLevels: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["word", "level"],
+        properties: {
+          word: { type: "string" },
+          level: { type: "string", enum: ["A1", "A2", "B1", "B2", "C1", "C2"] }
+        }
+      }
+    }
   }
 };
 var REPORT_BASE_PROMPT = `\u4F60\u662F\u5B78\u751F\u7684\u82F1\u6587\u5B78\u7FD2\u5925\u4F34\uFF0C\u6839\u64DA\u4ED6\u9019\u6BB5\u671F\u9593\u7684\u5B78\u7FD2\u6578\u64DA\uFF0C\u5BEB\u4E00\u5C01\u4FE1\u7D66\u4ED6\uFF0C\u4E26\u66FF\u4ED6\u7684\u5404\u500B\u9762\u5411\u63A8\u4F30\u7A0B\u5EA6\u3001\u7D66\u4E0B\u9031\u7684\u5177\u9AD4\u5EFA\u8B70\u3002
@@ -30839,11 +31412,13 @@ ${WARM_TONE}
 2. levels\uFF08\u5404\u9762\u5411\u7684\u7A0B\u5EA6\u63A8\u4F30\uFF09\uFF1A
    - \u4E00\u5B9A\u8981\u5217\uFF1A\u5B57\u5F59\u91CF\u3001\u6587\u6CD5\u5168\u9762\u6027\u3001\u591A\u7FA9\u5B57\u719F\u6089\u5EA6\uFF1B\u5176\u4ED6\u9762\u5411\u4F9D\u8B49\u64DA\u589E\u6E1B\uFF08\u9577\u53E5\u7406\u89E3\u3001\u5BEB\u4F5C\u3001\u95B1\u8B80\u2026\uFF09\u3002
    - level \u7528 CEFR\uFF08\u53EF\u4EE5\u5BEB\u5340\u9593\uFF0C\u4F8B\u5982\u300C\u7D04 B1\u300D\u300CA2\u2013B1\u300D\uFF09\uFF1B\u5B57\u5F59\u91CF\u7684 detail \u9644\u4F30\u8A08\u5B57\u6578\u5340\u9593\uFF08\u4F8B\u5982\u300C\u4F30 2,000\u20132,500 \u5B57\u300D\uFF09\uFF0C\u5176\u4ED6\u9762\u5411 detail \u7D66\u7A7A\u5B57\u4E32\u3002
+   - \u5B57\u5F59\u91CF\u4EE5\u3014\u5B57\u7684\u968E\u5C64\u5206\u5E03\u3015\u70BA\u4E3B\u8981\u4F9D\u64DA\uFF08\u4ED6\u67E5\uFF0F\u554F\u7684\u5B57\u591A\u843D\u5728\u54EA\u4E00\u7D1A\uFF0C\u719F\u7DF4\u7684\u5B57\u591A\u5728\u54EA\u4E00\u7D1A\uFF09\uFF0C\u4F30\u8A08\u5B57\u6578\u53EA\u662F\u8F14\u52A9\uFF1Bbasis \u5F15\u7528\u968E\u5C64\u5206\u5E03\u7684\u6BD4\u4F8B\u3002\u968E\u5C64\u6A23\u672C\u4E0D\u5920\u6642\u624D\u7528\u81EA\u8FF0\u7A0B\u5EA6\u548C\u5B57\u6578\u3002
    - \u6C92\u6709\u8B49\u64DA\u5C31\u5BEB\u300C\u9084\u770B\u4E0D\u51FA\u4F86\u300D\uFF0C\u4E0D\u8981\u786C\u731C\uFF1Bbasis \u7528\u4E00\u53E5\u8A71\u8AAA\u660E\u5177\u9AD4\u4F9D\u64DA\uFF08\u5F15\u7528\u6578\u5B57\u6216\u81EA\u8FF0\u7A0B\u5EA6\uFF09\u3002
 3. focus\uFF08\u7167\u4F60\u7684\u7A0B\u5EA6\u53EF\u4EE5\u52A0\u5F37\uFF0C3 \u5230 6 \u689D\uFF09\uFF1A\u4F9D\u5404\u9762\u5411\u63A8\u4F30\u7684\u7A0B\u5EA6\uFF0C\u9EDE\u540D\u8A72\u7A0B\u5EA6\u8A72\u88DC\u7684\u5177\u9AD4\u6587\u6CD5\u9EDE\u6216\u6280\u5DE7\uFF0C\u4E26\u8AAA\u600E\u9EBC\u7DF4\u3002\u4F8B\uFF1AB1 \u7684\u73FE\u5728\u5B8C\u6210\u5F0F\u548C\u904E\u53BB\u5F0F\u600E\u9EBC\u5206\u3001\u9577\u53E5\u62C6\u89E3\u5148\u627E\u4E3B\u8981\u52D5\u8A5E\u518D\u62EC\u51FA\u5B50\u53E5\u3002\u6BCF\u689D\u4E00\u5169\u53E5\uFF0C\u53EF\u4EE5\u76F4\u63A5\u7167\u505A\u3002
 4. tryNext\uFF08\u4E0B\u9031\u4E00\u8D77\u8A66\u8A66\uFF0C3 \u5230 5 \u689D\uFF09\uFF1A\u53EF\u4EE5\u52FE\u9078\u5B8C\u6210\u7684\u5C0F\u4EFB\u52D9\uFF0C\u81F3\u5C11\u4E00\u689D\u7528\u4F86\u8A66\u63A2\u300C\u9084\u770B\u4E0D\u51FA\u4F86\u300D\u7684\u9762\u5411\u3002
 5. reading\uFF08\u9069\u5408\u4F60\u7684\u95B1\u8B80\uFF0C2 \u5230 3 \u689D\uFF09\uFF1A\u4F9D\u3014\u8B80\u904E\u7684\u7B46\u8A18\u6A19\u984C\u3015\u63A8\u6E2C\u4ED6\u7684\u8208\u8DA3\u548C\u6587\u7AE0\u985E\u578B\uFF0C\u7D66\u300C\u65B9\u5411\uFF0B\u53EF\u4EE5\u76F4\u63A5\u641C\u5C0B\u7684\u95DC\u9375\u5B57\u300D\uFF0C\u4F8B\u5982\u300CTED \u6559\u80B2\u985E\u3001\u8A9E\u901F\u8F03\u6162\u7684\u8B1B\u8005\uFF0C\u641C\u5C0B\uFF1ATED-Ed ___\u300D\u3002\u4E0D\u8981\u9EDE\u540D\u5177\u9AD4\u7684\u6587\u7AE0\u6216\u6F14\u8B1B\u6A19\u984C\uFF1B\u6C92\u6709\u6A19\u984C\u53EF\u53C3\u8003\u6642\uFF0C\u4F9D\u7A0B\u5EA6\u7D66\u901A\u7528\u65B9\u5411\u3002
-6. letter\uFF08\u4FE1\uFF09\uFF1A2 \u5230 4 \u53E5\uFF0C\u4E00\u6BB5\uFF0C\u50CF\u670B\u53CB\u8AAA\u8A71\uFF1B\u8AAA\u770B\u5230\u7684\u9032\u6B65\u6216\u56F0\u96E3\uFF0C\u548C\u4E0B\u9031\u6700\u503C\u5F97\u505A\u7684\u4E00\u4EF6\u4E8B\u3002\u4E0D\u8981\u91CD\u8907\u5217\u6578\u5B57\u3002
+6. wordLevels\uFF08\u5B57\u7684 CEFR \u7B49\u7D1A\uFF09\uFF1A\u3014\u672A\u77E5\u7B49\u7D1A\u7684\u5B57\u3015\u5217\u51FA\u7684\u5B57\uFF0C\u6BCF\u500B\u6A19\u4E0A A1 \u5230 C2 \u7684\u7B49\u7D1A\uFF08\u4EE5\u4E00\u822C\u82F1\u8A9E\u5B78\u7FD2\u8005\u7684\u5E38\u898B\u7A0B\u5EA6\u5224\u65B7\uFF09\uFF1B\u5C08\u6709\u540D\u8A5E\u3001\u7E2E\u5BEB\u3001\u975E\u82F1\u6587\u7684\u5B57\u7565\u904E\uFF1B\u53EA\u6A19\u6E05\u55AE\u88E1\u7684\u5B57\uFF0C\u6C92\u6709\u6E05\u55AE\u5C31\u56DE\u7A7A\u9663\u5217\u3002
+7. letter\uFF08\u4FE1\uFF09\uFF1A2 \u5230 4 \u53E5\uFF0C\u4E00\u6BB5\uFF0C\u50CF\u670B\u53CB\u8AAA\u8A71\uFF1B\u8AAA\u770B\u5230\u7684\u9032\u6B65\u6216\u56F0\u96E3\uFF0C\u548C\u4E0B\u9031\u6700\u503C\u5F97\u505A\u7684\u4E00\u4EF6\u4E8B\u3002\u4E0D\u8981\u91CD\u8907\u5217\u6578\u5B57\u3002
 
 \u53EA\u6839\u64DA\u8CC7\u6599\u5BEB\uFF0C\u4E0D\u8981\u7DE8\u9020\u8CC7\u6599\u88E1\u6C92\u6709\u7684\u4E8B\u3002`;
 var isObj7 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -30873,7 +31448,14 @@ function parseReportAdvice(json) {
     const detail = str7(l4.detail);
     levels.push({ area, level, ...detail ? { detail } : {}, basis: str7(l4.basis) });
   }
-  return { letter: str7(o.letter), axes, levels, focus: strings(o.focus, 6), tryNext: strings(o.tryNext, 5), reading: strings(o.reading, 3) };
+  const wordLevels = [];
+  for (const w2 of Array.isArray(o.wordLevels) ? o.wordLevels : []) {
+    if (!isObj7(w2)) continue;
+    const word = str7(w2.word).toLowerCase();
+    const level = str7(w2.level).toUpperCase();
+    if (word && isCefrTier(level)) wordLevels.push({ word, level });
+  }
+  return { letter: str7(o.letter), axes, levels, focus: strings(o.focus, 6), tryNext: strings(o.tryNext, 5), reading: strings(o.reading, 3), wordLevels };
 }
 function resolveAdvice(draft, baseline, baselineLevels2) {
   return {
@@ -30886,6 +31468,7 @@ function isEmptyAdvice(a2) {
   return !a2.letter && !a2.focus.length && !a2.tryNext.length && !a2.reading.length;
 }
 function userMessage(input) {
+  var _a;
   const axes = input.baseline.map((a2) => `- ${a2.name}\uFF1A\u6D3B\u8E8D\u5EA6 ${a2.value.toFixed(2)}\uFF0C${a2.clear ? "\u6709\u8DB3\u5920\u7D00\u9304" : "\u7D00\u9304\u4E0D\u5920"}`).join("\n");
   const levels = input.baselineLevels.map((l4) => `- ${l4.area}\uFF1A${l4.level}${l4.detail ? `\uFF08${l4.detail}\uFF09` : ""}\uFF5C${l4.basis}${l4.rough ? "\uFF08\u898F\u5247\u7C97\u4F30\uFF09" : ""}`).join("\n");
   const titles = input.readingTitles.length ? input.readingTitles.map((t2) => `- ${t2}`).join("\n") : "\uFF08\u9019\u6BB5\u671F\u9593\u6C92\u6709\u95B1\u8B80\u7D00\u9304\uFF09";
@@ -30898,12 +31481,16 @@ ${axes}`,
     `\u3014\u7A0B\u5EA6\u7C97\u4F30\uFF08\u898F\u5247\u7B97\u7684\uFF0C\u50C5\u4F9B\u53C3\u8003\uFF09\u3015
 ${levels}`,
     `\u3014\u8B80\u904E\u7684\u7B46\u8A18\u6A19\u984C\u3015
-${titles}`
+${titles}`,
+    ...input.tierSummary ? [`\u3014\u5B57\u7684\u968E\u5C64\u5206\u5E03\uFF08CEFR-J \u5B57\u8868\uFF0B\u5DF2\u6A19\u7684\u7B49\u7D1A\uFF09\u3015
+${input.tierSummary}`] : [],
+    `\u3014\u672A\u77E5\u7B49\u7D1A\u7684\u5B57\u3015
+${((_a = input.unknownWords) == null ? void 0 : _a.length) ? input.unknownWords.join("\u3001") : "\uFF08\u6C92\u6709\uFF09"}`
   ].join("\n\n");
 }
 var reportAdvise = {
   id: "report.advise",
-  version: 3,
+  version: 4,
   surface: "report",
   tier: "smart",
   maxTokens: 6144,
@@ -32175,6 +32762,7 @@ var reportSection = {
       s.report = { ...(_a = s.report) != null ? _a : {}, ...resolveReportSettings(s.report), ...patch };
     });
     new import_obsidian57.Setting(el).setName(t("settings.report.enabled.name")).setDesc(t("settings.report.enabled.desc")).addToggle((tg) => tg.setValue(current().enabled).onChange((v) => void update({ enabled: v })));
+    el.createEl("p", { cls: "setting-item-description vt-report-source", text: t("settings.report.source") });
   }
 };
 
@@ -32550,15 +33138,6 @@ var PRACTICE_KINDS = [
   "paraphrase"
 ];
 
-// src/core/model/learner.ts
-var TRACKS = ["grammar", "poly", "vocab", "mix", "para"];
-var FOCUS_KINDS = ["grammar-objective", "sense", "word", "paragraph"];
-var LEARN_RESULTS = ["correct", "wrong", "skipped", "hinted", "retired"];
-var READING_KINDS = ["word", "paragraph", "add"];
-var DIARY_PICK_KINDS = ["quote", "place"];
-var ASK_SURFACES = ["word", "paragraph", "trivia", "morpheme", "grammar", "buddy", "other"];
-var ASK_TEXT_MAX = 80;
-
 // src/services/learner/learnerMerge.ts
 var DAY_MS4 = 864e5;
 var POOL_TOMBSTONE_TTL_MS = 30 * DAY_MS4;
@@ -32570,7 +33149,7 @@ function ms7(iso) {
   return Number.isNaN(t2) ? 0 : t2;
 }
 function emptyLearnerShard() {
-  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [], asks: [], wordTouches: [] };
+  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [], asks: [], wordTouches: [], wordCefr: [] };
 }
 var str10 = (v) => typeof v === "string" && v !== "";
 var isObj10 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -32738,6 +33317,19 @@ function normalizeTouch(raw) {
   const id2 = `${raw.day}|${word}`;
   return { id: id2, day: raw.day, word, lookup, pronounce: pronounce2, saved: raw.saved === true, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : `${raw.day}T00:00:00.000Z` };
 }
+function normalizeWordCefr(raw) {
+  if (!isObj10(raw) || !str10(raw.id) || !isCefrTier(raw.level) || !isIso(raw.at)) return null;
+  const id2 = raw.id.trim().toLowerCase();
+  return id2 ? { id: id2, level: raw.level, at: raw.at } : null;
+}
+function mergeWordCefr(a2, b) {
+  const map = /* @__PURE__ */ new Map();
+  for (const w2 of [...a2, ...b]) {
+    const cur = map.get(w2.id);
+    if (!cur || ms7(w2.at) > ms7(cur.at)) map.set(w2.id, w2);
+  }
+  return [...map.values()].sort((x3, y3) => x3.id < y3.id ? -1 : x3.id > y3.id ? 1 : 0);
+}
 function mergeAsks(a2, b) {
   const map = /* @__PURE__ */ new Map();
   for (const e of [...a2, ...b]) {
@@ -32788,14 +33380,15 @@ function normalizeLearnerShard(raw) {
     reading: normList2(s.reading, normalizeVisit),
     diaryPicks: normList2(s.diaryPicks, normalizePick),
     asks: normList2(s.asks, normalizeAsk),
-    wordTouches: normList2(s.wordTouches, normalizeTouch)
+    wordTouches: normList2(s.wordTouches, normalizeTouch),
+    wordCefr: mergeWordCefr(normList2(s.wordCefr, normalizeWordCefr), [])
   };
 }
 function sortEvents(list) {
   return list.sort((a2, b) => ms7(a2.at) - ms7(b.at) || (a2.id < b.id ? -1 : a2.id > b.id ? 1 : 0));
 }
 function mergeLearner(local, remote) {
-  var _a, _b, _c, _d, _e, _f, _g, _h;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
   const a2 = local.meta.grammarMigratedAt;
   const b = remote.meta.grammarMigratedAt;
   const migrated = a2 && b ? ms7(a2) <= ms7(b) ? a2 : b : a2 != null ? a2 : b;
@@ -32815,11 +33408,12 @@ function mergeLearner(local, remote) {
     reading: mergeReading((_a = local.reading) != null ? _a : [], (_b = remote.reading) != null ? _b : []),
     diaryPicks: mergePicks((_c = local.diaryPicks) != null ? _c : [], (_d = remote.diaryPicks) != null ? _d : []),
     asks: mergeAsks((_e = local.asks) != null ? _e : [], (_f = remote.asks) != null ? _f : []),
-    wordTouches: mergeTouches((_g = local.wordTouches) != null ? _g : [], (_h = remote.wordTouches) != null ? _h : [])
+    wordTouches: mergeTouches((_g = local.wordTouches) != null ? _g : [], (_h = remote.wordTouches) != null ? _h : []),
+    wordCefr: mergeWordCefr((_i = local.wordCefr) != null ? _i : [], (_j = remote.wordCefr) != null ? _j : [])
   };
 }
 function learnerFingerprint(shard) {
-  var _a, _b, _c, _d, _e, _f, _g, _h;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i;
   const rows = [`m|${(_a = shard.meta.grammarMigratedAt) != null ? _a : ""}|${(_b = shard.meta.asksMigratedAt) != null ? _b : ""}`];
   for (const e of shard.events) rows.push(`e|${e.id}`);
   for (const p of shard.pool) rows.push(`p|${p.id}|${p.updatedAt}|${(_c = p.removedAt) != null ? _c : ""}`);
@@ -32830,10 +33424,11 @@ function learnerFingerprint(shard) {
   for (const d of (_f = shard.diaryPicks) != null ? _f : []) rows.push(`d|${d.id}|${d.at}`);
   for (const a2 of (_g = shard.asks) != null ? _g : []) rows.push(`a|${a2.id}|${a2.ok}`);
   for (const w2 of (_h = shard.wordTouches) != null ? _h : []) rows.push(`w|${w2.id}|${w2.lookup}|${w2.pronounce}|${w2.saved}`);
+  for (const c2 of (_i = shard.wordCefr) != null ? _i : []) rows.push(`c|${c2.id}|${c2.level}|${c2.at}`);
   return rows.sort().join("\n");
 }
 function pruneLearner(shard, now2) {
-  var _a, _b, _c, _d;
+  var _a, _b, _c, _d, _e;
   const cutoff = readingCutoffDay(now2);
   const touchCutoff = localDayOf(new Date(now2 - EVENT_TTL_MS));
   return {
@@ -32846,7 +33441,8 @@ function pruneLearner(shard, now2) {
     reading: ((_a = shard.reading) != null ? _a : []).filter((r) => r.day >= cutoff),
     diaryPicks: (_b = shard.diaryPicks) != null ? _b : [],
     asks: ((_c = shard.asks) != null ? _c : []).filter((a2) => now2 - ms7(a2.at) < EVENT_TTL_MS),
-    wordTouches: ((_d = shard.wordTouches) != null ? _d : []).filter((w2) => w2.day >= touchCutoff)
+    wordTouches: ((_d = shard.wordTouches) != null ? _d : []).filter((w2) => w2.day >= touchCutoff),
+    wordCefr: (_e = shard.wordCefr) != null ? _e : []
   };
 }
 function pruneQuestions(shard, now2) {
@@ -34949,6 +35545,31 @@ var LearnerStore = class {
     var _a;
     return [...(_a = this.data.wordTouches) != null ? _a : []];
   }
+  // ── AI-tagged word levels (第二十三波 R7) ──────────────────────
+  wordCefr() {
+    var _a;
+    return new Map(((_a = this.data.wordCefr) != null ? _a : []).map((w2) => [w2.id, w2.level]));
+  }
+  // Words outside the CEFR-J list that the AI gave a level; kept for good so
+  // they aren't asked again. A level already stored is replaced only when it differs.
+  setWordCefr(entries) {
+    var _a, _b;
+    const list = (_b = (_a = this.data).wordCefr) != null ? _b : _a.wordCefr = [];
+    const at = this.clock().toISOString();
+    let changed = false;
+    for (const e of entries) {
+      const id2 = e.word.trim().toLowerCase();
+      if (!id2 || !isCefrTier(e.level)) continue;
+      const cur = list.find((w2) => w2.id === id2);
+      if ((cur == null ? void 0 : cur.level) === e.level) continue;
+      if (cur) {
+        cur.level = e.level;
+        cur.at = at;
+      } else list.push({ id: id2, level: e.level, at });
+      changed = true;
+    }
+    if (changed) this.scheduleWrite();
+  }
   // ── Migration ─────────────────────────────────────────────────
   // Call after ensureLoaded() (and after the GrammarStore has loaded).
   // Returns false — doing nothing — when it already ran, or the store isn't
@@ -36186,7 +36807,7 @@ var ScenarioService = class {
 };
 
 // src/services/learner/LearnerModel.ts
-var MATURE_STABILITY_DAYS = 21;
+var MATURE_STABILITY_DAYS2 = 21;
 var WEAK_LIMIT = 8;
 var SCORED = /* @__PURE__ */ new Set(["correct", "wrong"]);
 var byAt = (a2, b) => a2.at < b.at ? -1 : a2.at > b.at ? 1 : 0;
@@ -36226,6 +36847,11 @@ var LearnerModel = class {
       reviews: ((_i = (_h = (_g = this.deps).reviews) == null ? void 0 : _h.call(_g)) != null ? _i : []).filter((r) => inRange2(r.at)).sort(byAt)
     };
   }
+  // Levels the AI tagged for words outside the built-in list.
+  wordCefr() {
+    var _a, _b, _c;
+    return (_c = (_b = (_a = this.deps.learner).wordCefr) == null ? void 0 : _b.call(_a)) != null ? _c : /* @__PURE__ */ new Map();
+  }
   focusStats(focusId) {
     let correct = 0;
     let wrong = 0;
@@ -36263,7 +36889,7 @@ var LearnerModel = class {
       out.total++;
       const s = e.srs;
       if (!s || s.state === SrsState.New) continue;
-      if (s.state === SrsState.Review && s.stability >= MATURE_STABILITY_DAYS) out.mature++;
+      if (s.state === SrsState.Review && s.stability >= MATURE_STABILITY_DAYS2) out.mature++;
       else out.learning++;
       if (Date.parse(s.due) <= now2.getTime()) out.due++;
     }
@@ -36686,54 +37312,49 @@ var UNKNOWN_LEVEL = "\u9084\u770B\u4E0D\u51FA\u4F86";
 var GRAMMAR_MIN_QUESTIONS = 10;
 var BAND_PASS = 0.7;
 var BAND_MIN = 3;
-var VOCAB_SIZE = {
-  A1: [500, 700],
-  A2: [1e3, 1500],
-  B1: [2e3, 2500],
-  B2: [4e3, 5e3],
-  C1: [8e3, 1e4],
-  C2: [16e3, 2e4]
-};
-var num = (n) => n.toLocaleString("en-US");
 var GRAMMAR_BAND_LEVEL = ["A1\u2013A2", "B1\u2013B2", "C1"];
-var pct = (r) => `${Math.round(r * 100)}%`;
+var pct3 = (r) => `${Math.round(r * 100)}%`;
 function grammarLevel(data) {
   var _a;
   const area = "\u6587\u6CD5";
   const bands = data.grammar.bands;
-  const total = bands.reduce((s, b) => s + b.total, 0);
-  if (total < GRAMMAR_MIN_QUESTIONS) {
-    return { area, level: UNKNOWN_LEVEL, basis: `\u6587\u6CD5\u984C\u53EA\u505A\u4E86 ${total} \u984C\uFF0C\u81F3\u5C11 ${GRAMMAR_MIN_QUESTIONS} \u984C\u624D\u770B\u5F97\u51FA\u4F86`, rough: true };
+  const total2 = bands.reduce((s, b) => s + b.total, 0);
+  if (total2 < GRAMMAR_MIN_QUESTIONS) {
+    return { area, level: UNKNOWN_LEVEL, basis: `\u6587\u6CD5\u984C\u53EA\u505A\u4E86 ${total2} \u984C\uFF0C\u81F3\u5C11 ${GRAMMAR_MIN_QUESTIONS} \u984C\u624D\u770B\u5F97\u51FA\u4F86`, rough: true };
   }
   for (let i = bands.length - 1; i >= 0; i--) {
     const b = bands[i];
     if (b.total >= BAND_MIN && b.rate !== null && b.rate >= BAND_PASS) {
-      return { area, level: `\u7D04 ${(_a = GRAMMAR_BAND_LEVEL[i]) != null ? _a : b.label}`, basis: `\u96E3\u5EA6 ${b.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct(b.rate)}\uFF08${b.total} \u984C\uFF09`, rough: true };
+      return { area, level: `\u7D04 ${(_a = GRAMMAR_BAND_LEVEL[i]) != null ? _a : b.label}`, basis: `\u96E3\u5EA6 ${b.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct3(b.rate)}\uFF08${b.total} \u984C\uFF09`, rough: true };
     }
   }
   const low = bands.find((b) => b.total > 0);
   return {
     area,
     level: "\u7D04 A1\u2013A2 \u4EE5\u4E0B",
-    basis: low && low.rate !== null ? `\u96E3\u5EA6 ${low.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct(low.rate)}\uFF08${low.total} \u984C\uFF09\uFF0C\u9084\u6C92\u5230\u4E03\u6210` : "\u6587\u6CD5\u984C\u7B54\u5C0D\u7387\u9084\u6C92\u5230\u4E03\u6210",
+    basis: low && low.rate !== null ? `\u96E3\u5EA6 ${low.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct3(low.rate)}\uFF08${low.total} \u984C\uFF09\uFF0C\u9084\u6C92\u5230\u4E03\u6210` : "\u6587\u6CD5\u984C\u7B54\u5C0D\u7387\u9084\u6C92\u5230\u4E03\u6210",
     rough: true
   };
 }
-function vocabLevel(selfLevel, mature) {
+var TIER_SHORT_NOTE = "\uFF08\u67E5\uFF0F\u554F\u7684\u5B57\u9084\u4E0D\u5920\u591A\uFF0C\u66AB\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\u7C97\u4F30\uFF09";
+function vocabLevel(selfLevel, mature, data) {
   const area = "\u5B57\u5F59\u91CF";
+  const tiered = (data == null ? void 0 : data.tiers) ? vocabLevelFromTiers(data.tiers) : null;
+  if (tiered) return tiered;
+  const note = (data == null ? void 0 : data.tiers) ? TIER_SHORT_NOTE : "";
   const size = selfLevel ? VOCAB_SIZE[selfLevel] : void 0;
   if (!size) return { area, level: UNKNOWN_LEVEL, basis: "\u9084\u6C92\u6709\u8A2D\u5B9A\u81EA\u8FF0\u7A0B\u5EA6", rough: true };
   return {
     area,
     level: `\u7D04 ${selfLevel}`,
     detail: `\u4F30 ${num(size[0])}\u2013${num(size[1])} \u5B57`,
-    basis: mature !== void 0 ? `\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\uFF0B\u719F\u7DF4 ${mature} \u5B57\u7C97\u4F30` : "\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\u7C97\u4F30",
+    basis: (mature !== void 0 ? `\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\uFF0B\u719F\u7DF4 ${mature} \u5B57\u7C97\u4F30` : "\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\u7C97\u4F30") + note,
     rough: true
   };
 }
 function baselineLevels(data, selfLevel, mature) {
   const unknown = (area) => ({ area, level: UNKNOWN_LEVEL, basis: "\u9019\u9031\u7684\u7D00\u9304\u9084\u4E0D\u5920", rough: true });
-  return [vocabLevel(selfLevel, mature), grammarLevel(data), unknown("\u591A\u7FA9\u5B57\u719F\u6089\u5EA6"), unknown("\u9577\u53E5\u7406\u89E3"), unknown("\u5BEB\u4F5C"), unknown("\u95B1\u8B80")];
+  return [vocabLevel(selfLevel, mature, data), grammarLevel(data), unknown("\u591A\u7FA9\u5B57\u719F\u6089\u5EA6"), unknown("\u9577\u53E5\u7406\u89E3"), unknown("\u5BEB\u4F5C"), unknown("\u95B1\u8B80")];
 }
 
 // src/core/learner/reportMarkdown.ts
@@ -36755,7 +37376,7 @@ function taskName(id2) {
   return (_a = TASK_NAMES[id2]) != null ? _a : id2;
 }
 var TRACK_NAMES = { grammar: "\u6587\u6CD5", poly: "\u591A\u7FA9\u5B57", vocab: "\u55AE\u5B57", mix: "\u6DF7\u5408", para: "\u6BB5\u843D" };
-var pct2 = (r) => `${Math.round(r * 100)}%`;
+var pct4 = (r) => `${Math.round(r * 100)}%`;
 function verdictHeadline(verdict, suggestedLevel) {
   switch (verdict) {
     case "up":
@@ -36812,14 +37433,14 @@ function numbers(data) {
   const vl = [];
   if (v.newSaved > 0) vl.push(`- \u65B0\u6536\u85CF ${v.newSaved} \u500B\u5B57`);
   if (v.reviews > 0) {
-    const rate = v.recallRate === null ? "" : `\uFF0C\u8A18\u4F4F\u7387 ${pct2(v.recallRate)}${deltaRate(v.recallRate, v.prevRecallRate)}`;
+    const rate = v.recallRate === null ? "" : `\uFF0C\u8A18\u4F4F\u7387 ${pct4(v.recallRate)}${deltaRate(v.recallRate, v.prevRecallRate)}`;
     vl.push(`- \u8907\u7FD2 ${v.reviews} \u6B21${rate}${v.avgSeconds !== null ? `\uFF0C\u5E73\u5747\u505C\u7559 ${v.avgSeconds} \u79D2` : ""}`);
   }
   out.push(...section2("\u55AE\u5B57\u8907\u7FD2", vl));
   const pl = data.practice.tracks.map(
     (t2) => {
       var _a;
-      return `- ${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\uFF1A${t2.correct}/${t2.total}\uFF08${pct2(t2.rate)}${t2.prevRate !== null ? deltaRate(t2.rate, t2.prevRate) : ""}\uFF09`;
+      return `- ${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\uFF1A${t2.correct}/${t2.total}\uFF08${pct4(t2.rate)}${t2.prevRate !== null ? deltaRate(t2.rate, t2.prevRate) : ""}\uFF09`;
     }
   );
   out.push(...section2("\u7DF4\u7FD2\u7B54\u5C0D\u7387", pl));
@@ -36829,12 +37450,13 @@ function numbers(data) {
   const gl = [];
   const bands = data.grammar.bands.filter((b) => b.total > 0 && b.rate !== null);
   if (data.grammar.mastered > 0) gl.push(`- \u5DF2\u7CBE\u719F ${data.grammar.mastered} \u500B\u6587\u6CD5\u4E3B\u984C`);
-  for (const b of bands) gl.push(`- \u96E3\u5EA6 ${b.label}\uFF1A${b.correct}/${b.total}\uFF08${pct2(b.rate)}\uFF09`);
+  for (const b of bands) gl.push(`- \u96E3\u5EA6 ${b.label}\uFF1A${b.correct}/${b.total}\uFF08${pct4(b.rate)}\uFF09`);
   out.push(...section2("\u6587\u6CD5\u7CBE\u719F", gl));
   if (data.tags.length) out.push(...section2("\u8003\u8A66\u6A19\u7C64", [`- ${data.tags.map((t2) => `${t2.key}\uFF08${t2.count}\uFF09`).join("\u3001")}`]));
   return out;
 }
 var RADAR_LANG = "vocab-report-radar";
+var TIERS_LANG = "vocab-report-tiers";
 var GREY = (text) => `<span style="color: gray">${text}</span>`;
 function calloutLines(kind, fold, title, body) {
   const trimmed = [...body];
@@ -36875,7 +37497,8 @@ function renderReportFile(data, meta) {
   const note = GREY((_e = meta.aiNote) != null ? _e : "AI \u9019\u6B21\u6C92\u5BEB\u6210\u529F");
   const body = [reportTitle(meta), "", GREY(`${data.period.from} \uFF5E ${data.period.to}`), ""];
   if (ai == null ? void 0 : ai.letter) body.push(ai.letter, "");
-  const now2 = [...radarFence(axes), "", ...levelTable(levels), "", "#### \u7A0B\u5EA6\u5EFA\u8B70", "", `**${verdictHeadline(adv.verdict, adv.suggestedLevel)}**`, ""];
+  const tiers = data.tiers && hasTierData(data.tiers) ? ["", "```" + TIERS_LANG, tiersFenceJson(data.tiers), "```"] : [];
+  const now2 = [...radarFence(axes), "", ...levelTable(levels), ...tiers, "", "#### \u7A0B\u5EA6\u5EFA\u8B70", "", `**${verdictHeadline(adv.verdict, adv.suggestedLevel)}**`, ""];
   for (const s of adv.signals) now2.push(`- ${s.reason}`);
   body.push(...calloutLines("abstract", "+", "\u73FE\u5728\u7684\u7A0B\u5EA6", now2), "");
   const next = ["#### \u7167\u4F60\u7684\u7A0B\u5EA6\u53EF\u4EE5\u52A0\u5F37", ""];
@@ -36944,9 +37567,9 @@ function reportDigest(data) {
   if (w2.repeated.length) L.push(`\u53CD\u8986\u67E5\u7684\u5B57\uFF1A${w2.repeated.map((x3) => x3.word).join("\u3001")}`);
   if (w2.savedStillLooked.length) L.push(`\u6536\u85CF\u537B\u9084\u5728\u67E5\uFF1A${w2.savedStillLooked.map((x3) => x3.word).join("\u3001")}`);
   const v = data.vocab;
-  if (v.reviews) L.push(`\u55AE\u5B57\u8907\u7FD2 ${v.reviews} \u6B21\uFF0C\u8A18\u4F4F\u7387 ${v.recallRate === null ? "-" : pct2(v.recallRate)}`);
+  if (v.reviews) L.push(`\u55AE\u5B57\u8907\u7FD2 ${v.reviews} \u6B21\uFF0C\u8A18\u4F4F\u7387 ${v.recallRate === null ? "-" : pct4(v.recallRate)}`);
   if (v.newSaved) L.push(`\u65B0\u6536\u85CF ${v.newSaved} \u500B\u5B57`);
-  for (const t2 of data.practice.tracks) L.push(`${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\u7DF4\u7FD2\u7B54\u5C0D\u7387 ${pct2(t2.rate)}\uFF08${t2.total} \u984C\uFF09`);
+  for (const t2 of data.practice.tracks) L.push(`${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\u7DF4\u7FD2\u7B54\u5C0D\u7387 ${pct4(t2.rate)}\uFF08${t2.total} \u984C\uFF09`);
   if (data.practice.weak.length) L.push(`\u5F31\u9EDE\uFF1A${data.practice.weak.map(weakLabel).join("\u3001")}`);
   if (data.grammar.mastered) L.push(`\u6587\u6CD5\u5DF2\u7CBE\u719F ${data.grammar.mastered} \u500B\u4E3B\u984C`);
   if (data.tags.length) L.push(`\u8003\u8A66\u6A19\u7C64\uFF1A${data.tags.map((t2) => t2.key).join("\u3001")}`);
@@ -37112,6 +37735,17 @@ function wordsSection(w2) {
   return l4.length ? `## \u67E5\u5B57\uFF0F\u767C\u97F3
 ${l4.join("\n")}` : "";
 }
+function tiersSection(t2) {
+  var _a;
+  if (!t2) return "";
+  const both = askedAndLooked(t2.profile);
+  const known2 = CEFR_TIERS.reduce((s, k) => s + both[k], 0);
+  if (known2 + both["?"] + CEFR_TIERS.reduce((s, k) => s + t2.profile.mature[k], 0) === 0) return "";
+  const lines4 = [tierSummary(t2.profile)];
+  for (const k of CEFR_TIERS) if ((_a = t2.examples[k]) == null ? void 0 : _a.length) lines4.push(`- ${k} \u4F8B\u5B57\uFF1A${t2.examples[k].slice(0, 10).join("\u3001")}`);
+  return `## \u4F60\u67E5\uFF0F\u554F\u7684\u5B57\u7684\u7A0B\u5EA6\u5206\u5E03
+${lines4.join("\n")}`;
+}
 function collectAnalysisMaterial(input) {
   const rounds = roundsOf2(input);
   const fixed = [
@@ -37119,7 +37753,8 @@ function collectAnalysisMaterial(input) {
     `## \u9019\u671F\u5831\u544A\u6458\u8981
 ${input.digest}`,
     wrongSection(input),
-    wordsSection(input.words)
+    wordsSection(input.words),
+    tiersSection(input.tiers)
   ].filter(Boolean);
   const fixedLen = fixed.join("\n\n").length;
   const kept = [];
@@ -37170,283 +37805,6 @@ ${limit ? cut2(body, limit) : body}`;
   if ([...full].length <= MATERIAL_MAX_CHARS) return { text: full, weeks: parts.length, truncated: false };
   const short = parts.map((p) => render(p, REVIEW_PRIORITY, REVIEW_WEEK_MAX)).join("\n\n");
   return { text: short, weeks: parts.length, truncated: true };
-}
-
-// src/core/learner/report.ts
-var GRAMMAR_MIN_N = 20;
-var GRAMMAR_UP = 0.85;
-var GRAMMAR_DOWN = 0.6;
-var PARA_MIN_N = 5;
-var PARA_TRANSLATE_DOWN = 0.6;
-var PARA_REFINE_UP = 0.7;
-var VOCAB_LOW = 0.7;
-var VOCAB_REPEATED_MIN = 3;
-var VOCAB_HIGH = 0.9;
-var VOCAB_HIGH_MIN_REVIEWS = 30;
-var pct3 = (r) => `${Math.round(r * 100)}%`;
-var inRange = (day, p) => day >= p.from && day <= p.to;
-var dayOfIso = (at) => {
-  const t2 = Date.parse(at);
-  return Number.isNaN(t2) ? null : localDayOf(new Date(t2));
-};
-function dayOfField(s) {
-  if (!s) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  return dayOfIso(s);
-}
-var atIn = (xs, p) => xs.filter((x3) => {
-  const d = dayOfIso(x3.at);
-  return d !== null && inRange(d, p);
-});
-function ranked2(m2, limit) {
-  const out = [...m2].map(([key6, count2]) => ({ key: key6, count: count2 }));
-  out.sort((a2, b) => b.count - a2.count || (a2.key < b.key ? -1 : a2.key > b.key ? 1 : 0));
-  return limit === void 0 ? out : out.slice(0, limit);
-}
-var bump = (m2, k, n = 1) => {
-  var _a;
-  return m2.set(k, ((_a = m2.get(k)) != null ? _a : 0) + n);
-};
-function activityOf(input, p) {
-  const days = /* @__PURE__ */ new Set();
-  for (const a2 of atIn(input.asks, p)) days.add(dayOfIso(a2.at));
-  for (const e of atIn(input.events, p)) days.add(dayOfIso(e.at));
-  for (const r of atIn(input.reviews, p)) days.add(dayOfIso(r.at));
-  for (const w2 of input.wordTouches) if (inRange(w2.day, p)) days.add(w2.day);
-  const reading = input.reading.filter((r) => inRange(r.day, p));
-  for (const r of reading) days.add(r.day);
-  return {
-    activeDays: days.size,
-    articles: new Set(reading.map((r) => r.path)).size,
-    sections: reading.length
-  };
-}
-function aiOf(input, p, prev) {
-  const asks = atIn(input.asks, p).filter((a2) => a2.ok);
-  const byTask = /* @__PURE__ */ new Map();
-  const bySurface = /* @__PURE__ */ new Map();
-  const byEntry = /* @__PURE__ */ new Map();
-  const byPath = /* @__PURE__ */ new Map();
-  let custom = 0;
-  for (const a2 of asks) {
-    bump(byTask, a2.taskId);
-    bump(bySurface, a2.surface);
-    if (a2.custom) custom++;
-    if (a2.entryId) bump(byEntry, a2.entryId);
-    if (a2.path) bump(byPath, a2.path);
-  }
-  const wordOf = new Map(input.vocab.map((v) => [v.id, v.word]));
-  const topWords = [];
-  for (const { key: key6, count: count2 } of ranked2(byEntry)) {
-    const word = wordOf.get(key6);
-    if (!word) continue;
-    topWords.push({ entryId: key6, word, count: count2 });
-    if (topWords.length === 5) break;
-  }
-  return {
-    total: asks.length,
-    byTask: ranked2(byTask),
-    bySurface: ranked2(bySurface),
-    custom,
-    prevTotal: prev ? atIn(input.asks, prev).filter((a2) => a2.ok).length : null,
-    topWords,
-    topPaths: ranked2(byPath, 3)
-  };
-}
-function touchesOf(input, p) {
-  const m2 = /* @__PURE__ */ new Map();
-  for (const t2 of input.wordTouches) {
-    if (!inRange(t2.day, p)) continue;
-    let a2 = m2.get(t2.word);
-    if (!a2) {
-      a2 = { word: t2.word, days: /* @__PURE__ */ new Set(), lookups: 0, pronounce: 0, saved: false };
-      m2.set(t2.word, a2);
-    }
-    if (t2.lookup > 0) a2.days.add(t2.day);
-    a2.lookups += t2.lookup;
-    a2.pronounce += t2.pronounce;
-    if (t2.saved && t2.lookup > 0) a2.saved = true;
-  }
-  return m2;
-}
-var byWord2 = (a2, b) => a2.word < b.word ? -1 : a2.word > b.word ? 1 : 0;
-function wordsOf(touches) {
-  const all = [...touches.values()];
-  return {
-    lookups: all.reduce((s, a2) => s + a2.lookups, 0),
-    repeated: all.filter((a2) => a2.days.size >= 2).map((a2) => ({ word: a2.word, days: a2.days.size, lookups: a2.lookups })).sort((a2, b) => b.days - a2.days || b.lookups - a2.lookups || byWord2(a2, b)).slice(0, 10),
-    savedStillLooked: all.filter((a2) => a2.saved && a2.lookups > 0).map((a2) => ({ word: a2.word, lookups: a2.lookups })).sort((a2, b) => b.lookups - a2.lookups || byWord2(a2, b)).slice(0, 10),
-    mostPronounced: all.filter((a2) => a2.pronounce > 0).map((a2) => ({ word: a2.word, pronounce: a2.pronounce })).sort((a2, b) => b.pronounce - a2.pronounce || byWord2(a2, b)).slice(0, 5)
-  };
-}
-var recallOf = (rs) => rs.length === 0 ? null : rs.filter((r) => r.rating >= Rating.Good).length / rs.length;
-function newSavedOf(vocab, p) {
-  return vocab.filter((v) => {
-    var _a;
-    if (v.deletedAt || v.liked !== true) return false;
-    const d = (_a = dayOfField(v.added)) != null ? _a : dayOfField(v.createdAt);
-    return d !== null && inRange(d, p);
-  });
-}
-function vocabOf(input, p, prev) {
-  const rs = atIn(input.reviews, p);
-  const avg = rs.length === 0 ? null : Math.round(rs.reduce((s, r) => s + r.elapsedMs, 0) / rs.length / 1e3 * 10) / 10;
-  return {
-    newSaved: newSavedOf(input.vocab, p).length,
-    reviews: rs.length,
-    recallRate: recallOf(rs),
-    avgSeconds: avg,
-    prevRecallRate: prev ? recallOf(atIn(input.reviews, prev)) : null
-  };
-}
-function rateByTrack(events) {
-  var _a;
-  const m2 = /* @__PURE__ */ new Map();
-  for (const e of events) {
-    if (e.result !== "correct" && e.result !== "wrong") continue;
-    const a2 = (_a = m2.get(e.track)) != null ? _a : { total: 0, correct: 0 };
-    a2.total++;
-    if (e.result === "correct") a2.correct++;
-    m2.set(e.track, a2);
-  }
-  return m2;
-}
-function endOfDay(day) {
-  const [y3, m2, d] = day.split("-").map(Number);
-  return new Date(y3, m2 - 1, d, 23, 59, 59);
-}
-function practiceOf(input, p, prev) {
-  const cur = rateByTrack(atIn(input.events, p));
-  const old = prev ? rateByTrack(atIn(input.events, prev)) : /* @__PURE__ */ new Map();
-  const tracks = [];
-  for (const t2 of TRACKS) {
-    const a2 = cur.get(t2);
-    if (!a2) continue;
-    const o = old.get(t2);
-    tracks.push({ track: t2, total: a2.total, correct: a2.correct, rate: a2.correct / a2.total, prevRate: o ? o.correct / o.total : null });
-  }
-  return { tracks, weak: weakFocuses(input.events, { now: endOfDay(p.to), limit: 5 }) };
-}
-var BANDS = [
-  [1, 3],
-  [4, 6],
-  [7, 9]
-];
-function grammarOf(input, p) {
-  const bands = BANDS.map(([min, max]) => ({ label: `${min}\u2013${max}`, min, max, total: 0, correct: 0, rate: null }));
-  for (const e of atIn(input.events, p)) {
-    if (e.track !== "grammar" || e.focus.kind !== "grammar-objective") continue;
-    if (e.result !== "correct" && e.result !== "wrong") continue;
-    const topic = topicById(e.focus.id.split("/")[0]);
-    if (!topic) continue;
-    const band = bands.find((b) => topic.difficulty >= b.min && topic.difficulty <= b.max);
-    if (!band) continue;
-    band.total++;
-    if (e.result === "correct") band.correct++;
-  }
-  for (const b of bands) b.rate = b.total === 0 ? null : b.correct / b.total;
-  return { mastered: input.grammarMastered, bands };
-}
-function tagsOf(input, p, touches) {
-  const picked2 = /* @__PURE__ */ new Map();
-  for (const v of newSavedOf(input.vocab, p)) picked2.set(v.id, v);
-  const byWordKey = /* @__PURE__ */ new Map();
-  for (const v of input.vocab) if (!v.deletedAt) byWordKey.set(v.word.toLowerCase(), v);
-  for (const a2 of touches.values()) {
-    if (!a2.saved || a2.lookups === 0) continue;
-    const v = byWordKey.get(a2.word);
-    if (v) picked2.set(v.id, v);
-  }
-  const m2 = /* @__PURE__ */ new Map();
-  for (const v of picked2.values()) {
-    const tags = new Set(
-      v.level.split(/[,，、]/).map((s) => s.trim()).filter(Boolean)
-    );
-    for (const t2 of tags) bump(m2, t2);
-  }
-  return ranked2(m2);
-}
-function suggestLevel(level, verdict) {
-  if (!level || verdict !== "up" && verdict !== "down") return void 0;
-  const i = CEFR_LEVELS.indexOf(level);
-  const j = Math.min(CEFR_LEVELS.length - 1, Math.max(0, i + (verdict === "up" ? 1 : -1)));
-  return CEFR_LEVELS[j];
-}
-function levelSignals(input, period) {
-  const signals = [];
-  let judged = false;
-  const start4 = startDifficulty(input.level);
-  const band = grammarOf(input, period).bands.find((b) => start4 >= b.min && start4 <= b.max);
-  if (band && band.rate !== null && band.total >= GRAMMAR_MIN_N) {
-    judged = true;
-    const text = `\u6587\u6CD5 ${band.label} \u7D1A\u7B54\u5C0D\u7387 ${pct3(band.rate)}\uFF08${band.total} \u984C\uFF09`;
-    if (band.rate >= GRAMMAR_UP) signals.push({ kind: "grammar", direction: "up", reason: `${text}\uFF0C\u5DF2\u9054 ${pct3(GRAMMAR_UP)} \u4EE5\u4E0A` });
-    else if (band.rate < GRAMMAR_DOWN) signals.push({ kind: "grammar", direction: "down", reason: `${text}\uFF0C\u4F4E\u65BC ${pct3(GRAMMAR_DOWN)}` });
-  }
-  const para = atIn(input.asks, period).filter((a2) => a2.ok && a2.surface === "paragraph");
-  if (para.length >= PARA_MIN_N) {
-    judged = true;
-    const translate = para.filter((a2) => a2.taskId === "paragraph.translate").length;
-    const refine = para.filter((a2) => a2.taskId === "paragraph.grammar" || a2.taskId === "paragraph.paraphrase").length;
-    if (translate / para.length > PARA_TRANSLATE_DOWN) {
-      signals.push({
-        kind: "paragraph",
-        direction: "down",
-        reason: `\u6BB5\u843D\u8A0E\u8AD6 ${para.length} \u6B21\u4E2D\u6709 ${translate} \u6B21\u662F\u7FFB\u8B6F\uFF08${pct3(translate / para.length)}\uFF09\uFF0C\u95B1\u8B80\u6750\u6599\u53EF\u80FD\u504F\u96E3`
-      });
-    } else if (refine / para.length >= PARA_REFINE_UP) {
-      signals.push({
-        kind: "paragraph",
-        direction: "up",
-        reason: `\u6BB5\u843D\u8A0E\u8AD6 ${para.length} \u6B21\u4E2D\u6709 ${refine} \u6B21\u662F\u6587\u6CD5\uFF0F\u63DB\u53E5\u8A71\u8AAA\uFF08${pct3(refine / para.length)}\uFF09\uFF0C\u7406\u89E3\u6C92\u554F\u984C\uFF0C\u5728\u7CBE\u9032\u8868\u9054`
-      });
-    }
-  }
-  const touches = touchesOf(input, period);
-  const words = wordsOf(touches);
-  const rs = atIn(input.reviews, period);
-  const recall = recallOf(rs);
-  const repeatedAll = [...touches.values()].filter((a2) => a2.days.size >= 2).length;
-  if (recall !== null && recall < VOCAB_LOW && repeatedAll >= VOCAB_REPEATED_MIN) {
-    judged = true;
-    signals.push({
-      kind: "vocab",
-      direction: "down",
-      reason: `\u55AE\u5B57\u8A18\u4F4F\u7387 ${pct3(recall)}\uFF0C\u4E14\u6709 ${repeatedAll} \u500B\u5B57\u53CD\u8986\u67E5\uFF0C\u65B0\u5B57\u9032\u4F86\u592A\u5FEB\uFF0C\u5EFA\u8B70\u653E\u6162`
-    });
-  } else if (recall !== null && rs.length >= VOCAB_HIGH_MIN_REVIEWS) {
-    judged = true;
-    if (recall > VOCAB_HIGH) {
-      signals.push({ kind: "vocab", direction: "up", reason: `\u55AE\u5B57\u8A18\u4F4F\u7387 ${pct3(recall)}\uFF08\u8907\u7FD2 ${rs.length} \u6B21\uFF09\uFF0C\u53EF\u4EE5\u52A0\u91CF` });
-    }
-  }
-  const tags = tagsOf(input, period, touches);
-  if (tags.length > 0 && words.lookups > 0) {
-    signals.push({ kind: "tags", direction: "info", reason: `\u67E5\u7684\u5B57\u591A\u534A\u5728 ${tags[0].key}\uFF08${tags[0].count} \u500B\uFF09` });
-  }
-  const up = signals.filter((s) => s.direction === "up").length;
-  const down = signals.filter((s) => s.direction === "down").length;
-  let verdict;
-  if (up >= 2 && down === 0) verdict = "up";
-  else if (down > 0 && down >= up) verdict = "down";
-  else if (up === 0 && down === 0 && !judged) verdict = "insufficient";
-  else verdict = "keep";
-  const suggestedLevel = suggestLevel(input.level, verdict);
-  return suggestedLevel ? { verdict, suggestedLevel, signals } : { verdict, signals };
-}
-function buildReport(input, period, prev) {
-  const touches = touchesOf(input, period);
-  return {
-    period,
-    activity: activityOf(input, period),
-    ai: aiOf(input, period, prev),
-    words: wordsOf(touches),
-    vocab: vocabOf(input, period, prev),
-    practice: practiceOf(input, period, prev),
-    grammar: grammarOf(input, period),
-    tags: tagsOf(input, period, touches),
-    advice: levelSignals(input, period)
-  };
 }
 
 // src/core/learner/reportAdvice.ts
@@ -37578,43 +37936,56 @@ var ReportService = class {
     const valid = days.filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d));
     return valid.length ? valid.sort()[0] : null;
   }
-  collect(from, to) {
+  reportInput(from, to) {
     const prev = shiftRange({ from, to });
     const act = this.deps.model.activity(prev.from, to);
-    return buildReport(
-      {
+    return {
+      input: {
         level: this.deps.model.level(),
         ...act,
         vocab: this.deps.vocab.entries,
         grammarMastered: this.deps.model.snapshot().grammar.mastered
       },
-      { from, to },
+      period: { from, to },
       prev
-    );
+    };
+  }
+  collect(from, to) {
+    var _a, _b;
+    const { input, period, prev } = this.reportInput(from, to);
+    const data = buildReport(input, period, prev);
+    return { ...data, tiers: vocabTierProfile(input, period, (_b = (_a = this.deps.model).wordCefr) == null ? void 0 : _b.call(_a)) };
   }
   async advice(data) {
-    var _a;
+    var _a, _b, _c, _d;
     const level = this.deps.model.level();
     const baseline = baselineAxes(data);
     const levels = baselineLevels(data, level, (_a = this.deps.model.snapshot().vocab) == null ? void 0 : _a.mature);
-    if (!this.deps.aiReady()) return { aiNote: "AI \u6C92\u6709\u958B\u555F\uFF0C\u9019\u6BB5\u7565\u904E", axes: baseline, levels };
+    if (!this.deps.aiReady()) return { aiNote: "AI \u6C92\u6709\u958B\u555F\uFF0C\u9019\u6BB5\u7565\u904E", axes: baseline, levels, baseline: levels };
     try {
       const readingTitles = collectReadingTitles(this.deps.model.activity(addDays(data.period.from, -30), data.period.to).reading, data.period);
+      const unknownWords = (_c = (_b = data.tiers) == null ? void 0 : _b.unknownWords) != null ? _c : [];
       const { value } = await runStructured(this.deps.ai, reportAdvise, {
         digest: reportDigest(data),
         level,
         baseline,
         baselineLevels: levels,
-        readingTitles
+        readingTitles,
+        ...data.tiers ? { tierSummary: tierSummary(data.tiers) } : {},
+        unknownWords
       });
-      if (!isEmptyAdvice(value)) return { advice: resolveAdvice(value, baseline, levels) };
+      if (!isEmptyAdvice(value)) {
+        const asked = new Set(unknownWords);
+        const wordLevels = ((_d = value.wordLevels) != null ? _d : []).filter((w2) => asked.has(w2.word));
+        return { advice: resolveAdvice(value, baseline, levels), wordLevels, baseline: levels };
+      }
     } catch (e) {
       console.error("Vocab Tracker: report advice failed", e);
     }
-    return { aiNote: "AI \u9019\u6B21\u6C92\u5BEB\u6210\u529F", axes: baseline, levels };
+    return { aiNote: "AI \u9019\u6B21\u6C92\u5BEB\u6210\u529F", axes: baseline, levels, baseline: levels };
   }
   async write(key6, opts = {}) {
-    var _a, _b;
+    var _a, _b, _c;
     const path = this.pathOf(key6);
     if (this.running.has(key6)) return "busy";
     if (!opts.overwrite && this.deps.vault.exists(path)) return "exists";
@@ -37634,7 +38005,16 @@ var ReportService = class {
         this.setState("idle");
         return "empty";
       }
-      const content = renderReportFile(data, { key: key6, first, ...await this.advice(data) });
+      const { wordLevels, baseline, ...meta } = await this.advice(data);
+      let shown = data;
+      if ((wordLevels == null ? void 0 : wordLevels.length) && this.deps.setWordCefr) {
+        this.deps.setWordCefr(wordLevels);
+        shown = this.collect(from, week.to);
+        const fresh = baselineLevels(shown, this.deps.model.level(), (_c = this.deps.model.snapshot().vocab) == null ? void 0 : _c.mature);
+        if (meta.levels) meta.levels = fresh;
+        else if (meta.advice && meta.advice.levels === baseline) meta.advice = { ...meta.advice, levels: fresh };
+      }
+      const content = renderReportFile(shown, { key: key6, first, ...meta });
       if (this.deps.vault.exists(path)) await this.deps.vault.process(path, () => content);
       else await this.deps.vault.create(path, content);
       this.setState("idle");
@@ -37682,7 +38062,7 @@ var ReportService = class {
   // 詳細分析 (規劃書 15 §6): reads the period's AI discussions, wrong answers
   // and word touches, and writes the answer into the report's managed blocks.
   async analyze(key6, opts = {}) {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f, _g;
     const path = this.pathOf(key6);
     const id2 = `analyze:${key6}`;
     if (this.running.has(id2)) return "busy";
@@ -37703,6 +38083,7 @@ var ReportService = class {
         range = { from: fm["analyzed-from"], to: own.to };
       }
       const data = this.collect(range.from, range.to);
+      const { input } = this.reportInput(range.from, range.to);
       const act = this.deps.model.activity(range.from, range.to);
       const vocab = this.deps.vocab.entries;
       const material = collectAnalysisMaterial({
@@ -37717,6 +38098,7 @@ var ReportService = class {
           return zh ? `${e.word}\uFF08${zh}\uFF09` : e.word;
         },
         words: data.words,
+        ...data.tiers ? { tiers: { profile: data.tiers, examples: tierExamples(input, { from: range.from, to: range.to }, (_g = (_f = this.deps.model).wordCefr) == null ? void 0 : _g.call(_f)) } } : {},
         digest: reportDigest(data),
         level: this.deps.model.level()
       });
@@ -42470,6 +42852,8 @@ var VocabTrackerPlugin = class extends import_obsidian72.Plugin {
     });
     this.report = new ReportService({
       model: this.learnerModel,
+      // 第二十三波 R7: levels the AI gave to words outside the CEFR-J list.
+      setWordCefr: (entries) => this.learner.setWordCefr(entries),
       vocab: this.store,
       vault: {
         exists: (p) => this.vault.exists(p),

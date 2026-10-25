@@ -8,6 +8,7 @@ import type { AskEvent, LearnEvent, ReadingVisit, WordTouch } from "../../core/m
 import type { CefrLevel } from "../../core/model/settings";
 import { SrsState } from "../../core/model/srs";
 import type { ReviewLog } from "../../core/model/srs";
+import type { CefrTier } from "../../core/wordlists/cefr";
 import type { GrammarStore } from "../grammar/GrammarStore";
 import type { LearnerStore } from "./LearnerStore";
 
@@ -59,7 +60,7 @@ export interface LearnerSnapshot {
 export interface LearnerModelDeps {
   vocab: () => readonly VocabEntry[];
   grammar: Pick<GrammarStore, "questions" | "attempts" | "progress">;
-  learner: Pick<LearnerStore, "learnEvents"> & Partial<Pick<LearnerStore, "asks" | "wordTouches" | "readingBetween">>;
+  learner: Pick<LearnerStore, "learnEvents"> & Partial<Pick<LearnerStore, "asks" | "wordTouches" | "readingBetween" | "wordCefr">>;
   reviews?: () => readonly ReviewLog[];
   level: () => CefrLevel | "";
   now?: () => Date;
@@ -114,6 +115,11 @@ export class LearnerModel {
       events: l.learnEvents().filter((e) => inRange(e.at)).sort(byAt),
       reviews: (this.deps.reviews?.() ?? []).filter((r) => inRange(r.at)).sort(byAt),
     };
+  }
+
+  // Levels the AI tagged for words outside the built-in list.
+  wordCefr(): ReadonlyMap<string, CefrTier> {
+    return this.deps.learner.wordCefr?.() ?? new Map();
   }
 
   focusStats(focusId: string): { correct: number; wrong: number; lastAt?: string } {

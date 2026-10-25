@@ -184,3 +184,27 @@ describe("report prompts", () => {
     expect(reportReview.maxTokens).toBe(8192);
   });
 });
+
+describe("collectAnalysisMaterial: tier distribution (第二十三波 R7)", () => {
+  const z = { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0, "?": 0 };
+  const tiers = {
+    profile: { asked: { ...z, A2: 3, B1: 4 }, looked: { ...z, B1: 2, "?": 1 }, saved: z, mature: { ...z, A2: 5 }, unknownWords: ["pug"] },
+    examples: { A1: [], A2: ["basket", "battery"], B1: ["anxiety"], B2: [], C1: [], C2: [] },
+  };
+
+  it("adds a section with the counts per level and example words", () => {
+    const m = collectAnalysisMaterial({ ...base, tiers });
+    expect(m.text).toContain("## 你查／問的字的程度分布");
+    expect(m.text).toContain("- 查／問的字（10 字）：A2 3、B1 6、不明 1");
+    expect(m.text).toContain("- 熟練的字（5 字）：A2 5");
+    expect(m.text).toContain("- A2 例字：basket、battery");
+    expect(m.text).toContain("- B1 例字：anxiety");
+    expect(m.text).not.toContain("B2 例字");
+  });
+
+  it("leaves it out with no tiers or no words", () => {
+    expect(collectAnalysisMaterial({ ...base }).text).not.toContain("程度分布");
+    const empty = { ...tiers, profile: { ...tiers.profile, asked: z, looked: z, mature: z } };
+    expect(collectAnalysisMaterial({ ...base, tiers: empty }).text).not.toContain("程度分布");
+  });
+});

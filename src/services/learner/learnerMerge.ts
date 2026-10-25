@@ -16,8 +16,10 @@ import type {
   ReadingVisit,
   Track,
   TrackFilter,
+  WordCefr,
   WordTouch,
 } from "../../core/model/learner";
+import { isCefrTier } from "../../core/wordlists/cefr";
 import { mergeRecords } from "../learn/learnMerge";
 
 // Multi-device merge for store/learner.json (規劃書 12 §1). Events are
@@ -39,7 +41,7 @@ function ms(iso: string | undefined): number {
 }
 
 export function emptyLearnerShard(): LearnerShard {
-  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [], asks: [], wordTouches: [] };
+  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [], asks: [], wordTouches: [], wordCefr: [] };
 }
 
 const str = (v: unknown): v is string => typeof v === "string" && v !== "";
@@ -223,6 +225,21 @@ function normalizeTouch(raw: unknown): WordTouch | null {
   return { id, day: raw.day, word, lookup, pronounce, saved: raw.saved === true, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : `${raw.day}T00:00:00.000Z` };
 }
 
+function normalizeWordCefr(raw: unknown): WordCefr | null {
+  if (!isObj(raw) || !str(raw.id) || !isCefrTier(raw.level) || !isIso(raw.at)) return null;
+  const id = raw.id.trim().toLowerCase();
+  return id ? { id, level: raw.level, at: raw.at } : null;
+}
+
+function mergeWordCefr(a: readonly WordCefr[], b: readonly WordCefr[]): WordCefr[] {
+  const map = new Map<string, WordCefr>();
+  for (const w of [...a, ...b]) {
+    const cur = map.get(w.id);
+    if (!cur || ms(w.at) > ms(cur.at)) map.set(w.id, w);
+  }
+  return [...map.values()].sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
+}
+
 function mergeAsks(a: readonly AskEvent[], b: readonly AskEvent[]): AskEvent[] {
   const map = new Map<string, AskEvent>();
   for (const e of [...a, ...b]) {
@@ -277,6 +294,7 @@ export function normalizeLearnerShard(raw: unknown): LearnerShard {
     diaryPicks: normList(s.diaryPicks, normalizePick),
     asks: normList(s.asks, normalizeAsk),
     wordTouches: normList(s.wordTouches, normalizeTouch),
+    wordCefr: mergeWordCefr(normList(s.wordCefr, normalizeWordCefr), []),
   };
 }
 
@@ -305,6 +323,7 @@ export function mergeLearner(local: LearnerShard, remote: LearnerShard): Learner
     diaryPicks: mergePicks(local.diaryPicks ?? [], remote.diaryPicks ?? []),
     asks: mergeAsks(local.asks ?? [], remote.asks ?? []),
     wordTouches: mergeTouches(local.wordTouches ?? [], remote.wordTouches ?? []),
+    wordCefr: mergeWordCefr(local.wordCefr ?? [], remote.wordCefr ?? []),
   };
 }
 
@@ -320,6 +339,7 @@ export function learnerFingerprint(shard: LearnerShard): string {
   for (const d of shard.diaryPicks ?? []) rows.push(`d|${d.id}|${d.at}`);
   for (const a of shard.asks ?? []) rows.push(`a|${a.id}|${a.ok}`);
   for (const w of shard.wordTouches ?? []) rows.push(`w|${w.id}|${w.lookup}|${w.pronounce}|${w.saved}`);
+  for (const c of shard.wordCefr ?? []) rows.push(`c|${c.id}|${c.level}|${c.at}`);
   return rows.sort().join("\n");
 }
 
@@ -337,6 +357,7 @@ export function pruneLearner(shard: LearnerShard, now: number): LearnerShard {
     diaryPicks: shard.diaryPicks ?? [],
     asks: (shard.asks ?? []).filter((a) => now - ms(a.at) < EVENT_TTL_MS),
     wordTouches: (shard.wordTouches ?? []).filter((w) => w.day >= touchCutoff),
+    wordCefr: shard.wordCefr ?? [],
   };
 }
 

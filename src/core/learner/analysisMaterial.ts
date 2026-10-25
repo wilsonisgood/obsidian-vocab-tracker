@@ -4,6 +4,8 @@ import { localDayOf } from "./reading";
 import { taskName } from "./reportMarkdown";
 import { PART_ADVICE, PART_ANALYSIS, PART_FOCUS, PART_LETTER, PART_LEVEL_TABLE, PART_OLD_ADVICE, PART_TRY, reportPart } from "./reportSections";
 import type { CefrLevel } from "../model/settings";
+import { CEFR_TIERS, type CefrTier } from "../wordlists/cefr";
+import { askedAndLooked, tierSummary, type TierProfile } from "./vocabTiers";
 
 // Material for report.analyze (第二十一波 R4, 規劃書 15 §6): every AI
 // discussion round of the period (tombstones included), the wrong practice
@@ -31,6 +33,8 @@ export interface AnalysisInput {
   // entryId → "word（中文意思）" for word discussions.
   entryLabel?: (entryId: string) => string | undefined;
   words: WordLists;
+  // Level distribution of the words asked / looked up, plus example words (第二十三波 R7).
+  tiers?: { profile: TierProfile; examples: Record<CefrTier, string[]> };
   digest: string;
   level: CefrLevel | "";
 }
@@ -108,6 +112,16 @@ function wordsSection(w: WordLists): string {
   return l.length ? `## 查字／發音\n${l.join("\n")}` : "";
 }
 
+function tiersSection(t: AnalysisInput["tiers"]): string {
+  if (!t) return "";
+  const both = askedAndLooked(t.profile);
+  const known = CEFR_TIERS.reduce((s, k) => s + both[k], 0);
+  if (known + both["?"] + CEFR_TIERS.reduce((s, k) => s + t.profile.mature[k], 0) === 0) return "";
+  const lines = [tierSummary(t.profile)];
+  for (const k of CEFR_TIERS) if (t.examples[k]?.length) lines.push(`- ${k} 例字：${t.examples[k].slice(0, 10).join("、")}`);
+  return `## 你查／問的字的程度分布\n${lines.join("\n")}`;
+}
+
 export function collectAnalysisMaterial(input: AnalysisInput): AnalysisMaterial {
   const rounds = roundsOf(input);
   const fixed = [
@@ -115,6 +129,7 @@ export function collectAnalysisMaterial(input: AnalysisInput): AnalysisMaterial 
     `## 這期報告摘要\n${input.digest}`,
     wrongSection(input),
     wordsSection(input.words),
+    tiersSection(input.tiers),
   ].filter(Boolean);
   const fixedLen = fixed.join("\n\n").length;
 
