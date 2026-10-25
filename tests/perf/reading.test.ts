@@ -11,13 +11,14 @@ import { report, type Row } from "./support/report";
 // section with 1,000 words and 200 threads. Every post-processor main.ts
 // registers runs on each section of the ~300-section article, in
 // registration order, and the per-section total is what's budgeted (p95):
-//   WordPageDecorator · ParagraphBadges · processMarks · examHighlight.
+//   WordPageDecorator · ParagraphBadges · vocabHighlight · processMarks ·
+//   examHighlight.
 // The word page (單字/<word>.md, written by the plugin itself) is measured
 // the same way, since that's where WordPageDecorator does its work.
 
 const BUDGET_MS = 2;
 // main.ts registration order (onload).
-const NAMES = ["WordPageDecorator", "ParagraphBadges", "processMarks", "examHighlight"];
+const NAMES = ["WordPageDecorator", "ParagraphBadges", "vocabHighlight", "processMarks", "examHighlight"];
 
 const fx = buildStressFixture();
 let b: Booted;
@@ -90,6 +91,7 @@ describe("reading-view post-processors (§1.3 < 2 ms per section)", () => {
     const discussed = fx.threads.filter((t) => t.anchor.kind === "paragraph" && t.anchor.path === fx.article.path);
     expect(counted).toHaveLength(discussed.length);
     expect(els.some((el) => el.querySelector("mark.vt-tracked-mark"))).toBe(true);
+    expect(els.some((el) => el.querySelector("mark.vt-vocab-auto.vt-tracked-mark"))).toBe(true);
     expect(els.some((el) => el.querySelector(".vt-exam-word"))).toBe(true);
 
     expect(percentile(run.totals, 95)).toBeLessThan(BUDGET_MS * PERF_FACTOR);

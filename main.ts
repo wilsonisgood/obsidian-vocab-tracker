@@ -69,6 +69,7 @@ import { ObsidianWordlists, inFolder } from "./src/platform/ObsidianWordlists";
 import { WordlistService } from "./src/services/wordlists/WordlistService";
 import { resolveWordlistSettings, tagColor, tagEnabled, type WordlistSettings } from "./src/core/model/wordlists";
 import { EXAM_WORD_CLS, highlightExamWords } from "./src/ui/reading/examHighlight";
+import { VocabHighlighter } from "./src/ui/reading/vocabHighlight";
 import { NoteImports } from "./src/services/wordlists/NoteImports";
 import { EntryWordIndex } from "./src/services/wordlists/EntryWordIndex";
 import { mergeLevel, planImport } from "./src/core/wordlists/importPlan";
@@ -594,6 +595,18 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     });
     this.register(this.paragraphBadges.attach());
     this.registerMarkdownPostProcessor(this.paragraphBadges.process);
+
+    // Saved words highlighted in every note, not only the one they were
+    // added from. Before processMarks (it makes these clickable too) and
+    // the exam underline (which skips <mark>).
+    const vocabHighlight = new VocabHighlighter({
+      entries: () => this.store.entries,
+      enabled: () => resolveUiPrefs(this.store.settings.ui).highlightSaved,
+      inflections: () => this.wordlistSettings().inflections,
+      rerender: () => this.rerenderReadingViews(),
+    });
+    this.register(this.store.events.on("data:changed", () => vocabHighlight.refresh()));
+    this.registerMarkdownPostProcessor(vocabHighlight.process);
 
     // Click handler for ==highlights== in reading mode
     this.registerMarkdownPostProcessor(this.processMarks.bind(this));
@@ -1557,7 +1570,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
 
   processMarks(el: HTMLElement, _ctx: MarkdownPostProcessorContext) {
     el.querySelectorAll<HTMLElement>("mark").forEach((mark) => {
-      const word = mark.textContent?.trim() ?? "";
+      // A saved-word highlight carries the saved form ("analyze" for "analyzed").
+      const word = mark.dataset.vtWord ?? mark.textContent?.trim() ?? "";
       if (!word) return;
       mark.addClass("vt-tracked-mark");
       // aria-label, not title: no hover on touch screens (規劃書 01 §2).

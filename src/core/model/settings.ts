@@ -103,6 +103,9 @@ export interface UiSettings extends SectionStamp {
   // 的連結／大綱；開啟後外掛在啟動時安靜建立一個右側欄分頁（不會跳出來蓋住
   // 筆記），使用者自己滑過去才看得到。
   sidebarOnPhone?: boolean;
+  // 單字庫裡的字在每篇筆記的閱讀模式都高亮，不只加字時那篇（那篇的原文
+  // 會被寫成 ==word==）。只是畫面上的裝飾，不改其他筆記。
+  highlightSaved?: boolean;
 }
 
 export interface UiPrefs {
@@ -110,6 +113,7 @@ export interface UiPrefs {
   livePreviewHint: boolean;
   pronounceSource: PronounceSource;
   sidebarOnPhone: boolean;
+  highlightSaved: boolean;
 }
 
 export const DEFAULT_UI_PREFS: Readonly<UiPrefs> = {
@@ -118,6 +122,7 @@ export const DEFAULT_UI_PREFS: Readonly<UiPrefs> = {
   pronounceSource: "auto",
   // On unless the user switched it off themselves (a stored false stays) (1010 #S2).
   sidebarOnPhone: true,
+  highlightSaved: true,
 };
 
 function isTapAction(v: unknown): v is TapAction {
@@ -137,6 +142,7 @@ export function resolveUiPrefs(ui: Partial<UiSettings> | undefined): UiPrefs {
     livePreviewHint: typeof ui?.livePreviewHint === "boolean" ? ui.livePreviewHint : DEFAULT_UI_PREFS.livePreviewHint,
     pronounceSource: isPronounceSource(ui?.pronounceSource) ? ui.pronounceSource : DEFAULT_UI_PREFS.pronounceSource,
     sidebarOnPhone: typeof ui?.sidebarOnPhone === "boolean" ? ui.sidebarOnPhone : DEFAULT_UI_PREFS.sidebarOnPhone,
+    highlightSaved: typeof ui?.highlightSaved === "boolean" ? ui.highlightSaved : DEFAULT_UI_PREFS.highlightSaved,
   };
 }
 
