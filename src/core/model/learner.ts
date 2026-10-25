@@ -62,6 +62,8 @@ export interface TrackFilter {
 
 export interface LearnerMeta {
   grammarMigratedAt?: string;
+  // 規劃書 15 §2.1: threads.json was backfilled into asks[] once.
+  asksMigratedAt?: string;
 }
 
 export interface LearnerShard {
@@ -75,6 +77,9 @@ export interface LearnerShard {
   // 第十九波 D1; absent in older files.
   reading?: ReadingVisit[];
   diaryPicks?: DiaryPick[];
+  // 規劃書 15 R1; absent in older files.
+  asks?: AskEvent[];
+  wordTouches?: WordTouch[];
 }
 
 export const TRACKS: readonly Track[] = ["grammar", "poly", "vocab", "mix", "para"];
@@ -105,4 +110,34 @@ export interface DiaryPick {
   key: string; // normalized (see normalizePickKey)
   day: string; // the diary day it was used on
   at: string;
+}
+
+// AI help requests (規劃書 15 §2.1): one per question asked in a discussion
+// thread, kept here so deleting a discussion doesn't erase the history.
+export type AskSurface = "word" | "paragraph" | "trivia" | "morpheme" | "grammar" | "other";
+export const ASK_SURFACES: readonly AskSurface[] = ["word", "paragraph", "trivia", "morpheme", "grammar", "other"];
+export const ASK_TEXT_MAX = 80;
+export interface AskEvent {
+  id: string; // = the user turn's id
+  at: string;
+  surface: AskSurface;
+  taskId: string; // "paragraph.translate", "word.compare"…
+  entryId?: string; // the word discussed / the trivia subject
+  path?: string; // the paragraph discussion's note
+  selection?: string; // highlighted text, first ASK_TEXT_MAX chars
+  custom: boolean; // the learner typed their own question
+  question?: string; // first ASK_TEXT_MAX chars
+  ok: boolean; // an answer came back
+}
+
+// Reading-view lookups and 🔊 presses (規劃書 15 §2.2), one row per local
+// day + word. Card autoplay doesn't count as a press.
+export interface WordTouch {
+  id: string; // `${day}|${word}`
+  day: string; // local date YYYY-MM-DD
+  word: string; // lowercased
+  lookup: number;
+  pronounce: number;
+  saved: boolean; // already in the vocab list the first time it was touched
+  updatedAt: string;
 }
