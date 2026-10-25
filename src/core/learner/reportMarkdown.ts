@@ -1,6 +1,9 @@
 import { topicById } from "../grammar/catalog";
 import type { CefrLevel } from "../model/settings";
+import { baselineLevels, type LevelEstimate } from "./levelEstimate";
+import { baselineAxes, type RadarAxis } from "./radar";
 import type { ReportData, LevelAdvice } from "./report";
+import type { ReportAdvice } from "./reportAdvice";
 
 // Report file text (規劃書 15 §4). Pure; Traditional Chinese is hard-coded.
 
@@ -8,9 +11,12 @@ export interface ReportMeta {
   key: string;
   // First report ever: the period runs from the earliest record (round 2 Q1).
   first?: boolean;
-  // AI advice paragraphs; absent → `aiNote` explains why.
-  advice?: string[];
+  // The AI's letter, levels, advice; absent → `aiNote` explains why.
+  advice?: ReportAdvice;
   aiNote?: string;
+  // Without `advice`: the rule-based fallbacks (default: computed from data).
+  axes?: RadarAxis[];
+  levels?: LevelEstimate[];
 }
 
 export const TASK_NAMES: Record<string, string> = {
@@ -69,9 +75,8 @@ function section(title: string, lines: string[]): string[] {
   return lines.length ? [`### ${title}`, ...lines, ""] : [];
 }
 
-export function reportTitle(data: ReportData, meta: Pick<ReportMeta, "key" | "first">): string {
-  const { from, to } = data.period;
-  return meta.first ? `# 到目前為止的學習報告（${from} ～ ${to}）` : `# 學習週報 ${meta.key}（${from} ～ ${to}）`;
+export function reportTitle(meta: Pick<ReportMeta, "key" | "first">): string {
+  return meta.first ? `# 到目前為止的你 · ${meta.key}` : `# 這週的你 · ${meta.key}`;
 }
 
 function numbers(data: ReportData): string[] {
@@ -122,6 +127,34 @@ function numbers(data: ReportData): string[] {
   return out;
 }
 
+export const RADAR_LANG = "vocab-report-radar";
+const GREY = (text: string) => `<span style="color: gray">${text}</span>`;
+
+// Every line of a callout starts with ">" (blank ones are a bare ">").
+export function calloutLines(kind: string, fold: "+" | "-", title: string, body: readonly string[]): string[] {
+  const trimmed = [...body];
+  while (trimmed.length && trimmed[trimmed.length - 1] === "") trimmed.pop();
+  return [`> [!${kind}]${fold} ${title}`, ...trimmed.map((l) => (l === "" ? ">" : `> ${l}`))];
+}
+
+const cell = (s: string) => s.replace(/\|/g, "／").replace(/\s*\n\s*/g, " ").trim();
+
+function levelTable(levels: readonly LevelEstimate[]): string[] {
+  const rows = levels.map((l) => {
+    const detail = l.detail ? `（${l.detail}）` : "";
+    const rough = l.rough ? "（粗估）" : "";
+    return `| ${cell(l.area)} | ${cell(l.level)}${cell(detail)}${rough} | ${cell(l.basis)} |`;
+  });
+  return ["| 面向 | 程度 | 依據 |", "| --- | --- | --- |", ...rows];
+}
+
+export function radarFence(axes: readonly RadarAxis[]): string[] {
+  const json = JSON.stringify({
+    axes: axes.map((a) => ({ name: a.name, value: Math.round(a.value * 100) / 100, clear: a.clear, ...(a.hint ? { hint: a.hint } : {}) })),
+  });
+  return ["```" + RADAR_LANG, json, "```"];
+}
+
 export function renderReportFile(data: ReportData, meta: ReportMeta): string {
   const adv = data.advice;
   const fm = [
@@ -134,16 +167,30 @@ export function renderReportFile(data: ReportData, meta: ReportMeta): string {
     "---",
     "",
   ];
-  const body: string[] = [reportTitle(data, meta), ""];
+  const ai = meta.advice;
+  const axes = ai?.axes ?? meta.axes ?? baselineAxes(data);
+  const levels = ai?.levels ?? meta.levels ?? baselineLevels(data, "");
+  const note = GREY(meta.aiNote ?? "AI 這次沒寫成功");
+
+  const body: string[] = [reportTitle(meta), "", GREY(`${data.period.from} ～ ${data.period.to}`), ""];
+  if (ai?.letter) body.push(ai.letter, "");
+
+  // 現在的程度
+  const now: string[] = [...radarFence(axes), "", ...levelTable(levels), "", "#### 程度建議", "", `**${verdictHeadline(adv.verdict, adv.suggestedLevel)}**`, ""];
+  for (const s of adv.signals) now.push(`- ${s.reason}`);
+  body.push(...calloutLines("abstract", "+", "現在的程度", now), "");
+
+  // 接下來的建議
+  const next: string[] = ["#### 照你的程度可以加強", ""];
+  if (ai?.focus.length) next.push(...ai.focus.map((p) => `- ${p}`), "");
+  else next.push(note, "");
+  if (ai?.tryNext.length) next.push("#### 下週一起試試", "", ...ai.tryNext.map((p) => `- [ ] ${p}`), "");
+  if (ai?.reading.length) next.push("#### 適合你的閱讀", "", ...ai.reading.map((p) => `- ${p}`), "");
+  body.push(...calloutLines("tip", "+", "接下來的建議", next), "");
+
   const nums = numbers(data);
-  if (nums.length) body.push("## 這週的數字", "", ...nums);
-  body.push("## 程度建議", "", `**${verdictHeadline(adv.verdict, adv.suggestedLevel)}**`, "");
-  for (const s of adv.signals) body.push(`- ${s.reason}`);
-  if (adv.signals.length) body.push("");
-  body.push("## 給你的建議", "");
-  if (meta.advice?.length) body.push(...meta.advice.flatMap((p) => [p, ""]));
-  else body.push(`<span style="color: gray">${meta.aiNote ?? "AI 這次沒寫成功"}</span>`, "");
-  // 詳細分析 buttons (第二十一波 R4); the analysis itself is written above it.
+  body.push(...calloutLines("note", "-", "數字明細", nums.length ? nums : ["這週還沒有數字可以列。"]), "");
+  // 詳細分析 buttons (第二十一波 R4); the analysis itself sits inside the callouts above.
   body.push(analyzeFence(meta.key), "");
   return [...fm, ...body].join("\n").replace(/\n+$/, "\n");
 }
@@ -153,6 +200,15 @@ export const ANALYSIS_HEADING = "## 詳細分析";
 
 export function analyzeFence(key: string): string {
   return ["```" + ANALYZE_LANG, `key: ${key}`, "```"].join("\n");
+}
+
+export function removeFrontmatterField(text: string, key: string): string {
+  const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+  if (!m) return text;
+  const re = new RegExp(`^${key}:.*(?:\\r?\\n|$)`, "m");
+  if (!re.test(m[1])) return text;
+  const fm = m[1].replace(re, "").replace(/\r?\n$/, "");
+  return text.slice(0, m.index) + `---\n${fm}\n---` + text.slice(m.index + m[0].length);
 }
 
 export function setFrontmatterField(text: string, key: string, value: string): string {

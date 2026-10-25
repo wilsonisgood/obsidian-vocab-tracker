@@ -1,7 +1,7 @@
 import type { CefrLevel } from "../../../core/model/settings";
 import type { AiResult } from "../providers/types";
 import { composeRequest } from "./compose";
-import { parseReportAnalysis } from "./reportAnalyze";
+import { parseMarkdownAnswer } from "./reportAnalyze";
 import { WARM_TONE } from "./tone";
 import type { AiTask, TaskContext } from "./types";
 
@@ -48,6 +48,6 @@ export const reportReview: AiTask<ReportReviewInput, string> = {
     });
   },
   parse(r: AiResult): string {
-    return parseReportAnalysis(r.text);
+    return parseMarkdownAnswer(r.text);
   },
 };

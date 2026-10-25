@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeButtonKey, parseAnalyzeKey, applyLevelOffer, reasonKey, writeButtonKey, type ReportCardLatest } from "../../../src/ui/blocks/reportCardState";
+import { analyzeAsk, weekLabel, analyzeButtonKey, parseAnalyzeKey, applyLevelOffer, reasonKey, writeButtonKey, type ReportCardLatest } from "../../../src/ui/blocks/reportCardState";
 
 const L = (p: Partial<ReportCardLatest>): ReportCardLatest => ({ key: "2026-W43", path: "p", verdict: "up", suggestedLevel: "B2", headline: "h", ...p });
 
@@ -47,5 +47,15 @@ describe("parseAnalyzeKey", () => {
     expect(analyzeButtonKey(false, false)).toBe("report.analyze.run");
     expect(analyzeButtonKey(false, true)).toBe("report.analyze.rerun");
     expect(analyzeButtonKey(true, true)).toBe("report.analyze.running");
+  });
+});
+
+describe("analyzeAsk", () => {
+  it("is null when nothing is pending", () => {
+    expect(analyzeAsk([])).toBeNull();
+  });
+  it("lists the weeks and counts them", () => {
+    expect(analyzeAsk(["2026-W42", "2026-W43"])).toEqual({ weeks: "W42、W43", n: 2 });
+    expect(weekLabel("2026-W07")).toBe("W07");
   });
 });

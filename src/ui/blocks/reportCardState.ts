@@ -75,3 +75,17 @@ export function reviewNoticeKey(result: "written" | "busy" | "empty" | "no-ai" |
       return "report.analyze.failed";
   }
 }
+
+// ── 補做詳細分析提醒 (第二十二波 R6) ──
+
+// "2026-W43" → "W43".
+export function weekLabel(key: string): string {
+  return key.replace(/^\d{4}-/, "");
+}
+
+// The one-line ask under the 詳細分析 button: which earlier weeks were never
+// analysed. null = nothing to ask, just run.
+export function analyzeAsk(pending: readonly string[]): { weeks: string; n: number } | null {
+  if (!pending.length) return null;
+  return { weeks: pending.map(weekLabel).join("、"), n: pending.length };
+}

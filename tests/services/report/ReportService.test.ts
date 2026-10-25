@@ -7,6 +7,19 @@ import { FakeLearnAi, result } from "../learn/fakes";
 const NOW = new Date(2026, 9, 26, 9, 0, 0); // Monday 2026-10-26 → last week is 2026-W43 (10-19..10-25)
 const FOLDER = "vocab-list/Report";
 
+const ADVICE_JSON = JSON.stringify({
+  letter: "這週你很穩。",
+  axes: [
+    { name: "文法", value: 0.4, clear: true, hint: "" },
+    { name: "聽力", value: 0, clear: false, hint: "聽一段慢速的 TED" },
+    { name: "單字", value: 0.6, clear: true, hint: "" },
+  ],
+  levels: [{ area: "字彙量", level: "約 B1", detail: "估 2,000–2,500 字", basis: "自述 B1" }],
+  focus: ["多練習現在完成式", "把查過的字再複習一次"],
+  tryNext: ["聽一段 TED 看看聽力"],
+  reading: ["TED 教育類，搜尋：TED-Ed"],
+});
+
 function ask(id: string, day: string, taskId = "paragraph.translate"): AskEvent {
   return { id, at: new Date(`${day}T12:00:00`).toISOString(), surface: "paragraph", taskId, custom: false, ok: true };
 }
@@ -29,13 +42,13 @@ class FakeVault {
   };
 }
 
-function setup(opts: { asks?: AskEvent[]; touches?: WordTouch[]; aiReady?: boolean; enabled?: boolean; reply?: string; failAi?: boolean } = {}) {
+function setup(opts: { reading?: never[]; asks?: AskEvent[]; touches?: WordTouch[]; aiReady?: boolean; enabled?: boolean; reply?: string; failAi?: boolean } = {}) {
   const vault = new FakeVault();
   const asks = opts.asks ?? [];
   const touches = opts.touches ?? [];
   const ai = new FakeLearnAi(() => {
     if (opts.failAi) throw new Error("boom");
-    return result(opts.reply ?? "- 多練習現在完成式\n- 把查過的字再複習一次");
+    return result(opts.reply ?? ADVICE_JSON);
   });
   const model: ReportServiceDeps["model"] = {
     activity: (from, to) => ({
@@ -44,11 +57,11 @@ function setup(opts: { asks?: AskEvent[]; touches?: WordTouch[]; aiReady?: boole
         return d >= from && d <= to;
       }),
       wordTouches: touches.filter((t) => t.day >= from && t.day <= to),
-      reading: [],
+      reading: (opts.reading ?? []).filter((r: { day: string }) => r.day >= from && r.day <= to),
       events: [],
       reviews: [],
     }),
-    snapshot: () => ({ grammar: { started: 0, mastered: 2, due: 0 } }) as never,
+    snapshot: () => ({ grammar: { started: 0, mastered: 2, due: 0 }, vocab: { total: 0, learning: 0, mature: 5, due: 0 } }) as never,
     level: () => "B1",
   };
   const svc = new ReportService({
@@ -76,13 +89,17 @@ describe("ReportService.write", () => {
     expect(text).toContain("vocab-tracker-id: report-2026-W43");
     expect(text).toContain("period: 2026-10-20~2026-10-25");
     expect(text).toContain("verdict: ");
-    expect(text).toContain("# 到目前為止的學習報告（2026-10-20 ～ 2026-10-25）"); // first report
-    expect(text).toContain("## 這週的數字");
+    expect(text).toContain("# 到目前為止的你 · 2026-W43"); // first report
+    expect(text).toContain("> [!note]- 數字明細");
     expect(text).toContain("AI 討論");
     expect(text).toContain("翻譯：1");
-    expect(text).toContain("## 程度建議");
-    expect(text).toContain("## 給你的建議");
-    expect(text).toContain("多練習現在完成式");
+    expect(text).toContain("> #### 程度建議");
+    expect(text).toContain("> #### 照你的程度可以加強");
+    expect(text).toContain("- 多練習現在完成式");
+    expect(text).toContain("這週你很穩。");
+    expect(text).toContain("- [ ] 聽一段 TED 看看聽力");
+    expect(text).toContain("| 字彙量 | 約 B1（估 2,000–2,500 字） | 自述 B1 |");
+    expect(text).toContain('"name":"聽力","value":0,"clear":false');
     expect(text).not.toContain("### 查字");
     expect(text).not.toContain("### 單字複習");
   });
@@ -99,7 +116,7 @@ describe("ReportService.write", () => {
     await svc.write("2026-W43");
     const text = vault.files.get(PATH) as string;
     expect(text).toContain("period: 2026-10-19~2026-10-25");
-    expect(text).toContain("# 學習週報 2026-W43（2026-10-19 ～ 2026-10-25）");
+    expect(text).toContain("# 這週的你 · 2026-W43");
   });
 
   it("skips an existing report, unless overwrite", async () => {
@@ -122,7 +139,11 @@ describe("ReportService.write", () => {
     const { svc, vault, ai } = setup({ asks: busyWeek, aiReady: false });
     expect(await svc.write("2026-W43")).toBe("written");
     expect(ai.requests).toHaveLength(0);
-    expect(vault.files.get(PATH)).toContain("AI 沒有開啟，這段略過");
+    const text = vault.files.get(PATH) as string;
+    expect(text).toContain("AI 沒有開啟，這段略過");
+    // the rule-based levels stand in, every row marked 粗估
+    expect(text).toContain("| 字彙量 | 約 B1（估 2,000–2,500 字）（粗估） |");
+    expect(text).toContain("vocab-report-radar");
   });
 
   it("notes an AI failure but still writes", async () => {
@@ -130,6 +151,22 @@ describe("ReportService.write", () => {
     expect(await svc.write("2026-W43")).toBe("written");
     expect(vault.files.get(PATH)).toContain("AI 這次沒寫成功");
     expect(svc.status()).toBe("idle");
+  });
+
+  it("sends the baselines and reading titles (no paths) to the AI", async () => {
+    const reading = [
+      { id: "1", day: "2026-10-01", at: "", updatedAt: "", path: "SECRET/path.md", title: "TED talk on sleep", kinds: ["word"] },
+      { id: "2", day: "2026-08-01", at: "", updatedAt: "", path: "old.md", title: "Too old", kinds: ["word"] },
+    ];
+    const { svc, ai, vault } = setup({ asks: busyWeek, reading: reading as never });
+    vault.files.set(`${FOLDER}/vocab-report-2026-W42.md`, "x"); // not the first report
+    await svc.write("2026-W43");
+    const sent = JSON.stringify(ai.requests[0]);
+    expect(sent).toContain("TED talk on sleep");
+    expect(sent).not.toContain("Too old");
+    expect(sent).not.toContain("SECRET");
+    expect(sent).toContain("活躍度基準");
+    expect(sent).toContain("程度粗估");
   });
 
   it("sends only the numbers digest to the AI", async () => {

@@ -1970,6 +1970,10 @@ var en = {
   "report.analyze.busy": "Already analyzing",
   "report.analyze.failed": "The analysis failed, please try again later",
   "report.analyze.noAi": "AI is off, cannot analyze",
+  "report.analyze.pending": "{weeks} before this have no detailed analysis yet. Analyze them together?",
+  "report.analyze.onlyThis": "This week only",
+  "report.analyze.withPrev": "Include the previous {n} weeks",
+  "report.radar.bad": "Chart data could not be read",
   "report.analyze.badKey": "vocab-report-analyze needs a key (e.g. key: 2026-W43)",
   "report.review.month": "Review this month",
   "report.review.quarter": "Review this quarter",
@@ -2913,6 +2917,10 @@ var zhTW = {
   "report.analyze.busy": "\u6B63\u5728\u5206\u6790\u4E2D",
   "report.analyze.failed": "\u5206\u6790\u6C92\u6709\u6210\u529F\uFF0C\u8ACB\u7A0D\u5F8C\u518D\u8A66",
   "report.analyze.noAi": "AI \u6C92\u6709\u958B\u555F\uFF0C\u7121\u6CD5\u5206\u6790",
+  "report.analyze.pending": "\u524D\u9762 {weeks} \u9084\u6C92\u505A\u8A73\u7D30\u5206\u6790\uFF0C\u8981\u4E00\u8D77\u5206\u6790\u55CE\uFF1F",
+  "report.analyze.onlyThis": "\u53EA\u5206\u6790\u9019\u9031",
+  "report.analyze.withPrev": "\u9023\u524D {n} \u9031\u4E00\u8D77",
+  "report.radar.bad": "\u5716\u8868\u8CC7\u6599\u8B80\u4E0D\u5230",
   "report.analyze.badKey": "vocab-report-analyze \u9700\u8981 key\uFF08\u4F8B\u5982 key: 2026-W43\uFF09",
   "report.review.month": "\u56DE\u9867\u9019\u500B\u6708",
   "report.review.quarter": "\u56DE\u9867\u9019\u4E00\u5B63",
@@ -5432,9 +5440,9 @@ var ChatPanel = class extends import_obsidian9.Component {
   userBubble(turn) {
     const el = bubble({ role: "user", text: turn.content });
     if (turn.selection) {
-      const quote = createDiv({ cls: "vt-bubble-quote", text: turn.selection });
-      quote.setAttr("aria-label", turn.selection);
-      el.prepend(quote);
+      const quote2 = createDiv({ cls: "vt-bubble-quote", text: turn.selection });
+      quote2.setAttr("aria-label", turn.selection);
+      el.prepend(quote2);
     }
     return el;
   }
@@ -6556,8 +6564,8 @@ function likeChipOn(s) {
 // src/ui/sidebar/examStrip.ts
 function renderFilterChips(root2, chips) {
   var _a;
-  const strip = root2.createDiv({ cls: "vt-exam-strip" });
-  const chipsEl = strip.createDiv({ cls: "vt-exam-chips" });
+  const strip2 = root2.createDiv({ cls: "vt-exam-strip" });
+  const chipsEl = strip2.createDiv({ cls: "vt-exam-chips" });
   for (const spec of chips) {
     const chip2 = chipsEl.createSpan({ cls: "vt-exam-chip" });
     chip2.toggleClass("is-off", !spec.on);
@@ -10849,7 +10857,7 @@ function emojiOf(meta, entry) {
   return (_a = meta == null ? void 0 : meta.emoji) != null ? _a : defaultEmoji(entry.partOfSpeech);
 }
 
-// node_modules/d3-dispatch/src/dispatch.js
+// ../../../node_modules/d3-dispatch/src/dispatch.js
 var noop = { value: () => {
 } };
 function dispatch() {
@@ -10919,7 +10927,7 @@ function set(type, name, callback) {
 }
 var dispatch_default = dispatch;
 
-// node_modules/d3-selection/src/namespaces.js
+// ../../../node_modules/d3-selection/src/namespaces.js
 var xhtml = "http://www.w3.org/1999/xhtml";
 var namespaces_default = {
   svg: "http://www.w3.org/2000/svg",
@@ -10929,14 +10937,14 @@ var namespaces_default = {
   xmlns: "http://www.w3.org/2000/xmlns/"
 };
 
-// node_modules/d3-selection/src/namespace.js
+// ../../../node_modules/d3-selection/src/namespace.js
 function namespace_default(name) {
   var prefix = name += "", i = prefix.indexOf(":");
   if (i >= 0 && (prefix = name.slice(0, i)) !== "xmlns") name = name.slice(i + 1);
   return namespaces_default.hasOwnProperty(prefix) ? { space: namespaces_default[prefix], local: name } : name;
 }
 
-// node_modules/d3-selection/src/creator.js
+// ../../../node_modules/d3-selection/src/creator.js
 function creatorInherit(name) {
   return function() {
     var document2 = this.ownerDocument, uri = this.namespaceURI;
@@ -10953,7 +10961,7 @@ function creator_default(name) {
   return (fullname.local ? creatorFixed : creatorInherit)(fullname);
 }
 
-// node_modules/d3-selection/src/selector.js
+// ../../../node_modules/d3-selection/src/selector.js
 function none() {
 }
 function selector_default(selector) {
@@ -10962,7 +10970,7 @@ function selector_default(selector) {
   };
 }
 
-// node_modules/d3-selection/src/selection/select.js
+// ../../../node_modules/d3-selection/src/selection/select.js
 function select_default(select) {
   if (typeof select !== "function") select = selector_default(select);
   for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
@@ -10976,12 +10984,12 @@ function select_default(select) {
   return new Selection(subgroups, this._parents);
 }
 
-// node_modules/d3-selection/src/array.js
+// ../../../node_modules/d3-selection/src/array.js
 function array(x3) {
   return x3 == null ? [] : Array.isArray(x3) ? x3 : Array.from(x3);
 }
 
-// node_modules/d3-selection/src/selectorAll.js
+// ../../../node_modules/d3-selection/src/selectorAll.js
 function empty() {
   return [];
 }
@@ -10991,7 +10999,7 @@ function selectorAll_default(selector) {
   };
 }
 
-// node_modules/d3-selection/src/selection/selectAll.js
+// ../../../node_modules/d3-selection/src/selection/selectAll.js
 function arrayAll(select) {
   return function() {
     return array(select.apply(this, arguments));
@@ -11011,7 +11019,7 @@ function selectAll_default(select) {
   return new Selection(subgroups, parents);
 }
 
-// node_modules/d3-selection/src/matcher.js
+// ../../../node_modules/d3-selection/src/matcher.js
 function matcher_default(selector) {
   return function() {
     return this.matches(selector);
@@ -11023,7 +11031,7 @@ function childMatcher(selector) {
   };
 }
 
-// node_modules/d3-selection/src/selection/selectChild.js
+// ../../../node_modules/d3-selection/src/selection/selectChild.js
 var find = Array.prototype.find;
 function childFind(match) {
   return function() {
@@ -11037,7 +11045,7 @@ function selectChild_default(match) {
   return this.select(match == null ? childFirst : childFind(typeof match === "function" ? match : childMatcher(match)));
 }
 
-// node_modules/d3-selection/src/selection/selectChildren.js
+// ../../../node_modules/d3-selection/src/selection/selectChildren.js
 var filter = Array.prototype.filter;
 function children() {
   return Array.from(this.children);
@@ -11051,7 +11059,7 @@ function selectChildren_default(match) {
   return this.selectAll(match == null ? children : childrenFilter(typeof match === "function" ? match : childMatcher(match)));
 }
 
-// node_modules/d3-selection/src/selection/filter.js
+// ../../../node_modules/d3-selection/src/selection/filter.js
 function filter_default(match) {
   if (typeof match !== "function") match = matcher_default(match);
   for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
@@ -11064,12 +11072,12 @@ function filter_default(match) {
   return new Selection(subgroups, this._parents);
 }
 
-// node_modules/d3-selection/src/selection/sparse.js
+// ../../../node_modules/d3-selection/src/selection/sparse.js
 function sparse_default(update) {
   return new Array(update.length);
 }
 
-// node_modules/d3-selection/src/selection/enter.js
+// ../../../node_modules/d3-selection/src/selection/enter.js
 function enter_default() {
   return new Selection(this._enter || this._groups.map(sparse_default), this._parents);
 }
@@ -11096,14 +11104,14 @@ EnterNode.prototype = {
   }
 };
 
-// node_modules/d3-selection/src/constant.js
+// ../../../node_modules/d3-selection/src/constant.js
 function constant_default(x3) {
   return function() {
     return x3;
   };
 }
 
-// node_modules/d3-selection/src/selection/data.js
+// ../../../node_modules/d3-selection/src/selection/data.js
 function bindIndex(parent, group, enter, update, exit, data) {
   var i = 0, node, groupLength = group.length, dataLength = data.length;
   for (; i < dataLength; ++i) {
@@ -11175,12 +11183,12 @@ function arraylike(data) {
   return typeof data === "object" && "length" in data ? data : Array.from(data);
 }
 
-// node_modules/d3-selection/src/selection/exit.js
+// ../../../node_modules/d3-selection/src/selection/exit.js
 function exit_default() {
   return new Selection(this._exit || this._groups.map(sparse_default), this._parents);
 }
 
-// node_modules/d3-selection/src/selection/join.js
+// ../../../node_modules/d3-selection/src/selection/join.js
 function join_default(onenter, onupdate, onexit) {
   var enter = this.enter(), update = this, exit = this.exit();
   if (typeof onenter === "function") {
@@ -11198,7 +11206,7 @@ function join_default(onenter, onupdate, onexit) {
   return enter && update ? enter.merge(update).order() : update;
 }
 
-// node_modules/d3-selection/src/selection/merge.js
+// ../../../node_modules/d3-selection/src/selection/merge.js
 function merge_default(context) {
   var selection2 = context.selection ? context.selection() : context;
   for (var groups0 = this._groups, groups1 = selection2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m2; ++j) {
@@ -11214,7 +11222,7 @@ function merge_default(context) {
   return new Selection(merges, this._parents);
 }
 
-// node_modules/d3-selection/src/selection/order.js
+// ../../../node_modules/d3-selection/src/selection/order.js
 function order_default() {
   for (var groups = this._groups, j = -1, m2 = groups.length; ++j < m2; ) {
     for (var group = groups[j], i = group.length - 1, next = group[i], node; --i >= 0; ) {
@@ -11227,7 +11235,7 @@ function order_default() {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/sort.js
+// ../../../node_modules/d3-selection/src/selection/sort.js
 function sort_default(compare) {
   if (!compare) compare = ascending;
   function compareNode(a2, b) {
@@ -11247,7 +11255,7 @@ function ascending(a2, b) {
   return a2 < b ? -1 : a2 > b ? 1 : a2 >= b ? 0 : NaN;
 }
 
-// node_modules/d3-selection/src/selection/call.js
+// ../../../node_modules/d3-selection/src/selection/call.js
 function call_default() {
   var callback = arguments[0];
   arguments[0] = this;
@@ -11255,12 +11263,12 @@ function call_default() {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/nodes.js
+// ../../../node_modules/d3-selection/src/selection/nodes.js
 function nodes_default() {
   return Array.from(this);
 }
 
-// node_modules/d3-selection/src/selection/node.js
+// ../../../node_modules/d3-selection/src/selection/node.js
 function node_default() {
   for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
     for (var group = groups[j], i = 0, n = group.length; i < n; ++i) {
@@ -11271,19 +11279,19 @@ function node_default() {
   return null;
 }
 
-// node_modules/d3-selection/src/selection/size.js
+// ../../../node_modules/d3-selection/src/selection/size.js
 function size_default() {
   let size = 0;
   for (const node of this) ++size;
   return size;
 }
 
-// node_modules/d3-selection/src/selection/empty.js
+// ../../../node_modules/d3-selection/src/selection/empty.js
 function empty_default() {
   return !this.node();
 }
 
-// node_modules/d3-selection/src/selection/each.js
+// ../../../node_modules/d3-selection/src/selection/each.js
 function each_default(callback) {
   for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
     for (var group = groups[j], i = 0, n = group.length, node; i < n; ++i) {
@@ -11293,7 +11301,7 @@ function each_default(callback) {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/attr.js
+// ../../../node_modules/d3-selection/src/selection/attr.js
 function attrRemove(name) {
   return function() {
     this.removeAttribute(name);
@@ -11337,12 +11345,12 @@ function attr_default(name, value) {
   return this.each((value == null ? fullname.local ? attrRemoveNS : attrRemove : typeof value === "function" ? fullname.local ? attrFunctionNS : attrFunction : fullname.local ? attrConstantNS : attrConstant)(fullname, value));
 }
 
-// node_modules/d3-selection/src/window.js
+// ../../../node_modules/d3-selection/src/window.js
 function window_default(node) {
   return node.ownerDocument && node.ownerDocument.defaultView || node.document && node || node.defaultView;
 }
 
-// node_modules/d3-selection/src/selection/style.js
+// ../../../node_modules/d3-selection/src/selection/style.js
 function styleRemove(name) {
   return function() {
     this.style.removeProperty(name);
@@ -11367,7 +11375,7 @@ function styleValue(node, name) {
   return node.style.getPropertyValue(name) || window_default(node).getComputedStyle(node, null).getPropertyValue(name);
 }
 
-// node_modules/d3-selection/src/selection/property.js
+// ../../../node_modules/d3-selection/src/selection/property.js
 function propertyRemove(name) {
   return function() {
     delete this[name];
@@ -11389,7 +11397,7 @@ function property_default(name, value) {
   return arguments.length > 1 ? this.each((value == null ? propertyRemove : typeof value === "function" ? propertyFunction : propertyConstant)(name, value)) : this.node()[name];
 }
 
-// node_modules/d3-selection/src/selection/classed.js
+// ../../../node_modules/d3-selection/src/selection/classed.js
 function classArray(string) {
   return string.trim().split(/^|\s+/);
 }
@@ -11452,7 +11460,7 @@ function classed_default(name, value) {
   return this.each((typeof value === "function" ? classedFunction : value ? classedTrue : classedFalse)(names, value));
 }
 
-// node_modules/d3-selection/src/selection/text.js
+// ../../../node_modules/d3-selection/src/selection/text.js
 function textRemove() {
   this.textContent = "";
 }
@@ -11471,7 +11479,7 @@ function text_default(value) {
   return arguments.length ? this.each(value == null ? textRemove : (typeof value === "function" ? textFunction : textConstant)(value)) : this.node().textContent;
 }
 
-// node_modules/d3-selection/src/selection/html.js
+// ../../../node_modules/d3-selection/src/selection/html.js
 function htmlRemove() {
   this.innerHTML = "";
 }
@@ -11490,7 +11498,7 @@ function html_default(value) {
   return arguments.length ? this.each(value == null ? htmlRemove : (typeof value === "function" ? htmlFunction : htmlConstant)(value)) : this.node().innerHTML;
 }
 
-// node_modules/d3-selection/src/selection/raise.js
+// ../../../node_modules/d3-selection/src/selection/raise.js
 function raise() {
   if (this.nextSibling) this.parentNode.appendChild(this);
 }
@@ -11498,7 +11506,7 @@ function raise_default() {
   return this.each(raise);
 }
 
-// node_modules/d3-selection/src/selection/lower.js
+// ../../../node_modules/d3-selection/src/selection/lower.js
 function lower() {
   if (this.previousSibling) this.parentNode.insertBefore(this, this.parentNode.firstChild);
 }
@@ -11506,7 +11514,7 @@ function lower_default() {
   return this.each(lower);
 }
 
-// node_modules/d3-selection/src/selection/append.js
+// ../../../node_modules/d3-selection/src/selection/append.js
 function append_default(name) {
   var create2 = typeof name === "function" ? name : creator_default(name);
   return this.select(function() {
@@ -11514,7 +11522,7 @@ function append_default(name) {
   });
 }
 
-// node_modules/d3-selection/src/selection/insert.js
+// ../../../node_modules/d3-selection/src/selection/insert.js
 function constantNull() {
   return null;
 }
@@ -11525,7 +11533,7 @@ function insert_default(name, before) {
   });
 }
 
-// node_modules/d3-selection/src/selection/remove.js
+// ../../../node_modules/d3-selection/src/selection/remove.js
 function remove() {
   var parent = this.parentNode;
   if (parent) parent.removeChild(this);
@@ -11534,7 +11542,7 @@ function remove_default() {
   return this.each(remove);
 }
 
-// node_modules/d3-selection/src/selection/clone.js
+// ../../../node_modules/d3-selection/src/selection/clone.js
 function selection_cloneShallow() {
   var clone = this.cloneNode(false), parent = this.parentNode;
   return parent ? parent.insertBefore(clone, this.nextSibling) : clone;
@@ -11547,12 +11555,12 @@ function clone_default(deep) {
   return this.select(deep ? selection_cloneDeep : selection_cloneShallow);
 }
 
-// node_modules/d3-selection/src/selection/datum.js
+// ../../../node_modules/d3-selection/src/selection/datum.js
 function datum_default(value) {
   return arguments.length ? this.property("__data__", value) : this.node().__data__;
 }
 
-// node_modules/d3-selection/src/selection/on.js
+// ../../../node_modules/d3-selection/src/selection/on.js
 function contextListener(listener) {
   return function(event) {
     listener.call(this, event, this.__data__);
@@ -11615,7 +11623,7 @@ function on_default(typename, value, options) {
   return this;
 }
 
-// node_modules/d3-selection/src/selection/dispatch.js
+// ../../../node_modules/d3-selection/src/selection/dispatch.js
 function dispatchEvent(node, type, params) {
   var window2 = window_default(node), event = window2.CustomEvent;
   if (typeof event === "function") {
@@ -11641,7 +11649,7 @@ function dispatch_default2(type, params) {
   return this.each((typeof params === "function" ? dispatchFunction : dispatchConstant)(type, params));
 }
 
-// node_modules/d3-selection/src/selection/iterator.js
+// ../../../node_modules/d3-selection/src/selection/iterator.js
 function* iterator_default() {
   for (var groups = this._groups, j = 0, m2 = groups.length; j < m2; ++j) {
     for (var group = groups[j], i = 0, n = group.length, node; i < n; ++i) {
@@ -11650,7 +11658,7 @@ function* iterator_default() {
   }
 }
 
-// node_modules/d3-selection/src/selection/index.js
+// ../../../node_modules/d3-selection/src/selection/index.js
 var root = [null];
 function Selection(groups, parents) {
   this._groups = groups;
@@ -11702,19 +11710,19 @@ Selection.prototype = selection.prototype = {
 };
 var selection_default = selection;
 
-// node_modules/d3-selection/src/select.js
+// ../../../node_modules/d3-selection/src/select.js
 function select_default2(selector) {
   return typeof selector === "string" ? new Selection([[document.querySelector(selector)]], [document.documentElement]) : new Selection([[selector]], root);
 }
 
-// node_modules/d3-selection/src/sourceEvent.js
+// ../../../node_modules/d3-selection/src/sourceEvent.js
 function sourceEvent_default(event) {
   let sourceEvent;
   while (sourceEvent = event.sourceEvent) event = sourceEvent;
   return event;
 }
 
-// node_modules/d3-selection/src/pointer.js
+// ../../../node_modules/d3-selection/src/pointer.js
 function pointer_default(event, node) {
   event = sourceEvent_default(event);
   if (node === void 0) node = event.currentTarget;
@@ -11734,7 +11742,7 @@ function pointer_default(event, node) {
   return [event.pageX, event.pageY];
 }
 
-// node_modules/d3-drag/src/noevent.js
+// ../../../node_modules/d3-drag/src/noevent.js
 var nonpassive = { passive: false };
 var nonpassivecapture = { capture: true, passive: false };
 function nopropagation(event) {
@@ -11745,7 +11753,7 @@ function noevent_default(event) {
   event.stopImmediatePropagation();
 }
 
-// node_modules/d3-drag/src/nodrag.js
+// ../../../node_modules/d3-drag/src/nodrag.js
 function nodrag_default(view) {
   var root2 = view.document.documentElement, selection2 = select_default2(view).on("dragstart.drag", noevent_default, nonpassivecapture);
   if ("onselectstart" in root2) {
@@ -11771,10 +11779,10 @@ function yesdrag(view, noclick) {
   }
 }
 
-// node_modules/d3-drag/src/constant.js
+// ../../../node_modules/d3-drag/src/constant.js
 var constant_default2 = (x3) => () => x3;
 
-// node_modules/d3-drag/src/event.js
+// ../../../node_modules/d3-drag/src/event.js
 function DragEvent(type, {
   sourceEvent,
   subject,
@@ -11806,7 +11814,7 @@ DragEvent.prototype.on = function() {
   return value === this._ ? this : value;
 };
 
-// node_modules/d3-drag/src/drag.js
+// ../../../node_modules/d3-drag/src/drag.js
 function defaultFilter(event) {
   return !event.ctrlKey && !event.button;
 }
@@ -11951,7 +11959,7 @@ function drag_default() {
   return drag;
 }
 
-// node_modules/d3-quadtree/src/add.js
+// ../../../node_modules/d3-quadtree/src/add.js
 function add_default(d) {
   const x3 = +this._x.call(null, d), y3 = +this._y.call(null, d);
   return add(this.cover(x3, y3), x3, y3, d);
@@ -11998,7 +12006,7 @@ function addAll(data) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/cover.js
+// ../../../node_modules/d3-quadtree/src/cover.js
 function cover_default(x3, y3) {
   if (isNaN(x3 = +x3) || isNaN(y3 = +y3)) return this;
   var x0 = this._x0, y0 = this._y0, x1 = this._x1, y1 = this._y1;
@@ -12034,7 +12042,7 @@ function cover_default(x3, y3) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/data.js
+// ../../../node_modules/d3-quadtree/src/data.js
 function data_default2() {
   var data = [];
   this.visit(function(node) {
@@ -12045,12 +12053,12 @@ function data_default2() {
   return data;
 }
 
-// node_modules/d3-quadtree/src/extent.js
+// ../../../node_modules/d3-quadtree/src/extent.js
 function extent_default(_) {
   return arguments.length ? this.cover(+_[0][0], +_[0][1]).cover(+_[1][0], +_[1][1]) : isNaN(this._x0) ? void 0 : [[this._x0, this._y0], [this._x1, this._y1]];
 }
 
-// node_modules/d3-quadtree/src/quad.js
+// ../../../node_modules/d3-quadtree/src/quad.js
 function quad_default(node, x0, y0, x1, y1) {
   this.node = node;
   this.x0 = x0;
@@ -12059,7 +12067,7 @@ function quad_default(node, x0, y0, x1, y1) {
   this.y1 = y1;
 }
 
-// node_modules/d3-quadtree/src/find.js
+// ../../../node_modules/d3-quadtree/src/find.js
 function find_default(x3, y3, radius) {
   var data, x0 = this._x0, y0 = this._y0, x1, y1, x22, y22, x32 = this._x1, y32 = this._y1, quads = [], node = this._root, q, i;
   if (node) quads.push(new quad_default(node, x0, y0, x32, y32));
@@ -12097,7 +12105,7 @@ function find_default(x3, y3, radius) {
   return data;
 }
 
-// node_modules/d3-quadtree/src/remove.js
+// ../../../node_modules/d3-quadtree/src/remove.js
 function remove_default2(d) {
   if (isNaN(x3 = +this._x.call(null, d)) || isNaN(y3 = +this._y.call(null, d))) return this;
   var parent, node = this._root, retainer, previous, next, x0 = this._x0, y0 = this._y0, x1 = this._x1, y1 = this._y1, x3, y3, xm, ym, right, bottom, i, j;
@@ -12127,12 +12135,12 @@ function removeAll(data) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/root.js
+// ../../../node_modules/d3-quadtree/src/root.js
 function root_default() {
   return this._root;
 }
 
-// node_modules/d3-quadtree/src/size.js
+// ../../../node_modules/d3-quadtree/src/size.js
 function size_default2() {
   var size = 0;
   this.visit(function(node) {
@@ -12143,7 +12151,7 @@ function size_default2() {
   return size;
 }
 
-// node_modules/d3-quadtree/src/visit.js
+// ../../../node_modules/d3-quadtree/src/visit.js
 function visit_default(callback) {
   var quads = [], q, node = this._root, child, x0, y0, x1, y1;
   if (node) quads.push(new quad_default(node, this._x0, this._y0, this._x1, this._y1));
@@ -12159,7 +12167,7 @@ function visit_default(callback) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/visitAfter.js
+// ../../../node_modules/d3-quadtree/src/visitAfter.js
 function visitAfter_default(callback) {
   var quads = [], next = [], q;
   if (this._root) quads.push(new quad_default(this._root, this._x0, this._y0, this._x1, this._y1));
@@ -12180,7 +12188,7 @@ function visitAfter_default(callback) {
   return this;
 }
 
-// node_modules/d3-quadtree/src/x.js
+// ../../../node_modules/d3-quadtree/src/x.js
 function defaultX(d) {
   return d[0];
 }
@@ -12188,7 +12196,7 @@ function x_default(_) {
   return arguments.length ? (this._x = _, this) : this._x;
 }
 
-// node_modules/d3-quadtree/src/y.js
+// ../../../node_modules/d3-quadtree/src/y.js
 function defaultY(d) {
   return d[1];
 }
@@ -12196,7 +12204,7 @@ function y_default(_) {
   return arguments.length ? (this._y = _, this) : this._y;
 }
 
-// node_modules/d3-quadtree/src/quadtree.js
+// ../../../node_modules/d3-quadtree/src/quadtree.js
 function quadtree(nodes, x3, y3) {
   var tree = new Quadtree(x3 == null ? defaultX : x3, y3 == null ? defaultY : y3, NaN, NaN, NaN, NaN);
   return nodes == null ? tree : tree.addAll(nodes);
@@ -12246,19 +12254,19 @@ treeProto.visitAfter = visitAfter_default;
 treeProto.x = x_default;
 treeProto.y = y_default;
 
-// node_modules/d3-force/src/constant.js
+// ../../../node_modules/d3-force/src/constant.js
 function constant_default3(x3) {
   return function() {
     return x3;
   };
 }
 
-// node_modules/d3-force/src/jiggle.js
+// ../../../node_modules/d3-force/src/jiggle.js
 function jiggle_default(random) {
   return (random() - 0.5) * 1e-6;
 }
 
-// node_modules/d3-force/src/collide.js
+// ../../../node_modules/d3-force/src/collide.js
 function x(d) {
   return d.x + d.vx;
 }
@@ -12331,7 +12339,7 @@ function collide_default(radius) {
   return force;
 }
 
-// node_modules/d3-force/src/link.js
+// ../../../node_modules/d3-force/src/link.js
 function index(d) {
   return d.index;
 }
@@ -12413,7 +12421,7 @@ function link_default(links) {
   return force;
 }
 
-// node_modules/d3-timer/src/timer.js
+// ../../../node_modules/d3-timer/src/timer.js
 var frame = 0;
 var timeout = 0;
 var interval = 0;
@@ -12515,7 +12523,7 @@ function sleep(time) {
   }
 }
 
-// node_modules/d3-timer/src/timeout.js
+// ../../../node_modules/d3-timer/src/timeout.js
 function timeout_default(callback, delay, time) {
   var t2 = new Timer();
   delay = delay == null ? 0 : +delay;
@@ -12526,7 +12534,7 @@ function timeout_default(callback, delay, time) {
   return t2;
 }
 
-// node_modules/d3-force/src/lcg.js
+// ../../../node_modules/d3-force/src/lcg.js
 var a = 1664525;
 var c = 1013904223;
 var m = 4294967296;
@@ -12535,7 +12543,7 @@ function lcg_default() {
   return () => (s = (a * s + c) % m) / m;
 }
 
-// node_modules/d3-force/src/simulation.js
+// ../../../node_modules/d3-force/src/simulation.js
 function x2(d) {
   return d.x;
 }
@@ -12644,7 +12652,7 @@ function simulation_default(nodes) {
   };
 }
 
-// node_modules/d3-force/src/manyBody.js
+// ../../../node_modules/d3-force/src/manyBody.js
 function manyBody_default() {
   var nodes, node, random, alpha, strength = constant_default3(-30), strengths, distanceMin2 = 1, distanceMax2 = Infinity, theta2 = 0.81;
   function force(_) {
@@ -12723,7 +12731,7 @@ function manyBody_default() {
   return force;
 }
 
-// node_modules/d3-force/src/x.js
+// ../../../node_modules/d3-force/src/x.js
 function x_default2(x3) {
   var strength = constant_default3(0.1), nodes, strengths, xz;
   if (typeof x3 !== "function") x3 = constant_default3(x3 == null ? 0 : +x3);
@@ -12754,7 +12762,7 @@ function x_default2(x3) {
   return force;
 }
 
-// node_modules/d3-force/src/y.js
+// ../../../node_modules/d3-force/src/y.js
 function y_default2(y3) {
   var strength = constant_default3(0.1), nodes, strengths, yz;
   if (typeof y3 !== "function") y3 = constant_default3(y3 == null ? 0 : +y3);
@@ -12785,7 +12793,7 @@ function y_default2(y3) {
   return force;
 }
 
-// node_modules/d3-transition/src/transition/schedule.js
+// ../../../node_modules/d3-transition/src/transition/schedule.js
 var emptyOn = dispatch_default("start", "end", "cancel", "interrupt");
 var emptyTween = [];
 var CREATED = 0;
@@ -12896,7 +12904,7 @@ function create(node, id2, self) {
   }
 }
 
-// node_modules/d3-transition/src/interrupt.js
+// ../../../node_modules/d3-transition/src/interrupt.js
 function interrupt_default(node, name) {
   var schedules = node.__transition, schedule, active2, empty2 = true, i;
   if (!schedules) return;
@@ -12915,14 +12923,14 @@ function interrupt_default(node, name) {
   if (empty2) delete node.__transition;
 }
 
-// node_modules/d3-transition/src/selection/interrupt.js
+// ../../../node_modules/d3-transition/src/selection/interrupt.js
 function interrupt_default2(name) {
   return this.each(function() {
     interrupt_default(this, name);
   });
 }
 
-// node_modules/d3-color/src/define.js
+// ../../../node_modules/d3-color/src/define.js
 function define_default(constructor, factory, prototype) {
   constructor.prototype = factory.prototype = prototype;
   prototype.constructor = constructor;
@@ -12933,7 +12941,7 @@ function extend(parent, definition) {
   return prototype;
 }
 
-// node_modules/d3-color/src/color.js
+// ../../../node_modules/d3-color/src/color.js
 function Color() {
 }
 var darker = 0.7;
@@ -13270,7 +13278,7 @@ function hsl2rgb(h, m1, m2) {
   return (h < 60 ? m1 + (m2 - m1) * h / 60 : h < 180 ? m2 : h < 240 ? m1 + (m2 - m1) * (240 - h) / 60 : m1) * 255;
 }
 
-// node_modules/d3-interpolate/src/basis.js
+// ../../../node_modules/d3-interpolate/src/basis.js
 function basis(t1, v0, v1, v2, v3) {
   var t2 = t1 * t1, t3 = t2 * t1;
   return ((1 - 3 * t1 + 3 * t2 - t3) * v0 + (4 - 6 * t2 + 3 * t3) * v1 + (1 + 3 * t1 + 3 * t2 - 3 * t3) * v2 + t3 * v3) / 6;
@@ -13283,7 +13291,7 @@ function basis_default(values) {
   };
 }
 
-// node_modules/d3-interpolate/src/basisClosed.js
+// ../../../node_modules/d3-interpolate/src/basisClosed.js
 function basisClosed_default(values) {
   var n = values.length;
   return function(t2) {
@@ -13292,10 +13300,10 @@ function basisClosed_default(values) {
   };
 }
 
-// node_modules/d3-interpolate/src/constant.js
+// ../../../node_modules/d3-interpolate/src/constant.js
 var constant_default4 = (x3) => () => x3;
 
-// node_modules/d3-interpolate/src/color.js
+// ../../../node_modules/d3-interpolate/src/color.js
 function linear(a2, d) {
   return function(t2) {
     return a2 + t2 * d;
@@ -13316,7 +13324,7 @@ function nogamma(a2, b) {
   return d ? linear(a2, d) : constant_default4(isNaN(a2) ? b : a2);
 }
 
-// node_modules/d3-interpolate/src/rgb.js
+// ../../../node_modules/d3-interpolate/src/rgb.js
 var rgb_default = (function rgbGamma(y3) {
   var color2 = gamma(y3);
   function rgb2(start4, end) {
@@ -13356,14 +13364,14 @@ function rgbSpline(spline) {
 var rgbBasis = rgbSpline(basis_default);
 var rgbBasisClosed = rgbSpline(basisClosed_default);
 
-// node_modules/d3-interpolate/src/number.js
+// ../../../node_modules/d3-interpolate/src/number.js
 function number_default(a2, b) {
   return a2 = +a2, b = +b, function(t2) {
     return a2 * (1 - t2) + b * t2;
   };
 }
 
-// node_modules/d3-interpolate/src/string.js
+// ../../../node_modules/d3-interpolate/src/string.js
 var reA = /[-+]?(?:\d+\.?\d*|\.?\d+)(?:[eE][-+]?\d+)?/g;
 var reB = new RegExp(reA.source, "g");
 function zero(b) {
@@ -13405,7 +13413,7 @@ function string_default(a2, b) {
   });
 }
 
-// node_modules/d3-interpolate/src/transform/decompose.js
+// ../../../node_modules/d3-interpolate/src/transform/decompose.js
 var degrees = 180 / Math.PI;
 var identity = {
   translateX: 0,
@@ -13431,7 +13439,7 @@ function decompose_default(a2, b, c2, d, e, f) {
   };
 }
 
-// node_modules/d3-interpolate/src/transform/parse.js
+// ../../../node_modules/d3-interpolate/src/transform/parse.js
 var svgNode;
 function parseCss(value) {
   const m2 = new (typeof DOMMatrix === "function" ? DOMMatrix : WebKitCSSMatrix)(value + "");
@@ -13446,7 +13454,7 @@ function parseSvg(value) {
   return decompose_default(value.a, value.b, value.c, value.d, value.e, value.f);
 }
 
-// node_modules/d3-interpolate/src/transform/index.js
+// ../../../node_modules/d3-interpolate/src/transform/index.js
 function interpolateTransform(parse, pxComma, pxParen, degParen) {
   function pop(s) {
     return s.length ? s.pop() + " " : "";
@@ -13501,7 +13509,7 @@ function interpolateTransform(parse, pxComma, pxParen, degParen) {
 var interpolateTransformCss = interpolateTransform(parseCss, "px, ", "px)", "deg)");
 var interpolateTransformSvg = interpolateTransform(parseSvg, ", ", ")", ")");
 
-// node_modules/d3-interpolate/src/zoom.js
+// ../../../node_modules/d3-interpolate/src/zoom.js
 var epsilon2 = 1e-12;
 function cosh(x3) {
   return ((x3 = Math.exp(x3)) + 1 / x3) / 2;
@@ -13546,7 +13554,7 @@ var zoom_default = (function zoomRho(rho, rho2, rho4) {
   return zoom;
 })(Math.SQRT2, 2, 4);
 
-// node_modules/d3-transition/src/transition/tween.js
+// ../../../node_modules/d3-transition/src/transition/tween.js
 function tweenRemove(id2, name) {
   var tween0, tween1;
   return function() {
@@ -13607,13 +13615,13 @@ function tweenValue(transition2, name, value) {
   };
 }
 
-// node_modules/d3-transition/src/transition/interpolate.js
+// ../../../node_modules/d3-transition/src/transition/interpolate.js
 function interpolate_default(a2, b) {
   var c2;
   return (typeof b === "number" ? number_default : b instanceof color ? rgb_default : (c2 = color(b)) ? (b = c2, rgb_default) : string_default)(a2, b);
 }
 
-// node_modules/d3-transition/src/transition/attr.js
+// ../../../node_modules/d3-transition/src/transition/attr.js
 function attrRemove2(name) {
   return function() {
     this.removeAttribute(name);
@@ -13663,7 +13671,7 @@ function attr_default2(name, value) {
   return this.attrTween(name, typeof value === "function" ? (fullname.local ? attrFunctionNS2 : attrFunction2)(fullname, i, tweenValue(this, "attr." + name, value)) : value == null ? (fullname.local ? attrRemoveNS2 : attrRemove2)(fullname) : (fullname.local ? attrConstantNS2 : attrConstant2)(fullname, i, value));
 }
 
-// node_modules/d3-transition/src/transition/attrTween.js
+// ../../../node_modules/d3-transition/src/transition/attrTween.js
 function attrInterpolate(name, i) {
   return function(t2) {
     this.setAttribute(name, i.call(this, t2));
@@ -13703,7 +13711,7 @@ function attrTween_default(name, value) {
   return this.tween(key6, (fullname.local ? attrTweenNS : attrTween)(fullname, value));
 }
 
-// node_modules/d3-transition/src/transition/delay.js
+// ../../../node_modules/d3-transition/src/transition/delay.js
 function delayFunction(id2, value) {
   return function() {
     init(this, id2).delay = +value.apply(this, arguments);
@@ -13719,7 +13727,7 @@ function delay_default(value) {
   return arguments.length ? this.each((typeof value === "function" ? delayFunction : delayConstant)(id2, value)) : get2(this.node(), id2).delay;
 }
 
-// node_modules/d3-transition/src/transition/duration.js
+// ../../../node_modules/d3-transition/src/transition/duration.js
 function durationFunction(id2, value) {
   return function() {
     set2(this, id2).duration = +value.apply(this, arguments);
@@ -13735,7 +13743,7 @@ function duration_default(value) {
   return arguments.length ? this.each((typeof value === "function" ? durationFunction : durationConstant)(id2, value)) : get2(this.node(), id2).duration;
 }
 
-// node_modules/d3-transition/src/transition/ease.js
+// ../../../node_modules/d3-transition/src/transition/ease.js
 function easeConstant(id2, value) {
   if (typeof value !== "function") throw new Error();
   return function() {
@@ -13747,7 +13755,7 @@ function ease_default(value) {
   return arguments.length ? this.each(easeConstant(id2, value)) : get2(this.node(), id2).ease;
 }
 
-// node_modules/d3-transition/src/transition/easeVarying.js
+// ../../../node_modules/d3-transition/src/transition/easeVarying.js
 function easeVarying(id2, value) {
   return function() {
     var v = value.apply(this, arguments);
@@ -13760,7 +13768,7 @@ function easeVarying_default(value) {
   return this.each(easeVarying(this._id, value));
 }
 
-// node_modules/d3-transition/src/transition/filter.js
+// ../../../node_modules/d3-transition/src/transition/filter.js
 function filter_default2(match) {
   if (typeof match !== "function") match = matcher_default(match);
   for (var groups = this._groups, m2 = groups.length, subgroups = new Array(m2), j = 0; j < m2; ++j) {
@@ -13773,7 +13781,7 @@ function filter_default2(match) {
   return new Transition(subgroups, this._parents, this._name, this._id);
 }
 
-// node_modules/d3-transition/src/transition/merge.js
+// ../../../node_modules/d3-transition/src/transition/merge.js
 function merge_default2(transition2) {
   if (transition2._id !== this._id) throw new Error();
   for (var groups0 = this._groups, groups1 = transition2._groups, m0 = groups0.length, m1 = groups1.length, m2 = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m2; ++j) {
@@ -13789,7 +13797,7 @@ function merge_default2(transition2) {
   return new Transition(merges, this._parents, this._name, this._id);
 }
 
-// node_modules/d3-transition/src/transition/on.js
+// ../../../node_modules/d3-transition/src/transition/on.js
 function start(name) {
   return (name + "").trim().split(/^|\s+/).every(function(t2) {
     var i = t2.indexOf(".");
@@ -13810,7 +13818,7 @@ function on_default2(name, listener) {
   return arguments.length < 2 ? get2(this.node(), id2).on.on(name) : this.each(onFunction(id2, name, listener));
 }
 
-// node_modules/d3-transition/src/transition/remove.js
+// ../../../node_modules/d3-transition/src/transition/remove.js
 function removeFunction(id2) {
   return function() {
     var parent = this.parentNode;
@@ -13822,7 +13830,7 @@ function remove_default3() {
   return this.on("end.remove", removeFunction(this._id));
 }
 
-// node_modules/d3-transition/src/transition/select.js
+// ../../../node_modules/d3-transition/src/transition/select.js
 function select_default3(select) {
   var name = this._name, id2 = this._id;
   if (typeof select !== "function") select = selector_default(select);
@@ -13838,7 +13846,7 @@ function select_default3(select) {
   return new Transition(subgroups, this._parents, name, id2);
 }
 
-// node_modules/d3-transition/src/transition/selectAll.js
+// ../../../node_modules/d3-transition/src/transition/selectAll.js
 function selectAll_default2(select) {
   var name = this._name, id2 = this._id;
   if (typeof select !== "function") select = selectorAll_default(select);
@@ -13858,13 +13866,13 @@ function selectAll_default2(select) {
   return new Transition(subgroups, parents, name, id2);
 }
 
-// node_modules/d3-transition/src/transition/selection.js
+// ../../../node_modules/d3-transition/src/transition/selection.js
 var Selection2 = selection_default.prototype.constructor;
 function selection_default2() {
   return new Selection2(this._groups, this._parents);
 }
 
-// node_modules/d3-transition/src/transition/style.js
+// ../../../node_modules/d3-transition/src/transition/style.js
 function styleNull(name, interpolate) {
   var string00, string10, interpolate0;
   return function() {
@@ -13905,7 +13913,7 @@ function style_default2(name, value, priority) {
   return value == null ? this.styleTween(name, styleNull(name, i)).on("end.style." + name, styleRemove2(name)) : typeof value === "function" ? this.styleTween(name, styleFunction2(name, i, tweenValue(this, "style." + name, value))).each(styleMaybeRemove(this._id, name)) : this.styleTween(name, styleConstant2(name, i, value), priority).on("end.style." + name, null);
 }
 
-// node_modules/d3-transition/src/transition/styleTween.js
+// ../../../node_modules/d3-transition/src/transition/styleTween.js
 function styleInterpolate(name, i, priority) {
   return function(t2) {
     this.style.setProperty(name, i.call(this, t2), priority);
@@ -13929,7 +13937,7 @@ function styleTween_default(name, value, priority) {
   return this.tween(key6, styleTween(name, value, priority == null ? "" : priority));
 }
 
-// node_modules/d3-transition/src/transition/text.js
+// ../../../node_modules/d3-transition/src/transition/text.js
 function textConstant2(value) {
   return function() {
     this.textContent = value;
@@ -13945,7 +13953,7 @@ function text_default2(value) {
   return this.tween("text", typeof value === "function" ? textFunction2(tweenValue(this, "text", value)) : textConstant2(value == null ? "" : value + ""));
 }
 
-// node_modules/d3-transition/src/transition/textTween.js
+// ../../../node_modules/d3-transition/src/transition/textTween.js
 function textInterpolate(i) {
   return function(t2) {
     this.textContent = i.call(this, t2);
@@ -13969,7 +13977,7 @@ function textTween_default(value) {
   return this.tween(key6, textTween(value));
 }
 
-// node_modules/d3-transition/src/transition/transition.js
+// ../../../node_modules/d3-transition/src/transition/transition.js
 function transition_default() {
   var name = this._name, id0 = this._id, id1 = newId();
   for (var groups = this._groups, m2 = groups.length, j = 0; j < m2; ++j) {
@@ -13988,7 +13996,7 @@ function transition_default() {
   return new Transition(groups, this._parents, name, id1);
 }
 
-// node_modules/d3-transition/src/transition/end.js
+// ../../../node_modules/d3-transition/src/transition/end.js
 function end_default() {
   var on0, on1, that = this, id2 = that._id, size = that.size();
   return new Promise(function(resolve, reject) {
@@ -14009,7 +14017,7 @@ function end_default() {
   });
 }
 
-// node_modules/d3-transition/src/transition/index.js
+// ../../../node_modules/d3-transition/src/transition/index.js
 var id = 0;
 function Transition(groups, parents, name, id2) {
   this._groups = groups;
@@ -14057,12 +14065,12 @@ Transition.prototype = transition.prototype = {
   [Symbol.iterator]: selection_prototype[Symbol.iterator]
 };
 
-// node_modules/d3-ease/src/cubic.js
+// ../../../node_modules/d3-ease/src/cubic.js
 function cubicInOut(t2) {
   return ((t2 *= 2) <= 1 ? t2 * t2 * t2 : (t2 -= 2) * t2 * t2 + 2) / 2;
 }
 
-// node_modules/d3-transition/src/selection/transition.js
+// ../../../node_modules/d3-transition/src/selection/transition.js
 var defaultTiming = {
   time: null,
   // Set on use.
@@ -14096,14 +14104,14 @@ function transition_default2(name) {
   return new Transition(groups, this._parents, name, id2);
 }
 
-// node_modules/d3-transition/src/selection/index.js
+// ../../../node_modules/d3-transition/src/selection/index.js
 selection_default.prototype.interrupt = interrupt_default2;
 selection_default.prototype.transition = transition_default2;
 
-// node_modules/d3-zoom/src/constant.js
+// ../../../node_modules/d3-zoom/src/constant.js
 var constant_default5 = (x3) => () => x3;
 
-// node_modules/d3-zoom/src/event.js
+// ../../../node_modules/d3-zoom/src/event.js
 function ZoomEvent(type, {
   sourceEvent,
   target,
@@ -14119,7 +14127,7 @@ function ZoomEvent(type, {
   });
 }
 
-// node_modules/d3-zoom/src/transform.js
+// ../../../node_modules/d3-zoom/src/transform.js
 function Transform(k, x3, y3) {
   this.k = k;
   this.x = x3;
@@ -14168,7 +14176,7 @@ function transform(node) {
   return node.__zoom;
 }
 
-// node_modules/d3-zoom/src/noevent.js
+// ../../../node_modules/d3-zoom/src/noevent.js
 function nopropagation2(event) {
   event.stopImmediatePropagation();
 }
@@ -14177,7 +14185,7 @@ function noevent_default2(event) {
   event.stopImmediatePropagation();
 }
 
-// node_modules/d3-zoom/src/zoom.js
+// ../../../node_modules/d3-zoom/src/zoom.js
 function defaultFilter2(event) {
   return (!event.ctrlKey || event.type === "wheel") && !event.button;
 }
@@ -14282,8 +14290,8 @@ function zoom_default2() {
       };
     });
   }
-  function gesture(that, args, clean3) {
-    return !clean3 && that.__zooming || new Gesture(that, args);
+  function gesture(that, args, clean4) {
+    return !clean4 && that.__zooming || new Gesture(that, args);
   }
   function Gesture(that, args) {
     this.that = that;
@@ -15509,9 +15517,9 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
       if (this.galaxySelected) this.galaxyGraph.select(this.galaxySelected, { silent: true });
       return;
     }
-    const svgEl = svgNode2(graphHost, "svg", { role: "group", "aria-label": t("galaxy.graphAriaLabel", { topic: familyTitle(selected) }) }, "vt-gx-svg");
+    const svgEl2 = svgNode2(graphHost, "svg", { role: "group", "aria-label": t("galaxy.graphAriaLabel", { topic: familyTitle(selected) }) }, "vt-gx-svg");
     const mobile = document.body.hasClass("is-mobile");
-    const graph = new GalaxyGraph(svgEl, {
+    const graph = new GalaxyGraph(svgEl2, {
       embedded: !this.opts.fullscreen,
       mobile,
       onSelect: (id2) => {
@@ -15521,7 +15529,7 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
       onToggleLike: (id2) => void this.galaxyToggleLike(selected.id, id2)
     });
     this.galaxyGraph = graph;
-    this.galaxySvgEl = svgEl;
+    this.galaxySvgEl = svgEl2;
     this.galaxyGraphFamilyId = selected.id;
     const model = buildGalaxyModel(selected, gxLookup, { onlyKnown: false, fresh: this.galaxyFresh });
     this.lastGalaxyModel = model;
@@ -15818,6 +15826,13 @@ function reviewNoticeKey(result) {
       return "report.analyze.failed";
   }
 }
+function weekLabel(key6) {
+  return key6.replace(/^\d{4}-/, "");
+}
+function analyzeAsk(pending) {
+  if (!pending.length) return null;
+  return { weeks: pending.map(weekLabel).join("\u3001"), n: pending.length };
+}
 
 // src/ui/blocks/reportAnalyze.ts
 function drawAnalyzeButtons(plugin, svc, host, key6, redraw) {
@@ -15828,13 +15843,27 @@ function drawAnalyzeButtons(plugin, svc, host, key6, redraw) {
   const row = host.createDiv({ cls: "vt-report-analyze" });
   const run = row.createEl("button", { cls: "vt-dash-report-btn", text: t(analyzeButtonKey(analyzing, !!(fm == null ? void 0 : fm.analyzed))) });
   run.disabled = analyzing;
-  run.onclick = () => {
+  const start4 = (opts) => {
+    var _a2;
     run.disabled = true;
     run.setText(t("report.analyze.running"));
-    void svc.analyze(key6).then((r) => {
+    (_a2 = host.querySelector(".vt-report-analyze-ask")) == null ? void 0 : _a2.remove();
+    void svc.analyze(key6, opts).then((r) => {
       new import_obsidian26.Notice(t(analyzeNoticeKey(r), { key: key6 }));
       redraw();
     });
+  };
+  run.onclick = () => {
+    var _a2;
+    const ask = analyzeAsk(svc.pendingAnalysis(key6));
+    if (!ask) return start4();
+    (_a2 = host.querySelector(".vt-report-analyze-ask")) == null ? void 0 : _a2.remove();
+    const box = host.createDiv({ cls: "vt-report-analyze-ask" });
+    box.createDiv({ cls: "vt-report-analyze-ask-text", text: t("report.analyze.pending", { weeks: ask.weeks }) });
+    const only = box.createEl("button", { cls: "vt-dash-report-btn", text: t("report.analyze.onlyThis") });
+    only.onclick = () => start4({ withPrevious: false });
+    const both = box.createEl("button", { cls: "vt-dash-report-btn mod-cta", text: t("report.analyze.withPrev", { n: String(ask.n) }) });
+    both.onclick = () => start4({ withPrevious: true });
   };
   for (const scope of ["month", "quarter"]) {
     const b = row.createEl("button", { cls: "vt-dash-report-btn", text: t(scope === "month" ? "report.review.month" : "report.review.quarter") });
@@ -15871,6 +15900,132 @@ function renderReportAnalyze(plugin, source, el, ctx) {
   draw();
   child.register(svc.onChange(draw));
   child.registerEvent(plugin.app.metadataCache.on("changed", (f) => f.path === svc.pathOf(key6) && draw()));
+}
+
+// src/core/learner/radar.ts
+var clamp01 = (n) => Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0;
+function taskCount(data, ...ids) {
+  return data.ai.byTask.filter((t2) => ids.includes(t2.key)).reduce((s, t2) => s + t2.count, 0);
+}
+function trackTotal(data, track2) {
+  var _a, _b;
+  return (_b = (_a = data.practice.tracks.find((t2) => t2.track === track2)) == null ? void 0 : _a.total) != null ? _b : 0;
+}
+function baselineAxes(data) {
+  const grammarQs = trackTotal(data, "grammar");
+  const grammar = grammarQs + taskCount(data, "paragraph.grammar");
+  const wordsDone = data.vocab.reviews + data.vocab.newSaved;
+  const poly = trackTotal(data, "poly");
+  const longSentence = taskCount(data, "paragraph.translate", "paragraph.grammar");
+  const writing = taskCount(data, "buddy.review", "buddy.writing", "word.sentence");
+  const axis = (name, count2, target, ok, hint) => ({
+    name,
+    value: clamp01(count2 / target),
+    clear: ok,
+    ...ok ? {} : { hint }
+  });
+  return [
+    axis("\u6587\u6CD5", grammar, 30, grammarQs >= 10, "\u505A 10 \u984C\u4EE5\u4E0A\u7684\u6587\u6CD5\u7DF4\u7FD2\uFF0C\u5C31\u80FD\u770B\u51FA\u6587\u6CD5\u7684\u7A0B\u5EA6"),
+    axis("\u55AE\u5B57", wordsDone, 50, data.vocab.reviews >= 20, "\u8907\u7FD2 20 \u6B21\u4EE5\u4E0A\u7684\u55AE\u5B57\u5361\uFF0C\u5C31\u80FD\u770B\u51FA\u55AE\u5B57\u7684\u719F\u6089\u5EA6"),
+    axis("\u95B1\u8B80", data.activity.articles, 5, data.activity.articles >= 3, "\u8B80 3 \u7BC7\u4EE5\u4E0A\u7684\u6587\u7AE0\uFF08\u6BB5\u843D\u6709\u4E92\u52D5\u624D\u7B97\uFF09"),
+    axis("\u591A\u7FA9\u5B57", poly, 20, poly >= 10, "\u505A 10 \u984C\u4EE5\u4E0A\u7684\u591A\u7FA9\u5B57\u7DF4\u7FD2"),
+    axis("\u9577\u53E5\u7406\u89E3", longSentence, 10, longSentence >= 5, "\u9047\u5230\u9577\u53E5\u6642\u7528\u300C\u7FFB\u8B6F\u300D\u6216\u300C\u6587\u6CD5\u89E3\u6790\u300D\u554F AI 5 \u6B21\u4EE5\u4E0A"),
+    axis("\u5BEB\u4F5C", writing, 6, writing >= 3, "\u7528\u300C\u9020\u53E5\u300D\u6216\u300C\u4E00\u8D77\u770B\u770B\u6211\u5BEB\u7684\u300D\u5BEB 3 \u6B21\u4EE5\u4E0A")
+  ];
+}
+var fmt = (n) => String(Math.round(n * 10) / 10);
+var pts = (ps) => ps.map((p) => `${fmt(p.x)},${fmt(p.y)}`).join(" ");
+function radarPoint(i, n, r, cx, cy) {
+  const a2 = -Math.PI / 2 + 2 * Math.PI * i / n;
+  return { x: cx + r * Math.cos(a2), y: cy + r * Math.sin(a2) };
+}
+function labelAnchor(i, n) {
+  const c2 = Math.cos(-Math.PI / 2 + 2 * Math.PI * i / n);
+  return c2 > 0.3 ? "start" : c2 < -0.3 ? "end" : "middle";
+}
+function radarLayout(axes, size = 300) {
+  const n = axes.length;
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = size * 0.32;
+  const ring = (f) => pts(axes.map((_, i) => radarPoint(i, n, radius * f, cx, cy)));
+  const vertices = axes.map((a2, i) => ({ ...radarPoint(i, n, radius * clamp01(a2.value), cx, cy), clear: a2.clear }));
+  return {
+    size,
+    cx,
+    cy,
+    radius,
+    rings: [ring(0.5), ring(1)],
+    spokes: axes.map((a2, i) => ({ ...radarPoint(i, n, radius, cx, cy), clear: a2.clear })),
+    vertices,
+    polygon: pts(vertices),
+    labels: axes.map((a2, i) => {
+      const anchor = labelAnchor(i, n);
+      const p = radarPoint(i, n, radius + 14, cx, cy);
+      const dy = Math.abs(p.x - cx) < 1 ? p.y < cy ? -2 : 10 : 4;
+      return { x: p.x, y: p.y + dy, text: a2.clear ? a2.name : `${a2.name}\uFF1F`, anchor, clear: a2.clear };
+    })
+  };
+}
+function parseRadarSource(source) {
+  let json;
+  try {
+    json = JSON.parse(source);
+  } catch (e) {
+    return null;
+  }
+  const raw = json == null ? void 0 : json.axes;
+  if (!Array.isArray(raw)) return null;
+  const axes = [];
+  for (const a2 of raw) {
+    if (typeof a2 !== "object" || a2 === null) continue;
+    const r = a2;
+    const name = typeof r.name === "string" ? r.name.trim() : "";
+    if (!name) continue;
+    axes.push({
+      name,
+      value: clamp01(Number(r.value)),
+      clear: r.clear !== false,
+      ...typeof r.hint === "string" && r.hint.trim() ? { hint: r.hint.trim() } : {}
+    });
+  }
+  return axes.length >= 3 ? axes : null;
+}
+
+// src/ui/blocks/reportRadar.ts
+var NS = "http://www.w3.org/2000/svg";
+function svgEl(parent, tag, attrs, cls) {
+  const el = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
+  if (cls) el.setAttribute("class", cls);
+  parent.appendChild(el);
+  return el;
+}
+function drawRadar(host, axes) {
+  const box = host.createDiv({ cls: "vt-report-radar" });
+  const L = radarLayout(axes);
+  const svg = svgEl(box, "svg", { viewBox: `0 0 ${L.size} ${L.size}`, role: "img", "aria-label": axes.map((a2) => a2.name).join("\u3001") }, "vt-radar-svg");
+  for (const ring of L.rings) svgEl(svg, "polygon", { points: ring }, "vt-radar-ring");
+  L.spokes.forEach((s, i) => svgEl(svg, "line", { x1: L.cx, y1: L.cy, x2: s.x, y2: s.y }, axes[i].clear ? "vt-radar-spoke" : "vt-radar-spoke is-unclear"));
+  svgEl(svg, "polygon", { points: L.polygon }, "vt-radar-area");
+  L.vertices.forEach((v) => v.clear && svgEl(svg, "circle", { cx: v.x, cy: v.y, r: 2.5 }, "vt-radar-dot"));
+  for (const l4 of L.labels) {
+    const text = svgEl(svg, "text", { x: l4.x, y: l4.y, "text-anchor": l4.anchor }, l4.clear ? "vt-radar-label" : "vt-radar-label is-unclear");
+    text.textContent = l4.text;
+  }
+  const hints = axes.filter((a2) => !a2.clear && a2.hint);
+  if (hints.length) {
+    const list = box.createDiv({ cls: "vt-radar-hints" });
+    for (const a2 of hints) list.createDiv({ text: `${a2.name}\uFF1F${a2.hint}` });
+  }
+}
+function renderReportRadar(_plugin, source, el, _ctx) {
+  const axes = parseRadarSource(source);
+  if (!axes) {
+    el.createDiv({ cls: "vt-radar-bad", text: t("report.radar.bad") });
+    return;
+  }
+  drawRadar(el, axes);
 }
 
 // src/ui/blocks/dashboard.ts
@@ -22295,10 +22450,10 @@ function renderRound(round, ctx, heading) {
   const { question, answer } = round;
   const label = question.taskId ? ctx.taskLabel(question.taskId) : void 0;
   const title = [ctx.formatDate(question.at), label].filter(Boolean).join(" \xB7 ");
-  const quote = [];
-  if ((_a = question.selection) == null ? void 0 : _a.trim()) quote.push(`\u300C${oneLine(question.selection)}\u300D`);
-  quote.push(`**Q** ${normalizeNewlines(question.content).trim()}`);
-  const parts = [`${heading} ${title}`, blockquote(quote.join("\n")), "", balanceFences(normalizeNewlines(stripGrammarTrailer(answer.content)).trim())];
+  const quote2 = [];
+  if ((_a = question.selection) == null ? void 0 : _a.trim()) quote2.push(`\u300C${oneLine(question.selection)}\u300D`);
+  quote2.push(`**Q** ${normalizeNewlines(question.content).trim()}`);
+  const parts = [`${heading} ${title}`, blockquote(quote2.join("\n")), "", balanceFences(normalizeNewlines(stripGrammarTrailer(answer.content)).trim())];
   if (answer.status === "aborted") parts.push("", italic(ctx.labels.aborted));
   return parts.join("\n");
 }
@@ -26454,12 +26609,12 @@ function parseFolds(raw) {
   if (!data || typeof data !== "object" || Array.isArray(data)) return out;
   for (const [id2, secs] of Object.entries(data)) {
     if (!secs || typeof secs !== "object" || Array.isArray(secs)) continue;
-    const clean3 = {};
+    const clean4 = {};
     for (const s of FOLD_SECTIONS) {
       const v = secs[s];
-      if (typeof v === "boolean") clean3[s] = v;
+      if (typeof v === "boolean") clean4[s] = v;
     }
-    out[id2] = clean3;
+    out[id2] = clean4;
   }
   return out;
 }
@@ -27048,6 +27203,7 @@ function practiceHost(plugin) {
 var BLOCKS = [
   { lang: "vocab-dashboard", render: renderDashboard },
   { lang: "vocab-report-analyze", render: renderReportAnalyze },
+  { lang: "vocab-report-radar", render: renderReportRadar },
   { lang: "vocab-flashcards", render: renderFlashcards },
   // 1010 A: one name per page — the old block names above/below keep working.
   { lang: "vocab-card", render: renderFlashcards },
@@ -27087,7 +27243,7 @@ function registerBlocks(plugin) {
   }
 }
 
-// node_modules/ts-fsrs/dist/index.mjs
+// ../../../node_modules/ts-fsrs/dist/index.mjs
 var FSRSError = class _FSRSError extends Error {
   constructor(message = "FSRS Error") {
     var _a;
@@ -27230,8 +27386,8 @@ function formatDate(dateInput) {
     minutes
   )}:${padZero(seconds)}`;
 }
-function padZero(num) {
-  return num < 10 ? `0${num}` : `${num}`;
+function padZero(num2) {
+  return num2 < 10 ? `0${num2}` : `${num2}`;
 }
 var TIMEUNIT = [60, 60, 24, 31, 12];
 var TIMEUNITFORMAT = ["second", "min", "hour", "day", "month", "year"];
@@ -27293,9 +27449,9 @@ function get_fuzz_range(interval2, elapsed_days, maximum_interval) {
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
-function roundTo(num, decimals) {
+function roundTo(num2, decimals) {
   const factor = 10 ** decimals;
-  return Math.round(num * factor) / factor;
+  return Math.round(num2 * factor) / factor;
 }
 function dateDiffInDays(last2, cur) {
   const utc1 = Date.UTC(
@@ -30097,8 +30253,8 @@ function parseDiaryAnswer(text) {
     const bar = pick.indexOf("|");
     if (bar >= 0) {
       const author = cleanPick(pick.slice(0, bar));
-      const quote = cleanPick(pick.slice(bar + 1));
-      if (author && quote) out.quote = { text: quote, author };
+      const quote2 = cleanPick(pick.slice(bar + 1));
+      if (author && quote2) out.quote = { text: quote2, author };
     } else {
       const place = cleanPick(pick);
       if (place) out.place = place;
@@ -30631,84 +30787,206 @@ var grammarGrade = {
 var GRAMMAR_TASKS3 = [grammarGrade];
 
 // src/services/ai/tasks/report.ts
-var REPORT_BASE_PROMPT = `\u4F60\u662F\u5B78\u751F\u7684\u82F1\u6587\u5B78\u7FD2\u5925\u4F34\uFF0C\u6839\u64DA\u4ED6\u9019\u6BB5\u671F\u9593\u7684\u5B78\u7FD2\u6578\u64DA\uFF0C\u5206\u4EAB\u4E0B\u9031\u53EF\u4EE5\u8A66\u8A66\u7684\u5177\u9AD4\u65B9\u5411\u3002
+var REPORT_ADVICE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["letter", "axes", "levels", "focus", "tryNext", "reading"],
+  properties: {
+    letter: { type: "string" },
+    axes: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["name", "value", "clear", "hint"],
+        properties: {
+          name: { type: "string" },
+          value: { type: "number", description: "0 \u5230 1 \u7684\u6D3B\u8E8D\u5EA6" },
+          clear: { type: "boolean", description: "false = \u7D00\u9304\u4E0D\u5920\uFF0C\u770B\u4E0D\u51FA\u4F86" },
+          hint: { type: "string", description: "clear \u70BA false \u6642\uFF0C\u5177\u9AD4\u53EF\u4EE5\u505A\u7684\u4E8B\uFF1B\u5426\u5247\u7A7A\u5B57\u4E32" }
+        }
+      }
+    },
+    levels: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["area", "level", "detail", "basis"],
+        properties: {
+          area: { type: "string" },
+          level: { type: "string", description: "\u4F8B\u5982\u300C\u7D04 B1\u300D\u300CA2\u2013B1\u300D\u300C\u9084\u770B\u4E0D\u51FA\u4F86\u300D" },
+          detail: { type: "string", description: "\u4F8B\u5982\u300C\u4F30 2,000\u20132,500 \u5B57\u300D\uFF1B\u6C92\u6709\u5C31\u7A7A\u5B57\u4E32" },
+          basis: { type: "string", description: "\u4E00\u53E5\u5177\u9AD4\u7684\u4F9D\u64DA" }
+        }
+      }
+    },
+    focus: { type: "array", items: { type: "string" } },
+    tryNext: { type: "array", items: { type: "string" } },
+    reading: { type: "array", items: { type: "string" } }
+  }
+};
+var REPORT_BASE_PROMPT = `\u4F60\u662F\u5B78\u751F\u7684\u82F1\u6587\u5B78\u7FD2\u5925\u4F34\uFF0C\u6839\u64DA\u4ED6\u9019\u6BB5\u671F\u9593\u7684\u5B78\u7FD2\u6578\u64DA\uFF0C\u5BEB\u4E00\u5C01\u4FE1\u7D66\u4ED6\uFF0C\u4E26\u66FF\u4ED6\u7684\u5404\u500B\u9762\u5411\u63A8\u4F30\u7A0B\u5EA6\u3001\u7D66\u4E0B\u9031\u7684\u5177\u9AD4\u5EFA\u8B70\u3002
 
 ${WARM_TONE}
 
-\u898F\u5247\uFF1A
-1. \u7528\u7E41\u9AD4\u4E2D\u6587\uFF0C\u7D66 3 \u5230 5 \u9EDE\u5EFA\u8B70\uFF0C\u6BCF\u9EDE\u4E00\u5169\u53E5\uFF0C\u8AAA\u6E05\u695A\u300C\u4E0B\u9031\u53EF\u4EE5\u505A\u4EC0\u9EBC\u300D\u3002
-2. \u5EFA\u8B70\u8981\u5177\u9AD4\u53EF\u884C\uFF08\u4F8B\u5982\u7DF4\u54EA\u4E00\u985E\u6587\u6CD5\u3001\u600E\u9EBC\u8655\u7406\u53CD\u8986\u67E5\u7684\u5B57\u3001\u95B1\u8B80\u6750\u6599\u96E3\u5EA6\u600E\u9EBC\u8ABF\uFF09\u3002
-3. \u4E0D\u8981\u91CD\u8907\u5217\u51FA\u6578\u5B57\uFF0C\u5B78\u751F\u5DF2\u7D93\u770B\u904E\uFF1B\u4E0D\u8981\u7DE8\u9020\u6578\u64DA\u88E1\u6C92\u6709\u7684\u4E8B\u3002
-4. \u6BCF\u9EDE\u7528\u300C- \u300D\u958B\u982D\uFF0C\u4E00\u9EDE\u4E00\u884C\uFF0C\u4E0D\u8981\u6A19\u984C\u3001\u4E0D\u8981\u524D\u8A00\u3001\u4E0D\u8981\u7D50\u8A9E\u3001\u4E0D\u8981 code fence\u3002`;
-function parseReportAdvice(text) {
-  return text.split(/\r?\n/).map((l4) => l4.replace(/^\s*(?:[-*•]|\d+[.)、])\s*/, "").trim()).filter((l4) => l4 && !/^```/.test(l4) && !/^#{1,6}\s/.test(l4));
+\u8ACB\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\uFF0C\u6B04\u4F4D\u5982\u4E0B\uFF0C\u5168\u90E8\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u82F1\u6587\u55AE\u5B57\u3001\u95DC\u9375\u5B57\u9664\u5916\uFF09\uFF1A
+
+1. axes\uFF08\u591A\u908A\u5F62\u5716\u7684\u9762\u5411\uFF0C\u5171 4 \u5230 7 \u500B\uFF09\uFF1A
+   - \u53EF\u4EE5\u6CBF\u7528\u3014\u6D3B\u8E8D\u5EA6\u57FA\u6E96\u3015\u7684\u9762\u5411\u3001\u6539\u540D\u3001\u522A\u6389\uFF0C\u4E5F\u53EF\u4EE5\u4F9D\u8B49\u64DA\u65B0\u589E\u9762\u5411\uFF08\u767C\u97F3\u3001\u807D\u529B\u3001\u7247\u8A9E\u3001\u6642\u614B\u2026\uFF09\u3002
+   - value \u662F 0 \u5230 1 \u7684\u300C\u6D3B\u8E8D\u5EA6\u300D\uFF08\u9019\u6BB5\u671F\u9593\u505A\u4E86\u591A\u5C11\uFF09\uFF0C\u4E0D\u662F\u7A0B\u5EA6\u9AD8\u4F4E\u3002
+   - \u6C92\u6709\u8B49\u64DA\u7684\u9762\u5411 clear \u8A2D false\uFF0C\u4E26\u5728 hint \u5BEB\u4E00\u500B\u5177\u9AD4\u53EF\u4EE5\u505A\u7684\u4E8B\uFF1Bclear \u70BA true \u6642 hint \u7D66\u7A7A\u5B57\u4E32\u3002\u4E0D\u8981\u7DE8\u9020\u3002
+2. levels\uFF08\u5404\u9762\u5411\u7684\u7A0B\u5EA6\u63A8\u4F30\uFF09\uFF1A
+   - \u4E00\u5B9A\u8981\u5217\uFF1A\u5B57\u5F59\u91CF\u3001\u6587\u6CD5\u5168\u9762\u6027\u3001\u591A\u7FA9\u5B57\u719F\u6089\u5EA6\uFF1B\u5176\u4ED6\u9762\u5411\u4F9D\u8B49\u64DA\u589E\u6E1B\uFF08\u9577\u53E5\u7406\u89E3\u3001\u5BEB\u4F5C\u3001\u95B1\u8B80\u2026\uFF09\u3002
+   - level \u7528 CEFR\uFF08\u53EF\u4EE5\u5BEB\u5340\u9593\uFF0C\u4F8B\u5982\u300C\u7D04 B1\u300D\u300CA2\u2013B1\u300D\uFF09\uFF1B\u5B57\u5F59\u91CF\u7684 detail \u9644\u4F30\u8A08\u5B57\u6578\u5340\u9593\uFF08\u4F8B\u5982\u300C\u4F30 2,000\u20132,500 \u5B57\u300D\uFF09\uFF0C\u5176\u4ED6\u9762\u5411 detail \u7D66\u7A7A\u5B57\u4E32\u3002
+   - \u6C92\u6709\u8B49\u64DA\u5C31\u5BEB\u300C\u9084\u770B\u4E0D\u51FA\u4F86\u300D\uFF0C\u4E0D\u8981\u786C\u731C\uFF1Bbasis \u7528\u4E00\u53E5\u8A71\u8AAA\u660E\u5177\u9AD4\u4F9D\u64DA\uFF08\u5F15\u7528\u6578\u5B57\u6216\u81EA\u8FF0\u7A0B\u5EA6\uFF09\u3002
+3. focus\uFF08\u7167\u4F60\u7684\u7A0B\u5EA6\u53EF\u4EE5\u52A0\u5F37\uFF0C3 \u5230 6 \u689D\uFF09\uFF1A\u4F9D\u5404\u9762\u5411\u63A8\u4F30\u7684\u7A0B\u5EA6\uFF0C\u9EDE\u540D\u8A72\u7A0B\u5EA6\u8A72\u88DC\u7684\u5177\u9AD4\u6587\u6CD5\u9EDE\u6216\u6280\u5DE7\uFF0C\u4E26\u8AAA\u600E\u9EBC\u7DF4\u3002\u4F8B\uFF1AB1 \u7684\u73FE\u5728\u5B8C\u6210\u5F0F\u548C\u904E\u53BB\u5F0F\u600E\u9EBC\u5206\u3001\u9577\u53E5\u62C6\u89E3\u5148\u627E\u4E3B\u8981\u52D5\u8A5E\u518D\u62EC\u51FA\u5B50\u53E5\u3002\u6BCF\u689D\u4E00\u5169\u53E5\uFF0C\u53EF\u4EE5\u76F4\u63A5\u7167\u505A\u3002
+4. tryNext\uFF08\u4E0B\u9031\u4E00\u8D77\u8A66\u8A66\uFF0C3 \u5230 5 \u689D\uFF09\uFF1A\u53EF\u4EE5\u52FE\u9078\u5B8C\u6210\u7684\u5C0F\u4EFB\u52D9\uFF0C\u81F3\u5C11\u4E00\u689D\u7528\u4F86\u8A66\u63A2\u300C\u9084\u770B\u4E0D\u51FA\u4F86\u300D\u7684\u9762\u5411\u3002
+5. reading\uFF08\u9069\u5408\u4F60\u7684\u95B1\u8B80\uFF0C2 \u5230 3 \u689D\uFF09\uFF1A\u4F9D\u3014\u8B80\u904E\u7684\u7B46\u8A18\u6A19\u984C\u3015\u63A8\u6E2C\u4ED6\u7684\u8208\u8DA3\u548C\u6587\u7AE0\u985E\u578B\uFF0C\u7D66\u300C\u65B9\u5411\uFF0B\u53EF\u4EE5\u76F4\u63A5\u641C\u5C0B\u7684\u95DC\u9375\u5B57\u300D\uFF0C\u4F8B\u5982\u300CTED \u6559\u80B2\u985E\u3001\u8A9E\u901F\u8F03\u6162\u7684\u8B1B\u8005\uFF0C\u641C\u5C0B\uFF1ATED-Ed ___\u300D\u3002\u4E0D\u8981\u9EDE\u540D\u5177\u9AD4\u7684\u6587\u7AE0\u6216\u6F14\u8B1B\u6A19\u984C\uFF1B\u6C92\u6709\u6A19\u984C\u53EF\u53C3\u8003\u6642\uFF0C\u4F9D\u7A0B\u5EA6\u7D66\u901A\u7528\u65B9\u5411\u3002
+6. letter\uFF08\u4FE1\uFF09\uFF1A2 \u5230 4 \u53E5\uFF0C\u4E00\u6BB5\uFF0C\u50CF\u670B\u53CB\u8AAA\u8A71\uFF1B\u8AAA\u770B\u5230\u7684\u9032\u6B65\u6216\u56F0\u96E3\uFF0C\u548C\u4E0B\u9031\u6700\u503C\u5F97\u505A\u7684\u4E00\u4EF6\u4E8B\u3002\u4E0D\u8981\u91CD\u8907\u5217\u6578\u5B57\u3002
+
+\u53EA\u6839\u64DA\u8CC7\u6599\u5BEB\uFF0C\u4E0D\u8981\u7DE8\u9020\u8CC7\u6599\u88E1\u6C92\u6709\u7684\u4E8B\u3002`;
+var isObj7 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var str7 = (v) => typeof v === "string" ? v.trim() : "";
+var strings = (v, max) => Array.isArray(v) ? v.map(str7).filter(Boolean).slice(0, max) : [];
+var MIN_AXES = 3;
+var MAX_AXES = 7;
+function parseReportAdvice(json) {
+  const o = isObj7(json) ? json : {};
+  const axes = [];
+  for (const a2 of Array.isArray(o.axes) ? o.axes : []) {
+    if (!isObj7(a2)) continue;
+    const name = str7(a2.name);
+    if (!name) continue;
+    const n = Number(a2.value);
+    const value = Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0;
+    const hint = str7(a2.hint);
+    axes.push({ name, value, clear: typeof a2.clear === "boolean" ? a2.clear : true, ...hint ? { hint } : {} });
+    if (axes.length === MAX_AXES) break;
+  }
+  const levels = [];
+  for (const l4 of Array.isArray(o.levels) ? o.levels : []) {
+    if (!isObj7(l4)) continue;
+    const area = str7(l4.area);
+    const level = str7(l4.level);
+    if (!area || !level) continue;
+    const detail = str7(l4.detail);
+    levels.push({ area, level, ...detail ? { detail } : {}, basis: str7(l4.basis) });
+  }
+  return { letter: str7(o.letter), axes, levels, focus: strings(o.focus, 6), tryNext: strings(o.tryNext, 5), reading: strings(o.reading, 3) };
+}
+function resolveAdvice(draft, baseline, baselineLevels2) {
+  return {
+    ...draft,
+    axes: draft.axes.length >= MIN_AXES ? draft.axes : baseline,
+    levels: draft.levels.length ? draft.levels : baselineLevels2
+  };
+}
+function isEmptyAdvice(a2) {
+  return !a2.letter && !a2.focus.length && !a2.tryNext.length && !a2.reading.length;
+}
+function userMessage(input) {
+  const axes = input.baseline.map((a2) => `- ${a2.name}\uFF1A\u6D3B\u8E8D\u5EA6 ${a2.value.toFixed(2)}\uFF0C${a2.clear ? "\u6709\u8DB3\u5920\u7D00\u9304" : "\u7D00\u9304\u4E0D\u5920"}`).join("\n");
+  const levels = input.baselineLevels.map((l4) => `- ${l4.area}\uFF1A${l4.level}${l4.detail ? `\uFF08${l4.detail}\uFF09` : ""}\uFF5C${l4.basis}${l4.rough ? "\uFF08\u898F\u5247\u7C97\u4F30\uFF09" : ""}`).join("\n");
+  const titles = input.readingTitles.length ? input.readingTitles.map((t2) => `- ${t2}`).join("\n") : "\uFF08\u9019\u6BB5\u671F\u9593\u6C92\u6709\u95B1\u8B80\u7D00\u9304\uFF09";
+  return [
+    `\u3014\u81EA\u8FF0\u7684 CEFR \u7A0B\u5EA6\u3015${input.level || "\u672A\u6307\u5B9A"}`,
+    `\u3014\u5B78\u7FD2\u6578\u64DA\u3015
+${input.digest}`,
+    `\u3014\u6D3B\u8E8D\u5EA6\u57FA\u6E96\u3015
+${axes}`,
+    `\u3014\u7A0B\u5EA6\u7C97\u4F30\uFF08\u898F\u5247\u7B97\u7684\uFF0C\u50C5\u4F9B\u53C3\u8003\uFF09\u3015
+${levels}`,
+    `\u3014\u8B80\u904E\u7684\u7B46\u8A18\u6A19\u984C\u3015
+${titles}`
+  ].join("\n\n");
 }
 var reportAdvise = {
   id: "report.advise",
-  version: 2,
+  version: 3,
   surface: "report",
   tier: "smart",
-  maxTokens: 4096,
+  maxTokens: 6144,
+  answerChars: () => 0,
   build(input, ctx) {
     return composeRequest({
       base: REPORT_BASE_PROMPT,
-      profile: ctx.profile,
+      profile: profileForTask(ctx.profile, reportAdvise, input),
       history: [],
-      user: `\u3014CEFR \u7A0B\u5EA6\u3015${input.level || "\u672A\u6307\u5B9A"}
-
-\u3014\u5B78\u7FD2\u6578\u64DA\u3015
-${input.digest}`,
+      user: userMessage(input),
       tier: "smart",
-      maxTokens: 4096
+      maxTokens: 6144,
+      output: { name: "report_advice", schema: REPORT_ADVICE_SCHEMA }
     });
   },
   parse(r) {
-    return parseReportAdvice(r.text);
+    return parseReportAdvice(structuredJson(r));
   }
 };
 
 // src/services/ai/tasks/reportAnalyze.ts
-var REPORT_ANALYZE_PROMPT = `\u4F60\u662F\u5B78\u751F\u7684\u82F1\u6587\u5B78\u7FD2\u5925\u4F34\u3002\u4E0B\u9762\u662F\u4ED6\u9019\u6BB5\u671F\u9593\u7684\u5B78\u7FD2\u6750\u6599\uFF1A\u548C AI \u8A0E\u8AD6\u904E\u7684\u554F\u7B54\u3001\u7DF4\u7FD2\u7B54\u932F\u7684\u984C\u76EE\u3001\u53CD\u8986\u67E5\u7684\u5B57\uFF0C\u4EE5\u53CA\u9019\u671F\u5831\u544A\u7684\u6578\u5B57\u6458\u8981\u3002\u8ACB\u66FF\u4ED6\u505A\u4E00\u4EFD\u8A73\u7D30\u5206\u6790\u3002
+var REPORT_ANALYZE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["now", "next"],
+  properties: {
+    now: { type: "string", description: "\u73FE\u6CC1\u5206\u6790\uFF0CMarkdown" },
+    next: { type: "string", description: "\u63A5\u4E0B\u4F86\u56DB\u9031\u7684\u65B9\u5411\uFF0CMarkdown" }
+  }
+};
+var REPORT_ANALYZE_PROMPT = `\u4F60\u662F\u5B78\u751F\u7684\u82F1\u6587\u5B78\u7FD2\u5925\u4F34\u3002\u4E0B\u9762\u662F\u4ED6\u9019\u6BB5\u671F\u9593\u7684\u5B78\u7FD2\u6750\u6599\uFF1A\u548C AI \u8A0E\u8AD6\u904E\u7684\u554F\u7B54\u3001\u7DF4\u7FD2\u7B54\u932F\u7684\u984C\u76EE\u3001\u53CD\u8986\u67E5\u7684\u5B57\uFF0C\u4EE5\u53CA\u9019\u671F\u5831\u544A\u7684\u6578\u5B57\u6458\u8981\u3002\u8ACB\u66FF\u4ED6\u505A\u4E00\u4EFD\u8A73\u7D30\u5206\u6790\uFF0C\u5206\u6210\u5169\u6BB5\u8F38\u51FA\u6210 JSON\uFF1Anow \u548C next\u3002
 
 ${WARM_TONE}
 
-\u8ACB\u7528\u7E41\u9AD4\u4E2D\u6587\u3001Markdown \u8F38\u51FA\uFF0C\u4F9D\u5E8F\u5BEB\u9019\u516D\u6BB5\uFF0C\u6BCF\u6BB5\u7528\u300C### \u300D\u958B\u982D\u7684\u5C0F\u6A19\uFF1A
-### \u4F60\u5E38\u554F\u4EC0\u9EBC
-### \u53CD\u8986\u51FA\u73FE\u7684\u89C0\u5FF5\u76F2\u9EDE
-### \u6587\u6CD5
-### \u55AE\u5B57\u8207\u7528\u6CD5
-### \u7A0B\u5EA6\u5224\u65B7
-### \u63A5\u4E0B\u4F86\u56DB\u9031\u53EF\u4EE5\u8A66\u8A66\u7684\u65B9\u5411
+\u7528\u7E41\u9AD4\u4E2D\u6587\u3001Markdown \u5BEB\uFF0C\u5C0F\u6A19\u8ACB\u7528\u55AE\u7368\u4E00\u884C\u7684\u7C97\u9AD4\uFF08\u4F8B\u5982\u300C**\u4F60\u5E38\u554F\u4EC0\u9EBC**\u300D\uFF09\uFF0C\u4E0D\u8981\u7528 # \u958B\u982D\u7684\u6A19\u984C\u3002
+
+now\uFF08\u73FE\u6CC1\uFF09\u4F9D\u5E8F\u5BEB\u9019\u4E94\u500B\u5C0F\u6A19\uFF1A
+**\u4F60\u5E38\u554F\u4EC0\u9EBC**
+**\u53CD\u8986\u51FA\u73FE\u7684\u89C0\u5FF5\u76F2\u9EDE**
+**\u6587\u6CD5**
+**\u55AE\u5B57\u8207\u7528\u6CD5**
+**\u7A0B\u5EA6\u5224\u65B7**
+
+next\uFF08\u56DB\u9031\u65B9\u5411\uFF09\u4F9D\u4ED6\u7684\u7A0B\u5EA6\u5206\u6210\u7B2C 1\uFF5E4 \u9031\uFF0C\u6BCF\u9031\u4E00\u5169\u4EF6\u5177\u9AD4\u505A\u5F97\u5230\u7684\u4E8B\uFF0C\u8981\u9EDE\u540D\u6587\u6CD5\u9EDE\u6216\u7DF4\u6CD5\uFF08\u4F8B\u5982\u8A72\u600E\u9EBC\u7DF4\u73FE\u5728\u5B8C\u6210\u5F0F\u3001\u9577\u53E5\u600E\u9EBC\u62C6\uFF09\u3002
 
 \u8981\u6C42\uFF1A
 1. \u300C\u6587\u6CD5\u300D\u300C\u55AE\u5B57\u8207\u7528\u6CD5\u300D\u300C\u53CD\u8986\u51FA\u73FE\u7684\u89C0\u5FF5\u76F2\u9EDE\u300D\u8981\u5404\u8209 1\uFF5E2 \u500B\u4ED6\u5BE6\u969B\u78B0\u904E\u7684\u4F8B\u53E5\u6216\u554F\u7B54\u4F86\u8AAA\u660E\u3002
 2. \u300C\u7A0B\u5EA6\u5224\u65B7\u300D\u8981\u548C\u4ED6\u81EA\u8FF0\u7684\u7A0B\u5EA6\u6BD4\u5C0D\uFF0C\u4E26\u5F15\u7528\u5BE6\u969B\u7684\u554F\u7B54\u6216\u932F\u984C\u7576\u4F9D\u64DA\uFF1B\u8CC7\u6599\u4E0D\u5920\u5C31\u8001\u5BE6\u8AAA\u8CC7\u6599\u4E0D\u5920\u3002
-3. \u300C\u63A5\u4E0B\u4F86\u56DB\u9031\u53EF\u4EE5\u8A66\u8A66\u7684\u65B9\u5411\u300D\u5206\u6210\u7B2C 1\uFF5E4 \u9031\uFF0C\u6BCF\u9031\u4E00\u5169\u4EF6\u5177\u9AD4\u505A\u5F97\u5230\u7684\u4E8B\u3002
-4. \u53EA\u6839\u64DA\u6750\u6599\u5BEB\uFF0C\u4E0D\u8981\u7DE8\u9020\u6750\u6599\u88E1\u6C92\u6709\u7684\u4E8B\uFF1B\u6C92\u6709\u6750\u6599\u7684\u6BB5\u843D\u7C21\u77ED\u8AAA\u660E\u5373\u53EF\uFF0C\u4E0D\u8981\u786C\u6E4A\u3002
-5. \u4E0D\u8981\u524D\u8A00\u3001\u7D50\u8A9E\uFF0C\u4E0D\u8981\u7528 code fence \u5305\u4F4F\u6574\u4EFD\u8F38\u51FA\u3002`;
-function parseReportAnalysis(text) {
-  const t2 = text.trim().replace(/^```(?:markdown|md)?\s*\n/i, "").replace(/\n```\s*$/, "").trim();
-  if (!t2) throw new Error("empty analysis");
+3. \u53EA\u6839\u64DA\u6750\u6599\u5BEB\uFF0C\u4E0D\u8981\u7DE8\u9020\u6750\u6599\u88E1\u6C92\u6709\u7684\u4E8B\uFF1B\u6C92\u6709\u6750\u6599\u7684\u6BB5\u843D\u7C21\u77ED\u8AAA\u660E\u5373\u53EF\uFF0C\u4E0D\u8981\u786C\u6E4A\u3002
+4. \u4E0D\u8981\u524D\u8A00\u3001\u7D50\u8A9E\uFF0C\u4E0D\u8981\u7528 code fence \u5305\u4F4F\u5167\u5BB9\u3002`;
+var strip = (s) => s.trim().replace(/^```(?:markdown|md)?\s*\n/i, "").replace(/\n```\s*$/, "").trim();
+function parseMarkdownAnswer(text) {
+  const t2 = strip(text);
+  if (!t2) throw new AiError("bad_output", "empty analysis");
   return t2;
+}
+function parseReportAnalysis(json) {
+  const o = typeof json === "object" && json !== null ? json : {};
+  const now2 = typeof o.now === "string" ? strip(o.now) : "";
+  const next = typeof o.next === "string" ? strip(o.next) : "";
+  if (!now2 && !next) throw new AiError("bad_output", "report.analyze: empty analysis");
+  return { now: now2, next };
 }
 var reportAnalyze = {
   id: "report.analyze",
-  version: 1,
+  version: 2,
   surface: "report",
   tier: "smart",
   maxTokens: 8192,
+  answerChars: () => 0,
   build(input, ctx) {
     return composeRequest({
       base: REPORT_ANALYZE_PROMPT,
-      profile: ctx.profile,
+      profile: profileForTask(ctx.profile, reportAnalyze, input),
       history: [],
       user: `${input.material}`,
       tier: "smart",
-      maxTokens: 8192
+      maxTokens: 8192,
+      output: { name: "report_analysis", schema: REPORT_ANALYZE_SCHEMA }
     });
   },
   parse(r) {
-    return parseReportAnalysis(r.text);
+    return parseReportAnalysis(structuredJson(r));
   }
 };
 
@@ -30747,7 +31025,7 @@ ${input.material}`,
     });
   },
   parse(r) {
-    return parseReportAnalysis(r.text);
+    return parseMarkdownAnswer(r.text);
   }
 };
 
@@ -30809,33 +31087,33 @@ var VERB_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u
 8. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
 var VERB_TEMPLATE = `\u4EFB\u52D9\uFF1A\u7528\u6CD5\uFF08{{word}}\uFF09
 \u5217\u51FA {{word}} \u5E38\u898B\u7684\u8A5E\u6027\uFF0C\u6574\u7406\u6BCF\u500B\u8A5E\u6027\u7684\u5E38\u898B\u53E5\u578B\u8207\u76F8\u8FD1\u8AAA\u6CD5\u3002{{#onlyPos}}\u9019\u6B21\u53EA\u9700\u8981 {{onlyPos}} \u9019\u500B\u8A5E\u6027\u7684\u7528\u6CD5\uFF0Centries \u53EA\u8981\u4E00\u9805\u3002{{/onlyPos}}{{#hasSource}}\u3014\u51FA\u8655\u6BB5\u843D\u3015\u6216\u3014\u51FA\u8655\u53E5\u5B50\u3015\u88E1\u7684\u7528\u6CD5\u5982\u679C\u5C6C\u65BC\u5176\u4E2D\u4E00\u7A2E\uFF0C\u628A\u90A3\u500B\u53E5\u578B\u6392\u5728\u7B2C\u4E00\u500B\u3002{{/hasSource}}`;
-function isObj7(v) {
+function isObj8(v) {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
-function str7(v) {
+function str8(v) {
   return typeof v === "string" ? v.trim() : "";
 }
 function parseVerbUsage(json) {
-  if (!isObj7(json) || !Array.isArray(json.entries)) {
+  if (!isObj8(json) || !Array.isArray(json.entries)) {
     throw new AiError("bad_output", "verb.usage: expected { entries: [...] }");
   }
   const entries = [];
   for (const raw of json.entries) {
-    if (!isObj7(raw)) continue;
-    const [pos] = parsePos(str7(raw.pos));
+    if (!isObj8(raw)) continue;
+    const [pos] = parsePos(str8(raw.pos));
     if (!pos) continue;
     const patterns = [];
     for (const p of Array.isArray(raw.patterns) ? raw.patterns : []) {
-      if (!isObj7(p)) continue;
-      const pattern = str7(p.pattern);
-      if (pattern) patterns.push({ pattern, meaningZh: str7(p.meaningZh), example: str7(p.example) });
+      if (!isObj8(p)) continue;
+      const pattern = str8(p.pattern);
+      if (pattern) patterns.push({ pattern, meaningZh: str8(p.meaningZh), example: str8(p.example) });
     }
     if (!patterns.length) continue;
     const related = [];
     for (const r of Array.isArray(raw.related) ? raw.related : []) {
-      if (!isObj7(r)) continue;
-      const phrase = str7(r.phrase);
-      if (phrase) related.push({ phrase, zh: str7(r.zh) });
+      if (!isObj8(r)) continue;
+      const phrase = str8(r.phrase);
+      if (phrase) related.push({ phrase, zh: str8(r.zh) });
     }
     entries.push({ pos, patterns, related });
   }
@@ -31459,7 +31737,7 @@ function renderTraces(parent, traces, open) {
 }
 
 // src/ui/settings/sections/ai.ts
-var fmt = (n) => n.toLocaleString();
+var fmt2 = (n) => n.toLocaleString();
 function renderProviderFields(el, ctx, id2) {
   var _a, _b;
   const def = providerDef(id2);
@@ -31581,15 +31859,15 @@ var aiSection = {
     const usage = new import_obsidian48.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
     ctx.ai.usageSummary().then((u) => {
       const desc = createFragment((f) => {
-        f.createDiv({ text: t("settings.ai.usage.value", { month: fmt(u.monthWeighted), today: fmt(u.today.input + u.today.output) }) });
+        f.createDiv({ text: t("settings.ai.usage.value", { month: fmt2(u.monthWeighted), today: fmt2(u.today.input + u.today.output) }) });
         f.createDiv({
           cls: "vt-settings-muted",
           text: t("settings.ai.usage.detail", {
-            input: fmt(u.month.input),
-            output: fmt(u.month.output),
-            cacheRead: fmt(u.month.cacheRead),
-            cacheWrite: fmt(u.month.cacheWrite),
-            requests: fmt(u.month.requests)
+            input: fmt2(u.month.input),
+            output: fmt2(u.month.output),
+            cacheRead: fmt2(u.month.cacheRead),
+            cacheWrite: fmt2(u.month.cacheWrite),
+            requests: fmt2(u.month.requests)
           })
         });
       });
@@ -32156,53 +32434,53 @@ function ms6(iso) {
 function emptyGrammarShard() {
   return { questions: [], attempts: [], progress: [] };
 }
-var str8 = (v) => typeof v === "string" && v !== "";
-var isObj8 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var str9 = (v) => typeof v === "string" && v !== "";
+var isObj9 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 function normalizeScenario(raw) {
-  if (!isObj8(raw) || !str8(raw.id) || !str8(raw.scene)) return null;
+  if (!isObj9(raw) || !str9(raw.id) || !str9(raw.scene)) return null;
   const seq = typeof raw.seq === "number" && Number.isFinite(raw.seq) && raw.seq >= 0 ? Math.floor(raw.seq) : null;
   if (seq === null) return null;
   const out = { id: raw.id, scene: raw.scene, seq };
-  if (str8(raw.speaker)) out.speaker = raw.speaker;
+  if (str9(raw.speaker)) out.speaker = raw.speaker;
   if (Array.isArray(raw.lead)) {
     const lead = [];
     for (const l4 of raw.lead) {
-      if (!isObj8(l4) || !str8(l4.text)) continue;
-      lead.push(str8(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
+      if (!isObj9(l4) || !str9(l4.text)) continue;
+      lead.push(str9(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
     }
     if (lead.length) out.lead = lead;
   }
   return out;
 }
 function normalizeQuestion(raw) {
-  if (!isObj8(raw) || !str8(raw.id) || !str8(raw.topicId) || !str8(raw.objectiveId)) return null;
+  if (!isObj9(raw) || !str9(raw.id) || !str9(raw.topicId) || !str9(raw.objectiveId)) return null;
   if (typeof raw.stem !== "string" || typeof raw.answer !== "string") return null;
   const type = GRAMMAR_QUESTION_TYPES.includes(raw.type) ? raw.type : null;
   if (!type) return null;
-  const strings = (v) => Array.isArray(v) ? v.filter((x3) => typeof x3 === "string") : void 0;
+  const strings2 = (v) => Array.isArray(v) ? v.filter((x3) => typeof x3 === "string") : void 0;
   const q = {
     ...raw,
     type,
     explanation: typeof raw.explanation === "string" ? raw.explanation : "",
     errorTag: normalizeErrorTag(raw.errorTag)
   };
-  const options = strings(raw.options);
+  const options = strings2(raw.options);
   if (options) q.options = options;
   else delete q.options;
-  const accepted = strings(raw.accepted);
+  const accepted = strings2(raw.accepted);
   if (accepted) q.accepted = accepted;
   else delete q.accepted;
-  if (!isObj8(raw.distractors)) delete q.distractors;
+  if (!isObj9(raw.distractors)) delete q.distractors;
   const scenario = normalizeScenario(raw.scenario);
   if (scenario) q.scenario = scenario;
   else delete q.scenario;
-  if (str8(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
+  if (str9(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
   else delete q.sentenceZh;
   return q;
 }
 function normalizeAttempt(raw) {
-  if (!isObj8(raw) || !str8(raw.id) || !str8(raw.questionId) || !str8(raw.topicId) || !str8(raw.objectiveId)) return null;
-  if (!str8(raw.at) || Number.isNaN(Date.parse(raw.at))) return null;
+  if (!isObj9(raw) || !str9(raw.id) || !str9(raw.questionId) || !str9(raw.topicId) || !str9(raw.objectiveId)) return null;
+  if (!str9(raw.at) || Number.isNaN(Date.parse(raw.at))) return null;
   return {
     id: raw.id,
     questionId: raw.questionId,
@@ -32214,9 +32492,9 @@ function normalizeAttempt(raw) {
   };
 }
 function normalizeProgress(raw) {
-  if (!isObj8(raw) || !str8(raw.id)) return null;
+  if (!isObj9(raw) || !str9(raw.id)) return null;
   const p = { ...raw };
-  if (!isObj8(p.srs)) delete p.srs;
+  if (!isObj9(p.srs)) delete p.srs;
   return p;
 }
 function normList(raw, one2) {
@@ -32229,7 +32507,7 @@ function normList(raw, one2) {
   return out;
 }
 function normalizeGrammarShard(raw) {
-  const s = isObj8(raw) ? raw : {};
+  const s = isObj9(raw) ? raw : {};
   return {
     questions: normList(s.questions, normalizeQuestion),
     attempts: normList(s.attempts, normalizeAttempt),
@@ -32294,27 +32572,27 @@ function ms7(iso) {
 function emptyLearnerShard() {
   return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [], asks: [], wordTouches: [] };
 }
-var str9 = (v) => typeof v === "string" && v !== "";
-var isObj9 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
-var isIso = (v) => str9(v) && !Number.isNaN(Date.parse(v));
+var str10 = (v) => typeof v === "string" && v !== "";
+var isObj10 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var isIso = (v) => str10(v) && !Number.isNaN(Date.parse(v));
 var isTrack = (v) => TRACKS.includes(v);
 var REASONS = ["answered", "skipped", "retired", "filtered"];
 function focusOf(raw) {
-  if (!isObj9(raw) || !str9(raw.id) || !FOCUS_KINDS.includes(raw.kind)) return null;
+  if (!isObj10(raw) || !str10(raw.id) || !FOCUS_KINDS.includes(raw.kind)) return null;
   return { kind: raw.kind, id: raw.id };
 }
 function normalizeEvent(raw) {
-  if (!isObj9(raw) || !str9(raw.id) || !isIso(raw.at) || !isTrack(raw.track)) return null;
+  if (!isObj10(raw) || !str10(raw.id) || !isIso(raw.at) || !isTrack(raw.track)) return null;
   const focus = focusOf(raw.focus);
   if (!focus || !LEARN_RESULTS.includes(raw.result)) return null;
   const e = { id: raw.id, at: raw.at, track: raw.track, focus, result: raw.result };
   if (typeof raw.given === "string") e.given = raw.given;
-  if (str9(raw.errorTag)) e.errorTag = raw.errorTag;
-  if (str9(raw.questionId)) e.questionId = raw.questionId;
+  if (str10(raw.errorTag)) e.errorTag = raw.errorTag;
+  if (str10(raw.questionId)) e.questionId = raw.questionId;
   return e;
 }
 function normalizePool(raw) {
-  if (!isObj9(raw) || !str9(raw.id) || !isTrack(raw.track) || !str9(raw.questionId)) return null;
+  if (!isObj10(raw) || !str10(raw.id) || !isTrack(raw.track) || !str10(raw.questionId)) return null;
   if (!isIso(raw.addedAt)) return null;
   const p = {
     id: raw.id,
@@ -32324,7 +32602,7 @@ function normalizePool(raw) {
     addedAt: raw.addedAt,
     updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : raw.addedAt
   };
-  if (str9(raw.scenarioId)) p.scenarioId = raw.scenarioId;
+  if (str10(raw.scenarioId)) p.scenarioId = raw.scenarioId;
   if (isIso(raw.removedAt)) {
     p.removedAt = raw.removedAt;
     p.removeReason = REASONS.includes(raw.removeReason) ? raw.removeReason : "answered";
@@ -32332,7 +32610,7 @@ function normalizePool(raw) {
   return p;
 }
 function normalizeMistake(raw) {
-  if (!isObj9(raw) || !str9(raw.id) || !isTrack(raw.track) || !str9(raw.questionId)) return null;
+  if (!isObj10(raw) || !str10(raw.id) || !isTrack(raw.track) || !str10(raw.questionId)) return null;
   const focus = focusOf(raw.focus);
   if (!focus || !isIso(raw.lastWrongAt)) return null;
   const addedAt = isIso(raw.addedAt) ? raw.addedAt : raw.lastWrongAt;
@@ -32349,20 +32627,20 @@ function normalizeMistake(raw) {
   return m2;
 }
 function normalizeFilter(raw) {
-  if (!isObj9(raw) || !isTrack(raw.id)) return null;
+  if (!isObj10(raw) || !isTrack(raw.id)) return null;
   return { id: raw.id, value: raw.value, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : "" };
 }
 var SCENARIO_TRACKS = ["poly", "vocab", "mix", "para"];
 function normalizeQuestion2(raw) {
-  if (!isObj9(raw) || !str9(raw.id) || !SCENARIO_TRACKS.includes(raw.track)) return null;
+  if (!isObj10(raw) || !str10(raw.id) || !SCENARIO_TRACKS.includes(raw.track)) return null;
   if (!PRACTICE_KINDS.includes(raw.kind)) return null;
-  if (!str9(raw.text) || !str9(raw.answerId) || !str9(raw.explanation)) return null;
+  if (!str10(raw.text) || !str10(raw.answerId) || !str10(raw.explanation)) return null;
   const focus = focusOf(raw.focus);
-  if (!focus || !isObj9(raw.scenario) || !str9(raw.scenario.id) || !str9(raw.scenario.scene)) return null;
+  if (!focus || !isObj10(raw.scenario) || !str10(raw.scenario.id) || !str10(raw.scenario.scene)) return null;
   if (!Array.isArray(raw.options)) return null;
   const options = [];
   for (const o of raw.options) {
-    if (isObj9(o) && str9(o.id) && typeof o.text === "string" && o.text !== "") options.push({ id: o.id, text: o.text });
+    if (isObj10(o) && str10(o.id) && typeof o.text === "string" && o.text !== "") options.push({ id: o.id, text: o.text });
   }
   if (options.length < 2 || !options.some((o) => o.id === raw.answerId)) return null;
   const sc = raw.scenario;
@@ -32371,12 +32649,12 @@ function normalizeQuestion2(raw) {
     scene: sc.scene,
     seq: typeof sc.seq === "number" && Number.isFinite(sc.seq) ? sc.seq : 0
   };
-  if (str9(sc.speaker)) scenario.speaker = sc.speaker;
+  if (str10(sc.speaker)) scenario.speaker = sc.speaker;
   if (Array.isArray(sc.lead)) {
     const lead = [];
     for (const l4 of sc.lead) {
-      if (!isObj9(l4) || !str9(l4.text)) continue;
-      lead.push(str9(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
+      if (!isObj10(l4) || !str10(l4.text)) continue;
+      lead.push(str10(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
     }
     if (lead.length) scenario.lead = lead;
   }
@@ -32394,19 +32672,19 @@ function normalizeQuestion2(raw) {
     createdAt,
     updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : createdAt
   };
-  if (isObj9(raw.optionNotes)) {
+  if (isObj10(raw.optionNotes)) {
     const notes = {};
-    for (const [k, v] of Object.entries(raw.optionNotes)) if (str9(v)) notes[k] = v;
+    for (const [k, v] of Object.entries(raw.optionNotes)) if (str10(v)) notes[k] = v;
     if (Object.keys(notes).length) q.optionNotes = notes;
   }
-  if (str9(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh;
-  if (str9(raw.errorTag)) q.errorTag = raw.errorTag;
+  if (str10(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh;
+  if (str10(raw.errorTag)) q.errorTag = raw.errorTag;
   if (isIso(raw.retiredAt)) q.retiredAt = raw.retiredAt;
   return q;
 }
 var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 function normalizeVisit(raw) {
-  if (!isObj9(raw) || !str9(raw.id) || !str9(raw.path) || !str9(raw.day) || !DAY_RE.test(raw.day) || !isIso(raw.at)) return null;
+  if (!isObj10(raw) || !str10(raw.id) || !str10(raw.path) || !str10(raw.day) || !DAY_RE.test(raw.day) || !isIso(raw.at)) return null;
   const kinds = Array.isArray(raw.kinds) ? sortKinds(raw.kinds.filter((k) => READING_KINDS.includes(k))) : [];
   if (kinds.length === 0) return null;
   const v = {
@@ -32418,11 +32696,11 @@ function normalizeVisit(raw) {
     title: typeof raw.title === "string" ? raw.title : "",
     kinds
   };
-  if (str9(raw.heading)) v.heading = raw.heading;
+  if (str10(raw.heading)) v.heading = raw.heading;
   return v;
 }
 function normalizePick(raw) {
-  if (!isObj9(raw) || !str9(raw.id) || !str9(raw.key) || !str9(raw.day) || !isIso(raw.at)) return null;
+  if (!isObj10(raw) || !str10(raw.id) || !str10(raw.key) || !str10(raw.day) || !isIso(raw.at)) return null;
   if (!DIARY_PICK_KINDS.includes(raw.kind)) return null;
   return { id: raw.id, kind: raw.kind, key: raw.key, day: raw.day, at: raw.at };
 }
@@ -32435,7 +32713,7 @@ function mergePicks(a2, b) {
   return [...map.values()];
 }
 function normalizeAsk(raw) {
-  if (!isObj9(raw) || !str9(raw.id) || !isIso(raw.at) || typeof raw.taskId !== "string") return null;
+  if (!isObj10(raw) || !str10(raw.id) || !isIso(raw.at) || typeof raw.taskId !== "string") return null;
   const e = {
     id: raw.id,
     at: raw.at,
@@ -32444,15 +32722,15 @@ function normalizeAsk(raw) {
     custom: raw.custom === true,
     ok: raw.ok === true
   };
-  if (str9(raw.entryId)) e.entryId = raw.entryId;
-  if (str9(raw.path)) e.path = raw.path;
-  if (str9(raw.selection)) e.selection = raw.selection;
-  if (str9(raw.question)) e.question = raw.question;
+  if (str10(raw.entryId)) e.entryId = raw.entryId;
+  if (str10(raw.path)) e.path = raw.path;
+  if (str10(raw.selection)) e.selection = raw.selection;
+  if (str10(raw.question)) e.question = raw.question;
   return e;
 }
 var count = (v) => typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
 function normalizeTouch(raw) {
-  if (!isObj9(raw) || !str9(raw.word) || !str9(raw.day) || !DAY_RE.test(raw.day)) return null;
+  if (!isObj10(raw) || !str10(raw.word) || !str10(raw.day) || !DAY_RE.test(raw.day)) return null;
   const lookup = count(raw.lookup);
   const pronounce2 = count(raw.pronounce);
   if (lookup + pronounce2 === 0) return null;
@@ -32496,10 +32774,10 @@ function normList2(raw, one2) {
   return out;
 }
 function normalizeLearnerShard(raw) {
-  const s = isObj9(raw) ? raw : {};
+  const s = isObj10(raw) ? raw : {};
   const meta = {};
-  if (isObj9(s.meta) && isIso(s.meta.grammarMigratedAt)) meta.grammarMigratedAt = s.meta.grammarMigratedAt;
-  if (isObj9(s.meta) && isIso(s.meta.asksMigratedAt)) meta.asksMigratedAt = s.meta.asksMigratedAt;
+  if (isObj10(s.meta) && isIso(s.meta.grammarMigratedAt)) meta.grammarMigratedAt = s.meta.grammarMigratedAt;
+  if (isObj10(s.meta) && isIso(s.meta.asksMigratedAt)) meta.asksMigratedAt = s.meta.asksMigratedAt;
   return {
     events: sortEvents(normList2(s.events, normalizeEvent)),
     pool: normList2(s.pool, normalizePool),
@@ -36403,6 +36681,61 @@ var DiaryService = class {
   }
 };
 
+// src/core/learner/levelEstimate.ts
+var UNKNOWN_LEVEL = "\u9084\u770B\u4E0D\u51FA\u4F86";
+var GRAMMAR_MIN_QUESTIONS = 10;
+var BAND_PASS = 0.7;
+var BAND_MIN = 3;
+var VOCAB_SIZE = {
+  A1: [500, 700],
+  A2: [1e3, 1500],
+  B1: [2e3, 2500],
+  B2: [4e3, 5e3],
+  C1: [8e3, 1e4],
+  C2: [16e3, 2e4]
+};
+var num = (n) => n.toLocaleString("en-US");
+var GRAMMAR_BAND_LEVEL = ["A1\u2013A2", "B1\u2013B2", "C1"];
+var pct = (r) => `${Math.round(r * 100)}%`;
+function grammarLevel(data) {
+  var _a;
+  const area = "\u6587\u6CD5";
+  const bands = data.grammar.bands;
+  const total = bands.reduce((s, b) => s + b.total, 0);
+  if (total < GRAMMAR_MIN_QUESTIONS) {
+    return { area, level: UNKNOWN_LEVEL, basis: `\u6587\u6CD5\u984C\u53EA\u505A\u4E86 ${total} \u984C\uFF0C\u81F3\u5C11 ${GRAMMAR_MIN_QUESTIONS} \u984C\u624D\u770B\u5F97\u51FA\u4F86`, rough: true };
+  }
+  for (let i = bands.length - 1; i >= 0; i--) {
+    const b = bands[i];
+    if (b.total >= BAND_MIN && b.rate !== null && b.rate >= BAND_PASS) {
+      return { area, level: `\u7D04 ${(_a = GRAMMAR_BAND_LEVEL[i]) != null ? _a : b.label}`, basis: `\u96E3\u5EA6 ${b.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct(b.rate)}\uFF08${b.total} \u984C\uFF09`, rough: true };
+    }
+  }
+  const low = bands.find((b) => b.total > 0);
+  return {
+    area,
+    level: "\u7D04 A1\u2013A2 \u4EE5\u4E0B",
+    basis: low && low.rate !== null ? `\u96E3\u5EA6 ${low.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct(low.rate)}\uFF08${low.total} \u984C\uFF09\uFF0C\u9084\u6C92\u5230\u4E03\u6210` : "\u6587\u6CD5\u984C\u7B54\u5C0D\u7387\u9084\u6C92\u5230\u4E03\u6210",
+    rough: true
+  };
+}
+function vocabLevel(selfLevel, mature) {
+  const area = "\u5B57\u5F59\u91CF";
+  const size = selfLevel ? VOCAB_SIZE[selfLevel] : void 0;
+  if (!size) return { area, level: UNKNOWN_LEVEL, basis: "\u9084\u6C92\u6709\u8A2D\u5B9A\u81EA\u8FF0\u7A0B\u5EA6", rough: true };
+  return {
+    area,
+    level: `\u7D04 ${selfLevel}`,
+    detail: `\u4F30 ${num(size[0])}\u2013${num(size[1])} \u5B57`,
+    basis: mature !== void 0 ? `\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\uFF0B\u719F\u7DF4 ${mature} \u5B57\u7C97\u4F30` : "\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\u7C97\u4F30",
+    rough: true
+  };
+}
+function baselineLevels(data, selfLevel, mature) {
+  const unknown = (area) => ({ area, level: UNKNOWN_LEVEL, basis: "\u9019\u9031\u7684\u7D00\u9304\u9084\u4E0D\u5920", rough: true });
+  return [vocabLevel(selfLevel, mature), grammarLevel(data), unknown("\u591A\u7FA9\u5B57\u719F\u6089\u5EA6"), unknown("\u9577\u53E5\u7406\u89E3"), unknown("\u5BEB\u4F5C"), unknown("\u95B1\u8B80")];
+}
+
 // src/core/learner/reportMarkdown.ts
 var TASK_NAMES = {
   "paragraph.grammar": "\u6587\u6CD5\u89E3\u6790",
@@ -36422,7 +36755,7 @@ function taskName(id2) {
   return (_a = TASK_NAMES[id2]) != null ? _a : id2;
 }
 var TRACK_NAMES = { grammar: "\u6587\u6CD5", poly: "\u591A\u7FA9\u5B57", vocab: "\u55AE\u5B57", mix: "\u6DF7\u5408", para: "\u6BB5\u843D" };
-var pct = (r) => `${Math.round(r * 100)}%`;
+var pct2 = (r) => `${Math.round(r * 100)}%`;
 function verdictHeadline(verdict, suggestedLevel) {
   switch (verdict) {
     case "up":
@@ -36454,9 +36787,8 @@ function weakLabel(f) {
 function section2(title, lines4) {
   return lines4.length ? [`### ${title}`, ...lines4, ""] : [];
 }
-function reportTitle(data, meta) {
-  const { from, to } = data.period;
-  return meta.first ? `# \u5230\u76EE\u524D\u70BA\u6B62\u7684\u5B78\u7FD2\u5831\u544A\uFF08${from} \uFF5E ${to}\uFF09` : `# \u5B78\u7FD2\u9031\u5831 ${meta.key}\uFF08${from} \uFF5E ${to}\uFF09`;
+function reportTitle(meta) {
+  return meta.first ? `# \u5230\u76EE\u524D\u70BA\u6B62\u7684\u4F60 \xB7 ${meta.key}` : `# \u9019\u9031\u7684\u4F60 \xB7 ${meta.key}`;
 }
 function numbers(data) {
   const out = [];
@@ -36480,14 +36812,14 @@ function numbers(data) {
   const vl = [];
   if (v.newSaved > 0) vl.push(`- \u65B0\u6536\u85CF ${v.newSaved} \u500B\u5B57`);
   if (v.reviews > 0) {
-    const rate = v.recallRate === null ? "" : `\uFF0C\u8A18\u4F4F\u7387 ${pct(v.recallRate)}${deltaRate(v.recallRate, v.prevRecallRate)}`;
+    const rate = v.recallRate === null ? "" : `\uFF0C\u8A18\u4F4F\u7387 ${pct2(v.recallRate)}${deltaRate(v.recallRate, v.prevRecallRate)}`;
     vl.push(`- \u8907\u7FD2 ${v.reviews} \u6B21${rate}${v.avgSeconds !== null ? `\uFF0C\u5E73\u5747\u505C\u7559 ${v.avgSeconds} \u79D2` : ""}`);
   }
   out.push(...section2("\u55AE\u5B57\u8907\u7FD2", vl));
   const pl = data.practice.tracks.map(
     (t2) => {
       var _a;
-      return `- ${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\uFF1A${t2.correct}/${t2.total}\uFF08${pct(t2.rate)}${t2.prevRate !== null ? deltaRate(t2.rate, t2.prevRate) : ""}\uFF09`;
+      return `- ${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\uFF1A${t2.correct}/${t2.total}\uFF08${pct2(t2.rate)}${t2.prevRate !== null ? deltaRate(t2.rate, t2.prevRate) : ""}\uFF09`;
     }
   );
   out.push(...section2("\u7DF4\u7FD2\u7B54\u5C0D\u7387", pl));
@@ -36497,13 +36829,35 @@ function numbers(data) {
   const gl = [];
   const bands = data.grammar.bands.filter((b) => b.total > 0 && b.rate !== null);
   if (data.grammar.mastered > 0) gl.push(`- \u5DF2\u7CBE\u719F ${data.grammar.mastered} \u500B\u6587\u6CD5\u4E3B\u984C`);
-  for (const b of bands) gl.push(`- \u96E3\u5EA6 ${b.label}\uFF1A${b.correct}/${b.total}\uFF08${pct(b.rate)}\uFF09`);
+  for (const b of bands) gl.push(`- \u96E3\u5EA6 ${b.label}\uFF1A${b.correct}/${b.total}\uFF08${pct2(b.rate)}\uFF09`);
   out.push(...section2("\u6587\u6CD5\u7CBE\u719F", gl));
   if (data.tags.length) out.push(...section2("\u8003\u8A66\u6A19\u7C64", [`- ${data.tags.map((t2) => `${t2.key}\uFF08${t2.count}\uFF09`).join("\u3001")}`]));
   return out;
 }
+var RADAR_LANG = "vocab-report-radar";
+var GREY = (text) => `<span style="color: gray">${text}</span>`;
+function calloutLines(kind, fold, title, body) {
+  const trimmed = [...body];
+  while (trimmed.length && trimmed[trimmed.length - 1] === "") trimmed.pop();
+  return [`> [!${kind}]${fold} ${title}`, ...trimmed.map((l4) => l4 === "" ? ">" : `> ${l4}`)];
+}
+var cell = (s) => s.replace(/\|/g, "\uFF0F").replace(/\s*\n\s*/g, " ").trim();
+function levelTable(levels) {
+  const rows = levels.map((l4) => {
+    const detail = l4.detail ? `\uFF08${l4.detail}\uFF09` : "";
+    const rough = l4.rough ? "\uFF08\u7C97\u4F30\uFF09" : "";
+    return `| ${cell(l4.area)} | ${cell(l4.level)}${cell(detail)}${rough} | ${cell(l4.basis)} |`;
+  });
+  return ["| \u9762\u5411 | \u7A0B\u5EA6 | \u4F9D\u64DA |", "| --- | --- | --- |", ...rows];
+}
+function radarFence(axes) {
+  const json = JSON.stringify({
+    axes: axes.map((a2) => ({ name: a2.name, value: Math.round(a2.value * 100) / 100, clear: a2.clear, ...a2.hint ? { hint: a2.hint } : {} }))
+  });
+  return ["```" + RADAR_LANG, json, "```"];
+}
 function renderReportFile(data, meta) {
-  var _a, _b;
+  var _a, _b, _c, _d, _e;
   const adv = data.advice;
   const fm = [
     "---",
@@ -36515,15 +36869,23 @@ function renderReportFile(data, meta) {
     "---",
     ""
   ];
-  const body = [reportTitle(data, meta), ""];
+  const ai = meta.advice;
+  const axes = (_b = (_a = ai == null ? void 0 : ai.axes) != null ? _a : meta.axes) != null ? _b : baselineAxes(data);
+  const levels = (_d = (_c = ai == null ? void 0 : ai.levels) != null ? _c : meta.levels) != null ? _d : baselineLevels(data, "");
+  const note = GREY((_e = meta.aiNote) != null ? _e : "AI \u9019\u6B21\u6C92\u5BEB\u6210\u529F");
+  const body = [reportTitle(meta), "", GREY(`${data.period.from} \uFF5E ${data.period.to}`), ""];
+  if (ai == null ? void 0 : ai.letter) body.push(ai.letter, "");
+  const now2 = [...radarFence(axes), "", ...levelTable(levels), "", "#### \u7A0B\u5EA6\u5EFA\u8B70", "", `**${verdictHeadline(adv.verdict, adv.suggestedLevel)}**`, ""];
+  for (const s of adv.signals) now2.push(`- ${s.reason}`);
+  body.push(...calloutLines("abstract", "+", "\u73FE\u5728\u7684\u7A0B\u5EA6", now2), "");
+  const next = ["#### \u7167\u4F60\u7684\u7A0B\u5EA6\u53EF\u4EE5\u52A0\u5F37", ""];
+  if (ai == null ? void 0 : ai.focus.length) next.push(...ai.focus.map((p) => `- ${p}`), "");
+  else next.push(note, "");
+  if (ai == null ? void 0 : ai.tryNext.length) next.push("#### \u4E0B\u9031\u4E00\u8D77\u8A66\u8A66", "", ...ai.tryNext.map((p) => `- [ ] ${p}`), "");
+  if (ai == null ? void 0 : ai.reading.length) next.push("#### \u9069\u5408\u4F60\u7684\u95B1\u8B80", "", ...ai.reading.map((p) => `- ${p}`), "");
+  body.push(...calloutLines("tip", "+", "\u63A5\u4E0B\u4F86\u7684\u5EFA\u8B70", next), "");
   const nums = numbers(data);
-  if (nums.length) body.push("## \u9019\u9031\u7684\u6578\u5B57", "", ...nums);
-  body.push("## \u7A0B\u5EA6\u5EFA\u8B70", "", `**${verdictHeadline(adv.verdict, adv.suggestedLevel)}**`, "");
-  for (const s of adv.signals) body.push(`- ${s.reason}`);
-  if (adv.signals.length) body.push("");
-  body.push("## \u7D66\u4F60\u7684\u5EFA\u8B70", "");
-  if ((_a = meta.advice) == null ? void 0 : _a.length) body.push(...meta.advice.flatMap((p) => [p, ""]));
-  else body.push(`<span style="color: gray">${(_b = meta.aiNote) != null ? _b : "AI \u9019\u6B21\u6C92\u5BEB\u6210\u529F"}</span>`, "");
+  body.push(...calloutLines("note", "-", "\u6578\u5B57\u660E\u7D30", nums.length ? nums : ["\u9019\u9031\u9084\u6C92\u6709\u6578\u5B57\u53EF\u4EE5\u5217\u3002"]), "");
   body.push(analyzeFence(meta.key), "");
   return [...fm, ...body].join("\n").replace(/\n+$/, "\n");
 }
@@ -36531,6 +36893,16 @@ var ANALYZE_LANG = "vocab-report-analyze";
 var ANALYSIS_HEADING = "## \u8A73\u7D30\u5206\u6790";
 function analyzeFence(key6) {
   return ["```" + ANALYZE_LANG, `key: ${key6}`, "```"].join("\n");
+}
+function removeFrontmatterField(text, key6) {
+  const m2 = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+  if (!m2) return text;
+  const re = new RegExp(`^${key6}:.*(?:\\r?\\n|$)`, "m");
+  if (!re.test(m2[1])) return text;
+  const fm = m2[1].replace(re, "").replace(/\r?\n$/, "");
+  return text.slice(0, m2.index) + `---
+${fm}
+---` + text.slice(m2.index + m2[0].length);
 }
 function setFrontmatterField(text, key6, value) {
   const m2 = /^---\r?\n([\s\S]*?)\r?\n---(\r?\n|$)/.exec(text);
@@ -36572,15 +36944,107 @@ function reportDigest(data) {
   if (w2.repeated.length) L.push(`\u53CD\u8986\u67E5\u7684\u5B57\uFF1A${w2.repeated.map((x3) => x3.word).join("\u3001")}`);
   if (w2.savedStillLooked.length) L.push(`\u6536\u85CF\u537B\u9084\u5728\u67E5\uFF1A${w2.savedStillLooked.map((x3) => x3.word).join("\u3001")}`);
   const v = data.vocab;
-  if (v.reviews) L.push(`\u55AE\u5B57\u8907\u7FD2 ${v.reviews} \u6B21\uFF0C\u8A18\u4F4F\u7387 ${v.recallRate === null ? "-" : pct(v.recallRate)}`);
+  if (v.reviews) L.push(`\u55AE\u5B57\u8907\u7FD2 ${v.reviews} \u6B21\uFF0C\u8A18\u4F4F\u7387 ${v.recallRate === null ? "-" : pct2(v.recallRate)}`);
   if (v.newSaved) L.push(`\u65B0\u6536\u85CF ${v.newSaved} \u500B\u5B57`);
-  for (const t2 of data.practice.tracks) L.push(`${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\u7DF4\u7FD2\u7B54\u5C0D\u7387 ${pct(t2.rate)}\uFF08${t2.total} \u984C\uFF09`);
+  for (const t2 of data.practice.tracks) L.push(`${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\u7DF4\u7FD2\u7B54\u5C0D\u7387 ${pct2(t2.rate)}\uFF08${t2.total} \u984C\uFF09`);
   if (data.practice.weak.length) L.push(`\u5F31\u9EDE\uFF1A${data.practice.weak.map(weakLabel).join("\u3001")}`);
   if (data.grammar.mastered) L.push(`\u6587\u6CD5\u5DF2\u7CBE\u719F ${data.grammar.mastered} \u500B\u4E3B\u984C`);
   if (data.tags.length) L.push(`\u8003\u8A66\u6A19\u7C64\uFF1A${data.tags.map((t2) => t2.key).join("\u3001")}`);
   L.push(`\u7A0B\u5EA6\u5224\u65B7\uFF1A${verdictHeadline(data.advice.verdict, data.advice.suggestedLevel)}`);
   for (const s of data.advice.signals) L.push(`- ${s.reason}`);
   return L.join("\n");
+}
+
+// src/core/learner/reportSections.ts
+var PART_LETTER = "\u4FE1";
+var PART_LEVEL_TABLE = "\u7A0B\u5EA6\u63A8\u4F30\u8868";
+var PART_ADVICE = "\u7A0B\u5EA6\u5EFA\u8B70";
+var PART_FOCUS = "\u7167\u4F60\u7684\u7A0B\u5EA6\u53EF\u4EE5\u52A0\u5F37";
+var PART_TRY = "\u4E0B\u9031\u4E00\u8D77\u8A66\u8A66";
+var PART_OLD_ADVICE = "\u7D66\u4F60\u7684\u5EFA\u8B70";
+var PART_ANALYSIS = "\u8A73\u7D30\u5206\u6790";
+var ANALYSIS_NOW = "\u8A73\u7D30\u5206\u6790 \xB7 \u73FE\u6CC1";
+var ANALYSIS_NEXT = "\u8A73\u7D30\u5206\u6790 \xB7 \u56DB\u9031\u65B9\u5411";
+var MARKER_LINE2 = /^[ \t]*%%[ \t]*vt:(?:begin|end)[ \t]+[a-z0-9-]+[ \t]*%%[ \t]*$/;
+var CALLOUT_TITLE = /^\[!\w+\][+-]?/;
+function isCalloutLayout(text) {
+  return /^> \[!abstract\]/m.test(text);
+}
+function clean3(lines4) {
+  return lines4.filter((l4) => !MARKER_LINE2.test(l4)).join("\n").trim();
+}
+function oldParts(lines4) {
+  const out = {};
+  let cur = null;
+  for (const line2 of lines4) {
+    const h = /^##(?!#)\s*(.*?)\s*$/.exec(line2);
+    if (h) {
+      cur = [];
+      out[h[1]] = cur;
+      continue;
+    }
+    if (/^```vocab-report-analyze/.test(line2)) cur = null;
+    cur == null ? void 0 : cur.push(line2);
+  }
+  return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, clean3(v)]));
+}
+function newParts(lines4) {
+  const out = {};
+  const title = lines4.findIndex((l4) => /^# /.test(l4));
+  if (title >= 0) {
+    const letter = [];
+    for (let i = title + 1; i < lines4.length; i++) {
+      if (lines4[i].startsWith(">")) break;
+      if (/^<span style="color: gray">\d{4}-\d{2}-\d{2}/.test(lines4[i])) continue;
+      letter.push(lines4[i]);
+    }
+    out[PART_LETTER] = letter;
+  }
+  let cur = null;
+  let head = false;
+  for (const line2 of lines4) {
+    if (!line2.startsWith(">")) {
+      cur = null;
+      head = false;
+      continue;
+    }
+    const body = line2.replace(/^>[ \t]?/, "");
+    if (CALLOUT_TITLE.test(body)) {
+      const isLevel2 = /^\[!abstract\]/.test(body);
+      head = isLevel2;
+      cur = isLevel2 ? out[PART_LEVEL_TABLE] = [] : null;
+      continue;
+    }
+    const h = /^####(?!#)\s*(.*?)\s*$/.exec(body);
+    if (h) {
+      head = false;
+      cur = out[h[1]] = [];
+      continue;
+    }
+    if (head) {
+      if (/^\s*\|/.test(body)) cur == null ? void 0 : cur.push(body);
+      continue;
+    }
+    cur == null ? void 0 : cur.push(body);
+  }
+  const parts = Object.fromEntries(Object.entries(out).map(([k, v]) => [k, clean3(v)]).filter(([, v]) => v));
+  const halves = [];
+  if (parts[ANALYSIS_NOW]) halves.push(`\u3010\u73FE\u6CC1\u3011
+${parts[ANALYSIS_NOW]}`);
+  if (parts[ANALYSIS_NEXT]) halves.push(`\u3010\u56DB\u9031\u65B9\u5411\u3011
+${parts[ANALYSIS_NEXT]}`);
+  if (halves.length) parts[PART_ANALYSIS] = halves.join("\n\n");
+  return parts;
+}
+function extractReportParts(text) {
+  const lines4 = text.split(/\r?\n/);
+  return isCalloutLayout(text) ? newParts(lines4) : oldParts(lines4);
+}
+function reportPart(text, name) {
+  const parts = extractReportParts(text);
+  if (parts[name] !== void 0) return parts[name];
+  const key6 = Object.keys(parts).find((k) => k.startsWith(name));
+  return key6 ? parts[key6] : "";
 }
 
 // src/core/learner/analysisMaterial.ts
@@ -36677,20 +37141,18 @@ ${numbered.join("\n\n")}` : "## AI \u8A0E\u8AD6\n\u9019\u6BB5\u671F\u9593\u6C92\
   return { text: sections.join("\n\n"), rounds: kept.length, totalRounds: rounds.length };
 }
 var REVIEW_WEEK_MAX = 800;
-var REVIEW_SECTIONS = ["\u7A0B\u5EA6\u5EFA\u8B70", "\u7D66\u4F60\u7684\u5EFA\u8B70", "\u8A73\u7D30\u5206\u6790"];
-var MARKER_LINE2 = /^[ \t]*%%[ \t]*vt:(?:begin|end)[ \t]+[a-z0-9-]+[ \t]*%%[ \t]*$/;
+var REVIEW_SECTIONS = [PART_LETTER, PART_LEVEL_TABLE, PART_ADVICE, PART_FOCUS, PART_TRY, PART_OLD_ADVICE, PART_ANALYSIS];
+var REVIEW_PRIORITY = [
+  PART_ANALYSIS,
+  PART_FOCUS,
+  PART_LETTER,
+  PART_OLD_ADVICE,
+  PART_ADVICE,
+  PART_LEVEL_TABLE,
+  PART_TRY
+];
 function extractReportSection(text, title) {
-  const lines4 = text.split(/\r?\n/);
-  const start4 = lines4.findIndex((l4) => l4.trim() === `## ${title}`);
-  if (start4 < 0) return "";
-  const out = [];
-  for (let i = start4 + 1; i < lines4.length; i++) {
-    if (/^##\s/.test(lines4[i])) break;
-    if (/^```vocab-report-analyze/.test(lines4[i])) break;
-    if (MARKER_LINE2.test(lines4[i])) continue;
-    out.push(lines4[i]);
-  }
-  return out.join("\n").trim();
+  return reportPart(text, title);
 }
 function collectReviewMaterial(weeks) {
   const sorted = [...weeks].sort((a2, b) => a2.key < b.key ? -1 : 1);
@@ -36706,7 +37168,7 @@ ${limit ? cut2(body, limit) : body}`;
   };
   const full = parts.map((p) => render(p, REVIEW_SECTIONS)).join("\n\n");
   if ([...full].length <= MATERIAL_MAX_CHARS) return { text: full, weeks: parts.length, truncated: false };
-  const short = parts.map((p) => render(p, ["\u8A73\u7D30\u5206\u6790", "\u7D66\u4F60\u7684\u5EFA\u8B70", "\u7A0B\u5EA6\u5EFA\u8B70"], REVIEW_WEEK_MAX)).join("\n\n");
+  const short = parts.map((p) => render(p, REVIEW_PRIORITY, REVIEW_WEEK_MAX)).join("\n\n");
   return { text: short, weeks: parts.length, truncated: true };
 }
 
@@ -36721,7 +37183,7 @@ var VOCAB_LOW = 0.7;
 var VOCAB_REPEATED_MIN = 3;
 var VOCAB_HIGH = 0.9;
 var VOCAB_HIGH_MIN_REVIEWS = 30;
-var pct2 = (r) => `${Math.round(r * 100)}%`;
+var pct3 = (r) => `${Math.round(r * 100)}%`;
 var inRange = (day, p) => day >= p.from && day <= p.to;
 var dayOfIso = (at) => {
   const t2 = Date.parse(at);
@@ -36917,9 +37379,9 @@ function levelSignals(input, period) {
   const band = grammarOf(input, period).bands.find((b) => start4 >= b.min && start4 <= b.max);
   if (band && band.rate !== null && band.total >= GRAMMAR_MIN_N) {
     judged = true;
-    const text = `\u6587\u6CD5 ${band.label} \u7D1A\u7B54\u5C0D\u7387 ${pct2(band.rate)}\uFF08${band.total} \u984C\uFF09`;
-    if (band.rate >= GRAMMAR_UP) signals.push({ kind: "grammar", direction: "up", reason: `${text}\uFF0C\u5DF2\u9054 ${pct2(GRAMMAR_UP)} \u4EE5\u4E0A` });
-    else if (band.rate < GRAMMAR_DOWN) signals.push({ kind: "grammar", direction: "down", reason: `${text}\uFF0C\u4F4E\u65BC ${pct2(GRAMMAR_DOWN)}` });
+    const text = `\u6587\u6CD5 ${band.label} \u7D1A\u7B54\u5C0D\u7387 ${pct3(band.rate)}\uFF08${band.total} \u984C\uFF09`;
+    if (band.rate >= GRAMMAR_UP) signals.push({ kind: "grammar", direction: "up", reason: `${text}\uFF0C\u5DF2\u9054 ${pct3(GRAMMAR_UP)} \u4EE5\u4E0A` });
+    else if (band.rate < GRAMMAR_DOWN) signals.push({ kind: "grammar", direction: "down", reason: `${text}\uFF0C\u4F4E\u65BC ${pct3(GRAMMAR_DOWN)}` });
   }
   const para = atIn(input.asks, period).filter((a2) => a2.ok && a2.surface === "paragraph");
   if (para.length >= PARA_MIN_N) {
@@ -36930,13 +37392,13 @@ function levelSignals(input, period) {
       signals.push({
         kind: "paragraph",
         direction: "down",
-        reason: `\u6BB5\u843D\u8A0E\u8AD6 ${para.length} \u6B21\u4E2D\u6709 ${translate} \u6B21\u662F\u7FFB\u8B6F\uFF08${pct2(translate / para.length)}\uFF09\uFF0C\u95B1\u8B80\u6750\u6599\u53EF\u80FD\u504F\u96E3`
+        reason: `\u6BB5\u843D\u8A0E\u8AD6 ${para.length} \u6B21\u4E2D\u6709 ${translate} \u6B21\u662F\u7FFB\u8B6F\uFF08${pct3(translate / para.length)}\uFF09\uFF0C\u95B1\u8B80\u6750\u6599\u53EF\u80FD\u504F\u96E3`
       });
     } else if (refine / para.length >= PARA_REFINE_UP) {
       signals.push({
         kind: "paragraph",
         direction: "up",
-        reason: `\u6BB5\u843D\u8A0E\u8AD6 ${para.length} \u6B21\u4E2D\u6709 ${refine} \u6B21\u662F\u6587\u6CD5\uFF0F\u63DB\u53E5\u8A71\u8AAA\uFF08${pct2(refine / para.length)}\uFF09\uFF0C\u7406\u89E3\u6C92\u554F\u984C\uFF0C\u5728\u7CBE\u9032\u8868\u9054`
+        reason: `\u6BB5\u843D\u8A0E\u8AD6 ${para.length} \u6B21\u4E2D\u6709 ${refine} \u6B21\u662F\u6587\u6CD5\uFF0F\u63DB\u53E5\u8A71\u8AAA\uFF08${pct3(refine / para.length)}\uFF09\uFF0C\u7406\u89E3\u6C92\u554F\u984C\uFF0C\u5728\u7CBE\u9032\u8868\u9054`
       });
     }
   }
@@ -36950,12 +37412,12 @@ function levelSignals(input, period) {
     signals.push({
       kind: "vocab",
       direction: "down",
-      reason: `\u55AE\u5B57\u8A18\u4F4F\u7387 ${pct2(recall)}\uFF0C\u4E14\u6709 ${repeatedAll} \u500B\u5B57\u53CD\u8986\u67E5\uFF0C\u65B0\u5B57\u9032\u4F86\u592A\u5FEB\uFF0C\u5EFA\u8B70\u653E\u6162`
+      reason: `\u55AE\u5B57\u8A18\u4F4F\u7387 ${pct3(recall)}\uFF0C\u4E14\u6709 ${repeatedAll} \u500B\u5B57\u53CD\u8986\u67E5\uFF0C\u65B0\u5B57\u9032\u4F86\u592A\u5FEB\uFF0C\u5EFA\u8B70\u653E\u6162`
     });
   } else if (recall !== null && rs.length >= VOCAB_HIGH_MIN_REVIEWS) {
     judged = true;
     if (recall > VOCAB_HIGH) {
-      signals.push({ kind: "vocab", direction: "up", reason: `\u55AE\u5B57\u8A18\u4F4F\u7387 ${pct2(recall)}\uFF08\u8907\u7FD2 ${rs.length} \u6B21\uFF09\uFF0C\u53EF\u4EE5\u52A0\u91CF` });
+      signals.push({ kind: "vocab", direction: "up", reason: `\u55AE\u5B57\u8A18\u4F4F\u7387 ${pct3(recall)}\uFF08\u8907\u7FD2 ${rs.length} \u6B21\uFF09\uFF0C\u53EF\u4EE5\u52A0\u91CF` });
     }
   }
   const tags = tagsOf(input, period, touches);
@@ -36987,9 +37449,36 @@ function buildReport(input, period, prev) {
   };
 }
 
+// src/core/learner/reportAdvice.ts
+var READING_TITLE_LOOKBACK_DAYS = 30;
+var READING_TITLE_MAX = 30;
+function collectReadingTitles(reading, period, max = READING_TITLE_MAX, lookbackDays = READING_TITLE_LOOKBACK_DAYS) {
+  const from = addDays(period.from, -lookbackDays);
+  const sorted = reading.filter((r) => r.day >= from && r.day <= period.to).sort((a2, b) => a2.day < b.day ? 1 : a2.day > b.day ? -1 : 0);
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  for (const r of sorted) {
+    const title = r.title.trim();
+    if (!title || seen.has(title)) continue;
+    seen.add(title);
+    out.push(title);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
 // src/services/report/applyAnalysis.ts
 var ANALYSIS_BLOCK = "analysis";
+var ANALYSIS_NOW_BLOCK = "analysis-now";
+var ANALYSIS_NEXT_BLOCK = "analysis-next";
 function applyAnalysis(text, analysis, analyzedAt) {
+  const out = isCalloutLayout(text) ? applyInCallouts(text, analysis) : applyOld(text, analysis);
+  return setFrontmatterField(out, "analyzed", analyzedAt);
+}
+function applyOld(text, analysis) {
+  const body = typeof analysis === "string" ? analysis : [analysis.now, analysis.next && `**\u63A5\u4E0B\u4F86\u56DB\u9031\u53EF\u4EE5\u8A66\u8A66\u7684\u65B9\u5411**
+
+${analysis.next}`].filter(Boolean).join("\n\n");
   let out = text;
   if (!/^[ \t]*%%[ \t]*vt:begin analysis[ \t]*%%/m.test(out)) {
     const slot = `${ANALYSIS_HEADING}
@@ -37002,11 +37491,36 @@ function applyAnalysis(text, analysis, analyzedAt) {
     if (i >= 0) out = out.slice(0, i) + slot + out.slice(i);
     else out = out.replace(/\n*$/, "\n\n") + slot.replace(/\n+$/, "\n");
   }
-  out = applyManagedBlocks(out, [{ name: ANALYSIS_BLOCK, body: analysis }]);
-  return setFrontmatterField(out, "analyzed", analyzedAt);
+  return applyManagedBlocks(out, [{ name: ANALYSIS_BLOCK, body }]);
+}
+var demote = (md) => md.replace(/^(#{1,4})(\s)/gm, "#####$2");
+var quote = (l4) => l4 === "" ? ">" : `> ${l4}`;
+var markerRe = (kind, name) => new RegExp(`^>[ \\t]*%%[ \\t]*vt:${kind}[ \\t]+${name}[ \\t]*%%[ \\t]*$`);
+function setBlock(lines4, calloutStart, heading, block, body) {
+  const start4 = lines4.findIndex((l4) => calloutStart.test(l4));
+  if (start4 < 0) return lines4;
+  let end = start4 + 1;
+  while (end < lines4.length && lines4[end].startsWith(">")) end++;
+  const inner = body.trim() === "" ? [] : demote(body.trim()).split(/\r?\n/).map(quote);
+  const begin = lines4.findIndex((l4, i) => i > start4 && i < end && markerRe("begin", block).test(l4));
+  const close = begin < 0 ? -1 : lines4.findIndex((l4, i) => i > begin && i < end && markerRe("end", block).test(l4));
+  if (begin >= 0 && close > begin) {
+    return [...lines4.slice(0, begin + 1), ...inner, ...lines4.slice(close)];
+  }
+  const slot = [">", `> #### ${heading}`, ">", `> %% vt:begin ${block} %%`, ...inner, `> %% vt:end ${block} %%`];
+  return [...lines4.slice(0, end), ...slot, ...lines4.slice(end)];
+}
+function applyInCallouts(text, analysis) {
+  const a2 = typeof analysis === "string" ? { now: analysis, next: "" } : analysis;
+  const eol = text.includes("\r\n") ? "\r\n" : "\n";
+  let lines4 = text.split(/\r?\n/);
+  lines4 = setBlock(lines4, /^> \[!abstract\]/, ANALYSIS_NOW, ANALYSIS_NOW_BLOCK, a2.now);
+  lines4 = setBlock(lines4, /^> \[!tip\]/, ANALYSIS_NEXT, ANALYSIS_NEXT_BLOCK, a2.next);
+  return lines4.join(eol);
 }
 
 // src/services/report/ReportService.ts
+var PENDING_ANALYSIS_MAX = 8;
 var REPORT_FILE = /^vocab-report-(\d{4}-W\d{2})\.md$/;
 var VERDICTS = /* @__PURE__ */ new Set(["up", "keep", "down", "insufficient"]);
 var ReportService = class {
@@ -37079,14 +37593,25 @@ var ReportService = class {
     );
   }
   async advice(data) {
-    if (!this.deps.aiReady()) return { aiNote: "AI \u6C92\u6709\u958B\u555F\uFF0C\u9019\u6BB5\u7565\u904E" };
+    var _a;
+    const level = this.deps.model.level();
+    const baseline = baselineAxes(data);
+    const levels = baselineLevels(data, level, (_a = this.deps.model.snapshot().vocab) == null ? void 0 : _a.mature);
+    if (!this.deps.aiReady()) return { aiNote: "AI \u6C92\u6709\u958B\u555F\uFF0C\u9019\u6BB5\u7565\u904E", axes: baseline, levels };
     try {
-      const { value } = await runStructured(this.deps.ai, reportAdvise, { digest: reportDigest(data), level: this.deps.model.level() });
-      if (value.length) return { advice: value };
+      const readingTitles = collectReadingTitles(this.deps.model.activity(addDays(data.period.from, -30), data.period.to).reading, data.period);
+      const { value } = await runStructured(this.deps.ai, reportAdvise, {
+        digest: reportDigest(data),
+        level,
+        baseline,
+        baselineLevels: levels,
+        readingTitles
+      });
+      if (!isEmptyAdvice(value)) return { advice: resolveAdvice(value, baseline, levels) };
     } catch (e) {
       console.error("Vocab Tracker: report advice failed", e);
     }
-    return { aiNote: "AI \u9019\u6B21\u6C92\u5BEB\u6210\u529F" };
+    return { aiNote: "AI \u9019\u6B21\u6C92\u5BEB\u6210\u529F", axes: baseline, levels };
   }
   async write(key6, opts = {}) {
     var _a, _b;
@@ -37130,10 +37655,34 @@ var ReportService = class {
     }
     return this.write(previousWeek(this.today()).key);
   }
+  // The weeks right before `key` whose reports exist but were never analysed
+  // (no `analyzed`, no `analyzed-in`), oldest first, at most 8, unbroken: the
+  // first gap, an analysed week or a missing report ends the walk.
+  pendingAnalysis(key6) {
+    const have = new Set(this.reportKeys());
+    const out = [];
+    let day = weekRange(key6).from;
+    while (out.length < PENDING_ANALYSIS_MAX) {
+      day = addDays(day, -1);
+      const k = isoWeekKey(day);
+      day = weekRange(k).from;
+      if (!have.has(k)) break;
+      const fm = this.deps.vault.frontmatterOf(this.pathOf(k));
+      if ((fm == null ? void 0 : fm.analyzed) || (fm == null ? void 0 : fm["analyzed-in"])) break;
+      out.unshift(k);
+    }
+    return out;
+  }
+  periodOf(key6) {
+    var _a;
+    const fm = this.deps.vault.frontmatterOf(this.pathOf(key6));
+    const m2 = /^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/.exec(String((_a = fm == null ? void 0 : fm.period) != null ? _a : ""));
+    return m2 ? { from: m2[1], to: m2[2] } : weekRange(key6);
+  }
   // 詳細分析 (規劃書 15 §6): reads the period's AI discussions, wrong answers
-  // and word touches, and writes the answer into the report's managed block.
-  async analyze(key6) {
-    var _a, _b, _c, _d, _e, _f;
+  // and word touches, and writes the answer into the report's managed blocks.
+  async analyze(key6, opts = {}) {
+    var _a, _b, _c, _d, _e;
     const path = this.pathOf(key6);
     const id2 = `analyze:${key6}`;
     if (this.running.has(id2)) return "busy";
@@ -37144,14 +37693,21 @@ var ReportService = class {
     try {
       await ((_b = (_a = this.deps).ready) == null ? void 0 : _b.call(_a));
       const fm = this.deps.vault.frontmatterOf(path);
-      const m2 = /^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/.exec(String((_c = fm == null ? void 0 : fm.period) != null ? _c : ""));
-      const range = m2 ? { from: m2[1], to: m2[2] } : weekRange(key6);
+      const own = this.periodOf(key6);
+      let range = own;
+      let previous = [];
+      if (opts.withPrevious) {
+        previous = this.pendingAnalysis(key6);
+        if (previous.length) range = { from: this.periodOf(previous[0]).from, to: own.to };
+      } else if (opts.withPrevious === void 0 && typeof (fm == null ? void 0 : fm["analyzed-from"]) === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fm["analyzed-from"])) {
+        range = { from: fm["analyzed-from"], to: own.to };
+      }
       const data = this.collect(range.from, range.to);
       const act = this.deps.model.activity(range.from, range.to);
       const vocab = this.deps.vocab.entries;
       const material = collectAnalysisMaterial({
         period: range,
-        threads: (_f = (_e = (_d = this.deps).threads) == null ? void 0 : _e.call(_d)) != null ? _f : [],
+        threads: (_e = (_d = (_c = this.deps).threads) == null ? void 0 : _d.call(_c)) != null ? _e : [],
         events: act.events,
         ...this.deps.practiceQuestion ? { questionOf: this.deps.practiceQuestion } : {},
         entryLabel: (id3) => {
@@ -37166,7 +37722,12 @@ var ReportService = class {
       });
       const { value } = await runStructured(this.deps.ai, reportAnalyze, { material: material.text, level: this.deps.model.level() });
       const stamp = this.now().toISOString();
-      await this.deps.vault.process(path, (t2) => applyAnalysis(t2, value, stamp));
+      const widened = range.from !== own.from;
+      await this.deps.vault.process(path, (t2) => {
+        const done = applyAnalysis(t2, value, stamp);
+        return widened ? setFrontmatterField(done, "analyzed-from", range.from) : removeFrontmatterField(done, "analyzed-from");
+      });
+      for (const k of previous) await this.deps.vault.process(this.pathOf(k), (t2) => setFrontmatterField(t2, "analyzed-in", key6));
       return "written";
     } catch (e) {
       console.error("Vocab Tracker: report analysis failed", e);
@@ -37236,25 +37797,21 @@ var ReportService = class {
 
 // src/core/learner/buddyContext.ts
 var BUDDY_REPORT_SECTION_MAX = 3e3;
-var BUDDY_REPORT_SECTIONS = ["\u7A0B\u5EA6\u5EFA\u8B70", "\u7D66\u4F60\u7684\u5EFA\u8B70", "\u8A73\u7D30\u5206\u6790"];
+var BUDDY_REPORT_SECTIONS = [
+  PART_LETTER,
+  PART_LEVEL_TABLE,
+  PART_ADVICE,
+  PART_FOCUS,
+  PART_TRY,
+  PART_OLD_ADVICE,
+  PART_ANALYSIS
+];
 function clip2(text, max) {
   const chars = [...text];
   return chars.length > max ? `${chars.slice(0, max).join("")}\u2026` : text;
 }
 function reportSection2(markdown, name) {
-  const lines4 = markdown.split(/\r?\n/);
-  const out = [];
-  let inside = false;
-  for (const line2 of lines4) {
-    const h = /^##(?!#)\s*(.*?)\s*$/.exec(line2);
-    if (h) {
-      if (inside) break;
-      inside = h[1].startsWith(name);
-      continue;
-    }
-    if (inside) out.push(line2);
-  }
-  return out.join("\n").trim();
+  return reportPart(markdown, name);
 }
 function snapshotLines(s) {
   const out = [];
@@ -39569,8 +40126,8 @@ function renderParagraph(p, article, ctx) {
   const rounds = roundsOf(p.turns);
   if (!rounds.length) return null;
   const heading = p.index === null ? `## ${ctx.labels.paragraphOrphaned}` : `## \xB6${p.index + 1} ${preview(p.text)}`;
-  const quote = p.index !== null && p.blockId ? `![[${article}#^${p.blockId}]]` : blockquote(p.text);
-  return [heading, "", quote, "", renderRounds(rounds, ctx, "###")].join("\n");
+  const quote2 = p.index !== null && p.blockId ? `![[${article}#^${p.blockId}]]` : blockquote(p.text);
+  return [heading, "", quote2, "", renderRounds(rounds, ctx, "###")].join("\n");
 }
 function renderParagraphs(input, ctx) {
   const article = linkTarget(input.articlePath);

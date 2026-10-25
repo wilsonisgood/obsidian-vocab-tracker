@@ -1,9 +1,19 @@
+import { PART_ADVICE, PART_ANALYSIS, PART_FOCUS, PART_LETTER, PART_LEVEL_TABLE, PART_OLD_ADVICE, PART_TRY, reportPart } from "./reportSections";
+
 // What the learning buddy knows about the learner (規劃書 15 §7). Pure: the
 // service hands in LearnerModel.snapshot() (structurally typed here, since
 // core/** can't import services) and the newest report's Markdown.
 
 export const BUDDY_REPORT_SECTION_MAX = 3000;
-export const BUDDY_REPORT_SECTIONS = ["程度建議", "給你的建議", "詳細分析"] as const;
+export const BUDDY_REPORT_SECTIONS = [
+  PART_LETTER,
+  PART_LEVEL_TABLE,
+  PART_ADVICE,
+  PART_FOCUS,
+  PART_TRY,
+  PART_OLD_ADVICE,
+  PART_ANALYSIS,
+] as const;
 
 export interface BuddySnapshot {
   level: string;
@@ -18,21 +28,9 @@ function clip(text: string, max: number): string {
   return chars.length > max ? `${chars.slice(0, max).join("")}…` : text;
 }
 
-// The body of the "## <name>" section (up to the next "## "), trimmed.
+// The body of one named section of a report note — either layout.
 export function reportSection(markdown: string, name: string): string {
-  const lines = markdown.split(/\r?\n/);
-  const out: string[] = [];
-  let inside = false;
-  for (const line of lines) {
-    const h = /^##(?!#)\s*(.*?)\s*$/.exec(line);
-    if (h) {
-      if (inside) break;
-      inside = h[1].startsWith(name);
-      continue;
-    }
-    if (inside) out.push(line);
-  }
-  return out.join("\n").trim();
+  return reportPart(markdown, name);
 }
 
 function snapshotLines(s: BuddySnapshot): string[] {

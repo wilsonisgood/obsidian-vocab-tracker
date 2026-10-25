@@ -5107,6 +5107,65 @@ body.is-mobile .vt-pr-poly-sense input[type=checkbox] {
 .vt-report-analyze .vt-dash-report-btn {
   margin-right: 0;
 }
+.vt-report-radar {
+  width: min(240px, 100%);
+  margin: 4px auto;
+}
+.vt-radar-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.vt-radar-ring {
+  fill: none;
+  stroke: var(--background-modifier-border);
+  stroke-width: 1;
+}
+.vt-radar-spoke {
+  stroke: var(--background-modifier-border);
+  stroke-width: 1;
+}
+.vt-radar-spoke.is-unclear {
+  stroke-dasharray: 3 3;
+}
+.vt-radar-area {
+  fill: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+  stroke: var(--interactive-accent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.vt-radar-dot {
+  fill: var(--interactive-accent);
+}
+.vt-radar-label {
+  fill: var(--text-normal);
+  font-size: 11px;
+}
+.vt-radar-label.is-unclear {
+  fill: var(--text-faint);
+}
+.vt-radar-hints,
+.vt-radar-bad {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  margin-top: 4px;
+}
+.vt-radar-bad {
+  text-align: center;
+}
+.vt-report-analyze-ask {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+}
+.vt-report-analyze-ask-text {
+  flex-basis: 100%;
+}
 
 /* src/styles/buddy.css */
 .vt-buddy-head {

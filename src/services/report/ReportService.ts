@@ -1,12 +1,15 @@
 import { collectAnalysisMaterial, collectReviewMaterial } from "../../core/learner/analysisMaterial";
-import { monthKeyOf, monthRange, previousWeek, quarterKeyOf, quarterRange, shiftRange, weekRange } from "../../core/learner/period";
+import { addDays, isoWeekKey, monthKeyOf, monthRange, previousWeek, quarterKeyOf, quarterRange, shiftRange, weekRange } from "../../core/learner/period";
 import { localDayOf } from "../../core/learner/reading";
 import { buildReport, type LevelAdvice, type ReportData } from "../../core/learner/report";
-import { renderReportFile, renderReviewFile, reportDigest, verdictHeadline } from "../../core/learner/reportMarkdown";
+import { baselineLevels } from "../../core/learner/levelEstimate";
+import { baselineAxes } from "../../core/learner/radar";
+import { collectReadingTitles } from "../../core/learner/reportAdvice";
+import { removeFrontmatterField, renderReportFile, renderReviewFile, reportDigest, setFrontmatterField, verdictHeadline, type ReportMeta } from "../../core/learner/reportMarkdown";
 import type { VocabEntry } from "../../core/model/entry";
 import type { CefrLevel } from "../../core/model/settings";
 import type { Thread } from "../../core/model/thread";
-import { reportAdvise } from "../ai/tasks/report";
+import { isEmptyAdvice, reportAdvise, resolveAdvice } from "../ai/tasks/report";
 import { reportAnalyze } from "../ai/tasks/reportAnalyze";
 import { reportReview } from "../ai/tasks/reportReview";
 import type { LearnAi } from "../learn/ports";
@@ -57,6 +60,15 @@ export interface ReportServiceDeps {
   // Text of a report note (null when it can't be read).
   read?: (path: string) => Promise<string | null>;
 }
+
+export interface AnalyzeOptions {
+  // Analyse from the earliest not-yet-analysed report right before this one
+  // (see pendingAnalysis). false = this week only; unset = keep whatever the
+  // note was analysed with last time.
+  withPrevious?: boolean;
+}
+
+export const PENDING_ANALYSIS_MAX = 8;
 
 export type ReportAnalyzeResult = "written" | "busy" | "missing" | "no-ai" | "failed";
 export type ReportReviewResult = "written" | "busy" | "empty" | "no-ai" | "failed";
@@ -144,15 +156,25 @@ export class ReportService {
     );
   }
 
-  private async advice(data: ReportData): Promise<{ advice?: string[]; aiNote?: string }> {
-    if (!this.deps.aiReady()) return { aiNote: "AI 沒有開啟，這段略過" };
+  private async advice(data: ReportData): Promise<Pick<ReportMeta, "advice" | "aiNote" | "axes" | "levels">> {
+    const level = this.deps.model.level();
+    const baseline = baselineAxes(data);
+    const levels = baselineLevels(data, level, this.deps.model.snapshot().vocab?.mature);
+    if (!this.deps.aiReady()) return { aiNote: "AI 沒有開啟，這段略過", axes: baseline, levels };
     try {
-      const { value } = await runStructured(this.deps.ai, reportAdvise, { digest: reportDigest(data), level: this.deps.model.level() });
-      if (value.length) return { advice: value };
+      const readingTitles = collectReadingTitles(this.deps.model.activity(addDays(data.period.from, -30), data.period.to).reading, data.period);
+      const { value } = await runStructured(this.deps.ai, reportAdvise, {
+        digest: reportDigest(data),
+        level,
+        baseline,
+        baselineLevels: levels,
+        readingTitles,
+      });
+      if (!isEmptyAdvice(value)) return { advice: resolveAdvice(value, baseline, levels) };
     } catch (e) {
       console.error("Vocab Tracker: report advice failed", e);
     }
-    return { aiNote: "AI 這次沒寫成功" };
+    return { aiNote: "AI 這次沒寫成功", axes: baseline, levels };
   }
 
   async write(key: string, opts: { overwrite?: boolean } = {}): Promise<ReportWriteResult> {
@@ -198,9 +220,34 @@ export class ReportService {
     return this.write(previousWeek(this.today()).key);
   }
 
+  // The weeks right before `key` whose reports exist but were never analysed
+  // (no `analyzed`, no `analyzed-in`), oldest first, at most 8, unbroken: the
+  // first gap, an analysed week or a missing report ends the walk.
+  pendingAnalysis(key: string): string[] {
+    const have = new Set(this.reportKeys());
+    const out: string[] = [];
+    let day = weekRange(key).from;
+    while (out.length < PENDING_ANALYSIS_MAX) {
+      day = addDays(day, -1);
+      const k = isoWeekKey(day);
+      day = weekRange(k).from;
+      if (!have.has(k)) break;
+      const fm = this.deps.vault.frontmatterOf(this.pathOf(k));
+      if (fm?.analyzed || fm?.["analyzed-in"]) break;
+      out.unshift(k);
+    }
+    return out;
+  }
+
+  private periodOf(key: string): { from: string; to: string } {
+    const fm = this.deps.vault.frontmatterOf(this.pathOf(key));
+    const m = /^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/.exec(String(fm?.period ?? ""));
+    return m ? { from: m[1], to: m[2] } : weekRange(key);
+  }
+
   // 詳細分析 (規劃書 15 §6): reads the period's AI discussions, wrong answers
-  // and word touches, and writes the answer into the report's managed block.
-  async analyze(key: string): Promise<ReportAnalyzeResult> {
+  // and word touches, and writes the answer into the report's managed blocks.
+  async analyze(key: string, opts: AnalyzeOptions = {}): Promise<ReportAnalyzeResult> {
     const path = this.pathOf(key);
     const id = `analyze:${key}`;
     if (this.running.has(id)) return "busy";
@@ -211,8 +258,16 @@ export class ReportService {
     try {
       await this.deps.ready?.();
       const fm = this.deps.vault.frontmatterOf(path);
-      const m = /^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/.exec(String(fm?.period ?? ""));
-      const range = m ? { from: m[1], to: m[2] } : weekRange(key);
+      const own = this.periodOf(key);
+      let range = own;
+      let previous: string[] = [];
+      if (opts.withPrevious) {
+        previous = this.pendingAnalysis(key);
+        if (previous.length) range = { from: this.periodOf(previous[0]).from, to: own.to };
+      } else if (opts.withPrevious === undefined && typeof fm?.["analyzed-from"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fm["analyzed-from"])) {
+        // Re-analysis keeps the span it was analysed with.
+        range = { from: fm["analyzed-from"], to: own.to };
+      }
       const data = this.collect(range.from, range.to);
       const act = this.deps.model.activity(range.from, range.to);
       const vocab = this.deps.vocab.entries;
@@ -233,7 +288,13 @@ export class ReportService {
       });
       const { value } = await runStructured(this.deps.ai, reportAnalyze, { material: material.text, level: this.deps.model.level() });
       const stamp = this.now().toISOString();
-      await this.deps.vault.process(path, (t) => applyAnalysis(t, value, stamp));
+      const widened = range.from !== own.from;
+      await this.deps.vault.process(path, (t) => {
+        const done = applyAnalysis(t, value, stamp);
+        return widened ? setFrontmatterField(done, "analyzed-from", range.from) : removeFrontmatterField(done, "analyzed-from");
+      });
+      // The weeks folded into this one aren't asked about again.
+      for (const k of previous) await this.deps.vault.process(this.pathOf(k), (t) => setFrontmatterField(t, "analyzed-in", key));
       return "written";
     } catch (e) {
       console.error("Vocab Tracker: report analysis failed", e);

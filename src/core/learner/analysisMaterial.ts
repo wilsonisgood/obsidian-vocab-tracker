@@ -2,6 +2,7 @@ import type { LearnEvent } from "../model/learner";
 import { pairTurns, type Thread } from "../model/thread";
 import { localDayOf } from "./reading";
 import { taskName } from "./reportMarkdown";
+import { PART_ADVICE, PART_ANALYSIS, PART_FOCUS, PART_LETTER, PART_LEVEL_TABLE, PART_OLD_ADVICE, PART_TRY, reportPart } from "./reportSections";
 import type { CefrLevel } from "../model/settings";
 
 // Material for report.analyze (第二十一波 R4, 規劃書 15 §6): every AI
@@ -139,24 +140,23 @@ export function collectAnalysisMaterial(input: AnalysisInput): AnalysisMaterial 
 // ── Month / quarter review material ──────────────────────────────────────
 
 export const REVIEW_WEEK_MAX = 800;
-const REVIEW_SECTIONS = ["程度建議", "給你的建議", "詳細分析"] as const;
-const MARKER_LINE = /^[ \t]*%%[ \t]*vt:(?:begin|end)[ \t]+[a-z0-9-]+[ \t]*%%[ \t]*$/;
+// Everything a week can say, in reading order …
+const REVIEW_SECTIONS = [PART_LETTER, PART_LEVEL_TABLE, PART_ADVICE, PART_FOCUS, PART_TRY, PART_OLD_ADVICE, PART_ANALYSIS] as const;
+// … and, when it doesn't fit, the order they are kept in.
+const REVIEW_PRIORITY: readonly (typeof REVIEW_SECTIONS)[number][] = [
+  PART_ANALYSIS,
+  PART_FOCUS,
+  PART_LETTER,
+  PART_OLD_ADVICE,
+  PART_ADVICE,
+  PART_LEVEL_TABLE,
+  PART_TRY,
+];
 
-// The body of "## <title>" (up to the next "## " heading), managed-block
-// markers and the placeholder grey span removed. "" when absent.
+// The body of one section of a report note (either layout; see
+// reportSections.ts). "" when absent.
 export function extractReportSection(text: string, title: string): string {
-  const lines = text.split(/\r?\n/);
-  const start = lines.findIndex((l) => l.trim() === `## ${title}`);
-  if (start < 0) return "";
-  const out: string[] = [];
-  for (let i = start + 1; i < lines.length; i++) {
-    if (/^##\s/.test(lines[i])) break;
-    // The analyze button block closes the file; it isn't prose.
-    if (/^```vocab-report-analyze/.test(lines[i])) break;
-    if (MARKER_LINE.test(lines[i])) continue;
-    out.push(lines[i]);
-  }
-  return out.join("\n").trim();
+  return reportPart(text, title);
 }
 
 export interface ReviewWeek {
@@ -180,6 +180,6 @@ export function collectReviewMaterial(weeks: readonly ReviewWeek[]): { text: str
   const full = parts.map((p) => render(p, REVIEW_SECTIONS)).join("\n\n");
   if ([...full].length <= MATERIAL_MAX_CHARS) return { text: full, weeks: parts.length, truncated: false };
   // Too long: 800 characters per week, the detailed analysis first.
-  const short = parts.map((p) => render(p, ["詳細分析", "給你的建議", "程度建議"], REVIEW_WEEK_MAX)).join("\n\n");
+  const short = parts.map((p) => render(p, REVIEW_PRIORITY, REVIEW_WEEK_MAX)).join("\n\n");
   return { text: short, weeks: parts.length, truncated: true };
 }

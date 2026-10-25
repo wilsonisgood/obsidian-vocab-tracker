@@ -1,14 +1,15 @@
 import { MarkdownRenderChild, Notice, type MarkdownPostProcessorContext } from "obsidian";
 import type VocabTrackerPlugin from "../../../main";
 import { t } from "../../core/i18n";
-import { analyzeButtonKey, analyzeNoticeKey, parseAnalyzeKey, reviewNoticeKey } from "./reportCardState";
+import { analyzeAsk, analyzeButtonKey, analyzeNoticeKey, parseAnalyzeKey, reviewNoticeKey } from "./reportCardState";
 
 // ReportService, as far as these buttons need it.
 export interface ReportAnalyzeHost {
   pathOf(key: string): string;
   isAnalyzing(key: string): boolean;
   onChange(cb: () => void): () => void;
-  analyze(key: string): Promise<"written" | "busy" | "missing" | "no-ai" | "failed">;
+  analyze(key: string, opts?: { withPrevious?: boolean }): Promise<"written" | "busy" | "missing" | "no-ai" | "failed">;
+  pendingAnalysis(key: string): string[];
   review(scope: "month" | "quarter"): Promise<{ result: "written" | "busy" | "empty" | "no-ai" | "failed"; path?: string }>;
 }
 
@@ -23,13 +24,26 @@ export function drawAnalyzeButtons(plugin: VocabTrackerPlugin, svc: ReportAnalyz
 
   const run = row.createEl("button", { cls: "vt-dash-report-btn", text: t(analyzeButtonKey(analyzing, !!fm?.analyzed)) });
   run.disabled = analyzing;
-  run.onclick = () => {
+  const start = (opts?: { withPrevious?: boolean }) => {
     run.disabled = true;
     run.setText(t("report.analyze.running"));
-    void svc.analyze(key).then((r) => {
+    host.querySelector(".vt-report-analyze-ask")?.remove();
+    void svc.analyze(key, opts).then((r) => {
       new Notice(t(analyzeNoticeKey(r), { key }));
       redraw();
     });
+  };
+  run.onclick = () => {
+    // Earlier weeks nobody analysed: ask first (a line under the buttons, no modal).
+    const ask = analyzeAsk(svc.pendingAnalysis(key));
+    if (!ask) return start();
+    host.querySelector(".vt-report-analyze-ask")?.remove();
+    const box = host.createDiv({ cls: "vt-report-analyze-ask" });
+    box.createDiv({ cls: "vt-report-analyze-ask-text", text: t("report.analyze.pending", { weeks: ask.weeks }) });
+    const only = box.createEl("button", { cls: "vt-dash-report-btn", text: t("report.analyze.onlyThis") });
+    only.onclick = () => start({ withPrevious: false });
+    const both = box.createEl("button", { cls: "vt-dash-report-btn mod-cta", text: t("report.analyze.withPrev", { n: String(ask.n) }) });
+    both.onclick = () => start({ withPrevious: true });
   };
 
   for (const scope of ["month", "quarter"] as const) {
