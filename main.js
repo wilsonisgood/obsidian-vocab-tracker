@@ -561,7 +561,8 @@ var DEFAULT_UI_PREFS = {
   livePreviewHint: true,
   pronounceSource: "auto",
   // On unless the user switched it off themselves (a stored false stays) (1010 #S2).
-  sidebarOnPhone: true
+  sidebarOnPhone: true,
+  highlightSaved: true
 };
 function isTapAction(v) {
   return typeof v === "string" && TAP_ACTIONS.includes(v);
@@ -574,7 +575,8 @@ function resolveUiPrefs(ui) {
     tapAction: isTapAction(ui == null ? void 0 : ui.wordTapAction) ? ui.wordTapAction : DEFAULT_UI_PREFS.tapAction,
     livePreviewHint: typeof (ui == null ? void 0 : ui.livePreviewHint) === "boolean" ? ui.livePreviewHint : DEFAULT_UI_PREFS.livePreviewHint,
     pronounceSource: isPronounceSource(ui == null ? void 0 : ui.pronounceSource) ? ui.pronounceSource : DEFAULT_UI_PREFS.pronounceSource,
-    sidebarOnPhone: typeof (ui == null ? void 0 : ui.sidebarOnPhone) === "boolean" ? ui.sidebarOnPhone : DEFAULT_UI_PREFS.sidebarOnPhone
+    sidebarOnPhone: typeof (ui == null ? void 0 : ui.sidebarOnPhone) === "boolean" ? ui.sidebarOnPhone : DEFAULT_UI_PREFS.sidebarOnPhone,
+    highlightSaved: typeof (ui == null ? void 0 : ui.highlightSaved) === "boolean" ? ui.highlightSaved : DEFAULT_UI_PREFS.highlightSaved
   };
 }
 var DEFAULT_GRAMMAR_SETTINGS = { useMyWords: true, useMySentences: true };
@@ -1548,6 +1550,8 @@ var en = {
   "settings.reading.pronounceSource.synth": "System voice only",
   "settings.reading.livePreviewHint.name": "Live Preview hint",
   "settings.reading.livePreviewHint.desc": "On mobile, tell me once per session when I tap a word in Live Preview, where tapping can\u2019t save words.",
+  "settings.reading.highlightSaved.name": "Highlight saved words in every note",
+  "settings.reading.highlightSaved.desc": "Saved words are highlighted in every note\u2019s reading view; tap one to open its card. Display only \u2014 other notes aren\u2019t edited. The note you added a word from still gets ==highlight== written into it.",
   "settings.reading.sidebarOnPhone.name": "iPhone swipe sidebar",
   "settings.reading.sidebarOnPhone.desc": "When on, swiping in from the right edge adds a \u201CWords\u201D tab next to Obsidian's built-in Links/Outline, showing this note's words, paragraph discussions, AI discussions and grammar. This only creates the tab \u2014 it won't pop open over the note on its own; tapping a word still opens the bottom Word info.",
   // ── 備份與還原 (services/backup) ──
@@ -2445,6 +2449,8 @@ var zhTW = {
   "settings.reading.pronounceSource.synth": "\u53EA\u7528\u7CFB\u7D71\u8A9E\u97F3",
   "settings.reading.livePreviewHint.name": "Live Preview \u63D0\u793A",
   "settings.reading.livePreviewHint.desc": "\u5728\u884C\u52D5\u88DD\u7F6E\u7684 Live Preview\uFF08\u5373\u6642\u9810\u89BD\uFF09\u9EDE\u5B57\u6642\uFF0C\u6BCF\u6B21\u958B\u555F\u63D0\u9192\u4E00\u6B21\uFF1A\u9EDE\u5B57\u53EA\u5728\u95B1\u8B80\u6A21\u5F0F\u6709\u6548\u3002",
+  "settings.reading.highlightSaved.name": "\u5728\u6240\u6709\u7B46\u8A18\u9AD8\u4EAE\u55AE\u5B57",
+  "settings.reading.highlightSaved.desc": "\u55AE\u5B57\u5EAB\u88E1\u7684\u5B57\uFF0C\u5728\u6BCF\u7BC7\u7B46\u8A18\u7684\u95B1\u8B80\u6A21\u5F0F\u90FD\u6703\u9AD8\u4EAE\uFF0C\u9EDE\u4E86\u6253\u958B\u5B57\u5361\u3002\u53EA\u662F\u756B\u9762\u4E0A\u7684\u6A19\u793A\uFF0C\u4E0D\u6703\u6539\u52D5\u7B46\u8A18\u5167\u5BB9\uFF1B\u52A0\u5B57\u90A3\u7BC7\u7B46\u8A18\u7684 ==\u9AD8\u4EAE== \u7167\u820A\u5BEB\u9032\u539F\u6587\u3002",
   "settings.reading.sidebarOnPhone.name": "iPhone \u53F3\u6ED1\u5074\u6B04",
   "settings.reading.sidebarOnPhone.desc": "\u958B\u555F\u5F8C\uFF0C\u5F9E\u756B\u9762\u53F3\u908A\u7DE3\u5F80\u5DE6\u6ED1\u6703\u591A\u4E00\u500B\u300C\u55AE\u5B57\u300D\u5206\u9801\uFF0C\u8DDF Obsidian \u5167\u5EFA\u7684\u300C\u9023\u7D50\u300D\u300C\u5927\u7DB1\u300D\u6392\u5728\u4E00\u8D77\uFF0C\u986F\u793A\u672C\u7BC7\u7B46\u8A18\u7684\u55AE\u5B57\uFF0F\u6BB5\u843D\u8A0E\u8AD6\uFF0FAI \u8A0E\u8AD6\uFF0F\u6587\u6CD5\u3002\u53EA\u662F\u591A\u5EFA\u7ACB\u9019\u500B\u5206\u9801\uFF0C\u4E0D\u6703\u81EA\u52D5\u8DF3\u51FA\u4F86\u84CB\u4F4F\u7B46\u8A18\uFF1B\u9EDE\u5B57\u67E5\u55AE\u5B57\u7DAD\u6301\u7528\u5E95\u90E8\u55AE\u5B57info\u3002",
   // ── 備份與還原 (services/backup) ──
@@ -31076,6 +31082,7 @@ var readingSection = {
       (d) => d.addOptions(pronounceOptions()).setValue(prefs.pronounceSource).onChange((v) => setPref(ctx, "pronounceSource", v))
     );
     new import_obsidian52.Setting(el).setName(t("settings.reading.livePreviewHint.name")).setDesc(t("settings.reading.livePreviewHint.desc")).addToggle((tg) => tg.setValue(prefs.livePreviewHint).onChange((on) => setPref(ctx, "livePreviewHint", on)));
+    new import_obsidian52.Setting(el).setName(t("settings.reading.highlightSaved.name")).setDesc(t("settings.reading.highlightSaved.desc")).addToggle((tg) => tg.setValue(prefs.highlightSaved).onChange((on) => setPref(ctx, "highlightSaved", on)));
     new import_obsidian52.Setting(el).setName(t("settings.reading.sidebarOnPhone.name")).setDesc(t("settings.reading.sidebarOnPhone.desc")).addToggle((tg) => tg.setValue(prefs.sidebarOnPhone).onChange((on) => setPref(ctx, "sidebarOnPhone", on)));
   }
 };
@@ -36973,6 +36980,87 @@ function highlightExamWords(el, lookup, colorOf) {
   }
 }
 
+// src/core/wordlists/vocabLookup.ts
+var NONE2 = [];
+var SINGLE_WORD = /^[a-z][a-z'-]*$/;
+function savedWords(entries) {
+  const out = /* @__PURE__ */ new Set();
+  for (const e of entries) {
+    if (e.deletedAt) continue;
+    const w2 = e.word.trim().toLowerCase();
+    if (SINGLE_WORD.test(w2)) out.add(w2);
+  }
+  return out;
+}
+function vocabLookup(words, inflections) {
+  const memo = /* @__PURE__ */ new Map();
+  return (word) => {
+    const lower2 = word.toLowerCase();
+    let hit = memo.get(lower2);
+    if (hit) return hit;
+    hit = NONE2;
+    if (words.has(lower2)) hit = [lower2];
+    else if (inflections) {
+      const base = lemmaCandidates(lower2).find((b) => words.has(b));
+      if (base) hit = [base];
+    }
+    memo.set(lower2, hit);
+    return hit;
+  };
+}
+
+// src/ui/reading/vocabHighlight.ts
+var VOCAB_AUTO_CLS = "vt-vocab-auto";
+function highlightVocabWords(el, lookup) {
+  var _a;
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => {
+      var _a2, _b;
+      return ((_a2 = n.parentElement) == null ? void 0 : _a2.closest(SKIP2)) || !/[A-Za-z]/.test((_b = n.nodeValue) != null ? _b : "") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes = [];
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) nodes.push(n);
+  for (const node of nodes) {
+    const segments = segmentText((_a = node.nodeValue) != null ? _a : "", lookup);
+    if (!segments) continue;
+    const frag = document.createDocumentFragment();
+    for (const seg of segments) {
+      if (typeof seg === "string") {
+        frag.appendChild(document.createTextNode(seg));
+        continue;
+      }
+      const mark = frag.createEl("mark", { cls: VOCAB_AUTO_CLS, text: seg.word });
+      mark.dataset.vtWord = seg.tags[0];
+    }
+    node.replaceWith(frag);
+  }
+}
+var VocabHighlighter = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.key = null;
+    this.lookup = null;
+    this.process = (el) => {
+      if (this.key === null) this.build();
+      if (this.lookup) highlightVocabWords(el, this.lookup);
+    };
+  }
+  // Call on the store's data:changed.
+  refresh() {
+    const before = this.key;
+    this.build();
+    if (before !== null && before !== this.key) this.deps.rerender();
+  }
+  build() {
+    const enabled = this.deps.enabled();
+    const inflections = this.deps.inflections();
+    const words = enabled ? savedWords(this.deps.entries()) : /* @__PURE__ */ new Set();
+    this.key = `${enabled}|${inflections}|${[...words].sort().join(" ")}`;
+    this.lookup = words.size > 0 ? vocabLookup(words, inflections) : null;
+  }
+};
+
 // src/services/wordlists/NoteImports.ts
 var NoteImports = class {
   constructor(storage) {
@@ -40133,6 +40221,14 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
     });
     this.register(this.paragraphBadges.attach());
     this.registerMarkdownPostProcessor(this.paragraphBadges.process);
+    const vocabHighlight = new VocabHighlighter({
+      entries: () => this.store.entries,
+      enabled: () => resolveUiPrefs(this.store.settings.ui).highlightSaved,
+      inflections: () => this.wordlistSettings().inflections,
+      rerender: () => this.rerenderReadingViews()
+    });
+    this.register(this.store.events.on("data:changed", () => vocabHighlight.refresh()));
+    this.registerMarkdownPostProcessor(vocabHighlight.process);
     this.registerMarkdownPostProcessor(this.processMarks.bind(this));
     this.registerMarkdownPostProcessor((el) => {
       const lookup = this.wordlists.highlightLookup();
@@ -40953,8 +41049,8 @@ var VocabTrackerPlugin = class extends import_obsidian68.Plugin {
   // ── Mark click handler ─────────────────────────────────────────
   processMarks(el, _ctx) {
     el.querySelectorAll("mark").forEach((mark) => {
-      var _a, _b;
-      const word = (_b = (_a = mark.textContent) == null ? void 0 : _a.trim()) != null ? _b : "";
+      var _a, _b, _c;
+      const word = (_c = (_b = mark.dataset.vtWord) != null ? _b : (_a = mark.textContent) == null ? void 0 : _a.trim()) != null ? _c : "";
       if (!word) return;
       mark.addClass("vt-tracked-mark");
       mark.setAttr("aria-label", t("mobile.mark.label", { word }));

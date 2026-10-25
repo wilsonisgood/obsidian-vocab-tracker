@@ -543,6 +543,9 @@ export const en = {
   "settings.reading.livePreviewHint.name": "Live Preview hint",
   "settings.reading.livePreviewHint.desc":
     "On mobile, tell me once per session when I tap a word in Live Preview, where tapping can’t save words.",
+  "settings.reading.highlightSaved.name": "Highlight saved words in every note",
+  "settings.reading.highlightSaved.desc":
+    "Saved words are highlighted in every note’s reading view; tap one to open its card. Display only — other notes aren’t edited. The note you added a word from still gets ==highlight== written into it.",
   "settings.reading.sidebarOnPhone.name": "iPhone swipe sidebar",
   "settings.reading.sidebarOnPhone.desc":
     "When on, swiping in from the right edge adds a “Words” tab next to Obsidian's built-in Links/Outline, showing this note's words, paragraph discussions, AI discussions and grammar. This only creates the tab — it won't pop open over the note on its own; tapping a word still opens the bottom Word info.",

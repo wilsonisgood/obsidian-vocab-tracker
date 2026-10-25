@@ -7,7 +7,7 @@ export const EXAM_WORD_CLS = "vt-exam-word";
 // Rendered text that isn't prose to read: code, math, links, tags, already
 // tracked ==marks==, frontmatter/properties, and this plugin's own
 // code-block UIs (dashboard, flashcards).
-const SKIP = [
+export const SKIP = [
   "code", "pre", "a", "mark", "button", "input", "textarea", "script", "style",
   ".math", ".tag", ".internal-link", ".external-link", ".frontmatter",
   ".frontmatter-container", ".metadata-container", "[class*='block-language-']",

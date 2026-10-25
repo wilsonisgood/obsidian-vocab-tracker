@@ -19,12 +19,13 @@ const T3 = "2026-10-03T00:00:00.000Z";
 const data = (settings: PluginSettings) => ({ schemaVersion: 2 as const, settings, entries: [] });
 
 describe("resolveUiPrefs", () => {
-  it("defaults: tap opens Word info, Live Preview hint on, automatic pronunciation, phone sidebar on", () => {
+  it("defaults: tap opens Word info, Live Preview hint on, automatic pronunciation, phone sidebar on, saved words highlighted", () => {
     expect(DEFAULT_UI_PREFS).toEqual({
       tapAction: "open",
       livePreviewHint: true,
       pronounceSource: "auto",
       sidebarOnPhone: true,
+      highlightSaved: true,
     });
     expect(resolveUiPrefs(undefined)).toEqual(DEFAULT_UI_PREFS);
   });
@@ -35,12 +36,20 @@ describe("resolveUiPrefs", () => {
 
   it("keeps stored values", () => {
     expect(
-      resolveUiPrefs({ locale: "auto", wordTapAction: "menu", livePreviewHint: false, pronounceSource: "synth", sidebarOnPhone: false })
+      resolveUiPrefs({
+        locale: "auto",
+        wordTapAction: "menu",
+        livePreviewHint: false,
+        pronounceSource: "synth",
+        sidebarOnPhone: false,
+        highlightSaved: false,
+      })
     ).toEqual({
       tapAction: "menu",
       livePreviewHint: false,
       pronounceSource: "synth",
       sidebarOnPhone: false,
+      highlightSaved: false,
     });
     expect(resolveUiPrefs({ locale: "auto", pronounceSource: "recording" }).pronounceSource).toBe("recording");
     expect(resolveUiPrefs({ locale: "auto", sidebarOnPhone: true }).sidebarOnPhone).toBe(true);
