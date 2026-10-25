@@ -81,7 +81,7 @@ describe("entry file content", () => {
 
 describe("files settings", () => {
   it("fills in defaults", () => {
-    expect(resolveFilesSettings(undefined)).toEqual({ folder: "vocab-list", wordsFolder: "單字", threadsFolder: "討論串", diaryFolder: "日記" });
+    expect(resolveFilesSettings(undefined)).toEqual({ folder: "vocab-list", wordsFolder: "單字", threadsFolder: "討論串", diaryFolder: "日記", reportFolder: "Report" });
     expect(resolveFilesSettings({ folder: "  " }).folder).toBe("vocab-list");
   });
 

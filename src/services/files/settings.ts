@@ -14,6 +14,7 @@ export const DEFAULT_FILES_SETTINGS: FilesSettings = {
   wordsFolder: "單字",
   threadsFolder: "討論串",
   diaryFolder: "日記",
+  reportFolder: "Report",
 };
 
 // Folder path as typed by the user → vault path: no leading/trailing
@@ -35,6 +36,7 @@ export function resolveFilesSettings(raw?: Partial<FilesSettings> | null): Files
     wordsFolder: cleanFolder(raw?.wordsFolder) ?? DEFAULT_FILES_SETTINGS.wordsFolder,
     threadsFolder: cleanFolder(raw?.threadsFolder) ?? DEFAULT_FILES_SETTINGS.threadsFolder,
     diaryFolder: cleanFolder(raw?.diaryFolder) ?? DEFAULT_FILES_SETTINGS.diaryFolder,
+    reportFolder: cleanFolder(raw?.reportFolder) ?? DEFAULT_FILES_SETTINGS.reportFolder,
   };
 }
 
@@ -43,6 +45,7 @@ export interface FilesPaths {
   words: string;
   threads: string;
   diary: string;
+  report: string;
 }
 
 export function filesPaths(s: FilesSettings): FilesPaths {
@@ -51,6 +54,7 @@ export function filesPaths(s: FilesSettings): FilesPaths {
     words: joinPath(s.folder, s.wordsFolder),
     threads: joinPath(s.folder, s.threadsFolder),
     diary: joinPath(s.folder, s.diaryFolder),
+    report: joinPath(s.folder, s.reportFolder),
   };
 }
 

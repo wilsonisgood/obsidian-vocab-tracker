@@ -8,6 +8,7 @@ import { filesSection } from "./files";
 import { paragraphsSection } from "./paragraphs";
 import { readingSection } from "./reading";
 import { diarySection } from "./diary";
+import { reportSection } from "./report";
 import { backupSection } from "./backup";
 
 // Order = order on the settings page. New sections (SRS, export…) go here.
@@ -21,5 +22,6 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
   paragraphsSection,
   filesSection,
   diarySection,
+  reportSection,
   backupSection,
 ];
