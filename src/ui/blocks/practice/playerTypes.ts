@@ -8,8 +8,9 @@
 // choice: `text` has one "____"; find-error: `text` is the whole sentence and
 // the options are fragments of it (tap the wrong one); which-sense /
 // same-sense: `text` marks the target word as [[word]]; pick-word: like
-// choice, the options are English words.
-export type PlayerKind = "choice" | "find-error" | "which-sense" | "pick-word" | "same-sense";
+// choice, the options are English words; paraphrase: `text` is a plain
+// sentence, the options are sentences (pick the one that means the same).
+export type PlayerKind = "choice" | "find-error" | "which-sense" | "pick-word" | "same-sense" | "paraphrase";
 
 export interface PlayerLine {
   speaker?: string;

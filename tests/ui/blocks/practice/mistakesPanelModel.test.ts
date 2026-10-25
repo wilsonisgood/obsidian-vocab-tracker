@@ -40,6 +40,8 @@ describe("mistakes panel model", () => {
     expect(mistakeLabel("tense-choice")).toBe("時態選擇");
     expect(mistakeLabel("sense-confusion")).toBe("意思混淆");
     expect(mistakeLabel(mistakeKey(q("1", undefined, "pick-word")))).toBe("選用字");
+    expect(mistakeLabel("para-negation")).toBe("否定意思");
+    expect(mistakeLabel(mistakeKey(q("1", undefined, "paraphrase")))).toBe("換句話說");
     expect(mistakeLabel("weird")).toBe("weird");
   });
 });

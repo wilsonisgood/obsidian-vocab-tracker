@@ -419,6 +419,8 @@ describe("task registry", () => {
       "grammar.grade",
       // 第十七波: the practice tabs call this directly.
       "practice.scenario",
+      // 換句話說: ScenarioService calls this directly.
+      "practice.paraphrase",
       // 第十九波: DiaryService calls this directly.
       "diary.write",
     ]);

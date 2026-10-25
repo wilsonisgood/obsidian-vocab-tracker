@@ -1,6 +1,9 @@
 import type { TypedEmitter } from "../../core/events";
 import type { PolySense } from "../../core/model/poly";
 import type { PracticeQuestion, ScenarioTrack } from "../../core/model/practice";
+import type { ParagraphRef } from "../../core/practice/paraphrase";
+
+export type { ParagraphRef };
 
 // What the 常用字 / 單字情境 / 混合 tabs (第十七波 Q, V) need from the
 // scenario service. ScenarioService implements it; the UI only sees this.
@@ -22,7 +25,7 @@ export interface GrammarRef {
 
 // `tested` senses are asked ("考"); `reference` ones only feed wrong options
 // and the story ("參考").
-export type ScenarioRequest =
+export type StoryRequest =
   | { track: "poly"; tested: PolySense[]; reference: PolySense[] }
   | { track: "vocab"; words: VocabRef[] }
   | {
@@ -31,6 +34,14 @@ export type ScenarioRequest =
       vocab?: VocabRef[];
       grammar?: GrammarRef[];
     };
+
+// 換句話說: the paragraphs in scope; each refill asks about one of them.
+export interface ParaRequest {
+  track: "para";
+  paragraphs: ParagraphRef[];
+}
+
+export type ScenarioRequest = StoryRequest | ParaRequest;
 
 export interface ScenarioEvents {
   "pool:change": ScenarioTrack;

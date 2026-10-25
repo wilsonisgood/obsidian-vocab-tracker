@@ -32,6 +32,8 @@ export function questionTag(q: PracticeQuestion, labels: QuestionLabels = {}): s
       const title = labels.topicTitle?.(q.focus.id.split("/")[0]);
       return title ? `${t("practice.grammar.tag")} · ${title}` : t("practice.grammar.tag");
     }
+    case "paragraph":
+      return `${t("practice.para.tag")} · ${q.scenario.scene}`;
   }
 }
 

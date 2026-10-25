@@ -10,6 +10,7 @@ import { renderGrammarTopic, type GrammarTopicDeps } from "./grammarTopic";
 import { renderPractice } from "./practice";
 import { grammarTab } from "./practice/grammarTab";
 import { mixTab } from "./practice/mixTab";
+import { paraTab } from "./practice/paraTab";
 import { polyTab } from "./practice/polyTab";
 import { renderMistakesPanel } from "./practice/mistakesPanel";
 import { pickVocabRefs, vocabScopeIds } from "./practice/vocabFilterModel";
@@ -200,6 +201,17 @@ function practiceHost(plugin: VocabTrackerPlugin): PracticeHost {
           vocabScopeIds(plugin.store.entries, parseFilterValue(plugin.learner.filter("vocab")), new Date()),
         grammarRefs: () => mixGrammarRefs(plugin),
         polySenses: () => sensesInFilter(parsePolyFilter(plugin.learner.filter("poly"))),
+        aiStatus: () => plugin.ai.status(),
+      }),
+      paraTab({
+        api: plugin.scenario,
+        mountPlayer: mountScenarioPlayer,
+        mountMistakes: mountMistakes(plugin),
+        ready: async () => {
+          await Promise.all([scenarioReady(plugin), plugin.threads.ensureLoaded()]);
+        },
+        threads: () => plugin.threads.paragraphThreads(),
+        onFilterChange: (fn) => plugin.learner.events.on("filter:change", (track) => track === "para" && fn()),
         aiStatus: () => plugin.ai.status(),
       }),
     ],

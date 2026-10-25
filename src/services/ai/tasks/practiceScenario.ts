@@ -1,9 +1,9 @@
 import { ERROR_TAGS, normalizeErrorTag } from "../../../core/model/grammar";
 import type { FocusKind, FocusRef } from "../../../core/model/learner";
 import type { PolySense } from "../../../core/model/poly";
-import { PRACTICE_KINDS, type PracticeKind, type ScenarioTrack } from "../../../core/model/practice";
+import type { PracticeKind, ScenarioTrack } from "../../../core/model/practice";
 import { renderTemplate } from "../../../core/text/template";
-import type { GrammarRef, ScenarioRequest, VocabRef } from "../../practice/scenarioApi";
+import type { GrammarRef, StoryRequest, VocabRef } from "../../practice/scenarioApi";
 import { AiError } from "../errors";
 import type { AiResult, JsonSchema } from "../providers/types";
 import { isFullSentence, isOptionSentence, isTargetForm } from "./sentenceCheck";
@@ -47,6 +47,9 @@ export const POLY_ERROR_TAGS = [
 export const VOCAB_ERROR_TAGS = ["meaning", "form", "collocation", "confusable"] as const;
 
 export type RefCategory = "poly" | "vocab" | "grammar";
+
+// What a scenario may ask (paraphrase has its own task, practice.paraphrase).
+const SCENARIO_KINDS: readonly PracticeKind[] = ["which-sense", "pick-word", "same-sense", "choice", "find-error"];
 
 const KINDS_BY_CATEGORY: Record<RefCategory, readonly PracticeKind[]> = {
   vocab: ["which-sense", "pick-word"],
@@ -114,7 +117,7 @@ export interface ScenarioRefs {
   vocabWord?: Map<string, string>;
 }
 
-export function refsOf(req: ScenarioRequest): ScenarioRefs {
+export function refsOf(req: StoryRequest): ScenarioRefs {
   const tested = new Map<string, FocusInfo>();
   const senseWord = new Map<string, string>();
   const poly = req.track === "poly" ? req : req.track === "mix" ? req.poly : undefined;
@@ -131,11 +134,11 @@ export function refsOf(req: ScenarioRequest): ScenarioRefs {
   return { tested, senseWord, vocabWord };
 }
 
-export function scenarioTrack(req: ScenarioRequest): ScenarioTrack {
+export function scenarioTrack(req: StoryRequest): ScenarioTrack {
   return req.track;
 }
 
-function errorTagsOf(req: ScenarioRequest): string[] {
+function errorTagsOf(req: StoryRequest): string[] {
   if (req.track === "poly") return [...POLY_ERROR_TAGS];
   if (req.track === "vocab") return [...VOCAB_ERROR_TAGS];
   const out: string[] = [];
@@ -176,7 +179,7 @@ export const PRACTICE_SCENARIO_SCHEMA: JsonSchema = {
               required: ["focusId", "kind", "text", "options", "answerId", "explanation", "optionNotes", "sentenceZh", "errorTag"],
               properties: {
                 focusId: { type: "string", description: "〔出題參考〕裡標「考」的 id（原樣照抄）" },
-                kind: { type: "string", enum: [...PRACTICE_KINDS] },
+                kind: { type: "string", enum: [...SCENARIO_KINDS] },
                 text: {
                   type: "string",
                   description:
@@ -256,7 +259,7 @@ function inferInfo(id: string): FocusInfo {
   return { category: "vocab", kind: "word" };
 }
 
-function parseOptions(v: unknown): { id: string; text: string }[] | null {
+export function parseOptions(v: unknown): { id: string; text: string }[] | null {
   if (!Array.isArray(v)) return null;
   const out: { id: string; text: string }[] = [];
   for (const o of v) {
@@ -275,7 +278,7 @@ function parseOptions(v: unknown): { id: string; text: string }[] | null {
 
 // Wrong option id → note. Accepts the schema's [{id, note}] and a plain
 // { id: note } object.
-function parseNotes(v: unknown, options: { id: string; text: string }[], answerId: string): Record<string, string> {
+export function parseNotes(v: unknown, options: { id: string; text: string }[], answerId: string): Record<string, string> {
   const out: Record<string, string> = {};
   const put = (key: string, note: string) => {
     const opt = options.find((o) => o.id === key) ?? options.find((o) => o.text === key);
@@ -420,7 +423,7 @@ export function parsePracticeScenario(json: unknown, refs?: ScenarioRefs): Pract
 // ── task ──────────────────────────────────────────────────────────
 
 export interface PracticeScenarioInput {
-  request: ScenarioRequest;
+  request: StoryRequest;
   // Defaults to DEFAULT_QUESTION_COUNT.
   count?: number;
   // weaknessDigest() text, scoped to the focus ids sent; "" = none.
@@ -446,7 +449,7 @@ function clean(list: readonly string[] | undefined, max: number): string[] {
 }
 
 // 〔出題參考〕 body and the task paragraph for a request.
-function referenceAndTask(req: ScenarioRequest, count: number): { reference: string; user: string } {
+function referenceAndTask(req: StoryRequest, count: number): { reference: string; user: string } {
   const errorTags = errorTagsOf(req).join("、");
   if (req.track === "poly") {
     const words = [...new Set(req.tested.map((s) => s.word))];
@@ -515,7 +518,7 @@ export const practiceScenario: AiTask<PracticeScenarioInput, PracticeScenarioDra
 // the request didn't offer as 考 (and checks poly option ids against the
 // request's senses). AiTask.parse only sees the AI's answer, so the service
 // passes this per-request variant to runStructured.
-export function practiceScenarioFor(req: ScenarioRequest): AiTask<PracticeScenarioInput, PracticeScenarioDraft> {
+export function practiceScenarioFor(req: StoryRequest): AiTask<PracticeScenarioInput, PracticeScenarioDraft> {
   const refs = refsOf(req);
   return { ...practiceScenario, parse: (r) => parsePracticeScenario(structuredJson(r), refs) };
 }

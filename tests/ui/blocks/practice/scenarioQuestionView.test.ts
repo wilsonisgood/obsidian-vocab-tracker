@@ -72,3 +72,20 @@ describe("toPlayerQuestion", () => {
     expect(toPlayerQuestion(gq, {}).tag).toBe("文法");
   });
 });
+
+describe("換句話說 questions", () => {
+  it("tag the paragraph's note and keep the sentence as is", () => {
+    const p = toPlayerQuestion(
+      base({
+        track: "para",
+        kind: "paraphrase",
+        scenario: { id: "sc2", scene: "〈News〉", seq: 1 },
+        text: "The committee hardly ever approves a budget increase.",
+        focus: { kind: "paragraph", id: "t1" },
+      })
+    );
+    expect(p.tag).toBe("段落 · 〈News〉");
+    expect(p.kind).toBe("paraphrase");
+    expect(p.hints).toBeUndefined();
+  });
+});

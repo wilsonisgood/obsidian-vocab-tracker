@@ -497,6 +497,11 @@
   letter-spacing: 0.05em;
   color: var(--text-muted);
 }
+.vt-ppane-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
 .vt-ppane-delete.mod-warning {
   color: var(--text-error);
 }
@@ -4563,6 +4568,21 @@ body.is-mobile .vt-pr-chip {
   cursor: default;
   border-style: dashed;
 }
+.vt-pr-para-scope {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+}
+.vt-pr-para-select {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
 body.is-mobile .vt-pr-mix-tag {
   min-height: 44px;
   padding: 8px 16px;
@@ -5263,6 +5283,7 @@ body.is-mobile .vt-speak-icon,
 body.is-mobile .vt-row-footer-icon,
 body.is-mobile .vt-icon-btn,
 body.is-mobile .vt-close-btn,
+body.is-mobile .vt-ppane-practice,
 body.is-mobile .vt-ppane-delete {
   display: inline-flex;
   align-items: center;

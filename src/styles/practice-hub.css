@@ -66,4 +66,11 @@ body.is-mobile .vt-pr-chip { padding: 8px 16px; }
   color: var(--text-on-accent);
 }
 .vt-pr-mix-tag:disabled { opacity: 0.45; cursor: default; border-style: dashed; }
+/* 換句話說: 出題範圍 dropdown */
+.vt-pr-para-scope {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+  padding: 8px 12px; border: 1px solid var(--background-modifier-border); border-radius: 8px;
+  background: var(--background-secondary);
+}
+.vt-pr-para-select { flex: 1 1 auto; min-width: 0; max-width: 100%; }
 body.is-mobile .vt-pr-mix-tag { min-height: 44px; padding: 8px 16px; }

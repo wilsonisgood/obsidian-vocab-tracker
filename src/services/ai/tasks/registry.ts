@@ -6,6 +6,7 @@ import { GRAMMAR_TASKS as GRAMMAR_EXPLAIN_TASKS } from "./grammarExplain";
 import { GRAMMAR_TASKS as GRAMMAR_GRADE_TASKS } from "./grammarGrade";
 import { GRAMMAR_TASKS as GRAMMAR_QUESTION_TASKS } from "./grammarQuestions";
 import { PARAGRAPH_TASKS } from "./paragraph";
+import { PARAPHRASE_TASKS } from "./paraphrase";
 import { PRACTICE_TASKS } from "./practiceScenario";
 import { TRIVIA_TASKS } from "./trivia";
 import type { AiTask, Surface } from "./types";
@@ -58,6 +59,7 @@ export function defaultTaskRegistry(): TaskRegistry {
     ...GRAMMAR_QUESTION_TASKS,
     ...GRAMMAR_GRADE_TASKS,
     ...PRACTICE_TASKS,
+    ...PARAPHRASE_TASKS,
     diaryWrite,
   ]);
 }

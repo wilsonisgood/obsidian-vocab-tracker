@@ -331,3 +331,66 @@ describe("practiceLine", () => {
     expect(practiceLine({ ...base, kind: "which-sense", text: "A [[run]] B.", options: opts } as PracticeQuestion)).toBe("A run B.");
   });
 });
+
+describe("ScenarioService 換句話說 (para)", () => {
+  const sentences = [
+    "The committee hardly ever approves a budget increase.",
+    "Because costs rose sharply last year, it made an exception.",
+    "Members said the decision would be reviewed in spring.",
+  ];
+  const para = (threadId: string, title: string) => ({ threadId, path: `${title}.md`, title, sentences, discussed: [] });
+  const PARA: ScenarioRequest = { track: "para", paragraphs: [para("t1", "One"), para("t2", "Two")] };
+  const paraAsk = (n: number, variant = "") => ({
+    sourceIndex: n,
+    options: ["seldom", "often", "never", "always"].map((w, i) => ({ id: "abcd"[i], text: `They ${w} agree to spend more ${variant}${n}.` })),
+    answerId: "a",
+    explanation: "解釋",
+    optionNotes: [],
+    sentenceZh: "中文",
+    errorTag: "para-negation",
+  });
+  const reply = (variant = "") => ({ questions: [1, 2, 3].map((n) => paraAsk(n, variant)) });
+  const systemOf = (r: { system: { text: string }[] }) => r.system.map((b) => b.text).join("\n");
+
+  it("asks about one paragraph, stores paraphrase questions on its thread and pools them", async () => {
+    const { learner, service, ai } = await filled(PARA, reply());
+    const pool = service.poolQuestions("para");
+    expect(pool.map((q) => q.text)).toEqual(sentences);
+    expect(pool[0]).toMatchObject({ track: "para", kind: "paraphrase", focus: { kind: "paragraph", id: "t1" } });
+    expect(pool[0].scenario.scene).toBe("〈One〉");
+    expect(learner.pool("para")).toHaveLength(3);
+    expect(ai.threadIds).toEqual([refillThreadId("para")]);
+    expect(systemOf(ai.requests[0])).not.toContain("〔已出過的句子〕第");
+  });
+
+  it("next refill takes the paragraph asked least; the same sentence with new options is a new question", async () => {
+    let n = 0;
+    const ctx = await filled(PARA, () => reply(`v${++n} `));
+    for (const q of ctx.service.poolQuestions("para")) ctx.service.answer(q, "a", true, { hinted: false, fromMistakes: false });
+    await ctx.service.refill(PARA);
+    expect(ctx.service.poolQuestions("para").map((q) => q.focus.id)).toEqual(["t2", "t2", "t2"]);
+    const third = { track: "para" as const, paragraphs: [para("t1", "One")] };
+    for (const q of ctx.service.poolQuestions("para")) ctx.service.skip(q);
+    ctx.service.applyScope("para", new Set(["t1"]));
+    await ctx.service.refill(third);
+    expect(systemOf(ctx.ai.requests[2])).toContain("〔已出過的句子〕第 1、2、3 句已經出過題");
+    expect(ctx.service.poolQuestions("para")).toHaveLength(3);
+  });
+
+  it("a wrong answer's error type comes back as 〔學習弱點〕", async () => {
+    const ctx = await filled(PARA, reply());
+    const [q] = ctx.service.poolQuestions("para");
+    ctx.service.answer(q, "b", false, { hinted: false, fromMistakes: false });
+    for (const x of ctx.service.poolQuestions("para")) ctx.service.skip(x);
+    expect(ctx.learner.mistakes("para")).toHaveLength(1);
+    ctx.ai.script = () => result(JSON.stringify(reply("again ")));
+    await ctx.service.refill(PARA);
+    expect(systemOf(ctx.ai.requests[1])).toContain("〔學習弱點〕\npara-negation｜最近 30 天錯 1 次");
+  });
+
+  it("no paragraph: nothing is sent", async () => {
+    const { ai, service } = await filled({ track: "para", paragraphs: [] }, reply());
+    expect(ai.requests).toHaveLength(0);
+    expect(service.poolQuestions("para")).toEqual([]);
+  });
+});

@@ -3,9 +3,11 @@ import type { PracticeQuestion } from "./practice";
 // and weaknesses are computed from events, never stored. Pool and mistake
 // records live beside them in store/learner.json.
 
-export type Track = "grammar" | "poly" | "vocab" | "mix";
-export type FocusKind = "grammar-objective" | "sense" | "word";
-// grammar-objective id = `${topicId}/${objectiveId}`; sense = "get.arrive"; word = VocabEntry.id
+// para: 換句話說 — paraphrase questions on paragraphs the learner discussed.
+export type Track = "grammar" | "poly" | "vocab" | "mix" | "para";
+export type FocusKind = "grammar-objective" | "sense" | "word" | "paragraph";
+// grammar-objective id = `${topicId}/${objectiveId}`; sense = "get.arrive"; word = VocabEntry.id;
+// paragraph = the paragraph discussion's thread id
 export interface FocusRef {
   kind: FocusKind;
   id: string;
@@ -75,8 +77,8 @@ export interface LearnerShard {
   diaryPicks?: DiaryPick[];
 }
 
-export const TRACKS: readonly Track[] = ["grammar", "poly", "vocab", "mix"];
-export const FOCUS_KINDS: readonly FocusKind[] = ["grammar-objective", "sense", "word"];
+export const TRACKS: readonly Track[] = ["grammar", "poly", "vocab", "mix", "para"];
+export const FOCUS_KINDS: readonly FocusKind[] = ["grammar-objective", "sense", "word", "paragraph"];
 export const LEARN_RESULTS: readonly LearnResult[] = ["correct", "wrong", "skipped", "hinted", "retired"];
 
 // Reading log (第十九波 D1, 1016 #6-#8): which articles the learner

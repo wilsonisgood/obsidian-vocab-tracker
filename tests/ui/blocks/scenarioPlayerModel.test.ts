@@ -156,6 +156,7 @@ describe("misc", () => {
     expect(optionColumns("choice", false)).toBe(2);
     expect(optionColumns("choice", true)).toBe(1);
     expect(optionColumns("same-sense", false)).toBe(1);
+    expect(optionColumns("paraphrase", false)).toBe(1);
     expect(askLine({ kind: "which-sense", text: "She sat by the [[bank]] of the river.", options: [] } as never)).toBe("「bank」在這句中是什麼意思？");
     expect(askLine({ kind: "pick-word", text: "I ____ tea.", options: [] } as never)).toBe("選出最適合填入空格的字");
   });

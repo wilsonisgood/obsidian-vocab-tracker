@@ -14,10 +14,13 @@ import {
   type PracticeScenarioInput,
 } from "../ai/tasks/practiceScenario";
 import type { PreviousScenario } from "../ai/tasks/grammarQuestions";
+import { practiceParaphraseFor, type ParaphraseInput } from "../ai/tasks/paraphrase";
+import type { PracticeScenarioDraft } from "../ai/tasks/practiceScenario";
+import { nextParagraph } from "../../core/practice/paraphrase";
 import type { LearnAi } from "../learn/ports";
 import { runStructured } from "../learn/structured";
 import type { LearnerStore } from "../learner/LearnerStore";
-import type { ScenarioEvents, ScenarioPracticeApi, ScenarioRequest } from "./scenarioApi";
+import type { ParaRequest, ScenarioEvents, ScenarioPracticeApi, ScenarioRequest, StoryRequest } from "./scenarioApi";
 
 // The scenario front desk for 常用字 / 單字情境 / 混合 (第十七波 S): asks
 // the AI for one connected scenario at a time, stores its questions in the
@@ -59,6 +62,8 @@ export interface ScenarioServiceDeps {
   newId?: () => string;
 }
 
+type RefillJob = (signal?: AbortSignal) => Promise<PracticeScenarioDraft>;
+
 export function refillThreadId(track: ScenarioTrack): string {
   return `practice:pool:${track}`;
 }
@@ -69,6 +74,13 @@ function defaultId(now: Date): string {
 
 const poolItemId = (track: ScenarioTrack, questionId: string) => `${track}:${questionId}`;
 const textKey = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+// 換句話說 asks about the paragraph's own sentences, so one sentence can come
+// back with other options; a question is the sentence plus its answer.
+const questionKey = (q: Pick<PracticeQuestion, "kind" | "text" | "options" | "answerId">) =>
+  q.kind === "paraphrase"
+    ? `${textKey(q.text)}|${textKey(q.options.find((o) => o.id === q.answerId)?.text ?? "")}`
+    : textKey(q.text);
+const PARA_WEAK_DAYS = 30;
 const unmark = (s: string) => s.replace(/\[\[([^[\]]+)\]\]/g, "$1");
 
 // The sentence of a question as the story reads it: markers removed, the
@@ -122,24 +134,13 @@ export class ScenarioService implements ScenarioPracticeApi {
       if (!this.aiReady()) return;
       const count = Math.min(SCENARIO_REFILL_COUNT, poolRoom(learner.pool(track), track));
       if (count <= 0) return;
-      const refs = refsOf(req);
-      if (!refs.tested.size) return;
+      const job = req.track === "para" ? this.paraJob(req, count) : this.storyJob(req, count);
+      if (!job) return;
       started = true;
       this.events.emit("refill:start", track);
-      const input: PracticeScenarioInput = {
-        request: req,
-        count,
-        weakness: this.weakness(req),
-        previous: this.previousScenario(track),
-        words: this.words(),
-        avoid: this.avoid(track),
-      };
-      const { value: draft } = await runStructured(this.deps.ai, practiceScenarioFor(req), input, {
-        threadId: refillThreadId(track),
-        signal: opts.signal,
-      });
+      const draft = await job(opts.signal);
       const now = this.clock().toISOString();
-      const taken = new Set(learner.practiceQuestions(track).map((q) => textKey(q.text)));
+      const taken = new Set(learner.practiceQuestions(track).map(questionKey));
       const scenarioId = `sc-${this.newId()}`;
       const saved: PracticeQuestion[] = [];
       const scope = this.scopeVersion(track) !== version0 ? this.scopes.get(track) : undefined;
@@ -149,7 +150,7 @@ export class ScenarioService implements ScenarioPracticeApi {
           outOfScope++;
           continue;
         }
-        const key = textKey(d.text);
+        const key = questionKey(d);
         if (taken.has(key)) continue;
         taken.add(key);
         const scenario: PracticeQuestion["scenario"] = { id: scenarioId, scene: draft.scene, seq: saved.length + 1 };
@@ -199,6 +200,50 @@ export class ScenarioService implements ScenarioPracticeApi {
     }
   }
 
+  private storyJob(req: StoryRequest, count: number): RefillJob | null {
+    if (!refsOf(req).tested.size) return null;
+    const track = req.track;
+    const input: PracticeScenarioInput = {
+      request: req,
+      count,
+      weakness: this.weakness(req),
+      previous: this.previousScenario(track),
+      words: this.words(),
+      avoid: this.avoid(track),
+    };
+    return async (signal) =>
+      (await runStructured(this.deps.ai, practiceScenarioFor(req), input, { threadId: refillThreadId(track), signal })).value;
+  }
+
+  // 換句話說: one paragraph per refill — the one asked about least so far —
+  // with the numbers of its sentences that already have a question.
+  private paraJob(req: ParaRequest, count: number): RefillJob | null {
+    const stored = this.deps.learner.practiceQuestions("para");
+    const paragraph = nextParagraph(req.paragraphs, (id) => stored.filter((q) => q.focus.id === id).length);
+    if (!paragraph) return null;
+    const mine = new Set(stored.filter((q) => q.focus.id === paragraph.threadId).map((q) => textKey(q.text)));
+    const asked = paragraph.sentences.flatMap((s, i) => (mine.has(textKey(s)) ? [i + 1] : []));
+    const input: ParaphraseInput = { paragraph, count, weakness: this.paraWeakness(), asked };
+    return async (signal) =>
+      (await runStructured(this.deps.ai, practiceParaphraseFor(paragraph), input, { threadId: refillThreadId("para"), signal }))
+        .value;
+  }
+
+  // 〔學習弱點〕 of 換句話說: the error types missed most in the last 30 days.
+  private paraWeakness(): string {
+    const since = new Date(this.clock().getTime() - PARA_WEAK_DAYS * 86_400_000).toISOString();
+    const counts = new Map<string, number>();
+    for (const e of this.deps.learner.learnEvents({ track: "para" })) {
+      if (e.result !== "wrong" || !e.errorTag || e.at < since) continue;
+      counts.set(e.errorTag, (counts.get(e.errorTag) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([tag, n]) => `${tag}｜最近 ${PARA_WEAK_DAYS} 天錯 ${n} 次`)
+      .join("\n");
+  }
+
   private aiReady(): boolean {
     const status = this.deps.ai.status;
     if (!status) return true;
@@ -210,7 +255,7 @@ export class ScenarioService implements ScenarioPracticeApi {
   }
 
   // 〔學習弱點〕: scoped to the ids this request sends.
-  private weakness(req: ScenarioRequest): string {
+  private weakness(req: StoryRequest): string {
     const refs = refsOf(req);
     const label = new Map<string, string>();
     if (req.track === "poly") for (const s of req.tested) label.set(s.id, s.zh);

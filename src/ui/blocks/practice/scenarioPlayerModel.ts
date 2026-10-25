@@ -309,12 +309,14 @@ export function askLine(q: PlayerQuestion): string {
       return t("practice.player.ask.pick");
     case "find-error":
       return t("practice.player.ask.find-error");
+    case "paraphrase":
+      return t("practice.player.ask.paraphrase");
   }
 }
 
-// same-sense options are sentences → always one column.
+// same-sense / paraphrase options are sentences → always one column.
 export function optionColumns(kind: PlayerKind, mobile: boolean): 1 | 2 {
-  if (kind === "same-sense" || mobile) return 1;
+  if (kind === "same-sense" || kind === "paraphrase" || mobile) return 1;
   return 2;
 }
 

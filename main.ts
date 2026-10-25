@@ -47,7 +47,7 @@ import { LearnerStore } from "./src/services/learner/LearnerStore";
 import { ReadingTracker } from "./src/services/learner/ReadingTracker";
 import { pluginNoteKind } from "./src/ui/reading/pluginNote";
 import type { Track } from "./src/core/model/learner";
-import { TAB_KEY as PRACTICE_TAB_KEY } from "./src/ui/blocks/practice/practiceModel";
+import { TAB_EVENT as PRACTICE_TAB_EVENT, TAB_KEY as PRACTICE_TAB_KEY } from "./src/ui/blocks/practice/practiceModel";
 import { GrammarPages } from "./src/services/grammar/GrammarPages";
 import { QuestionService } from "./src/services/grammar/QuestionService";
 import { ScenarioService } from "./src/services/practice/ScenarioService";
@@ -1089,10 +1089,19 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     void this.openEntryFile("dna", "tab");
   }
 
-  // 第十六波: Practice.md on the given tab (the hub reads the remembered tab).
-  async openPracticeTab(track: Track): Promise<void> {
+  // 第十六波: Practice.md on the given tab (the hub reads the remembered tab;
+  // a hub that's already open switches through PRACTICE_TAB_EVENT).
+  async openPracticeTab(track: Track, where: "current" | "tab" = "current"): Promise<void> {
     if (typeof this.app.saveLocalStorage === "function") this.app.saveLocalStorage(PRACTICE_TAB_KEY, track);
-    await this.openEntryFile("practice");
+    this.app.workspace.trigger(PRACTICE_TAB_EVENT, track);
+    await this.openEntryFile("practice", where);
+  }
+
+  // 換句話說 (ParagraphPaneHost): the practice hub's 換句話說 tab on just this
+  // paragraph, in its own tab so the article stays open.
+  practiceParagraph(threadId: string): void {
+    this.learner.setFilter("para", { scope: "thread", threadId });
+    void this.openPracticeTab("para", "tab");
   }
 
   async openEntryFile(id: EntryFileId, where: "current" | "tab" = "current") {
