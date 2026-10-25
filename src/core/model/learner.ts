@@ -114,8 +114,8 @@ export interface DiaryPick {
 
 // AI help requests (規劃書 15 §2.1): one per question asked in a discussion
 // thread, kept here so deleting a discussion doesn't erase the history.
-export type AskSurface = "word" | "paragraph" | "trivia" | "morpheme" | "grammar" | "other";
-export const ASK_SURFACES: readonly AskSurface[] = ["word", "paragraph", "trivia", "morpheme", "grammar", "other"];
+export type AskSurface = "word" | "paragraph" | "trivia" | "morpheme" | "grammar" | "buddy" | "other";
+export const ASK_SURFACES: readonly AskSurface[] = ["word", "paragraph", "trivia", "morpheme", "grammar", "buddy", "other"];
 export const ASK_TEXT_MAX = 80;
 export interface AskEvent {
   id: string; // = the user turn's id

@@ -1,6 +1,7 @@
 import type { CefrLevel } from "../../../core/model/settings";
 import type { AiResult } from "../providers/types";
 import { composeRequest } from "./compose";
+import { WARM_TONE } from "./tone";
 import type { AiTask, TaskContext } from "./types";
 
 // Report advice (規劃書 15 §4). One call per report; the input is a numbers
@@ -11,7 +12,9 @@ export interface ReportAdviceInput {
   level: CefrLevel | "";
 }
 
-export const REPORT_BASE_PROMPT = `你是一位溫暖又務實的英文家教，根據學生這段期間的學習數據，給下週的具體建議。
+export const REPORT_BASE_PROMPT = `你是學生的英文學習夥伴，根據他這段期間的學習數據，分享下週可以試試的具體方向。
+
+${WARM_TONE}
 
 規則：
 1. 用繁體中文，給 3 到 5 點建議，每點一兩句，說清楚「下週可以做什麼」。
@@ -28,7 +31,7 @@ export function parseReportAdvice(text: string): string[] {
 
 export const reportAdvise: AiTask<ReportAdviceInput, string[]> = {
   id: "report.advise",
-  version: 1,
+  version: 2,
   surface: "report",
   tier: "smart",
   maxTokens: 4096,

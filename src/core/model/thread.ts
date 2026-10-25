@@ -16,7 +16,10 @@ export type Anchor =
   | { kind: "trivia-session" }
   // Wave 9 DS/DU (A9) — one DNA discussion thread per morpheme, threadId
   // morphemeThreadId(morphemeId) (core/model/morpheme.ts).
-  | { kind: "morpheme"; morphemeId: string };
+  | { kind: "morpheme"; morphemeId: string }
+  // 學習夥伴 (規劃書 15 §7): free conversations about how to learn; several
+  // can exist, each its own thread.
+  | { kind: "buddy" };
 
 export type TurnStatus = "done" | "streaming" | "error" | "aborted";
 
