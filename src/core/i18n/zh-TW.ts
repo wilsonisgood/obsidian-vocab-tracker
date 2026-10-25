@@ -958,4 +958,17 @@ export const zhTW: Record<keyof typeof en, string> = {
   "command.report.write": "產生上週學習報告",
   "dashboard.diary.written": "日記寫好了：{day}",
   "diary.disclaimer": "出處由 AI 提供，可能有誤。",
+  // 第二十一波 R5
+  "ai.task.buddy.grammar": "聊聊文法怎麼學",
+  "ai.task.buddy.writing": "想多寫一點英文",
+  "ai.task.buddy.review": "一起看看我寫的",
+  "ai.task.buddy.level": "我最近走到哪了",
+  "ai.task.buddy.reading": "找點東西來讀",
+  "ai.task.buddy.plan": "聊聊接下來怎麼學",
+  "buddy.title": "學習夥伴",
+  "buddy.new": "新對話",
+  "buddy.placeholder": "想聊什麼都可以，例如：我寫的這句自然嗎？",
+  "buddy.untitled": "新的對話",
+  "buddy.threads": "最近的對話",
+  "command.buddy.open": "和學習夥伴聊聊",
 };

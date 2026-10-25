@@ -28,6 +28,7 @@ import { weakFocuses } from "../../core/learner/weakness";
 import type { GrammarFilter } from "../../core/grammar/practiceFilter";
 import type { FilterStore, PracticeHost } from "./practice/types";
 import { openPluginSettings } from "../kit/openSettings";
+import { renderBuddy } from "./buddy";
 import { renderTrivia } from "./trivia";
 import { renderVerbs } from "./verbs";
 import { renderWordHeader, WORD_BLOCK_LANG } from "./wordHeader";
@@ -253,6 +254,7 @@ export const BLOCKS: readonly BlockDef[] = [
   { lang: "vocab-usage", render: renderVerbs },
   { lang: "vocab-trivia", render: renderTrivia },
   { lang: "vocab-eureka", render: renderTrivia },
+  { lang: "vocab-buddy", render: renderBuddy },
   // Wave 9 (規劃書 09 §7): Word DNA — morpheme breakdown, timeline, 冷知識.
   { lang: "vocab-dna", render: (plugin, source, el, ctx) =>
       // Only the Word DNA entry file feeds the sidebar (規劃書 10 §2.1).

@@ -967,4 +967,17 @@ export const en = {
   "command.report.write": "Write last week's learning report",
   "dashboard.diary.written": "Diary written: {day}",
   "diary.disclaimer": "The source is provided by AI and may be wrong.",
+  // 第二十一波 R5
+  "ai.task.buddy.grammar": "How to learn grammar",
+  "ai.task.buddy.writing": "Write more English",
+  "ai.task.buddy.review": "Look at my writing",
+  "ai.task.buddy.level": "Where am I now?",
+  "ai.task.buddy.reading": "Find something to read",
+  "ai.task.buddy.plan": "Plan the next few weeks",
+  "buddy.title": "Learning buddy",
+  "buddy.new": "New chat",
+  "buddy.placeholder": "Chat about anything, e.g. does this sentence sound natural?",
+  "buddy.untitled": "New chat",
+  "buddy.threads": "Recent chats",
+  "command.buddy.open": "Chat with your learning buddy",
 } as const;
