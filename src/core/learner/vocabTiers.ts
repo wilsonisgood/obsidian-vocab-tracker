@@ -128,9 +128,17 @@ export function vocabLevelFromTiers(profile: TierProfile): LevelEstimate | null 
   const n = leveled(both);
   if (n < TIER_SAMPLE_MIN) return null;
 
-  // The level most of them sit at (a tie goes to the higher one).
+  // The median level: counting up from A1, the first level where the
+  // running total passes half. Unlike the most common level, a spread-out
+  // profile (A1 3, B1 2, B2 2) doesn't get pulled to one low peak.
   let edge = 0;
-  for (let i = 0; i < CEFR_TIERS.length; i++) if (both[CEFR_TIERS[i]] >= both[CEFR_TIERS[edge]]) edge = i;
+  for (let i = 0, run = 0; i < CEFR_TIERS.length; i++) {
+    run += both[CEFR_TIERS[i]];
+    if (run * 2 > n) {
+      edge = i;
+      break;
+    }
+  }
   let lo = Math.max(0, edge - 1);
   let hi = edge;
   let label = tierLabel(lo, hi);

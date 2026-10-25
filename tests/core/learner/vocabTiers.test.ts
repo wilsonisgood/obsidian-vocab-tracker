@@ -120,6 +120,12 @@ describe("tierExamples", () => {
 });
 
 describe("vocabLevelFromTiers", () => {
+  it("reads the median level, not one low peak, from a spread-out profile", () => {
+    // A1 3, B1 2, B2 2: half of the 7 is passed at B1.
+    const e = vocabLevelFromTiers(profile({ asked: count({ A1: 3, B1: 2, B2: 2 }), looked: count({ B1: 1 }) }));
+    expect(e?.level).toBe("約 A2–B1");
+  });
+
   it("too few leveled words → null (the caller falls back)", () => {
     expect(vocabLevelFromTiers(profile({ asked: count({ B1: 7, "?": 20 }) }))).toBeNull();
   });
