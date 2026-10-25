@@ -67,6 +67,8 @@ interface Config {
   deviceState?: DeviceStatePort;
   // Defaults to "iPhone / iPad" (incl. emulateMobile).
   mobile?: () => boolean;
+  // A 🔊 pressed by the user (規劃書 15 §2.2); autoplay via pronounce() doesn't call it.
+  onPressed?: (word: string) => void;
 }
 
 function isMobileNow(): boolean {
@@ -200,7 +202,14 @@ export function bindPronounceButton(
   el.addEventListener("click", (e) => {
     if (opts.stopPropagation) e.stopPropagation();
     const target = get();
-    if (target) void pronounce(target);
+    if (target) {
+      void pronounce(target);
+      try {
+        config.onPressed?.(target.word);
+      } catch (err) {
+        console.error("Vocab Tracker: onPressed failed", err);
+      }
+    }
     opts.after?.(e);
   });
 }

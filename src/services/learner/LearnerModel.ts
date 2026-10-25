@@ -3,9 +3,11 @@ import { topicStatuses } from "../../core/grammar/progress";
 import { weakFocuses } from "../../core/learner/weakness";
 import type { WeakFocus } from "../../core/learner/weakness";
 import type { VocabEntry } from "../../core/model/entry";
-import type { LearnEvent } from "../../core/model/learner";
+import { localDayOf } from "../../core/learner/reading";
+import type { AskEvent, LearnEvent, ReadingVisit, WordTouch } from "../../core/model/learner";
 import type { CefrLevel } from "../../core/model/settings";
 import { SrsState } from "../../core/model/srs";
+import type { ReviewLog } from "../../core/model/srs";
 import type { GrammarStore } from "../grammar/GrammarStore";
 import type { LearnerStore } from "./LearnerStore";
 
@@ -57,13 +59,25 @@ export interface LearnerSnapshot {
 export interface LearnerModelDeps {
   vocab: () => readonly VocabEntry[];
   grammar: Pick<GrammarStore, "questions" | "attempts" | "progress">;
-  learner: Pick<LearnerStore, "learnEvents">;
+  learner: Pick<LearnerStore, "learnEvents"> & Partial<Pick<LearnerStore, "asks" | "wordTouches" | "readingBetween">>;
+  reviews?: () => readonly ReviewLog[];
   level: () => CefrLevel | "";
   now?: () => Date;
 }
 
 // Counted as practice: skipped / retired say nothing about what was learned.
 const SCORED = new Set<LearnEvent["result"]>(["correct", "wrong"]);
+
+// What the learner did in a period (規劃書 15 §2.5); every list oldest first.
+export interface LearnerActivity {
+  asks: AskEvent[];
+  wordTouches: WordTouch[];
+  reading: ReadingVisit[];
+  events: LearnEvent[];
+  reviews: ReviewLog[];
+}
+
+const byAt = <T extends { at: string }>(a: T, b: T) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0);
 
 export class LearnerModel {
   constructor(private deps: LearnerModelDeps) {}
@@ -83,6 +97,22 @@ export class LearnerModel {
       grammar: this.grammar(now),
       poly: { practisedSenses: senses.size, weakSenses: weakAll.filter((w) => w.focus.kind === "sense").length },
       weak: weakAll.slice(0, WEAK_LIMIT),
+    };
+  }
+
+  // `from` / `to`: local dates YYYY-MM-DD, both ends included.
+  activity(from: string, to: string): LearnerActivity {
+    const l = this.deps.learner;
+    const inRange = (iso: string) => {
+      const day = localDayOf(new Date(iso));
+      return day >= from && day <= to;
+    };
+    return {
+      asks: (l.asks?.() ?? []).filter((a) => inRange(a.at)).sort(byAt),
+      wordTouches: (l.wordTouches?.() ?? []).filter((w) => w.day >= from && w.day <= to).sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : a.word < b.word ? -1 : 1)),
+      reading: l.readingBetween?.(from, to) ?? [],
+      events: l.learnEvents().filter((e) => inRange(e.at)).sort(byAt),
+      reviews: (this.deps.reviews?.() ?? []).filter((r) => inRange(r.at)).sort(byAt),
     };
   }
 

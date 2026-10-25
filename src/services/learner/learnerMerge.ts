@@ -1,8 +1,10 @@
 import { PRACTICE_KINDS } from "../../core/model/practice";
 import type { PracticeQuestion, ScenarioTrack } from "../../core/model/practice";
 import { DIARY_PICK_KINDS, FOCUS_KINDS, LEARN_RESULTS, READING_KINDS, TRACKS } from "../../core/model/learner";
-import { mergeReading, readingCutoffDay, sortKinds } from "../../core/learner/reading";
+import { localDayOf, mergeReading, readingCutoffDay, sortKinds } from "../../core/learner/reading";
+import { ASK_SURFACES } from "../../core/model/learner";
 import type {
+  AskEvent,
   DiaryPick,
   FocusRef,
   LearnEvent,
@@ -14,6 +16,7 @@ import type {
   ReadingVisit,
   Track,
   TrackFilter,
+  WordTouch,
 } from "../../core/model/learner";
 import { mergeRecords } from "../learn/learnMerge";
 
@@ -36,7 +39,7 @@ function ms(iso: string | undefined): number {
 }
 
 export function emptyLearnerShard(): LearnerShard {
-  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [] };
+  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [], asks: [], wordTouches: [] };
 }
 
 const str = (v: unknown): v is string => typeof v === "string" && v !== "";
@@ -191,6 +194,63 @@ function mergePicks(a: readonly DiaryPick[], b: readonly DiaryPick[]): DiaryPick
   return [...map.values()];
 }
 
+function normalizeAsk(raw: unknown): AskEvent | null {
+  if (!isObj(raw) || !str(raw.id) || !isIso(raw.at) || typeof raw.taskId !== "string") return null;
+  const e: AskEvent = {
+    id: raw.id,
+    at: raw.at,
+    surface: ASK_SURFACES.includes(raw.surface as AskEvent["surface"]) ? (raw.surface as AskEvent["surface"]) : "other",
+    taskId: raw.taskId,
+    custom: raw.custom === true,
+    ok: raw.ok === true,
+  };
+  if (str(raw.entryId)) e.entryId = raw.entryId;
+  if (str(raw.path)) e.path = raw.path;
+  if (str(raw.selection)) e.selection = raw.selection;
+  if (str(raw.question)) e.question = raw.question;
+  return e;
+}
+
+const count = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.floor(v) : 0);
+
+function normalizeTouch(raw: unknown): WordTouch | null {
+  if (!isObj(raw) || !str(raw.word) || !str(raw.day) || !DAY_RE.test(raw.day)) return null;
+  const lookup = count(raw.lookup);
+  const pronounce = count(raw.pronounce);
+  if (lookup + pronounce === 0) return null;
+  const word = raw.word.toLowerCase();
+  const id = `${raw.day}|${word}`;
+  return { id, day: raw.day, word, lookup, pronounce, saved: raw.saved === true, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : `${raw.day}T00:00:00.000Z` };
+}
+
+function mergeAsks(a: readonly AskEvent[], b: readonly AskEvent[]): AskEvent[] {
+  const map = new Map<string, AskEvent>();
+  for (const e of [...a, ...b]) {
+    const cur = map.get(e.id);
+    if (!cur || ms(e.at) > ms(cur.at)) map.set(e.id, e);
+  }
+  return [...map.values()].sort((x, y) => ms(x.at) - ms(y.at) || (x.id < y.id ? -1 : 1));
+}
+
+function mergeTouches(a: readonly WordTouch[], b: readonly WordTouch[]): WordTouch[] {
+  const map = new Map<string, WordTouch>();
+  for (const t of [...a, ...b]) {
+    const cur = map.get(t.id);
+    if (!cur) {
+      map.set(t.id, { ...t });
+      continue;
+    }
+    map.set(t.id, {
+      ...cur,
+      lookup: Math.max(cur.lookup, t.lookup),
+      pronounce: Math.max(cur.pronounce, t.pronounce),
+      saved: cur.saved || t.saved,
+      updatedAt: ms(t.updatedAt) > ms(cur.updatedAt) ? t.updatedAt : cur.updatedAt,
+    });
+  }
+  return [...map.values()];
+}
+
 function normList<T>(raw: unknown, one: (r: unknown) => T | null): T[] {
   if (!Array.isArray(raw)) return [];
   const out: T[] = [];
@@ -203,7 +263,9 @@ function normList<T>(raw: unknown, one: (r: unknown) => T | null): T[] {
 
 export function normalizeLearnerShard(raw: unknown): LearnerShard {
   const s = isObj(raw) ? raw : {};
-  const meta = isObj(s.meta) && isIso(s.meta.grammarMigratedAt) ? { grammarMigratedAt: s.meta.grammarMigratedAt } : {};
+  const meta: LearnerShard["meta"] = {};
+  if (isObj(s.meta) && isIso(s.meta.grammarMigratedAt)) meta.grammarMigratedAt = s.meta.grammarMigratedAt;
+  if (isObj(s.meta) && isIso(s.meta.asksMigratedAt)) meta.asksMigratedAt = s.meta.asksMigratedAt;
   return {
     events: sortEvents(normList(s.events, normalizeEvent)),
     pool: normList(s.pool, normalizePool),
@@ -213,6 +275,8 @@ export function normalizeLearnerShard(raw: unknown): LearnerShard {
     meta,
     reading: normList(s.reading, normalizeVisit),
     diaryPicks: normList(s.diaryPicks, normalizePick),
+    asks: normList(s.asks, normalizeAsk),
+    wordTouches: normList(s.wordTouches, normalizeTouch),
   };
 }
 
@@ -224,21 +288,29 @@ export function mergeLearner(local: LearnerShard, remote: LearnerShard): Learner
   const a = local.meta.grammarMigratedAt;
   const b = remote.meta.grammarMigratedAt;
   const migrated = a && b ? (ms(a) <= ms(b) ? a : b) : a ?? b;
+  const aa = local.meta.asksMigratedAt;
+  const ab = remote.meta.asksMigratedAt;
+  const asksMigrated = aa && ab ? (ms(aa) <= ms(ab) ? aa : ab) : aa ?? ab;
+  const meta: LearnerShard["meta"] = {};
+  if (migrated) meta.grammarMigratedAt = migrated;
+  if (asksMigrated) meta.asksMigratedAt = asksMigrated;
   return {
     events: sortEvents(mergeRecords(local.events, remote.events, (l) => l)),
     pool: mergeRecords(local.pool, remote.pool),
     mistakes: mergeRecords(local.mistakes, remote.mistakes),
     filters: mergeRecords(local.filters, remote.filters),
     questions: mergeRecords(local.questions, remote.questions),
-    meta: migrated ? { grammarMigratedAt: migrated } : {},
+    meta,
     reading: mergeReading(local.reading ?? [], remote.reading ?? []),
     diaryPicks: mergePicks(local.diaryPicks ?? [], remote.diaryPicks ?? []),
+    asks: mergeAsks(local.asks ?? [], remote.asks ?? []),
+    wordTouches: mergeTouches(local.wordTouches ?? [], remote.wordTouches ?? []),
   };
 }
 
 // What a merge can change, for deciding whether to write the union back.
 export function learnerFingerprint(shard: LearnerShard): string {
-  const rows: string[] = [`m|${shard.meta.grammarMigratedAt ?? ""}`];
+  const rows: string[] = [`m|${shard.meta.grammarMigratedAt ?? ""}|${shard.meta.asksMigratedAt ?? ""}`];
   for (const e of shard.events) rows.push(`e|${e.id}`);
   for (const p of shard.pool) rows.push(`p|${p.id}|${p.updatedAt}|${p.removedAt ?? ""}`);
   for (const m of shard.mistakes) rows.push(`x|${m.id}|${m.updatedAt}|${m.resolvedAt ?? ""}`);
@@ -246,11 +318,14 @@ export function learnerFingerprint(shard: LearnerShard): string {
   for (const q of shard.questions) rows.push(`q|${q.id}|${q.updatedAt}`);
   for (const r of shard.reading ?? []) rows.push(`r|${r.id}|${r.at}|${r.updatedAt}|${r.kinds.join(",")}`);
   for (const d of shard.diaryPicks ?? []) rows.push(`d|${d.id}|${d.at}`);
+  for (const a of shard.asks ?? []) rows.push(`a|${a.id}|${a.ok}`);
+  for (const w of shard.wordTouches ?? []) rows.push(`w|${w.id}|${w.lookup}|${w.pronounce}|${w.saved}`);
   return rows.sort().join("\n");
 }
 
 export function pruneLearner(shard: LearnerShard, now: number): LearnerShard {
   const cutoff = readingCutoffDay(now);
+  const touchCutoff = localDayOf(new Date(now - EVENT_TTL_MS));
   return {
     events: shard.events.filter((e) => now - ms(e.at) < EVENT_TTL_MS),
     pool: shard.pool.filter((p) => !p.removedAt || now - ms(p.removedAt) < POOL_TOMBSTONE_TTL_MS),
@@ -260,6 +335,8 @@ export function pruneLearner(shard: LearnerShard, now: number): LearnerShard {
     meta: shard.meta,
     reading: (shard.reading ?? []).filter((r) => r.day >= cutoff),
     diaryPicks: shard.diaryPicks ?? [],
+    asks: (shard.asks ?? []).filter((a) => now - ms(a.at) < EVENT_TTL_MS),
+    wordTouches: (shard.wordTouches ?? []).filter((w) => w.day >= touchCutoff),
   };
 }
 

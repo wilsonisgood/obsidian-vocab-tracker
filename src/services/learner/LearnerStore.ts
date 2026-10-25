@@ -2,7 +2,9 @@ import { TypedEmitter } from "../../core/events";
 import { migrateGrammar } from "../../core/learner/migrateGrammar";
 import type { GrammarAttempt, GrammarQuestion } from "../../core/model/grammar";
 import { localDayOf, normalizePickKey, readingId, sortKinds } from "../../core/learner/reading";
-import type { DiaryPick, DiaryPickKind, LearnEvent, LearnerShard, MistakeItem, PoolItem, ReadingKind, ReadingVisit, Track } from "../../core/model/learner";
+import { asksFromThreads } from "../../core/learner/asks";
+import type { Thread } from "../../core/model/thread";
+import type { AskEvent, DiaryPick, DiaryPickKind, LearnEvent, LearnerShard, MistakeItem, PoolItem, ReadingKind, ReadingVisit, Track, WordTouch } from "../../core/model/learner";
 import type { PracticeQuestion, ScenarioTrack } from "../../core/model/practice";
 import type { StoragePort } from "../../core/ports";
 import { livePool } from "../../core/practice/pool";
@@ -216,6 +218,42 @@ export class LearnerStore {
     return [...(this.data.diaryPicks ?? [])];
   }
 
+  // ── AI asks & word touches (規劃書 15 §2) ──────────────────────
+
+  // Same id already recorded → ignored (the event itself never changes).
+  recordAsk(e: AskEvent): void {
+    const list = (this.data.asks ??= []);
+    if (list.some((x) => x.id === e.id)) return;
+    list.push(e);
+    this.scheduleWrite();
+  }
+
+  asks(): AskEvent[] {
+    return [...(this.data.asks ?? [])];
+  }
+
+  // One row per local day + lowercased word; `saved` is fixed by the first touch.
+  recordWordTouch(input: { word: string; kind: "lookup" | "pronounce"; saved: boolean }): void {
+    const word = input.word.trim().toLowerCase();
+    if (!word) return;
+    const now = this.clock();
+    const day = localDayOf(now);
+    const id = `${day}|${word}`;
+    const list = (this.data.wordTouches ??= []);
+    let cur = list.find((w) => w.id === id);
+    if (!cur) {
+      cur = { id, day, word, lookup: 0, pronounce: 0, saved: input.saved, updatedAt: "" };
+      list.push(cur);
+    }
+    cur[input.kind]++;
+    cur.updatedAt = now.toISOString();
+    this.scheduleWrite();
+  }
+
+  wordTouches(): WordTouch[] {
+    return [...(this.data.wordTouches ?? [])];
+  }
+
   // ── Migration ─────────────────────────────────────────────────
 
   // Call after ensureLoaded() (and after the GrammarStore has loaded).
@@ -232,6 +270,18 @@ export class LearnerStore {
     this.data.meta = { ...this.data.meta, grammarMigratedAt: now.toISOString() };
     if (m.pool.length) this.events.emit("pool:change", "grammar");
     for (const x of m.mistakes) this.events.emit("mistake:change", x);
+    this.scheduleWrite();
+    return true;
+  }
+
+  // Backfills asks[] from threads.json once (tombstoned turns included).
+  // Returns false — doing nothing — when it already ran or isn't loaded.
+  migrateAsksFromThreads(threads: readonly Thread[], surfaceOf?: (taskId: string) => string | undefined): boolean {
+    if (!this.ready || this.data.meta.asksMigratedAt) return false;
+    const list = (this.data.asks ??= []);
+    const known = new Set(list.map((a) => a.id));
+    for (const a of asksFromThreads(threads, surfaceOf)) if (!known.has(a.id)) list.push(a);
+    this.data.meta = { ...this.data.meta, asksMigratedAt: this.clock().toISOString() };
     this.scheduleWrite();
     return true;
   }

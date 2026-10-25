@@ -13,6 +13,8 @@ import { paragraphKey, questionCount } from "../anchors/ParagraphIndex";
 import { paragraphInput } from "../anchors/paragraphInput";
 import { trailingBlockId } from "../../core/text/blockId";
 import { paragraphHash } from "../../core/text/hash";
+import { buildAskEvent } from "../../core/learner/asks";
+import type { AskEvent } from "../../core/model/learner";
 import { addPin, pinText, removePin } from "./pin";
 import { findWordSource, wordInput } from "./wordInput";
 
@@ -53,6 +55,8 @@ export interface ThreadServiceDeps {
   anchors?: Pick<ParagraphAnchorService, "create" | "resolve">;
   clock?: () => Date;
   newId?: () => string;
+  // 規劃書 15 §2.1: told once per finished round (done, error or stopped).
+  onAsked?: (e: AskEvent) => void;
 }
 
 export interface AskParams {
@@ -268,8 +272,23 @@ export class ThreadService {
         this.active.delete(threadId);
         this.partial.delete(answer.id);
         this.changed(thread);
+        this.reportAsked(user, answer, thread.anchor);
       }
     }
+  }
+
+  private reportAsked(user: Turn, answer: Turn, anchor: Anchor): void {
+    if (!this.deps.onAsked) return;
+    try {
+      this.deps.onAsked(buildAskEvent(user, answer, anchor, user.taskId ? this.deps.ai.tasks.get(user.taskId)?.surface : undefined));
+    } catch (e) {
+      console.error("Vocab Tracker: onAsked failed", e);
+    }
+  }
+
+  // Every thread, tombstoned ones included (the asks backfill counts them).
+  allThreads(): readonly Thread[] {
+    return this.threads;
   }
 
   // What the user bubble shows: the question, else the quick action's label.

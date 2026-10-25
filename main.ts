@@ -250,6 +250,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       source: () => resolveUiPrefs(this.store.settings.ui).pronounceSource,
       // Failed recording URLs, remembered on this device for 7 days.
       deviceState: new ObsidianDeviceState(this.app),
+      // 規劃書 15 §2.2: only the user's own 🔊 presses (card autoplay isn't one).
+      onPressed: (w) => this.learner?.recordWordTouch({ word: w, kind: "pronounce", saved: this.isWordSaved(w) }),
     });
 
     // AI (M3): service + settings tab. AI stays off until enabled in settings.
@@ -313,7 +315,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       vault: this.vault,
       mode: () => resolveAnchorSettings(this.store.settings).mode,
     });
-    this.threads = new ThreadService({ storage: this.storage, store: this.store, ai, notes: this.notes, anchors: this.anchors });
+    this.threads = new ThreadService({ storage: this.storage, store: this.store, ai, notes: this.notes, anchors: this.anchors, onAsked: (e) => this.learner?.recordAsk(e) });
 
     // M7: word families, verb usage and trivia. learn.json loads lazily,
     // the first time one of them is used.
@@ -359,6 +361,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       vocab: () => this.store.entries,
       grammar: this.grammar,
       learner: this.learner,
+      reviews: () => this.srs.reviewLogs(),
       level: () => this.store.settings.learner?.level ?? "",
     });
     setProfileDeps({ learnerModel: this.learnerModel });
@@ -782,6 +785,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     try {
       await Promise.all([this.grammar.ensureLoaded(), this.learner.ensureLoaded()]);
       this.learner.migrateFromGrammar(this.grammar.questions(), this.grammar.attempts());
+      // 規劃書 15 §2.1: backfill the asks log from the discussions, once.
+      await this.threads.ensureLoaded();
+      this.learner.migrateAsksFromThreads(this.threads.allThreads(), (id) => this.ai.tasks.get(id)?.surface);
     } catch (e) {
       console.error("Vocab Tracker: couldn't load learner data", e);
     }
@@ -1265,7 +1271,13 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   }
 
   // 1016 #6: a clicked word counts as reading interaction (not a plugin page).
+  private isWordSaved(word: string): boolean {
+    const w = word.trim().toLowerCase();
+    return this.store.entries.some((e) => !e.deletedAt && e.word.trim().toLowerCase() === w);
+  }
+
   private async noteReadingClick(word: string, sentence?: string): Promise<void> {
+    this.learner.recordWordTouch({ word, kind: "lookup", saved: this.isWordSaved(word) });
     try {
       const file = this.app.workspace.getActiveFile();
       if (!file || file.extension !== "md") return;
