@@ -3196,14 +3196,14 @@ var Pronouncer = class {
       this.cache.set(url, hit);
       return hit;
     }
-    const clip3 = this.deps.createClip(url);
-    const c2 = { clip: clip3, ready: clip3.ready, timedOut: false, offs: [] };
+    const clip4 = this.deps.createClip(url);
+    const c2 = { clip: clip4, ready: clip4.ready, timedOut: false, offs: [] };
     c2.offs.push(
-      clip3.on("ready", () => {
+      clip4.on("ready", () => {
         c2.ready = true;
         c2.timedOut = false;
       }),
-      clip3.on("error", () => this.markFailed(url))
+      clip4.on("error", () => this.markFailed(url))
     );
     this.cache.set(url, c2);
     const max = (_a = this.deps.cacheSize) != null ? _a : DEFAULT_CACHE_SIZE;
@@ -3270,9 +3270,9 @@ var Pronouncer = class {
   playRecording(a2, url, word) {
     var _a;
     const c2 = this.entry(url);
-    const clip3 = c2.clip;
-    a2.clip = clip3;
-    if (clip3.ready) c2.ready = true;
+    const clip4 = c2.clip;
+    a2.clip = clip4;
+    if (clip4.ready) c2.ready = true;
     if (!c2.ready) this.setState(a2, "loading");
     let fellBack = false;
     const fallBack = () => {
@@ -3282,12 +3282,12 @@ var Pronouncer = class {
       a2.offs = [];
       if (a2.timer) clearTimeout(a2.timer);
       a2.timer = null;
-      clip3.pause();
+      clip4.pause();
       a2.clip = null;
       this.speakSynth(a2, word);
     };
     a2.offs.push(
-      clip3.on("playing", () => {
+      clip4.on("playing", () => {
         if (!this.live(a2) || fellBack) return;
         if (a2.timer) clearTimeout(a2.timer);
         a2.timer = null;
@@ -3295,13 +3295,13 @@ var Pronouncer = class {
         this.setState(a2, "playing");
         this.settle(a2, "recording");
       }),
-      clip3.on("ended", () => {
+      clip4.on("ended", () => {
         if (!this.live(a2) || fellBack) return;
         this.current = null;
         this.finish(a2, "recording");
       }),
       // markFailed (registered with the clip) has already run.
-      clip3.on("error", fallBack)
+      clip4.on("error", fallBack)
     );
     if (this.source === "auto" && !c2.ready) {
       const ms9 = (_a = this.deps.timeoutMs) != null ? _a : DEFAULT_TIMEOUT_MS;
@@ -3313,12 +3313,12 @@ var Pronouncer = class {
       }, ms9);
     }
     try {
-      clip3.rewind();
+      clip4.rewind();
     } catch (e) {
     }
     let started;
     try {
-      started = clip3.play();
+      started = clip4.play();
     } catch (e) {
       started = Promise.reject(e);
     }
@@ -20263,8 +20263,8 @@ function practiceMistakeCount(groups) {
 }
 var MISTAKE_LINE_MAX = 60;
 function mistakeLine(text, max = MISTAKE_LINE_MAX) {
-  const flat2 = text.replace(/\[\[|\]\]/g, "").replace(/\s+/g, " ").trim();
-  return flat2.length > max ? `${flat2.slice(0, max - 1).trimEnd()}\u2026` : flat2;
+  const flat3 = text.replace(/\[\[|\]\]/g, "").replace(/\s+/g, " ").trim();
+  return flat3.length > max ? `${flat3.slice(0, max - 1).trimEnd()}\u2026` : flat3;
 }
 
 // src/ui/blocks/practice/filterBar.ts
@@ -23239,9 +23239,9 @@ function objectiveRows(topic, attempts) {
 var SIGHTING_LIMIT = 5;
 var SNAPSHOT_CHARS = 120;
 function clipSnapshot(text, max = SNAPSHOT_CHARS) {
-  const flat2 = text.replace(/\s+/g, " ").replace(/\s*\^[\w-]+$/, "").trim();
-  const chars = [...flat2];
-  return chars.length > max ? `${chars.slice(0, max).join("").trimEnd()}\u2026` : flat2;
+  const flat3 = text.replace(/\s+/g, " ").replace(/\s*\^[\w-]+$/, "").trim();
+  const chars = [...flat3];
+  return chars.length > max ? `${chars.slice(0, max).join("").trimEnd()}\u2026` : flat3;
 }
 function noteName2(path) {
   const base = path.slice(path.lastIndexOf("/") + 1);
@@ -24982,9 +24982,9 @@ function plain(text) {
 function splitSentences(text) {
   const out = [];
   for (const block of plain(text).split(/\n\s*\n/)) {
-    const flat2 = block.replace(/\s*\n\s*/g, " ").trim();
-    if (!flat2) continue;
-    for (const part of flat2.split(/(?<=[.!?…]["'”’)\]]?)\s+(?=["'“‘([]?[A-Z0-9])/)) {
+    const flat3 = block.replace(/\s*\n\s*/g, " ").trim();
+    if (!flat3) continue;
+    for (const part of flat3.split(/(?<=[.!?…]["'”’)\]]?)\s+(?=["'“‘([]?[A-Z0-9])/)) {
       const s = part.trim();
       if (s) out.push(s);
     }
@@ -28349,24 +28349,24 @@ var CLAMP_PARAMETERS = (w17_w18_ceiling, enable_short_term = default_enable_shor
   [0.1, 0.8]
 ];
 var clipParameters = (parameters, numRelearningSteps, enableShortTerm = default_enable_short_term) => {
-  const clip3 = CLAMP_PARAMETERS(W17_W18_Ceiling, enableShortTerm).slice(
+  const clip4 = CLAMP_PARAMETERS(W17_W18_Ceiling, enableShortTerm).slice(
     0,
     parameters.length
   );
   if (Math.max(0, numRelearningSteps) > 1) {
-    const w11 = clamp(parameters[11] || 0, clip3[11][0], clip3[11][1]);
-    const w13 = clamp(parameters[13] || 0, clip3[13][0], clip3[13][1]);
-    const w14 = clamp(parameters[14] || 0, clip3[14][0], clip3[14][1]);
+    const w11 = clamp(parameters[11] || 0, clip4[11][0], clip4[11][1]);
+    const w13 = clamp(parameters[13] || 0, clip4[13][0], clip4[13][1]);
+    const w14 = clamp(parameters[14] || 0, clip4[14][0], clip4[14][1]);
     const value = -(Math.log(w11) + Math.log(Math.pow(2, w13) - 1) + w14 * 0.3) / numRelearningSteps;
     const w17_w18_ceiling = clamp(
       roundTo(Math.sqrt(Math.max(value, 0)), 8),
       0.01,
       W17_W18_Ceiling
     );
-    if (clip3[17]) clip3[17] = [clip3[17][0], w17_w18_ceiling];
-    if (clip3[18]) clip3[18] = [clip3[18][0], w17_w18_ceiling];
+    if (clip4[17]) clip4[17] = [clip4[17][0], w17_w18_ceiling];
+    if (clip4[18]) clip4[18] = [clip4[18][0], w17_w18_ceiling];
   }
-  return clip3.map(
+  return clip4.map(
     ([min, max], index2) => clamp(parameters[index2] || 0, min, max)
   );
 };
@@ -38222,11 +38222,13 @@ function snapshotLines(s) {
   }
   return out;
 }
-function buddyContext(snapshot2, latestReport) {
+function buddyContext(snapshot2, latestReport, recent = []) {
   const blocks = [];
   const lines4 = snapshotLines(snapshot2);
   if (lines4.length) blocks.push(`\u3010\u5B78\u7FD2\u7D00\u9304\u6458\u8981\u3011
 ${lines4.join("\n")}`);
+  if (recent.length) blocks.push(`\u3010\u6700\u8FD1\u8DDF AI \u8A0E\u8AD6\u904E\u7684\u5167\u5BB9\uFF08\u65B0\u5230\u820A\uFF0C\u53EA\u6709\u554F\u984C\u8207\u9078\u53D6\u6587\u5B57\uFF09\u3011
+${recent.join("\n")}`);
   if (latestReport == null ? void 0 : latestReport.trim()) {
     for (const name of BUDDY_REPORT_SECTIONS) {
       const body = reportSection2(latestReport, name);
@@ -38235,6 +38237,49 @@ ${clip2(body, BUDDY_REPORT_SECTION_MAX)}`);
     }
   }
   return blocks.join("\n\n");
+}
+
+// src/core/learner/recentDiscussions.ts
+var RECENT_DISCUSSION_DAYS = 14;
+var RECENT_DISCUSSION_MAX = 20;
+var TEXT_MAX = 120;
+var DAY_MS5 = 864e5;
+var flat2 = (s) => s.replace(/\s+/g, " ").trim();
+function clip3(s) {
+  const chars = [...flat2(s)];
+  return chars.length > TEXT_MAX ? `${chars.slice(0, TEXT_MAX).join("")}\u2026` : chars.join("");
+}
+function mmdd2(iso) {
+  const d = new Date(iso);
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+function subjectOf3(th, subjectEntryId, wordOf) {
+  var _a, _b;
+  const a2 = th.anchor;
+  if (a2.kind === "word") return (_a = wordOf(a2.entryId)) != null ? _a : "";
+  if (a2.kind === "paragraph") return `\u300C${noteTitle2(a2.path)}\u300D\u7684\u6BB5\u843D`;
+  if (a2.kind === "trivia-session") return subjectEntryId ? (_b = wordOf(subjectEntryId)) != null ? _b : "" : "";
+  return "";
+}
+function recentDiscussions(threads, wordOf, now2, opts = {}) {
+  var _a, _b, _c, _d;
+  const since = now2.getTime() - ((_a = opts.days) != null ? _a : RECENT_DISCUSSION_DAYS) * DAY_MS5;
+  const rows = [];
+  for (const th of threads) {
+    if (th.deletedAt || th.anchor.kind === "buddy") continue;
+    for (const turn of liveTurns(th)) {
+      if (turn.role !== "user") continue;
+      const at = Date.parse(turn.at);
+      if (Number.isNaN(at) || at < since) continue;
+      const subject = subjectOf3(th, turn.subjectEntryId, wordOf);
+      const parts = [`${mmdd2(turn.at)} ${turn.taskId ? taskName(turn.taskId) : "\u63D0\u554F"}${subject ? `\uFF5C${subject}` : ""}`];
+      if ((_b = turn.selection) == null ? void 0 : _b.trim()) parts.push(`\u9078\u4E86\u300C${clip3(turn.selection)}\u300D`);
+      if ((_c = turn.question) == null ? void 0 : _c.trim()) parts.push(`\u554F\uFF1A${clip3(turn.question)}`);
+      rows.push({ at, line: `- ${parts.join("\uFF5C")}` });
+    }
+  }
+  rows.sort((a2, b) => b.at - a2.at);
+  return rows.slice(0, (_d = opts.max) != null ? _d : RECENT_DISCUSSION_MAX).map((r) => r.line);
 }
 
 // src/services/learn/EmojiService.ts
@@ -42757,7 +42802,12 @@ var VocabTrackerPlugin = class extends import_obsidian72.Plugin {
         var _a, _b;
         const latest = await ((_a = this.report) == null ? void 0 : _a.latest());
         const md = latest ? (_b = await this.readNote(latest.path)) != null ? _b : "" : "";
-        return buddyContext(this.learnerModel.snapshot(), md);
+        const wordOf = (id2) => {
+          var _a2;
+          return (_a2 = this.store.entries.find((e) => e.id === id2)) == null ? void 0 : _a2.word;
+        };
+        const recent = recentDiscussions(this.threads.allThreads(), wordOf, /* @__PURE__ */ new Date());
+        return buddyContext(this.learnerModel.snapshot(), md, recent);
       },
       onAsked: (e) => {
         var _a;

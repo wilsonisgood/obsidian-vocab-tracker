@@ -62,6 +62,7 @@ import { resolveDiarySettings, resolveReportSettings } from "./src/core/model/se
 import { ReportService } from "./src/services/report/ReportService";
 import { previousWeek } from "./src/core/learner/period";
 import { buddyContext } from "./src/core/learner/buddyContext";
+import { recentDiscussions } from "./src/core/learner/recentDiscussions";
 import { EmojiService } from "./src/services/learn/EmojiService";
 import { FamilyService } from "./src/services/learn/FamilyService";
 import { VerbUsageService } from "./src/services/learn/VerbUsageService";
@@ -330,7 +331,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       buddyContext: async () => {
         const latest = await this.report?.latest();
         const md = latest ? ((await this.readNote(latest.path)) ?? "") : "";
-        return buddyContext(this.learnerModel.snapshot(), md);
+        const wordOf = (id: string) => this.store.entries.find((e) => e.id === id)?.word;
+        const recent = recentDiscussions(this.threads.allThreads(), wordOf, new Date());
+        return buddyContext(this.learnerModel.snapshot(), md, recent);
       },
       onAsked: (e) => this.learner?.recordAsk(e),
     });

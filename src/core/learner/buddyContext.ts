@@ -56,10 +56,12 @@ function snapshotLines(s: BuddySnapshot): string[] {
 }
 
 // "" when there is nothing to say yet.
-export function buddyContext(snapshot: BuddySnapshot, latestReport?: string): string {
+// `recent`: recentDiscussions() lines — what the learner asked the AI lately.
+export function buddyContext(snapshot: BuddySnapshot, latestReport?: string, recent: readonly string[] = []): string {
   const blocks: string[] = [];
   const lines = snapshotLines(snapshot);
   if (lines.length) blocks.push(`【學習紀錄摘要】\n${lines.join("\n")}`);
+  if (recent.length) blocks.push(`【最近跟 AI 討論過的內容（新到舊，只有問題與選取文字）】\n${recent.join("\n")}`);
   if (latestReport?.trim()) {
     for (const name of BUDDY_REPORT_SECTIONS) {
       const body = reportSection(latestReport, name);
