@@ -14,6 +14,8 @@ export interface BuddyInput {
   context: string;
   question?: string;
   selection?: string;
+  // 隨機分享最近讀的: shareBrief() of what was picked; "" when nothing was.
+  share?: string;
 }
 
 export const BUDDY_BASE_PROMPT = `你是學生的英文學習夥伴，陪他聊英文怎麼學、看他寫的英文、一起想接下來可以怎麼走。
@@ -25,7 +27,8 @@ ${WARM_TONE}
 2. 預設用繁體中文（台灣用語），英文例句保留英文；〔學習者設定〕指定了其他回答語言時，以它為準。
 3. 〔學習者背景〕是他的學習紀錄，只在有幫助時自然地引用，沒有的資料不要編造，也不要把數字整串念一遍。
 4. 像聊天一樣回答，不要寫成長篇報告；一次給一兩個做得到的方向就好，結尾可以問他一個小問題，讓對話繼續。
-5. 學生貼上自己寫的英文時，這是他的練習，不是要被評分：先說做得好的地方，再用原句舉例說哪裡可以更自然、為什麼。`;
+5. 學生貼上自己寫的英文時，這是他的練習，不是要被評分：先說做得好的地方，再用原句舉例說哪裡可以更自然、為什麼。
+6. 如果上一輪是你把他最近讀過的一段文字或一個字丟給他、請他說說理解，他接著的回覆就是他的理解：先溫暖地肯定他抓到的部分，再自然地補充或修正，順便帶一個道地的用法或例句，不要像在打分數。`;
 
 const SELECTION_HEADER = `{{#selection}}〔選取的文字〕
 {{selection}}
@@ -65,6 +68,14 @@ ${EXTRA}`,
 一起想接下來幾週可以怎麼安排：每天大概花多少時間、先專注哪一兩件事，並留一點彈性。
 ${EXTRA}`,
 
+  share: `任務：隨機分享最近讀的
+{{#share}}〔他最近讀到的〕
+{{share}}
+
+你像一個好奇的朋友，把上面這個丟給他：用一兩句話說說你看到它時覺得有趣的地方，然後請他分享他理解的意思，或用自己的話換句話說。先不要給解釋或答案，等他回答；一次只問一個問題。
+{{/share}}{{^share}}（目前找不到他最近讀過的東西。）請像好奇的朋友一樣，親切地邀請他聊聊最近讀了什麼、有沒有遇到想聊的字或句子。
+{{/share}}`,
+
   custom: `${SELECTION_HEADER}〔學生說〕
 {{question}}
 
@@ -86,6 +97,7 @@ function buddyTask(id: BuddyKind, label?: AiTask<BuddyInput>["label"]): AiTask<B
       const slots = {
         selection: input.selection?.trim(),
         question: input.question?.trim(),
+        share: input.share?.trim(),
         // 一起看看我寫的: the pasted English is the question text, or the selection.
         writing: id === "review" ? [input.question?.trim(), input.selection?.trim()].filter(Boolean).join("\n\n") : undefined,
       };
@@ -116,8 +128,9 @@ export const buddyWriting = buddyTask("writing", "ai.task.buddy.writing");
 export const buddyReview = buddyTask("review", "ai.task.buddy.review");
 export const buddyLevel = buddyTask("level", "ai.task.buddy.level");
 export const buddyReading = buddyTask("reading", "ai.task.buddy.reading");
+export const buddyShare = buddyTask("share", "ai.task.buddy.share");
 export const buddyPlan = buddyTask("plan", "ai.task.buddy.plan");
 // No label: free typing from the composer.
 export const buddyCustom = buddyTask("custom");
 
-export const BUDDY_TASKS = [buddyGrammar, buddyWriting, buddyReview, buddyLevel, buddyReading, buddyPlan, buddyCustom];
+export const BUDDY_TASKS = [buddyShare, buddyGrammar, buddyWriting, buddyReview, buddyLevel, buddyReading, buddyPlan, buddyCustom];

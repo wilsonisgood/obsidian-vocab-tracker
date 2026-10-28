@@ -15,6 +15,8 @@ import { trailingBlockId } from "../../core/text/blockId";
 import { paragraphHash } from "../../core/text/hash";
 import { buildAskEvent } from "../../core/learner/asks";
 import type { AskEvent } from "../../core/model/learner";
+import { answeredPairs, archiveNoteId, archivePath, batchesToArchive, renderArchiveNote, ARCHIVE_SIZE } from "../../core/learner/buddyGroups";
+import { pickShare, rememberShare, shareBrief, type ShareItem } from "../../core/learner/sharePick";
 import { addPin, pinText, removePin } from "./pin";
 import { findWordSource, wordInput } from "./wordInput";
 
@@ -60,6 +62,18 @@ export interface ThreadServiceDeps {
   // 學習夥伴: the learner's background text (buddyContext()), read fresh on
   // every question. Without it the buddy gets an empty context.
   buddyContext?: () => Promise<string>;
+  // 隨機分享最近讀的: what the learner read lately (collectShareItems()).
+  shareMaterial?: () => Promise<ShareItem[]>;
+  random?: () => number;
+  // 對話十則存檔: where the notes go. Without it nothing is saved.
+  buddyArchive?: {
+    folder: () => string;
+    exists: (path: string) => boolean;
+    create: (path: string, content: string) => Promise<void>;
+    // A note with this `vocab-tracker-id` already exists (another device saved it).
+    hasNote?: (id: string) => boolean;
+    onSaved?: (path: string, start: number, end: number) => void;
+  };
 }
 
 export interface AskParams {
@@ -139,6 +153,8 @@ export class ThreadService {
   private disposed = false;
   private clock: () => Date;
   private newId: () => string;
+  // Keys of the latest 隨機分享 picks, newest last.
+  private recentShares: string[] = [];
 
   constructor(private deps: ThreadServiceDeps) {
     this.clock = deps.clock ?? (() => new Date());
@@ -378,16 +394,53 @@ export class ThreadService {
     } catch (e) {
       console.error("Vocab Tracker: buddy context failed", e);
     }
+    const share = req.taskId === "buddy.share" ? await this.pickShareBrief() : undefined;
     await this.ask({
       threadId: id,
       anchor: { kind: "buddy" },
       taskId: req.taskId,
-      input: { context, question: req.question, selection: req.selection },
+      input: { context, question: req.question, selection: req.selection, ...(share !== undefined ? { share } : {}) },
       display: this.displayFor(req),
       question: req.question,
       selection: req.selection,
     });
+    void this.archiveBuddy(id).catch((e) => console.error("Vocab Tracker: buddy archive failed", e));
     return id;
+  }
+
+  private async pickShareBrief(): Promise<string> {
+    let items: ShareItem[] = [];
+    try {
+      items = (await this.deps.shareMaterial?.()) ?? [];
+    } catch (e) {
+      console.error("Vocab Tracker: share material failed", e);
+    }
+    const item = pickShare(items, this.recentShares, this.deps.random ?? Math.random);
+    if (item) this.recentShares = rememberShare(this.recentShares, item.key);
+    return shareBrief(item);
+  }
+
+  // 對話十則存檔: every full ten answered questions become one note.
+  // Which batches are saved is kept on the thread.
+  async archiveBuddy(threadId: string): Promise<void> {
+    const cfg = this.deps.buddyArchive;
+    const thread = this.get(threadId);
+    if (!cfg || !thread || thread.anchor.kind !== "buddy") return;
+    const pairs = answeredPairs(thread);
+    for (const start of batchesToArchive(pairs.length, thread.archived ?? [])) {
+      const now = this.clock();
+      const id = archiveNoteId(threadId, start);
+      const path = archivePath(cfg.folder(), start, now);
+      // Saved on another device already, or the very file is there.
+      const taken = cfg.hasNote?.(id) || cfg.exists(path);
+      if (!taken) {
+        const batch = pairs.slice(start, start + ARCHIVE_SIZE);
+        await cfg.create(path, renderArchiveNote({ threadId, start, pairs: batch, now }));
+        cfg.onSaved?.(path, start, start + ARCHIVE_SIZE);
+      }
+      thread.archived = [...(thread.archived ?? []), start].sort((a, b) => a - b);
+      this.changed(thread);
+    }
   }
 
   async retryBuddy(threadId: string, turnId: string): Promise<void> {

@@ -13,7 +13,7 @@ describe("buddy tasks", () => {
   it("are registered under surface buddy with the spec'd ids", () => {
     const reg = defaultTaskRegistry();
     expect(BUDDY_TASKS.map((t) => t.id)).toEqual([
-      "buddy.grammar", "buddy.writing", "buddy.review", "buddy.level", "buddy.reading", "buddy.plan", "buddy.custom",
+      "buddy.share", "buddy.grammar", "buddy.writing", "buddy.review", "buddy.level", "buddy.reading", "buddy.plan", "buddy.custom",
     ]);
     for (const t of BUDDY_TASKS) {
       expect(reg.get(t.id)).toBe(t);
@@ -21,7 +21,7 @@ describe("buddy tasks", () => {
       expect(t.tier).toBe("smart");
       expect(t.maxTokens).toBe(4096);
     }
-    expect(reg.forSurface("buddy").filter((t) => t.label)).toHaveLength(6);
+    expect(reg.forSurface("buddy").filter((t) => t.label)).toHaveLength(7);
     expect(buddyCustom.label).toBeUndefined();
   });
 

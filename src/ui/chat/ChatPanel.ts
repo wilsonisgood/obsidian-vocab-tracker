@@ -10,6 +10,7 @@ import { bubble } from "../kit/bubble";
 import type { KitAction } from "../kit/emptyState";
 import { runUndoable } from "../kit/undoable";
 import { chipsLabel, displayContent, grammarChips } from "./grammarChips";
+import { quickTasksToShow, selectionToAttach } from "./quickTasks";
 import type { SelectionTracker } from "./SelectionTracker";
 
 // Discussion panel shared by word (A2, M4), paragraph (A1, M5) and trivia
@@ -64,6 +65,13 @@ export interface ChatPanelOptions {
   // it used; clicking one calls this (open the topic page). Without it, no
   // chips are drawn.
   onGrammarTopic?: (topicId: string) => void;
+  // 學習夥伴: the quick buttons to show right now, as task ids (the host
+  // calls refreshQuick() when they change). Without it every labeled task
+  // of the surface is shown.
+  quickTasks?: () => readonly string[];
+  // false: the page ignores the note's text selection — no 「選取」 chip and
+  // nothing is attached to a question. Default true.
+  attachSelection?: boolean;
 }
 
 function shortDate(iso: string): string {
@@ -84,6 +92,8 @@ export class ChatPanel extends Component {
   private input: HTMLTextAreaElement | null = null;
   private sendBtn: HTMLButtonElement | null = null;
   private quickBtns: HTMLButtonElement[] = [];
+  private quickEl: HTMLElement | null = null;
+  private offline = false;
   private originText: string | undefined;
 
   // Turn-list markdown lives in its own child component, reset on every
@@ -133,7 +143,9 @@ export class ChatPanel extends Component {
         }
       })
     );
-    this.register(this.opts.selection.events.on("change", () => this.renderSelection()));
+    if (this.opts.attachSelection !== false) {
+      this.register(this.opts.selection.events.on("change", () => this.renderSelection()));
+    }
     this.register(() => {
       if (this.frame !== null) cancelAnimationFrame(this.frame);
     });
@@ -381,17 +393,14 @@ export class ChatPanel extends Component {
     if (renderAiGate(controls, status, { onOpenSettings: this.opts.onOpenSettings }) && status !== "offline") return;
     const offline = status === "offline";
 
-    const quick = controls.createDiv({ cls: "vt-chat-quick" });
-    for (const task of this.opts.ai.tasks.forSurface(this.opts.surface)) {
-      if (!task.label) continue;
-      const btn = quick.createEl("button", { cls: "vt-chip", text: t(task.label) });
-      btn.disabled = offline;
-      btn.addEventListener("click", () => this.submit(task.id, ""));
-      this.quickBtns.push(btn);
-    }
+    this.offline = offline;
+    this.quickEl = controls.createDiv({ cls: "vt-chat-quick" });
+    this.renderQuick();
 
-    this.selectionEl = controls.createDiv({ cls: "vt-chat-selection" });
-    this.renderSelection();
+    if (this.opts.attachSelection !== false) {
+      this.selectionEl = controls.createDiv({ cls: "vt-chat-selection" });
+      this.renderSelection();
+    }
 
     const composer = controls.createDiv({ cls: "vt-chat-composer" });
     const input = (this.input = composer.createEl("textarea", { cls: "vt-chat-input" }));
@@ -433,6 +442,27 @@ export class ChatPanel extends Component {
     }
   }
 
+  // Redraws the quick buttons (the host changed which ones to show).
+  refreshQuick(): void {
+    if (this.quickEl) this.renderQuick();
+  }
+
+  private renderQuick(): void {
+    const quick = this.quickEl;
+    if (!quick) return;
+    quick.empty();
+    this.quickBtns = [];
+    const { ai, surface } = this.opts;
+    const tasks = quickTasksToShow(ai.tasks.forSurface(surface), (id) => ai.tasks.get(id), this.opts.quickTasks?.());
+    for (const task of tasks) {
+      const btn = quick.createEl("button", { cls: "vt-chip", text: t(task.label as NonNullable<typeof task.label>) });
+      btn.disabled = this.offline;
+      btn.addEventListener("click", () => this.submit(task.id, ""));
+      this.quickBtns.push(btn);
+    }
+    this.updateBusy();
+  }
+
   private renderSelection(): void {
     const el = this.selectionEl;
     if (!el) return;
@@ -464,7 +494,7 @@ export class ChatPanel extends Component {
     const question = text.trim();
     if (taskId === this.opts.customTaskId && !question) return;
     if (this.busy) return;
-    const selection = this.opts.selection.get()?.text;
+    const selection = selectionToAttach(this.opts.attachSelection, this.opts.selection.get()?.text);
     if (question && this.input) {
       this.input.value = "";
       autoGrow(this.input);

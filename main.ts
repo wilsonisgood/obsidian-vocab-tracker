@@ -62,6 +62,7 @@ import { resolveDiarySettings, resolveReportSettings } from "./src/core/model/se
 import { ReportService } from "./src/services/report/ReportService";
 import { previousWeek } from "./src/core/learner/period";
 import { buddyContext } from "./src/core/learner/buddyContext";
+import { collectShareItems } from "./src/core/learner/sharePick";
 import { recentDiscussions } from "./src/core/learner/recentDiscussions";
 import { EmojiService } from "./src/services/learn/EmojiService";
 import { FamilyService } from "./src/services/learn/FamilyService";
@@ -180,6 +181,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   ai!: AiService;
   notes!: ObsidianNotes;
   threads!: ThreadService;
+  // Per-device state (not synced), e.g. the day the 「再一則滿十則」 hint showed.
+  device!: ObsidianDeviceState;
   learn!: LearnStore;
   // 文法學習 (Wave 15): progress/questions store, topic pages, AI question maker.
   grammar!: GrammarStore;
@@ -321,6 +324,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       vault: this.vault,
       mode: () => resolveAnchorSettings(this.store.settings).mode,
     });
+    this.device = new ObsidianDeviceState(this.app);
     this.threads = new ThreadService({
       storage: this.storage,
       store: this.store,
@@ -334,6 +338,24 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         const wordOf = (id: string) => this.store.entries.find((e) => e.id === id)?.word;
         const recent = recentDiscussions(this.threads.allThreads(), wordOf, new Date());
         return buddyContext(this.learnerModel.snapshot(), md, recent);
+      },
+      // 隨機分享最近讀的: paragraphs discussed and words touched in the last two weeks.
+      shareMaterial: async () => {
+        await this.loadLearner();
+        return collectShareItems({
+          threads: this.threads.allThreads(),
+          entries: this.store.entries,
+          touches: this.learner.wordTouches(),
+          now: new Date(),
+        });
+      },
+      // 對話十則存檔: ten questions of a buddy chat become a note in the discussions folder.
+      buddyArchive: {
+        folder: () => this.files.paths().threads,
+        exists: (p) => this.vault.exists(p),
+        create: (p, c) => this.vault.create(p, c),
+        hasNote: (id) => this.vault.findManaged("ai-note", id) !== null,
+        onSaved: (path, start, end) => new Notice(t("buddy.archived", { from: start + 1, to: end, path })),
       },
       onAsked: (e) => this.learner?.recordAsk(e),
     });

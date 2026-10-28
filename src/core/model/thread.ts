@@ -68,6 +68,9 @@ export interface Thread extends Record_ {
   id: string;
   anchor: Anchor;
   turns: Turn[];
+  // Buddy conversations: starts (0, 10, 20…) of the ten-question batches
+  // already saved as notes, so a batch is written once.
+  archived?: number[];
 }
 
 // One thread per word, with a deterministic id so two devices that each

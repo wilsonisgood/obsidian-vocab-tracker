@@ -15,14 +15,14 @@ export const PARAGRAPH_TEXT_MAX = 400;
 const DAY_MS = 86_400_000;
 
 const flat = (s: string) => s.replace(/\s+/g, " ").trim();
-function clip(s: string, max = TEXT_MAX): string {
+export function clip(s: string, max = TEXT_MAX): string {
   const chars = [...flat(s)];
   return chars.length > max ? `${chars.slice(0, max).join("")}…` : chars.join("");
 }
 
 // Markdown noise a transcript paragraph carries: links keep their text;
 // list bullets, video timestamps ("[00:01:29]") and block ids go.
-function plainParagraph(md: string): string {
+export function plainParagraph(md: string): string {
   return md
     .replace(/!?\[\[([^\]|]*\|)?([^\]]*)\]\]/g, "$2")
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
