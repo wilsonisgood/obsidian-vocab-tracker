@@ -15,6 +15,14 @@ import { trailingBlockId } from "../../core/text/blockId";
 import { paragraphHash } from "../../core/text/hash";
 import { buildAskEvent } from "../../core/learner/asks";
 import type { AskEvent } from "../../core/model/learner";
+import {
+  appendBatch, archivePath, batchMarker, buildEntries, digestConversation, fallbackWords, renderBatchSection, renderDayNote,
+  type WordLink,
+} from "../../core/learner/buddyArchive";
+import { digestIsEmpty, parseDigest, type Digest } from "../../core/learner/buddyDigest";
+import { answeredPairs, ARCHIVE_TAKE, ARCHIVE_TRIGGER, localDay } from "../../core/learner/buddyGroups";
+import { parseSuggestions } from "../../core/learner/buddySuggestions";
+import { pickShare, pickShareStyle, rememberShare, shareBrief, shareSource, shareSubject, type ShareItem } from "../../core/learner/sharePick";
 import { addPin, pinText, removePin } from "./pin";
 import { findWordSource, wordInput } from "./wordInput";
 
@@ -59,7 +67,27 @@ export interface ThreadServiceDeps {
   onAsked?: (e: AskEvent) => void;
   // 學習夥伴: the learner's background text (buddyContext()), read fresh on
   // every question. Without it the buddy gets an empty context.
-  buddyContext?: () => Promise<string>;
+  buddyContext?: (taskId: string) => Promise<string>;
+  // 聊聊最近讀的: what the learner read lately (collectShareItems()).
+  shareMaterial?: () => Promise<ShareItem[]>;
+  random?: () => number;
+  // 對話十則存檔: where the notes go. Without it nothing is saved.
+  buddyArchive?: {
+    folder: () => string;
+    exists: (path: string) => boolean;
+    create: (path: string, content: string) => Promise<void>;
+    // Atomic edit of an existing note (VaultPort.process).
+    process: (path: string, fn: (text: string) => string) => Promise<unknown>;
+    // The day note, wherever the learner moved it (`vocab-tracker-id`).
+    findNote?: (id: string) => string | null;
+    onSaved?: (path: string) => void;
+    // 這次的收穫 needs the AI; false skips it.
+    digestReady?: () => boolean;
+    // Word page path (for [[link|word]]); null when the word has none.
+    wordLink?: WordLink;
+    // Is the word in the learner's list.
+    isSavedWord?: (word: string) => boolean;
+  };
 }
 
 export interface AskParams {
@@ -73,6 +101,7 @@ export interface AskParams {
   selection?: string;
   // 冷知識: the word this round is about (規劃書 06 §7.4), kept on both turns.
   subjectEntryId?: string;
+  shareSubject?: string;
 }
 
 export interface WordAsk {
@@ -139,6 +168,10 @@ export class ThreadService {
   private disposed = false;
   private clock: () => Date;
   private newId: () => string;
+  // Keys of the latest 聊聊最近讀的 picks, newest last.
+  private recentShares: string[] = [];
+  private lastShareKind: ShareItem["kind"] | undefined;
+  private lastShareStyle: string | undefined;
 
   constructor(private deps: ThreadServiceDeps) {
     this.clock = deps.clock ?? (() => new Date());
@@ -232,6 +265,7 @@ export class ThreadService {
     if (p.question) user.question = p.question;
     if (p.selection) user.selection = p.selection;
     if (p.subjectEntryId) user.subjectEntryId = p.subjectEntryId;
+    if (p.shareSubject) user.shareSubject = p.shareSubject;
     const answer: Turn = {
       id: this.newId(),
       role: "assistant",
@@ -265,6 +299,10 @@ export class ThreadService {
       answer.provider = r.provider;
       answer.usage = { input: r.usage.input, output: r.usage.output, cacheRead: r.usage.cacheRead, cacheWrite: r.usage.cacheWrite };
       answer.stop = r.stop;
+      if (p.anchor.kind === "buddy") {
+        const suggestions = parseSuggestions(r.text);
+        if (suggestions.length) answer.suggestions = suggestions;
+      }
     } catch (e) {
       if (this.disposed) return;
       const streamed = this.partial.get(answer.id) ?? "";
@@ -374,20 +412,102 @@ export class ThreadService {
     if (existing && existing.anchor.kind !== "buddy") return null;
     let context = "";
     try {
-      context = (await this.deps.buddyContext?.()) ?? "";
+      context = (await this.deps.buddyContext?.(req.taskId)) ?? "";
     } catch (e) {
       console.error("Vocab Tracker: buddy context failed", e);
     }
+    const share = req.taskId === "buddy.share" ? await this.pickShareBrief() : undefined;
     await this.ask({
       threadId: id,
       anchor: { kind: "buddy" },
       taskId: req.taskId,
-      input: { context, question: req.question, selection: req.selection },
+      input: { context, question: req.question, selection: req.selection, ...(share ? { share: share.brief, shareStyle: share.style, ...share.source } : {}) },
       display: this.displayFor(req),
       question: req.question,
       selection: req.selection,
+      ...(share?.subject ? { shareSubject: share.subject } : {}),
     });
+    void this.archiveBuddy(id).catch((e) => console.error("Vocab Tracker: buddy archive failed", e));
     return id;
+  }
+
+  private async pickShareBrief(): Promise<{ brief: string; style?: string; subject?: string; source?: { sourceTitle: string; sourceParagraph: string } }> {
+    let items: ShareItem[] = [];
+    try {
+      items = (await this.deps.shareMaterial?.()) ?? [];
+    } catch (e) {
+      console.error("Vocab Tracker: share material failed", e);
+    }
+    const random = this.deps.random ?? Math.random;
+    const item = pickShare(items, this.recentShares, random, this.lastShareKind);
+    if (!item) return { brief: "" };
+    this.recentShares = rememberShare(this.recentShares, item.key);
+    this.lastShareKind = item.kind;
+    const style = pickShareStyle(item.kind, this.lastShareStyle, random);
+    this.lastShareStyle = style.id;
+    return { brief: shareBrief(item), style: style.text, subject: shareSubject(item), source: shareSource(item) };
+  }
+
+  // 對話整理: once ten answered groups are alive, the oldest eight are
+  // written to a note and tombstoned (the newest two stay to chat on).
+  // Nothing is deleted when the note can't be written.
+  async archiveBuddy(threadId: string): Promise<void> {
+    const cfg = this.deps.buddyArchive;
+    const thread = this.get(threadId);
+    if (!cfg || !thread || thread.anchor.kind !== "buddy") return;
+    const pairs = answeredPairs(thread);
+    if (pairs.length < ARCHIVE_TRIGGER) return;
+    const batch = pairs.slice(0, ARCHIVE_TAKE);
+    const start = thread.archivedCount ?? 0;
+    const now = this.clock();
+    const day = localDay(now);
+    const labelOf = (id: string) => {
+      const label = this.deps.ai.tasks.get(id)?.label;
+      return label ? t(label) : undefined;
+    };
+    const entries = buildEntries(batch, pairs[ARCHIVE_TAKE]?.user, labelOf);
+    const digest = await this.digestOf(entries, cfg);
+    const words = digest?.words.length ? digest.words : fallbackWords(entries, cfg.isSavedWord ?? (() => false));
+    const section = renderBatchSection({ threadId, start, entries, digest, words, now, wordLink: cfg.wordLink });
+
+    const existing = cfg.findNote?.(`buddy-day-${day}`) ?? null;
+    const path = existing ?? archivePath(cfg.folder(), day);
+    if (cfg.exists(path)) {
+      let written = false;
+      await cfg.process(path, (text) => {
+        const next = appendBatch(text, batchMarker(threadId, start), section, words);
+        written = next !== null;
+        return next ?? text;
+      });
+      if (written) cfg.onSaved?.(path);
+    } else {
+      await cfg.create(path, renderDayNote(day, words, section, now));
+      cfg.onSaved?.(path);
+    }
+    // Only after the note is safe are the eight groups tombstoned.
+    const stamp = this.nowIso();
+    for (const p of batch) {
+      for (const turn of [p.user, p.assistant]) {
+        turn.deletedAt = stamp;
+        turn.updatedAt = stamp;
+      }
+    }
+    thread.archivedCount = start + ARCHIVE_TAKE;
+    this.changed(thread);
+  }
+
+  // The AI's 這次的收穫; null when it is off or fails (the note then lists words only).
+  private async digestOf(entries: Parameters<typeof digestConversation>[0], cfg: NonNullable<ThreadServiceDeps["buddyArchive"]>): Promise<Digest | null> {
+    if (!cfg.digestReady?.()) return null;
+    try {
+      const { request } = this.deps.ai.prepare("buddy.digest", { conversation: digestConversation(entries) }, []);
+      const r = await this.deps.ai.complete(request, { threadId: `digest:${this.newId()}` });
+      const d = parseDigest(r.text);
+      return d && !digestIsEmpty(d) ? d : null;
+    } catch (e) {
+      console.error("Vocab Tracker: buddy digest failed", e);
+      return null;
+    }
   }
 
   async retryBuddy(threadId: string, turnId: string): Promise<void> {

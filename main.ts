@@ -62,6 +62,8 @@ import { resolveDiarySettings, resolveReportSettings } from "./src/core/model/se
 import { ReportService } from "./src/services/report/ReportService";
 import { previousWeek } from "./src/core/learner/period";
 import { buddyContext } from "./src/core/learner/buddyContext";
+import { findWordSource } from "./src/services/threads/wordInput";
+import { attachWordSources, collectShareItems, type WordSourceText } from "./src/core/learner/sharePick";
 import { recentDiscussions } from "./src/core/learner/recentDiscussions";
 import { EmojiService } from "./src/services/learn/EmojiService";
 import { FamilyService } from "./src/services/learn/FamilyService";
@@ -180,6 +182,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   ai!: AiService;
   notes!: ObsidianNotes;
   threads!: ThreadService;
+  // Per-device state (not synced), e.g. the day the 「再一則滿十則」 hint showed.
+  device!: ObsidianDeviceState;
   learn!: LearnStore;
   // 文法學習 (Wave 15): progress/questions store, topic pages, AI question maker.
   grammar!: GrammarStore;
@@ -321,6 +325,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       vault: this.vault,
       mode: () => resolveAnchorSettings(this.store.settings).mode,
     });
+    this.device = new ObsidianDeviceState(this.app);
     this.threads = new ThreadService({
       storage: this.storage,
       store: this.store,
@@ -328,12 +333,50 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       notes: this.notes,
       anchors: this.anchors,
       // 學習夥伴 (規劃書 15 §7.3): what the buddy knows about the learner.
-      buddyContext: async () => {
+      buddyContext: async (taskId) => {
         const latest = await this.report?.latest();
         const md = latest ? ((await this.readNote(latest.path)) ?? "") : "";
         const wordOf = (id: string) => this.store.entries.find((e) => e.id === id)?.word;
-        const recent = recentDiscussions(this.threads.allThreads(), wordOf, new Date());
+        // 最近討論只在「聊聊最近讀的」與自己輸入／點建議話題時附上。
+        const recent = taskId === "buddy.share" || taskId === "buddy.custom" ? recentDiscussions(this.threads.allThreads(), wordOf, new Date()) : [];
         return buddyContext(this.learnerModel.snapshot(), md, recent);
+      },
+      // 隨機分享最近讀的: paragraphs discussed and words touched in the last two weeks.
+      shareMaterial: async () => {
+        await this.loadLearner();
+        const items = collectShareItems({
+          threads: this.threads.allThreads(),
+          entries: this.store.entries,
+          touches: this.learner.wordTouches(),
+          now: new Date(),
+        });
+        // A word comes with the paragraph it was saved from, when there is one.
+        const sources = new Map<string, WordSourceText>();
+        for (const item of items) {
+          if (item.kind !== "word") continue;
+          const entry = this.store.entries.find((e) => !e.deletedAt && e.word.toLowerCase() === item.word);
+          const src = entry ? await findWordSource(entry, this.notes) : null;
+          if (src) sources.set(item.word, { title: src.title, paragraph: src.paragraph });
+        }
+        return attachWordSources(items, (w) => sources.get(w));
+      },
+      // 對話十則存檔: ten questions of a buddy chat become a note in the discussions folder.
+      buddyArchive: {
+        folder: () => this.files.paths().threads,
+        exists: (p) => this.vault.exists(p),
+        create: (p, c) => this.vault.create(p, c),
+        process: (p, fn) => this.vault.process(p, fn),
+        findNote: (id) => this.vault.findManaged("ai-note", id),
+        onSaved: (path) => new Notice(t("buddy.archived", { path })),
+        digestReady: () => this.ai.status() === "ready",
+        isSavedWord: (w) => this.isWordSaved(w),
+        // 單字頁 of a word in the list; null when it has none yet.
+        wordLink: (w) => {
+          const entry = this.store.entries.find((e) => !e.deletedAt && e.word.toLowerCase() === w.toLowerCase());
+          if (!entry) return null;
+          const path = this.exporter.wordPagePath(entry.id, entry.word);
+          return this.vault.exists(path) ? path : null;
+        },
       },
       onAsked: (e) => this.learner?.recordAsk(e),
     });

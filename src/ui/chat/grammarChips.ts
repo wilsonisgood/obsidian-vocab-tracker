@@ -1,3 +1,4 @@
+import { stripSuggestions } from "../../core/learner/buddySuggestions";
 import { t } from "../../core/i18n";
 import { GRAMMAR_TASK_ID } from "../../core/grammar/sightings";
 import { topicById } from "../../core/grammar/catalog";
@@ -27,7 +28,7 @@ export interface GrammarChip {
 // Other turns pass through untouched (only a trailer-shaped comment is ever
 // removed, so a plain answer is the same string).
 export function displayContent(content: string): string {
-  return stripGrammarTrailer(content);
+  return stripSuggestions(stripGrammarTrailer(content));
 }
 
 // Chips for a finished 文法解析 answer; empty for any other turn, an answer

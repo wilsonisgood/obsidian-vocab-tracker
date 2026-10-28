@@ -53,3 +53,102 @@
   font-size: var(--font-ui-smaller);
   color: var(--text-faint);
 }
+
+/* 第二十四波 R8：右側分類欄、快速按鈕、沉底按鈕 */
+.vt-buddy {
+  container-type: inline-size;
+  container-name: vt-buddy;
+}
+.vt-buddy-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.vt-buddy-chat {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.vt-buddy .vt-buddy-list {
+  flex: none;
+  width: 200px;
+  max-height: 70vh;
+  margin-bottom: 0;
+  padding-left: 10px;
+  border-left: 1px solid var(--background-modifier-border);
+}
+.vt-buddy-list.is-empty {
+  display: none;
+}
+.vt-buddy-group-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 2px 4px;
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-s);
+}
+.vt-buddy-group-head:hover {
+  background: var(--background-modifier-hover);
+}
+.vt-buddy-group-arrow {
+  display: inline-flex;
+}
+.vt-buddy-group-title {
+  flex: 1;
+}
+.vt-buddy-group-count {
+  color: var(--text-faint);
+}
+.vt-buddy-list-toggle {
+  display: none;
+}
+.vt-buddy-head {
+  gap: 6px;
+}
+.vt-buddy-head .vt-buddy-title {
+  margin-right: auto;
+}
+@container vt-buddy (max-width: 699px) {
+  .vt-buddy-body {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .vt-buddy .vt-buddy-list {
+    display: none;
+    width: auto;
+    max-height: 240px;
+    padding-left: 0;
+    border-left: none;
+    margin-bottom: 8px;
+  }
+  .vt-buddy.is-list-open .vt-buddy-list:not(.is-empty) {
+    display: flex;
+  }
+  .vt-buddy-list-toggle {
+    display: inline-flex;
+  }
+}
+.vt-buddy-sink {
+  position: fixed;
+  z-index: 30;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--shadow-s);
+  color: var(--text-normal);
+}
+.vt-buddy-list-title {
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 2px 4px;
+}

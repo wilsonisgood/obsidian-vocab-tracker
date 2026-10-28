@@ -985,6 +985,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "report.review.empty": "這段期間還沒有週報可以回顧",
 
   // 第二十一波 R5
+  "ai.task.buddy.share": "聊聊最近讀的",
   "ai.task.buddy.grammar": "聊聊文法怎麼學",
   "ai.task.buddy.writing": "想多寫一點英文",
   "ai.task.buddy.review": "一起看看我寫的",
@@ -996,5 +997,14 @@ export const zhTW: Record<keyof typeof en, string> = {
   "buddy.placeholder": "想聊什麼都可以，例如：我寫的這句自然嗎？",
   "buddy.untitled": "新的對話",
   "buddy.threads": "最近的對話",
+  "buddy.list": "對話清單",
+  "buddy.listToday": "對話清單 · 今天 {n}",
+  "buddy.group.today": "今天",
+  "buddy.group.yesterday": "昨天",
+  "buddy.sink": "捲到最底",
+  "buddy.nearFull.title": "快滿十則了",
+  "buddy.nearFull.body": "再一則就會把前 8 則整理進討論串，對話裡只留最新兩則。",
+  "buddy.nearFull.ok": "知道了",
+  "buddy.archived": "內容已整理進討論串：{path}",
   "command.buddy.open": "和學習夥伴聊聊",
 };

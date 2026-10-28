@@ -52,6 +52,8 @@ export interface Turn {
   question?: string;
   sent?: string;
   subjectEntryId?: string;
+  // 聊聊最近讀的: what the buddy picked — the word, or 〈note title〉 for a paragraph.
+  shareSubject?: string;
   status: TurnStatus;
   error?: TurnErrorCode;
   errorMessage?: string;
@@ -61,6 +63,8 @@ export interface Turn {
   provider?: string;
   usage?: TurnUsage;
   feedback?: "up" | "down";
+  // Buddy answers: the 〔接著聊〕 topics parsed from the answer's last line.
+  suggestions?: string[];
   pinnedToGrammar?: boolean;
 }
 
@@ -68,6 +72,9 @@ export interface Thread extends Record_ {
   id: string;
   anchor: Anchor;
   turns: Turn[];
+  // Buddy conversations: how many question-answer groups (counted from the
+  // first, deleted ones included) were already tidied into discussion notes.
+  archivedCount?: number;
 }
 
 // One thread per word, with a deterministic id so two devices that each

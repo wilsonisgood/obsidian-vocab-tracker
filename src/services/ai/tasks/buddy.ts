@@ -14,6 +14,13 @@ export interface BuddyInput {
   context: string;
   question?: string;
   selection?: string;
+  // 聊聊最近讀的: shareBrief() of what was picked; "" when nothing was.
+  share?: string;
+  // 聊聊最近讀的: this round's way of asking (SHARE_STYLES).
+  shareStyle?: string;
+  // The note paragraph a picked word came from.
+  sourceTitle?: string;
+  sourceParagraph?: string;
 }
 
 export const BUDDY_BASE_PROMPT = `你是學生的英文學習夥伴，陪他聊英文怎麼學、看他寫的英文、一起想接下來可以怎麼走。
@@ -25,7 +32,10 @@ ${WARM_TONE}
 2. 預設用繁體中文（台灣用語），英文例句保留英文；〔學習者設定〕指定了其他回答語言時，以它為準。
 3. 〔學習者背景〕是他的學習紀錄，只在有幫助時自然地引用，沒有的資料不要編造，也不要把數字整串念一遍。
 4. 像聊天一樣回答，不要寫成長篇報告；一次給一兩個做得到的方向就好，結尾可以問他一個小問題，讓對話繼續。
-5. 學生貼上自己寫的英文時，這是他的練習，不是要被評分：先說做得好的地方，再用原句舉例說哪裡可以更自然、為什麼。`;
+5. 學生貼上自己寫的英文時，這是他的練習，不是要被評分：先說做得好的地方，再用原句舉例說哪裡可以更自然、為什麼。
+6. 如果上一輪是你把他最近讀過的一段文字或一個字丟給他、請他說說理解，他接著的回覆就是他的理解：先溫暖地肯定他抓到的部分，再自然地補充或修正，順便帶一個道地的用法或例句，不要像在打分數。
+7. 每次回答的最後，另起一行輸出三個可以接著聊的話題，格式固定為：〔接著聊〕話題一｜話題二｜話題三
+   每個話題 14 個中文字以內，輕鬆有趣、適合當按鈕文字、跟這一輪的內容相關；這一行是給介面用的，正文裡不要提到它。`;
 
 const SELECTION_HEADER = `{{#selection}}〔選取的文字〕
 {{selection}}
@@ -65,6 +75,20 @@ ${EXTRA}`,
 一起想接下來幾週可以怎麼安排：每天大概花多少時間、先專注哪一兩件事，並留一點彈性。
 ${EXTRA}`,
 
+  share: `任務：聊聊最近讀的
+{{#share}}〔他最近讀到的〕
+{{share}}
+
+你像一個好奇的朋友，把上面這個丟給他。{{#shareStyle}}這次的問法：{{shareStyle}}。{{/shareStyle}}
+{{#sourceParagraph}}這個字出自「{{sourceTitle}}」的這一段：
+{{sourceParagraph}}
+可以用那段的上下文出題（例如這個字在這句裡是什麼意思、換個字還說得通嗎、這段主旨是什麼），問法可以更豐富。
+{{/sourceParagraph}}
+先不要給解釋或答案，等他回答；一次只問一個問題，開場用一兩句話就好。
+不要用固定的開場句（例如每次都「我覺得 X 很有趣，因為…」），每次用不同的口氣和切入點。
+{{/share}}{{^share}}（目前找不到他最近讀過的東西。）請像好奇的朋友一樣，親切地邀請他聊聊最近讀了什麼、有沒有遇到想聊的字或句子。
+{{/share}}`,
+
   custom: `${SELECTION_HEADER}〔學生說〕
 {{question}}
 
@@ -86,6 +110,10 @@ function buddyTask(id: BuddyKind, label?: AiTask<BuddyInput>["label"]): AiTask<B
       const slots = {
         selection: input.selection?.trim(),
         question: input.question?.trim(),
+        share: input.share?.trim(),
+        shareStyle: input.shareStyle?.trim(),
+        sourceTitle: input.sourceTitle?.trim(),
+        sourceParagraph: input.sourceParagraph?.trim(),
         // 一起看看我寫的: the pasted English is the question text, or the selection.
         writing: id === "review" ? [input.question?.trim(), input.selection?.trim()].filter(Boolean).join("\n\n") : undefined,
       };
@@ -116,8 +144,47 @@ export const buddyWriting = buddyTask("writing", "ai.task.buddy.writing");
 export const buddyReview = buddyTask("review", "ai.task.buddy.review");
 export const buddyLevel = buddyTask("level", "ai.task.buddy.level");
 export const buddyReading = buddyTask("reading", "ai.task.buddy.reading");
+export const buddyShare = buddyTask("share", "ai.task.buddy.share");
 export const buddyPlan = buddyTask("plan", "ai.task.buddy.plan");
 // No label: free typing from the composer.
 export const buddyCustom = buddyTask("custom");
 
-export const BUDDY_TASKS = [buddyGrammar, buddyWriting, buddyReview, buddyLevel, buddyReading, buddyPlan, buddyCustom];
+export const BUDDY_TASKS = [buddyShare, buddyGrammar, buddyWriting, buddyReview, buddyLevel, buddyReading, buddyPlan, buddyCustom];
+
+// ── 對話整理的「這次的收穫」 (buddy.digest) ──
+
+export interface BuddyDigestInput {
+  // digestConversation(): 你／夥伴 lines of the groups being tidied.
+  conversation: string;
+}
+
+export const BUDDY_DIGEST_PROMPT = `你在幫學生整理一段英文學習對話的收穫。對話裡「（…）」括號的內容是介面按鈕的說明，不是學生說的話。
+只輸出 JSON（不要程式碼區塊、不要其他文字），格式：
+{"topics":["…"],"corrections":[{"yours":"…","better":"…","why":"…"}],"understandings":[{"subject":"…","yours":"…","ok":true,"feedback":"…"}],"words":["…"]}
+規則：
+1. topics：2 到 3 個這段對話聊到的主題（英文單字、專有名詞或簡短中文），給標題用。
+2. corrections：學生自己寫的英文有哪些句子可以更自然；yours 引用原句，better 是更自然的寫法，why 用幾個關鍵詞說明原因（如「過去式、介系詞」）。學生沒寫英文就給空陣列，不要編造。
+3. understandings：夥伴請學生說出理解的字或段落；subject 是那個字，yours 是學生的理解，ok 表示大致正確，feedback 一句補充。沒有就給空陣列。
+4. words：對話中聊到的英文單字（原形、小寫），最多 12 個。
+5. 只根據對話內容，沒有的就給空陣列，不要編造。`;
+
+export const buddyDigest: AiTask<BuddyDigestInput, string> = {
+  id: "buddy.digest",
+  version: 1,
+  surface: "buddy",
+  tier: "fast",
+  maxTokens: 1500,
+  build(input, ctx) {
+    return composeRequest({
+      base: BUDDY_DIGEST_PROMPT,
+      profile: ctx.profile,
+      history: [],
+      user: `〔對話〕\n${input.conversation}`,
+      tier: "fast",
+      maxTokens: 1500,
+    });
+  },
+  parse(r: AiResult): string {
+    return r.text;
+  },
+};

@@ -2,9 +2,14 @@ import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext } from 
 import type VocabTrackerPlugin from "../../../main";
 import { t } from "../../core/i18n";
 import { liveTurns, type Thread } from "../../core/model/thread";
-import { buddyCustom, buddyReview } from "../../services/ai/tasks/buddy";
+import { defaultExpandedKeys, groupByDay, isGroupCollapsed, localDay, shouldWarnNinth, tidiedUp, todayCount, userQuestionCount, type DayGroup } from "../../core/learner/buddyGroups";
+import { latestSuggestions, pickTwo } from "../../core/learner/buddySuggestions";
+import type { QuickItem } from "../chat/quickTasks";
+import { ROTATION_MS, rotationPaused, rotationWindow } from "../../core/learner/quickRotation";
+import { buddyCustom, buddyGrammar, buddyPlan, buddyReading, buddyReview, buddyShare, buddyLevel, buddyWriting } from "../../services/ai/tasks/buddy";
+import { BuddyNearFullModal } from "./BuddyNearFullModal";
+import { showSinkButton } from "./scrollBottom";
 import { ChatPanel, createChatUiState, type ChatPanelOptions, type ChatSend } from "../chat/ChatPanel";
-import { dayLabel } from "../kit/dates";
 import { openPluginSettings } from "../kit/openSettings";
 import { guardReadingClicks } from "./learnUi";
 
@@ -17,6 +22,7 @@ import { guardReadingClicks } from "./learnUi";
 // recent conversations sits above; each is its own thread (`buddy:<id>`).
 
 const TITLE_CHARS = 30;
+const WARN_KEY = "buddy-nearfull-day";
 
 // 「第一個問題前 30 字」 — a quick-action question shows its button label.
 export function buddyThreadTitle(thread: Thread): string {
@@ -40,6 +46,16 @@ class BuddyBlock extends MarkdownRenderChild {
   private root!: HTMLElement;
   private listEl!: HTMLElement;
   private chatHost!: HTMLElement;
+  // 分類欄的收合狀態（true = 收起），這個 block 存活期間記住。
+  private groupOverrides = new Map<string, boolean>();
+  // 快速按鈕輪替：第幾輪、滑鼠是否停在按鈕列。
+  private round = 0;
+  private hovering = false;
+  // 建議話題：目前顯示的兩個，以及它們是從哪一組挑的。
+  private listBtn!: HTMLButtonElement;
+  private archivedSeen = 0;
+  private picked: string[] = [];
+  private pickedFrom = "";
   private chat: ChatPanel | null = null;
   private chatState = createChatUiState();
   // The open conversation; an id nothing is stored under yet is a new one.
@@ -64,14 +80,33 @@ class BuddyBlock extends MarkdownRenderChild {
     const title = head.createSpan({ cls: "vt-buddy-title" });
     setIcon(title.createSpan({ cls: "vt-buddy-title-icon" }), "message-circle");
     title.createSpan({ text: t("buddy.title") });
+    const listBtn = (this.listBtn = head.createEl("button", { cls: "vt-chip vt-buddy-list-toggle", text: t("buddy.list"), attr: { type: "button" } }));
+    listBtn.addEventListener("click", () => this.root.toggleClass("is-list-open", !this.root.hasClass("is-list-open")));
     const newBtn = head.createEl("button", { cls: "vt-chip vt-buddy-new", text: t("buddy.new") });
     newBtn.addEventListener("click", () => this.startNew());
 
-    this.listEl = this.root.createDiv({ cls: "vt-buddy-list" });
-    this.chatHost = this.root.createDiv({ cls: "vt-buddy-chat" });
+    const body = this.root.createDiv({ cls: "vt-buddy-body" });
+    this.chatHost = body.createDiv({ cls: "vt-buddy-chat" });
+    this.listEl = body.createDiv({ cls: "vt-buddy-list" });
+
+    this.registerDomEvent(this.chatHost, "mouseover", (e) => {
+      this.hovering = e.target instanceof Element && !!e.target.closest(".vt-chat-quick");
+    });
+    this.registerDomEvent(this.chatHost, "mouseleave", () => (this.hovering = false));
+    this.registerInterval(window.setInterval(() => this.rotateQuick(), ROTATION_MS));
+    this.setupSink();
 
     // Only list changes matter here; the ChatPanel follows its own thread.
-    this.register(this.plugin.threads.events.on("thread:upsert", (th) => th.anchor.kind === "buddy" && this.renderList()));
+    this.register(this.plugin.threads.events.on("thread:upsert", (th) => {
+      if (th.anchor.kind !== "buddy") return;
+      this.renderList();
+      if (th.id === this.threadId) {
+        this.chat?.refreshQuick();
+        // Eight groups were tidied away: the page would be left on empty space.
+        if (tidiedUp(this.archivedSeen, th.archivedCount)) this.scrollToEnd();
+        this.archivedSeen = th.archivedCount ?? 0;
+      }
+    }));
     this.register(this.plugin.threads.events.on("threads:reloaded", () => this.renderList()));
 
     void this.plugin.threads.ensureLoaded().then(() => {
@@ -104,14 +139,126 @@ class BuddyBlock extends MarkdownRenderChild {
     const el = this.listEl;
     el.empty();
     const now = new Date();
-    for (const th of this.listed()) {
-      const row = el.createEl("button", { cls: "vt-buddy-item", attr: { type: "button" } });
-      row.toggleClass("is-active", th.id === this.threadId);
-      row.createSpan({ cls: "vt-buddy-item-title", text: buddyThreadTitle(th) });
-      row.createSpan({ cls: "vt-buddy-item-date", text: dayLabel(th.updatedAt ?? th.createdAt, now) ?? "" });
-      row.addEventListener("click", () => this.open(th.id));
+    const threads = this.listed();
+    const byId = new Map(threads.map((th) => [th.id, th]));
+    const today = todayCount(
+      threads.map((th) => ({ startedAt: th.createdAt ?? th.updatedAt ?? "" })),
+      now
+    );
+    const title = today > 0 ? t("buddy.listToday", { n: today }) : t("buddy.list");
+    this.listBtn.setText(title);
+    el.createDiv({ cls: "vt-buddy-list-title", text: title });
+    const groups = groupByDay(
+      threads.map((th) => ({ id: th.id, at: th.updatedAt ?? th.createdAt ?? "" })),
+      now
+    );
+    const defaults = defaultExpandedKeys(groups, this.threadId, now);
+    for (const g of groups) {
+      const collapsed = isGroupCollapsed(g.key, this.groupOverrides, defaults);
+      const heading = el.createDiv({ cls: "vt-buddy-group-head" });
+      setIcon(heading.createSpan({ cls: "vt-buddy-group-arrow" }), collapsed ? "chevron-right" : "chevron-down");
+      heading.createSpan({ cls: "vt-buddy-group-title", text: this.groupLabel(g) });
+      heading.createSpan({ cls: "vt-buddy-group-count", text: String(g.ids.length) });
+      heading.addEventListener("click", () => {
+        this.groupOverrides.set(g.key, !collapsed);
+        this.renderList();
+      });
+      if (collapsed) continue;
+      for (const id of g.ids) {
+        const th = byId.get(id);
+        if (!th) continue;
+        const row = el.createEl("button", { cls: "vt-buddy-item", attr: { type: "button" } });
+        row.toggleClass("is-active", th.id === this.threadId);
+        row.createSpan({ cls: "vt-buddy-item-title", text: buddyThreadTitle(th) });
+        row.addEventListener("click", () => {
+          this.root.removeClass("is-list-open");
+          this.open(th.id);
+        });
+      }
     }
-    el.toggle(el.childElementCount > 0);
+    el.toggleClass("is-empty", groups.length === 0);
+  }
+
+  private groupLabel(g: DayGroup): string {
+    const label = g.label;
+    if (label.kind === "today") return t("buddy.group.today");
+    if (label.kind === "yesterday") return t("buddy.group.yesterday");
+    return label.md;
+  }
+
+  // ── 快速按鈕：常駐「聊聊最近讀的」＋ 六題輪流兩個 ──
+
+  private rotationPool(): string[] {
+    return [buddyGrammar, buddyWriting, buddyReview, buddyLevel, buddyReading, buddyPlan].map((task) => task.id);
+  }
+
+  // 常駐「聊聊最近讀的」；其餘兩個：最新回答的建議話題（隨機），沒有就退回六個固定話題。
+  private quickIds(): QuickItem[] {
+    const pool = latestSuggestions(this.plugin.threads.get(this.threadId));
+    if (!pool.length) return [buddyShare.id, ...rotationWindow(this.rotationPool(), this.round)];
+    const sig = pool.join("|");
+    if (sig !== this.pickedFrom) this.repick(pool);
+    return [buddyShare.id, ...this.picked.map((text) => ({ text, taskId: buddyCustom.id, question: text }))];
+  }
+
+  private repick(pool: readonly string[]): void {
+    this.pickedFrom = pool.join("|");
+    this.picked = pickTwo(pool, this.picked, Math.random);
+  }
+
+  private rotateQuick(): void {
+    if (this.disposed || !this.chat) return;
+    const active = document.activeElement;
+    const focused = active instanceof HTMLTextAreaElement && this.chatHost.contains(active);
+    if (rotationPaused({ hovering: this.hovering, composerFocused: focused })) return;
+    this.round++;
+    const pool = latestSuggestions(this.plugin.threads.get(this.threadId));
+    if (pool.length) this.repick(pool);
+    this.chat.refreshQuick();
+  }
+
+  // ── 沉底按鈕：頁面不在最底時，右下角一顆圓形按鈕 ──
+
+  // Once the chat has been redrawn, bring its last message into view.
+  private scrollToEnd(): void {
+    if (!liveTurns(this.plugin.threads.get(this.threadId)).length) return;
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        if (this.disposed) return;
+        const end = this.chatHost.querySelector(".vt-chat-controls") ?? this.chatHost.lastElementChild;
+        end?.scrollIntoView({ block: "end", behavior: "auto" });
+      })
+    );
+  }
+
+  private setupSink(): void {
+    const scroller = this.containerEl.closest<HTMLElement>(".markdown-preview-view, .cm-scroller");
+    if (!scroller) return;
+    const btn = document.body.createEl("button", {
+      cls: "vt vt-buddy-sink clickable-icon",
+      attr: { type: "button", "aria-label": t("buddy.sink") },
+    });
+    setIcon(btn, "arrow-down");
+    btn.hide();
+    btn.addEventListener("click", () => scroller.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" }));
+    const update = () => {
+      const rect = scroller.getBoundingClientRect();
+      const visible = this.root.isConnected && rect.width > 0 && rect.height > 0;
+      if (!visible || !showSinkButton(scroller.scrollTop, scroller.clientHeight, scroller.scrollHeight)) return btn.hide();
+      btn.style.right = `${Math.max(8, window.innerWidth - rect.right + 16)}px`;
+      btn.style.bottom = `${Math.max(8, window.innerHeight - rect.bottom + 16)}px`;
+      btn.show();
+    };
+    this.registerDomEvent(scroller, "scroll", update);
+    this.registerDomEvent(window, "resize", update);
+    const observer = new ResizeObserver(update);
+    observer.observe(scroller);
+    observer.observe(this.root);
+    this.register(() => {
+      observer.disconnect();
+      btn.remove();
+    });
+    update();
   }
 
   private mountChat(): void {
@@ -126,6 +273,8 @@ class BuddyBlock extends MarkdownRenderChild {
       surface: "buddy",
       customTaskId: buddyCustom.id,
       sourcePath: this.sourcePath,
+      quickTasks: () => this.quickIds(),
+      attachSelection: false,
       placeholder: t("buddy.placeholder"),
       state: this.chatState,
       send: (req) => this.send(req),
@@ -133,6 +282,17 @@ class BuddyBlock extends MarkdownRenderChild {
       onOpenSettings: () => openPluginSettings(this.plugin.app, this.plugin.manifest.id),
     };
     this.chat = this.addChild(new ChatPanel(this.chatHost, opts));
+    this.archivedSeen = this.plugin.threads.get(this.threadId)?.archivedCount ?? 0;
+    this.scrollToEnd();
+  }
+
+  // 第 9 則問題送出時提示一次「再一則就存檔」，一天一次。
+  private maybeWarnNinth(): void {
+    const number = userQuestionCount(this.plugin.threads.get(this.threadId)) + 1;
+    const today = localDay(new Date());
+    if (!shouldWarnNinth(number, this.plugin.device.get(WARN_KEY), today)) return;
+    this.plugin.device.set(WARN_KEY, today);
+    new BuddyNearFullModal(this.plugin.app).open();
   }
 
   private async send(req: ChatSend): Promise<void> {
@@ -147,6 +307,7 @@ class BuddyBlock extends MarkdownRenderChild {
         this.mountChat();
       }
     }
-    await this.plugin.threads.askBuddy(this.threadId, { taskId: req.taskId, question, selection: req.selection });
+    this.maybeWarnNinth();
+    await this.plugin.threads.askBuddy(this.threadId, { taskId: req.taskId, question });
   }
 }
