@@ -98,6 +98,8 @@ describe("buddy.share", () => {
     await a.threads.askBuddy(null, { taskId: "buddy.share" });
     expect(render(a.ai.requests[0])).toContain("這個字出自「Cooking」的這一段");
     expect(render(a.ai.requests[0])).toContain("She wore an apron.");
+    const turn = a.threads.buddyThreads()[0].turns[0];
+    expect(turn.shareSource).toEqual({ kind: "word", word: "a", title: "Cooking", text: "She wore an apron." });
     const b = setup(undefined, undefined, { shareMaterial: async () => [word("a")], random: () => 0 });
     await b.threads.askBuddy(null, { taskId: "buddy.share" });
     expect(render(b.ai.requests[0])).not.toContain("這個字出自");

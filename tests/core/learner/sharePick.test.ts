@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attachWordSources, collectShareItems, shareSource, GIST_BIAS, pickShare, pickShareStyle, rememberShare, shareBrief, shareSubject, SHARE_STYLES, type ShareItem } from "../../../src/core/learner/sharePick";
+import { highlightWord, quoteCard, shareSourceOf, attachWordSources, collectShareItems, shareSource, GIST_BIAS, pickShare, pickShareStyle, rememberShare, shareBrief, shareSubject, SHARE_STYLES, type ShareItem } from "../../../src/core/learner/sharePick";
 import type { Thread } from "../../../src/core/model/thread";
 
 const NOW = new Date(2026, 9, 28, 12);
@@ -149,5 +149,32 @@ describe("a word's source paragraph", () => {
     expect(shareSource(items[1])).toBeUndefined();
     expect(shareSource(items[2])).toBeUndefined();
     expect(shareSource(null)).toBeUndefined();
+  });
+});
+
+describe("quote card", () => {
+  it("remembers the pick", () => {
+    expect(shareSourceOf({ kind: "paragraph", key: "p:1", title: "Ellis Island", text: "Many came by ship." })).toEqual({ kind: "paragraph", title: "Ellis Island", text: "Many came by ship." });
+    expect(shareSourceOf({ kind: "word", key: "w:a", word: "apron", meaning: "圍裙", sourceTitle: "Cooking", sourceParagraph: "An apron." })).toEqual({ kind: "word", word: "apron", meaning: "圍裙", title: "Cooking", text: "An apron." });
+    expect(shareSourceOf({ kind: "word", key: "w:a", word: "apron" })).toEqual({ kind: "word", word: "apron" });
+    expect(shareSourceOf(null)).toBeUndefined();
+  });
+  it("marks the word in its paragraph, in any case and common endings", () => {
+    const hit = (t: string, w: string) => highlightWord(t, w).filter((s) => s.hit).map((s) => s.text);
+    expect(hit("Apron strings and an apron, two aprons.", "apron")).toEqual(["Apron", "apron", "aprons"]);
+    expect(hit("She analyzed it, analyzing more.", "analyze")).toEqual(["analyzed", "analyzing"]);
+    expect(hit("The cat sat.", "apron")).toEqual([]);
+    expect(hit("scatter", "cat")).toEqual([]);
+    expect(highlightWord("text", " ")).toEqual([{ text: "text", hit: false }]);
+    expect(highlightWord("a.b", "a.b").some((s) => s.hit)).toBe(true);
+  });
+  it("builds the card: paragraph, word with source, word alone, nothing", () => {
+    expect(quoteCard({ kind: "paragraph", title: "Ellis Island", text: "Many came." })).toEqual({ heading: "出自〈Ellis Island〉", body: [{ text: "Many came.", hit: false }] });
+    const w = quoteCard({ kind: "word", word: "apron", title: "Cooking", text: "She wore an apron." });
+    expect(w?.heading).toBe("出自〈Cooking〉");
+    expect(w?.body.find((s) => s.hit)?.text).toBe("apron");
+    expect(quoteCard({ kind: "word", word: "apron", meaning: "圍裙" })).toEqual({ heading: null, body: [], wordLine: { word: "apron", meaning: "圍裙" } });
+    expect(quoteCard(undefined)).toBeNull();
+    expect(quoteCard({ kind: "paragraph", title: "T" })).toBeNull();
   });
 });

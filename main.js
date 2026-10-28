@@ -5498,7 +5498,7 @@ var ChatPanel = class extends import_obsidian9.Component {
     this.renderTurns();
   }
   renderTurns() {
-    var _a;
+    var _a, _b, _c;
     const thread = this.thread;
     this.renderMeta(thread);
     if (this.turnsScope) this.removeChild(this.turnsScope);
@@ -5522,6 +5522,8 @@ var ChatPanel = class extends import_obsidian9.Component {
       const pair = this.turnsEl.createDiv({ cls: "vt-chat-pair" });
       if (!pairBusy) pair.appendChild(this.deletePairButton(turn));
       pair.appendChild(this.userBubble(turn));
+      const preface = (_b = (_a = this.opts).turnPreface) == null ? void 0 : _b.call(_a, turn);
+      if (preface) pair.appendChild(preface);
       if (answer) {
         pair.appendChild(this.answerBubble(answer));
         i++;
@@ -5530,7 +5532,7 @@ var ChatPanel = class extends import_obsidian9.Component {
     this.updateBusy();
     if (this.scrollOnNextRender) {
       this.scrollOnNextRender = false;
-      ((_a = this.input) != null ? _a : this.turnsEl).scrollIntoView({ block: "nearest" });
+      ((_c = this.input) != null ? _c : this.turnsEl).scrollIntoView({ block: "nearest" });
     }
   }
   // Delete belongs to the whole pair rather than the answer's action bar
@@ -26740,6 +26742,487 @@ function isAtBottom(scrollTop, clientHeight, scrollHeight, tolerance = BOTTOM_TO
 function showSinkButton(scrollTop, clientHeight, scrollHeight) {
   return scrollHeight > clientHeight && !isAtBottom(scrollTop, clientHeight, scrollHeight);
 }
+var SINK_MAX_TRIES = 40;
+var SINK_RETRY_MS = 250;
+function sinkSearch(found, attempt, maxTries = SINK_MAX_TRIES) {
+  if (found) return "setup";
+  return attempt + 1 < maxTries ? "retry" : "giveup";
+}
+var SCROLLER_SELECTOR = ".markdown-reading-view .markdown-preview-view, .markdown-preview-view, .cm-scroller";
+function isScrollableOverflow(overflowY) {
+  return overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay";
+}
+var FOLLOW_GAP = 120;
+function shouldFollow(gap, threshold = FOLLOW_GAP) {
+  return gap < threshold;
+}
+
+// src/core/learner/levelEstimate.ts
+var UNKNOWN_LEVEL = "\u9084\u770B\u4E0D\u51FA\u4F86";
+var GRAMMAR_MIN_QUESTIONS = 10;
+var BAND_PASS = 0.7;
+var BAND_MIN = 3;
+var GRAMMAR_BAND_LEVEL = ["A1\u2013A2", "B1\u2013B2", "C1"];
+var pct3 = (r) => `${Math.round(r * 100)}%`;
+function grammarLevel(data) {
+  var _a;
+  const area = "\u6587\u6CD5";
+  const bands = data.grammar.bands;
+  const total2 = bands.reduce((s, b) => s + b.total, 0);
+  if (total2 < GRAMMAR_MIN_QUESTIONS) {
+    return { area, level: UNKNOWN_LEVEL, basis: `\u6587\u6CD5\u984C\u53EA\u505A\u4E86 ${total2} \u984C\uFF0C\u81F3\u5C11 ${GRAMMAR_MIN_QUESTIONS} \u984C\u624D\u770B\u5F97\u51FA\u4F86`, rough: true };
+  }
+  for (let i = bands.length - 1; i >= 0; i--) {
+    const b = bands[i];
+    if (b.total >= BAND_MIN && b.rate !== null && b.rate >= BAND_PASS) {
+      return { area, level: `\u7D04 ${(_a = GRAMMAR_BAND_LEVEL[i]) != null ? _a : b.label}`, basis: `\u96E3\u5EA6 ${b.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct3(b.rate)}\uFF08${b.total} \u984C\uFF09`, rough: true };
+    }
+  }
+  const low = bands.find((b) => b.total > 0);
+  return {
+    area,
+    level: "\u7D04 A1\u2013A2 \u4EE5\u4E0B",
+    basis: low && low.rate !== null ? `\u96E3\u5EA6 ${low.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct3(low.rate)}\uFF08${low.total} \u984C\uFF09\uFF0C\u9084\u6C92\u5230\u4E03\u6210` : "\u6587\u6CD5\u984C\u7B54\u5C0D\u7387\u9084\u6C92\u5230\u4E03\u6210",
+    rough: true
+  };
+}
+var TIER_SHORT_NOTE = "\uFF08\u67E5\uFF0F\u554F\u7684\u5B57\u9084\u4E0D\u5920\u591A\uFF0C\u66AB\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\u7C97\u4F30\uFF09";
+function vocabLevel(selfLevel, mature, data) {
+  const area = "\u5B57\u5F59\u91CF";
+  const tiered = (data == null ? void 0 : data.tiers) ? vocabLevelFromTiers(data.tiers) : null;
+  if (tiered) return tiered;
+  const note = (data == null ? void 0 : data.tiers) ? TIER_SHORT_NOTE : "";
+  const size = selfLevel ? VOCAB_SIZE[selfLevel] : void 0;
+  if (!size) return { area, level: UNKNOWN_LEVEL, basis: "\u9084\u6C92\u6709\u8A2D\u5B9A\u81EA\u8FF0\u7A0B\u5EA6", rough: true };
+  return {
+    area,
+    level: `\u7D04 ${selfLevel}`,
+    detail: `\u4F30 ${num(size[0])}\u2013${num(size[1])} \u5B57`,
+    basis: (mature !== void 0 ? `\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\uFF0B\u719F\u7DF4 ${mature} \u5B57\u7C97\u4F30` : "\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\u7C97\u4F30") + note,
+    rough: true
+  };
+}
+function baselineLevels(data, selfLevel, mature) {
+  const unknown = (area) => ({ area, level: UNKNOWN_LEVEL, basis: "\u9019\u9031\u7684\u7D00\u9304\u9084\u4E0D\u5920", rough: true });
+  return [vocabLevel(selfLevel, mature, data), grammarLevel(data), unknown("\u591A\u7FA9\u5B57\u719F\u6089\u5EA6"), unknown("\u9577\u53E5\u7406\u89E3"), unknown("\u5BEB\u4F5C"), unknown("\u95B1\u8B80")];
+}
+
+// src/core/learner/reportMarkdown.ts
+var TASK_NAMES = {
+  "paragraph.grammar": "\u6587\u6CD5\u89E3\u6790",
+  "paragraph.translate": "\u7FFB\u8B6F",
+  "paragraph.vocab": "\u751F\u5B57\u6574\u7406",
+  "paragraph.paraphrase": "\u63DB\u53E5\u8A71\u8AAA",
+  "paragraph.custom": "\u6BB5\u843D\u81EA\u554F",
+  "word.usage": "\u7528\u6CD5",
+  "word.compare": "\u6BD4\u8F03",
+  "word.sentence": "\u9020\u53E5",
+  "word.mnemonic": "\u8A18\u61B6\u6CD5",
+  "word.custom": "\u55AE\u5B57\u81EA\u554F"
+};
+function taskName(id2) {
+  var _a;
+  if (id2.startsWith("trivia.")) return "\u5C0F\u77E5\u8B58";
+  return (_a = TASK_NAMES[id2]) != null ? _a : id2;
+}
+var TRACK_NAMES = { grammar: "\u6587\u6CD5", poly: "\u591A\u7FA9\u5B57", vocab: "\u55AE\u5B57", mix: "\u6DF7\u5408", para: "\u6BB5\u843D" };
+var pct4 = (r) => `${Math.round(r * 100)}%`;
+function verdictHeadline(verdict, suggestedLevel) {
+  switch (verdict) {
+    case "up":
+      return suggestedLevel ? `\u53EF\u4EE5\u5F80\u4E0A\u4E00\u7D1A\u8A66\u8A66\uFF08\u5EFA\u8B70 ${suggestedLevel}\uFF09` : "\u53EF\u4EE5\u5F80\u4E0A\u4E00\u7D1A\u8A66\u8A66";
+    case "down":
+      return "\u5EFA\u8B70\u5148\u56DE\u982D\u88DC\u57FA\u790E";
+    case "keep":
+      return "\u7DAD\u6301\u76EE\u524D\u7A0B\u5EA6";
+    default:
+      return "\u8CC7\u6599\u4E0D\u5920\uFF0C\u4E0B\u671F\u518D\u770B";
+  }
+}
+function delta(cur, prev) {
+  if (prev === null || cur === prev) return "";
+  return cur > prev ? ` \u25B2${cur - prev}` : ` \u25BC${prev - cur}`;
+}
+function deltaRate(cur, prev) {
+  if (prev === null) return "";
+  const d = Math.round((cur - prev) * 100);
+  return d === 0 ? "" : d > 0 ? ` \u25B2${d}%` : ` \u25BC${-d}%`;
+}
+function weakLabel(f) {
+  if (f.focus.kind === "grammar-objective") {
+    const t2 = topicById(f.focus.id.split("/")[0]);
+    if (t2) return t2.title;
+  }
+  return f.focus.id;
+}
+function section2(title, lines4) {
+  return lines4.length ? [`### ${title}`, ...lines4, ""] : [];
+}
+function reportTitle(meta) {
+  return meta.first ? `# \u5230\u76EE\u524D\u70BA\u6B62\u7684\u4F60 \xB7 ${meta.key}` : `# \u9019\u9031\u7684\u4F60 \xB7 ${meta.key}`;
+}
+function numbers(data) {
+  const out = [];
+  const a2 = data.activity;
+  out.push(...section2("\u6D3B\u8E8D", [`- \u6D3B\u8E8D ${a2.activeDays} \u5929\uFF0C\u8B80\u4E86 ${a2.articles} \u7BC7\u6587\u7AE0\uFF08${a2.sections} \u500B\u6BB5\u843D\uFF09`]));
+  const ai = data.ai;
+  if (ai.total > 0) {
+    const l4 = [`- \u5171 ${ai.total} \u6B21${ai.prevTotal !== null ? `\uFF08\u4E0A\u671F ${ai.prevTotal}${delta(ai.total, ai.prevTotal)}\uFF09` : ""}\uFF0C\u5176\u4E2D\u81EA\u554F ${ai.custom} \u6B21`];
+    for (const t2 of ai.byTask) l4.push(`- ${taskName(t2.key)}\uFF1A${t2.count}`);
+    if (ai.topWords.length) l4.push(`- \u6700\u5E38\u554F\u7684\u5B57\uFF1A${ai.topWords.map((w3) => `${w3.word}\uFF08${w3.count}\uFF09`).join("\u3001")}`);
+    out.push(...section2("AI \u8A0E\u8AD6", l4));
+  }
+  const w2 = data.words;
+  const wl = [];
+  if (w2.lookups > 0) wl.push(`- \u67E5\u5B57 ${w2.lookups} \u6B21`);
+  if (w2.repeated.length) wl.push(`- \u53CD\u8986\u67E5\uFF1A${w2.repeated.map((x3) => `${x3.word}\uFF08${x3.days} \u5929\uFF09`).join("\u3001")}`);
+  if (w2.savedStillLooked.length) wl.push(`- \u6536\u85CF\u537B\u9084\u5728\u67E5\uFF1A${w2.savedStillLooked.map((x3) => `${x3.word}\uFF08${x3.lookups}\uFF09`).join("\u3001")}`);
+  if (w2.mostPronounced.length) wl.push(`- \u807D\u6700\u591A\u6B21\uFF1A${w2.mostPronounced.map((x3) => `${x3.word}\uFF08${x3.pronounce}\uFF09`).join("\u3001")}`);
+  out.push(...section2("\u67E5\u5B57\uFF0F\u767C\u97F3", wl));
+  const v = data.vocab;
+  const vl = [];
+  if (v.newSaved > 0) vl.push(`- \u65B0\u6536\u85CF ${v.newSaved} \u500B\u5B57`);
+  if (v.reviews > 0) {
+    const rate = v.recallRate === null ? "" : `\uFF0C\u8A18\u4F4F\u7387 ${pct4(v.recallRate)}${deltaRate(v.recallRate, v.prevRecallRate)}`;
+    vl.push(`- \u8907\u7FD2 ${v.reviews} \u6B21${rate}${v.avgSeconds !== null ? `\uFF0C\u5E73\u5747\u505C\u7559 ${v.avgSeconds} \u79D2` : ""}`);
+  }
+  out.push(...section2("\u55AE\u5B57\u8907\u7FD2", vl));
+  const pl = data.practice.tracks.map(
+    (t2) => {
+      var _a;
+      return `- ${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\uFF1A${t2.correct}/${t2.total}\uFF08${pct4(t2.rate)}${t2.prevRate !== null ? deltaRate(t2.rate, t2.prevRate) : ""}\uFF09`;
+    }
+  );
+  out.push(...section2("\u7DF4\u7FD2\u7B54\u5C0D\u7387", pl));
+  if (data.practice.weak.length) {
+    out.push(...section2("\u5F31\u9EDE", data.practice.weak.map((f) => `- ${weakLabel(f)}\uFF08\u932F ${f.wrong} \u6B21\uFF09`)));
+  }
+  const gl = [];
+  const bands = data.grammar.bands.filter((b) => b.total > 0 && b.rate !== null);
+  if (data.grammar.mastered > 0) gl.push(`- \u5DF2\u7CBE\u719F ${data.grammar.mastered} \u500B\u6587\u6CD5\u4E3B\u984C`);
+  for (const b of bands) gl.push(`- \u96E3\u5EA6 ${b.label}\uFF1A${b.correct}/${b.total}\uFF08${pct4(b.rate)}\uFF09`);
+  out.push(...section2("\u6587\u6CD5\u7CBE\u719F", gl));
+  if (data.tags.length) out.push(...section2("\u8003\u8A66\u6A19\u7C64", [`- ${data.tags.map((t2) => `${t2.key}\uFF08${t2.count}\uFF09`).join("\u3001")}`]));
+  return out;
+}
+var RADAR_LANG = "vocab-report-radar";
+var TIERS_LANG = "vocab-report-tiers";
+var GREY = (text) => `<span style="color: gray">${text}</span>`;
+function calloutLines(kind, fold, title, body) {
+  const trimmed = [...body];
+  while (trimmed.length && trimmed[trimmed.length - 1] === "") trimmed.pop();
+  return [`> [!${kind}]${fold} ${title}`, ...trimmed.map((l4) => l4 === "" ? ">" : `> ${l4}`)];
+}
+var cell = (s) => s.replace(/\|/g, "\uFF0F").replace(/\s*\n\s*/g, " ").trim();
+function levelTable(levels) {
+  const rows = levels.map((l4) => {
+    const detail = l4.detail ? `\uFF08${l4.detail}\uFF09` : "";
+    const rough = l4.rough ? "\uFF08\u7C97\u4F30\uFF09" : "";
+    return `| ${cell(l4.area)} | ${cell(l4.level)}${cell(detail)}${rough} | ${cell(l4.basis)} |`;
+  });
+  return ["| \u9762\u5411 | \u7A0B\u5EA6 | \u4F9D\u64DA |", "| --- | --- | --- |", ...rows];
+}
+function radarFence(axes) {
+  const json = JSON.stringify({
+    axes: axes.map((a2) => ({ name: a2.name, value: Math.round(a2.value * 100) / 100, clear: a2.clear, ...a2.hint ? { hint: a2.hint } : {} }))
+  });
+  return ["```" + RADAR_LANG, json, "```"];
+}
+function renderReportFile(data, meta) {
+  var _a, _b, _c, _d, _e;
+  const adv = data.advice;
+  const fm = [
+    "---",
+    "vocab-tracker: report",
+    `vocab-tracker-id: report-${meta.key}`,
+    `period: ${data.period.from}~${data.period.to}`,
+    `verdict: ${adv.verdict}`,
+    ...adv.suggestedLevel ? [`suggested-level: ${adv.suggestedLevel}`] : [],
+    "---",
+    ""
+  ];
+  const ai = meta.advice;
+  const axes = (_b = (_a = ai == null ? void 0 : ai.axes) != null ? _a : meta.axes) != null ? _b : baselineAxes(data);
+  const levels = (_d = (_c = ai == null ? void 0 : ai.levels) != null ? _c : meta.levels) != null ? _d : baselineLevels(data, "");
+  const note = GREY((_e = meta.aiNote) != null ? _e : "AI \u9019\u6B21\u6C92\u5BEB\u6210\u529F");
+  const body = [reportTitle(meta), "", GREY(`${data.period.from} \uFF5E ${data.period.to}`), ""];
+  if (ai == null ? void 0 : ai.letter) body.push(ai.letter, "");
+  const tiers = data.tiers && hasTierData(data.tiers) ? ["", "```" + TIERS_LANG, tiersFenceJson(data.tiers), "```"] : [];
+  const now2 = [...radarFence(axes), "", ...levelTable(levels), ...tiers, "", "#### \u7A0B\u5EA6\u5EFA\u8B70", "", `**${verdictHeadline(adv.verdict, adv.suggestedLevel)}**`, ""];
+  for (const s of adv.signals) now2.push(`- ${s.reason}`);
+  body.push(...calloutLines("abstract", "+", "\u73FE\u5728\u7684\u7A0B\u5EA6", now2), "");
+  const next = ["#### \u7167\u4F60\u7684\u7A0B\u5EA6\u53EF\u4EE5\u52A0\u5F37", ""];
+  if (ai == null ? void 0 : ai.focus.length) next.push(...ai.focus.map((p) => `- ${p}`), "");
+  else next.push(note, "");
+  if (ai == null ? void 0 : ai.tryNext.length) next.push("#### \u4E0B\u9031\u4E00\u8D77\u8A66\u8A66", "", ...ai.tryNext.map((p) => `- [ ] ${p}`), "");
+  if (ai == null ? void 0 : ai.reading.length) next.push("#### \u9069\u5408\u4F60\u7684\u95B1\u8B80", "", ...ai.reading.map((p) => `- ${p}`), "");
+  body.push(...calloutLines("tip", "+", "\u63A5\u4E0B\u4F86\u7684\u5EFA\u8B70", next), "");
+  const nums = numbers(data);
+  body.push(...calloutLines("note", "-", "\u6578\u5B57\u660E\u7D30", nums.length ? nums : ["\u9019\u9031\u9084\u6C92\u6709\u6578\u5B57\u53EF\u4EE5\u5217\u3002"]), "");
+  body.push(analyzeFence(meta.key), "");
+  return [...fm, ...body].join("\n").replace(/\n+$/, "\n");
+}
+var ANALYZE_LANG = "vocab-report-analyze";
+var ANALYSIS_HEADING = "## \u8A73\u7D30\u5206\u6790";
+function analyzeFence(key6) {
+  return ["```" + ANALYZE_LANG, `key: ${key6}`, "```"].join("\n");
+}
+function removeFrontmatterField(text, key6) {
+  const m2 = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+  if (!m2) return text;
+  const re = new RegExp(`^${key6}:.*(?:\\r?\\n|$)`, "m");
+  if (!re.test(m2[1])) return text;
+  const fm = m2[1].replace(re, "").replace(/\r?\n$/, "");
+  return text.slice(0, m2.index) + `---
+${fm}
+---` + text.slice(m2.index + m2[0].length);
+}
+function setFrontmatterField(text, key6, value) {
+  const m2 = /^---\r?\n([\s\S]*?)\r?\n---(\r?\n|$)/.exec(text);
+  if (!m2) return `---
+${key6}: ${value}
+---
+
+${text}`;
+  const re = new RegExp(`^${key6}:.*$`, "m");
+  const fm = re.test(m2[1]) ? m2[1].replace(re, `${key6}: ${value}`) : `${m2[1]}
+${key6}: ${value}`;
+  return text.slice(0, m2.index) + `---
+${fm}
+---` + m2[2] + text.slice(m2.index + m2[0].length);
+}
+function renderReviewFile(key6, period, body) {
+  const label = key6.includes("Q") ? "\u5B63" : "\u6708";
+  return [
+    "---",
+    "vocab-tracker: report",
+    `vocab-tracker-id: review-${key6}`,
+    `period: ${period.from}~${period.to}`,
+    "---",
+    "",
+    `# \u5B78\u7FD2\u56DE\u9867 ${key6}\uFF08${period.from} \uFF5E ${period.to}\uFF0C\u9019${label}\uFF09`,
+    "",
+    body.trim(),
+    ""
+  ].join("\n");
+}
+function reportDigest(data) {
+  var _a;
+  const L = [`\u671F\u9593\uFF1A${data.period.from} \uFF5E ${data.period.to}`];
+  const a2 = data.activity;
+  L.push(`\u6D3B\u8E8D ${a2.activeDays} \u5929\uFF0C\u8B80 ${a2.articles} \u7BC7\u6587\u7AE0`);
+  if (data.ai.total) L.push(`AI \u8A0E\u8AD6 ${data.ai.total} \u6B21\uFF1A${data.ai.byTask.map((t2) => `${taskName(t2.key)} ${t2.count}`).join("\u3001")}`);
+  const w2 = data.words;
+  if (w2.lookups) L.push(`\u67E5\u5B57 ${w2.lookups} \u6B21`);
+  if (w2.repeated.length) L.push(`\u53CD\u8986\u67E5\u7684\u5B57\uFF1A${w2.repeated.map((x3) => x3.word).join("\u3001")}`);
+  if (w2.savedStillLooked.length) L.push(`\u6536\u85CF\u537B\u9084\u5728\u67E5\uFF1A${w2.savedStillLooked.map((x3) => x3.word).join("\u3001")}`);
+  const v = data.vocab;
+  if (v.reviews) L.push(`\u55AE\u5B57\u8907\u7FD2 ${v.reviews} \u6B21\uFF0C\u8A18\u4F4F\u7387 ${v.recallRate === null ? "-" : pct4(v.recallRate)}`);
+  if (v.newSaved) L.push(`\u65B0\u6536\u85CF ${v.newSaved} \u500B\u5B57`);
+  for (const t2 of data.practice.tracks) L.push(`${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\u7DF4\u7FD2\u7B54\u5C0D\u7387 ${pct4(t2.rate)}\uFF08${t2.total} \u984C\uFF09`);
+  if (data.practice.weak.length) L.push(`\u5F31\u9EDE\uFF1A${data.practice.weak.map(weakLabel).join("\u3001")}`);
+  if (data.grammar.mastered) L.push(`\u6587\u6CD5\u5DF2\u7CBE\u719F ${data.grammar.mastered} \u500B\u4E3B\u984C`);
+  if (data.tags.length) L.push(`\u8003\u8A66\u6A19\u7C64\uFF1A${data.tags.map((t2) => t2.key).join("\u3001")}`);
+  L.push(`\u7A0B\u5EA6\u5224\u65B7\uFF1A${verdictHeadline(data.advice.verdict, data.advice.suggestedLevel)}`);
+  for (const s of data.advice.signals) L.push(`- ${s.reason}`);
+  return L.join("\n");
+}
+
+// src/core/learner/recentDiscussions.ts
+var RECENT_DISCUSSION_DAYS = 14;
+var RECENT_DISCUSSION_MAX = 20;
+var TEXT_MAX = 120;
+var PARAGRAPH_TEXT_MAX = 400;
+var DAY_MS3 = 864e5;
+var flat2 = (s) => s.replace(/\s+/g, " ").trim();
+function clip(s, max = TEXT_MAX) {
+  const chars = [...flat2(s)];
+  return chars.length > max ? `${chars.slice(0, max).join("")}\u2026` : chars.join("");
+}
+function plainParagraph2(md) {
+  return md.replace(/!?\[\[([^\]|]*\|)?([^\]]*)\]\]/g, "$2").replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\s\^[\w-]+\s*$/gm, "").replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, "").replace(/^\s*\[?\d{1,2}:\d{2}(?::\d{2})?\]?\s*/gm, "").replace(/[*_`]/g, "");
+}
+function mmdd2(iso) {
+  const d = new Date(iso);
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+function subjectOf(th, subjectEntryId, wordOf) {
+  var _a, _b;
+  const a2 = th.anchor;
+  if (a2.kind === "word") return (_a = wordOf(a2.entryId)) != null ? _a : "";
+  if (a2.kind === "paragraph") return `\u300C${noteTitle2(a2.path)}\u300D\u7684\u6BB5\u843D`;
+  if (a2.kind === "trivia-session") return subjectEntryId ? (_b = wordOf(subjectEntryId)) != null ? _b : "" : "";
+  return "";
+}
+function recentDiscussions(threads, wordOf, now2, opts = {}) {
+  var _a, _b, _c, _d;
+  const since = now2.getTime() - ((_a = opts.days) != null ? _a : RECENT_DISCUSSION_DAYS) * DAY_MS3;
+  const rows = [];
+  for (const th of threads) {
+    if (th.deletedAt || th.anchor.kind === "buddy") continue;
+    for (const turn of liveTurns(th)) {
+      if (turn.role !== "user") continue;
+      const at = Date.parse(turn.at);
+      if (Number.isNaN(at) || at < since) continue;
+      const subject = subjectOf(th, turn.subjectEntryId, wordOf);
+      const parts = [`${mmdd2(turn.at)} ${turn.taskId ? taskName(turn.taskId) : "\u63D0\u554F"}${subject ? `\uFF5C${subject}` : ""}`];
+      if ((_b = turn.selection) == null ? void 0 : _b.trim()) parts.push(`\u9078\u4E86\u300C${clip(turn.selection)}\u300D`);
+      if ((_c = turn.question) == null ? void 0 : _c.trim()) parts.push(`\u554F\uFF1A${clip(turn.question)}`);
+      const paragraph = th.anchor.kind === "paragraph" ? clip(plainParagraph2(th.anchor.snapshot), PARAGRAPH_TEXT_MAX) : void 0;
+      rows.push({ at, line: `- ${parts.join("\uFF5C")}`, thread: th.id, ...paragraph ? { paragraph } : {} });
+    }
+  }
+  rows.sort((a2, b) => b.at - a2.at);
+  const shown = /* @__PURE__ */ new Set();
+  return rows.slice(0, (_d = opts.max) != null ? _d : RECENT_DISCUSSION_MAX).map((r) => {
+    if (!r.paragraph || shown.has(r.thread)) return r.line;
+    shown.add(r.thread);
+    return `${r.line}
+  \u6BB5\u843D\u539F\u6587\uFF1A${r.paragraph}`;
+  });
+}
+
+// src/core/learner/sharePick.ts
+var SHARE_DAYS = 14;
+var SHARE_AVOID_RECENT = 5;
+var DAY_MS4 = 864e5;
+var MIN_PARAGRAPH_CHARS = 20;
+var localDay2 = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function collectShareItems(src) {
+  var _a, _b;
+  const since = src.now.getTime() - ((_a = src.days) != null ? _a : SHARE_DAYS) * DAY_MS4;
+  const sinceDay = localDay2(new Date(since));
+  const items = [];
+  for (const th of src.threads) {
+    if (th.deletedAt || th.anchor.kind !== "paragraph") continue;
+    const asked = liveTurns(th).some((turn) => turn.role === "user" && Date.parse(turn.at) >= since);
+    if (!asked) continue;
+    const text = clip(plainParagraph2(th.anchor.snapshot), PARAGRAPH_TEXT_MAX);
+    if ([...text].length < MIN_PARAGRAPH_CHARS) continue;
+    items.push({ kind: "paragraph", key: `p:${th.id}`, title: noteTitle2(th.anchor.path), text });
+  }
+  const meaningOf = /* @__PURE__ */ new Map();
+  for (const e of src.entries) {
+    if (e.deletedAt) continue;
+    const zh = (_b = e.definitionZh) == null ? void 0 : _b.trim();
+    if (zh) meaningOf.set(e.word.trim().toLowerCase(), zh);
+  }
+  const seen = /* @__PURE__ */ new Set();
+  const addWord = (raw) => {
+    const word = raw.trim().toLowerCase();
+    if (!word || seen.has(word)) return;
+    seen.add(word);
+    const meaning = meaningOf.get(word);
+    items.push({ kind: "word", key: `w:${word}`, word, ...meaning ? { meaning } : {} });
+  };
+  for (const w2 of src.touches) if (w2.day >= sinceDay) addWord(w2.word);
+  for (const e of src.entries) {
+    if (e.deletedAt || !e.createdAt) continue;
+    if (Date.parse(e.createdAt) >= since) addWord(e.word);
+  }
+  return items;
+}
+var PARAGRAPH_BIAS = 0.6;
+function pickShare(items, recentKeys, random, lastKind) {
+  if (!items.length) return null;
+  const avoid = new Set(recentKeys.slice(-SHARE_AVOID_RECENT));
+  const fresh = items.filter((i2) => !avoid.has(i2.key));
+  const pool = fresh.length ? fresh : items;
+  const paragraphs = pool.filter((i2) => i2.kind === "paragraph");
+  const words = pool.filter((i2) => i2.kind === "word");
+  let group = pool;
+  if (paragraphs.length && words.length) {
+    const wantParagraph = lastKind === "word" ? true : random() < PARAGRAPH_BIAS;
+    group = wantParagraph ? paragraphs : words;
+  }
+  const i = Math.min(group.length - 1, Math.floor(random() * group.length));
+  return group[i];
+}
+var SHARE_STYLES = [
+  { id: "guess", scope: "both", text: "\u8ACB\u4ED6\u731C\u731C\u770B\uFF0C\u9019\u500B\u5B57\uFF08\u6216\u9019\u6BB5\uFF09\u662F\u4EC0\u9EBC\u610F\u601D" },
+  { id: "choice", scope: "both", text: "\u7D66\u5169\u500B\u53EF\u80FD\u7684\u610F\u601D\u8B93\u4ED6\u4E8C\u9078\u4E00\uFF08\u5176\u4E2D\u4E00\u500B\u662F\u5C0D\u7684\uFF0C\u53E6\u4E00\u500B\u662F\u770B\u8D77\u4F86\u50CF\u7684\u5E72\u64FE\uFF09" },
+  { id: "scenario", scope: "both", text: "\u5148\u63CF\u8FF0\u4E00\u500B\u751F\u6D3B\u60C5\u5883\uFF0C\u8ACB\u4ED6\u731C\u731C\u5728\u9019\u500B\u60C5\u5883\u88E1\u5B83\u662F\u4EC0\u9EBC\u610F\u601D" },
+  { id: "sentence", scope: "word", text: "\u8ACB\u4ED6\u7528\u9019\u500B\u5B57\u9020\u4E00\u500B\u53E5\u5B50" },
+  { id: "assoc", scope: "both", text: "\u554F\u4ED6\u770B\u5230\u9019\u500B\u5B57\uFF08\u6216\u9019\u6BB5\uFF09\u6703\u8B93\u4ED6\u60F3\u5230\u4EC0\u9EBC" },
+  { id: "rephrase", scope: "paragraph", text: "\u8ACB\u4ED6\u7528\u81EA\u5DF1\u7684\u8A71\u628A\u9019\u4E00\u6BB5\u63DB\u53E5\u8A71\u8AAA" },
+  { id: "gist", scope: "paragraph", text: "\u8ACB\u4ED6\u7528\u4E00\u53E5\u8A71\u8AAA\u8AAA\u9019\u6BB5\u5728\u8B1B\u4EC0\u9EBC\u3001\u4F5C\u8005\u60F3\u8868\u9054\u4EC0\u9EBC" }
+];
+var GIST_BIAS = 0.4;
+function pickShareStyle(kind, lastId, random) {
+  const fit = SHARE_STYLES.filter((s) => s.scope === "both" || s.scope === kind);
+  if (kind === "paragraph" && lastId !== "gist" && random() < GIST_BIAS) return fit.find((s) => s.id === "gist");
+  const others = fit.filter((s) => s.id !== "gist");
+  const pool = others.filter((s) => s.id !== lastId);
+  const from = pool.length ? pool : others;
+  return from[Math.min(from.length - 1, Math.floor(random() * from.length))];
+}
+function attachWordSources(items, sourceOf) {
+  return items.map((item) => {
+    if (item.kind !== "word") return item;
+    const src = sourceOf(item.word);
+    const paragraph = src ? clip(plainParagraph2(src.paragraph), PARAGRAPH_TEXT_MAX) : "";
+    return paragraph ? { ...item, sourceTitle: src == null ? void 0 : src.title, sourceParagraph: paragraph } : item;
+  });
+}
+function shareSource(item) {
+  var _a;
+  if ((item == null ? void 0 : item.kind) !== "word" || !item.sourceParagraph) return void 0;
+  return { sourceTitle: (_a = item.sourceTitle) != null ? _a : "", sourceParagraph: item.sourceParagraph };
+}
+function shareSubject(item) {
+  if (!item) return void 0;
+  return item.kind === "word" ? item.word : `\u3008${item.title}\u3009`;
+}
+function rememberShare(recentKeys, key6) {
+  return [...recentKeys.filter((k) => k !== key6), key6].slice(-SHARE_AVOID_RECENT);
+}
+function shareBrief(item) {
+  if (!item) return "";
+  if (item.kind === "word") return `\u55AE\u5B57\uFF1A${item.word}${item.meaning ? `\uFF08${item.meaning}\uFF09` : ""}`;
+  return `\u6BB5\u843D\uFF08\u51FA\u81EA\u300C${item.title}\u300D\uFF09\uFF1A
+${item.text}`;
+}
+function shareSourceOf(item) {
+  if (!item) return void 0;
+  if (item.kind === "paragraph") return { kind: "paragraph", title: item.title, text: item.text };
+  return {
+    kind: "word",
+    word: item.word,
+    ...item.meaning ? { meaning: item.meaning } : {},
+    ...item.sourceTitle ? { title: item.sourceTitle } : {},
+    ...item.sourceParagraph ? { text: item.sourceParagraph } : {}
+  };
+}
+var escapeRe2 = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function highlightWord(text, word) {
+  var _a;
+  const w2 = word.trim();
+  if (!w2) return [{ text, hit: false }];
+  const stem = w2.length > 4 ? w2.replace(/(?:e|y)$/i, "") : w2;
+  const re = new RegExp(`(?<![A-Za-z])${escapeRe2(stem)}[A-Za-z]{0,4}(?![A-Za-z])`, "gi");
+  const out = [];
+  let last2 = 0;
+  for (const m2 of text.matchAll(re)) {
+    const at = (_a = m2.index) != null ? _a : 0;
+    if (at > last2) out.push({ text: text.slice(last2, at), hit: false });
+    out.push({ text: m2[0], hit: true });
+    last2 = at + m2[0].length;
+  }
+  if (last2 < text.length) out.push({ text: text.slice(last2), hit: false });
+  return out.length ? out : [{ text, hit: false }];
+}
+function quoteCard(src) {
+  var _a, _b, _c;
+  if (!src) return null;
+  const title = (_a = src.title) == null ? void 0 : _a.trim();
+  const heading = title ? `\u51FA\u81EA\u3008${title}\u3009` : null;
+  const text = (_b = src.text) == null ? void 0 : _b.trim();
+  if (src.kind === "paragraph") return text ? { heading, body: [{ text, hit: false }] } : null;
+  const word = (_c = src.word) == null ? void 0 : _c.trim();
+  if (!word) return null;
+  if (!text) return { heading: null, body: [], wordLine: { word, ...src.meaning ? { meaning: src.meaning } : {} } };
+  return { heading, body: highlightWord(text, word) };
+}
 
 // src/ui/blocks/buddy.ts
 var TITLE_CHARS = 30;
@@ -26773,6 +27256,9 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     // The open conversation; an id nothing is stored under yet is a new one.
     this.threadId = "";
     this.disposed = false;
+    // 送出後捲到最底；回答時使用者還在底部附近就一路跟著捲，完成時再捲一次。
+    this.following = false;
+    this.awaitingTurn = false;
   }
   onload() {
     this.containerEl.empty();
@@ -26795,7 +27281,7 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     });
     this.registerDomEvent(this.chatHost, "mouseleave", () => this.hovering = false);
     this.registerInterval(window.setInterval(() => this.rotateQuick(), ROTATION_MS));
-    this.setupSink();
+    this.setupSink(0);
     this.register(this.plugin.threads.events.on("thread:upsert", (th) => {
       var _a, _b;
       if (th.anchor.kind !== "buddy") return;
@@ -26807,6 +27293,7 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
       }
     }));
     this.register(this.plugin.threads.events.on("threads:reloaded", () => this.renderList()));
+    this.onFollowEvents();
     void this.plugin.threads.ensureLoaded().then(() => {
       var _a, _b;
       if (this.disposed) return;
@@ -26911,20 +27398,77 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     this.chat.refreshQuick();
   }
   // ── 沉底按鈕：頁面不在最底時，右下角一顆圓形按鈕 ──
+  // Runs once the block is attached and laid out (it isn't yet at onload).
+  afterLayout(fn, tries = 40) {
+    requestAnimationFrame(() => {
+      if (this.disposed) return;
+      if (this.root.isConnected && this.root.offsetHeight > 0) return fn();
+      if (tries > 0) this.afterLayout(fn, tries - 1);
+    });
+  }
   // Once the chat has been redrawn, bring its last message into view.
   scrollToEnd() {
     if (!liveTurns(this.plugin.threads.get(this.threadId)).length) return;
-    requestAnimationFrame(
-      () => requestAnimationFrame(() => {
+    this.afterLayout(() => requestAnimationFrame(() => {
+      var _a;
+      return (_a = this.chatEnd()) == null ? void 0 : _a.scrollIntoView({ block: "end", behavior: "auto" });
+    }));
+  }
+  chatEnd() {
+    var _a;
+    return (_a = this.chatHost.querySelector(".vt-chat-controls")) != null ? _a : this.chatHost.lastElementChild;
+  }
+  // How far the composer's bottom edge is below the visible area.
+  composerGap() {
+    var _a, _b;
+    const end = this.chatEnd();
+    if (!end) return 0;
+    const view = (_b = (_a = this.findScroller()) == null ? void 0 : _a.getBoundingClientRect().bottom) != null ? _b : window.innerHeight;
+    return end.getBoundingClientRect().bottom - view;
+  }
+  findScroller() {
+    const hit = this.containerEl.closest(SCROLLER_SELECTOR);
+    if (hit) return hit;
+    for (let el = this.containerEl.parentElement; el; el = el.parentElement) {
+      if (isScrollableOverflow(getComputedStyle(el).overflowY)) return el;
+    }
+    return null;
+  }
+  onFollowEvents() {
+    const threads = this.plugin.threads;
+    this.register(
+      threads.events.on("thread:turn-delta", (d) => {
         var _a;
-        if (this.disposed) return;
-        const end = (_a = this.chatHost.querySelector(".vt-chat-controls")) != null ? _a : this.chatHost.lastElementChild;
-        end == null ? void 0 : end.scrollIntoView({ block: "end", behavior: "auto" });
+        if (d.threadId !== this.threadId || !this.following) return;
+        if (!shouldFollow(this.composerGap())) {
+          this.following = false;
+          return;
+        }
+        (_a = this.chatEnd()) == null ? void 0 : _a.scrollIntoView({ block: "end", behavior: "auto" });
+      })
+    );
+    this.register(
+      threads.events.on("thread:upsert", (th) => {
+        if (th.id !== this.threadId) return;
+        if (this.awaitingTurn) {
+          this.awaitingTurn = false;
+          this.scrollToEnd();
+        } else if (this.following && !threads.isBusy(th.id)) {
+          this.following = false;
+          this.scrollToEnd();
+        }
       })
     );
   }
-  setupSink() {
-    const scroller = this.containerEl.closest(".markdown-preview-view, .cm-scroller");
+  // The container isn't there yet at onload (the block is not attached), so look again a few times.
+  setupSink(attempt) {
+    if (this.disposed) return;
+    const scroller = this.findScroller();
+    const next = sinkSearch(!!scroller, attempt);
+    if (next === "retry") {
+      this.registerInterval(window.setTimeout(() => this.setupSink(attempt + 1), SINK_RETRY_MS));
+      return;
+    }
     if (!scroller) return;
     const btn = document.body.createEl("button", {
       cls: "vt vt-buddy-sink clickable-icon",
@@ -26971,6 +27515,7 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
       state: this.chatState,
       send: (req) => this.send(req),
       retry: (turnId) => this.plugin.threads.retryBuddy(this.threadId, turnId),
+      turnPreface: (turn) => this.quoteCardEl(turn),
       onOpenSettings: () => openPluginSettings(this.plugin.app, this.plugin.manifest.id)
     };
     this.chat = this.addChild(new ChatPanel(this.chatHost, opts));
@@ -26985,6 +27530,25 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     this.plugin.device.set(WARN_KEY, today);
     new BuddyNearFullModal(this.plugin.app).open();
   }
+  // 聊聊最近讀的: the picked word or paragraph, quoted above the buddy's question.
+  quoteCardEl(turn) {
+    const card = quoteCard(turn.shareSource);
+    if (!card) return null;
+    const el = createDiv({ cls: "vt-buddy-quote" });
+    if (card.heading) el.createDiv({ cls: "vt-buddy-quote-head", text: card.heading });
+    if (card.wordLine) {
+      const line2 = el.createDiv({ cls: "vt-buddy-quote-body" });
+      line2.createEl("strong", { text: card.wordLine.word });
+      if (card.wordLine.meaning) line2.createSpan({ text: `\u3000${card.wordLine.meaning}` });
+      return el;
+    }
+    const body = el.createDiv({ cls: "vt-buddy-quote-body" });
+    for (const seg of card.body) {
+      if (seg.hit) body.createEl("mark", { text: seg.text });
+      else body.appendText(seg.text);
+    }
+    return el;
+  }
   async send(req) {
     var _a;
     let { question } = req;
@@ -26997,6 +27561,8 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
       }
     }
     this.maybeWarnNinth();
+    this.following = true;
+    this.awaitingTurn = true;
     await this.plugin.threads.askBuddy(this.threadId, { taskId: req.taskId, question });
   }
 };
@@ -27100,7 +27666,7 @@ var TRIVIA_TEMPLATES = {
 var TITLE_MAX = 40;
 var BOLD_LINE_RE = /^\s*(?:#+\s*)?\*\*(.+?)\*\*\s*[:：]?\s*$/;
 var LABEL_LINE_RE = /^\s*(?:標題|title)\s*[:：]\s*(.+)$/i;
-function clip(s, max) {
+function clip2(s, max) {
   return s.length > max ? `${s.slice(0, max - 1)}\u2026` : s;
 }
 function splitTrivia(text) {
@@ -27110,10 +27676,10 @@ function splitTrivia(text) {
   const first = nl === -1 ? trimmed : trimmed.slice(0, nl);
   const rest = nl === -1 ? "" : trimmed.slice(nl + 1).trim();
   const titled = (_a = BOLD_LINE_RE.exec(first)) != null ? _a : LABEL_LINE_RE.exec(first);
-  if (titled && rest) return { title: clip(titled[1].trim(), TITLE_MAX), body: rest };
+  if (titled && rest) return { title: clip2(titled[1].trim(), TITLE_MAX), body: rest };
   const plain2 = trimmed.replace(/\*\*|__|`/g, "");
   const sentence = (_c = (_b = /^[^。！？!?\n]+[。！？!?]?/.exec(plain2)) == null ? void 0 : _b[0]) != null ? _c : plain2;
-  return { title: clip(sentence.trim(), TITLE_MAX), body: trimmed };
+  return { title: clip2(sentence.trim(), TITLE_MAX), body: trimmed };
 }
 function triviaTask(id2, opts) {
   const task = {
@@ -27165,7 +27731,7 @@ var TRIVIA_TASK_BY_KIND = {
 var RECENT_DAYS2 = 14;
 var EXCLUDE_LAST = 30;
 var RECENT_WEIGHT = 0.7;
-var DAY_MS3 = 24 * 60 * 60 * 1e3;
+var DAY_MS5 = 24 * 60 * 60 * 1e3;
 function triviaRounds(thread) {
   var _a;
   if (!thread) return [];
@@ -27180,7 +27746,7 @@ function triviaRounds(thread) {
   }
   return out;
 }
-function subjectOf(thread, turn) {
+function subjectOf2(thread, turn) {
   if (turn.subjectEntryId) return turn.subjectEntryId;
   if (!thread) return void 0;
   const i = thread.turns.indexOf(turn);
@@ -27210,7 +27776,7 @@ function pickSubject(entries, recent, opts) {
     const lastTold = (e) => recent.indexOf(e.id);
     return [...live].sort((a2, b) => lastTold(b) - lastTold(a2))[0];
   }
-  const since = opts.now.getTime() - ((_b = opts.recentDays) != null ? _b : RECENT_DAYS2) * DAY_MS3;
+  const since = opts.now.getTime() - ((_b = opts.recentDays) != null ? _b : RECENT_DAYS2) * DAY_MS5;
   const fresh = candidates.filter((e) => entryAddedMs2(e) >= since);
   const older = candidates.filter((e) => entryAddedMs2(e) < since);
   let pool;
@@ -27471,7 +28037,7 @@ var TriviaBlock = class extends import_obsidian42.MarkdownRenderChild {
   }
   subjectWord(turn) {
     var _a;
-    return (_a = this.entryById(subjectOf(this.plugin.trivia.thread(), turn))) == null ? void 0 : _a.word;
+    return (_a = this.entryById(subjectOf2(this.plugin.trivia.thread(), turn))) == null ? void 0 : _a.word;
   }
   turnHeader(turn) {
     const text = triviaTurnHeader(
@@ -33569,11 +34135,11 @@ var PRACTICE_KINDS = [
 ];
 
 // src/services/learner/learnerMerge.ts
-var DAY_MS4 = 864e5;
-var POOL_TOMBSTONE_TTL_MS = 30 * DAY_MS4;
-var MISTAKE_RESOLVED_TTL_MS = 90 * DAY_MS4;
-var EVENT_TTL_MS = 365 * DAY_MS4;
-var QUESTION_TTL_MS = 30 * DAY_MS4;
+var DAY_MS6 = 864e5;
+var POOL_TOMBSTONE_TTL_MS = 30 * DAY_MS6;
+var MISTAKE_RESOLVED_TTL_MS = 90 * DAY_MS6;
+var EVENT_TTL_MS = 365 * DAY_MS6;
+var QUESTION_TTL_MS = 30 * DAY_MS6;
 function ms7(iso) {
   const t2 = iso ? Date.parse(iso) : 0;
   return Number.isNaN(t2) ? 0 : t2;
@@ -34679,331 +35245,6 @@ function asksFromThreads(threads, surfaceOf) {
   return out.sort((a2, b) => a2.at < b.at ? -1 : a2.at > b.at ? 1 : a2.id < b.id ? -1 : 1);
 }
 
-// src/core/learner/levelEstimate.ts
-var UNKNOWN_LEVEL = "\u9084\u770B\u4E0D\u51FA\u4F86";
-var GRAMMAR_MIN_QUESTIONS = 10;
-var BAND_PASS = 0.7;
-var BAND_MIN = 3;
-var GRAMMAR_BAND_LEVEL = ["A1\u2013A2", "B1\u2013B2", "C1"];
-var pct3 = (r) => `${Math.round(r * 100)}%`;
-function grammarLevel(data) {
-  var _a;
-  const area = "\u6587\u6CD5";
-  const bands = data.grammar.bands;
-  const total2 = bands.reduce((s, b) => s + b.total, 0);
-  if (total2 < GRAMMAR_MIN_QUESTIONS) {
-    return { area, level: UNKNOWN_LEVEL, basis: `\u6587\u6CD5\u984C\u53EA\u505A\u4E86 ${total2} \u984C\uFF0C\u81F3\u5C11 ${GRAMMAR_MIN_QUESTIONS} \u984C\u624D\u770B\u5F97\u51FA\u4F86`, rough: true };
-  }
-  for (let i = bands.length - 1; i >= 0; i--) {
-    const b = bands[i];
-    if (b.total >= BAND_MIN && b.rate !== null && b.rate >= BAND_PASS) {
-      return { area, level: `\u7D04 ${(_a = GRAMMAR_BAND_LEVEL[i]) != null ? _a : b.label}`, basis: `\u96E3\u5EA6 ${b.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct3(b.rate)}\uFF08${b.total} \u984C\uFF09`, rough: true };
-    }
-  }
-  const low = bands.find((b) => b.total > 0);
-  return {
-    area,
-    level: "\u7D04 A1\u2013A2 \u4EE5\u4E0B",
-    basis: low && low.rate !== null ? `\u96E3\u5EA6 ${low.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct3(low.rate)}\uFF08${low.total} \u984C\uFF09\uFF0C\u9084\u6C92\u5230\u4E03\u6210` : "\u6587\u6CD5\u984C\u7B54\u5C0D\u7387\u9084\u6C92\u5230\u4E03\u6210",
-    rough: true
-  };
-}
-var TIER_SHORT_NOTE = "\uFF08\u67E5\uFF0F\u554F\u7684\u5B57\u9084\u4E0D\u5920\u591A\uFF0C\u66AB\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\u7C97\u4F30\uFF09";
-function vocabLevel(selfLevel, mature, data) {
-  const area = "\u5B57\u5F59\u91CF";
-  const tiered = (data == null ? void 0 : data.tiers) ? vocabLevelFromTiers(data.tiers) : null;
-  if (tiered) return tiered;
-  const note = (data == null ? void 0 : data.tiers) ? TIER_SHORT_NOTE : "";
-  const size = selfLevel ? VOCAB_SIZE[selfLevel] : void 0;
-  if (!size) return { area, level: UNKNOWN_LEVEL, basis: "\u9084\u6C92\u6709\u8A2D\u5B9A\u81EA\u8FF0\u7A0B\u5EA6", rough: true };
-  return {
-    area,
-    level: `\u7D04 ${selfLevel}`,
-    detail: `\u4F30 ${num(size[0])}\u2013${num(size[1])} \u5B57`,
-    basis: (mature !== void 0 ? `\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\uFF0B\u719F\u7DF4 ${mature} \u5B57\u7C97\u4F30` : "\u4EE5\u81EA\u8FF0\u7A0B\u5EA6\u7C97\u4F30") + note,
-    rough: true
-  };
-}
-function baselineLevels(data, selfLevel, mature) {
-  const unknown = (area) => ({ area, level: UNKNOWN_LEVEL, basis: "\u9019\u9031\u7684\u7D00\u9304\u9084\u4E0D\u5920", rough: true });
-  return [vocabLevel(selfLevel, mature, data), grammarLevel(data), unknown("\u591A\u7FA9\u5B57\u719F\u6089\u5EA6"), unknown("\u9577\u53E5\u7406\u89E3"), unknown("\u5BEB\u4F5C"), unknown("\u95B1\u8B80")];
-}
-
-// src/core/learner/reportMarkdown.ts
-var TASK_NAMES = {
-  "paragraph.grammar": "\u6587\u6CD5\u89E3\u6790",
-  "paragraph.translate": "\u7FFB\u8B6F",
-  "paragraph.vocab": "\u751F\u5B57\u6574\u7406",
-  "paragraph.paraphrase": "\u63DB\u53E5\u8A71\u8AAA",
-  "paragraph.custom": "\u6BB5\u843D\u81EA\u554F",
-  "word.usage": "\u7528\u6CD5",
-  "word.compare": "\u6BD4\u8F03",
-  "word.sentence": "\u9020\u53E5",
-  "word.mnemonic": "\u8A18\u61B6\u6CD5",
-  "word.custom": "\u55AE\u5B57\u81EA\u554F"
-};
-function taskName(id2) {
-  var _a;
-  if (id2.startsWith("trivia.")) return "\u5C0F\u77E5\u8B58";
-  return (_a = TASK_NAMES[id2]) != null ? _a : id2;
-}
-var TRACK_NAMES = { grammar: "\u6587\u6CD5", poly: "\u591A\u7FA9\u5B57", vocab: "\u55AE\u5B57", mix: "\u6DF7\u5408", para: "\u6BB5\u843D" };
-var pct4 = (r) => `${Math.round(r * 100)}%`;
-function verdictHeadline(verdict, suggestedLevel) {
-  switch (verdict) {
-    case "up":
-      return suggestedLevel ? `\u53EF\u4EE5\u5F80\u4E0A\u4E00\u7D1A\u8A66\u8A66\uFF08\u5EFA\u8B70 ${suggestedLevel}\uFF09` : "\u53EF\u4EE5\u5F80\u4E0A\u4E00\u7D1A\u8A66\u8A66";
-    case "down":
-      return "\u5EFA\u8B70\u5148\u56DE\u982D\u88DC\u57FA\u790E";
-    case "keep":
-      return "\u7DAD\u6301\u76EE\u524D\u7A0B\u5EA6";
-    default:
-      return "\u8CC7\u6599\u4E0D\u5920\uFF0C\u4E0B\u671F\u518D\u770B";
-  }
-}
-function delta(cur, prev) {
-  if (prev === null || cur === prev) return "";
-  return cur > prev ? ` \u25B2${cur - prev}` : ` \u25BC${prev - cur}`;
-}
-function deltaRate(cur, prev) {
-  if (prev === null) return "";
-  const d = Math.round((cur - prev) * 100);
-  return d === 0 ? "" : d > 0 ? ` \u25B2${d}%` : ` \u25BC${-d}%`;
-}
-function weakLabel(f) {
-  if (f.focus.kind === "grammar-objective") {
-    const t2 = topicById(f.focus.id.split("/")[0]);
-    if (t2) return t2.title;
-  }
-  return f.focus.id;
-}
-function section2(title, lines4) {
-  return lines4.length ? [`### ${title}`, ...lines4, ""] : [];
-}
-function reportTitle(meta) {
-  return meta.first ? `# \u5230\u76EE\u524D\u70BA\u6B62\u7684\u4F60 \xB7 ${meta.key}` : `# \u9019\u9031\u7684\u4F60 \xB7 ${meta.key}`;
-}
-function numbers(data) {
-  const out = [];
-  const a2 = data.activity;
-  out.push(...section2("\u6D3B\u8E8D", [`- \u6D3B\u8E8D ${a2.activeDays} \u5929\uFF0C\u8B80\u4E86 ${a2.articles} \u7BC7\u6587\u7AE0\uFF08${a2.sections} \u500B\u6BB5\u843D\uFF09`]));
-  const ai = data.ai;
-  if (ai.total > 0) {
-    const l4 = [`- \u5171 ${ai.total} \u6B21${ai.prevTotal !== null ? `\uFF08\u4E0A\u671F ${ai.prevTotal}${delta(ai.total, ai.prevTotal)}\uFF09` : ""}\uFF0C\u5176\u4E2D\u81EA\u554F ${ai.custom} \u6B21`];
-    for (const t2 of ai.byTask) l4.push(`- ${taskName(t2.key)}\uFF1A${t2.count}`);
-    if (ai.topWords.length) l4.push(`- \u6700\u5E38\u554F\u7684\u5B57\uFF1A${ai.topWords.map((w3) => `${w3.word}\uFF08${w3.count}\uFF09`).join("\u3001")}`);
-    out.push(...section2("AI \u8A0E\u8AD6", l4));
-  }
-  const w2 = data.words;
-  const wl = [];
-  if (w2.lookups > 0) wl.push(`- \u67E5\u5B57 ${w2.lookups} \u6B21`);
-  if (w2.repeated.length) wl.push(`- \u53CD\u8986\u67E5\uFF1A${w2.repeated.map((x3) => `${x3.word}\uFF08${x3.days} \u5929\uFF09`).join("\u3001")}`);
-  if (w2.savedStillLooked.length) wl.push(`- \u6536\u85CF\u537B\u9084\u5728\u67E5\uFF1A${w2.savedStillLooked.map((x3) => `${x3.word}\uFF08${x3.lookups}\uFF09`).join("\u3001")}`);
-  if (w2.mostPronounced.length) wl.push(`- \u807D\u6700\u591A\u6B21\uFF1A${w2.mostPronounced.map((x3) => `${x3.word}\uFF08${x3.pronounce}\uFF09`).join("\u3001")}`);
-  out.push(...section2("\u67E5\u5B57\uFF0F\u767C\u97F3", wl));
-  const v = data.vocab;
-  const vl = [];
-  if (v.newSaved > 0) vl.push(`- \u65B0\u6536\u85CF ${v.newSaved} \u500B\u5B57`);
-  if (v.reviews > 0) {
-    const rate = v.recallRate === null ? "" : `\uFF0C\u8A18\u4F4F\u7387 ${pct4(v.recallRate)}${deltaRate(v.recallRate, v.prevRecallRate)}`;
-    vl.push(`- \u8907\u7FD2 ${v.reviews} \u6B21${rate}${v.avgSeconds !== null ? `\uFF0C\u5E73\u5747\u505C\u7559 ${v.avgSeconds} \u79D2` : ""}`);
-  }
-  out.push(...section2("\u55AE\u5B57\u8907\u7FD2", vl));
-  const pl = data.practice.tracks.map(
-    (t2) => {
-      var _a;
-      return `- ${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\uFF1A${t2.correct}/${t2.total}\uFF08${pct4(t2.rate)}${t2.prevRate !== null ? deltaRate(t2.rate, t2.prevRate) : ""}\uFF09`;
-    }
-  );
-  out.push(...section2("\u7DF4\u7FD2\u7B54\u5C0D\u7387", pl));
-  if (data.practice.weak.length) {
-    out.push(...section2("\u5F31\u9EDE", data.practice.weak.map((f) => `- ${weakLabel(f)}\uFF08\u932F ${f.wrong} \u6B21\uFF09`)));
-  }
-  const gl = [];
-  const bands = data.grammar.bands.filter((b) => b.total > 0 && b.rate !== null);
-  if (data.grammar.mastered > 0) gl.push(`- \u5DF2\u7CBE\u719F ${data.grammar.mastered} \u500B\u6587\u6CD5\u4E3B\u984C`);
-  for (const b of bands) gl.push(`- \u96E3\u5EA6 ${b.label}\uFF1A${b.correct}/${b.total}\uFF08${pct4(b.rate)}\uFF09`);
-  out.push(...section2("\u6587\u6CD5\u7CBE\u719F", gl));
-  if (data.tags.length) out.push(...section2("\u8003\u8A66\u6A19\u7C64", [`- ${data.tags.map((t2) => `${t2.key}\uFF08${t2.count}\uFF09`).join("\u3001")}`]));
-  return out;
-}
-var RADAR_LANG = "vocab-report-radar";
-var TIERS_LANG = "vocab-report-tiers";
-var GREY = (text) => `<span style="color: gray">${text}</span>`;
-function calloutLines(kind, fold, title, body) {
-  const trimmed = [...body];
-  while (trimmed.length && trimmed[trimmed.length - 1] === "") trimmed.pop();
-  return [`> [!${kind}]${fold} ${title}`, ...trimmed.map((l4) => l4 === "" ? ">" : `> ${l4}`)];
-}
-var cell = (s) => s.replace(/\|/g, "\uFF0F").replace(/\s*\n\s*/g, " ").trim();
-function levelTable(levels) {
-  const rows = levels.map((l4) => {
-    const detail = l4.detail ? `\uFF08${l4.detail}\uFF09` : "";
-    const rough = l4.rough ? "\uFF08\u7C97\u4F30\uFF09" : "";
-    return `| ${cell(l4.area)} | ${cell(l4.level)}${cell(detail)}${rough} | ${cell(l4.basis)} |`;
-  });
-  return ["| \u9762\u5411 | \u7A0B\u5EA6 | \u4F9D\u64DA |", "| --- | --- | --- |", ...rows];
-}
-function radarFence(axes) {
-  const json = JSON.stringify({
-    axes: axes.map((a2) => ({ name: a2.name, value: Math.round(a2.value * 100) / 100, clear: a2.clear, ...a2.hint ? { hint: a2.hint } : {} }))
-  });
-  return ["```" + RADAR_LANG, json, "```"];
-}
-function renderReportFile(data, meta) {
-  var _a, _b, _c, _d, _e;
-  const adv = data.advice;
-  const fm = [
-    "---",
-    "vocab-tracker: report",
-    `vocab-tracker-id: report-${meta.key}`,
-    `period: ${data.period.from}~${data.period.to}`,
-    `verdict: ${adv.verdict}`,
-    ...adv.suggestedLevel ? [`suggested-level: ${adv.suggestedLevel}`] : [],
-    "---",
-    ""
-  ];
-  const ai = meta.advice;
-  const axes = (_b = (_a = ai == null ? void 0 : ai.axes) != null ? _a : meta.axes) != null ? _b : baselineAxes(data);
-  const levels = (_d = (_c = ai == null ? void 0 : ai.levels) != null ? _c : meta.levels) != null ? _d : baselineLevels(data, "");
-  const note = GREY((_e = meta.aiNote) != null ? _e : "AI \u9019\u6B21\u6C92\u5BEB\u6210\u529F");
-  const body = [reportTitle(meta), "", GREY(`${data.period.from} \uFF5E ${data.period.to}`), ""];
-  if (ai == null ? void 0 : ai.letter) body.push(ai.letter, "");
-  const tiers = data.tiers && hasTierData(data.tiers) ? ["", "```" + TIERS_LANG, tiersFenceJson(data.tiers), "```"] : [];
-  const now2 = [...radarFence(axes), "", ...levelTable(levels), ...tiers, "", "#### \u7A0B\u5EA6\u5EFA\u8B70", "", `**${verdictHeadline(adv.verdict, adv.suggestedLevel)}**`, ""];
-  for (const s of adv.signals) now2.push(`- ${s.reason}`);
-  body.push(...calloutLines("abstract", "+", "\u73FE\u5728\u7684\u7A0B\u5EA6", now2), "");
-  const next = ["#### \u7167\u4F60\u7684\u7A0B\u5EA6\u53EF\u4EE5\u52A0\u5F37", ""];
-  if (ai == null ? void 0 : ai.focus.length) next.push(...ai.focus.map((p) => `- ${p}`), "");
-  else next.push(note, "");
-  if (ai == null ? void 0 : ai.tryNext.length) next.push("#### \u4E0B\u9031\u4E00\u8D77\u8A66\u8A66", "", ...ai.tryNext.map((p) => `- [ ] ${p}`), "");
-  if (ai == null ? void 0 : ai.reading.length) next.push("#### \u9069\u5408\u4F60\u7684\u95B1\u8B80", "", ...ai.reading.map((p) => `- ${p}`), "");
-  body.push(...calloutLines("tip", "+", "\u63A5\u4E0B\u4F86\u7684\u5EFA\u8B70", next), "");
-  const nums = numbers(data);
-  body.push(...calloutLines("note", "-", "\u6578\u5B57\u660E\u7D30", nums.length ? nums : ["\u9019\u9031\u9084\u6C92\u6709\u6578\u5B57\u53EF\u4EE5\u5217\u3002"]), "");
-  body.push(analyzeFence(meta.key), "");
-  return [...fm, ...body].join("\n").replace(/\n+$/, "\n");
-}
-var ANALYZE_LANG = "vocab-report-analyze";
-var ANALYSIS_HEADING = "## \u8A73\u7D30\u5206\u6790";
-function analyzeFence(key6) {
-  return ["```" + ANALYZE_LANG, `key: ${key6}`, "```"].join("\n");
-}
-function removeFrontmatterField(text, key6) {
-  const m2 = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
-  if (!m2) return text;
-  const re = new RegExp(`^${key6}:.*(?:\\r?\\n|$)`, "m");
-  if (!re.test(m2[1])) return text;
-  const fm = m2[1].replace(re, "").replace(/\r?\n$/, "");
-  return text.slice(0, m2.index) + `---
-${fm}
----` + text.slice(m2.index + m2[0].length);
-}
-function setFrontmatterField(text, key6, value) {
-  const m2 = /^---\r?\n([\s\S]*?)\r?\n---(\r?\n|$)/.exec(text);
-  if (!m2) return `---
-${key6}: ${value}
----
-
-${text}`;
-  const re = new RegExp(`^${key6}:.*$`, "m");
-  const fm = re.test(m2[1]) ? m2[1].replace(re, `${key6}: ${value}`) : `${m2[1]}
-${key6}: ${value}`;
-  return text.slice(0, m2.index) + `---
-${fm}
----` + m2[2] + text.slice(m2.index + m2[0].length);
-}
-function renderReviewFile(key6, period, body) {
-  const label = key6.includes("Q") ? "\u5B63" : "\u6708";
-  return [
-    "---",
-    "vocab-tracker: report",
-    `vocab-tracker-id: review-${key6}`,
-    `period: ${period.from}~${period.to}`,
-    "---",
-    "",
-    `# \u5B78\u7FD2\u56DE\u9867 ${key6}\uFF08${period.from} \uFF5E ${period.to}\uFF0C\u9019${label}\uFF09`,
-    "",
-    body.trim(),
-    ""
-  ].join("\n");
-}
-function reportDigest(data) {
-  var _a;
-  const L = [`\u671F\u9593\uFF1A${data.period.from} \uFF5E ${data.period.to}`];
-  const a2 = data.activity;
-  L.push(`\u6D3B\u8E8D ${a2.activeDays} \u5929\uFF0C\u8B80 ${a2.articles} \u7BC7\u6587\u7AE0`);
-  if (data.ai.total) L.push(`AI \u8A0E\u8AD6 ${data.ai.total} \u6B21\uFF1A${data.ai.byTask.map((t2) => `${taskName(t2.key)} ${t2.count}`).join("\u3001")}`);
-  const w2 = data.words;
-  if (w2.lookups) L.push(`\u67E5\u5B57 ${w2.lookups} \u6B21`);
-  if (w2.repeated.length) L.push(`\u53CD\u8986\u67E5\u7684\u5B57\uFF1A${w2.repeated.map((x3) => x3.word).join("\u3001")}`);
-  if (w2.savedStillLooked.length) L.push(`\u6536\u85CF\u537B\u9084\u5728\u67E5\uFF1A${w2.savedStillLooked.map((x3) => x3.word).join("\u3001")}`);
-  const v = data.vocab;
-  if (v.reviews) L.push(`\u55AE\u5B57\u8907\u7FD2 ${v.reviews} \u6B21\uFF0C\u8A18\u4F4F\u7387 ${v.recallRate === null ? "-" : pct4(v.recallRate)}`);
-  if (v.newSaved) L.push(`\u65B0\u6536\u85CF ${v.newSaved} \u500B\u5B57`);
-  for (const t2 of data.practice.tracks) L.push(`${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\u7DF4\u7FD2\u7B54\u5C0D\u7387 ${pct4(t2.rate)}\uFF08${t2.total} \u984C\uFF09`);
-  if (data.practice.weak.length) L.push(`\u5F31\u9EDE\uFF1A${data.practice.weak.map(weakLabel).join("\u3001")}`);
-  if (data.grammar.mastered) L.push(`\u6587\u6CD5\u5DF2\u7CBE\u719F ${data.grammar.mastered} \u500B\u4E3B\u984C`);
-  if (data.tags.length) L.push(`\u8003\u8A66\u6A19\u7C64\uFF1A${data.tags.map((t2) => t2.key).join("\u3001")}`);
-  L.push(`\u7A0B\u5EA6\u5224\u65B7\uFF1A${verdictHeadline(data.advice.verdict, data.advice.suggestedLevel)}`);
-  for (const s of data.advice.signals) L.push(`- ${s.reason}`);
-  return L.join("\n");
-}
-
-// src/core/learner/recentDiscussions.ts
-var RECENT_DISCUSSION_DAYS = 14;
-var RECENT_DISCUSSION_MAX = 20;
-var TEXT_MAX = 120;
-var PARAGRAPH_TEXT_MAX = 400;
-var DAY_MS5 = 864e5;
-var flat2 = (s) => s.replace(/\s+/g, " ").trim();
-function clip2(s, max = TEXT_MAX) {
-  const chars = [...flat2(s)];
-  return chars.length > max ? `${chars.slice(0, max).join("")}\u2026` : chars.join("");
-}
-function plainParagraph2(md) {
-  return md.replace(/!?\[\[([^\]|]*\|)?([^\]]*)\]\]/g, "$2").replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\s\^[\w-]+\s*$/gm, "").replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, "").replace(/^\s*\[?\d{1,2}:\d{2}(?::\d{2})?\]?\s*/gm, "").replace(/[*_`]/g, "");
-}
-function mmdd2(iso) {
-  const d = new Date(iso);
-  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
-}
-function subjectOf2(th, subjectEntryId, wordOf) {
-  var _a, _b;
-  const a2 = th.anchor;
-  if (a2.kind === "word") return (_a = wordOf(a2.entryId)) != null ? _a : "";
-  if (a2.kind === "paragraph") return `\u300C${noteTitle2(a2.path)}\u300D\u7684\u6BB5\u843D`;
-  if (a2.kind === "trivia-session") return subjectEntryId ? (_b = wordOf(subjectEntryId)) != null ? _b : "" : "";
-  return "";
-}
-function recentDiscussions(threads, wordOf, now2, opts = {}) {
-  var _a, _b, _c, _d;
-  const since = now2.getTime() - ((_a = opts.days) != null ? _a : RECENT_DISCUSSION_DAYS) * DAY_MS5;
-  const rows = [];
-  for (const th of threads) {
-    if (th.deletedAt || th.anchor.kind === "buddy") continue;
-    for (const turn of liveTurns(th)) {
-      if (turn.role !== "user") continue;
-      const at = Date.parse(turn.at);
-      if (Number.isNaN(at) || at < since) continue;
-      const subject = subjectOf2(th, turn.subjectEntryId, wordOf);
-      const parts = [`${mmdd2(turn.at)} ${turn.taskId ? taskName(turn.taskId) : "\u63D0\u554F"}${subject ? `\uFF5C${subject}` : ""}`];
-      if ((_b = turn.selection) == null ? void 0 : _b.trim()) parts.push(`\u9078\u4E86\u300C${clip2(turn.selection)}\u300D`);
-      if ((_c = turn.question) == null ? void 0 : _c.trim()) parts.push(`\u554F\uFF1A${clip2(turn.question)}`);
-      const paragraph = th.anchor.kind === "paragraph" ? clip2(plainParagraph2(th.anchor.snapshot), PARAGRAPH_TEXT_MAX) : void 0;
-      rows.push({ at, line: `- ${parts.join("\uFF5C")}`, thread: th.id, ...paragraph ? { paragraph } : {} });
-    }
-  }
-  rows.sort((a2, b) => b.at - a2.at);
-  const shown = /* @__PURE__ */ new Set();
-  return rows.slice(0, (_d = opts.max) != null ? _d : RECENT_DISCUSSION_MAX).map((r) => {
-    if (!r.paragraph || shown.has(r.thread)) return r.line;
-    shown.add(r.thread);
-    return `${r.line}
-  \u6BB5\u843D\u539F\u6587\uFF1A${r.paragraph}`;
-  });
-}
-
 // src/core/learner/buddyArchive.ts
 var SHARE_TASK_ID = "buddy.share";
 var CUSTOM_TASK_ID = "buddy.custom";
@@ -35024,6 +35265,13 @@ function pickedText(subject, skipped) {
   if (!subject) return "\uFF08\u5925\u4F34\u9080\u4ED6\u804A\u804A\u6700\u8FD1\u8B80\u4E86\u4EC0\u9EBC\uFF09";
   return subject.startsWith("\u3008") ? `\uFF08\u5925\u4F34\u6311\u4E86${subject}\u90A3\u6BB5${tail}\uFF09` : `\uFF08\u5925\u4F34\u6311\u4E86 **${subject}**${tail}\uFF09`;
 }
+function quoteLines(turn) {
+  const card = quoteCard(turn.shareSource);
+  if (!card) return [];
+  if (card.wordLine) return [`> **${card.wordLine.word}**${card.wordLine.meaning ? `\uFF08${card.wordLine.meaning}\uFF09` : ""}`];
+  const body = card.body.map((s) => s.hit ? `**${s.text}**` : s.text).join("").replace(/\s*\n\s*/g, " ");
+  return [...card.heading ? [`> ${card.heading}`, ">"] : [], `> ${body}`];
+}
 function buildEntries(pairs, next, labelOf) {
   return pairs.map((p, i) => {
     var _a, _b, _c;
@@ -35036,13 +35284,14 @@ function buildEntries(pairs, next, labelOf) {
     if (kind === "share") you = pickedText(turn.shareSubject, skipped);
     else if (kind === "button") you = `\uFF08\u9EDE\u4E86\u300C${(_b = labelOf((_a = turn.taskId) != null ? _a : "")) != null ? _b : turn.content}\u300D\uFF09`;
     else you = ((_c = turn.question) == null ? void 0 : _c.trim()) || turn.content;
-    return { at: turn.at, kind, you, ...turn.shareSubject ? { subject: turn.shareSubject } : {}, skipped, answer };
+    const quote2 = kind === "share" && !skipped ? quoteLines(turn) : [];
+    return { at: turn.at, kind, you, ...turn.shareSubject ? { subject: turn.shareSubject } : {}, skipped, answer, ...quote2.length ? { quote: quote2 } : {} };
   });
 }
 function digestConversation(entries) {
   return entries.map((e) => {
     const lines4 = [`\u4F60\uFF1A${e.you}`];
-    if (!e.skipped) lines4.push(`\u5925\u4F34\uFF1A${clip2(e.answer, ANSWER_FOR_AI_MAX)}`);
+    if (!e.skipped) lines4.push(`\u5925\u4F34\uFF1A${clip(e.answer, ANSWER_FOR_AI_MAX)}`);
     return lines4.join("\n");
   }).join("\n\n");
 }
@@ -35085,6 +35334,7 @@ function conversationCallout(entries) {
   for (const e of entries) {
     const time = hhmm(e.at);
     lines4.push("", `**\u4F60**${time ? `\uFF08${time}\uFF09` : ""}\uFF1A${e.you}`);
+    if (e.quote && !e.skipped) lines4.push("", ...e.quote);
     if (!e.skipped) lines4.push("", e.answer.includes("\n") ? `**\u5925\u4F34**\uFF1A
 
 ${e.answer}` : `**\u5925\u4F34**\uFF1A${e.answer}`);
@@ -35205,107 +35455,6 @@ function parseDigest(text) {
 }
 function digestIsEmpty(d) {
   return !d.topics.length && !d.corrections.length && !d.understandings.length && !d.words.length;
-}
-
-// src/core/learner/sharePick.ts
-var SHARE_DAYS = 14;
-var SHARE_AVOID_RECENT = 5;
-var DAY_MS6 = 864e5;
-var MIN_PARAGRAPH_CHARS = 20;
-var localDay2 = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-function collectShareItems(src) {
-  var _a, _b;
-  const since = src.now.getTime() - ((_a = src.days) != null ? _a : SHARE_DAYS) * DAY_MS6;
-  const sinceDay = localDay2(new Date(since));
-  const items = [];
-  for (const th of src.threads) {
-    if (th.deletedAt || th.anchor.kind !== "paragraph") continue;
-    const asked = liveTurns(th).some((turn) => turn.role === "user" && Date.parse(turn.at) >= since);
-    if (!asked) continue;
-    const text = clip2(plainParagraph2(th.anchor.snapshot), PARAGRAPH_TEXT_MAX);
-    if ([...text].length < MIN_PARAGRAPH_CHARS) continue;
-    items.push({ kind: "paragraph", key: `p:${th.id}`, title: noteTitle2(th.anchor.path), text });
-  }
-  const meaningOf = /* @__PURE__ */ new Map();
-  for (const e of src.entries) {
-    if (e.deletedAt) continue;
-    const zh = (_b = e.definitionZh) == null ? void 0 : _b.trim();
-    if (zh) meaningOf.set(e.word.trim().toLowerCase(), zh);
-  }
-  const seen = /* @__PURE__ */ new Set();
-  const addWord = (raw) => {
-    const word = raw.trim().toLowerCase();
-    if (!word || seen.has(word)) return;
-    seen.add(word);
-    const meaning = meaningOf.get(word);
-    items.push({ kind: "word", key: `w:${word}`, word, ...meaning ? { meaning } : {} });
-  };
-  for (const w2 of src.touches) if (w2.day >= sinceDay) addWord(w2.word);
-  for (const e of src.entries) {
-    if (e.deletedAt || !e.createdAt) continue;
-    if (Date.parse(e.createdAt) >= since) addWord(e.word);
-  }
-  return items;
-}
-var PARAGRAPH_BIAS = 0.6;
-function pickShare(items, recentKeys, random, lastKind) {
-  if (!items.length) return null;
-  const avoid = new Set(recentKeys.slice(-SHARE_AVOID_RECENT));
-  const fresh = items.filter((i2) => !avoid.has(i2.key));
-  const pool = fresh.length ? fresh : items;
-  const paragraphs = pool.filter((i2) => i2.kind === "paragraph");
-  const words = pool.filter((i2) => i2.kind === "word");
-  let group = pool;
-  if (paragraphs.length && words.length) {
-    const wantParagraph = lastKind === "word" ? true : random() < PARAGRAPH_BIAS;
-    group = wantParagraph ? paragraphs : words;
-  }
-  const i = Math.min(group.length - 1, Math.floor(random() * group.length));
-  return group[i];
-}
-var SHARE_STYLES = [
-  { id: "guess", scope: "both", text: "\u8ACB\u4ED6\u731C\u731C\u770B\uFF0C\u9019\u500B\u5B57\uFF08\u6216\u9019\u6BB5\uFF09\u662F\u4EC0\u9EBC\u610F\u601D" },
-  { id: "choice", scope: "both", text: "\u7D66\u5169\u500B\u53EF\u80FD\u7684\u610F\u601D\u8B93\u4ED6\u4E8C\u9078\u4E00\uFF08\u5176\u4E2D\u4E00\u500B\u662F\u5C0D\u7684\uFF0C\u53E6\u4E00\u500B\u662F\u770B\u8D77\u4F86\u50CF\u7684\u5E72\u64FE\uFF09" },
-  { id: "scenario", scope: "both", text: "\u5148\u63CF\u8FF0\u4E00\u500B\u751F\u6D3B\u60C5\u5883\uFF0C\u8ACB\u4ED6\u731C\u731C\u5728\u9019\u500B\u60C5\u5883\u88E1\u5B83\u662F\u4EC0\u9EBC\u610F\u601D" },
-  { id: "sentence", scope: "word", text: "\u8ACB\u4ED6\u7528\u9019\u500B\u5B57\u9020\u4E00\u500B\u53E5\u5B50" },
-  { id: "assoc", scope: "both", text: "\u554F\u4ED6\u770B\u5230\u9019\u500B\u5B57\uFF08\u6216\u9019\u6BB5\uFF09\u6703\u8B93\u4ED6\u60F3\u5230\u4EC0\u9EBC" },
-  { id: "rephrase", scope: "paragraph", text: "\u8ACB\u4ED6\u7528\u81EA\u5DF1\u7684\u8A71\u628A\u9019\u4E00\u6BB5\u63DB\u53E5\u8A71\u8AAA" },
-  { id: "gist", scope: "paragraph", text: "\u8ACB\u4ED6\u7528\u4E00\u53E5\u8A71\u8AAA\u8AAA\u9019\u6BB5\u5728\u8B1B\u4EC0\u9EBC\u3001\u4F5C\u8005\u60F3\u8868\u9054\u4EC0\u9EBC" }
-];
-var GIST_BIAS = 0.4;
-function pickShareStyle(kind, lastId, random) {
-  const fit = SHARE_STYLES.filter((s) => s.scope === "both" || s.scope === kind);
-  if (kind === "paragraph" && lastId !== "gist" && random() < GIST_BIAS) return fit.find((s) => s.id === "gist");
-  const others = fit.filter((s) => s.id !== "gist");
-  const pool = others.filter((s) => s.id !== lastId);
-  const from = pool.length ? pool : others;
-  return from[Math.min(from.length - 1, Math.floor(random() * from.length))];
-}
-function attachWordSources(items, sourceOf) {
-  return items.map((item) => {
-    if (item.kind !== "word") return item;
-    const src = sourceOf(item.word);
-    const paragraph = src ? clip2(plainParagraph2(src.paragraph), PARAGRAPH_TEXT_MAX) : "";
-    return paragraph ? { ...item, sourceTitle: src == null ? void 0 : src.title, sourceParagraph: paragraph } : item;
-  });
-}
-function shareSource(item) {
-  var _a;
-  if ((item == null ? void 0 : item.kind) !== "word" || !item.sourceParagraph) return void 0;
-  return { sourceTitle: (_a = item.sourceTitle) != null ? _a : "", sourceParagraph: item.sourceParagraph };
-}
-function shareSubject(item) {
-  if (!item) return void 0;
-  return item.kind === "word" ? item.word : `\u3008${item.title}\u3009`;
-}
-function rememberShare(recentKeys, key6) {
-  return [...recentKeys.filter((k) => k !== key6), key6].slice(-SHARE_AVOID_RECENT);
-}
-function shareBrief(item) {
-  if (!item) return "";
-  if (item.kind === "word") return `\u55AE\u5B57\uFF1A${item.word}${item.meaning ? `\uFF08${item.meaning}\uFF09` : ""}`;
-  return `\u6BB5\u843D\uFF08\u51FA\u81EA\u300C${item.title}\u300D\uFF09\uFF1A
-${item.text}`;
 }
 
 // src/services/threads/pin.ts
@@ -35447,6 +35596,7 @@ var ThreadService = class {
     if (p.selection) user.selection = p.selection;
     if (p.subjectEntryId) user.subjectEntryId = p.subjectEntryId;
     if (p.shareSubject) user.shareSubject = p.shareSubject;
+    if (p.shareSource) user.shareSource = p.shareSource;
     const answer = {
       id: this.newId(),
       role: "assistant",
@@ -35601,7 +35751,8 @@ var ThreadService = class {
       display: this.displayFor(req),
       question: req.question,
       selection: req.selection,
-      ...(share == null ? void 0 : share.subject) ? { shareSubject: share.subject } : {}
+      ...(share == null ? void 0 : share.subject) ? { shareSubject: share.subject } : {},
+      ...(share == null ? void 0 : share.card) ? { shareSource: share.card } : {}
     });
     void this.archiveBuddy(id2).catch((e) => console.error("Vocab Tracker: buddy archive failed", e));
     return id2;
@@ -35621,7 +35772,7 @@ var ThreadService = class {
     this.lastShareKind = item.kind;
     const style = pickShareStyle(item.kind, this.lastShareStyle, random);
     this.lastShareStyle = style.id;
-    return { brief: shareBrief(item), style: style.text, subject: shareSubject(item), source: shareSource(item) };
+    return { brief: shareBrief(item), style: style.text, subject: shareSubject(item), source: shareSource(item), card: shareSourceOf(item) };
   }
   // 對話整理: once ten answered groups are alive, the oldest eight are
   // written to a note and tombstoned (the newest two stay to chat on).
@@ -39739,7 +39890,7 @@ var TriviaService = class {
     for (let i = th.turns.length - 1; i >= 0; i--) {
       const t2 = th.turns[i];
       if (t2.deletedAt || t2.role !== "assistant") continue;
-      const e = this.entry(subjectOf(th, t2));
+      const e = this.entry(subjectOf2(th, t2));
       if (e) return e;
     }
     return void 0;
@@ -39758,7 +39909,7 @@ var TriviaService = class {
     const out = [];
     for (const r of triviaRounds(th)) {
       if (!r.answer.content.trim()) continue;
-      const word = (_b = (_a = this.entry(subjectOf(th, r.answer))) == null ? void 0 : _a.word) != null ? _b : "";
+      const word = (_b = (_a = this.entry(subjectOf2(th, r.answer))) == null ? void 0 : _a.word) != null ? _b : "";
       out.push({ word, title: splitTrivia(r.answer.content).title });
       if (out.length >= MAX_TOLD) break;
     }
@@ -39833,7 +39984,7 @@ var TriviaService = class {
     await this.ensureLoaded();
     const th = this.thread();
     const answer = th == null ? void 0 : th.turns.find((x3) => x3.id === turnId);
-    const entryId = answer ? subjectOf(th, answer) : void 0;
+    const entryId = answer ? subjectOf2(th, answer) : void 0;
     const q = this.deps.threads.dropFailedRound(th, turnId);
     if (!q) return;
     const kind = Object.keys(TRIVIA_TASK_BY_KIND).find((k) => TRIVIA_TASK_BY_KIND[k].id === q.taskId);
@@ -39857,7 +40008,7 @@ var TriviaService = class {
     if (existing) return existing;
     const turn = this.answerTurn(turnId);
     if (!turn) return void 0;
-    const subject = this.entry(subjectOf(this.thread(), turn));
+    const subject = this.entry(subjectOf2(this.thread(), turn));
     if (!subject) return void 0;
     const { title, body } = splitTrivia(turn.content);
     const mentions = new WordIndex(this.deps.vocab.entries).mentions(`${title}
@@ -42468,6 +42619,9 @@ function sectionReady(info) {
   for (let i = info.text.indexOf("\n"); i >= 0 && lines4 <= info.lineEnd; i = info.text.indexOf("\n", i + 1)) lines4++;
   return info.lineEnd < lines4;
 }
+function skipsBadges(fm) {
+  return !!wordPageEntryId(fm) || pluginNoteKind(fm) !== null;
+}
 function badgeState(count2, showGhost) {
   return count2 > 0 ? { kind: "count", count: count2 } : { kind: "ghost", quiet: !showGhost };
 }
@@ -42483,8 +42637,7 @@ var ParagraphBadges = class {
       const first = el.firstElementChild;
       if (!isAnchorableTag(first == null ? void 0 : first.tagName)) return;
       const fm = (_c = ctx.frontmatter) != null ? _c : (_b = (_a = this.deps).frontmatterOf) == null ? void 0 : _b.call(_a, ctx.sourcePath);
-      if (wordPageEntryId(fm)) return;
-      if ((fm == null ? void 0 : fm["vocab-tracker"]) === "grammar") return;
+      if (skipsBadges(fm)) return;
       if (!ctx.getSectionInfo(el)) return;
       let handles = [];
       let unloaded = false;

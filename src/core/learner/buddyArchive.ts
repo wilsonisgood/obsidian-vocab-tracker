@@ -3,6 +3,7 @@ import type { Digest } from "./buddyDigest";
 import type { ArchivePair } from "./buddyGroups";
 import { clip } from "./recentDiscussions";
 import type { Turn } from "../model/thread";
+import { quoteCard } from "./sharePick";
 
 // 對話整理成筆記: one note per day, every tidy-up of a conversation adds a
 // section to it. Pure; ThreadService does the I/O.
@@ -37,12 +38,23 @@ export interface ArchiveEntry {
   subject?: string;
   skipped: boolean;
   answer: string;
+  // Share only: the picked material as quoted markdown lines.
+  quote?: string[];
 }
 
 function pickedText(subject: string | undefined, skipped: boolean): string {
   const tail = skipped ? " · 略過" : "";
   if (!subject) return "（夥伴邀他聊聊最近讀了什麼）";
   return subject.startsWith("〈") ? `（夥伴挑了${subject}那段${tail}）` : `（夥伴挑了 **${subject}**${tail}）`;
+}
+
+// The pick as a quote: 出自 line, then the paragraph with the word in bold.
+function quoteLines(turn: Turn): string[] {
+  const card = quoteCard(turn.shareSource);
+  if (!card) return [];
+  if (card.wordLine) return [`> **${card.wordLine.word}**${card.wordLine.meaning ? `（${card.wordLine.meaning}）` : ""}`];
+  const body = card.body.map((s) => (s.hit ? `**${s.text}**` : s.text)).join("").replace(/\s*\n\s*/g, " ");
+  return [...(card.heading ? [`> ${card.heading}`, ">"] : []), `> ${body}`];
 }
 
 // `next`: the user turn right after the last pair (for the skip check).
@@ -62,7 +74,8 @@ export function buildEntries(
     if (kind === "share") you = pickedText(turn.shareSubject, skipped);
     else if (kind === "button") you = `（點了「${labelOf(turn.taskId ?? "") ?? turn.content}」）`;
     else you = turn.question?.trim() || turn.content;
-    return { at: turn.at, kind, you, ...(turn.shareSubject ? { subject: turn.shareSubject } : {}), skipped, answer };
+    const quote = kind === "share" && !skipped ? quoteLines(turn) : [];
+    return { at: turn.at, kind, you, ...(turn.shareSubject ? { subject: turn.shareSubject } : {}), skipped, answer, ...(quote.length ? { quote } : {}) };
   });
 }
 
@@ -130,6 +143,7 @@ export function conversationCallout(entries: readonly ArchiveEntry[]): string {
   for (const e of entries) {
     const time = hhmm(e.at);
     lines.push("", `**你**${time ? `（${time}）` : ""}：${e.you}`);
+    if (e.quote && !e.skipped) lines.push("", ...e.quote);
     if (!e.skipped) lines.push("", e.answer.includes("\n") ? `**夥伴**：\n\n${e.answer}` : `**夥伴**：${e.answer}`);
   }
   return lines.join("\n").split("\n").map((l) => (l ? `> ${l}` : ">")).join("\n");

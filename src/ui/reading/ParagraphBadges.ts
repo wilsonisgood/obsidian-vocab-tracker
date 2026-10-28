@@ -1,6 +1,7 @@
 import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext, type MarkdownSectionInformation } from "obsidian";
 import { t } from "../../core/i18n";
 import { trailingBlockId } from "../../core/text/blockId";
+import { pluginNoteKind } from "./pluginNote";
 import { wordPageEntryId } from "./WordPageDecorator";
 import { shouldSplitList, splitListItems } from "../../core/text/listItems";
 import type { SectionRef } from "../../services/anchors/ParagraphAnchorService";
@@ -102,6 +103,13 @@ export function sectionReady(info: Pick<MarkdownSectionInformation, "text" | "li
   return info.lineEnd < lines;
 }
 
+// The plugin's own pages (word, entry, ai-note, grammar, diary, report) get
+// no ✦: they aren't articles to discuss, and every badge is DOM the page
+// would carry for nothing.
+export function skipsBadges(fm: Record<string, unknown> | null | undefined): boolean {
+  return !!wordPageEntryId(fm) || pluginNoteKind(fm) !== null;
+}
+
 export type BadgeState = { kind: "count"; count: number } | { kind: "ghost"; quiet: boolean };
 
 // What a section's badge should look like. "quiet" ghosts stay hidden even
@@ -156,9 +164,7 @@ export class ParagraphBadges {
     const first = el.firstElementChild;
     if (!isAnchorableTag(first?.tagName)) return;
     const fm = (ctx.frontmatter as Record<string, unknown> | undefined) ?? this.deps.frontmatterOf?.(ctx.sourcePath);
-    if (wordPageEntryId(fm)) return;
-    // Grammar topic pages (第十五波 M) are the plugin's own too: no ✦.
-    if (fm?.["vocab-tracker"] === "grammar") return;
+    if (skipsBadges(fm)) return;
     if (!ctx.getSectionInfo(el)) return;
 
     let handles: BadgeHandle[] = [];

@@ -8,7 +8,8 @@ import type { QuickItem } from "../chat/quickTasks";
 import { ROTATION_MS, rotationPaused, rotationWindow } from "../../core/learner/quickRotation";
 import { buddyCustom, buddyGrammar, buddyPlan, buddyReading, buddyReview, buddyShare, buddyLevel, buddyWriting } from "../../services/ai/tasks/buddy";
 import { BuddyNearFullModal } from "./BuddyNearFullModal";
-import { showSinkButton } from "./scrollBottom";
+import { isScrollableOverflow, SCROLLER_SELECTOR, shouldFollow, showSinkButton, SINK_RETRY_MS, sinkSearch } from "./scrollBottom";
+import { quoteCard } from "../../core/learner/sharePick";
 import { ChatPanel, createChatUiState, type ChatPanelOptions, type ChatSend } from "../chat/ChatPanel";
 import { openPluginSettings } from "../kit/openSettings";
 import { guardReadingClicks } from "./learnUi";
@@ -94,7 +95,7 @@ class BuddyBlock extends MarkdownRenderChild {
     });
     this.registerDomEvent(this.chatHost, "mouseleave", () => (this.hovering = false));
     this.registerInterval(window.setInterval(() => this.rotateQuick(), ROTATION_MS));
-    this.setupSink();
+    this.setupSink(0);
 
     // Only list changes matter here; the ChatPanel follows its own thread.
     this.register(this.plugin.threads.events.on("thread:upsert", (th) => {
@@ -108,6 +109,7 @@ class BuddyBlock extends MarkdownRenderChild {
       }
     }));
     this.register(this.plugin.threads.events.on("threads:reloaded", () => this.renderList()));
+    this.onFollowEvents();
 
     void this.plugin.threads.ensureLoaded().then(() => {
       if (this.disposed) return;
@@ -219,20 +221,81 @@ class BuddyBlock extends MarkdownRenderChild {
 
   // ── 沉底按鈕：頁面不在最底時，右下角一顆圓形按鈕 ──
 
+  // Runs once the block is attached and laid out (it isn't yet at onload).
+  private afterLayout(fn: () => void, tries = 40): void {
+    requestAnimationFrame(() => {
+      if (this.disposed) return;
+      if (this.root.isConnected && this.root.offsetHeight > 0) return fn();
+      if (tries > 0) this.afterLayout(fn, tries - 1);
+    });
+  }
+
   // Once the chat has been redrawn, bring its last message into view.
   private scrollToEnd(): void {
     if (!liveTurns(this.plugin.threads.get(this.threadId)).length) return;
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        if (this.disposed) return;
-        const end = this.chatHost.querySelector(".vt-chat-controls") ?? this.chatHost.lastElementChild;
-        end?.scrollIntoView({ block: "end", behavior: "auto" });
+    this.afterLayout(() => requestAnimationFrame(() => this.chatEnd()?.scrollIntoView({ block: "end", behavior: "auto" })));
+  }
+
+  private chatEnd(): Element | null {
+    return this.chatHost.querySelector(".vt-chat-controls") ?? this.chatHost.lastElementChild;
+  }
+
+  // How far the composer's bottom edge is below the visible area.
+  private composerGap(): number {
+    const end = this.chatEnd();
+    if (!end) return 0;
+    const view = this.findScroller()?.getBoundingClientRect().bottom ?? window.innerHeight;
+    return end.getBoundingClientRect().bottom - view;
+  }
+
+  private findScroller(): HTMLElement | null {
+    const hit = this.containerEl.closest<HTMLElement>(SCROLLER_SELECTOR);
+    if (hit) return hit;
+    for (let el = this.containerEl.parentElement; el; el = el.parentElement) {
+      if (isScrollableOverflow(getComputedStyle(el).overflowY)) return el;
+    }
+    return null;
+  }
+
+  // 送出後捲到最底；回答時使用者還在底部附近就一路跟著捲，完成時再捲一次。
+  private following = false;
+  private awaitingTurn = false;
+
+  private onFollowEvents(): void {
+    const threads = this.plugin.threads;
+    this.register(
+      threads.events.on("thread:turn-delta", (d) => {
+        if (d.threadId !== this.threadId || !this.following) return;
+        if (!shouldFollow(this.composerGap())) {
+          this.following = false;
+          return;
+        }
+        this.chatEnd()?.scrollIntoView({ block: "end", behavior: "auto" });
+      })
+    );
+    this.register(
+      threads.events.on("thread:upsert", (th) => {
+        if (th.id !== this.threadId) return;
+        if (this.awaitingTurn) {
+          this.awaitingTurn = false;
+          this.scrollToEnd();
+        } else if (this.following && !threads.isBusy(th.id)) {
+          this.following = false;
+          this.scrollToEnd();
+        }
       })
     );
   }
 
-  private setupSink(): void {
-    const scroller = this.containerEl.closest<HTMLElement>(".markdown-preview-view, .cm-scroller");
+  // The container isn't there yet at onload (the block is not attached), so look again a few times.
+  private setupSink(attempt: number): void {
+    if (this.disposed) return;
+    const scroller = this.findScroller();
+    const next = sinkSearch(!!scroller, attempt);
+    if (next === "retry") {
+      this.registerInterval(window.setTimeout(() => this.setupSink(attempt + 1), SINK_RETRY_MS));
+      return;
+    }
     if (!scroller) return;
     const btn = document.body.createEl("button", {
       cls: "vt vt-buddy-sink clickable-icon",
@@ -279,6 +342,7 @@ class BuddyBlock extends MarkdownRenderChild {
       state: this.chatState,
       send: (req) => this.send(req),
       retry: (turnId) => this.plugin.threads.retryBuddy(this.threadId, turnId),
+      turnPreface: (turn) => this.quoteCardEl(turn),
       onOpenSettings: () => openPluginSettings(this.plugin.app, this.plugin.manifest.id),
     };
     this.chat = this.addChild(new ChatPanel(this.chatHost, opts));
@@ -295,6 +359,26 @@ class BuddyBlock extends MarkdownRenderChild {
     new BuddyNearFullModal(this.plugin.app).open();
   }
 
+  // 聊聊最近讀的: the picked word or paragraph, quoted above the buddy's question.
+  private quoteCardEl(turn: Thread["turns"][number]): HTMLElement | null {
+    const card = quoteCard(turn.shareSource);
+    if (!card) return null;
+    const el = createDiv({ cls: "vt-buddy-quote" });
+    if (card.heading) el.createDiv({ cls: "vt-buddy-quote-head", text: card.heading });
+    if (card.wordLine) {
+      const line = el.createDiv({ cls: "vt-buddy-quote-body" });
+      line.createEl("strong", { text: card.wordLine.word });
+      if (card.wordLine.meaning) line.createSpan({ text: `\u3000${card.wordLine.meaning}` });
+      return el;
+    }
+    const body = el.createDiv({ cls: "vt-buddy-quote-body" });
+    for (const seg of card.body) {
+      if (seg.hit) body.createEl("mark", { text: seg.text });
+      else body.appendText(seg.text);
+    }
+    return el;
+  }
+
   private async send(req: ChatSend): Promise<void> {
     let { question } = req;
     // 一起看看我寫的: the English pasted into the composer is the text to
@@ -308,6 +392,8 @@ class BuddyBlock extends MarkdownRenderChild {
       }
     }
     this.maybeWarnNinth();
+    this.following = true;
+    this.awaitingTurn = true;
     await this.plugin.threads.askBuddy(this.threadId, { taskId: req.taskId, question });
   }
 }

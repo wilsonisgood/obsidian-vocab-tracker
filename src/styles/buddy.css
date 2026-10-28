@@ -152,3 +152,24 @@
   color: var(--text-muted);
   padding: 2px 4px;
 }
+.vt-buddy-quote {
+  margin: 6px 0;
+  padding: 6px 10px;
+  border-left: 3px solid var(--interactive-accent);
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+  background: var(--background-secondary);
+  font-size: var(--font-ui-small);
+}
+.vt-buddy-quote-head {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.vt-buddy-quote-body {
+  color: var(--text-normal);
+}
+.vt-buddy-quote-body mark {
+  background: var(--text-highlight-bg);
+  color: inherit;
+  border-radius: 2px;
+}

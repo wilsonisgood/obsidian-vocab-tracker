@@ -30,6 +30,15 @@ export interface TurnUsage {
   cacheWrite: number;
 }
 
+export interface ShareSource {
+  kind: "word" | "paragraph";
+  word?: string;
+  meaning?: string;
+  title?: string;
+  // The paragraph (≤ 400 chars).
+  text?: string;
+}
+
 export interface Turn {
   id: string;
   role: "user" | "assistant";
@@ -54,6 +63,9 @@ export interface Turn {
   subjectEntryId?: string;
   // 聊聊最近讀的: what the buddy picked — the word, or 〈note title〉 for a paragraph.
   shareSubject?: string;
+  // 聊聊最近讀的: the picked material itself, for the quote card above the
+  // buddy's question.
+  shareSource?: ShareSource;
   status: TurnStatus;
   error?: TurnErrorCode;
   errorMessage?: string;
