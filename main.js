@@ -80,9 +80,9 @@ function extractSentence(text, start4, end, node) {
   if ((s > 0 || e < text.length) && node && node.parentElement) {
     return sentence;
   }
-  const block2 = node && node.parentElement && node.parentElement.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
-  if (block2) {
-    const full = (block2.textContent || "").replace(/\s+/g, " ").trim();
+  const block = node && node.parentElement && node.parentElement.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
+  if (block) {
+    const full = (block.textContent || "").replace(/\s+/g, " ").trim();
     if (full.length <= 400) return full;
   }
   return sentence;
@@ -184,8 +184,8 @@ var ObsidianStorage = class {
   // The v1 → v2 migration's one-off backup of data.json:
   // backup/<name>-v1-<time>.json (BackupService lists and restores these).
   async backup(name, data) {
-    const stamp2 = (/* @__PURE__ */ new Date()).toISOString().replace(/:/g, "-");
-    await this.writeBackupFile(`${name}-v1-${stamp2}.json`, JSON.stringify(data, null, 2));
+    const stamp = (/* @__PURE__ */ new Date()).toISOString().replace(/:/g, "-");
+    await this.writeBackupFile(`${name}-v1-${stamp}.json`, JSON.stringify(data, null, 2));
   }
   // ── 備份與還原 (services/backup) ─────────────────────────────────
   get backupFolder() {
@@ -689,13 +689,13 @@ function snapshotSettingsSections(s) {
   }
   return out;
 }
-function stampChangedSections(s, before, stamp2) {
+function stampChangedSections(s, before, stamp) {
   const changed = [];
   for (const key6 of SETTINGS_SECTIONS) {
     const section4 = s[key6];
     if (!section4 || typeof section4 !== "object") continue;
     if (sectionFingerprint(section4) !== before[key6].fingerprint) {
-      section4.updatedAt = stamp2;
+      section4.updatedAt = stamp;
       changed.push(key6);
     } else if (before[key6].updatedAt !== void 0) {
       section4.updatedAt = before[key6].updatedAt;
@@ -747,8 +747,8 @@ var VocabStore = class {
     carryLegacyStamp(s);
     const before = snapshotSettingsSections(s);
     mutate(s);
-    const stamp2 = nowIso();
-    if (stampChangedSections(s, before, stamp2).length > 0) s.updatedAt = stamp2;
+    const stamp = nowIso();
+    if (stampChangedSections(s, before, stamp).length > 0) s.updatedAt = stamp;
     return this.save();
   }
   // Live entries only — excludes soft-deleted (tombstoned) ones. UI code
@@ -767,10 +767,10 @@ var VocabStore = class {
   // words imported at once.
   addEntries(entries) {
     var _a, _b;
-    const stamp2 = nowIso();
+    const stamp = nowIso();
     for (const entry of entries) {
-      entry.createdAt = (_a = entry.createdAt) != null ? _a : stamp2;
-      entry.updatedAt = stamp2;
+      entry.createdAt = (_a = entry.createdAt) != null ? _a : stamp;
+      entry.updatedAt = stamp;
       entry.rev = 0;
       entry.lang = (_b = entry.lang) != null ? _b : "en";
       this.data.entries.push(entry);
@@ -789,9 +789,9 @@ var VocabStore = class {
   }
   touchMany(entries) {
     var _a;
-    const stamp2 = nowIso();
+    const stamp = nowIso();
     for (const entry of entries) {
-      entry.updatedAt = stamp2;
+      entry.updatedAt = stamp;
       entry.rev = ((_a = entry.rev) != null ? _a : 0) + 1;
     }
     return this.save();
@@ -815,12 +815,12 @@ var VocabStore = class {
   // save-already-done no-op case or log it.
   async backfillLiked(decide) {
     var _a;
-    const stamp2 = nowIso();
+    const stamp = nowIso();
     let count2 = 0;
     for (const entry of this.data.entries) {
       if (entry.liked !== void 0) continue;
       entry.liked = decide(entry);
-      entry.updatedAt = stamp2;
+      entry.updatedAt = stamp;
       entry.rev = ((_a = entry.rev) != null ? _a : 0) + 1;
       count2++;
     }
@@ -836,9 +836,9 @@ var VocabStore = class {
     var _a;
     const entry = this.data.entries.find((e) => e.id === id2);
     if (!entry) return Promise.resolve();
-    const stamp2 = nowIso();
-    entry.deletedAt = stamp2;
-    entry.updatedAt = stamp2;
+    const stamp = nowIso();
+    entry.deletedAt = stamp;
+    entry.updatedAt = stamp;
     entry.rev = ((_a = entry.rev) != null ? _a : 0) + 1;
     return this.save();
   }
@@ -851,8 +851,8 @@ var VocabStore = class {
     const entry = this.data.entries.find((e) => e.id === id2);
     if (!entry) return Promise.resolve();
     entry.deletedAt = void 0;
-    const stamp2 = nowIso();
-    entry.updatedAt = stamp2;
+    const stamp = nowIso();
+    entry.updatedAt = stamp;
     entry.rev = ((_a = entry.rev) != null ? _a : 0) + 1;
     return this.save();
   }
@@ -4023,11 +4023,11 @@ function splitParagraphSpans(markdown) {
   let start4 = -1;
   const flush = (end) => {
     if (start4 < 0) return;
-    const block2 = lines4.slice(start4, end + 1);
-    if (LIST_MARKER_RE.test(block2[0]) && shouldSplitList(block2)) {
-      for (const item of splitListItems(block2, start4)) out.push(item);
+    const block = lines4.slice(start4, end + 1);
+    if (LIST_MARKER_RE.test(block[0]) && shouldSplitList(block)) {
+      for (const item of splitListItems(block, start4)) out.push(item);
     } else {
-      out.push({ text: block2.join("\n"), lineStart: start4, lineEnd: end });
+      out.push({ text: block.join("\n"), lineStart: start4, lineEnd: end });
     }
     start4 = -1;
   };
@@ -6432,18 +6432,18 @@ function familyMembers(f) {
 function normalizeForm(s) {
   return s.toLowerCase().replace(/[-\s]/g, "");
 }
-function matchMorpheme(list, type, form) {
+function matchMorpheme(list2, type, form) {
   const key6 = normalizeForm(form);
-  return list.find((m2) => {
+  return list2.find((m2) => {
     if (m2.deletedAt || m2.mergedInto) return false;
     if (m2.type !== type) return false;
     if (normalizeForm(m2.form) === key6) return true;
     return m2.variants.some((v) => normalizeForm(v) === key6);
   });
 }
-function resolveMorphemeId(list, id2) {
+function resolveMorphemeId(list2, id2) {
   var _a;
-  const byId = new Map(list.map((m2) => [m2.id, m2]));
+  const byId = new Map(list2.map((m2) => [m2.id, m2]));
   const seen = /* @__PURE__ */ new Set();
   let current = id2;
   while (!seen.has(current)) {
@@ -6939,12 +6939,12 @@ function noteSections(markdown) {
   let start4 = -1;
   const flush = (end) => {
     if (start4 < 0) return;
-    const block2 = lines4.slice(start4, end + 1);
-    const type = classify(block2);
-    if (type === "list" && shouldSplitList(block2)) {
-      for (const item of splitListItems(block2, start4)) out.push({ type: "list", ...item });
+    const block = lines4.slice(start4, end + 1);
+    const type = classify(block);
+    if (type === "list" && shouldSplitList(block)) {
+      for (const item of splitListItems(block, start4)) out.push({ type: "list", ...item });
     } else {
-      out.push({ type, lineStart: start4, lineEnd: end, text: block2.join("\n") });
+      out.push({ type, lineStart: start4, lineEnd: end, text: block.join("\n") });
     }
     start4 = -1;
   };
@@ -7538,8 +7538,8 @@ var AllNotesThreadList = class extends import_obsidian14.Component {
     const byPath = /* @__PURE__ */ new Map();
     for (const th of this.deps.threads.paragraphThreads()) {
       if (th.anchor.kind !== "paragraph" || !this.deps.exists(th.anchor.path)) continue;
-      const list = byPath.get(th.anchor.path);
-      if (list) list.push(th);
+      const list2 = byPath.get(th.anchor.path);
+      if (list2) list2.push(th);
       else byPath.set(th.anchor.path, [th]);
     }
     const paths = [...byPath.keys()].sort((a2, b) => noteTitle(a2).localeCompare(noteTitle(b)));
@@ -8307,12 +8307,12 @@ function byTime(a2, b) {
 function objectiveStats(topic, attempts) {
   const mine = attempts.filter((a2) => a2.topicId === topic.id).sort(byTime);
   return topic.objectives.map((o) => {
-    const list = mine.filter((a2) => a2.objectiveId === o.id);
-    const recent = list.slice(-RECENT_WINDOW);
+    const list2 = mine.filter((a2) => a2.objectiveId === o.id);
+    const recent = list2.slice(-RECENT_WINDOW);
     return {
       objectiveId: o.id,
-      answered: list.length,
-      correct: list.filter((a2) => a2.correct).length,
+      answered: list2.length,
+      correct: list2.filter((a2) => a2.correct).length,
       recentCorrect: recent.filter((a2) => a2.correct).length,
       recentCount: recent.length
     };
@@ -8769,9 +8769,9 @@ var MAX_DUE_GRAMMAR = 5;
 function noteGrammarRows(sightings, path, limit = MAX_NOTE_GRAMMAR) {
   if (!path) return [];
   const rows = [];
-  for (const [topicId, list] of sightingsByTopic(sightingsOfPath(sightings, path))) {
+  for (const [topicId, list2] of sightingsByTopic(sightingsOfPath(sightings, path))) {
     const topic = topicById(topicId);
-    if (topic) rows.push({ row: { topicId, title: topic.title, stage: topic.stage, count: list.length }, order: topic.order });
+    if (topic) rows.push({ row: { topicId, title: topic.title, stage: topic.stage, count: list2.length }, order: topic.order });
   }
   rows.sort((a2, b) => b.row.count - a2.row.count || a2.row.stage - b.row.stage || a2.order - b.order);
   return rows.slice(0, limit).map((r) => r.row);
@@ -9477,12 +9477,12 @@ var VerbsBlock = class extends import_obsidian20.MarkdownRenderChild {
     if (this.pickedId !== prev && mountedPages.has(this)) window.setTimeout(notifyPages, 0);
     this.root.toggleClass("is-empty", !learned.length);
     if (this.countEl) this.countEl.setText(t("learn.verb.count", { n: learned.length }));
-    const list = this.listEl;
-    if (list) {
-      list.empty();
-      if (learned.length && !shown.length) list.createDiv({ cls: "vt-verbs-nomatch", text: t("learn.verb.noMatch") });
+    const list2 = this.listEl;
+    if (list2) {
+      list2.empty();
+      if (learned.length && !shown.length) list2.createDiv({ cls: "vt-verbs-nomatch", text: t("learn.verb.noMatch") });
       for (const e of shown) {
-        const row = list.createEl("button", { cls: "vt-verbs-row" });
+        const row = list2.createEl("button", { cls: "vt-verbs-row" });
         row.toggleClass("is-active", e.id === this.pickedId);
         row.setAttr("aria-pressed", String(e.id === this.pickedId));
         row.createSpan({ cls: "vt-verbs-row-word", text: e.word });
@@ -9572,9 +9572,9 @@ var VerbsBlock = class extends import_obsidian20.MarkdownRenderChild {
     const dates = usageDates(usage);
     if (dates) section4.createDiv({ cls: "vt-verb-meta", text: dates });
     const { patterns, related } = usageRows(usage);
-    const list = section4.createDiv({ cls: "vt-verb-patterns" });
+    const list2 = section4.createDiv({ cls: "vt-verb-patterns" });
     for (const p of patterns) {
-      const row = list.createDiv({ cls: "vt-verb-pattern" });
+      const row = list2.createDiv({ cls: "vt-verb-pattern" });
       row.createSpan({ cls: "vt-verb-pattern-p", text: p.pattern });
       const right = row.createDiv({ cls: "vt-verb-pattern-body" });
       if (p.meaningZh) {
@@ -10364,18 +10364,18 @@ var VocabSidebarView = class extends import_obsidian22.ItemView {
     const page = this.currentPage();
     if (page) return pageScopedEntries(page.groups, this.plugin.store.entries);
     const ctx = this.isListedCtx();
-    let list = this.plugin.store.entries.filter((e) => isListed(e, ctx));
+    let list2 = this.plugin.store.entries.filter((e) => isListed(e, ctx));
     const activeFile = this.app.workspace.getActiveFile();
     const noteMode = ((_a = this.filterMode) != null ? _a : "note") === "note" && activeFile instanceof import_obsidian22.TFile;
     if (noteMode) {
       const file = activeFile;
       const scope = this.noteScopeFor(file);
-      list = scope ? list.filter((e) => scope.has(e.id)) : list.filter((e) => {
+      list2 = scope ? list2.filter((e) => scope.has(e.id)) : list2.filter((e) => {
         var _a2;
         return ((_a2 = e.source) == null ? void 0 : _a2.path) === file.path;
       });
     }
-    return list;
+    return list2;
   }
   // Something that only changes which words are allowed (a chip toggled,
   // 本篇 scope resolved) — redraw just the 單字 section's body and refresh
@@ -10922,7 +10922,7 @@ var VocabSidebarView = class extends import_obsidian22.ItemView {
     }
     const activeFile = this.plugin.app.workspace.getActiveFile();
     const noteMode = ((_a = this.filterMode) != null ? _a : "note") === "note" && !!activeFile;
-    const list = this.scopedEntries();
+    const list2 = this.scopedEntries();
     this.examStripEl = root2.createDiv();
     renderExamStrip(
       this.examStripEl,
@@ -10931,7 +10931,7 @@ var VocabSidebarView = class extends import_obsidian22.ItemView {
       (_b = this.filterMode) != null ? _b : "note",
       (scope) => this.likeCountFor(scope, activeFile)
     );
-    if (list.length === 0) {
+    if (list2.length === 0) {
       root2.createEl("div", {
         text: noteMode ? t("sidebar.hint.noteEmpty") : t("sidebar.hint.allEmpty"),
         cls: "vt-sidebar-hint"
@@ -10943,7 +10943,7 @@ var VocabSidebarView = class extends import_obsidian22.ItemView {
         renderGroupedVocabList(
           this.plugin,
           listEl,
-          list,
+          list2,
           this.collapsedGroups,
           this.expandState,
           (entryId) => entryId ? this.handleWordRowChanged(entryId) : this.redrawWords(),
@@ -10951,7 +10951,7 @@ var VocabSidebarView = class extends import_obsidian22.ItemView {
           { order: "recent" }
         );
       } else {
-        for (const entry of sortByRecent(list)) {
+        for (const entry of sortByRecent(list2)) {
           const state = (_c = this.expandState.get(entry.id)) != null ? _c : "collapsed";
           renderVocabRow(
             this.plugin,
@@ -11558,12 +11558,12 @@ ClassList.prototype = {
   }
 };
 function classedAdd(node, names) {
-  var list = classList(node), i = -1, n = names.length;
-  while (++i < n) list.add(names[i]);
+  var list2 = classList(node), i = -1, n = names.length;
+  while (++i < n) list2.add(names[i]);
 }
 function classedRemove(node, names) {
-  var list = classList(node), i = -1, n = names.length;
-  while (++i < n) list.remove(names[i]);
+  var list2 = classList(node), i = -1, n = names.length;
+  while (++i < n) list2.remove(names[i]);
 }
 function classedTrue(names) {
   return function() {
@@ -11583,8 +11583,8 @@ function classedFunction(names, value) {
 function classed_default(name, value) {
   var names = classArray(name + "");
   if (arguments.length < 2) {
-    var list = classList(this.node()), i = -1, n = names.length;
-    while (++i < n) if (!list.contains(names[i])) return false;
+    var list2 = classList(this.node()), i = -1, n = names.length;
+    while (++i < n) if (!list2.contains(names[i])) return false;
     return true;
   }
   return this.each((typeof value === "function" ? classedFunction : value ? classedTrue : classedFalse)(names, value));
@@ -12481,13 +12481,13 @@ function find2(nodeById, nodeId) {
 function link_default(links) {
   var id2 = index, strength = defaultStrength, strengths, distance = constant_default3(30), distances, nodes, count2, bias, random, iterations = 1;
   if (links == null) links = [];
-  function defaultStrength(link) {
-    return 1 / Math.min(count2[link.source.index], count2[link.target.index]);
+  function defaultStrength(link2) {
+    return 1 / Math.min(count2[link2.source.index], count2[link2.target.index]);
   }
   function force(alpha) {
     for (var k = 0, n = links.length; k < iterations; ++k) {
-      for (var i = 0, link, source, target, x3, y3, l4, b; i < n; ++i) {
-        link = links[i], source = link.source, target = link.target;
+      for (var i = 0, link2, source, target, x3, y3, l4, b; i < n; ++i) {
+        link2 = links[i], source = link2.source, target = link2.target;
         x3 = target.x + target.vx - source.x - source.vx || jiggle_default(random);
         y3 = target.y + target.vy - source.y - source.vy || jiggle_default(random);
         l4 = Math.sqrt(x3 * x3 + y3 * y3);
@@ -12502,16 +12502,16 @@ function link_default(links) {
   }
   function initialize() {
     if (!nodes) return;
-    var i, n = nodes.length, m2 = links.length, nodeById = new Map(nodes.map((d, i2) => [id2(d, i2, nodes), d])), link;
+    var i, n = nodes.length, m2 = links.length, nodeById = new Map(nodes.map((d, i2) => [id2(d, i2, nodes), d])), link2;
     for (i = 0, count2 = new Array(n); i < m2; ++i) {
-      link = links[i], link.index = i;
-      if (typeof link.source !== "object") link.source = find2(nodeById, link.source);
-      if (typeof link.target !== "object") link.target = find2(nodeById, link.target);
-      count2[link.source.index] = (count2[link.source.index] || 0) + 1;
-      count2[link.target.index] = (count2[link.target.index] || 0) + 1;
+      link2 = links[i], link2.index = i;
+      if (typeof link2.source !== "object") link2.source = find2(nodeById, link2.source);
+      if (typeof link2.target !== "object") link2.target = find2(nodeById, link2.target);
+      count2[link2.source.index] = (count2[link2.source.index] || 0) + 1;
+      count2[link2.target.index] = (count2[link2.target.index] || 0) + 1;
     }
     for (i = 0, bias = new Array(m2); i < m2; ++i) {
-      link = links[i], bias[i] = count2[link.source.index] / (count2[link.source.index] + count2[link.target.index]);
+      link2 = links[i], bias[i] = count2[link2.source.index] / (count2[link2.source.index] + count2[link2.target.index]);
     }
     strengths = new Array(m2), initializeStrength();
     distances = new Array(m2), initializeDistance();
@@ -14686,7 +14686,7 @@ function buildGalaxyModel(family, lookup, opts) {
   const allWords = groupWordNodes.flat();
   const known2 = allWords.filter((n) => n.kind === "known").length;
   const total2 = allWords.length;
-  const visible = opts.onlyKnown ? groupWordNodes.map((list) => list.filter((n) => n.kind === "known")) : groupWordNodes;
+  const visible = opts.onlyKnown ? groupWordNodes.map((list2) => list2.filter((n) => n.kind === "known")) : groupWordNodes;
   const nodes = [hub];
   const links = [];
   if (useGroups) {
@@ -15582,11 +15582,11 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
       c2.createDiv({ cls: "vt-fam-col-stem" });
       c2.createDiv({ cls: "vt-fam-group", text: col.label });
       c2.createDiv({ cls: "vt-fam-col-stem is-short" });
-      const list = c2.createDiv({ cls: "vt-fam-chips" });
+      const list2 = c2.createDiv({ cls: "vt-fam-chips" });
       for (const chip2 of col.chips) {
         if (chip2.known) {
           const entry = chip2.entryId ? lookup.byEntryId(chip2.entryId) : void 0;
-          const el2 = wordChip(list, this.plugin, entry, ["vt-fam-chip", "is-known", ...chip2.focus ? ["is-focus"] : []]);
+          const el2 = wordChip(list2, this.plugin, entry, ["vt-fam-chip", "is-known", ...chip2.focus ? ["is-focus"] : []]);
           el2.createSpan({ cls: "vt-fam-chip-word", text: chip2.word });
           if (chip2.zh) {
             const zh = el2.createSpan({ cls: "vt-fam-chip-zh" });
@@ -15595,7 +15595,7 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
           continue;
         }
         const busy = this.adding.has(`${f.id}\0${chip2.word.toLowerCase()}`);
-        const el = list.createEl("button", { cls: "vt-fam-chip is-suggested" });
+        const el = list2.createEl("button", { cls: "vt-fam-chip is-suggested" });
         el.createSpan({ cls: "vt-fam-chip-word", text: chip2.word });
         if (chip2.zh) {
           const zh = el.createSpan({ cls: "vt-fam-chip-zh" });
@@ -16145,8 +16145,8 @@ function drawRadar(host, axes) {
   }
   const hints = axes.filter((a2) => !a2.clear && a2.hint);
   if (hints.length) {
-    const list = box.createDiv({ cls: "vt-radar-hints" });
-    for (const a2 of hints) list.createDiv({ text: `${a2.name}\uFF1F${a2.hint}` });
+    const list2 = box.createDiv({ cls: "vt-radar-hints" });
+    for (const a2 of hints) list2.createDiv({ text: `${a2.name}\uFF1F${a2.hint}` });
   }
 }
 function renderReportRadar(_plugin, source, el, _ctx) {
@@ -16892,8 +16892,8 @@ function renderDiaryCard(plugin, el, ctx) {
     card.createDiv({ cls: "vt-dash-diary-title", text: t("dashboard.diary.title") });
     const status = svc.status();
     if (latest) {
-      const link = card.createEl("a", { cls: "vt-dash-diary-link", text: latest.day });
-      link.onclick = (ev) => {
+      const link2 = card.createEl("a", { cls: "vt-dash-diary-link", text: latest.day });
+      link2.onclick = (ev) => {
         ev.preventDefault();
         void plugin.app.workspace.openLinkText(latest.path, "", false);
       };
@@ -17013,8 +17013,8 @@ function renderReportCard(plugin, el, ctx) {
     card.createDiv({ cls: "vt-dash-report-title", text: t("dashboard.report.title") });
     const status = svc.status();
     if (latest) {
-      const link = card.createEl("a", { cls: "vt-dash-report-link", text: latest.key });
-      link.onclick = (ev) => {
+      const link2 = card.createEl("a", { cls: "vt-dash-report-link", text: latest.key });
+      link2.onclick = (ev) => {
         ev.preventDefault();
         void plugin.app.workspace.openLinkText(latest.path, "", false);
       };
@@ -17632,9 +17632,9 @@ var DnaBlock = class extends import_obsidian31.MarkdownRenderChild {
     const wiki = main.createDiv({ cls: "vt-dna-wiki" });
     (0, import_obsidian31.setIcon)(wiki.createSpan({ cls: "vt-dna-wiki-icon" }), "info");
     wiki.createSpan({ cls: "vt-dna-wiki-text", text: `${t("dna.wiktionaryNote")} ` });
-    const link = wiki.createEl("a", { text: t("dna.wiktionaryLink"), href: wiktionaryUrl(m2.form) });
-    link.setAttr("target", "_blank");
-    link.setAttr("rel", "noopener");
+    const link2 = wiki.createEl("a", { text: t("dna.wiktionaryLink"), href: wiktionaryUrl(m2.form) });
+    link2.setAttr("target", "_blank");
+    link2.setAttr("rel", "noopener");
     const controls = main.createDiv({ cls: "vt-dna-controls" });
     const verifyBtn = controls.createEl("button", { cls: "vt-dna-verify", attr: { type: "button" } });
     verifyBtn.toggleClass("is-active", !!m2.verified);
@@ -18054,11 +18054,11 @@ function originView(entry, family) {
 function originLabel(v) {
   return v.name ? lo("origin", v.name) : lo("originUnknown");
 }
-function wordTarget(params, frontmatter2, sourcePath) {
+function wordTarget(params, frontmatter3, sourcePath) {
   if (params.id) return { id: params.id };
   if (params.word) return { word: params.word };
-  const fmId = frontmatter2 == null ? void 0 : frontmatter2["vocab-tracker-id"];
-  if ((frontmatter2 == null ? void 0 : frontmatter2["vocab-tracker"]) === "word" && (typeof fmId === "string" || typeof fmId === "number")) {
+  const fmId = frontmatter3 == null ? void 0 : frontmatter3["vocab-tracker-id"];
+  if ((frontmatter3 == null ? void 0 : frontmatter3["vocab-tracker"]) === "word" && (typeof fmId === "string" || typeof fmId === "number")) {
     return { id: String(fmId) };
   }
   return { word: noteBasename(sourcePath) };
@@ -18071,8 +18071,8 @@ function findTarget(entries, target) {
   return word ? live.find((e) => e.word.toLowerCase() === word) : void 0;
 }
 function shortDay(d) {
-  const pad5 = (n) => String(n).padStart(2, "0");
-  return `${pad5(d.getMonth() + 1)}/${pad5(d.getDate())}`;
+  const pad6 = (n) => String(n).padStart(2, "0");
+  return `${pad6(d.getMonth() + 1)}/${pad6(d.getDate())}`;
 }
 function dueLabel2(entry, now2 = /* @__PURE__ */ new Date()) {
   if (isNewCard(entry) || !entry.srs) return l2("dueNew");
@@ -18088,8 +18088,8 @@ function sourceLabel(path, paragraph) {
 }
 function renderWordHeader(host, source, el, ctx) {
   var _a;
-  const frontmatter2 = (_a = ctx.frontmatter) != null ? _a : host.frontmatterOf(ctx.sourcePath);
-  const target = wordTarget(parseBlockParams(source), frontmatter2, ctx.sourcePath);
+  const frontmatter3 = (_a = ctx.frontmatter) != null ? _a : host.frontmatterOf(ctx.sourcePath);
+  const target = wordTarget(parseBlockParams(source), frontmatter3, ctx.sourcePath);
   ctx.addChild(new WordHeaderBlock(el, host, target));
 }
 var WordHeaderBlock = class extends import_obsidian32.MarkdownRenderChild {
@@ -18818,9 +18818,9 @@ var FlashcardsBlock = class extends import_obsidian33.MarkdownRenderChild {
     ].map((id2) => this.live(id2)).filter((e) => !!e);
     if (forgotten.length > 0) {
       box.createDiv({ cls: "vt-fc-section-title", text: t("flashcards.done.forgotten") });
-      const list = box.createDiv({ cls: "vt-fc-forgotten" });
+      const list2 = box.createDiv({ cls: "vt-fc-forgotten" });
       for (const entry of forgotten) {
-        const row = list.createDiv({ cls: "vt-fc-forgotten-row" });
+        const row = list2.createDiv({ cls: "vt-fc-forgotten-row" });
         row.createSpan({ cls: "vt-fc-forgotten-word", text: entry.word });
         row.createSpan({ cls: "vt-fc-forgotten-zh", text: entry.definitionZh });
         const speak = row.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
@@ -18881,8 +18881,8 @@ var FlashcardsBlock = class extends import_obsidian33.MarkdownRenderChild {
     (0, import_obsidian33.setIcon)(toggle2.createSpan({ cls: ["vt-fc-icon", "vt-fc-batch-chevron"] }), "chevron-down");
     const panel = panelHost.createDiv({ cls: "vt-fc-batch", attr: { id: this.batchId } });
     panel.hidden = !open;
-    const list = panel.createEl("ol", { cls: "vt-fc-batch-list" });
-    for (const row of rows) this.renderBatchRow(list, row, entries.get(row.id), phase);
+    const list2 = panel.createEl("ol", { cls: "vt-fc-batch-list" });
+    for (const row of rows) this.renderBatchRow(list2, row, entries.get(row.id), phase);
     if (open) scrollToCurrent(panel);
     toggle2.onclick = (e) => {
       const next = !this.batchOpen[phase];
@@ -18894,9 +18894,9 @@ var FlashcardsBlock = class extends import_obsidian33.MarkdownRenderChild {
       this.keepCardKeys(e);
     };
   }
-  renderBatchRow(list, row, entry, phase) {
+  renderBatchRow(list2, row, entry, phase) {
     var _a;
-    const li = list.createEl("li", { cls: ["vt-fc-batch-row", `is-${row.status}`] });
+    const li = list2.createEl("li", { cls: ["vt-fc-batch-row", `is-${row.status}`] });
     if (row.status === "current") li.setAttr("aria-current", "step");
     const text = li.createDiv({ cls: "vt-fc-batch-text" });
     if (row.word === null) {
@@ -19527,11 +19527,11 @@ errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
 function objectiveRef(topicId, objectiveId) {
   return `${topicId}/${objectiveId}`;
 }
-function cleanSentences(list) {
+function cleanSentences(list2) {
   var _a;
   const out = [];
   const seen = /* @__PURE__ */ new Set();
-  for (const x3 of list != null ? list : []) {
+  for (const x3 of list2 != null ? list2 : []) {
     const sentence = ((_a = x3 == null ? void 0 : x3.sentence) != null ? _a : "").replace(/\s+/g, " ").trim().slice(0, MAX_SENTENCE_CHARS);
     if (!sentence || seen.has(sentence.toLowerCase())) continue;
     seen.add(sentence.toLowerCase());
@@ -19540,10 +19540,10 @@ function cleanSentences(list) {
   }
   return out;
 }
-function clean(list, max) {
+function clean(list2, max) {
   const out = [];
   const seen = /* @__PURE__ */ new Set();
-  for (const s of list != null ? list : []) {
+  for (const s of list2 != null ? list2 : []) {
     const v = (s != null ? s : "").replace(/\s+/g, " ").trim();
     if (!v || seen.has(v.toLowerCase())) continue;
     seen.add(v.toLowerCase());
@@ -19570,9 +19570,9 @@ function str2(v) {
 function strList(v) {
   return Array.isArray(v) ? v.map(str2).filter(Boolean) : [];
 }
-function uniq(list) {
+function uniq(list2) {
   const out = [];
-  for (const s of list) if (!out.includes(s)) out.push(s);
+  for (const s of list2) if (!out.includes(s)) out.push(s);
   return out;
 }
 var GAP_RE = /_{3,}/g;
@@ -19823,8 +19823,8 @@ function polyLines(p) {
   const line2 = (tag, s) => `${tag} ${s.id}\uFF5C${s.zh}\uFF5C${s.example}\uFF5C${s.cue}`;
   return [...p.tested.map((s) => line2("\u8003", s)), ...p.reference.map((s) => line2("\u53C3\u8003", s))];
 }
-var vocabLines = (list) => list.map((v) => `${v.id}\uFF5C${v.word}\uFF5C${v.zh}\uFF5C${v.pos}`);
-var grammarLines = (list) => list.map((g) => `${objectiveRef(g.topicId, g.objectiveId)}\uFF5C${g.text}\uFF5C${g.title}\uFF08${g.pattern}\uFF09`);
+var vocabLines = (list2) => list2.map((v) => `${v.id}\uFF5C${v.word}\uFF5C${v.zh}\uFF5C${v.pos}`);
+var grammarLines = (list2) => list2.map((g) => `${objectiveRef(g.topicId, g.objectiveId)}\uFF5C${g.text}\uFF5C${g.title}\uFF08${g.pattern}\uFF09`);
 function refsOf(req) {
   var _a, _b, _c;
   const tested = /* @__PURE__ */ new Map();
@@ -19922,7 +19922,7 @@ function isObj3(v) {
 }
 var str3 = (v) => typeof v === "string" ? v.trim() : "";
 var strList2 = (v) => Array.isArray(v) ? v.map(str3).filter(Boolean) : [];
-var uniq2 = (list) => [...new Set(list)];
+var uniq2 = (list2) => [...new Set(list2)];
 var GAP_RE2 = /_{3,}/g;
 var MARK_RE = /\[\[[^[\]]+\]\]/g;
 function inferInfo(id2) {
@@ -20065,10 +20065,10 @@ function parsePracticeScenario(json, refs) {
   if (speakers.length) out.speakers = speakers;
   return out;
 }
-function clean2(list, max) {
+function clean2(list2, max) {
   const out = [];
   const seen = /* @__PURE__ */ new Set();
-  for (const s of list != null ? list : []) {
+  for (const s of list2 != null ? list2 : []) {
     const v = (s != null ? s : "").replace(/\s+/g, " ").trim();
     if (!v || seen.has(v.toLowerCase())) continue;
     seen.add(v.toLowerCase());
@@ -20751,8 +20751,8 @@ var GrammarTabView = class {
         const row = group.createDiv({ cls: "vt-pr-mistake" });
         row.createSpan({ cls: "vt-pr-mistake-tag", text: g.label });
         row.createSpan({ cls: "vt-pr-mistake-count", text: t("practice.grammar.count", { n: g.questions.length }) });
-        const list = group.createEl("ul", { cls: "vt-pr-mistake-list" });
-        for (const q of g.questions) list.createEl("li", { cls: "vt-pr-mistake-item", text: mistakeLine(q.stem) });
+        const list2 = group.createEl("ul", { cls: "vt-pr-mistake-list" });
+        for (const q of g.questions) list2.createEl("li", { cls: "vt-pr-mistake-item", text: mistakeLine(q.stem) });
         const isOpen2 = redoTag === g.errorTag;
         learnButton(row, {
           label: isOpen2 ? t("practice.grammar.fold") : t("practice.grammar.redo"),
@@ -20923,13 +20923,13 @@ var GrammarMapBlock = class extends import_obsidian34.MarkdownRenderChild {
       learnButton(bar2, { label: t("grammar.map.review"), icon: "repeat", onClick: () => this.practice(due[0].id) });
     }
     const rows = mapRows(this.stage, GRAMMAR_TOPICS, statusOf2, attempts);
-    const list = this.root.createDiv({ cls: "vt-gr-list" });
-    if (!rows.length) list.createDiv({ cls: "vt-gr-empty", text: t("grammar.map.empty") });
-    for (const row of rows) this.renderRow(list, row);
+    const list2 = this.root.createDiv({ cls: "vt-gr-list" });
+    if (!rows.length) list2.createDiv({ cls: "vt-gr-empty", text: t("grammar.map.empty") });
+    for (const row of rows) this.renderRow(list2, row);
     this.renderMistakes();
   }
-  renderRow(list, row) {
-    const btn = list.createEl("button", { cls: ["vt-gr-row", `is-${row.status}`], attr: { type: "button" } });
+  renderRow(list2, row) {
+    const btn = list2.createEl("button", { cls: ["vt-gr-row", `is-${row.status}`], attr: { type: "button" } });
     btn.createSpan({ cls: ["vt-gr-dot", `is-${row.status}`], attr: { "aria-hidden": "true" } });
     const text = btn.createSpan({ cls: "vt-gr-row-text" });
     text.createSpan({ cls: "vt-gr-row-title", text: row.topic.title });
@@ -23555,9 +23555,9 @@ var GrammarTopicBlock = class extends import_obsidian36.MarkdownRenderChild {
   renderObjectives(topic) {
     const sec = this.root.createDiv({ cls: "vt-gr-sec" });
     sec.createDiv({ cls: "vt-gr-sec-title", text: t("grammar.topic.objectives") });
-    const list = sec.createDiv({ cls: "vt-gr-objectives" });
+    const list2 = sec.createDiv({ cls: "vt-gr-objectives" });
     for (const o of objectiveRows(topic, this.deps.grammar.attempts(topic.id))) {
-      const row = list.createDiv({ cls: ["vt-gr-objective", `is-${o.state}`] });
+      const row = list2.createDiv({ cls: ["vt-gr-objective", `is-${o.state}`] });
       row.createSpan({ cls: ["vt-gr-dot", `is-${o.state === "done" ? "mastered" : o.state === "partial" ? "learning" : "new"}`], attr: { "aria-hidden": "true" } });
       row.createSpan({ cls: "vt-gr-objective-text", text: o.text });
       row.createSpan({ cls: "vt-gr-objective-score", text: o.score });
@@ -24783,14 +24783,14 @@ function vocabTab(host, scenario) {
       };
       const mountCards = (box, owner) => {
         const cardsEl = box.createDiv({ cls: "vt-pr-vocab-cards" });
-        const block2 = new FlashcardsBlock(
+        const block = new FlashcardsBlock(
           cardsEl,
           host,
           { ...parseFlashcardParams(""), mode: CARD_MODES[0] },
           { filter: () => toQueueFilter(value, /* @__PURE__ */ new Date()) }
         );
-        owner.addChild(block2);
-        onFilter = () => block2.restart();
+        owner.addChild(block);
+        onFilter = () => block.restart();
       };
       const mountScenario = (box, owner, s) => {
         const entries = () => host.store.entries;
@@ -25099,8 +25099,8 @@ function plain(text) {
 }
 function splitSentences(text) {
   const out = [];
-  for (const block2 of plain(text).split(/\n\s*\n/)) {
-    const flat3 = block2.replace(/\s*\n\s*/g, " ").trim();
+  for (const block of plain(text).split(/\n\s*\n/)) {
+    const flat3 = block.replace(/\s*\n\s*/g, " ").trim();
     if (!flat3) continue;
     for (const part of flat3.split(/(?<=[.!?…]["'”’)\]]?)\s+(?=["'“‘([]?[A-Z0-9])/)) {
       const s = part.trim();
@@ -25382,15 +25382,15 @@ function renderMistakesPanel(el, deps, owner) {
     body.toggleClass("is-hidden", !open);
     updateCount();
     if (!open) return;
-    const list = groups();
-    if (list.length === 0) body.createDiv({ cls: "vt-pr-empty", text: t("practice.mistakes.empty") });
-    for (const g of list) {
+    const list2 = groups();
+    if (list2.length === 0) body.createDiv({ cls: "vt-pr-empty", text: t("practice.mistakes.empty") });
+    for (const g of list2) {
       const group = body.createDiv({ cls: "vt-pr-mistake-group" });
       const row = group.createDiv({ cls: "vt-pr-mistake" });
       row.createSpan({ cls: "vt-pr-mistake-tag", text: g.label });
       row.createSpan({ cls: "vt-pr-mistake-count", text: t("practice.mistakes.count", { n: g.questions.length }) });
-      const list2 = group.createEl("ul", { cls: "vt-pr-mistake-list" });
-      for (const q of g.questions) list2.createEl("li", { cls: "vt-pr-mistake-item", text: mistakeLine(q.text) });
+      const list3 = group.createEl("ul", { cls: "vt-pr-mistake-list" });
+      for (const q of g.questions) list3.createEl("li", { cls: "vt-pr-mistake-item", text: mistakeLine(q.text) });
       const isOpen2 = redoKey === g.key;
       learnButton(row, {
         label: isOpen2 ? t("practice.mistakes.fold") : t("practice.mistakes.redo"),
@@ -26538,43 +26538,6 @@ function answeredPairs(thread) {
   }
   return out;
 }
-var stamp = (d) => `${d.getFullYear()}${pad3(d.getMonth() + 1)}${pad3(d.getDate())}${pad3(d.getHours())}${pad3(d.getMinutes())}`;
-function archiveFileName(start4, now2, size = ARCHIVE_TAKE) {
-  return `Buddy-${start4}_${start4 + size}-${stamp(now2)}.md`;
-}
-function archivePath(folder, start4, now2, size = ARCHIVE_TAKE) {
-  const dir = folder.replace(/\/+$/, "");
-  return `${dir ? `${dir}/` : ""}${archiveFileName(start4, now2, size)}`;
-}
-function archiveNoteId(threadId, start4) {
-  return `buddy-${threadId.replace(/^buddy:/, "")}-${start4}`;
-}
-function block(label, text) {
-  const body = text.trim();
-  return body.includes("\n") ? `**${label}**\uFF1A
-
-${body}` : `**${label}**\uFF1A${body}`;
-}
-function renderArchiveNote(input) {
-  var _a;
-  const { threadId, start: start4, pairs, now: now2 } = input;
-  const day = localDay(now2);
-  const lines4 = [
-    "---",
-    "vocab-tracker: ai-note",
-    `vocab-tracker-id: ${JSON.stringify(archiveNoteId(threadId, start4))}`,
-    "---",
-    `# \u5B78\u7FD2\u5925\u4F34\u5C0D\u8A71\uFF08\u7B2C ${start4 + 1}\u2013${start4 + pairs.length} \u5247\uFF09`,
-    `<small>${day}</small>`,
-    ""
-  ];
-  for (const p of pairs) {
-    const q = ((_a = p.user.question) == null ? void 0 : _a.trim()) || p.user.content;
-    lines4.push(block("\u4F60", q), "", block("\u5925\u4F34", stripSuggestions(p.assistant.content)), "");
-  }
-  return `${lines4.join("\n").trimEnd()}
-`;
-}
 function shouldWarnNinth(questionNumber, lastWarnedDay, today) {
   return questionNumber === WARN_AT && lastWarnedDay !== today;
 }
@@ -26646,7 +26609,9 @@ ${EXTRA}`,
 {{#share}}\u3014\u4ED6\u6700\u8FD1\u8B80\u5230\u7684\u3015
 {{share}}
 
-\u4F60\u50CF\u4E00\u500B\u597D\u5947\u7684\u670B\u53CB\uFF0C\u628A\u4E0A\u9762\u9019\u500B\u4E1F\u7D66\u4ED6\uFF1A\u7528\u4E00\u5169\u53E5\u8A71\u8AAA\u8AAA\u4F60\u770B\u5230\u5B83\u6642\u89BA\u5F97\u6709\u8DA3\u7684\u5730\u65B9\uFF0C\u7136\u5F8C\u8ACB\u4ED6\u5206\u4EAB\u4ED6\u7406\u89E3\u7684\u610F\u601D\uFF0C\u6216\u7528\u81EA\u5DF1\u7684\u8A71\u63DB\u53E5\u8A71\u8AAA\u3002\u5148\u4E0D\u8981\u7D66\u89E3\u91CB\u6216\u7B54\u6848\uFF0C\u7B49\u4ED6\u56DE\u7B54\uFF1B\u4E00\u6B21\u53EA\u554F\u4E00\u500B\u554F\u984C\u3002
+\u4F60\u50CF\u4E00\u500B\u597D\u5947\u7684\u670B\u53CB\uFF0C\u628A\u4E0A\u9762\u9019\u500B\u4E1F\u7D66\u4ED6\u3002{{#shareStyle}}\u9019\u6B21\u7684\u554F\u6CD5\uFF1A{{shareStyle}}\u3002{{/shareStyle}}
+\u5148\u4E0D\u8981\u7D66\u89E3\u91CB\u6216\u7B54\u6848\uFF0C\u7B49\u4ED6\u56DE\u7B54\uFF1B\u4E00\u6B21\u53EA\u554F\u4E00\u500B\u554F\u984C\uFF0C\u958B\u5834\u7528\u4E00\u5169\u53E5\u8A71\u5C31\u597D\u3002
+\u4E0D\u8981\u7528\u56FA\u5B9A\u7684\u958B\u5834\u53E5\uFF08\u4F8B\u5982\u6BCF\u6B21\u90FD\u300C\u6211\u89BA\u5F97 X \u5F88\u6709\u8DA3\uFF0C\u56E0\u70BA\u2026\u300D\uFF09\uFF0C\u6BCF\u6B21\u7528\u4E0D\u540C\u7684\u53E3\u6C23\u548C\u5207\u5165\u9EDE\u3002
 {{/share}}{{^share}}\uFF08\u76EE\u524D\u627E\u4E0D\u5230\u4ED6\u6700\u8FD1\u8B80\u904E\u7684\u6771\u897F\u3002\uFF09\u8ACB\u50CF\u597D\u5947\u7684\u670B\u53CB\u4E00\u6A23\uFF0C\u89AA\u5207\u5730\u9080\u8ACB\u4ED6\u804A\u804A\u6700\u8FD1\u8B80\u4E86\u4EC0\u9EBC\u3001\u6709\u6C92\u6709\u9047\u5230\u60F3\u804A\u7684\u5B57\u6216\u53E5\u5B50\u3002
 {{/share}}`,
   custom: `${SELECTION_HEADER3}\u3014\u5B78\u751F\u8AAA\u3015
@@ -26664,13 +26629,14 @@ function buddyTask(id2, label) {
     maxTokens: 4096,
     ...label ? { label } : {},
     build(input, ctx) {
-      var _a, _b, _c, _d, _e;
+      var _a, _b, _c, _d, _e, _f;
       const slots = {
         selection: (_a = input.selection) == null ? void 0 : _a.trim(),
         question: (_b = input.question) == null ? void 0 : _b.trim(),
         share: (_c = input.share) == null ? void 0 : _c.trim(),
+        shareStyle: (_d = input.shareStyle) == null ? void 0 : _d.trim(),
         // 一起看看我寫的: the pasted English is the question text, or the selection.
-        writing: id2 === "review" ? [(_d = input.question) == null ? void 0 : _d.trim(), (_e = input.selection) == null ? void 0 : _e.trim()].filter(Boolean).join("\n\n") : void 0
+        writing: id2 === "review" ? [(_e = input.question) == null ? void 0 : _e.trim(), (_f = input.selection) == null ? void 0 : _f.trim()].filter(Boolean).join("\n\n") : void 0
       };
       const user = id2 === "review" ? renderTemplate(BUDDY_TEMPLATES.review, { writing: slots.writing }) : renderTemplate(BUDDY_TEMPLATES[id2], slots);
       return composeRequest({
@@ -26699,6 +26665,36 @@ var buddyShare = buddyTask("share", "ai.task.buddy.share");
 var buddyPlan = buddyTask("plan", "ai.task.buddy.plan");
 var buddyCustom = buddyTask("custom");
 var BUDDY_TASKS = [buddyShare, buddyGrammar, buddyWriting, buddyReview, buddyLevel, buddyReading, buddyPlan, buddyCustom];
+var BUDDY_DIGEST_PROMPT = `\u4F60\u5728\u5E6B\u5B78\u751F\u6574\u7406\u4E00\u6BB5\u82F1\u6587\u5B78\u7FD2\u5C0D\u8A71\u7684\u6536\u7A6B\u3002\u5C0D\u8A71\u88E1\u300C\uFF08\u2026\uFF09\u300D\u62EC\u865F\u7684\u5167\u5BB9\u662F\u4ECB\u9762\u6309\u9215\u7684\u8AAA\u660E\uFF0C\u4E0D\u662F\u5B78\u751F\u8AAA\u7684\u8A71\u3002
+\u53EA\u8F38\u51FA JSON\uFF08\u4E0D\u8981\u7A0B\u5F0F\u78BC\u5340\u584A\u3001\u4E0D\u8981\u5176\u4ED6\u6587\u5B57\uFF09\uFF0C\u683C\u5F0F\uFF1A
+{"topics":["\u2026"],"corrections":[{"yours":"\u2026","better":"\u2026","why":"\u2026"}],"understandings":[{"subject":"\u2026","yours":"\u2026","ok":true,"feedback":"\u2026"}],"words":["\u2026"]}
+\u898F\u5247\uFF1A
+1. topics\uFF1A2 \u5230 3 \u500B\u9019\u6BB5\u5C0D\u8A71\u804A\u5230\u7684\u4E3B\u984C\uFF08\u82F1\u6587\u55AE\u5B57\u3001\u5C08\u6709\u540D\u8A5E\u6216\u7C21\u77ED\u4E2D\u6587\uFF09\uFF0C\u7D66\u6A19\u984C\u7528\u3002
+2. corrections\uFF1A\u5B78\u751F\u81EA\u5DF1\u5BEB\u7684\u82F1\u6587\u6709\u54EA\u4E9B\u53E5\u5B50\u53EF\u4EE5\u66F4\u81EA\u7136\uFF1Byours \u5F15\u7528\u539F\u53E5\uFF0Cbetter \u662F\u66F4\u81EA\u7136\u7684\u5BEB\u6CD5\uFF0Cwhy \u7528\u5E7E\u500B\u95DC\u9375\u8A5E\u8AAA\u660E\u539F\u56E0\uFF08\u5982\u300C\u904E\u53BB\u5F0F\u3001\u4ECB\u7CFB\u8A5E\u300D\uFF09\u3002\u5B78\u751F\u6C92\u5BEB\u82F1\u6587\u5C31\u7D66\u7A7A\u9663\u5217\uFF0C\u4E0D\u8981\u7DE8\u9020\u3002
+3. understandings\uFF1A\u5925\u4F34\u8ACB\u5B78\u751F\u8AAA\u51FA\u7406\u89E3\u7684\u5B57\u6216\u6BB5\u843D\uFF1Bsubject \u662F\u90A3\u500B\u5B57\uFF0Cyours \u662F\u5B78\u751F\u7684\u7406\u89E3\uFF0Cok \u8868\u793A\u5927\u81F4\u6B63\u78BA\uFF0Cfeedback \u4E00\u53E5\u88DC\u5145\u3002\u6C92\u6709\u5C31\u7D66\u7A7A\u9663\u5217\u3002
+4. words\uFF1A\u5C0D\u8A71\u4E2D\u804A\u5230\u7684\u82F1\u6587\u55AE\u5B57\uFF08\u539F\u5F62\u3001\u5C0F\u5BEB\uFF09\uFF0C\u6700\u591A 12 \u500B\u3002
+5. \u53EA\u6839\u64DA\u5C0D\u8A71\u5167\u5BB9\uFF0C\u6C92\u6709\u7684\u5C31\u7D66\u7A7A\u9663\u5217\uFF0C\u4E0D\u8981\u7DE8\u9020\u3002`;
+var buddyDigest = {
+  id: "buddy.digest",
+  version: 1,
+  surface: "buddy",
+  tier: "fast",
+  maxTokens: 1500,
+  build(input, ctx) {
+    return composeRequest({
+      base: BUDDY_DIGEST_PROMPT,
+      profile: ctx.profile,
+      history: [],
+      user: `\u3014\u5C0D\u8A71\u3015
+${input.conversation}`,
+      tier: "fast",
+      maxTokens: 1500
+    });
+  },
+  parse(r) {
+    return r.text;
+  }
+};
 
 // src/ui/blocks/BuddyNearFullModal.ts
 var import_obsidian40 = require("obsidian");
@@ -27600,9 +27596,9 @@ function l3(key6, vars) {
   return t(`wordPage.${key6}`, vars);
 }
 var SECTIONS = ["info", "dna", "families", "usage", "trivia", "discussion"];
-function wordPageEntryId(frontmatter2) {
-  if (!frontmatter2 || frontmatter2["vocab-tracker"] !== "word") return null;
-  const id2 = frontmatter2["vocab-tracker-id"];
+function wordPageEntryId(frontmatter3) {
+  if (!frontmatter3 || frontmatter3["vocab-tracker"] !== "word") return null;
+  const id2 = frontmatter3["vocab-tracker-id"];
   if (typeof id2 === "string" && id2.trim()) return id2.trim();
   if (typeof id2 === "number" && Number.isFinite(id2)) return String(id2);
   return null;
@@ -27875,8 +27871,8 @@ function renderWordDna(host, source, el, ctx) {
 }
 function addBlock(host, source, el, ctx, kind) {
   var _a;
-  const frontmatter2 = (_a = ctx.frontmatter) != null ? _a : host.frontmatterOf(ctx.sourcePath);
-  const target = wordTarget(parseBlockParams(source), frontmatter2, ctx.sourcePath);
+  const frontmatter3 = (_a = ctx.frontmatter) != null ? _a : host.frontmatterOf(ctx.sourcePath);
+  const target = wordTarget(parseBlockParams(source), frontmatter3, ctx.sourcePath);
   ctx.addChild(new WordSectionBlock(el, host, target, kind));
 }
 var WordSectionBlock = class extends import_obsidian44.MarkdownRenderChild {
@@ -32150,6 +32146,7 @@ function defaultTaskRegistry() {
     ...VERB_TASKS,
     ...TRIVIA_TASKS,
     ...BUDDY_TASKS,
+    buddyDigest,
     ...DNA_TASKS,
     ...GRAMMAR_TASKS2,
     ...GRAMMAR_TASKS,
@@ -32986,8 +32983,8 @@ var wordlistsSection = {
       })
     );
     const s = current();
-    for (const list of lists) {
-      const row = new import_obsidian53.Setting(el).setName(tagLabel(list.tag)).setDesc(t("settings.wordlists.list.desc", { n: list.words.toLocaleString(), paths: list.paths.join(", ") })).addColorPicker((c2) => c2.setValue(tagColor(s, list.tag)).onChange((v) => void updateTag(list.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list.tag)).onChange((v) => void updateTag(list.tag, { enabled: v })));
+    for (const list2 of lists) {
+      const row = new import_obsidian53.Setting(el).setName(tagLabel(list2.tag)).setDesc(t("settings.wordlists.list.desc", { n: list2.words.toLocaleString(), paths: list2.paths.join(", ") })).addColorPicker((c2) => c2.setValue(tagColor(s, list2.tag)).onChange((v) => void updateTag(list2.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list2.tag)).onChange((v) => void updateTag(list2.tag, { enabled: v })));
       row.settingEl.addClass("vt-wordlist-row");
     }
   }
@@ -33281,7 +33278,7 @@ function normalizeLearnShard(raw) {
 }
 function learnFingerprint(shard) {
   var _a, _b, _c;
-  const recs = (kind, list) => list.map((r) => {
+  const recs = (kind, list2) => list2.map((r) => {
     var _a2, _b2, _c2;
     return `${kind}|${r.id}|${(_a2 = r.updatedAt) != null ? _a2 : ""}|${(_b2 = r.rev) != null ? _b2 : 0}|${(_c2 = r.deletedAt) != null ? _c2 : ""}`;
   });
@@ -33302,10 +33299,10 @@ function pickMorpheme(local, remote) {
   }
   return pickNewer2(local, remote);
 }
-function dedupeMorphemes(list) {
-  const live = list.filter((m2) => !m2.deletedAt && !m2.mergedInto);
-  const rest = list.filter((m2) => m2.deletedAt || m2.mergedInto);
-  if (live.length < 2) return list.slice();
+function dedupeMorphemes(list2) {
+  const live = list2.filter((m2) => !m2.deletedAt && !m2.mergedInto);
+  const rest = list2.filter((m2) => m2.deletedAt || m2.mergedInto);
+  if (live.length < 2) return list2.slice();
   const keysOf = (m2) => /* @__PURE__ */ new Set([normalizeForm(m2.form), ...m2.variants.map(normalizeForm)]);
   const keys = live.map(keysOf);
   const intersects = (a2, b) => {
@@ -33431,17 +33428,17 @@ function normalizeQuestion(raw) {
   if (typeof raw.stem !== "string" || typeof raw.answer !== "string") return null;
   const type = GRAMMAR_QUESTION_TYPES.includes(raw.type) ? raw.type : null;
   if (!type) return null;
-  const strings2 = (v) => Array.isArray(v) ? v.filter((x3) => typeof x3 === "string") : void 0;
+  const strings3 = (v) => Array.isArray(v) ? v.filter((x3) => typeof x3 === "string") : void 0;
   const q = {
     ...raw,
     type,
     explanation: typeof raw.explanation === "string" ? raw.explanation : "",
     errorTag: normalizeErrorTag(raw.errorTag)
   };
-  const options = strings2(raw.options);
+  const options = strings3(raw.options);
   if (options) q.options = options;
   else delete q.options;
-  const accepted = strings2(raw.accepted);
+  const accepted = strings3(raw.accepted);
   if (accepted) q.accepted = accepted;
   else delete q.accepted;
   if (!isObj9(raw.distractors)) delete q.distractors;
@@ -33488,8 +33485,8 @@ function normalizeGrammarShard(raw) {
     progress: normList(s.progress, normalizeProgress)
   };
 }
-function sortAttempts(list) {
-  return list.sort((a2, b) => ms6(a2.at) - ms6(b.at) || (a2.id < b.id ? -1 : a2.id > b.id ? 1 : 0));
+function sortAttempts(list2) {
+  return list2.sort((a2, b) => ms6(a2.at) - ms6(b.at) || (a2.id < b.id ? -1 : a2.id > b.id ? 1 : 0));
 }
 function mergeGrammar(local, remote) {
   return {
@@ -33500,7 +33497,7 @@ function mergeGrammar(local, remote) {
   };
 }
 function grammarFingerprint(shard) {
-  const recs = (kind, list) => list.map((r) => {
+  const recs = (kind, list2) => list2.map((r) => {
     var _a, _b, _c;
     return `${kind}|${r.id}|${(_a = r.updatedAt) != null ? _a : ""}|${(_b = r.rev) != null ? _b : 0}|${(_c = r.deletedAt) != null ? _c : ""}`;
   });
@@ -33770,8 +33767,8 @@ function normalizeLearnerShard(raw) {
     wordCefr: mergeWordCefr(normList2(s.wordCefr, normalizeWordCefr), [])
   };
 }
-function sortEvents(list) {
-  return list.sort((a2, b) => ms7(a2.at) - ms7(b.at) || (a2.id < b.id ? -1 : a2.id > b.id ? 1 : 0));
+function sortEvents(list2) {
+  return list2.sort((a2, b) => ms7(a2.at) - ms7(b.at) || (a2.id < b.id ? -1 : a2.id > b.id ? 1 : 0));
 }
 function mergeLearner(local, remote) {
   var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
@@ -34960,6 +34957,209 @@ function recentDiscussions(threads, wordOf, now2, opts = {}) {
   });
 }
 
+// src/core/learner/buddyArchive.ts
+var SHARE_TASK_ID = "buddy.share";
+var CUSTOM_TASK_ID = "buddy.custom";
+var ANSWER_FOR_AI_MAX = 1500;
+var pad5 = (n) => String(n).padStart(2, "0");
+var hhmm = (iso) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : `${pad5(d.getHours())}:${pad5(d.getMinutes())}`;
+};
+function turnKind(turn) {
+  var _a;
+  if (turn.taskId === SHARE_TASK_ID) return "share";
+  if (turn.taskId !== CUSTOM_TASK_ID && !((_a = turn.question) == null ? void 0 : _a.trim())) return "button";
+  return "typed";
+}
+function pickedText(subject, skipped) {
+  const tail = skipped ? " \xB7 \u7565\u904E" : "";
+  if (!subject) return "\uFF08\u5925\u4F34\u9080\u4ED6\u804A\u804A\u6700\u8FD1\u8B80\u4E86\u4EC0\u9EBC\uFF09";
+  return subject.startsWith("\u3008") ? `\uFF08\u5925\u4F34\u6311\u4E86${subject}\u90A3\u6BB5${tail}\uFF09` : `\uFF08\u5925\u4F34\u6311\u4E86 **${subject}**${tail}\uFF09`;
+}
+function buildEntries(pairs, next, labelOf) {
+  return pairs.map((p, i) => {
+    var _a, _b, _c;
+    const turn = p.user;
+    const kind = turnKind(turn);
+    const following = i + 1 < pairs.length ? pairs[i + 1].user : next;
+    const skipped = kind === "share" && !!following && turnKind(following) !== "typed";
+    const answer = stripSuggestions(p.assistant.content).trim();
+    let you;
+    if (kind === "share") you = pickedText(turn.shareSubject, skipped);
+    else if (kind === "button") you = `\uFF08\u9EDE\u4E86\u300C${(_b = labelOf((_a = turn.taskId) != null ? _a : "")) != null ? _b : turn.content}\u300D\uFF09`;
+    else you = ((_c = turn.question) == null ? void 0 : _c.trim()) || turn.content;
+    return { at: turn.at, kind, you, ...turn.shareSubject ? { subject: turn.shareSubject } : {}, skipped, answer };
+  });
+}
+function digestConversation(entries) {
+  return entries.map((e) => {
+    const lines4 = [`\u4F60\uFF1A${e.you}`];
+    if (!e.skipped) lines4.push(`\u5925\u4F34\uFF1A${clip2(e.answer, ANSWER_FOR_AI_MAX)}`);
+    return lines4.join("\n");
+  }).join("\n\n");
+}
+var BOLD_ENGLISH = /\*\*([A-Za-z][A-Za-z'-]{1,30})\*\*/g;
+function fallbackWords(entries, isSaved) {
+  const out = [];
+  const add3 = (w2) => {
+    const word = w2.trim();
+    if (word && !out.some((x3) => x3.toLowerCase() === word.toLowerCase()) && isSaved(word)) out.push(word);
+  };
+  for (const e of entries) {
+    if (e.subject && !e.subject.startsWith("\u3008")) add3(e.subject);
+    for (const m2 of e.answer.matchAll(BOLD_ENGLISH)) add3(m2[1]);
+  }
+  return out;
+}
+function archiveNoteId(day) {
+  return `buddy-day-${day}`;
+}
+function archiveFileName(day) {
+  return `Buddy-${day}.md`;
+}
+function archivePath(folder, day) {
+  const dir = folder.replace(/\/+$/, "");
+  return `${dir ? `${dir}/` : ""}${archiveFileName(day)}`;
+}
+function batchMarker(threadId, start4) {
+  return `<!-- buddy-batch:${threadId}:${start4} -->`;
+}
+function link(word, wordLink) {
+  const path = wordLink == null ? void 0 : wordLink(word);
+  return path ? `[[${path.replace(/\.md$/i, "")}|${word}]]` : `**${word}**`;
+}
+function mdOf(iso) {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+function conversationCallout(entries) {
+  const lines4 = [`[!quote]- \u5B8C\u6574\u5C0D\u8A71\uFF08${entries.length} \u5247\uFF09`];
+  for (const e of entries) {
+    const time = hhmm(e.at);
+    lines4.push("", `**\u4F60**${time ? `\uFF08${time}\uFF09` : ""}\uFF1A${e.you}`);
+    if (!e.skipped) lines4.push("", e.answer.includes("\n") ? `**\u5925\u4F34**\uFF1A
+
+${e.answer}` : `**\u5925\u4F34**\uFF1A${e.answer}`);
+  }
+  return lines4.join("\n").split("\n").map((l4) => l4 ? `> ${l4}` : ">").join("\n");
+}
+function batchTopics(input) {
+  var _a, _b;
+  const topics = (_b = (_a = input.digest) == null ? void 0 : _a.topics) != null ? _b : [];
+  return topics.length ? topics.slice(0, 3) : input.words.slice(0, 3);
+}
+function harvest(input) {
+  const { digest, words, wordLink } = input;
+  const out = [];
+  if (digest == null ? void 0 : digest.corrections.length) {
+    out.push("**\u4F60\u5BEB\u7684 \u2192 \u66F4\u81EA\u7136\u7684\u5BEB\u6CD5**");
+    for (const c2 of digest.corrections) out.push(`- ${c2.yours} \u2192 ${c2.better}${c2.why ? `\uFF08${c2.why}\uFF09` : ""}`);
+    out.push("");
+  }
+  if (digest == null ? void 0 : digest.understandings.length) {
+    out.push("**\u4F60\u7684\u7406\u89E3**");
+    for (const u of digest.understandings) {
+      out.push(`- ${link(u.subject, wordLink)}\uFF1A${u.yours} ${u.ok ? "\u2713" : "\u518D\u60F3\u60F3"}${u.feedback ? `\uFF1B${u.feedback}` : ""}`);
+    }
+    out.push("");
+  }
+  if (words.length) {
+    out.push("**\u804A\u904E\u7684\u5B57**", words.map((w2) => link(w2, wordLink)).join("\u3001"), "");
+  }
+  return out;
+}
+function renderBatchSection(input) {
+  const { threadId, start: start4, entries, now: now2 } = input;
+  const topics = batchTopics(input);
+  const head = `## ${pad5(now2.getHours())}:${pad5(now2.getMinutes())} \xB7 \u7B2C ${start4 + 1}\u2013${start4 + entries.length} \u5247${topics.length ? `\uFF1A${topics.join("\u3001")}` : ""}`;
+  const lines4 = [head, batchMarker(threadId, start4), ""];
+  const got = harvest(input);
+  if (got.length) lines4.push("### \u9019\u6B21\u7684\u6536\u7A6B", "", ...got);
+  lines4.push(conversationCallout(entries), "");
+  return lines4.join("\n");
+}
+function frontmatter2(day, words) {
+  return [
+    "---",
+    "vocab-tracker: ai-note",
+    `vocab-tracker-id: ${JSON.stringify(archiveNoteId(day))}`,
+    `date: ${day}`,
+    `words: ${JSON.stringify(words)}`,
+    "---"
+  ].join("\n");
+}
+function renderDayNote(day, words, section4, now2) {
+  return `${frontmatter2(day, words)}
+# \u5B78\u7FD2\u5925\u4F34 \xB7 ${mdOf(now2.toISOString())}
+
+${section4}`.replace(/\n+$/, "\n");
+}
+var WORDS_LINE = /^words: (\[.*\])\s*$/m;
+function appendBatch(existing, marker, section4, newWords) {
+  if (existing.includes(marker)) return null;
+  let text = existing;
+  const m2 = WORDS_LINE.exec(text);
+  if (m2) {
+    let old = [];
+    try {
+      const parsed = JSON.parse(m2[1]);
+      if (Array.isArray(parsed)) old = parsed.filter((x3) => typeof x3 === "string");
+    } catch (e) {
+    }
+    const merged = [...old];
+    for (const w2 of newWords) if (!merged.some((x3) => x3.toLowerCase() === w2.toLowerCase())) merged.push(w2);
+    text = text.replace(WORDS_LINE, `words: ${JSON.stringify(merged)}`);
+  }
+  return `${text.replace(/\s+$/, "")}
+
+${section4}`.replace(/\n+$/, "\n");
+}
+
+// src/core/learner/buddyDigest.ts
+var str11 = (v) => typeof v === "string" ? v.trim() : "";
+var isObj11 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var list = (v) => Array.isArray(v) ? v : [];
+var strings2 = (v, max) => {
+  const out = [];
+  for (const x3 of list(v)) {
+    const s = str11(x3);
+    if (s && !out.includes(s)) out.push(s);
+    if (out.length >= max) break;
+  }
+  return out;
+};
+function parseDigest(text) {
+  const start4 = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start4 < 0 || end <= start4) return null;
+  let raw;
+  try {
+    raw = JSON.parse(text.slice(start4, end + 1));
+  } catch (e) {
+    return null;
+  }
+  if (!isObj11(raw)) return null;
+  const corrections = [];
+  for (const c2 of list(raw.corrections)) {
+    if (!isObj11(c2)) continue;
+    const yours = str11(c2.yours);
+    const better = str11(c2.better);
+    if (yours && better) corrections.push({ yours, better, why: str11(c2.why) });
+  }
+  const understandings = [];
+  for (const u of list(raw.understandings)) {
+    if (!isObj11(u)) continue;
+    const subject = str11(u.subject);
+    const yours = str11(u.yours);
+    if (subject && yours) understandings.push({ subject, yours, ok: u.ok === true, feedback: str11(u.feedback) });
+  }
+  return { topics: strings2(raw.topics, 3), corrections, understandings, words: strings2(raw.words, 20) };
+}
+function digestIsEmpty(d) {
+  return !d.topics.length && !d.corrections.length && !d.understandings.length && !d.words.length;
+}
+
 // src/core/learner/sharePick.ts
 var SHARE_DAYS = 14;
 var SHARE_AVOID_RECENT = 5;
@@ -35000,13 +35200,39 @@ function collectShareItems(src) {
   }
   return items;
 }
-function pickShare(items, recentKeys, random) {
+var PARAGRAPH_BIAS = 0.6;
+function pickShare(items, recentKeys, random, lastKind) {
   if (!items.length) return null;
   const avoid = new Set(recentKeys.slice(-SHARE_AVOID_RECENT));
   const fresh = items.filter((i2) => !avoid.has(i2.key));
   const pool = fresh.length ? fresh : items;
-  const i = Math.min(pool.length - 1, Math.floor(random() * pool.length));
-  return pool[i];
+  const paragraphs = pool.filter((i2) => i2.kind === "paragraph");
+  const words = pool.filter((i2) => i2.kind === "word");
+  let group = pool;
+  if (paragraphs.length && words.length) {
+    const wantParagraph = lastKind === "word" ? true : random() < PARAGRAPH_BIAS;
+    group = wantParagraph ? paragraphs : words;
+  }
+  const i = Math.min(group.length - 1, Math.floor(random() * group.length));
+  return group[i];
+}
+var SHARE_STYLES = [
+  { id: "guess", scope: "both", text: "\u8ACB\u4ED6\u731C\u731C\u770B\uFF0C\u9019\u500B\u5B57\uFF08\u6216\u9019\u6BB5\uFF09\u662F\u4EC0\u9EBC\u610F\u601D" },
+  { id: "choice", scope: "both", text: "\u7D66\u5169\u500B\u53EF\u80FD\u7684\u610F\u601D\u8B93\u4ED6\u4E8C\u9078\u4E00\uFF08\u5176\u4E2D\u4E00\u500B\u662F\u5C0D\u7684\uFF0C\u53E6\u4E00\u500B\u662F\u770B\u8D77\u4F86\u50CF\u7684\u5E72\u64FE\uFF09" },
+  { id: "scenario", scope: "both", text: "\u5148\u63CF\u8FF0\u4E00\u500B\u751F\u6D3B\u60C5\u5883\uFF0C\u8ACB\u4ED6\u731C\u731C\u5728\u9019\u500B\u60C5\u5883\u88E1\u5B83\u662F\u4EC0\u9EBC\u610F\u601D" },
+  { id: "sentence", scope: "word", text: "\u8ACB\u4ED6\u7528\u9019\u500B\u5B57\u9020\u4E00\u500B\u53E5\u5B50" },
+  { id: "assoc", scope: "both", text: "\u554F\u4ED6\u770B\u5230\u9019\u500B\u5B57\uFF08\u6216\u9019\u6BB5\uFF09\u6703\u8B93\u4ED6\u60F3\u5230\u4EC0\u9EBC" },
+  { id: "rephrase", scope: "paragraph", text: "\u8ACB\u4ED6\u7528\u81EA\u5DF1\u7684\u8A71\u628A\u9019\u4E00\u6BB5\u63DB\u53E5\u8A71\u8AAA" }
+];
+function pickShareStyle(kind, lastId, random) {
+  const fit = SHARE_STYLES.filter((s) => s.scope === "both" || s.scope === kind);
+  const pool = fit.filter((s) => s.id !== lastId);
+  const from = pool.length ? pool : fit;
+  return from[Math.min(from.length - 1, Math.floor(random() * from.length))];
+}
+function shareSubject(item) {
+  if (!item) return void 0;
+  return item.kind === "word" ? item.word : `\u3008${item.title}\u3009`;
 }
 function rememberShare(recentKeys, key6) {
   return [...recentKeys.filter((k) => k !== key6), key6].slice(-SHARE_AVOID_RECENT);
@@ -35156,6 +35382,7 @@ var ThreadService = class {
     if (p.question) user.question = p.question;
     if (p.selection) user.selection = p.selection;
     if (p.subjectEntryId) user.subjectEntryId = p.subjectEntryId;
+    if (p.shareSubject) user.shareSubject = p.shareSubject;
     const answer = {
       id: this.newId(),
       role: "assistant",
@@ -35306,10 +35533,11 @@ var ThreadService = class {
       threadId: id2,
       anchor: { kind: "buddy" },
       taskId: req.taskId,
-      input: { context, question: req.question, selection: req.selection, ...share !== void 0 ? { share } : {} },
+      input: { context, question: req.question, selection: req.selection, ...share ? { share: share.brief, shareStyle: share.style } : {} },
       display: this.displayFor(req),
       question: req.question,
-      selection: req.selection
+      selection: req.selection,
+      ...(share == null ? void 0 : share.subject) ? { shareSubject: share.subject } : {}
     });
     void this.archiveBuddy(id2).catch((e) => console.error("Vocab Tracker: buddy archive failed", e));
     return id2;
@@ -35322,15 +35550,20 @@ var ThreadService = class {
     } catch (e) {
       console.error("Vocab Tracker: share material failed", e);
     }
-    const item = pickShare(items, this.recentShares, (_d = this.deps.random) != null ? _d : Math.random);
-    if (item) this.recentShares = rememberShare(this.recentShares, item.key);
-    return shareBrief(item);
+    const random = (_d = this.deps.random) != null ? _d : Math.random;
+    const item = pickShare(items, this.recentShares, random, this.lastShareKind);
+    if (!item) return { brief: "" };
+    this.recentShares = rememberShare(this.recentShares, item.key);
+    this.lastShareKind = item.kind;
+    const style = pickShareStyle(item.kind, this.lastShareStyle, random);
+    this.lastShareStyle = style.id;
+    return { brief: shareBrief(item), style: style.text, subject: shareSubject(item) };
   }
   // 對話整理: once ten answered groups are alive, the oldest eight are
   // written to a note and tombstoned (the newest two stay to chat on).
   // Nothing is deleted when the note can't be written.
   async archiveBuddy(threadId) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e, _f, _g;
     const cfg = this.deps.buddyArchive;
     const thread = this.get(threadId);
     if (!cfg || !thread || thread.anchor.kind !== "buddy") return;
@@ -35339,21 +35572,53 @@ var ThreadService = class {
     const batch = pairs.slice(0, ARCHIVE_TAKE);
     const start4 = (_a = thread.archivedCount) != null ? _a : 0;
     const now2 = this.clock();
-    const id2 = archiveNoteId(threadId, start4);
-    const path = archivePath(cfg.folder(), start4, now2, ARCHIVE_TAKE);
-    if (!(((_b = cfg.hasNote) == null ? void 0 : _b.call(cfg, id2)) || cfg.exists(path))) {
-      await cfg.create(path, renderArchiveNote({ threadId, start: start4, pairs: batch, now: now2 }));
-      (_c = cfg.onSaved) == null ? void 0 : _c.call(cfg, path, start4, start4 + ARCHIVE_TAKE);
+    const day = localDay(now2);
+    const labelOf = (id2) => {
+      var _a2;
+      const label = (_a2 = this.deps.ai.tasks.get(id2)) == null ? void 0 : _a2.label;
+      return label ? t(label) : void 0;
+    };
+    const entries = buildEntries(batch, (_b = pairs[ARCHIVE_TAKE]) == null ? void 0 : _b.user, labelOf);
+    const digest = await this.digestOf(entries, cfg);
+    const words = (digest == null ? void 0 : digest.words.length) ? digest.words : fallbackWords(entries, (_c = cfg.isSavedWord) != null ? _c : (() => false));
+    const section4 = renderBatchSection({ threadId, start: start4, entries, digest, words, now: now2, wordLink: cfg.wordLink });
+    const existing = (_e = (_d = cfg.findNote) == null ? void 0 : _d.call(cfg, `buddy-day-${day}`)) != null ? _e : null;
+    const path = existing != null ? existing : archivePath(cfg.folder(), day);
+    if (cfg.exists(path)) {
+      let written = false;
+      await cfg.process(path, (text) => {
+        const next = appendBatch(text, batchMarker(threadId, start4), section4, words);
+        written = next !== null;
+        return next != null ? next : text;
+      });
+      if (written) (_f = cfg.onSaved) == null ? void 0 : _f.call(cfg, path);
+    } else {
+      await cfg.create(path, renderDayNote(day, words, section4, now2));
+      (_g = cfg.onSaved) == null ? void 0 : _g.call(cfg, path);
     }
-    const stamp2 = this.nowIso();
+    const stamp = this.nowIso();
     for (const p of batch) {
       for (const turn of [p.user, p.assistant]) {
-        turn.deletedAt = stamp2;
-        turn.updatedAt = stamp2;
+        turn.deletedAt = stamp;
+        turn.updatedAt = stamp;
       }
     }
     thread.archivedCount = start4 + ARCHIVE_TAKE;
     this.changed(thread);
+  }
+  // The AI's 這次的收穫; null when it is off or fails (the note then lists words only).
+  async digestOf(entries, cfg) {
+    var _a;
+    if (!((_a = cfg.digestReady) == null ? void 0 : _a.call(cfg))) return null;
+    try {
+      const { request } = this.deps.ai.prepare("buddy.digest", { conversation: digestConversation(entries) }, []);
+      const r = await this.deps.ai.complete(request, { threadId: `digest:${this.newId()}` });
+      const d = parseDigest(r.text);
+      return d && !digestIsEmpty(d) ? d : null;
+    } catch (e) {
+      console.error("Vocab Tracker: buddy digest failed", e);
+      return null;
+    }
   }
   async retryBuddy(threadId, turnId) {
     const question = this.dropFailedRound(this.get(threadId), turnId);
@@ -35893,10 +36158,10 @@ var LearnStore = class {
     rec.updatedAt = now2;
     rec.rev = ((_b = rec.rev) != null ? _b : 0) + 1;
   }
-  upsert(list, rec) {
-    const i = list.findIndex((x3) => x3.id === rec.id);
-    if (i === -1) list.push(rec);
-    else list[i] = rec;
+  upsert(list2, rec) {
+    const i = list2.findIndex((x3) => x3.id === rec.id);
+    if (i === -1) list2.push(rec);
+    else list2[i] = rec;
   }
   scheduleWrite() {
     if (this.writeTimer) clearTimeout(this.writeTimer);
@@ -36037,10 +36302,10 @@ var GrammarStore = class {
   nowIso() {
     return this.clock().toISOString();
   }
-  upsert(list, rec) {
-    const i = list.findIndex((x3) => x3.id === rec.id);
-    if (i === -1) list.push(rec);
-    else list[i] = rec;
+  upsert(list2, rec) {
+    const i = list2.findIndex((x3) => x3.id === rec.id);
+    if (i === -1) list2.push(rec);
+    else list2[i] = rec;
   }
   scheduleWrite() {
     if (this.writeTimer) clearTimeout(this.writeTimer);
@@ -36135,16 +36400,16 @@ function migrateGrammar(questions2, attempts, now2, existingPool = []) {
   });
   const byQuestion = /* @__PURE__ */ new Map();
   for (const a2 of sorted) {
-    const list = byQuestion.get(a2.questionId);
-    if (list) list.push(a2);
+    const list2 = byQuestion.get(a2.questionId);
+    if (list2) list2.push(a2);
     else byQuestion.set(a2.questionId, [a2]);
   }
   const usable = questions2.filter((q) => !q.retiredAt && !q.deletedAt);
   const mistakes = [];
   for (const q of usable) {
-    const list = byQuestion.get(q.id);
-    if (!list || list[list.length - 1].correct) continue;
-    const wrongs = list.filter((a2) => !a2.correct);
+    const list2 = byQuestion.get(q.id);
+    if (!list2 || list2[list2.length - 1].correct) continue;
+    const wrongs = list2.filter((a2) => !a2.correct);
     mistakes.push({
       id: `grammar:${q.id}`,
       track: "grammar",
@@ -36298,8 +36563,8 @@ var LearnerStore = class {
     const iso = now2.toISOString();
     const day = localDayOf(now2);
     const id2 = readingId(day, input.path, input.heading);
-    const list = (_b = (_a = this.data).reading) != null ? _b : _a.reading = [];
-    const cur = list.find((r) => r.id === id2);
+    const list2 = (_b = (_a = this.data).reading) != null ? _b : _a.reading = [];
+    const cur = list2.find((r) => r.id === id2);
     if (cur) {
       cur.kinds = sortKinds([...cur.kinds, input.kind]);
       cur.updatedAt = iso;
@@ -36307,7 +36572,7 @@ var LearnerStore = class {
     } else {
       const v = { id: id2, day, at: iso, updatedAt: iso, path: input.path, title: input.title, kinds: [input.kind] };
       if (input.heading) v.heading = input.heading;
-      list.push(v);
+      list2.push(v);
     }
     this.scheduleWrite();
   }
@@ -36324,9 +36589,9 @@ var LearnerStore = class {
     const key6 = normalizePickKey(p.key);
     if (!key6) return;
     const id2 = `${p.kind}|${key6}`;
-    const list = (_b = (_a = this.data).diaryPicks) != null ? _b : _a.diaryPicks = [];
-    if (list.some((x3) => x3.id === id2)) return;
-    list.push({ id: id2, kind: p.kind, key: key6, day: p.day, at: this.clock().toISOString() });
+    const list2 = (_b = (_a = this.data).diaryPicks) != null ? _b : _a.diaryPicks = [];
+    if (list2.some((x3) => x3.id === id2)) return;
+    list2.push({ id: id2, kind: p.kind, key: key6, day: p.day, at: this.clock().toISOString() });
     this.scheduleWrite();
   }
   diaryPicks() {
@@ -36337,9 +36602,9 @@ var LearnerStore = class {
   // Same id already recorded → ignored (the event itself never changes).
   recordAsk(e) {
     var _a, _b;
-    const list = (_b = (_a = this.data).asks) != null ? _b : _a.asks = [];
-    if (list.some((x3) => x3.id === e.id)) return;
-    list.push(e);
+    const list2 = (_b = (_a = this.data).asks) != null ? _b : _a.asks = [];
+    if (list2.some((x3) => x3.id === e.id)) return;
+    list2.push(e);
     this.scheduleWrite();
   }
   asks() {
@@ -36354,11 +36619,11 @@ var LearnerStore = class {
     const now2 = this.clock();
     const day = localDayOf(now2);
     const id2 = `${day}|${word}`;
-    const list = (_b = (_a = this.data).wordTouches) != null ? _b : _a.wordTouches = [];
-    let cur = list.find((w2) => w2.id === id2);
+    const list2 = (_b = (_a = this.data).wordTouches) != null ? _b : _a.wordTouches = [];
+    let cur = list2.find((w2) => w2.id === id2);
     if (!cur) {
       cur = { id: id2, day, word, lookup: 0, pronounce: 0, saved: input.saved, updatedAt: "" };
-      list.push(cur);
+      list2.push(cur);
     }
     cur[input.kind]++;
     cur.updatedAt = now2.toISOString();
@@ -36377,18 +36642,18 @@ var LearnerStore = class {
   // they aren't asked again. A level already stored is replaced only when it differs.
   setWordCefr(entries) {
     var _a, _b;
-    const list = (_b = (_a = this.data).wordCefr) != null ? _b : _a.wordCefr = [];
+    const list2 = (_b = (_a = this.data).wordCefr) != null ? _b : _a.wordCefr = [];
     const at = this.clock().toISOString();
     let changed = false;
     for (const e of entries) {
       const id2 = e.word.trim().toLowerCase();
       if (!id2 || !isCefrTier(e.level)) continue;
-      const cur = list.find((w2) => w2.id === id2);
+      const cur = list2.find((w2) => w2.id === id2);
       if ((cur == null ? void 0 : cur.level) === e.level) continue;
       if (cur) {
         cur.level = e.level;
         cur.at = at;
-      } else list.push({ id: id2, level: e.level, at });
+      } else list2.push({ id: id2, level: e.level, at });
       changed = true;
     }
     if (changed) this.scheduleWrite();
@@ -36416,18 +36681,18 @@ var LearnerStore = class {
   migrateAsksFromThreads(threads, surfaceOf) {
     var _a, _b;
     if (!this.ready || this.data.meta.asksMigratedAt) return false;
-    const list = (_b = (_a = this.data).asks) != null ? _b : _a.asks = [];
-    const known2 = new Set(list.map((a2) => a2.id));
-    for (const a2 of asksFromThreads(threads, surfaceOf)) if (!known2.has(a2.id)) list.push(a2);
+    const list2 = (_b = (_a = this.data).asks) != null ? _b : _a.asks = [];
+    const known2 = new Set(list2.map((a2) => a2.id));
+    for (const a2 of asksFromThreads(threads, surfaceOf)) if (!known2.has(a2.id)) list2.push(a2);
     this.data.meta = { ...this.data.meta, asksMigratedAt: this.clock().toISOString() };
     this.scheduleWrite();
     return true;
   }
   // ── Persistence ───────────────────────────────────────────────
-  upsert(list, rec) {
-    const i = list.findIndex((x3) => x3.id === rec.id);
-    if (i === -1) list.push(rec);
-    else list[i] = rec;
+  upsert(list2, rec) {
+    const i = list2.findIndex((x3) => x3.id === rec.id);
+    if (i === -1) list2.push(rec);
+    else list2[i] = rec;
   }
   scheduleWrite() {
     if (this.writeTimer) clearTimeout(this.writeTimer);
@@ -36688,9 +36953,9 @@ function legacyTitleHeading(basename2, headings, frontmatterEndLine) {
 
 // src/ui/reading/pluginNote.ts
 var KINDS = ["word", "entry", "ai-note", "grammar", "diary", "report"];
-function pluginNoteKind(frontmatter2) {
-  const kind = frontmatter2 == null ? void 0 : frontmatter2["vocab-tracker"];
-  const id2 = frontmatter2 == null ? void 0 : frontmatter2["vocab-tracker-id"];
+function pluginNoteKind(frontmatter3) {
+  const kind = frontmatter3 == null ? void 0 : frontmatter3["vocab-tracker"];
+  const id2 = frontmatter3 == null ? void 0 : frontmatter3["vocab-tracker-id"];
   if (typeof kind !== "string" || !KINDS.includes(kind)) return null;
   if (!(typeof id2 === "string" && id2.trim()) && !(typeof id2 === "number" && Number.isFinite(id2))) return null;
   return kind;
@@ -37210,9 +37475,9 @@ var QuestionService = class {
     for (const q of qs) {
       const a2 = first.get(q.id);
       if (!a2) continue;
-      const list = (_a = byTopic.get(q.topicId)) != null ? _a : [];
-      list.push({ correct: a2.correct, retired: !!q.retiredAt });
-      byTopic.set(q.topicId, list);
+      const list2 = (_a = byTopic.get(q.topicId)) != null ? _a : [];
+      list2.push({ correct: a2.correct, retired: !!q.retiredAt });
+      byTopic.set(q.topicId, list2);
     }
     for (const [topicId, results] of byTopic) this.finishSession(topicId, results, this.clock());
   }
@@ -37918,9 +38183,9 @@ function shiftDay(day, delta2) {
   const [y3, m2, d] = day.split("-").map(Number);
   return localDayOf(new Date(y3, m2 - 1, d + delta2));
 }
-function uniq3(list) {
+function uniq3(list2) {
   const seen = /* @__PURE__ */ new Set();
-  return list.filter((s) => {
+  return list2.filter((s) => {
     const k = s.toLowerCase();
     if (!s || seen.has(k)) return false;
     seen.add(k);
@@ -38406,18 +38671,18 @@ ${analysis.next}`].filter(Boolean).join("\n\n");
 var demote = (md) => md.replace(/^(#{1,4})(\s)/gm, "#####$2");
 var quote = (l4) => l4 === "" ? ">" : `> ${l4}`;
 var markerRe = (kind, name) => new RegExp(`^>[ \\t]*%%[ \\t]*vt:${kind}[ \\t]+${name}[ \\t]*%%[ \\t]*$`);
-function setBlock(lines4, calloutStart, heading, block2, body) {
+function setBlock(lines4, calloutStart, heading, block, body) {
   const start4 = lines4.findIndex((l4) => calloutStart.test(l4));
   if (start4 < 0) return lines4;
   let end = start4 + 1;
   while (end < lines4.length && lines4[end].startsWith(">")) end++;
   const inner = body.trim() === "" ? [] : demote(body.trim()).split(/\r?\n/).map(quote);
-  const begin = lines4.findIndex((l4, i) => i > start4 && i < end && markerRe("begin", block2).test(l4));
-  const close = begin < 0 ? -1 : lines4.findIndex((l4, i) => i > begin && i < end && markerRe("end", block2).test(l4));
+  const begin = lines4.findIndex((l4, i) => i > start4 && i < end && markerRe("begin", block).test(l4));
+  const close = begin < 0 ? -1 : lines4.findIndex((l4, i) => i > begin && i < end && markerRe("end", block).test(l4));
   if (begin >= 0 && close > begin) {
     return [...lines4.slice(0, begin + 1), ...inner, ...lines4.slice(close)];
   }
-  const slot = [">", `> #### ${heading}`, ">", `> %% vt:begin ${block2} %%`, ...inner, `> %% vt:end ${block2} %%`];
+  const slot = [">", `> #### ${heading}`, ">", `> %% vt:begin ${block} %%`, ...inner, `> %% vt:end ${block} %%`];
   return [...lines4.slice(0, end), ...slot, ...lines4.slice(end)];
 }
 function applyInCallouts(text, analysis) {
@@ -38655,10 +38920,10 @@ var ReportService = class {
         level: this.deps.model.level()
       });
       const { value } = await runStructured(this.deps.ai, reportAnalyze, { material: material.text, level: this.deps.model.level() });
-      const stamp2 = this.now().toISOString();
+      const stamp = this.now().toISOString();
       const widened = range.from !== own.from;
       await this.deps.vault.process(path, (t2) => {
-        const done = applyAnalysis(t2, value, stamp2);
+        const done = applyAnalysis(t2, value, stamp);
         return widened ? setFrontmatterField(done, "analyzed-from", range.from) : removeFrontmatterField(done, "analyzed-from");
       });
       for (const k of previous) await this.deps.vault.process(this.pathOf(k), (t2) => setFrontmatterField(t2, "analyzed-in", key6));
@@ -39311,9 +39576,9 @@ var VerbUsageService = class {
   async regenerate(entry, pos, opts = {}) {
     if (!this.canGenerate(entry)) throw new Error(`"${entry.word}" is deleted`);
     const result = await this.run(entry, opts, pos);
-    const block2 = result[pos];
-    if (!block2) throw new Error(`verb.usage: AI didn't return a ${pos} block`);
-    return block2;
+    const block = result[pos];
+    if (!block) throw new Error(`verb.usage: AI didn't return a ${pos} block`);
+    return block;
   }
   // Old verb-only API (ui/blocks/verbs.ts, WordPageDecorator): generates
   // every pos like generateAll, but returns (and the caller only ever
@@ -39321,9 +39586,9 @@ var VerbUsageService = class {
   async generate(entry, opts = {}) {
     if (!isVerb(entry.partOfSpeech)) throw new Error(`"${entry.word}" is not a verb`);
     const result = await this.generateAll(entry, opts);
-    const block2 = result.v;
-    if (!block2) throw new Error(`verb.usage: AI didn't return a verb block`);
-    return block2;
+    const block = result.v;
+    if (!block) throw new Error(`verb.usage: AI didn't return a verb block`);
+    return block;
   }
   async run(entry, opts, onlyPos) {
     var _a, _b, _c, _d;
@@ -39555,9 +39820,9 @@ ${body}`, /* @__PURE__ */ new Set([subject.id]));
 var key5 = (w2) => w2.trim().toLowerCase();
 var DNA_ANALYZE_THREAD = "dna:analyze";
 var DNA_EXPAND_THREAD = "dna:expand";
-function findExistingMorpheme(list, type, form, variants) {
+function findExistingMorpheme(list2, type, form, variants) {
   for (const f of [form, ...variants]) {
-    const m2 = matchMorpheme(list, type, f);
+    const m2 = matchMorpheme(list2, type, f);
     if (m2) return m2;
   }
   return void 0;
@@ -39715,7 +39980,7 @@ var MorphemeService = class {
   // ── Attributing an analyze response to morpheme records ─────────────
   learnedCounts() {
     var _a;
-    const list = this.deps.learn.morphemes();
+    const list2 = this.deps.learn.morphemes();
     const liked = new Set(this.deps.vocab.entries.filter((e) => e.liked === true).map((e) => e.id));
     const counts = /* @__PURE__ */ new Map();
     for (const meta of this.deps.learn.allWordMeta()) {
@@ -39723,7 +39988,7 @@ var MorphemeService = class {
       const seen = /* @__PURE__ */ new Set();
       for (const part of meta.breakdown.parts) {
         if (!part.morphemeId) continue;
-        const id2 = resolveMorphemeId(list, part.morphemeId);
+        const id2 = resolveMorphemeId(list2, part.morphemeId);
         if (seen.has(id2)) continue;
         seen.add(id2);
         counts.set(id2, ((_a = counts.get(id2)) != null ? _a : 0) + 1);
@@ -39735,18 +40000,18 @@ var MorphemeService = class {
   // capped — the batch request only ever carries the top 200.
   knownIndex(limit = 200) {
     const counts = this.learnedCounts();
-    const list = this.deps.learn.morphemes().filter((m2) => !m2.mergedInto);
-    return [...list].sort((a2, b) => {
+    const list2 = this.deps.learn.morphemes().filter((m2) => !m2.mergedInto);
+    return [...list2].sort((a2, b) => {
       var _a, _b;
       return ((_a = counts.get(b.id)) != null ? _a : 0) - ((_b = counts.get(a2.id)) != null ? _b : 0);
     }).slice(0, limit).map((m2) => ({ id: m2.id, type: m2.type, form: m2.form, variants: m2.variants }));
   }
   applyAnalysis(entries, value, model, generatedAt) {
-    const list = this.deps.learn.morphemes();
+    const list2 = this.deps.learn.morphemes();
     const refToId = /* @__PURE__ */ new Map();
     for (const dm of value.morphemes) {
-      const existing = findExistingMorpheme(list, dm.type, dm.form, dm.variants);
-      const resolved = existing ? this.mergeIntoExisting(existing, dm) : this.createMorpheme(dm, list);
+      const existing = findExistingMorpheme(list2, dm.type, dm.form, dm.variants);
+      const resolved = existing ? this.mergeIntoExisting(existing, dm) : this.createMorpheme(dm, list2);
       refToId.set(dm.ref, resolved.id);
     }
     const byWord3 = new Map(value.words.map((w2) => [key5(w2.word), w2]));
@@ -39776,7 +40041,7 @@ var MorphemeService = class {
     const morphemeId = fromBatch != null ? fromBatch : direct;
     return morphemeId ? { text: p.text, type: p.type, meaningZh: p.meaningZh, morphemeId } : { text: p.text, type: p.type, meaningZh: p.meaningZh };
   }
-  createMorpheme(dm, list) {
+  createMorpheme(dm, list2) {
     const m2 = {
       id: this.newId(),
       form: dm.form,
@@ -39790,7 +40055,7 @@ var MorphemeService = class {
     };
     if (dm.factTitle.trim() || dm.factBody.trim()) m2.fact = { title: dm.factTitle, body: dm.factBody };
     this.deps.learn.putMorpheme(m2);
-    list.push(m2);
+    list2.push(m2);
     return m2;
   }
   // verified 絕不覆蓋 (只補 suggested 沒有的字); 未 verified 只補空欄位。
@@ -39837,8 +40102,8 @@ var MorphemeService = class {
   // A3: learned 只算 like 的字；suggested 扣掉已在 learned 的字；只回已學 ≥1。
   stats(type) {
     var _a;
-    const list = this.deps.learn.morphemes();
-    const live = list.filter((m2) => !m2.mergedInto && m2.type === type);
+    const list2 = this.deps.learn.morphemes();
+    const live = list2.filter((m2) => !m2.mergedInto && m2.type === type);
     const liked = new Map(this.deps.vocab.entries.filter((e) => e.liked === true).map((e) => [e.id, e]));
     const learnedMap = /* @__PURE__ */ new Map();
     for (const meta of this.deps.learn.allWordMeta()) {
@@ -39847,7 +40112,7 @@ var MorphemeService = class {
       const seen = /* @__PURE__ */ new Set();
       for (const part of meta.breakdown.parts) {
         if (!part.morphemeId) continue;
-        const id2 = resolveMorphemeId(list, part.morphemeId);
+        const id2 = resolveMorphemeId(list2, part.morphemeId);
         if (seen.has(id2)) continue;
         seen.add(id2);
         const arr = learnedMap.get(id2);
@@ -39866,20 +40131,20 @@ var MorphemeService = class {
     return out;
   }
   learnedWordsFor(morphemeId) {
-    const list = this.deps.learn.morphemes();
+    const list2 = this.deps.learn.morphemes();
     const out = /* @__PURE__ */ new Set();
     for (const meta of this.deps.learn.allWordMeta()) {
       const e = this.entry(meta.id);
       if (!e || e.liked !== true || !meta.breakdown) continue;
-      if (meta.breakdown.parts.some((p) => p.morphemeId && resolveMorphemeId(list, p.morphemeId) === morphemeId)) out.add(key5(e.word));
+      if (meta.breakdown.parts.some((p) => p.morphemeId && resolveMorphemeId(list2, p.morphemeId) === morphemeId)) out.add(key5(e.word));
     }
     return out;
   }
   // ── dna.expand (「還有哪些字」) ───────────────────────────────────────
   async expand(id2, signal) {
     await this.deps.learn.ensureLoaded();
-    const list = this.deps.learn.morphemes();
-    const m2 = this.deps.learn.morpheme(resolveMorphemeId(list, id2));
+    const list2 = this.deps.learn.morphemes();
+    const m2 = this.deps.learn.morpheme(resolveMorphemeId(list2, id2));
     if (!m2) return [];
     const exclude = this.learnedWordsFor(m2.id);
     for (const s of m2.suggested) exclude.add(key5(s.word));
@@ -39969,12 +40234,12 @@ var MorphemeService = class {
     await Promise.all([this.deps.threads.ensureLoaded(), this.deps.learn.ensureLoaded()]);
   }
   chatWordsFor(m2, max) {
-    const list = this.deps.learn.morphemes();
+    const list2 = this.deps.learn.morphemes();
     const out = [];
     for (const meta of this.deps.learn.allWordMeta()) {
       const e = this.entry(meta.id);
       if (!e || e.liked !== true || !meta.breakdown) continue;
-      if (meta.breakdown.parts.some((p) => p.morphemeId && resolveMorphemeId(list, p.morphemeId) === m2.id)) {
+      if (meta.breakdown.parts.some((p) => p.morphemeId && resolveMorphemeId(list2, p.morphemeId) === m2.id)) {
         out.push({ word: e.word, partOfSpeech: e.partOfSpeech, zh: e.definitionZh });
         if (out.length >= max) break;
       }
@@ -40102,17 +40367,17 @@ var WordlistIndex = class {
     // and inflection fallback tries several candidates, so remember answers.
     this.memo = /* @__PURE__ */ new Map();
     var _a;
-    for (const list of lists) {
-      const info = (_a = this.info.get(list.tag)) != null ? _a : { tag: list.tag, words: 0, paths: [] };
-      if (list.path) info.paths.push(list.path);
-      this.info.set(list.tag, info);
-      for (const word of list.words) {
+    for (const list2 of lists) {
+      const info = (_a = this.info.get(list2.tag)) != null ? _a : { tag: list2.tag, words: 0, paths: [] };
+      if (list2.path) info.paths.push(list2.path);
+      this.info.set(list2.tag, info);
+      for (const word of list2.words) {
         const tags = this.byWord.get(word);
         if (!tags) {
-          this.byWord.set(word, [list.tag]);
+          this.byWord.set(word, [list2.tag]);
           info.words++;
-        } else if (!tags.includes(list.tag)) {
-          tags.push(list.tag);
+        } else if (!tags.includes(list2.tag)) {
+          tags.push(list2.tag);
           info.words++;
         }
       }
@@ -40438,8 +40703,8 @@ function buildEntryLookup(entries) {
   for (const e of entries) {
     const key6 = e.word.trim().toLowerCase();
     if (!key6) continue;
-    const list = byWord3.get(key6);
-    if (list) list.push(e);
+    const list2 = byWord3.get(key6);
+    if (list2) list2.push(e);
     else byWord3.set(key6, [e]);
   }
   const forWord = (word) => byWord3.get(word.trim().toLowerCase());
@@ -40870,9 +41135,9 @@ function scalar(v) {
   if (typeof v === "number" && Number.isFinite(v)) return String(v);
   return null;
 }
-function managedRefOf(frontmatter2) {
-  if (!frontmatter2 || typeof frontmatter2 !== "object") return null;
-  const fm = frontmatter2;
+function managedRefOf(frontmatter3) {
+  if (!frontmatter3 || typeof frontmatter3 !== "object") return null;
+  const fm = frontmatter3;
   const kind = scalar(fm[KIND_KEY]);
   const id2 = scalar(fm[ID_KEY]);
   return kind && id2 ? { kind, id: id2 } : null;
@@ -41071,11 +41336,11 @@ function renderParagraphs(input, ctx) {
   return parts.length ? parts.join("\n\n") : italic(ctx.labels.paragraphsEmpty);
 }
 function renderWords(input, ctx) {
-  const list = input.words.map((w2) => {
+  const list2 = input.words.map((w2) => {
     const ref = wordRef(ctx, w2.word, w2.entryId);
     return w2.questions > 0 ? `- ${ref} \xB7 ${fill(ctx.labels.wordQuestions, { n: w2.questions })}` : `- ${ref}`;
   });
-  return [`## ${ctx.labels.wordsLearned}`, "", list.length ? list.join("\n") : italic(ctx.labels.wordsEmpty)].join("\n");
+  return [`## ${ctx.labels.wordsLearned}`, "", list2.length ? list2.join("\n") : italic(ctx.labels.wordsEmpty)].join("\n");
 }
 function hasAiNoteContent(input) {
   return input.paragraphs.some((p) => roundsOf(p.turns).length > 0);
@@ -41247,11 +41512,11 @@ function renderTrivia2(input, ctx) {
     parts.push(lines4.join("\n"));
   }
   if (mentioned.length) {
-    const list = mentioned.map((t2) => {
+    const list2 = mentioned.map((t2) => {
       const subject = ctx.entryWord(t2.entryId);
       return subject ? `- ${oneLine(t2.title)}\uFF08${wordRef(ctx, subject, t2.entryId)}\uFF09` : `- ${oneLine(t2.title)}`;
     });
-    parts.push([`**${ctx.labels.triviaMentionedIn}**`, "", ...list].join("\n"));
+    parts.push([`**${ctx.labels.triviaMentionedIn}**`, "", ...list2].join("\n"));
   }
   return parts.join("\n\n");
 }
@@ -41293,8 +41558,8 @@ var NotThisArticle = class extends Error {
 function shortDate4(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
-  const pad5 = (n) => String(n).padStart(2, "0");
-  return `${pad5(d.getMonth() + 1)}/${pad5(d.getDate())}`;
+  const pad6 = (n) => String(n).padStart(2, "0");
+  return `${pad6(d.getMonth() + 1)}/${pad6(d.getDate())}`;
 }
 function jobKey(job) {
   switch (job.kind) {
@@ -42701,14 +42966,14 @@ var WordSheet = class extends import_obsidian71.Component {
     try {
       const adapter = this.plugin.app.vault.adapter;
       const lines4 = Object.entries(probe2).map(([k, v]) => `- ${k}: \`${String(v)}\``);
-      const block2 = `
+      const block = `
 ## ${(/* @__PURE__ */ new Date()).toISOString()}
 
 ${lines4.join("\n")}
 `;
-      if (await adapter.exists(KEYBOARD_PROBE_PATH)) await adapter.append(KEYBOARD_PROBE_PATH, block2);
+      if (await adapter.exists(KEYBOARD_PROBE_PATH)) await adapter.append(KEYBOARD_PROBE_PATH, block);
       else await adapter.write(KEYBOARD_PROBE_PATH, `# Vocab Tracker \u9375\u76E4\u8A3A\u65B7
-${block2}`);
+${block}`);
     } catch (e) {
       console.warn("Vocab Tracker: couldn't write the keyboard probe", e);
     }
@@ -43328,8 +43593,18 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
         folder: () => this.files.paths().threads,
         exists: (p) => this.vault.exists(p),
         create: (p, c2) => this.vault.create(p, c2),
-        hasNote: (id2) => this.vault.findManaged("ai-note", id2) !== null,
-        onSaved: (path) => new import_obsidian73.Notice(t("buddy.archived", { path }))
+        process: (p, fn) => this.vault.process(p, fn),
+        findNote: (id2) => this.vault.findManaged("ai-note", id2),
+        onSaved: (path) => new import_obsidian73.Notice(t("buddy.archived", { path })),
+        digestReady: () => this.ai.status() === "ready",
+        isSavedWord: (w2) => this.isWordSaved(w2),
+        // 單字頁 of a word in the list; null when it has none yet.
+        wordLink: (w2) => {
+          const entry = this.store.entries.find((e) => !e.deletedAt && e.word.toLowerCase() === w2.toLowerCase());
+          if (!entry) return null;
+          const path = this.exporter.wordPagePath(entry.id, entry.word);
+          return this.vault.exists(path) ? path : null;
+        }
       },
       onAsked: (e) => {
         var _a;
@@ -44272,13 +44547,13 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
     const word = text.slice(start4, end).replace(/^[-']+|[-']+$/g, "");
     if (!/^[A-Za-z][A-Za-z'\-]*$/.test(word)) return { word: "", sentence: "" };
     const examSpan = (_a = node.parentElement) == null ? void 0 : _a.closest(`.${EXAM_WORD_CLS}`);
-    const block2 = examSpan == null ? void 0 : examSpan.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
-    if (examSpan && block2) {
+    const block = examSpan == null ? void 0 : examSpan.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
+    if (examSpan && block) {
       const range = document.createRange();
-      range.setStart(block2, 0);
+      range.setStart(block, 0);
       range.setEnd(node, start4);
       const before = range.toString().length;
-      const blockText = block2.textContent || "";
+      const blockText = block.textContent || "";
       return { word, sentence: extractSentence(blockText, before, before + (end - start4), null) };
     }
     const sentence = extractSentence(text, start4, end, node);

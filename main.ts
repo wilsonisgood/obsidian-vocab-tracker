@@ -355,8 +355,18 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         folder: () => this.files.paths().threads,
         exists: (p) => this.vault.exists(p),
         create: (p, c) => this.vault.create(p, c),
-        hasNote: (id) => this.vault.findManaged("ai-note", id) !== null,
+        process: (p, fn) => this.vault.process(p, fn),
+        findNote: (id) => this.vault.findManaged("ai-note", id),
         onSaved: (path) => new Notice(t("buddy.archived", { path })),
+        digestReady: () => this.ai.status() === "ready",
+        isSavedWord: (w) => this.isWordSaved(w),
+        // 單字頁 of a word in the list; null when it has none yet.
+        wordLink: (w) => {
+          const entry = this.store.entries.find((e) => !e.deletedAt && e.word.toLowerCase() === w.toLowerCase());
+          if (!entry) return null;
+          const path = this.exporter.wordPagePath(entry.id, entry.word);
+          return this.vault.exists(path) ? path : null;
+        },
       },
       onAsked: (e) => this.learner?.recordAsk(e),
     });

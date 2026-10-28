@@ -68,15 +68,63 @@ export function collectShareItems(src: ShareSources): ShareItem[] {
   return items;
 }
 
-// null when there is nothing to pick. Items picked recently are skipped;
-// when that would leave nothing, the whole pool is used again.
-export function pickShare(items: readonly ShareItem[], recentKeys: readonly string[], random: () => number): ShareItem | null {
+// Share of picks that go to a paragraph when both kinds are available.
+export const PARAGRAPH_BIAS = 0.6;
+
+// null when there is nothing to pick. Items picked recently are skipped
+// (when that would leave nothing, the whole pool is used again). Words and
+// paragraphs take turns: after a word comes a paragraph when there is one;
+// otherwise a paragraph wins PARAGRAPH_BIAS of the time.
+export function pickShare(
+  items: readonly ShareItem[],
+  recentKeys: readonly string[],
+  random: () => number,
+  lastKind?: ShareItem["kind"]
+): ShareItem | null {
   if (!items.length) return null;
   const avoid = new Set(recentKeys.slice(-SHARE_AVOID_RECENT));
   const fresh = items.filter((i) => !avoid.has(i.key));
   const pool = fresh.length ? fresh : items;
-  const i = Math.min(pool.length - 1, Math.floor(random() * pool.length));
-  return pool[i];
+  const paragraphs = pool.filter((i) => i.kind === "paragraph");
+  const words = pool.filter((i) => i.kind === "word");
+  let group = pool;
+  if (paragraphs.length && words.length) {
+    const wantParagraph = lastKind === "word" ? true : random() < PARAGRAPH_BIAS;
+    group = wantParagraph ? paragraphs : words;
+  }
+  const i = Math.min(group.length - 1, Math.floor(random() * group.length));
+  return group[i];
+}
+
+// ── 出題方式：每次換一種，不連續重複 ──
+
+export interface ShareStyle {
+  id: string;
+  // Told to the model as this round's way of asking.
+  text: string;
+  scope: "both" | "word" | "paragraph";
+}
+
+export const SHARE_STYLES: readonly ShareStyle[] = [
+  { id: "guess", scope: "both", text: "請他猜猜看，這個字（或這段）是什麼意思" },
+  { id: "choice", scope: "both", text: "給兩個可能的意思讓他二選一（其中一個是對的，另一個是看起來像的干擾）" },
+  { id: "scenario", scope: "both", text: "先描述一個生活情境，請他猜猜在這個情境裡它是什麼意思" },
+  { id: "sentence", scope: "word", text: "請他用這個字造一個句子" },
+  { id: "assoc", scope: "both", text: "問他看到這個字（或這段）會讓他想到什麼" },
+  { id: "rephrase", scope: "paragraph", text: "請他用自己的話把這一段換句話說" },
+];
+
+export function pickShareStyle(kind: ShareItem["kind"], lastId: string | undefined, random: () => number): ShareStyle {
+  const fit = SHARE_STYLES.filter((s) => s.scope === "both" || s.scope === kind);
+  const pool = fit.filter((s) => s.id !== lastId);
+  const from = pool.length ? pool : fit;
+  return from[Math.min(from.length - 1, Math.floor(random() * from.length))];
+}
+
+// What a stored turn remembers of the pick: the word, or 〈note title〉.
+export function shareSubject(item: ShareItem | null): string | undefined {
+  if (!item) return undefined;
+  return item.kind === "word" ? item.word : `〈${item.title}〉`;
 }
 
 // Remembers a pick; only the newest SHARE_AVOID_RECENT stay.

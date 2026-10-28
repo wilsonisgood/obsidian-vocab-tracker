@@ -1,14 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   answeredPairs,
-  archiveFileName,
-  archiveNoteId,
-  archivePath,
   defaultExpandedKeys,
   groupByDay,
   isGroupCollapsed,
   localDay,
-  renderArchiveNote,
   shouldWarnNinth,
   userQuestionCount,
 } from "../../../src/core/learner/buddyGroups";
@@ -70,44 +66,6 @@ describe("ten-question archive", () => {
     const th = thread(turns);
     expect(userQuestionCount(th)).toBe(4);
     expect(answeredPairs(th)).toHaveLength(2);
-  });
-
-  it("builds the file name and path", () => {
-    const now = new Date(2026, 9, 28, 11, 44);
-    expect(archiveFileName(0, now)).toBe("Buddy-0_8-202610281144.md");
-    expect(archiveFileName(8, now)).toBe("Buddy-8_16-202610281144.md");
-    expect(archivePath("vocab-list/討論串/", 0, now)).toBe("vocab-list/討論串/Buddy-0_8-202610281144.md");
-    expect(archivePath("", 0, now)).toBe("Buddy-0_8-202610281144.md");
-    expect(archiveNoteId("buddy:abc", 8)).toBe("buddy-abc-8");
-  });
-
-  it("renders frontmatter, title, date and 你／夥伴 per pair with the full answer", () => {
-    const th = thread([
-      user("u1", "聊聊最近讀的", { question: "我覺得 apron 是圍裙" }),
-      ai("a1", "對！\n\n- 圍裙\n- 也可指機場停機坪\n〔接著聊〕圍裙的由來｜廚房英文｜機場單字"),
-      user("u2", "我最近走到哪了"),
-      ai("a2", "還不錯"),
-    ]);
-    const md = renderArchiveNote({ threadId: "buddy:abc", start: 0, pairs: answeredPairs(th), now: NOW });
-    expect(md).toBe(
-      [
-        "---",
-        "vocab-tracker: ai-note",
-        'vocab-tracker-id: "buddy-abc-0"',
-        "---",
-        "# 學習夥伴對話（第 1–2 則）",
-        "<small>2026-10-28</small>",
-        "",
-        "**你**：我覺得 apron 是圍裙",
-        "",
-        "**夥伴**：\n\n對！\n\n- 圍裙\n- 也可指機場停機坪",
-        "",
-        "**你**：我最近走到哪了",
-        "",
-        "**夥伴**：還不錯",
-        "",
-      ].join("\n")
-    );
   });
 
   it("warns on the 9th question once a day", () => {

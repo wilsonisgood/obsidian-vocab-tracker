@@ -1,4 +1,3 @@
-import { stripSuggestions } from "./buddySuggestions";
 import { liveTurns, pairTurns, type Thread, type Turn } from "../model/thread";
 
 // 學習夥伴頁面的純邏輯：對話清單依日期分組、十則存檔、第 9 則提示。
@@ -82,53 +81,6 @@ export function answeredPairs(thread: Thread | undefined): ArchivePair[] {
     if (p.assistant && p.assistant.status === "done" && p.assistant.content.trim()) out.push({ user: p.user, assistant: p.assistant });
   }
   return out;
-}
-
-const stamp = (d: Date) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}`;
-
-// 「Buddy-0_8-202610281144.md」: start = groups already tidied (running count).
-export function archiveFileName(start: number, now: Date, size = ARCHIVE_TAKE): string {
-  return `Buddy-${start}_${start + size}-${stamp(now)}.md`;
-}
-
-export function archivePath(folder: string, start: number, now: Date, size = ARCHIVE_TAKE): string {
-  const dir = folder.replace(/\/+$/, "");
-  return `${dir ? `${dir}/` : ""}${archiveFileName(start, now, size)}`;
-}
-
-export function archiveNoteId(threadId: string, start: number): string {
-  return `buddy-${threadId.replace(/^buddy:/, "")}-${start}`;
-}
-
-function block(label: string, text: string): string {
-  const body = text.trim();
-  return body.includes("\n") ? `**${label}**：\n\n${body}` : `**${label}**：${body}`;
-}
-
-// The saved note: frontmatter, title, date, then 你／夥伴 for each pair.
-// The 〔接著聊〕 line is left out.
-export function renderArchiveNote(input: {
-  threadId: string;
-  start: number;
-  pairs: readonly ArchivePair[];
-  now: Date;
-}): string {
-  const { threadId, start, pairs, now } = input;
-  const day = localDay(now);
-  const lines = [
-    "---",
-    "vocab-tracker: ai-note",
-    `vocab-tracker-id: ${JSON.stringify(archiveNoteId(threadId, start))}`,
-    "---",
-    `# 學習夥伴對話（第 ${start + 1}–${start + pairs.length} 則）`,
-    `<small>${day}</small>`,
-    "",
-  ];
-  for (const p of pairs) {
-    const q = p.user.question?.trim() || p.user.content;
-    lines.push(block("你", q), "", block("夥伴", stripSuggestions(p.assistant.content)), "");
-  }
-  return `${lines.join("\n").trimEnd()}\n`;
 }
 
 // `questionNumber`: which question the one just sent is.

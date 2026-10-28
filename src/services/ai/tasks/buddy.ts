@@ -16,6 +16,8 @@ export interface BuddyInput {
   selection?: string;
   // 聊聊最近讀的: shareBrief() of what was picked; "" when nothing was.
   share?: string;
+  // 聊聊最近讀的: this round's way of asking (SHARE_STYLES).
+  shareStyle?: string;
 }
 
 export const BUDDY_BASE_PROMPT = `你是學生的英文學習夥伴，陪他聊英文怎麼學、看他寫的英文、一起想接下來可以怎麼走。
@@ -74,7 +76,9 @@ ${EXTRA}`,
 {{#share}}〔他最近讀到的〕
 {{share}}
 
-你像一個好奇的朋友，把上面這個丟給他：用一兩句話說說你看到它時覺得有趣的地方，然後請他分享他理解的意思，或用自己的話換句話說。先不要給解釋或答案，等他回答；一次只問一個問題。
+你像一個好奇的朋友，把上面這個丟給他。{{#shareStyle}}這次的問法：{{shareStyle}}。{{/shareStyle}}
+先不要給解釋或答案，等他回答；一次只問一個問題，開場用一兩句話就好。
+不要用固定的開場句（例如每次都「我覺得 X 很有趣，因為…」），每次用不同的口氣和切入點。
 {{/share}}{{^share}}（目前找不到他最近讀過的東西。）請像好奇的朋友一樣，親切地邀請他聊聊最近讀了什麼、有沒有遇到想聊的字或句子。
 {{/share}}`,
 
@@ -100,6 +104,7 @@ function buddyTask(id: BuddyKind, label?: AiTask<BuddyInput>["label"]): AiTask<B
         selection: input.selection?.trim(),
         question: input.question?.trim(),
         share: input.share?.trim(),
+        shareStyle: input.shareStyle?.trim(),
         // 一起看看我寫的: the pasted English is the question text, or the selection.
         writing: id === "review" ? [input.question?.trim(), input.selection?.trim()].filter(Boolean).join("\n\n") : undefined,
       };
@@ -136,3 +141,41 @@ export const buddyPlan = buddyTask("plan", "ai.task.buddy.plan");
 export const buddyCustom = buddyTask("custom");
 
 export const BUDDY_TASKS = [buddyShare, buddyGrammar, buddyWriting, buddyReview, buddyLevel, buddyReading, buddyPlan, buddyCustom];
+
+// ── 對話整理的「這次的收穫」 (buddy.digest) ──
+
+export interface BuddyDigestInput {
+  // digestConversation(): 你／夥伴 lines of the groups being tidied.
+  conversation: string;
+}
+
+export const BUDDY_DIGEST_PROMPT = `你在幫學生整理一段英文學習對話的收穫。對話裡「（…）」括號的內容是介面按鈕的說明，不是學生說的話。
+只輸出 JSON（不要程式碼區塊、不要其他文字），格式：
+{"topics":["…"],"corrections":[{"yours":"…","better":"…","why":"…"}],"understandings":[{"subject":"…","yours":"…","ok":true,"feedback":"…"}],"words":["…"]}
+規則：
+1. topics：2 到 3 個這段對話聊到的主題（英文單字、專有名詞或簡短中文），給標題用。
+2. corrections：學生自己寫的英文有哪些句子可以更自然；yours 引用原句，better 是更自然的寫法，why 用幾個關鍵詞說明原因（如「過去式、介系詞」）。學生沒寫英文就給空陣列，不要編造。
+3. understandings：夥伴請學生說出理解的字或段落；subject 是那個字，yours 是學生的理解，ok 表示大致正確，feedback 一句補充。沒有就給空陣列。
+4. words：對話中聊到的英文單字（原形、小寫），最多 12 個。
+5. 只根據對話內容，沒有的就給空陣列，不要編造。`;
+
+export const buddyDigest: AiTask<BuddyDigestInput, string> = {
+  id: "buddy.digest",
+  version: 1,
+  surface: "buddy",
+  tier: "fast",
+  maxTokens: 1500,
+  build(input, ctx) {
+    return composeRequest({
+      base: BUDDY_DIGEST_PROMPT,
+      profile: ctx.profile,
+      history: [],
+      user: `〔對話〕\n${input.conversation}`,
+      tier: "fast",
+      maxTokens: 1500,
+    });
+  },
+  parse(r: AiResult): string {
+    return r.text;
+  },
+};

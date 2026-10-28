@@ -1,4 +1,4 @@
-import { BUDDY_TASKS } from "./buddy";
+import { BUDDY_TASKS, buddyDigest } from "./buddy";
 import { diaryWrite } from "./diary";
 import { DNA_TASKS } from "./dna";
 import { EMOJI_TASKS } from "./emoji";
@@ -59,6 +59,7 @@ export function defaultTaskRegistry(): TaskRegistry {
     ...VERB_TASKS,
     ...TRIVIA_TASKS,
     ...BUDDY_TASKS,
+    buddyDigest,
     ...DNA_TASKS,
     ...GRAMMAR_EXPLAIN_TASKS,
     ...GRAMMAR_QUESTION_TASKS,

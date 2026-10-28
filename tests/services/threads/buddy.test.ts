@@ -86,6 +86,8 @@ describe("buddy.share", () => {
     const { threads, ai } = setup(undefined, undefined, { shareMaterial: async () => [word("a"), word("b")], random: () => 0 });
     const id = (await threads.askBuddy(null, { taskId: "buddy.share" })) as string;
     expect(render(ai.requests[0])).toContain("單字：a（意思）");
+    expect(render(ai.requests[0])).toContain("這次的問法：");
+    expect(threads.get(id)?.turns[0].shareSubject).toBe("a");
     await threads.askBuddy(id, { taskId: "buddy.share" });
     expect(render(ai.requests[1])).toContain("單字：b（意思）");
   });
@@ -122,70 +124,99 @@ describe("buddy suggestions", () => {
   });
 });
 
-describe("buddy archive (oldest 8 of 10 live groups)", () => {
-  function withArchive(over: { exists?: (p: string) => boolean; hasNote?: (id: string) => boolean; fail?: boolean } = {}) {
+describe("buddy archive (oldest 8 of 10 live groups, one note a day)", () => {
+  function withArchive(over: { fail?: boolean; digest?: boolean; saved?: Set<string> } = {}) {
     const files = new Map<string, string>();
     const saved: string[] = [];
-    const s = setup(undefined, undefined, {
-      buddyArchive: {
-        folder: () => "vocab-list/討論串",
-        exists: over.exists ?? ((p) => files.has(p)),
-        create: async (p, c) => {
-          if (over.fail) throw new Error("disk full");
-          files.set(p, c);
+    let n = 0;
+    const s = setup(
+      async (req) => (JSON.stringify(req).includes("整理一段英文學習對話") ? result('{"topics":["T1"],"words":["apple"]}') : result("ok **banana**")),
+      undefined,
+      {
+        newId: () => `id${++n}`,
+        buddyArchive: {
+          folder: () => "vocab-list/討論串",
+          exists: (p) => files.has(p),
+          create: async (p, c) => {
+            if (over.fail) throw new Error("disk full");
+            files.set(p, c);
+          },
+          process: async (p, fn) => void files.set(p, fn(files.get(p) as string)),
+          onSaved: (p) => saved.push(p),
+          digestReady: () => !!over.digest,
+          isSavedWord: (w) => (over.saved ?? new Set(["banana"])).has(w),
         },
-        hasNote: over.hasNote,
-        onSaved: (p) => saved.push(p),
-      },
-    });
+      }
+    );
     return { ...s, files, saved };
   }
   const ask = (threads: ThreadService, id: string | null, n: number) => threads.askBuddy(id, { taskId: "buddy.custom", question: `q${n}` });
   const live = (threads: ThreadService, id: string) => threads.get(id)?.turns.filter((t) => !t.deletedAt && t.role === "user").map((t) => t.question);
-  const flush = () => new Promise((r) => setTimeout(r, 0));
-
-  it("waits for 10, saves and deletes the oldest 8, keeps the newest 2, then counts on", async () => {
-    const { threads, files, saved } = withArchive();
-    const id = (await ask(threads, null, 0)) as string;
-    for (let n = 1; n < 9; n++) await ask(threads, id, n);
+  const flush = () => new Promise((r) => setTimeout(r, 5));
+  async function fill(threads: ThreadService, id: string | null, from: number, to: number) {
+    let tid = id;
+    for (let n = from; n < to; n++) tid = (await ask(threads, tid, n)) as string;
     await flush();
+    return tid as string;
+  }
+
+  it("waits for 10, writes one day note, deletes the oldest 8 (tombstones), keeps 2", async () => {
+    const { threads, files, saved } = withArchive();
+    const id = await fill(threads, null, 0, 9);
     expect(files.size).toBe(0);
     await ask(threads, id, 9);
     await flush();
     expect(saved).toHaveLength(1);
-    expect(saved[0]).toMatch(/^vocab-list\/討論串\/Buddy-0_8-\d{12}\.md$/);
-    const note = [...files.values()][0];
-    expect(note).toContain("**你**：q0");
-    expect(note).toContain("**你**：q7");
-    expect(note).not.toContain("**你**：q8");
+    const [path, md] = [...files.entries()][0];
+    expect(path).toMatch(/^vocab-list\/討論串\/Buddy-\d{4}-\d{2}-\d{2}\.md$/);
+    expect(md).toContain("**你**（");
+    expect(md).toContain("：q7");
+    expect(md).not.toContain("：q8");
+    expect(md).toContain('words: ["banana"]');
     expect(live(threads, id)).toEqual(["q8", "q9"]);
     expect(threads.get(id)?.archivedCount).toBe(8);
-    // tombstoned, not removed
     expect(threads.get(id)?.turns).toHaveLength(20);
-    for (let n = 10; n < 18; n++) await ask(threads, id, n);
-    await flush();
+  });
+
+  it("a second tidy-up the same day goes into the same note", async () => {
+    const { threads, files, saved } = withArchive();
+    const id = await fill(threads, null, 0, 10);
+    await fill(threads, id, 10, 18);
+    expect(files.size).toBe(1);
     expect(saved).toHaveLength(2);
-    expect(saved[1]).toMatch(/Buddy-8_16-/);
-    expect(live(threads, id)).toEqual(["q16", "q17"]);
+    const md = [...files.values()][0];
+    expect(md.indexOf("第 1–8 則")).toBeGreaterThan(0);
+    expect(md.indexOf("第 1–8 則")).toBeLessThan(md.indexOf("第 9–16 則"));
     expect(threads.get(id)?.archivedCount).toBe(16);
+  });
+
+  it("uses the AI digest when ready", async () => {
+    const { threads, files } = withArchive({ digest: true });
+    await fill(threads, null, 0, 10);
+    const md = [...files.values()][0];
+    expect(md).toContain("：T1");
+    expect(md).toContain('words: ["apple"]');
   });
 
   it("deletes nothing when the note can't be written", async () => {
     const { threads, files } = withArchive({ fail: true });
-    const id = (await ask(threads, null, 0)) as string;
-    for (let n = 1; n < 10; n++) await ask(threads, id, n);
-    await flush();
+    const id = await fill(threads, null, 0, 10);
     expect(files.size).toBe(0);
     expect(live(threads, id)).toHaveLength(10);
     expect(threads.get(id)?.archivedCount).toBeUndefined();
   });
 
-  it("doesn't rewrite a note that already exists, but still tidies the chat", async () => {
-    const { threads, files } = withArchive({ hasNote: () => true });
-    const id = (await ask(threads, null, 0)) as string;
-    for (let n = 1; n < 10; n++) await ask(threads, id, n);
-    await flush();
-    expect(files.size).toBe(0);
+  it("a batch already in the note isn't written twice, yet the chat is tidied", async () => {
+    const { threads, files, saved } = withArchive();
+    const id = await fill(threads, null, 0, 10);
+    const t = threads.get(id);
+    // pretend another device tidied the same batch: counter lost, note kept
+    if (t) delete t.archivedCount;
+    for (const turn of t?.turns ?? []) delete turn.deletedAt;
+    const before = [...files.values()][0];
+    await threads.archiveBuddy(id);
+    expect([...files.values()][0]).toBe(before);
+    expect(saved).toHaveLength(1);
     expect(live(threads, id)).toEqual(["q8", "q9"]);
   });
 });

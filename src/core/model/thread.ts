@@ -52,6 +52,8 @@ export interface Turn {
   question?: string;
   sent?: string;
   subjectEntryId?: string;
+  // 聊聊最近讀的: what the buddy picked — the word, or 〈note title〉 for a paragraph.
+  shareSubject?: string;
   status: TurnStatus;
   error?: TurnErrorCode;
   errorMessage?: string;
