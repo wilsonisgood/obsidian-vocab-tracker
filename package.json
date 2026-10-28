@@ -1,6 +1,6 @@
 {
   "name": "obsidian-vocab-tracker",
-  "version": "2.2.7",
+  "version": "2.2.8",
   "type": "module",
   "scripts": {
     "version": "node version-bump.mjs && git add package.json manifest.json versions.json",
