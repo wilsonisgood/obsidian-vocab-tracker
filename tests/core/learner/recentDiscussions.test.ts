@@ -24,7 +24,7 @@ describe("recentDiscussions", () => {
     ];
     const lines = recentDiscussions(threads, wordOf, NOW);
     expect(lines).toEqual([
-      "- 10/25 文法解析｜「How to learn」的段落｜選了「Having been told twice, she left.」",
+      "- 10/25 文法解析｜「How to learn」的段落｜選了「Having been told twice, she left.」\n  段落原文：…",
       "- 10/20 比較｜analyze｜問：跟 analyse 差在哪？",
     ]);
     expect(lines.join("\n")).not.toContain("很長的回答");
@@ -49,6 +49,25 @@ describe("recentDiscussions", () => {
     const lines = recentDiscussions([thread("word:e1", { kind: "word", entryId: "e1" }, turns)], wordOf, NOW, { max: 5 });
     expect(lines).toHaveLength(5);
     expect(lines[0]).toContain(`${"x".repeat(120)}…`);
+  });
+});
+
+describe("recentDiscussions paragraph text", () => {
+  it("sends the paragraph itself once per thread, so a bare 文法解析 still says which paragraph", () => {
+    const snapshot = "* [[00:01:29](https://youtu.be/x?t=89s)] Today I will explain why **school** matters. ^vt-abc123";
+    const threads = [
+      thread("paragraph:p", { kind: "paragraph", path: "eng/Cadence_Gao_School_Speech_Transcript 2.md", hash: "h", snapshot }, [
+        user("u1", "2026-10-27T09:00:00", { taskId: "paragraph.grammar" }),
+        answer("a1", "2026-10-27T09:00:05"),
+        user("u2", "2026-10-27T10:00:00", { taskId: "paragraph.translate" }),
+        answer("a2", "2026-10-27T10:00:05"),
+      ]),
+    ];
+    const lines = recentDiscussions(threads, wordOf, NOW);
+    expect(lines).toEqual([
+      "- 10/27 翻譯｜「Cadence_Gao_School_Speech_Transcript 2」的段落\n  段落原文：Today I will explain why school matters.",
+      "- 10/27 文法解析｜「Cadence_Gao_School_Speech_Transcript 2」的段落",
+    ]);
   });
 });
 

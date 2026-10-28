@@ -4,17 +4,32 @@ import { taskName } from "./reportMarkdown";
 
 // The learner's latest AI discussions (words, paragraphs, trivia, DNA) for
 // the learning buddy's background: what was asked and highlighted, never
-// the answers. Buddy chats themselves and deleted rounds are left out.
+// the answers. Buddy chats themselves and deleted rounds are left out. A
+// paragraph's own text goes along once (on its newest question), since a
+// quick action like 文法解析 often has no selection or typed question.
 
 export const RECENT_DISCUSSION_DAYS = 14;
 export const RECENT_DISCUSSION_MAX = 20;
 const TEXT_MAX = 120;
+export const PARAGRAPH_TEXT_MAX = 400;
 const DAY_MS = 86_400_000;
 
 const flat = (s: string) => s.replace(/\s+/g, " ").trim();
-function clip(s: string): string {
+function clip(s: string, max = TEXT_MAX): string {
   const chars = [...flat(s)];
-  return chars.length > TEXT_MAX ? `${chars.slice(0, TEXT_MAX).join("")}…` : chars.join("");
+  return chars.length > max ? `${chars.slice(0, max).join("")}…` : chars.join("");
+}
+
+// Markdown noise a transcript paragraph carries: links keep their text;
+// list bullets, video timestamps ("[00:01:29]") and block ids go.
+function plainParagraph(md: string): string {
+  return md
+    .replace(/!?\[\[([^\]|]*\|)?([^\]]*)\]\]/g, "$2")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\s\^[\w-]+\s*$/gm, "")
+    .replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, "")
+    .replace(/^\s*\[?\d{1,2}:\d{2}(?::\d{2})?\]?\s*/gm, "")
+    .replace(/[*_`]/g, "");
 }
 function mmdd(iso: string): string {
   const d = new Date(iso);
@@ -37,7 +52,7 @@ export function recentDiscussions(
   opts: { days?: number; max?: number } = {}
 ): string[] {
   const since = now.getTime() - (opts.days ?? RECENT_DISCUSSION_DAYS) * DAY_MS;
-  const rows: { at: number; line: string }[] = [];
+  const rows: { at: number; line: string; thread: string; paragraph?: string }[] = [];
   for (const th of threads) {
     if (th.deletedAt || th.anchor.kind === "buddy") continue;
     for (const turn of liveTurns(th)) {
@@ -48,9 +63,15 @@ export function recentDiscussions(
       const parts = [`${mmdd(turn.at)} ${turn.taskId ? taskName(turn.taskId) : "提問"}${subject ? `｜${subject}` : ""}`];
       if (turn.selection?.trim()) parts.push(`選了「${clip(turn.selection)}」`);
       if (turn.question?.trim()) parts.push(`問：${clip(turn.question)}`);
-      rows.push({ at, line: `- ${parts.join("｜")}` });
+      const paragraph = th.anchor.kind === "paragraph" ? clip(plainParagraph(th.anchor.snapshot), PARAGRAPH_TEXT_MAX) : undefined;
+      rows.push({ at, line: `- ${parts.join("｜")}`, thread: th.id, ...(paragraph ? { paragraph } : {}) });
     }
   }
   rows.sort((a, b) => b.at - a.at);
-  return rows.slice(0, opts.max ?? RECENT_DISCUSSION_MAX).map((r) => r.line);
+  const shown = new Set<string>();
+  return rows.slice(0, opts.max ?? RECENT_DISCUSSION_MAX).map((r) => {
+    if (!r.paragraph || shown.has(r.thread)) return r.line;
+    shown.add(r.thread);
+    return `${r.line}\n  段落原文：${r.paragraph}`;
+  });
 }

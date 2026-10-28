@@ -38227,7 +38227,7 @@ function buddyContext(snapshot2, latestReport, recent = []) {
   const lines4 = snapshotLines(snapshot2);
   if (lines4.length) blocks.push(`\u3010\u5B78\u7FD2\u7D00\u9304\u6458\u8981\u3011
 ${lines4.join("\n")}`);
-  if (recent.length) blocks.push(`\u3010\u6700\u8FD1\u8DDF AI \u8A0E\u8AD6\u904E\u7684\u5167\u5BB9\uFF08\u65B0\u5230\u820A\uFF0C\u53EA\u6709\u554F\u984C\u8207\u9078\u53D6\u6587\u5B57\uFF09\u3011
+  if (recent.length) blocks.push(`\u3010\u6700\u8FD1\u8DDF AI \u8A0E\u8AD6\u904E\u7684\u5167\u5BB9\uFF08\u65B0\u5230\u820A\uFF1B\u554F\u984C\u3001\u9078\u53D6\u6587\u5B57\u8207\u6BB5\u843D\u539F\u6587\uFF0C\u4E0D\u542B AI \u7684\u56DE\u7B54\uFF09\u3011
 ${recent.join("\n")}`);
   if (latestReport == null ? void 0 : latestReport.trim()) {
     for (const name of BUDDY_REPORT_SECTIONS) {
@@ -38243,11 +38243,15 @@ ${clip2(body, BUDDY_REPORT_SECTION_MAX)}`);
 var RECENT_DISCUSSION_DAYS = 14;
 var RECENT_DISCUSSION_MAX = 20;
 var TEXT_MAX = 120;
+var PARAGRAPH_TEXT_MAX = 400;
 var DAY_MS5 = 864e5;
 var flat2 = (s) => s.replace(/\s+/g, " ").trim();
-function clip3(s) {
+function clip3(s, max = TEXT_MAX) {
   const chars = [...flat2(s)];
-  return chars.length > TEXT_MAX ? `${chars.slice(0, TEXT_MAX).join("")}\u2026` : chars.join("");
+  return chars.length > max ? `${chars.slice(0, max).join("")}\u2026` : chars.join("");
+}
+function plainParagraph2(md) {
+  return md.replace(/!?\[\[([^\]|]*\|)?([^\]]*)\]\]/g, "$2").replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\s\^[\w-]+\s*$/gm, "").replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, "").replace(/^\s*\[?\d{1,2}:\d{2}(?::\d{2})?\]?\s*/gm, "").replace(/[*_`]/g, "");
 }
 function mmdd2(iso) {
   const d = new Date(iso);
@@ -38275,11 +38279,18 @@ function recentDiscussions(threads, wordOf, now2, opts = {}) {
       const parts = [`${mmdd2(turn.at)} ${turn.taskId ? taskName(turn.taskId) : "\u63D0\u554F"}${subject ? `\uFF5C${subject}` : ""}`];
       if ((_b = turn.selection) == null ? void 0 : _b.trim()) parts.push(`\u9078\u4E86\u300C${clip3(turn.selection)}\u300D`);
       if ((_c = turn.question) == null ? void 0 : _c.trim()) parts.push(`\u554F\uFF1A${clip3(turn.question)}`);
-      rows.push({ at, line: `- ${parts.join("\uFF5C")}` });
+      const paragraph = th.anchor.kind === "paragraph" ? clip3(plainParagraph2(th.anchor.snapshot), PARAGRAPH_TEXT_MAX) : void 0;
+      rows.push({ at, line: `- ${parts.join("\uFF5C")}`, thread: th.id, ...paragraph ? { paragraph } : {} });
     }
   }
   rows.sort((a2, b) => b.at - a2.at);
-  return rows.slice(0, (_d = opts.max) != null ? _d : RECENT_DISCUSSION_MAX).map((r) => r.line);
+  const shown = /* @__PURE__ */ new Set();
+  return rows.slice(0, (_d = opts.max) != null ? _d : RECENT_DISCUSSION_MAX).map((r) => {
+    if (!r.paragraph || shown.has(r.thread)) return r.line;
+    shown.add(r.thread);
+    return `${r.line}
+  \u6BB5\u843D\u539F\u6587\uFF1A${r.paragraph}`;
+  });
 }
 
 // src/services/learn/EmojiService.ts
