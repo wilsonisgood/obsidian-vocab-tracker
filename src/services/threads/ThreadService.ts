@@ -1,6 +1,6 @@
 import { t } from "../../core/i18n";
 import type { VocabEntry } from "../../core/model/entry";
-import { findTurnPair, liveTurns, wordThreadId, type Anchor, type Thread, type Turn } from "../../core/model/thread";
+import { findTurnPair, liveTurns, wordThreadId, type Anchor, type ShareSource, type Thread, type Turn } from "../../core/model/thread";
 import type { NoteReaderPort, StoragePort } from "../../core/ports";
 import { mergeThreads, settleStaleTurns, threadsFingerprint } from "../../core/store/threads";
 import { TypedEmitter } from "../../core/events";
@@ -22,7 +22,7 @@ import {
 import { digestIsEmpty, parseDigest, type Digest } from "../../core/learner/buddyDigest";
 import { answeredPairs, ARCHIVE_TAKE, ARCHIVE_TRIGGER, localDay } from "../../core/learner/buddyGroups";
 import { parseSuggestions } from "../../core/learner/buddySuggestions";
-import { pickShare, pickShareStyle, rememberShare, shareBrief, shareSource, shareSubject, type ShareItem } from "../../core/learner/sharePick";
+import { pickShare, pickShareStyle, rememberShare, shareBrief, shareSource, shareSourceOf, shareSubject, type ShareItem } from "../../core/learner/sharePick";
 import { addPin, pinText, removePin } from "./pin";
 import { findWordSource, wordInput } from "./wordInput";
 
@@ -102,6 +102,7 @@ export interface AskParams {
   // 冷知識: the word this round is about (規劃書 06 §7.4), kept on both turns.
   subjectEntryId?: string;
   shareSubject?: string;
+  shareSource?: ShareSource;
 }
 
 export interface WordAsk {
@@ -266,6 +267,7 @@ export class ThreadService {
     if (p.selection) user.selection = p.selection;
     if (p.subjectEntryId) user.subjectEntryId = p.subjectEntryId;
     if (p.shareSubject) user.shareSubject = p.shareSubject;
+    if (p.shareSource) user.shareSource = p.shareSource;
     const answer: Turn = {
       id: this.newId(),
       role: "assistant",
@@ -426,12 +428,13 @@ export class ThreadService {
       question: req.question,
       selection: req.selection,
       ...(share?.subject ? { shareSubject: share.subject } : {}),
+      ...(share?.card ? { shareSource: share.card } : {}),
     });
     void this.archiveBuddy(id).catch((e) => console.error("Vocab Tracker: buddy archive failed", e));
     return id;
   }
 
-  private async pickShareBrief(): Promise<{ brief: string; style?: string; subject?: string; source?: { sourceTitle: string; sourceParagraph: string } }> {
+  private async pickShareBrief(): Promise<{ brief: string; style?: string; subject?: string; source?: { sourceTitle: string; sourceParagraph: string }; card?: ShareSource }> {
     let items: ShareItem[] = [];
     try {
       items = (await this.deps.shareMaterial?.()) ?? [];
@@ -445,7 +448,7 @@ export class ThreadService {
     this.lastShareKind = item.kind;
     const style = pickShareStyle(item.kind, this.lastShareStyle, random);
     this.lastShareStyle = style.id;
-    return { brief: shareBrief(item), style: style.text, subject: shareSubject(item), source: shareSource(item) };
+    return { brief: shareBrief(item), style: style.text, subject: shareSubject(item), source: shareSource(item), card: shareSourceOf(item) };
   }
 
   // 對話整理: once ten answered groups are alive, the oldest eight are

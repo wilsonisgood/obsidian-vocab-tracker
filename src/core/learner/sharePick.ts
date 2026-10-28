@@ -1,6 +1,6 @@
 import type { VocabEntry } from "../model/entry";
 import type { WordTouch } from "../model/learner";
-import { liveTurns, type Thread } from "../model/thread";
+import { liveTurns, type ShareSource, type Thread } from "../model/thread";
 import { noteTitle } from "../practice/paraphrase";
 import { clip, PARAGRAPH_TEXT_MAX, plainParagraph } from "./recentDiscussions";
 
@@ -165,4 +165,66 @@ export function shareBrief(item: ShareItem | null): string {
   if (!item) return "";
   if (item.kind === "word") return `單字：${item.word}${item.meaning ? `（${item.meaning}）` : ""}`;
   return `段落（出自「${item.title}」）：\n${item.text}`;
+}
+
+// What the turn remembers of the pick, for the quote card.
+export function shareSourceOf(item: ShareItem | null): ShareSource | undefined {
+  if (!item) return undefined;
+  if (item.kind === "paragraph") return { kind: "paragraph", title: item.title, text: item.text };
+  return {
+    kind: "word",
+    word: item.word,
+    ...(item.meaning ? { meaning: item.meaning } : {}),
+    ...(item.sourceTitle ? { title: item.sourceTitle } : {}),
+    ...(item.sourceParagraph ? { text: item.sourceParagraph } : {}),
+  };
+}
+
+// ── quote card ──
+
+export interface Segment {
+  text: string;
+  hit: boolean;
+}
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// `text` split so the word (any case, common endings: -s -ed -ing, a dropped
+// final e or y) is marked. Irregular forms simply aren't found.
+export function highlightWord(text: string, word: string): Segment[] {
+  const w = word.trim();
+  if (!w) return [{ text, hit: false }];
+  const stem = w.length > 4 ? w.replace(/(?:e|y)$/i, "") : w;
+  const re = new RegExp(`(?<![A-Za-z])${escapeRe(stem)}[A-Za-z]{0,4}(?![A-Za-z])`, "gi");
+  const out: Segment[] = [];
+  let last = 0;
+  for (const m of text.matchAll(re)) {
+    const at = m.index ?? 0;
+    if (at > last) out.push({ text: text.slice(last, at), hit: false });
+    out.push({ text: m[0], hit: true });
+    last = at + m[0].length;
+  }
+  if (last < text.length) out.push({ text: text.slice(last), hit: false });
+  return out.length ? out : [{ text, hit: false }];
+}
+
+export interface QuoteCard {
+  // 「出自〈title〉」; null when there is no source.
+  heading: string | null;
+  // The paragraph with the picked word marked; [] for a word with no source.
+  body: Segment[];
+  // A word with no source paragraph: the word and its meaning.
+  wordLine?: { word: string; meaning?: string };
+}
+
+export function quoteCard(src: ShareSource | undefined): QuoteCard | null {
+  if (!src) return null;
+  const title = src.title?.trim();
+  const heading = title ? `出自〈${title}〉` : null;
+  const text = src.text?.trim();
+  if (src.kind === "paragraph") return text ? { heading, body: [{ text, hit: false }] } : null;
+  const word = src.word?.trim();
+  if (!word) return null;
+  if (!text) return { heading: null, body: [], wordLine: { word, ...(src.meaning ? { meaning: src.meaning } : {}) } };
+  return { heading, body: highlightWord(text, word) };
 }

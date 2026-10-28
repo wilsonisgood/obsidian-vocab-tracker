@@ -173,3 +173,22 @@ describe("note", () => {
     expect(archivePath("f", "2026-10-29")).not.toBe(archivePath("f", "2026-10-28"));
   });
 });
+
+describe("quote in the full conversation", () => {
+  const share = (src: Turn["shareSource"], o: Partial<Turn> = {}) =>
+    pair(user("1", 9, 5, { taskId: "buddy.share", shareSubject: "apron", shareSource: src, ...o }), "你覺得呢？");
+  it("puts the picked paragraph (word in bold) under the pick, one more quote level inside the callout", () => {
+    const e = buildEntries([share({ kind: "word", word: "apron", title: "Cooking", text: "She wore an apron." })], undefined, labelOf);
+    const c = conversationCallout(e);
+    expect(c).toContain("> > 出自〈Cooking〉");
+    expect(c).toContain("> > She wore an **apron**.");
+    expect(c.indexOf("> > 出自")).toBeGreaterThan(c.indexOf("（夥伴挑了 **apron**）"));
+    expect(c.indexOf("> > 出自")).toBeLessThan(c.indexOf("**夥伴**"));
+  });
+  it("a bare word shows word and meaning; a skipped pick shows no quote", () => {
+    const bare = conversationCallout(buildEntries([share({ kind: "word", word: "apron", meaning: "圍裙" })], undefined, labelOf));
+    expect(bare).toContain("> > **apron**（圍裙）");
+    const skipped = conversationCallout(buildEntries([share({ kind: "word", word: "apron", meaning: "圍裙" })], user("n", 9, 6, { taskId: "buddy.plan" }), labelOf));
+    expect(skipped).not.toContain("圍裙");
+  });
+});

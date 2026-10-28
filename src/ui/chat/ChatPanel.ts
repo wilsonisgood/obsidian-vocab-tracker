@@ -57,6 +57,8 @@ export interface ChatPanelOptions {
   retry(turnId: string): Promise<void>;
   turnActions?(turn: Turn): KitAction[];
   // A line above an answer, e.g. 「冷知識 · apron」 (trivia, design L7).
+  // Something drawn between a question and its answer (the buddy's quote card).
+  turnPreface?(turn: Turn): HTMLElement | null;
   turnHeader?(turn: Turn): { text: string; icon?: string } | undefined;
   // Extra meta-line text that needs I/O, e.g. 「出自 ¶12」.
   origin?: Promise<string | undefined>;
@@ -224,6 +226,8 @@ export class ChatPanel extends Component {
       const pair = this.turnsEl.createDiv({ cls: "vt-chat-pair" });
       if (!pairBusy) pair.appendChild(this.deletePairButton(turn));
       pair.appendChild(this.userBubble(turn));
+      const preface = this.opts.turnPreface?.(turn);
+      if (preface) pair.appendChild(preface);
       if (answer) {
         pair.appendChild(this.answerBubble(answer));
         i++;

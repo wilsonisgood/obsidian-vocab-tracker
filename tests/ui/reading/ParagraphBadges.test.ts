@@ -21,6 +21,7 @@ import { TypedEmitter } from "../../../src/core/events";
 import type { ParagraphIndexEvents } from "../../../src/services/anchors/ParagraphIndex";
 import type { SectionRef } from "../../../src/services/anchors/ParagraphAnchorService";
 import { NOT_READY_MAX_TRIES, NOT_READY_RETRY_MS, ParagraphBadges, SectionLines, badgeState, isAnchorableTag, sectionReady } from "../../../src/ui/reading/ParagraphBadges";
+import { skipsBadges } from "../../../src/ui/reading/ParagraphBadges";
 
 // Minimal stand-in for Obsidian's HTMLElement helpers.
 class FakeEl {
@@ -340,5 +341,18 @@ describe("sectionReady", () => {
     expect(sectionReady({ text: "", lineEnd: 0 })).toBe(false);
     expect(sectionReady({ text: "a\nb", lineEnd: 1 })).toBe(true);
     expect(sectionReady({ text: "a\nb", lineEnd: 2 })).toBe(false);
+  });
+});
+
+
+describe("skipsBadges", () => {
+  it("skips every kind of the plugin's own page, not the user's notes", () => {
+    for (const kind of ["word", "entry", "ai-note", "grammar", "diary", "report"]) {
+      expect(skipsBadges({ "vocab-tracker": kind, "vocab-tracker-id": "x-1" })).toBe(true);
+    }
+    expect(skipsBadges({ "vocab-tracker": "ai-note", "vocab-tracker-id": "buddy-day-2026-10-28" })).toBe(true);
+    expect(skipsBadges({ tags: ["a"] })).toBe(false);
+    expect(skipsBadges({ "vocab-tracker": "ai-note" })).toBe(false);
+    expect(skipsBadges(undefined)).toBe(false);
   });
 });
