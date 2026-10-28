@@ -2,7 +2,7 @@ import { MarkdownRenderChild, setIcon, type MarkdownPostProcessorContext } from 
 import type VocabTrackerPlugin from "../../../main";
 import { t } from "../../core/i18n";
 import { liveTurns, type Thread } from "../../core/model/thread";
-import { defaultExpandedKeys, groupByDay, isGroupCollapsed, localDay, shouldWarnNinth, userQuestionCount, type DayGroup } from "../../core/learner/buddyGroups";
+import { defaultExpandedKeys, groupByDay, isGroupCollapsed, localDay, shouldWarnNinth, tidiedUp, todayCount, userQuestionCount, type DayGroup } from "../../core/learner/buddyGroups";
 import { latestSuggestions, pickTwo } from "../../core/learner/buddySuggestions";
 import type { QuickItem } from "../chat/quickTasks";
 import { ROTATION_MS, rotationPaused, rotationWindow } from "../../core/learner/quickRotation";
@@ -52,6 +52,8 @@ class BuddyBlock extends MarkdownRenderChild {
   private round = 0;
   private hovering = false;
   // 建議話題：目前顯示的兩個，以及它們是從哪一組挑的。
+  private listBtn!: HTMLButtonElement;
+  private archivedSeen = 0;
   private picked: string[] = [];
   private pickedFrom = "";
   private chat: ChatPanel | null = null;
@@ -78,7 +80,7 @@ class BuddyBlock extends MarkdownRenderChild {
     const title = head.createSpan({ cls: "vt-buddy-title" });
     setIcon(title.createSpan({ cls: "vt-buddy-title-icon" }), "message-circle");
     title.createSpan({ text: t("buddy.title") });
-    const listBtn = head.createEl("button", { cls: "vt-chip vt-buddy-list-toggle", text: t("buddy.list"), attr: { type: "button" } });
+    const listBtn = (this.listBtn = head.createEl("button", { cls: "vt-chip vt-buddy-list-toggle", text: t("buddy.list"), attr: { type: "button" } }));
     listBtn.addEventListener("click", () => this.root.toggleClass("is-list-open", !this.root.hasClass("is-list-open")));
     const newBtn = head.createEl("button", { cls: "vt-chip vt-buddy-new", text: t("buddy.new") });
     newBtn.addEventListener("click", () => this.startNew());
@@ -98,7 +100,12 @@ class BuddyBlock extends MarkdownRenderChild {
     this.register(this.plugin.threads.events.on("thread:upsert", (th) => {
       if (th.anchor.kind !== "buddy") return;
       this.renderList();
-      if (th.id === this.threadId) this.chat?.refreshQuick();
+      if (th.id === this.threadId) {
+        this.chat?.refreshQuick();
+        // Eight groups were tidied away: the page would be left on empty space.
+        if (tidiedUp(this.archivedSeen, th.archivedCount)) this.scrollToEnd();
+        this.archivedSeen = th.archivedCount ?? 0;
+      }
     }));
     this.register(this.plugin.threads.events.on("threads:reloaded", () => this.renderList()));
 
@@ -134,6 +141,13 @@ class BuddyBlock extends MarkdownRenderChild {
     const now = new Date();
     const threads = this.listed();
     const byId = new Map(threads.map((th) => [th.id, th]));
+    const today = todayCount(
+      threads.map((th) => ({ startedAt: th.createdAt ?? th.updatedAt ?? "" })),
+      now
+    );
+    const title = today > 0 ? t("buddy.listToday", { n: today }) : t("buddy.list");
+    this.listBtn.setText(title);
+    el.createDiv({ cls: "vt-buddy-list-title", text: title });
     const groups = groupByDay(
       threads.map((th) => ({ id: th.id, at: th.updatedAt ?? th.createdAt ?? "" })),
       now
@@ -205,6 +219,18 @@ class BuddyBlock extends MarkdownRenderChild {
 
   // ── 沉底按鈕：頁面不在最底時，右下角一顆圓形按鈕 ──
 
+  // Once the chat has been redrawn, bring its last message into view.
+  private scrollToEnd(): void {
+    if (!liveTurns(this.plugin.threads.get(this.threadId)).length) return;
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        if (this.disposed) return;
+        const end = this.chatHost.querySelector(".vt-chat-controls") ?? this.chatHost.lastElementChild;
+        end?.scrollIntoView({ block: "end", behavior: "auto" });
+      })
+    );
+  }
+
   private setupSink(): void {
     const scroller = this.containerEl.closest<HTMLElement>(".markdown-preview-view, .cm-scroller");
     if (!scroller) return;
@@ -256,6 +282,8 @@ class BuddyBlock extends MarkdownRenderChild {
       onOpenSettings: () => openPluginSettings(this.plugin.app, this.plugin.manifest.id),
     };
     this.chat = this.addChild(new ChatPanel(this.chatHost, opts));
+    this.archivedSeen = this.plugin.threads.get(this.threadId)?.archivedCount ?? 0;
+    this.scrollToEnd();
   }
 
   // 第 9 則問題送出時提示一次「再一則就存檔」，一天一次。

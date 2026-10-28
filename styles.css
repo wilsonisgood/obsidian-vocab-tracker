@@ -5373,6 +5373,12 @@ body.is-mobile .vt-pr-poly-sense input[type=checkbox] {
   box-shadow: var(--shadow-s);
   color: var(--text-normal);
 }
+.vt-buddy-list-title {
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 2px 4px;
+}
 
 /* src/styles/mobile.css */
 .vt-sheet-layer {

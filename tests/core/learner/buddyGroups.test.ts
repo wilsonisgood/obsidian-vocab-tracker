@@ -6,6 +6,8 @@ import {
   isGroupCollapsed,
   localDay,
   shouldWarnNinth,
+  tidiedUp,
+  todayCount,
   userQuestionCount,
 } from "../../../src/core/learner/buddyGroups";
 import type { Thread, Turn } from "../../../src/core/model/thread";
@@ -75,5 +77,24 @@ describe("ten-question archive", () => {
     expect(shouldWarnNinth(9, "2026-10-27", today)).toBe(true);
     expect(shouldWarnNinth(8, null, today)).toBe(false);
     expect(shouldWarnNinth(10, null, today)).toBe(false);
+  });
+});
+
+describe("list title count and scrolling after a tidy-up", () => {
+  it("counts the conversations started today", () => {
+    const items = [
+      { startedAt: new Date(2026, 9, 28, 8).toISOString() },
+      { startedAt: new Date(2026, 9, 28, 23, 59).toISOString() },
+      { startedAt: new Date(2026, 9, 27, 23, 59).toISOString() },
+      { startedAt: "bad" },
+    ];
+    expect(todayCount(items, NOW)).toBe(2);
+    expect(todayCount([], NOW)).toBe(0);
+  });
+  it("a tidy-up is the counter going up", () => {
+    expect(tidiedUp(undefined, 8)).toBe(true);
+    expect(tidiedUp(8, 16)).toBe(true);
+    expect(tidiedUp(8, 8)).toBe(false);
+    expect(tidiedUp(undefined, undefined)).toBe(false);
   });
 });

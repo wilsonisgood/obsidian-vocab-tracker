@@ -92,6 +92,17 @@ describe("buddy.share", () => {
     expect(render(ai.requests[1])).toContain("單字：b（意思）");
   });
 
+  it("a word with its source paragraph is asked in context; one without isn't", async () => {
+    const withSource: ShareItem = { kind: "word", key: "w:a", word: "a", sourceTitle: "Cooking", sourceParagraph: "She wore an apron." };
+    const a = setup(undefined, undefined, { shareMaterial: async () => [withSource], random: () => 0 });
+    await a.threads.askBuddy(null, { taskId: "buddy.share" });
+    expect(render(a.ai.requests[0])).toContain("這個字出自「Cooking」的這一段");
+    expect(render(a.ai.requests[0])).toContain("She wore an apron.");
+    const b = setup(undefined, undefined, { shareMaterial: async () => [word("a")], random: () => 0 });
+    await b.threads.askBuddy(null, { taskId: "buddy.share" });
+    expect(render(b.ai.requests[0])).not.toContain("這個字出自");
+  });
+
   it("with no material, invites a chat about what he read", async () => {
     const { threads, ai } = setup(undefined, undefined, { shareMaterial: async () => [] });
     await threads.askBuddy(null, { taskId: "buddy.share" });

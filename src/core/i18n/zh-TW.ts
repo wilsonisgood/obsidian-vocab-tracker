@@ -998,6 +998,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "buddy.untitled": "新的對話",
   "buddy.threads": "最近的對話",
   "buddy.list": "對話清單",
+  "buddy.listToday": "對話清單 · 今天 {n}",
   "buddy.group.today": "今天",
   "buddy.group.yesterday": "昨天",
   "buddy.sink": "捲到最底",

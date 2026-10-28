@@ -1999,6 +1999,7 @@ var en = {
   "buddy.untitled": "New chat",
   "buddy.threads": "Recent chats",
   "buddy.list": "Chats",
+  "buddy.listToday": "Chats \xB7 today {n}",
   "buddy.group.today": "Today",
   "buddy.group.yesterday": "Yesterday",
   "buddy.sink": "Scroll to bottom",
@@ -2961,6 +2962,7 @@ var zhTW = {
   "buddy.untitled": "\u65B0\u7684\u5C0D\u8A71",
   "buddy.threads": "\u6700\u8FD1\u7684\u5C0D\u8A71",
   "buddy.list": "\u5C0D\u8A71\u6E05\u55AE",
+  "buddy.listToday": "\u5C0D\u8A71\u6E05\u55AE \xB7 \u4ECA\u5929 {n}",
   "buddy.group.today": "\u4ECA\u5929",
   "buddy.group.yesterday": "\u6628\u5929",
   "buddy.sink": "\u6372\u5230\u6700\u5E95",
@@ -26525,6 +26527,16 @@ function isGroupCollapsed(key6, overrides, defaults) {
   var _a;
   return (_a = overrides.get(key6)) != null ? _a : !defaults.has(key6);
 }
+function todayCount(items, now2) {
+  const today = localDay(now2);
+  return items.filter((i) => {
+    const d = new Date(i.startedAt);
+    return !Number.isNaN(d.getTime()) && localDay(d) === today;
+  }).length;
+}
+function tidiedUp(before, after) {
+  return (after != null ? after : 0) > (before != null ? before : 0);
+}
 var ARCHIVE_TRIGGER = 10;
 var ARCHIVE_TAKE = 8;
 var WARN_AT = ARCHIVE_TRIGGER - 1;
@@ -26610,6 +26622,10 @@ ${EXTRA}`,
 {{share}}
 
 \u4F60\u50CF\u4E00\u500B\u597D\u5947\u7684\u670B\u53CB\uFF0C\u628A\u4E0A\u9762\u9019\u500B\u4E1F\u7D66\u4ED6\u3002{{#shareStyle}}\u9019\u6B21\u7684\u554F\u6CD5\uFF1A{{shareStyle}}\u3002{{/shareStyle}}
+{{#sourceParagraph}}\u9019\u500B\u5B57\u51FA\u81EA\u300C{{sourceTitle}}\u300D\u7684\u9019\u4E00\u6BB5\uFF1A
+{{sourceParagraph}}
+\u53EF\u4EE5\u7528\u90A3\u6BB5\u7684\u4E0A\u4E0B\u6587\u51FA\u984C\uFF08\u4F8B\u5982\u9019\u500B\u5B57\u5728\u9019\u53E5\u88E1\u662F\u4EC0\u9EBC\u610F\u601D\u3001\u63DB\u500B\u5B57\u9084\u8AAA\u5F97\u901A\u55CE\u3001\u9019\u6BB5\u4E3B\u65E8\u662F\u4EC0\u9EBC\uFF09\uFF0C\u554F\u6CD5\u53EF\u4EE5\u66F4\u8C50\u5BCC\u3002
+{{/sourceParagraph}}
 \u5148\u4E0D\u8981\u7D66\u89E3\u91CB\u6216\u7B54\u6848\uFF0C\u7B49\u4ED6\u56DE\u7B54\uFF1B\u4E00\u6B21\u53EA\u554F\u4E00\u500B\u554F\u984C\uFF0C\u958B\u5834\u7528\u4E00\u5169\u53E5\u8A71\u5C31\u597D\u3002
 \u4E0D\u8981\u7528\u56FA\u5B9A\u7684\u958B\u5834\u53E5\uFF08\u4F8B\u5982\u6BCF\u6B21\u90FD\u300C\u6211\u89BA\u5F97 X \u5F88\u6709\u8DA3\uFF0C\u56E0\u70BA\u2026\u300D\uFF09\uFF0C\u6BCF\u6B21\u7528\u4E0D\u540C\u7684\u53E3\u6C23\u548C\u5207\u5165\u9EDE\u3002
 {{/share}}{{^share}}\uFF08\u76EE\u524D\u627E\u4E0D\u5230\u4ED6\u6700\u8FD1\u8B80\u904E\u7684\u6771\u897F\u3002\uFF09\u8ACB\u50CF\u597D\u5947\u7684\u670B\u53CB\u4E00\u6A23\uFF0C\u89AA\u5207\u5730\u9080\u8ACB\u4ED6\u804A\u804A\u6700\u8FD1\u8B80\u4E86\u4EC0\u9EBC\u3001\u6709\u6C92\u6709\u9047\u5230\u60F3\u804A\u7684\u5B57\u6216\u53E5\u5B50\u3002
@@ -26629,14 +26645,16 @@ function buddyTask(id2, label) {
     maxTokens: 4096,
     ...label ? { label } : {},
     build(input, ctx) {
-      var _a, _b, _c, _d, _e, _f;
+      var _a, _b, _c, _d, _e, _f, _g, _h;
       const slots = {
         selection: (_a = input.selection) == null ? void 0 : _a.trim(),
         question: (_b = input.question) == null ? void 0 : _b.trim(),
         share: (_c = input.share) == null ? void 0 : _c.trim(),
         shareStyle: (_d = input.shareStyle) == null ? void 0 : _d.trim(),
+        sourceTitle: (_e = input.sourceTitle) == null ? void 0 : _e.trim(),
+        sourceParagraph: (_f = input.sourceParagraph) == null ? void 0 : _f.trim(),
         // 一起看看我寫的: the pasted English is the question text, or the selection.
-        writing: id2 === "review" ? [(_e = input.question) == null ? void 0 : _e.trim(), (_f = input.selection) == null ? void 0 : _f.trim()].filter(Boolean).join("\n\n") : void 0
+        writing: id2 === "review" ? [(_g = input.question) == null ? void 0 : _g.trim(), (_h = input.selection) == null ? void 0 : _h.trim()].filter(Boolean).join("\n\n") : void 0
       };
       const user = id2 === "review" ? renderTemplate(BUDDY_TEMPLATES.review, { writing: slots.writing }) : renderTemplate(BUDDY_TEMPLATES[id2], slots);
       return composeRequest({
@@ -26747,7 +26765,7 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     // 快速按鈕輪替：第幾輪、滑鼠是否停在按鈕列。
     this.round = 0;
     this.hovering = false;
-    // 建議話題：目前顯示的兩個，以及它們是從哪一組挑的。
+    this.archivedSeen = 0;
     this.picked = [];
     this.pickedFrom = "";
     this.chat = null;
@@ -26765,7 +26783,7 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     const title = head.createSpan({ cls: "vt-buddy-title" });
     (0, import_obsidian41.setIcon)(title.createSpan({ cls: "vt-buddy-title-icon" }), "message-circle");
     title.createSpan({ text: t("buddy.title") });
-    const listBtn = head.createEl("button", { cls: "vt-chip vt-buddy-list-toggle", text: t("buddy.list"), attr: { type: "button" } });
+    const listBtn = this.listBtn = head.createEl("button", { cls: "vt-chip vt-buddy-list-toggle", text: t("buddy.list"), attr: { type: "button" } });
     listBtn.addEventListener("click", () => this.root.toggleClass("is-list-open", !this.root.hasClass("is-list-open")));
     const newBtn = head.createEl("button", { cls: "vt-chip vt-buddy-new", text: t("buddy.new") });
     newBtn.addEventListener("click", () => this.startNew());
@@ -26779,10 +26797,14 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     this.registerInterval(window.setInterval(() => this.rotateQuick(), ROTATION_MS));
     this.setupSink();
     this.register(this.plugin.threads.events.on("thread:upsert", (th) => {
-      var _a;
+      var _a, _b;
       if (th.anchor.kind !== "buddy") return;
       this.renderList();
-      if (th.id === this.threadId) (_a = this.chat) == null ? void 0 : _a.refreshQuick();
+      if (th.id === this.threadId) {
+        (_a = this.chat) == null ? void 0 : _a.refreshQuick();
+        if (tidiedUp(this.archivedSeen, th.archivedCount)) this.scrollToEnd();
+        this.archivedSeen = (_b = th.archivedCount) != null ? _b : 0;
+      }
     }));
     this.register(this.plugin.threads.events.on("threads:reloaded", () => this.renderList()));
     void this.plugin.threads.ensureLoaded().then(() => {
@@ -26813,6 +26835,16 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     const now2 = /* @__PURE__ */ new Date();
     const threads = this.listed();
     const byId = new Map(threads.map((th) => [th.id, th]));
+    const today = todayCount(
+      threads.map((th) => {
+        var _a, _b;
+        return { startedAt: (_b = (_a = th.createdAt) != null ? _a : th.updatedAt) != null ? _b : "" };
+      }),
+      now2
+    );
+    const title = today > 0 ? t("buddy.listToday", { n: today }) : t("buddy.list");
+    this.listBtn.setText(title);
+    el.createDiv({ cls: "vt-buddy-list-title", text: title });
     const groups = groupByDay(
       threads.map((th) => {
         var _a, _b;
@@ -26879,6 +26911,18 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     this.chat.refreshQuick();
   }
   // ── 沉底按鈕：頁面不在最底時，右下角一顆圓形按鈕 ──
+  // Once the chat has been redrawn, bring its last message into view.
+  scrollToEnd() {
+    if (!liveTurns(this.plugin.threads.get(this.threadId)).length) return;
+    requestAnimationFrame(
+      () => requestAnimationFrame(() => {
+        var _a;
+        if (this.disposed) return;
+        const end = (_a = this.chatHost.querySelector(".vt-chat-controls")) != null ? _a : this.chatHost.lastElementChild;
+        end == null ? void 0 : end.scrollIntoView({ block: "end", behavior: "auto" });
+      })
+    );
+  }
   setupSink() {
     const scroller = this.containerEl.closest(".markdown-preview-view, .cm-scroller");
     if (!scroller) return;
@@ -26909,6 +26953,7 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     update();
   }
   mountChat() {
+    var _a, _b;
     if (this.chat) this.removeChild(this.chat);
     this.chatHost.empty();
     const opts = {
@@ -26929,6 +26974,8 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
       onOpenSettings: () => openPluginSettings(this.plugin.app, this.plugin.manifest.id)
     };
     this.chat = this.addChild(new ChatPanel(this.chatHost, opts));
+    this.archivedSeen = (_b = (_a = this.plugin.threads.get(this.threadId)) == null ? void 0 : _a.archivedCount) != null ? _b : 0;
+    this.scrollToEnd();
   }
   // 第 9 則問題送出時提示一次「再一則就存檔」，一天一次。
   maybeWarnNinth() {
@@ -35222,13 +35269,30 @@ var SHARE_STYLES = [
   { id: "scenario", scope: "both", text: "\u5148\u63CF\u8FF0\u4E00\u500B\u751F\u6D3B\u60C5\u5883\uFF0C\u8ACB\u4ED6\u731C\u731C\u5728\u9019\u500B\u60C5\u5883\u88E1\u5B83\u662F\u4EC0\u9EBC\u610F\u601D" },
   { id: "sentence", scope: "word", text: "\u8ACB\u4ED6\u7528\u9019\u500B\u5B57\u9020\u4E00\u500B\u53E5\u5B50" },
   { id: "assoc", scope: "both", text: "\u554F\u4ED6\u770B\u5230\u9019\u500B\u5B57\uFF08\u6216\u9019\u6BB5\uFF09\u6703\u8B93\u4ED6\u60F3\u5230\u4EC0\u9EBC" },
-  { id: "rephrase", scope: "paragraph", text: "\u8ACB\u4ED6\u7528\u81EA\u5DF1\u7684\u8A71\u628A\u9019\u4E00\u6BB5\u63DB\u53E5\u8A71\u8AAA" }
+  { id: "rephrase", scope: "paragraph", text: "\u8ACB\u4ED6\u7528\u81EA\u5DF1\u7684\u8A71\u628A\u9019\u4E00\u6BB5\u63DB\u53E5\u8A71\u8AAA" },
+  { id: "gist", scope: "paragraph", text: "\u8ACB\u4ED6\u7528\u4E00\u53E5\u8A71\u8AAA\u8AAA\u9019\u6BB5\u5728\u8B1B\u4EC0\u9EBC\u3001\u4F5C\u8005\u60F3\u8868\u9054\u4EC0\u9EBC" }
 ];
+var GIST_BIAS = 0.4;
 function pickShareStyle(kind, lastId, random) {
   const fit = SHARE_STYLES.filter((s) => s.scope === "both" || s.scope === kind);
-  const pool = fit.filter((s) => s.id !== lastId);
-  const from = pool.length ? pool : fit;
+  if (kind === "paragraph" && lastId !== "gist" && random() < GIST_BIAS) return fit.find((s) => s.id === "gist");
+  const others = fit.filter((s) => s.id !== "gist");
+  const pool = others.filter((s) => s.id !== lastId);
+  const from = pool.length ? pool : others;
   return from[Math.min(from.length - 1, Math.floor(random() * from.length))];
+}
+function attachWordSources(items, sourceOf) {
+  return items.map((item) => {
+    if (item.kind !== "word") return item;
+    const src = sourceOf(item.word);
+    const paragraph = src ? clip2(plainParagraph2(src.paragraph), PARAGRAPH_TEXT_MAX) : "";
+    return paragraph ? { ...item, sourceTitle: src == null ? void 0 : src.title, sourceParagraph: paragraph } : item;
+  });
+}
+function shareSource(item) {
+  var _a;
+  if ((item == null ? void 0 : item.kind) !== "word" || !item.sourceParagraph) return void 0;
+  return { sourceTitle: (_a = item.sourceTitle) != null ? _a : "", sourceParagraph: item.sourceParagraph };
 }
 function shareSubject(item) {
   if (!item) return void 0;
@@ -35533,7 +35597,7 @@ var ThreadService = class {
       threadId: id2,
       anchor: { kind: "buddy" },
       taskId: req.taskId,
-      input: { context, question: req.question, selection: req.selection, ...share ? { share: share.brief, shareStyle: share.style } : {} },
+      input: { context, question: req.question, selection: req.selection, ...share ? { share: share.brief, shareStyle: share.style, ...share.source } : {} },
       display: this.displayFor(req),
       question: req.question,
       selection: req.selection,
@@ -35557,7 +35621,7 @@ var ThreadService = class {
     this.lastShareKind = item.kind;
     const style = pickShareStyle(item.kind, this.lastShareStyle, random);
     this.lastShareStyle = style.id;
-    return { brief: shareBrief(item), style: style.text, subject: shareSubject(item) };
+    return { brief: shareBrief(item), style: style.text, subject: shareSubject(item), source: shareSource(item) };
   }
   // 對話整理: once ten answered groups are alive, the oldest eight are
   // written to a note and tombstoned (the newest two stay to chat on).
@@ -43581,12 +43645,20 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       // 隨機分享最近讀的: paragraphs discussed and words touched in the last two weeks.
       shareMaterial: async () => {
         await this.loadLearner();
-        return collectShareItems({
+        const items = collectShareItems({
           threads: this.threads.allThreads(),
           entries: this.store.entries,
           touches: this.learner.wordTouches(),
           now: /* @__PURE__ */ new Date()
         });
+        const sources = /* @__PURE__ */ new Map();
+        for (const item of items) {
+          if (item.kind !== "word") continue;
+          const entry = this.store.entries.find((e) => !e.deletedAt && e.word.toLowerCase() === item.word);
+          const src = entry ? await findWordSource(entry, this.notes) : null;
+          if (src) sources.set(item.word, { title: src.title, paragraph: src.paragraph });
+        }
+        return attachWordSources(items, (w2) => sources.get(w2));
       },
       // 對話十則存檔: ten questions of a buddy chat become a note in the discussions folder.
       buddyArchive: {

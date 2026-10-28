@@ -1007,6 +1007,7 @@ export const en = {
   "buddy.untitled": "New chat",
   "buddy.threads": "Recent chats",
   "buddy.list": "Chats",
+  "buddy.listToday": "Chats · today {n}",
   "buddy.group.today": "Today",
   "buddy.group.yesterday": "Yesterday",
   "buddy.sink": "Scroll to bottom",

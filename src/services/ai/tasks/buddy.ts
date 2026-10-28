@@ -18,6 +18,9 @@ export interface BuddyInput {
   share?: string;
   // 聊聊最近讀的: this round's way of asking (SHARE_STYLES).
   shareStyle?: string;
+  // The note paragraph a picked word came from.
+  sourceTitle?: string;
+  sourceParagraph?: string;
 }
 
 export const BUDDY_BASE_PROMPT = `你是學生的英文學習夥伴，陪他聊英文怎麼學、看他寫的英文、一起想接下來可以怎麼走。
@@ -77,6 +80,10 @@ ${EXTRA}`,
 {{share}}
 
 你像一個好奇的朋友，把上面這個丟給他。{{#shareStyle}}這次的問法：{{shareStyle}}。{{/shareStyle}}
+{{#sourceParagraph}}這個字出自「{{sourceTitle}}」的這一段：
+{{sourceParagraph}}
+可以用那段的上下文出題（例如這個字在這句裡是什麼意思、換個字還說得通嗎、這段主旨是什麼），問法可以更豐富。
+{{/sourceParagraph}}
 先不要給解釋或答案，等他回答；一次只問一個問題，開場用一兩句話就好。
 不要用固定的開場句（例如每次都「我覺得 X 很有趣，因為…」），每次用不同的口氣和切入點。
 {{/share}}{{^share}}（目前找不到他最近讀過的東西。）請像好奇的朋友一樣，親切地邀請他聊聊最近讀了什麼、有沒有遇到想聊的字或句子。
@@ -105,6 +112,8 @@ function buddyTask(id: BuddyKind, label?: AiTask<BuddyInput>["label"]): AiTask<B
         question: input.question?.trim(),
         share: input.share?.trim(),
         shareStyle: input.shareStyle?.trim(),
+        sourceTitle: input.sourceTitle?.trim(),
+        sourceParagraph: input.sourceParagraph?.trim(),
         // 一起看看我寫的: the pasted English is the question text, or the selection.
         writing: id === "review" ? [input.question?.trim(), input.selection?.trim()].filter(Boolean).join("\n\n") : undefined,
       };

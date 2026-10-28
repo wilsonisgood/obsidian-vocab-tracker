@@ -59,6 +59,20 @@ export function isGroupCollapsed(key: string, overrides: ReadonlyMap<string, boo
   return overrides.get(key) ?? !defaults.has(key);
 }
 
+// How many conversations started today (the list's title shows it).
+export function todayCount(items: readonly { startedAt: string }[], now: Date): number {
+  const today = localDay(now);
+  return items.filter((i) => {
+    const d = new Date(i.startedAt);
+    return !Number.isNaN(d.getTime()) && localDay(d) === today;
+  }).length;
+}
+
+// The tidy-up just happened: the thread's counter went up.
+export function tidiedUp(before: number | undefined, after: number | undefined): boolean {
+  return (after ?? 0) > (before ?? 0);
+}
+
 // ── 對話整理：活著的問答滿 10 組，把最舊的 8 組存成筆記並刪掉 ──────────
 
 export const ARCHIVE_TRIGGER = 10;

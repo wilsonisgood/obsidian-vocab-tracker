@@ -17,7 +17,7 @@ const MIN_PARAGRAPH_CHARS = 20;
 
 export type ShareItem =
   | { kind: "paragraph"; key: string; title: string; text: string }
-  | { kind: "word"; key: string; word: string; meaning?: string };
+  | { kind: "word"; key: string; word: string; meaning?: string; sourceTitle?: string; sourceParagraph?: string };
 
 export interface ShareSources {
   threads: readonly Thread[];
@@ -112,13 +112,41 @@ export const SHARE_STYLES: readonly ShareStyle[] = [
   { id: "sentence", scope: "word", text: "請他用這個字造一個句子" },
   { id: "assoc", scope: "both", text: "問他看到這個字（或這段）會讓他想到什麼" },
   { id: "rephrase", scope: "paragraph", text: "請他用自己的話把這一段換句話說" },
+  { id: "gist", scope: "paragraph", text: "請他用一句話說說這段在講什麼、作者想表達什麼" },
 ];
+
+// 抓段落主旨 is the favorite: this share of paragraph rounds.
+export const GIST_BIAS = 0.4;
 
 export function pickShareStyle(kind: ShareItem["kind"], lastId: string | undefined, random: () => number): ShareStyle {
   const fit = SHARE_STYLES.filter((s) => s.scope === "both" || s.scope === kind);
-  const pool = fit.filter((s) => s.id !== lastId);
-  const from = pool.length ? pool : fit;
+  if (kind === "paragraph" && lastId !== "gist" && random() < GIST_BIAS) return fit.find((s) => s.id === "gist") as ShareStyle;
+  const others = fit.filter((s) => s.id !== "gist");
+  const pool = others.filter((s) => s.id !== lastId);
+  const from = pool.length ? pool : others;
   return from[Math.min(from.length - 1, Math.floor(random() * from.length))];
+}
+
+export interface WordSourceText {
+  title: string;
+  paragraph: string;
+}
+
+// Words that came from a note carry that paragraph (cleaned like the
+// discussion summaries, clipped) so the buddy can ask in context.
+export function attachWordSources(items: readonly ShareItem[], sourceOf: (word: string) => WordSourceText | null | undefined): ShareItem[] {
+  return items.map((item) => {
+    if (item.kind !== "word") return item;
+    const src = sourceOf(item.word);
+    const paragraph = src ? clip(plainParagraph(src.paragraph), PARAGRAPH_TEXT_MAX) : "";
+    return paragraph ? { ...item, sourceTitle: src?.title, sourceParagraph: paragraph } : item;
+  });
+}
+
+// What the prompt gets for the pick's origin; undefined without one.
+export function shareSource(item: ShareItem | null): { sourceTitle: string; sourceParagraph: string } | undefined {
+  if (item?.kind !== "word" || !item.sourceParagraph) return undefined;
+  return { sourceTitle: item.sourceTitle ?? "", sourceParagraph: item.sourceParagraph };
 }
 
 // What a stored turn remembers of the pick: the word, or 〈note title〉.

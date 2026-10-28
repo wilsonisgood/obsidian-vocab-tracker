@@ -22,7 +22,7 @@ import {
 import { digestIsEmpty, parseDigest, type Digest } from "../../core/learner/buddyDigest";
 import { answeredPairs, ARCHIVE_TAKE, ARCHIVE_TRIGGER, localDay } from "../../core/learner/buddyGroups";
 import { parseSuggestions } from "../../core/learner/buddySuggestions";
-import { pickShare, pickShareStyle, rememberShare, shareBrief, shareSubject, type ShareItem } from "../../core/learner/sharePick";
+import { pickShare, pickShareStyle, rememberShare, shareBrief, shareSource, shareSubject, type ShareItem } from "../../core/learner/sharePick";
 import { addPin, pinText, removePin } from "./pin";
 import { findWordSource, wordInput } from "./wordInput";
 
@@ -421,7 +421,7 @@ export class ThreadService {
       threadId: id,
       anchor: { kind: "buddy" },
       taskId: req.taskId,
-      input: { context, question: req.question, selection: req.selection, ...(share ? { share: share.brief, shareStyle: share.style } : {}) },
+      input: { context, question: req.question, selection: req.selection, ...(share ? { share: share.brief, shareStyle: share.style, ...share.source } : {}) },
       display: this.displayFor(req),
       question: req.question,
       selection: req.selection,
@@ -431,7 +431,7 @@ export class ThreadService {
     return id;
   }
 
-  private async pickShareBrief(): Promise<{ brief: string; style?: string; subject?: string }> {
+  private async pickShareBrief(): Promise<{ brief: string; style?: string; subject?: string; source?: { sourceTitle: string; sourceParagraph: string } }> {
     let items: ShareItem[] = [];
     try {
       items = (await this.deps.shareMaterial?.()) ?? [];
@@ -445,7 +445,7 @@ export class ThreadService {
     this.lastShareKind = item.kind;
     const style = pickShareStyle(item.kind, this.lastShareStyle, random);
     this.lastShareStyle = style.id;
-    return { brief: shareBrief(item), style: style.text, subject: shareSubject(item) };
+    return { brief: shareBrief(item), style: style.text, subject: shareSubject(item), source: shareSource(item) };
   }
 
   // 對話整理: once ten answered groups are alive, the oldest eight are

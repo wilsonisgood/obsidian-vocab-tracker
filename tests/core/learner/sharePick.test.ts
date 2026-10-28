@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { collectShareItems, pickShare, pickShareStyle, rememberShare, shareBrief, shareSubject, SHARE_STYLES, type ShareItem } from "../../../src/core/learner/sharePick";
+import { attachWordSources, collectShareItems, shareSource, GIST_BIAS, pickShare, pickShareStyle, rememberShare, shareBrief, shareSubject, SHARE_STYLES, type ShareItem } from "../../../src/core/learner/sharePick";
 import type { Thread } from "../../../src/core/model/thread";
 
 const NOW = new Date(2026, 9, 28, 12);
@@ -108,5 +108,46 @@ describe("pickShareStyle", () => {
     const ids = (k: "word" | "paragraph") => new Set([0, 0.2, 0.4, 0.6, 0.8, 0.99].map((r) => pickShareStyle(k, undefined, () => r).id));
     expect(ids("word").has("rephrase")).toBe(false);
     expect(ids("paragraph").has("sentence")).toBe(false);
+  });
+});
+
+describe("抓段落主旨", () => {
+  it("paragraph rounds go to gist about 40%, never twice in a row; words never get it", () => {
+    expect(pickShareStyle("paragraph", undefined, () => 0.1).id).toBe("gist");
+    expect(pickShareStyle("paragraph", undefined, () => GIST_BIAS - 0.01).id).toBe("gist");
+    expect(pickShareStyle("paragraph", "gist", () => 0.1).id).not.toBe("gist");
+    for (const r of [0.4, 0.6, 0.99]) expect(pickShareStyle("paragraph", undefined, () => r).id).not.toBe("gist");
+    for (const r of [0, 0.5, 0.99]) expect(pickShareStyle("word", undefined, () => r).id).not.toBe("gist");
+  });
+  it("the others still don't repeat", () => {
+    for (const last of SHARE_STYLES.map((s) => s.id)) {
+      expect(pickShareStyle("paragraph", last, () => 0.7).id).not.toBe(last);
+    }
+  });
+});
+
+describe("a word's source paragraph", () => {
+  const items: ShareItem[] = [
+    { kind: "word", key: "w:apron", word: "apron" },
+    { kind: "word", key: "w:lost", word: "lost" },
+    { kind: "paragraph", key: "p:1", title: "T", text: "x".repeat(30) },
+  ];
+  const long = `- [00:01] ${"A sentence with an **apron**. ".repeat(40)}`;
+  it("attaches the cleaned, clipped paragraph and title when found; leaves the rest", () => {
+    const out = attachWordSources(items, (w) => (w === "apron" ? { title: "Cooking", paragraph: long } : null));
+    const apron = out[0] as Extract<ShareItem, { kind: "word" }>;
+    expect(apron.sourceTitle).toBe("Cooking");
+    expect([...(apron.sourceParagraph as string)].length).toBeLessThanOrEqual(401);
+    expect(apron.sourceParagraph).not.toContain("**");
+    expect(apron.sourceParagraph).not.toContain("[00:01]");
+    expect(out[1]).toEqual(items[1]);
+    expect(out[2]).toBe(items[2]);
+  });
+  it("shareSource hands over title and paragraph only for a word that has one", () => {
+    const [a] = attachWordSources(items, () => ({ title: "Cooking", paragraph: "She wore an apron." }));
+    expect(shareSource(a)).toEqual({ sourceTitle: "Cooking", sourceParagraph: "She wore an apron." });
+    expect(shareSource(items[1])).toBeUndefined();
+    expect(shareSource(items[2])).toBeUndefined();
+    expect(shareSource(null)).toBeUndefined();
   });
 });

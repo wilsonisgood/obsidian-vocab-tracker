@@ -62,7 +62,8 @@ import { resolveDiarySettings, resolveReportSettings } from "./src/core/model/se
 import { ReportService } from "./src/services/report/ReportService";
 import { previousWeek } from "./src/core/learner/period";
 import { buddyContext } from "./src/core/learner/buddyContext";
-import { collectShareItems } from "./src/core/learner/sharePick";
+import { findWordSource } from "./src/services/threads/wordInput";
+import { attachWordSources, collectShareItems, type WordSourceText } from "./src/core/learner/sharePick";
 import { recentDiscussions } from "./src/core/learner/recentDiscussions";
 import { EmojiService } from "./src/services/learn/EmojiService";
 import { FamilyService } from "./src/services/learn/FamilyService";
@@ -343,12 +344,21 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       // 隨機分享最近讀的: paragraphs discussed and words touched in the last two weeks.
       shareMaterial: async () => {
         await this.loadLearner();
-        return collectShareItems({
+        const items = collectShareItems({
           threads: this.threads.allThreads(),
           entries: this.store.entries,
           touches: this.learner.wordTouches(),
           now: new Date(),
         });
+        // A word comes with the paragraph it was saved from, when there is one.
+        const sources = new Map<string, WordSourceText>();
+        for (const item of items) {
+          if (item.kind !== "word") continue;
+          const entry = this.store.entries.find((e) => !e.deletedAt && e.word.toLowerCase() === item.word);
+          const src = entry ? await findWordSource(entry, this.notes) : null;
+          if (src) sources.set(item.word, { title: src.title, paragraph: src.paragraph });
+        }
+        return attachWordSources(items, (w) => sources.get(w));
       },
       // 對話十則存檔: ten questions of a buddy chat become a note in the discussions folder.
       buddyArchive: {
