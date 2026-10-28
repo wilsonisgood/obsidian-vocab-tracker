@@ -4,7 +4,6 @@ import {
   archiveFileName,
   archiveNoteId,
   archivePath,
-  batchesToArchive,
   defaultExpandedKeys,
   groupByDay,
   isGroupCollapsed,
@@ -73,28 +72,19 @@ describe("ten-question archive", () => {
     expect(answeredPairs(th)).toHaveLength(2);
   });
 
-  it("batches: nothing before 10, then [0], then 10 more; saved ones are skipped", () => {
-    expect(batchesToArchive(9, [])).toEqual([]);
-    expect(batchesToArchive(10, [])).toEqual([0]);
-    expect(batchesToArchive(10, [0])).toEqual([]);
-    expect(batchesToArchive(19, [0])).toEqual([]);
-    expect(batchesToArchive(20, [0])).toEqual([10]);
-    expect(batchesToArchive(20, [])).toEqual([0, 10]);
-  });
-
   it("builds the file name and path", () => {
     const now = new Date(2026, 9, 28, 11, 44);
-    expect(archiveFileName(0, now)).toBe("Buddy-0_10-202610281144.md");
-    expect(archiveFileName(10, now)).toBe("Buddy-10_20-202610281144.md");
-    expect(archivePath("vocab-list/討論串/", 0, now)).toBe("vocab-list/討論串/Buddy-0_10-202610281144.md");
-    expect(archivePath("", 0, now)).toBe("Buddy-0_10-202610281144.md");
-    expect(archiveNoteId("buddy:abc", 10)).toBe("buddy-abc-10");
+    expect(archiveFileName(0, now)).toBe("Buddy-0_8-202610281144.md");
+    expect(archiveFileName(8, now)).toBe("Buddy-8_16-202610281144.md");
+    expect(archivePath("vocab-list/討論串/", 0, now)).toBe("vocab-list/討論串/Buddy-0_8-202610281144.md");
+    expect(archivePath("", 0, now)).toBe("Buddy-0_8-202610281144.md");
+    expect(archiveNoteId("buddy:abc", 8)).toBe("buddy-abc-8");
   });
 
   it("renders frontmatter, title, date and 你／夥伴 per pair with the full answer", () => {
     const th = thread([
-      user("u1", "隨機分享最近讀的", { question: "我覺得 apron 是圍裙" }),
-      ai("a1", "對！\n\n- 圍裙\n- 也可指機場停機坪"),
+      user("u1", "聊聊最近讀的", { question: "我覺得 apron 是圍裙" }),
+      ai("a1", "對！\n\n- 圍裙\n- 也可指機場停機坪\n〔接著聊〕圍裙的由來｜廚房英文｜機場單字"),
       user("u2", "我最近走到哪了"),
       ai("a2", "還不錯"),
     ]);

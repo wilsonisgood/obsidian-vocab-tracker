@@ -61,6 +61,8 @@ export interface Turn {
   provider?: string;
   usage?: TurnUsage;
   feedback?: "up" | "down";
+  // Buddy answers: the 〔接著聊〕 topics parsed from the answer's last line.
+  suggestions?: string[];
   pinnedToGrammar?: boolean;
 }
 
@@ -68,9 +70,9 @@ export interface Thread extends Record_ {
   id: string;
   anchor: Anchor;
   turns: Turn[];
-  // Buddy conversations: starts (0, 10, 20…) of the ten-question batches
-  // already saved as notes, so a batch is written once.
-  archived?: number[];
+  // Buddy conversations: how many question-answer groups (counted from the
+  // first, deleted ones included) were already tidied into discussion notes.
+  archivedCount?: number;
 }
 
 // One thread per word, with a deterministic id so two devices that each

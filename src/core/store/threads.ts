@@ -55,8 +55,8 @@ export function mergeThreads(local: readonly Thread[], remote: readonly Thread[]
     }
     const newer = pickThreadFields(mine, t);
     const merged: Thread = { ...newer, turns: mergeTurns(mine.turns, t.turns) };
-    const archived = [...new Set([...(mine.archived ?? []), ...(t.archived ?? [])])].sort((a, b) => a - b);
-    if (archived.length) merged.archived = archived;
+    const archivedCount = Math.max(mine.archivedCount ?? 0, t.archivedCount ?? 0);
+    if (archivedCount) merged.archivedCount = archivedCount;
     byId.set(t.id, merged);
   }
   return order.map((id) => byId.get(id) as Thread);
@@ -74,7 +74,7 @@ export function threadsFingerprint(threads: readonly Thread[]): string {
         th.updatedAt ?? "",
         th.rev ?? 0,
         th.deletedAt ?? "",
-        (th.archived ?? []).join("+"),
+        th.archivedCount ?? 0,
         ...th.turns.map((t) => `${t.id}|${t.updatedAt ?? ""}|${t.deletedAt ?? ""}|${t.status}`).sort(),
       ].join(",")
     )

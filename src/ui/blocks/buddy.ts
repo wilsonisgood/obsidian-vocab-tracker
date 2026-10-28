@@ -3,6 +3,8 @@ import type VocabTrackerPlugin from "../../../main";
 import { t } from "../../core/i18n";
 import { liveTurns, type Thread } from "../../core/model/thread";
 import { defaultExpandedKeys, groupByDay, isGroupCollapsed, localDay, shouldWarnNinth, userQuestionCount, type DayGroup } from "../../core/learner/buddyGroups";
+import { latestSuggestions, pickTwo } from "../../core/learner/buddySuggestions";
+import type { QuickItem } from "../chat/quickTasks";
 import { ROTATION_MS, rotationPaused, rotationWindow } from "../../core/learner/quickRotation";
 import { buddyCustom, buddyGrammar, buddyPlan, buddyReading, buddyReview, buddyShare, buddyLevel, buddyWriting } from "../../services/ai/tasks/buddy";
 import { BuddyNearFullModal } from "./BuddyNearFullModal";
@@ -49,6 +51,9 @@ class BuddyBlock extends MarkdownRenderChild {
   // 快速按鈕輪替：第幾輪、滑鼠是否停在按鈕列。
   private round = 0;
   private hovering = false;
+  // 建議話題：目前顯示的兩個，以及它們是從哪一組挑的。
+  private picked: string[] = [];
+  private pickedFrom = "";
   private chat: ChatPanel | null = null;
   private chatState = createChatUiState();
   // The open conversation; an id nothing is stored under yet is a new one.
@@ -90,7 +95,11 @@ class BuddyBlock extends MarkdownRenderChild {
     this.setupSink();
 
     // Only list changes matter here; the ChatPanel follows its own thread.
-    this.register(this.plugin.threads.events.on("thread:upsert", (th) => th.anchor.kind === "buddy" && this.renderList()));
+    this.register(this.plugin.threads.events.on("thread:upsert", (th) => {
+      if (th.anchor.kind !== "buddy") return;
+      this.renderList();
+      if (th.id === this.threadId) this.chat?.refreshQuick();
+    }));
     this.register(this.plugin.threads.events.on("threads:reloaded", () => this.renderList()));
 
     void this.plugin.threads.ensureLoaded().then(() => {
@@ -163,14 +172,24 @@ class BuddyBlock extends MarkdownRenderChild {
     return label.md;
   }
 
-  // ── 快速按鈕：常駐「隨機分享」＋ 六題輪流兩個 ──
+  // ── 快速按鈕：常駐「聊聊最近讀的」＋ 六題輪流兩個 ──
 
   private rotationPool(): string[] {
     return [buddyGrammar, buddyWriting, buddyReview, buddyLevel, buddyReading, buddyPlan].map((task) => task.id);
   }
 
-  private quickIds(): string[] {
-    return [buddyShare.id, ...rotationWindow(this.rotationPool(), this.round)];
+  // 常駐「聊聊最近讀的」；其餘兩個：最新回答的建議話題（隨機），沒有就退回六個固定話題。
+  private quickIds(): QuickItem[] {
+    const pool = latestSuggestions(this.plugin.threads.get(this.threadId));
+    if (!pool.length) return [buddyShare.id, ...rotationWindow(this.rotationPool(), this.round)];
+    const sig = pool.join("|");
+    if (sig !== this.pickedFrom) this.repick(pool);
+    return [buddyShare.id, ...this.picked.map((text) => ({ text, taskId: buddyCustom.id, question: text }))];
+  }
+
+  private repick(pool: readonly string[]): void {
+    this.pickedFrom = pool.join("|");
+    this.picked = pickTwo(pool, this.picked, Math.random);
   }
 
   private rotateQuick(): void {
@@ -179,6 +198,8 @@ class BuddyBlock extends MarkdownRenderChild {
     const focused = active instanceof HTMLTextAreaElement && this.chatHost.contains(active);
     if (rotationPaused({ hovering: this.hovering, composerFocused: focused })) return;
     this.round++;
+    const pool = latestSuggestions(this.plugin.threads.get(this.threadId));
+    if (pool.length) this.repick(pool);
     this.chat.refreshQuick();
   }
 

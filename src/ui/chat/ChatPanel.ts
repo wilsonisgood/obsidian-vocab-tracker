@@ -10,7 +10,7 @@ import { bubble } from "../kit/bubble";
 import type { KitAction } from "../kit/emptyState";
 import { runUndoable } from "../kit/undoable";
 import { chipsLabel, displayContent, grammarChips } from "./grammarChips";
-import { quickTasksToShow, selectionToAttach } from "./quickTasks";
+import { quickTasksToShow, resolveQuickItems, selectionToAttach, type QuickItem } from "./quickTasks";
 import type { SelectionTracker } from "./SelectionTracker";
 
 // Discussion panel shared by word (A2, M4), paragraph (A1, M5) and trivia
@@ -68,7 +68,7 @@ export interface ChatPanelOptions {
   // 學習夥伴: the quick buttons to show right now, as task ids (the host
   // calls refreshQuick() when they change). Without it every labeled task
   // of the surface is shown.
-  quickTasks?: () => readonly string[];
+  quickTasks?: () => readonly QuickItem[];
   // false: the page ignores the note's text selection — no 「選取」 chip and
   // nothing is attached to a question. Default true.
   attachSelection?: boolean;
@@ -453,11 +453,19 @@ export class ChatPanel extends Component {
     quick.empty();
     this.quickBtns = [];
     const { ai, surface } = this.opts;
-    const tasks = quickTasksToShow(ai.tasks.forSurface(surface), (id) => ai.tasks.get(id), this.opts.quickTasks?.());
-    for (const task of tasks) {
-      const btn = quick.createEl("button", { cls: "vt-chip", text: t(task.label as NonNullable<typeof task.label>) });
+    const chosen = this.opts.quickTasks?.();
+    const buttons = chosen
+      ? resolveQuickItems(chosen, (id) => ai.tasks.get(id))
+      : quickTasksToShow(ai.tasks.forSurface(surface), (id) => ai.tasks.get(id)).map((task) => ({
+          label: { key: task.label as string },
+          taskId: task.id,
+          question: "",
+        }));
+    for (const b of buttons) {
+      const text = "key" in b.label ? t(b.label.key as Parameters<typeof t>[0]) : b.label.text;
+      const btn = quick.createEl("button", { cls: "vt-chip", text });
       btn.disabled = this.offline;
-      btn.addEventListener("click", () => this.submit(task.id, ""));
+      btn.addEventListener("click", () => this.submit(b.taskId, b.question, true));
       this.quickBtns.push(btn);
     }
     this.updateBusy();
@@ -490,12 +498,13 @@ export class ChatPanel extends Component {
     btn.toggleClass("is-stop", busy);
   }
 
-  private submit(taskId: string, text: string): void {
+  // `fromButton`: a host-defined button's question; the composer draft stays.
+  private submit(taskId: string, text: string, fromButton = false): void {
     const question = text.trim();
     if (taskId === this.opts.customTaskId && !question) return;
     if (this.busy) return;
     const selection = selectionToAttach(this.opts.attachSelection, this.opts.selection.get()?.text);
-    if (question && this.input) {
+    if (question && this.input && !fromButton) {
       this.input.value = "";
       autoGrow(this.input);
       this.opts.state.drafts.delete(this.opts.threadId);

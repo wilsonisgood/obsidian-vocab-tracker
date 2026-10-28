@@ -15,7 +15,8 @@ import { trailingBlockId } from "../../core/text/blockId";
 import { paragraphHash } from "../../core/text/hash";
 import { buildAskEvent } from "../../core/learner/asks";
 import type { AskEvent } from "../../core/model/learner";
-import { answeredPairs, archiveNoteId, archivePath, batchesToArchive, renderArchiveNote, ARCHIVE_SIZE } from "../../core/learner/buddyGroups";
+import { answeredPairs, archiveNoteId, archivePath, renderArchiveNote, ARCHIVE_TAKE, ARCHIVE_TRIGGER } from "../../core/learner/buddyGroups";
+import { parseSuggestions } from "../../core/learner/buddySuggestions";
 import { pickShare, rememberShare, shareBrief, type ShareItem } from "../../core/learner/sharePick";
 import { addPin, pinText, removePin } from "./pin";
 import { findWordSource, wordInput } from "./wordInput";
@@ -61,8 +62,8 @@ export interface ThreadServiceDeps {
   onAsked?: (e: AskEvent) => void;
   // 學習夥伴: the learner's background text (buddyContext()), read fresh on
   // every question. Without it the buddy gets an empty context.
-  buddyContext?: () => Promise<string>;
-  // 隨機分享最近讀的: what the learner read lately (collectShareItems()).
+  buddyContext?: (taskId: string) => Promise<string>;
+  // 聊聊最近讀的: what the learner read lately (collectShareItems()).
   shareMaterial?: () => Promise<ShareItem[]>;
   random?: () => number;
   // 對話十則存檔: where the notes go. Without it nothing is saved.
@@ -153,7 +154,7 @@ export class ThreadService {
   private disposed = false;
   private clock: () => Date;
   private newId: () => string;
-  // Keys of the latest 隨機分享 picks, newest last.
+  // Keys of the latest 聊聊最近讀的 picks, newest last.
   private recentShares: string[] = [];
 
   constructor(private deps: ThreadServiceDeps) {
@@ -281,6 +282,10 @@ export class ThreadService {
       answer.provider = r.provider;
       answer.usage = { input: r.usage.input, output: r.usage.output, cacheRead: r.usage.cacheRead, cacheWrite: r.usage.cacheWrite };
       answer.stop = r.stop;
+      if (p.anchor.kind === "buddy") {
+        const suggestions = parseSuggestions(r.text);
+        if (suggestions.length) answer.suggestions = suggestions;
+      }
     } catch (e) {
       if (this.disposed) return;
       const streamed = this.partial.get(answer.id) ?? "";
@@ -390,7 +395,7 @@ export class ThreadService {
     if (existing && existing.anchor.kind !== "buddy") return null;
     let context = "";
     try {
-      context = (await this.deps.buddyContext?.()) ?? "";
+      context = (await this.deps.buddyContext?.(req.taskId)) ?? "";
     } catch (e) {
       console.error("Vocab Tracker: buddy context failed", e);
     }
@@ -420,27 +425,34 @@ export class ThreadService {
     return shareBrief(item);
   }
 
-  // 對話十則存檔: every full ten answered questions become one note.
-  // Which batches are saved is kept on the thread.
+  // 對話整理: once ten answered groups are alive, the oldest eight are
+  // written to a note and tombstoned (the newest two stay to chat on).
+  // Nothing is deleted when the note can't be written.
   async archiveBuddy(threadId: string): Promise<void> {
     const cfg = this.deps.buddyArchive;
     const thread = this.get(threadId);
     if (!cfg || !thread || thread.anchor.kind !== "buddy") return;
     const pairs = answeredPairs(thread);
-    for (const start of batchesToArchive(pairs.length, thread.archived ?? [])) {
-      const now = this.clock();
-      const id = archiveNoteId(threadId, start);
-      const path = archivePath(cfg.folder(), start, now);
-      // Saved on another device already, or the very file is there.
-      const taken = cfg.hasNote?.(id) || cfg.exists(path);
-      if (!taken) {
-        const batch = pairs.slice(start, start + ARCHIVE_SIZE);
-        await cfg.create(path, renderArchiveNote({ threadId, start, pairs: batch, now }));
-        cfg.onSaved?.(path, start, start + ARCHIVE_SIZE);
-      }
-      thread.archived = [...(thread.archived ?? []), start].sort((a, b) => a - b);
-      this.changed(thread);
+    if (pairs.length < ARCHIVE_TRIGGER) return;
+    const batch = pairs.slice(0, ARCHIVE_TAKE);
+    const start = thread.archivedCount ?? 0;
+    const now = this.clock();
+    const id = archiveNoteId(threadId, start);
+    const path = archivePath(cfg.folder(), start, now, ARCHIVE_TAKE);
+    // Saved on another device already, or the very file is there: not rewritten.
+    if (!(cfg.hasNote?.(id) || cfg.exists(path))) {
+      await cfg.create(path, renderArchiveNote({ threadId, start, pairs: batch, now }));
+      cfg.onSaved?.(path, start, start + ARCHIVE_TAKE);
     }
+    const stamp = this.nowIso();
+    for (const p of batch) {
+      for (const turn of [p.user, p.assistant]) {
+        turn.deletedAt = stamp;
+        turn.updatedAt = stamp;
+      }
+    }
+    thread.archivedCount = start + ARCHIVE_TAKE;
+    this.changed(thread);
   }
 
   async retryBuddy(threadId: string, turnId: string): Promise<void> {

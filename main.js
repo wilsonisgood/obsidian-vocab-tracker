@@ -1986,7 +1986,7 @@ var en = {
   "report.review.done": "Review written: {path}",
   "report.review.empty": "No weekly reports in this period yet",
   // 第二十一波 R5
-  "ai.task.buddy.share": "Share what I read lately",
+  "ai.task.buddy.share": "Chat about what I read lately",
   "ai.task.buddy.grammar": "How to learn grammar",
   "ai.task.buddy.writing": "Write more English",
   "ai.task.buddy.review": "Look at my writing",
@@ -2003,9 +2003,9 @@ var en = {
   "buddy.group.yesterday": "Yesterday",
   "buddy.sink": "Scroll to bottom",
   "buddy.nearFull.title": "Almost ten",
-  "buddy.nearFull.body": "One more and this chat reaches 10 questions. It will be saved to the discussions folder so you can look back on it.",
+  "buddy.nearFull.body": "One more and the first 8 questions will be tidied into the discussions folder, leaving only the latest two in this chat.",
   "buddy.nearFull.ok": "Got it",
-  "buddy.archived": "Saved questions {from}\u2013{to} of this chat to {path}",
+  "buddy.archived": "Tidied into the discussions folder: {path}",
   "command.buddy.open": "Chat with your learning buddy"
 };
 
@@ -2948,7 +2948,7 @@ var zhTW = {
   "report.review.done": "\u5DF2\u5BEB\u597D\u56DE\u9867\uFF1A{path}",
   "report.review.empty": "\u9019\u6BB5\u671F\u9593\u9084\u6C92\u6709\u9031\u5831\u53EF\u4EE5\u56DE\u9867",
   // 第二十一波 R5
-  "ai.task.buddy.share": "\u96A8\u6A5F\u5206\u4EAB\u6700\u8FD1\u8B80\u7684",
+  "ai.task.buddy.share": "\u804A\u804A\u6700\u8FD1\u8B80\u7684",
   "ai.task.buddy.grammar": "\u804A\u804A\u6587\u6CD5\u600E\u9EBC\u5B78",
   "ai.task.buddy.writing": "\u60F3\u591A\u5BEB\u4E00\u9EDE\u82F1\u6587",
   "ai.task.buddy.review": "\u4E00\u8D77\u770B\u770B\u6211\u5BEB\u7684",
@@ -2965,9 +2965,9 @@ var zhTW = {
   "buddy.group.yesterday": "\u6628\u5929",
   "buddy.sink": "\u6372\u5230\u6700\u5E95",
   "buddy.nearFull.title": "\u5FEB\u6EFF\u5341\u5247\u4E86",
-  "buddy.nearFull.body": "\u518D\u4E00\u5247\u5C31\u6EFF 10 \u5247\uFF0C\u9019\u6BB5\u5C0D\u8A71\u6703\u81EA\u52D5\u5B58\u5230\u8A0E\u8AD6\u4E32\uFF0C\u65B9\u4FBF\u4E4B\u5F8C\u56DE\u9867\u3002",
+  "buddy.nearFull.body": "\u518D\u4E00\u5247\u5C31\u6703\u628A\u524D 8 \u5247\u6574\u7406\u9032\u8A0E\u8AD6\u4E32\uFF0C\u5C0D\u8A71\u88E1\u53EA\u7559\u6700\u65B0\u5169\u5247\u3002",
   "buddy.nearFull.ok": "\u77E5\u9053\u4E86",
-  "buddy.archived": "\u5DF2\u628A\u9019\u6BB5\u5C0D\u8A71\u7684\u7B2C {from}\u2013{to} \u5247\u5B58\u5230 {path}",
+  "buddy.archived": "\u5167\u5BB9\u5DF2\u6574\u7406\u9032\u8A0E\u8AD6\u4E32\uFF1A{path}",
   "command.buddy.open": "\u548C\u5B78\u7FD2\u5925\u4F34\u804A\u804A"
 };
 
@@ -4369,6 +4369,52 @@ function flushUndoables() {
   sharedQueue.flush();
 }
 
+// src/core/learner/buddySuggestions.ts
+var SUGGESTION_MAX_CHARS = 14;
+var MAX_SUGGESTIONS = 3;
+var LINE_RE = /(?:^|\n)[ \t]*〔接著聊〕[^\n]*(?:\n[\s\S]*)?$/;
+function parseSuggestions(text) {
+  const m2 = /〔接著聊〕([^\n]*)/.exec(text);
+  if (!m2) return [];
+  const out = [];
+  for (const raw of m2[1].split(/[｜|]/)) {
+    const s = raw.trim().replace(/^[\s\-•\d.、]+/, "").trim();
+    if (!s || [...s].length > SUGGESTION_MAX_CHARS * 2 || out.includes(s)) continue;
+    out.push(s);
+    if (out.length === MAX_SUGGESTIONS) break;
+  }
+  return out;
+}
+function stripSuggestions(text) {
+  if (!text.includes("\u3014")) return text;
+  let out = text.replace(LINE_RE, "");
+  const tail = /(?:^|\n)[ \t]*(〔(?:接(?:著(?:聊)?)?)?)$/.exec(out);
+  if (tail) out = out.slice(0, out.length - tail[0].length);
+  return out === text ? text : out.replace(/\s+$/, "");
+}
+function latestSuggestions(thread) {
+  var _a;
+  const turns = liveTurns(thread);
+  for (let i = turns.length - 1; i >= 0; i--) {
+    const t2 = turns[i];
+    if (t2.role !== "assistant") continue;
+    return t2.status === "done" ? (_a = t2.suggestions) != null ? _a : [] : [];
+  }
+  return [];
+}
+function pickTwo(pool, previous, random) {
+  if (pool.length <= 2) return [...pool];
+  const same = (a2) => a2.length === previous.length && a2.every((x3) => previous.includes(x3));
+  for (let tries = 0; tries < 8; tries++) {
+    const rest = [...pool];
+    const pick = [];
+    for (let k = 0; k < 2; k++) pick.push(rest.splice(Math.min(rest.length - 1, Math.floor(random() * rest.length)), 1)[0]);
+    if (!same(pick)) return pick;
+  }
+  const i = pool.indexOf(previous[0]);
+  return [pool[(i + 1) % pool.length], pool[(i + 2) % pool.length]];
+}
+
 // src/core/grammar/catalog.ts
 var STAGE1 = [
   {
@@ -5301,7 +5347,7 @@ function chipsLabel() {
   return t("grammar.chip.label");
 }
 function displayContent(content) {
-  return stripGrammarTrailer(content);
+  return stripSuggestions(stripGrammarTrailer(content));
 }
 function grammarChips(turn) {
   if (turn.role !== "assistant" || turn.taskId !== GRAMMAR_TASK_ID || turn.status !== "done") return [];
@@ -5325,6 +5371,18 @@ function quickTasksToShow(surfaceTasks, get3, ids) {
 }
 function selectionToAttach(attach, selected) {
   return attach === false ? void 0 : selected;
+}
+function resolveQuickItems(items, get3) {
+  const out = [];
+  for (const item of items) {
+    if (typeof item !== "string") {
+      out.push({ label: { text: item.text }, taskId: item.taskId, question: item.question });
+      continue;
+    }
+    const task = get3(item);
+    if (task == null ? void 0 : task.label) out.push({ label: { key: task.label }, taskId: task.id, question: "" });
+  }
+  return out;
 }
 
 // src/ui/chat/ChatPanel.ts
@@ -5669,11 +5727,17 @@ var ChatPanel = class extends import_obsidian9.Component {
     quick.empty();
     this.quickBtns = [];
     const { ai, surface } = this.opts;
-    const tasks = quickTasksToShow(ai.tasks.forSurface(surface), (id2) => ai.tasks.get(id2), (_b = (_a = this.opts).quickTasks) == null ? void 0 : _b.call(_a));
-    for (const task of tasks) {
-      const btn = quick.createEl("button", { cls: "vt-chip", text: t(task.label) });
+    const chosen = (_b = (_a = this.opts).quickTasks) == null ? void 0 : _b.call(_a);
+    const buttons2 = chosen ? resolveQuickItems(chosen, (id2) => ai.tasks.get(id2)) : quickTasksToShow(ai.tasks.forSurface(surface), (id2) => ai.tasks.get(id2)).map((task) => ({
+      label: { key: task.label },
+      taskId: task.id,
+      question: ""
+    }));
+    for (const b of buttons2) {
+      const text = "key" in b.label ? t(b.label.key) : b.label.text;
+      const btn = quick.createEl("button", { cls: "vt-chip", text });
       btn.disabled = this.offline;
-      btn.addEventListener("click", () => this.submit(task.id, ""));
+      btn.addEventListener("click", () => this.submit(b.taskId, b.question, true));
       this.quickBtns.push(btn);
     }
     this.updateBusy();
@@ -5703,13 +5767,14 @@ var ChatPanel = class extends import_obsidian9.Component {
     btn.setAttr("aria-label", t(busy ? "chat.stop" : "chat.send"));
     btn.toggleClass("is-stop", busy);
   }
-  submit(taskId, text) {
+  // `fromButton`: a host-defined button's question; the composer draft stays.
+  submit(taskId, text, fromButton = false) {
     var _a;
     const question = text.trim();
     if (taskId === this.opts.customTaskId && !question) return;
     if (this.busy) return;
     const selection2 = selectionToAttach(this.opts.attachSelection, (_a = this.opts.selection.get()) == null ? void 0 : _a.text);
-    if (question && this.input) {
+    if (question && this.input && !fromButton) {
       this.input.value = "";
       autoGrow(this.input);
       this.opts.state.drafts.delete(this.opts.threadId);
@@ -26460,8 +26525,9 @@ function isGroupCollapsed(key6, overrides, defaults) {
   var _a;
   return (_a = overrides.get(key6)) != null ? _a : !defaults.has(key6);
 }
-var ARCHIVE_SIZE = 10;
-var WARN_AT = ARCHIVE_SIZE - 1;
+var ARCHIVE_TRIGGER = 10;
+var ARCHIVE_TAKE = 8;
+var WARN_AT = ARCHIVE_TRIGGER - 1;
 function userQuestionCount(thread) {
   return liveTurns(thread).filter((turn) => turn.role === "user").length;
 }
@@ -26472,16 +26538,11 @@ function answeredPairs(thread) {
   }
   return out;
 }
-function batchesToArchive(pairCount, saved, size = ARCHIVE_SIZE) {
-  const out = [];
-  for (let start4 = 0; start4 + size <= pairCount; start4 += size) if (!saved.includes(start4)) out.push(start4);
-  return out;
-}
 var stamp = (d) => `${d.getFullYear()}${pad3(d.getMonth() + 1)}${pad3(d.getDate())}${pad3(d.getHours())}${pad3(d.getMinutes())}`;
-function archiveFileName(start4, now2, size = ARCHIVE_SIZE) {
+function archiveFileName(start4, now2, size = ARCHIVE_TAKE) {
   return `Buddy-${start4}_${start4 + size}-${stamp(now2)}.md`;
 }
-function archivePath(folder, start4, now2, size = ARCHIVE_SIZE) {
+function archivePath(folder, start4, now2, size = ARCHIVE_TAKE) {
   const dir = folder.replace(/\/+$/, "");
   return `${dir ? `${dir}/` : ""}${archiveFileName(start4, now2, size)}`;
 }
@@ -26509,7 +26570,7 @@ function renderArchiveNote(input) {
   ];
   for (const p of pairs) {
     const q = ((_a = p.user.question) == null ? void 0 : _a.trim()) || p.user.content;
-    lines4.push(block("\u4F60", q), "", block("\u5925\u4F34", p.assistant.content), "");
+    lines4.push(block("\u4F60", q), "", block("\u5925\u4F34", stripSuggestions(p.assistant.content)), "");
   }
   return `${lines4.join("\n").trimEnd()}
 `;
@@ -26548,7 +26609,9 @@ ${WARM_TONE}
 3. \u3014\u5B78\u7FD2\u8005\u80CC\u666F\u3015\u662F\u4ED6\u7684\u5B78\u7FD2\u7D00\u9304\uFF0C\u53EA\u5728\u6709\u5E6B\u52A9\u6642\u81EA\u7136\u5730\u5F15\u7528\uFF0C\u6C92\u6709\u7684\u8CC7\u6599\u4E0D\u8981\u7DE8\u9020\uFF0C\u4E5F\u4E0D\u8981\u628A\u6578\u5B57\u6574\u4E32\u5FF5\u4E00\u904D\u3002
 4. \u50CF\u804A\u5929\u4E00\u6A23\u56DE\u7B54\uFF0C\u4E0D\u8981\u5BEB\u6210\u9577\u7BC7\u5831\u544A\uFF1B\u4E00\u6B21\u7D66\u4E00\u5169\u500B\u505A\u5F97\u5230\u7684\u65B9\u5411\u5C31\u597D\uFF0C\u7D50\u5C3E\u53EF\u4EE5\u554F\u4ED6\u4E00\u500B\u5C0F\u554F\u984C\uFF0C\u8B93\u5C0D\u8A71\u7E7C\u7E8C\u3002
 5. \u5B78\u751F\u8CBC\u4E0A\u81EA\u5DF1\u5BEB\u7684\u82F1\u6587\u6642\uFF0C\u9019\u662F\u4ED6\u7684\u7DF4\u7FD2\uFF0C\u4E0D\u662F\u8981\u88AB\u8A55\u5206\uFF1A\u5148\u8AAA\u505A\u5F97\u597D\u7684\u5730\u65B9\uFF0C\u518D\u7528\u539F\u53E5\u8209\u4F8B\u8AAA\u54EA\u88E1\u53EF\u4EE5\u66F4\u81EA\u7136\u3001\u70BA\u4EC0\u9EBC\u3002
-6. \u5982\u679C\u4E0A\u4E00\u8F2A\u662F\u4F60\u628A\u4ED6\u6700\u8FD1\u8B80\u904E\u7684\u4E00\u6BB5\u6587\u5B57\u6216\u4E00\u500B\u5B57\u4E1F\u7D66\u4ED6\u3001\u8ACB\u4ED6\u8AAA\u8AAA\u7406\u89E3\uFF0C\u4ED6\u63A5\u8457\u7684\u56DE\u8986\u5C31\u662F\u4ED6\u7684\u7406\u89E3\uFF1A\u5148\u6EAB\u6696\u5730\u80AF\u5B9A\u4ED6\u6293\u5230\u7684\u90E8\u5206\uFF0C\u518D\u81EA\u7136\u5730\u88DC\u5145\u6216\u4FEE\u6B63\uFF0C\u9806\u4FBF\u5E36\u4E00\u500B\u9053\u5730\u7684\u7528\u6CD5\u6216\u4F8B\u53E5\uFF0C\u4E0D\u8981\u50CF\u5728\u6253\u5206\u6578\u3002`;
+6. \u5982\u679C\u4E0A\u4E00\u8F2A\u662F\u4F60\u628A\u4ED6\u6700\u8FD1\u8B80\u904E\u7684\u4E00\u6BB5\u6587\u5B57\u6216\u4E00\u500B\u5B57\u4E1F\u7D66\u4ED6\u3001\u8ACB\u4ED6\u8AAA\u8AAA\u7406\u89E3\uFF0C\u4ED6\u63A5\u8457\u7684\u56DE\u8986\u5C31\u662F\u4ED6\u7684\u7406\u89E3\uFF1A\u5148\u6EAB\u6696\u5730\u80AF\u5B9A\u4ED6\u6293\u5230\u7684\u90E8\u5206\uFF0C\u518D\u81EA\u7136\u5730\u88DC\u5145\u6216\u4FEE\u6B63\uFF0C\u9806\u4FBF\u5E36\u4E00\u500B\u9053\u5730\u7684\u7528\u6CD5\u6216\u4F8B\u53E5\uFF0C\u4E0D\u8981\u50CF\u5728\u6253\u5206\u6578\u3002
+7. \u6BCF\u6B21\u56DE\u7B54\u7684\u6700\u5F8C\uFF0C\u53E6\u8D77\u4E00\u884C\u8F38\u51FA\u4E09\u500B\u53EF\u4EE5\u63A5\u8457\u804A\u7684\u8A71\u984C\uFF0C\u683C\u5F0F\u56FA\u5B9A\u70BA\uFF1A\u3014\u63A5\u8457\u804A\u3015\u8A71\u984C\u4E00\uFF5C\u8A71\u984C\u4E8C\uFF5C\u8A71\u984C\u4E09
+   \u6BCF\u500B\u8A71\u984C 14 \u500B\u4E2D\u6587\u5B57\u4EE5\u5167\uFF0C\u8F15\u9B06\u6709\u8DA3\u3001\u9069\u5408\u7576\u6309\u9215\u6587\u5B57\u3001\u8DDF\u9019\u4E00\u8F2A\u7684\u5167\u5BB9\u76F8\u95DC\uFF1B\u9019\u4E00\u884C\u662F\u7D66\u4ECB\u9762\u7528\u7684\uFF0C\u6B63\u6587\u88E1\u4E0D\u8981\u63D0\u5230\u5B83\u3002`;
 var SELECTION_HEADER3 = `{{#selection}}\u3014\u9078\u53D6\u7684\u6587\u5B57\u3015
 {{selection}}
 
@@ -26579,7 +26642,7 @@ ${EXTRA}`,
   plan: `${SELECTION_HEADER3}\u4EFB\u52D9\uFF1A\u804A\u804A\u63A5\u4E0B\u4F86\u600E\u9EBC\u5B78
 \u4E00\u8D77\u60F3\u63A5\u4E0B\u4F86\u5E7E\u9031\u53EF\u4EE5\u600E\u9EBC\u5B89\u6392\uFF1A\u6BCF\u5929\u5927\u6982\u82B1\u591A\u5C11\u6642\u9593\u3001\u5148\u5C08\u6CE8\u54EA\u4E00\u5169\u4EF6\u4E8B\uFF0C\u4E26\u7559\u4E00\u9EDE\u5F48\u6027\u3002
 ${EXTRA}`,
-  share: `\u4EFB\u52D9\uFF1A\u96A8\u6A5F\u5206\u4EAB\u6700\u8FD1\u8B80\u7684
+  share: `\u4EFB\u52D9\uFF1A\u804A\u804A\u6700\u8FD1\u8B80\u7684
 {{#share}}\u3014\u4ED6\u6700\u8FD1\u8B80\u5230\u7684\u3015
 {{share}}
 
@@ -26688,6 +26751,9 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     // 快速按鈕輪替：第幾輪、滑鼠是否停在按鈕列。
     this.round = 0;
     this.hovering = false;
+    // 建議話題：目前顯示的兩個，以及它們是從哪一組挑的。
+    this.picked = [];
+    this.pickedFrom = "";
     this.chat = null;
     this.chatState = createChatUiState();
     // The open conversation; an id nothing is stored under yet is a new one.
@@ -26716,7 +26782,12 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     this.registerDomEvent(this.chatHost, "mouseleave", () => this.hovering = false);
     this.registerInterval(window.setInterval(() => this.rotateQuick(), ROTATION_MS));
     this.setupSink();
-    this.register(this.plugin.threads.events.on("thread:upsert", (th) => th.anchor.kind === "buddy" && this.renderList()));
+    this.register(this.plugin.threads.events.on("thread:upsert", (th) => {
+      var _a;
+      if (th.anchor.kind !== "buddy") return;
+      this.renderList();
+      if (th.id === this.threadId) (_a = this.chat) == null ? void 0 : _a.refreshQuick();
+    }));
     this.register(this.plugin.threads.events.on("threads:reloaded", () => this.renderList()));
     void this.plugin.threads.ensureLoaded().then(() => {
       var _a, _b;
@@ -26785,12 +26856,21 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     if (label.kind === "yesterday") return t("buddy.group.yesterday");
     return label.md;
   }
-  // ── 快速按鈕：常駐「隨機分享」＋ 六題輪流兩個 ──
+  // ── 快速按鈕：常駐「聊聊最近讀的」＋ 六題輪流兩個 ──
   rotationPool() {
     return [buddyGrammar, buddyWriting, buddyReview, buddyLevel, buddyReading, buddyPlan].map((task) => task.id);
   }
+  // 常駐「聊聊最近讀的」；其餘兩個：最新回答的建議話題（隨機），沒有就退回六個固定話題。
   quickIds() {
-    return [buddyShare.id, ...rotationWindow(this.rotationPool(), this.round)];
+    const pool = latestSuggestions(this.plugin.threads.get(this.threadId));
+    if (!pool.length) return [buddyShare.id, ...rotationWindow(this.rotationPool(), this.round)];
+    const sig = pool.join("|");
+    if (sig !== this.pickedFrom) this.repick(pool);
+    return [buddyShare.id, ...this.picked.map((text) => ({ text, taskId: buddyCustom.id, question: text }))];
+  }
+  repick(pool) {
+    this.pickedFrom = pool.join("|");
+    this.picked = pickTwo(pool, this.picked, Math.random);
   }
   rotateQuick() {
     if (this.disposed || !this.chat) return;
@@ -26798,6 +26878,8 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     const focused = active2 instanceof HTMLTextAreaElement && this.chatHost.contains(active2);
     if (rotationPaused({ hovering: this.hovering, composerFocused: focused })) return;
     this.round++;
+    const pool = latestSuggestions(this.plugin.threads.get(this.threadId));
+    if (pool.length) this.repick(pool);
     this.chat.refreshQuick();
   }
   // ── 沉底按鈕：頁面不在最底時，右下角一顆圓形按鈕 ──
@@ -34437,8 +34519,8 @@ function mergeThreads(local, remote) {
     }
     const newer = pickThreadFields(mine, t2);
     const merged = { ...newer, turns: mergeTurns(mine.turns, t2.turns) };
-    const archived = [.../* @__PURE__ */ new Set([...(_a = mine.archived) != null ? _a : [], ...(_b = t2.archived) != null ? _b : []])].sort((a2, b) => a2 - b);
-    if (archived.length) merged.archived = archived;
+    const archivedCount = Math.max((_a = mine.archivedCount) != null ? _a : 0, (_b = t2.archivedCount) != null ? _b : 0);
+    if (archivedCount) merged.archivedCount = archivedCount;
     byId.set(t2.id, merged);
   }
   return order.map((id2) => byId.get(id2));
@@ -34452,7 +34534,7 @@ function threadsFingerprint(threads) {
         (_a = th.updatedAt) != null ? _a : "",
         (_b = th.rev) != null ? _b : 0,
         (_c = th.deletedAt) != null ? _c : "",
-        ((_d = th.archived) != null ? _d : []).join("+"),
+        (_d = th.archivedCount) != null ? _d : 0,
         ...th.turns.map((t2) => {
           var _a2, _b2;
           return `${t2.id}|${(_a2 = t2.updatedAt) != null ? _a2 : ""}|${(_b2 = t2.deletedAt) != null ? _b2 : ""}|${t2.status}`;
@@ -34996,7 +35078,7 @@ var ThreadService = class {
     // click can't write two block ids into the same paragraph.
     this.creating = /* @__PURE__ */ new Set();
     this.disposed = false;
-    // Keys of the latest 隨機分享 picks, newest last.
+    // Keys of the latest 聊聊最近讀的 picks, newest last.
     this.recentShares = [];
     var _a, _b;
     this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
@@ -35107,6 +35189,10 @@ var ThreadService = class {
       answer.provider = r.provider;
       answer.usage = { input: r.usage.input, output: r.usage.output, cacheRead: r.usage.cacheRead, cacheWrite: r.usage.cacheWrite };
       answer.stop = r.stop;
+      if (p.anchor.kind === "buddy") {
+        const suggestions = parseSuggestions(r.text);
+        if (suggestions.length) answer.suggestions = suggestions;
+      }
     } catch (e) {
       if (this.disposed) return;
       const streamed = (_b = this.partial.get(answer.id)) != null ? _b : "";
@@ -35211,7 +35297,7 @@ var ThreadService = class {
     if (existing && existing.anchor.kind !== "buddy") return null;
     let context = "";
     try {
-      context = (_c = await ((_b = (_a = this.deps).buddyContext) == null ? void 0 : _b.call(_a))) != null ? _c : "";
+      context = (_c = await ((_b = (_a = this.deps).buddyContext) == null ? void 0 : _b.call(_a, req.taskId))) != null ? _c : "";
     } catch (e) {
       console.error("Vocab Tracker: buddy context failed", e);
     }
@@ -35240,27 +35326,34 @@ var ThreadService = class {
     if (item) this.recentShares = rememberShare(this.recentShares, item.key);
     return shareBrief(item);
   }
-  // 對話十則存檔: every full ten answered questions become one note.
-  // Which batches are saved is kept on the thread.
+  // 對話整理: once ten answered groups are alive, the oldest eight are
+  // written to a note and tombstoned (the newest two stay to chat on).
+  // Nothing is deleted when the note can't be written.
   async archiveBuddy(threadId) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     const cfg = this.deps.buddyArchive;
     const thread = this.get(threadId);
     if (!cfg || !thread || thread.anchor.kind !== "buddy") return;
     const pairs = answeredPairs(thread);
-    for (const start4 of batchesToArchive(pairs.length, (_a = thread.archived) != null ? _a : [])) {
-      const now2 = this.clock();
-      const id2 = archiveNoteId(threadId, start4);
-      const path = archivePath(cfg.folder(), start4, now2);
-      const taken = ((_b = cfg.hasNote) == null ? void 0 : _b.call(cfg, id2)) || cfg.exists(path);
-      if (!taken) {
-        const batch = pairs.slice(start4, start4 + ARCHIVE_SIZE);
-        await cfg.create(path, renderArchiveNote({ threadId, start: start4, pairs: batch, now: now2 }));
-        (_c = cfg.onSaved) == null ? void 0 : _c.call(cfg, path, start4, start4 + ARCHIVE_SIZE);
-      }
-      thread.archived = [...(_d = thread.archived) != null ? _d : [], start4].sort((a2, b) => a2 - b);
-      this.changed(thread);
+    if (pairs.length < ARCHIVE_TRIGGER) return;
+    const batch = pairs.slice(0, ARCHIVE_TAKE);
+    const start4 = (_a = thread.archivedCount) != null ? _a : 0;
+    const now2 = this.clock();
+    const id2 = archiveNoteId(threadId, start4);
+    const path = archivePath(cfg.folder(), start4, now2, ARCHIVE_TAKE);
+    if (!(((_b = cfg.hasNote) == null ? void 0 : _b.call(cfg, id2)) || cfg.exists(path))) {
+      await cfg.create(path, renderArchiveNote({ threadId, start: start4, pairs: batch, now: now2 }));
+      (_c = cfg.onSaved) == null ? void 0 : _c.call(cfg, path, start4, start4 + ARCHIVE_TAKE);
     }
+    const stamp2 = this.nowIso();
+    for (const p of batch) {
+      for (const turn of [p.user, p.assistant]) {
+        turn.deletedAt = stamp2;
+        turn.updatedAt = stamp2;
+      }
+    }
+    thread.archivedCount = start4 + ARCHIVE_TAKE;
+    this.changed(thread);
   }
   async retryBuddy(threadId, turnId) {
     const question = this.dropFailedRound(this.get(threadId), turnId);
@@ -43209,7 +43302,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       notes: this.notes,
       anchors: this.anchors,
       // 學習夥伴 (規劃書 15 §7.3): what the buddy knows about the learner.
-      buddyContext: async () => {
+      buddyContext: async (taskId) => {
         var _a, _b;
         const latest = await ((_a = this.report) == null ? void 0 : _a.latest());
         const md = latest ? (_b = await this.readNote(latest.path)) != null ? _b : "" : "";
@@ -43217,7 +43310,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
           var _a2;
           return (_a2 = this.store.entries.find((e) => e.id === id2)) == null ? void 0 : _a2.word;
         };
-        const recent = recentDiscussions(this.threads.allThreads(), wordOf, /* @__PURE__ */ new Date());
+        const recent = taskId === "buddy.share" || taskId === "buddy.custom" ? recentDiscussions(this.threads.allThreads(), wordOf, /* @__PURE__ */ new Date()) : [];
         return buddyContext(this.learnerModel.snapshot(), md, recent);
       },
       // 隨機分享最近讀的: paragraphs discussed and words touched in the last two weeks.
@@ -43236,7 +43329,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
         exists: (p) => this.vault.exists(p),
         create: (p, c2) => this.vault.create(p, c2),
         hasNote: (id2) => this.vault.findManaged("ai-note", id2) !== null,
-        onSaved: (path, start4, end) => new import_obsidian73.Notice(t("buddy.archived", { from: start4 + 1, to: end, path }))
+        onSaved: (path) => new import_obsidian73.Notice(t("buddy.archived", { path }))
       },
       onAsked: (e) => {
         var _a;

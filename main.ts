@@ -332,11 +332,12 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       notes: this.notes,
       anchors: this.anchors,
       // 學習夥伴 (規劃書 15 §7.3): what the buddy knows about the learner.
-      buddyContext: async () => {
+      buddyContext: async (taskId) => {
         const latest = await this.report?.latest();
         const md = latest ? ((await this.readNote(latest.path)) ?? "") : "";
         const wordOf = (id: string) => this.store.entries.find((e) => e.id === id)?.word;
-        const recent = recentDiscussions(this.threads.allThreads(), wordOf, new Date());
+        // 最近討論只在「聊聊最近讀的」與自己輸入／點建議話題時附上。
+        const recent = taskId === "buddy.share" || taskId === "buddy.custom" ? recentDiscussions(this.threads.allThreads(), wordOf, new Date()) : [];
         return buddyContext(this.learnerModel.snapshot(), md, recent);
       },
       // 隨機分享最近讀的: paragraphs discussed and words touched in the last two weeks.
@@ -355,7 +356,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         exists: (p) => this.vault.exists(p),
         create: (p, c) => this.vault.create(p, c),
         hasNote: (id) => this.vault.findManaged("ai-note", id) !== null,
-        onSaved: (path, start, end) => new Notice(t("buddy.archived", { from: start + 1, to: end, path })),
+        onSaved: (path) => new Notice(t("buddy.archived", { path })),
       },
       onAsked: (e) => this.learner?.recordAsk(e),
     });

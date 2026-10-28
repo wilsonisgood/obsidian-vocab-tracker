@@ -1,3 +1,4 @@
+import { stripSuggestions } from "./buddySuggestions";
 import { liveTurns, pairTurns, type Thread, type Turn } from "../model/thread";
 
 // 學習夥伴頁面的純邏輯：對話清單依日期分組、十則存檔、第 9 則提示。
@@ -59,10 +60,11 @@ export function isGroupCollapsed(key: string, overrides: ReadonlyMap<string, boo
   return overrides.get(key) ?? !defaults.has(key);
 }
 
-// ── 十則存檔 ────────────────────────────────────────────────────────
+// ── 對話整理：活著的問答滿 10 組，把最舊的 8 組存成筆記並刪掉 ──────────
 
-export const ARCHIVE_SIZE = 10;
-export const WARN_AT = ARCHIVE_SIZE - 1;
+export const ARCHIVE_TRIGGER = 10;
+export const ARCHIVE_TAKE = 8;
+export const WARN_AT = ARCHIVE_TRIGGER - 1;
 
 export function userQuestionCount(thread: Thread | undefined): number {
   return liveTurns(thread).filter((turn) => turn.role === "user").length;
@@ -82,21 +84,14 @@ export function answeredPairs(thread: Thread | undefined): ArchivePair[] {
   return out;
 }
 
-// Batch starts (0, 10, 20…) whose full ten pairs exist and aren't saved yet.
-export function batchesToArchive(pairCount: number, saved: readonly number[], size = ARCHIVE_SIZE): number[] {
-  const out: number[] = [];
-  for (let start = 0; start + size <= pairCount; start += size) if (!saved.includes(start)) out.push(start);
-  return out;
-}
-
 const stamp = (d: Date) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}`;
 
-// 「Buddy-0_10-202610281144.md」
-export function archiveFileName(start: number, now: Date, size = ARCHIVE_SIZE): string {
+// 「Buddy-0_8-202610281144.md」: start = groups already tidied (running count).
+export function archiveFileName(start: number, now: Date, size = ARCHIVE_TAKE): string {
   return `Buddy-${start}_${start + size}-${stamp(now)}.md`;
 }
 
-export function archivePath(folder: string, start: number, now: Date, size = ARCHIVE_SIZE): string {
+export function archivePath(folder: string, start: number, now: Date, size = ARCHIVE_TAKE): string {
   const dir = folder.replace(/\/+$/, "");
   return `${dir ? `${dir}/` : ""}${archiveFileName(start, now, size)}`;
 }
@@ -111,6 +106,7 @@ function block(label: string, text: string): string {
 }
 
 // The saved note: frontmatter, title, date, then 你／夥伴 for each pair.
+// The 〔接著聊〕 line is left out.
 export function renderArchiveNote(input: {
   threadId: string;
   start: number;
@@ -130,12 +126,10 @@ export function renderArchiveNote(input: {
   ];
   for (const p of pairs) {
     const q = p.user.question?.trim() || p.user.content;
-    lines.push(block("你", q), "", block("夥伴", p.assistant.content), "");
+    lines.push(block("你", q), "", block("夥伴", stripSuggestions(p.assistant.content)), "");
   }
   return `${lines.join("\n").trimEnd()}\n`;
 }
-
-// ── 第 9 則的提示：一天一次 ─────────────────────────────────────────
 
 // `questionNumber`: which question the one just sent is.
 export function shouldWarnNinth(questionNumber: number, lastWarnedDay: string | null, today: string): boolean {

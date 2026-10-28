@@ -8,7 +8,7 @@ import { FakeAi, result, render, type Script } from "./fakes";
 
 function setup(
   script: Script = async () => result("ok"),
-  buddyContext?: () => Promise<string>,
+  buddyContext?: (taskId: string) => Promise<string>,
   extra: Partial<ConstructorParameters<typeof ThreadService>[0]> = {}
 ) {
   const store = new VocabStore({ entries: [] }, async () => {});
@@ -97,25 +97,54 @@ describe("buddy.share", () => {
   });
 });
 
-describe("buddy ten-question archive", () => {
-  function withArchive(over: { exists?: (p: string) => boolean; hasNote?: (id: string) => boolean } = {}) {
+describe("buddy context by task", () => {
+  it("passes the task id to buddyContext", async () => {
+    const seen: string[] = [];
+    const { threads } = setup(undefined, async (taskId) => (seen.push(taskId), ""));
+    const id = (await threads.askBuddy(null, { taskId: "buddy.grammar" })) as string;
+    await threads.askBuddy(id, { taskId: "buddy.custom", question: "q" });
+    expect(seen).toEqual(["buddy.grammar", "buddy.custom"]);
+  });
+});
+
+describe("buddy suggestions", () => {
+  it("parses the 〔接著聊〕 line into the answer turn, keeping the raw text", async () => {
+    const { threads } = setup(async () => result("好的。\n〔接著聊〕貓的英文｜點餐用語｜夢想旅行"));
+    const id = (await threads.askBuddy(null, { taskId: "buddy.custom", question: "q" })) as string;
+    const answer = threads.get(id)?.turns[1];
+    expect(answer?.suggestions).toEqual(["貓的英文", "點餐用語", "夢想旅行"]);
+    expect(answer?.content).toContain("〔接著聊〕");
+  });
+  it("no line, no suggestions", async () => {
+    const { threads } = setup();
+    const id = (await threads.askBuddy(null, { taskId: "buddy.custom", question: "q" })) as string;
+    expect(threads.get(id)?.turns[1].suggestions).toBeUndefined();
+  });
+});
+
+describe("buddy archive (oldest 8 of 10 live groups)", () => {
+  function withArchive(over: { exists?: (p: string) => boolean; hasNote?: (id: string) => boolean; fail?: boolean } = {}) {
     const files = new Map<string, string>();
-    const saved: [string, number, number][] = [];
+    const saved: string[] = [];
     const s = setup(undefined, undefined, {
       buddyArchive: {
         folder: () => "vocab-list/討論串",
         exists: over.exists ?? ((p) => files.has(p)),
-        create: async (p, c) => void files.set(p, c),
+        create: async (p, c) => {
+          if (over.fail) throw new Error("disk full");
+          files.set(p, c);
+        },
         hasNote: over.hasNote,
-        onSaved: (p, a, b) => saved.push([p, a, b]),
+        onSaved: (p) => saved.push(p),
       },
     });
     return { ...s, files, saved };
   }
   const ask = (threads: ThreadService, id: string | null, n: number) => threads.askBuddy(id, { taskId: "buddy.custom", question: `q${n}` });
+  const live = (threads: ThreadService, id: string) => threads.get(id)?.turns.filter((t) => !t.deletedAt && t.role === "user").map((t) => t.question);
   const flush = () => new Promise((r) => setTimeout(r, 0));
 
-  it("saves questions 1–10 once, then 11–20, not before", async () => {
+  it("waits for 10, saves and deletes the oldest 8, keeps the newest 2, then counts on", async () => {
     const { threads, files, saved } = withArchive();
     const id = (await ask(threads, null, 0)) as string;
     for (let n = 1; n < 9; n++) await ask(threads, id, n);
@@ -124,24 +153,39 @@ describe("buddy ten-question archive", () => {
     await ask(threads, id, 9);
     await flush();
     expect(saved).toHaveLength(1);
-    expect(saved[0][0]).toMatch(/^vocab-list\/討論串\/Buddy-0_10-\d{12}\.md$/);
-    expect([saved[0][1], saved[0][2]]).toEqual([0, 10]);
-    expect([...files.values()][0]).toContain("**你**：q9");
-    expect(threads.get(id)?.archived).toEqual([0]);
-    await ask(threads, id, 10);
+    expect(saved[0]).toMatch(/^vocab-list\/討論串\/Buddy-0_8-\d{12}\.md$/);
+    const note = [...files.values()][0];
+    expect(note).toContain("**你**：q0");
+    expect(note).toContain("**你**：q7");
+    expect(note).not.toContain("**你**：q8");
+    expect(live(threads, id)).toEqual(["q8", "q9"]);
+    expect(threads.get(id)?.archivedCount).toBe(8);
+    // tombstoned, not removed
+    expect(threads.get(id)?.turns).toHaveLength(20);
+    for (let n = 10; n < 18; n++) await ask(threads, id, n);
     await flush();
-    expect(files.size).toBe(1);
-    for (let n = 11; n < 20; n++) await ask(threads, id, n);
-    await flush();
-    expect(saved.map((x) => [x[1], x[2]])).toEqual([[0, 10], [10, 20]]);
+    expect(saved).toHaveLength(2);
+    expect(saved[1]).toMatch(/Buddy-8_16-/);
+    expect(live(threads, id)).toEqual(["q16", "q17"]);
+    expect(threads.get(id)?.archivedCount).toBe(16);
   });
 
-  it("doesn't rewrite a batch already marked saved, and skips one another device saved", async () => {
+  it("deletes nothing when the note can't be written", async () => {
+    const { threads, files } = withArchive({ fail: true });
+    const id = (await ask(threads, null, 0)) as string;
+    for (let n = 1; n < 10; n++) await ask(threads, id, n);
+    await flush();
+    expect(files.size).toBe(0);
+    expect(live(threads, id)).toHaveLength(10);
+    expect(threads.get(id)?.archivedCount).toBeUndefined();
+  });
+
+  it("doesn't rewrite a note that already exists, but still tidies the chat", async () => {
     const { threads, files } = withArchive({ hasNote: () => true });
     const id = (await ask(threads, null, 0)) as string;
     for (let n = 1; n < 10; n++) await ask(threads, id, n);
     await flush();
     expect(files.size).toBe(0);
-    expect(threads.get(id)?.archived).toEqual([0]);
+    expect(live(threads, id)).toEqual(["q8", "q9"]);
   });
 });

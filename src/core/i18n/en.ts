@@ -994,7 +994,7 @@ export const en = {
   "report.review.empty": "No weekly reports in this period yet",
 
   // 第二十一波 R5
-  "ai.task.buddy.share": "Share what I read lately",
+  "ai.task.buddy.share": "Chat about what I read lately",
   "ai.task.buddy.grammar": "How to learn grammar",
   "ai.task.buddy.writing": "Write more English",
   "ai.task.buddy.review": "Look at my writing",
@@ -1011,8 +1011,8 @@ export const en = {
   "buddy.group.yesterday": "Yesterday",
   "buddy.sink": "Scroll to bottom",
   "buddy.nearFull.title": "Almost ten",
-  "buddy.nearFull.body": "One more and this chat reaches 10 questions. It will be saved to the discussions folder so you can look back on it.",
+  "buddy.nearFull.body": "One more and the first 8 questions will be tidied into the discussions folder, leaving only the latest two in this chat.",
   "buddy.nearFull.ok": "Got it",
-  "buddy.archived": "Saved questions {from}–{to} of this chat to {path}",
+  "buddy.archived": "Tidied into the discussions folder: {path}",
   "command.buddy.open": "Chat with your learning buddy",
 } as const;
