@@ -111,6 +111,10 @@ function makePlugin(entries: VocabEntry[], threads: Record<string, unknown> = {}
   const events = new TypedEmitter<{ "data:changed": unknown }>();
   return {
     store: { entries, events },
+    // 1030 #3: no 語境意思 in these tests.
+    noteGlosses: { onReady: () => () => {} },
+    learner: { events: new TypedEmitter<{ "gloss:change": unknown }>() },
+    glossInActiveNote: () => undefined,
     app: {
       workspace: {
         on: (_name: string, fn: () => void) => {

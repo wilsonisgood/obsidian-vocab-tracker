@@ -3,6 +3,7 @@ import { diaryWrite } from "./diary";
 import { DNA_TASKS } from "./dna";
 import { EMOJI_TASKS } from "./emoji";
 import { FAMILY_TASKS } from "./family";
+import { GLOSS_TASKS } from "./gloss";
 import { GRAMMAR_TASKS as GRAMMAR_EXPLAIN_TASKS } from "./grammarExplain";
 import { GRAMMAR_TASKS as GRAMMAR_GRADE_TASKS } from "./grammarGrade";
 import { GRAMMAR_TASKS as GRAMMAR_QUESTION_TASKS } from "./grammarQuestions";
@@ -66,6 +67,7 @@ export function defaultTaskRegistry(): TaskRegistry {
     ...GRAMMAR_GRADE_TASKS,
     ...PRACTICE_TASKS,
     ...PARAPHRASE_TASKS,
+    ...GLOSS_TASKS,
     diaryWrite,
     reportAdvise,
     reportAnalyze,

@@ -4,7 +4,7 @@ import type { GrammarAttempt, GrammarQuestion } from "../../core/model/grammar";
 import { localDayOf, normalizePickKey, readingId, sortKinds } from "../../core/learner/reading";
 import { asksFromThreads } from "../../core/learner/asks";
 import type { Thread } from "../../core/model/thread";
-import type { AskEvent, DiaryPick, DiaryPickKind, LearnEvent, LearnerShard, MistakeItem, PoolItem, ReadingKind, ReadingVisit, Track, WordTouch } from "../../core/model/learner";
+import type { AskEvent, DiaryPick, DiaryPickKind, LearnEvent, LearnerShard, MistakeItem, ParagraphGloss, PoolItem, ReadingKind, ReadingVisit, Track, WordTouch } from "../../core/model/learner";
 import type { PracticeQuestion, ScenarioTrack } from "../../core/model/practice";
 import { isCefrTier, type CefrTier } from "../../core/wordlists/cefr";
 import type { StoragePort } from "../../core/ports";
@@ -32,6 +32,7 @@ export interface LearnerEvents {
   "mistake:change": MistakeItem;
   "filter:change": Track;
   "question:upsert": PracticeQuestion[];
+  "gloss:change": ParagraphGloss;
   // The in-memory data was replaced by a merge with the disk copy (sync).
   "learner:reloaded": void;
 }
@@ -279,6 +280,23 @@ export class LearnerStore {
       changed = true;
     }
     if (changed) this.scheduleWrite();
+  }
+
+  // ── 語境意思 (1030 #3) ─────────────────────────────────────────
+
+  // id = paragraphHash of the paragraph's text.
+  gloss(id: string): ParagraphGloss | undefined {
+    return (this.data.glosses ?? []).find((g) => g.id === id);
+  }
+
+  glosses(): readonly ParagraphGloss[] {
+    return this.data.glosses ?? [];
+  }
+
+  upsertGloss(g: ParagraphGloss): void {
+    this.upsert((this.data.glosses ??= []), g);
+    this.events.emit("gloss:change", g);
+    this.scheduleWrite();
   }
 
   // ── Migration ─────────────────────────────────────────────────

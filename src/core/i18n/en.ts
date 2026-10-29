@@ -789,6 +789,8 @@ export const en = {
   "practice.vocab.quickDue": "Due today",
   "practice.vocab.quickRecent": "Recently added (7 days)",
   "practice.player.skip": "Skip",
+  "row.gloss.inNote": "Meaning in this note",
+  "wordPage.glosses": "Meaning in each note",
   "practice.player.hint": "💡 Hint",
   "practice.player.next": "Next",
   "practice.player.right": "✓ Correct",

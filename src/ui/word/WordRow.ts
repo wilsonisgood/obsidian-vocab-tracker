@@ -31,6 +31,10 @@ import type { WordTab, WordUi } from "./wordUi";
 export type ExpandState = "collapsed" | "half" | "full";
 
 export interface RowOptions {
+  // 1030 #3: the word's 語境意思 in the note in front. When there is one,
+  // the Info screen shows only it (the dictionary meanings and the other
+  // notes' stay on the word page).
+  gloss?(entry: VocabEntry): { pos?: string; zh: string; en: string } | undefined;
   // Next-review date chip in the header (dashboard, 設計稿 L1). Off in the
   // narrow sidebar, where the header is already crowded.
   showDue?: boolean;
@@ -404,7 +408,15 @@ export function renderVocabRow(
     // 規格 #12/1009 #1: Info 畫面只留英文定義、中文定義（可編輯），下面是程度
     // 標籤（唯讀 chip）— 音標、同義字、反義字、例句、文法提示、出處、複習時間
     // 都到單字頁看（src/ui/blocks/wordHeader.ts）。Sheet 跟 row 完全同一份。
-    if (!loadingSheet) {
+    const gloss = opts.gloss?.(entry);
+    if (gloss) {
+      const box = body.createDiv({ cls: "vt-row-gloss" });
+      const zh = box.createDiv({ cls: "vt-row-gloss-zh" });
+      if (gloss.pos) zh.createSpan({ cls: "vt-row-gloss-pos", text: gloss.pos });
+      zh.createSpan({ text: gloss.zh });
+      if (gloss.en) box.createDiv({ cls: "vt-row-gloss-en", text: gloss.en });
+      box.createDiv({ cls: "vt-row-gloss-note", text: t("row.gloss.inNote") });
+    } else if (!loadingSheet) {
       mkField(t("row.field.definition"), "definition", { multiline: true });
       mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
     }

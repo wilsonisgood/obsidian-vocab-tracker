@@ -74,6 +74,23 @@ export interface WordCefr {
   at: string; // ISO
 }
 
+// 1030 #3 語境意思: what the words of one paragraph mean there, glossed by
+// the AI once after the learner discussed the paragraph (or a word in it).
+// Keyed by the paragraph's text hash (core/text/hash.ts paragraphHash), so
+// renaming the note keeps it and editing the paragraph makes a new one.
+export interface GlossWord {
+  w: string; // lowercased, as it appears in the paragraph
+  pos?: string;
+  zh: string; // 在這段裡的中文意思
+  en: string; // short English explanation for this context
+}
+export interface ParagraphGloss {
+  id: string; // paragraphHash(text)
+  path: string; // the note it was glossed in (informational)
+  words: GlossWord[]; // empty: glossed, nothing worth glossing
+  at: string; // ISO
+}
+
 export interface LearnerShard {
   events: LearnEvent[];
   pool: PoolItem[];
@@ -90,6 +107,8 @@ export interface LearnerShard {
   wordTouches?: WordTouch[];
   // 第二十三波 R7: levels the AI gave to words outside the CEFR-J list.
   wordCefr?: WordCefr[];
+  // 1030 #3; absent in older files.
+  glosses?: ParagraphGloss[];
 }
 
 export const TRACKS: readonly Track[] = ["grammar", "poly", "vocab", "mix", "para"];

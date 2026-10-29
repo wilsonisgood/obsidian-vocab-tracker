@@ -7,9 +7,11 @@ import type {
   AskEvent,
   DiaryPick,
   FocusRef,
+  GlossWord,
   LearnEvent,
   LearnerShard,
   MistakeItem,
+  ParagraphGloss,
   PoolItem,
   PoolRemoveReason,
   ReadingKind,
@@ -41,7 +43,7 @@ function ms(iso: string | undefined): number {
 }
 
 export function emptyLearnerShard(): LearnerShard {
-  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [], asks: [], wordTouches: [], wordCefr: [] };
+  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [], asks: [], wordTouches: [], wordCefr: [], glosses: [] };
 }
 
 const str = (v: unknown): v is string => typeof v === "string" && v !== "";
@@ -240,6 +242,28 @@ function mergeWordCefr(a: readonly WordCefr[], b: readonly WordCefr[]): WordCefr
   return [...map.values()].sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
 }
 
+function normalizeGloss(raw: unknown): ParagraphGloss | null {
+  if (!isObj(raw) || !str(raw.id) || typeof raw.path !== "string" || !isIso(raw.at) || !Array.isArray(raw.words)) return null;
+  const words: GlossWord[] = [];
+  for (const w of raw.words) {
+    if (!isObj(w) || !str(w.w) || typeof w.zh !== "string" || typeof w.en !== "string") continue;
+    const g: GlossWord = { w: w.w.toLowerCase(), zh: w.zh, en: w.en };
+    if (str(w.pos)) g.pos = w.pos;
+    words.push(g);
+  }
+  return { id: raw.id, path: raw.path, words, at: raw.at };
+}
+
+// The newer gloss of a paragraph wins.
+function mergeGlosses(a: readonly ParagraphGloss[], b: readonly ParagraphGloss[]): ParagraphGloss[] {
+  const map = new Map<string, ParagraphGloss>();
+  for (const g of [...a, ...b]) {
+    const cur = map.get(g.id);
+    if (!cur || ms(g.at) > ms(cur.at)) map.set(g.id, g);
+  }
+  return [...map.values()].sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
+}
+
 function mergeAsks(a: readonly AskEvent[], b: readonly AskEvent[]): AskEvent[] {
   const map = new Map<string, AskEvent>();
   for (const e of [...a, ...b]) {
@@ -295,6 +319,7 @@ export function normalizeLearnerShard(raw: unknown): LearnerShard {
     asks: normList(s.asks, normalizeAsk),
     wordTouches: normList(s.wordTouches, normalizeTouch),
     wordCefr: mergeWordCefr(normList(s.wordCefr, normalizeWordCefr), []),
+    glosses: mergeGlosses(normList(s.glosses, normalizeGloss), []),
   };
 }
 
@@ -324,6 +349,7 @@ export function mergeLearner(local: LearnerShard, remote: LearnerShard): Learner
     asks: mergeAsks(local.asks ?? [], remote.asks ?? []),
     wordTouches: mergeTouches(local.wordTouches ?? [], remote.wordTouches ?? []),
     wordCefr: mergeWordCefr(local.wordCefr ?? [], remote.wordCefr ?? []),
+    glosses: mergeGlosses(local.glosses ?? [], remote.glosses ?? []),
   };
 }
 
@@ -340,6 +366,7 @@ export function learnerFingerprint(shard: LearnerShard): string {
   for (const a of shard.asks ?? []) rows.push(`a|${a.id}|${a.ok}`);
   for (const w of shard.wordTouches ?? []) rows.push(`w|${w.id}|${w.lookup}|${w.pronounce}|${w.saved}`);
   for (const c of shard.wordCefr ?? []) rows.push(`c|${c.id}|${c.level}|${c.at}`);
+  for (const g of shard.glosses ?? []) rows.push(`g|${g.id}|${g.at}`);
   return rows.sort().join("\n");
 }
 
@@ -358,6 +385,7 @@ export function pruneLearner(shard: LearnerShard, now: number): LearnerShard {
     asks: (shard.asks ?? []).filter((a) => now - ms(a.at) < EVENT_TTL_MS),
     wordTouches: (shard.wordTouches ?? []).filter((w) => w.day >= touchCutoff),
     wordCefr: shard.wordCefr ?? [],
+    glosses: shard.glosses ?? [],
   };
 }
 

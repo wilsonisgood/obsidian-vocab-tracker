@@ -32,7 +32,7 @@ export { hasDictionaryData };
 // 1010-2 W new strings (move into i18n at integration).
 export const WORD_BLOCK_LANG = "vocab-word";
 
-type Key = "missing" | "speak" | "source" | "sourceTitle" | "dueNew" | "dueToday" | "dueOn" | "reviewed" | "review";
+type Key = "missing" | "speak" | "source" | "sourceTitle" | "dueNew" | "dueToday" | "dueOn" | "reviewed" | "review" | "glosses";
 
 function l(key: Key, vars?: Record<string, string | number>): string {
   return t(`wordPage.${key}`, vars);
@@ -103,6 +103,10 @@ export interface WordHeaderHost {
   // blocks (renderStrand's own behavior when `onPart` finds nothing to
   // call).
   openMorpheme?(morphemeId: string): unknown;
+  // 1030 #3: the word's 語境意思 in every note it was glossed in (plugin.glosses).
+  // Optional: without it the list isn't drawn.
+  glosses?: { allFor(word: string): { path: string; gloss: { pos?: string; zh: string; en: string } }[] };
+  openNote?(path: string, where?: "current" | "tab"): unknown;
 }
 
 // ── emoji ／ 拆字（09 §7.1, A7）─────────────────────────────────────
@@ -269,6 +273,29 @@ class WordHeaderBlock extends MarkdownRenderChild {
     this.disposed = true;
   }
 
+  // 1030 #3: 「在各篇的意思」 — one line per note (the newest gloss of each).
+  private renderGlosses(root: HTMLElement, entry: VocabEntry): void {
+    const all = this.host.glosses?.allFor(entry.word) ?? [];
+    const seen = new Set<string>();
+    const rows = all.filter((g) => !seen.has(g.path) && seen.add(g.path));
+    if (!rows.length) return;
+    const box = root.createDiv({ cls: "vt-wh-glosses" });
+    box.createDiv({ cls: "vt-wh-glosses-title", text: l("glosses") });
+    for (const { path, gloss } of rows) {
+      const row = box.createDiv({ cls: "vt-wh-gloss" });
+      const title = (path.split("/").pop() ?? path).replace(/\.md$/i, "");
+      const link = row.createSpan({ cls: "vt-wh-gloss-note", text: title });
+      const open = this.host.openNote;
+      if (open) {
+        link.addClass("is-link");
+        link.addEventListener("click", () => void open.call(this.host, path, "current"));
+      }
+      const zh = row.createSpan({ cls: "vt-wh-gloss-zh", text: gloss.pos ? `${gloss.pos} ${gloss.zh}` : gloss.zh });
+      if (gloss.en) zh.setAttr("title", gloss.en);
+      if (gloss.en) row.createDiv({ cls: "vt-wh-gloss-en", text: gloss.en });
+    }
+  }
+
   private render(): void {
     if (this.disposed) return;
     const el = this.containerEl;
@@ -298,6 +325,7 @@ class WordHeaderBlock extends MarkdownRenderChild {
       if (vis.definition) this.field(defs, entry, "definition", t("row.field.definition"), { multiline: true });
       if (vis.definitionZh) this.field(defs, entry, "definitionZh", t("row.field.definitionZh"), { multiline: true });
     }
+    this.renderGlosses(root, entry);
 
     const chips = root.createDiv({ cls: "vt-wh-chips" });
     if (entry.source?.path) this.renderSource(chips, entry, entry.source.path, entry.source.line);

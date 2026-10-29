@@ -64,6 +64,12 @@ export class WordSheet extends Component implements SheetTarget {
 
   onload(): void {
     this.register(this.plugin.store.events.on("data:changed", () => this.onDataChanged()));
+    // 1030 #3: the note's 語境意思 arrived (read, or just glossed).
+    const redrawWord = () => {
+      if (this.isOpen && this.view?.kind === "word") this.draw();
+    };
+    this.register(this.plugin.noteGlosses.onReady(redrawWord));
+    this.register(this.plugin.learner.events.on("gloss:change", redrawWord));
     // Another note in front (incl. 「跳到原文」 from the card): the sheet
     // belonged to the previous one.
     this.registerEvent(this.plugin.app.workspace.on("file-open", () => this.close()));
@@ -206,6 +212,7 @@ export class WordSheet extends Component implements SheetTarget {
         },
         onDeleted: () => this.close(),
         onJump: () => this.close(),
+        gloss: (e) => this.plugin.glossInActiveNote(e.word),
         onViewChange: (tab) => this.applyPaneHeight(tab),
       }
     );
@@ -235,6 +242,7 @@ export class WordSheet extends Component implements SheetTarget {
         ui: this.wordUi,
         variant: "sheet",
         preview: { ctx: view.ctx ?? {}, dict: dict.data ?? null, status: dict.status },
+        gloss: (e) => this.plugin.glossInActiveNote(e.word),
         onViewChange: (tab) => this.applyPaneHeight(tab),
       }
     );

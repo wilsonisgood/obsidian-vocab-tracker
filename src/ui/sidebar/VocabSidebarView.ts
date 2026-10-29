@@ -167,6 +167,9 @@ export class VocabSidebarView extends ItemView {
       })
     );
     this.register(threads.events.on("threads:reloaded", () => this.updateWordChips()));
+    // 1030 #3: a paragraph got its 語境意思 / the note's ones were read.
+    this.register(this.plugin.learner.events.on("gloss:change", () => this.redrawWords()));
+    this.register(this.plugin.noteGlosses.onReady(() => this.redrawWords()));
     void threads.ensureLoaded().then(() => this.updateWordChips());
 
     const { vault } = this.app;
@@ -1022,6 +1025,7 @@ export class VocabSidebarView extends ItemView {
       },
       openWordPage: (entry: VocabEntry) => void this.plugin.openWordPage(entry.id),
       locate: (entry: VocabEntry) => void this.plugin.locator.locate(entry),
+      gloss: (entry: VocabEntry) => this.plugin.glossInActiveNote(entry.word),
     };
   }
 

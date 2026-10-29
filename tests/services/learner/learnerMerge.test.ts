@@ -153,3 +153,22 @@ describe("reading log merge / prune", () => {
     expect(n.diaryPicks).toEqual([]);
   });
 });
+
+describe("語境意思 merge (1030 #3)", () => {
+  const g = (at: string, zh: string) => ({ id: "h1", path: "a.md", at, words: [{ w: "trade", zh, en: "x" }] });
+
+  it("keeps the newer gloss of a paragraph and survives normalize / prune", () => {
+    const a: LearnerShard = { ...emptyLearnerShard(), glosses: [g("2026-10-01T00:00:00.000Z", "貿易")] };
+    const b: LearnerShard = { ...emptyLearnerShard(), glosses: [g("2026-10-02T00:00:00.000Z", "交換")] };
+    const merged = mergeLearner(a, b);
+    expect(merged.glosses).toEqual([g("2026-10-02T00:00:00.000Z", "交換")]);
+    expect(learnerFingerprint(merged)).not.toBe(learnerFingerprint(a));
+    expect(normalizeLearnerShard(JSON.parse(JSON.stringify(merged))).glosses).toEqual(merged.glosses);
+    expect(pruneLearner(merged, Date.parse("2027-10-01T00:00:00.000Z")).glosses).toEqual(merged.glosses);
+  });
+
+  it("drops malformed rows and words", () => {
+    const raw = { glosses: [{ id: "h1", path: "a.md", at: "2026-10-01T00:00:00.000Z", words: [{ w: "Trade", zh: "換", en: "" }, { w: "", zh: "x", en: "" }] }, { id: "", path: "", at: "x", words: [] }] };
+    expect(normalizeLearnerShard(raw).glosses).toEqual([{ id: "h1", path: "a.md", at: "2026-10-01T00:00:00.000Z", words: [{ w: "trade", zh: "換", en: "" }] }]);
+  });
+});

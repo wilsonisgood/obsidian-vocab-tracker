@@ -1783,6 +1783,8 @@ var en = {
   "practice.vocab.quickDue": "Due today",
   "practice.vocab.quickRecent": "Recently added (7 days)",
   "practice.player.skip": "Skip",
+  "row.gloss.inNote": "Meaning in this note",
+  "wordPage.glosses": "Meaning in each note",
   "practice.player.hint": "\u{1F4A1} Hint",
   "practice.player.next": "Next",
   "practice.player.right": "\u2713 Correct",
@@ -2745,6 +2747,8 @@ var zhTW = {
   "practice.vocab.quickDue": "\u4ECA\u65E5\u5230\u671F",
   "practice.vocab.quickRecent": "\u6700\u8FD1\u6536\u9304\uFF087 \u5929\u5167\uFF09",
   "practice.player.skip": "\u8DF3\u904E",
+  "row.gloss.inNote": "\u5728\u9019\u7BC7\u7684\u610F\u601D",
+  "wordPage.glosses": "\u5728\u5404\u7BC7\u6587\u7AE0\u7684\u610F\u601D",
   "practice.player.hint": "\u{1F4A1} \u63D0\u793A",
   "practice.player.next": "\u4E0B\u4E00\u984C",
   "practice.player.right": "\u2713 \u7B54\u5C0D\u4E86",
@@ -6155,7 +6159,7 @@ function renderVocabRow(plugin, container, entry, initialState2, setState, refre
     }
   };
   function build2() {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     if (layout.alwaysOpen && state === "collapsed") state = "half";
     state = normalizeExpand(state);
     const rowEl = document.createElement("div");
@@ -6315,7 +6319,15 @@ function renderVocabRow(plugin, container, entry, initialState2, setState, refre
         text: t(opts.preview.status === "error" ? "row.preview.error" : "row.preview.loading")
       });
     }
-    if (!loadingSheet) {
+    const gloss = (_e = opts.gloss) == null ? void 0 : _e.call(opts, entry);
+    if (gloss) {
+      const box = body.createDiv({ cls: "vt-row-gloss" });
+      const zh = box.createDiv({ cls: "vt-row-gloss-zh" });
+      if (gloss.pos) zh.createSpan({ cls: "vt-row-gloss-pos", text: gloss.pos });
+      zh.createSpan({ text: gloss.zh });
+      if (gloss.en) box.createDiv({ cls: "vt-row-gloss-en", text: gloss.en });
+      box.createDiv({ cls: "vt-row-gloss-note", text: t("row.gloss.inNote") });
+    } else if (!loadingSheet) {
       mkField(t("row.field.definition"), "definition", { multiline: true });
       mkField(t("row.field.definitionZh"), "definitionZh", { multiline: true });
     }
@@ -10125,6 +10137,8 @@ var VocabSidebarView = class extends import_obsidian22.ItemView {
       })
     );
     this.register(threads.events.on("threads:reloaded", () => this.updateWordChips()));
+    this.register(this.plugin.learner.events.on("gloss:change", () => this.redrawWords()));
+    this.register(this.plugin.noteGlosses.onReady(() => this.redrawWords()));
     void threads.ensureLoaded().then(() => this.updateWordChips());
     const { vault } = this.app;
     this.registerEvent(vault.on("modify", (f) => this.noteChanged(f.path)));
@@ -10883,7 +10897,8 @@ var VocabSidebarView = class extends import_obsidian22.ItemView {
         this.drawWordChip(chip2, entry.id);
       },
       openWordPage: (entry) => void this.plugin.openWordPage(entry.id),
-      locate: (entry) => void this.plugin.locator.locate(entry)
+      locate: (entry) => void this.plugin.locator.locate(entry),
+      gloss: (entry) => this.plugin.glossInActiveNote(entry.word)
     };
   }
   // 1007-2 #8/#13: resets pageCollapsed to "only the page's active group
@@ -18139,6 +18154,29 @@ var WordHeaderBlock = class extends import_obsidian32.MarkdownRenderChild {
   onunload() {
     this.disposed = true;
   }
+  // 1030 #3: 「在各篇的意思」 — one line per note (the newest gloss of each).
+  renderGlosses(root2, entry) {
+    var _a, _b, _c;
+    const all = (_b = (_a = this.host.glosses) == null ? void 0 : _a.allFor(entry.word)) != null ? _b : [];
+    const seen = /* @__PURE__ */ new Set();
+    const rows = all.filter((g) => !seen.has(g.path) && seen.add(g.path));
+    if (!rows.length) return;
+    const box = root2.createDiv({ cls: "vt-wh-glosses" });
+    box.createDiv({ cls: "vt-wh-glosses-title", text: l2("glosses") });
+    for (const { path, gloss } of rows) {
+      const row = box.createDiv({ cls: "vt-wh-gloss" });
+      const title = ((_c = path.split("/").pop()) != null ? _c : path).replace(/\.md$/i, "");
+      const link2 = row.createSpan({ cls: "vt-wh-gloss-note", text: title });
+      const open = this.host.openNote;
+      if (open) {
+        link2.addClass("is-link");
+        link2.addEventListener("click", () => void open.call(this.host, path, "current"));
+      }
+      const zh = row.createSpan({ cls: "vt-wh-gloss-zh", text: gloss.pos ? `${gloss.pos} ${gloss.zh}` : gloss.zh });
+      if (gloss.en) zh.setAttr("title", gloss.en);
+      if (gloss.en) row.createDiv({ cls: "vt-wh-gloss-en", text: gloss.en });
+    }
+  }
   render() {
     var _a, _b, _c;
     if (this.disposed) return;
@@ -18163,6 +18201,7 @@ var WordHeaderBlock = class extends import_obsidian32.MarkdownRenderChild {
       if (vis.definition) this.field(defs, entry, "definition", t("row.field.definition"), { multiline: true });
       if (vis.definitionZh) this.field(defs, entry, "definitionZh", t("row.field.definitionZh"), { multiline: true });
     }
+    this.renderGlosses(root2, entry);
     const chips = root2.createDiv({ cls: "vt-wh-chips" });
     if ((_a = entry.source) == null ? void 0 : _a.path) this.renderSource(chips, entry, entry.source.path, entry.source.line);
     this.renderOrigin(chips, entry);
@@ -32257,6 +32296,98 @@ var wordEmoji = {
 };
 var EMOJI_TASKS = [wordEmoji];
 
+// src/services/ai/tasks/gloss.ts
+var GLOSS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["items"],
+  properties: {
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["word", "pos", "zh", "en"],
+        properties: {
+          word: { type: "string", description: "\u7167\u3014\u8981\u89E3\u91CB\u7684\u5B57\u3015\u7684\u539F\u6A23\u5BEB\uFF08\u5C0F\u5BEB\uFF09" },
+          pos: { type: "string", description: "\u5728\u9019\u6BB5\u88E1\u7684\u8A5E\u6027\u7E2E\u5BEB\uFF1An. / v. / adj. / adv. / prep. / phr. \u2026" },
+          zh: { type: "string", description: "\u5728\u9019\u6BB5\u88E1\u7684\u4E2D\u6587\u610F\u601D\uFF0C\u7CBE\u7C21\uFF082\uFF5E12 \u5B57\uFF09\uFF0C\u4E0D\u8981\u5217\u5176\u4ED6\u610F\u601D" },
+          en: { type: "string", description: "\u5728\u9019\u6BB5\u88E1\u7684\u82F1\u6587\u89E3\u91CB\uFF0C\u4E00\u53E5\u77ED\u8A9E\uFF08\u4E0D\u8D85\u904E 12 \u500B\u5B57\uFF09" }
+        }
+      }
+    }
+  }
+};
+var GLOSS_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u95B1\u8B80\u8001\u5E2B\uFF0C\u5E6B\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u628A\u6587\u7AE0\u6BB5\u843D\u88E1\u7684\u55AE\u5B57\u300C\u7167\u9019\u6BB5\u7684\u8A9E\u5883\u300D\u7CBE\u6E96\u7FFB\u8B6F\u3002
+
+\u898F\u5247\uFF1A
+1. \u6BCF\u500B\u5B57\u53EA\u7D66\u5B83\u5728\u3014\u6BB5\u843D\u3015\u88E1\u7684\u90A3\u4E00\u500B\u610F\u601D\uFF0C\u4E0D\u662F\u5B57\u5178\u4E0A\u6700\u5E38\u898B\u7684\u610F\u601D\uFF1B\u7247\u8A9E\u52D5\u8A5E\u3001\u6163\u7528\u642D\u914D\u8981\u7167\u6574\u500B\u642D\u914D\u4F86\u7FFB\u3002
+2. \u4E2D\u6587\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C\u7CBE\u7C21\uFF0C\u50CF\u55AE\u5B57\u5361\u4E0A\u7684\u610F\u601D\uFF0C\u4E0D\u8981\u5BEB\u6210\u53E5\u5B50\u3002
+3. \u82F1\u6587\u89E3\u91CB\u8981\u6BD4\u539F\u5B57\u7C21\u55AE\uFF0C\u5B78\u7FD2\u8005\u770B\u5F97\u61C2\u3002
+4. \u4EBA\u540D\u3001\u5730\u540D\u3001\u54C1\u724C\u3001\u6578\u5B57\u3001\u7E2E\u5BEB\uFF0C\u4EE5\u53CA\u4E0D\u9700\u8981\u89E3\u91CB\u7684\u6975\u7C21\u55AE\u5B57\uFF0C\u76F4\u63A5\u4E0D\u8F38\u51FA\u3002
+5. word \u6B04\u4F4D\u7167\u3014\u8981\u89E3\u91CB\u7684\u5B57\u3015\u7684\u539F\u6A23\u5BEB\uFF0C\u4E0D\u8981\u6539\u6210\u539F\u5F62\u3002
+6. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
+var GLOSS_TEMPLATE = `\u3014\u6587\u7AE0\u3015{{title}}
+\u3014\u6BB5\u843D\u3015
+{{paragraph}}
+
+\u3014\u8981\u89E3\u91CB\u7684\u5B57\u3015\uFF08\u5171 {{count}} \u500B\uFF09
+{{words}}`;
+var GLOSS_USER_TEMPLATE = `\u4EFB\u52D9\uFF1A\u7167\u3014\u6BB5\u843D\u3015\u7684\u8A9E\u5883\uFF0C\u89E3\u91CB\u3014\u8981\u89E3\u91CB\u7684\u5B57\u3015\u88E1\u7684\u6BCF\u500B\u5B57`;
+function isObj7(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+function str6(v) {
+  return typeof v === "string" ? v.trim() : "";
+}
+function parseGloss(json, asked) {
+  if (!isObj7(json) || !Array.isArray(json.items)) throw new AiError("bad_output", "paragraph.gloss: expected { items: [...] }");
+  const want = new Set(asked);
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  for (const it of json.items) {
+    if (!isObj7(it)) continue;
+    const word = str6(it.word).toLowerCase();
+    const zh = str6(it.zh);
+    if (!word || !zh || seen.has(word) || want.size && !want.has(word)) continue;
+    seen.add(word);
+    out.push({ word, pos: str6(it.pos), zh, en: str6(it.en) });
+  }
+  return out;
+}
+var paragraphGloss = {
+  id: "paragraph.gloss",
+  version: 1,
+  surface: "paragraph",
+  tier: "fast",
+  maxTokens: 4096,
+  // Structured JSON, not prose.
+  answerChars: () => 0,
+  build(input, ctx) {
+    return composeRequest({
+      base: GLOSS_BASE_PROMPT,
+      context: [
+        renderTemplate(GLOSS_TEMPLATE, {
+          title: input.title,
+          paragraph: input.paragraph,
+          count: input.words.length,
+          words: input.words.map((w2) => `- ${w2}`).join("\n")
+        })
+      ],
+      profile: profileForTask(ctx.profile, paragraphGloss, input),
+      history: [],
+      user: renderTemplate(GLOSS_USER_TEMPLATE, {}),
+      tier: paragraphGloss.tier,
+      maxTokens: paragraphGloss.maxTokens,
+      output: { name: "paragraph_gloss", schema: GLOSS_SCHEMA }
+    });
+  },
+  parse(r) {
+    return parseGloss(structuredJson(r), []);
+  }
+};
+var GLOSS_TASKS = [paragraphGloss];
+
 // src/services/ai/tasks/grammarGrade.ts
 var MAX_GIVEN_CHARS = 1e3;
 var MAX_FEEDBACK_CHARS = 300;
@@ -32292,7 +32423,7 @@ var GRAMMAR_GRADE_TEMPLATE = `\u3014\u5B78\u7FD2\u8005\u7684\u4F5C\u7B54\u3015
 
 \u4EFB\u52D9\uFF1A\u6279\u6539\u9019\u500B\u4F5C\u7B54\u3002`;
 var KIND = { rewrite: "\u6539\u5BEB\u984C", translate: "\u7FFB\u8B6F\u984C" };
-function str6(v) {
+function str7(v) {
   return typeof v === "string" ? v.trim() : "";
 }
 function parseGrammarGrade(json) {
@@ -32301,11 +32432,11 @@ function parseGrammarGrade(json) {
   }
   const o = json;
   if (typeof o.correct !== "boolean") throw new AiError("bad_output", "grammar.grade: correct must be true or false");
-  let feedback = str6(o.feedback);
+  let feedback = str7(o.feedback);
   if (!feedback) throw new AiError("bad_output", "grammar.grade: empty feedback");
   if (feedback.length > MAX_FEEDBACK_CHARS) feedback = `${feedback.slice(0, MAX_FEEDBACK_CHARS - 1)}\u2026`;
   const out = { correct: o.correct, feedback };
-  const corrected = str6(o.corrected);
+  const corrected = str7(o.corrected);
   if (!o.correct && corrected) out.corrected = corrected;
   return out;
 }
@@ -32423,41 +32554,41 @@ ${WARM_TONE}
 7. letter\uFF08\u4FE1\uFF09\uFF1A2 \u5230 4 \u53E5\uFF0C\u4E00\u6BB5\uFF0C\u50CF\u670B\u53CB\u8AAA\u8A71\uFF1B\u8AAA\u770B\u5230\u7684\u9032\u6B65\u6216\u56F0\u96E3\uFF0C\u548C\u4E0B\u9031\u6700\u503C\u5F97\u505A\u7684\u4E00\u4EF6\u4E8B\u3002\u4E0D\u8981\u91CD\u8907\u5217\u6578\u5B57\u3002
 
 \u53EA\u6839\u64DA\u8CC7\u6599\u5BEB\uFF0C\u4E0D\u8981\u7DE8\u9020\u8CC7\u6599\u88E1\u6C92\u6709\u7684\u4E8B\u3002`;
-var isObj7 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
-var str7 = (v) => typeof v === "string" ? v.trim() : "";
-var strings = (v, max) => Array.isArray(v) ? v.map(str7).filter(Boolean).slice(0, max) : [];
+var isObj8 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var str8 = (v) => typeof v === "string" ? v.trim() : "";
+var strings = (v, max) => Array.isArray(v) ? v.map(str8).filter(Boolean).slice(0, max) : [];
 var MIN_AXES = 3;
 var MAX_AXES = 7;
 function parseReportAdvice(json) {
-  const o = isObj7(json) ? json : {};
+  const o = isObj8(json) ? json : {};
   const axes = [];
   for (const a2 of Array.isArray(o.axes) ? o.axes : []) {
-    if (!isObj7(a2)) continue;
-    const name = str7(a2.name);
+    if (!isObj8(a2)) continue;
+    const name = str8(a2.name);
     if (!name) continue;
     const n = Number(a2.value);
     const value = Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0;
-    const hint = str7(a2.hint);
+    const hint = str8(a2.hint);
     axes.push({ name, value, clear: typeof a2.clear === "boolean" ? a2.clear : true, ...hint ? { hint } : {} });
     if (axes.length === MAX_AXES) break;
   }
   const levels = [];
   for (const l4 of Array.isArray(o.levels) ? o.levels : []) {
-    if (!isObj7(l4)) continue;
-    const area = str7(l4.area);
-    const level = str7(l4.level);
+    if (!isObj8(l4)) continue;
+    const area = str8(l4.area);
+    const level = str8(l4.level);
     if (!area || !level) continue;
-    const detail = str7(l4.detail);
-    levels.push({ area, level, ...detail ? { detail } : {}, basis: str7(l4.basis) });
+    const detail = str8(l4.detail);
+    levels.push({ area, level, ...detail ? { detail } : {}, basis: str8(l4.basis) });
   }
   const wordLevels = [];
   for (const w2 of Array.isArray(o.wordLevels) ? o.wordLevels : []) {
-    if (!isObj7(w2)) continue;
-    const word = str7(w2.word).toLowerCase();
-    const level = str7(w2.level).toUpperCase();
+    if (!isObj8(w2)) continue;
+    const word = str8(w2.word).toLowerCase();
+    const level = str8(w2.level).toUpperCase();
     if (word && isCefrTier(level)) wordLevels.push({ word, level });
   }
-  return { letter: str7(o.letter), axes, levels, focus: strings(o.focus, 6), tryNext: strings(o.tryNext, 5), reading: strings(o.reading, 3), wordLevels };
+  return { letter: str8(o.letter), axes, levels, focus: strings(o.focus, 6), tryNext: strings(o.tryNext, 5), reading: strings(o.reading, 3), wordLevels };
 }
 function resolveAdvice(draft, baseline, baselineLevels2) {
   return {
@@ -32676,33 +32807,33 @@ var VERB_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u
 8. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
 var VERB_TEMPLATE = `\u4EFB\u52D9\uFF1A\u7528\u6CD5\uFF08{{word}}\uFF09
 \u5217\u51FA {{word}} \u5E38\u898B\u7684\u8A5E\u6027\uFF0C\u6574\u7406\u6BCF\u500B\u8A5E\u6027\u7684\u5E38\u898B\u53E5\u578B\u8207\u76F8\u8FD1\u8AAA\u6CD5\u3002{{#onlyPos}}\u9019\u6B21\u53EA\u9700\u8981 {{onlyPos}} \u9019\u500B\u8A5E\u6027\u7684\u7528\u6CD5\uFF0Centries \u53EA\u8981\u4E00\u9805\u3002{{/onlyPos}}{{#hasSource}}\u3014\u51FA\u8655\u6BB5\u843D\u3015\u6216\u3014\u51FA\u8655\u53E5\u5B50\u3015\u88E1\u7684\u7528\u6CD5\u5982\u679C\u5C6C\u65BC\u5176\u4E2D\u4E00\u7A2E\uFF0C\u628A\u90A3\u500B\u53E5\u578B\u6392\u5728\u7B2C\u4E00\u500B\u3002{{/hasSource}}`;
-function isObj8(v) {
+function isObj9(v) {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
-function str8(v) {
+function str9(v) {
   return typeof v === "string" ? v.trim() : "";
 }
 function parseVerbUsage(json) {
-  if (!isObj8(json) || !Array.isArray(json.entries)) {
+  if (!isObj9(json) || !Array.isArray(json.entries)) {
     throw new AiError("bad_output", "verb.usage: expected { entries: [...] }");
   }
   const entries = [];
   for (const raw of json.entries) {
-    if (!isObj8(raw)) continue;
-    const [pos] = parsePos(str8(raw.pos));
+    if (!isObj9(raw)) continue;
+    const [pos] = parsePos(str9(raw.pos));
     if (!pos) continue;
     const patterns = [];
     for (const p of Array.isArray(raw.patterns) ? raw.patterns : []) {
-      if (!isObj8(p)) continue;
-      const pattern = str8(p.pattern);
-      if (pattern) patterns.push({ pattern, meaningZh: str8(p.meaningZh), example: str8(p.example) });
+      if (!isObj9(p)) continue;
+      const pattern = str9(p.pattern);
+      if (pattern) patterns.push({ pattern, meaningZh: str9(p.meaningZh), example: str9(p.example) });
     }
     if (!patterns.length) continue;
     const related = [];
     for (const r of Array.isArray(raw.related) ? raw.related : []) {
-      if (!isObj8(r)) continue;
-      const phrase = str8(r.phrase);
-      if (phrase) related.push({ phrase, zh: str8(r.zh) });
+      if (!isObj9(r)) continue;
+      const phrase = str9(r.phrase);
+      if (phrase) related.push({ phrase, zh: str9(r.zh) });
     }
     entries.push({ pos, patterns, related });
   }
@@ -32773,6 +32904,7 @@ function defaultTaskRegistry() {
     ...GRAMMAR_TASKS3,
     ...PRACTICE_TASKS,
     ...PARAPHRASE_TASKS,
+    ...GLOSS_TASKS,
     diaryWrite,
     reportAdvise,
     reportAnalyze,
@@ -34025,26 +34157,26 @@ function ms6(iso) {
 function emptyGrammarShard() {
   return { questions: [], attempts: [], progress: [] };
 }
-var str9 = (v) => typeof v === "string" && v !== "";
-var isObj9 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var str10 = (v) => typeof v === "string" && v !== "";
+var isObj10 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 function normalizeScenario(raw) {
-  if (!isObj9(raw) || !str9(raw.id) || !str9(raw.scene)) return null;
+  if (!isObj10(raw) || !str10(raw.id) || !str10(raw.scene)) return null;
   const seq = typeof raw.seq === "number" && Number.isFinite(raw.seq) && raw.seq >= 0 ? Math.floor(raw.seq) : null;
   if (seq === null) return null;
   const out = { id: raw.id, scene: raw.scene, seq };
-  if (str9(raw.speaker)) out.speaker = raw.speaker;
+  if (str10(raw.speaker)) out.speaker = raw.speaker;
   if (Array.isArray(raw.lead)) {
     const lead = [];
     for (const l4 of raw.lead) {
-      if (!isObj9(l4) || !str9(l4.text)) continue;
-      lead.push(str9(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
+      if (!isObj10(l4) || !str10(l4.text)) continue;
+      lead.push(str10(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
     }
     if (lead.length) out.lead = lead;
   }
   return out;
 }
 function normalizeQuestion(raw) {
-  if (!isObj9(raw) || !str9(raw.id) || !str9(raw.topicId) || !str9(raw.objectiveId)) return null;
+  if (!isObj10(raw) || !str10(raw.id) || !str10(raw.topicId) || !str10(raw.objectiveId)) return null;
   if (typeof raw.stem !== "string" || typeof raw.answer !== "string") return null;
   const type = GRAMMAR_QUESTION_TYPES.includes(raw.type) ? raw.type : null;
   if (!type) return null;
@@ -34061,17 +34193,17 @@ function normalizeQuestion(raw) {
   const accepted = strings3(raw.accepted);
   if (accepted) q.accepted = accepted;
   else delete q.accepted;
-  if (!isObj9(raw.distractors)) delete q.distractors;
+  if (!isObj10(raw.distractors)) delete q.distractors;
   const scenario = normalizeScenario(raw.scenario);
   if (scenario) q.scenario = scenario;
   else delete q.scenario;
-  if (str9(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
+  if (str10(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
   else delete q.sentenceZh;
   return q;
 }
 function normalizeAttempt(raw) {
-  if (!isObj9(raw) || !str9(raw.id) || !str9(raw.questionId) || !str9(raw.topicId) || !str9(raw.objectiveId)) return null;
-  if (!str9(raw.at) || Number.isNaN(Date.parse(raw.at))) return null;
+  if (!isObj10(raw) || !str10(raw.id) || !str10(raw.questionId) || !str10(raw.topicId) || !str10(raw.objectiveId)) return null;
+  if (!str10(raw.at) || Number.isNaN(Date.parse(raw.at))) return null;
   return {
     id: raw.id,
     questionId: raw.questionId,
@@ -34083,9 +34215,9 @@ function normalizeAttempt(raw) {
   };
 }
 function normalizeProgress(raw) {
-  if (!isObj9(raw) || !str9(raw.id)) return null;
+  if (!isObj10(raw) || !str10(raw.id)) return null;
   const p = { ...raw };
-  if (!isObj9(p.srs)) delete p.srs;
+  if (!isObj10(p.srs)) delete p.srs;
   return p;
 }
 function normList(raw, one2) {
@@ -34098,7 +34230,7 @@ function normList(raw, one2) {
   return out;
 }
 function normalizeGrammarShard(raw) {
-  const s = isObj9(raw) ? raw : {};
+  const s = isObj10(raw) ? raw : {};
   return {
     questions: normList(s.questions, normalizeQuestion),
     attempts: normList(s.attempts, normalizeAttempt),
@@ -34152,29 +34284,29 @@ function ms7(iso) {
   return Number.isNaN(t2) ? 0 : t2;
 }
 function emptyLearnerShard() {
-  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [], asks: [], wordTouches: [], wordCefr: [] };
+  return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [], asks: [], wordTouches: [], wordCefr: [], glosses: [] };
 }
-var str10 = (v) => typeof v === "string" && v !== "";
-var isObj10 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
-var isIso = (v) => str10(v) && !Number.isNaN(Date.parse(v));
+var str11 = (v) => typeof v === "string" && v !== "";
+var isObj11 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var isIso = (v) => str11(v) && !Number.isNaN(Date.parse(v));
 var isTrack = (v) => TRACKS.includes(v);
 var REASONS = ["answered", "skipped", "retired", "filtered"];
 function focusOf(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !FOCUS_KINDS.includes(raw.kind)) return null;
+  if (!isObj11(raw) || !str11(raw.id) || !FOCUS_KINDS.includes(raw.kind)) return null;
   return { kind: raw.kind, id: raw.id };
 }
 function normalizeEvent(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !isIso(raw.at) || !isTrack(raw.track)) return null;
+  if (!isObj11(raw) || !str11(raw.id) || !isIso(raw.at) || !isTrack(raw.track)) return null;
   const focus = focusOf(raw.focus);
   if (!focus || !LEARN_RESULTS.includes(raw.result)) return null;
   const e = { id: raw.id, at: raw.at, track: raw.track, focus, result: raw.result };
   if (typeof raw.given === "string") e.given = raw.given;
-  if (str10(raw.errorTag)) e.errorTag = raw.errorTag;
-  if (str10(raw.questionId)) e.questionId = raw.questionId;
+  if (str11(raw.errorTag)) e.errorTag = raw.errorTag;
+  if (str11(raw.questionId)) e.questionId = raw.questionId;
   return e;
 }
 function normalizePool(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !isTrack(raw.track) || !str10(raw.questionId)) return null;
+  if (!isObj11(raw) || !str11(raw.id) || !isTrack(raw.track) || !str11(raw.questionId)) return null;
   if (!isIso(raw.addedAt)) return null;
   const p = {
     id: raw.id,
@@ -34184,7 +34316,7 @@ function normalizePool(raw) {
     addedAt: raw.addedAt,
     updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : raw.addedAt
   };
-  if (str10(raw.scenarioId)) p.scenarioId = raw.scenarioId;
+  if (str11(raw.scenarioId)) p.scenarioId = raw.scenarioId;
   if (isIso(raw.removedAt)) {
     p.removedAt = raw.removedAt;
     p.removeReason = REASONS.includes(raw.removeReason) ? raw.removeReason : "answered";
@@ -34192,7 +34324,7 @@ function normalizePool(raw) {
   return p;
 }
 function normalizeMistake(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !isTrack(raw.track) || !str10(raw.questionId)) return null;
+  if (!isObj11(raw) || !str11(raw.id) || !isTrack(raw.track) || !str11(raw.questionId)) return null;
   const focus = focusOf(raw.focus);
   if (!focus || !isIso(raw.lastWrongAt)) return null;
   const addedAt = isIso(raw.addedAt) ? raw.addedAt : raw.lastWrongAt;
@@ -34209,20 +34341,20 @@ function normalizeMistake(raw) {
   return m2;
 }
 function normalizeFilter(raw) {
-  if (!isObj10(raw) || !isTrack(raw.id)) return null;
+  if (!isObj11(raw) || !isTrack(raw.id)) return null;
   return { id: raw.id, value: raw.value, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : "" };
 }
 var SCENARIO_TRACKS = ["poly", "vocab", "mix", "para"];
 function normalizeQuestion2(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !SCENARIO_TRACKS.includes(raw.track)) return null;
+  if (!isObj11(raw) || !str11(raw.id) || !SCENARIO_TRACKS.includes(raw.track)) return null;
   if (!PRACTICE_KINDS.includes(raw.kind)) return null;
-  if (!str10(raw.text) || !str10(raw.answerId) || !str10(raw.explanation)) return null;
+  if (!str11(raw.text) || !str11(raw.answerId) || !str11(raw.explanation)) return null;
   const focus = focusOf(raw.focus);
-  if (!focus || !isObj10(raw.scenario) || !str10(raw.scenario.id) || !str10(raw.scenario.scene)) return null;
+  if (!focus || !isObj11(raw.scenario) || !str11(raw.scenario.id) || !str11(raw.scenario.scene)) return null;
   if (!Array.isArray(raw.options)) return null;
   const options = [];
   for (const o of raw.options) {
-    if (isObj10(o) && str10(o.id) && typeof o.text === "string" && o.text !== "") options.push({ id: o.id, text: o.text });
+    if (isObj11(o) && str11(o.id) && typeof o.text === "string" && o.text !== "") options.push({ id: o.id, text: o.text });
   }
   if (options.length < 2 || !options.some((o) => o.id === raw.answerId)) return null;
   const sc = raw.scenario;
@@ -34231,12 +34363,12 @@ function normalizeQuestion2(raw) {
     scene: sc.scene,
     seq: typeof sc.seq === "number" && Number.isFinite(sc.seq) ? sc.seq : 0
   };
-  if (str10(sc.speaker)) scenario.speaker = sc.speaker;
+  if (str11(sc.speaker)) scenario.speaker = sc.speaker;
   if (Array.isArray(sc.lead)) {
     const lead = [];
     for (const l4 of sc.lead) {
-      if (!isObj10(l4) || !str10(l4.text)) continue;
-      lead.push(str10(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
+      if (!isObj11(l4) || !str11(l4.text)) continue;
+      lead.push(str11(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
     }
     if (lead.length) scenario.lead = lead;
   }
@@ -34254,19 +34386,19 @@ function normalizeQuestion2(raw) {
     createdAt,
     updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : createdAt
   };
-  if (isObj10(raw.optionNotes)) {
+  if (isObj11(raw.optionNotes)) {
     const notes = {};
-    for (const [k, v] of Object.entries(raw.optionNotes)) if (str10(v)) notes[k] = v;
+    for (const [k, v] of Object.entries(raw.optionNotes)) if (str11(v)) notes[k] = v;
     if (Object.keys(notes).length) q.optionNotes = notes;
   }
-  if (str10(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh;
-  if (str10(raw.errorTag)) q.errorTag = raw.errorTag;
+  if (str11(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh;
+  if (str11(raw.errorTag)) q.errorTag = raw.errorTag;
   if (isIso(raw.retiredAt)) q.retiredAt = raw.retiredAt;
   return q;
 }
 var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 function normalizeVisit(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !str10(raw.path) || !str10(raw.day) || !DAY_RE.test(raw.day) || !isIso(raw.at)) return null;
+  if (!isObj11(raw) || !str11(raw.id) || !str11(raw.path) || !str11(raw.day) || !DAY_RE.test(raw.day) || !isIso(raw.at)) return null;
   const kinds = Array.isArray(raw.kinds) ? sortKinds(raw.kinds.filter((k) => READING_KINDS.includes(k))) : [];
   if (kinds.length === 0) return null;
   const v = {
@@ -34278,11 +34410,11 @@ function normalizeVisit(raw) {
     title: typeof raw.title === "string" ? raw.title : "",
     kinds
   };
-  if (str10(raw.heading)) v.heading = raw.heading;
+  if (str11(raw.heading)) v.heading = raw.heading;
   return v;
 }
 function normalizePick(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !str10(raw.key) || !str10(raw.day) || !isIso(raw.at)) return null;
+  if (!isObj11(raw) || !str11(raw.id) || !str11(raw.key) || !str11(raw.day) || !isIso(raw.at)) return null;
   if (!DIARY_PICK_KINDS.includes(raw.kind)) return null;
   return { id: raw.id, kind: raw.kind, key: raw.key, day: raw.day, at: raw.at };
 }
@@ -34295,7 +34427,7 @@ function mergePicks(a2, b) {
   return [...map.values()];
 }
 function normalizeAsk(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !isIso(raw.at) || typeof raw.taskId !== "string") return null;
+  if (!isObj11(raw) || !str11(raw.id) || !isIso(raw.at) || typeof raw.taskId !== "string") return null;
   const e = {
     id: raw.id,
     at: raw.at,
@@ -34304,15 +34436,15 @@ function normalizeAsk(raw) {
     custom: raw.custom === true,
     ok: raw.ok === true
   };
-  if (str10(raw.entryId)) e.entryId = raw.entryId;
-  if (str10(raw.path)) e.path = raw.path;
-  if (str10(raw.selection)) e.selection = raw.selection;
-  if (str10(raw.question)) e.question = raw.question;
+  if (str11(raw.entryId)) e.entryId = raw.entryId;
+  if (str11(raw.path)) e.path = raw.path;
+  if (str11(raw.selection)) e.selection = raw.selection;
+  if (str11(raw.question)) e.question = raw.question;
   return e;
 }
 var count = (v) => typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
 function normalizeTouch(raw) {
-  if (!isObj10(raw) || !str10(raw.word) || !str10(raw.day) || !DAY_RE.test(raw.day)) return null;
+  if (!isObj11(raw) || !str11(raw.word) || !str11(raw.day) || !DAY_RE.test(raw.day)) return null;
   const lookup = count(raw.lookup);
   const pronounce2 = count(raw.pronounce);
   if (lookup + pronounce2 === 0) return null;
@@ -34321,7 +34453,7 @@ function normalizeTouch(raw) {
   return { id: id2, day: raw.day, word, lookup, pronounce: pronounce2, saved: raw.saved === true, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : `${raw.day}T00:00:00.000Z` };
 }
 function normalizeWordCefr(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !isCefrTier(raw.level) || !isIso(raw.at)) return null;
+  if (!isObj11(raw) || !str11(raw.id) || !isCefrTier(raw.level) || !isIso(raw.at)) return null;
   const id2 = raw.id.trim().toLowerCase();
   return id2 ? { id: id2, level: raw.level, at: raw.at } : null;
 }
@@ -34330,6 +34462,25 @@ function mergeWordCefr(a2, b) {
   for (const w2 of [...a2, ...b]) {
     const cur = map.get(w2.id);
     if (!cur || ms7(w2.at) > ms7(cur.at)) map.set(w2.id, w2);
+  }
+  return [...map.values()].sort((x3, y3) => x3.id < y3.id ? -1 : x3.id > y3.id ? 1 : 0);
+}
+function normalizeGloss(raw) {
+  if (!isObj11(raw) || !str11(raw.id) || typeof raw.path !== "string" || !isIso(raw.at) || !Array.isArray(raw.words)) return null;
+  const words = [];
+  for (const w2 of raw.words) {
+    if (!isObj11(w2) || !str11(w2.w) || typeof w2.zh !== "string" || typeof w2.en !== "string") continue;
+    const g = { w: w2.w.toLowerCase(), zh: w2.zh, en: w2.en };
+    if (str11(w2.pos)) g.pos = w2.pos;
+    words.push(g);
+  }
+  return { id: raw.id, path: raw.path, words, at: raw.at };
+}
+function mergeGlosses(a2, b) {
+  const map = /* @__PURE__ */ new Map();
+  for (const g of [...a2, ...b]) {
+    const cur = map.get(g.id);
+    if (!cur || ms7(g.at) > ms7(cur.at)) map.set(g.id, g);
   }
   return [...map.values()].sort((x3, y3) => x3.id < y3.id ? -1 : x3.id > y3.id ? 1 : 0);
 }
@@ -34369,10 +34520,10 @@ function normList2(raw, one2) {
   return out;
 }
 function normalizeLearnerShard(raw) {
-  const s = isObj10(raw) ? raw : {};
+  const s = isObj11(raw) ? raw : {};
   const meta = {};
-  if (isObj10(s.meta) && isIso(s.meta.grammarMigratedAt)) meta.grammarMigratedAt = s.meta.grammarMigratedAt;
-  if (isObj10(s.meta) && isIso(s.meta.asksMigratedAt)) meta.asksMigratedAt = s.meta.asksMigratedAt;
+  if (isObj11(s.meta) && isIso(s.meta.grammarMigratedAt)) meta.grammarMigratedAt = s.meta.grammarMigratedAt;
+  if (isObj11(s.meta) && isIso(s.meta.asksMigratedAt)) meta.asksMigratedAt = s.meta.asksMigratedAt;
   return {
     events: sortEvents(normList2(s.events, normalizeEvent)),
     pool: normList2(s.pool, normalizePool),
@@ -34384,14 +34535,15 @@ function normalizeLearnerShard(raw) {
     diaryPicks: normList2(s.diaryPicks, normalizePick),
     asks: normList2(s.asks, normalizeAsk),
     wordTouches: normList2(s.wordTouches, normalizeTouch),
-    wordCefr: mergeWordCefr(normList2(s.wordCefr, normalizeWordCefr), [])
+    wordCefr: mergeWordCefr(normList2(s.wordCefr, normalizeWordCefr), []),
+    glosses: mergeGlosses(normList2(s.glosses, normalizeGloss), [])
   };
 }
 function sortEvents(list2) {
   return list2.sort((a2, b) => ms7(a2.at) - ms7(b.at) || (a2.id < b.id ? -1 : a2.id > b.id ? 1 : 0));
 }
 function mergeLearner(local, remote) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
   const a2 = local.meta.grammarMigratedAt;
   const b = remote.meta.grammarMigratedAt;
   const migrated = a2 && b ? ms7(a2) <= ms7(b) ? a2 : b : a2 != null ? a2 : b;
@@ -34412,11 +34564,12 @@ function mergeLearner(local, remote) {
     diaryPicks: mergePicks((_c = local.diaryPicks) != null ? _c : [], (_d = remote.diaryPicks) != null ? _d : []),
     asks: mergeAsks((_e = local.asks) != null ? _e : [], (_f = remote.asks) != null ? _f : []),
     wordTouches: mergeTouches((_g = local.wordTouches) != null ? _g : [], (_h = remote.wordTouches) != null ? _h : []),
-    wordCefr: mergeWordCefr((_i = local.wordCefr) != null ? _i : [], (_j = remote.wordCefr) != null ? _j : [])
+    wordCefr: mergeWordCefr((_i = local.wordCefr) != null ? _i : [], (_j = remote.wordCefr) != null ? _j : []),
+    glosses: mergeGlosses((_k = local.glosses) != null ? _k : [], (_l = remote.glosses) != null ? _l : [])
   };
 }
 function learnerFingerprint(shard) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
   const rows = [`m|${(_a = shard.meta.grammarMigratedAt) != null ? _a : ""}|${(_b = shard.meta.asksMigratedAt) != null ? _b : ""}`];
   for (const e of shard.events) rows.push(`e|${e.id}`);
   for (const p of shard.pool) rows.push(`p|${p.id}|${p.updatedAt}|${(_c = p.removedAt) != null ? _c : ""}`);
@@ -34428,10 +34581,11 @@ function learnerFingerprint(shard) {
   for (const a2 of (_g = shard.asks) != null ? _g : []) rows.push(`a|${a2.id}|${a2.ok}`);
   for (const w2 of (_h = shard.wordTouches) != null ? _h : []) rows.push(`w|${w2.id}|${w2.lookup}|${w2.pronounce}|${w2.saved}`);
   for (const c2 of (_i = shard.wordCefr) != null ? _i : []) rows.push(`c|${c2.id}|${c2.level}|${c2.at}`);
+  for (const g of (_j = shard.glosses) != null ? _j : []) rows.push(`g|${g.id}|${g.at}`);
   return rows.sort().join("\n");
 }
 function pruneLearner(shard, now2) {
-  var _a, _b, _c, _d, _e;
+  var _a, _b, _c, _d, _e, _f;
   const cutoff = readingCutoffDay(now2);
   const touchCutoff = localDayOf(new Date(now2 - EVENT_TTL_MS));
   return {
@@ -34445,7 +34599,8 @@ function pruneLearner(shard, now2) {
     diaryPicks: (_b = shard.diaryPicks) != null ? _b : [],
     asks: ((_c = shard.asks) != null ? _c : []).filter((a2) => now2 - ms7(a2.at) < EVENT_TTL_MS),
     wordTouches: ((_d = shard.wordTouches) != null ? _d : []).filter((w2) => w2.day >= touchCutoff),
-    wordCefr: (_e = shard.wordCefr) != null ? _e : []
+    wordCefr: (_e = shard.wordCefr) != null ? _e : [],
+    glosses: (_f = shard.glosses) != null ? _f : []
   };
 }
 function pruneQuestions(shard, now2) {
@@ -35421,13 +35576,13 @@ ${section4}`.replace(/\n+$/, "\n");
 }
 
 // src/core/learner/buddyDigest.ts
-var str11 = (v) => typeof v === "string" ? v.trim() : "";
-var isObj11 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var str12 = (v) => typeof v === "string" ? v.trim() : "";
+var isObj12 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
 var list = (v) => Array.isArray(v) ? v : [];
 var strings2 = (v, max) => {
   const out = [];
   for (const x3 of list(v)) {
-    const s = str11(x3);
+    const s = str12(x3);
     if (s && !out.includes(s)) out.push(s);
     if (out.length >= max) break;
   }
@@ -35443,20 +35598,20 @@ function parseDigest(text) {
   } catch (e) {
     return null;
   }
-  if (!isObj11(raw)) return null;
+  if (!isObj12(raw)) return null;
   const corrections = [];
   for (const c2 of list(raw.corrections)) {
-    if (!isObj11(c2)) continue;
-    const yours = str11(c2.yours);
-    const better = str11(c2.better);
-    if (yours && better) corrections.push({ yours, better, why: str11(c2.why) });
+    if (!isObj12(c2)) continue;
+    const yours = str12(c2.yours);
+    const better = str12(c2.better);
+    if (yours && better) corrections.push({ yours, better, why: str12(c2.why) });
   }
   const understandings = [];
   for (const u of list(raw.understandings)) {
-    if (!isObj11(u)) continue;
-    const subject = str11(u.subject);
-    const yours = str11(u.yours);
-    if (subject && yours) understandings.push({ subject, yours, ok: u.ok === true, feedback: str11(u.feedback) });
+    if (!isObj12(u)) continue;
+    const subject = str12(u.subject);
+    const yours = str12(u.yours);
+    if (subject && yours) understandings.push({ subject, yours, ok: u.ok === true, feedback: str12(u.feedback) });
   }
   return { topics: strings2(raw.topics, 3), corrections, understandings, words: strings2(raw.words, 20) };
 }
@@ -35580,7 +35735,7 @@ var ThreadService = class {
     this.deps.ai.cancel(threadId);
   }
   async ask(p) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e;
     await this.ensureLoaded();
     if (this.disposed || this.active.has(p.threadId)) return;
     let thread = this.get(p.threadId);
@@ -35659,6 +35814,7 @@ var ThreadService = class {
         this.partial.delete(answer.id);
         this.changed(thread);
         this.reportAsked(user, answer, thread.anchor);
+        (_e = (_d = this.deps).onDiscussed) == null ? void 0 : _e.call(_d, thread.anchor, answer.status === "done");
       }
     }
   }
@@ -36880,6 +37036,22 @@ var LearnerStore = class {
     }
     if (changed) this.scheduleWrite();
   }
+  // ── 語境意思 (1030 #3) ─────────────────────────────────────────
+  // id = paragraphHash of the paragraph's text.
+  gloss(id2) {
+    var _a;
+    return ((_a = this.data.glosses) != null ? _a : []).find((g) => g.id === id2);
+  }
+  glosses() {
+    var _a;
+    return (_a = this.data.glosses) != null ? _a : [];
+  }
+  upsertGloss(g) {
+    var _a, _b;
+    this.upsert((_b = (_a = this.data).glosses) != null ? _b : _a.glosses = [], g);
+    this.events.emit("gloss:change", g);
+    this.scheduleWrite();
+  }
   // ── Migration ─────────────────────────────────────────────────
   // Call after ensureLoaded() (and after the GrammarStore has loaded).
   // Returns false — doing nothing — when it already ran, or the store isn't
@@ -36939,6 +37111,155 @@ var LearnerStore = class {
       this.pendingWrite = this.write();
     }
     await this.pendingWrite;
+  }
+};
+
+// src/core/learner/gloss.ts
+var GLOSS_MAX_WORDS = 40;
+var TOKEN_RE3 = /[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]/g;
+function glossCandidates(paragraph, level, extra, max = GLOSS_MAX_WORDS) {
+  const floor = CEFR_TIERS.indexOf(level || "A2");
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  for (const m2 of plainParagraph(paragraph).matchAll(TOKEN_RE3)) {
+    const w2 = m2[0].toLowerCase().replace(/^'+|'+$/g, "");
+    if (w2.length < 2 || seen.has(w2)) continue;
+    seen.add(w2);
+    const tier = cefrOf(w2, extra);
+    if (tier && CEFR_TIERS.indexOf(tier) < floor) continue;
+    out.push(w2);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+function noteGlosses(glosses, hashes) {
+  const ids = new Set(hashes);
+  const out = /* @__PURE__ */ new Map();
+  for (const g of glosses) {
+    if (!ids.has(g.id)) continue;
+    for (const w2 of g.words) {
+      const cur = out.get(w2.w);
+      if (!cur || g.at > cur.at) out.set(w2.w, { ...w2, at: g.at });
+    }
+  }
+  return out;
+}
+function glossOf(map, word) {
+  const w2 = word.trim().toLowerCase();
+  const hit = map.get(w2);
+  if (hit) return hit;
+  for (const [form, g] of map) if (matchesWord(form, w2, true)) return g;
+  return void 0;
+}
+
+// src/services/learner/GlossService.ts
+var GlossService = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.inflight = /* @__PURE__ */ new Set();
+    var _a;
+    this.clock = (_a = deps.clock) != null ? _a : (() => /* @__PURE__ */ new Date());
+  }
+  // ThreadService's onDiscussed: only discussions that got an answer.
+  async afterDiscussion(anchor, ok) {
+    var _a;
+    if (!ok) return;
+    try {
+      if (anchor.kind === "paragraph") {
+        const text = await this.deps.paragraphText(anchor);
+        if (text) await this.glossParagraph(anchor.path, text);
+      } else if (anchor.kind === "word") {
+        const src = (_a = this.deps.entry(anchor.entryId)) == null ? void 0 : _a.source;
+        if (!(src == null ? void 0 : src.path)) return;
+        const content = await this.deps.notes.read(src.path);
+        const hit = content === null ? null : paragraphAtLine(content, src.line);
+        if (hit) await this.glossParagraph(src.path, hit.text);
+      }
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't gloss the paragraph", e);
+    }
+  }
+  // Resolves once the paragraph has a gloss (or the attempt failed).
+  async glossParagraph(path, text) {
+    const id2 = paragraphHash(text);
+    if (this.inflight.has(id2) || !this.deps.aiReady()) return;
+    this.inflight.add(id2);
+    try {
+      await this.deps.learner.ensureLoaded();
+      if (this.deps.learner.gloss(id2)) return;
+      const words = glossCandidates(text, this.deps.level(), this.deps.learner.wordCefr());
+      let glossed = [];
+      if (words.length) {
+        const input = { title: basenameOf(path), paragraph: plainParagraph(text), words };
+        const r = await this.deps.ai.run(paragraphGloss, input, { threadId: `gloss:${id2}` });
+        glossed = parseGloss(structuredJson(r), words).map((it) => {
+          const g = { w: it.word, zh: it.zh, en: it.en };
+          if (it.pos) g.pos = it.pos;
+          return g;
+        });
+      }
+      this.deps.learner.upsertGloss({ id: id2, path, words: glossed, at: this.clock().toISOString() });
+    } finally {
+      this.inflight.delete(id2);
+    }
+  }
+  // The glossed words of a note's current paragraphs.
+  forNote(markdown) {
+    const glosses = this.deps.learner.glosses();
+    if (!glosses.length) return /* @__PURE__ */ new Map();
+    return noteGlosses(glosses, splitParagraphSpans(markdown).map((p) => paragraphHash(p.text)));
+  }
+  // Every gloss of a word across notes (word detail page), newest first.
+  allFor(word) {
+    const out = [];
+    for (const g of this.deps.learner.glosses()) {
+      const hit = glossOf(noteGlosses([g], [g.id]), word);
+      if (hit) out.push({ path: g.path, gloss: hit, at: g.at });
+    }
+    return out.sort((a2, b) => a2.at < b.at ? 1 : a2.at > b.at ? -1 : 0);
+  }
+};
+
+// src/ui/word/noteGlossCache.ts
+var NoteGlossCache = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.cur = null;
+    this.loading = null;
+    this.version = 0;
+    this.listeners = /* @__PURE__ */ new Set();
+  }
+  get(path, mtime) {
+    var _a;
+    const key6 = `${path}
+${mtime}
+${this.version}`;
+    if (((_a = this.cur) == null ? void 0 : _a.key) === key6) return this.cur.map;
+    if (this.loading !== key6) void this.load(path, key6);
+    return null;
+  }
+  // A gloss was added or synced: everything is read again.
+  invalidate() {
+    this.version++;
+    this.cur = null;
+  }
+  onReady(fn) {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  }
+  async load(path, key6) {
+    this.loading = key6;
+    let text;
+    try {
+      text = await this.deps.read(path);
+    } catch (e) {
+      text = null;
+    }
+    if (this.loading !== key6) return;
+    this.loading = null;
+    const map = text === null ? /* @__PURE__ */ new Map() : this.deps.forNote(text);
+    this.cur = { key: key6, map };
+    if (map.size) for (const fn of this.listeners) fn(path);
   }
 };
 
@@ -43106,6 +43427,12 @@ var WordSheet = class extends import_obsidian71.Component {
   }
   onload() {
     this.register(this.plugin.store.events.on("data:changed", () => this.onDataChanged()));
+    const redrawWord = () => {
+      var _a;
+      if (this.isOpen && ((_a = this.view) == null ? void 0 : _a.kind) === "word") this.draw();
+    };
+    this.register(this.plugin.noteGlosses.onReady(redrawWord));
+    this.register(this.plugin.learner.events.on("gloss:change", redrawWord));
     this.registerEvent(this.plugin.app.workspace.on("file-open", () => this.close()));
     this.register(() => {
       var _a;
@@ -43239,6 +43566,7 @@ ${block}`);
         },
         onDeleted: () => this.close(),
         onJump: () => this.close(),
+        gloss: (e) => this.plugin.glossInActiveNote(e.word),
         onViewChange: (tab) => this.applyPaneHeight(tab)
       }
     );
@@ -43268,6 +43596,7 @@ ${block}`);
         ui: this.wordUi,
         variant: "sheet",
         preview: { ctx: (_a = view.ctx) != null ? _a : {}, dict: (_b = dict.data) != null ? _b : null, status: dict.status },
+        gloss: (e) => this.plugin.glossInActiveNote(e.word),
         onViewChange: (tab) => this.applyPaneHeight(tab)
       }
     );
@@ -43848,11 +44177,33 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       onAsked: (e) => {
         var _a;
         return (_a = this.learner) == null ? void 0 : _a.recordAsk(e);
+      },
+      onDiscussed: (anchor, ok) => {
+        var _a;
+        return void ((_a = this.glosses) == null ? void 0 : _a.afterDiscussion(anchor, ok));
       }
     });
     this.learn = new LearnStore({ storage: this.storage });
     this.grammar = new GrammarStore({ storage: this.storage });
     this.learner = new LearnerStore({ storage: this.storage });
+    this.glosses = new GlossService({
+      ai,
+      learner: this.learner,
+      notes: this.notes,
+      level: () => {
+        var _a, _b;
+        return (_b = (_a = this.store.settings.learner) == null ? void 0 : _a.level) != null ? _b : "";
+      },
+      entry: (id2) => this.store.entries.find((e) => e.id === id2 && !e.deletedAt),
+      paragraphText: async (anchor) => {
+        const where = await this.anchors.resolve(anchor);
+        return where.status === "found" ? where.section.text : null;
+      },
+      aiReady: () => this.ai.status() === "ready"
+    });
+    this.noteGlosses = new NoteGlossCache({ read: (path) => this.notes.read(path), forNote: (md) => this.glosses.forNote(md) });
+    this.learner.events.on("gloss:change", () => this.noteGlosses.invalidate());
+    this.learner.events.on("learner:reloaded", () => this.noteGlosses.invalidate());
     this.reading = new ReadingTracker(
       {
         isPluginNote: (path) => pluginNoteKind(this.frontmatterOf(path)) !== null,
@@ -44858,6 +45209,14 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       reviews: 0,
       ...fields
     };
+  }
+  // 1030 #3: this word's 語境意思 in the note in front (null: none, or the
+  // note is still being read — NoteGlossCache.onReady fires when it is).
+  glossInActiveNote(word) {
+    const file = this.app.workspace.getActiveFile();
+    if (!file || file.extension !== "md") return void 0;
+    const map = this.noteGlosses.get(file.path, file.stat.mtime);
+    return map ? glossOf(map, word) : void 0;
   }
   async jumpToSource(entry) {
     if (!entry.source || !entry.source.path) return;

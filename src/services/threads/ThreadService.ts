@@ -65,6 +65,9 @@ export interface ThreadServiceDeps {
   newId?: () => string;
   // 規劃書 15 §2.1: told once per finished round (done, error or stopped).
   onAsked?: (e: AskEvent) => void;
+  // 1030 #3: a discussion round finished (ok: an answer came back) — the
+  // paragraph's 語境意思 is glossed from here.
+  onDiscussed?: (anchor: Anchor, ok: boolean) => void;
   // 學習夥伴: the learner's background text (buddyContext()), read fresh on
   // every question. Without it the buddy gets an empty context.
   buddyContext?: (taskId: string) => Promise<string>;
@@ -323,6 +326,7 @@ export class ThreadService {
         this.partial.delete(answer.id);
         this.changed(thread);
         this.reportAsked(user, answer, thread.anchor);
+        this.deps.onDiscussed?.(thread.anchor, answer.status === "done");
       }
     }
   }

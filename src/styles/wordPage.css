@@ -496,3 +496,34 @@ body.is-phone .vt-wh-inforow {
 body.is-mobile .vt-wh-lookup {
   min-height: 44px;
 }
+
+/* 1030 #3: 在各篇文章的意思 (語境意思, one row per note). */
+.vt-word-header .vt-wh-glosses {
+  margin: 4px 0 10px;
+}
+
+.vt-word-header .vt-wh-glosses-title {
+  color: var(--text-muted);
+  font-size: 0.8em;
+  margin-bottom: 4px;
+}
+
+.vt-word-header .vt-wh-gloss {
+  margin-bottom: 4px;
+}
+
+.vt-word-header .vt-wh-gloss-note {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  margin-right: 8px;
+}
+
+.vt-word-header .vt-wh-gloss-note.is-link {
+  color: var(--text-accent);
+  cursor: pointer;
+}
+
+.vt-word-header .vt-wh-gloss-en {
+  color: var(--text-faint);
+  font-size: 0.85em;
+}

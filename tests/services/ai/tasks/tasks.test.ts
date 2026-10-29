@@ -394,6 +394,7 @@ describe("task registry", () => {
       "paragraph.vocab",
       "paragraph.paraphrase",
       "paragraph.custom",
+      "paragraph.gloss",
     ]);
     expect(reg.forSurface("word").map((t) => t.id)).toEqual(["word.usage", "word.compare", "word.sentence", "word.mnemonic", "word.custom"]);
     expect(() => reg.register(paragraphGrammar)).toThrow(/already registered/);
@@ -423,6 +424,8 @@ describe("task registry", () => {
       "buddy.digest",
       // 換句話說: ScenarioService calls this directly.
       "practice.paraphrase",
+      // 1030 #3: GlossService calls this after a discussion.
+      "paragraph.gloss",
       // 第十九波: DiaryService calls this directly.
       "diary.write",
       // 第二十波: ReportService calls this directly.

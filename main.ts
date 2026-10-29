@@ -44,6 +44,9 @@ import { ThreadService } from "./src/services/threads/ThreadService";
 import { LearnStore } from "./src/services/learn/LearnStore";
 import { GrammarStore } from "./src/services/grammar/GrammarStore";
 import { LearnerStore } from "./src/services/learner/LearnerStore";
+import { GlossService } from "./src/services/learner/GlossService";
+import { NoteGlossCache } from "./src/ui/word/noteGlossCache";
+import { glossOf, type NoteGloss } from "./src/core/learner/gloss";
 import { ReadingTracker } from "./src/services/learner/ReadingTracker";
 import { pluginNoteKind } from "./src/ui/reading/pluginNote";
 import type { Track } from "./src/core/model/learner";
@@ -189,6 +192,9 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   grammar!: GrammarStore;
   // Wave 16 F: learning events, 待答池, 錯題區 (規劃書 12 §1).
   learner!: LearnerStore;
+  // 1030 #3 語境意思.
+  glosses!: GlossService;
+  noteGlosses!: NoteGlossCache;
   reading!: ReadingTracker;
   grammarPages!: GrammarPages;
   grammarQuestions!: QuestionService;
@@ -379,6 +385,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         },
       },
       onAsked: (e) => this.learner?.recordAsk(e),
+      onDiscussed: (anchor, ok) => void this.glosses?.afterDiscussion(anchor, ok),
     });
 
     // M7: word families, verb usage and trivia. learn.json loads lazily,
@@ -386,6 +393,21 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.learn = new LearnStore({ storage: this.storage });
     this.grammar = new GrammarStore({ storage: this.storage });
     this.learner = new LearnerStore({ storage: this.storage });
+    this.glosses = new GlossService({
+      ai,
+      learner: this.learner,
+      notes: this.notes,
+      level: () => this.store.settings.learner?.level ?? "",
+      entry: (id) => this.store.entries.find((e) => e.id === id && !e.deletedAt),
+      paragraphText: async (anchor) => {
+        const where = await this.anchors.resolve(anchor);
+        return where.status === "found" ? where.section.text : null;
+      },
+      aiReady: () => this.ai.status() === "ready",
+    });
+    this.noteGlosses = new NoteGlossCache({ read: (path) => this.notes.read(path), forNote: (md) => this.glosses.forNote(md) });
+    this.learner.events.on("gloss:change", () => this.noteGlosses.invalidate());
+    this.learner.events.on("learner:reloaded", () => this.noteGlosses.invalidate());
     // 第十九波 D1 (1016 #6-#8): reading log.
     this.reading = new ReadingTracker(
       {
@@ -1558,6 +1580,15 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       reviews: 0,
       ...fields,
     };
+  }
+
+  // 1030 #3: this word's 語境意思 in the note in front (null: none, or the
+  // note is still being read — NoteGlossCache.onReady fires when it is).
+  glossInActiveNote(word: string): NoteGloss | undefined {
+    const file = this.app.workspace.getActiveFile();
+    if (!file || file.extension !== "md") return undefined;
+    const map = this.noteGlosses.get(file.path, file.stat.mtime);
+    return map ? glossOf(map, word) : undefined;
   }
 
   async jumpToSource(entry: VocabEntry) {
