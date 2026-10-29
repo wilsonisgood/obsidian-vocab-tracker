@@ -780,7 +780,6 @@ export const zhTW: Record<keyof typeof en, string> = {
   "practice.vocab.quickDue": "今日到期",
   "practice.vocab.quickRecent": "最近收錄（7 天內）",
   "practice.player.skip": "跳過",
-  "practice.player.retire": "👎 這題有問題",
   "practice.player.hint": "💡 提示",
   "practice.player.next": "下一題",
   "practice.player.right": "✓ 答對了",

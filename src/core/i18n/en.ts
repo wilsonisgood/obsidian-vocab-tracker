@@ -789,7 +789,6 @@ export const en = {
   "practice.vocab.quickDue": "Due today",
   "practice.vocab.quickRecent": "Recently added (7 days)",
   "practice.player.skip": "Skip",
-  "practice.player.retire": "👎 Bad question",
   "practice.player.hint": "💡 Hint",
   "practice.player.next": "Next",
   "practice.player.right": "✓ Correct",

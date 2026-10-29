@@ -316,6 +316,18 @@ describe("QuestionService skip / retire / applyFilter", () => {
     expect(learner.pool("grammar")).toHaveLength(5);
   });
 
+  it("1030 #2: skipping a 錯題 resolves it (no attempt, not retired)", async () => {
+    const { grammar, service } = await filled();
+    const [a] = service.poolQuestions();
+    service.answer(a, "b", false, { hinted: false, fromMistakes: false });
+    expect(service.mistakeQuestions()).toHaveLength(1);
+    const attempts = grammar.attempts().length;
+    service.skip(a);
+    expect(service.mistakeQuestions()).toEqual([]);
+    expect(grammar.question(a.id)!.retiredAt).toBeFalsy();
+    expect(grammar.attempts()).toHaveLength(attempts);
+  });
+
   it("retire (a question or its id) keeps the old behaviour and also leaves pool and 錯題區", async () => {
     const { grammar, learner, service } = await filled();
     const [a, b] = service.poolQuestions();

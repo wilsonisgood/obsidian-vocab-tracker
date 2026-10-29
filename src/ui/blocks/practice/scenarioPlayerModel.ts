@@ -135,7 +135,7 @@ export interface PlayerState {
   correct?: boolean;
   hinted: boolean;
   hintShown: boolean;
-  done: string[]; // ids answered / skipped / retired this session
+  done: string[]; // ids answered / skipped this session
   history: HistoryItem[];
   answered: number;
   correctCount: number;
@@ -230,11 +230,6 @@ export function skipState(s: PlayerState, questions: readonly PlayerQuestion[]):
   return { state: advance(s, toHistory(s.current, true, true), questions), skipped: true };
 }
 
-// 👎: works in both phases; an answered line stays in the history.
-export function retireState(s: PlayerState, questions: readonly PlayerQuestion[]): PlayerState {
-  if (!s.current || s.phase === "empty") return s;
-  return advance(s, toHistory(s.current, false, s.phase === "feedback"), questions);
-}
 
 export function feedbackNote(s: PlayerState): string | undefined {
   const q = s.current;

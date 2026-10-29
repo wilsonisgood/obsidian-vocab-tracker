@@ -1,9 +1,9 @@
 // 情境播放器的介面 (第十六波 P／G, 規劃書 12 §1.2). One player for every
 // practice track: it shows a continuing scene — answered lines stay above
 // with the answer filled in — and asks one tap-only question at a time
-// (1013-2: no typing, skip and 👎 on every question). The track (grammar,
+// (1013-2: no typing, skip on every question; 1030: no more 👎). The track (grammar,
 // 常用字, …) turns its own questions into PlayerQuestion and decides what
-// answering / skipping / retiring does to its pool, mistakes and events.
+// answering / skipping does to its pool, mistakes and events.
 
 // choice: `text` has one "____"; find-error: `text` is the whole sentence and
 // the options are fragments of it (tap the wrong one); which-sense /
@@ -58,7 +58,6 @@ export interface PlayerCallbacks {
   // right after, before 「下一題」).
   onAnswer(a: PlayerAnswer): void;
   onSkip(q: PlayerQuestion): void;
-  onRetire(q: PlayerQuestion): void;
   // The player reached the end of what questions() returned.
   onEmpty?(): void;
 }

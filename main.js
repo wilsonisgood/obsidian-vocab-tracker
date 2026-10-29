@@ -1783,7 +1783,6 @@ var en = {
   "practice.vocab.quickDue": "Due today",
   "practice.vocab.quickRecent": "Recently added (7 days)",
   "practice.player.skip": "Skip",
-  "practice.player.retire": "\u{1F44E} Bad question",
   "practice.player.hint": "\u{1F4A1} Hint",
   "practice.player.next": "Next",
   "practice.player.right": "\u2713 Correct",
@@ -2746,7 +2745,6 @@ var zhTW = {
   "practice.vocab.quickDue": "\u4ECA\u65E5\u5230\u671F",
   "practice.vocab.quickRecent": "\u6700\u8FD1\u6536\u9304\uFF087 \u5929\u5167\uFF09",
   "practice.player.skip": "\u8DF3\u904E",
-  "practice.player.retire": "\u{1F44E} \u9019\u984C\u6709\u554F\u984C",
   "practice.player.hint": "\u{1F4A1} \u63D0\u793A",
   "practice.player.next": "\u4E0B\u4E00\u984C",
   "practice.player.right": "\u2713 \u7B54\u5C0D\u4E86",
@@ -20605,11 +20603,6 @@ var GrammarTabView = class {
             const q = this.byId.get(pq.id);
             if (q) api.skip(q);
             this.ctl.afterAction();
-          },
-          onRetire: (pq) => {
-            const q = this.byId.get(pq.id);
-            if (q) api.retire(q);
-            this.ctl.afterAction();
           }
         }
       },
@@ -20818,13 +20811,6 @@ function mountMistakeRedo(host, o) {
           done.add(pq.id);
           const q = byId.get(pq.id);
           if (q) o.api.skip(q);
-          (_a = o.onChange) == null ? void 0 : _a.call(o);
-        },
-        onRetire: (pq) => {
-          var _a;
-          done.add(pq.id);
-          const q = byId.get(pq.id);
-          if (q) o.api.retire(q);
           (_a = o.onChange) == null ? void 0 : _a.call(o);
         }
       }
@@ -24593,8 +24579,7 @@ function mountScenarioPane(el, o) {
           (_a2 = o.onAnswer) == null ? void 0 : _a2.call(o, a2);
           act(a2.question, (q) => api.answer(q, a2.optionId, a2.correct, { hinted: a2.hinted, fromMistakes: false }));
         },
-        onSkip: (pq) => act(pq, (q) => api.skip(q)),
-        onRetire: (pq) => act(pq, (q) => api.retire(q))
+        onSkip: (pq) => act(pq, (q) => api.skip(q))
       }
     },
     o.owner
@@ -25437,12 +25422,6 @@ function renderMistakesPanel(el, deps, owner) {
             const q = byId.get(pq.id);
             if (q) api.skip(q);
             updateCount();
-          },
-          onRetire: (pq) => {
-            done.add(pq.id);
-            const q = byId.get(pq.id);
-            if (q) api.retire(q);
-            updateCount();
           }
         }
       },
@@ -25660,11 +25639,6 @@ var PolyTabView = class {
           onSkip: (pq) => {
             const q = this.byId.get(pq.id);
             if (q) api.skip(q);
-            this.ctl.afterAction();
-          },
-          onRetire: (pq) => {
-            const q = this.byId.get(pq.id);
-            if (q) api.retire(q);
             this.ctl.afterAction();
           }
         }
@@ -26161,10 +26135,6 @@ function skipState(s, questions2) {
   if (s.phase === "feedback") return { state: nextState(s, questions2), skipped: false };
   return { state: advance(s, toHistory(s.current, true, true), questions2), skipped: true };
 }
-function retireState(s, questions2) {
-  if (!s.current || s.phase === "empty") return s;
-  return advance(s, toHistory(s.current, false, s.phase === "feedback"), questions2);
-}
 function feedbackNote(s) {
   var _a;
   const q = s.current;
@@ -26325,12 +26295,6 @@ function mountScenarioPlayer(el, opts, owner) {
     if (r.skipped && q) opts.callbacks.onSkip(q);
     sync(r.state);
   }
-  function retire() {
-    const q = state.current;
-    if (!q) return;
-    opts.callbacks.onRetire(q);
-    sync(retireState(state, questions2()));
-  }
   function hint() {
     state = showHint(state);
     render();
@@ -26447,7 +26411,6 @@ function mountScenarioPlayer(el, opts, owner) {
     const actions = box.createDiv({ cls: "vt-pr-actions" });
     if (!feedback) learnButton(actions, { label: t("practice.player.skip"), ghost: true, onClick: skip });
     if (canHint(state)) learnButton(actions, { label: t("practice.player.hint"), ghost: true, onClick: hint });
-    learnButton(actions, { label: t("practice.player.retire"), ghost: true, onClick: retire });
     if (feedback) renderFeedback(box, q);
   }
   function renderFeedback(parent, q) {
@@ -37682,6 +37645,8 @@ var QuestionService = class {
     const learner = this.deps.learner;
     if (!learner) return;
     learner.addEvent(this.plainEvent(q, "skipped", `g:skip:${this.newId()}`));
+    const m2 = learner.mistake(poolItemId(q.id));
+    if (m2 && !m2.resolvedAt) learner.upsertMistake(resolveMistake(m2, this.clock()));
     this.leavePool(q, "skipped");
   }
   // 👎: the question is retired for good (attempts keep pointing at it).
@@ -38124,8 +38089,13 @@ var ScenarioService = class {
       }
     }
   }
+  // 1030 #2: 跳過 = leaves the pool and 錯題本, and doesn't count (no
+  // rating: only answers are scored).
   skip(q) {
-    this.deps.learner.addEvent(this.plainEvent(q, "skipped", `p:skip:${q.id}:${this.newId()}`));
+    const learner = this.deps.learner;
+    learner.addEvent(this.plainEvent(q, "skipped", `p:skip:${q.id}:${this.newId()}`));
+    const m2 = learner.mistake(poolItemId2(q.track, q.id));
+    if (m2 && !m2.resolvedAt) learner.upsertMistake(resolveMistake(m2, this.clock()));
     this.leavePool(q, "skipped");
   }
   // 👎: the question is retired for good (events keep pointing at it).

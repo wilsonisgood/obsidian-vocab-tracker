@@ -126,7 +126,6 @@ export function mountScenarioPane(el: HTMLElement, o: ScenarioPaneOptions): Scen
           act(a.question, (q) => api.answer(q, a.optionId, a.correct, { hinted: a.hinted, fromMistakes: false }));
         },
         onSkip: (pq) => act(pq, (q) => api.skip(q)),
-        onRetire: (pq) => act(pq, (q) => api.retire(q)),
       },
     },
     o.owner

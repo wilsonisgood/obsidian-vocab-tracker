@@ -127,11 +127,6 @@ class GrammarTabView {
             if (q) api.skip(q);
             this.ctl.afterAction();
           },
-          onRetire: (pq) => {
-            const q = this.byId.get(pq.id);
-            if (q) api.retire(q);
-            this.ctl.afterAction();
-          },
         },
       },
       this.owner
@@ -338,7 +333,7 @@ class GrammarTabView {
 // ── In-place redo of one error-tag group (tab and grammar map) ───────
 
 export interface MistakeRedoOptions {
-  api: Pick<GrammarPracticeApi, "mistakeQuestions" | "answer" | "skip" | "retire">;
+  api: Pick<GrammarPracticeApi, "mistakeQuestions" | "answer" | "skip">;
   mountPlayer: MountPlayer;
   owner: Component;
   errorTag: string;
@@ -379,12 +374,6 @@ export function mountMistakeRedo(host: HTMLElement, o: MistakeRedoOptions): Play
           done.add(pq.id);
           const q = byId.get(pq.id);
           if (q) o.api.skip(q);
-          o.onChange?.();
-        },
-        onRetire: (pq) => {
-          done.add(pq.id);
-          const q = byId.get(pq.id);
-          if (q) o.api.retire(q);
           o.onChange?.();
         },
       },

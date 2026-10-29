@@ -395,8 +395,13 @@ export class ScenarioService implements ScenarioPracticeApi {
     }
   }
 
+  // 1030 #2: 跳過 = leaves the pool and 錯題本, and doesn't count (no
+  // rating: only answers are scored).
   skip(q: PracticeQuestion): void {
-    this.deps.learner.addEvent(this.plainEvent(q, "skipped", `p:skip:${q.id}:${this.newId()}`));
+    const learner = this.deps.learner;
+    learner.addEvent(this.plainEvent(q, "skipped", `p:skip:${q.id}:${this.newId()}`));
+    const m = learner.mistake(poolItemId(q.track, q.id));
+    if (m && !m.resolvedAt) learner.upsertMistake(resolveMistake(m, this.clock()));
     this.leavePool(q, "skipped");
   }
 

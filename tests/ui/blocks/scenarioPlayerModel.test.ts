@@ -3,7 +3,7 @@ import { setLocale } from "../../../src/core/i18n";
 import type { PlayerQuestion } from "../../../src/ui/blocks/practice/playerTypes";
 import {
   answerState, answeredText, canHint, historyEntries, initialState, keyAction, nextState, optionColumns, optionDiffParts,
-  questionSegments, refreshState, retireState, segmentBlanks, segmentFragments, segmentTargets, showHint,
+  questionSegments, refreshState, segmentBlanks, segmentFragments, segmentTargets, showHint,
   skipState, speakerSides, askLine, trimHistory, entrySpeakers, feedbackNote,
 } from "../../../src/ui/blocks/practice/scenarioPlayerModel";
 
@@ -69,16 +69,13 @@ describe("transitions", () => {
     const r = answerState(start(), "a")!;
     expect(answerState(r.state, "a")).toBeNull();
   });
-  it("skip and retire advance; skip in feedback is just next", () => {
+  it("skip advances; skip in feedback is just next", () => {
     const sk = skipState(start(), qs);
     expect(sk.skipped).toBe(true);
     expect(sk.state.history[0].skipped).toBe(true);
     const fb = answerState(start(), "a")!.state;
     expect(skipState(fb, qs).skipped).toBe(false);
-    const rt = retireState(start(), qs);
-    expect(rt.current?.id).toBe("2");
-    expect(rt.history[0].parts).toBeUndefined();
-    expect(retireState(fb, qs).history[0].parts).toBeDefined();
+    expect(sk.state.current?.id).toBe("2");
   });
   it("does not re-pick done questions that are still listed", () => {
     const n = nextState(answerState(start(), "a")!.state, qs);

@@ -125,11 +125,6 @@ class PolyTabView {
             if (q) api.skip(q);
             this.ctl.afterAction();
           },
-          onRetire: (pq) => {
-            const q = this.byId.get(pq.id);
-            if (q) api.retire(q);
-            this.ctl.afterAction();
-          },
         },
       },
       this.owner

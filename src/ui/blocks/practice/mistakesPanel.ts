@@ -112,12 +112,6 @@ export function renderMistakesPanel(
             if (q) api.skip(q);
             updateCount();
           },
-          onRetire: (pq) => {
-            done.add(pq.id);
-            const q = byId.get(pq.id);
-            if (q) api.retire(q);
-            updateCount();
-          },
         },
       },
       owner

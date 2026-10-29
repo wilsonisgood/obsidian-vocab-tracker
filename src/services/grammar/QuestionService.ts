@@ -452,6 +452,9 @@ export class QuestionService implements GrammarPracticeApi {
     const learner = this.deps.learner;
     if (!learner) return;
     learner.addEvent(this.plainEvent(q, "skipped", `g:skip:${this.newId()}`));
+    // 1030 #2: 跳過 also takes it out of 錯題本 (skips never count: no attempt).
+    const m = learner.mistake(poolItemId(q.id));
+    if (m && !m.resolvedAt) learner.upsertMistake(resolveMistake(m, this.clock()));
     this.leavePool(q, "skipped");
   }
 

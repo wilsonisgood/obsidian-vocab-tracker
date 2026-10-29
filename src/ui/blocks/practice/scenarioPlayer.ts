@@ -1,13 +1,13 @@
 // Shared scenario player (第十六波 P, 規劃書 12 §1.2). Renders the state
 // machine of scenarioPlayerModel.ts; the track decides what answering,
-// skipping and 👎 do through PlayerOptions.callbacks.
+// skipping do through PlayerOptions.callbacks.
 import type { Component } from "obsidian";
 import { t } from "../../../core/i18n";
 import { learnButton } from "../learnUi";
 import type { PlayerHandle, PlayerOptions, PlayerQuestion } from "./playerTypes";
 import {
   MOBILE_HISTORY_LIMIT, answerState, canHint, entrySpeakers, feedbackNote, historyEntries,
-  initialState, keyAction, nextState, optionColumns, optionDiffParts, questionSegments, refreshState, retireState,
+  initialState, keyAction, nextState, optionColumns, optionDiffParts, questionSegments, refreshState,
   showHint, skipState, speakerSides, askLine, trimHistory,
   type AnsweredPart, type PlayerState,
 } from "./scenarioPlayerModel";
@@ -51,12 +51,6 @@ export function mountScenarioPlayer(el: HTMLElement, opts: PlayerOptions, owner:
     const r = skipState(state, questions());
     if (r.skipped && q) opts.callbacks.onSkip(q);
     sync(r.state);
-  }
-  function retire(): void {
-    const q = state.current;
-    if (!q) return;
-    opts.callbacks.onRetire(q);
-    sync(retireState(state, questions()));
   }
   function hint(): void {
     state = showHint(state);
@@ -183,7 +177,6 @@ export function mountScenarioPlayer(el: HTMLElement, opts: PlayerOptions, owner:
     const actions = box.createDiv({ cls: "vt-pr-actions" });
     if (!feedback) learnButton(actions, { label: t("practice.player.skip"), ghost: true, onClick: skip });
     if (canHint(state)) learnButton(actions, { label: t("practice.player.hint"), ghost: true, onClick: hint });
-    learnButton(actions, { label: t("practice.player.retire"), ghost: true, onClick: retire });
 
     if (feedback) renderFeedback(box, q);
   }

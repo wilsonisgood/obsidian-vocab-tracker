@@ -295,6 +295,17 @@ describe("ScenarioService answers", () => {
     expect(service.poolQuestions("poly").map((q) => q.id)).not.toContain(q3.id);
   });
 
+  it("1030 #2: skipping a question in 錯題本 takes it out of 錯題本, without retiring or rating it", async () => {
+    const { learner, service } = await filled();
+    const [q1] = service.poolQuestions("poly");
+    service.answer(q1, "get.become", false, { hinted: false, fromMistakes: false });
+    expect(service.mistakeQuestions("poly")).toHaveLength(1);
+    service.skip(q1);
+    expect(service.mistakeQuestions("poly")).toEqual([]);
+    expect(learner.practiceQuestion(q1.id)!.retiredAt).toBeUndefined();
+    expect(learner.learnEvents().map((e) => e.result)).toEqual(["wrong", "skipped"]);
+  });
+
   it("applyScope removes pool questions outside the focus ids", async () => {
     const { service, ev } = await filled();
     ev.length = 0;
