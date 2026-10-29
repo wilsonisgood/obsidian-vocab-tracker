@@ -44525,6 +44525,15 @@ function saveDnaBudget(v) {
   } catch (e) {
   }
 }
+function rerenderKeepingScroll(view) {
+  const preview2 = view.previewMode;
+  const line2 = preview2.getScroll();
+  preview2.rerender(true);
+  requestAnimationFrame(() => {
+    preview2.applyScroll(line2);
+    requestAnimationFrame(() => preview2.applyScroll(line2));
+  });
+}
 var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
   constructor() {
     super(...arguments);
@@ -44983,7 +44992,7 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
         for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
           const view = leaf.view;
           if (view instanceof import_obsidian74.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === path && view.getMode() === "preview") {
-            view.previewMode.rerender(true);
+            rerenderKeepingScroll(view);
           }
         }
       }
@@ -45358,10 +45367,9 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
   }
   // Re-runs post-processors so underlines follow the current lists/settings.
   rerenderReadingViews() {
-    var _a;
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
       const view = leaf.view;
-      if (view instanceof import_obsidian74.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
+      if (view instanceof import_obsidian74.MarkdownView && view.previewMode) rerenderKeepingScroll(view);
     }
   }
   refreshExamStrip() {

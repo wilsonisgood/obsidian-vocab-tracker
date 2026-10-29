@@ -177,6 +177,19 @@ function saveDnaBudget(v: { day: string; used: number }): void {
 
 // The plugin is the host of every vocab-* block (src/ui/blocks/registry.ts):
 // vocab-word's WordHeaderHost, the M7 blocks' WordLinkHost.
+// 1030: a full reading-view re-render (a first question's ^vt id, new
+// highlights) lands somewhere else — the reader was pulled up a section.
+// Keep the line at the top of the view where it was.
+function rerenderKeepingScroll(view: MarkdownView): void {
+  const preview = view.previewMode;
+  const line = preview.getScroll();
+  preview.rerender(true);
+  requestAnimationFrame(() => {
+    preview.applyScroll(line);
+    requestAnimationFrame(() => preview.applyScroll(line));
+  });
+}
+
 export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost, WordLinkHost {
   vocabData: VocabData = { entries: [] };
   store!: VocabStore;
@@ -721,7 +734,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
         for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
           const view = leaf.view;
           if (view instanceof MarkdownView && view.file?.path === path && view.getMode() === "preview") {
-            view.previewMode.rerender(true);
+            rerenderKeepingScroll(view);
           }
         }
       },
@@ -1191,7 +1204,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   rerenderReadingViews() {
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
       const view = leaf.view;
-      if (view instanceof MarkdownView) view.previewMode?.rerender(true);
+      if (view instanceof MarkdownView && view.previewMode) rerenderKeepingScroll(view);
     }
   }
 
