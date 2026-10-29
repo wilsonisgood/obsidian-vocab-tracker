@@ -1569,6 +1569,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     }
     const leaf = this.app.workspace.getLeaf(false);
     await leaf.openFile(file, { eState: { line: entry.source.line } });
+    // 1030 #5：出處被標題收起來時，打開它並高亮這個字。
+    await this.locator.flash(entry, { line: entry.source.line });
   }
 
   // ── Auto-fetch dictionary data (Wiktionary, falls back to Datamuse) ──

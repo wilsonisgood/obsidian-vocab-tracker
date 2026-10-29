@@ -30928,6 +30928,22 @@ function occurrenceIndexInLine(occurrences, index2) {
   }
   return k;
 }
+function occurrenceIndexFrom(occurrences, index2, fromLine) {
+  let k = 0;
+  for (let i = 0; i < index2; i++) {
+    if (occurrences[i].line >= fromLine) k++;
+  }
+  return k;
+}
+
+// src/core/text/folds.ts
+function hidesLine(fold, line2) {
+  return fold.from < line2 && line2 <= fold.to;
+}
+function foldsRevealing(folds, line2) {
+  const kept = folds.filter((f) => !hidesLine(f, line2));
+  return kept.length === folds.length ? null : kept;
+}
 
 // src/ui/reading/locateWord.ts
 var FLASH_MS2 = 3e3;
@@ -31015,24 +31031,52 @@ function flashSpan(span) {
     span.replaceWith(document.createTextNode((_a = span.textContent) != null ? _a : ""));
   }, FLASH_MS2);
 }
-async function flashInPreview(view, occ, k, word, inflections) {
+function revealLine(view, line2) {
+  var _a;
+  const mode = view.currentMode;
+  if (typeof mode.getFoldInfo !== "function" || typeof mode.applyFoldInfo !== "function") return false;
+  try {
+    const info = mode.getFoldInfo();
+    const kept = info ? foldsRevealing((_a = info.folds) != null ? _a : [], line2) : null;
+    if (!info || !kept) return false;
+    mode.applyFoldInfo({ ...info, folds: kept });
+    return true;
+  } catch (e) {
+    console.error("Vocab Tracker: couldn't unfold the note", e);
+    return false;
+  }
+}
+function previewSectionAt(view, line2) {
+  var _a;
+  const renderer = view.previewMode.renderer;
+  const sections = renderer == null ? void 0 : renderer.sections;
+  if (!Array.isArray(sections)) return null;
+  return (_a = sections.find((s) => {
+    var _a2;
+    return s.lineStart <= line2 && line2 <= s.lineEnd && ((_a2 = s.el) == null ? void 0 : _a2.isConnected);
+  })) != null ? _a : null;
+}
+async function flashInPreview(view, occurrences, index2, word, inflections) {
+  const occ = occurrences[index2];
   view.previewMode.applyScroll(occ.line);
   let hit = null;
   for (let i = 0; i < RENDER_RETRY_LIMIT && !hit; i++) {
     await nextFrame();
-    hit = findNthMatch(view.previewMode.containerEl, word, inflections, k);
+    const section4 = previewSectionAt(view, occ.line);
+    hit = section4 ? findNthMatch(section4.el, word, inflections, occurrenceIndexFrom(occurrences, index2, section4.lineStart)) : findNthMatch(view.previewMode.containerEl, word, inflections, occurrenceIndexInLine(occurrences, index2));
   }
   if (!hit) return;
   flashSpan(wrapRange(hit.node, hit.start, hit.length));
 }
 async function goTo(view, occurrences, index2, word, inflections) {
   const occ = occurrences[index2];
+  const unfolded = revealLine(view, occ.line);
   if (isSourceMode(view)) {
     selectInEditor(view, occ);
     return;
   }
-  const k = occurrenceIndexInLine(occurrences, index2);
-  await flashInPreview(view, occ, k, word, inflections);
+  if (unfolded) await nextFrame();
+  await flashInPreview(view, occurrences, index2, word, inflections);
 }
 function createWordLocator(app, opts) {
   let last2 = null;
@@ -44854,6 +44898,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
     }
     const leaf = this.app.workspace.getLeaf(false);
     await leaf.openFile(file, { eState: { line: entry.source.line } });
+    await this.locator.flash(entry, { line: entry.source.line });
   }
   // ── Auto-fetch dictionary data (Wiktionary, falls back to Datamuse) ──
   // `quiet` (background queue): no notice on failure, no sidebar render.

@@ -18,9 +18,11 @@ import {
   matchesWord,
   nearestOccurrenceIndex,
   nextOccurrenceIndex,
+  occurrenceIndexFrom,
   occurrenceIndexInLine,
   type Occurrence,
 } from "../../core/text/occurrences";
+import { foldsRevealing, type FoldRange } from "../../core/text/folds";
 import type { VocabEntry } from "../../core/model/entry";
 
 export interface WordLocator {
@@ -145,12 +147,56 @@ function flashSpan(span: HTMLElement): void {
   }, FLASH_MS);
 }
 
-async function flashInPreview(view: MarkdownView, occ: Occurrence, k: number, word: string, inflections: boolean): Promise<void> {
+// Obsidian 沒公開的收合 API（編輯／閱讀兩個 subview 都有）。不存在就當作
+// 沒有收合，照舊定位。
+interface FoldableMode {
+  getFoldInfo?(): { folds: FoldRange[]; lines: number } | null;
+  applyFoldInfo?(info: { folds: FoldRange[]; lines: number }): void;
+}
+
+// 1030 #5：字所在的段落被標題收起來時，先打開蓋住它的收合（只動這幾個，
+// 其他收合保持原狀），不然捲過去只停在收合的標題上、看不到字。
+function revealLine(view: MarkdownView, line: number): boolean {
+  const mode = view.currentMode as unknown as FoldableMode;
+  if (typeof mode.getFoldInfo !== "function" || typeof mode.applyFoldInfo !== "function") return false;
+  try {
+    const info = mode.getFoldInfo();
+    const kept = info ? foldsRevealing(info.folds ?? [], line) : null;
+    if (!info || !kept) return false;
+    mode.applyFoldInfo({ ...info, folds: kept });
+    return true;
+  } catch (e) {
+    console.error("Vocab Tracker: couldn't unfold the note", e);
+    return false;
+  }
+}
+
+interface PreviewSection {
+  lineStart: number;
+  lineEnd: number;
+  el: HTMLElement;
+}
+
+// 閱讀模式裡 line 所在的那一塊 DOM（renderer.sections，沒公開）。找不到就
+// 回 null，退回在整頁裡數。
+function previewSectionAt(view: MarkdownView, line: number): PreviewSection | null {
+  const renderer = (view.previewMode as unknown as { renderer?: { sections?: PreviewSection[] } }).renderer;
+  const sections = renderer?.sections;
+  if (!Array.isArray(sections)) return null;
+  return sections.find((s) => s.lineStart <= line && line <= s.lineEnd && s.el?.isConnected) ?? null;
+}
+
+async function flashInPreview(view: MarkdownView, occurrences: Occurrence[], index: number, word: string, inflections: boolean): Promise<void> {
+  const occ = occurrences[index];
   view.previewMode.applyScroll(occ.line);
   let hit: ReturnType<typeof findNthMatch> = null;
   for (let i = 0; i < RENDER_RETRY_LIMIT && !hit; i++) {
     await nextFrame();
-    hit = findNthMatch(view.previewMode.containerEl, word, inflections, k);
+    // 只在目標段落裡數，前面其他段落（尤其是剛展開的）有同一個字也不會數錯。
+    const section = previewSectionAt(view, occ.line);
+    hit = section
+      ? findNthMatch(section.el, word, inflections, occurrenceIndexFrom(occurrences, index, section.lineStart))
+      : findNthMatch(view.previewMode.containerEl, word, inflections, occurrenceIndexInLine(occurrences, index));
   }
   if (!hit) return; // 至少已經捲到那一行了 (#8 的容錯)
   flashSpan(wrapRange(hit.node, hit.start, hit.length));
@@ -158,12 +204,14 @@ async function flashInPreview(view: MarkdownView, occ: Occurrence, k: number, wo
 
 async function goTo(view: MarkdownView, occurrences: Occurrence[], index: number, word: string, inflections: boolean): Promise<void> {
   const occ = occurrences[index];
+  const unfolded = revealLine(view, occ.line);
   if (isSourceMode(view)) {
     selectInEditor(view, occ);
     return;
   }
-  const k = occurrenceIndexInLine(occurrences, index);
-  await flashInPreview(view, occ, k, word, inflections);
+  // 剛展開的段落要等閱讀模式重新排版後再捲。
+  if (unfolded) await nextFrame();
+  await flashInPreview(view, occurrences, index, word, inflections);
 }
 
 interface Resolved {

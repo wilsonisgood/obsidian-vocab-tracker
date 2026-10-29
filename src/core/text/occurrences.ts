@@ -80,3 +80,13 @@ export function occurrenceIndexInLine(occurrences: readonly Occurrence[], index:
   }
   return k;
 }
+
+// 這一處在「fromLine 起算」的範圍裡排第幾個（0-based）：閱讀模式只在目標
+// 段落的 DOM 裡數，段落從 fromLine 開始，前面幾行的同一個字也要算進去。
+export function occurrenceIndexFrom(occurrences: readonly Occurrence[], index: number, fromLine: number): number {
+  let k = 0;
+  for (let i = 0; i < index; i++) {
+    if (occurrences[i].line >= fromLine) k++;
+  }
+  return k;
+}

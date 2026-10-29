@@ -3,6 +3,7 @@ import {
   findOccurrences,
   nearestOccurrenceIndex,
   nextOccurrenceIndex,
+  occurrenceIndexFrom,
   occurrenceIndexInLine,
 } from "../../../src/core/text/occurrences";
 
@@ -93,5 +94,13 @@ describe("occurrenceIndexInLine (1006-2 #8 same-line DOM lookup)", () => {
     const md = ["fox fox", "fox"].join("\n");
     const occ = findOccurrences(md, "fox", true);
     expect(occ.map((_, i) => occurrenceIndexInLine(occ, i))).toEqual([0, 1, 0]);
+  });
+});
+
+describe("occurrenceIndexFrom (1030 #5 count inside the target section)", () => {
+  it("counts earlier hits from the section's first line on, not before it", () => {
+    const occ = findOccurrences("fox\n\nfox and fox\nthe fox", "fox", true);
+    // lines: 0, 2, 2, 3 — section starts at line 2
+    expect(occ.map((_, i) => occurrenceIndexFrom(occ, i, 2))).toEqual([0, 0, 1, 2]);
   });
 });
