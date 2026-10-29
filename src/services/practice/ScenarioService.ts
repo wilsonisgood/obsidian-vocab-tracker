@@ -58,14 +58,17 @@ export interface ScenarioServiceDeps {
   // C6: a vocab word answered wrong in a scenario (not a 錯題區 redo) gets
   // one FSRS Again. `entryId` is the focus id of the question.
   rateVocabAgain?: (entryId: string) => void;
+  // 1030 #4: this service's own pool lane (PoolItem.lane), e.g. one note's
+  // 「複習這篇筆記」. Questions, events and mistakes stay shared.
+  lane?: string;
   clock?: () => Date;
   newId?: () => string;
 }
 
 type RefillJob = (signal?: AbortSignal) => Promise<PracticeScenarioDraft>;
 
-export function refillThreadId(track: ScenarioTrack): string {
-  return `practice:pool:${track}`;
+export function refillThreadId(track: ScenarioTrack, lane?: string): string {
+  return lane ? `practice:pool:${track}:${lane}` : `practice:pool:${track}`;
 }
 
 function defaultId(now: Date): string {
@@ -130,9 +133,9 @@ export class ScenarioService implements ScenarioPracticeApi {
     try {
       await learner.ensureLoaded();
       this.dropUnaskable(track);
-      if (!needsRefill(learner.pool(track), track)) return;
+      if (!needsRefill(learner.pool(track, this.deps.lane), track)) return;
       if (!this.aiReady()) return;
-      const count = Math.min(SCENARIO_REFILL_COUNT, poolRoom(learner.pool(track), track));
+      const count = Math.min(SCENARIO_REFILL_COUNT, poolRoom(learner.pool(track, this.deps.lane), track));
       if (count <= 0) return;
       const job = req.track === "para" ? this.paraJob(req, count) : this.storyJob(req, count);
       if (!job) return;
@@ -183,12 +186,13 @@ export class ScenarioService implements ScenarioPracticeApi {
       if (!saved.length) throw new AiError("bad_output", "practice.scenario: every question was already stored");
       learner.upsertPracticeQuestions(saved);
       const added = addToPool(
-        learner.pool(track),
+        learner.pool(track, this.deps.lane),
         track,
         saved.map((q) => ({ questionId: q.id, scenarioId: q.scenario.id })),
         this.clock()
       );
-      if (added.length) learner.upsertPool(added);
+      const lane = this.deps.lane;
+      if (added.length) learner.upsertPool(lane ? added.map((i) => ({ ...i, lane })) : added);
       this.refilling.delete(track);
       this.events.emit("refill:end", { track });
       this.events.emit("pool:change", track);
@@ -212,7 +216,7 @@ export class ScenarioService implements ScenarioPracticeApi {
       avoid: this.avoid(track),
     };
     return async (signal) =>
-      (await runStructured(this.deps.ai, practiceScenarioFor(req), input, { threadId: refillThreadId(track), signal })).value;
+      (await runStructured(this.deps.ai, practiceScenarioFor(req), input, { threadId: refillThreadId(track, this.deps.lane), signal })).value;
   }
 
   // 換句話說: one paragraph per refill — the one asked about least so far —
@@ -225,7 +229,7 @@ export class ScenarioService implements ScenarioPracticeApi {
     const asked = paragraph.sentences.flatMap((s, i) => (mine.has(textKey(s)) ? [i + 1] : []));
     const input: ParaphraseInput = { paragraph, count, weakness: this.paraWeakness(), asked };
     return async (signal) =>
-      (await runStructured(this.deps.ai, practiceParaphraseFor(paragraph), input, { threadId: refillThreadId("para"), signal }))
+      (await runStructured(this.deps.ai, practiceParaphraseFor(paragraph), input, { threadId: refillThreadId("para", this.deps.lane), signal }))
         .value;
   }
 
@@ -277,7 +281,7 @@ export class ScenarioService implements ScenarioPracticeApi {
   // of the pool, so the next one carries on from it.
   private previousScenario(track: ScenarioTrack): PreviousScenario | undefined {
     const learner = this.deps.learner;
-    const live = learner.pool(track);
+    const live = learner.pool(track, this.deps.lane);
     for (let i = live.length - 1; i >= 0; i--) {
       const last = learner.practiceQuestion(live[i].questionId)?.scenario;
       if (!last) continue;
@@ -312,7 +316,7 @@ export class ScenarioService implements ScenarioPracticeApi {
     const learner = this.deps.learner;
     const now = this.clock();
     const out = learner
-      .pool(track)
+      .pool(track, this.deps.lane)
       .filter((i) => {
         const q = learner.practiceQuestion(i.questionId);
         return !q || !!q.retiredAt;
@@ -325,7 +329,7 @@ export class ScenarioService implements ScenarioPracticeApi {
 
   poolQuestions(track: ScenarioTrack): PracticeQuestion[] {
     const out: PracticeQuestion[] = [];
-    for (const i of this.deps.learner.pool(track)) {
+    for (const i of this.deps.learner.pool(track, this.deps.lane)) {
       const q = this.deps.learner.practiceQuestion(i.questionId);
       if (q && !q.retiredAt) out.push(q);
     }
@@ -347,7 +351,7 @@ export class ScenarioService implements ScenarioPracticeApi {
     this.scopeVersions.set(track, this.scopeVersion(track) + 1);
     const learner = this.deps.learner;
     const now = this.clock();
-    const gone = learner.pool(track).filter((i) => {
+    const gone = learner.pool(track, this.deps.lane).filter((i) => {
       const q = learner.practiceQuestion(i.questionId);
       return !q || !focusIds.has(q.focus.id);
     });
@@ -424,7 +428,7 @@ export class ScenarioService implements ScenarioPracticeApi {
 
   private leavePool(q: PracticeQuestion, reason: PoolRemoveReason): void {
     const learner = this.deps.learner;
-    const item = learner.pool(q.track).find((i) => i.questionId === q.id);
+    const item = learner.pool(q.track, this.deps.lane).find((i) => i.questionId === q.id);
     if (!item) return;
     learner.upsertPool([removeFromPool(item, reason, this.clock())]);
     this.events.emit("pool:change", q.track);

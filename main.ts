@@ -46,6 +46,7 @@ import { GrammarStore } from "./src/services/grammar/GrammarStore";
 import { LearnerStore } from "./src/services/learner/LearnerStore";
 import { GlossService } from "./src/services/learner/GlossService";
 import { NoteGlossCache } from "./src/ui/word/noteGlossCache";
+import { NoteReviewPanels } from "./src/ui/reading/NoteReviewPanel";
 import { glossOf, type NoteGloss } from "./src/core/learner/gloss";
 import { ReadingTracker } from "./src/services/learner/ReadingTracker";
 import { pluginNoteKind } from "./src/ui/reading/pluginNote";
@@ -195,6 +196,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   // 1030 #3 語境意思.
   glosses!: GlossService;
   noteGlosses!: NoteGlossCache;
+  // 1030 #4: the scenario service of one note's 「複習這篇筆記」 (its own pool lane).
+  noteScenario!: (path: string) => ScenarioService;
   reading!: ReadingTracker;
   grammarPages!: GrammarPages;
   grammarQuestions!: QuestionService;
@@ -431,17 +434,25 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       level: () => this.store.settings.learner?.level ?? "",
     });
     // 第十七波: 常用字 / 單字情境 / 混合 share one scenario service.
-    this.scenario = new ScenarioService({
+    const scenarioDeps = {
       ai,
       learner: this.learner,
       recentWords: () => this.recentWords(),
       level: () => this.store.settings.learner?.level ?? "",
       // C6: a scenario word answered wrong is one FSRS Again.
-      rateVocabAgain: (id) => {
+      rateVocabAgain: (id: string) => {
         const entry = this.store.entries.find((e) => e.id === id);
         if (entry) void this.srs.rate(entry, Rating.Again, "en-zh");
       },
-    });
+    };
+    this.scenario = new ScenarioService(scenarioDeps);
+    // 1030 #4: each note's 「複習這篇筆記」 has its own pool lane.
+    const noteScenarios = new Map<string, ScenarioService>();
+    this.noteScenario = (path) => {
+      let s = noteScenarios.get(path);
+      if (!s) noteScenarios.set(path, (s = new ScenarioService({ ...scenarioDeps, lane: `note:${path}` })));
+      return s;
+    };
     // 第十七波 Z: the one read point for how far the learner has got.
     this.learnerModel = new LearnerModel({
       vocab: () => this.store.entries,
@@ -664,6 +675,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     );
     // The plugin's own notes: 「屬性」 folded / small, no doubled title.
     new PluginNoteChrome(this.app).attach(this);
+    // 1030 #4: 「複習這篇筆記」 under the title of the user's notes.
+    new NoteReviewPanels(this).attach(this);
 
     // Sidebar
     this.registerView(

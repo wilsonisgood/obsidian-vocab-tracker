@@ -27,5 +27,6 @@
 @import "./practice-mix.css";
 @import "./report.css";
 @import "./buddy.css";
+@import "./noteReview.css";
 /* Last: its is-mobile / is-phone / is-tablet rules override the above. */
 @import "./mobile.css";

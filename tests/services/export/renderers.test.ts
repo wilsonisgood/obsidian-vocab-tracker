@@ -301,6 +301,19 @@ describe("AI note renderer", () => {
   });
 });
 
+describe("AI note: the whole-note discussion (1030 #4)", () => {
+  it("comes first, under 「## 整篇文章」, and alone is enough to create the note", () => {
+    const turns = NOTE.paragraphs.find((p) => p.turns.length)!.turns;
+    const withWhole: AiNoteInput = { ...NOTE, note: { turns } };
+    const body = renderAiNoteSections(withWhole, ctx())[0].body;
+    expect(body.startsWith("## 整篇文章")).toBe(true);
+    expect(body.indexOf("## 整篇文章")).toBeLessThan(body.indexOf("## ¶12"));
+    const onlyWhole: AiNoteInput = { articlePath: "Note.md", paragraphs: [], words: [], note: { turns } };
+    expect(hasAiNoteContent(onlyWhole)).toBe(true);
+    expect(hasAiNoteContent({ ...onlyWhole, note: { turns: [] } })).toBe(false);
+  });
+});
+
 describe("trivia favourites renderer", () => {
   it("renders saved items newest first (snapshot)", () => {
     expect(renderTriviaFavoritesFile({ items: TRIVIA }, ctx())).toMatchSnapshot();

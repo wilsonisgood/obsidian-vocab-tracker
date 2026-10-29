@@ -77,6 +77,7 @@ const KEYS: Exclude<keyof ExportLabels, "usagePosHeading" | "info" | "dna">[] = 
   "userNotesHint",
   "paragraphsEmpty",
   "paragraphOrphaned",
+  "wholeNote",
   "wordsLearned",
   "wordsEmpty",
   "wordQuestions",

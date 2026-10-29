@@ -35,7 +35,7 @@ __export(main_exports, {
   default: () => VocabTrackerPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian73 = require("obsidian");
+var import_obsidian74 = require("obsidian");
 
 // src/core/text/wordRe.ts
 function escapeRe(s) {
@@ -887,8 +887,8 @@ var VocabStore = class {
 };
 
 // src/core/migrations/v1-to-v2.ts
-function parseAddedAt(added) {
-  const d = new Date(added.replace(" ", "T"));
+function parseAddedAt(added2) {
+  const d = new Date(added2.replace(" ", "T"));
   return Number.isNaN(d.getTime()) ? nowIso() : d.toISOString();
 }
 function migrateEntry(entry) {
@@ -1365,6 +1365,7 @@ var en = {
   "export.userNotesHint": "Your notes below \u2014 the plugin never changes them",
   "export.paragraphsEmpty": "No paragraph discussions yet.",
   "export.paragraphOrphaned": "Paragraph no longer found in the note",
+  "export.wholeNote": "The whole note",
   "export.wordsLearned": "Words from this note",
   "export.wordsEmpty": "No words added from this note yet.",
   "export.wordQuestions": "{n} questions",
@@ -1784,6 +1785,13 @@ var en = {
   "practice.vocab.quickRecent": "Recently added (7 days)",
   "practice.player.skip": "Skip",
   "row.gloss.inNote": "Meaning in this note",
+  "ai.task.note.mainIdea": "Main idea",
+  "noteReview.title": "Review this note",
+  "noteReview.tab.vocab": "Words",
+  "noteReview.tab.ai": "AI discussion",
+  "noteReview.vocab.few": "Fewer than {n} words in this note have a Chinese meaning",
+  "noteReview.ai.placeholder": "Ask about this article\u2026",
+  "ai.task.note.structure": "Structure",
   "wordPage.glosses": "Meaning in each note",
   "practice.player.hint": "\u{1F4A1} Hint",
   "practice.player.next": "Next",
@@ -2330,6 +2338,7 @@ var zhTW = {
   "export.userNotesHint": "\u4EE5\u4E0B\u662F\u4F60\u7684\u7B46\u8A18\uFF0C\u63D2\u4EF6\u4E0D\u6703\u6539\u52D5",
   "export.paragraphsEmpty": "\u9084\u6C92\u6709\u6BB5\u843D\u8A0E\u8AD6\u3002",
   "export.paragraphOrphaned": "\u539F\u6587\u4E2D\u627E\u4E0D\u5230\u9019\u6BB5",
+  "export.wholeNote": "\u6574\u7BC7\u6587\u7AE0",
   "export.wordsLearned": "\u9019\u7BC7\u5B78\u5230\u7684\u55AE\u5B57",
   "export.wordsEmpty": "\u9019\u7BC7\u9084\u6C92\u6709\u52A0\u5165\u55AE\u5B57\u3002",
   "export.wordQuestions": "{n} \u5247\u8A0E\u8AD6",
@@ -2748,6 +2757,13 @@ var zhTW = {
   "practice.vocab.quickRecent": "\u6700\u8FD1\u6536\u9304\uFF087 \u5929\u5167\uFF09",
   "practice.player.skip": "\u8DF3\u904E",
   "row.gloss.inNote": "\u5728\u9019\u7BC7\u7684\u610F\u601D",
+  "ai.task.note.mainIdea": "\u9019\u7BC7\u7684\u4E3B\u65E8",
+  "noteReview.title": "\u8907\u7FD2\u9019\u7BC7\u7B46\u8A18",
+  "noteReview.tab.vocab": "\u55AE\u5B57",
+  "noteReview.tab.ai": "AI \u8A0E\u8AD6",
+  "noteReview.vocab.few": "\u9019\u7BC7\u6709\u4E2D\u6587\u610F\u601D\u7684\u55AE\u5B57\u4E0D\u5230 {n} \u500B",
+  "noteReview.ai.placeholder": "\u554F\u554F\u9019\u7BC7\u6587\u7AE0\u5728\u8AAA\u4EC0\u9EBC\u2026",
+  "ai.task.note.structure": "\u6BB5\u843D\u7D50\u69CB",
   "wordPage.glosses": "\u5728\u5404\u7BC7\u6587\u7AE0\u7684\u610F\u601D",
   "practice.player.hint": "\u{1F4A1} \u63D0\u793A",
   "practice.player.next": "\u4E0B\u4E00\u984C",
@@ -5882,11 +5898,11 @@ function loadPreviewDictionary(dict, word, onSettled) {
 // src/ui/word/AiTab.ts
 function buildPreviewSend(host, draftWord, draftThreadId, ui, preview2) {
   return async (req) => {
-    const added = await promotePreview(host, draftWord, preview2.ctx, preview2.dict);
-    if (ui.chat.focused === draftThreadId) ui.chat.focused = wordThreadId(added.id);
-    ui.tabs.set(added.id, "ai");
+    const added2 = await promotePreview(host, draftWord, preview2.ctx, preview2.dict);
+    if (ui.chat.focused === draftThreadId) ui.chat.focused = wordThreadId(added2.id);
+    ui.tabs.set(added2.id, "ai");
     preview2.refresh();
-    await host.threads.askWord(added, req);
+    await host.threads.askWord(added2, req);
   };
 }
 function renderWordAiTab(plugin, container, entry, ui, scope, preview2) {
@@ -8997,6 +9013,7 @@ var KEYS = [
   "userNotesHint",
   "paragraphsEmpty",
   "paragraphOrphaned",
+  "wholeNote",
   "wordsLearned",
   "wordsEmpty",
   "wordQuestions",
@@ -9231,11 +9248,11 @@ function dayLabel(iso, now2 = /* @__PURE__ */ new Date()) {
   return d.getFullYear() === now2.getFullYear() ? md : `${d.getFullYear()}/${md}`;
 }
 function recordDates(rec, now2 = /* @__PURE__ */ new Date()) {
-  const added = dayLabel(rec.createdAt, now2);
+  const added2 = dayLabel(rec.createdAt, now2);
   const updated = dayLabel(rec.updatedAt, now2);
   const out = {};
-  if (added) out.added = added;
-  if (updated && updated !== added) out.updated = updated;
+  if (added2) out.added = added2;
+  if (updated && updated !== added2) out.updated = updated;
   return out;
 }
 function datesText(d, first = "added") {
@@ -15784,14 +15801,14 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
     const ctrl = new AbortController();
     this.galaxyExpandCtrl.set(family.id, ctrl);
     this.render();
-    this.plugin.families.expand(family.id, ctrl.signal).then((added) => {
+    this.plugin.families.expand(family.id, ctrl.signal).then((added2) => {
       if (this.disposed) return;
-      if (!added.length) {
+      if (!added2.length) {
         new import_obsidian23.Notice(t("galaxy.noMoreSuggestions"));
         return;
       }
-      for (const m2 of added) this.galaxyFresh.add(galaxyNodeId(m2));
-      new import_obsidian23.Notice(t("galaxy.expandFound", { n: added.length, words: joinWords(added.map((m2) => m2.word)) }));
+      for (const m2 of added2) this.galaxyFresh.add(galaxyNodeId(m2));
+      new import_obsidian23.Notice(t("galaxy.expandFound", { n: added2.length, words: joinWords(added2.map((m2) => m2.word)) }));
     }).catch((e) => {
       if (this.disposed || isAbort(e)) return;
       console.error("Vocab Tracker: galaxy expand failed", e);
@@ -32388,6 +32405,66 @@ var paragraphGloss = {
 };
 var GLOSS_TASKS = [paragraphGloss];
 
+// src/services/ai/tasks/note.ts
+var NOTE_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u8010\u5FC3\u3001\u7CBE\u6E96\u7684\u82F1\u6587\u95B1\u8B80\u5BB6\u6559\uFF0C\u6B63\u5728\u966A\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u8B80\u5B8C\u4E00\u7BC7\u82F1\u6587\u6587\u7AE0\uFF0C\u5E6B\u4ED6\u6293\u4F4F\u6574\u7BC7\u5728\u8AAA\u4EC0\u9EBC\u3002\u3014\u6587\u7AE0\u3015\u662F\u5168\u6587\uFF0C\u6BB5\u843D\u524D\u9762\u7684 \xB6 \u6578\u5B57\u662F\u6BB5\u843D\u7DE8\u865F\u3002
+
+\u56DE\u7B54\u898F\u5247\uFF1A
+1. \u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u56DE\u7B54\uFF0C\u5F15\u7528\u82F1\u6587\u539F\u6587\u6642\u4FDD\u7559\u82F1\u6587\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u82E5\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\uFF0C\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
+2. \u53EA\u6839\u64DA\u63D0\u4F9B\u7684\u6587\u7AE0\u56DE\u7B54\u3002\u6587\u7AE0\u6C92\u5BEB\u7684\u4E0D\u8981\u88DC\uFF0C\u4E0D\u78BA\u5B9A\u5C31\u76F4\u63A5\u8AAA\u300C\u4E0D\u78BA\u5B9A\u300D\u3002
+3. \u63D0\u5230\u67D0\u4E00\u6BB5\u6642\u5BEB\u51FA\u6BB5\u843D\u7DE8\u865F\uFF08\u4F8B\u5982 \xB63\uFF09\uFF0C\u8B93\u5B78\u7FD2\u8005\u80FD\u56DE\u53BB\u5C0D\u7167\u3002
+4. \u7528 Markdown \u6392\u7248\uFF1A\u91CD\u9EDE\u7528\u7C97\u9AD4\uFF0C\u689D\u5217\u6700\u591A 6 \u9EDE\uFF0C\u4E0D\u8981\u7528\u6A19\u984C\uFF08#\uFF09\u3002
+5. \u7BC7\u5E45\u4EE5\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u70BA\u6E96\u3002`;
+var NOTE_ARTICLE_TEMPLATE = `\u3014\u6587\u7AE0\u3015{{#title}}\u300A{{title}}\u300B{{/title}}
+{{#truncated}}\uFF08\u5168\u6587\u592A\u9577\uFF0C\u9019\u88E1\u53EA\u9644\u4E0A\u524D {{shown}} \u6BB5\u3002\uFF09{{/truncated}}
+
+{{body}}`;
+var NOTE_TEMPLATES = {
+  mainIdea: `\u4EFB\u52D9\uFF1A\u9019\u7BC7\u7684\u4E3B\u65E8
+\u5148\u7528\u4E00\u53E5\u4E2D\u6587\u8AAA\u51FA\u6574\u7BC7\u7684\u4E3B\u65E8\uFF0C\u518D\u9644\u4E0A\u539F\u6587\u88E1\u6700\u80FD\u4EE3\u8868\u4E3B\u65E8\u7684\u4E00\u53E5\uFF08\u7167\u6284\u82F1\u6587\uFF09\u3002\u63A5\u8457\u7528 2\uFF5E4 \u9EDE\u8AAA\u660E\u4F5C\u8005\u7528\u54EA\u4E9B\u8AD6\u9EDE\u6216\u4F8B\u5B50\u652F\u6301\u5B83\uFF0C\u6BCF\u9EDE\u6A19\u51FA\u6BB5\u843D\u7DE8\u865F\u3002`,
+  structure: `\u4EFB\u52D9\uFF1A\u6BB5\u843D\u7D50\u69CB
+\u628A\u6587\u7AE0\u5206\u6210\u5E7E\u500B\u90E8\u5206\uFF08\u958B\u982D\u3001\u8F49\u6298\u3001\u8AD6\u9EDE\u3001\u4F8B\u5B50\u3001\u7D50\u8AD6\u2026\uFF09\uFF0C\u6BCF\u90E8\u5206\u5BEB\u51FA\u6BB5\u843D\u7BC4\u570D\u548C\u4E00\u53E5\u4E2D\u6587\u6458\u8981\uFF1B\u6700\u5F8C\u8AAA\u660E\u5404\u90E8\u5206\u600E\u9EBC\u929C\u63A5\uFF0C\u9EDE\u51FA\u95DC\u9375\u7684\u8F49\u6298\u8A5E\u3002`,
+  custom: `\u3014\u4F7F\u7528\u8005\u7684\u554F\u984C\u3015
+{{question}}`
+};
+function noteArticleBlock(article, maxTokens = MAX_ARTICLE_TOKENS) {
+  var _a;
+  const numbered = article.paragraphs.map((p, i) => `\xB6${i + 1} ${p.trim()}`);
+  let shown = numbered.length;
+  while (shown > 1 && estimateTokens(numbered.slice(0, shown).join("\n\n")) > maxTokens) shown--;
+  return renderTemplate(NOTE_ARTICLE_TEMPLATE, {
+    title: (_a = article.title) == null ? void 0 : _a.trim(),
+    truncated: shown < numbered.length ? "yes" : "",
+    shown,
+    body: numbered.slice(0, shown).join("\n\n")
+  });
+}
+function noteTask(id2, opts) {
+  const task = {
+    id: `note.${id2}`,
+    version: 1,
+    surface: "note",
+    ...opts,
+    build(input, ctx) {
+      var _a, _b;
+      return composeRequest({
+        base: NOTE_BASE_PROMPT,
+        cached: [noteArticleBlock(input.article)],
+        context: [],
+        profile: profileForTask(ctx.profile, task, input),
+        history: ctx.history,
+        user: renderTemplate(NOTE_TEMPLATES[id2], { question: (_b = (_a = input.question) == null ? void 0 : _a.trim()) != null ? _b : "" }),
+        tier: opts.tier,
+        maxTokens: opts.maxTokens
+      });
+    }
+  };
+  return task;
+}
+var noteMainIdea = noteTask("mainIdea", { tier: "smart", maxTokens: 4096, label: "ai.task.note.mainIdea" });
+var noteStructure = noteTask("structure", { tier: "smart", maxTokens: 4096, label: "ai.task.note.structure" });
+var noteCustom = noteTask("custom", { tier: "smart", maxTokens: 4096 });
+var NOTE_TASKS = [noteMainIdea, noteStructure, noteCustom];
+
 // src/services/ai/tasks/grammarGrade.ts
 var MAX_GIVEN_CHARS = 1e3;
 var MAX_FEEDBACK_CHARS = 300;
@@ -32905,6 +32982,7 @@ function defaultTaskRegistry() {
     ...PRACTICE_TASKS,
     ...PARAPHRASE_TASKS,
     ...GLOSS_TASKS,
+    ...NOTE_TASKS,
     diaryWrite,
     reportAdvise,
     reportAnalyze,
@@ -34317,6 +34395,7 @@ function normalizePool(raw) {
     updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : raw.addedAt
   };
   if (str11(raw.scenarioId)) p.scenarioId = raw.scenarioId;
+  if (str11(raw.lane)) p.lane = raw.lane;
   if (isIso(raw.removedAt)) {
     p.removedAt = raw.removedAt;
     p.removeReason = REASONS.includes(raw.removeReason) ? raw.removeReason : "answered";
@@ -34862,9 +34941,9 @@ function rebaseThreads(current, backup, opts, counts, changed) {
 }
 function unionAttempts(current, backup, counts) {
   const had = new Set(current.map((a2) => a2.id));
-  const added = backup.filter((a2) => !had.has(a2.id));
-  counts.attemptsAdded = added.length;
-  return added.length ? sortAttempts([...current, ...added]) : [...current];
+  const added2 = backup.filter((a2) => !had.has(a2.id));
+  counts.attemptsAdded = added2.length;
+  return added2.length ? sortAttempts([...current, ...added2]) : [...current];
 }
 function currentShard(current, shard) {
   var _a, _b, _c, _d, _e, _f, _g, _h;
@@ -35374,6 +35453,7 @@ function truncateAsk(text) {
 function askSurfaceOf(taskId, surface) {
   const raw = surface != null ? surface : taskId.split(".")[0];
   if (ASK_SURFACES.includes(raw)) return raw;
+  if (raw === "note") return "paragraph";
   return raw === "dna" ? "morpheme" : "other";
 }
 function buildAskEvent(user, answer, anchor, surface) {
@@ -35389,7 +35469,7 @@ function buildAskEvent(user, answer, anchor, surface) {
   };
   const entryId = (_c = user.subjectEntryId) != null ? _c : anchor.kind === "word" ? anchor.entryId : void 0;
   if (entryId) e.entryId = entryId;
-  if (anchor.kind === "paragraph") e.path = anchor.path;
+  if (anchor.kind === "paragraph" || anchor.kind === "note") e.path = anchor.path;
   const selection2 = truncateAsk(user.selection);
   if (selection2) e.selection = selection2;
   const question = truncateAsk(user.question);
@@ -36106,9 +36186,57 @@ ${ref.lineStart}`;
   }
   // 文章改名 (規劃書 06 §4.6): paragraph anchors follow the note; a folder
   // rename moves every note under it. Returns how many threads moved.
+  // ─── Whole-note discussions (1030 #4 複習這篇筆記) ─────────────────────
+  // The note's discussion: the live one anchored to it, else the id a first
+  // question will create (the hash of the path; a deleted one's id isn't reused).
+  noteThreadId(path) {
+    const live = this.threads.find((th) => !th.deletedAt && th.anchor.kind === "note" && th.anchor.path === path);
+    if (live) return live.id;
+    const base = `note:${sha1(path).slice(0, 12)}`;
+    let id2 = base;
+    for (let n = 2; this.threads.some((th) => th.id === id2); n++) id2 = `${base}-${n}`;
+    return id2;
+  }
+  noteThread(path) {
+    return this.threads.find((th) => !th.deletedAt && th.anchor.kind === "note" && th.anchor.path === path);
+  }
+  async askNote(path, req) {
+    await this.ensureLoaded();
+    if (this.disposed) return null;
+    const content = await this.deps.notes.read(path);
+    if (content === null) return null;
+    const threadId = this.noteThreadId(path);
+    if (this.isBusy(threadId)) return null;
+    const paragraphs = splitParagraphSpans(content).map((s) => plainParagraph(s.text));
+    const input = { article: { title: noteTitle3(path), paragraphs } };
+    if (req.question) input.question = req.question;
+    await this.ask({
+      threadId,
+      anchor: { kind: "note", path },
+      taskId: req.taskId,
+      input,
+      display: this.displayFor(req),
+      question: req.question,
+      selection: req.selection
+    });
+    return threadId;
+  }
+  async retryNote(path, turnId) {
+    const question = this.dropFailedRound(this.get(this.noteThreadId(path)), turnId);
+    if (!(question == null ? void 0 : question.taskId)) return;
+    await this.askNote(path, { taskId: question.taskId, question: question.question, selection: question.selection });
+  }
   async renameParagraphPath(oldPath, newPath) {
     await this.ensureLoaded();
     let moved = 0;
+    for (const th of this.threads) {
+      if (th.deletedAt || th.anchor.kind !== "note") continue;
+      const a2 = th.anchor;
+      const next = a2.path === oldPath ? newPath : a2.path.startsWith(`${oldPath}/`) ? newPath + a2.path.slice(oldPath.length) : null;
+      if (next === null) continue;
+      th.anchor = { kind: "note", path: next };
+      this.changed(th);
+    }
     for (const th of this.paragraphThreads()) {
       const a2 = th.anchor;
       let next = null;
@@ -36717,6 +36845,12 @@ var REFILL_AT = 4;
 function livePool(items, track2) {
   return items.filter((i) => i.track === track2 && !i.removedAt).sort((a2, b) => a2.seq - b.seq);
 }
+function laneItems(items, lane) {
+  return items.filter((i) => {
+    var _a;
+    return ((_a = i.lane) != null ? _a : "") === (lane != null ? lane : "");
+  });
+}
 function needsRefill(items, track2) {
   return livePool(items, track2).length <= REFILL_AT;
 }
@@ -36879,8 +37013,8 @@ var LearnerStore = class {
     );
   }
   // ── Pool ──────────────────────────────────────────────────────
-  pool(track2) {
-    return livePool(this.data.pool, track2);
+  pool(track2, lane) {
+    return livePool(laneItems(this.data.pool, lane), track2);
   }
   // Every stored pool item (removed ones included), for addToPool's de-dupe.
   allPool() {
@@ -37263,26 +37397,11 @@ ${this.version}`;
   }
 };
 
-// src/services/learner/ReadingTracker.ts
-var ReadingTracker = class {
-  constructor(port, learner) {
-    this.port = port;
-    this.learner = learner;
-  }
-  // `line` is the 0-based source line of the interaction (null / negative: unknown).
-  async note(path, line2, kind) {
-    try {
-      if (!/\.md$/i.test(path)) return;
-      if (this.port.isPluginNote(path)) return;
-      const text = await this.port.read(path);
-      if (text === null) return;
-      const ctx = headingContext(text, line2, basenameOf(path));
-      this.learner.recordReading({ path, title: ctx.title, heading: ctx.heading, kind });
-    } catch (e) {
-      console.error("Vocab Tracker: couldn't record reading", e);
-    }
-  }
-};
+// src/ui/reading/NoteReviewPanel.ts
+var import_obsidian63 = require("obsidian");
+
+// src/ui/reading/ParagraphBadges.ts
+var import_obsidian62 = require("obsidian");
 
 // src/services/export/managedBlock.ts
 var NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
@@ -37524,6 +37643,548 @@ function chromeState(cache2, basename2, hasDashboardBlock = false) {
     hideFirstHeading: hasDashboardBlock && opensWithH1(cache2 == null ? void 0 : cache2.headings)
   };
 }
+
+// src/ui/reading/ParagraphBadges.ts
+var BADGE_CLS = "vt-pbadge";
+var BADGE_HOST_CLS = "vt-pbadge-host";
+var ANCHORABLE_TAGS = /* @__PURE__ */ new Set(["P", "UL", "OL", "BLOCKQUOTE"]);
+function isAnchorableTag(tagName) {
+  return !!tagName && ANCHORABLE_TAGS.has(tagName.toUpperCase());
+}
+var SectionLines = class {
+  constructor() {
+    this.text = null;
+    this.lines = [];
+  }
+  slice(info) {
+    if (info.text !== this.text) {
+      this.text = info.text;
+      this.lines = info.text.replace(/\r\n?/g, "\n").split("\n");
+    }
+    return this.lines.slice(info.lineStart, info.lineEnd + 1).join("\n");
+  }
+};
+var NOT_READY_RETRY_MS = 100;
+var NOT_READY_MAX_TRIES = 30;
+function sectionReady(info) {
+  if (!info.text) return false;
+  let lines4 = 1;
+  for (let i = info.text.indexOf("\n"); i >= 0 && lines4 <= info.lineEnd; i = info.text.indexOf("\n", i + 1)) lines4++;
+  return info.lineEnd < lines4;
+}
+function skipsBadges(fm) {
+  return !!wordPageEntryId(fm) || pluginNoteKind(fm) !== null;
+}
+function badgeState(count2, showGhost) {
+  return count2 > 0 ? { kind: "count", count: count2 } : { kind: "ghost", quiet: !showGhost };
+}
+var ParagraphBadges = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.live = /* @__PURE__ */ new Map();
+    this.lines = new SectionLines();
+    this.healed = /* @__PURE__ */ new Set();
+    // registerMarkdownPostProcessor(badges.process)
+    this.process = (el, ctx) => {
+      var _a, _b, _c;
+      const first = el.firstElementChild;
+      if (!isAnchorableTag(first == null ? void 0 : first.tagName)) return;
+      const fm = (_c = ctx.frontmatter) != null ? _c : (_b = (_a = this.deps).frontmatterOf) == null ? void 0 : _b.call(_a, ctx.sourcePath);
+      if (skipsBadges(fm)) return;
+      if (!ctx.getSectionInfo(el)) return;
+      let handles = [];
+      let unloaded = false;
+      let timer2 = 0;
+      const child = new import_obsidian62.MarkdownRenderChild(el);
+      child.register(() => {
+        unloaded = true;
+        if (timer2) window.clearTimeout(timer2);
+        handles.forEach((h) => this.untrack(h));
+      });
+      ctx.addChild(child);
+      const attach = (tries) => {
+        if (unloaded) return;
+        const info = ctx.getSectionInfo(el);
+        if (!info) return;
+        if (!sectionReady(info)) {
+          if (tries < NOT_READY_MAX_TRIES) timer2 = window.setTimeout(() => attach(tries + 1), NOT_READY_RETRY_MS);
+          return;
+        }
+        handles = this.handlesFor(ctx.sourcePath, el, first, info.lineStart, info.lineEnd, this.lines.slice(info));
+        handles.forEach((h, i) => {
+          h.fresh = () => {
+            const now2 = ctx.getSectionInfo(el);
+            if (!now2 || !sectionReady(now2)) return null;
+            const again = this.handlesFor(ctx.sourcePath, el, first, now2.lineStart, now2.lineEnd, this.lines.slice(now2));
+            return again.length === handles.length ? again[i].ref : null;
+          };
+          this.draw(h);
+          this.track(h);
+        });
+      };
+      attach(0);
+    };
+  }
+  // Keeps live badges in sync with the index. Returns the unsubscribe.
+  attach() {
+    return this.deps.index.events.on("paragraph-index:change", ({ paths }) => this.refresh(paths));
+  }
+  // Re-draws the live badges of these notes (all notes when omitted), e.g.
+  // after the AI on/off switch changes whether ghosts show.
+  refresh(paths) {
+    var _a, _b;
+    const targets = paths != null ? paths : [...this.live.keys()];
+    for (const path of targets) {
+      for (const h of (_a = this.live.get(path)) != null ? _a : []) {
+        h.ref = (_b = h.fresh()) != null ? _b : h.ref;
+        this.draw(h);
+      }
+      this.healStale(path);
+    }
+  }
+  // Once per id, so a paragraph that simply isn't rendered (scrolled out of
+  // a long note) can't cause a re-render loop.
+  healStale(path) {
+    const handles = this.live.get(path);
+    if (!this.deps.rerender || !this.deps.index.blockIds || !(handles == null ? void 0 : handles.size)) return;
+    const rendered = new Set([...handles].map((h) => trailingBlockId(h.ref.text)));
+    const missing = this.deps.index.blockIds(path).filter((id2) => !rendered.has(id2) && !this.healed.has(`${path}
+${id2}`));
+    if (!missing.length) return;
+    for (const id2 of missing) this.healed.add(`${path}
+${id2}`);
+    this.deps.rerender(path);
+  }
+  // One handle per top-level `<li>` when this list was split (see class
+  // comment); otherwise the usual single handle for the whole section
+  // element. Falls back to the whole list if the DOM's `<li>` count
+  // doesn't match the split — e.g. a task-list item rendered with extra
+  // wrapper elements — rather than guessing at a mismatched mapping.
+  handlesFor(path, el, first, lineStart, lineEnd, text) {
+    var _a, _b;
+    const whole = () => [{ ref: { path, lineStart, lineEnd, text }, host: el, badge: null, fresh: () => null }];
+    const tag = (_a = first == null ? void 0 : first.tagName) == null ? void 0 : _a.toUpperCase();
+    if (tag !== "UL" && tag !== "OL") return whole();
+    const lines4 = text.split("\n");
+    if (!shouldSplitList(lines4)) return whole();
+    const items = splitListItems(lines4, lineStart);
+    const lis = Array.from((_b = first == null ? void 0 : first.children) != null ? _b : []).filter((c2) => {
+      var _a2;
+      return ((_a2 = c2.tagName) == null ? void 0 : _a2.toUpperCase()) === "LI";
+    });
+    if (lis.length !== items.length) return whole();
+    return items.map((item, i) => ({
+      ref: { path, lineStart: item.lineStart, lineEnd: item.lineEnd, text: item.text },
+      host: lis[i],
+      badge: null,
+      fresh: () => null
+    }));
+  }
+  track(h) {
+    let set3 = this.live.get(h.ref.path);
+    if (!set3) {
+      set3 = /* @__PURE__ */ new Set();
+      this.live.set(h.ref.path, set3);
+    }
+    set3.add(h);
+  }
+  untrack(h) {
+    const set3 = this.live.get(h.ref.path);
+    if (!set3) return;
+    set3.delete(h);
+    if (!set3.size) this.live.delete(h.ref.path);
+  }
+  draw(h) {
+    const state = badgeState(this.deps.index.count(h.ref.path, h.ref.text), this.deps.showGhost());
+    let badge = h.badge;
+    if (!badge) {
+      h.host.addClass(BADGE_HOST_CLS);
+      badge = h.badge = h.host.createSpan({ cls: BADGE_CLS });
+      badge.setAttr("role", "button");
+      badge.setAttr("tabindex", "0");
+      const open = (e) => {
+        var _a;
+        e.preventDefault();
+        e.stopPropagation();
+        h.ref = (_a = h.fresh()) != null ? _a : h.ref;
+        this.deps.onOpen(h.ref);
+      };
+      badge.addEventListener("click", open);
+      badge.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") open(e);
+      });
+      (0, import_obsidian62.setIcon)(badge.createSpan({ cls: "vt-pbadge-icon" }), "sparkles");
+      badge.createSpan({ cls: "vt-pbadge-count" });
+    }
+    const countEl = badge.querySelector(".vt-pbadge-count");
+    badge.toggleClass("has-count", state.kind === "count");
+    badge.toggleClass("is-ghost", state.kind === "ghost");
+    badge.toggleClass("is-quiet", state.kind === "ghost" && state.quiet);
+    countEl == null ? void 0 : countEl.setText(state.kind === "count" ? String(state.count) : "");
+    const label = state.kind === "count" ? t("paragraph.badge.count", { n: state.count }) : t("paragraph.badge.open");
+    badge.setAttr("aria-label", label);
+  }
+};
+
+// src/ui/reading/noteReviewModel.ts
+var REVIEW_STORAGE_KEY = "vt-note-review";
+var DEFAULT_PREFS = { open: false, tab: "vocab" };
+function parseReviewPrefs(raw) {
+  const out = /* @__PURE__ */ new Map();
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return out;
+  for (const [path, v] of Object.entries(raw)) {
+    if (typeof v !== "object" || v === null) continue;
+    const r = v;
+    out.set(path, { open: r.open === true, tab: r.tab === "ai" ? "ai" : "vocab" });
+  }
+  return out;
+}
+function reviewPrefsOf(all, path) {
+  var _a;
+  return (_a = all.get(path)) != null ? _a : DEFAULT_PREFS;
+}
+function serializeReviewPrefs(all) {
+  return Object.fromEntries(all);
+}
+function renameReviewPrefs(all, oldPath, newPath) {
+  const cur = all.get(oldPath);
+  if (!cur) return false;
+  all.delete(oldPath);
+  all.set(newPath, cur);
+  return true;
+}
+function showsReview(o) {
+  return !o.skip && (o.words > 0 || o.discussions > 0);
+}
+function isDue2(e, nowMs) {
+  return !isNewCard(e) && !!e.srs && Date.parse(e.srs.due) <= nowMs;
+}
+var added = (e) => {
+  var _a, _b;
+  return (_b = (_a = e.createdAt) != null ? _a : e.added) != null ? _b : "";
+};
+function noteVocabRefs(entries, scope, glossOf2, now2, max = SCENARIO_MAX_WORDS) {
+  var _a;
+  const nowMs = now2.getTime();
+  const refs = [];
+  for (const e of entries) {
+    if (e.deletedAt || !scope.has(e.id)) continue;
+    const g = glossOf2(e.word);
+    const zh = ((_a = g == null ? void 0 : g.zh) != null ? _a : e.definitionZh).trim();
+    if (!zh) continue;
+    refs.push({ e, ref: { id: e.id, word: e.word, zh, pos: (g == null ? void 0 : g.pos) || e.partOfSpeech } });
+  }
+  const due = refs.filter((r) => isDue2(r.e, nowMs)).sort((a2, b) => Date.parse(a2.e.srs.due) - Date.parse(b.e.srs.due));
+  const rest = refs.filter((r) => !isDue2(r.e, nowMs)).sort((a2, b) => added(a2.e) < added(b.e) ? 1 : added(a2.e) > added(b.e) ? -1 : 0);
+  return [...due, ...rest].slice(0, max).map((r) => r.ref);
+}
+
+// src/ui/reading/NoteReviewPanel.ts
+var SETTLE_MS = 120;
+var PANEL_CLS = "vt-note-review";
+var NoteReviewPanels = class {
+  constructor(host) {
+    this.host = host;
+    this.panels = /* @__PURE__ */ new Map();
+    this.timer = null;
+    this.eligible = /* @__PURE__ */ new Map();
+    this.disposed = false;
+    this.prefs = parseReviewPrefs(host.app.loadLocalStorage(REVIEW_STORAGE_KEY));
+  }
+  attach(owner) {
+    const { workspace, metadataCache, vault } = this.host.app;
+    const later2 = () => this.schedule();
+    owner.registerEvent(workspace.on("file-open", later2));
+    owner.registerEvent(workspace.on("layout-change", later2));
+    owner.registerEvent(workspace.on("active-leaf-change", later2));
+    owner.registerEvent(metadataCache.on("changed", later2));
+    owner.registerEvent(
+      vault.on("rename", (f, oldPath) => {
+        if (renameReviewPrefs(this.prefs, oldPath, f.path)) this.savePrefs();
+        later2();
+      })
+    );
+    owner.register(this.host.store.events.on("data:changed", () => this.invalidate()));
+    owner.register(this.host.threads.events.on("thread:upsert", () => this.invalidate()));
+    workspace.onLayoutReady(later2);
+    owner.register(() => this.dispose());
+  }
+  prefsFor(path) {
+    return reviewPrefsOf(this.prefs, path);
+  }
+  setPrefs(path, p) {
+    this.prefs.set(path, p);
+    this.savePrefs();
+  }
+  savePrefs() {
+    this.host.app.saveLocalStorage(REVIEW_STORAGE_KEY, serializeReviewPrefs(this.prefs));
+  }
+  invalidate() {
+    this.eligible.clear();
+    this.schedule();
+  }
+  schedule() {
+    if (this.disposed) return;
+    if (this.timer !== null) window.clearTimeout(this.timer);
+    this.timer = window.setTimeout(() => {
+      this.timer = null;
+      void this.refresh();
+    }, SETTLE_MS);
+  }
+  async refresh() {
+    if (this.disposed) return;
+    const seen = /* @__PURE__ */ new Set();
+    for (const leaf of this.host.app.workspace.getLeavesOfType("markdown")) {
+      const view = leaf.view;
+      if (!(view instanceof import_obsidian63.MarkdownView)) continue;
+      seen.add(view);
+      const file = view.file;
+      const el = file ? await this.eligibility(file) : null;
+      if (this.disposed) return;
+      let panel = this.panels.get(view);
+      if (!file || !(el == null ? void 0 : el.show)) {
+        if (panel) this.drop(view, panel);
+        continue;
+      }
+      if (panel && panel.path !== file.path) {
+        this.drop(view, panel);
+        panel = void 0;
+      }
+      if (!panel) {
+        panel = new ReviewPanel(this.host, this, file.path);
+        panel.load();
+        this.panels.set(view, panel);
+      }
+      panel.setScope(el.scope);
+      panel.place(view);
+    }
+    for (const [view, panel] of this.panels) if (!seen.has(view)) this.drop(view, panel);
+  }
+  drop(view, panel) {
+    panel.unload();
+    this.panels.delete(view);
+  }
+  // Shown on notes with a word of their own (本篇) or a discussion.
+  async eligibility(file) {
+    var _a, _b, _c;
+    if (file.extension !== "md") return null;
+    const { store, threads } = this.host;
+    await threads.ensureLoaded();
+    const discussions = threads.paragraphThreads(file.path).length + (threads.noteThread(file.path) ? 1 : 0);
+    const key6 = `${file.path}
+${file.stat.mtime}
+${store.entries.length}
+${discussions}`;
+    const cached = this.eligible.get(file.path);
+    if ((cached == null ? void 0 : cached.key) === key6) return cached;
+    const skip = skipsBadges(this.host.frontmatterOf(file.path));
+    let scope = /* @__PURE__ */ new Set();
+    if (!skip) {
+      const hits = (_b = (_a = this.host.wordlists.cachedScan(file.path, file.stat.mtime)) == null ? void 0 : _a.hits) != null ? _b : [];
+      let text;
+      try {
+        text = await this.host.notes.read(file.path);
+      } catch (e) {
+        text = null;
+      }
+      const inflections = resolveWordlistSettings(store.settings.wordlists).inflections;
+      scope = computeNoteScope(store.entries, hits, text, inflections);
+      for (const e of store.entries) if (!e.deletedAt && ((_c = e.source) == null ? void 0 : _c.path) === file.path) scope.add(e.id);
+    }
+    const out = { key: key6, show: showsReview({ skip, words: scope.size, discussions }), scope };
+    this.eligible.set(file.path, out);
+    return out;
+  }
+  dispose() {
+    this.disposed = true;
+    if (this.timer !== null) window.clearTimeout(this.timer);
+    for (const [view, panel] of this.panels) this.drop(view, panel);
+  }
+};
+var ReviewPanel = class extends import_obsidian63.Component {
+  constructor(host, panels, path) {
+    super();
+    this.host = host;
+    this.panels = panels;
+    this.path = path;
+    this.body = null;
+    this.scope = /* @__PURE__ */ new Set();
+    this.tabBodies = /* @__PURE__ */ new Map();
+    this.observer = null;
+    this.view = null;
+    this.root = createDiv({ cls: ["vt", PANEL_CLS] });
+  }
+  onload() {
+    this.draw();
+    this.register(this.host.learner.events.on("gloss:change", () => {
+      var _a, _b;
+      return (_b = (_a = this.tabBodies.get("vocab")) == null ? void 0 : _a.refresh) == null ? void 0 : _b.call(_a);
+    }));
+    this.register(() => {
+      var _a;
+      (_a = this.observer) == null ? void 0 : _a.disconnect();
+      this.root.remove();
+    });
+  }
+  setScope(scope) {
+    var _a, _b;
+    const changed = scope.size !== this.scope.size || [...scope].some((id2) => !this.scope.has(id2));
+    this.scope = scope;
+    if (changed) (_b = (_a = this.tabBodies.get("vocab")) == null ? void 0 : _a.refresh) == null ? void 0 : _b.call(_a);
+  }
+  // Under the title of whichever mode the view shows now.
+  place(view) {
+    var _a;
+    this.view = view;
+    const target = slotFor(view);
+    if (!target) return;
+    if (this.root.parentElement !== target.parent || this.root.previousElementSibling !== target.after) {
+      if (target.after) target.after.after(this.root);
+      else target.parent.prepend(this.root);
+    }
+    (_a = this.observer) == null ? void 0 : _a.disconnect();
+    this.observer = new MutationObserver(() => {
+      if (!this.root.isConnected && this.view) this.place(this.view);
+    });
+    this.observer.observe(target.parent, { childList: true });
+  }
+  prefs() {
+    return this.panels.prefsFor(this.path);
+  }
+  draw() {
+    this.root.empty();
+    const prefs = this.prefs();
+    this.root.toggleClass("is-open", prefs.open);
+    const head = this.root.createDiv({ cls: "vt-nr-head", attr: { role: "button", tabindex: "0" } });
+    (0, import_obsidian63.setIcon)(head.createSpan({ cls: "vt-nr-arrow" }), prefs.open ? "chevron-down" : "chevron-right");
+    head.createSpan({ cls: "vt-nr-title", text: t("noteReview.title") });
+    const toggle2 = () => {
+      this.panels.setPrefs(this.path, { ...this.prefs(), open: !this.prefs().open });
+      this.draw();
+    };
+    head.addEventListener("click", toggle2);
+    head.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle2();
+      }
+    });
+    if (!prefs.open) {
+      this.closeTabs();
+      return;
+    }
+    this.body = this.root.createDiv({ cls: "vt-nr-body" });
+    const tabs = this.body.createDiv({ cls: ["vt-pr-tabs", "vt-nr-tabs"], attr: { role: "tablist" } });
+    const holder = this.body.createDiv({ cls: "vt-nr-tab-body" });
+    for (const id2 of ["vocab", "ai"]) {
+      const btn = tabs.createEl("button", { cls: ["vt-pr-tab", "vt-nr-tab"], text: t(id2 === "vocab" ? "noteReview.tab.vocab" : "noteReview.tab.ai") });
+      btn.toggleClass("is-active", prefs.tab === id2);
+      btn.addEventListener("click", () => {
+        if (this.prefs().tab === id2) return;
+        this.panels.setPrefs(this.path, { ...this.prefs(), tab: id2 });
+        this.draw();
+      });
+    }
+    this.closeTabs();
+    this.mountTab(prefs.tab, holder);
+  }
+  closeTabs() {
+    for (const { owner } of this.tabBodies.values()) this.removeChild(owner);
+    this.tabBodies.clear();
+  }
+  mountTab(tab, holder) {
+    const owner = this.addChild(new import_obsidian63.Component());
+    const el = holder.createDiv({ cls: `vt-nr-${tab}` });
+    const entry = { el, owner };
+    this.tabBodies.set(tab, entry);
+    if (tab === "ai") this.mountAi(el, owner);
+    else entry.refresh = this.mountVocab(el, owner);
+  }
+  // 單字: the practice hub's scenario player alone — no filter bar, no
+  // 錯題區 — on this note's words, in this note's own pool lane.
+  mountVocab(el, owner) {
+    el.addClass("vt-learn", "vt-pr");
+    const api = this.host.noteScenario(this.path);
+    let ready = false;
+    const pane = mountScenarioPane(el, {
+      track: "vocab",
+      api,
+      mountPlayer: mountScenarioPlayer,
+      owner,
+      toPlayer: (q) => toPlayerQuestion2(q),
+      aiStatus: () => this.host.ai.status(),
+      idleText: () => t("noteReview.vocab.few", { n: SCENARIO_MIN_WORDS })
+    });
+    const apply = () => {
+      if (!ready) return;
+      const file = this.host.app.vault.getAbstractFileByPath(this.path);
+      const map = file instanceof import_obsidian63.TFile ? this.host.noteGlosses.get(file.path, file.stat.mtime) : null;
+      const refs = noteVocabRefs(this.host.store.entries, this.scope, (w2) => map ? glossOf(map, w2) : void 0, /* @__PURE__ */ new Date());
+      const req = refs.length >= SCENARIO_MIN_WORDS ? { track: "vocab", words: refs } : null;
+      pane.setRequest(req, req ? new Set(this.scope) : /* @__PURE__ */ new Set());
+    };
+    owner.register(this.host.noteGlosses.onReady((p) => p === this.path && apply()));
+    void this.host.learner.ensureLoaded().then(() => {
+      ready = true;
+      apply();
+    });
+    return apply;
+  }
+  // AI 討論: the note's whole-article discussion.
+  mountAi(el, owner) {
+    const { threads } = this.host;
+    const chat = new ChatPanel(el, {
+      app: this.host.app,
+      threads,
+      ai: this.host.ai,
+      selection: this.host.selection,
+      threadId: threads.noteThreadId(this.path),
+      surface: "note",
+      customTaskId: noteCustom.id,
+      sourcePath: this.path,
+      placeholder: t("noteReview.ai.placeholder"),
+      state: createChatUiState(),
+      attachSelection: false,
+      send: async (req) => {
+        await threads.askNote(this.path, { taskId: req.taskId, question: req.question });
+      },
+      retry: (turnId) => threads.retryNote(this.path, turnId),
+      onOpenSettings: () => openPluginSettings(this.host.app, this.host.manifest.id)
+    });
+    owner.addChild(chat);
+  }
+};
+function slotFor(view) {
+  if (view.getMode() === "preview") {
+    const sizer2 = view.previewMode.containerEl.querySelector(".markdown-preview-sizer");
+    if (!sizer2) return null;
+    return { parent: sizer2, after: sizer2.querySelector(":scope > .mod-header") };
+  }
+  const sizer = view.containerEl.querySelector(".markdown-source-view .cm-sizer");
+  if (!sizer) return null;
+  return { parent: sizer, after: sizer.querySelector(":scope > .inline-title") };
+}
+
+// src/services/learner/ReadingTracker.ts
+var ReadingTracker = class {
+  constructor(port, learner) {
+    this.port = port;
+    this.learner = learner;
+  }
+  // `line` is the 0-based source line of the interaction (null / negative: unknown).
+  async note(path, line2, kind) {
+    try {
+      if (!/\.md$/i.test(path)) return;
+      if (this.port.isPluginNote(path)) return;
+      const text = await this.port.read(path);
+      if (text === null) return;
+      const ctx = headingContext(text, line2, basenameOf(path));
+      this.learner.recordReading({ path, title: ctx.title, heading: ctx.heading, kind });
+    } catch (e) {
+      console.error("Vocab Tracker: couldn't record reading", e);
+    }
+  }
+};
 
 // src/services/grammar/GrammarPages.ts
 var GrammarPages = class {
@@ -37790,7 +38451,7 @@ var QuestionService = class {
         const allowed = new Set(topicsInFilter(parseGrammarFilter(this.currentFilter), (_c = (_b = (_a = this.deps).level) == null ? void 0 : _b.call(_a)) != null ? _c : ""));
         keep = saved.filter((q) => allowed.has(q.topicId));
       }
-      const added = addToPool(
+      const added2 = addToPool(
         learner.pool(GRAMMAR),
         GRAMMAR,
         keep.map((q) => {
@@ -37799,7 +38460,7 @@ var QuestionService = class {
         }),
         this.clock()
       );
-      if (added.length) learner.upsertPool(added);
+      if (added2.length) learner.upsertPool(added2);
       this.refilling = false;
       this.events.emit("refill:end", {});
       this.events.emit("pool:change", void 0);
@@ -38118,8 +38779,8 @@ var QuestionService = class {
 
 // src/services/practice/ScenarioService.ts
 var SCENARIO_REFILL_COUNT = 6;
-function refillThreadId(track2) {
-  return `practice:pool:${track2}`;
+function refillThreadId(track2, lane) {
+  return lane ? `practice:pool:${track2}:${lane}` : `practice:pool:${track2}`;
 }
 function defaultId4(now2) {
   return `${now2.getTime().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -38174,9 +38835,9 @@ var ScenarioService = class {
     try {
       await learner.ensureLoaded();
       this.dropUnaskable(track2);
-      if (!needsRefill(learner.pool(track2), track2)) return;
+      if (!needsRefill(learner.pool(track2, this.deps.lane), track2)) return;
       if (!this.aiReady()) return;
-      const count2 = Math.min(SCENARIO_REFILL_COUNT, poolRoom(learner.pool(track2), track2));
+      const count2 = Math.min(SCENARIO_REFILL_COUNT, poolRoom(learner.pool(track2, this.deps.lane), track2));
       if (count2 <= 0) return;
       const job = req.track === "para" ? this.paraJob(req, count2) : this.storyJob(req, count2);
       if (!job) return;
@@ -38225,13 +38886,14 @@ var ScenarioService = class {
       }
       if (!saved.length) throw new AiError("bad_output", "practice.scenario: every question was already stored");
       learner.upsertPracticeQuestions(saved);
-      const added = addToPool(
-        learner.pool(track2),
+      const added2 = addToPool(
+        learner.pool(track2, this.deps.lane),
         track2,
         saved.map((q) => ({ questionId: q.id, scenarioId: q.scenario.id })),
         this.clock()
       );
-      if (added.length) learner.upsertPool(added);
+      const lane = this.deps.lane;
+      if (added2.length) learner.upsertPool(lane ? added2.map((i) => ({ ...i, lane })) : added2);
       this.refilling.delete(track2);
       this.events.emit("refill:end", { track: track2 });
       this.events.emit("pool:change", track2);
@@ -38253,7 +38915,7 @@ var ScenarioService = class {
       words: this.words(),
       avoid: this.avoid(track2)
     };
-    return async (signal) => (await runStructured(this.deps.ai, practiceScenarioFor(req), input, { threadId: refillThreadId(track2), signal })).value;
+    return async (signal) => (await runStructured(this.deps.ai, practiceScenarioFor(req), input, { threadId: refillThreadId(track2, this.deps.lane), signal })).value;
   }
   // 換句話說: one paragraph per refill — the one asked about least so far —
   // with the numbers of its sentences that already have a question.
@@ -38264,7 +38926,7 @@ var ScenarioService = class {
     const mine = new Set(stored.filter((q) => q.focus.id === paragraph.threadId).map((q) => textKey(q.text)));
     const asked = paragraph.sentences.flatMap((s, i) => mine.has(textKey(s)) ? [i + 1] : []);
     const input = { paragraph, count: count2, weakness: this.paraWeakness(), asked };
-    return async (signal) => (await runStructured(this.deps.ai, practiceParaphraseFor(paragraph), input, { threadId: refillThreadId("para"), signal })).value;
+    return async (signal) => (await runStructured(this.deps.ai, practiceParaphraseFor(paragraph), input, { threadId: refillThreadId("para", this.deps.lane), signal })).value;
   }
   // 〔學習弱點〕 of 換句話說: the error types missed most in the last 30 days.
   paraWeakness() {
@@ -38310,7 +38972,7 @@ var ScenarioService = class {
   previousScenario(track2) {
     var _a;
     const learner = this.deps.learner;
-    const live = learner.pool(track2);
+    const live = learner.pool(track2, this.deps.lane);
     for (let i = live.length - 1; i >= 0; i--) {
       const last2 = (_a = learner.practiceQuestion(live[i].questionId)) == null ? void 0 : _a.scenario;
       if (!last2) continue;
@@ -38338,7 +39000,7 @@ var ScenarioService = class {
   dropUnaskable(track2) {
     const learner = this.deps.learner;
     const now2 = this.clock();
-    const out = learner.pool(track2).filter((i) => {
+    const out = learner.pool(track2, this.deps.lane).filter((i) => {
       const q = learner.practiceQuestion(i.questionId);
       return !q || !!q.retiredAt;
     }).map((i) => {
@@ -38350,7 +39012,7 @@ var ScenarioService = class {
   // ── Pool / 錯題區 for the practice tabs ───────────────────────
   poolQuestions(track2) {
     const out = [];
-    for (const i of this.deps.learner.pool(track2)) {
+    for (const i of this.deps.learner.pool(track2, this.deps.lane)) {
       const q = this.deps.learner.practiceQuestion(i.questionId);
       if (q && !q.retiredAt) out.push(q);
     }
@@ -38370,7 +39032,7 @@ var ScenarioService = class {
     this.scopeVersions.set(track2, this.scopeVersion(track2) + 1);
     const learner = this.deps.learner;
     const now2 = this.clock();
-    const gone = learner.pool(track2).filter((i) => {
+    const gone = learner.pool(track2, this.deps.lane).filter((i) => {
       const q = learner.practiceQuestion(i.questionId);
       return !q || !focusIds.has(q.focus.id);
     });
@@ -38437,7 +39099,7 @@ var ScenarioService = class {
   }
   leavePool(q, reason) {
     const learner = this.deps.learner;
-    const item = learner.pool(q.track).find((i) => i.questionId === q.id);
+    const item = learner.pool(q.track, this.deps.lane).find((i) => i.questionId === q.id);
     if (!item) return;
     learner.upsertPool([removeFromPool(item, reason, this.clock())]);
     this.events.emit("pool:change", q.track);
@@ -39833,7 +40495,7 @@ var FamilyService = class {
         }
       }
     }
-    const added = await this.addWords([...toAdd.values()]);
+    const added2 = await this.addWords([...toAdd.values()]);
     const index2 = new WordIndex(this.deps.vocab.entries);
     for (const f of families) {
       this.link(f, index2);
@@ -39841,7 +40503,7 @@ var FamilyService = class {
     }
     const seedEntryIds = [...new Set(candidates.flatMap((c2) => c2.seedEntryIds))];
     this.events.emit("family:saved", { seedEntryIds });
-    return { families, added };
+    return { families, added: added2 };
   }
   // L5 「點一下加入」: adds one suggested word of a saved family. A3: a word
   // that's already tracked but not liked just gets liked — it doesn't get a
@@ -39900,7 +40562,7 @@ var FamilyService = class {
       { threadId: familyExpandThreadId(familyId), signal }
     );
     const groupByKey = new Map(f.groups.map((g) => [key4(g.label), g]));
-    const added = [];
+    const added2 = [];
     for (const d of drafts) {
       if (existingWords.has(key4(d.word))) continue;
       existingWords.add(key4(d.word));
@@ -39915,13 +40577,13 @@ var FamilyService = class {
       }
       const member = { word: d.word, zh: d.zh, emoji: d.emoji };
       group.members.push(member);
-      added.push(member);
+      added2.push(member);
     }
-    if (added.length) {
+    if (added2.length) {
       this.link(f, new WordIndex(this.deps.vocab.entries));
       this.deps.learn.putFamily(f);
     }
-    return added;
+    return added2;
   }
   toFamily(c2, entryCount, renewed = /* @__PURE__ */ new Set()) {
     const existing = this.families().find((f) => key4(f.topic) === key4(c2.topic));
@@ -40416,14 +41078,14 @@ var MorphemeService = class {
   // Background queue: de-duped, drained 10 at a time, one batch running
   // system-wide at once (shared with analyzeNow/startAuto via busyChain).
   queue(entryIds) {
-    let added = false;
+    let added2 = false;
     for (const id2 of entryIds) {
       if (this.pendingSet.has(id2)) continue;
       this.pendingSet.add(id2);
       this.pending.push(id2);
-      added = true;
+      added2 = true;
     }
-    if (added) void this.runExclusive(() => this.drainPending());
+    if (added2) void this.runExclusive(() => this.drainPending());
   }
   async drainPending() {
     if (!this.pending.length) return;
@@ -40848,7 +41510,7 @@ var MorphemeService = class {
 };
 
 // src/ui/chat/SelectionTracker.ts
-var import_obsidian62 = require("obsidian");
+var import_obsidian64 = require("obsidian");
 var MAX_SELECTION_CHARS = 1500;
 var SelectionTracker = class {
   constructor(app) {
@@ -40872,7 +41534,7 @@ var SelectionTracker = class {
     if (!sel || !node) return;
     const el = node instanceof HTMLElement ? node : node.parentElement;
     if (!(el == null ? void 0 : el.closest('.workspace-leaf-content[data-type="markdown"]'))) return;
-    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian62.MarkdownView && v.containerEl.contains(el));
+    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian64.MarkdownView && v.containerEl.contains(el));
     const raw = (view == null ? void 0 : view.getMode()) === "source" ? view.editor.getSelection() : sel.toString();
     const text = raw.replace(/\s+/g, " ").trim().slice(0, MAX_SELECTION_CHARS);
     if (!text) {
@@ -40889,10 +41551,10 @@ var SelectionTracker = class {
 };
 
 // src/platform/ObsidianWordlists.ts
-var import_obsidian63 = require("obsidian");
+var import_obsidian65 = require("obsidian");
 var EXTENSIONS = /* @__PURE__ */ new Set(["md", "txt", "csv", "tsv"]);
 function inFolder(path, folder) {
-  return path.startsWith((0, import_obsidian63.normalizePath)(folder) + "/");
+  return path.startsWith((0, import_obsidian65.normalizePath)(folder) + "/");
 }
 var ObsidianWordlists = class {
   constructor(app) {
@@ -40903,7 +41565,7 @@ var ObsidianWordlists = class {
   }
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian63.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian65.TFile ? this.app.vault.cachedRead(file) : null;
   }
 };
 
@@ -41068,7 +41730,7 @@ var WordlistService = class extends TypedEmitter {
 };
 
 // src/ui/reading/examHighlight.ts
-var import_obsidian64 = require("obsidian");
+var import_obsidian66 = require("obsidian");
 var EXAM_WORD_CLS = "vt-exam-word";
 var SKIP2 = [
   "code",
@@ -41112,7 +41774,7 @@ function highlightExamWords(el, lookup, colorOf) {
       const span = frag.createSpan({ cls: EXAM_WORD_CLS, text: seg.word });
       span.dataset.vtTags = seg.tags.join(" ");
       span.style.setProperty("--vt-exam-color", colorOf(seg.tags[0]));
-      (0, import_obsidian64.setTooltip)(span, seg.tags.map(tagLabel).join(" \xB7 "), { delay: 300 });
+      (0, import_obsidian66.setTooltip)(span, seg.tags.map(tagLabel).join(" \xB7 "), { delay: 300 });
     }
     node.replaceWith(frag);
   }
@@ -41481,7 +42143,7 @@ async function refreshStaleDictionary(entry, dictionary) {
 }
 
 // src/platform/ObsidianVault.ts
-var import_obsidian65 = require("obsidian");
+var import_obsidian67 = require("obsidian");
 var Unchanged = class {
   constructor(text) {
     this.text = text;
@@ -41506,7 +42168,7 @@ var ObsidianVault = class {
   // ── shared ────────────────────────────────────────────────────────────
   async read(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    return file instanceof import_obsidian65.TFile ? this.app.vault.cachedRead(file) : null;
+    return file instanceof import_obsidian67.TFile ? this.app.vault.cachedRead(file) : null;
   }
   // ── task G ────────────────────────────────────────────────────────────
   // vault.process(file, fn). Rethrow whatever `fn` throws unchanged:
@@ -41516,7 +42178,7 @@ var ObsidianVault = class {
   // minAppVersion ≥ 1.1.0 in manifest.json.
   async process(path, fn) {
     const file = this.app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian65.TFile)) throw new Error(`File not found: ${path}`);
+    if (!(file instanceof import_obsidian67.TFile)) throw new Error(`File not found: ${path}`);
     try {
       return await this.app.vault.process(file, (text) => {
         const next = fn(text);
@@ -41562,19 +42224,19 @@ var ObsidianVault = class {
     component.registerEvent(
       vault.on("delete", (file) => {
         var _a, _b;
-        if (file instanceof import_obsidian65.TFolder) (_a = this.managed) == null ? void 0 : _a.deleteUnder(file.path);
+        if (file instanceof import_obsidian67.TFolder) (_a = this.managed) == null ? void 0 : _a.deleteUnder(file.path);
         else (_b = this.managed) == null ? void 0 : _b.delete(file.path);
       })
     );
     if (workspace.layoutReady) this.markResolved();
   }
   exists(path) {
-    return this.app.vault.getAbstractFileByPath((0, import_obsidian65.normalizePath)(path)) !== null;
+    return this.app.vault.getAbstractFileByPath((0, import_obsidian67.normalizePath)(path)) !== null;
   }
   // Creates missing parent folders; rejects when the file already exists.
   async create(path, content) {
     var _a;
-    const target = (0, import_obsidian65.normalizePath)(path);
+    const target = (0, import_obsidian67.normalizePath)(path);
     if (this.app.vault.getAbstractFileByPath(target)) throw new Error(`File already exists: ${target}`);
     await this.ensureFolder(parentOf(target));
     const file = await this.app.vault.create(target, content);
@@ -41585,8 +42247,8 @@ var ObsidianVault = class {
   // target exists (never overwrites).
   async rename(from, to) {
     var _a;
-    const source = (0, import_obsidian65.normalizePath)(from);
-    const target = (0, import_obsidian65.normalizePath)(to);
+    const source = (0, import_obsidian67.normalizePath)(from);
+    const target = (0, import_obsidian67.normalizePath)(to);
     const file = this.app.vault.getAbstractFileByPath(source);
     if (!file) throw new Error(`File not found: ${source}`);
     if (source === target) return;
@@ -41642,11 +42304,11 @@ var ObsidianVault = class {
     var _a;
     const index2 = this.managed;
     if (!index2) return;
-    if (file instanceof import_obsidian65.TFolder) {
+    if (file instanceof import_obsidian67.TFolder) {
       index2.moveUnder(oldPath, file.path);
     } else if (index2.has(oldPath)) {
       index2.move(oldPath, file.path);
-    } else if (file instanceof import_obsidian65.TFile) {
+    } else if (file instanceof import_obsidian67.TFile) {
       index2.set(file.path, managedRefOf((_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter));
     }
   }
@@ -41668,12 +42330,12 @@ var ObsidianVault = class {
     for (let i = 1; i <= parts.length; i++) {
       const path = parts.slice(0, i).join("/");
       const existing = this.app.vault.getAbstractFileByPath(path);
-      if (existing instanceof import_obsidian65.TFolder) continue;
+      if (existing instanceof import_obsidian67.TFolder) continue;
       if (existing) throw new Error(`Not a folder: ${path}`);
       try {
         await this.app.vault.createFolder(path);
       } catch (e) {
-        if (!(this.app.vault.getAbstractFileByPath(path) instanceof import_obsidian65.TFolder)) throw e;
+        if (!(this.app.vault.getAbstractFileByPath(path) instanceof import_obsidian67.TFolder)) throw e;
       }
     }
   }
@@ -41851,8 +42513,8 @@ function editFrontmatter(text, fields, opts = {}) {
     if (key6 !== void 0 && key6 === opts.after) insertAt = out.length;
   }
   if (opts.add) {
-    const added = Object.keys(fields).filter((k) => !done.has(k)).map((k) => `${k}: ${yamlValue(fields[k])}${eol}`);
-    out.splice(insertAt < 0 ? out.length : insertAt, 0, ...added);
+    const added2 = Object.keys(fields).filter((k) => !done.has(k)).map((k) => `${k}: ${yamlValue(fields[k])}${eol}`);
+    out.splice(insertAt < 0 ? out.length : insertAt, 0, ...added2);
   }
   return text.slice(0, at.start) + out.join("") + text.slice(at.end);
 }
@@ -41880,9 +42542,16 @@ function renderParagraph(p, article, ctx) {
   const quote2 = p.index !== null && p.blockId ? `![[${article}#^${p.blockId}]]` : blockquote(p.text);
   return [heading, "", quote2, "", renderRounds(rounds, ctx, "###")].join("\n");
 }
+function renderWhole(input, ctx) {
+  const rounds = input.note ? roundsOf(input.note.turns) : [];
+  return rounds.length ? [`## ${ctx.labels.wholeNote}`, "", renderRounds(rounds, ctx, "###")].join("\n") : null;
+}
 function renderParagraphs(input, ctx) {
   const article = linkTarget(input.articlePath);
-  const parts = [...input.paragraphs].sort(byOrder).map((p) => renderParagraph(p, article, ctx)).filter((p) => p !== null);
+  const parts = [
+    renderWhole(input, ctx),
+    ...[...input.paragraphs].sort(byOrder).map((p) => renderParagraph(p, article, ctx))
+  ].filter((p) => p !== null);
   return parts.length ? parts.join("\n\n") : italic(ctx.labels.paragraphsEmpty);
 }
 function renderWords(input, ctx) {
@@ -41893,7 +42562,7 @@ function renderWords(input, ctx) {
   return [`## ${ctx.labels.wordsLearned}`, "", list2.length ? list2.join("\n") : italic(ctx.labels.wordsEmpty)].join("\n");
 }
 function hasAiNoteContent(input) {
-  return input.paragraphs.some((p) => roundsOf(p.turns).length > 0);
+  return input.paragraphs.some((p) => roundsOf(p.turns).length > 0) || !!input.note && roundsOf(input.note.turns).length > 0;
 }
 function renderAiNoteSections(input, ctx) {
   return [
@@ -42212,7 +42881,7 @@ var ExportService = class {
   threadChanged(thread) {
     var _a, _b;
     const anchor = thread.anchor;
-    if (anchor.kind === "paragraph") {
+    if (anchor.kind === "paragraph" || anchor.kind === "note") {
       this.articleChanged(anchor.path);
     } else if (anchor.kind === "word") {
       this.wordChanged(anchor.entryId, "ifContent");
@@ -42490,7 +43159,7 @@ var ExportService = class {
     }
   }
   async writeNote(articlePath, create2) {
-    var _a, _b;
+    var _a, _b, _c;
     await ((_b = (_a = this.deps.data).ready) == null ? void 0 : _b.call(_a));
     const { data } = this.deps;
     const paragraphs = (await data.paragraphThreads(articlePath)).flatMap(({ thread, index: index2 }) => {
@@ -42502,8 +43171,8 @@ var ExportService = class {
       var _a2;
       return ((_a2 = e.source) == null ? void 0 : _a2.path) === articlePath;
     }).sort((a2, b) => {
-      var _a2, _b2, _c, _d;
-      return ((_b2 = (_a2 = a2.source) == null ? void 0 : _a2.line) != null ? _b2 : 0) - ((_d = (_c = b.source) == null ? void 0 : _c.line) != null ? _d : 0) || a2.word.localeCompare(b.word);
+      var _a2, _b2, _c2, _d;
+      return ((_b2 = (_a2 = a2.source) == null ? void 0 : _a2.line) != null ? _b2 : 0) - ((_d = (_c2 = b.source) == null ? void 0 : _c2.line) != null ? _d : 0) || a2.word.localeCompare(b.word);
     }).map((e) => ({
       word: e.word,
       entryId: e.id,
@@ -42511,6 +43180,8 @@ var ExportService = class {
       questions: threadRounds(data.wordThread(e.id)).length
     }));
     const input = { articlePath, paragraphs, words };
+    const whole = (_c = data.noteThread) == null ? void 0 : _c.call(data, articlePath);
+    if (whole) input.note = { turns: whole.turns };
     const ctx = this.context();
     const sections = renderAiNoteSections(input, ctx);
     const allowed = create2 === "always" || create2 === "ifContent" && hasAiNoteContent(input);
@@ -42569,6 +43240,10 @@ function createExportData(src) {
     entry,
     entries: () => src.entries().filter((e) => !e.deletedAt),
     wordThread: (entryId) => src.threads.wordThread(entryId),
+    noteThread: (path) => {
+      var _a, _b;
+      return (_b = (_a = src.threads).noteThread) == null ? void 0 : _b.call(_a, path);
+    },
     async paragraphThreads(path) {
       const threads = src.threads.paragraphThreads(path).filter((th) => !th.deletedAt && th.anchor.kind === "paragraph");
       if (!threads.length) return [];
@@ -42775,8 +43450,8 @@ var SeedRecord = class {
 };
 
 // src/ui/blocks/wordReview.ts
-var import_obsidian66 = require("obsidian");
-var WordReviewModal = class extends import_obsidian66.Modal {
+var import_obsidian68 = require("obsidian");
+var WordReviewModal = class extends import_obsidian68.Modal {
   constructor(host, entry) {
     super(host.app);
     this.host = host;
@@ -42807,11 +43482,11 @@ function openWordReview(host, entry) {
 }
 
 // src/ui/reading/PluginNoteChrome.ts
-var import_obsidian67 = require("obsidian");
+var import_obsidian69 = require("obsidian");
 var PLUGIN_NOTE_CLASS = "vt-plugin-note";
 var HIDE_TITLE_CLASS = "vt-hide-inline-title";
 var HIDE_FIRST_HEADING_CLASS = "vt-hide-first-heading";
-var SETTLE_MS = 80;
+var SETTLE_MS2 = 80;
 var PluginNoteChrome = class {
   constructor(app) {
     this.app = app;
@@ -42835,14 +43510,14 @@ var PluginNoteChrome = class {
     this.timer = window.setTimeout(() => {
       this.timer = null;
       this.refresh();
-    }, SETTLE_MS);
+    }, SETTLE_MS2);
   }
   refresh() {
     var _a;
     if (this.disposed) return;
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
       const view = leaf.view;
-      if (!(view instanceof import_obsidian67.MarkdownView)) continue;
+      if (!(view instanceof import_obsidian69.MarkdownView)) continue;
       const file = view.file;
       const cache2 = file ? this.app.metadataCache.getFileCache(file) : null;
       const el = view.containerEl;
@@ -42864,7 +43539,7 @@ var PluginNoteChrome = class {
 };
 
 // src/ui/reading/openInPreview.ts
-var import_obsidian68 = require("obsidian");
+var import_obsidian70 = require("obsidian");
 function isInFolder(path, folder) {
   if (!/\.md$/i.test(path)) return false;
   const trimmed = folder.replace(/^\/+/, "").replace(/\/+$/, "");
@@ -42889,7 +43564,7 @@ function installOpenInPreview(plugin, folder) {
   let lastActive = null;
   const processLeaf = (leaf) => {
     const view = leaf.view;
-    if (!(view instanceof import_obsidian68.MarkdownView) || !view.file) return;
+    if (!(view instanceof import_obsidian70.MarkdownView) || !view.file) return;
     const next = { leafId: idOf(leaf), path: view.file.path };
     const switchNow = shouldSwitchToPreview(lastActive, next, folder());
     lastActive = next;
@@ -42899,7 +43574,7 @@ function installOpenInPreview(plugin, folder) {
       var _a;
       if (attempt > 20) return;
       const currentView = leaf.view;
-      if (!(currentView instanceof import_obsidian68.MarkdownView) || ((_a = currentView.file) == null ? void 0 : _a.path) !== stable.path) return;
+      if (!(currentView instanceof import_obsidian70.MarkdownView) || ((_a = currentView.file) == null ? void 0 : _a.path) !== stable.path) return;
       if (currentView.getMode() !== "source") return;
       const viewState = leaf.getViewState();
       void leaf.setViewState({ ...viewState, state: { ...viewState.state, mode: "preview" } }).then(() => {
@@ -42925,189 +43600,6 @@ function installOpenInPreview(plugin, folder) {
   plugin.registerEvent(plugin.app.workspace.on("active-leaf-change", () => handle()));
 }
 
-// src/ui/reading/ParagraphBadges.ts
-var import_obsidian69 = require("obsidian");
-var BADGE_CLS = "vt-pbadge";
-var BADGE_HOST_CLS = "vt-pbadge-host";
-var ANCHORABLE_TAGS = /* @__PURE__ */ new Set(["P", "UL", "OL", "BLOCKQUOTE"]);
-function isAnchorableTag(tagName) {
-  return !!tagName && ANCHORABLE_TAGS.has(tagName.toUpperCase());
-}
-var SectionLines = class {
-  constructor() {
-    this.text = null;
-    this.lines = [];
-  }
-  slice(info) {
-    if (info.text !== this.text) {
-      this.text = info.text;
-      this.lines = info.text.replace(/\r\n?/g, "\n").split("\n");
-    }
-    return this.lines.slice(info.lineStart, info.lineEnd + 1).join("\n");
-  }
-};
-var NOT_READY_RETRY_MS = 100;
-var NOT_READY_MAX_TRIES = 30;
-function sectionReady(info) {
-  if (!info.text) return false;
-  let lines4 = 1;
-  for (let i = info.text.indexOf("\n"); i >= 0 && lines4 <= info.lineEnd; i = info.text.indexOf("\n", i + 1)) lines4++;
-  return info.lineEnd < lines4;
-}
-function skipsBadges(fm) {
-  return !!wordPageEntryId(fm) || pluginNoteKind(fm) !== null;
-}
-function badgeState(count2, showGhost) {
-  return count2 > 0 ? { kind: "count", count: count2 } : { kind: "ghost", quiet: !showGhost };
-}
-var ParagraphBadges = class {
-  constructor(deps) {
-    this.deps = deps;
-    this.live = /* @__PURE__ */ new Map();
-    this.lines = new SectionLines();
-    this.healed = /* @__PURE__ */ new Set();
-    // registerMarkdownPostProcessor(badges.process)
-    this.process = (el, ctx) => {
-      var _a, _b, _c;
-      const first = el.firstElementChild;
-      if (!isAnchorableTag(first == null ? void 0 : first.tagName)) return;
-      const fm = (_c = ctx.frontmatter) != null ? _c : (_b = (_a = this.deps).frontmatterOf) == null ? void 0 : _b.call(_a, ctx.sourcePath);
-      if (skipsBadges(fm)) return;
-      if (!ctx.getSectionInfo(el)) return;
-      let handles = [];
-      let unloaded = false;
-      let timer2 = 0;
-      const child = new import_obsidian69.MarkdownRenderChild(el);
-      child.register(() => {
-        unloaded = true;
-        if (timer2) window.clearTimeout(timer2);
-        handles.forEach((h) => this.untrack(h));
-      });
-      ctx.addChild(child);
-      const attach = (tries) => {
-        if (unloaded) return;
-        const info = ctx.getSectionInfo(el);
-        if (!info) return;
-        if (!sectionReady(info)) {
-          if (tries < NOT_READY_MAX_TRIES) timer2 = window.setTimeout(() => attach(tries + 1), NOT_READY_RETRY_MS);
-          return;
-        }
-        handles = this.handlesFor(ctx.sourcePath, el, first, info.lineStart, info.lineEnd, this.lines.slice(info));
-        handles.forEach((h, i) => {
-          h.fresh = () => {
-            const now2 = ctx.getSectionInfo(el);
-            if (!now2 || !sectionReady(now2)) return null;
-            const again = this.handlesFor(ctx.sourcePath, el, first, now2.lineStart, now2.lineEnd, this.lines.slice(now2));
-            return again.length === handles.length ? again[i].ref : null;
-          };
-          this.draw(h);
-          this.track(h);
-        });
-      };
-      attach(0);
-    };
-  }
-  // Keeps live badges in sync with the index. Returns the unsubscribe.
-  attach() {
-    return this.deps.index.events.on("paragraph-index:change", ({ paths }) => this.refresh(paths));
-  }
-  // Re-draws the live badges of these notes (all notes when omitted), e.g.
-  // after the AI on/off switch changes whether ghosts show.
-  refresh(paths) {
-    var _a, _b;
-    const targets = paths != null ? paths : [...this.live.keys()];
-    for (const path of targets) {
-      for (const h of (_a = this.live.get(path)) != null ? _a : []) {
-        h.ref = (_b = h.fresh()) != null ? _b : h.ref;
-        this.draw(h);
-      }
-      this.healStale(path);
-    }
-  }
-  // Once per id, so a paragraph that simply isn't rendered (scrolled out of
-  // a long note) can't cause a re-render loop.
-  healStale(path) {
-    const handles = this.live.get(path);
-    if (!this.deps.rerender || !this.deps.index.blockIds || !(handles == null ? void 0 : handles.size)) return;
-    const rendered = new Set([...handles].map((h) => trailingBlockId(h.ref.text)));
-    const missing = this.deps.index.blockIds(path).filter((id2) => !rendered.has(id2) && !this.healed.has(`${path}
-${id2}`));
-    if (!missing.length) return;
-    for (const id2 of missing) this.healed.add(`${path}
-${id2}`);
-    this.deps.rerender(path);
-  }
-  // One handle per top-level `<li>` when this list was split (see class
-  // comment); otherwise the usual single handle for the whole section
-  // element. Falls back to the whole list if the DOM's `<li>` count
-  // doesn't match the split — e.g. a task-list item rendered with extra
-  // wrapper elements — rather than guessing at a mismatched mapping.
-  handlesFor(path, el, first, lineStart, lineEnd, text) {
-    var _a, _b;
-    const whole = () => [{ ref: { path, lineStart, lineEnd, text }, host: el, badge: null, fresh: () => null }];
-    const tag = (_a = first == null ? void 0 : first.tagName) == null ? void 0 : _a.toUpperCase();
-    if (tag !== "UL" && tag !== "OL") return whole();
-    const lines4 = text.split("\n");
-    if (!shouldSplitList(lines4)) return whole();
-    const items = splitListItems(lines4, lineStart);
-    const lis = Array.from((_b = first == null ? void 0 : first.children) != null ? _b : []).filter((c2) => {
-      var _a2;
-      return ((_a2 = c2.tagName) == null ? void 0 : _a2.toUpperCase()) === "LI";
-    });
-    if (lis.length !== items.length) return whole();
-    return items.map((item, i) => ({
-      ref: { path, lineStart: item.lineStart, lineEnd: item.lineEnd, text: item.text },
-      host: lis[i],
-      badge: null,
-      fresh: () => null
-    }));
-  }
-  track(h) {
-    let set3 = this.live.get(h.ref.path);
-    if (!set3) {
-      set3 = /* @__PURE__ */ new Set();
-      this.live.set(h.ref.path, set3);
-    }
-    set3.add(h);
-  }
-  untrack(h) {
-    const set3 = this.live.get(h.ref.path);
-    if (!set3) return;
-    set3.delete(h);
-    if (!set3.size) this.live.delete(h.ref.path);
-  }
-  draw(h) {
-    const state = badgeState(this.deps.index.count(h.ref.path, h.ref.text), this.deps.showGhost());
-    let badge = h.badge;
-    if (!badge) {
-      h.host.addClass(BADGE_HOST_CLS);
-      badge = h.badge = h.host.createSpan({ cls: BADGE_CLS });
-      badge.setAttr("role", "button");
-      badge.setAttr("tabindex", "0");
-      const open = (e) => {
-        var _a;
-        e.preventDefault();
-        e.stopPropagation();
-        h.ref = (_a = h.fresh()) != null ? _a : h.ref;
-        this.deps.onOpen(h.ref);
-      };
-      badge.addEventListener("click", open);
-      badge.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") open(e);
-      });
-      (0, import_obsidian69.setIcon)(badge.createSpan({ cls: "vt-pbadge-icon" }), "sparkles");
-      badge.createSpan({ cls: "vt-pbadge-count" });
-    }
-    const countEl = badge.querySelector(".vt-pbadge-count");
-    badge.toggleClass("has-count", state.kind === "count");
-    badge.toggleClass("is-ghost", state.kind === "ghost");
-    badge.toggleClass("is-quiet", state.kind === "ghost" && state.quiet);
-    countEl == null ? void 0 : countEl.setText(state.kind === "count" ? String(state.count) : "");
-    const label = state.kind === "count" ? t("paragraph.badge.count", { n: state.count }) : t("paragraph.badge.open");
-    badge.setAttr("aria-label", label);
-  }
-};
-
 // src/ui/mobile/tapAction.ts
 function tapActionFor(ui, _form) {
   return resolveUiPrefs(ui).tapAction;
@@ -43124,10 +43616,10 @@ function planTap(action, tracked) {
 }
 
 // src/ui/mobile/WordSheet.ts
-var import_obsidian71 = require("obsidian");
+var import_obsidian72 = require("obsidian");
 
 // src/ui/mobile/BottomSheet.ts
-var import_obsidian70 = require("obsidian");
+var import_obsidian71 = require("obsidian");
 
 // src/ui/mobile/sheetGeometry.ts
 var TAP_SLOP_PX = 6;
@@ -43268,7 +43760,7 @@ var BottomSheet = class {
     grab.createDiv({ cls: "vt-sheet-grab" });
     const close = grab.createEl("button", { cls: "vt-sheet-close clickable-icon" });
     close.setAttr("aria-label", opts.closeLabel);
-    (0, import_obsidian70.setIcon)(close, "x");
+    (0, import_obsidian71.setIcon)(close, "x");
     close.addEventListener("click", () => this.close());
     grab.addEventListener("pointerdown", this.onPointerDown);
     grab.addEventListener("pointermove", this.onPointerMove);
@@ -43412,7 +43904,7 @@ function isTextInput(target) {
 
 // src/ui/mobile/WordSheet.ts
 var KEYBOARD_PROBE_PATH = "Vocab Tracker \u9375\u76E4\u8A3A\u65B7.md";
-var WordSheet = class extends import_obsidian71.Component {
+var WordSheet = class extends import_obsidian72.Component {
   constructor(plugin, opts = {}) {
     super();
     this.plugin = plugin;
@@ -43675,12 +44167,12 @@ ${block}`);
     this.cancelRebind();
     try {
       if (!await this.plugin.threads.rebindParagraph(threadId, ref)) return;
-      new import_obsidian71.Notice(t("paragraph.rebind.done"));
+      new import_obsidian72.Notice(t("paragraph.rebind.done"));
       this.view = { kind: "paragraph", route: { name: "paragraph", threadId } };
       this.show();
     } catch (e) {
       console.error("Vocab Tracker: rebind failed", e);
-      new import_obsidian71.Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian72.Notice(t("paragraph.rebind.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
 };
@@ -43950,7 +44442,7 @@ function snapshot(e) {
 }
 
 // src/ui/word/DeleteEntryModal.ts
-var import_obsidian72 = require("obsidian");
+var import_obsidian73 = require("obsidian");
 
 // src/ui/word/deleteEntryImpact.ts
 function deletionImpactLines(impact) {
@@ -43964,7 +44456,7 @@ function deletionImpactLines(impact) {
 }
 
 // src/ui/word/DeleteEntryModal.ts
-var DeleteEntryModal = class extends import_obsidian72.Modal {
+var DeleteEntryModal = class extends import_obsidian73.Modal {
   constructor(app, word, impact, onResult) {
     super(app);
     this.word = word;
@@ -43993,11 +44485,11 @@ var DeleteEntryModal = class extends import_obsidian72.Modal {
       el.createEl("p", { text: t("deleteEntry.noLinks"), cls: "vt-settings-muted" });
     }
     if (this.impact.wordPageExists) {
-      new import_obsidian72.Setting(el).setName(t("deleteEntry.trashWordPage")).addToggle(
+      new import_obsidian73.Setting(el).setName(t("deleteEntry.trashWordPage")).addToggle(
         (toggle2) => toggle2.setValue(this.trashWordPage).onChange((v) => this.trashWordPage = v)
       );
     }
-    new import_obsidian72.Setting(el).addButton((b) => b.setButtonText(t("deleteEntry.cancel")).onClick(() => this.close())).addButton(
+    new import_obsidian73.Setting(el).addButton((b) => b.setButtonText(t("deleteEntry.cancel")).onClick(() => this.close())).addButton(
       (b) => b.setButtonText(t("deleteEntry.confirm")).setWarning().onClick(() => {
         this.confirmed = true;
         this.onResult({ trashWordPage: this.trashWordPage });
@@ -44033,7 +44525,7 @@ function saveDnaBudget(v) {
   } catch (e) {
   }
 }
-var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
+var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
   constructor() {
     super(...arguments);
     this.vocabData = { entries: [] };
@@ -44163,7 +44655,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
         create: (p, c2) => this.vault.create(p, c2),
         process: (p, fn) => this.vault.process(p, fn),
         findNote: (id2) => this.vault.findManaged("ai-note", id2),
-        onSaved: (path) => new import_obsidian73.Notice(t("buddy.archived", { path })),
+        onSaved: (path) => new import_obsidian74.Notice(t("buddy.archived", { path })),
         digestReady: () => this.ai.status() === "ready",
         isSavedWord: (w2) => this.isWordSaved(w2),
         // 單字頁 of a word in the list; null when it has none yet.
@@ -44228,7 +44720,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
         return (_b = (_a = this.store.settings.learner) == null ? void 0 : _a.level) != null ? _b : "";
       }
     });
-    this.scenario = new ScenarioService({
+    const scenarioDeps = {
       ai,
       learner: this.learner,
       recentWords: () => this.recentWords(),
@@ -44241,7 +44733,14 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
         const entry = this.store.entries.find((e) => e.id === id2);
         if (entry) void this.srs.rate(entry, Rating.Again, "en-zh");
       }
-    });
+    };
+    this.scenario = new ScenarioService(scenarioDeps);
+    const noteScenarios = /* @__PURE__ */ new Map();
+    this.noteScenario = (path) => {
+      let s = noteScenarios.get(path);
+      if (!s) noteScenarios.set(path, s = new ScenarioService({ ...scenarioDeps, lane: `note:${path}` }));
+      return s;
+    };
     this.learnerModel = new LearnerModel({
       vocab: () => this.store.entries,
       grammar: this.grammar,
@@ -44278,7 +44777,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
         read: (p) => this.vault.read(p),
         list: (folder) => {
           const f = this.app.vault.getAbstractFileByPath(folder);
-          return f instanceof import_obsidian73.TFolder ? f.children.map((c2) => c2.path) : [];
+          return f instanceof import_obsidian74.TFolder ? f.children.map((c2) => c2.path) : [];
         },
         frontmatterOf: (p) => this.frontmatterOf(p)
       },
@@ -44304,7 +44803,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
         process: (p, fn) => this.vault.process(p, fn),
         list: (folder) => {
           const f = this.app.vault.getAbstractFileByPath(folder);
-          return f instanceof import_obsidian73.TFolder ? f.children.map((c2) => c2.path) : [];
+          return f instanceof import_obsidian74.TFolder ? f.children.map((c2) => c2.path) : [];
         },
         frontmatterOf: (p) => this.frontmatterOf(p)
       },
@@ -44411,13 +44910,13 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       openPath: (p) => this.openNote(p)
     });
     this.registerEvent(
-      this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof import_obsidian73.TFolder))
+      this.app.vault.on("rename", (file, oldPath) => void this.files.handleRename(oldPath, file.path, file instanceof import_obsidian74.TFolder))
     );
-    this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof import_obsidian73.TFolder)));
+    this.registerEvent(this.app.vault.on("delete", (file) => this.files.handleDelete(file.path, file instanceof import_obsidian74.TFolder)));
     this.app.workspace.onLayoutReady(() => {
       this.registerEvent(
         this.app.vault.on("create", (file) => {
-          if (file instanceof import_obsidian73.TFile && file.extension === "md") void this.restoreArticle(file);
+          if (file instanceof import_obsidian74.TFile && file.extension === "md") void this.restoreArticle(file);
         })
       );
       window.setTimeout(() => void this.restoreLostArticles().catch((e) => console.error("Vocab Tracker: restore sweep failed", e)), 5e3);
@@ -44445,10 +44944,11 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
         trivia: this.trivia,
         // The bottom sheet on iPhone.
         openInSidebar: (entry) => this.surfaces.openWordCard(entry.id, "ai"),
-        notify: (m2) => new import_obsidian73.Notice(m2)
+        notify: (m2) => new import_obsidian74.Notice(m2)
       })
     );
     new PluginNoteChrome(this.app).attach(this);
+    new NoteReviewPanels(this).attach(this);
     this.registerView(
       VOCAB_VIEW_TYPE,
       (leaf) => new VocabSidebarView(leaf, this)
@@ -44482,7 +44982,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
         var _a;
         for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
           const view = leaf.view;
-          if (view instanceof import_obsidian73.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === path && view.getMode() === "preview") {
+          if (view instanceof import_obsidian74.MarkdownView && ((_a = view.file) == null ? void 0 : _a.path) === path && view.getMode() === "preview") {
             view.previewMode.rerender(true);
           }
         }
@@ -44513,8 +45013,8 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       callback: () => {
         const key6 = previousWeek(this.report.today()).key;
         void this.report.write(key6, { overwrite: true }).then((r) => {
-          if (r === "written") new import_obsidian73.Notice(t("dashboard.report.written", { key: key6 }));
-          else if (r === "empty") new import_obsidian73.Notice(t("dashboard.report.empty"));
+          if (r === "written") new import_obsidian74.Notice(t("dashboard.report.written", { key: key6 }));
+          else if (r === "empty") new import_obsidian74.Notice(t("dashboard.report.empty"));
         });
       }
     });
@@ -44593,7 +45093,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
     );
     this.registerEvent(
       this.app.vault.on("rename", async (file, oldPath) => {
-        if (!(file instanceof import_obsidian73.TFile)) return;
+        if (!(file instanceof import_obsidian74.TFile)) return;
         const changed = updateSourcePaths(this.vocabData.entries, oldPath, file.path);
         if (changed.length) await this.store.touchMany(changed);
         await this.noteImports.rename(oldPath, file.path);
@@ -44779,7 +45279,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       if (plan.retag.length) await this.store.touchMany(plan.retag.map((r) => r.entry));
       await this.noteImports.mark(file.path, nowIso());
       if (created2.length || plan.retag.length) {
-        new import_obsidian73.Notice(
+        new import_obsidian74.Notice(
           t("exam.import.done", { note: file.basename, added: created2.length, tagged: plan.retag.length })
         );
         this.renderSidebar();
@@ -44829,7 +45329,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
     (_a = this.sidebarView()) == null ? void 0 : _a.render();
   }
   registerWordlistEvents() {
-    const reload = (0, import_obsidian73.debounce)(() => void this.wordlists.reload(), 800, true);
+    const reload = (0, import_obsidian74.debounce)(() => void this.wordlists.reload(), 800, true);
     const inLists = (path) => inFolder(path, this.wordlistSettings().folder);
     const onChange = (file, oldPath) => {
       if (inLists(file.path) || oldPath && inLists(oldPath)) reload();
@@ -44837,7 +45337,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
     this.registerEvent(this.app.vault.on("create", (f) => onChange(f)));
     this.registerEvent(this.app.vault.on("delete", (f) => onChange(f)));
     this.registerEvent(this.app.vault.on("rename", (f, oldPath) => onChange(f, oldPath)));
-    const rescanActive = (0, import_obsidian73.debounce)(() => this.refreshExamStrip(), 1500, true);
+    const rescanActive = (0, import_obsidian74.debounce)(() => this.refreshExamStrip(), 1500, true);
     this.registerEvent(
       this.app.vault.on("modify", (f) => {
         var _a;
@@ -44861,7 +45361,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
     var _a;
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
       const view = leaf.view;
-      if (view instanceof import_obsidian73.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
+      if (view instanceof import_obsidian74.MarkdownView) (_a = view.previewMode) == null ? void 0 : _a.rerender(true);
     }
   }
   refreshExamStrip() {
@@ -44902,7 +45402,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
   }
   // Live Preview hint's 「切換到閱讀模式」.
   async switchToReadingView() {
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian73.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian74.MarkdownView);
     if (!view) return;
     await view.setState({ ...view.getState(), mode: "preview" }, { history: false });
   }
@@ -44941,7 +45441,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       await this.openNote(await this.files.ensure(id2), where);
     } catch (e) {
       console.error(`Vocab Tracker: couldn't open the ${id2} entry file`, e);
-      new import_obsidian73.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian74.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   // The 「單字頁」 button: the word's page, created now if it has none.
@@ -44953,7 +45453,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       if (path) await this.openNote(path);
     } catch (e) {
       console.error("Vocab Tracker: couldn't open the word page", e);
-      new import_obsidian73.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian74.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   // "tab": a new tab, or the tab already showing the note.
@@ -44965,12 +45465,12 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
   }
   async openNote(path, where = "current") {
     const file = this.app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof import_obsidian73.TFile)) return;
+    if (!(file instanceof import_obsidian74.TFile)) return;
     const { workspace } = this.app;
     if (where === "tab") {
       const open = workspace.getLeavesOfType("markdown").find((leaf) => {
         var _a;
-        return leaf.view instanceof import_obsidian73.MarkdownView && ((_a = leaf.view.file) == null ? void 0 : _a.path) === path;
+        return leaf.view instanceof import_obsidian74.MarkdownView && ((_a = leaf.view.file) == null ? void 0 : _a.path) === path;
       });
       if (open) {
         workspace.setActiveLeaf(open, { focus: true });
@@ -45007,13 +45507,13 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       (p) => !!this.app.vault.getAbstractFileByPath(p)
     );
     const old = rename ? this.app.vault.getAbstractFileByPath(rename[0]) : null;
-    if (rename && old instanceof import_obsidian73.TFile) await this.app.fileManager.renameFile(old, rename[1]);
+    if (rename && old instanceof import_obsidian74.TFile) await this.app.fileManager.renameFile(old, rename[1]);
     if (this.app.vault.getAbstractFileByPath(VOCAB_FILE)) return;
     if (!this.app.vault.getAbstractFileByPath(VOCAB_FOLDER)) {
       await this.app.vault.createFolder(VOCAB_FOLDER);
     }
     const legacy = this.app.vault.getAbstractFileByPath(VOCAB_FILE_LEGACY);
-    if (legacy instanceof import_obsidian73.TFile) {
+    if (legacy instanceof import_obsidian74.TFile) {
       await this.app.fileManager.renameFile(legacy, VOCAB_FILE);
       return;
     }
@@ -45075,13 +45575,13 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
     }
   }
   showWordMenu(evt, word, ctx, exists) {
-    const menu = new import_obsidian73.Menu();
+    const menu = new import_obsidian74.Menu();
     menu.addItem((item) => {
       item.setTitle(t(exists ? "mobile.menu.open" : "mobile.menu.add", { word }));
       item.setIcon(exists ? "book-open" : "plus");
       item.onClick(async () => {
-        const added = await this.addWordToVocab(word, ctx);
-        if (added) new import_obsidian73.Notice(t("mobile.menu.added", { word }));
+        const added2 = await this.addWordToVocab(word, ctx);
+        if (added2) new import_obsidian74.Notice(t("mobile.menu.added", { word }));
       });
     });
     menu.showAtMouseEvent(evt);
@@ -45093,21 +45593,21 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       await quickSave(word, {
         add: async () => {
           var _a2;
-          const added = await this.addWordToVocab(word, ctx, { reveal: false });
-          if (!added) return null;
+          const added2 = await this.addWordToVocab(word, ctx, { reveal: false });
+          if (!added2) return null;
           return (_a2 = this.store.entries.find((e) => e.word.toLowerCase() === word.toLowerCase())) != null ? _a2 : null;
         },
         remove: async (entry) => {
           await this.deleteEntry(entry);
           this.renderSidebar();
         },
-        notify: (text, actions) => (actions == null ? void 0 : actions.length) ? actionNotice(text, actions) : new import_obsidian73.Notice(text)
+        notify: (text, actions) => (actions == null ? void 0 : actions.length) ? actionNotice(text, actions) : new import_obsidian74.Notice(text)
       });
       this.renderSidebar();
       (_a = this.sidebarView()) == null ? void 0 : _a.locateWord(word);
     } catch (e) {
       console.error("Vocab Tracker: couldn't save the word", e);
-      new import_obsidian73.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
+      new import_obsidian74.Notice(t("wordPage.failed", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
   getWordContext(x3, y3) {
@@ -45222,7 +45722,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
     if (!entry.source || !entry.source.path) return;
     const file = this.app.vault.getAbstractFileByPath(entry.source.path);
     if (!file) {
-      new import_obsidian73.Notice("Source note not found: " + entry.source.path);
+      new import_obsidian74.Notice("Source note not found: " + entry.source.path);
       return;
     }
     const leaf = this.app.workspace.getLeaf(false);
@@ -45247,13 +45747,13 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
       await this.store.touch(entry);
       if (opts.quiet) return;
       this.renderSidebar();
-      if (opts.verbose) new import_obsidian73.Notice(`Vocab Tracker: fetched "${entry.word}"`);
+      if (opts.verbose) new import_obsidian74.Notice(`Vocab Tracker: fetched "${entry.word}"`);
     } catch (e) {
       console.error("Vocab Tracker: dictionary fetch failed", e);
       const kind = dictionaryErrorKind(e);
       if (kind === "network") this.unreachable.add(entry.id);
       if (opts.quiet) return;
-      new import_obsidian73.Notice(t(`dictionary.error.${kind}`, { word: entry.word }), kind === "network" ? 8e3 : void 0);
+      new import_obsidian74.Notice(t(`dictionary.error.${kind}`, { word: entry.word }), kind === "network" ? 8e3 : void 0);
     }
   }
   // See `unreachable`. At most every NETWORK_RETRY_GAP_MS: iPhone fires
@@ -45328,7 +45828,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
         return r.content;
       });
       if (result.rebound || result.highlighted) {
-        new import_obsidian73.Notice(t("article.restored", { threads: result.rebound, words: result.highlighted }));
+        new import_obsidian74.Notice(t("article.restored", { threads: result.rebound, words: result.highlighted }));
       }
     } catch (e) {
       console.error("Vocab Tracker: couldn't restore the article's anchors", e);
@@ -45344,7 +45844,7 @@ var VocabTrackerPlugin = class extends import_obsidian73.Plugin {
     for (const e of this.store.entries) if (!e.deletedAt && ((_a = e.source) == null ? void 0 : _a.path)) paths.add(e.source.path);
     for (const path of paths) {
       const file = this.app.vault.getAbstractFileByPath(path);
-      if (file instanceof import_obsidian73.TFile && file.extension === "md") await this.restoreArticle(file, true);
+      if (file instanceof import_obsidian74.TFile && file.extension === "md") await this.restoreArticle(file, true);
     }
   }
   async unhighlightWord(word, path) {

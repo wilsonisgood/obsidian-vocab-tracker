@@ -12,7 +12,10 @@ import type { AnchorResolution, ParagraphAnchor, ParagraphAnchorService, Section
 import { paragraphKey, questionCount } from "../anchors/ParagraphIndex";
 import { paragraphInput } from "../anchors/paragraphInput";
 import { trailingBlockId } from "../../core/text/blockId";
-import { paragraphHash } from "../../core/text/hash";
+import { paragraphHash, sha1 } from "../../core/text/hash";
+import { plainParagraph, splitParagraphSpans } from "../../core/text/paragraphs";
+import { noteTitle } from "../anchors/paragraphInput";
+import type { NoteInput } from "../ai/tasks/note";
 import { buildAskEvent } from "../../core/learner/asks";
 import type { AskEvent } from "../../core/model/learner";
 import {
@@ -636,9 +639,63 @@ export class ThreadService {
 
   // 文章改名 (規劃書 06 §4.6): paragraph anchors follow the note; a folder
   // rename moves every note under it. Returns how many threads moved.
+  // ─── Whole-note discussions (1030 #4 複習這篇筆記) ─────────────────────
+
+  // The note's discussion: the live one anchored to it, else the id a first
+  // question will create (the hash of the path; a deleted one's id isn't reused).
+  noteThreadId(path: string): string {
+    const live = this.threads.find((th) => !th.deletedAt && th.anchor.kind === "note" && th.anchor.path === path);
+    if (live) return live.id;
+    const base = `note:${sha1(path).slice(0, 12)}`;
+    let id = base;
+    for (let n = 2; this.threads.some((th) => th.id === id); n++) id = `${base}-${n}`;
+    return id;
+  }
+
+  noteThread(path: string): Thread | undefined {
+    return this.threads.find((th) => !th.deletedAt && th.anchor.kind === "note" && th.anchor.path === path);
+  }
+
+  async askNote(path: string, req: { taskId: string; question?: string; selection?: string }): Promise<string | null> {
+    await this.ensureLoaded();
+    if (this.disposed) return null;
+    const content = await this.deps.notes.read(path);
+    if (content === null) return null;
+    const threadId = this.noteThreadId(path);
+    if (this.isBusy(threadId)) return null;
+    const paragraphs = splitParagraphSpans(content).map((s) => plainParagraph(s.text));
+    const input: NoteInput = { article: { title: noteTitle(path), paragraphs } };
+    if (req.question) input.question = req.question;
+    await this.ask({
+      threadId,
+      anchor: { kind: "note", path },
+      taskId: req.taskId,
+      input,
+      display: this.displayFor(req),
+      question: req.question,
+      selection: req.selection,
+    });
+    return threadId;
+  }
+
+  async retryNote(path: string, turnId: string): Promise<void> {
+    const question = this.dropFailedRound(this.get(this.noteThreadId(path)), turnId);
+    if (!question?.taskId) return;
+    await this.askNote(path, { taskId: question.taskId, question: question.question, selection: question.selection });
+  }
+
   async renameParagraphPath(oldPath: string, newPath: string): Promise<number> {
     await this.ensureLoaded();
     let moved = 0;
+    // The whole-note discussions follow the note too (1030 #4).
+    for (const th of this.threads) {
+      if (th.deletedAt || th.anchor.kind !== "note") continue;
+      const a = th.anchor;
+      const next = a.path === oldPath ? newPath : a.path.startsWith(`${oldPath}/`) ? newPath + a.path.slice(oldPath.length) : null;
+      if (next === null) continue;
+      th.anchor = { kind: "note", path: next };
+      this.changed(th);
+    }
     for (const th of this.paragraphThreads()) {
       const a = th.anchor as ParagraphAnchor;
       let next: string | null = null;

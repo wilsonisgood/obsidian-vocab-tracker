@@ -34,6 +34,8 @@ export interface AiNoteInput {
   articlePath: string;
   paragraphs: readonly AiNoteParagraph[];
   words: readonly AiNoteWord[];
+  // 1030 #4: the whole-article discussion (複習這篇筆記), shown first.
+  note?: { turns: readonly Turn[] };
 }
 
 const HEADING_PREVIEW = 40;
@@ -62,12 +64,17 @@ function renderParagraph(p: AiNoteParagraph, article: string, ctx: RenderContext
   return [heading, "", quote, "", renderRounds(rounds, ctx, "###")].join("\n");
 }
 
+function renderWhole(input: AiNoteInput, ctx: RenderContext): string | null {
+  const rounds = input.note ? roundsOf(input.note.turns) : [];
+  return rounds.length ? [`## ${ctx.labels.wholeNote}`, "", renderRounds(rounds, ctx, "###")].join("\n") : null;
+}
+
 function renderParagraphs(input: AiNoteInput, ctx: RenderContext): string {
   const article = linkTarget(input.articlePath);
-  const parts = [...input.paragraphs]
-    .sort(byOrder)
-    .map((p) => renderParagraph(p, article, ctx))
-    .filter((p): p is string => p !== null);
+  const parts = [
+    renderWhole(input, ctx),
+    ...[...input.paragraphs].sort(byOrder).map((p) => renderParagraph(p, article, ctx)),
+  ].filter((p): p is string => p !== null);
   return parts.length ? parts.join("\n\n") : italic(ctx.labels.paragraphsEmpty);
 }
 
@@ -81,7 +88,7 @@ function renderWords(input: AiNoteInput, ctx: RenderContext): string {
 
 // Only notes with at least one exported round are created.
 export function hasAiNoteContent(input: AiNoteInput): boolean {
-  return input.paragraphs.some((p) => roundsOf(p.turns).length > 0);
+  return input.paragraphs.some((p) => roundsOf(p.turns).length > 0) || (!!input.note && roundsOf(input.note.turns).length > 0);
 }
 
 export function renderAiNoteSections(input: AiNoteInput, ctx: RenderContext): ManagedSection[] {

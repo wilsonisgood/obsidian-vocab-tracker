@@ -21,6 +21,8 @@ export interface ExportDataSources {
     ensureLoaded(): Promise<void>;
     wordThread(entryId: string): Thread | undefined;
     paragraphThreads(path?: string): Thread[];
+    // 1030 #4; optional so older wiring still type-checks.
+    noteThread?(path: string): Thread | undefined;
   };
   learn: {
     ensureLoaded(): Promise<void>;
@@ -56,6 +58,7 @@ export function createExportData(src: ExportDataSources): ExportDataPort {
     entry,
     entries: () => src.entries().filter((e) => !e.deletedAt),
     wordThread: (entryId) => src.threads.wordThread(entryId),
+    noteThread: (path) => src.threads.noteThread?.(path),
     async paragraphThreads(path): Promise<ParagraphThread[]> {
       const threads = src.threads.paragraphThreads(path).filter((th) => !th.deletedAt && th.anchor.kind === "paragraph");
       if (!threads.length) return [];

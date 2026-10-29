@@ -208,7 +208,7 @@ export class ExportService {
 
   threadChanged(thread: Thread): void {
     const anchor = thread.anchor;
-    if (anchor.kind === "paragraph") {
+    if (anchor.kind === "paragraph" || anchor.kind === "note") {
       this.articleChanged(anchor.path);
     } else if (anchor.kind === "word") {
       this.wordChanged(anchor.entryId, "ifContent");
@@ -557,6 +557,8 @@ export class ExportService {
         questions: threadRounds(data.wordThread(e.id)).length,
       }));
     const input: AiNoteInput = { articlePath, paragraphs, words };
+    const whole = data.noteThread?.(articlePath);
+    if (whole) input.note = { turns: whole.turns };
     const ctx = this.context();
     const sections = renderAiNoteSections(input, ctx);
     const allowed = create === "always" || (create === "ifContent" && hasAiNoteContent(input));

@@ -80,6 +80,7 @@ function normalizePool(raw: unknown): PoolItem | null {
     updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : raw.addedAt,
   };
   if (str(raw.scenarioId)) p.scenarioId = raw.scenarioId;
+  if (str(raw.lane)) p.lane = raw.lane;
   if (isIso(raw.removedAt)) {
     p.removedAt = raw.removedAt;
     p.removeReason = REASONS.includes(raw.removeReason as PoolRemoveReason) ? (raw.removeReason as PoolRemoveReason) : "answered";

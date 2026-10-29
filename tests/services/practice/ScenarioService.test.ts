@@ -405,3 +405,36 @@ describe("ScenarioService 換句話說 (para)", () => {
     expect(service.poolQuestions("para")).toEqual([]);
   });
 });
+
+describe("pool lanes (1030 #4 複習這篇筆記)", () => {
+  it("a note's lane has its own pool: neither side's scope or refill empties the other", async () => {
+    const ctx = await filled(VOCAB, scenario(6, vocabAsk));
+    let seq = 100;
+    let round = 0;
+    const noteAi = new StatusAi(() => {
+      round++;
+      return result(JSON.stringify(scenario(6, (k) => ({ ...vocabAsk(k), text: `Round ${round}: he was [[reluctant]] to go, number ${k}.` }))));
+    });
+    const note = new ScenarioService({ ai: noteAi, learner: ctx.learner, clock: ctx.clock, newId: () => `n${++seq}`, lane: "note:a.md" });
+    await note.refill(VOCAB);
+    expect(noteAi.threadIds).toEqual([refillThreadId("vocab", "note:a.md")]);
+    expect(note.poolQuestions("vocab")).toHaveLength(6);
+    expect(ctx.service.poolQuestions("vocab")).toHaveLength(6);
+    expect(new Set(note.poolQuestions("vocab").map((q) => q.id)).size).toBe(6);
+    expect(note.poolQuestions("vocab").some((q) => ctx.service.poolQuestions("vocab").includes(q))).toBe(false);
+
+    // the hub narrowing its scope leaves the note's lane alone, and vice versa
+    ctx.service.applyScope("vocab", new Set(["other"]));
+    expect(ctx.service.poolQuestions("vocab")).toHaveLength(0);
+    expect(note.poolQuestions("vocab")).toHaveLength(6);
+    note.applyScope("vocab", new Set(["nope"]));
+    expect(note.poolQuestions("vocab")).toHaveLength(0);
+
+    // answers / mistakes are shared: a wrong answer in the note lands in the hub's 錯題本
+    await note.refill(VOCAB);
+    const q = note.poolQuestions("vocab")[0];
+    note.answer(q, "b", false, { hinted: false, fromMistakes: false });
+    expect(ctx.service.mistakeQuestions("vocab").map((m) => m.id)).toContain(q.id);
+    expect(note.poolQuestions("vocab").map((x) => x.id)).not.toContain(q.id);
+  });
+});

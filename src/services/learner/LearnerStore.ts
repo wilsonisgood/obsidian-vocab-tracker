@@ -8,7 +8,7 @@ import type { AskEvent, DiaryPick, DiaryPickKind, LearnEvent, LearnerShard, Mist
 import type { PracticeQuestion, ScenarioTrack } from "../../core/model/practice";
 import { isCefrTier, type CefrTier } from "../../core/wordlists/cefr";
 import type { StoragePort } from "../../core/ports";
-import { livePool } from "../../core/practice/pool";
+import { laneItems, livePool } from "../../core/practice/pool";
 import { openMistakes } from "../../core/practice/mistakes";
 import {
   emptyLearnerShard,
@@ -106,8 +106,8 @@ export class LearnerStore {
 
   // ── Pool ──────────────────────────────────────────────────────
 
-  pool(track: Track): PoolItem[] {
-    return livePool(this.data.pool, track);
+  pool(track: Track, lane?: string): PoolItem[] {
+    return livePool(laneItems(this.data.pool, lane), track);
   }
 
   // Every stored pool item (removed ones included), for addToPool's de-dupe.

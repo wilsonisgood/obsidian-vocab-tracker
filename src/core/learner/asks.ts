@@ -18,6 +18,7 @@ export function truncateAsk(text: string | undefined): string | undefined {
 export function askSurfaceOf(taskId: string, surface?: string): AskSurface {
   const raw = surface ?? taskId.split(".")[0];
   if (ASK_SURFACES.includes(raw as AskSurface)) return raw as AskSurface;
+  if (raw === "note") return "paragraph"; // 1030 #4: a whole-note discussion is reading too
   return raw === "dna" ? "morpheme" : "other";
 }
 
@@ -33,7 +34,7 @@ export function buildAskEvent(user: Turn, answer: Turn | undefined, anchor: Anch
   };
   const entryId = user.subjectEntryId ?? (anchor.kind === "word" ? anchor.entryId : undefined);
   if (entryId) e.entryId = entryId;
-  if (anchor.kind === "paragraph") e.path = anchor.path;
+  if (anchor.kind === "paragraph" || anchor.kind === "note") e.path = anchor.path;
   const selection = truncateAsk(user.selection);
   if (selection) e.selection = selection;
   const question = truncateAsk(user.question);

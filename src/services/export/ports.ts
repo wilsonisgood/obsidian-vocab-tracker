@@ -26,6 +26,8 @@ export interface ExportDataPort {
   wordThread(entryId: string): Thread | undefined;
   // Live paragraph threads anchored to this note.
   paragraphThreads(path: string): Promise<ParagraphThread[]>;
+  // 1030 #4: the note's whole-article discussion. Optional.
+  noteThread?(path: string): Thread | undefined;
   families(): readonly ExportFamily[];
   // This entry's usage blocks, by part of speech (1006-2 #19 #21).
   usages(entryId: string): Partial<Record<PosKey, ExportUsage>>;

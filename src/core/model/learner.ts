@@ -37,6 +37,9 @@ export interface PoolItem {
   scenarioId?: string;
   // Answer order within the pool (ascending).
   seq: number;
+  // 1030 #4: a pool of its own (「複習這篇筆記」: `note:<path>`), so it and the
+  // practice hub's tab never empty each other. Absent = the hub's pool.
+  lane?: string;
   addedAt: string;
   updatedAt: string;
   removedAt?: string;

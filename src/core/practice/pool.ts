@@ -11,6 +11,11 @@ export function livePool(items: readonly PoolItem[], track: Track): PoolItem[] {
   return items.filter((i) => i.track === track && !i.removedAt).sort((a, b) => a.seq - b.seq);
 }
 
+// One lane's items (absent = the hub's: items without a lane), 1030 #4.
+export function laneItems(items: readonly PoolItem[], lane?: string): PoolItem[] {
+  return items.filter((i) => (i.lane ?? "") === (lane ?? ""));
+}
+
 export function needsRefill(items: readonly PoolItem[], track: Track): boolean {
   return livePool(items, track).length <= REFILL_AT;
 }

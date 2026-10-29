@@ -1,0 +1,47 @@
+/* 1030 #4 「複習這篇筆記」: the collapsible panel under a note's title. */
+.vt-note-review {
+  margin: 4px 0 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-primary);
+}
+
+.vt-note-review .vt-nr-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  user-select: none;
+}
+
+.vt-note-review .vt-nr-head:hover {
+  color: var(--text-normal);
+}
+
+.vt-note-review .vt-nr-arrow {
+  display: inline-flex;
+}
+
+.vt-note-review .vt-nr-arrow svg {
+  width: 14px;
+  height: 14px;
+}
+
+.vt-note-review.is-open .vt-nr-head {
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.vt-note-review .vt-nr-body {
+  padding: 0 12px 12px;
+}
+
+.vt-note-review .vt-nr-tabs {
+  margin-bottom: 12px;
+}
+
+body.is-mobile .vt-note-review .vt-nr-head {
+  min-height: 44px;
+}

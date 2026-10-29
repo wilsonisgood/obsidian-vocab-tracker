@@ -86,6 +86,8 @@ export interface ExportLabels {
   userNotesHint: string;
   paragraphsEmpty: string;
   paragraphOrphaned: string;
+  // 1030 #4: 「## 整篇文章」 heading of the whole-note discussion.
+  wholeNote: string;
   wordsLearned: string;
   wordsEmpty: string;
   // "{n}" is replaced with the number of questions.

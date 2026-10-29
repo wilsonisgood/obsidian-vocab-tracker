@@ -19,7 +19,10 @@ export type Anchor =
   | { kind: "morpheme"; morphemeId: string }
   // 學習夥伴 (規劃書 15 §7): free conversations about how to learn; several
   // can exist, each its own thread.
-  | { kind: "buddy" };
+  | { kind: "buddy" }
+  // 1030 #4 「複習這篇筆記」: one whole-article discussion per note (its main
+  // idea, structure, free questions). Follows the note when it's renamed.
+  | { kind: "note"; path: string };
 
 export type TurnStatus = "done" | "streaming" | "error" | "aborted";
 
