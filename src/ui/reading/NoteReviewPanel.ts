@@ -39,8 +39,9 @@ import {
 // Whether it's open and which tab is remembered per note, for good.
 //
 // Obsidian gives no slot under the title, so the panel's element is placed
-// by hand: after `.mod-header` in reading view, after `.inline-title` (or
-// before the content) in the editor, and moved along when the mode changes.
+// by hand: inside `.mod-header` after the title in reading view, after
+// `.inline-title` (or before the content) in the editor, and moved along
+// when the mode changes.
 
 export interface NoteReviewHost {
   app: App;
@@ -357,9 +358,13 @@ class ReviewPanel extends Component {
 // Where the panel goes in the view's current mode.
 function slotFor(view: MarkdownView): { parent: HTMLElement; after: Element | null } | null {
   if (view.getMode() === "preview") {
-    const sizer = view.previewMode.containerEl.querySelector<HTMLElement>(".markdown-preview-sizer");
-    if (!sizer) return null;
-    return { parent: sizer, after: sizer.querySelector(":scope > .mod-header") };
+    // Inside the header, not beside it: reading view lays its sections out
+    // by heights it measured itself, so an element of ours between header and
+    // sections pulled the scroll back by its height each time sections were
+    // swapped in (1030: the jolt at headings).
+    const header = view.previewMode.containerEl.querySelector<HTMLElement>(".markdown-preview-sizer > .mod-header");
+    if (!header) return null;
+    return { parent: header, after: header.querySelector(":scope > .inline-title") };
   }
   const sizer = view.containerEl.querySelector<HTMLElement>(".markdown-source-view .cm-sizer");
   if (!sizer) return null;

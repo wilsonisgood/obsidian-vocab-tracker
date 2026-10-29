@@ -80,7 +80,7 @@ describe("複習這篇筆記 + 收合定位", () => {
       })()`);
       const out = JSON.parse(r) as Record<string, unknown>;
       console.log("[note-review]", out);
-      expect(out.reading).toBe("markdown-preview-sizer after mod-header");
+      expect(out.reading).toBe("mod-header after inline-title");
       expect(out.live).toBe("cm-sizer after inline-title");
       expect(out.tabs).toBe(2);
       expect(out.foldedBefore).toBe(1);

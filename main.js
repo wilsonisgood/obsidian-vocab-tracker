@@ -38156,9 +38156,9 @@ var ReviewPanel = class extends import_obsidian63.Component {
 };
 function slotFor(view) {
   if (view.getMode() === "preview") {
-    const sizer2 = view.previewMode.containerEl.querySelector(".markdown-preview-sizer");
-    if (!sizer2) return null;
-    return { parent: sizer2, after: sizer2.querySelector(":scope > .mod-header") };
+    const header = view.previewMode.containerEl.querySelector(".markdown-preview-sizer > .mod-header");
+    if (!header) return null;
+    return { parent: header, after: header.querySelector(":scope > .inline-title") };
   }
   const sizer = view.containerEl.querySelector(".markdown-source-view .cm-sizer");
   if (!sizer) return null;
