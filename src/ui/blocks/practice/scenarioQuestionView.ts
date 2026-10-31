@@ -11,23 +11,13 @@ export interface QuestionLabels {
   topicTitle?(topicId: string): string;
 }
 
-const MARK = /\[\[(.+?)\]\]/;
-
-// The English word a 單字 question is about: the [[marked]] word, else the
-// right option (pick-word), else the focus id.
-export function questionWord(q: PracticeQuestion): string {
-  const marked = MARK.exec(q.text)?.[1];
-  if (marked) return marked;
-  const right = q.options.find((o) => o.id === q.answerId)?.text;
-  return right ?? q.focus.id;
-}
-
 export function questionTag(q: PracticeQuestion, labels: QuestionLabels = {}): string {
   switch (q.focus.kind) {
     case "sense":
       return `${t("practice.poly.tag")} · ${senseById(q.focus.id)?.word ?? q.focus.id.split(".")[0]}`;
     case "word":
-      return `${t("practice.poly.tagWord")} · ${questionWord(q)}`;
+      // 1031: no word after it — in a 選字 question the word is the answer.
+      return t("practice.poly.tagWord");
     case "grammar-objective": {
       const title = labels.topicTitle?.(q.focus.id.split("/")[0]);
       return title ? `${t("practice.grammar.tag")} · ${title}` : t("practice.grammar.tag");

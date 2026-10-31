@@ -64,6 +64,7 @@ describe("複習這篇筆記 + 收合定位", () => {
         view.containerEl.querySelector(".vt-note-review .vt-nr-head")?.click();
         await sleep(400);
         const tabs = view.containerEl.querySelectorAll(".vt-note-review .vt-nr-tab").length;
+        const vocabLabel = view.containerEl.querySelector(".vt-note-review .vt-nr-tab")?.textContent;
 
         // Fold 「Part two」 (lines 6..11) and locate the word in it.
         const entry = plugin.store.entries.find((e) => e.word === "trade");
@@ -76,13 +77,15 @@ describe("複習這篇筆記 + 收合定位", () => {
         await sleep(300);
         const foldedAfter = (mode.getFoldInfo?.()?.folds ?? []).length;
         const sel = view.editor.getSelection();
-        return JSON.stringify({ reading, live, tabs, foldedBefore, foldedAfter, sel });
+        return JSON.stringify({ reading, live, tabs, vocabLabel, foldedBefore, foldedAfter, sel });
       })()`);
       const out = JSON.parse(r) as Record<string, unknown>;
       console.log("[note-review]", out);
       expect(out.reading).toBe("mod-header after inline-title");
       expect(out.live).toBe("cm-sizer after inline-title");
       expect(out.tabs).toBe(2);
+      // 1031: 「單字 (0)N」 — nothing reviewed yet this round
+      expect(String(out.vocabLabel)).toMatch(/^單字 \(0\)\d+$/);
       expect(out.foldedBefore).toBe(1);
       expect(out.foldedAfter).toBe(0);
       expect(String(out.sel)).toContain("trade");

@@ -5,6 +5,8 @@ import {
   parseReviewPrefs,
   renameReviewPrefs,
   reviewPrefsOf,
+  reviewProgress,
+  vocabTabCount,
   serializeReviewPrefs,
   showsReview,
 } from "../../../src/ui/reading/noteReviewModel";
@@ -47,5 +49,37 @@ describe("noteReviewModel (1030 #4 複習這篇筆記)", () => {
     expect(refs.find((r) => r.id === "trade")).toEqual({ id: "trade", word: "trade", zh: "拿…換取", pos: "v." });
     expect(refs.find((r) => r.id === "cell")?.zh).toBe("cell 中");
     expect(noteVocabRefs(entries, scope, gloss, NOW, 1)).toHaveLength(1);
+  });
+
+  it("「單字 (3)17」: answered words since the round started; a finished round restarts at (0)", () => {
+    const ids = new Set(["a", "b", "c"]);
+    const ev = (id: string, at: string, result = "correct", track = "vocab") =>
+      ({ at, track, focus: { kind: "word", id }, result }) as never;
+    const events = [
+      ev("a", "2026-10-30T00:00:00.000Z"),
+      ev("b", "2026-10-31T01:00:00.000Z", "wrong"),
+      ev("c", "2026-10-31T02:00:00.000Z", "skipped"),
+      ev("x", "2026-10-31T02:00:00.000Z"),
+      ev("c", "2026-10-31T02:00:00.000Z", "correct", "poly"),
+    ];
+    const p = reviewProgress(ids, events, "2026-10-31T00:00:00.000Z");
+    expect([...p.done]).toEqual(["b"]);
+    expect(p.total).toBe(3);
+    expect(p.restart).toBe(false);
+    expect(vocabTabCount(p.done.size, p.total)).toBe("(1)3");
+    const all = reviewProgress(ids, [...events, ev("a", "2026-10-31T03:00:00.000Z", "hinted"), ev("c", "2026-10-31T03:00:00.000Z")], "2026-10-31T00:00:00.000Z");
+    expect(all).toEqual({ done: new Set(), total: 3, restart: true });
+  });
+
+  it("asks the words not reviewed yet this round first", () => {
+    const entries = [entry("a", { createdAt: "2026-10-09" }), entry("b", { createdAt: "2026-10-05" })];
+    const refs = noteVocabRefs(entries, new Set(["a", "b"]), () => undefined, NOW, 12, new Set(["a"]));
+    expect(refs.map((r) => r.id)).toEqual(["b", "a"]);
+  });
+
+  it("keeps the round start in the prefs", () => {
+    expect(reviewPrefsOf(parseReviewPrefs({ "a.md": { open: true, tab: "vocab", roundAt: "2026-10-31T00:00:00.000Z" } }), "a.md").roundAt).toBe(
+      "2026-10-31T00:00:00.000Z"
+    );
   });
 });

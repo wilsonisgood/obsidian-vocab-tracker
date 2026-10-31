@@ -1,4 +1,5 @@
 import type { VocabEntry } from "../../core/model/entry";
+import type { LearnEvent } from "../../core/model/learner";
 import { isNewCard } from "../../services/srs/queue";
 import type { VocabRef } from "../../services/practice/scenarioApi";
 import { SCENARIO_MAX_WORDS } from "../blocks/practice/vocabFilterModel";
@@ -11,6 +12,9 @@ export type ReviewTab = "vocab" | "ai";
 export interface ReviewPrefs {
   open: boolean;
   tab: ReviewTab;
+  // 1031: when this round of 單字 started (ISO): words answered since then
+  // count as reviewed — 「單字 (3)17」. Absent = from the beginning.
+  roundAt?: string;
 }
 
 export const REVIEW_STORAGE_KEY = "vt-note-review";
@@ -23,7 +27,9 @@ export function parseReviewPrefs(raw: unknown): Map<string, ReviewPrefs> {
   for (const [path, v] of Object.entries(raw as Record<string, unknown>)) {
     if (typeof v !== "object" || v === null) continue;
     const r = v as Record<string, unknown>;
-    out.set(path, { open: r.open === true, tab: r.tab === "ai" ? "ai" : "vocab" });
+    const p: ReviewPrefs = { open: r.open === true, tab: r.tab === "ai" ? "ai" : "vocab" };
+    if (typeof r.roundAt === "string" && r.roundAt) p.roundAt = r.roundAt;
+    out.set(path, p);
   }
   return out;
 }
@@ -57,16 +63,42 @@ function isDue(e: VocabEntry, nowMs: number): boolean {
 
 const added = (e: VocabEntry) => e.createdAt ?? e.added ?? "";
 
+// 「單字 (3)17」 (1031): of the note's quiz words (`ids`), the ones answered
+// (right, wrong or with a hint — skips don't count) in a scenario since the
+// round started. When every word has been reviewed the round is over:
+// `restart` tells the caller to start a new one (back to (0)).
+export function reviewProgress(
+  ids: ReadonlySet<string>,
+  events: readonly Pick<LearnEvent, "at" | "track" | "focus" | "result">[],
+  roundAt: string | undefined
+): { done: Set<string>; total: number; restart: boolean } {
+  const from = roundAt ? Date.parse(roundAt) : 0;
+  const done = new Set<string>();
+  for (const e of events) {
+    if (e.track !== "vocab" || e.focus.kind !== "word" || e.result === "skipped" || e.result === "retired") continue;
+    if (!ids.has(e.focus.id) || Date.parse(e.at) < from) continue;
+    done.add(e.focus.id);
+  }
+  const restart = ids.size > 0 && done.size >= ids.size;
+  return { done: restart ? new Set() : done, total: ids.size, restart };
+}
+
+export function vocabTabCount(done: number, total: number): string {
+  return `(${done})${total}`;
+}
+
 // The words the 單字 tab's scenarios are written around: the note's words
 // (scope), each with its meaning in this note when it has one (語境意思),
-// else its own Chinese meaning; words with neither are left out. Due first
-// (oldest due first), then the newest; at most `max`.
+// else its own Chinese meaning; words with neither are left out. Words not
+// reviewed yet this round (`done`) come first, then due first (oldest due
+// first), then the newest; at most `max`.
 export function noteVocabRefs(
   entries: readonly VocabEntry[],
   scope: ReadonlySet<string>,
   glossOf: (word: string) => { zh: string; pos?: string } | undefined,
   now: Date,
-  max = SCENARIO_MAX_WORDS
+  max = SCENARIO_MAX_WORDS,
+  done: ReadonlySet<string> = new Set()
 ): VocabRef[] {
   const nowMs = now.getTime();
   const refs: { e: VocabEntry; ref: VocabRef }[] = [];
@@ -79,5 +111,6 @@ export function noteVocabRefs(
   }
   const due = refs.filter((r) => isDue(r.e, nowMs)).sort((a, b) => Date.parse(a.e.srs!.due) - Date.parse(b.e.srs!.due));
   const rest = refs.filter((r) => !isDue(r.e, nowMs)).sort((a, b) => (added(a.e) < added(b.e) ? 1 : added(a.e) > added(b.e) ? -1 : 0));
-  return [...due, ...rest].slice(0, max).map((r) => r.ref);
+  const ordered = [...due, ...rest];
+  return [...ordered.filter((r) => !done.has(r.e.id)), ...ordered.filter((r) => done.has(r.e.id))].slice(0, max).map((r) => r.ref);
 }

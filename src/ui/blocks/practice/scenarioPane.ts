@@ -31,6 +31,9 @@ export interface ScenarioPane {
   // An element above the player for the tab's own line (the mix tally).
   headEl: HTMLElement;
   setRequest(req: ScenarioRequest | null, focusIds: ReadonlySet<string>): void;
+  // The same scope, words reordered (1031: the note's unreviewed words
+  // first): the next refill uses it; nothing is refilled or aborted now.
+  updateRequest(req: ScenarioRequest): void;
 }
 
 export function mountScenarioPane(el: HTMLElement, o: ScenarioPaneOptions): ScenarioPane {
@@ -152,6 +155,9 @@ export function mountScenarioPane(el: HTMLElement, o: ScenarioPaneOptions): Scen
 
   return {
     headEl,
+    updateRequest(next) {
+      if (req) req = next;
+    },
     setRequest(next, focusIds) {
       req = next;
       noteEl.empty();

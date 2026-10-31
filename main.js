@@ -24500,21 +24500,13 @@ function sensesInFilter(f) {
 }
 
 // src/ui/blocks/practice/scenarioQuestionView.ts
-var MARK = /\[\[(.+?)\]\]/;
-function questionWord(q) {
-  var _a, _b;
-  const marked = (_a = MARK.exec(q.text)) == null ? void 0 : _a[1];
-  if (marked) return marked;
-  const right = (_b = q.options.find((o) => o.id === q.answerId)) == null ? void 0 : _b.text;
-  return right != null ? right : q.focus.id;
-}
 function questionTag(q, labels = {}) {
   var _a, _b, _c;
   switch (q.focus.kind) {
     case "sense":
       return `${t("practice.poly.tag")} \xB7 ${(_b = (_a = senseById(q.focus.id)) == null ? void 0 : _a.word) != null ? _b : q.focus.id.split(".")[0]}`;
     case "word":
-      return `${t("practice.poly.tagWord")} \xB7 ${questionWord(q)}`;
+      return t("practice.poly.tagWord");
     case "grammar-objective": {
       const title = (_c = labels.topicTitle) == null ? void 0 : _c.call(labels, q.focus.id.split("/")[0]);
       return title ? `${t("practice.grammar.tag")} \xB7 ${title}` : t("practice.grammar.tag");
@@ -24659,6 +24651,9 @@ function mountScenarioPane(el, o) {
   );
   return {
     headEl,
+    updateRequest(next) {
+      if (req) req = next;
+    },
     setRequest(next, focusIds) {
       req = next;
       noteEl.empty();
@@ -35465,8 +35460,25 @@ var TASK_NAMES2 = {
   "paragraph.translate": "\u7FFB\u8B6F",
   "paragraph.grammar": "\u6587\u6CD5",
   "paragraph.vocab": "\u751F\u5B57",
-  "paragraph.paraphrase": "\u63DB\u53E5\u8A71\u8AAA"
+  "paragraph.paraphrase": "\u63DB\u53E5\u8A71\u8AAA",
+  "word.usage": "\u7528\u6CD5",
+  "word.compare": "\u6BD4\u8F03",
+  "word.sentence": "\u9020\u53E5",
+  "word.mnemonic": "\u8A18\u61B6\u6CD5"
 };
+function asksOf(th) {
+  var _a, _b;
+  const asks = [];
+  if (!th || th.deletedAt) return asks;
+  for (const turn of liveTurns(th)) {
+    if (turn.role !== "user") continue;
+    const q = (_a = turn.question) == null ? void 0 : _a.trim();
+    const name = TASK_NAMES2[(_b = turn.taskId) != null ? _b : ""];
+    const ask = q ? `\u63D0\u554F\u300C${clip3(q)}\u300D` : name;
+    if (ask && !asks.includes(ask)) asks.push(ask);
+  }
+  return asks;
+}
 function wordStatus(e, now2) {
   const s = e.srs;
   if (!s || s.state === SrsState.New) return "\u65B0";
@@ -35486,29 +35498,25 @@ function paragraphNumber2(content, anchor) {
   return i < 0 ? null : i + 1;
 }
 function noteLearnerContext(content, words, paragraphThreads, now2) {
-  var _a, _b;
   const lines4 = ["\u3014\u5B78\u7FD2\u72C0\u6CC1\u3015\uFF08\u5B78\u7FD2\u8005\u5728\u9019\u7BC7\u505A\u904E\u7684\u4E8B\uFF0C\u51FA\u984C\u6642\u512A\u5148\u8003\u9019\u4E9B\u5730\u65B9\uFF09"];
   const live = words.filter((w2) => !w2.deletedAt);
   if (live.length) {
     const list2 = live.slice(0, MAX_WORDS3).map((w2) => `${w2.word}\uFF08${wordStatus(w2, now2)}\uFF09`);
     lines4.push(`- \u9019\u7BC7\u6536\u9304\u7684\u55AE\u5B57\uFF08${live.length}\uFF09\uFF1A${list2.join("\u3001")}${live.length > MAX_WORDS3 ? "\u2026" : ""}`);
   }
+  const wordAsks = live.flatMap((w2) => {
+    const asks = asksOf(w2.thread);
+    return asks.length ? [`${w2.word} ${asks.join("\u3001")}`] : [];
+  });
+  if (wordAsks.length) lines4.push(`- \u554F\u904E AI \u7684\u55AE\u5B57\uFF1A${wordAsks.join("\uFF1B")}`);
   const discussed = [];
   for (const th of paragraphThreads) {
-    if (th.deletedAt) continue;
-    const asks = [];
-    for (const turn of liveTurns(th)) {
-      if (turn.role !== "user") continue;
-      const q = (_a = turn.question) == null ? void 0 : _a.trim();
-      const name = TASK_NAMES2[(_b = turn.taskId) != null ? _b : ""];
-      const ask = q ? `\u63D0\u554F\u300C${clip3(q)}\u300D` : name;
-      if (ask && !asks.includes(ask)) asks.push(ask);
-    }
+    const asks = asksOf(th);
     if (asks.length) discussed.push({ n: paragraphNumber2(content, th.anchor), asks });
   }
   discussed.sort((a2, b) => {
-    var _a2, _b2;
-    return ((_a2 = a2.n) != null ? _a2 : Infinity) - ((_b2 = b.n) != null ? _b2 : Infinity);
+    var _a, _b;
+    return ((_a = a2.n) != null ? _a : Infinity) - ((_b = b.n) != null ? _b : Infinity);
   });
   if (discussed.length) {
     const list2 = discussed.map((d) => `${d.n === null ? "\uFF08\u5DF2\u6539\u52D5\u7684\u6BB5\u843D\uFF09" : `\xB6${d.n}`} ${d.asks.join("\u3001")}`);
@@ -36287,7 +36295,7 @@ ${ref.lineStart}`;
     const words = this.deps.store.entries.filter((e) => {
       var _a;
       return !e.deletedAt && ((_a = e.source) == null ? void 0 : _a.path) === path;
-    });
+    }).map((e) => ({ word: e.word, srs: e.srs, thread: this.wordThread(e.id) }));
     input.learner = noteLearnerContext(content, words, this.paragraphThreads(path), this.clock());
     await this.ask({
       threadId,
@@ -37914,7 +37922,9 @@ function parseReviewPrefs(raw) {
   for (const [path, v] of Object.entries(raw)) {
     if (typeof v !== "object" || v === null) continue;
     const r = v;
-    out.set(path, { open: r.open === true, tab: r.tab === "ai" ? "ai" : "vocab" });
+    const p = { open: r.open === true, tab: r.tab === "ai" ? "ai" : "vocab" };
+    if (typeof r.roundAt === "string" && r.roundAt) p.roundAt = r.roundAt;
+    out.set(path, p);
   }
   return out;
 }
@@ -37942,7 +37952,21 @@ var added = (e) => {
   var _a, _b;
   return (_b = (_a = e.createdAt) != null ? _a : e.added) != null ? _b : "";
 };
-function noteVocabRefs(entries, scope, glossOf2, now2, max = SCENARIO_MAX_WORDS) {
+function reviewProgress(ids, events, roundAt) {
+  const from = roundAt ? Date.parse(roundAt) : 0;
+  const done = /* @__PURE__ */ new Set();
+  for (const e of events) {
+    if (e.track !== "vocab" || e.focus.kind !== "word" || e.result === "skipped" || e.result === "retired") continue;
+    if (!ids.has(e.focus.id) || Date.parse(e.at) < from) continue;
+    done.add(e.focus.id);
+  }
+  const restart = ids.size > 0 && done.size >= ids.size;
+  return { done: restart ? /* @__PURE__ */ new Set() : done, total: ids.size, restart };
+}
+function vocabTabCount(done, total2) {
+  return `(${done})${total2}`;
+}
+function noteVocabRefs(entries, scope, glossOf2, now2, max = SCENARIO_MAX_WORDS, done = /* @__PURE__ */ new Set()) {
   var _a;
   const nowMs = now2.getTime();
   const refs = [];
@@ -37955,7 +37979,8 @@ function noteVocabRefs(entries, scope, glossOf2, now2, max = SCENARIO_MAX_WORDS)
   }
   const due = refs.filter((r) => isDue2(r.e, nowMs)).sort((a2, b) => Date.parse(a2.e.srs.due) - Date.parse(b.e.srs.due));
   const rest = refs.filter((r) => !isDue2(r.e, nowMs)).sort((a2, b) => added(a2.e) < added(b.e) ? 1 : added(a2.e) > added(b.e) ? -1 : 0);
-  return [...due, ...rest].slice(0, max).map((r) => r.ref);
+  const ordered = [...due, ...rest];
+  return [...ordered.filter((r) => !done.has(r.e.id)), ...ordered.filter((r) => done.has(r.e.id))].slice(0, max).map((r) => r.ref);
 }
 
 // src/ui/reading/NoteReviewPanel.ts
@@ -38091,14 +38116,20 @@ var ReviewPanel = class extends import_obsidian63.Component {
     this.tabBodies = /* @__PURE__ */ new Map();
     this.observer = null;
     this.view = null;
+    this.vocabTabEl = null;
     this.root = createDiv({ cls: ["vt", PANEL_CLS] });
   }
   onload() {
     this.draw();
-    this.register(this.host.learner.events.on("gloss:change", () => {
-      var _a, _b;
-      return (_b = (_a = this.tabBodies.get("vocab")) == null ? void 0 : _a.refresh) == null ? void 0 : _b.call(_a);
-    }));
+    this.register(
+      this.host.learner.events.on("gloss:change", () => {
+        var _a, _b;
+        this.updateCount();
+        (_b = (_a = this.tabBodies.get("vocab")) == null ? void 0 : _a.refresh) == null ? void 0 : _b.call(_a);
+      })
+    );
+    this.register(this.host.learner.events.on("event:add", () => this.updateCount()));
+    void this.host.learner.ensureLoaded().then(() => this.updateCount());
     this.register(() => {
       var _a;
       (_a = this.observer) == null ? void 0 : _a.disconnect();
@@ -38109,7 +38140,9 @@ var ReviewPanel = class extends import_obsidian63.Component {
     var _a, _b;
     const changed = scope.size !== this.scope.size || [...scope].some((id2) => !this.scope.has(id2));
     this.scope = scope;
-    if (changed) (_b = (_a = this.tabBodies.get("vocab")) == null ? void 0 : _a.refresh) == null ? void 0 : _b.call(_a);
+    if (!changed) return;
+    this.updateCount();
+    (_b = (_a = this.tabBodies.get("vocab")) == null ? void 0 : _a.refresh) == null ? void 0 : _b.call(_a);
   }
   // Under the title of whichever mode the view shows now.
   place(view) {
@@ -38157,6 +38190,7 @@ var ReviewPanel = class extends import_obsidian63.Component {
     const holder = this.body.createDiv({ cls: "vt-nr-tab-body" });
     for (const id2 of ["vocab", "ai"]) {
       const btn = tabs.createEl("button", { cls: ["vt-pr-tab", "vt-nr-tab"], text: t(id2 === "vocab" ? "noteReview.tab.vocab" : "noteReview.tab.ai") });
+      if (id2 === "vocab") this.vocabTabEl = btn;
       btn.toggleClass("is-active", prefs.tab === id2);
       btn.addEventListener("click", () => {
         if (this.prefs().tab === id2) return;
@@ -38166,6 +38200,32 @@ var ReviewPanel = class extends import_obsidian63.Component {
     }
     this.closeTabs();
     this.mountTab(prefs.tab, holder);
+    this.updateCount();
+  }
+  // The note's meanings in this note (語境意思), when read already.
+  glossFor() {
+    const file = this.host.app.vault.getAbstractFileByPath(this.path);
+    const map = file instanceof import_obsidian63.TFile ? this.host.noteGlosses.get(file.path, file.stat.mtime) : null;
+    return (w2) => map ? glossOf(map, w2) : void 0;
+  }
+  // This round's reviewed words; a finished round starts over at (0).
+  progress() {
+    const all = noteVocabRefs(this.host.store.entries, this.scope, this.glossFor(), /* @__PURE__ */ new Date(), Number.POSITIVE_INFINITY);
+    const ids = new Set(all.map((r) => r.id));
+    const events = this.host.learner.learnEvents({ track: "vocab" });
+    let p = reviewProgress(ids, events, this.prefs().roundAt);
+    if (p.restart) {
+      this.panels.setPrefs(this.path, { ...this.prefs(), roundAt: (/* @__PURE__ */ new Date()).toISOString() });
+      p = reviewProgress(ids, events, this.prefs().roundAt);
+    }
+    return p;
+  }
+  // 「單字 (3)17」: 3 of the note's 17 words reviewed this round.
+  updateCount() {
+    const el = this.vocabTabEl;
+    if (!(el == null ? void 0 : el.isConnected)) return;
+    const { done, total: total2 } = this.progress();
+    el.setText(`${t("noteReview.tab.vocab")} ${vocabTabCount(done.size, total2)}`);
   }
   closeTabs() {
     for (const { owner } of this.tabBodies.values()) this.removeChild(owner);
@@ -38196,13 +38256,19 @@ var ReviewPanel = class extends import_obsidian63.Component {
     });
     const apply = () => {
       if (!ready) return;
-      const file = this.host.app.vault.getAbstractFileByPath(this.path);
-      const map = file instanceof import_obsidian63.TFile ? this.host.noteGlosses.get(file.path, file.stat.mtime) : null;
-      const refs = noteVocabRefs(this.host.store.entries, this.scope, (w2) => map ? glossOf(map, w2) : void 0, /* @__PURE__ */ new Date());
+      const { done } = this.progress();
+      const refs = noteVocabRefs(this.host.store.entries, this.scope, this.glossFor(), /* @__PURE__ */ new Date(), void 0, done);
       const req = refs.length >= SCENARIO_MIN_WORDS ? { track: "vocab", words: refs } : null;
       pane.setRequest(req, req ? new Set(this.scope) : /* @__PURE__ */ new Set());
     };
     owner.register(this.host.noteGlosses.onReady((p) => p === this.path && apply()));
+    owner.register(
+      this.host.learner.events.on("event:add", () => {
+        if (!ready) return;
+        const refs = noteVocabRefs(this.host.store.entries, this.scope, this.glossFor(), /* @__PURE__ */ new Date(), void 0, this.progress().done);
+        if (refs.length >= SCENARIO_MIN_WORDS) pane.updateRequest({ track: "vocab", words: refs });
+      })
+    );
     void this.host.learner.ensureLoaded().then(() => {
       ready = true;
       apply();

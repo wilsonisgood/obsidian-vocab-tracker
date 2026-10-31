@@ -2,6 +2,7 @@ import { Component, MarkdownView, setIcon, TFile, type App } from "obsidian";
 import { t } from "../../core/i18n";
 import { glossOf } from "../../core/learner/gloss";
 import type { VocabEntry } from "../../core/model/entry";
+import type { LearnEvent } from "../../core/model/learner";
 import { resolveWordlistSettings } from "../../core/model/wordlists";
 import type { AiService } from "../../services/ai/AiService";
 import { noteCustom } from "../../services/ai/tasks/note";
@@ -25,6 +26,8 @@ import {
   renameReviewPrefs,
   REVIEW_STORAGE_KEY,
   reviewPrefsOf,
+  reviewProgress,
+  vocabTabCount,
   serializeReviewPrefs,
   showsReview,
   type ReviewPrefs,
@@ -52,7 +55,11 @@ export interface NoteReviewHost {
   wordlists: Pick<WordlistService, "cachedScan">;
   notes: { read(path: string): Promise<string | null> };
   noteGlosses: NoteGlossCache;
-  learner: { ensureLoaded(): Promise<void>; events: { on(e: "gloss:change", fn: () => void): () => void } };
+  learner: {
+    ensureLoaded(): Promise<void>;
+    learnEvents(opts?: { track?: "vocab" }): readonly LearnEvent[];
+    events: { on(e: "gloss:change" | "event:add", fn: () => void): () => void };
+  };
   manifest: { id: string };
   frontmatterOf(path: string): Record<string, unknown> | null | undefined;
   noteScenario(path: string): ScenarioService;
@@ -201,6 +208,7 @@ class ReviewPanel extends Component {
   private tabBodies = new Map<ReviewTab, { el: HTMLElement; owner: Component; refresh?: () => void }>();
   private observer: MutationObserver | null = null;
   private view: MarkdownView | null = null;
+  private vocabTabEl: HTMLElement | null = null;
 
   constructor(
     private host: NoteReviewHost,
@@ -213,7 +221,15 @@ class ReviewPanel extends Component {
 
   onload(): void {
     this.draw();
-    this.register(this.host.learner.events.on("gloss:change", () => this.tabBodies.get("vocab")?.refresh?.()));
+    this.register(
+      this.host.learner.events.on("gloss:change", () => {
+        this.updateCount();
+        this.tabBodies.get("vocab")?.refresh?.();
+      })
+    );
+    // An answer (here or in the practice hub) moves 「單字 (n)」 on.
+    this.register(this.host.learner.events.on("event:add", () => this.updateCount()));
+    void this.host.learner.ensureLoaded().then(() => this.updateCount());
     this.register(() => {
       this.observer?.disconnect();
       this.root.remove();
@@ -223,7 +239,9 @@ class ReviewPanel extends Component {
   setScope(scope: Set<string>): void {
     const changed = scope.size !== this.scope.size || [...scope].some((id) => !this.scope.has(id));
     this.scope = scope;
-    if (changed) this.tabBodies.get("vocab")?.refresh?.();
+    if (!changed) return;
+    this.updateCount();
+    this.tabBodies.get("vocab")?.refresh?.();
   }
 
   // Under the title of whichever mode the view shows now.
@@ -274,6 +292,7 @@ class ReviewPanel extends Component {
     const holder = this.body.createDiv({ cls: "vt-nr-tab-body" });
     for (const id of ["vocab", "ai"] as const) {
       const btn = tabs.createEl("button", { cls: ["vt-pr-tab", "vt-nr-tab"], text: t(id === "vocab" ? "noteReview.tab.vocab" : "noteReview.tab.ai") });
+      if (id === "vocab") this.vocabTabEl = btn;
       btn.toggleClass("is-active", prefs.tab === id);
       btn.addEventListener("click", () => {
         if (this.prefs().tab === id) return;
@@ -283,6 +302,35 @@ class ReviewPanel extends Component {
     }
     this.closeTabs();
     this.mountTab(prefs.tab, holder);
+    this.updateCount();
+  }
+
+  // The note's meanings in this note (語境意思), when read already.
+  private glossFor(): (word: string) => { zh: string; pos?: string } | undefined {
+    const file = this.host.app.vault.getAbstractFileByPath(this.path);
+    const map = file instanceof TFile ? this.host.noteGlosses.get(file.path, file.stat.mtime) : null;
+    return (w) => (map ? glossOf(map, w) : undefined);
+  }
+
+  // This round's reviewed words; a finished round starts over at (0).
+  private progress(): { done: Set<string>; total: number } {
+    const all = noteVocabRefs(this.host.store.entries as VocabEntry[], this.scope, this.glossFor(), new Date(), Number.POSITIVE_INFINITY);
+    const ids = new Set(all.map((r) => r.id));
+    const events = this.host.learner.learnEvents({ track: "vocab" });
+    let p = reviewProgress(ids, events, this.prefs().roundAt);
+    if (p.restart) {
+      this.panels.setPrefs(this.path, { ...this.prefs(), roundAt: new Date().toISOString() });
+      p = reviewProgress(ids, events, this.prefs().roundAt);
+    }
+    return p;
+  }
+
+  // 「單字 (3)17」: 3 of the note's 17 words reviewed this round.
+  private updateCount(): void {
+    const el = this.vocabTabEl;
+    if (!el?.isConnected) return;
+    const { done, total } = this.progress();
+    el.setText(`${t("noteReview.tab.vocab")} ${vocabTabCount(done.size, total)}`);
   }
 
   private closeTabs(): void {
@@ -316,13 +364,21 @@ class ReviewPanel extends Component {
     });
     const apply = () => {
       if (!ready) return;
-      const file = this.host.app.vault.getAbstractFileByPath(this.path);
-      const map = file instanceof TFile ? this.host.noteGlosses.get(file.path, file.stat.mtime) : null;
-      const refs = noteVocabRefs(this.host.store.entries as VocabEntry[], this.scope, (w) => (map ? glossOf(map, w) : undefined), new Date());
+      // Words not reviewed yet this round are asked first.
+      const { done } = this.progress();
+      const refs = noteVocabRefs(this.host.store.entries as VocabEntry[], this.scope, this.glossFor(), new Date(), undefined, done);
       const req = refs.length >= SCENARIO_MIN_WORDS ? ({ track: "vocab", words: refs } as const) : null;
       pane.setRequest(req, req ? new Set(this.scope) : new Set());
     };
     owner.register(this.host.noteGlosses.onReady((p) => p === this.path && apply()));
+    // After each answer the next refill asks the words not reviewed yet.
+    owner.register(
+      this.host.learner.events.on("event:add", () => {
+        if (!ready) return;
+        const refs = noteVocabRefs(this.host.store.entries as VocabEntry[], this.scope, this.glossFor(), new Date(), undefined, this.progress().done);
+        if (refs.length >= SCENARIO_MIN_WORDS) pane.updateRequest({ track: "vocab", words: refs });
+      })
+    );
     void this.host.learner.ensureLoaded().then(() => {
       ready = true;
       apply();

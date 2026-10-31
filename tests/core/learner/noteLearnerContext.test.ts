@@ -36,7 +36,9 @@ describe("noteLearnerContext (1030 #4 quiz aimed at what the learner did)", () =
         { taskId: "paragraph.translate" },
       ]),
     ];
-    const text = noteLearnerContext(NOTE, [{ word: "trade" }, { word: "gone", deletedAt: "x" }], threads, NOW);
+    const wordThread = thread({ kind: "word", entryId: "e1" }, [{ taskId: "word.usage" }, { taskId: "word.custom", question: "跟 swap 差在哪？" }]);
+    const text = noteLearnerContext(NOTE, [{ word: "trade", thread: wordThread }, { word: "gone", deletedAt: "x" }], threads, NOW);
+    expect(text).toContain("問過 AI 的單字：trade 用法、提問「跟 swap 差在哪？」");
     expect(text).toContain("〔學習狀況〕");
     expect(text).toContain("這篇收錄的單字（1）：trade（新）");
     expect(text).toContain("討論過的段落：¶2 翻譯、文法；¶3 提問「them 指的是誰？」");

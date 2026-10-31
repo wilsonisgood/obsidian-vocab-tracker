@@ -55,7 +55,7 @@ describe("toPlayerQuestion", () => {
       options: [{ id: "a", text: "不情願" }],
       answerId: "a",
     });
-    expect(toPlayerQuestion(wq, {}).tag).toBe("單字 · reluctant");
+    expect(toPlayerQuestion(wq, {}).tag).toBe("單字");
     const pw = base({
       track: "vocab",
       kind: "pick-word",
@@ -64,7 +64,8 @@ describe("toPlayerQuestion", () => {
       options: [{ id: "reluctant", text: "reluctant" }, { id: "eager", text: "eager" }],
       answerId: "reluctant",
     });
-    expect(toPlayerQuestion(pw, {}).tag).toBe("單字 · reluctant");
+    // 1031: the word would give the answer away
+    expect(toPlayerQuestion(pw, {}).tag).toBe("單字");
     const gq = base({ track: "mix", kind: "choice", focus: { kind: "grammar-objective", id: "present-perfect/o1" } });
     expect(toPlayerQuestion(gq, { topicTitle: (id) => (id === "present-perfect" ? "現在完成式" : "") }).tag).toBe(
       "文法 · 現在完成式"
