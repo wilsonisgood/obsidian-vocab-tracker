@@ -15,6 +15,7 @@ import { trailingBlockId } from "../../core/text/blockId";
 import { paragraphHash, sha1 } from "../../core/text/hash";
 import { plainParagraph, splitParagraphSpans } from "../../core/text/paragraphs";
 import { noteTitle } from "../anchors/paragraphInput";
+import { noteLearnerContext } from "../../core/learner/noteLearnerContext";
 import type { NoteInput } from "../ai/tasks/note";
 import { buildAskEvent } from "../../core/learner/asks";
 import type { AskEvent } from "../../core/model/learner";
@@ -666,6 +667,9 @@ export class ThreadService {
     const paragraphs = splitParagraphSpans(content).map((s) => plainParagraph(s.text));
     const input: NoteInput = { article: { title: noteTitle(path), paragraphs } };
     if (req.question) input.question = req.question;
+    // 〔學習狀況〕: this note's saved words and its paragraph discussions.
+    const words = this.deps.store.entries.filter((e) => !e.deletedAt && e.source?.path === path);
+    input.learner = noteLearnerContext(content, words, this.paragraphThreads(path), this.clock());
     await this.ask({
       threadId,
       anchor: { kind: "note", path },

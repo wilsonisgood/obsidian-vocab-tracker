@@ -787,7 +787,7 @@ export const zhTW: Record<keyof typeof en, string> = {
   "noteReview.tab.vocab": "單字",
   "noteReview.tab.ai": "AI 討論",
   "noteReview.vocab.few": "這篇有中文意思的單字不到 {n} 個",
-  "noteReview.ai.placeholder": "問問這篇文章在說什麼…",
+  "noteReview.ai.placeholder": "回答 AI 的題目，或問這篇文章…",
   "ai.task.note.structure": "段落結構",
   "wordPage.glosses": "在各篇文章的意思",
   "practice.player.hint": "💡 提示",

@@ -37,13 +37,17 @@ describe("ThreadService whole-note discussion (1030 #4)", () => {
     expect(system).toContain("〔文章〕《Batteries》");
     expect(system).toContain("¶2 Sodium cells trade density for cost.");
     expect(system).not.toContain("^vt-a1");
-    expect(req.messages.at(-1)!.content).toContain("任務：這篇的主旨");
+    expect(req.messages.at(-1)!.content).toContain("任務：出一題考「這篇的主旨」");
+    expect(system).toContain("一次只問一題");
+    // 〔學習狀況〕 travels outside the cached article
+    expect(JSON.stringify(req)).toContain("〔學習狀況〕");
     expect(threads.noteThread(PATH)).toMatchObject({ id, anchor: { kind: "note", path: PATH } });
     expect(discussed).toEqual([{ anchor: { kind: "note", path: PATH }, ok: true }]);
 
     await threads.askNote(PATH, { taskId: "note.custom", question: "作者的立場是？" });
     expect(threads.noteThread(PATH)!.turns.filter((t) => t.role === "user")).toHaveLength(2);
     expect(ai.requests[1].messages.at(-1)!.content).toContain("作者的立場是？");
+    expect(ai.requests[1].messages.at(-1)!.content).toContain("如果你的上一則是在出題");
   });
 
   it("follows the note when it's renamed, and never reuses a deleted thread's id", async () => {

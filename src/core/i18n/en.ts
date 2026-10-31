@@ -796,7 +796,7 @@ export const en = {
   "noteReview.tab.vocab": "Words",
   "noteReview.tab.ai": "AI discussion",
   "noteReview.vocab.few": "Fewer than {n} words in this note have a Chinese meaning",
-  "noteReview.ai.placeholder": "Ask about this article…",
+  "noteReview.ai.placeholder": "Answer the AI's question, or ask about this article…",
   "ai.task.note.structure": "Structure",
   "wordPage.glosses": "Meaning in each note",
   "practice.player.hint": "💡 Hint",

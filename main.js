@@ -1790,7 +1790,7 @@ var en = {
   "noteReview.tab.vocab": "Words",
   "noteReview.tab.ai": "AI discussion",
   "noteReview.vocab.few": "Fewer than {n} words in this note have a Chinese meaning",
-  "noteReview.ai.placeholder": "Ask about this article\u2026",
+  "noteReview.ai.placeholder": "Answer the AI's question, or ask about this article\u2026",
   "ai.task.note.structure": "Structure",
   "wordPage.glosses": "Meaning in each note",
   "practice.player.hint": "\u{1F4A1} Hint",
@@ -2762,7 +2762,7 @@ var zhTW = {
   "noteReview.tab.vocab": "\u55AE\u5B57",
   "noteReview.tab.ai": "AI \u8A0E\u8AD6",
   "noteReview.vocab.few": "\u9019\u7BC7\u6709\u4E2D\u6587\u610F\u601D\u7684\u55AE\u5B57\u4E0D\u5230 {n} \u500B",
-  "noteReview.ai.placeholder": "\u554F\u554F\u9019\u7BC7\u6587\u7AE0\u5728\u8AAA\u4EC0\u9EBC\u2026",
+  "noteReview.ai.placeholder": "\u56DE\u7B54 AI \u7684\u984C\u76EE\uFF0C\u6216\u554F\u9019\u7BC7\u6587\u7AE0\u2026",
   "ai.task.note.structure": "\u6BB5\u843D\u7D50\u69CB",
   "wordPage.glosses": "\u5728\u5404\u7BC7\u6587\u7AE0\u7684\u610F\u601D",
   "practice.player.hint": "\u{1F4A1} \u63D0\u793A",
@@ -3234,14 +3234,14 @@ var Pronouncer = class {
       this.cache.set(url, hit);
       return hit;
     }
-    const clip4 = this.deps.createClip(url);
-    const c2 = { clip: clip4, ready: clip4.ready, timedOut: false, offs: [] };
+    const clip5 = this.deps.createClip(url);
+    const c2 = { clip: clip5, ready: clip5.ready, timedOut: false, offs: [] };
     c2.offs.push(
-      clip4.on("ready", () => {
+      clip5.on("ready", () => {
         c2.ready = true;
         c2.timedOut = false;
       }),
-      clip4.on("error", () => this.markFailed(url))
+      clip5.on("error", () => this.markFailed(url))
     );
     this.cache.set(url, c2);
     const max = (_a = this.deps.cacheSize) != null ? _a : DEFAULT_CACHE_SIZE;
@@ -3308,9 +3308,9 @@ var Pronouncer = class {
   playRecording(a2, url, word) {
     var _a;
     const c2 = this.entry(url);
-    const clip4 = c2.clip;
-    a2.clip = clip4;
-    if (clip4.ready) c2.ready = true;
+    const clip5 = c2.clip;
+    a2.clip = clip5;
+    if (clip5.ready) c2.ready = true;
     if (!c2.ready) this.setState(a2, "loading");
     let fellBack = false;
     const fallBack = () => {
@@ -3320,12 +3320,12 @@ var Pronouncer = class {
       a2.offs = [];
       if (a2.timer) clearTimeout(a2.timer);
       a2.timer = null;
-      clip4.pause();
+      clip5.pause();
       a2.clip = null;
       this.speakSynth(a2, word);
     };
     a2.offs.push(
-      clip4.on("playing", () => {
+      clip5.on("playing", () => {
         if (!this.live(a2) || fellBack) return;
         if (a2.timer) clearTimeout(a2.timer);
         a2.timer = null;
@@ -3333,13 +3333,13 @@ var Pronouncer = class {
         this.setState(a2, "playing");
         this.settle(a2, "recording");
       }),
-      clip4.on("ended", () => {
+      clip5.on("ended", () => {
         if (!this.live(a2) || fellBack) return;
         this.current = null;
         this.finish(a2, "recording");
       }),
       // markFailed (registered with the clip) has already run.
-      clip4.on("error", fallBack)
+      clip5.on("error", fallBack)
     );
     if (this.source === "auto" && !c2.ready) {
       const ms9 = (_a = this.deps.timeoutMs) != null ? _a : DEFAULT_TIMEOUT_MS;
@@ -3351,12 +3351,12 @@ var Pronouncer = class {
       }, ms9);
     }
     try {
-      clip4.rewind();
+      clip5.rewind();
     } catch (e) {
     }
     let started;
     try {
-      started = clip4.play();
+      started = clip5.play();
     } catch (e) {
       started = Promise.reject(e);
     }
@@ -7639,14 +7639,14 @@ function buildParagraphContext(input, opts = {}) {
     body: numbered.slice(from, to).join("\n\n")
   });
   const paragraph = paragraphs[input.paragraphIndex].trim();
-  const paragraphNumber2 = input.paragraphIndex + 1;
+  const paragraphNumber3 = input.paragraphIndex + 1;
   return {
     articleBlock,
-    focusBlock: renderTemplate(FOCUS_TEMPLATE, { paragraph, paragraphNumber: paragraphNumber2 }),
+    focusBlock: renderTemplate(FOCUS_TEMPLATE, { paragraph, paragraphNumber: paragraphNumber3 }),
     truncated,
     slots: {
       paragraph,
-      paragraphNumber: paragraphNumber2,
+      paragraphNumber: paragraphNumber3,
       selection: (_e = (_d = input.selection) == null ? void 0 : _d.trim()) != null ? _e : "",
       question: (_g = (_f = input.question) == null ? void 0 : _f.trim()) != null ? _g : "",
       knownWords: ((_h = input.knownWords) != null ? _h : []).join(", ")
@@ -29357,24 +29357,24 @@ var CLAMP_PARAMETERS = (w17_w18_ceiling, enable_short_term = default_enable_shor
   [0.1, 0.8]
 ];
 var clipParameters = (parameters, numRelearningSteps, enableShortTerm = default_enable_short_term) => {
-  const clip4 = CLAMP_PARAMETERS(W17_W18_Ceiling, enableShortTerm).slice(
+  const clip5 = CLAMP_PARAMETERS(W17_W18_Ceiling, enableShortTerm).slice(
     0,
     parameters.length
   );
   if (Math.max(0, numRelearningSteps) > 1) {
-    const w11 = clamp(parameters[11] || 0, clip4[11][0], clip4[11][1]);
-    const w13 = clamp(parameters[13] || 0, clip4[13][0], clip4[13][1]);
-    const w14 = clamp(parameters[14] || 0, clip4[14][0], clip4[14][1]);
+    const w11 = clamp(parameters[11] || 0, clip5[11][0], clip5[11][1]);
+    const w13 = clamp(parameters[13] || 0, clip5[13][0], clip5[13][1]);
+    const w14 = clamp(parameters[14] || 0, clip5[14][0], clip5[14][1]);
     const value = -(Math.log(w11) + Math.log(Math.pow(2, w13) - 1) + w14 * 0.3) / numRelearningSteps;
     const w17_w18_ceiling = clamp(
       roundTo(Math.sqrt(Math.max(value, 0)), 8),
       0.01,
       W17_W18_Ceiling
     );
-    if (clip4[17]) clip4[17] = [clip4[17][0], w17_w18_ceiling];
-    if (clip4[18]) clip4[18] = [clip4[18][0], w17_w18_ceiling];
+    if (clip5[17]) clip5[17] = [clip5[17][0], w17_w18_ceiling];
+    if (clip5[18]) clip5[18] = [clip5[18][0], w17_w18_ceiling];
   }
-  return clip4.map(
+  return clip5.map(
     ([min, max], index2) => clamp(parameters[index2] || 0, min, max)
   );
 };
@@ -32406,25 +32406,37 @@ var paragraphGloss = {
 var GLOSS_TASKS = [paragraphGloss];
 
 // src/services/ai/tasks/note.ts
-var NOTE_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u8010\u5FC3\u3001\u7CBE\u6E96\u7684\u82F1\u6587\u95B1\u8B80\u5BB6\u6559\uFF0C\u6B63\u5728\u966A\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u8B80\u5B8C\u4E00\u7BC7\u82F1\u6587\u6587\u7AE0\uFF0C\u5E6B\u4ED6\u6293\u4F4F\u6574\u7BC7\u5728\u8AAA\u4EC0\u9EBC\u3002\u3014\u6587\u7AE0\u3015\u662F\u5168\u6587\uFF0C\u6BB5\u843D\u524D\u9762\u7684 \xB6 \u6578\u5B57\u662F\u6BB5\u843D\u7DE8\u865F\u3002
+var NOTE_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u8010\u5FC3\u3001\u7CBE\u6E96\u7684\u82F1\u6587\u95B1\u8B80\u5BB6\u6559\uFF0C\u6B63\u5728\u7528\u63D0\u554F\u7684\u65B9\u5F0F\u78BA\u8A8D\u4E00\u4F4D\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u6709\u6C92\u6709\u8B80\u61C2\u4E00\u7BC7\u82F1\u6587\u6587\u7AE0\u3002\u3014\u6587\u7AE0\u3015\u662F\u5168\u6587\uFF0C\u6BB5\u843D\u524D\u9762\u7684 \xB6 \u6578\u5B57\u662F\u6BB5\u843D\u7DE8\u865F\uFF1B\u3014\u5B78\u7FD2\u72C0\u6CC1\u3015\u662F\u5B78\u7FD2\u8005\u5728\u9019\u7BC7\u67E5\u904E\u3001\u554F\u904E\u7684\u5730\u65B9\u3002
 
-\u56DE\u7B54\u898F\u5247\uFF1A
-1. \u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u56DE\u7B54\uFF0C\u5F15\u7528\u82F1\u6587\u539F\u6587\u6642\u4FDD\u7559\u82F1\u6587\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u82E5\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\uFF0C\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
-2. \u53EA\u6839\u64DA\u63D0\u4F9B\u7684\u6587\u7AE0\u56DE\u7B54\u3002\u6587\u7AE0\u6C92\u5BEB\u7684\u4E0D\u8981\u88DC\uFF0C\u4E0D\u78BA\u5B9A\u5C31\u76F4\u63A5\u8AAA\u300C\u4E0D\u78BA\u5B9A\u300D\u3002
-3. \u63D0\u5230\u67D0\u4E00\u6BB5\u6642\u5BEB\u51FA\u6BB5\u843D\u7DE8\u865F\uFF08\u4F8B\u5982 \xB63\uFF09\uFF0C\u8B93\u5B78\u7FD2\u8005\u80FD\u56DE\u53BB\u5C0D\u7167\u3002
-4. \u7528 Markdown \u6392\u7248\uFF1A\u91CD\u9EDE\u7528\u7C97\u9AD4\uFF0C\u689D\u5217\u6700\u591A 6 \u9EDE\uFF0C\u4E0D\u8981\u7528\u6A19\u984C\uFF08#\uFF09\u3002
-5. \u7BC7\u5E45\u4EE5\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u70BA\u6E96\u3002`;
+\u51FA\u984C\u898F\u5247\uFF1A
+1. \u4E00\u6B21\u53EA\u554F\u4E00\u984C\uFF0C\u4E0D\u8981\u9644\u7B54\u6848\u3001\u4E0D\u8981\u6697\u793A\u7B54\u6848\uFF1B\u554F\u5B8C\u5C31\u505C\uFF0C\u7B49\u5B78\u7FD2\u8005\u56DE\u7B54\u3002
+2. \u96E3\u5EA6\u7167\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\uFF1A\u7A0B\u5EA6\u4F4E\u5C31\u7D66\u9078\u9805\uFF08A/B/C\uFF0C\u9078\u9805\u7528\u4E2D\u6587\u6216\u7C21\u55AE\u82F1\u6587\uFF09\uFF0C\u7A0B\u5EA6\u9AD8\u5C31\u554F\u958B\u653E\u984C\u3001\u8981\u6C42\u7528\u81EA\u5DF1\u7684\u8A71\u8AAA\u3002
+3. \u512A\u5148\u8003\u3014\u5B78\u7FD2\u72C0\u6CC1\u3015\u88E1\u5B78\u7FD2\u8005\u5361\u904E\u7684\u5730\u65B9\uFF08\u554F\u904E\u7FFB\u8B6F\u3001\u6587\u6CD5\u7684\u6BB5\u843D\uFF0C\u9084\u4E0D\u719F\u7684\u55AE\u5B57\u6240\u5728\u7684\u53E5\u5B50\uFF09\uFF0C\u4F46\u984C\u76EE\u8981\u6263\u7DCA\u6574\u7BC7\u7684\u7406\u89E3\uFF0C\u4E0D\u662F\u55AE\u5B57\u5C0F\u8003\u3002
+4. \u984C\u76EE\u5BEB\u51FA\u76F8\u95DC\u7684\u6BB5\u843D\u7DE8\u865F\uFF08\u4F8B\u5982 \xB63\uFF09\uFF0C\u8B93\u5B78\u7FD2\u8005\u80FD\u56DE\u53BB\u770B\u3002
+
+\u6279\u6539\u898F\u5247\uFF08\u524D\u4E00\u5247\u662F\u4F60\u51FA\u7684\u984C\uFF0C\u5B78\u7FD2\u8005\u9019\u6B21\u7684\u8F38\u5165\u5C31\u662F\u4F5C\u7B54\uFF09\uFF1A
+1. \u7B2C\u4E00\u884C\u5BEB\u300C\u2705 \u7B54\u5C0D\u4E86\u300D\u300C\u{1F7E1} \u90E8\u5206\u6B63\u78BA\u300D\u6216\u300C\u274C \u4E0D\u592A\u5C0D\u300D\u3002
+2. \u63A5\u8457\u5F15\u7528\u539F\u6587\uFF08\u7167\u6284\u82F1\u6587\u3001\u6A19\u51FA \xB6\uFF09\u8AAA\u660E\u6B63\u78BA\u7684\u7406\u89E3\uFF0C\u9EDE\u51FA\u5B78\u7FD2\u8005\u6F0F\u6389\u6216\u8AA4\u6703\u7684\u5730\u65B9\uFF1B\u7B54\u5C0D\u4E5F\u88DC\u4E00\u53E5\u70BA\u4EC0\u9EBC\u5C0D\u3002
+3. \u6700\u5F8C\u53E6\u8D77\u4E00\u884C\u51FA\u4E0B\u4E00\u984C\uFF08\u540C\u4E00\u985E\u578B\u3001\u63DB\u500B\u89D2\u5EA6\u6216\u6BB5\u843D\uFF09\uFF0C\u4E00\u6A23\u4E0D\u9644\u7B54\u6848\u3002
+
+\u5171\u901A\u898F\u5247\uFF1A
+1. \u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C\u5F15\u7528\u82F1\u6587\u539F\u6587\u6642\u4FDD\u7559\u82F1\u6587\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u82E5\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\uFF0C\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
+2. \u53EA\u6839\u64DA\u63D0\u4F9B\u7684\u6587\u7AE0\u3002\u6587\u7AE0\u6C92\u5BEB\u7684\u4E0D\u8981\u88DC\uFF0C\u4E0D\u78BA\u5B9A\u5C31\u76F4\u63A5\u8AAA\u300C\u4E0D\u78BA\u5B9A\u300D\u3002
+3. \u7528 Markdown \u6392\u7248\uFF1A\u91CD\u9EDE\u7528\u7C97\u9AD4\uFF0C\u689D\u5217\u6700\u591A 5 \u9EDE\uFF0C\u4E0D\u8981\u7528\u6A19\u984C\uFF08#\uFF09\u3002
+4. \u7BC7\u5E45\u4EE5\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u70BA\u6E96\u3002`;
 var NOTE_ARTICLE_TEMPLATE = `\u3014\u6587\u7AE0\u3015{{#title}}\u300A{{title}}\u300B{{/title}}
 {{#truncated}}\uFF08\u5168\u6587\u592A\u9577\uFF0C\u9019\u88E1\u53EA\u9644\u4E0A\u524D {{shown}} \u6BB5\u3002\uFF09{{/truncated}}
 
 {{body}}`;
 var NOTE_TEMPLATES = {
-  mainIdea: `\u4EFB\u52D9\uFF1A\u9019\u7BC7\u7684\u4E3B\u65E8
-\u5148\u7528\u4E00\u53E5\u4E2D\u6587\u8AAA\u51FA\u6574\u7BC7\u7684\u4E3B\u65E8\uFF0C\u518D\u9644\u4E0A\u539F\u6587\u88E1\u6700\u80FD\u4EE3\u8868\u4E3B\u65E8\u7684\u4E00\u53E5\uFF08\u7167\u6284\u82F1\u6587\uFF09\u3002\u63A5\u8457\u7528 2\uFF5E4 \u9EDE\u8AAA\u660E\u4F5C\u8005\u7528\u54EA\u4E9B\u8AD6\u9EDE\u6216\u4F8B\u5B50\u652F\u6301\u5B83\uFF0C\u6BCF\u9EDE\u6A19\u51FA\u6BB5\u843D\u7DE8\u865F\u3002`,
-  structure: `\u4EFB\u52D9\uFF1A\u6BB5\u843D\u7D50\u69CB
-\u628A\u6587\u7AE0\u5206\u6210\u5E7E\u500B\u90E8\u5206\uFF08\u958B\u982D\u3001\u8F49\u6298\u3001\u8AD6\u9EDE\u3001\u4F8B\u5B50\u3001\u7D50\u8AD6\u2026\uFF09\uFF0C\u6BCF\u90E8\u5206\u5BEB\u51FA\u6BB5\u843D\u7BC4\u570D\u548C\u4E00\u53E5\u4E2D\u6587\u6458\u8981\uFF1B\u6700\u5F8C\u8AAA\u660E\u5404\u90E8\u5206\u600E\u9EBC\u929C\u63A5\uFF0C\u9EDE\u51FA\u95DC\u9375\u7684\u8F49\u6298\u8A5E\u3002`,
-  custom: `\u3014\u4F7F\u7528\u8005\u7684\u554F\u984C\u3015
-{{question}}`
+  mainIdea: `\u4EFB\u52D9\uFF1A\u51FA\u4E00\u984C\u8003\u300C\u9019\u7BC7\u7684\u4E3B\u65E8\u300D
+\u8003\u5B78\u7FD2\u8005\u80FD\u4E0D\u80FD\u6293\u5230\u6574\u7BC7\u7684\u4E3B\u65E8\uFF0C\u6216\u4F5C\u8005\u7528\u54EA\u4E9B\u8AD6\u9EDE\u3001\u4F8B\u5B50\u652F\u6301\u5B83\u3002\u4F9D\u51FA\u984C\u898F\u5247\u53EA\u554F\u4E00\u984C\u3002`,
+  structure: `\u4EFB\u52D9\uFF1A\u51FA\u4E00\u984C\u8003\u300C\u6BB5\u843D\u7D50\u69CB\u300D
+\u8003\u5B78\u7FD2\u8005\u80FD\u4E0D\u80FD\u770B\u51FA\u6BB5\u843D\u4E4B\u9593\u7684\u95DC\u4FC2\uFF1A\u67D0\u6BB5\u5728\u5168\u6587\u626E\u6F14\u4EC0\u9EBC\u89D2\u8272\uFF08\u958B\u982D\u3001\u8F49\u6298\u3001\u8AD6\u9EDE\u3001\u4F8B\u5B50\u3001\u7D50\u8AD6\u2026\uFF09\u3001\u54EA\u88E1\u662F\u8F49\u6298\u3001\u67D0\u500B\u8F49\u6298\u8A5E\u9023\u63A5\u4E86\u4EC0\u9EBC\u3002\u4F9D\u51FA\u984C\u898F\u5247\u53EA\u554F\u4E00\u984C\u3002`,
+  custom: `\u3014\u5B78\u7FD2\u8005\u7684\u8F38\u5165\u3015
+{{question}}
+
+\u5982\u679C\u4F60\u7684\u4E0A\u4E00\u5247\u662F\u5728\u51FA\u984C\uFF0C\u9019\u5C31\u662F\u5B78\u7FD2\u8005\u7684\u4F5C\u7B54\uFF1A\u7167\u6279\u6539\u898F\u5247\u6279\u6539\uFF0C\u518D\u51FA\u4E0B\u4E00\u984C\u3002\u5426\u5247\u9019\u662F\u5B78\u7FD2\u8005\u5C0D\u6587\u7AE0\u7684\u63D0\u554F\uFF1A\u76F4\u63A5\u56DE\u7B54\uFF0C\u4E0D\u7528\u51FA\u984C\u3002`
 };
 function noteArticleBlock(article, maxTokens = MAX_ARTICLE_TOKENS) {
   var _a;
@@ -32441,18 +32453,19 @@ function noteArticleBlock(article, maxTokens = MAX_ARTICLE_TOKENS) {
 function noteTask(id2, opts) {
   const task = {
     id: `note.${id2}`,
-    version: 1,
+    // v2 (1030): quiz the learner instead of explaining; 〔學習狀況〕 added.
+    version: 2,
     surface: "note",
     ...opts,
     build(input, ctx) {
-      var _a, _b;
+      var _a, _b, _c;
       return composeRequest({
         base: NOTE_BASE_PROMPT,
         cached: [noteArticleBlock(input.article)],
-        context: [],
+        context: ((_a = input.learner) == null ? void 0 : _a.trim()) ? [input.learner.trim()] : [],
         profile: profileForTask(ctx.profile, task, input),
         history: ctx.history,
-        user: renderTemplate(NOTE_TEMPLATES[id2], { question: (_b = (_a = input.question) == null ? void 0 : _a.trim()) != null ? _b : "" }),
+        user: renderTemplate(NOTE_TEMPLATES[id2], { question: (_c = (_b = input.question) == null ? void 0 : _b.trim()) != null ? _c : "" }),
         tier: opts.tier,
         maxTokens: opts.maxTokens
       });
@@ -35444,6 +35457,67 @@ function paragraphInput(anchor, where, extra = {}) {
   return input;
 }
 
+// src/core/learner/noteLearnerContext.ts
+var MAX_WORDS3 = 30;
+var MAX_QUESTION = 40;
+var MATURE_STABILITY_DAYS2 = 21;
+var TASK_NAMES2 = {
+  "paragraph.translate": "\u7FFB\u8B6F",
+  "paragraph.grammar": "\u6587\u6CD5",
+  "paragraph.vocab": "\u751F\u5B57",
+  "paragraph.paraphrase": "\u63DB\u53E5\u8A71\u8AAA"
+};
+function wordStatus(e, now2) {
+  const s = e.srs;
+  if (!s || s.state === SrsState.New) return "\u65B0";
+  if (Date.parse(s.due) <= now2.getTime()) return "\u5230\u671F";
+  return s.state === SrsState.Review && s.stability >= MATURE_STABILITY_DAYS2 ? "\u719F" : "\u5B78\u7FD2\u4E2D";
+}
+function clip3(s) {
+  const one2 = s.replace(/\s+/g, " ").trim();
+  return one2.length > MAX_QUESTION ? `${one2.slice(0, MAX_QUESTION - 1)}\u2026` : one2;
+}
+function paragraphNumber2(content, anchor) {
+  if (anchor.kind !== "paragraph") return null;
+  const spans = splitParagraphSpans(content);
+  const i = spans.findIndex(
+    (s) => anchor.blockId && trailingBlockId(s.text) === anchor.blockId || paragraphHash(s.text) === anchor.hash
+  );
+  return i < 0 ? null : i + 1;
+}
+function noteLearnerContext(content, words, paragraphThreads, now2) {
+  var _a, _b;
+  const lines4 = ["\u3014\u5B78\u7FD2\u72C0\u6CC1\u3015\uFF08\u5B78\u7FD2\u8005\u5728\u9019\u7BC7\u505A\u904E\u7684\u4E8B\uFF0C\u51FA\u984C\u6642\u512A\u5148\u8003\u9019\u4E9B\u5730\u65B9\uFF09"];
+  const live = words.filter((w2) => !w2.deletedAt);
+  if (live.length) {
+    const list2 = live.slice(0, MAX_WORDS3).map((w2) => `${w2.word}\uFF08${wordStatus(w2, now2)}\uFF09`);
+    lines4.push(`- \u9019\u7BC7\u6536\u9304\u7684\u55AE\u5B57\uFF08${live.length}\uFF09\uFF1A${list2.join("\u3001")}${live.length > MAX_WORDS3 ? "\u2026" : ""}`);
+  }
+  const discussed = [];
+  for (const th of paragraphThreads) {
+    if (th.deletedAt) continue;
+    const asks = [];
+    for (const turn of liveTurns(th)) {
+      if (turn.role !== "user") continue;
+      const q = (_a = turn.question) == null ? void 0 : _a.trim();
+      const name = TASK_NAMES2[(_b = turn.taskId) != null ? _b : ""];
+      const ask = q ? `\u63D0\u554F\u300C${clip3(q)}\u300D` : name;
+      if (ask && !asks.includes(ask)) asks.push(ask);
+    }
+    if (asks.length) discussed.push({ n: paragraphNumber2(content, th.anchor), asks });
+  }
+  discussed.sort((a2, b) => {
+    var _a2, _b2;
+    return ((_a2 = a2.n) != null ? _a2 : Infinity) - ((_b2 = b.n) != null ? _b2 : Infinity);
+  });
+  if (discussed.length) {
+    const list2 = discussed.map((d) => `${d.n === null ? "\uFF08\u5DF2\u6539\u52D5\u7684\u6BB5\u843D\uFF09" : `\xB6${d.n}`} ${d.asks.join("\u3001")}`);
+    lines4.push(`- \u8A0E\u8AD6\u904E\u7684\u6BB5\u843D\uFF1A${list2.join("\uFF1B")}`);
+  }
+  if (lines4.length === 1) lines4.push("- \u9019\u7BC7\u9084\u6C92\u6709\u6536\u9304\u55AE\u5B57\uFF0C\u4E5F\u9084\u6C92\u8A0E\u8AD6\u904E\u6BB5\u843D\u3002");
+  return lines4.join("\n");
+}
+
 // src/core/learner/asks.ts
 function truncateAsk(text) {
   const s = text == null ? void 0 : text.trim();
@@ -36210,6 +36284,11 @@ ${ref.lineStart}`;
     const paragraphs = splitParagraphSpans(content).map((s) => plainParagraph(s.text));
     const input = { article: { title: noteTitle3(path), paragraphs } };
     if (req.question) input.question = req.question;
+    const words = this.deps.store.entries.filter((e) => {
+      var _a;
+      return !e.deletedAt && ((_a = e.source) == null ? void 0 : _a.path) === path;
+    });
+    input.learner = noteLearnerContext(content, words, this.paragraphThreads(path), this.clock());
     await this.ask({
       threadId,
       anchor: { kind: "note", path },
@@ -39107,7 +39186,7 @@ var ScenarioService = class {
 };
 
 // src/services/learner/LearnerModel.ts
-var MATURE_STABILITY_DAYS2 = 21;
+var MATURE_STABILITY_DAYS3 = 21;
 var WEAK_LIMIT = 8;
 var SCORED = /* @__PURE__ */ new Set(["correct", "wrong"]);
 var byAt = (a2, b) => a2.at < b.at ? -1 : a2.at > b.at ? 1 : 0;
@@ -39189,7 +39268,7 @@ var LearnerModel = class {
       out.total++;
       const s = e.srs;
       if (!s || s.state === SrsState.New) continue;
-      if (s.state === SrsState.Review && s.stability >= MATURE_STABILITY_DAYS2) out.mature++;
+      if (s.state === SrsState.Review && s.stability >= MATURE_STABILITY_DAYS3) out.mature++;
       else out.learning++;
       if (Date.parse(s.due) <= now2.getTime()) out.due++;
     }
@@ -40217,7 +40296,7 @@ var BUDDY_REPORT_SECTIONS = [
   PART_OLD_ADVICE,
   PART_ANALYSIS
 ];
-function clip3(text, max) {
+function clip4(text, max) {
   const chars = [...text];
   return chars.length > max ? `${chars.slice(0, max).join("")}\u2026` : text;
 }
@@ -40256,7 +40335,7 @@ ${recent.join("\n")}`);
     for (const name of BUDDY_REPORT_SECTIONS) {
       const body = reportSection2(latestReport, name);
       if (body) blocks.push(`\u3010\u6700\u65B0\u5B78\u7FD2\u5831\u544A\uFF1A${name}\u3011
-${clip3(body, BUDDY_REPORT_SECTION_MAX)}`);
+${clip4(body, BUDDY_REPORT_SECTION_MAX)}`);
     }
   }
   return blocks.join("\n\n");
