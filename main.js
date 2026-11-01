@@ -1458,7 +1458,6 @@ var en = {
   "paragraph.pane.title": "Paragraph \xB7 \xB6{n}",
   "paragraph.pane.titleNoNumber": "Paragraph discussion",
   "paragraph.pane.jump": "Jump to the paragraph",
-  "paragraph.pane.delete": "Delete this discussion",
   "paragraph.pane.placeholder": "Ask about this paragraph\u2026",
   "paragraph.pane.edited": "The text has changed since this discussion started.",
   "paragraph.pane.orphanParagraph": "This paragraph can't be found any more (deleted, or edited while in hash mode). Rebind the discussion to another paragraph, or delete it.",
@@ -1954,7 +1953,6 @@ var en = {
   "practice.mistakes.tag.para-certainty": "Certainty",
   "practice.mistakes.tag.para-detail": "Added or missing detail",
   "practice.mistakes.tag.para-word": "Word meaning",
-  "paragraph.pane.practice": "Practise paraphrasing this paragraph",
   // Wave 17 Z — learning summary (AI learner block)
   "learner.summary.prefix": "Current progress: ",
   "learner.summary.vocab": "{n} words learned ({mature} mature)",
@@ -2436,7 +2434,6 @@ var zhTW = {
   "paragraph.pane.title": "\u6BB5\u843D\u8A0E\u8AD6 \xB7 \xB6{n}",
   "paragraph.pane.titleNoNumber": "\u6BB5\u843D\u8A0E\u8AD6",
   "paragraph.pane.jump": "\u8DF3\u5230\u539F\u6587",
-  "paragraph.pane.delete": "\u522A\u9664\u9019\u4E32\u8A0E\u8AD6",
   "paragraph.pane.placeholder": "\u8FFD\u554F\u9019\u4E00\u6BB5\u2026",
   "paragraph.pane.edited": "\u539F\u6587\u5DF2\u4FEE\u6539\uFF1A\u9019\u4E32\u8A0E\u8AD6\u662F\u91DD\u5C0D\u4FEE\u6539\u524D\u7684\u6587\u5B57\u958B\u59CB\u7684\u3002",
   "paragraph.pane.orphanParagraph": "\u539F\u6587\u4E2D\u627E\u4E0D\u5230\u9019\u6BB5\u4E86\uFF08\u6BB5\u843D\u88AB\u522A\u9664\uFF0C\u6216\u5728 hash \u6A21\u5F0F\u4E0B\u6587\u5B57\u88AB\u4FEE\u6539\uFF09\u3002\u53EF\u4EE5\u91CD\u65B0\u7D81\u5B9A\u5230\u53E6\u4E00\u6BB5\uFF0C\u6216\u522A\u9664\u9019\u4E32\u8A0E\u8AD6\u3002",
@@ -2931,7 +2928,6 @@ var zhTW = {
   "practice.mistakes.tag.para-certainty": "\u78BA\u5B9A\u7A0B\u5EA6",
   "practice.mistakes.tag.para-detail": "\u591A\u52A0\u6216\u6F0F\u6389\u8CC7\u8A0A",
   "practice.mistakes.tag.para-word": "\u5B57\u8A5E\u610F\u601D",
-  "paragraph.pane.practice": "\u7528\u9019\u6BB5\u7DF4\u63DB\u53E5\u8A71\u8AAA",
   // 第十七波 Z — 學習概況（AI 學習者區塊）
   "learner.summary.prefix": "\u76EE\u524D\u5B78\u7FD2\u6982\u6CC1\uFF1A",
   "learner.summary.vocab": "\u5DF2\u5B78\u55AE\u5B57 {n}\uFF08\u719F\u7DF4 {mature}\uFF09",
@@ -7992,39 +7988,6 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     });
     const head = this.root.createDiv({ cls: "vt-ppane-head" });
     this.titleEl = head.createSpan({ cls: "vt-ppane-title", text: t("paragraph.pane.titleNoNumber") });
-    const id2 = this.threadId;
-    const tools = head.createSpan({ cls: "vt-ppane-tools" });
-    if (id2 && this.host.practiceParagraph) {
-      const practice = tools.createSpan({ cls: "vt-ppane-practice clickable-icon" });
-      (0, import_obsidian15.setIcon)(practice, "list-checks");
-      practice.setAttr("aria-label", t("paragraph.pane.practice"));
-      practice.setAttr("role", "button");
-      practice.addEventListener("click", () => {
-        var _a, _b, _c, _d;
-        (_b = (_a = this.host).practiceParagraph) == null ? void 0 : _b.call(_a, id2);
-        (_d = (_c = this.nav).jumped) == null ? void 0 : _d.call(_c);
-      });
-    }
-    if (id2) {
-      const del = tools.createSpan({ cls: "vt-ppane-delete clickable-icon" });
-      (0, import_obsidian15.setIcon)(del, "trash-2");
-      del.setAttr("aria-label", t("paragraph.pane.delete"));
-      let armed = false;
-      del.addEventListener("click", () => {
-        if (!armed) {
-          armed = true;
-          del.addClass("mod-warning");
-          del.setAttr("aria-label", t("paragraph.action.confirmDelete"));
-          window.setTimeout(() => {
-            armed = false;
-            del.removeClass("mod-warning");
-            del.setAttr("aria-label", t("paragraph.pane.delete"));
-          }, 3e3);
-          return;
-        }
-        void this.host.threads.deleteThread(id2).then(() => new import_obsidian15.Notice(t("paragraph.deleted")));
-      });
-    }
     this.quoteEl = this.root.createDiv({ cls: "vt-ppane-quote" });
     this.quoteEl.setAttr("aria-label", t("paragraph.pane.jump"));
     this.quoteEl.addEventListener("click", () => void this.jump());
@@ -45682,12 +45645,6 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
     if (typeof this.app.saveLocalStorage === "function") this.app.saveLocalStorage(TAB_KEY2, track2);
     this.app.workspace.trigger(TAB_EVENT, track2);
     await this.openEntryFile("practice", where);
-  }
-  // 換句話說 (ParagraphPaneHost): the practice hub's 換句話說 tab on just this
-  // paragraph, in its own tab so the article stays open.
-  practiceParagraph(threadId) {
-    this.learner.setFilter("para", { scope: "thread", threadId });
-    void this.openPracticeTab("para", "tab");
   }
   async openEntryFile(id2, where = "current") {
     try {

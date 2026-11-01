@@ -1285,13 +1285,6 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     await this.openEntryFile("practice", where);
   }
 
-  // 換句話說 (ParagraphPaneHost): the practice hub's 換句話說 tab on just this
-  // paragraph, in its own tab so the article stays open.
-  practiceParagraph(threadId: string): void {
-    this.learner.setFilter("para", { scope: "thread", threadId });
-    void this.openPracticeTab("para", "tab");
-  }
-
   async openEntryFile(id: EntryFileId, where: "current" | "tab" = "current") {
     try {
       await this.openNote(await this.files.ensure(id), where);

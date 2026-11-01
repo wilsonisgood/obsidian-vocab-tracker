@@ -413,7 +413,6 @@ export const zhTW: Record<keyof typeof en, string> = {
   "paragraph.pane.title": "段落討論 · ¶{n}",
   "paragraph.pane.titleNoNumber": "段落討論",
   "paragraph.pane.jump": "跳到原文",
-  "paragraph.pane.delete": "刪除這串討論",
   "paragraph.pane.placeholder": "追問這一段…",
   "paragraph.pane.edited": "原文已修改：這串討論是針對修改前的文字開始的。",
   "paragraph.pane.orphanParagraph": "原文中找不到這段了（段落被刪除，或在 hash 模式下文字被修改）。可以重新綁定到另一段，或刪除這串討論。",
@@ -930,7 +929,6 @@ export const zhTW: Record<keyof typeof en, string> = {
   "practice.mistakes.tag.para-certainty": "確定程度",
   "practice.mistakes.tag.para-detail": "多加或漏掉資訊",
   "practice.mistakes.tag.para-word": "字詞意思",
-  "paragraph.pane.practice": "用這段練換句話說",
   // 第十七波 Z — 學習概況（AI 學習者區塊）
   "learner.summary.prefix": "目前學習概況：",
   "learner.summary.vocab": "已學單字 {n}（熟練 {mature}）",

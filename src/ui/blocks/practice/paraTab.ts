@@ -18,8 +18,8 @@ import type { FilterStore, PracticeTabDef } from "./types";
 
 // 換句話說 tab: paraphrase questions on the paragraphs the learner has
 // discussed (their sentences, with what was asked about them). 出題範圍
-// picks all discussions, one note's, or one paragraph's — the last one is
-// what the sidebar's 「用這段練換句話說」 sets.
+// picks all discussions, one note's, or one paragraph's (a saved filter;
+// 1101: the sidebar button that set it is gone).
 
 export interface ParaTabDeps {
   api: ScenarioPracticeApi;

@@ -40,9 +40,6 @@ export interface ParagraphPaneHost {
   // Wave 15 S: GrammarPages (M) — a 文法解析 chip opens its topic page.
   // Absent until main.ts wires it up; then no chips are drawn.
   grammarPages?: { open(topicId: string): Promise<void> | void };
-  // 換句話說: opens the practice hub's 換句話說 tab on just this paragraph.
-  // Absent = no button.
-  practiceParagraph?(threadId: string): void;
 }
 
 export interface ParagraphPaneNav {
@@ -148,39 +145,8 @@ export class ParagraphThreadPane extends Component {
 
     const head = this.root.createDiv({ cls: "vt-ppane-head" });
     this.titleEl = head.createSpan({ cls: "vt-ppane-title", text: t("paragraph.pane.titleNoNumber") });
-    const id = this.threadId;
-    const tools = head.createSpan({ cls: "vt-ppane-tools" });
-    if (id && this.host.practiceParagraph) {
-      const practice = tools.createSpan({ cls: "vt-ppane-practice clickable-icon" });
-      setIcon(practice, "list-checks");
-      practice.setAttr("aria-label", t("paragraph.pane.practice"));
-      practice.setAttr("role", "button");
-      practice.addEventListener("click", () => {
-        this.host.practiceParagraph?.(id);
-        this.nav.jumped?.();
-      });
-    }
-    if (id) {
-      const del = tools.createSpan({ cls: "vt-ppane-delete clickable-icon" });
-      setIcon(del, "trash-2");
-      del.setAttr("aria-label", t("paragraph.pane.delete"));
-      // Same in-place confirmation as the list's delete button.
-      let armed = false;
-      del.addEventListener("click", () => {
-        if (!armed) {
-          armed = true;
-          del.addClass("mod-warning");
-          del.setAttr("aria-label", t("paragraph.action.confirmDelete"));
-          window.setTimeout(() => {
-            armed = false;
-            del.removeClass("mod-warning");
-            del.setAttr("aria-label", t("paragraph.pane.delete"));
-          }, 3000);
-          return;
-        }
-        void this.host.threads.deleteThread(id).then(() => new Notice(t("paragraph.deleted")));
-      });
-    }
+    // 1101: no 換句話說 / 刪除 buttons beside the title any more (a discussion
+    // is deleted from the list; 換句話說 from the practice hub).
 
     this.quoteEl = this.root.createDiv({ cls: "vt-ppane-quote" });
     this.quoteEl.setAttr("aria-label", t("paragraph.pane.jump"));

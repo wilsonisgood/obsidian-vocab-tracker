@@ -59,7 +59,7 @@ class PracticeBlock extends MarkdownRenderChild {
     const remembered = this.locked ? undefined : rememberedTab(this.tabs, this.loadTab());
     this.select(remembered ?? this.tabs[0]);
 
-    // 「練這個主題」/「用這段練換句話說」 while this hub is already open.
+    // 「練這個主題」 while this hub is already open.
     // A custom event, so Workspace's typed overloads don't cover it.
     const workspace = this.host.app.workspace as unknown as Events;
     if (!this.locked && typeof workspace?.on === "function") {

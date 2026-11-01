@@ -415,7 +415,6 @@ export const en = {
   "paragraph.pane.title": "Paragraph · ¶{n}",
   "paragraph.pane.titleNoNumber": "Paragraph discussion",
   "paragraph.pane.jump": "Jump to the paragraph",
-  "paragraph.pane.delete": "Delete this discussion",
   "paragraph.pane.placeholder": "Ask about this paragraph…",
   "paragraph.pane.edited": "The text has changed since this discussion started.",
   "paragraph.pane.orphanParagraph":
@@ -939,7 +938,6 @@ export const en = {
   "practice.mistakes.tag.para-certainty": "Certainty",
   "practice.mistakes.tag.para-detail": "Added or missing detail",
   "practice.mistakes.tag.para-word": "Word meaning",
-  "paragraph.pane.practice": "Practise paraphrasing this paragraph",
   // Wave 17 Z — learning summary (AI learner block)
   "learner.summary.prefix": "Current progress: ",
   "learner.summary.vocab": "{n} words learned ({mature} mature)",

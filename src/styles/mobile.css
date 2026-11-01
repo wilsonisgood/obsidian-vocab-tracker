@@ -304,9 +304,7 @@ body.is-mobile .vt-row-arrow,
 body.is-mobile .vt-speak-icon,
 body.is-mobile .vt-row-footer-icon,
 body.is-mobile .vt-icon-btn,
-body.is-mobile .vt-close-btn,
-body.is-mobile .vt-ppane-practice,
-body.is-mobile .vt-ppane-delete {
+body.is-mobile .vt-close-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;

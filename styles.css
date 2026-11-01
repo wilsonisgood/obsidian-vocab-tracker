@@ -5,8 +5,6 @@ body {
 .vt-bubble-action svg,
 .vt-chat-pair-delete svg,
 .vt-chat-selection-remove svg,
-.vt-ppane-practice svg,
-.vt-ppane-delete svg,
 .vt-ppane-back-icon svg,
 .vt-ppane-ainote-icon svg,
 .vt-plist-delete svg,
@@ -549,14 +547,6 @@ body {
   font-size: 0.8em;
   letter-spacing: 0.05em;
   color: var(--text-muted);
-}
-.vt-ppane-tools {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-.vt-ppane-delete.mod-warning {
-  color: var(--text-error);
 }
 .vt-ppane-quote {
   border-left: 3px solid var(--interactive-accent);
@@ -5754,9 +5744,7 @@ body.is-mobile .vt-row-arrow,
 body.is-mobile .vt-speak-icon,
 body.is-mobile .vt-row-footer-icon,
 body.is-mobile .vt-icon-btn,
-body.is-mobile .vt-close-btn,
-body.is-mobile .vt-ppane-practice,
-body.is-mobile .vt-ppane-delete {
+body.is-mobile .vt-close-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;

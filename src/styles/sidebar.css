@@ -461,16 +461,6 @@
   color: var(--text-muted);
 }
 
-.vt-ppane-tools {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.vt-ppane-delete.mod-warning {
-  color: var(--text-error);
-}
-
 .vt-ppane-quote {
   border-left: 3px solid var(--interactive-accent);
   padding: 4px 10px;
