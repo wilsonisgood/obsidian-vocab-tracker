@@ -48,7 +48,9 @@ export const learnerSection: SettingsSection = {
     // 1101 互動語言: follow the level, or pick a step on the slider.
     const stepName = (i: number) => t(`settings.learner.english.${ENGLISH_STEPS[i]}` as I18nKey);
     let slider: Setting | null = null;
-    const showSlider = () => slider?.settingEl.toggle(languageModeOf(profile()) === "manual");
+    const showSlider = (): void => {
+      slider?.settingEl.toggle(languageModeOf(profile()) === "manual");
+    };
     new Setting(el)
       .setName(t("settings.learner.language.name"))
       .setDesc(t("settings.learner.language.desc"))
@@ -63,7 +65,12 @@ export const learnerSection: SettingsSection = {
         );
       });
     slider = new Setting(el).setName(t("settings.learner.english.name"));
-    const sliderDesc = () => slider?.setDesc(`${t("settings.learner.english.scale")} → ${stepName(ENGLISH_STEPS.indexOf(englishStepOf(profile())))}`);
+    // Returns nothing on purpose: it runs as a promise's .then callback, and
+    // Obsidian's Setting has its own then() — returning the Setting made the
+    // promise unwrap it forever and froze the app (1101).
+    const sliderDesc = (): void => {
+      slider?.setDesc(`${t("settings.learner.english.scale")} → ${stepName(ENGLISH_STEPS.indexOf(englishStepOf(profile())))}`);
+    };
     slider.addSlider((s) =>
       s
         .setLimits(0, ENGLISH_STEPS.length - 1, 1)
