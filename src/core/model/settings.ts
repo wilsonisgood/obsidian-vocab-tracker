@@ -49,12 +49,54 @@ export type LearnerGoal = (typeof LEARNER_GOALS)[number];
 export const ANSWER_LANGUAGES = ["zh-TW", "en", "bilingual"] as const;
 export type AnswerLanguage = (typeof ANSWER_LANGUAGES)[number];
 
+// 1101 互動語言: how much English the AI uses with the learner. Either it
+// follows the level (A1 全中文, A2 中文配簡單英文, B1 簡單英文, B2 中等英文,
+// C1+ 進階英文) or the learner picks a step on the slider.
+export const LANGUAGE_MODES = ["level", "manual"] as const;
+export type LanguageMode = (typeof LANGUAGE_MODES)[number];
+// The slider's steps, left to right.
+export const ENGLISH_STEPS = ["zh", "basic", "middle", "advanced"] as const;
+export type EnglishStep = (typeof ENGLISH_STEPS)[number];
+// What a request actually asks for: a slider step, or (level mode, A2)
+// Chinese with simple English mixed in.
+export type InteractionStyle = EnglishStep | "zhEasy";
+
+const LEVEL_STYLE: Record<CefrLevel, InteractionStyle> = {
+  A1: "zh",
+  A2: "zhEasy",
+  B1: "basic",
+  B2: "middle",
+  C1: "advanced",
+  C2: "advanced",
+};
+
+// Profiles saved before 1101 only have answerLanguage: 「英文」 meant simple
+// English (now the slider's basic); anything else follows the level.
+export function languageModeOf(p: Pick<LearnerProfile, "languageMode" | "answerLanguage">): LanguageMode {
+  return p.languageMode ?? (p.answerLanguage === "en" ? "manual" : "level");
+}
+
+export function englishStepOf(p: Pick<LearnerProfile, "englishStep" | "answerLanguage">): EnglishStep {
+  if (p.englishStep && (ENGLISH_STEPS as readonly string[]).includes(p.englishStep)) return p.englishStep;
+  return p.answerLanguage === "en" ? "basic" : "zh";
+}
+
+export function interactionStyle(p: Pick<LearnerProfile, "level" | "languageMode" | "englishStep" | "answerLanguage">): InteractionStyle {
+  if (languageModeOf(p) === "manual") return englishStepOf(p);
+  return p.level ? LEVEL_STYLE[p.level] : "zh";
+}
+
 // Who the learner is — rendered into a system block on every AI request
 // (services/ai/context/profile.ts) so answers match their level and goal.
 export interface LearnerProfile extends SectionStamp {
   level: CefrLevel | "";
   goal: LearnerGoal;
+  // Before 1101 the only language setting; read through languageModeOf /
+  // englishStepOf for profiles that don't have the two fields below yet.
   answerLanguage: AnswerLanguage;
+  // 1101: follow the level, or the slider (englishStep).
+  languageMode?: LanguageMode;
+  englishStep?: EnglishStep;
   // Soft target the model is asked to stay under; 0 = no limit.
   maxAnswerChars: number;
   // Free-text "其他補充" appended verbatim.

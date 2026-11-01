@@ -553,7 +553,28 @@ function nowIso() {
 // src/core/model/settings.ts
 var CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 var LEARNER_GOALS = ["general", "toefl", "toeic", "ielts", "gept", "school"];
-var ANSWER_LANGUAGES = ["zh-TW", "en", "bilingual"];
+var LANGUAGE_MODES = ["level", "manual"];
+var ENGLISH_STEPS = ["zh", "basic", "middle", "advanced"];
+var LEVEL_STYLE = {
+  A1: "zh",
+  A2: "zhEasy",
+  B1: "basic",
+  B2: "middle",
+  C1: "advanced",
+  C2: "advanced"
+};
+function languageModeOf(p) {
+  var _a;
+  return (_a = p.languageMode) != null ? _a : p.answerLanguage === "en" ? "manual" : "level";
+}
+function englishStepOf(p) {
+  if (p.englishStep && ENGLISH_STEPS.includes(p.englishStep)) return p.englishStep;
+  return p.answerLanguage === "en" ? "basic" : "zh";
+}
+function interactionStyle(p) {
+  if (languageModeOf(p) === "manual") return englishStepOf(p);
+  return p.level ? LEVEL_STYLE[p.level] : "zh";
+}
 var TAP_ACTIONS = ["menu", "save", "open"];
 var PRONOUNCE_SOURCES = ["auto", "recording", "synth"];
 var DEFAULT_UI_PREFS = {
@@ -1308,10 +1329,16 @@ var en = {
   "settings.learner.goal.ielts": "IELTS",
   "settings.learner.goal.gept": "GEPT",
   "settings.learner.goal.school": "School exams",
-  "settings.learner.language.name": "Answer language",
-  "settings.learner.language.zh-TW": "Traditional Chinese",
-  "settings.learner.language.en": "English",
-  "settings.learner.language.bilingual": "Chinese + English",
+  "settings.learner.language.name": "Interaction language",
+  "settings.learner.language.desc": "How much English the AI uses with you. By level: A1 Chinese, A2 Chinese with simple English, B1 simple English, B2 intermediate English, C1+ advanced English.",
+  "settings.learner.language.mode.level": "Follow my level",
+  "settings.learner.language.mode.manual": "Choose myself",
+  "settings.learner.english.name": "English amount",
+  "settings.learner.english.scale": "Chinese \u2190 \u2192 Advanced English",
+  "settings.learner.english.zh": "Chinese",
+  "settings.learner.english.basic": "basic: simple English, Chinese for hard parts",
+  "settings.learner.english.middle": "middle: intermediate English, Chinese only for very hard parts",
+  "settings.learner.english.advanced": "advance: all English",
   "settings.learner.maxChars.name": "Answer length",
   "settings.learner.maxChars.desc": "Rough upper limit in characters. 0 = no limit.",
   "settings.learner.extra.name": "Anything else",
@@ -2281,10 +2308,16 @@ var zhTW = {
   "settings.learner.goal.ielts": "\u96C5\u601D",
   "settings.learner.goal.gept": "\u5168\u6C11\u82F1\u6AA2",
   "settings.learner.goal.school": "\u5B78\u6821\u8003\u8A66",
-  "settings.learner.language.name": "\u56DE\u7B54\u8A9E\u8A00",
-  "settings.learner.language.zh-TW": "\u7E41\u9AD4\u4E2D\u6587",
-  "settings.learner.language.en": "\u82F1\u6587",
-  "settings.learner.language.bilingual": "\u4E2D\u82F1\u5C0D\u7167",
+  "settings.learner.language.name": "\u4E92\u52D5\u8A9E\u8A00",
+  "settings.learner.language.desc": "AI \u7528\u591A\u5C11\u82F1\u6587\u8DDF\u4F60\u4E92\u52D5\u3002\u4F9D\u7A0B\u5EA6\uFF1AA1 \u5168\u4E2D\u6587\u3001A2 \u4E2D\u6587\u914D\u7C21\u55AE\u82F1\u6587\u3001B1 \u7C21\u55AE\u82F1\u6587\u3001B2 \u4E2D\u7B49\u82F1\u6587\u3001C1 \u4EE5\u4E0A\u9032\u968E\u82F1\u6587\u3002",
+  "settings.learner.language.mode.level": "\u4F9D\u6211\u7684\u7A0B\u5EA6",
+  "settings.learner.language.mode.manual": "\u81EA\u5DF1\u8ABF\u6574",
+  "settings.learner.english.name": "\u82F1\u6587\u6BD4\u4F8B",
+  "settings.learner.english.scale": "\u4E2D\u6587 \u2190 \u2192 \u9032\u968E\u82F1\u6587",
+  "settings.learner.english.zh": "\u4E2D\u6587",
+  "settings.learner.english.basic": "basic\uFF1A\u7C21\u55AE\u82F1\u6587\uFF0C\u96E3\u8655\u9644\u4E2D\u6587",
+  "settings.learner.english.middle": "middle\uFF1A\u4E2D\u7B49\u82F1\u6587\uFF0C\u5F88\u96E3\u7684\u5730\u65B9\u624D\u88DC\u4E2D\u6587",
+  "settings.learner.english.advanced": "advance\uFF1A\u5168\u82F1\u6587",
   "settings.learner.maxChars.name": "\u56DE\u7B54\u9577\u5EA6",
   "settings.learner.maxChars.desc": "\u5927\u7D04\u7684\u5B57\u6578\u4E0A\u9650\u30020 = \u4E0D\u9650\u3002",
   "settings.learner.extra.name": "\u5176\u4ED6\u88DC\u5145",
@@ -3824,7 +3857,8 @@ function buildWordContext(input) {
 
 // src/services/ai/context/profile.ts
 var PROFILE_TEMPLATE = `\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015
-\u6211\u662F{{who}}\u7684\u82F1\u6587\u5B78\u7FD2\u8005\u3002\u8ACB\u7528{{language}}\u56DE\u7B54\uFF0C\u7C21\u660E\u627C\u8981{{#maxChars}}\uFF0C\u76E1\u91CF\u5728 {{maxChars}} \u5B57\u4EE5\u5167\u5B8C\u6210\u8AAA\u660E\uFF08\u82F1\u6587\u539F\u6587\u8207\u4F8B\u53E5\u4E0D\u8A08\u5165\u5B57\u6578\uFF09{{/maxChars}}\u3002
+\u6211\u662F{{who}}\u7684\u82F1\u6587\u5B78\u7FD2\u8005\u3002\u56DE\u7B54\u7C21\u660E\u627C\u8981{{#maxChars}}\uFF0C\u76E1\u91CF\u5728 {{maxChars}} \u5B57\u4EE5\u5167\u5B8C\u6210\u8AAA\u660E\uFF08\u82F1\u6587\u539F\u6587\u8207\u4F8B\u53E5\u4E0D\u8A08\u5165\u5B57\u6578\uFF09{{/maxChars}}\u3002
+\u4E92\u52D5\u8A9E\u8A00\uFF1A{{language}}\u9019\u4E00\u689D\u512A\u5148\u65BC\u5176\u4ED6\u898F\u5247\u88E1\u300C\u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\u300D\u4E4B\u985E\u7684\u8AAA\u6CD5\uFF1B\u5F15\u7528\u7684\u82F1\u6587\u539F\u6587\u3001\u4F8B\u53E5\u7167\u820A\u7528\u82F1\u6587\uFF0CJSON \u6B04\u4F4D\u6709\u6307\u5B9A\u8A9E\u8A00\u7684\u7167\u6B04\u4F4D\u898F\u5B9A\u3002
 {{#extra}}\u5176\u4ED6\u88DC\u5145\uFF1A{{extra}}{{/extra}}`;
 var LEVEL_LABEL = {
   A1: "A1\uFF08\u5165\u9580\uFF09",
@@ -3843,9 +3877,11 @@ var GOAL_PHRASE = {
   school: "\u6B63\u5728\u6E96\u5099\u5B78\u6821\u8003\u8A66\uFF08\u6703\u8003\uFF0F\u5B78\u6E2C\uFF09"
 };
 var LANGUAGE_PHRASE = {
-  "zh-TW": "\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09",
-  en: "\u6DFA\u986F\u7684\u82F1\u6587",
-  bilingual: "\u4E2D\u82F1\u5C0D\u7167\uFF08\u4EE5\u7E41\u9AD4\u4E2D\u6587\u70BA\u4E3B\uFF0C\u95DC\u9375\u8655\u9644\u82F1\u6587\uFF09"
+  zh: "\u5168\u7A0B\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\u3002",
+  zhEasy: "\u4EE5\u7E41\u9AD4\u4E2D\u6587\u70BA\u4E3B\uFF0C\u7A7F\u63D2\u7C21\u55AE\u7684\u82F1\u6587\u77ED\u53E5\uFF08\u4F8B\u5982\u5148\u7528\u4E00\u53E5\u7C21\u55AE\u82F1\u6587\u8AAA\uFF0C\u518D\u7528\u4E2D\u6587\u8AAA\u660E\uFF09\u3002",
+  basic: "\u4EE5\u7C21\u55AE\u7684\u82F1\u6587\u70BA\u4E3B\uFF08\u5E38\u7528\u5B57\u3001\u77ED\u53E5\uFF09\uFF1B\u6BD4\u8F03\u96E3\u7684\u5B57\u548C\u95DC\u9375\u7684\u89E3\u91CB\u5728\u5F8C\u9762\u7528\u62EC\u865F\u9644\u7E41\u9AD4\u4E2D\u6587\u3002",
+  middle: "\u7528\u4E2D\u7B49\u7A0B\u5EA6\u7684\u82F1\u6587\uFF1B\u53EA\u6709\u5F88\u96E3\u7684\u5B57\u6216\u6982\u5FF5\u624D\u88DC\u4E00\u53E5\u7E41\u9AD4\u4E2D\u6587\u3002",
+  advanced: "\u5168\u7A0B\u7528\u81EA\u7136\u3001\u9032\u968E\u7684\u82F1\u6587\uFF0C\u4E0D\u7528\u4E2D\u6587\uFF08\u9664\u975E\u5B78\u751F\u8981\u6C42\uFF09\u3002"
 };
 var defaultDeps = {};
 function setProfileDeps(deps) {
@@ -3860,13 +3896,13 @@ function renderLearnerSummary(s) {
   return parts.length ? t("learner.summary.prefix") + parts.join(" \xB7 ") : "";
 }
 function renderProfile(p, deps = defaultDeps) {
-  var _a, _b;
+  var _a;
   const parts = [];
   if (p.level) parts.push(` ${LEVEL_LABEL[p.level]}\u7A0B\u5EA6`);
   parts.push((_a = GOAL_PHRASE[p.goal]) != null ? _a : GOAL_PHRASE.general);
   const base = renderTemplate(PROFILE_TEMPLATE, {
     who: `\u4E00\u500B${parts.join("\u3001")}`,
-    language: (_b = LANGUAGE_PHRASE[p.answerLanguage]) != null ? _b : LANGUAGE_PHRASE["zh-TW"],
+    language: LANGUAGE_PHRASE[interactionStyle(p)],
     maxChars: p.maxAnswerChars > 0 ? p.maxAnswerChars : void 0,
     extra: p.extra.trim()
   });
@@ -32410,12 +32446,12 @@ var NOTE_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u8010\u5FC3\u3001\u7CBE\u6E96\u
 4. \u984C\u76EE\u5BEB\u51FA\u76F8\u95DC\u7684\u6BB5\u843D\u7DE8\u865F\uFF08\u4F8B\u5982 \xB63\uFF09\uFF0C\u8B93\u5B78\u7FD2\u8005\u80FD\u56DE\u53BB\u770B\u3002
 
 \u6279\u6539\u898F\u5247\uFF08\u524D\u4E00\u5247\u662F\u4F60\u51FA\u7684\u984C\uFF0C\u5B78\u7FD2\u8005\u9019\u6B21\u7684\u8F38\u5165\u5C31\u662F\u4F5C\u7B54\uFF09\uFF1A
-1. \u7B2C\u4E00\u884C\u5BEB\u300C\u2705 \u7B54\u5C0D\u4E86\u300D\u300C\u{1F7E1} \u90E8\u5206\u6B63\u78BA\u300D\u6216\u300C\u274C \u4E0D\u592A\u5C0D\u300D\u3002
+1. \u7B2C\u4E00\u884C\u7528 \u2705\uFF08\u7B54\u5C0D\uFF09\u3001\u{1F7E1}\uFF08\u90E8\u5206\u6B63\u78BA\uFF09\u6216 \u274C\uFF08\u4E0D\u592A\u5C0D\uFF09\u958B\u982D\uFF0C\u63A5\u4E00\u53E5\u7C21\u77ED\u8A55\u8A9E\u3002
 2. \u63A5\u8457\u5F15\u7528\u539F\u6587\uFF08\u7167\u6284\u82F1\u6587\u3001\u6A19\u51FA \xB6\uFF09\u8AAA\u660E\u6B63\u78BA\u7684\u7406\u89E3\uFF0C\u9EDE\u51FA\u5B78\u7FD2\u8005\u6F0F\u6389\u6216\u8AA4\u6703\u7684\u5730\u65B9\uFF1B\u7B54\u5C0D\u4E5F\u88DC\u4E00\u53E5\u70BA\u4EC0\u9EBC\u5C0D\u3002
 3. \u6700\u5F8C\u53E6\u8D77\u4E00\u884C\u51FA\u4E0B\u4E00\u984C\uFF08\u540C\u4E00\u985E\u578B\u3001\u63DB\u500B\u89D2\u5EA6\u6216\u6BB5\u843D\uFF09\uFF0C\u4E00\u6A23\u4E0D\u9644\u7B54\u6848\u3002
 
 \u5171\u901A\u898F\u5247\uFF1A
-1. \u9810\u8A2D\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C\u5F15\u7528\u82F1\u6587\u539F\u6587\u6642\u4FDD\u7559\u82F1\u6587\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u82E5\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\uFF0C\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
+1. \u51FA\u984C\u3001\u9078\u9805\u3001\u6279\u6539\u3001\u8AAA\u660E\u7528\u7684\u8A9E\u8A00\u4E00\u5F8B\u7167\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u300C\u4E92\u52D5\u8A9E\u8A00\u300D\uFF1B\u5F15\u7528\u82F1\u6587\u539F\u6587\u6642\u7167\u6284\u82F1\u6587\u3002
 2. \u53EA\u6839\u64DA\u63D0\u4F9B\u7684\u6587\u7AE0\u3002\u6587\u7AE0\u6C92\u5BEB\u7684\u4E0D\u8981\u88DC\uFF0C\u4E0D\u78BA\u5B9A\u5C31\u76F4\u63A5\u8AAA\u300C\u4E0D\u78BA\u5B9A\u300D\u3002
 3. \u7528 Markdown \u6392\u7248\uFF1A\u91CD\u9EDE\u7528\u7C97\u9AD4\uFF0C\u689D\u5217\u6700\u591A 5 \u9EDE\uFF0C\u4E0D\u8981\u7528\u6A19\u984C\uFF08#\uFF09\u3002
 4. \u7BC7\u5E45\u4EE5\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u70BA\u6E96\u3002`;
@@ -32449,7 +32485,8 @@ function noteTask(id2, opts) {
   const task = {
     id: `note.${id2}`,
     // v2 (1030): quiz the learner instead of explaining; 〔學習狀況〕 added.
-    version: 2,
+    // v3 (1101): every word of it in the profile's 互動語言.
+    version: 3,
     surface: "note",
     ...opts,
     build(input, ctx) {
@@ -33725,10 +33762,28 @@ var learnerSection = {
       for (const g of LEARNER_GOALS) d.addOption(g, t(`settings.learner.goal.${g}`));
       d.setValue(profile().goal).onChange((v) => void update((p) => p.goal = v));
     });
-    new import_obsidian51.Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
-      for (const l4 of ANSWER_LANGUAGES) d.addOption(l4, t(`settings.learner.language.${l4}`));
-      d.setValue(profile().answerLanguage).onChange((v) => void update((p) => p.answerLanguage = v));
+    const stepName = (i) => t(`settings.learner.english.${ENGLISH_STEPS[i]}`);
+    let slider = null;
+    const showSlider = () => slider == null ? void 0 : slider.settingEl.toggle(languageModeOf(profile()) === "manual");
+    new import_obsidian51.Setting(el).setName(t("settings.learner.language.name")).setDesc(t("settings.learner.language.desc")).addDropdown((d) => {
+      for (const m2 of LANGUAGE_MODES) d.addOption(m2, t(`settings.learner.language.mode.${m2}`));
+      d.setValue(languageModeOf(profile())).onChange(
+        (v) => void update((p) => {
+          p.languageMode = v;
+          p.englishStep = englishStepOf(p);
+        }).then(showSlider)
+      );
     });
+    slider = new import_obsidian51.Setting(el).setName(t("settings.learner.english.name"));
+    const sliderDesc = () => slider == null ? void 0 : slider.setDesc(`${t("settings.learner.english.scale")} \u2192 ${stepName(ENGLISH_STEPS.indexOf(englishStepOf(profile())))}`);
+    slider.addSlider(
+      (s) => s.setLimits(0, ENGLISH_STEPS.length - 1, 1).setValue(ENGLISH_STEPS.indexOf(englishStepOf(profile()))).setDynamicTooltip().onChange((v) => void update((p) => {
+        var _a;
+        return p.englishStep = (_a = ENGLISH_STEPS[v]) != null ? _a : "zh";
+      }).then(sliderDesc))
+    );
+    sliderDesc();
+    showSlider();
     new import_obsidian51.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setValue(String(profile().maxAnswerChars)).onChange((v) => {

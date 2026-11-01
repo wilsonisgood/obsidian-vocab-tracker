@@ -29,12 +29,12 @@ export const NOTE_BASE_PROMPT = `你是一位耐心、精準的英文閱讀家�
 4. 題目寫出相關的段落編號（例如 ¶3），讓學習者能回去看。
 
 批改規則（前一則是你出的題，學習者這次的輸入就是作答）：
-1. 第一行寫「✅ 答對了」「🟡 部分正確」或「❌ 不太對」。
+1. 第一行用 ✅（答對）、🟡（部分正確）或 ❌（不太對）開頭，接一句簡短評語。
 2. 接著引用原文（照抄英文、標出 ¶）說明正確的理解，點出學習者漏掉或誤會的地方；答對也補一句為什麼對。
 3. 最後另起一行出下一題（同一類型、換個角度或段落），一樣不附答案。
 
 共通規則：
-1. 預設用繁體中文（台灣用語），引用英文原文時保留英文；〔學習者設定〕若指定了其他回答語言，以學習者設定為準。
+1. 出題、選項、批改、說明用的語言一律照〔學習者設定〕的「互動語言」；引用英文原文時照抄英文。
 2. 只根據提供的文章。文章沒寫的不要補，不確定就直接說「不確定」。
 3. 用 Markdown 排版：重點用粗體，條列最多 5 點，不要用標題（#）。
 4. 篇幅以〔學習者設定〕為準。`;
@@ -75,7 +75,8 @@ function noteTask(id: NoteTaskId, opts: Pick<AiTask<NoteInput>, "tier" | "maxTok
   const task: AiTask<NoteInput> = {
     id: `note.${id}`,
     // v2 (1030): quiz the learner instead of explaining; 〔學習狀況〕 added.
-    version: 2,
+    // v3 (1101): every word of it in the profile's 互動語言.
+    version: 3,
     surface: "note",
     ...opts,
     build(input: NoteInput, ctx: TaskContext) {

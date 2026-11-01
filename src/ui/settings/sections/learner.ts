@@ -1,11 +1,14 @@
 import { Setting } from "obsidian";
 import { t, type I18nKey } from "../../../core/i18n";
 import {
-  ANSWER_LANGUAGES,
   CEFR_LEVELS,
+  ENGLISH_STEPS,
+  englishStepOf,
+  LANGUAGE_MODES,
+  languageModeOf,
   LEARNER_GOALS,
-  type AnswerLanguage,
   type CefrLevel,
+  type LanguageMode,
   type LearnerGoal,
   type LearnerProfile,
   resolveGrammarSettings,
@@ -42,10 +45,34 @@ export const learnerSection: SettingsSection = {
       d.setValue(profile().goal).onChange((v) => void update((p) => (p.goal = v as LearnerGoal)));
     });
 
-    new Setting(el).setName(t("settings.learner.language.name")).addDropdown((d) => {
-      for (const l of ANSWER_LANGUAGES) d.addOption(l, t(`settings.learner.language.${l}` as I18nKey));
-      d.setValue(profile().answerLanguage).onChange((v) => void update((p) => (p.answerLanguage = v as AnswerLanguage)));
-    });
+    // 1101 互動語言: follow the level, or pick a step on the slider.
+    const stepName = (i: number) => t(`settings.learner.english.${ENGLISH_STEPS[i]}` as I18nKey);
+    let slider: Setting | null = null;
+    const showSlider = () => slider?.settingEl.toggle(languageModeOf(profile()) === "manual");
+    new Setting(el)
+      .setName(t("settings.learner.language.name"))
+      .setDesc(t("settings.learner.language.desc"))
+      .addDropdown((d) => {
+        for (const m of LANGUAGE_MODES) d.addOption(m, t(`settings.learner.language.mode.${m}` as I18nKey));
+        d.setValue(languageModeOf(profile())).onChange(
+          (v) =>
+            void update((p) => {
+              p.languageMode = v as LanguageMode;
+              p.englishStep = englishStepOf(p);
+            }).then(showSlider)
+        );
+      });
+    slider = new Setting(el).setName(t("settings.learner.english.name"));
+    const sliderDesc = () => slider?.setDesc(`${t("settings.learner.english.scale")} → ${stepName(ENGLISH_STEPS.indexOf(englishStepOf(profile())))}`);
+    slider.addSlider((s) =>
+      s
+        .setLimits(0, ENGLISH_STEPS.length - 1, 1)
+        .setValue(ENGLISH_STEPS.indexOf(englishStepOf(profile())))
+        .setDynamicTooltip()
+        .onChange((v) => void update((p) => (p.englishStep = ENGLISH_STEPS[v] ?? "zh")).then(sliderDesc))
+    );
+    sliderDesc();
+    showSlider();
 
     new Setting(el)
       .setName(t("settings.learner.maxChars.name"))

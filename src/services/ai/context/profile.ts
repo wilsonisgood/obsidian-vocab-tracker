@@ -1,4 +1,4 @@
-import type { AnswerLanguage, CefrLevel, LearnerGoal, LearnerProfile } from "../../../core/model/settings";
+import { interactionStyle, type CefrLevel, type InteractionStyle, type LearnerGoal, type LearnerProfile } from "../../../core/model/settings";
 import type { LearnerSnapshot } from "../../learner/LearnerModel";
 import { t } from "../../../core/i18n";
 import { renderTemplate } from "../../../core/text/template";
@@ -8,7 +8,8 @@ import { renderTemplate } from "../../../core/text/template";
 // never invalidates the (potentially 30k-token) article cache; see
 // tasks/compose.ts for the full ordering.
 export const PROFILE_TEMPLATE = `〔學習者設定〕
-我是{{who}}的英文學習者。請用{{language}}回答，簡明扼要{{#maxChars}}，盡量在 {{maxChars}} 字以內完成說明（英文原文與例句不計入字數）{{/maxChars}}。
+我是{{who}}的英文學習者。回答簡明扼要{{#maxChars}}，盡量在 {{maxChars}} 字以內完成說明（英文原文與例句不計入字數）{{/maxChars}}。
+互動語言：{{language}}這一條優先於其他規則裡「預設用繁體中文」之類的說法；引用的英文原文、例句照舊用英文，JSON 欄位有指定語言的照欄位規定。
 {{#extra}}其他補充：{{extra}}{{/extra}}`;
 
 const LEVEL_LABEL: Record<CefrLevel, string> = {
@@ -29,10 +30,13 @@ const GOAL_PHRASE: Record<LearnerGoal, string> = {
   school: "正在準備學校考試（會考／學測）",
 };
 
-const LANGUAGE_PHRASE: Record<AnswerLanguage, string> = {
-  "zh-TW": "繁體中文（台灣用語）",
-  en: "淺顯的英文",
-  bilingual: "中英對照（以繁體中文為主，關鍵處附英文）",
+// 1101 互動語言 (core/model/settings.ts interactionStyle).
+const LANGUAGE_PHRASE: Record<InteractionStyle, string> = {
+  zh: "全程用繁體中文（台灣用語）。",
+  zhEasy: "以繁體中文為主，穿插簡單的英文短句（例如先用一句簡單英文說，再用中文說明）。",
+  basic: "以簡單的英文為主（常用字、短句）；比較難的字和關鍵的解釋在後面用括號附繁體中文。",
+  middle: "用中等程度的英文；只有很難的字或概念才補一句繁體中文。",
+  advanced: "全程用自然、進階的英文，不用中文（除非學生要求）。",
 };
 
 // Optional: lets the block carry a one-line learning summary. Without it
@@ -65,7 +69,7 @@ export function renderProfile(p: LearnerProfile, deps: ProfileDeps = defaultDeps
   parts.push(GOAL_PHRASE[p.goal] ?? GOAL_PHRASE.general);
   const base = renderTemplate(PROFILE_TEMPLATE, {
     who: `一個${parts.join("、")}`,
-    language: LANGUAGE_PHRASE[p.answerLanguage] ?? LANGUAGE_PHRASE["zh-TW"],
+    language: LANGUAGE_PHRASE[interactionStyle(p)],
     maxChars: p.maxAnswerChars > 0 ? p.maxAnswerChars : undefined,
     extra: p.extra.trim(),
   });
