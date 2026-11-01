@@ -33828,7 +33828,9 @@ var learnerSection = {
     });
     const stepName = (i) => t(`settings.learner.english.${ENGLISH_STEPS[i]}`);
     let slider = null;
-    const showSlider = () => slider == null ? void 0 : slider.settingEl.toggle(languageModeOf(profile()) === "manual");
+    const showSlider = () => {
+      slider == null ? void 0 : slider.settingEl.toggle(languageModeOf(profile()) === "manual");
+    };
     new import_obsidian51.Setting(el).setName(t("settings.learner.language.name")).setDesc(t("settings.learner.language.desc")).addDropdown((d) => {
       for (const m2 of LANGUAGE_MODES) d.addOption(m2, t(`settings.learner.language.mode.${m2}`));
       d.setValue(languageModeOf(profile())).onChange(
@@ -33839,7 +33841,9 @@ var learnerSection = {
       );
     });
     slider = new import_obsidian51.Setting(el).setName(t("settings.learner.english.name"));
-    const sliderDesc = () => slider == null ? void 0 : slider.setDesc(`${t("settings.learner.english.scale")} \u2192 ${stepName(ENGLISH_STEPS.indexOf(englishStepOf(profile())))}`);
+    const sliderDesc = () => {
+      slider == null ? void 0 : slider.setDesc(`${t("settings.learner.english.scale")} \u2192 ${stepName(ENGLISH_STEPS.indexOf(englishStepOf(profile())))}`);
+    };
     slider.addSlider(
       (s) => s.setLimits(0, ENGLISH_STEPS.length - 1, 1).setValue(ENGLISH_STEPS.indexOf(englishStepOf(profile()))).setDynamicTooltip().onChange((v) => void update((p) => {
         var _a;
