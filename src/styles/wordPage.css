@@ -69,8 +69,8 @@
 .vt-chip-icon svg,
 .vt-wh-btn-icon svg,
 .vt-wp-btn-icon svg {
-  width: 14px;
-  height: 14px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 
 .vt-wh-review {

@@ -1,5 +1,6 @@
 import type { VocabEntry } from "../../core/model/entry";
 import type { LearnEvent } from "../../core/model/learner";
+import { splitParagraphSpans } from "../../core/text/paragraphs";
 import { isNewCard } from "../../services/srs/queue";
 import type { VocabRef } from "../../services/practice/scenarioApi";
 import { SCENARIO_MAX_WORDS } from "../blocks/practice/vocabFilterModel";
@@ -113,4 +114,11 @@ export function noteVocabRefs(
   const rest = refs.filter((r) => !isDue(r.e, nowMs)).sort((a, b) => (added(a.e) < added(b.e) ? 1 : added(a.e) > added(b.e) ? -1 : 0));
   const ordered = [...due, ...rest];
   return [...ordered.filter((r) => !done.has(r.e.id)), ...ordered.filter((r) => done.has(r.e.id))].slice(0, max).map((r) => r.ref);
+}
+
+// 1101: ¶n in a whole-note AI answer → the paragraph's first line (0-based),
+// numbered the way the AI was sent the article; null past the end.
+export function paragraphLine(content: string, n: number): number | null {
+  const span = splitParagraphSpans(content)[n - 1];
+  return span ? span.lineStart : null;
 }

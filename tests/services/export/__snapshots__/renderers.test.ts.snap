@@ -75,29 +75,6 @@ The last time I stood in a stadium this big…
 "
 `;
 
-exports[`trivia favourites renderer > renders saved items newest first (snapshot) 1`] = `
-"\`\`\`vocab-trivia
-\`\`\`
-
-%% vt:begin trivia-favorites %%
-## 收藏
-
-### leotard 來自一位法國特技演員
-
-Jules Léotard 在 19 世紀穿著這種緊身衣表演空中飛人。
-
-*[[vocab-list/單字/leotard|leotard]] · 10/04*
-
-### gl- 開頭的字常跟「光」有關
-
-glow、gleam、glint、glare、glimmer 都跟光有關。
-語言學把這種現象叫做 phonaestheme。
-
-*[[vocab-list/單字/glittery|glittery]] · 10/03*
-%% vt:end trivia-favorites %%
-"
-`;
-
 exports[`word page renderer > a saved verb usage creates the page and is dated in 用法 (1005 #4, #14; snapshot) 1`] = `
 "## 用法
 

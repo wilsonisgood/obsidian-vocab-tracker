@@ -229,10 +229,11 @@ describe("debounce", () => {
   it("honours a custom debounce", async () => {
     svc.dispose();
     svc = make({ debounceMs: 50 });
-    data.triviaList = TRIVIA;
-    svc.triviaChanged();
+    vault.files.set(GLITTERY_PAGE, "---\nvocab-tracker: word\n---\n");
+    data.usageMap.set(GLITTERY.id, USAGE);
+    svc.wordChanged(GLITTERY.id);
     await vi.advanceTimersByTimeAsync(50);
-    expect(vault.exists(TRIVIA_FILE)).toBe(true);
+    expect(vault.files.get(GLITTERY_PAGE)).toContain("glittery + 抽象名詞");
   });
 
   it("reads data when the write runs, not when the change was announced", async () => {
@@ -777,19 +778,18 @@ describe("AI notes: articles with the same name", () => {
 });
 
 describe("trivia favourites", () => {
-  it("creates 冷知識.md once something is saved and keeps the code block on update", async () => {
+  it("1101: no 「收藏」 section in Eureka.md any more — never created, an old one is taken out", async () => {
+    data.triviaList = TRIVIA;
     svc.triviaChanged();
     await vi.advanceTimersByTimeAsync(1000);
-    expect(vault.files.size).toBe(0);
+    expect(vault.exists(TRIVIA_FILE)).toBe(false);
 
-    vault.files.set(TRIVIA_FILE, "# 冷知識\n\n```vocab-trivia\n```\n");
-    data.triviaList = TRIVIA;
+    vault.files.set(TRIVIA_FILE, "```vocab-eureka\n```\n\n%% vt:begin trivia-favorites %%\n## 收藏\n\n### old\n%% vt:end trivia-favorites %%\n\nmy notes\n");
     svc.triviaItemChanged(TRIVIA[0]);
     await vi.advanceTimersByTimeAsync(1000);
     const text = vault.files.get(TRIVIA_FILE)!;
-    expect(text.startsWith("# 冷知識\n\n```vocab-trivia\n```\n")).toBe(true);
-    expect(text).toContain("### gl- 開頭的字常跟「光」有關");
-    // Saving trivia about glittery creates its page too.
+    expect(text).toBe("```vocab-eureka\n```\n\nmy notes\n");
+    // Saving trivia about glittery still creates its page.
     expect(vault.exists(GLITTERY_PAGE)).toBe(true);
   });
 
@@ -960,9 +960,9 @@ describe("events, flush and dispose", () => {
     data.threads = [GLITTERY_THREAD];
     data.triviaList = TRIVIA;
     svc.wordChanged(GLITTERY.id, "ifContent");
-    svc.triviaChanged();
     await vi.advanceTimersByTimeAsync(1000);
-    expect([...vault.files.keys()]).toEqual([TRIVIA_FILE]);
+    // the word page export is off: nothing written
+    expect([...vault.files.keys()]).toEqual([]);
   });
 });
 

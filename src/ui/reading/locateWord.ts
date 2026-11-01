@@ -156,7 +156,7 @@ interface FoldableMode {
 
 // 1030 #5：字所在的段落被標題收起來時，先打開蓋住它的收合（只動這幾個，
 // 其他收合保持原狀），不然捲過去只停在收合的標題上、看不到字。
-function revealLine(view: MarkdownView, line: number): boolean {
+export function revealLine(view: MarkdownView, line: number): boolean {
   const mode = view.currentMode as unknown as FoldableMode;
   if (typeof mode.getFoldInfo !== "function" || typeof mode.applyFoldInfo !== "function") return false;
   try {
@@ -213,6 +213,32 @@ async function goTo(view: MarkdownView, occurrences: Occurrence[], index: number
   if (unfolded) await nextFrame();
   await flashInPreview(view, occurrences, index, word, inflections);
 }
+
+// 1101: a ¶ link in a whole-note AI answer — scroll the note to the
+// paragraph starting at `line` (unfolding it first) and flash it.
+export async function jumpToLine(view: MarkdownView, line: number): Promise<void> {
+  const unfolded = revealLine(view, line);
+  if (isSourceMode(view)) {
+    view.editor.setCursor({ line, ch: 0 });
+    view.editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+    return;
+  }
+  if (unfolded) await nextFrame();
+  view.previewMode.applyScroll(line);
+  for (let i = 0; i < RENDER_RETRY_LIMIT; i++) {
+    await nextFrame();
+    const section = previewSectionAt(view, line);
+    if (!section) continue;
+    section.el.removeClass(PARA_FLASH_CLS);
+    void section.el.offsetWidth; // restart the animation
+    section.el.addClass(PARA_FLASH_CLS);
+    setTimeout(() => section.el.removeClass(PARA_FLASH_CLS), PARA_FLASH_MS);
+    return;
+  }
+}
+
+const PARA_FLASH_CLS = "vt-para-flash";
+const PARA_FLASH_MS = 2500;
 
 interface Resolved {
   view: MarkdownView;

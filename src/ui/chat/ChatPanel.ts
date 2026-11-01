@@ -1,4 +1,5 @@
 import { Component, MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
+import { linkParagraphRefs } from "./paragraphRefs";
 import { t } from "../../core/i18n";
 import { liveTurns, type Thread, type Turn } from "../../core/model/thread";
 import type { AiService } from "../../services/ai/AiService";
@@ -67,6 +68,11 @@ export interface ChatPanelOptions {
   // it used; clicking one calls this (open the topic page). Without it, no
   // chips are drawn.
   onGrammarTopic?: (topicId: string) => void;
+  // 1101: 「¶3」 in an answer jumps to that paragraph of the note. Without
+  // it ¶ numbers stay plain text.
+  onParagraphRef?: (n: number) => void;
+  // 1101 (Eureka): the composer on top and the newest Q&A first.
+  newestFirst?: boolean;
   // 學習夥伴: the quick buttons to show right now, as task ids (the host
   // calls refreshQuick() when they change). Without it every labeled task
   // of the surface is shown.
@@ -122,6 +128,8 @@ export class ChatPanel extends Component {
     this.metaEl = this.root.createDiv({ cls: "vt-chat-meta" });
     this.turnsEl = this.root.createDiv({ cls: "vt-chat-turns" });
     this.renderControls();
+    // Newest first: the turns go below the composer.
+    if (this.opts.newestFirst) this.root.appendChild(this.turnsEl);
     this.renderTurns();
 
     this.register(
@@ -210,10 +218,12 @@ export class ChatPanel extends Component {
     if (!turns.length) {
       this.turnsEl.createDiv({ cls: "vt-chat-empty", text: t("chat.empty") });
     }
+    // One block per Q&A pair (or a lone answer), oldest first.
+    const blocks: HTMLElement[] = [];
     for (let i = 0; i < turns.length; i++) {
       const turn = turns[i];
       if (turn.role !== "user") {
-        this.turnsEl.appendChild(this.answerBubble(turn));
+        blocks.push(this.answerBubble(turn));
         continue;
       }
       // A question and its answer sit in one rounded frame, the delete
@@ -223,7 +233,8 @@ export class ChatPanel extends Component {
       const next = turns[i + 1];
       const answer = next?.role === "assistant" ? next : undefined;
       const pairBusy = answer?.status === "streaming";
-      const pair = this.turnsEl.createDiv({ cls: "vt-chat-pair" });
+      const pair = createDiv({ cls: "vt-chat-pair" });
+      blocks.push(pair);
       if (!pairBusy) pair.appendChild(this.deletePairButton(turn));
       pair.appendChild(this.userBubble(turn));
       const preface = this.opts.turnPreface?.(turn);
@@ -233,6 +244,8 @@ export class ChatPanel extends Component {
         i++;
       }
     }
+    if (this.opts.newestFirst) blocks.reverse();
+    for (const b of blocks) this.turnsEl.appendChild(b);
     this.updateBusy();
     if (this.scrollOnNextRender) {
       this.scrollOnNextRender = false;
@@ -291,8 +304,11 @@ export class ChatPanel extends Component {
 
   private answerBubble(turn: Turn): HTMLElement {
     const scope = this.turnsScope as Component;
+    const onRef = this.opts.onParagraphRef;
     const render = (el: HTMLElement, md: string) =>
-      void MarkdownRenderer.render(this.opts.app, md, el, this.opts.sourcePath, scope);
+      void MarkdownRenderer.render(this.opts.app, md, el, this.opts.sourcePath, scope).then(() => {
+        if (onRef) linkParagraphRefs(el, onRef);
+      });
 
     if (turn.status === "streaming") {
       this.streamTurnId = turn.id;

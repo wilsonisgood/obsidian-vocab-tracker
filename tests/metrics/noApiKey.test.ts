@@ -132,8 +132,6 @@ describe.each([
   it("the 字族 / 動詞 / 冷知識 entry files show their saved content", async () => {
     const learn = fx.learnShard();
     const paths = { families: await b.plugin.files.ensure("families"), verbs: await b.plugin.files.ensure("verbs"), trivia: await b.plugin.files.ensure("trivia") };
-    // 冷知識.md lists the saved items in its exported section (the block
-    // itself has `favorites: off`): let the export land first.
     await b.plugin.exporter.flush();
     const families = readNote(b, paths.families);
     const verbs = readNote(b, paths.verbs);
@@ -144,11 +142,9 @@ describe.each([
     expect(text(families, "vocab-galaxy")).toContain(learn.families[0].label);
     const verb = fx.liveEntries.find((e) => e.usage)!;
     expect(text(verbs, "vocab-usage")).toContain(verb.word);
-    // The trivia block draws (its AI part just says AI needs setting up)…
+    // The trivia block draws (its AI part just says AI needs setting up).
+    // 1101: no 「收藏」 list under it any more.
     expect(text(trivia, "vocab-eureka").length).toBeGreaterThan(0);
-    // …and every saved item is listed under it.
-    const page = trivia.map((el) => el.textContent).join("\n");
-    for (const item of learn.trivia) expect(page).toContain(item.title);
   });
 
   it("reading view: every post-processor runs over the long article", async () => {

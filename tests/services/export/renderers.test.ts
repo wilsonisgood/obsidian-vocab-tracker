@@ -3,7 +3,6 @@ import type { WordBreakdown } from "../../../src/core/model/morpheme";
 import { findManagedBlock } from "../../../src/services/export/managedBlock";
 import { hasAiNoteContent, renderAiNoteFile, renderAiNoteSections, type AiNoteInput } from "../../../src/services/export/renderers/aiNote";
 import { balanceFences, blockquote, frontmatter, inlineCode, roundsOf, threadRounds } from "../../../src/services/export/renderers/common";
-import { renderTriviaFavoritesFile, renderTriviaFavoritesSections } from "../../../src/services/export/renderers/triviaFavorites";
 import {
   familiesOf,
   hasWordPageContent,
@@ -311,16 +310,6 @@ describe("AI note: the whole-note discussion (1030 #4)", () => {
     const onlyWhole: AiNoteInput = { articlePath: "Note.md", paragraphs: [], words: [], note: { turns } };
     expect(hasAiNoteContent(onlyWhole)).toBe(true);
     expect(hasAiNoteContent({ ...onlyWhole, note: { turns: [] } })).toBe(false);
-  });
-});
-
-describe("trivia favourites renderer", () => {
-  it("renders saved items newest first (snapshot)", () => {
-    expect(renderTriviaFavoritesFile({ items: TRIVIA }, ctx())).toMatchSnapshot();
-  });
-
-  it("renders the empty state", () => {
-    expect(renderTriviaFavoritesSections({ items: [] }, ctx())[0].body).toBe("## 收藏\n\n*還沒有收藏。*");
   });
 });
 

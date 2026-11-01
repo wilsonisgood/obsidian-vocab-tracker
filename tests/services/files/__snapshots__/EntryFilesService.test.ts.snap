@@ -58,12 +58,6 @@ vocab-tracker-id: trivia
 \`\`\`vocab-eureka
 favorites: off
 \`\`\`
-
-%% vt:begin trivia-favorites %%
-## 收藏
-
-*還沒有收藏。*
-%% vt:end trivia-favorites %%
 ",
   "verbs": "---
 vocab-tracker: entry

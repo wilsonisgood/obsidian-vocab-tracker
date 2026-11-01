@@ -20,8 +20,10 @@ import { toPlayerQuestion } from "../blocks/practice/scenarioQuestionView";
 import { SCENARIO_MIN_WORDS } from "../blocks/practice/vocabFilterModel";
 import { computeNoteScope } from "../sidebar/noteScope";
 import { skipsBadges } from "./ParagraphBadges";
+import { jumpToLine } from "./locateWord";
 import {
   noteVocabRefs,
+  paragraphLine,
   parseReviewPrefs,
   renameReviewPrefs,
   REVIEW_STORAGE_KEY,
@@ -386,6 +388,15 @@ class ReviewPanel extends Component {
     return apply;
   }
 
+  // ¶n in an answer: scroll this note there (the iPhone question was 「不然
+  // 不知道題目在問什麼」).
+  private async jumpToParagraph(n: number): Promise<void> {
+    const view = this.view;
+    if (!view?.file || view.file.path !== this.path) return;
+    const line = paragraphLine(view.getViewData(), n);
+    if (line !== null) await jumpToLine(view, line);
+  }
+
   // AI 討論: the note's whole-article discussion.
   private mountAi(el: HTMLElement, owner: Component): void {
     const { threads } = this.host;
@@ -405,6 +416,7 @@ class ReviewPanel extends Component {
         await threads.askNote(this.path, { taskId: req.taskId, question: req.question });
       },
       retry: (turnId) => threads.retryNote(this.path, turnId),
+      onParagraphRef: (n) => void this.jumpToParagraph(n),
       onOpenSettings: () => openPluginSettings(this.host.app, this.host.manifest.id),
     });
     owner.addChild(chat);

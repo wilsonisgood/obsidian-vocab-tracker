@@ -239,8 +239,8 @@ body.is-mobile .vt-empty-action button {
 }
 
 .vt-view-toggle-icon svg {
-  width: 13px;
-  height: 13px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 
 .vt-view-toggle-count:not(:empty) {
@@ -308,8 +308,8 @@ body.is-mobile .vt-empty-action button {
 }
 
 .vt-chat-pair-delete svg {
-  width: 14px;
-  height: 14px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 
 body.is-mobile .vt-chat-pair-delete {

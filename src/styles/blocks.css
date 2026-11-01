@@ -153,8 +153,8 @@ body.is-mobile .vt-flashcards {
 
 .vt-fc-icon svg,
 .vt-fc-icon-btn svg {
-  width: 16px;
-  height: 16px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 
 /* Toolbar: mode switch + source filter */
@@ -789,8 +789,8 @@ body.is-mobile .vt-learn {
 }
 
 .vt-learn-btn .vt-btn-icon svg {
-  width: 15px;
-  height: 15px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 
 /* 「AI 正在整理…」 + 停止 */
@@ -1620,8 +1620,8 @@ body.is-mobile button.vt-verb-related-chip {
 }
 
 .vt-ai-debug-icon svg {
-  width: 14px;
-  height: 14px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 
 .vt-ai-debug[open] > .vt-ai-debug-summary {

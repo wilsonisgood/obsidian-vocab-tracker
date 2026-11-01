@@ -1,4 +1,36 @@
 /* src/styles/kit.css */
+body {
+  --vt-icon: 14px;
+}
+.vt-bubble-action svg,
+.vt-chat-pair-delete svg,
+.vt-chat-selection-remove svg,
+.vt-ppane-practice svg,
+.vt-ppane-delete svg,
+.vt-ppane-back-icon svg,
+.vt-ppane-ainote-icon svg,
+.vt-plist-delete svg,
+.vt-dlist-delete svg,
+.vt-wh-btn-icon svg,
+.vt-wp-btn-icon svg,
+.vt-chip-icon svg,
+.vt-wh-speak svg,
+.vt-wh-emoji svg,
+.vt-verb-speak svg,
+.vt-trivia-fav-remove svg,
+.vt-fam-root-more svg,
+.vt-buddy-sink svg,
+.vt-sheet-close svg,
+.vt-row-footer-icon svg,
+.vt-btn-icon svg,
+.vt-fc-icon svg,
+.vt-fc-icon-btn svg,
+.vt-view-toggle-icon svg,
+.vt-ai-debug-icon svg,
+.vt-icon-btn svg {
+  width: var(--vt-icon);
+  height: var(--vt-icon);
+}
 .vt-icon-btn {
   cursor: pointer;
 }
@@ -404,8 +436,8 @@
   color: var(--text-error);
 }
 .vt-plist-delete svg {
-  width: 13px;
-  height: 13px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 .vt-plist-group-head {
   font-size: 0.8em;
@@ -504,8 +536,8 @@
   display: inline-flex;
 }
 .vt-ppane-back-icon svg {
-  width: 15px;
-  height: 15px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 .vt-ppane-head {
   display: flex;
@@ -579,8 +611,8 @@
   display: inline-flex;
 }
 .vt-ppane-ainote-icon svg {
-  width: 13px;
-  height: 13px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 @media (hover: none) {
   .vt-ppane-ainote {
@@ -668,8 +700,8 @@
   color: var(--text-error);
 }
 .vt-dlist-delete svg {
-  width: 13px;
-  height: 13px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 .vt-dlist-icon {
   display: inline-flex;
@@ -1140,8 +1172,8 @@ body.is-mobile .vt-flashcards {
 }
 .vt-fc-icon svg,
 .vt-fc-icon-btn svg {
-  width: 16px;
-  height: 16px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 .vt-fc-toolbar {
   display: flex;
@@ -1679,8 +1711,8 @@ body.is-mobile .vt-learn {
   cursor: default;
 }
 .vt-learn-btn .vt-btn-icon svg {
-  width: 15px;
-  height: 15px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 .vt-learn-busy {
   display: flex;
@@ -2357,8 +2389,8 @@ body.is-mobile button.vt-verb-related-chip {
   display: inline-flex;
 }
 .vt-ai-debug-icon svg {
-  width: 14px;
-  height: 14px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 .vt-ai-debug[open] > .vt-ai-debug-summary {
   border-bottom: 1px solid var(--vt-border);
@@ -2678,8 +2710,8 @@ body.is-mobile .vt-empty-action button {
   color: var(--text-accent);
 }
 .vt-view-toggle-icon svg {
-  width: 13px;
-  height: 13px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 .vt-view-toggle-count:not(:empty) {
   font-size: var(--font-ui-smaller);
@@ -2734,8 +2766,8 @@ body.is-mobile .vt-empty-action button {
   color: var(--text-error);
 }
 .vt-chat-pair-delete svg {
-  width: 14px;
-  height: 14px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 body.is-mobile .vt-chat-pair-delete {
   min-width: 44px;
@@ -2963,8 +2995,8 @@ body.is-mobile .vt-chat-send {
 .vt-chip-icon svg,
 .vt-wh-btn-icon svg,
 .vt-wp-btn-icon svg {
-  width: 14px;
-  height: 14px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 .vt-wh-review {
   margin-left: auto;
@@ -3341,6 +3373,24 @@ body.is-mobile .vt-wh-lookup {
   background-color: var(--text-selection);
   border-radius: 3px;
   transition: background-color 2.4s ease-out 0.6s;
+}
+.vt-para-flash {
+  animation: vt-para-flash-fade 2.4s ease-out;
+  border-radius: 4px;
+}
+@keyframes vt-para-flash-fade {
+  0%, 50% {
+    background-color: rgba(var(--color-yellow-rgb), 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+.vt-para-ref {
+  color: var(--text-accent);
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
 }
 
 /* src/styles/galaxy.css */

@@ -2,7 +2,6 @@ import type { en } from "./en";
 
 export const zhTW: Record<keyof typeof en, string> = {
   "sidebar.title": "單字追蹤",
-  "sidebar.openList": "開啟 List",
   "sidebar.filter.note": "本篇筆記",
   "sidebar.filter.all": "全部",
   "sidebar.scope.note": "本篇筆記",

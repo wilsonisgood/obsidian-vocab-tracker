@@ -16,7 +16,7 @@ import {
   type AiNoteOwner,
 } from "./renderers/aiNote";
 import { threadRounds } from "./renderers/common";
-import { renderTriviaFavoritesFile, renderTriviaFavoritesSections } from "./renderers/triviaFavorites";
+import { TRIVIA_FAVORITES_SECTION } from "./renderers/triviaFavorites";
 import {
   WORD_PAGE_KIND,
   hasWordPageContent,
@@ -573,12 +573,11 @@ export class ExportService {
     );
   }
 
+  // 1101: Eureka.md no longer gets a 「收藏」 section under its block — it
+  // only repeated the conversation. One already there is taken out; no
+  // file is created for it.
   private async writeTrivia(path: string): Promise<void> {
-    await this.deps.data.ready?.();
-    const input = { items: this.deps.data.trivia() };
-    const ctx = this.context();
-    const hasItems = input.items.some((t) => !t.deletedAt);
-    await this.write(path, renderTriviaFavoritesSections(input, ctx), hasItems ? () => renderTriviaFavoritesFile(input, ctx) : null);
+    await this.write(path, [], null, [TRIVIA_FAVORITES_SECTION]);
   }
 
   private context(): RenderContext {

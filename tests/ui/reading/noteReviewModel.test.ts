@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { VocabEntry } from "../../../src/core/model/entry";
 import {
   noteVocabRefs,
+  paragraphLine,
   parseReviewPrefs,
   renameReviewPrefs,
   reviewPrefsOf,
@@ -81,5 +82,13 @@ describe("noteReviewModel (1030 #4 複習這篇筆記)", () => {
     expect(reviewPrefsOf(parseReviewPrefs({ "a.md": { open: true, tab: "vocab", roundAt: "2026-10-31T00:00:00.000Z" } }), "a.md").roundAt).toBe(
       "2026-10-31T00:00:00.000Z"
     );
+  });
+
+  it("1101: ¶n → the paragraph's first line, numbered like the article the AI got", () => {
+    const md = "---\na: 1\n---\n# Title\n\nFirst para\nstill first.\n\nSecond.\n";
+    expect(paragraphLine(md, 1)).toBe(3); // the heading is ¶1
+    expect(paragraphLine(md, 2)).toBe(5);
+    expect(paragraphLine(md, 3)).toBe(8);
+    expect(paragraphLine(md, 9)).toBeNull();
   });
 });

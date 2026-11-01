@@ -1,9 +1,6 @@
 import { joinPath } from "../../core/text/slug";
-import { exportLabels } from "../export/labels";
 import { buildManagedFile } from "../export/managedBlock";
 import { frontmatter } from "../export/renderers/common";
-import { renderTriviaFavoritesSections } from "../export/renderers/triviaFavorites";
-import type { RenderContext } from "../export/types";
 
 // The entry files (規劃書 06 §8.3, screen F1): one note per learning
 // mode, holding that mode's code block. Created only when missing, never
@@ -105,20 +102,8 @@ export function entryFilePath(folder: string, id: EntryFileId): string {
   return joinPath(folder, `${entryFileDef(id).name}.md`);
 }
 
-// Only the labels are read when there are no items to render.
-function emptyContext(): RenderContext {
-  return {
-    labels: exportLabels(),
-    formatDate: (iso) => iso.slice(0, 10),
-    taskLabel: () => undefined,
-    entryWord: () => undefined,
-    pageLink: () => null,
-  };
-}
-
-// A new entry file. Eureka.md also gets the (empty) saved-trivia section
-// right under its block, so ExportService fills it in place instead of
-// appending it after whatever the user writes below.
+// A new entry file: just its block (1101: Eureka.md no longer gets a
+// saved-trivia section).
 //
 // No 「# Galaxy」 heading: Obsidian already shows the file name as the
 // inline title right above, so the heading only repeated it (1005 回饋 #4).
@@ -133,8 +118,7 @@ export function renderEntryFile(id: EntryFileId): string {
     ...(def.params ? [def.params] : []),
     "```",
   ].join("\n");
-  const sections = id === "trivia" ? renderTriviaFavoritesSections({ items: [] }, emptyContext()) : [];
-  return buildManagedFile(head, sections);
+  return buildManagedFile(head, []);
 }
 
 // The 「# 字族樹」 an entry file made before 1005 starts with: the note's

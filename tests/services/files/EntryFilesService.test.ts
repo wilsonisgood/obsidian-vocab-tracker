@@ -72,10 +72,10 @@ describe("entry file content", () => {
     expect(legacyTitleHeading("字族樹", undefined, 3)).toBe(false);
   });
 
-  it("puts an empty saved-trivia section under 冷知識's block", () => {
+  it("1101: Eureka.md is just its block — no saved-trivia section", () => {
     const text = renderEntryFile("trivia");
-    expect(text.indexOf("```vocab-trivia")).toBeLessThan(text.indexOf("%% vt:begin trivia-favorites %%"));
-    expect(text).toContain("%% vt:end trivia-favorites %%");
+    expect(text).toContain("```vocab-eureka");
+    expect(text).not.toContain("trivia-favorites");
   });
 });
 

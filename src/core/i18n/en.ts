@@ -1,6 +1,5 @@
 export const en = {
   "sidebar.title": "Vocab Tracker",
-  "sidebar.openList": "Open List",
   "sidebar.filter.note": "This note",
   "sidebar.filter.all": "All",
   "sidebar.scope.note": "This note",

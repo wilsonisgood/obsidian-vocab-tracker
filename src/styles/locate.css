@@ -8,3 +8,21 @@
   border-radius: 3px;
   transition: background-color 2.4s ease-out 0.6s;
 }
+
+/* 1101: a ¶ link in a whole-note AI answer — the paragraph it jumped to. */
+.vt-para-flash {
+  animation: vt-para-flash-fade 2.4s ease-out;
+  border-radius: 4px;
+}
+@keyframes vt-para-flash-fade {
+  0%, 50% { background-color: rgba(var(--color-yellow-rgb), 0.3); }
+  100% { background-color: transparent; }
+}
+
+/* ¶3 in an AI answer: jumps to that paragraph. */
+.vt-para-ref {
+  color: var(--text-accent);
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}

@@ -234,6 +234,8 @@ class TriviaBlock extends MarkdownRenderChild {
       turnActions: (turn) => this.turnActions(turn),
       turnHeader: (turn) => this.turnHeader(turn),
       onOpenSettings: () => openPluginSettings(this.plugin.app, this.plugin.manifest.id),
+      // 1101: composer on top, newest first.
+      newestFirst: true,
     };
     this.chat = this.addChild(new ChatPanel(host, opts));
   }

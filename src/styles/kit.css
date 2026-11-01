@@ -1,3 +1,40 @@
+/* 1101: one size for every icon button (複製、收藏、刪除、發音…), the size of
+   the delete icon at the top left of a Q&A pair. Decorative icons (meta
+   lines, ✦ badges, flashcard illustrations) keep their own sizes. */
+body {
+  --vt-icon: 14px;
+}
+
+.vt-bubble-action svg,
+.vt-chat-pair-delete svg,
+.vt-chat-selection-remove svg,
+.vt-ppane-practice svg,
+.vt-ppane-delete svg,
+.vt-ppane-back-icon svg,
+.vt-ppane-ainote-icon svg,
+.vt-plist-delete svg,
+.vt-dlist-delete svg,
+.vt-wh-btn-icon svg,
+.vt-wp-btn-icon svg,
+.vt-chip-icon svg,
+.vt-wh-speak svg,
+.vt-wh-emoji svg,
+.vt-verb-speak svg,
+.vt-trivia-fav-remove svg,
+.vt-fam-root-more svg,
+.vt-buddy-sink svg,
+.vt-sheet-close svg,
+.vt-row-footer-icon svg,
+.vt-btn-icon svg,
+.vt-fc-icon svg,
+.vt-fc-icon-btn svg,
+.vt-view-toggle-icon svg,
+.vt-ai-debug-icon svg,
+.vt-icon-btn svg {
+  width: var(--vt-icon);
+  height: var(--vt-icon);
+}
+
 /* ── Small reusable pieces shared across sidebar, rows and dashboard ── */
 
 .vt-icon-btn {

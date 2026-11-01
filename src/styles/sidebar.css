@@ -323,8 +323,8 @@
 }
 
 .vt-plist-delete svg {
-  width: 13px;
-  height: 13px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 
 /* 全部模式：段落討論依筆記分組（規格 #8） */
@@ -444,8 +444,8 @@
 }
 
 .vt-ppane-back-icon svg {
-  width: 15px;
-  height: 15px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 
 .vt-ppane-head {
@@ -535,8 +535,8 @@
 }
 
 .vt-ppane-ainote-icon svg {
-  width: 13px;
-  height: 13px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 
 @media (hover: none) {
@@ -646,8 +646,8 @@
 }
 
 .vt-dlist-delete svg {
-  width: 13px;
-  height: 13px;
+  width: var(--vt-icon);
+  height: var(--vt-icon);
 }
 
 .vt-dlist-icon {

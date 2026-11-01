@@ -623,6 +623,8 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
     this.exporter.watchThreads(this.threads.events);
     this.exporter.watchLearn(this.learn.events);
     this.exporter.watchUsage(this.verbs.events);
+    // 1101: take an old 「收藏」 section out of Eureka.md (no-op when it has none).
+    this.app.workspace.onLayoutReady(() => this.exporter.triviaChanged());
     this.files = new EntryFilesService({
       vault: this.vault,
       settings: () => this.store.settings.files,

@@ -692,12 +692,8 @@ export class VocabSidebarView extends ItemView {
     root.addClass("vt-sidebar");
 
     const header = root.createEl("div", { cls: "vt-sidebar-header" });
+    // 1101: no 「open the list」 icon here any more (the command still does it).
     header.createEl("h4", { text: t("sidebar.title") });
-    const openList = header.createEl("span", { cls: "vt-icon-btn clickable-icon" });
-    setIcon(openList, "file-text");
-    openList.setAttr("role", "button");
-    openList.setAttr("aria-label", t("sidebar.openList"));
-    openList.onclick = () => this.plugin.openVocabFile();
 
     // 本篇／全部（1006report.md #5）: moved up here, shared by every
     // section below (words/段落討論/AI 討論/文法) instead of living inside
