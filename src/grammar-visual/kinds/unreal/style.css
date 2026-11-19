@@ -1,0 +1,10 @@
+/* G3 現實與假設 */
+.gv-un-host { display: flex; flex-direction: column; gap: 10px; }
+.gv-un-grid { display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); align-items: stretch; }
+.gv-un-grid.is-single { grid-template-columns: minmax(0, 1fr); }
+.gv-un-grid > .gv-card.is-amber { border-style: dashed; }
+.gv-un-text { font-size: 1.02em; }
+.gv-un-arrow { display: flex; align-items: center; justify-content: center; padding: 0 4px; text-align: center; font-size: var(--gv-font-smaller); color: var(--gv-text); }
+.gv-un-shifts { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.gv.is-mobile .gv-un-grid { grid-template-columns: minmax(0, 1fr); }
+.gv.is-mobile .gv-un-arrow { height: 36px; padding: 0; }
