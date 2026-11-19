@@ -1,7 +1,7 @@
 import type { BackshiftVisual, KindModule } from "../../types";
 import { SHORT_MAX, SENTENCE_MAX, arr, base, baseSchema, obj, oneOf, sArr, sEnum, sObj, sStr, str } from "../../kit/parse";
 import { add, el, explain, sentence } from "../../kit/dom";
-import { locate, markWords } from "../link/locate";
+import { locate, markWords } from "../../kit/locate";
 import { BUILTIN } from "./builtin";
 
 const TYPES = ["tense", "person", "time", "place"] as const;

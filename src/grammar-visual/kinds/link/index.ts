@@ -2,7 +2,7 @@ import type { KindModule, LinkVisual } from "../../types";
 import { SHORT_MAX, arr, base, baseSchema, obj, oneOf, sArr, sEnum, sObj, sStr, str } from "../../kit/parse";
 import { add, explain, sentence, stateful } from "../../kit/dom";
 import { BUILTIN } from "./builtin";
-import { locate, markWords } from "./locate";
+import { locate, markWords } from "../../kit/locate";
 
 const KINDS = ["refer", "modify"] as const;
 

@@ -1,4 +1,4 @@
-import type { Mark, MarkTone, MarkedSentence } from "../../types";
+import type { Mark, MarkTone, MarkedSentence } from "../types";
 
 // 在句子裡找一個字：優先找「前後不是英文字母」的完整單字，找不到才退回一般子字串。
 export function locate(text: string, word: string): number {

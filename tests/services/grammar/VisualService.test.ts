@@ -13,7 +13,7 @@ const sample = {
   number: "singular",
   skip: "of items",
   verb: "is",
-  steps: ["找核心名詞"],
+  steps: ["找核心名詞 list", "動詞跟 list 配 → is"],
   traps: [],
 };
 
