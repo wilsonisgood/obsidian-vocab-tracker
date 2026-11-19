@@ -1,0 +1,12 @@
+.gv-focus-root { display: flex; flex-direction: column; gap: 10px; }
+.gv-focus-cards { display: flex; flex-direction: column; gap: 8px; }
+.gv-focus-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 6px; }
+.gv-focus-head .gv-card-title { margin-bottom: 0; }
+.gv-focus-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.gv-focus-role { display: flex; flex-direction: column; gap: 1px; padding: 5px 10px; border-radius: 6px; background: var(--gv-bg2); border: 1px solid var(--gv-border); }
+.gv-focus-role.is-action { background: transparent; border-style: dashed; }
+.gv-focus-role.is-focus { background: var(--gv-accent-bg); border: 2px solid var(--gv-accent); font-weight: 600; }
+.gv-focus-tag { font-size: var(--gv-font-smaller); color: var(--gv-muted); font-weight: 400; }
+.gv-focus-role.is-focus .gv-focus-tag { color: var(--gv-accent-text); }
+.gv.is-mobile .gv-focus-row { flex-direction: column; align-items: stretch; }
+.gv.is-mobile .gv-focus-role { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 8px; }
