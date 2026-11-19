@@ -122,3 +122,13 @@ body.is-mobile .vt-pr-mistake { min-height: 44px; }
 /* 錯題區 expanded list (第十八波 R) */
 .vt-pr-mistake-list { margin: 2px 0 6px; padding: 0 0 0 20px; font-size: var(--font-ui-smaller); color: var(--text-muted); }
 .vt-pr-mistake-item { overflow-wrap: anywhere; }
+
+/* 主題頁：概念版面 + 練習這個概念（grammar-visual） */
+.vt-gr-practice-card { display: flex; flex-direction: column; gap: 14px; }
+.vt-gr-visual { display: flex; flex-direction: column; gap: 8px; }
+.vt-gr-visual-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.vt-gr-visual-busy { font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.vt-gr-dock { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--background-modifier-border); }
+.vt-gr-dock:empty { display: none; }
+.vt-gr-dock-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.vt-gr-dock-done { padding: 10px 12px; border-radius: 8px; background: var(--background-secondary); }
