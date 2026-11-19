@@ -1,0 +1,9 @@
+.gv-agreement-core { display: flex; align-items: center; gap: 8px; }
+.gv-agreement-pair { font-weight: 600; color: var(--gv-accent-text); }
+.gv-agreement-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.gv-agreement-step { padding: 8px 12px; border-radius: var(--gv-radius); background: var(--gv-bg); border: 1px solid var(--gv-border); }
+.gv-agreement-step.is-last { background: var(--gv-accent-bg); border: 2px solid var(--gv-accent); color: var(--gv-accent-text); }
+.gv-agreement-traps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.gv-agreement-trap { padding: 8px 10px; border-radius: 6px; background: var(--gv-bg); font-size: var(--gv-font-small); }
+.gv-agreement-example { font-weight: 600; }
+.gv.is-mobile .gv-agreement-step { padding: 8px 10px; }
