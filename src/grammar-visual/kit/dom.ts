@@ -11,7 +11,8 @@ export function el<K extends keyof HTMLElementTagNameMap>(
   text?: string
 ): HTMLElementTagNameMap[K] {
   const e = ctx.doc.createElement(tag);
-  if (cls) for (const c of Array.isArray(cls) ? cls : [cls]) if (c) e.classList.add(c);
+  // 「a b」這種含空白的字串也拆開（真的 DOM 的 classList.add 遇到空白會丟錯）。
+  if (cls) for (const c of (Array.isArray(cls) ? cls : [cls]).flatMap((x) => x.split(/\s+/))) if (c) e.classList.add(c);
   if (text !== undefined) e.textContent = text;
   return e;
 }
