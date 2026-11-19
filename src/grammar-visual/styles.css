@@ -1,0 +1,82 @@
+/* 文法概念版面（grammar-visual）的樣式。顏色全部取 Obsidian 的 CSS 變數，
+   沒有時（搬到別的環境）用括號裡的預設值。各版面自己的樣式在
+   kinds/<kind>/style.css，class 一律 gv- 開頭。 */
+@import "./kinds/timeline/style.css";
+@import "./kinds/scale/style.css";
+@import "./kinds/unreal/style.css";
+@import "./kinds/backshift/style.css";
+@import "./kinds/focus/style.css";
+@import "./kinds/verbslot/style.css";
+@import "./kinds/path/style.css";
+@import "./kinds/connector/style.css";
+@import "./kinds/order/style.css";
+@import "./kinds/scope/style.css";
+@import "./kinds/clause/style.css";
+@import "./kinds/compare/style.css";
+@import "./kinds/link/style.css";
+@import "./kinds/agreement/style.css";
+
+.gv {
+  --gv-text: var(--text-normal, #222222);
+  --gv-muted: var(--text-muted, #5c5c5c);
+  --gv-faint: var(--text-faint, #707070);
+  --gv-border: var(--background-modifier-border, #e0e0e0);
+  --gv-bg: var(--background-primary, #ffffff);
+  --gv-bg2: var(--background-secondary, #f6f6f6);
+  --gv-accent: var(--interactive-accent, #7b4fe8);
+  --gv-accent-text: var(--text-accent, #5b34c4);
+  --gv-accent-on: var(--text-on-accent, #ffffff);
+  --gv-accent-bg: rgba(var(--interactive-accent-rgb, 123, 79, 232), 0.14);
+  --gv-amber: var(--color-orange, #e0a14a);
+  --gv-amber-bg: rgba(var(--color-orange-rgb, 224, 161, 74), 0.16);
+  --gv-green: var(--color-green, #08b94e);
+  --gv-green-bg: rgba(var(--color-green-rgb, 8, 185, 78), 0.16);
+  --gv-red: var(--color-red, #e93147);
+  --gv-red-bg: rgba(var(--color-red-rgb, 233, 49, 71), 0.14);
+  --gv-radius: 8px;
+  --gv-font-small: var(--font-ui-small, 13px);
+  --gv-font-smaller: var(--font-ui-smaller, 12px);
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--gv-radius);
+  background: var(--gv-bg2);
+  color: var(--gv-text);
+  line-height: 1.5;
+}
+.gv.is-mobile { padding: 12px; }
+
+.gv-head { display: flex; align-items: baseline; gap: 8px; font-size: var(--gv-font-smaller); color: var(--gv-accent-text); font-weight: 600; }
+
+.gv-sentence { font-size: 1.08em; }
+.gv-mark.is-accent { color: var(--gv-accent-text); font-weight: 600; }
+.gv-mark.is-amber { padding: 0 3px; border-radius: 4px; background: var(--gv-amber-bg); border-bottom: 2px solid var(--gv-amber); }
+.gv-mark.is-muted { color: var(--gv-faint); }
+.gv-mark.is-strike { color: var(--gv-faint); text-decoration: line-through; }
+
+.gv-explain { font-size: 0.95em; }
+.gv-note { font-size: var(--gv-font-small); color: var(--gv-muted); }
+.gv-label { font-size: var(--gv-font-smaller); font-weight: 600; color: var(--gv-muted); }
+
+.gv-card { padding: 10px 12px; border-radius: var(--gv-radius); background: var(--gv-bg); border: 1px solid var(--gv-border); }
+.gv-card.is-accent { background: var(--gv-accent-bg); border: 2px solid var(--gv-accent); }
+.gv-card.is-amber { background: var(--gv-amber-bg); border: 1px solid var(--gv-amber); }
+.gv-card-title { font-size: var(--gv-font-smaller); font-weight: 600; color: var(--gv-muted); margin-bottom: 2px; }
+.gv-card.is-accent > .gv-card-title { color: var(--gv-accent-text); }
+
+.gv-badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: var(--gv-font-smaller); font-weight: 600; }
+.gv-badge.is-accent { background: var(--gv-accent); color: var(--gv-accent-on); }
+.gv-badge.is-amber { background: var(--gv-amber-bg); color: var(--gv-text); border: 1px solid var(--gv-amber); }
+.gv-badge.is-plain { background: var(--gv-bg); color: var(--gv-muted); border: 1px solid var(--gv-border); }
+
+/* 切換鈕：跟插件練習頁的 .vt-pr-chip 同尺寸。 */
+.gv-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.gv-chip {
+  border-radius: 999px; padding: 4px 12px; font-size: var(--gv-font-small); height: auto;
+  background: var(--gv-bg); border: 1px solid var(--gv-border); color: var(--gv-text);
+  cursor: pointer; box-shadow: none;
+}
+.gv-chip.is-on { background: var(--gv-accent); border-color: var(--gv-accent); color: var(--gv-accent-on); }
+.gv.is-mobile .gv-chip { min-height: 44px; padding: 8px 16px; }
