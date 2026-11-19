@@ -1,0 +1,13 @@
+.gv-scope .gv-body { display: flex; flex-direction: column; gap: 10px; }
+.gv-scope-host { display: flex; flex-direction: column; gap: 10px; }
+.gv-scope-outer { padding: 10px; border-radius: 10px; background: var(--gv-bg); border: 1px solid var(--gv-border); }
+.gv-scope-layer { margin-top: 8px; padding: 8px 10px; border-radius: var(--gv-radius); background: var(--gv-bg); border: 1px solid var(--gv-border); }
+.gv-scope-outer > .gv-scope-layer:first-child { margin-top: 0; }
+.gv-scope-layer.is-hit { background: var(--gv-accent-bg); border: 2px solid var(--gv-accent); }
+.gv-scope-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: var(--gv-font-smaller); color: var(--gv-muted); }
+.gv-scope-layer.is-hit > .gv-scope-head { color: var(--gv-accent-text); }
+.gv-scope-word { font-size: var(--gv-font-small); color: var(--gv-text); }
+.gv-scope-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gv-muted); align-self: center; }
+
+.gv.is-mobile .gv-scope-head { flex-direction: column; align-items: flex-start; gap: 0; }
+.gv.is-mobile .gv-scope-dot { display: none; }
