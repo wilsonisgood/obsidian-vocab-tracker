@@ -1,0 +1,15 @@
+.gv-link-host { display: flex; flex-direction: column; gap: 10px; }
+.gv-link-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.gv-link-row {
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; width: 100%; height: auto;
+  min-height: 36px; box-sizing: border-box; padding: 8px 12px; text-align: left; cursor: pointer; box-shadow: none;
+  background: var(--gv-bg); border: 1px solid var(--gv-border); border-radius: var(--gv-radius); color: var(--gv-text);
+}
+.gv-link-row.is-modify { border-style: dashed; border-color: var(--gv-amber); }
+.gv-link-row.is-on { background: var(--gv-accent-bg); border: 2px solid var(--gv-accent); }
+.gv-link-row.is-on.is-modify { background: var(--gv-amber-bg); border: 2px dashed var(--gv-amber); }
+.gv-link-pair { font-weight: 600; }
+.gv-link-row.is-on .gv-link-pair { color: var(--gv-accent-text); }
+.gv-link-kind { font-size: var(--gv-font-smaller); color: var(--gv-muted); text-align: right; }
+.gv-link-why { grid-column: 1 / -1; font-size: var(--gv-font-small); color: var(--gv-muted); }
+.gv.is-mobile .gv-link-row { min-height: 44px; }
