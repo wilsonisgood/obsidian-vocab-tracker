@@ -1,0 +1,27 @@
+/* G1 時間軸 */
+.gv-tl-board { position: relative; padding: 8px 0 0; background: var(--gv-bg); border: 1px solid var(--gv-border); border-radius: var(--gv-radius); overflow: hidden; }
+.gv-tl-row { position: relative; height: 46px; }
+.gv-tl-axis { position: absolute; left: 4%; right: 4%; top: 33px; height: 2px; background: var(--gv-faint); opacity: 0.6; }
+.gv-tl-label { position: absolute; top: 2px; left: var(--gv-x); max-width: 70%; font-size: var(--gv-font-smaller); font-weight: 600; color: var(--gv-muted); }
+.gv-tl-label.is-right { left: auto; right: var(--gv-x); text-align: right; }
+.gv-tl-row.is-focus .gv-tl-label { color: var(--gv-accent-text); }
+.gv-tl-dot { position: absolute; top: 27px; left: var(--gv-x); border-radius: 50%; background: var(--gv-faint); border: 2px solid var(--gv-bg); box-sizing: border-box; width: 16px; height: 16px; margin-left: -8px; }
+.gv-tl-dot.is-small { width: 10px; height: 10px; margin-left: -5px; top: 30px; }
+.gv-tl-row.is-focus .gv-tl-dot { background: var(--gv-accent); }
+.gv-tl-bar { position: absolute; top: 26px; left: var(--gv-x); width: var(--gv-w); height: 16px; box-sizing: border-box; border-radius: 8px; background: var(--gv-bg2); border: 2px solid var(--gv-faint); }
+.gv-tl-row.is-focus .gv-tl-bar { background: var(--gv-accent-bg); border-color: var(--gv-accent); }
+.gv-tl-row.is-span-to-now .gv-tl-bar, .gv-tl-row.is-ongoing .gv-tl-bar { border-radius: 8px 0 0 8px; border-right: 0; }
+.gv-tl-tail { position: absolute; top: 26px; left: var(--gv-x); width: 9%; height: 16px; box-sizing: border-box; border: 2px dashed var(--gv-faint); border-left: 0; border-radius: 0 8px 8px 0; }
+.gv-tl-row.is-focus .gv-tl-tail { border-color: var(--gv-accent); }
+.gv-tl-tail:not(.is-open) { width: 3%; border-style: solid; border-color: var(--gv-muted); }
+.gv-tl-now, .gv-tl-ref { position: absolute; top: 0; bottom: 0; left: var(--gv-x); border-left: 2px dashed var(--gv-muted); }
+.gv-tl-ref { border-left: 2px solid var(--gv-amber); }
+.gv-tl-foot { position: relative; height: 40px; }
+.gv-tl-tick { position: absolute; left: var(--gv-x); top: 4px; transform: translateX(-50%); font-size: var(--gv-font-smaller); color: var(--gv-muted); white-space: nowrap; }
+.gv-tl-tick.is-ref { top: 22px; color: var(--gv-text); font-weight: 600; }
+.gv.is-mobile .gv-tl-row { height: 52px; }
+.gv.is-mobile .gv-tl-axis { top: 36px; }
+.gv.is-mobile .gv-tl-label { font-size: var(--gv-font-small); top: 4px; }
+.gv.is-mobile .gv-tl-dot { top: 29px; }
+.gv.is-mobile .gv-tl-dot.is-small { top: 32px; }
+.gv.is-mobile .gv-tl-bar, .gv.is-mobile .gv-tl-tail { top: 28px; }
