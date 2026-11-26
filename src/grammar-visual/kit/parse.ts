@@ -1,7 +1,8 @@
 import type { LayoutKind, Mark, MarkTone, MarkedSentence } from "../types";
 
-// 驗證 AI 輸出的小工具。規則一律是「不合格就 null」，呼叫端用
-// `if (x === null) return null` 一路往外丟，不修補、不猜。
+// 驗證 AI 輸出的小工具。型別不對、必要欄位缺了就 null，呼叫端用
+// `if (x === null) return null` 一路往外丟；只差在「太長、太多、超出範圍」
+// 這種畫面上安全的小問題就修掉（截短、取前幾個、夾回範圍），不整份作廢。
 
 export type Obj = Record<string, unknown>;
 
@@ -9,21 +10,25 @@ export function obj(raw: unknown): Obj | null {
   return raw !== null && typeof raw === "object" && !Array.isArray(raw) ? (raw as Obj) : null;
 }
 
-// 修掉前後空白；超過 max 字或不是字串就 null。allowEmpty=false 時空字串也 null。
+// 修掉前後空白；不是字串就 null，allowEmpty=false 時空字串也 null。
+// 超過 max 字就截短並補「…」。
 export function str(raw: unknown, max: number, allowEmpty = false): string | null {
   if (typeof raw !== "string") return null;
   const s = raw.trim().replace(/\s+/g, " ");
   if (!allowEmpty && s === "") return null;
-  return s.length > max ? null : s;
+  return s.length > max ? `${s.slice(0, Math.max(1, max - 1)).trimEnd()}…` : s;
 }
 
+// 數字（或像 "2" 這種數字字串）；超出範圍就夾回 [min, max]。
 export function num(raw: unknown, min: number, max: number): number | null {
-  return typeof raw === "number" && Number.isFinite(raw) && raw >= min && raw <= max ? raw : null;
+  const n = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : raw;
+  if (typeof n !== "number" || !Number.isFinite(n) || min > max) return null;
+  return Math.min(max, Math.max(min, n));
 }
 
 export function int(raw: unknown, min: number, max: number): number | null {
   const n = num(raw, min, max);
-  return n !== null && Number.isInteger(n) ? n : null;
+  return n === null ? null : Math.min(max, Math.max(min, Math.round(n)));
 }
 
 export function bool(raw: unknown): boolean | null {
@@ -34,9 +39,12 @@ export function oneOf<T extends string>(raw: unknown, allowed: readonly T[]): T 
   return typeof raw === "string" && (allowed as readonly string[]).includes(raw) ? (raw as T) : null;
 }
 
-// 陣列長度要在 [min, max]；任何一項 item() 回 null 就整個 null。
+// 陣列至少要有 min 項，超過 max 項只取前 max 項；任何一項 item() 回 null
+// 就整個 null（要略過壞掉的項目，用 arrSome）。
 export function arr<T>(raw: unknown, min: number, max: number, item: (x: unknown, i: number) => T | null): T[] | null {
-  if (!Array.isArray(raw) || raw.length < min || raw.length > max) return null;
+  if (!Array.isArray(raw) || raw.length < min) return null;
+  raw = raw.slice(0, max);
+  if (!Array.isArray(raw)) return null;
   const out: T[] = [];
   for (let i = 0; i < raw.length; i++) {
     const v = item(raw[i], i);
@@ -44,6 +52,17 @@ export function arr<T>(raw: unknown, min: number, max: number, item: (x: unknown
     out.push(v);
   }
   return out;
+}
+
+// 跟 arr 一樣，但壞掉的項目直接略過；略過後少於 min 項才 null。
+export function arrSome<T>(raw: unknown, min: number, max: number, item: (x: unknown, i: number) => T | null): T[] | null {
+  if (!Array.isArray(raw)) return null;
+  const out: T[] = [];
+  for (let i = 0; i < raw.length && out.length < max; i++) {
+    const v = item(raw[i], i);
+    if (v !== null) out.push(v);
+  }
+  return out.length >= min ? out : null;
 }
 
 export const MARK_TONES: readonly MarkTone[] = ["accent", "amber", "muted", "strike"];
@@ -58,7 +77,7 @@ export function marked(raw: unknown): MarkedSentence | null {
   if (!o) return null;
   const text = str(o.text, SENTENCE_MAX);
   if (text === null) return null;
-  const marks = arr(o.marks, 0, 6, (m): Mark | null => {
+  const marks = arrSome(o.marks, 0, 6, (m): Mark | null => {
     const mo = obj(m);
     if (!mo) return null;
     const t = str(mo.text, SENTENCE_MAX);

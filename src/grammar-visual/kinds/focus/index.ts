@@ -34,8 +34,10 @@ function parse(raw: unknown): FocusVisual | null {
   const b = base(raw, "focus");
   if (!b) return null;
   const cards = arr(b.o.cards, 2, 3, parseCard);
-  if (cards === null || cards.filter((c) => c.current).length !== 1) return null;
-  return { kind: "focus", sentence: b.sentence, explain: b.explain, cards };
+  if (cards === null) return null;
+  // 「這句」那張剛好一張：沒有就第一張，多張就留第一張。
+  const first = Math.max(0, cards.findIndex((c) => c.current));
+  return { kind: "focus", sentence: b.sentence, explain: b.explain, cards: cards.map((c, i) => ({ ...c, current: i === first })) };
 }
 
 const schema = sObj({

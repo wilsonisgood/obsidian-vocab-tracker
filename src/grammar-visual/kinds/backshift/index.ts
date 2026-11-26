@@ -26,8 +26,10 @@ function parse(raw: unknown): BackshiftVisual | null {
     return from !== null && to !== null && type !== null && why !== null ? { from, to, type, why } : null;
   });
   if (direct === null || !swaps) return null;
-  for (const s of swaps) if (locate(direct, s.from) < 0 || locate(b.sentence.text, s.to) < 0) return null;
-  return { kind: "backshift", sentence: b.sentence, explain: b.explain, direct, swaps };
+  // 對照的字要真的在原話／轉述句裡；對不到的那組略過，至少留一組。
+  const found = swaps.filter((s) => locate(direct, s.from) >= 0 && locate(b.sentence.text, s.to) >= 0);
+  if (!found.length) return null;
+  return { kind: "backshift", sentence: b.sentence, explain: b.explain, direct, swaps: found };
 }
 
 export const backshiftKind: KindModule<"backshift"> = {

@@ -21,13 +21,15 @@ describe("order", () => {
     expect(orderKind.parse({ ...v, kind: "scope" })).toBeNull();
     expect(orderKind.parse({ ...v, steps: [] })).toBeNull();
     expect(orderKind.parse({ ...v, base: [v.base[0]] })).toBeNull();
-    expect(orderKind.parse({ ...v, steps: ["only one"] })).toBeNull();
+    // 步驟編號說了算：0 → plain；有編號卻標 plain → moved；超出範圍夾回。
     const bad = clone(v);
     bad.result[0].step = 0;
-    expect(orderKind.parse(bad)).toBeNull();
+    expect(orderKind.parse(bad)?.result[0].role).toBe("plain");
     const bad2 = clone(v);
     bad2.base[0].step = 5;
-    expect(orderKind.parse(bad2)).toBeNull();
+    const p2 = orderKind.parse(bad2);
+    expect(p2?.base[0].step).toBe(v.steps.length);
+    expect(p2?.base[0].role).toBe("moved");
   });
   it("電腦版與手機版都畫得出來", () => {
     const v = orderKind.builtin["negative-inversion"];

@@ -36,9 +36,9 @@ describe("compare parse 擋掉不合格", () => {
     const a = sample(); a.items = a.items.slice(0, 1);
     expect(compareKind.parse(a)).toBeNull();
     const b = sample(); b.items[0].value = 0;
-    expect(compareKind.parse(b)).toBeNull();
+    expect(compareKind.parse(b)?.items[0].value).toBe(1); // 夾回範圍
     const c = sample(); c.focus = "Nobody";
-    expect(compareKind.parse(c)).toBeNull();
+    expect(compareKind.parse(c)?.focus).toBe(sample().items[0].label);
     const d = sample(); d.relation = "bigger";
     expect(compareKind.parse(d)).toBeNull();
   });

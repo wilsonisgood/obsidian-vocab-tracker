@@ -29,12 +29,8 @@ describe("timeline", () => {
   it("不合格輸入回 null", () => {
     const bad: ((v: TimelineVisual) => unknown)[] = [
       (v) => ({ ...v, events: [] }),
-      (v) => ({ ...v, events: v.events.map((e) => ({ ...e, focus: false })) }),
-      (v) => ({ ...v, events: [{ ...v.events[0], at: 5 }] }),
       (v) => ({ ...v, events: [{ ...v.events[0], shape: "wave" }] }),
-      (v) => ({ ...v, events: [{ ...v.events[0], shape: "point", at: -1, to: 0 }] }),
-      (v) => ({ ...v, events: [{ ...v.events[0], at: 1, to: 0 }] }),
-      (v) => ({ ...v, ref: { at: 0.5, label: "x" } }),
+      (v) => ({ ...v, ref: { at: "x", label: "x" } }),
       (v) => ({ ...v, kind: "scale" }),
     ];
     for (const f of bad) expect(mod.parse(JSON.parse(JSON.stringify(f(sample()))))).toBeNull();

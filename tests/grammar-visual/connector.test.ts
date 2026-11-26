@@ -21,7 +21,7 @@ describe("connector 版面", () => {
     expect(connectorKind.parse(null)).toBeNull();
     expect(connectorKind.parse({ ...good, kind: "scale" })).toBeNull();
     expect(connectorKind.parse({ ...good, explain: "" })).toBeNull();
-    expect(connectorKind.parse({ ...good, explain: "字".repeat(200) })).toBeNull();
+    expect(connectorKind.parse({ ...good, explain: "字".repeat(200) })?.explain.endsWith("…")).toBe(true); // 太長就截短
     expect(connectorKind.parse({ ...good, relation: "other" })).toBeNull();
     expect(connectorKind.parse({ ...good, compare: [] })).toBeNull();
     expect(connectorKind.parse({ ...good, left: { text: "", note: "" } })).toBeNull();

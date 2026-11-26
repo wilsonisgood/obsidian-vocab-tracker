@@ -18,10 +18,10 @@ describe("scope", () => {
   it("不合格輸入回 null", () => {
     const v = clone(scopeKind.builtin["prepositions-time-place"]);
     expect(scopeKind.parse("x")).toBeNull();
-    expect(scopeKind.parse({ ...v, hit: 3 })).toBeNull();
+    expect(scopeKind.parse({ ...v, hit: 3 })?.hit).toBe(v.levels.length - 1); // 夾回範圍
     expect(scopeKind.parse({ ...v, levels: [v.levels[0]] })).toBeNull();
     expect(scopeKind.parse({ ...v, domain: "space" })).toBeNull();
-    expect(scopeKind.parse({ ...v, alt: [v.alt[0], v.alt[0]] })).toBeNull();
+    expect(scopeKind.parse({ ...v, alt: [v.alt[0], v.alt[0]] })?.alt.length).toBe(1); // 多的只取前面
   });
   it("畫出層層框，並能切換時間與地點", () => {
     const v = scopeKind.builtin["prepositions-time-place"];

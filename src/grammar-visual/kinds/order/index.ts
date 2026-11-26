@@ -14,9 +14,9 @@ function parseTokens(raw: unknown, steps: number): OrderToken[] | null {
     const role = oneOf(o.role, ROLES);
     const step = int(o.step, 0, steps);
     if (text === null || role === null || step === null) return null;
-    // 沒搬的才是 plain，搬了就要有步驟編號。
-    if ((role === "plain") !== (step === 0)) return null;
-    return { text, role, step };
+    // 步驟編號說了算：0＝沒動（plain）；有編號卻標 plain 的當成 moved。
+    if (step === 0) return { text, role: "plain", step };
+    return { text, role: role === "plain" ? "moved" : role, step };
   });
 }
 
@@ -38,8 +38,6 @@ export const orderKind: KindModule<"order"> = {
     const tokens = parseTokens(b.o.base, steps.length);
     const result = parseTokens(b.o.result, steps.length);
     if (tokens === null || result === null) return null;
-    // 每個步驟都要在結果句裡看得到。
-    for (let i = 1; i <= steps.length; i++) if (!result.some((t) => t.step === i)) return null;
     return { kind: "order", sentence: b.sentence, explain: b.explain, baseLabel, base: tokens, resultLabel, result, steps };
   },
   schema: sObj({

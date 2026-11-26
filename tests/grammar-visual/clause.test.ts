@@ -21,10 +21,10 @@ describe("clause", () => {
     expect(clauseKind.parse({ ...v, clauses: [] })).toBeNull();
     const jump = clone(v);
     jump.clauses[0].depth = 2;
-    expect(clauseKind.parse(jump)).toBeNull();
+    expect(clauseKind.parse(jump)?.clauses[0].depth).toBe(1); // 跳層拉回上一層 +1
     const deep = clone(v);
     deep.clauses[1].depth = 4;
-    expect(clauseKind.parse(deep)).toBeNull();
+    expect(clauseKind.parse(deep)?.clauses[1].depth).toBeLessThanOrEqual(3);
     expect(clauseKind.parse({ ...v, core: "" })).toBeNull();
   });
   it("展開子句與只看主幹可以切換", () => {

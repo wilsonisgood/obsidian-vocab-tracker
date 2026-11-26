@@ -21,8 +21,9 @@ function parseEvent(raw: unknown): TimelineEvent | null {
   const to = int(o.to, -3, 3);
   const focus = bool(o.focus);
   if (label === null || shape === null || at === null || to === null || focus === null) return null;
-  if (shape === "point" ? to !== at : to < at) return null;
-  return { label, shape, at, to, focus };
+  // point 的終點就是起點；span 起訖顛倒就對調。
+  if (shape === "point") return { label, shape, at, to: at, focus };
+  return { label, shape, at: Math.min(at, to), to: Math.max(at, to), focus };
 }
 
 function parse(raw: unknown): TimelineVisual | null {
@@ -34,7 +35,8 @@ function parse(raw: unknown): TimelineVisual | null {
   const at = int(ro.at, -3, 3);
   const label = str(ro.label, SHORT_MAX);
   if (at === null || label === null) return null;
-  if (!events.some((e) => e.focus)) return null;
+  // 沒標「這句」的就當第一件是。
+  if (!events.some((e) => e.focus)) events[0] = { ...events[0], focus: true };
   return { kind: "timeline", sentence: b.sentence, explain: b.explain, events, ref: { at, label } };
 }
 

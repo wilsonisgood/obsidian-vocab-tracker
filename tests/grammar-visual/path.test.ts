@@ -21,11 +21,11 @@ describe("path 版面", () => {
     expect(pathKind.parse(null)).toBeNull();
     expect(pathKind.parse({ ...good, kind: "scale" })).toBeNull();
     expect(pathKind.parse({ ...good, explain: "" })).toBeNull();
-    expect(pathKind.parse({ ...good, explain: "字".repeat(200) })).toBeNull();
+    expect(pathKind.parse({ ...good, explain: "字".repeat(200) })?.explain.endsWith("…")).toBe(true); // 太長就截短
     const steps = good.steps as unknown[];
-    expect(pathKind.parse({ ...good, stopAt: steps.length })).toBeNull();
-    expect(pathKind.parse({ ...good, stopAt: -1 })).toBeNull();
-    expect(pathKind.parse({ ...good, stopAt: 0.5 })).toBeNull();
+    expect(pathKind.parse({ ...good, stopAt: steps.length })?.stopAt).toBe(steps.length - 1); // 夾回範圍
+    expect(pathKind.parse({ ...good, stopAt: -1 })?.stopAt).toBe(0);
+    expect(pathKind.parse({ ...good, stopAt: "x" })).toBeNull();
     expect(pathKind.parse({ ...good, steps: steps.slice(0, 1) })).toBeNull();
   });
 
