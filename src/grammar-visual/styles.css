@@ -80,3 +80,10 @@
 }
 .gv-chip.is-on { background: var(--gv-accent); border-color: var(--gv-accent); color: var(--gv-accent-on); }
 .gv.is-mobile .gv-chip { min-height: 44px; padding: 8px 16px; }
+
+/* Obsidian 閱讀模式會替清單加縮排與項目符號（.markdown-rendered ol / ul / li），
+   版面裡的清單只是排版用，一律清掉，免得整排格子被推到右邊。
+   要縮排的版面用比這條更具體的選擇器自己加（例：語序搬移的步驟）。 */
+.gv .gv-body :is(ol, ul) { margin: 0; padding: 0; list-style: none; }
+.gv .gv-body li { margin-inline: 0; }
+.gv .gv-body li::marker { content: none; }

@@ -8,11 +8,11 @@
 .gv-order-tok.is-moved { border-color: var(--gv-amber); }
 .gv-order-row.is-result .gv-order-tok.is-aux { background: var(--gv-accent-bg); border-width: 2px; font-weight: 600; }
 .gv-order-row.is-result .gv-order-tok.is-moved { background: var(--gv-amber-bg); border-width: 2px; font-weight: 600; }
-.gv-order-steps { list-style: none; margin: 0; padding: 0 0 0 82px; display: flex; flex-direction: column; gap: 2px; font-size: var(--gv-font-small); color: var(--gv-muted); }
+.gv .gv-body .gv-order-steps { list-style: none; margin: 0; padding: 0 0 0 82px; display: flex; flex-direction: column; gap: 2px; font-size: var(--gv-font-small); color: var(--gv-muted); }
 .gv-order-step { margin: 0; padding: 0; }
 
 .gv.is-mobile .gv-order-row { flex-direction: column; align-items: stretch; gap: 6px; padding: 10px; border-radius: var(--gv-radius); background: var(--gv-bg); border: 1px solid var(--gv-border); }
 .gv.is-mobile .gv-order-row.is-result { border: 2px solid var(--gv-accent); }
 .gv.is-mobile .gv-order-label { width: auto; }
 .gv.is-mobile .gv-order-tok { padding: 4px 8px; }
-.gv.is-mobile .gv-order-steps { padding: 0 4px; }
+.gv.is-mobile .gv-body .gv-order-steps { padding: 0 4px; }
