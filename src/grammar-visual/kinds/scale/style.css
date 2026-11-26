@@ -3,17 +3,18 @@
 .gv-sc-evtext { padding: 0 4px; border-radius: 4px; background: var(--gv-green-bg); }
 .gv-sc-host { display: flex; flex-direction: column; gap: 10px; }
 .gv-sc-ends { display: flex; justify-content: space-between; }
-.gv-sc-board { position: relative; height: 128px; background: var(--gv-bg); border: 1px solid var(--gv-border); border-radius: var(--gv-radius); }
-.gv-sc-track { position: absolute; left: 4%; right: 4%; top: 40px; height: 6px; border-radius: 3px; background: var(--gv-border); }
+.gv-sc-board { position: relative; padding: 16px 0 12px; background: var(--gv-bg); border: 1px solid var(--gv-border); border-radius: var(--gv-radius); }
+.gv-sc-track { position: absolute; left: calc(50% / var(--gv-n)); right: calc(50% / var(--gv-n)); top: 23px; height: 6px; border-radius: 3px; background: var(--gv-border); }
 .gv-sc-fill { height: 6px; width: var(--gv-w); border-radius: 3px; background: var(--gv-accent-bg); border: 1px solid var(--gv-accent); box-sizing: border-box; }
-.gv-sc-step { position: absolute; left: var(--gv-x); top: 33px; width: var(--gv-sw); max-width: 30%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; }
+.gv-sc-cols { position: relative; display: grid; grid-template-columns: repeat(var(--gv-n), minmax(0, 1fr)); }
+.gv-sc-step { position: relative; min-width: 0; padding: 0 4px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; }
 .gv-sc-dot { width: 20px; height: 20px; margin-bottom: 4px; border-radius: 50%; box-sizing: border-box; background: var(--gv-bg2); border: 2px solid var(--gv-faint); }
 .gv-sc-step.is-pick .gv-sc-dot { background: var(--gv-accent); border: 3px solid var(--gv-bg); box-shadow: 0 0 0 2px var(--gv-accent); }
 .gv-sc-word { font-size: var(--gv-font-small); font-weight: 600; }
 .gv-sc-step.is-pick .gv-sc-word { color: var(--gv-accent-text); }
 .gv-sc-gloss { font-size: var(--gv-font-smaller); color: var(--gv-muted); }
 .gv-sc-step.is-pick .gv-sc-gloss { color: var(--gv-accent-text); }
-.gv-sc-here { position: absolute; top: -26px; padding: 0 8px; border-radius: 999px; font-size: var(--gv-font-smaller); font-weight: 600; background: var(--gv-accent); color: var(--gv-accent-on); white-space: nowrap; }
+.gv-sc-here { margin-top: 4px; padding: 0 8px; border-radius: 999px; font-size: var(--gv-font-smaller); font-weight: 600; background: var(--gv-accent); color: var(--gv-accent-on); white-space: nowrap; }
 
 /* 手機：直的量尺 */
 .gv-sc-vwrap { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 12px; padding: 12px; background: var(--gv-bg); border: 1px solid var(--gv-border); border-radius: var(--gv-radius); }

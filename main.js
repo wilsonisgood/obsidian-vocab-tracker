@@ -24126,23 +24126,24 @@ var scaleKind = {
       const board = add2(h, ctx, "div", "gv-sc-board");
       board.setAttribute("role", "group");
       board.setAttribute("aria-label", TYPE_NAME[cur.scale]);
+      board.style.setProperty("--gv-n", String(n));
       const track2 = add2(board, ctx, "div", "gv-sc-track");
-      const pos = (i) => 10 + i / (n - 1) * 80;
-      const pickX = pos(n - 1 - cur.pick);
+      const pickCol = n - 1 - cur.pick;
       const fill2 = add2(track2, ctx, "div", "gv-sc-fill");
-      fill2.style.setProperty("--gv-w", `${(pickX - 4).toFixed(2)}%`);
+      fill2.style.setProperty("--gv-w", `${(pickCol / (n - 1) * 100).toFixed(2)}%`);
+      const row = add2(board, ctx, "div", "gv-sc-cols");
+      const cells = [];
       cur.steps.forEach((step, k) => {
-        const x3 = pos(n - 1 - k);
         const on = k === cur.pick;
-        const item = add2(board, ctx, "div", ["gv-sc-step", on ? "is-pick" : ""]);
-        item.style.setProperty("--gv-x", `${x3.toFixed(2)}%`);
-        item.style.setProperty("--gv-sw", `${(80 / (n - 1)).toFixed(2)}%`);
+        const item = el(ctx, "div", ["gv-sc-step", on ? "is-pick" : ""]);
+        cells[n - 1 - k] = item;
         if (on) item.setAttribute("aria-current", "true");
         add2(item, ctx, "span", "gv-sc-dot");
         add2(item, ctx, "div", "gv-sc-word", step.word);
         add2(item, ctx, "div", "gv-sc-gloss", step.gloss);
         if (on) add2(item, ctx, "div", "gv-sc-here", "\u9019\u53E5");
       });
+      for (const c4 of cells) row.appendChild(c4);
     }
     function drawVertical(h, cur, s2, set4) {
       const wrap = add2(h, ctx, "div", "gv-sc-vwrap");

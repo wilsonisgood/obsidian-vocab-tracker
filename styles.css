@@ -5748,16 +5748,16 @@ body.is-mobile .vt-note-review .vt-nr-head {
 }
 .gv-sc-board {
   position: relative;
-  height: 128px;
+  padding: 16px 0 12px;
   background: var(--gv-bg);
   border: 1px solid var(--gv-border);
   border-radius: var(--gv-radius);
 }
 .gv-sc-track {
   position: absolute;
-  left: 4%;
-  right: 4%;
-  top: 40px;
+  left: calc(50% / var(--gv-n));
+  right: calc(50% / var(--gv-n));
+  top: 23px;
   height: 6px;
   border-radius: 3px;
   background: var(--gv-border);
@@ -5770,13 +5770,15 @@ body.is-mobile .vt-note-review .vt-nr-head {
   border: 1px solid var(--gv-accent);
   box-sizing: border-box;
 }
+.gv-sc-cols {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--gv-n), minmax(0, 1fr));
+}
 .gv-sc-step {
-  position: absolute;
-  left: var(--gv-x);
-  top: 33px;
-  width: var(--gv-sw);
-  max-width: 30%;
-  transform: translateX(-50%);
+  position: relative;
+  min-width: 0;
+  padding: 0 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -5812,8 +5814,7 @@ body.is-mobile .vt-note-review .vt-nr-head {
   color: var(--gv-accent-text);
 }
 .gv-sc-here {
-  position: absolute;
-  top: -26px;
+  margin-top: 4px;
   padding: 0 8px;
   border-radius: 999px;
   font-size: var(--gv-font-smaller);
@@ -6187,6 +6188,7 @@ body.is-mobile .vt-note-review .vt-nr-head {
 }
 .gv.is-mobile .gv-path-result {
   flex-basis: 100%;
+  box-sizing: border-box;
   text-align: left;
   padding-left: 32px;
 }

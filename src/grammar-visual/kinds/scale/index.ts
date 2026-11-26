@@ -1,6 +1,6 @@
 import type { KindModule, ScaleSet, ScaleStep, ScaleType, ScaleVisual } from "../../types";
 import { arr, base, baseSchema, int, obj, oneOf, sArr, sEnum, sInt, sObj, sStr, str, SENTENCE_MAX, SHORT_MAX } from "../../kit/parse";
-import { add, chips, explain, sentence, stateful } from "../../kit/dom";
+import { add, el, chips, explain, sentence, stateful } from "../../kit/dom";
 import { scaleBuiltin } from "./builtin";
 
 const TYPES: readonly ScaleType[] = ["certainty", "obligation", "frequency", "amount", "formality", "politeness", "polarity"];
@@ -142,24 +142,26 @@ export const scaleKind: KindModule<"scale"> = {
       const board = add(h, ctx, "div", "gv-sc-board");
       board.setAttribute("role", "group");
       board.setAttribute("aria-label", TYPE_NAME[cur.scale]);
+      // n 個等寬欄位，刻度點在每欄正中；軌道從第一欄中心畫到最後一欄中心。
+      board.style.setProperty("--gv-n", String(n));
       const track = add(board, ctx, "div", "gv-sc-track");
-      const pos = (i: number): number => 10 + (i / (n - 1)) * 80;
-      // 顯示順序：低在左、高在右；steps 是由高到低，所以 steps 的第 k 格顯示在 n-1-k。
-      const pickX = pos(n - 1 - cur.pick);
+      // 顯示順序：低在左、高在右；steps 是由高到低，所以 steps 的第 k 格顯示在第 n-1-k 欄。
+      const pickCol = n - 1 - cur.pick;
       const fill = add(track, ctx, "div", "gv-sc-fill");
-      fill.style.setProperty("--gv-w", `${(pickX - 4).toFixed(2)}%`);
+      fill.style.setProperty("--gv-w", `${((pickCol / (n - 1)) * 100).toFixed(2)}%`);
+      const row = add(board, ctx, "div", "gv-sc-cols");
+      const cells: HTMLElement[] = [];
       cur.steps.forEach((step, k) => {
-        const x = pos(n - 1 - k);
         const on = k === cur.pick;
-        const item = add(board, ctx, "div", ["gv-sc-step", on ? "is-pick" : ""]);
-        item.style.setProperty("--gv-x", `${x.toFixed(2)}%`);
-        item.style.setProperty("--gv-sw", `${(80 / (n - 1)).toFixed(2)}%`);
+        const item = el(ctx, "div", ["gv-sc-step", on ? "is-pick" : ""]);
+        cells[n - 1 - k] = item;
         if (on) item.setAttribute("aria-current", "true");
         add(item, ctx, "span", "gv-sc-dot");
         add(item, ctx, "div", "gv-sc-word", step.word);
         add(item, ctx, "div", "gv-sc-gloss", step.gloss);
         if (on) add(item, ctx, "div", "gv-sc-here", "這句");
       });
+      for (const c of cells) row.appendChild(c);
     }
 
     function drawVertical(h: HTMLElement, cur: ScaleSet, s: State, set: (n: State) => void): void {
