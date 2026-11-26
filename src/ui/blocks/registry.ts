@@ -76,6 +76,8 @@ function grammarTopicDeps(plugin: VocabTrackerPlugin): GrammarTopicDeps {
     openTopic: (id) => plugin.grammarPages.open(id),
     openNote: (path) => plugin.openNote(path),
     openSettings: () => openPluginSettings(plugin.app, plugin.manifest.id),
+    visuals: plugin.grammarVisuals,
+    aiReady: () => plugin.ai.status() === "ready",
   };
 }
 
@@ -85,7 +87,6 @@ function grammarPracticeDeps(plugin: VocabTrackerPlugin): GrammarPracticeDeps {
     api: plugin.grammarQuestions,
     ready: () => grammarReady(plugin),
     ...grammarRouting(plugin),
-    visuals: plugin.grammarVisuals,
     generate: (topicId, count) => plugin.grammarQuestions.generate(topicId, { count }),
     aiReady: () => plugin.ai.status() === "ready",
     mountPlayer: mountScenarioPlayer,

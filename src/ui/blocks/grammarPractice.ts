@@ -2,8 +2,6 @@ import { MarkdownRenderChild, type Component, type MarkdownPostProcessorContext 
 import { t } from "../../core/i18n";
 import { topicById } from "../../core/grammar/catalog";
 import type { GrammarQuestion } from "../../core/model/grammar";
-import { renderGrammarVisual } from "../../grammar-visual";
-import type { VisualService } from "../../services/grammar/VisualService";
 import type { GrammarPracticeApi, GrammarFilter } from "../grammar/practiceTypes";
 import { stageLabel } from "../grammar/labels";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText } from "./learnUi";
@@ -19,9 +17,8 @@ import { dockSummary, type DockAnswer } from "./grammarPracticeModel";
 //   ```
 //
 // 主題頁「## 說明」下面這一塊，由上往下：
-//   1. 概念版面（grammar-visual 模組畫；內建一份，「換一個例句」問 AI）
-//   2. 練習這個概念：「出 3 題」就在這裡做，概念留在上面邊看邊做
-//   3. 原本的「在練習中心練這個主題」卡（錯題數）
+//   1. 練習這個概念：「出 3 題」就在這裡做（概念版面在頁首，見 grammarVisualPanel.ts）
+//   2. 原本的「在練習中心練這個主題」卡（錯題數）
 
 // What the card needs; registry.ts builds it. Every field is optional so a
 // host missing one just leaves that part out.
@@ -31,7 +28,6 @@ export interface GrammarPracticeDeps {
   ready?(): Promise<void>;
   setGrammarFilter?(f: GrammarFilter): void;
   openPractice?(track: "grammar"): void;
-  visuals?: Pick<VisualService, "current" | "isGenerated" | "isBusy" | "regenerate" | "reset" | "stop" | "events">;
   // 只出題、不放進待答池（QuestionService.generate）。
   generate?(topicId: string, count: number): Promise<GrammarQuestion[]>;
   aiReady?(): boolean;
@@ -50,15 +46,11 @@ export function renderGrammarPractice(
   ctx.addChild(new GrammarPracticeCard(el, deps, topic));
 }
 
-const isMobile = (): boolean => document.body.classList.contains("is-mobile");
-
 class GrammarPracticeCard extends MarkdownRenderChild {
   private root!: HTMLElement;
-  private visualEl!: HTMLElement;
   private dockEl!: HTMLElement;
   private countEl: HTMLElement | null = null;
   private alive = true;
-  private visualError = "";
   // 練習區
   private batch: GrammarQuestion[] = [];
   private answers: DockAnswer[] = [];
@@ -88,65 +80,16 @@ class GrammarPracticeCard extends MarkdownRenderChild {
       this.root.createDiv({ cls: "vt-gr-empty", text: t("grammar.practiceCard.noTopic") });
       return;
     }
-    this.visualEl = this.root.createDiv({ cls: "vt-gr-visual" });
     this.dockEl = this.root.createDiv({ cls: "vt-gr-dock" });
-    const { visuals } = this.deps;
-    if (visuals) {
-      this.register(
-        visuals.events.on("visual:change", (e) => {
-          if (e.topicId === topic.id) this.renderVisual();
-        })
-      );
-    }
-    this.renderVisual();
     this.renderDock();
     this.renderHubCard(topic.id, `${stageLabel(topic.stage)} · ${topic.title}`);
-  }
-
-  // ── 1. 概念版面 ────────────────────────────────────────────────
-
-  private renderVisual(): void {
-    if (!this.alive) return;
-    const el = this.visualEl;
-    el.empty();
-    const { visuals } = this.deps;
-    const v = visuals?.current(this.topicId) ?? null;
-    if (!v) {
-      el.createDiv({ cls: "vt-gr-empty", text: t("grammar.visual.none") });
-      return;
-    }
-    renderGrammarVisual(el, v, { mobile: isMobile() });
-    if (!visuals || !this.canAsk()) return;
-    const row = el.createDiv({ cls: "vt-gr-visual-actions" });
-    if (visuals.isBusy(this.topicId)) {
-      row.createSpan({ cls: "vt-gr-visual-busy", text: t("grammar.visual.regenBusy") });
-      learnButton(row, { label: t("grammar.visual.stop"), ghost: true, onClick: () => visuals.stop(this.topicId) });
-      return;
-    }
-    learnButton(row, { label: t("grammar.visual.regen"), icon: "sparkles", ghost: true, onClick: () => void this.regenerate() });
-    if (visuals.isGenerated(this.topicId)) {
-      learnButton(row, { label: t("grammar.visual.reset"), ghost: true, onClick: () => visuals.reset(this.topicId) });
-    }
-    if (this.visualError) row.createDiv({ cls: "vt-learn-error", text: this.visualError });
-  }
-
-  private async regenerate(): Promise<void> {
-    const { visuals } = this.deps;
-    if (!visuals) return;
-    this.visualError = "";
-    try {
-      await visuals.regenerate(this.topicId);
-    } catch (e) {
-      if (!isAbort(e)) this.visualError = t("grammar.visual.failed", { error: learnErrorText(e) });
-      this.renderVisual();
-    }
   }
 
   private canAsk(): boolean {
     return this.deps.aiReady ? this.deps.aiReady() : true;
   }
 
-  // ── 2. 練習這個概念 ────────────────────────────────────────────
+  // ── 1. 練習這個概念 ────────────────────────────────────────────
 
   private renderDock(): void {
     if (!this.alive) return;
@@ -241,7 +184,7 @@ class GrammarPracticeCard extends MarkdownRenderChild {
     }
   }
 
-  // ── 3. 練習中心卡 ──────────────────────────────────────────────
+  // ── 2. 練習中心卡 ──────────────────────────────────────────────
 
   private renderHubCard(topicId: string, sub: string): void {
     const card = this.root.createDiv({ cls: "vt-gr-bar vt-gr-practice-bar" });

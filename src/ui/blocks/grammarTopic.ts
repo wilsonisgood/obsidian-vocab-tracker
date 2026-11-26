@@ -15,6 +15,7 @@ import { emptyState } from "../kit/emptyState";
 import { inlineNote } from "../kit/inlineNote";
 import { objectiveRows, pageErrorText, parseTopicParams, sightingRows, topicChips, topicMeta } from "./grammarTopicModel";
 import { guardReadingClicks, isAbort, learnButton, learnErrorText } from "./learnUi";
+import { mountVisualPanel, type VisualPanelDeps } from "./grammarVisualPanel";
 
 // ── vocab-grammar-topic code block (第十五波 M, 1013 §3.2) ─────────
 //
@@ -33,7 +34,7 @@ import { guardReadingClicks, isAbort, learnButton, learnErrorText } from "./lear
 // Dependencies come bundled as GrammarTopicDeps (registry.ts builds them,
 // 整合事項).
 
-export interface GrammarTopicDeps {
+export interface GrammarTopicDeps extends VisualPanelDeps {
   grammar: Pick<GrammarStore, "ensureLoaded" | "attempts" | "events">;
   threads: Pick<ThreadService, "ensureLoaded" | "paragraphThreads" | "events">;
   ai: Pick<AiService, "run" | "status">;
@@ -102,6 +103,10 @@ class GrammarTopicBlock extends MarkdownRenderChild {
 
   onload(): void {
     this.containerEl.empty();
+    // 概念版面在頁首、主題卡上面；主題卡重畫時不動它。
+    const visualEl = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-visual"] });
+    guardReadingClicks(this, visualEl);
+    if (this.topic) mountVisualPanel(visualEl, this.deps, this.topic.id, this);
     this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-topic"] });
     guardReadingClicks(this, this.root);
 

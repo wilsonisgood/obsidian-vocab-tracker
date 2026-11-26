@@ -4518,6 +4518,10 @@ body.is-mobile .vt-pr-mistake {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 14px;
+}
+.vt-gr-visual:empty {
+  display: none;
 }
 .vt-gr-visual-actions {
   display: flex;
