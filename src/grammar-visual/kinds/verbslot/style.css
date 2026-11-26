@@ -1,0 +1,15 @@
+.gv-verbslot-root { display: flex; flex-direction: column; gap: 10px; }
+.gv-verbslot-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.gv-verbslot-card { display: flex; flex-direction: column; gap: 6px; }
+.gv-verbslot-card.is-off { opacity: 0.55; border-style: dashed; }
+.gv-verbslot-head { display: flex; align-items: center; gap: 8px; }
+.gv-verbslot-pattern { font-weight: 600; }
+.gv-verbslot-pic { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.gv-verbslot-box { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; background: var(--gv-bg2); border: 1px solid var(--gv-border); }
+.gv-verbslot-box.is-stop { border-color: var(--gv-red); background: var(--gv-red-bg); }
+.gv-verbslot-box.is-stop .gv-verbslot-box-text { text-decoration: line-through; color: var(--gv-muted); }
+.gv-verbslot-x { color: var(--gv-red); font-weight: 700; }
+.gv-verbslot-box.is-accent { border: 2px solid var(--gv-accent); background: var(--gv-accent-bg); font-weight: 600; }
+.gv-verbslot-box.has-next::after { content: "→"; margin-left: 6px; color: var(--gv-faint); }
+.gv-verbslot-family { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.gv.is-mobile .gv-verbslot-cards { grid-template-columns: 1fr; }

@@ -7,19 +7,17 @@ import { guardReadingClicks, learnButton } from "./learnUi";
 import { parseBlockParams } from "./params";
 import { routeToPractice } from "./practice/grammarTabModel";
 
-// ── vocab-grammar-practice code block (wave 15 P → 第十六波 H) ──────
+// ── vocab-grammar-practice code block (wave 15 P → 第十六波 H → 概念版面) ──
 //
 //   ```vocab-grammar-practice
 //   topic: present-perfect-vs-past
 //   ```
 //
-// Practice moved to the practice hub's 文法 tab (固定決定 5): the block is
-// one card, 「在練習中心練這個主題」 with the topic's open-mistake count.
-// The button sets the grammar filter to the topic and opens the tab.
+// 主題頁「## 說明」下面這一塊，由上往下：
+// 「在練習中心練這個主題」卡（錯題數）。概念版面與「練習這個概念」在頁首
+// （grammarVisualPanel.ts、grammarPracticeDock.ts，由主題區塊掛上）。
 
-// What the card needs; registry.ts builds it (整合事項). The practice fields
-// stay optional until main.ts wires them: without them the button is left
-// out.
+// What the card needs; registry.ts builds it.
 export interface GrammarPracticeDeps {
   api?: Pick<GrammarPracticeApi, "mistakeQuestions" | "events">;
   // Resolves when the grammar and learner stores have loaded.
@@ -40,6 +38,7 @@ export function renderGrammarPractice(
 
 class GrammarPracticeCard extends MarkdownRenderChild {
   private root!: HTMLElement;
+  private dockEl!: HTMLElement;
   private countEl: HTMLElement | null = null;
   private alive = true;
 
@@ -61,18 +60,21 @@ class GrammarPracticeCard extends MarkdownRenderChild {
       this.root.createDiv({ cls: "vt-gr-empty", text: t("grammar.practiceCard.noTopic") });
       return;
     }
+    this.renderHubCard(topic.id, `${stageLabel(topic.stage)} · ${topic.title}`);
+  }
+
+  private renderHubCard(topicId: string, sub: string): void {
     const card = this.root.createDiv({ cls: "vt-gr-bar vt-gr-practice-bar" });
     const text = card.createDiv({ cls: "vt-gr-practice-text" });
     text.createDiv({ cls: "vt-gr-bar-main", text: t("grammar.practiceCard.title") });
-    text.createDiv({ cls: "vt-gr-bar-sub", text: `${stageLabel(topic.stage)} · ${topic.title}` });
+    text.createDiv({ cls: "vt-gr-bar-sub", text: sub });
     this.countEl = text.createDiv({ cls: "vt-gr-practice-count" });
     const { setGrammarFilter, openPractice } = this.deps;
     if (setGrammarFilter && openPractice) {
       learnButton(card, {
         label: t("grammar.practiceCard.go"),
         icon: "play",
-        cta: true,
-        onClick: () => routeToPractice({ setGrammarFilter, openPractice }, topic.id),
+        onClick: () => routeToPractice({ setGrammarFilter, openPractice }, topicId),
       });
     }
 
@@ -80,7 +82,7 @@ class GrammarPracticeCard extends MarkdownRenderChild {
     if (!api) return;
     const refresh = () => {
       if (!this.alive || !this.countEl) return;
-      const n = api.mistakeQuestions().filter((q) => q.topicId === topic.id).length;
+      const n = api.mistakeQuestions().filter((q) => q.topicId === topicId).length;
       this.countEl.setText(n > 0 ? t("grammar.practiceCard.mistakes", { n }) : t("grammar.practiceCard.noMistakes"));
     };
     this.register(api.events.on("pool:change", refresh));

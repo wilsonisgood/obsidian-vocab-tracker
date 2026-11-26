@@ -418,6 +418,7 @@ describe("task registry", () => {
       "grammar.explain",
       "grammar.questions",
       "grammar.grade",
+      "grammar.visual",
       // 第十七波: the practice tabs call this directly.
       "practice.scenario",
       // 對話整理: ThreadService.archiveBuddy calls this directly.

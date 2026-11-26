@@ -38,6 +38,21 @@ const layerRestrictions = [
       ],
     },
   },
+  {
+    // 文法概念版面是要整包搬走的獨立模組：只准 import 自己資料夾裡的檔案。
+    files: ["src/grammar-visual/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [{ name: "obsidian", message: "grammar-visual 是獨立模組，不得 import obsidian" }],
+          patterns: [
+            { group: ["**/core/**", "**/services/**", "**/ui/**", "**/platform/**", "**/main"], message: "grammar-visual 只能 import 自己資料夾裡的檔案" },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export default tseslint.config(

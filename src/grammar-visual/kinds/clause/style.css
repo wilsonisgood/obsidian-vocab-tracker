@@ -1,0 +1,12 @@
+.gv-clause .gv-body { display: flex; flex-direction: column; gap: 10px; }
+.gv-clause-host { display: flex; flex-direction: column; gap: 8px; }
+.gv-clause-core-text { font-size: 1.05em; }
+.gv-clause-row { display: flex; flex-direction: column; gap: 4px; }
+.gv-clause-link { display: flex; align-items: center; gap: 8px; font-size: var(--gv-font-small); color: var(--gv-muted); }
+.gv-clause-d1 { margin-left: 18px; }
+.gv-clause-d2 { margin-left: 36px; }
+.gv-clause-d3 { margin-left: 54px; }
+.gv-clause-text { font-size: 1em; }
+
+.gv.is-mobile .gv-clause-d2 { margin-left: 30px; }
+.gv.is-mobile .gv-clause-d3 { margin-left: 42px; }

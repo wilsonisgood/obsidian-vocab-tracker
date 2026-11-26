@@ -8,6 +8,7 @@ import { NOTE_TASKS } from "./note";
 import { GRAMMAR_TASKS as GRAMMAR_EXPLAIN_TASKS } from "./grammarExplain";
 import { GRAMMAR_TASKS as GRAMMAR_GRADE_TASKS } from "./grammarGrade";
 import { GRAMMAR_TASKS as GRAMMAR_QUESTION_TASKS } from "./grammarQuestions";
+import { GRAMMAR_TASKS as GRAMMAR_VISUAL_TASKS } from "./grammarVisual";
 import { reportAdvise } from "./report";
 import { reportAnalyze } from "./reportAnalyze";
 import { reportReview } from "./reportReview";
@@ -66,6 +67,7 @@ export function defaultTaskRegistry(): TaskRegistry {
     ...GRAMMAR_EXPLAIN_TASKS,
     ...GRAMMAR_QUESTION_TASKS,
     ...GRAMMAR_GRADE_TASKS,
+    ...GRAMMAR_VISUAL_TASKS,
     ...PRACTICE_TASKS,
     ...PARAPHRASE_TASKS,
     ...GLOSS_TASKS,

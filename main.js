@@ -5,7 +5,7 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __defNormalProp = (obj, key6, value) => key6 in obj ? __defProp(obj, key6, { enumerable: true, configurable: true, writable: true, value }) : obj[key6] = value;
+var __defNormalProp = (obj2, key6, value) => key6 in obj2 ? __defProp(obj2, key6, { enumerable: true, configurable: true, writable: true, value }) : obj2[key6] = value;
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -27,7 +27,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __publicField = (obj, key6, value) => __defNormalProp(obj, typeof key6 !== "symbol" ? key6 + "" : key6, value);
+var __publicField = (obj2, key6, value) => __defNormalProp(obj2, typeof key6 !== "symbol" ? key6 + "" : key6, value);
 
 // main.ts
 var main_exports = {};
@@ -38,8 +38,8 @@ module.exports = __toCommonJS(main_exports);
 var import_obsidian74 = require("obsidian");
 
 // src/core/text/wordRe.ts
-function escapeRe(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRe(s2) {
+  return s2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 function buildWordRe(word) {
   return new RegExp(
@@ -71,25 +71,25 @@ function wrapOutsideCode(content, re) {
 
 // src/core/text/sentence.ts
 function extractSentence(text, start4, end, node) {
-  let s = start4;
+  let s2 = start4;
   let e = end;
-  while (s > 0 && !/[.!?\n]/.test(text[s - 1])) s--;
+  while (s2 > 0 && !/[.!?\n]/.test(text[s2 - 1])) s2--;
   while (e < text.length && !/[.!?\n]/.test(text[e])) e++;
   if (e < text.length && /[.!?]/.test(text[e])) e++;
-  const sentence = text.slice(s, e).trim();
-  if ((s > 0 || e < text.length) && node && node.parentElement) {
-    return sentence;
+  const sentence2 = text.slice(s2, e).trim();
+  if ((s2 > 0 || e < text.length) && node && node.parentElement) {
+    return sentence2;
   }
   const block = node && node.parentElement && node.parentElement.closest("p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6");
   if (block) {
     const full = (block.textContent || "").replace(/\s+/g, " ").trim();
     if (full.length <= 400) return full;
   }
-  return sentence;
+  return sentence2;
 }
 
 // src/core/text/sourceLine.ts
-function findSourceLine(content, word, sentence) {
+function findSourceLine(content, word, sentence2) {
   const lines4 = content.split("\n");
   const wordRe = new RegExp(
     `(?<![A-Za-z0-9'\\-])${escapeRe(word)}(?![A-Za-z0-9'\\-])`,
@@ -100,8 +100,8 @@ function findSourceLine(content, word, sentence) {
     if (wordRe.test(lines4[i])) candidates.push(i);
   }
   if (candidates.length === 0) return -1;
-  if (candidates.length === 1 || !sentence) return candidates[0];
-  const sentWords = new Set(sentence.toLowerCase().match(/[a-z']+/g) || []);
+  if (candidates.length === 1 || !sentence2) return candidates[0];
+  const sentWords = new Set(sentence2.toLowerCase().match(/[a-z']+/g) || []);
   let best = candidates[0];
   let bestScore = -1;
   for (const i of candidates) {
@@ -284,9 +284,9 @@ function parseSense(partOfSpeech, html) {
   if (/^<i>[\s\S]*<\/i>$/.test(head) || /^<span class="use-with-mention"[^>]*>[^<]*<\/span>$/.test(head)) return null;
   const definition = toText(head);
   if (!definition) return null;
-  const base = (_a = /class="form-of-definition-link"[\s\S]*?title="([^"]+)"/.exec(head)) == null ? void 0 : _a[1];
+  const base2 = (_a = /class="form-of-definition-link"[\s\S]*?title="([^"]+)"/.exec(head)) == null ? void 0 : _a[1];
   const sense = { partOfSpeech, definition, labeled: head.includes("usage-label-sense") };
-  if (base) sense.baseForm = toText(base);
+  if (base2) sense.baseForm = toText(base2);
   return sense;
 }
 function toText(html) {
@@ -298,7 +298,7 @@ function pickWiktionarySense(entries) {
   for (const entry of entries) {
     const pos = (entry.partOfSpeech || "").toLowerCase();
     if (SKIPPED_POS.has(pos)) continue;
-    const senses = (entry.definitions || []).map((d) => parseSense(pos, d.definition || "")).filter((s) => s !== null);
+    const senses = (entry.definitions || []).map((d) => parseSense(pos, d.definition || "")).filter((s2) => s2 !== null);
     if (senses.length === 0) continue;
     let sense = senses[0];
     if (sense.definition.endsWith(":") && senses[1]) {
@@ -350,13 +350,13 @@ async function fetchDatamuseDefinition(http, w2) {
     throw new DictionaryError("network", `Datamuse request failed (${errorMessage(e)})`, { cause: e });
   }
   if (res.status !== 200) throw new Error(`Datamuse API returned HTTP ${res.status}`);
-  let arr;
+  let arr2;
   try {
-    arr = res.json;
+    arr2 = res.json;
   } catch (e) {
     throw new Error("couldn't parse Datamuse response", { cause: e });
   }
-  const defs = Array.isArray(arr) && Array.isArray((_a = arr[0]) == null ? void 0 : _a.defs) ? arr[0].defs : [];
+  const defs = Array.isArray(arr2) && Array.isArray((_a = arr2[0]) == null ? void 0 : _a.defs) ? arr2[0].defs : [];
   if (defs.length === 0) throw new DictionaryError("notFound", `"${w2}" not found in dictionary`);
   const [posTag, definition] = defs[0].split("	");
   const partOfSpeech = (_c = (_b = POS_MAP[posTag]) != null ? _b : posTag) != null ? _c : "";
@@ -374,8 +374,8 @@ async function fetchDatamuseRelated(http, w2, rel) {
 }
 
 // src/services/dictionary/translate/validate.ts
-function looksLikeValidTranslation(s) {
-  return s.length > 0 && !/%[0-9A-Fa-f]{2}/.test(s);
+function looksLikeValidTranslation(s2) {
+  return s2.length > 0 && !/%[0-9A-Fa-f]{2}/.test(s2);
 }
 
 // src/services/dictionary/translate/google.ts
@@ -468,10 +468,10 @@ var DictionaryService = class {
     let formOf = "";
     if (found.baseForm && found.baseForm.toLowerCase() !== w2) {
       try {
-        const base = await fetchWiktionaryDefinition(this.http, found.baseForm.toLowerCase());
+        const base2 = await fetchWiktionaryDefinition(this.http, found.baseForm.toLowerCase());
         formOf = definition;
-        definition = base.definition;
-        partOfSpeech = base.partOfSpeech;
+        definition = base2.definition;
+        partOfSpeech = base2.partOfSpeech;
       } catch (e) {
       }
     }
@@ -527,12 +527,12 @@ var TypedEmitter = class {
     this.listeners = /* @__PURE__ */ new Map();
   }
   on(event, fn) {
-    let set3 = this.listeners.get(event);
-    if (!set3) {
-      set3 = /* @__PURE__ */ new Set();
-      this.listeners.set(event, set3);
+    let set4 = this.listeners.get(event);
+    if (!set4) {
+      set4 = /* @__PURE__ */ new Set();
+      this.listeners.set(event, set4);
     }
-    set3.add(fn);
+    set4.add(fn);
     return () => this.off(event, fn);
   }
   off(event, fn) {
@@ -585,11 +585,11 @@ var DEFAULT_UI_PREFS = {
   sidebarOnPhone: true,
   highlightSaved: true
 };
-function isTapAction(v) {
-  return typeof v === "string" && TAP_ACTIONS.includes(v);
+function isTapAction(v5) {
+  return typeof v5 === "string" && TAP_ACTIONS.includes(v5);
 }
-function isPronounceSource(v) {
-  return typeof v === "string" && PRONOUNCE_SOURCES.includes(v);
+function isPronounceSource(v5) {
+  return typeof v5 === "string" && PRONOUNCE_SOURCES.includes(v5);
 }
 function resolveUiPrefs(ui) {
   return {
@@ -633,19 +633,19 @@ function stampMs(iso) {
   const ms9 = new Date(iso).getTime();
   return Number.isNaN(ms9) ? 0 : ms9;
 }
-function legacyStamp(s) {
-  const ms9 = stampMs(s.updatedAt);
+function legacyStamp(s2) {
+  const ms9 = stampMs(s2.updatedAt);
   let newest2 = 0;
-  for (const v of Object.values(s)) {
-    if (v && typeof v === "object") newest2 = Math.max(newest2, stampMs(v.updatedAt));
+  for (const v5 of Object.values(s2)) {
+    if (v5 && typeof v5 === "object") newest2 = Math.max(newest2, stampMs(v5.updatedAt));
   }
-  return ms9 > newest2 ? { ms: ms9, iso: s.updatedAt } : null;
+  return ms9 > newest2 ? { ms: ms9, iso: s2.updatedAt } : null;
 }
-function carryLegacyStamp(s) {
-  const legacy = legacyStamp(s);
+function carryLegacyStamp(s2) {
+  const legacy = legacyStamp(s2);
   if (!legacy) return;
   for (const key6 of SETTINGS_SECTIONS) {
-    const section4 = s[key6];
+    const section4 = s2[key6];
     if (section4 && typeof section4 === "object" && stampMs(section4.updatedAt) < legacy.ms) section4.updatedAt = legacy.iso;
   }
 }
@@ -678,42 +678,42 @@ function defaultLearnerProfile() {
 }
 function withSettingsDefaults(raw) {
   var _a, _b, _c, _d, _e, _f;
-  const base = raw != null ? raw : { schemaVersion: 2 };
+  const base2 = raw != null ? raw : { schemaVersion: 2 };
   const aiDefaults = defaultAiSettings();
-  const ai = (_a = base.ai) != null ? _a : aiDefaults;
+  const ai = (_a = base2.ai) != null ? _a : aiDefaults;
   const providers = { ...aiDefaults.providers };
   for (const id2 of Object.keys(providers)) {
     providers[id2] = { ...aiDefaults.providers[id2], ...(_c = (_b = ai.providers) == null ? void 0 : _b[id2]) != null ? _c : {} };
   }
   return {
-    ...base,
+    ...base2,
     schemaVersion: 2,
-    ui: { locale: "auto", ...(_d = base.ui) != null ? _d : {} },
+    ui: { locale: "auto", ...(_d = base2.ui) != null ? _d : {} },
     ai: { ...aiDefaults, ...ai, providers: { ...(_e = ai.providers) != null ? _e : {}, ...providers } },
-    learner: { ...defaultLearnerProfile(), ...(_f = base.learner) != null ? _f : {} }
+    learner: { ...defaultLearnerProfile(), ...(_f = base2.learner) != null ? _f : {} }
   };
 }
 function sectionFingerprint(section4) {
   if (!section4 || typeof section4 !== "object") return String(section4);
   return JSON.stringify(
     { ...section4, updatedAt: void 0 },
-    (_key, v) => v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(
-      Object.keys(v).sort().map((k) => [k, v[k]])
-    ) : v
+    (_key, v5) => v5 && typeof v5 === "object" && !Array.isArray(v5) ? Object.fromEntries(
+      Object.keys(v5).sort().map((k) => [k, v5[k]])
+    ) : v5
   );
 }
-function snapshotSettingsSections(s) {
+function snapshotSettingsSections(s2) {
   const out = {};
   for (const key6 of SETTINGS_SECTIONS) {
-    const section4 = s[key6];
+    const section4 = s2[key6];
     out[key6] = { fingerprint: sectionFingerprint(section4), updatedAt: section4 == null ? void 0 : section4.updatedAt };
   }
   return out;
 }
-function stampChangedSections(s, before, stamp) {
+function stampChangedSections(s2, before, stamp) {
   const changed = [];
   for (const key6 of SETTINGS_SECTIONS) {
-    const section4 = s[key6];
+    const section4 = s2[key6];
     if (!section4 || typeof section4 !== "object") continue;
     if (sectionFingerprint(section4) !== before[key6].fingerprint) {
       section4.updatedAt = stamp;
@@ -764,12 +764,12 @@ var VocabStore = class {
   // hands that old-version time down to its sections (carryLegacyStamp),
   // since bumping the top-level stamp here would hide it from merge.ts.
   updateSettings(mutate) {
-    const s = this.settings;
-    carryLegacyStamp(s);
-    const before = snapshotSettingsSections(s);
-    mutate(s);
+    const s2 = this.settings;
+    carryLegacyStamp(s2);
+    const before = snapshotSettingsSections(s2);
+    mutate(s2);
     const stamp = nowIso();
-    if (stampChangedSections(s, before, stamp).length > 0) s.updatedAt = stamp;
+    if (stampChangedSections(s2, before, stamp).length > 0) s2.updatedAt = stamp;
     return this.save();
   }
   // Live entries only — excludes soft-deleted (tombstoned) ones. UI code
@@ -981,8 +981,8 @@ function pickSection(local, remote, localLegacy, remoteLegacy, lTop, rTop) {
   const [winner, eff, own, legacy] = remoteWins ? [remote, r, rOwn, remoteLegacy] : [local, l4, lOwn, localLegacy];
   return legacy && eff > own ? { ...winner, updatedAt: legacy.iso } : winner;
 }
-function restFingerprint(s) {
-  const rest = { ...s };
+function restFingerprint(s2) {
+  const rest = { ...s2 };
   for (const key6 of SETTINGS_SECTIONS) delete rest[key6];
   return sectionFingerprint(rest);
 }
@@ -1857,6 +1857,20 @@ var en = {
   "grammar.practiceCard.mistakes": "{n} mistakes in this topic",
   "grammar.practiceCard.noMistakes": "No mistakes to redo in this topic",
   "grammar.practiceCard.noTopic": "Topic not found; check the topic: id.",
+  "grammar.visual.regen": "Another example",
+  "grammar.visual.regenBusy": "Generating\u2026",
+  "grammar.visual.stop": "Stop",
+  "grammar.visual.reset": "Back to the built-in example",
+  "grammar.visual.failed": "Couldn't generate it: {error}",
+  "grammar.visual.none": "No diagram for this topic yet.",
+  "grammar.dock.title": "Practice this concept",
+  "grammar.dock.sub": "Questions appear below while the concept stays in view.",
+  "grammar.dock.start": "3 questions",
+  "grammar.dock.more": "3 more",
+  "grammar.dock.busy": "Writing questions\u2026",
+  "grammar.dock.done": "Done: {right} / {total} right. Mistakes went to your mistake list.",
+  "grammar.dock.failed": "Couldn't write questions: {error}",
+  "grammar.dock.noAi": "Turn on AI in settings to get questions.",
   "grammar.topic.fillBuiltIn": "Fill in explanation",
   // ── 第十七波 Q：常用字頁籤、錯題區、Polysemy 意思地圖 ──
   "practice.poly.label": "Common words",
@@ -2832,6 +2846,20 @@ var zhTW = {
   "grammar.practiceCard.mistakes": "\u9019\u500B\u4E3B\u984C\u6709 {n} \u984C\u932F\u984C",
   "grammar.practiceCard.noMistakes": "\u9019\u500B\u4E3B\u984C\u6C92\u6709\u5F85\u91CD\u505A\u7684\u932F\u984C",
   "grammar.practiceCard.noTopic": "\u627E\u4E0D\u5230\u9019\u500B\u4E3B\u984C\uFF0C\u8ACB\u6AA2\u67E5 topic: \u7684 id\u3002",
+  "grammar.visual.regen": "\u63DB\u4E00\u500B\u4F8B\u53E5",
+  "grammar.visual.regenBusy": "\u7522\u751F\u4E2D\u2026",
+  "grammar.visual.stop": "\u505C\u6B62",
+  "grammar.visual.reset": "\u56DE\u5230\u5167\u5EFA\u4F8B\u53E5",
+  "grammar.visual.failed": "\u6C92\u6709\u7522\u751F\u6210\u529F\uFF1A{error}",
+  "grammar.visual.none": "\u9019\u500B\u4E3B\u984C\u9084\u6C92\u6709\u5716\u89E3\u3002",
+  "grammar.dock.title": "\u7DF4\u7FD2\u9019\u500B\u6982\u5FF5",
+  "grammar.dock.sub": "\u984C\u76EE\u51FA\u5728\u4E0B\u9762\uFF0C\u6982\u5FF5\u7559\u5728\u4E0A\u9762\uFF0C\u908A\u770B\u908A\u505A\u3002",
+  "grammar.dock.start": "\u51FA 3 \u984C",
+  "grammar.dock.more": "\u518D\u51FA 3 \u984C",
+  "grammar.dock.busy": "\u51FA\u984C\u4E2D\u2026",
+  "grammar.dock.done": "\u9019\u7D44\u505A\u5B8C\u4E86\uFF1A\u7B54\u5C0D {right} / {total} \u984C\u3002\u7B54\u932F\u7684\u5DF2\u8A18\u9032\u932F\u984C\u672C\u3002",
+  "grammar.dock.failed": "\u51FA\u984C\u5931\u6557\uFF1A{error}",
+  "grammar.dock.noAi": "\u51FA\u984C\u8981\u5148\u5728\u8A2D\u5B9A\u88E1\u958B\u555F AI\u3002",
   "grammar.topic.fillBuiltIn": "\u586B\u5165\u8AAA\u660E",
   // ── 第十七波 Q：常用字頁籤、錯題區、Polysemy 意思地圖 ──
   "practice.poly.label": "\u5E38\u7528\u5B57",
@@ -3143,8 +3171,8 @@ var Pronouncer = class {
     return false;
   }
   isCached(url) {
-    const c2 = this.cache.get(url);
-    return !!c2 && (c2.ready || c2.clip.ready);
+    const c4 = this.cache.get(url);
+    return !!c4 && (c4.ready || c4.clip.ready);
   }
   // Speaks the word. Resolves with how it was spoken once that's decided
   // (the recording started, or the system voice took over).
@@ -3177,9 +3205,9 @@ var Pronouncer = class {
   preload(req) {
     const url = this.recordingFor(req);
     if (!url || this.cache.has(url)) return;
-    const c2 = this.entry(url);
+    const c4 = this.entry(url);
     try {
-      c2.clip.load();
+      c4.clip.load();
     } catch (e) {
       console.error("Vocab Tracker: audio preload failed", e);
     }
@@ -3196,7 +3224,7 @@ var Pronouncer = class {
   }
   dispose() {
     this.stop();
-    for (const c2 of this.cache.values()) this.drop(c2);
+    for (const c4 of this.cache.values()) this.drop(c4);
     this.cache.clear();
   }
   // ── Internals ─────────────────────────────────────────────────
@@ -3262,29 +3290,29 @@ var Pronouncer = class {
       return hit;
     }
     const clip5 = this.deps.createClip(url);
-    const c2 = { clip: clip5, ready: clip5.ready, timedOut: false, offs: [] };
-    c2.offs.push(
+    const c4 = { clip: clip5, ready: clip5.ready, timedOut: false, offs: [] };
+    c4.offs.push(
       clip5.on("ready", () => {
-        c2.ready = true;
-        c2.timedOut = false;
+        c4.ready = true;
+        c4.timedOut = false;
       }),
       clip5.on("error", () => this.markFailed(url))
     );
-    this.cache.set(url, c2);
+    this.cache.set(url, c4);
     const max = (_a = this.deps.cacheSize) != null ? _a : DEFAULT_CACHE_SIZE;
     for (const [key6, old] of this.cache) {
       if (this.cache.size <= max) break;
-      if (old === c2 || ((_b = this.current) == null ? void 0 : _b.clip) === old.clip) continue;
+      if (old === c4 || ((_b = this.current) == null ? void 0 : _b.clip) === old.clip) continue;
       this.drop(old);
       this.cache.delete(key6);
     }
-    return c2;
+    return c4;
   }
-  drop(c2) {
-    for (const off of c2.offs) off();
-    c2.offs = [];
+  drop(c4) {
+    for (const off of c4.offs) off();
+    c4.offs = [];
     try {
-      c2.clip.pause();
+      c4.clip.pause();
     } catch (e) {
     }
   }
@@ -3292,21 +3320,21 @@ var Pronouncer = class {
     this.failed.delete(url);
     this.failed.set(url, this.now());
     this.saveFailed();
-    const c2 = this.cache.get(url);
-    if (c2) {
-      this.drop(c2);
+    const c4 = this.cache.get(url);
+    if (c4) {
+      this.drop(c4);
       this.cache.delete(url);
     }
   }
   live(a2) {
     return this.current === a2;
   }
-  setState(a2, s) {
-    if (a2.state === s) return;
-    a2.state = s;
+  setState(a2, s2) {
+    if (a2.state === s2) return;
+    a2.state = s2;
     if (a2.watchdog) clearTimeout(a2.watchdog);
     a2.watchdog = null;
-    if (s === "playing") {
+    if (s2 === "playing") {
       a2.watchdog = setTimeout(() => {
         if (this.live(a2)) {
           this.current = null;
@@ -3314,7 +3342,7 @@ var Pronouncer = class {
         }
       }, WATCHDOG_MS);
     }
-    a2.onState(s);
+    a2.onState(s2);
   }
   settle(a2, via) {
     if (a2.settled) return;
@@ -3334,11 +3362,11 @@ var Pronouncer = class {
   }
   playRecording(a2, url, word) {
     var _a;
-    const c2 = this.entry(url);
-    const clip5 = c2.clip;
+    const c4 = this.entry(url);
+    const clip5 = c4.clip;
     a2.clip = clip5;
-    if (clip5.ready) c2.ready = true;
-    if (!c2.ready) this.setState(a2, "loading");
+    if (clip5.ready) c4.ready = true;
+    if (!c4.ready) this.setState(a2, "loading");
     let fellBack = false;
     const fallBack = () => {
       if (!this.live(a2) || fellBack) return;
@@ -3356,7 +3384,7 @@ var Pronouncer = class {
         if (!this.live(a2) || fellBack) return;
         if (a2.timer) clearTimeout(a2.timer);
         a2.timer = null;
-        c2.ready = true;
+        c4.ready = true;
         this.setState(a2, "playing");
         this.settle(a2, "recording");
       }),
@@ -3368,12 +3396,12 @@ var Pronouncer = class {
       // markFailed (registered with the clip) has already run.
       clip5.on("error", fallBack)
     );
-    if (this.source === "auto" && !c2.ready) {
+    if (this.source === "auto" && !c4.ready) {
       const ms9 = (_a = this.deps.timeoutMs) != null ? _a : DEFAULT_TIMEOUT_MS;
       a2.timer = setTimeout(() => {
         a2.timer = null;
         if (!this.live(a2) || fellBack || a2.state === "playing") return;
-        c2.timedOut = true;
+        c4.timedOut = true;
         fallBack();
       }, ms9);
     }
@@ -3392,7 +3420,7 @@ var Pronouncer = class {
         if (!this.live(a2) || fellBack || a2.state === "playing") return;
         if (a2.timer) clearTimeout(a2.timer);
         a2.timer = null;
-        c2.ready = true;
+        c4.ready = true;
         this.setState(a2, "playing");
         this.settle(a2, "recording");
       },
@@ -3607,15 +3635,15 @@ function keyOf(entry) {
 var buttons = /* @__PURE__ */ new Set();
 var active = null;
 var token = 0;
-function applyPronounceState(el, state) {
-  el.toggleClass("is-loading", state === "loading");
-  el.toggleClass("is-playing", state === "playing");
+function applyPronounceState(el2, state) {
+  el2.toggleClass("is-loading", state === "loading");
+  el2.toggleClass("is-playing", state === "playing");
   if (state === "loading") {
-    el.setAttr("aria-busy", "true");
-    el.setAttr("title", t("pronounce.loading"));
+    el2.setAttr("aria-busy", "true");
+    el2.setAttr("title", t("pronounce.loading"));
   } else {
-    el.removeAttribute("aria-busy");
-    el.removeAttribute("title");
+    el2.removeAttribute("aria-busy");
+    el2.removeAttribute("title");
   }
 }
 function paint() {
@@ -3624,13 +3652,13 @@ function paint() {
     applyPronounceState(b.el, active && active.key === b.key ? active.state : "idle");
   }
 }
-function track(el, key6) {
+function track(el2, key6) {
   if (buttons.size > 100) {
     for (const b of buttons) if (!b.el.isConnected) buttons.delete(b);
   }
-  buttons.add({ el, key: key6 });
-  el.addClass("vt-pronounce");
-  applyPronounceState(el, active && active.key === key6 ? active.state : "idle");
+  buttons.add({ el: el2, key: key6 });
+  el2.addClass("vt-pronounce");
+  applyPronounceState(el2, active && active.key === key6 ? active.state : "idle");
 }
 function pronounce(entry) {
   const key6 = keyOf(entry);
@@ -3648,11 +3676,11 @@ function pronounce(entry) {
     return via;
   });
 }
-function bindPronounceButton(el, entry, opts = {}) {
+function bindPronounceButton(el2, entry, opts = {}) {
   const get3 = typeof entry === "function" ? entry : () => entry;
   const first = get3();
-  if (first) track(el, keyOf(first));
-  el.addEventListener("click", (e) => {
+  if (first) track(el2, keyOf(first));
+  el2.addEventListener("click", (e) => {
     var _a, _b;
     if (opts.stopPropagation) e.stopPropagation();
     const target = get3();
@@ -3727,35 +3755,35 @@ function tokens(text) {
   var _a;
   return (_a = text.toLowerCase().replace(/[‘’]/g, "'").replace(/[‐‑]/g, "-").match(TOKEN_RE)) != null ? _a : [];
 }
-var isConsonant = (c2) => /[b-df-hj-np-tv-z]/.test(c2);
+var isConsonant = (c4) => /[b-df-hj-np-tv-z]/.test(c4);
 var ACCIDENTAL = /* @__PURE__ */ new Set(["she", "the", "her"]);
-function wordForms(token2, side) {
+function wordForms(token2, side2) {
   const w2 = token2.endsWith("'s") ? token2.slice(0, -2) : token2;
   const out = /* @__PURE__ */ new Set([token2, w2]);
   const ends = (suf) => w2.length > suf.length && w2.endsWith(suf);
-  const add3 = (form) => {
-    if (!(side === "word" && ACCIDENTAL.has(form))) out.add(form);
+  const add4 = (form) => {
+    if (!(side2 === "word" && ACCIDENTAL.has(form))) out.add(form);
   };
-  const stem = (base, min2) => {
-    if (base.length < min2) return;
-    add3(base);
-    const last2 = base[base.length - 1];
-    if (last2 === base[base.length - 2] && isConsonant(last2)) add3(base.slice(0, -1));
+  const stem = (base2, min2) => {
+    if (base2.length < min2) return;
+    add4(base2);
+    const last2 = base2[base2.length - 1];
+    if (last2 === base2[base2.length - 2] && isConsonant(last2)) add4(base2.slice(0, -1));
   };
-  const rebuilt = (base, min2) => {
-    if (base.length >= min2) add3(base);
+  const rebuilt = (base2, min2) => {
+    if (base2.length >= min2) add4(base2);
   };
-  const min = side === "word" ? 4 : 3;
+  const min = side2 === "word" ? 4 : 3;
   if (ends("ies") || ends("ied")) rebuilt(w2.slice(0, -3) + "y", 3);
   if (ends("s") && !ends("ss")) {
-    const base = w2.slice(0, -1);
-    if (side === "word" && base.endsWith("e")) rebuilt(base, 3);
-    else stem(base, min);
+    const base2 = w2.slice(0, -1);
+    if (side2 === "word" && base2.endsWith("e")) rebuilt(base2, 3);
+    else stem(base2, min);
   }
   if (ends("es")) {
-    const base = w2.slice(0, -2);
-    if (side === "selection") stem(base, min);
-    else if (/(?:[sxzo]|ch|sh)$/.test(base)) rebuilt(base, 3);
+    const base2 = w2.slice(0, -2);
+    if (side2 === "selection") stem(base2, min);
+    else if (/(?:[sxzo]|ch|sh)$/.test(base2)) rebuilt(base2, 3);
   }
   if (ends("eed")) {
     rebuilt(w2.slice(0, -1), 4);
@@ -3768,7 +3796,7 @@ function wordForms(token2, side) {
     rebuilt(w2.slice(0, -3) + "e", 3);
   }
   if (ends("ying")) rebuilt(w2.slice(0, -4) + "ie", 3);
-  if (side === "word") {
+  if (side2 === "word") {
     if (ends("ier")) rebuilt(w2.slice(0, -3) + "y", 4);
     if (ends("iest")) rebuilt(w2.slice(0, -4) + "y", 4);
     return out;
@@ -3805,10 +3833,10 @@ function selectionHasWord(selection2, word) {
   const selToks = tokens(sel);
   const whole = wordToks.join(" ");
   if (selToks.length === 1 && selToks[0] === sel.toLowerCase()) {
-    const s = selToks[0];
-    if (s.length >= 4 && s.length * 2 > whole.length && whole.startsWith(s)) return true;
+    const s2 = selToks[0];
+    if (s2.length >= 4 && s2.length * 2 > whole.length && whole.startsWith(s2)) return true;
   }
-  const parts = (toks, side) => toks.flatMap((t2) => t2.split("-")).filter(Boolean).map((t2) => wordForms(t2, side));
+  const parts = (toks, side2) => toks.flatMap((t2) => t2.split("-")).filter(Boolean).map((t2) => wordForms(t2, side2));
   if (inOrder(parts(wordToks, "word"), parts(selToks, "selection"))) return true;
   if (wordToks.length === 1) {
     const joined = wordForms(wordToks[0].replace(/-/g, ""), "word");
@@ -3835,7 +3863,7 @@ function buildWordContext(input) {
       sourceParagraph,
       sourceTitle: (_g = input.sourceTitle) == null ? void 0 : _g.trim(),
       example,
-      otherExamples: ((_h = input.otherExamples) != null ? _h : []).map((s) => `- ${s.trim()}`).join("\n")
+      otherExamples: ((_h = input.otherExamples) != null ? _h : []).map((s2) => `- ${s2.trim()}`).join("\n")
     }),
     slots: {
       word: e.word,
@@ -3881,12 +3909,12 @@ var defaultDeps = {};
 function setProfileDeps(deps) {
   defaultDeps = deps;
 }
-function renderLearnerSummary(s) {
+function renderLearnerSummary(s2) {
   const parts = [];
-  const learned = s.vocab.learning + s.vocab.mature;
-  if (learned > 0) parts.push(t("learner.summary.vocab", { n: learned, mature: s.vocab.mature }));
-  if (s.grammar.mastered > 0) parts.push(t("learner.summary.grammar", { n: s.grammar.mastered }));
-  if (s.poly.practisedSenses > 0) parts.push(t("learner.summary.poly", { n: s.poly.practisedSenses }));
+  const learned = s2.vocab.learning + s2.vocab.mature;
+  if (learned > 0) parts.push(t("learner.summary.vocab", { n: learned, mature: s2.vocab.mature }));
+  if (s2.grammar.mastered > 0) parts.push(t("learner.summary.grammar", { n: s2.grammar.mastered }));
+  if (s2.poly.practisedSenses > 0) parts.push(t("learner.summary.poly", { n: s2.poly.practisedSenses }));
   return parts.length ? t("learner.summary.prefix") + parts.join(" \xB7 ") : "";
 }
 function renderProfile(p, deps = defaultDeps) {
@@ -3894,15 +3922,15 @@ function renderProfile(p, deps = defaultDeps) {
   const parts = [];
   if (p.level) parts.push(` ${LEVEL_LABEL[p.level]}\u7A0B\u5EA6`);
   parts.push((_a = GOAL_PHRASE[p.goal]) != null ? _a : GOAL_PHRASE.general);
-  const base = renderTemplate(PROFILE_TEMPLATE, {
+  const base2 = renderTemplate(PROFILE_TEMPLATE, {
     who: `\u4E00\u500B${parts.join("\u3001")}`,
     language: LANGUAGE_PHRASE[interactionStyle(p)],
     maxChars: p.maxAnswerChars > 0 ? p.maxAnswerChars : void 0,
     extra: p.extra.trim()
   });
   const summary = deps.learnerModel ? renderLearnerSummary(deps.learnerModel.snapshot()) : "";
-  return summary ? `${base}
-${summary}` : base;
+  return summary ? `${base2}
+${summary}` : base2;
 }
 
 // src/services/ai/tasks/compose.ts
@@ -3994,13 +4022,13 @@ function wordTask(id2, opts) {
     surface: "word",
     ...opts,
     build(input, ctx) {
-      const c2 = buildWordContext(input);
+      const c4 = buildWordContext(input);
       return composeRequest({
         base: WORD_BASE_PROMPT,
-        context: [c2.wordBlock],
+        context: [c4.wordBlock],
         profile: ctx.profile,
         history: ctx.history,
-        user: renderTemplate(WORD_TEMPLATES[id2], c2.slots),
+        user: renderTemplate(WORD_TEMPLATES[id2], c4.slots),
         tier: opts.tier,
         maxTokens: opts.maxTokens
       });
@@ -4290,18 +4318,18 @@ function classifyStreamError(type, message) {
 // src/ui/kit/emptyState.ts
 var import_obsidian5 = require("obsidian");
 function emptyState(opts) {
-  const el = createDiv({ cls: "vt-empty" });
-  if (opts.icon) (0, import_obsidian5.setIcon)(el.createSpan({ cls: "vt-empty-icon" }), opts.icon);
-  el.createDiv({ cls: "vt-empty-title", text: opts.title });
-  if (opts.body) el.createDiv({ cls: "vt-empty-body", text: opts.body });
+  const el2 = createDiv({ cls: "vt-empty" });
+  if (opts.icon) (0, import_obsidian5.setIcon)(el2.createSpan({ cls: "vt-empty-icon" }), opts.icon);
+  el2.createDiv({ cls: "vt-empty-title", text: opts.title });
+  if (opts.body) el2.createDiv({ cls: "vt-empty-body", text: opts.body });
   if (opts.action) {
     const { action } = opts;
-    const btn = el.createDiv({ cls: "vt-empty-action" }).createEl("button", { cls: "mod-cta vt-btn" });
+    const btn = el2.createDiv({ cls: "vt-empty-action" }).createEl("button", { cls: "mod-cta vt-btn" });
     if (action.icon) (0, import_obsidian5.setIcon)(btn.createSpan({ cls: "vt-btn-icon" }), action.icon);
     btn.createSpan({ text: action.label });
     btn.addEventListener("click", action.onClick);
   }
-  return el;
+  return el2;
 }
 
 // src/ui/kit/inlineNote.ts
@@ -4314,10 +4342,10 @@ var TONE_ICON = {
 function inlineNote(opts) {
   var _a, _b;
   const tone = (_a = opts.tone) != null ? _a : "info";
-  const el = createDiv({ cls: `vt-note is-${tone}` });
-  (0, import_obsidian6.setIcon)(el.createSpan({ cls: "vt-note-icon" }), (_b = opts.icon) != null ? _b : TONE_ICON[tone]);
-  el.createDiv({ cls: "vt-note-text", text: opts.text });
-  return el;
+  const el2 = createDiv({ cls: `vt-note is-${tone}` });
+  (0, import_obsidian6.setIcon)(el2.createSpan({ cls: "vt-note-icon" }), (_b = opts.icon) != null ? _b : TONE_ICON[tone]);
+  el2.createDiv({ cls: "vt-note-text", text: opts.text });
+  return el2;
 }
 
 // src/ui/kit/aiState.ts
@@ -4326,11 +4354,11 @@ function aiErrorKey(code) {
 }
 function aiErrorText(e) {
   const code = typeof e === "string" ? e : e.code;
-  const base = t(aiErrorKey(code));
+  const base2 = t(aiErrorKey(code));
   if (typeof e !== "string" && (code === "bad_request" || code === "auth") && e.message && e.message !== code) {
-    return `${base}\uFF08${e.message}\uFF09`;
+    return `${base2}\uFF08${e.message}\uFF09`;
   }
-  return base;
+  return base2;
 }
 function renderAiGate(parent, status, opts) {
   if (status === "ready") return false;
@@ -4354,15 +4382,15 @@ function renderAiGate(parent, status, opts) {
 var import_obsidian7 = require("obsidian");
 function bubble(opts) {
   var _a;
-  const el = createDiv({ cls: `vt-bubble is-${opts.role}` });
-  el.toggleClass("is-streaming", !!opts.streaming);
-  const body = el.createDiv({ cls: "vt-bubble-body" });
+  const el2 = createDiv({ cls: `vt-bubble is-${opts.role}` });
+  el2.toggleClass("is-streaming", !!opts.streaming);
+  const body = el2.createDiv({ cls: "vt-bubble-body" });
   if (opts.render && opts.role === "assistant") opts.render(body, opts.text);
   else body.setText(opts.text);
-  if (opts.streaming) el.createSpan({ cls: "vt-cursor" });
-  if (opts.error) el.createDiv({ cls: "vt-bubble-error", text: opts.error });
+  if (opts.streaming) el2.createSpan({ cls: "vt-cursor" });
+  if (opts.error) el2.createDiv({ cls: "vt-bubble-error", text: opts.error });
   if ((_a = opts.actions) == null ? void 0 : _a.length) {
-    const bar2 = el.createDiv({ cls: "vt-bubble-actions" });
+    const bar2 = el2.createDiv({ cls: "vt-bubble-actions" });
     for (const a2 of opts.actions) {
       const btn = bar2.createEl("button", { cls: "vt-bubble-action clickable-icon" });
       if (a2.icon) (0, import_obsidian7.setIcon)(btn.createSpan(), a2.icon);
@@ -4374,7 +4402,7 @@ function bubble(opts) {
       btn.addEventListener("click", a2.onClick);
     }
   }
-  return el;
+  return el2;
 }
 
 // src/ui/mobile/actionNotice.ts
@@ -4467,9 +4495,9 @@ function parseSuggestions(text) {
   if (!m2) return [];
   const out = [];
   for (const raw of m2[1].split(/[｜|]/)) {
-    const s = raw.trim().replace(/^[\s\-•\d.、]+/, "").trim();
-    if (!s || [...s].length > SUGGESTION_MAX_CHARS * 2 || out.includes(s)) continue;
-    out.push(s);
+    const s2 = raw.trim().replace(/^[\s\-•\d.、]+/, "").trim();
+    if (!s2 || [...s2].length > SUGGESTION_MAX_CHARS * 2 || out.includes(s2)) continue;
+    out.push(s2);
     if (out.length === MAX_SUGGESTIONS) break;
   }
   return out;
@@ -5295,15 +5323,15 @@ var RELATED_EDGES = [
 ];
 function buildRelated() {
   const m2 = /* @__PURE__ */ new Map();
-  const add3 = (a2, b) => {
+  const add4 = (a2, b) => {
     var _a;
     const l4 = (_a = m2.get(a2)) != null ? _a : [];
     if (!l4.includes(b)) l4.push(b);
     m2.set(a2, l4);
   };
   for (const [a2, b] of RELATED_EDGES) {
-    add3(a2, b);
-    add3(b, a2);
+    add4(a2, b);
+    add4(b, a2);
   }
   return m2;
 }
@@ -5412,15 +5440,15 @@ function grammarSightings(threads) {
 }
 function sightingsByTopic(sightings) {
   const out = /* @__PURE__ */ new Map();
-  for (const s of sightings) {
-    const l4 = out.get(s.topicId);
-    if (l4) l4.push(s);
-    else out.set(s.topicId, [s]);
+  for (const s2 of sightings) {
+    const l4 = out.get(s2.topicId);
+    if (l4) l4.push(s2);
+    else out.set(s2.topicId, [s2]);
   }
   return out;
 }
 function sightingsOfPath(sightings, path) {
-  return sightings.filter((s) => s.path === path);
+  return sightings.filter((s2) => s2.path === path);
 }
 
 // src/ui/grammar/labels.ts
@@ -5482,9 +5510,9 @@ function shortDate(iso) {
   const d = new Date(iso);
   return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
 }
-function autoGrow(el) {
-  el.style.height = "auto";
-  el.style.height = `${el.scrollHeight}px`;
+function autoGrow(el2) {
+  el2.style.height = "auto";
+  el2.style.height = `${el2.scrollHeight}px`;
 }
 var ChatPanel = class extends import_obsidian9.Component {
   constructor(parent, opts) {
@@ -5640,13 +5668,13 @@ var ChatPanel = class extends import_obsidian9.Component {
     return btn;
   }
   userBubble(turn) {
-    const el = bubble({ role: "user", text: turn.content });
+    const el2 = bubble({ role: "user", text: turn.content });
     if (turn.selection) {
       const quote2 = createDiv({ cls: "vt-bubble-quote", text: turn.selection });
       quote2.setAttr("aria-label", turn.selection);
-      el.prepend(quote2);
+      el2.prepend(quote2);
     }
-    return el;
+    return el2;
   }
   // 整組刪除 (1006 #20): no confirmation — apply the tombstone right
   // away (the pair disappears as soon as the resulting "thread:upsert"
@@ -5678,16 +5706,16 @@ var ChatPanel = class extends import_obsidian9.Component {
     var _a, _b, _c, _d, _e;
     const scope = this.turnsScope;
     const onRef = this.opts.onParagraphRef;
-    const render = (el2, md) => void import_obsidian9.MarkdownRenderer.render(this.opts.app, md, el2, this.opts.sourcePath, scope).then(() => {
-      if (onRef) linkParagraphRefs(el2, onRef);
+    const render5 = (el3, md) => void import_obsidian9.MarkdownRenderer.render(this.opts.app, md, el3, this.opts.sourcePath, scope).then(() => {
+      if (onRef) linkParagraphRefs(el3, onRef);
     });
     if (turn.status === "streaming") {
       this.streamTurnId = turn.id;
       this.streamText = (_a = this.opts.threads.streamingText(turn.id)) != null ? _a : "";
-      const el2 = bubble({ role: "assistant", text: "", streaming: true });
-      this.streamBody = el2.querySelector(".vt-bubble-body");
+      const el3 = bubble({ role: "assistant", text: "", streaming: true });
+      this.streamBody = el3.querySelector(".vt-bubble-body");
       this.paint();
-      return this.withHeader(el2, turn);
+      return this.withHeader(el3, turn);
     }
     const actions = [];
     if (turn.status === "error") {
@@ -5706,38 +5734,38 @@ var ChatPanel = class extends import_obsidian9.Component {
     } else if (turn.stop === "max_tokens") {
       error = t("chat.truncated");
     }
-    const el = bubble({ role: "assistant", text, render, actions, error });
-    el.toggleClass("is-muted-error", turn.status === "aborted");
-    if (!text.trim()) el.addClass("is-empty");
-    this.grammarChipRow(el, turn);
-    return this.withHeader(el, turn);
+    const el2 = bubble({ role: "assistant", text, render: render5, actions, error });
+    el2.toggleClass("is-muted-error", turn.status === "aborted");
+    if (!text.trim()) el2.addClass("is-empty");
+    this.grammarChipRow(el2, turn);
+    return this.withHeader(el2, turn);
   }
   // 文法解析 chips (1013 §3.5): under the answer, above its action bar.
-  grammarChipRow(el, turn) {
+  grammarChipRow(el2, turn) {
     const open = this.opts.onGrammarTopic;
     if (!open) return;
-    const chips = grammarChips(turn);
-    if (!chips.length) return;
+    const chips2 = grammarChips(turn);
+    if (!chips2.length) return;
     const row = createDiv({ cls: "vt-gr-ai-chips" });
     row.setAttr("aria-label", chipsLabel());
-    for (const chip2 of chips) {
+    for (const chip2 of chips2) {
       const btn = row.createEl("button", { cls: `vt-gr-ai-chip is-stage-${chip2.stage}`, text: chip2.label, attr: { type: "button" } });
       btn.dataset.topicId = chip2.topicId;
       btn.addEventListener("click", () => open(chip2.topicId));
     }
-    const body = el.querySelector(".vt-bubble-body");
+    const body = el2.querySelector(".vt-bubble-body");
     if (body) body.after(row);
-    else el.appendChild(row);
+    else el2.appendChild(row);
   }
-  withHeader(el, turn) {
+  withHeader(el2, turn) {
     var _a, _b;
     const h = (_b = (_a = this.opts).turnHeader) == null ? void 0 : _b.call(_a, turn);
-    if (!h) return el;
+    if (!h) return el2;
     const head = createDiv({ cls: "vt-bubble-head" });
     if (h.icon) (0, import_obsidian9.setIcon)(head.createSpan({ cls: "vt-bubble-head-icon" }), h.icon);
     head.createSpan({ text: h.text });
-    el.prepend(head);
-    return el;
+    el2.prepend(head);
+    return el2;
   }
   schedulePaint() {
     if (this.frame !== null) return;
@@ -5842,16 +5870,16 @@ var ChatPanel = class extends import_obsidian9.Component {
     this.updateBusy();
   }
   renderSelection() {
-    const el = this.selectionEl;
-    if (!el) return;
-    el.empty();
+    const el2 = this.selectionEl;
+    if (!el2) return;
+    el2.empty();
     const sel = this.opts.selection.get();
-    el.toggle(!!sel);
+    el2.toggle(!!sel);
     if (!sel) return;
-    el.setAttr("aria-label", t("chat.selection.hint"));
-    (0, import_obsidian9.setIcon)(el.createSpan({ cls: "vt-chat-selection-icon" }), "text-cursor");
-    el.createSpan({ cls: "vt-chat-selection-text", text: t("chat.selection", { text: sel.text }) });
-    const remove2 = el.createSpan({ cls: "vt-chat-selection-remove clickable-icon" });
+    el2.setAttr("aria-label", t("chat.selection.hint"));
+    (0, import_obsidian9.setIcon)(el2.createSpan({ cls: "vt-chat-selection-icon" }), "text-cursor");
+    el2.createSpan({ cls: "vt-chat-selection-text", text: t("chat.selection", { text: sel.text }) });
+    const remove2 = el2.createSpan({ cls: "vt-chat-selection-remove clickable-icon" });
     (0, import_obsidian9.setIcon)(remove2, "x");
     remove2.setAttr("aria-label", t("chat.selection.remove"));
     remove2.addEventListener("click", () => this.opts.selection.clear());
@@ -6012,7 +6040,7 @@ function renderWordAiTab(plugin, container, entry, ui, scope, preview2) {
       retry: (turnId) => plugin.threads.retryWord(entry, turnId),
       turnActions: pinAction,
       origin: findWordSource(entry, plugin.notes).then(
-        (s) => s ? t("chat.meta.origin", { n: s.paragraphNumber }) : void 0
+        (s2) => s2 ? t("chat.meta.origin", { n: s2.paragraphNumber }) : void 0
       ),
       onOpenSettings: () => openPluginSettings(plugin.app, plugin.manifest.id)
     })
@@ -6050,12 +6078,12 @@ var POS = /* @__PURE__ */ new Set([
 ]);
 var ENGLISH_RUN = /^[A-Za-z][A-Za-z'-]*(?:[ \t]+[A-Za-z][A-Za-z'-]*)*/;
 function headword(line2) {
-  let s = line2.trim();
-  if (!s || s.startsWith("#") || s.startsWith("//")) return null;
-  if (/^\|?[\s:|-]+$/.test(s)) return null;
-  s = s.replace(/^[-*+]\s+(\[.\]\s+)?/, "").replace(/^\d+[.)、]\s*/, "").replace(/^[|\s[*_`"']+/, "");
-  s = s.split(/[,\t|;]/)[0];
-  const m2 = ENGLISH_RUN.exec(s);
+  let s2 = line2.trim();
+  if (!s2 || s2.startsWith("#") || s2.startsWith("//")) return null;
+  if (/^\|?[\s:|-]+$/.test(s2)) return null;
+  s2 = s2.replace(/^[-*+]\s+(\[.\]\s+)?/, "").replace(/^\d+[.)、]\s*/, "").replace(/^[|\s[*_`"']+/, "");
+  s2 = s2.split(/[,\t|;]/)[0];
+  const m2 = ENGLISH_RUN.exec(s2);
   if (!m2) return null;
   const parts = m2[0].split(/[ \t]+/);
   if (parts.length > 1 && !POS.has(parts[1].toLowerCase())) return null;
@@ -6098,7 +6126,7 @@ function parseWordlist(content) {
 // src/core/model/like.ts
 function levelParts(level) {
   return new Set(
-    level.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)
+    level.split(",").map((s2) => s2.trim().toLowerCase()).filter(Boolean)
   );
 }
 function examTags(entry, knownTags) {
@@ -6203,11 +6231,11 @@ function viewToggleSpec(current, aiQuestionCount) {
   return { icon: "sparkles", label: "word.tab.ai", count: aiQuestionCount > 0 ? aiQuestionCount : null };
 }
 function levelTags(level) {
-  return (level != null ? level : "").split(",").map((s) => s.trim()).filter(Boolean);
+  return (level != null ? level : "").split(",").map((s2) => s2.trim()).filter(Boolean);
 }
-function autoGrowTextarea(el) {
-  el.style.height = "auto";
-  el.style.height = `${el.scrollHeight}px`;
+function autoGrowTextarea(el2) {
+  el2.style.height = "auto";
+  el2.style.height = `${el2.scrollHeight}px`;
 }
 
 // src/ui/word/WordRow.ts
@@ -6536,8 +6564,8 @@ function familyMembers(f) {
 }
 
 // src/core/model/morpheme.ts
-function normalizeForm(s) {
-  return s.toLowerCase().replace(/[-\s]/g, "");
+function normalizeForm(s2) {
+  return s2.toLowerCase().replace(/[-\s]/g, "");
 }
 function matchMorpheme(list2, type, form) {
   const key6 = normalizeForm(form);
@@ -6545,7 +6573,7 @@ function matchMorpheme(list2, type, form) {
     if (m2.deletedAt || m2.mergedInto) return false;
     if (m2.type !== type) return false;
     if (normalizeForm(m2.form) === key6) return true;
-    return m2.variants.some((v) => normalizeForm(v) === key6);
+    return m2.variants.some((v5) => normalizeForm(v5) === key6);
   });
 }
 function resolveMorphemeId(list2, id2) {
@@ -6581,18 +6609,18 @@ function morphemeThreadId(id2) {
 // src/ui/word/wordOrder.ts
 var LOCAL_STAMP = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/;
 var ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
-function stampMs2(s) {
+function stampMs2(s2) {
   var _a, _b, _c;
-  if (!s) return NaN;
-  const m2 = LOCAL_STAMP.exec(s.trim());
+  if (!s2) return NaN;
+  const m2 = LOCAL_STAMP.exec(s2.trim());
   if (m2) {
     return new Date(+m2[1], +m2[2] - 1, +m2[3], +((_a = m2[4]) != null ? _a : 0), +((_b = m2[5]) != null ? _b : 0), +((_c = m2[6]) != null ? _c : 0)).getTime();
   }
-  return ISO.test(s) ? Date.parse(s) : NaN;
+  return ISO.test(s2) ? Date.parse(s2) : NaN;
 }
 function firstMs(...values) {
-  for (const v of values) {
-    const ms9 = stampMs2(v);
+  for (const v5 of values) {
+    const ms9 = stampMs2(v5);
     if (!Number.isNaN(ms9)) return ms9;
   }
   return 0;
@@ -6702,13 +6730,13 @@ function renderGroupedVocabList(plugin, container, rows, collapsedGroups, expand
     if (isCollapsed) continue;
     for (const entry of group.entries) {
       const state = (_b = expandState.get(entry.id)) != null ? _b : "collapsed";
-      renderVocabRow(plugin, container, entry, state, (s) => expandState.set(entry.id, s), () => refresh(entry.id), rowOpts);
+      renderVocabRow(plugin, container, entry, state, (s2) => expandState.set(entry.id, s2), () => refresh(entry.id), rowOpts);
     }
   }
   if (pendingTitles.length) {
     void learn.ensureLoaded().then(() => {
-      for (const { el, group } of pendingTitles) {
-        if (el.isConnected) el.setText(groupTitle(group, learn));
+      for (const { el: el2, group } of pendingTitles) {
+        if (el2.isConnected) el2.setText(groupTitle(group, learn));
       }
     });
   }
@@ -6783,27 +6811,27 @@ var PALETTE = ["#06b6d4", "#ec4899", "#84cc16", "#f97316", "#6366f1", "#14b8a6",
 function defaultTagColor(tag) {
   for (const [re, color2] of KNOWN) if (re.test(tag)) return color2;
   let h = 0;
-  for (const c2 of tag) h = h * 31 + c2.charCodeAt(0) >>> 0;
+  for (const c4 of tag) h = h * 31 + c4.charCodeAt(0) >>> 0;
   return PALETTE[h % PALETTE.length];
 }
-function tagColor(s, tag) {
+function tagColor(s2, tag) {
   var _a;
-  return ((_a = s.tags[tag]) == null ? void 0 : _a.color) || defaultTagColor(tag);
+  return ((_a = s2.tags[tag]) == null ? void 0 : _a.color) || defaultTagColor(tag);
 }
-function tagEnabled(s, tag) {
+function tagEnabled(s2, tag) {
   var _a;
-  return ((_a = s.tags[tag]) == null ? void 0 : _a.enabled) !== false;
+  return ((_a = s2.tags[tag]) == null ? void 0 : _a.enabled) !== false;
 }
-function likeChipOn(s) {
-  return s.likeEnabled !== false;
+function likeChipOn(s2) {
+  return s2.likeEnabled !== false;
 }
 
 // src/ui/sidebar/examStrip.ts
-function renderFilterChips(root2, chips) {
+function renderFilterChips(root2, chips2) {
   var _a;
   const strip2 = root2.createDiv({ cls: "vt-exam-strip" });
   const chipsEl = strip2.createDiv({ cls: "vt-exam-chips" });
-  for (const spec of chips) {
+  for (const spec of chips2) {
     const chip2 = chipsEl.createSpan({ cls: "vt-exam-chip" });
     chip2.toggleClass("is-off", !spec.on);
     if (spec.icon) {
@@ -6929,25 +6957,25 @@ function withBlockId(markdown, line2, id2) {
 
 // src/core/text/hash.ts
 var PARAGRAPH_HASH_LENGTH = 12;
-function utf8Bytes(s) {
+function utf8Bytes(s2) {
   const out = [];
-  for (let i = 0; i < s.length; i++) {
-    let c2 = s.charCodeAt(i);
-    if (c2 >= 55296 && c2 <= 56319) {
-      const d = i + 1 < s.length ? s.charCodeAt(i + 1) : 0;
+  for (let i = 0; i < s2.length; i++) {
+    let c4 = s2.charCodeAt(i);
+    if (c4 >= 55296 && c4 <= 56319) {
+      const d = i + 1 < s2.length ? s2.charCodeAt(i + 1) : 0;
       if (d >= 56320 && d <= 57343) {
-        c2 = 65536 + (c2 - 55296 << 10) + (d - 56320);
+        c4 = 65536 + (c4 - 55296 << 10) + (d - 56320);
         i++;
       } else {
-        c2 = 65533;
+        c4 = 65533;
       }
-    } else if (c2 >= 56320 && c2 <= 57343) {
-      c2 = 65533;
+    } else if (c4 >= 56320 && c4 <= 57343) {
+      c4 = 65533;
     }
-    if (c2 < 128) out.push(c2);
-    else if (c2 < 2048) out.push(192 | c2 >> 6, 128 | c2 & 63);
-    else if (c2 < 65536) out.push(224 | c2 >> 12, 128 | c2 >> 6 & 63, 128 | c2 & 63);
-    else out.push(240 | c2 >> 18, 128 | c2 >> 12 & 63, 128 | c2 >> 6 & 63, 128 | c2 & 63);
+    if (c4 < 128) out.push(c4);
+    else if (c4 < 2048) out.push(192 | c4 >> 6, 128 | c4 & 63);
+    else if (c4 < 65536) out.push(224 | c4 >> 12, 128 | c4 >> 6 & 63, 128 | c4 & 63);
+    else out.push(240 | c4 >> 18, 128 | c4 >> 12 & 63, 128 | c4 >> 6 & 63, 128 | c4 & 63);
   }
   return out;
 }
@@ -6957,8 +6985,8 @@ function sha1(text) {
   bytes.push(128);
   while (bytes.length % 64 !== 56) bytes.push(0);
   const hi = Math.floor(bitLen / 4294967296);
-  for (let s = 24; s >= 0; s -= 8) bytes.push(hi >>> s & 255);
-  for (let s = 24; s >= 0; s -= 8) bytes.push(bitLen >>> s & 255);
+  for (let s2 = 24; s2 >= 0; s2 -= 8) bytes.push(hi >>> s2 & 255);
+  for (let s2 = 24; s2 >= 0; s2 -= 8) bytes.push(bitLen >>> s2 & 255);
   let h0 = 1732584193;
   let h1 = 4023233417;
   let h2 = 2562383102;
@@ -6976,35 +7004,35 @@ function sha1(text) {
     }
     let a2 = h0;
     let b = h1;
-    let c2 = h2;
+    let c4 = h2;
     let d = h3;
     let e = h4;
     for (let i = 0; i < 80; i++) {
       let f;
       let k;
       if (i < 20) {
-        f = b & c2 | ~b & d;
+        f = b & c4 | ~b & d;
         k = 1518500249;
       } else if (i < 40) {
-        f = b ^ c2 ^ d;
+        f = b ^ c4 ^ d;
         k = 1859775393;
       } else if (i < 60) {
-        f = b & c2 | b & d | c2 & d;
+        f = b & c4 | b & d | c4 & d;
         k = 2400959708;
       } else {
-        f = b ^ c2 ^ d;
+        f = b ^ c4 ^ d;
         k = 3395469782;
       }
       const t2 = (a2 << 5 | a2 >>> 27) + f + e + k + w2[i] | 0;
       e = d;
-      d = c2;
-      c2 = b << 30 | b >>> 2;
+      d = c4;
+      c4 = b << 30 | b >>> 2;
       b = a2;
       a2 = t2;
     }
     h0 = h0 + a2 | 0;
     h1 = h1 + b | 0;
-    h2 = h2 + c2 | 0;
+    h2 = h2 + c4 | 0;
     h3 = h3 + d | 0;
     h4 = h4 + e | 0;
   }
@@ -7086,7 +7114,7 @@ function sectionText(markdown, lineStart, lineEnd) {
   return markdown.replace(/\r\n?/g, "\n").split("\n").slice(lineStart, lineEnd + 1).join("\n");
 }
 function sectionAt(sections, line2) {
-  return sections.find((s) => line2 >= s.lineStart && line2 <= s.lineEnd);
+  return sections.find((s2) => line2 >= s2.lineStart && line2 <= s2.lineEnd);
 }
 function ownBlockIdLine(section4) {
   if (section4.type !== "list") return section4.lineEnd;
@@ -7107,7 +7135,7 @@ function mergedListSections(sections) {
     }
     let j = i;
     while (j + 1 < sections.length && sections[j + 1].type === "list" && sections[j + 1].lineStart === sections[j].lineEnd + 1) j++;
-    if (j > i) out.push({ section: sections[i], text: sections.slice(i, j + 1).map((s) => s.text).join("\n") });
+    if (j > i) out.push({ section: sections[i], text: sections.slice(i, j + 1).map((s2) => s2.text).join("\n") });
     i = j + 1;
   }
   return out;
@@ -7139,10 +7167,10 @@ var Index = class {
   sectionOfHash(hash2) {
     if (!this.hashes) {
       const map = /* @__PURE__ */ new Map();
-      for (const s of this.sections) {
-        if (!isAnchorable(s.type)) continue;
-        const h = paragraphHash(s.text);
-        if (!map.has(h)) map.set(h, s);
+      for (const s2 of this.sections) {
+        if (!isAnchorable(s2.type)) continue;
+        const h = paragraphHash(s2.text);
+        if (!map.has(h)) map.set(h, s2);
       }
       this.hashes = map;
     }
@@ -7179,12 +7207,12 @@ function locateSection(content, ref) {
   const want = normalizeParagraph(ref.text);
   const atRange = sectionText(content, ref.lineStart, ref.lineEnd);
   if (normalizeParagraph(atRange) === want) {
-    const s = sectionAt(sections, ref.lineEnd);
-    if (s && s.lineStart === ref.lineStart && s.lineEnd === ref.lineEnd) return s;
-    return { type: (_a = s == null ? void 0 : s.type) != null ? _a : "paragraph", lineStart: ref.lineStart, lineEnd: ref.lineEnd, text: atRange };
+    const s2 = sectionAt(sections, ref.lineEnd);
+    if (s2 && s2.lineStart === ref.lineStart && s2.lineEnd === ref.lineEnd) return s2;
+    return { type: (_a = s2 == null ? void 0 : s2.type) != null ? _a : "paragraph", lineStart: ref.lineStart, lineEnd: ref.lineEnd, text: atRange };
   }
   const hash2 = paragraphHash(ref.text);
-  return (_b = sections.find((s) => isAnchorable(s.type) && paragraphHash(s.text) === hash2)) != null ? _b : shiftedRange(content, ref, want, sections);
+  return (_b = sections.find((s2) => isAnchorable(s2.type) && paragraphHash(s2.text) === hash2)) != null ? _b : shiftedRange(content, ref, want, sections);
 }
 function shiftedRange(content, ref, want, sections) {
   var _a, _b;
@@ -7237,21 +7265,21 @@ var ParagraphAnchorService = class {
     const section4 = locateSection(content, ref);
     if (!section4) throw new AnchorError("missing-paragraph");
     if (!isAnchorable(section4.type)) throw new AnchorError("not-anchorable", `Can't anchor a ${section4.type}`);
-    const base = {
+    const base2 = {
       kind: "paragraph",
       path: ref.path,
       hash: paragraphHash(section4.text),
       snapshot: plainParagraph(section4.text)
     };
     const existing = trailingBlockId(ownBlockIdText(section4));
-    if (existing) return { ...base, blockId: existing };
-    if (this.deps.mode() === "hash") return base;
+    if (existing) return { ...base2, blockId: existing };
+    if (this.deps.mode() === "hash") return base2;
     try {
       const blockId = await this.writeBlockId(ref.path, section4);
-      return { ...base, blockId };
+      return { ...base2, blockId };
     } catch (e) {
       console.warn("Vocab Tracker: couldn't write a block id, using a text hash instead", e);
-      return base;
+      return base2;
     }
   }
   async writeBlockId(path, section4) {
@@ -7351,33 +7379,33 @@ var ParagraphIndex = class {
     if (thread.deletedAt || thread.anchor.kind !== "paragraph") return void 0;
     const count2 = questionCount(thread);
     if (!count2) return void 0;
-    const c2 = { path: thread.anchor.path, key: paragraphKey(thread.anchor), count: count2 };
-    let keys = this.byPath.get(c2.path);
+    const c4 = { path: thread.anchor.path, key: paragraphKey(thread.anchor), count: count2 };
+    let keys = this.byPath.get(c4.path);
     if (!keys) {
       keys = /* @__PURE__ */ new Map();
-      this.byPath.set(c2.path, keys);
+      this.byPath.set(c4.path, keys);
     }
-    keys.set(c2.key, ((_a = keys.get(c2.key)) != null ? _a : 0) + count2);
-    this.byThread.set(thread.id, c2);
-    return c2;
+    keys.set(c4.key, ((_a = keys.get(c4.key)) != null ? _a : 0) + count2);
+    this.byThread.set(thread.id, c4);
+    return c4;
   }
   remove(threadId) {
     var _a;
-    const c2 = this.byThread.get(threadId);
-    if (!c2) return;
+    const c4 = this.byThread.get(threadId);
+    if (!c4) return;
     this.byThread.delete(threadId);
-    const keys = this.byPath.get(c2.path);
+    const keys = this.byPath.get(c4.path);
     if (!keys) return;
-    const left = ((_a = keys.get(c2.key)) != null ? _a : 0) - c2.count;
-    if (left > 0) keys.set(c2.key, left);
-    else keys.delete(c2.key);
-    if (!keys.size) this.byPath.delete(c2.path);
+    const left = ((_a = keys.get(c4.key)) != null ? _a : 0) - c4.count;
+    if (left > 0) keys.set(c4.key, left);
+    else keys.delete(c4.key);
+    if (!keys.size) this.byPath.delete(c4.path);
   }
 };
 
 // src/ui/sidebar/paragraphRows.ts
 function paragraphNumberAt(spans, lineStart) {
-  return spans.filter((s) => s.lineEnd < lineStart).length + 1;
+  return spans.filter((s2) => s2.lineEnd < lineStart).length + 1;
 }
 function lastTurnAt(thread) {
   const turns = liveTurns(thread);
@@ -7399,7 +7427,7 @@ function paragraphRows(threads, content, labelOf) {
     if (thread.deletedAt || thread.anchor.kind !== "paragraph") continue;
     const anchor = thread.anchor;
     const where = content === null ? null : resolveIn(content, anchor);
-    const base = {
+    const base2 = {
       threadId: thread.id,
       labels: taskLabelKeys(thread, labelOf),
       count: questionCount(thread),
@@ -7409,7 +7437,7 @@ function paragraphRows(threads, content, labelOf) {
     };
     if ((where == null ? void 0 : where.status) === "found") {
       rows.push({
-        ...base,
+        ...base2,
         number: paragraphNumberAt(spans, where.section.lineStart),
         preview: plainParagraph(where.section.text),
         orphan: false,
@@ -7417,7 +7445,7 @@ function paragraphRows(threads, content, labelOf) {
         line: where.section.lineStart
       });
     } else {
-      rows.push({ ...base, number: null, preview: anchor.snapshot, orphan: true, edited: false, line: -1 });
+      rows.push({ ...base2, number: null, preview: anchor.snapshot, orphan: true, edited: false, line: -1 });
     }
   }
   return rows.sort(compareRows);
@@ -7470,7 +7498,7 @@ function confirmButton(parent, label, confirmLabel, onConfirm) {
   });
   return btn;
 }
-function deleteButton(parent, el, threadId, actions) {
+function deleteButton(parent, el2, threadId, actions) {
   const btn = parent.createSpan({ cls: "vt-plist-delete" });
   (0, import_obsidian14.setIcon)(btn, "trash-2");
   btn.setAttr("role", "button");
@@ -7480,8 +7508,8 @@ function deleteButton(parent, el, threadId, actions) {
     e.stopPropagation();
     runUndoable({
       message: t("undo.deletedThread"),
-      apply: () => el.addClass("vt-plist-row-removed"),
-      restore: () => el.removeClass("vt-plist-row-removed"),
+      apply: () => el2.addClass("vt-plist-row-removed"),
+      restore: () => el2.removeClass("vt-plist-row-removed"),
       commit: () => actions.remove(threadId)
     });
   };
@@ -7499,29 +7527,29 @@ function rebindButton(parent, threadId, actions) {
   });
 }
 function drawRow(parent, row, actions, current = false, note) {
-  const el = parent.createDiv({ cls: "vt-plist-row" });
-  el.toggleClass("is-current", current);
-  el.toggleClass("is-orphan", row.orphan);
-  el.setAttr("data-thread-id", row.threadId);
-  el.setAttr("role", "button");
-  el.setAttr("tabindex", "0");
-  el.addEventListener("click", () => actions.open(row.threadId));
-  el.addEventListener("keydown", (e) => {
+  const el2 = parent.createDiv({ cls: "vt-plist-row" });
+  el2.toggleClass("is-current", current);
+  el2.toggleClass("is-orphan", row.orphan);
+  el2.setAttr("data-thread-id", row.threadId);
+  el2.setAttr("role", "button");
+  el2.setAttr("tabindex", "0");
+  el2.addEventListener("click", () => actions.open(row.threadId));
+  el2.addEventListener("keydown", (e) => {
     if (e.key === "Enter") actions.open(row.threadId);
   });
-  const head = el.createDiv({ cls: "vt-plist-row-head" });
+  const head = el2.createDiv({ cls: "vt-plist-row-head" });
   const title = head.createDiv({ cls: "vt-plist-text" });
   if (row.number !== null) title.createSpan({ cls: "vt-plist-num", text: `\xB6${row.number}` });
   title.createSpan({ text: row.preview });
   title.setAttr("aria-label", row.preview);
-  deleteButton(head, el, row.threadId, actions);
-  const meta = el.createDiv({ cls: "vt-plist-meta" });
+  deleteButton(head, el2, row.threadId, actions);
+  const meta = el2.createDiv({ cls: "vt-plist-meta" });
   (0, import_obsidian14.setIcon)(meta.createSpan({ cls: "vt-plist-meta-icon" }), "sparkles");
   meta.createSpan({ text: rowMeta(row) });
   if (row.orphan) meta.createSpan({ cls: "vt-plist-flag is-orphan", text: t("paragraph.list.orphan") });
   else if (row.edited) meta.createSpan({ cls: "vt-plist-flag", text: t("paragraph.list.edited") });
-  if (note) el.createDiv({ cls: "vt-plist-path", text: note });
-  if (row.orphan) rebindButton(el, row.threadId, actions);
+  if (note) el2.createDiv({ cls: "vt-plist-path", text: note });
+  if (row.orphan) rebindButton(el2, row.threadId, actions);
 }
 var ParagraphThreadList = class extends import_obsidian14.Component {
   constructor(parent, path, deps, actions, currentThreadId = () => null, onCount) {
@@ -7800,14 +7828,14 @@ function paragraphTask(id2, opts) {
     surface: "paragraph",
     ...opts,
     build(input, ctx) {
-      const c2 = buildParagraphContext(input);
+      const c4 = buildParagraphContext(input);
       return composeRequest({
         base: PARAGRAPH_BASE_PROMPT,
-        cached: id2 === "grammar" ? [c2.articleBlock, grammarTopicBlock()] : [c2.articleBlock],
-        context: [c2.focusBlock],
+        cached: id2 === "grammar" ? [c4.articleBlock, grammarTopicBlock()] : [c4.articleBlock],
+        context: [c4.focusBlock],
         profile: profileForTask(ctx.profile, task, input),
         history: ctx.history,
-        user: renderTemplate(PARAGRAPH_TEMPLATES[id2], c2.slots),
+        user: renderTemplate(PARAGRAPH_TEMPLATES[id2], c4.slots),
         tier: opts.tier,
         maxTokens: opts.maxTokens
       });
@@ -7847,11 +7875,11 @@ function resolveAnchorSettings(settings) {
 }
 function patchAnchorSettings(settings, patch) {
   var _a;
-  const s = settings;
-  s.anchors = { ...(_a = s.anchors) != null ? _a : {}, ...resolveAnchorSettings(settings), ...patch };
+  const s2 = settings;
+  s2.anchors = { ...(_a = s2.anchors) != null ? _a : {}, ...resolveAnchorSettings(settings), ...patch };
 }
-function needsBlockIdNotice(s, sectionText2) {
-  return s.mode === "block" && !s.blockIdNoticeSeen && !trailingBlockId(sectionText2);
+function needsBlockIdNotice(s2, sectionText2) {
+  return s2.mode === "block" && !s2.blockIdNoticeSeen && !trailingBlockId(sectionText2);
 }
 
 // src/ui/sidebar/routes.ts
@@ -8019,14 +8047,14 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
       }
     }
     if (!this.alive || seq !== this.aiNoteSeq) return;
-    const el = this.aiNoteEl;
-    el.empty();
+    const el2 = this.aiNoteEl;
+    el2.empty();
     if (!note) return;
     const path = note;
-    (0, import_obsidian15.setIcon)(el.createSpan({ cls: "vt-ppane-ainote-icon" }), "file-text");
-    el.createSpan({ text: t("paragraph.pane.openAiNote", { path: path.split("/").slice(-2).join("/") }) });
-    el.onclick = () => void this.host.openNote(path, "tab");
-    el.onkeydown = (e) => {
+    (0, import_obsidian15.setIcon)(el2.createSpan({ cls: "vt-ppane-ainote-icon" }), "file-text");
+    el2.createSpan({ text: t("paragraph.pane.openAiNote", { path: path.split("/").slice(-2).join("/") }) });
+    el2.onclick = () => void this.host.openNote(path, "tab");
+    el2.onkeydown = (e) => {
       if (e.key === "Enter") void this.host.openNote(path, "tab");
     };
   }
@@ -8039,9 +8067,9 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
   renderBlockIdNotice(section4) {
     const settings = resolveAnchorSettings(this.host.store.settings);
     if (!needsBlockIdNotice(settings, section4.text)) return;
-    const el = this.noticeEl = this.root.createDiv({ cls: "vt-ppane-notice" });
-    el.appendChild(inlineNote({ tone: "info", icon: "hash", text: t("paragraph.notice.blockId") }));
-    const bar2 = el.createDiv({ cls: "vt-ppane-notice-actions" });
+    const el2 = this.noticeEl = this.root.createDiv({ cls: "vt-ppane-notice" });
+    el2.appendChild(inlineNote({ tone: "info", icon: "hash", text: t("paragraph.notice.blockId") }));
+    const bar2 = el2.createDiv({ cls: "vt-ppane-notice-actions" });
     const ok = bar2.createEl("button", { cls: "mod-cta", text: t("paragraph.notice.ok") });
     ok.addEventListener("click", () => void this.dismissNotice(false));
     const hash2 = bar2.createEl("button", { text: t("paragraph.notice.useHash") });
@@ -8052,19 +8080,19 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     (_a = this.noticeEl) == null ? void 0 : _a.remove();
     this.noticeEl = null;
     await this.host.store.updateSettings(
-      (s) => patchAnchorSettings(s, useHash ? { mode: "hash", blockIdNoticeSeen: true } : { blockIdNoticeSeen: true })
+      (s2) => patchAnchorSettings(s2, useHash ? { mode: "hash", blockIdNoticeSeen: true } : { blockIdNoticeSeen: true })
     );
     if (useHash) new import_obsidian15.Notice(t("paragraph.notice.hashOn"));
   }
   // ── Chat ───────────────────────────────────────────────────────────────
-  renderChat(el) {
+  renderChat(el2) {
     var _a, _b;
     const { app, threads, ai, selection: selection2, manifest } = this.host;
     const route = this.route;
     const threadId = route.name === "paragraph" ? route.threadId : this.key;
     const sourcePath = route.name === "paragraph-draft" ? route.section.path : (_b = (_a = this.anchor()) == null ? void 0 : _a.path) != null ? _b : "";
     this.addChild(
-      new ChatPanel(el, {
+      new ChatPanel(el2, {
         app,
         threads,
         ai,
@@ -8099,7 +8127,7 @@ var ParagraphThreadPane = class extends import_obsidian15.Component {
     if (this.noticeEl) {
       this.noticeEl.remove();
       this.noticeEl = null;
-      await store.updateSettings((s) => patchAnchorSettings(s, { blockIdNoticeSeen: true }));
+      await store.updateSettings((s2) => patchAnchorSettings(s2, { blockIdNoticeSeen: true }));
     }
     const busyBefore = new Set(threads.paragraphThreads(section4.path).filter((th) => threads.isBusy(th.id)).map((th) => th.id));
     let started = false;
@@ -8271,24 +8299,24 @@ var DiscussionList = class extends import_obsidian16.Component {
     }
   }
   drawRow(row) {
-    const el = this.el.createDiv({ cls: "vt-dlist-row is-word" });
-    el.setAttr("role", "button");
-    el.setAttr("tabindex", "0");
-    el.setAttr("data-thread-id", row.threadId);
+    const el2 = this.el.createDiv({ cls: "vt-dlist-row is-word" });
+    el2.setAttr("role", "button");
+    el2.setAttr("tabindex", "0");
+    el2.setAttr("data-thread-id", row.threadId);
     const open = () => this.actions.openWord(row.entryId);
-    el.addEventListener("click", open);
-    el.addEventListener("keydown", (e) => {
+    el2.addEventListener("click", open);
+    el2.addEventListener("keydown", (e) => {
       if (e.key === "Enter") open();
     });
-    const title = el.createDiv({ cls: "vt-dlist-title" });
+    const title = el2.createDiv({ cls: "vt-dlist-title" });
     (0, import_obsidian16.setIcon)(title.createSpan({ cls: "vt-dlist-icon" }), "type");
     title.createSpan({ cls: "vt-dlist-text", text: row.title });
     title.setAttr("aria-label", row.title);
-    this.addDeleteButton(title, el, row.threadId);
+    this.addDeleteButton(title, el2, row.threadId);
     const parts = [t("paragraph.list.count", { n: row.count })];
     const date = shortDate2(row.lastAt);
     if (date) parts.push(date);
-    el.createDiv({ cls: "vt-dlist-meta", text: parts.join(" \xB7 ") });
+    el2.createDiv({ cls: "vt-dlist-meta", text: parts.join(" \xB7 ") });
   }
   // 整串刪除（1006report.md #21）：不跳確認，立刻藏起這一列，runUndoable
   // 給幾秒「復原」，時間到才真的 deleteThread。
@@ -8346,10 +8374,10 @@ var ERROR_TAGS = [
   "spelling-form",
   "other"
 ];
-function normalizeErrorTag(v) {
-  if (typeof v !== "string") return "other";
-  const s = v.trim().toLowerCase();
-  return ERROR_TAGS.includes(s) ? s : "other";
+function normalizeErrorTag(v5) {
+  if (typeof v5 !== "string") return "other";
+  const s2 = v5.trim().toLowerCase();
+  return ERROR_TAGS.includes(s2) ? s2 : "other";
 }
 var GRAMMAR_QUESTION_TYPES = ["choice", "blank", "find-error", "rewrite", "translate"];
 
@@ -8393,7 +8421,7 @@ function objectiveStats(topic, attempts) {
   });
 }
 function isMastered(stats) {
-  return stats.length > 0 && stats.every((s) => s.answered >= MASTERY_MIN_ANSWERED && s.recentCorrect >= MASTERY_MIN_RECENT_CORRECT);
+  return stats.length > 0 && stats.every((s2) => s2.answered >= MASTERY_MIN_ANSWERED && s2.recentCorrect >= MASTERY_MIN_RECENT_CORRECT);
 }
 function topicStatus(topic, attempts, progress, now2) {
   if ((progress == null ? void 0 : progress.srs) && ms2(progress.srs.due) <= now2.getTime()) return "due";
@@ -8442,9 +8470,9 @@ function knownTopicIds(topics, statusOf2) {
 
 // src/core/grammar/practiceFilter.ts
 var STAGES = [1, 2, 3];
-function parseGrammarFilter(v) {
-  const o = typeof v === "object" && v !== null && !Array.isArray(v) ? v : {};
-  const stages = STAGES.filter((s) => Array.isArray(o.stages) && o.stages.includes(s));
+function parseGrammarFilter(v5) {
+  const o = typeof v5 === "object" && v5 !== null && !Array.isArray(v5) ? v5 : {};
+  const stages = STAGES.filter((s2) => Array.isArray(o.stages) && o.stages.includes(s2));
   const topics = [];
   if (Array.isArray(o.topics)) {
     for (const t2 of o.topics) if (typeof t2 === "string" && t2 && !topics.includes(t2)) topics.push(t2);
@@ -8518,7 +8546,7 @@ function parseFlashcardParams(source) {
   if (src) out.source = src;
   const limit = Number(p.limit);
   if (p.limit !== void 0 && Number.isInteger(limit) && limit > 0) out.limit = limit;
-  const unquote3 = (s) => (s != null ? s : "").replace(/^["']|["']$/g, "").trim();
+  const unquote3 = (s2) => (s2 != null ? s2 : "").replace(/^["']|["']$/g, "").trim();
   const id2 = unquote3(p.id);
   const word = unquote3(p.word);
   if (id2) out.id = id2;
@@ -8554,7 +8582,7 @@ function statusLabel(status) {
 }
 function objectivesReached(topic, attempts) {
   const stats = objectiveStats(topic, attempts);
-  return { reached: stats.filter((s) => isMastered([s])).length, total: stats.length };
+  return { reached: stats.filter((s2) => isMastered([s2])).length, total: stats.length };
 }
 function mapRows(stage, topics, statusOf2, attempts) {
   return topics.filter((t2) => t2.stage === stage).sort((a2, b) => a2.order - b.order).map((topic) => {
@@ -8594,9 +8622,9 @@ function selectedLabels(value, group) {
 function parseFilterValue(raw) {
   const out = {};
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
-  for (const [k, v] of Object.entries(raw)) {
-    if (!Array.isArray(v)) continue;
-    const ids = v.filter((x3) => typeof x3 === "string" && x3 !== "");
+  for (const [k, v5] of Object.entries(raw)) {
+    if (!Array.isArray(v5)) continue;
+    const ids = v5.filter((x3) => typeof x3 === "string" && x3 !== "");
     if (ids.length > 0) out[k] = [...new Set(ids)];
   }
   return out;
@@ -8611,7 +8639,7 @@ function pruneValue(value, groups) {
   return out;
 }
 function sameFilter(a2, b) {
-  const norm = (v) => Object.keys(v).filter((k) => v[k].length > 0).sort().map((k) => `${k}=${[...new Set(v[k])].sort().join(",")}`).join("|");
+  const norm = (v5) => Object.keys(v5).filter((k) => v5[k].length > 0).sort().map((k) => `${k}=${[...new Set(v5[k])].sort().join(",")}`).join("|");
   return norm(a2) === norm(b);
 }
 
@@ -8619,15 +8647,15 @@ function sameFilter(a2, b) {
 var SIGHTING_DAYS = 7;
 var REFILL_THRESHOLD = 4;
 function filterToValue(f) {
-  const v = {};
-  if (f.stages.length > 0) v.stage = f.stages.map(String);
-  if (f.topics.length > 0) v.topic = [...f.topics];
-  return v;
+  const v5 = {};
+  if (f.stages.length > 0) v5.stage = f.stages.map(String);
+  if (f.topics.length > 0) v5.topic = [...f.topics];
+  return v5;
 }
-function valueToFilter(v, level) {
+function valueToFilter(v5, level) {
   var _a, _b;
-  const stages = ((_a = v.stage) != null ? _a : []).map(Number).filter((n) => n === 1 || n === 2 || n === 3);
-  const f = parseGrammarFilter({ stages, topics: (_b = v.topic) != null ? _b : [] });
+  const stages = ((_a = v5.stage) != null ? _a : []).map(Number).filter((n) => n === 1 || n === 2 || n === 3);
+  const f = parseGrammarFilter({ stages, topics: (_b = v5.topic) != null ? _b : [] });
   const shown = new Set(shownStages(f, level));
   f.topics = f.topics.filter((id2) => {
     const t2 = topicById(id2);
@@ -8645,7 +8673,7 @@ function grammarGroups(f, level) {
       id: "stage",
       label: t("practice.grammar.stage"),
       multi: false,
-      options: STAGES2.map((s) => ({ id: String(s), label: stageLabel(s) }))
+      options: STAGES2.map((s2) => ({ id: String(s2), label: stageLabel(s2) }))
     },
     {
       id: "topic",
@@ -8657,10 +8685,10 @@ function grammarGroups(f, level) {
 }
 function grammarSummary(f, level) {
   const groups = grammarGroups(f, level);
-  const v = filterToValue(f);
+  const v5 = filterToValue(f);
   const stage = groups[0];
-  const stageText = f.stages.length > 0 ? joinWords(selectedLabels(v, stage)) : stageLabel(defaultStage(level));
-  const topics = f.topics.length > 0 ? joinWords(selectedLabels(v, groups[1])) : t("practice.grammar.allTopics");
+  const stageText = f.stages.length > 0 ? joinWords(selectedLabels(v5, stage)) : stageLabel(defaultStage(level));
+  const topics = f.topics.length > 0 ? joinWords(selectedLabels(v5, groups[1])) : t("practice.grammar.allTopics");
   return `${stageText} \xB7 ${topics}`;
 }
 function filterForTopics(ids) {
@@ -8670,7 +8698,7 @@ function filterForTopics(ids) {
 }
 function recentSightingTopics(sightings, now2, days = SIGHTING_DAYS) {
   const since = now2.getTime() - days * 24 * 60 * 60 * 1e3;
-  return [...new Set(sightings.filter((s) => Date.parse(s.at) >= since).map((s) => s.topicId))];
+  return [...new Set(sightings.filter((s2) => Date.parse(s2.at) >= since).map((s2) => s2.topicId))];
 }
 function grammarQuickPicks(src, level) {
   void level;
@@ -8699,12 +8727,12 @@ function toPlayerQuestion(q) {
   const opts = [...new Set(((_a = q.options) != null ? _a : []).filter((o) => o.trim() !== ""))];
   if (opts.length < 2 || !opts.includes(q.answer)) return null;
   const topic = topicById(q.topicId);
-  const sc = q.scenario;
-  const base = {
+  const sc2 = q.scenario;
+  const base2 = {
     id: q.id,
-    ...sc ? { scenarioId: sc.id, scene: sc.scene } : {},
-    ...(sc == null ? void 0 : sc.lead) && sc.lead.length > 0 ? { lead: sc.lead.map((l4) => ({ ...l4.speaker ? { speaker: l4.speaker } : {}, text: l4.text })) } : {},
-    ...(sc == null ? void 0 : sc.speaker) ? { speaker: sc.speaker } : {},
+    ...sc2 ? { scenarioId: sc2.id, scene: sc2.scene } : {},
+    ...(sc2 == null ? void 0 : sc2.lead) && sc2.lead.length > 0 ? { lead: sc2.lead.map((l4) => ({ ...l4.speaker ? { speaker: l4.speaker } : {}, text: l4.text })) } : {},
+    ...(sc2 == null ? void 0 : sc2.speaker) ? { speaker: sc2.speaker } : {},
     options: opts.map((o) => ({ id: o, text: o })),
     answerId: q.answer,
     explanation: q.explanation,
@@ -8714,11 +8742,11 @@ function toPlayerQuestion(q) {
   };
   if (q.type === "choice") {
     if (((_b = q.stem.match(/_{3,}/g)) != null ? _b : []).length !== 1) return null;
-    return { ...base, kind: "choice", text: q.stem.replace(BLANK, "____") };
+    return { ...base2, kind: "choice", text: q.stem.replace(BLANK, "____") };
   }
   const fixed = (_c = q.accepted) == null ? void 0 : _c[0];
   const answered = fixed && q.stem.includes(q.answer) ? q.stem.replace(q.answer, fixed) : void 0;
-  return { ...base, kind: "find-error", text: q.stem, ...answered ? { answered } : {} };
+  return { ...base2, kind: "find-error", text: q.stem, ...answered ? { answered } : {} };
 }
 function groupMistakes(questions2) {
   const groups = /* @__PURE__ */ new Map();
@@ -8785,8 +8813,8 @@ function parsePos(text) {
   return POS_KEYS.filter((k) => found.has(k));
 }
 function formatPos(keys) {
-  const set3 = new Set(keys);
-  return POS_KEYS.filter((k) => set3.has(k)).map((k) => POS_LABEL[k]).join(", ");
+  const set4 = new Set(keys);
+  return POS_KEYS.filter((k) => set4.has(k)).map((k) => POS_LABEL[k]).join(", ");
 }
 function verbFavoriteId(entryId) {
   return `verb:${entryId}`;
@@ -8952,37 +8980,37 @@ var GrammarSection = class extends import_obsidian17.Component {
       var _a, _b;
       return (_b = (_a = this.actions).openGrammarTopic) == null ? void 0 : _b.call(_a, row.topicId);
     };
-    const el = this.el.createDiv({ cls: `vt-gr-side-row is-stage-${row.stage}` });
-    el.setAttr("role", "button");
-    el.setAttr("tabindex", "0");
-    el.setAttr("data-topic-id", row.topicId);
-    el.addEventListener("click", open);
-    el.addEventListener("keydown", (e) => {
+    const el2 = this.el.createDiv({ cls: `vt-gr-side-row is-stage-${row.stage}` });
+    el2.setAttr("role", "button");
+    el2.setAttr("tabindex", "0");
+    el2.setAttr("data-topic-id", row.topicId);
+    el2.addEventListener("click", open);
+    el2.addEventListener("keydown", (e) => {
       if (e.key === "Enter") open();
     });
-    el.createSpan({ cls: "vt-gr-side-row-title", text: row.title });
+    el2.createSpan({ cls: "vt-gr-side-row-title", text: row.title });
     if (count2 !== void 0) {
-      el.createSpan({ cls: "vt-gr-side-row-count", text: `\xD7${count2}` });
+      el2.createSpan({ cls: "vt-gr-side-row-count", text: `\xD7${count2}` });
       return;
     }
-    const btn = el.createEl("button", { cls: "vt-gr-side-row-btn", text: t("grammar.sidebar.practice"), attr: { type: "button" } });
+    const btn = el2.createEl("button", { cls: "vt-gr-side-row-btn", text: t("grammar.sidebar.practice"), attr: { type: "button" } });
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       if (!routeToPractice(this.deps, row.topicId)) open();
     });
   }
   drawRow(row, active2, select) {
-    const el = this.el.createDiv({ cls: "vt-glist-row" });
-    el.setAttr("role", "button");
-    el.setAttr("tabindex", "0");
-    el.setAttr("data-entry-id", row.entryId);
-    el.toggleClass("is-active", active2);
+    const el2 = this.el.createDiv({ cls: "vt-glist-row" });
+    el2.setAttr("role", "button");
+    el2.setAttr("tabindex", "0");
+    el2.setAttr("data-entry-id", row.entryId);
+    el2.toggleClass("is-active", active2);
     const open = () => select ? select(row.entryId) : this.actions.openWord(row.entryId);
-    el.addEventListener("click", open);
-    el.addEventListener("keydown", (e) => {
+    el2.addEventListener("click", open);
+    el2.addEventListener("keydown", (e) => {
       if (e.key === "Enter") open();
     });
-    const title = el.createDiv({ cls: "vt-glist-title" });
+    const title = el2.createDiv({ cls: "vt-glist-title" });
     const icon = title.createSpan({ cls: "vt-glist-icon" });
     if (row.favorited) {
       icon.addClass("is-saved");
@@ -8993,7 +9021,7 @@ var GrammarSection = class extends import_obsidian17.Component {
     }
     title.createSpan({ cls: "vt-glist-text", text: row.word });
     const date = shortDate2(row.lastAt);
-    if (date) el.createDiv({ cls: "vt-glist-meta", text: date });
+    if (date) el2.createDiv({ cls: "vt-glist-meta", text: date });
   }
 };
 
@@ -9078,41 +9106,41 @@ function exportLabels() {
 
 // src/core/wordlists/lemma.ts
 var MIN_BASE = 3;
-function isConsonant2(c2) {
-  return /[b-df-hj-np-tv-z]/.test(c2);
+function isConsonant2(c4) {
+  return /[b-df-hj-np-tv-z]/.test(c4);
 }
 function lemmaCandidates(lower2) {
   const w2 = lower2.endsWith("'s") ? lower2.slice(0, -2) : lower2;
   const out = w2 !== lower2 ? [w2] : [];
-  const add3 = (base) => {
-    if (base.length >= MIN_BASE && base !== w2 && !out.includes(base)) out.push(base);
+  const add4 = (base2) => {
+    if (base2.length >= MIN_BASE && base2 !== w2 && !out.includes(base2)) out.push(base2);
   };
   if (w2.endsWith("ies") || w2.endsWith("ied")) {
-    add3(w2.slice(0, -3) + "y");
+    add4(w2.slice(0, -3) + "y");
   }
   if (w2.endsWith("s") && !w2.endsWith("ss")) {
-    add3(w2.slice(0, -1));
-    if (w2.endsWith("es")) add3(w2.slice(0, -2));
+    add4(w2.slice(0, -1));
+    if (w2.endsWith("es")) add4(w2.slice(0, -2));
   }
   if (w2.endsWith("ed") && !w2.endsWith("eed")) {
-    add3(w2.slice(0, -1));
+    add4(w2.slice(0, -1));
     const stem = w2.slice(0, -2);
-    add3(stem);
+    add4(stem);
     if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant2(stem[stem.length - 1])) {
-      add3(stem.slice(0, -1));
+      add4(stem.slice(0, -1));
     }
   }
   if (w2.endsWith("ing")) {
     const stem = w2.slice(0, -3);
-    add3(stem);
-    add3(stem + "e");
+    add4(stem);
+    add4(stem + "e");
     if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && isConsonant2(stem[stem.length - 1])) {
-      add3(stem.slice(0, -1));
+      add4(stem.slice(0, -1));
     }
-    if (stem.endsWith("y")) add3(stem.slice(0, -1) + "ie");
+    if (stem.endsWith("y")) add4(stem.slice(0, -1) + "ie");
   }
-  if (w2.endsWith("ily")) add3(w2.slice(0, -3) + "y");
-  if (w2.endsWith("ly") && w2.length - 2 >= 4) add3(w2.slice(0, -2));
+  if (w2.endsWith("ily")) add4(w2.slice(0, -3) + "y");
+  if (w2.endsWith("ly") && w2.length - 2 >= 4) add4(w2.slice(0, -2));
   return out;
 }
 
@@ -9165,11 +9193,11 @@ var WordIndex = class {
   mentions(text, exclude = /* @__PURE__ */ new Set()) {
     var _a;
     const out = [];
-    const add3 = (e) => {
+    const add4 = (e) => {
       if (e && !exclude.has(e.id) && !out.includes(e.id)) out.push(e.id);
     };
-    for (const token2 of (_a = text.match(TOKEN_RE2)) != null ? _a : []) add3(this.find(token2.replace(/^['-]+|['-]+$/g, "")));
-    for (const e of this.phrases) if (buildWordRe(e.word.trim()).test(text)) add3(e);
+    for (const token2 of (_a = text.match(TOKEN_RE2)) != null ? _a : []) add4(this.find(token2.replace(/^['-]+|['-]+$/g, "")));
+    for (const e of this.phrases) if (buildWordRe(e.word.trim()).test(text)) add4(e);
     return out;
   }
 };
@@ -9264,10 +9292,10 @@ function wordOpener(host) {
 function wordChip(parent, host, entry, cls) {
   const open = entry ? wordOpener(host) : void 0;
   if (!entry || !open) return parent.createSpan({ cls });
-  const el = parent.createEl("button", { cls, attr: { type: "button", title: t("learn.openWord", { word: entry.word }) } });
-  el.addClass("is-link");
-  el.addEventListener("click", () => open(entry));
-  return el;
+  const el2 = parent.createEl("button", { cls, attr: { type: "button", title: t("learn.openWord", { word: entry.word }) } });
+  el2.addClass("is-link");
+  el2.addEventListener("click", () => open(entry));
+  return el2;
 }
 function learnButton(parent, opts) {
   const btn = parent.createEl("button", { cls: "vt-btn vt-learn-btn" });
@@ -9340,8 +9368,8 @@ function filterByActivePos(entries, active2) {
 function noteName(path) {
   var _a;
   if (!path) return void 0;
-  const base = (_a = path.split("/").pop()) != null ? _a : path;
-  return base.replace(/\.md$/i, "") || void 0;
+  const base2 = (_a = path.split("/").pop()) != null ? _a : path;
+  return base2.replace(/\.md$/i, "") || void 0;
 }
 function shortDate3(iso) {
   if (!iso) return void 0;
@@ -9413,8 +9441,8 @@ function visibleUsagePage() {
   for (const b of mountedPages) if (b.isVisible()) return b;
   return null;
 }
-function renderVerbs(plugin, source, el, ctx) {
-  ctx.addChild(new VerbsBlock(el, plugin, parseVerbsParams(source), ctx.sourcePath));
+function renderVerbs(plugin, source, el2, ctx) {
+  ctx.addChild(new VerbsBlock(el2, plugin, parseVerbsParams(source), ctx.sourcePath));
 }
 var VerbsBlock = class extends import_obsidian20.MarkdownRenderChild {
   constructor(containerEl, plugin, params, sourcePath) {
@@ -9498,15 +9526,15 @@ var VerbsBlock = class extends import_obsidian20.MarkdownRenderChild {
   }
   buildLayout() {
     const grid = this.root.createDiv({ cls: "vt-verbs-grid" });
-    const side = grid.createDiv({ cls: "vt-verbs-side" });
-    this.filterEl = side.createDiv({ cls: "vt-verbs-tag-chips" });
+    const side2 = grid.createDiv({ cls: "vt-verbs-side" });
+    this.filterEl = side2.createDiv({ cls: "vt-verbs-tag-chips" });
     const wlSettings = resolveWordlistSettings(this.plugin.store.settings.wordlists);
     renderFilterChips(this.filterEl, [
       ...tagChipSpecs(this.plugin, this.plugin.wordlists.index.tags, wlSettings, (tag) => tagCountInLibrary(this.plugin, tag)),
       likeChipSpec(this.plugin, wlSettings, likeCountInLibrary(this.plugin))
     ]);
-    this.posChipsEl = side.createDiv({ cls: "vt-verbs-pos-chips" });
-    const search = side.createDiv({ cls: "vt-verbs-search" });
+    this.posChipsEl = side2.createDiv({ cls: "vt-verbs-pos-chips" });
+    const search = side2.createDiv({ cls: "vt-verbs-search" });
     (0, import_obsidian20.setIcon)(search.createSpan({ cls: "vt-verbs-search-icon" }), "search");
     const input = search.createEl("input", { cls: "vt-verbs-filter", type: "search" });
     input.placeholder = t("learn.verb.filter");
@@ -9514,17 +9542,17 @@ var VerbsBlock = class extends import_obsidian20.MarkdownRenderChild {
       this.query = input.value;
       this.render();
     });
-    this.countEl = side.createDiv({ cls: "vt-verbs-count" });
-    this.listEl = side.createDiv({ cls: "vt-verbs-list" });
+    this.countEl = side2.createDiv({ cls: "vt-verbs-count" });
+    this.listEl = side2.createDiv({ cls: "vt-verbs-list" });
     this.detailEl = grid.createDiv({ cls: "vt-verb-detail" });
   }
-  renderPosChips(chips) {
+  renderPosChips(chips2) {
     const host = this.posChipsEl;
     if (!host) return;
     host.empty();
-    if (!chips.length) return;
+    if (!chips2.length) return;
     const headings = usagePosHeadings();
-    for (const pos of chips) {
+    for (const pos of chips2) {
       const chip2 = host.createEl("button", { cls: "vt-verbs-pos-chip" });
       const dim = this.dimmedPos.has(pos);
       chip2.toggleClass("is-dim", dim);
@@ -9543,9 +9571,9 @@ var VerbsBlock = class extends import_obsidian20.MarkdownRenderChild {
     const listedCtx = this.isListedCtx();
     const learned = entriesWithUsage(this.plugin.store.entries).filter((e) => isListed(e, listedCtx));
     const afterQuery = filterVerbs(learned, this.query);
-    const chips = posChipsIn(afterQuery);
-    this.renderPosChips(chips);
-    const active2 = new Set(chips.filter((p) => !this.dimmedPos.has(p)));
+    const chips2 = posChipsIn(afterQuery);
+    this.renderPosChips(chips2);
+    const active2 = new Set(chips2.filter((p) => !this.dimmedPos.has(p)));
     const shown = filterByActivePos(afterQuery, active2);
     const prev = this.pickedId;
     this.pickedId = pickVerb(shown, this.pickedId);
@@ -9596,8 +9624,8 @@ var VerbsBlock = class extends import_obsidian20.MarkdownRenderChild {
   }
   // ── Right pane ────────────────────────────────────────────────
   renderDetail(e) {
-    const el = this.detailEl;
-    const head = el.createDiv({ cls: "vt-verb-head" });
+    const el2 = this.detailEl;
+    const head = el2.createDiv({ cls: "vt-verb-head" });
     head.createSpan({ cls: "vt-verb-word", text: e.word });
     const phon = phoneticLine(e);
     if (phon) head.createSpan({ cls: "vt-verb-phon", text: phon });
@@ -9606,17 +9634,17 @@ var VerbsBlock = class extends import_obsidian20.MarkdownRenderChild {
     speak.setAttr("aria-label", t("learn.verb.speak"));
     bindPronounceButton(speak, e);
     const source = usageMeta(e, void 0).source;
-    if (source) el.createDiv({ cls: "vt-verb-meta", text: t("learn.verb.meta.source", { source }) });
+    if (source) el2.createDiv({ cls: "vt-verb-meta", text: t("learn.verb.meta.source", { source }) });
     const busy = this.plugin.verbs.isBusy(e.id);
     if (busy) {
-      const box = el.createDiv({ cls: "vt-learn-busy" });
+      const box = el2.createDiv({ cls: "vt-learn-busy" });
       const line2 = box.createDiv({ cls: "vt-learn-busy-text" });
       (0, import_obsidian20.setIcon)(line2.createSpan({ cls: "vt-learn-busy-icon" }), "sparkles");
       line2.createSpan({ text: t("learn.verb.generating", { word: e.word }) });
       learnButton(box, { label: t("learn.stop"), icon: "square", onClick: () => this.plugin.verbs.stop(e.id) });
     }
     const error = this.errors.get(e.id);
-    if (error && !busy) el.appendChild(aiErrorBox({ text: error.text, error: error.cause }));
+    if (error && !busy) el2.appendChild(aiErrorBox({ text: error.text, error: error.cause }));
     if (this.markdownScope) {
       this.removeChild(this.markdownScope);
       this.markdownScope = null;
@@ -9625,12 +9653,12 @@ var VerbsBlock = class extends import_obsidian20.MarkdownRenderChild {
     const posList = POS_KEYS.filter((p) => usages[p]);
     if (posList.length) {
       const scope = this.markdownScope = this.addChild(new import_obsidian20.Component());
-      for (const pos of posList) this.renderPosSection(el, e, pos, usages[pos], scope, busy);
+      for (const pos of posList) this.renderPosSection(el2, e, pos, usages[pos], scope, busy);
       return;
     }
     if (busy) return;
-    if (renderLearnAiGate(el, this.plugin)) return;
-    el.appendChild(
+    if (renderLearnAiGate(el2, this.plugin)) return;
+    el2.appendChild(
       emptyState({
         icon: "sparkles",
         title: t("learn.verb.empty.title", { word: e.word }),
@@ -9641,8 +9669,8 @@ var VerbsBlock = class extends import_obsidian20.MarkdownRenderChild {
   }
   // One part of speech's usage: its own heading, patterns/related, meta
   // (加入/更新日期) and actions (收藏 / 重新產生) (1006-2 #19 #22).
-  renderPosSection(el, e, pos, usage, scope, entryBusy) {
-    const section4 = el.createDiv({ cls: "vt-verb-pos" });
+  renderPosSection(el2, e, pos, usage, scope, entryBusy) {
+    const section4 = el2.createDiv({ cls: "vt-verb-pos" });
     section4.createDiv({ cls: "vt-verb-pos-title", text: usagePosHeadings()[pos] });
     const dates = usageDates(usage);
     if (dates) section4.createDiv({ cls: "vt-verb-meta", text: dates });
@@ -9657,8 +9685,8 @@ var VerbsBlock = class extends import_obsidian20.MarkdownRenderChild {
         void import_obsidian20.MarkdownRenderer.render(this.plugin.app, p.meaningZh, zh, this.sourcePath, scope);
       }
       if (p.example) {
-        const ex = right.createDiv({ cls: "vt-verb-pattern-ex" });
-        void import_obsidian20.MarkdownRenderer.render(this.plugin.app, p.example, ex, this.sourcePath, scope);
+        const ex2 = right.createDiv({ cls: "vt-verb-pattern-ex" });
+        void import_obsidian20.MarkdownRenderer.render(this.plugin.app, p.example, ex2, this.sourcePath, scope);
       }
     }
     if (related.length) {
@@ -9824,24 +9852,24 @@ function proseLines(markdown) {
       out.push("");
       continue;
     }
-    let s = line2;
+    let s2 = line2;
     if (inComment) {
-      const end = s.indexOf("%%");
+      const end = s2.indexOf("%%");
       if (end < 0) {
         out.push("");
         continue;
       }
-      s = s.slice(end + 2);
+      s2 = s2.slice(end + 2);
       inComment = false;
     }
-    s = s.replace(/%%.*?%%/g, " ");
-    const open = s.indexOf("%%");
+    s2 = s2.replace(/%%.*?%%/g, " ");
+    const open = s2.indexOf("%%");
     if (open >= 0) {
-      s = s.slice(0, open);
+      s2 = s2.slice(0, open);
       inComment = true;
     }
-    s = s.replace(/`[^`]*`/g, " ").replace(/!?\[\[([^\]|]*)\|?([^\]]*)\]\]/g, (_m, target, alias) => alias || target).replace(/\]\([^)]*\)/g, "]").replace(/\bhttps?:\/\/\S+/g, " ").replace(/<[^>]+>/g, " ");
-    out.push(s);
+    s2 = s2.replace(/`[^`]*`/g, " ").replace(/!?\[\[([^\]|]*)\|?([^\]]*)\]\]/g, (_m, target, alias) => alias || target).replace(/\]\([^)]*\)/g, "]").replace(/\bhttps?:\/\/\S+/g, " ").replace(/<[^>]+>/g, " ");
+    out.push(s2);
   }
   return out;
 }
@@ -9863,13 +9891,13 @@ var ScanAccumulator = class {
       if (!hit) continue;
       if (!this.hits.has(hit.base)) {
         const start4 = m2.index;
-        const sentence = extractSentence(text, start4, start4 + m2[0].length, null);
-        this.hits.set(hit.base, { word: hit.base, tags: hit.tags, line: line2, sentence });
+        const sentence2 = extractSentence(text, start4, start4 + m2[0].length, null);
+        this.hits.set(hit.base, { word: hit.base, tags: hit.tags, line: line2, sentence: sentence2 });
       }
       for (const tag of hit.tags) {
-        let set3 = this.seenByTag.get(tag);
-        if (!set3) this.seenByTag.set(tag, set3 = /* @__PURE__ */ new Set());
-        set3.add(hit.base);
+        let set4 = this.seenByTag.get(tag);
+        if (!set4) this.seenByTag.set(tag, set4 = /* @__PURE__ */ new Set());
+        set4.add(hit.base);
         this.counts.set(tag, ((_a = this.counts.get(tag)) != null ? _a : 0) + 1);
       }
     }
@@ -9877,8 +9905,8 @@ var ScanAccumulator = class {
   result() {
     var _a;
     const byTag = {};
-    for (const [tag, set3] of this.seenByTag) {
-      byTag[tag] = { unique: set3.size, count: (_a = this.counts.get(tag)) != null ? _a : 0 };
+    for (const [tag, set4] of this.seenByTag) {
+      byTag[tag] = { unique: set4.size, count: (_a = this.counts.get(tag)) != null ? _a : 0 };
     }
     return { uniqueWords: this.seen.size, byTag, hits: [...this.hits.values()] };
   }
@@ -9893,7 +9921,7 @@ function noteWordSet(markdown, inflections) {
       const lower2 = m2[0].toLowerCase();
       if (words.has(lower2)) continue;
       words.add(lower2);
-      if (inflections) for (const c2 of lemmaCandidates(lower2)) words.add(c2);
+      if (inflections) for (const c4 of lemmaCandidates(lower2)) words.add(c4);
     }
   }
   return words;
@@ -10048,7 +10076,7 @@ function renderPageGroups(container, deps) {
         container,
         entry,
         state,
-        (s) => deps.expandState.set(entry.id, s),
+        (s2) => deps.expandState.set(entry.id, s2),
         () => deps.onRowRemoved(entry.id),
         {
           ...deps.rowOpts,
@@ -10069,15 +10097,15 @@ function suggestKey(groupKey, word) {
 function renderSuggestRow(container, page, group, row, deps) {
   const key6 = suggestKey(group.key, row.word);
   const busy = deps.busy.has(key6);
-  const el = container.createDiv({ cls: ["vt-row", "vt-page-suggest"] });
-  el.setAttr("data-word", row.word.word.toLowerCase());
-  if (row.word.emoji) el.createSpan({ text: row.word.emoji, cls: "vt-page-suggest-emoji" });
-  el.createSpan({ text: row.word.word, cls: "vt-page-suggest-word" });
-  if (row.word.zh) el.createSpan({ text: row.word.zh, cls: "vt-page-suggest-zh" });
-  for (const tagText of row.levelTags) el.createSpan({ text: tagText, cls: "vt-row-level-chip" });
-  for (const label of row.morphemeLabels) el.createSpan({ text: label, cls: "vt-row-morpheme-chip" });
-  el.createEl("span", { cls: "vt-group-spacer" });
-  const addBtn = el.createEl("span", { cls: "vt-row-like" });
+  const el2 = container.createDiv({ cls: ["vt-row", "vt-page-suggest"] });
+  el2.setAttr("data-word", row.word.word.toLowerCase());
+  if (row.word.emoji) el2.createSpan({ text: row.word.emoji, cls: "vt-page-suggest-emoji" });
+  el2.createSpan({ text: row.word.word, cls: "vt-page-suggest-word" });
+  if (row.word.zh) el2.createSpan({ text: row.word.zh, cls: "vt-page-suggest-zh" });
+  for (const tagText of row.levelTags) el2.createSpan({ text: tagText, cls: "vt-row-level-chip" });
+  for (const label of row.morphemeLabels) el2.createSpan({ text: label, cls: "vt-row-morpheme-chip" });
+  el2.createEl("span", { cls: "vt-group-spacer" });
+  const addBtn = el2.createEl("span", { cls: "vt-row-like" });
   addBtn.toggleClass("is-busy", busy);
   addBtn.setText("\u2661");
   addBtn.setAttr("role", "button");
@@ -10339,12 +10367,12 @@ var VocabSidebarView = class extends import_obsidian22.ItemView {
     const root2 = this.scrollRoot();
     if (!root2) return;
     const entry = this.findEntry(word);
-    const el = entry ? root2.querySelector(`.vt-row[data-entry-id="${CSS.escape(entry.id)}"]`) : root2.querySelector(`.vt-row[data-word="${CSS.escape(word)}"]`);
-    if (!el) return;
-    el.scrollIntoView({ block: "nearest" });
-    el.removeClass("is-flash");
-    el.addClass("is-flash");
-    window.setTimeout(() => el.removeClass("is-flash"), FOCUS_FLASH_MS);
+    const el2 = entry ? root2.querySelector(`.vt-row[data-entry-id="${CSS.escape(entry.id)}"]`) : root2.querySelector(`.vt-row[data-word="${CSS.escape(word)}"]`);
+    if (!el2) return;
+    el2.scrollIntoView({ block: "nearest" });
+    el2.removeClass("is-flash");
+    el2.addClass("is-flash");
+    window.setTimeout(() => el2.removeClass("is-flash"), FOCUS_FLASH_MS);
   }
   // Called by main.ts whenever something that affects the exam chips
   // changed (a scan finished, a chip was toggled, the note was edited).
@@ -10542,14 +10570,14 @@ var VocabSidebarView = class extends import_obsidian22.ItemView {
     }
   }
   drawRebindBanner() {
-    const el = this.rebindEl;
-    if (!el) return;
-    el.empty();
-    el.toggle(!!this.rebindThreadId);
+    const el2 = this.rebindEl;
+    if (!el2) return;
+    el2.empty();
+    el2.toggle(!!this.rebindThreadId);
     if (!this.rebindThreadId) return;
-    (0, import_obsidian22.setIcon)(el.createSpan({ cls: "vt-rebind-icon" }), "link");
-    el.createSpan({ cls: "vt-rebind-text", text: t("paragraph.rebind.banner") });
-    const cancel = el.createEl("button", { text: t("paragraph.rebind.cancel") });
+    (0, import_obsidian22.setIcon)(el2.createSpan({ cls: "vt-rebind-icon" }), "link");
+    el2.createSpan({ cls: "vt-rebind-text", text: t("paragraph.rebind.banner") });
+    const cancel = el2.createEl("button", { text: t("paragraph.rebind.cancel") });
     cancel.addEventListener("click", () => this.cancelRebind());
   }
   listActions() {
@@ -11031,7 +11059,7 @@ var VocabSidebarView = class extends import_obsidian22.ItemView {
             listEl,
             entry,
             state,
-            (s) => this.expandState.set(entry.id, s),
+            (s2) => this.expandState.set(entry.id, s2),
             () => this.handleWordRowChanged(entry.id),
             rowOpts
           );
@@ -11112,9 +11140,9 @@ Dispatch.prototype = dispatch.prototype = {
   }
 };
 function get(type, name) {
-  for (var i = 0, n = type.length, c2; i < n; ++i) {
-    if ((c2 = type[i]).name === name) {
-      return c2.value;
+  for (var i = 0, n = type.length, c4; i < n; ++i) {
+    if ((c4 = type[i]).name === name) {
+      return c4.value;
     }
   }
 }
@@ -11527,16 +11555,16 @@ function attrConstantNS(fullname, value) {
 }
 function attrFunction(name, value) {
   return function() {
-    var v = value.apply(this, arguments);
-    if (v == null) this.removeAttribute(name);
-    else this.setAttribute(name, v);
+    var v5 = value.apply(this, arguments);
+    if (v5 == null) this.removeAttribute(name);
+    else this.setAttribute(name, v5);
   };
 }
 function attrFunctionNS(fullname, value) {
   return function() {
-    var v = value.apply(this, arguments);
-    if (v == null) this.removeAttributeNS(fullname.space, fullname.local);
-    else this.setAttributeNS(fullname.space, fullname.local, v);
+    var v5 = value.apply(this, arguments);
+    if (v5 == null) this.removeAttributeNS(fullname.space, fullname.local);
+    else this.setAttributeNS(fullname.space, fullname.local, v5);
   };
 }
 function attr_default(name, value) {
@@ -11566,9 +11594,9 @@ function styleConstant(name, value, priority) {
 }
 function styleFunction(name, value, priority) {
   return function() {
-    var v = value.apply(this, arguments);
-    if (v == null) this.style.removeProperty(name);
-    else this.style.setProperty(name, v, priority);
+    var v5 = value.apply(this, arguments);
+    if (v5 == null) this.style.removeProperty(name);
+    else this.style.setProperty(name, v5, priority);
   };
 }
 function style_default(name, value, priority) {
@@ -11591,9 +11619,9 @@ function propertyConstant(name, value) {
 }
 function propertyFunction(name, value) {
   return function() {
-    var v = value.apply(this, arguments);
-    if (v == null) delete this[name];
-    else this[name] = v;
+    var v5 = value.apply(this, arguments);
+    if (v5 == null) delete this[name];
+    else this[name] = v5;
   };
 }
 function property_default(name, value) {
@@ -11674,8 +11702,8 @@ function textConstant(value) {
 }
 function textFunction(value) {
   return function() {
-    var v = value.apply(this, arguments);
-    this.textContent = v == null ? "" : v;
+    var v5 = value.apply(this, arguments);
+    this.textContent = v5 == null ? "" : v5;
   };
 }
 function text_default(value) {
@@ -11693,8 +11721,8 @@ function htmlConstant(value) {
 }
 function htmlFunction(value) {
   return function() {
-    var v = value.apply(this, arguments);
-    this.innerHTML = v == null ? "" : v;
+    var v5 = value.apply(this, arguments);
+    this.innerHTML = v5 == null ? "" : v5;
   };
 }
 function html_default(value) {
@@ -12063,9 +12091,9 @@ function drag_default() {
   }
   function touchstarted(event, d) {
     if (!filter2.call(this, event, d)) return;
-    var touches = event.changedTouches, c2 = container.call(this, event, d), n = touches.length, i, gesture;
+    var touches = event.changedTouches, c4 = container.call(this, event, d), n = touches.length, i, gesture;
     for (i = 0; i < n; ++i) {
-      if (gesture = beforestart(this, c2, event, d, touches[i].identifier, touches[i])) {
+      if (gesture = beforestart(this, c4, event, d, touches[i].identifier, touches[i])) {
         nopropagation(event);
         gesture("start", event, touches[i]);
       }
@@ -12094,8 +12122,8 @@ function drag_default() {
     }
   }
   function beforestart(that, container2, event, d, identifier, touch) {
-    var dispatch2 = listeners.copy(), p = pointer_default(touch || event, container2), dx, dy, s;
-    if ((s = subject.call(that, new DragEvent("beforestart", {
+    var dispatch2 = listeners.copy(), p = pointer_default(touch || event, container2), dx, dy, s2;
+    if ((s2 = subject.call(that, new DragEvent("beforestart", {
       sourceEvent: event,
       target: drag,
       identifier,
@@ -12106,8 +12134,8 @@ function drag_default() {
       dy: 0,
       dispatch: dispatch2
     }), d)) == null) return;
-    dx = s.x - p[0] || 0;
-    dy = s.y - p[1] || 0;
+    dx = s2.x - p[0] || 0;
+    dy = s2.y - p[1] || 0;
     return function gesture(type, event2, touch2) {
       var p0 = p, n;
       switch (type) {
@@ -12126,7 +12154,7 @@ function drag_default() {
         that,
         new DragEvent(type, {
           sourceEvent: event2,
-          subject: s,
+          subject: s2,
           target: drag,
           identifier,
           active: n,
@@ -12742,8 +12770,8 @@ var a = 1664525;
 var c = 1013904223;
 var m = 4294967296;
 function lcg_default() {
-  let s = 1;
-  return () => (s = (a * s + c) % m) / m;
+  let s2 = 1;
+  return () => (s2 = (a * s2 + c) % m) / m;
 }
 
 // node_modules/d3-force/src/simulation.js
@@ -12869,11 +12897,11 @@ function manyBody_default() {
     for (i = 0; i < n; ++i) node2 = nodes[i], strengths[node2.index] = +strength(node2, i, nodes);
   }
   function accumulate(quad) {
-    var strength2 = 0, q, c2, weight = 0, x3, y3, i;
+    var strength2 = 0, q, c4, weight = 0, x3, y3, i;
     if (quad.length) {
       for (x3 = y3 = i = 0; i < 4; ++i) {
-        if ((q = quad[i]) && (c2 = Math.abs(q.value))) {
-          strength2 += q.value, weight += c2, x3 += c2 * q.x, y3 += c2 * q.y;
+        if ((q = quad[i]) && (c4 = Math.abs(q.value))) {
+          strength2 += q.value, weight += c4, x3 += c4 * q.x, y3 += c4 * q.y;
         }
       }
       quad.x = x3 / weight;
@@ -13408,11 +13436,11 @@ function hex(value) {
   value = clampi(value);
   return (value < 16 ? "0" : "") + value.toString(16);
 }
-function hsla(h, s, l4, a2) {
-  if (a2 <= 0) h = s = l4 = NaN;
-  else if (l4 <= 0 || l4 >= 1) h = s = NaN;
-  else if (s <= 0) h = NaN;
-  return new Hsl(h, s, l4, a2);
+function hsla(h, s2, l4, a2) {
+  if (a2 <= 0) h = s2 = l4 = NaN;
+  else if (l4 <= 0 || l4 >= 1) h = s2 = NaN;
+  else if (s2 <= 0) h = NaN;
+  return new Hsl(h, s2, l4, a2);
 }
 function hslConvert(o) {
   if (o instanceof Hsl) return new Hsl(o.h, o.s, o.l, o.opacity);
@@ -13420,24 +13448,24 @@ function hslConvert(o) {
   if (!o) return new Hsl();
   if (o instanceof Hsl) return o;
   o = o.rgb();
-  var r = o.r / 255, g = o.g / 255, b = o.b / 255, min = Math.min(r, g, b), max = Math.max(r, g, b), h = NaN, s = max - min, l4 = (max + min) / 2;
-  if (s) {
-    if (r === max) h = (g - b) / s + (g < b) * 6;
-    else if (g === max) h = (b - r) / s + 2;
-    else h = (r - g) / s + 4;
-    s /= l4 < 0.5 ? max + min : 2 - max - min;
+  var r = o.r / 255, g = o.g / 255, b = o.b / 255, min = Math.min(r, g, b), max = Math.max(r, g, b), h = NaN, s2 = max - min, l4 = (max + min) / 2;
+  if (s2) {
+    if (r === max) h = (g - b) / s2 + (g < b) * 6;
+    else if (g === max) h = (b - r) / s2 + 2;
+    else h = (r - g) / s2 + 4;
+    s2 /= l4 < 0.5 ? max + min : 2 - max - min;
     h *= 60;
   } else {
-    s = l4 > 0 && l4 < 1 ? 0 : h;
+    s2 = l4 > 0 && l4 < 1 ? 0 : h;
   }
-  return new Hsl(h, s, l4, o.opacity);
+  return new Hsl(h, s2, l4, o.opacity);
 }
-function hsl(h, s, l4, opacity) {
-  return arguments.length === 1 ? hslConvert(h) : new Hsl(h, s, l4, opacity == null ? 1 : opacity);
+function hsl(h, s2, l4, opacity) {
+  return arguments.length === 1 ? hslConvert(h) : new Hsl(h, s2, l4, opacity == null ? 1 : opacity);
 }
-function Hsl(h, s, l4, opacity) {
+function Hsl(h, s2, l4, opacity) {
   this.h = +h;
-  this.s = +s;
+  this.s = +s2;
   this.l = +l4;
   this.opacity = +opacity;
 }
@@ -13451,7 +13479,7 @@ define_default(Hsl, hsl, extend(Color, {
     return new Hsl(this.h, this.s, this.l * k, this.opacity);
   },
   rgb() {
-    var h = this.h % 360 + (this.h < 0) * 360, s = isNaN(h) || isNaN(this.s) ? 0 : this.s, l4 = this.l, m2 = l4 + (l4 < 0.5 ? l4 : 1 - l4) * s, m1 = 2 * l4 - m2;
+    var h = this.h % 360 + (this.h < 0) * 360, s2 = isNaN(h) || isNaN(this.s) ? 0 : this.s, l4 = this.l, m2 = l4 + (l4 < 0.5 ? l4 : 1 - l4) * s2, m1 = 2 * l4 - m2;
     return new Rgb(
       hsl2rgb(h >= 240 ? h - 240 : h + 120, m1, m2),
       hsl2rgb(h, m1, m2),
@@ -13482,15 +13510,15 @@ function hsl2rgb(h, m1, m2) {
 }
 
 // node_modules/d3-interpolate/src/basis.js
-function basis(t1, v0, v1, v2, v3) {
+function basis(t1, v0, v1, v22, v32) {
   var t2 = t1 * t1, t3 = t2 * t1;
-  return ((1 - 3 * t1 + 3 * t2 - t3) * v0 + (4 - 6 * t2 + 3 * t3) * v1 + (1 + 3 * t1 + 3 * t2 - 3 * t3) * v2 + t3 * v3) / 6;
+  return ((1 - 3 * t1 + 3 * t2 - t3) * v0 + (4 - 6 * t2 + 3 * t3) * v1 + (1 + 3 * t1 + 3 * t2 - 3 * t3) * v22 + t3 * v32) / 6;
 }
 function basis_default(values) {
   var n = values.length - 1;
   return function(t2) {
-    var i = t2 <= 0 ? t2 = 0 : t2 >= 1 ? (t2 = 1, n - 1) : Math.floor(t2 * n), v1 = values[i], v2 = values[i + 1], v0 = i > 0 ? values[i - 1] : 2 * v1 - v2, v3 = i < n - 1 ? values[i + 2] : 2 * v2 - v1;
-    return basis((t2 - i / n) * n, v0, v1, v2, v3);
+    var i = t2 <= 0 ? t2 = 0 : t2 >= 1 ? (t2 = 1, n - 1) : Math.floor(t2 * n), v1 = values[i], v22 = values[i + 1], v0 = i > 0 ? values[i - 1] : 2 * v1 - v22, v32 = i < n - 1 ? values[i + 2] : 2 * v22 - v1;
+    return basis((t2 - i / n) * n, v0, v1, v22, v32);
   };
 }
 
@@ -13498,8 +13526,8 @@ function basis_default(values) {
 function basisClosed_default(values) {
   var n = values.length;
   return function(t2) {
-    var i = Math.floor(((t2 %= 1) < 0 ? ++t2 : t2) * n), v0 = values[(i + n - 1) % n], v1 = values[i % n], v2 = values[(i + 1) % n], v3 = values[(i + 2) % n];
-    return basis((t2 - i / n) * n, v0, v1, v2, v3);
+    var i = Math.floor(((t2 %= 1) < 0 ? ++t2 : t2) * n), v0 = values[(i + n - 1) % n], v1 = values[i % n], v22 = values[(i + 1) % n], v32 = values[(i + 2) % n];
+    return basis((t2 - i / n) * n, v0, v1, v22, v32);
   };
 }
 
@@ -13588,31 +13616,31 @@ function one(b) {
   };
 }
 function string_default(a2, b) {
-  var bi = reA.lastIndex = reB.lastIndex = 0, am, bm, bs, i = -1, s = [], q = [];
+  var bi = reA.lastIndex = reB.lastIndex = 0, am, bm, bs, i = -1, s2 = [], q = [];
   a2 = a2 + "", b = b + "";
   while ((am = reA.exec(a2)) && (bm = reB.exec(b))) {
     if ((bs = bm.index) > bi) {
       bs = b.slice(bi, bs);
-      if (s[i]) s[i] += bs;
-      else s[++i] = bs;
+      if (s2[i]) s2[i] += bs;
+      else s2[++i] = bs;
     }
     if ((am = am[0]) === (bm = bm[0])) {
-      if (s[i]) s[i] += bm;
-      else s[++i] = bm;
+      if (s2[i]) s2[i] += bm;
+      else s2[++i] = bm;
     } else {
-      s[++i] = null;
+      s2[++i] = null;
       q.push({ i, x: number_default(am, bm) });
     }
     bi = reB.lastIndex;
   }
   if (bi < b.length) {
     bs = b.slice(bi);
-    if (s[i]) s[i] += bs;
-    else s[++i] = bs;
+    if (s2[i]) s2[i] += bs;
+    else s2[++i] = bs;
   }
-  return s.length < 2 ? q[0] ? one(q[0].x) : zero(b) : (b = q.length, function(t2) {
-    for (var i2 = 0, o; i2 < b; ++i2) s[(o = q[i2]).i] = o.x(t2);
-    return s.join("");
+  return s2.length < 2 ? q[0] ? one(q[0].x) : zero(b) : (b = q.length, function(t2) {
+    for (var i2 = 0, o; i2 < b; ++i2) s2[(o = q[i2]).i] = o.x(t2);
+    return s2.join("");
   });
 }
 
@@ -13626,12 +13654,12 @@ var identity = {
   scaleX: 1,
   scaleY: 1
 };
-function decompose_default(a2, b, c2, d, e, f) {
+function decompose_default(a2, b, c4, d, e, f) {
   var scaleX, scaleY, skewX;
   if (scaleX = Math.sqrt(a2 * a2 + b * b)) a2 /= scaleX, b /= scaleX;
-  if (skewX = a2 * c2 + b * d) c2 -= a2 * skewX, d -= b * skewX;
-  if (scaleY = Math.sqrt(c2 * c2 + d * d)) c2 /= scaleY, d /= scaleY, skewX /= scaleY;
-  if (a2 * d < b * c2) a2 = -a2, b = -b, skewX = -skewX, scaleX = -scaleX;
+  if (skewX = a2 * c4 + b * d) c4 -= a2 * skewX, d -= b * skewX;
+  if (scaleY = Math.sqrt(c4 * c4 + d * d)) c4 /= scaleY, d /= scaleY, skewX /= scaleY;
+  if (a2 * d < b * c4) a2 = -a2, b = -b, skewX = -skewX, scaleX = -scaleX;
   return {
     translateX: e,
     translateY: f,
@@ -13658,54 +13686,54 @@ function parseSvg(value) {
 }
 
 // node_modules/d3-interpolate/src/transform/index.js
-function interpolateTransform(parse, pxComma, pxParen, degParen) {
-  function pop(s) {
-    return s.length ? s.pop() + " " : "";
+function interpolateTransform(parse12, pxComma, pxParen, degParen) {
+  function pop(s2) {
+    return s2.length ? s2.pop() + " " : "";
   }
-  function translate(xa, ya, xb, yb, s, q) {
+  function translate(xa, ya, xb, yb, s2, q) {
     if (xa !== xb || ya !== yb) {
-      var i = s.push("translate(", null, pxComma, null, pxParen);
+      var i = s2.push("translate(", null, pxComma, null, pxParen);
       q.push({ i: i - 4, x: number_default(xa, xb) }, { i: i - 2, x: number_default(ya, yb) });
     } else if (xb || yb) {
-      s.push("translate(" + xb + pxComma + yb + pxParen);
+      s2.push("translate(" + xb + pxComma + yb + pxParen);
     }
   }
-  function rotate(a2, b, s, q) {
+  function rotate(a2, b, s2, q) {
     if (a2 !== b) {
       if (a2 - b > 180) b += 360;
       else if (b - a2 > 180) a2 += 360;
-      q.push({ i: s.push(pop(s) + "rotate(", null, degParen) - 2, x: number_default(a2, b) });
+      q.push({ i: s2.push(pop(s2) + "rotate(", null, degParen) - 2, x: number_default(a2, b) });
     } else if (b) {
-      s.push(pop(s) + "rotate(" + b + degParen);
+      s2.push(pop(s2) + "rotate(" + b + degParen);
     }
   }
-  function skewX(a2, b, s, q) {
+  function skewX(a2, b, s2, q) {
     if (a2 !== b) {
-      q.push({ i: s.push(pop(s) + "skewX(", null, degParen) - 2, x: number_default(a2, b) });
+      q.push({ i: s2.push(pop(s2) + "skewX(", null, degParen) - 2, x: number_default(a2, b) });
     } else if (b) {
-      s.push(pop(s) + "skewX(" + b + degParen);
+      s2.push(pop(s2) + "skewX(" + b + degParen);
     }
   }
-  function scale(xa, ya, xb, yb, s, q) {
+  function scale(xa, ya, xb, yb, s2, q) {
     if (xa !== xb || ya !== yb) {
-      var i = s.push(pop(s) + "scale(", null, ",", null, ")");
+      var i = s2.push(pop(s2) + "scale(", null, ",", null, ")");
       q.push({ i: i - 4, x: number_default(xa, xb) }, { i: i - 2, x: number_default(ya, yb) });
     } else if (xb !== 1 || yb !== 1) {
-      s.push(pop(s) + "scale(" + xb + "," + yb + ")");
+      s2.push(pop(s2) + "scale(" + xb + "," + yb + ")");
     }
   }
   return function(a2, b) {
-    var s = [], q = [];
-    a2 = parse(a2), b = parse(b);
-    translate(a2.translateX, a2.translateY, b.translateX, b.translateY, s, q);
-    rotate(a2.rotate, b.rotate, s, q);
-    skewX(a2.skewX, b.skewX, s, q);
-    scale(a2.scaleX, a2.scaleY, b.scaleX, b.scaleY, s, q);
+    var s2 = [], q = [];
+    a2 = parse12(a2), b = parse12(b);
+    translate(a2.translateX, a2.translateY, b.translateX, b.translateY, s2, q);
+    rotate(a2.rotate, b.rotate, s2, q);
+    skewX(a2.skewX, b.skewX, s2, q);
+    scale(a2.scaleX, a2.scaleY, b.scaleX, b.scaleY, s2, q);
     a2 = b = null;
     return function(t2) {
       var i = -1, n = q.length, o;
-      while (++i < n) s[(o = q[i]).i] = o.x(t2);
-      return s.join("");
+      while (++i < n) s2[(o = q[i]).i] = o.x(t2);
+      return s2.join("");
     };
   };
 }
@@ -13739,11 +13767,11 @@ var zoom_default = (function zoomRho(rho, rho2, rho4) {
       var d1 = Math.sqrt(d2), b0 = (w1 * w1 - w0 * w0 + rho4 * d2) / (2 * w0 * rho2 * d1), b1 = (w1 * w1 - w0 * w0 - rho4 * d2) / (2 * w1 * rho2 * d1), r0 = Math.log(Math.sqrt(b0 * b0 + 1) - b0), r1 = Math.log(Math.sqrt(b1 * b1 + 1) - b1);
       S = (r1 - r0) / rho;
       i = function(t2) {
-        var s = t2 * S, coshr0 = cosh(r0), u = w0 / (rho2 * d1) * (coshr0 * tanh(rho * s + r0) - sinh(r0));
+        var s2 = t2 * S, coshr0 = cosh(r0), u = w0 / (rho2 * d1) * (coshr0 * tanh(rho * s2 + r0) - sinh(r0));
         return [
           ux0 + u * dx,
           uy0 + u * dy,
-          w0 * coshr0 / cosh(rho * s + r0)
+          w0 * coshr0 / cosh(rho * s2 + r0)
         ];
       };
     }
@@ -13820,8 +13848,8 @@ function tweenValue(transition2, name, value) {
 
 // node_modules/d3-transition/src/transition/interpolate.js
 function interpolate_default(a2, b) {
-  var c2;
-  return (typeof b === "number" ? number_default : b instanceof color ? rgb_default : (c2 = color(b)) ? (b = c2, rgb_default) : string_default)(a2, b);
+  var c4;
+  return (typeof b === "number" ? number_default : b instanceof color ? rgb_default : (c4 = color(b)) ? (b = c4, rgb_default) : string_default)(a2, b);
 }
 
 // node_modules/d3-transition/src/transition/attr.js
@@ -13961,9 +13989,9 @@ function ease_default(value) {
 // node_modules/d3-transition/src/transition/easeVarying.js
 function easeVarying(id2, value) {
   return function() {
-    var v = value.apply(this, arguments);
-    if (typeof v !== "function") throw new Error();
-    set2(this, id2).ease = v;
+    var v5 = value.apply(this, arguments);
+    if (typeof v5 !== "function") throw new Error();
+    set2(this, id2).ease = v5;
   };
 }
 function easeVarying_default(value) {
@@ -14571,7 +14599,7 @@ function zoom_default2() {
   }
   function mousedowned(event, ...args) {
     if (touchending || !filter2.apply(this, arguments)) return;
-    var currentTarget = event.currentTarget, g = gesture(this, args, true).event(event), v = select_default2(event.view).on("mousemove.zoom", mousemoved, true).on("mouseup.zoom", mouseupped, true), p = pointer_default(event, currentTarget), x0 = event.clientX, y0 = event.clientY;
+    var currentTarget = event.currentTarget, g = gesture(this, args, true).event(event), v5 = select_default2(event.view).on("mousemove.zoom", mousemoved, true).on("mouseup.zoom", mouseupped, true), p = pointer_default(event, currentTarget), x0 = event.clientX, y0 = event.clientY;
     nodrag_default(event.view);
     nopropagation2(event);
     g.mouse = [p, this.__zoom.invert(p)];
@@ -14586,7 +14614,7 @@ function zoom_default2() {
       g.event(event2).zoom("mouse", constrain(translate(g.that.__zoom, g.mouse[0] = pointer_default(event2, currentTarget), g.mouse[1]), g.extent, translateExtent));
     }
     function mouseupped(event2) {
-      v.on("mousemove.zoom mouseup.zoom", null);
+      v5.on("mousemove.zoom mouseup.zoom", null);
       yesdrag(event2.view, g.moved);
       noevent_default2(event2);
       g.event(event2).end();
@@ -14802,12 +14830,12 @@ function heartAction(state) {
   if (state === "unliked-in-library") return "like";
   return "add";
 }
-function zoomFilter(ev, mode) {
-  if (mode.mobile && mode.embedded) return ev.touches !== void 0 && ev.touches >= 2;
-  if (!mode.embedded) return !ev.button;
-  if (ev.type === "wheel") return ev.ctrlKey || ev.metaKey;
-  if (ev.touches !== void 0) return ev.touches >= 2;
-  return !ev.button;
+function zoomFilter(ev2, mode) {
+  if (mode.mobile && mode.embedded) return ev2.touches !== void 0 && ev2.touches >= 2;
+  if (!mode.embedded) return !ev2.button;
+  if (ev2.type === "wheel") return ev2.ctrlKey || ev2.metaKey;
+  if (ev2.touches !== void 0) return ev2.touches >= 2;
+  return !ev2.button;
 }
 
 // src/ui/galaxy/galaxyHeight.ts
@@ -14935,10 +14963,10 @@ var GalaxyGraph = class {
     this.zoomBehavior = zoom_default2().scaleExtent([0.45, 2.6]).extent(() => [
       [0, 0],
       [this.width, this.height]
-    ]).filter((ev) => zoomFilter(ev, { embedded: opts.embedded, mobile: opts.mobile })).on("zoom", (ev) => this.root.attr("transform", ev.transform.toString()));
+    ]).filter((ev2) => zoomFilter(ev2, { embedded: opts.embedded, mobile: opts.mobile })).on("zoom", (ev2) => this.root.attr("transform", ev2.transform.toString()));
     this.svg.call(this.zoomBehavior).on("dblclick.zoom", null);
-    this.svg.on("click", (ev) => {
-      if (ev.target === svg) this.select(null);
+    this.svg.on("click", (ev2) => {
+      if (ev2.target === svg) this.select(null);
     });
     this.resizeObserver = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
       const r = svg.getBoundingClientRect();
@@ -15020,27 +15048,27 @@ var GalaxyGraph = class {
     heart.append("circle").attr("r", 13);
     heart.append("text").attr("class", "vt-gx-heart-glyph");
     const merged = entered.merge(sel);
-    merged.on("click", (ev, d) => {
-      ev.stopPropagation();
+    merged.on("click", (ev2, d) => {
+      ev2.stopPropagation();
       this.select(d.kind === "hub" ? null : d.id);
-    }).on("keydown", (ev, d) => {
-      if (ev.target === ev.currentTarget && (ev.key === "Enter" || ev.key === " ")) {
-        ev.preventDefault();
+    }).on("keydown", (ev2, d) => {
+      if (ev2.target === ev2.currentTarget && (ev2.key === "Enter" || ev2.key === " ")) {
+        ev2.preventDefault();
         this.select(d.kind === "hub" ? null : d.id);
       }
     });
     merged.call(
-      drag_default().on("start", (ev, d) => {
+      drag_default().on("start", (ev2, d) => {
         var _a;
-        if (!ev.active) (_a = this.sim) == null ? void 0 : _a.alphaTarget(0.25).restart();
+        if (!ev2.active) (_a = this.sim) == null ? void 0 : _a.alphaTarget(0.25).restart();
         d.fx = d.x;
         d.fy = d.y;
-      }).on("drag", (ev, d) => {
-        d.fx = ev.x;
-        d.fy = ev.y;
-      }).on("end", (ev, d) => {
+      }).on("drag", (ev2, d) => {
+        d.fx = ev2.x;
+        d.fy = ev2.y;
+      }).on("end", (ev2, d) => {
         var _a;
-        if (!ev.active) (_a = this.sim) == null ? void 0 : _a.alphaTarget(0);
+        if (!ev2.active) (_a = this.sim) == null ? void 0 : _a.alphaTarget(0);
         if (d.kind !== "hub") {
           d.fx = null;
           d.fy = null;
@@ -15057,13 +15085,13 @@ var GalaxyGraph = class {
       g.select(".vt-gx-z").attr("y", r + 32).text(d.zh);
       const state = heartState(d);
       const liked = state === "liked";
-      g.select(".vt-gx-heart").attr("transform", `translate(${r * 0.74},${-r * 0.74})`).classed("is-liked", liked).attr("aria-label", liked ? `\u53D6\u6D88 like ${d.word}` : `like ${d.word}`).on("click", (ev) => {
-        ev.stopPropagation();
+      g.select(".vt-gx-heart").attr("transform", `translate(${r * 0.74},${-r * 0.74})`).classed("is-liked", liked).attr("aria-label", liked ? `\u53D6\u6D88 like ${d.word}` : `like ${d.word}`).on("click", (ev2) => {
+        ev2.stopPropagation();
         onToggleLike(d.id);
-      }).on("keydown", (ev) => {
-        if (ev.key === "Enter" || ev.key === " ") {
-          ev.preventDefault();
-          ev.stopPropagation();
+      }).on("keydown", (ev2) => {
+        if (ev2.key === "Enter" || ev2.key === " ") {
+          ev2.preventDefault();
+          ev2.stopPropagation();
           onToggleLike(d.id);
         }
       }).select(".vt-gx-heart-glyph").text(liked ? "\u2665" : "\u2661");
@@ -15173,8 +15201,8 @@ function resolveAddWord(id2, family) {
 }
 
 // src/ui/kit/dragScroll.ts
-function dragScroll(el) {
-  el.addClass("vt-hscroll");
+function dragScroll(el2) {
+  el2.addClass("vt-hscroll");
   let startX = 0;
   let startLeft = 0;
   let pointerId = null;
@@ -15183,7 +15211,7 @@ function dragScroll(el) {
     if (e.pointerType !== "mouse" || e.button !== 0) return;
     pointerId = e.pointerId;
     startX = e.clientX;
-    startLeft = el.scrollLeft;
+    startLeft = el2.scrollLeft;
     dragged = false;
   };
   const move = (e) => {
@@ -15192,15 +15220,15 @@ function dragScroll(el) {
     if (!dragged && Math.abs(dx) <= 4) return;
     if (!dragged) {
       dragged = true;
-      el.setPointerCapture(e.pointerId);
-      el.addClass("is-dragging");
+      el2.setPointerCapture(e.pointerId);
+      el2.addClass("is-dragging");
     }
-    el.scrollLeft = startLeft - dx;
+    el2.scrollLeft = startLeft - dx;
   };
   const up = (e) => {
     if (pointerId !== e.pointerId) return;
     pointerId = null;
-    el.removeClass("is-dragging");
+    el2.removeClass("is-dragging");
   };
   const click = (e) => {
     if (!dragged) return;
@@ -15210,33 +15238,33 @@ function dragScroll(el) {
   };
   const wheel = (e) => {
     if (e.ctrlKey || Math.abs(e.deltaX) > 0 || e.deltaY === 0) return;
-    if (el.scrollWidth <= el.clientWidth) return;
-    el.scrollLeft += e.deltaY;
+    if (el2.scrollWidth <= el2.clientWidth) return;
+    el2.scrollLeft += e.deltaY;
     e.preventDefault();
   };
-  el.addEventListener("pointerdown", down);
-  el.addEventListener("pointermove", move);
-  el.addEventListener("pointerup", up);
-  el.addEventListener("pointercancel", up);
-  el.addEventListener("click", click, true);
-  el.addEventListener("wheel", wheel, { passive: false });
+  el2.addEventListener("pointerdown", down);
+  el2.addEventListener("pointermove", move);
+  el2.addEventListener("pointerup", up);
+  el2.addEventListener("pointercancel", up);
+  el2.addEventListener("click", click, true);
+  el2.addEventListener("wheel", wheel, { passive: false });
   return () => {
-    el.removeEventListener("pointerdown", down);
-    el.removeEventListener("pointermove", move);
-    el.removeEventListener("pointerup", up);
-    el.removeEventListener("pointercancel", up);
-    el.removeEventListener("click", click, true);
-    el.removeEventListener("wheel", wheel);
+    el2.removeEventListener("pointerdown", down);
+    el2.removeEventListener("pointermove", move);
+    el2.removeEventListener("pointerup", up);
+    el2.removeEventListener("pointercancel", up);
+    el2.removeEventListener("click", click, true);
+    el2.removeEventListener("wheel", wheel);
   };
 }
 
 // src/ui/kit/segmented.ts
 function segmented(parent, opts) {
-  const el = parent.createDiv({ cls: "vt-seg" });
-  el.setAttr("role", "group");
-  if (opts.ariaLabel) el.setAttr("aria-label", opts.ariaLabel);
+  const el2 = parent.createDiv({ cls: "vt-seg" });
+  el2.setAttr("role", "group");
+  if (opts.ariaLabel) el2.setAttr("aria-label", opts.ariaLabel);
   for (const opt of opts.options) {
-    const btn = el.createEl("button", { cls: "vt-seg-btn", text: opt.label, attr: { type: "button" } });
+    const btn = el2.createEl("button", { cls: "vt-seg-btn", text: opt.label, attr: { type: "button" } });
     const active2 = opt.value === opts.value;
     btn.setAttr("aria-pressed", String(active2));
     btn.toggleClass("is-active", active2);
@@ -15244,11 +15272,11 @@ function segmented(parent, opts) {
       if (opt.value !== opts.value) opts.onChange(opt.value);
     });
   }
-  return el;
+  return el2;
 }
 
 // src/ui/blocks/familiesModel.ts
-var unquote = (s) => (s != null ? s : "").trim().replace(/^["']|["']$/g, "").trim();
+var unquote = (s2) => (s2 != null ? s2 : "").trim().replace(/^["']|["']$/g, "").trim();
 function parseFamiliesParams(source) {
   var _a;
   const p = parseBlockParams(source);
@@ -15292,7 +15320,7 @@ function familyTree(f, lookup, opts = {}) {
   let suggestedCount = 0;
   const columns = [];
   for (const g of f.groups) {
-    const chips = [];
+    const chips2 = [];
     for (const m2 of g.members) {
       if (!m2.word.trim()) continue;
       const e = lookup.entry(m2);
@@ -15300,9 +15328,9 @@ function familyTree(f, lookup, opts = {}) {
       else suggestedCount++;
       const chip2 = e ? { word: m2.word, zh: m2.zh, known: true, entryId: e.id } : { word: m2.word, zh: m2.zh, known: false };
       if (e && opts.focusEntryId && e.id === opts.focusEntryId) chip2.focus = true;
-      chips.push(chip2);
+      chips2.push(chip2);
     }
-    if (chips.length) columns.push({ label: g.label, chips });
+    if (chips2.length) columns.push({ label: g.label, chips: chips2 });
   }
   const seeds = ((_a = f.seedEntryIds) != null ? _a : []).map((id2) => {
     var _a2;
@@ -15340,14 +15368,14 @@ function onFamilyFocus(fn) {
 // src/ui/blocks/families.ts
 var SVG_NS = "http://www.w3.org/2000/svg";
 function svgNode2(parent, tag, attrs, cls) {
-  const el = document.createElementNS(SVG_NS, tag);
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
-  if (cls) el.setAttribute("class", cls);
-  parent.appendChild(el);
-  return el;
+  const el2 = document.createElementNS(SVG_NS, tag);
+  for (const [k, v5] of Object.entries(attrs)) el2.setAttribute(k, v5);
+  if (cls) el2.setAttribute("class", cls);
+  parent.appendChild(el2);
+  return el2;
 }
-function renderFamilies(plugin, source, el, ctx) {
-  ctx.addChild(new FamiliesBlock(el, plugin, parseFamiliesParams(source), ctx.sourcePath));
+function renderFamilies(plugin, source, el2, ctx) {
+  ctx.addChild(new FamiliesBlock(el2, plugin, parseFamiliesParams(source), ctx.sourcePath));
 }
 var GALAXY_NOTICE_MS = 5e3;
 var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
@@ -15615,9 +15643,9 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
         { value: "galaxy", label: t("galaxy.mode.galaxy") },
         { value: "list", label: t("galaxy.mode.list") }
       ],
-      onChange: (v) => {
-        if (v === this.viewMode) return;
-        this.viewMode = v;
+      onChange: (v5) => {
+        if (v5 === this.viewMode) return;
+        this.viewMode = v5;
         this.render();
       }
     });
@@ -15651,33 +15679,33 @@ var FamiliesBlock = class extends import_obsidian23.MarkdownRenderChild {
     tree.createDiv({ cls: "vt-fam-stem" });
     const cols = tree.createDiv({ cls: "vt-fam-cols" });
     for (const col of view.columns) {
-      const c2 = cols.createDiv({ cls: "vt-fam-col" });
-      c2.createDiv({ cls: "vt-fam-col-stem" });
-      c2.createDiv({ cls: "vt-fam-group", text: col.label });
-      c2.createDiv({ cls: "vt-fam-col-stem is-short" });
-      const list2 = c2.createDiv({ cls: "vt-fam-chips" });
+      const c4 = cols.createDiv({ cls: "vt-fam-col" });
+      c4.createDiv({ cls: "vt-fam-col-stem" });
+      c4.createDiv({ cls: "vt-fam-group", text: col.label });
+      c4.createDiv({ cls: "vt-fam-col-stem is-short" });
+      const list2 = c4.createDiv({ cls: "vt-fam-chips" });
       for (const chip2 of col.chips) {
         if (chip2.known) {
           const entry = chip2.entryId ? lookup.byEntryId(chip2.entryId) : void 0;
-          const el2 = wordChip(list2, this.plugin, entry, ["vt-fam-chip", "is-known", ...chip2.focus ? ["is-focus"] : []]);
-          el2.createSpan({ cls: "vt-fam-chip-word", text: chip2.word });
+          const el3 = wordChip(list2, this.plugin, entry, ["vt-fam-chip", "is-known", ...chip2.focus ? ["is-focus"] : []]);
+          el3.createSpan({ cls: "vt-fam-chip-word", text: chip2.word });
           if (chip2.zh) {
-            const zh = el2.createSpan({ cls: "vt-fam-chip-zh" });
+            const zh = el3.createSpan({ cls: "vt-fam-chip-zh" });
             void import_obsidian23.MarkdownRenderer.render(this.plugin.app, chip2.zh, zh, this.sourcePath, scope);
           }
           continue;
         }
         const busy = this.adding.has(`${f.id}\0${chip2.word.toLowerCase()}`);
-        const el = list2.createEl("button", { cls: "vt-fam-chip is-suggested" });
-        el.createSpan({ cls: "vt-fam-chip-word", text: chip2.word });
+        const el2 = list2.createEl("button", { cls: "vt-fam-chip is-suggested" });
+        el2.createSpan({ cls: "vt-fam-chip-word", text: chip2.word });
         if (chip2.zh) {
-          const zh = el.createSpan({ cls: "vt-fam-chip-zh" });
+          const zh = el2.createSpan({ cls: "vt-fam-chip-zh" });
           void import_obsidian23.MarkdownRenderer.render(this.plugin.app, chip2.zh, zh, this.sourcePath, scope);
         }
-        (0, import_obsidian23.setIcon)(el.createSpan({ cls: "vt-fam-chip-icon" }), busy ? "loader" : "plus");
-        el.disabled = busy;
-        el.setAttr("aria-label", t("learn.family.add", { word: chip2.word }));
-        el.addEventListener("click", () => void this.addSuggested(f.id, chip2.word));
+        (0, import_obsidian23.setIcon)(el2.createSpan({ cls: "vt-fam-chip-icon" }), busy ? "loader" : "plus");
+        el2.disabled = busy;
+        el2.setAttr("aria-label", t("learn.family.add", { word: chip2.word }));
+        el2.addEventListener("click", () => void this.addSuggested(f.id, chip2.word));
       }
     }
     const legend = this.root.createDiv({ cls: "vt-fam-legend" });
@@ -16082,11 +16110,11 @@ function drawAnalyzeButtons(plugin, svc, host, key6, redraw) {
     };
   }
 }
-function renderReportAnalyze(plugin, source, el, ctx) {
+function renderReportAnalyze(plugin, source, el2, ctx) {
   const svc = plugin.report;
   if (!svc) return;
   const key6 = parseAnalyzeKey(source);
-  const box = el.createDiv({ cls: "vt-report-analyze-block" });
+  const box = el2.createDiv({ cls: "vt-report-analyze-block" });
   if (!key6) {
     box.createDiv({ cls: "vt-dash-report-reason", text: t("report.analyze.badKey") });
     return;
@@ -16108,7 +16136,7 @@ function renderReportAnalyze(plugin, source, el, ctx) {
 // src/core/learner/radar.ts
 var clamp01 = (n) => Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0;
 function taskCount(data, ...ids) {
-  return data.ai.byTask.filter((t2) => ids.includes(t2.key)).reduce((s, t2) => s + t2.count, 0);
+  return data.ai.byTask.filter((t2) => ids.includes(t2.key)).reduce((s2, t2) => s2 + t2.count, 0);
 }
 function trackTotal(data, track2) {
   var _a, _b;
@@ -16143,8 +16171,8 @@ function radarPoint(i, n, r, cx, cy) {
   return { x: cx + r * Math.cos(a2), y: cy + r * Math.sin(a2) };
 }
 function labelAnchor(i, n) {
-  const c2 = Math.cos(-Math.PI / 2 + 2 * Math.PI * i / n);
-  return c2 > 0.3 ? "start" : c2 < -0.3 ? "end" : "middle";
+  const c4 = Math.cos(-Math.PI / 2 + 2 * Math.PI * i / n);
+  return c4 > 0.3 ? "start" : c4 < -0.3 ? "end" : "middle";
 }
 function radarLayout(axes, size = 300) {
   const n = axes.length;
@@ -16198,20 +16226,20 @@ function parseRadarSource(source) {
 // src/ui/blocks/reportRadar.ts
 var NS = "http://www.w3.org/2000/svg";
 function svgEl(parent, tag, attrs, cls) {
-  const el = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
-  if (cls) el.setAttribute("class", cls);
-  parent.appendChild(el);
-  return el;
+  const el2 = document.createElementNS(NS, tag);
+  for (const [k, v5] of Object.entries(attrs)) el2.setAttribute(k, String(v5));
+  if (cls) el2.setAttribute("class", cls);
+  parent.appendChild(el2);
+  return el2;
 }
 function drawRadar(host, axes) {
   const box = host.createDiv({ cls: "vt-report-radar" });
   const L = radarLayout(axes);
   const svg = svgEl(box, "svg", { viewBox: `0 0 ${L.size} ${L.size}`, role: "img", "aria-label": axes.map((a2) => a2.name).join("\u3001") }, "vt-radar-svg");
   for (const ring of L.rings) svgEl(svg, "polygon", { points: ring }, "vt-radar-ring");
-  L.spokes.forEach((s, i) => svgEl(svg, "line", { x1: L.cx, y1: L.cy, x2: s.x, y2: s.y }, axes[i].clear ? "vt-radar-spoke" : "vt-radar-spoke is-unclear"));
+  L.spokes.forEach((s2, i) => svgEl(svg, "line", { x1: L.cx, y1: L.cy, x2: s2.x, y2: s2.y }, axes[i].clear ? "vt-radar-spoke" : "vt-radar-spoke is-unclear"));
   svgEl(svg, "polygon", { points: L.polygon }, "vt-radar-area");
-  L.vertices.forEach((v) => v.clear && svgEl(svg, "circle", { cx: v.x, cy: v.y, r: 2.5 }, "vt-radar-dot"));
+  L.vertices.forEach((v5) => v5.clear && svgEl(svg, "circle", { cx: v5.x, cy: v5.y, r: 2.5 }, "vt-radar-dot"));
   for (const l4 of L.labels) {
     const text = svgEl(svg, "text", { x: l4.x, y: l4.y, "text-anchor": l4.anchor }, l4.clear ? "vt-radar-label" : "vt-radar-label is-unclear");
     text.textContent = l4.text;
@@ -16222,13 +16250,13 @@ function drawRadar(host, axes) {
     for (const a2 of hints) list2.createDiv({ text: `${a2.name}\uFF1F${a2.hint}` });
   }
 }
-function renderReportRadar(_plugin, source, el, _ctx) {
+function renderReportRadar(_plugin, source, el2, _ctx) {
   const axes = parseRadarSource(source);
   if (!axes) {
-    el.createDiv({ cls: "vt-radar-bad", text: t("report.radar.bad") });
+    el2.createDiv({ cls: "vt-radar-bad", text: t("report.radar.bad") });
     return;
   }
-  drawRadar(el, axes);
+  drawRadar(el2, axes);
 }
 
 // src/core/wordlists/cefrjData.ts
@@ -16241,7 +16269,7 @@ var CEFRJ_WORDS = {
 
 // src/core/wordlists/cefr.ts
 var CEFR_TIERS = ["A1", "A2", "B1", "B2", "C1", "C2"];
-var isCefrTier = (v) => typeof v === "string" && CEFR_TIERS.includes(v);
+var isCefrTier = (v5) => typeof v5 === "string" && CEFR_TIERS.includes(v5);
 var listed = null;
 function table() {
   if (listed) return listed;
@@ -16297,8 +16325,8 @@ function normalizePickKey(raw) {
   ).join("|");
 }
 function sortKinds(kinds) {
-  const set3 = new Set(kinds);
-  return KIND_ORDER.filter((k) => set3.has(k));
+  const set4 = new Set(kinds);
+  return KIND_ORDER.filter((k) => set4.has(k));
 }
 function basenameOf(path) {
   const name = path.slice(path.lastIndexOf("/") + 1);
@@ -16358,9 +16386,9 @@ function mergeVisit(a2, b) {
 }
 function mergeReading(local, remote) {
   const map = /* @__PURE__ */ new Map();
-  for (const v of [...local, ...remote]) {
-    const cur = map.get(v.id);
-    map.set(v.id, cur ? mergeVisit(cur, v) : v);
+  for (const v5 of [...local, ...remote]) {
+    const cur = map.get(v5.id);
+    map.set(v5.id, cur ? mergeVisit(cur, v5) : v5);
   }
   return [...map.values()];
 }
@@ -16384,41 +16412,41 @@ function weakFocuses(events, opts) {
   const byFocus = /* @__PURE__ */ new Map();
   for (const e of inWindow) {
     const key6 = `${e.focus.kind}:${e.focus.id}`;
-    let acc = byFocus.get(key6);
-    if (!acc) {
-      acc = { focus: e.focus, track: e.track, score: 0, wrong: 0, lastWrongAt: "", correctSince: 0, given: /* @__PURE__ */ new Map() };
-      byFocus.set(key6, acc);
+    let acc3 = byFocus.get(key6);
+    if (!acc3) {
+      acc3 = { focus: e.focus, track: e.track, score: 0, wrong: 0, lastWrongAt: "", correctSince: 0, given: /* @__PURE__ */ new Map() };
+      byFocus.set(key6, acc3);
     }
     if (e.result === "wrong") {
       const days = Math.max(0, (nowMs - Date.parse(e.at)) / DAY_MS);
-      acc.score += Math.exp(-days / HALF_LIFE_DAYS);
-      acc.wrong++;
-      acc.lastWrongAt = e.at;
-      acc.track = e.track;
-      acc.correctSince = 0;
-      if (e.given) acc.given.set(e.given, ((_c = acc.given.get(e.given)) != null ? _c : 0) + 1);
+      acc3.score += Math.exp(-days / HALF_LIFE_DAYS);
+      acc3.wrong++;
+      acc3.lastWrongAt = e.at;
+      acc3.track = e.track;
+      acc3.correctSince = 0;
+      if (e.given) acc3.given.set(e.given, ((_c = acc3.given.get(e.given)) != null ? _c : 0) + 1);
     } else {
-      acc.correctSince++;
+      acc3.correctSince++;
     }
   }
   const out = [];
-  for (const acc of byFocus.values()) {
-    if (acc.wrong === 0) continue;
-    const score2 = acc.score - CORRECT_RELIEF * acc.correctSince;
+  for (const acc3 of byFocus.values()) {
+    if (acc3.wrong === 0) continue;
+    const score2 = acc3.score - CORRECT_RELIEF * acc3.correctSince;
     if (score2 <= 0) continue;
     let common;
     let best = 1;
-    for (const [g, n] of acc.given) {
+    for (const [g, n] of acc3.given) {
       if (n > best) {
         best = n;
         common = g;
       }
     }
     const w2 = {
-      focus: acc.focus,
-      track: acc.track,
-      wrong: acc.wrong,
-      lastWrongAt: acc.lastWrongAt,
+      focus: acc3.focus,
+      track: acc3.track,
+      wrong: acc3.wrong,
+      lastWrongAt: acc3.lastWrongAt,
       score: score2
     };
     if (common !== void 0) w2.commonGiven = common;
@@ -16455,10 +16483,10 @@ var dayOfIso = (at) => {
   const t2 = Date.parse(at);
   return Number.isNaN(t2) ? null : localDayOf(new Date(t2));
 };
-function dayOfField(s) {
-  if (!s) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  return dayOfIso(s);
+function dayOfField(s2) {
+  if (!s2) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s2)) return s2;
+  return dayOfIso(s2);
 }
 var atIn = (xs, p) => xs.filter((x3) => {
   const d = dayOfIso(x3.at);
@@ -16501,7 +16529,7 @@ function aiOf(input, p, prev) {
     if (a2.entryId) bump(byEntry, a2.entryId);
     if (a2.path) bump(byPath, a2.path);
   }
-  const wordOf = new Map(input.vocab.map((v) => [v.id, v.word]));
+  const wordOf = new Map(input.vocab.map((v5) => [v5.id, v5.word]));
   const topWords = [];
   for (const { key: key6, count: count2 } of ranked(byEntry)) {
     const word = wordOf.get(key6);
@@ -16539,7 +16567,7 @@ var byWord = (a2, b) => a2.word < b.word ? -1 : a2.word > b.word ? 1 : 0;
 function wordsOf(touches) {
   const all = [...touches.values()];
   return {
-    lookups: all.reduce((s, a2) => s + a2.lookups, 0),
+    lookups: all.reduce((s2, a2) => s2 + a2.lookups, 0),
     repeated: all.filter((a2) => a2.days.size >= 2).map((a2) => ({ word: a2.word, days: a2.days.size, lookups: a2.lookups })).sort((a2, b) => b.days - a2.days || b.lookups - a2.lookups || byWord(a2, b)).slice(0, 10),
     savedStillLooked: all.filter((a2) => a2.saved && a2.lookups > 0).map((a2) => ({ word: a2.word, lookups: a2.lookups })).sort((a2, b) => b.lookups - a2.lookups || byWord(a2, b)).slice(0, 10),
     mostPronounced: all.filter((a2) => a2.pronounce > 0).map((a2) => ({ word: a2.word, pronounce: a2.pronounce })).sort((a2, b) => b.pronounce - a2.pronounce || byWord(a2, b)).slice(0, 5)
@@ -16547,16 +16575,16 @@ function wordsOf(touches) {
 }
 var recallOf = (rs) => rs.length === 0 ? null : rs.filter((r) => r.rating >= Rating.Good).length / rs.length;
 function newSavedOf(vocab, p) {
-  return vocab.filter((v) => {
+  return vocab.filter((v5) => {
     var _a;
-    if (v.deletedAt || v.liked !== true) return false;
-    const d = (_a = dayOfField(v.added)) != null ? _a : dayOfField(v.createdAt);
+    if (v5.deletedAt || v5.liked !== true) return false;
+    const d = (_a = dayOfField(v5.added)) != null ? _a : dayOfField(v5.createdAt);
     return d !== null && inRange(d, p);
   });
 }
 function vocabOf(input, p, prev) {
   const rs = atIn(input.reviews, p);
-  const avg = rs.length === 0 ? null : Math.round(rs.reduce((s, r) => s + r.elapsedMs, 0) / rs.length / 1e3 * 10) / 10;
+  const avg = rs.length === 0 ? null : Math.round(rs.reduce((s2, r) => s2 + r.elapsedMs, 0) / rs.length / 1e3 * 10) / 10;
   return {
     newSaved: newSavedOf(input.vocab, p).length,
     reviews: rs.length,
@@ -16615,18 +16643,18 @@ function grammarOf(input, p) {
 }
 function tagsOf(input, p, touches) {
   const picked2 = /* @__PURE__ */ new Map();
-  for (const v of newSavedOf(input.vocab, p)) picked2.set(v.id, v);
+  for (const v5 of newSavedOf(input.vocab, p)) picked2.set(v5.id, v5);
   const byWordKey = /* @__PURE__ */ new Map();
-  for (const v of input.vocab) if (!v.deletedAt) byWordKey.set(v.word.toLowerCase(), v);
+  for (const v5 of input.vocab) if (!v5.deletedAt) byWordKey.set(v5.word.toLowerCase(), v5);
   for (const a2 of touches.values()) {
     if (!a2.saved || a2.lookups === 0) continue;
-    const v = byWordKey.get(a2.word);
-    if (v) picked2.set(v.id, v);
+    const v5 = byWordKey.get(a2.word);
+    if (v5) picked2.set(v5.id, v5);
   }
   const m2 = /* @__PURE__ */ new Map();
-  for (const v of picked2.values()) {
+  for (const v5 of picked2.values()) {
     const tags = new Set(
-      v.level.split(/[,，、]/).map((s) => s.trim()).filter(Boolean)
+      v5.level.split(/[,，、]/).map((s2) => s2.trim()).filter(Boolean)
     );
     for (const t2 of tags) bump(m2, t2);
   }
@@ -16690,8 +16718,8 @@ function levelSignals(input, period) {
   if (tags.length > 0 && words.lookups > 0) {
     signals.push({ kind: "tags", direction: "info", reason: `\u67E5\u7684\u5B57\u591A\u534A\u5728 ${tags[0].key}\uFF08${tags[0].count} \u500B\uFF09` });
   }
-  const up = signals.filter((s) => s.direction === "up").length;
-  const down = signals.filter((s) => s.direction === "down").length;
+  const up = signals.filter((s2) => s2.direction === "up").length;
+  const down = signals.filter((s2) => s2.direction === "down").length;
   let verdict;
   if (up >= 2 && down === 0) verdict = "up";
   else if (down > 0 && down >= up) verdict = "down";
@@ -16741,7 +16769,7 @@ function single(raw) {
 }
 function collectWords(input, period) {
   const out = { asked: /* @__PURE__ */ new Set(), looked: /* @__PURE__ */ new Set(), saved: /* @__PURE__ */ new Set(), mature: /* @__PURE__ */ new Set() };
-  const wordOf = new Map(input.vocab.map((v) => [v.id, v.word]));
+  const wordOf = new Map(input.vocab.map((v5) => [v5.id, v5.word]));
   for (const a2 of atIn(input.asks, period)) {
     if (!a2.ok) continue;
     const w2 = single(a2.entryId ? wordOf.get(a2.entryId) : a2.selection);
@@ -16752,29 +16780,29 @@ function collectWords(input, period) {
     const w2 = single(t2.word);
     if (w2) out.looked.add(w2);
   }
-  for (const v of newSavedOf(input.vocab, period)) {
-    const w2 = single(v.word);
+  for (const v5 of newSavedOf(input.vocab, period)) {
+    const w2 = single(v5.word);
     if (w2) out.saved.add(w2);
   }
-  for (const v of input.vocab) {
-    if (v.deletedAt || v.liked !== true || !v.srs) continue;
-    if (v.srs.state !== SrsState.Review || v.srs.stability < MATURE_STABILITY_DAYS) continue;
-    const w2 = single(v.word);
+  for (const v5 of input.vocab) {
+    if (v5.deletedAt || v5.liked !== true || !v5.srs) continue;
+    if (v5.srs.state !== SrsState.Review || v5.srs.stability < MATURE_STABILITY_DAYS) continue;
+    const w2 = single(v5.word);
     if (w2) out.mature.add(w2);
   }
   return out;
 }
 function countOf(words, extra, unknown) {
-  const c2 = emptyTierCount();
+  const c4 = emptyTierCount();
   for (const w2 of words) {
     const t2 = cefrOf(w2, extra);
-    if (t2) c2[t2]++;
+    if (t2) c4[t2]++;
     else {
-      c2["?"]++;
+      c4["?"]++;
       unknown.add(w2);
     }
   }
-  return c2;
+  return c4;
 }
 function vocabTierProfile(input, period, extra) {
   const w2 = collectWords(input, period);
@@ -16795,13 +16823,13 @@ function tierExamples(input, period, extra, max = TIER_EXAMPLES_MAX) {
   return out;
 }
 var sumTiers = (a2, b) => {
-  const c2 = emptyTierCount();
-  for (const k of TIER_KEYS) c2[k] = a2[k] + b[k];
-  return c2;
+  const c4 = emptyTierCount();
+  for (const k of TIER_KEYS) c4[k] = a2[k] + b[k];
+  return c4;
 };
 var askedAndLooked = (p) => sumTiers(p.asked, p.looked);
-var leveled = (c2) => CEFR_TIERS.reduce((s, t2) => s + c2[t2], 0);
-var total = (c2) => leveled(c2) + c2["?"];
+var leveled = (c4) => CEFR_TIERS.reduce((s2, t2) => s2 + c4[t2], 0);
+var total = (c4) => leveled(c4) + c4["?"];
 var pct2 = (r) => `${Math.round(r * 100)}%`;
 function tierLabel(lo2, hi) {
   return lo2 === hi ? CEFR_TIERS[lo2] : `${CEFR_TIERS[lo2]}\u2013${CEFR_TIERS[hi]}`;
@@ -16824,7 +16852,7 @@ function vocabLevelFromTiers(profile) {
   const m2 = leveled(profile.mature);
   let promoted = false;
   if (m2 >= TIER_MATURE_MIN) {
-    const atOrAbove = CEFR_TIERS.slice(edge).reduce((s, t2) => s + profile.mature[t2], 0);
+    const atOrAbove = CEFR_TIERS.slice(edge).reduce((s2, t2) => s2 + profile.mature[t2], 0);
     if (atOrAbove / m2 > 0.5) {
       promoted = true;
       if (edge === 0) {
@@ -16841,54 +16869,54 @@ function vocabLevelFromTiers(profile) {
   const size = `\u4F30 ${num(VOCAB_SIZE[CEFR_LEVELS[lo2]][0])}\u2013${num(VOCAB_SIZE[CEFR_LEVELS[hi]][1])} \u5B57`;
   return { area: "\u5B57\u5F59\u91CF", level: `\u7D04 ${label}`, detail: size, basis: basis2 };
 }
-function matureSpan(c2) {
+function matureSpan(c4) {
   let best = 0;
   let bestSum = -1;
   for (let i = 0; i < CEFR_TIERS.length - 1; i++) {
-    const s = c2[CEFR_TIERS[i]] + c2[CEFR_TIERS[i + 1]];
-    if (s >= bestSum) {
-      bestSum = s;
+    const s2 = c4[CEFR_TIERS[i]] + c4[CEFR_TIERS[i + 1]];
+    if (s2 >= bestSum) {
+      bestSum = s2;
       best = i;
     }
   }
-  const a2 = c2[CEFR_TIERS[best]];
-  const b = c2[CEFR_TIERS[best + 1]];
+  const a2 = c4[CEFR_TIERS[best]];
+  const b = c4[CEFR_TIERS[best + 1]];
   if (a2 === 0) return CEFR_TIERS[best + 1];
   if (b === 0) return CEFR_TIERS[best];
   return `${CEFR_TIERS[best]}\u2013${CEFR_TIERS[best + 1]}`;
 }
 function tierSummary(profile) {
-  const line2 = (label, c2) => {
-    const parts = TIER_KEYS.filter((k) => c2[k] > 0).map((k) => `${k === "?" ? "\u4E0D\u660E" : k} ${c2[k]}`);
-    return `- ${label}\uFF08${total(c2)} \u5B57\uFF09\uFF1A${parts.join("\u3001") || "\u6C92\u6709"}`;
+  const line2 = (label, c4) => {
+    const parts = TIER_KEYS.filter((k) => c4[k] > 0).map((k) => `${k === "?" ? "\u4E0D\u660E" : k} ${c4[k]}`);
+    return `- ${label}\uFF08${total(c4)} \u5B57\uFF09\uFF1A${parts.join("\u3001") || "\u6C92\u6709"}`;
   };
   return [line2("\u67E5\uFF0F\u554F\u7684\u5B57", askedAndLooked(profile)), line2("\u719F\u7DF4\u7684\u5B57", profile.mature), line2("\u9019\u671F\u65B0\u6536\u85CF\u7684\u5B57", profile.saved)].join("\n");
 }
-function tierSegments(c2) {
-  const sum = total(c2);
+function tierSegments(c4) {
+  const sum = total(c4);
   if (sum === 0) return [];
   const out = [];
   let at = 0;
   for (const k of TIER_KEYS) {
-    if (c2[k] <= 0) continue;
-    const percent = c2[k] / sum * 100;
-    out.push({ tier: k, count: c2[k], percent, start: at });
+    if (c4[k] <= 0) continue;
+    const percent = c4[k] / sum * 100;
+    out.push({ tier: k, count: c4[k], percent, start: at });
     at += percent;
   }
   return out;
 }
 function tiersFenceJson(profile) {
-  const trim = (c2) => Object.fromEntries(TIER_KEYS.map((k) => [k, c2[k]]));
+  const trim = (c4) => Object.fromEntries(TIER_KEYS.map((k) => [k, c4[k]]));
   return JSON.stringify({ asked: trim(askedAndLooked(profile)), mature: trim(profile.mature) });
 }
 function countFrom(raw) {
-  const c2 = emptyTierCount();
-  if (typeof raw !== "object" || raw === null) return c2;
+  const c4 = emptyTierCount();
+  if (typeof raw !== "object" || raw === null) return c4;
   for (const k of TIER_KEYS) {
-    const v = Number(raw[k]);
-    if (Number.isFinite(v) && v > 0) c2[k] = Math.floor(v);
+    const v5 = Number(raw[k]);
+    if (Number.isFinite(v5) && v5 > 0) c4[k] = Math.floor(v5);
   }
-  return c2;
+  return c4;
 }
 function parseTiersSource(source) {
   let json;
@@ -16907,9 +16935,9 @@ var hasTierData = (p) => total(askedAndLooked(p)) + total(p.mature) > 0;
 // src/ui/blocks/reportTiers.ts
 var TIER_ALPHA = { A1: 0.22, A2: 0.38, B1: 0.54, B2: 0.7, C1: 0.85, C2: 1, "?": 0 };
 var TIER_ORDER2 = ["A1", "A2", "B1", "B2", "C1", "C2", "?"];
-function paint2(el, tier) {
-  if (tier === "?") el.addClass("is-unknown");
-  else el.style.setProperty("--vt-tier-alpha", `${Math.round(TIER_ALPHA[tier] * 100)}%`);
+function paint2(el2, tier) {
+  if (tier === "?") el2.addClass("is-unknown");
+  else el2.style.setProperty("--vt-tier-alpha", `${Math.round(TIER_ALPHA[tier] * 100)}%`);
 }
 function bar(host, label, counts, tip) {
   const segs = tierSegments(counts);
@@ -16917,21 +16945,21 @@ function bar(host, label, counts, tip) {
   const row = host.createDiv({ cls: "vt-tiers-row" });
   row.createDiv({ cls: "vt-tiers-label", text: label });
   const track2 = row.createDiv({ cls: "vt-tiers-bar" });
-  for (const s of segs) {
-    const text = t("report.tiers.tip", { tier: s.tier === "?" ? t("report.tiers.unknown") : s.tier, n: s.count });
+  for (const s2 of segs) {
+    const text = t("report.tiers.tip", { tier: s2.tier === "?" ? t("report.tiers.unknown") : s2.tier, n: s2.count });
     const seg = track2.createDiv({ cls: "vt-tiers-seg", attr: { title: text, "aria-label": text } });
-    seg.style.width = `${s.percent}%`;
-    paint2(seg, s.tier);
+    seg.style.width = `${s2.percent}%`;
+    paint2(seg, s2.tier);
     seg.addEventListener("click", () => tip.setText(text));
   }
 }
-function renderReportTiers(_plugin, source, el, _ctx) {
+function renderReportTiers(_plugin, source, el2, _ctx) {
   const bars = parseTiersSource(source);
   if (!bars) {
-    el.createDiv({ cls: "vt-radar-bad", text: t("report.tiers.bad") });
+    el2.createDiv({ cls: "vt-radar-bad", text: t("report.tiers.bad") });
     return;
   }
-  const host = el.createDiv({ cls: "vt-report-tiers" });
+  const host = el2.createDiv({ cls: "vt-report-tiers" });
   const barsBox = host.createDiv({ cls: "vt-tiers-bars" });
   const tip = host.createDiv({ cls: "vt-tiers-tip" });
   bar(barsBox, t("report.tiers.asked"), bars.asked, tip);
@@ -16951,9 +16979,9 @@ var import_obsidian29 = require("obsidian");
 
 // src/ui/blocks/dashboardDiary.ts
 var import_obsidian27 = require("obsidian");
-function renderDiaryCard(plugin, el, ctx) {
-  const card = el.createDiv({ cls: "vt-dash-diary" });
-  const child = new import_obsidian27.MarkdownRenderChild(card);
+function renderDiaryCard(plugin, el2, ctx) {
+  const card2 = el2.createDiv({ cls: "vt-dash-diary" });
+  const child = new import_obsidian27.MarkdownRenderChild(card2);
   ctx.addChild(child);
   let alive = true;
   child.register(() => alive = false);
@@ -16961,25 +16989,25 @@ function renderDiaryCard(plugin, el, ctx) {
     const svc = plugin.diary;
     const latest = await svc.latest();
     if (!alive) return;
-    card.empty();
-    card.createDiv({ cls: "vt-dash-diary-title", text: t("dashboard.diary.title") });
+    card2.empty();
+    card2.createDiv({ cls: "vt-dash-diary-title", text: t("dashboard.diary.title") });
     const status = svc.status();
     if (latest) {
-      const link2 = card.createEl("a", { cls: "vt-dash-diary-link", text: latest.day });
-      link2.onclick = (ev) => {
-        ev.preventDefault();
+      const link2 = card2.createEl("a", { cls: "vt-dash-diary-link", text: latest.day });
+      link2.onclick = (ev2) => {
+        ev2.preventDefault();
         void plugin.app.workspace.openLinkText(latest.path, "", false);
       };
-      for (const l4 of latest.lines) card.createDiv({ cls: "vt-dash-diary-line", text: l4 });
+      for (const l4 of latest.lines) card2.createDiv({ cls: "vt-dash-diary-line", text: l4 });
     } else {
-      card.createDiv({ cls: "vt-dash-diary-line", text: t("dashboard.diary.none") });
+      card2.createDiv({ cls: "vt-dash-diary-line", text: t("dashboard.diary.none") });
     }
     const reason = status === "no-ai" ? "dashboard.diary.reason.noAi" : status === "off" ? "dashboard.diary.reason.off" : status === "failed" ? "dashboard.diary.reason.failed" : null;
-    if (reason) card.createDiv({ cls: "vt-dash-diary-reason", text: t(reason) });
+    if (reason) card2.createDiv({ cls: "vt-dash-diary-reason", text: t(reason) });
     const today = svc.today();
     const wroteToday = plugin.app.vault.getAbstractFileByPath(svc.pathOf(today)) !== null;
     const writing = status === "writing";
-    const btn = card.createEl("button", {
+    const btn = card2.createEl("button", {
       cls: "vt-dash-diary-btn",
       text: t(writing ? "dashboard.diary.writing" : wroteToday ? "dashboard.diary.rewrite" : "dashboard.diary.write")
     });
@@ -17071,35 +17099,35 @@ function quarterRange(key6) {
 }
 
 // src/ui/blocks/dashboardReport.ts
-function renderReportCard(plugin, el, ctx) {
+function renderReportCard(plugin, el2, ctx) {
   const svc = plugin.report;
   if (!svc) return;
-  const card = el.createDiv({ cls: "vt-dash-report" });
-  const child = new import_obsidian28.MarkdownRenderChild(card);
+  const card2 = el2.createDiv({ cls: "vt-dash-report" });
+  const child = new import_obsidian28.MarkdownRenderChild(card2);
   ctx.addChild(child);
   let alive = true;
   child.register(() => alive = false);
   const draw = async () => {
     const latest = await svc.latest();
     if (!alive) return;
-    card.empty();
-    card.createDiv({ cls: "vt-dash-report-title", text: t("dashboard.report.title") });
+    card2.empty();
+    card2.createDiv({ cls: "vt-dash-report-title", text: t("dashboard.report.title") });
     const status = svc.status();
     if (latest) {
-      const link2 = card.createEl("a", { cls: "vt-dash-report-link", text: latest.key });
-      link2.onclick = (ev) => {
-        ev.preventDefault();
+      const link2 = card2.createEl("a", { cls: "vt-dash-report-link", text: latest.key });
+      link2.onclick = (ev2) => {
+        ev2.preventDefault();
         void plugin.app.workspace.openLinkText(latest.path, "", false);
       };
-      card.createDiv({ cls: "vt-dash-report-line", text: latest.headline });
+      card2.createDiv({ cls: "vt-dash-report-line", text: latest.headline });
     } else {
-      card.createDiv({ cls: "vt-dash-report-line", text: t("dashboard.report.none") });
+      card2.createDiv({ cls: "vt-dash-report-line", text: t("dashboard.report.none") });
     }
     const reason = reasonKey(status);
-    if (reason) card.createDiv({ cls: "vt-dash-report-reason", text: t(reason) });
+    if (reason) card2.createDiv({ cls: "vt-dash-report-reason", text: t(reason) });
     const key6 = previousWeek(svc.today()).key;
     const exists = plugin.app.vault.getAbstractFileByPath(svc.pathOf(key6)) !== null;
-    const btn = card.createEl("button", { cls: "vt-dash-report-btn", text: t(writeButtonKey(status, exists)) });
+    const btn = card2.createEl("button", { cls: "vt-dash-report-btn", text: t(writeButtonKey(status, exists)) });
     btn.disabled = status === "writing";
     btn.onclick = () => {
       void svc.write(key6, { overwrite: exists }).then((r) => {
@@ -17107,13 +17135,13 @@ function renderReportCard(plugin, el, ctx) {
         else if (r === "empty") new import_obsidian28.Notice(t("dashboard.report.empty"));
       });
     };
-    if (latest) drawAnalyzeButtons(plugin, svc, card, latest.key, () => void draw());
+    if (latest) drawAnalyzeButtons(plugin, svc, card2, latest.key, () => void draw());
     const level = applyLevelOffer(latest, plugin.store.settings.learner.level);
     if (level) {
-      const apply = card.createEl("button", { cls: "vt-dash-report-btn", text: t("dashboard.report.applyLevel", { level }) });
+      const apply = card2.createEl("button", { cls: "vt-dash-report-btn", text: t("dashboard.report.applyLevel", { level }) });
       apply.onclick = () => {
-        void plugin.store.updateSettings((s) => {
-          s.learner.level = level;
+        void plugin.store.updateSettings((s2) => {
+          s2.learner.level = level;
         }).then(() => {
           new import_obsidian28.Notice(t("dashboard.report.levelApplied", { level }));
           void draw();
@@ -17126,17 +17154,17 @@ function renderReportCard(plugin, el, ctx) {
 }
 
 // src/ui/blocks/dashboard.ts
-function renderDashboard(plugin, _source, el, ctx) {
+function renderDashboard(plugin, _source, el2, ctx) {
   const allEntries = plugin.store.entries;
-  el.addClass("vt-dash");
+  el2.addClass("vt-dash");
   if (allEntries.length === 0) {
-    el.createEl("p", {
+    el2.createEl("p", {
       text: t("dashboard.empty"),
       cls: "vt-dash-empty"
     });
     return;
   }
-  const owner = new import_obsidian29.MarkdownRenderChild(el);
+  const owner = new import_obsidian29.MarkdownRenderChild(el2);
   ctx.addChild(owner);
   const wordUi = new WordUi(owner);
   const expandState = /* @__PURE__ */ new Map();
@@ -17155,20 +17183,20 @@ function renderDashboard(plugin, _source, el, ctx) {
     const ctx2 = isListedCtx();
     return plugin.store.entries.filter((e) => isListed(e, ctx2));
   };
-  const reviewSlot = el.createDiv();
+  const reviewSlot = el2.createDiv();
   renderReviewButton(plugin, reviewSlot, ctx);
-  renderDiaryCard(plugin, el.createDiv(), ctx);
-  renderReportCard(plugin, el.createDiv(), ctx);
-  const chipsEl = el.createDiv();
+  renderDiaryCard(plugin, el2.createDiv(), ctx);
+  renderReportCard(plugin, el2.createDiv(), ctx);
+  const chipsEl = el2.createDiv();
   const wlSettings = resolveWordlistSettings(plugin.store.settings.wordlists);
   renderFilterChips(chipsEl, [
     ...tagChipSpecs(plugin, plugin.wordlists.index.tags, wlSettings, (tag) => tagCountInLibrary(plugin, tag)),
     likeChipSpec(plugin, wlSettings, likeCountInLibrary(plugin))
   ]);
-  const statsEl = el.createDiv();
-  const search = el.createEl("input", { cls: ["vt-dash-search", "vt-field-box"] });
+  const statsEl = el2.createDiv();
+  const search = el2.createEl("input", { cls: ["vt-dash-search", "vt-field-box"] });
   search.placeholder = t("dashboard.search");
-  const listWrap = el.createEl("div", { cls: "vt-word-list" });
+  const listWrap = el2.createEl("div", { cls: "vt-word-list" });
   const drawStats = () => {
     var _a;
     statsEl.empty();
@@ -17180,7 +17208,7 @@ function renderDashboard(plugin, _source, el, ctx) {
     });
     const tagCounts = /* @__PURE__ */ new Map();
     for (const e of entries) {
-      for (const tag of e.level.split(",").map((s) => s.trim()).filter(Boolean)) {
+      for (const tag of e.level.split(",").map((s2) => s2.trim()).filter(Boolean)) {
         tagCounts.set(tag, ((_a = tagCounts.get(tag)) != null ? _a : 0) + 1);
       }
     }
@@ -17225,8 +17253,8 @@ function renderDashboard(plugin, _source, el, ctx) {
     drawList();
   };
 }
-function renderReviewButton(plugin, el, ctx) {
-  const btn = el.createEl("button", { cls: "vt-dash-review" });
+function renderReviewButton(plugin, el2, ctx) {
+  const btn = el2.createEl("button", { cls: "vt-dash-review" });
   (0, import_obsidian29.setIcon)(btn.createSpan({ cls: "vt-dash-review-icon" }), "layers");
   const label = btn.createSpan();
   btn.onclick = () => void plugin.openFlashcards();
@@ -17236,7 +17264,7 @@ function renderReviewButton(plugin, el, ctx) {
     btn.toggleClass("mod-cta", n > 0);
   };
   update();
-  const child = new import_obsidian29.MarkdownRenderChild(el);
+  const child = new import_obsidian29.MarkdownRenderChild(el2);
   let alive = true;
   child.register(() => alive = false);
   child.register(plugin.store.events.on("data:changed", update));
@@ -17258,8 +17286,8 @@ function parseDnaParams(source) {
   if (p.morpheme) out.morpheme = p.morpheme;
   return out;
 }
-function isMorphemeType(s) {
-  return DNA_TAB_ORDER.includes(s);
+function isMorphemeType(s2) {
+  return DNA_TAB_ORDER.includes(s2);
 }
 function resolveDnaSelection(params, statsByType) {
   var _a, _b, _c, _d;
@@ -17271,7 +17299,7 @@ function resolveDnaSelection(params, statsByType) {
   }
   const want = (_c = params.morpheme) == null ? void 0 : _c.trim();
   const morphemeId = want ? (_d = matchMorpheme(
-    statsByType[type].map((s) => s.morpheme),
+    statsByType[type].map((s2) => s2.morpheme),
     type,
     want
   )) == null ? void 0 : _d.id : void 0;
@@ -17299,12 +17327,12 @@ function pendingFocus2(req, appliedAt, now2) {
 }
 function selectionForMorpheme(statsByType, morphemeId) {
   for (const type of DNA_TAB_ORDER) {
-    if (statsByType[type].some((s) => s.morpheme.id === morphemeId)) return { type, morphemeId };
+    if (statsByType[type].some((s2) => s2.morpheme.id === morphemeId)) return { type, morphemeId };
   }
   return null;
 }
 function morphemeChips(stats) {
-  return stats.map((s) => ({ id: s.morpheme.id, form: s.morpheme.form, meaningZh: s.morpheme.meaningZh, learnedCount: s.learned.length })).sort((a2, b) => b.learnedCount - a2.learnedCount);
+  return stats.map((s2) => ({ id: s2.morpheme.id, form: s2.morpheme.form, meaningZh: s2.morpheme.meaningZh, learnedCount: s2.learned.length })).sort((a2, b) => b.learnedCount - a2.learnedCount);
 }
 function resolveFocusEntry(cur, focusEntryId, findEntryById) {
   if (focusEntryId) {
@@ -17334,7 +17362,7 @@ function parseTimeline(text) {
   return out;
 }
 function formatTimeline(timeline) {
-  return timeline.map((s) => `${s.stage}\uFF1A${s.form}`).join("\n");
+  return timeline.map((s2) => `${s2.stage}\uFF1A${s2.form}`).join("\n");
 }
 
 // src/ui/dna/MorphemeEditModal.ts
@@ -17360,17 +17388,17 @@ var MorphemeEditModal = class extends import_obsidian30.Modal {
     this.contentEl.empty();
   }
   render() {
-    const el = this.contentEl;
-    el.empty();
-    new import_obsidian30.Setting(el).setName(t("dna.edit.meaning")).addText((text) => text.setValue(this.meaningZh).onChange((v) => this.meaningZh = v));
-    new import_obsidian30.Setting(el).setName(t("dna.edit.origin")).addText((text) => text.setValue(this.origin).onChange((v) => this.origin = v));
-    new import_obsidian30.Setting(el).setName(t("dna.edit.timeline")).setDesc(t("dna.edit.timelineDesc")).addTextArea((ta) => {
-      ta.setValue(this.timelineText).onChange((v) => this.timelineText = v);
+    const el2 = this.contentEl;
+    el2.empty();
+    new import_obsidian30.Setting(el2).setName(t("dna.edit.meaning")).addText((text) => text.setValue(this.meaningZh).onChange((v5) => this.meaningZh = v5));
+    new import_obsidian30.Setting(el2).setName(t("dna.edit.origin")).addText((text) => text.setValue(this.origin).onChange((v5) => this.origin = v5));
+    new import_obsidian30.Setting(el2).setName(t("dna.edit.timeline")).setDesc(t("dna.edit.timelineDesc")).addTextArea((ta) => {
+      ta.setValue(this.timelineText).onChange((v5) => this.timelineText = v5);
       ta.inputEl.rows = 4;
     });
-    new import_obsidian30.Setting(el).setName(t("dna.edit.factTitle")).addText((text) => text.setValue(this.factTitle).onChange((v) => this.factTitle = v));
-    new import_obsidian30.Setting(el).setName(t("dna.edit.factBody")).addTextArea((ta) => ta.setValue(this.factBody).onChange((v) => this.factBody = v));
-    new import_obsidian30.Setting(el).addButton((b) => b.setButtonText(t("dna.edit.cancel")).onClick(() => this.close())).addButton(
+    new import_obsidian30.Setting(el2).setName(t("dna.edit.factTitle")).addText((text) => text.setValue(this.factTitle).onChange((v5) => this.factTitle = v5));
+    new import_obsidian30.Setting(el2).setName(t("dna.edit.factBody")).addTextArea((ta) => ta.setValue(this.factBody).onChange((v5) => this.factBody = v5));
+    new import_obsidian30.Setting(el2).addButton((b) => b.setButtonText(t("dna.edit.cancel")).onClick(() => this.close())).addButton(
       (b) => b.setButtonText(t("dna.edit.save")).setCta().onClick(() => {
         const title = this.factTitle.trim();
         const body = this.factBody.trim();
@@ -17402,8 +17430,8 @@ function dnaPageGroups(statsByType, findEntry, emojiOf2) {
       for (const entry of stat.learned) {
         words.push({ word: entry.word, zh: (_a = entry.definitionZh) != null ? _a : "", emoji: emojiOf2(entry), entryId: entry.id, morpheme });
       }
-      for (const s of stat.suggested) {
-        words.push({ word: s.word, zh: s.zh, emoji: s.emoji, entryId: (_b = findEntry(s.word)) == null ? void 0 : _b.id, morpheme });
+      for (const s2 of stat.suggested) {
+        words.push({ word: s2.word, zh: s2.zh, emoji: s2.emoji, entryId: (_b = findEntry(s2.word)) == null ? void 0 : _b.id, morpheme });
       }
     }
     return { key: `dna:${type}`, title: t(TAB_TITLE[type]), words };
@@ -17426,11 +17454,11 @@ function renderStrand(parent, b, opts) {
   }
   for (const part of b.parts) {
     const clickable = !!(opts == null ? void 0 : opts.onPart) && part.type !== "inflection" && !!part.morphemeId;
-    const base = clickable ? strand.createEl("button", { cls: ["vt-dna-base", `t-${part.type}`], attr: { type: "button" } }) : strand.createDiv({ cls: ["vt-dna-base", `t-${part.type}`] });
-    base.createSpan({ cls: "vt-dna-base-text", text: part.text });
+    const base2 = clickable ? strand.createEl("button", { cls: ["vt-dna-base", `t-${part.type}`], attr: { type: "button" } }) : strand.createDiv({ cls: ["vt-dna-base", `t-${part.type}`] });
+    base2.createSpan({ cls: "vt-dna-base-text", text: part.text });
     const meaning = part.meaningZh ? `${TYPE_LABEL[part.type]} \xB7 ${part.meaningZh}` : TYPE_LABEL[part.type];
-    base.createSpan({ cls: "vt-dna-base-meaning", text: meaning });
-    if (clickable) base.addEventListener("click", () => opts.onPart(part));
+    base2.createSpan({ cls: "vt-dna-base-meaning", text: meaning });
+    if (clickable) base2.addEventListener("click", () => opts.onPart(part));
   }
   return strand;
 }
@@ -17441,11 +17469,11 @@ var TAB_KEY = {
   suffix: "dna.tabs.suffix",
   root: "dna.tabs.root"
 };
-function fadeIn(el) {
+function fadeIn(el2) {
   var _a;
   if (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  (_a = el.animate) == null ? void 0 : _a.call(
-    el,
+  (_a = el2.animate) == null ? void 0 : _a.call(
+    el2,
     [
       { opacity: 0, transform: "translateY(6px)" },
       { opacity: 1, transform: "none" }
@@ -17469,8 +17497,8 @@ function renderAiGate2(parent, status, onOpenSettings) {
   );
   return true;
 }
-function renderDna(deps, source, el, ctx) {
-  ctx.addChild(new DnaBlock(el, deps, parseDnaParams(source), ctx.sourcePath));
+function renderDna(deps, source, el2, ctx) {
+  ctx.addChild(new DnaBlock(el2, deps, parseDnaParams(source), ctx.sourcePath));
 }
 var DnaBlock = class extends import_obsidian31.MarkdownRenderChild {
   constructor(containerEl, deps, params, sourcePath) {
@@ -17567,7 +17595,7 @@ var DnaBlock = class extends import_obsidian31.MarkdownRenderChild {
       root2.createDiv({ cls: "vt-dna-tab-empty", text: t("dna.emptyTab") });
       return;
     }
-    const cur = (_b = stats.find((s) => s.morpheme.id === this.morphemeId)) != null ? _b : stats[0];
+    const cur = (_b = stats.find((s2) => s2.morpheme.id === this.morphemeId)) != null ? _b : stats[0];
     this.morphemeId = cur.morpheme.id;
     this.renderChips(root2, stats, cur);
     const main = root2.createDiv({ cls: "vt-dna-main" });
@@ -17844,19 +17872,19 @@ var import_obsidian33 = require("obsidian");
 
 // src/core/text/cloze.ts
 var SUFFIXES = "(?:s|es|ed|d|ing|er|est|ly)?";
-function clozeParts(sentence, word) {
+function clozeParts(sentence2, word) {
   const w2 = word.trim();
-  if (!sentence || !w2) return null;
+  if (!sentence2 || !w2) return null;
   const re = new RegExp(
     `(?<![A-Za-z0-9'\\-])${escapeRe(w2)}${SUFFIXES}(?![A-Za-z0-9'\\-])`,
     "i"
   );
-  const m2 = re.exec(sentence);
+  const m2 = re.exec(sentence2);
   if (!m2) return null;
   return {
-    before: sentence.slice(0, m2.index),
+    before: sentence2.slice(0, m2.index),
     answer: m2[0],
-    after: sentence.slice(m2.index + m2[0].length)
+    after: sentence2.slice(m2.index + m2[0].length)
   };
 }
 
@@ -18007,20 +18035,20 @@ var import_obsidian32 = require("obsidian");
 var FORBIDDEN = /[/\\:*?"<>|#^[\]]/g;
 var CONTROL = /[\u0000-\u001f\u007f]/g;
 var MAX_NAME_BYTES = 200;
-function utf8Bytes2(s) {
+function utf8Bytes2(s2) {
   var _a;
   let n = 0;
-  for (const ch of s) {
+  for (const ch of s2) {
     const cp = (_a = ch.codePointAt(0)) != null ? _a : 0;
     n += cp < 128 ? 1 : cp < 2048 ? 2 : cp < 65536 ? 3 : 4;
   }
   return n;
 }
-function truncateBytes(s, maxBytes) {
-  if (utf8Bytes2(s) <= maxBytes) return s;
+function truncateBytes(s2, maxBytes) {
+  if (utf8Bytes2(s2) <= maxBytes) return s2;
   let out = "";
   let n = 0;
-  for (const ch of Array.from(s)) {
+  for (const ch of Array.from(s2)) {
     const size = utf8Bytes2(ch);
     if (n + size > maxBytes) break;
     out += ch;
@@ -18029,12 +18057,12 @@ function truncateBytes(s, maxBytes) {
   return out.replace(/\u200d+$/, "");
 }
 function slugify(name, fallback = "untitled", maxBytes = MAX_NAME_BYTES) {
-  let s = name.normalize("NFC").replace(CONTROL, "").replace(FORBIDDEN, "-");
-  s = s.replace(/\s+/g, " ").trim();
-  s = s.replace(/-{2,}/g, "-");
-  s = s.replace(/^[.\s]+/, "").replace(/[.\s]+$/, "");
-  s = truncateBytes(s, Math.max(0, maxBytes)).replace(/[.\s]+$/, "");
-  return s || fallback;
+  let s2 = name.normalize("NFC").replace(CONTROL, "").replace(FORBIDDEN, "-");
+  s2 = s2.replace(/\s+/g, " ").trim();
+  s2 = s2.replace(/-{2,}/g, "-");
+  s2 = s2.replace(/^[.\s]+/, "").replace(/[.\s]+$/, "");
+  s2 = truncateBytes(s2, Math.max(0, maxBytes)).replace(/[.\s]+$/, "");
+  return s2 || fallback;
 }
 function wordSlug(word) {
   return slugify(word.toLocaleLowerCase("en"), "word", MAX_NAME_BYTES - utf8Bytes2(".md"));
@@ -18054,11 +18082,11 @@ function linkTarget(path) {
 // src/services/files/paragraphNumber.ts
 function paragraphNumber(markdown, line2) {
   let n = 0;
-  for (const s of noteSections(markdown)) {
-    if (!isAnchorable(s.type)) continue;
+  for (const s2 of noteSections(markdown)) {
+    if (!isAnchorable(s2.type)) continue;
     n++;
-    if (line2 >= s.lineStart && line2 <= s.lineEnd) return n;
-    if (s.lineStart > line2) return null;
+    if (line2 >= s2.lineStart && line2 <= s2.lineEnd) return n;
+    if (s2.lineStart > line2) return null;
   }
   return null;
 }
@@ -18074,11 +18102,11 @@ function hasDictionaryData(entry) {
     entry.antonyms,
     entry.example,
     entry.sensesZh
-  ].some((v) => typeof v === "string" && v.trim() !== "");
+  ].some((v5) => typeof v5 === "string" && v5.trim() !== "");
 }
 var INFO_KEYS = ["phonetic", "partOfSpeech", "synonyms", "antonyms", "example", "level"];
-function filled2(v) {
-  return typeof v === "string" && v.trim() !== "";
+function filled2(v5) {
+  return typeof v5 === "string" && v5.trim() !== "";
 }
 function senseLines(sensesZh) {
   if (!filled2(sensesZh)) return [];
@@ -18124,8 +18152,8 @@ function originView(entry, family) {
   const title = familyTitle(family);
   return { familyId, name: (group == null ? void 0 : group.label.trim()) ? `${title} \u203A ${group.label.trim()}` : title };
 }
-function originLabel(v) {
-  return v.name ? lo("origin", v.name) : lo("originUnknown");
+function originLabel(v5) {
+  return v5.name ? lo("origin", v5.name) : lo("originUnknown");
 }
 function wordTarget(params, frontmatter3, sourcePath) {
   if (params.id) return { id: params.id };
@@ -18159,11 +18187,11 @@ function sourceLabel(path, paragraph) {
   const name = noteBasename(path);
   return l2("source", { source: paragraph ? `${name} \xB6${paragraph}` : name });
 }
-function renderWordHeader(host, source, el, ctx) {
+function renderWordHeader(host, source, el2, ctx) {
   var _a;
   const frontmatter3 = (_a = ctx.frontmatter) != null ? _a : host.frontmatterOf(ctx.sourcePath);
   const target = wordTarget(parseBlockParams(source), frontmatter3, ctx.sourcePath);
-  ctx.addChild(new WordHeaderBlock(el, host, target));
+  ctx.addChild(new WordHeaderBlock(el2, host, target));
 }
 var WordHeaderBlock = class extends import_obsidian32.MarkdownRenderChild {
   constructor(containerEl, host, target) {
@@ -18236,9 +18264,9 @@ var WordHeaderBlock = class extends import_obsidian32.MarkdownRenderChild {
   render() {
     var _a, _b, _c;
     if (this.disposed) return;
-    const el = this.containerEl;
-    el.empty();
-    const root2 = el.createDiv({ cls: ["vt", "vt-word-header"] });
+    const el2 = this.containerEl;
+    el2.empty();
+    const root2 = el2.createDiv({ cls: ["vt", "vt-word-header"] });
     const entry = findTarget(this.host.store.entries, this.target);
     if (!entry) {
       root2.appendChild(inlineNote({ text: l2("missing") }));
@@ -18258,17 +18286,17 @@ var WordHeaderBlock = class extends import_obsidian32.MarkdownRenderChild {
       if (vis.definitionZh) this.field(defs, entry, "definitionZh", t("row.field.definitionZh"), { multiline: true });
     }
     this.renderGlosses(root2, entry);
-    const chips = root2.createDiv({ cls: "vt-wh-chips" });
-    if ((_a = entry.source) == null ? void 0 : _a.path) this.renderSource(chips, entry, entry.source.path, entry.source.line);
-    this.renderOrigin(chips, entry);
+    const chips2 = root2.createDiv({ cls: "vt-wh-chips" });
+    if ((_a = entry.source) == null ? void 0 : _a.path) this.renderSource(chips2, entry, entry.source.path, entry.source.line);
+    this.renderOrigin(chips2, entry);
     const dates = datesText(recordDates(entry));
-    if (dates) chip(chips, "calendar-plus", dates);
-    chip(chips, "calendar", dueLabel2(entry));
+    if (dates) chip(chips2, "calendar-plus", dates);
+    chip(chips2, "calendar", dueLabel2(entry));
     const reps = (_c = (_b = entry.srs) == null ? void 0 : _b.reps) != null ? _c : 0;
-    if (reps > 0) chip(chips, "rotate-ccw", l2("reviewed", { n: reps }));
+    if (reps > 0) chip(chips2, "rotate-ccw", l2("reviewed", { n: reps }));
     const review = this.host.reviewWord;
     if (review) {
-      const btn = chips.createEl("button", { cls: ["mod-cta", "vt-wh-review"] });
+      const btn = chips2.createEl("button", { cls: ["mod-cta", "vt-wh-review"] });
       (0, import_obsidian32.setIcon)(btn.createSpan({ cls: "vt-wh-btn-icon" }), "layers");
       btn.createSpan({ text: l2("review") });
       btn.addEventListener("click", () => void review.call(this.host, entry));
@@ -18338,20 +18366,20 @@ var WordHeaderBlock = class extends import_obsidian32.MarkdownRenderChild {
     if (!familyId) return;
     const view = originView(entry, (_a = this.host.learn) == null ? void 0 : _a.family(familyId));
     if (!view) return;
-    const el = chip(parent, "git-fork", originLabel(view));
-    el.addClass("vt-wh-origin");
+    const el2 = chip(parent, "git-fork", originLabel(view));
+    el2.addClass("vt-wh-origin");
     const open = this.host.openEntryFile;
     if (!open) return;
-    el.addClass("is-link");
-    el.setAttr("title", lo("originTitle"));
-    el.setAttr("role", "link");
-    el.tabIndex = 0;
+    el2.addClass("is-link");
+    el2.setAttr("title", lo("originTitle"));
+    el2.setAttr("role", "link");
+    el2.tabIndex = 0;
     const go = () => {
       if (view.name) focusFamily({ familyId, entryId: entry.id });
       void open.call(this.host, "families", "tab");
     };
-    el.addEventListener("click", go);
-    el.addEventListener("keydown", (e) => {
+    el2.addEventListener("click", go);
+    el2.addEventListener("keydown", (e) => {
       if (e.key === "Enter") go();
     });
   }
@@ -18359,13 +18387,13 @@ var WordHeaderBlock = class extends import_obsidian32.MarkdownRenderChild {
     const key6 = `${path}
 ${line2}`;
     const known2 = this.paragraphs.get(key6);
-    const el = chip(parent, "file-text", sourceLabel(path, known2 != null ? known2 : null));
-    el.addClass("is-link");
-    el.setAttr("title", l2("sourceTitle"));
-    el.setAttr("role", "link");
-    el.tabIndex = 0;
-    el.addEventListener("click", () => void this.host.jumpToSource(entry));
-    el.addEventListener("keydown", (e) => {
+    const el2 = chip(parent, "file-text", sourceLabel(path, known2 != null ? known2 : null));
+    el2.addClass("is-link");
+    el2.setAttr("title", l2("sourceTitle"));
+    el2.setAttr("role", "link");
+    el2.tabIndex = 0;
+    el2.addEventListener("click", () => void this.host.jumpToSource(entry));
+    el2.addEventListener("keydown", (e) => {
       if (e.key === "Enter") void this.host.jumpToSource(entry);
     });
     const read = this.host.readNote;
@@ -18375,15 +18403,15 @@ ${line2}`;
       var _a;
       const n = text === null ? null : paragraphNumber(text, line2);
       this.paragraphs.set(key6, n);
-      if (n !== null && !this.disposed) (_a = el.querySelector(".vt-chip-text")) == null ? void 0 : _a.setText(sourceLabel(path, n));
+      if (n !== null && !this.disposed) (_a = el2.querySelector(".vt-chip-text")) == null ? void 0 : _a.setText(sourceLabel(path, n));
     }).catch(() => void 0);
   }
 };
 function chip(parent, icon, text) {
-  const el = parent.createSpan({ cls: "vt-wh-chip" });
-  (0, import_obsidian32.setIcon)(el.createSpan({ cls: "vt-chip-icon" }), icon);
-  el.createSpan({ cls: "vt-chip-text", text });
-  return el;
+  const el2 = parent.createSpan({ cls: "vt-wh-chip" });
+  (0, import_obsidian32.setIcon)(el2.createSpan({ cls: "vt-chip-icon" }), icon);
+  el2.createSpan({ cls: "vt-chip-text", text });
+  return el2;
 }
 function renderEntryField(parent, store, entry, key6, placeholder, opts = {}, after) {
   var _a;
@@ -18466,8 +18494,8 @@ function nextReviewText(due, now2, interval2) {
 }
 
 // src/ui/blocks/flashcards.ts
-function renderFlashcards(plugin, source, el, ctx) {
-  ctx.addChild(new FlashcardsBlock(el, plugin, parseFlashcardParams(source)));
+function renderFlashcards(plugin, source, el2, ctx) {
+  ctx.addChild(new FlashcardsBlock(el2, plugin, parseFlashcardParams(source)));
 }
 function formatInterval(ms9) {
   const { value, unit } = splitInterval(ms9);
@@ -18720,8 +18748,8 @@ var FlashcardsBlock = class extends import_obsidian33.MarkdownRenderChild {
       });
       this.renderBatch(progress, this.root, "card");
     }
-    const card = this.root.createDiv({ cls: "vt-fc-card" });
-    const front = card.createDiv({ cls: "vt-fc-front" });
+    const card2 = this.root.createDiv({ cls: "vt-fc-card" });
+    const front = card2.createDiv({ cls: "vt-fc-front" });
     switch (this.mode) {
       case "en-zh":
         this.renderWordHead(front, entry);
@@ -18741,29 +18769,29 @@ var FlashcardsBlock = class extends import_obsidian33.MarkdownRenderChild {
         break;
     }
     if (!this.flipped) {
-      card.createDiv({ cls: "vt-fc-hint", text: t(`flashcards.hint.${this.mode}`) });
-      const flip = card.createEl("button", { cls: ["vt-fc-btn", "vt-fc-flip"] });
+      card2.createDiv({ cls: "vt-fc-hint", text: t(`flashcards.hint.${this.mode}`) });
+      const flip = card2.createEl("button", { cls: ["vt-fc-btn", "vt-fc-flip"] });
       flip.createSpan({ text: t("flashcards.flip") });
       flip.createEl("kbd", { cls: "vt-fc-kbd", text: t("flashcards.flipKey") });
       flip.onclick = () => this.flip();
     } else {
-      this.renderBack(card.createDiv({ cls: "vt-fc-back" }), entry);
+      this.renderBack(card2.createDiv({ cls: "vt-fc-back" }), entry);
       this.renderRatings(entry);
     }
     if (this.single) return;
     const stats = this.root.createDiv({ cls: "vt-fc-stats" });
     const stat = (label, n) => {
-      const s = stats.createSpan({ cls: "vt-fc-stat" });
-      s.createSpan({ text: label });
-      s.createSpan({ cls: "vt-fc-stat-n", text: String(n) });
+      const s2 = stats.createSpan({ cls: "vt-fc-stat" });
+      s2.createSpan({ text: label });
+      s2.createSpan({ cls: "vt-fc-stat-n", text: String(n) });
     };
     stat(t("flashcards.stat.due"), this.initialDue);
     stat(t("flashcards.stat.new"), this.initialNew);
     stat(t("flashcards.stat.done"), this.results.length);
   }
-  renderWordHead(el, entry) {
-    el.createDiv({ cls: "vt-fc-word", text: entry.word });
-    const sub = el.createDiv({ cls: "vt-fc-sub" });
+  renderWordHead(el2, entry) {
+    el2.createDiv({ cls: "vt-fc-word", text: entry.word });
+    const sub = el2.createDiv({ cls: "vt-fc-sub" });
     const meta = [entry.phonetic, entry.partOfSpeech].filter(Boolean).join(" \xB7 ");
     if (meta) sub.createSpan({ text: meta });
     const speak = sub.createEl("button", { cls: "vt-fc-icon-btn", attr: { "aria-label": t("row.pronounce") } });
@@ -18772,9 +18800,9 @@ var FlashcardsBlock = class extends import_obsidian33.MarkdownRenderChild {
   }
   // Cloze sentence with the word blanked ("blank") or revealed and
   // highlighted ("answer"); also used for the example on the back.
-  renderSentence(el, entry, as) {
+  renderSentence(el2, entry, as) {
     const parts = clozeParts(entry.example, entry.word);
-    const line2 = el.createDiv({ cls: "vt-fc-sentence" });
+    const line2 = el2.createDiv({ cls: "vt-fc-sentence" });
     if (!parts) {
       line2.setText(entry.example);
       return;
@@ -18784,15 +18812,15 @@ var FlashcardsBlock = class extends import_obsidian33.MarkdownRenderChild {
     else line2.createEl("mark", { cls: "vt-fc-mark", text: parts.answer });
     line2.appendText(parts.after);
   }
-  renderListenFront(el, entry) {
-    const play = el.createEl("button", {
+  renderListenFront(el2, entry) {
+    const play = el2.createEl("button", {
       cls: "vt-fc-listen",
       attr: { "aria-label": t("flashcards.listen.replay") }
     });
     (0, import_obsidian33.setIcon)(play, "volume-2");
     bindPronounceButton(play, entry);
     if (!this.flipped) {
-      const input = el.createEl("input", {
+      const input = el2.createEl("input", {
         cls: "vt-fc-input",
         type: "text",
         attr: {
@@ -18807,20 +18835,20 @@ var FlashcardsBlock = class extends import_obsidian33.MarkdownRenderChild {
       return;
     }
     const ok = this.typed.trim().toLowerCase() === entry.word.trim().toLowerCase();
-    const result = el.createDiv({ cls: ["vt-fc-result", ok ? "is-correct" : "is-wrong"] });
+    const result = el2.createDiv({ cls: ["vt-fc-result", ok ? "is-correct" : "is-wrong"] });
     (0, import_obsidian33.setIcon)(result.createSpan({ cls: "vt-fc-icon" }), ok ? "check" : "x");
     result.createSpan({
       text: ok ? t("flashcards.listen.correct") : t("flashcards.listen.wrong", { answer: this.typed.trim() || "\u2014" })
     });
   }
-  renderBack(el, entry) {
+  renderBack(el2, entry) {
     var _a;
-    if (this.mode !== "en-zh") this.renderWordHead(el, entry);
-    if (this.mode !== "zh-en") el.createDiv({ cls: "vt-fc-answer", text: zhOf(entry) });
-    if (entry.definition) el.createDiv({ cls: "vt-fc-def", text: entry.definition });
-    if (entry.example && this.mode !== "cloze") this.renderSentence(el, entry, "answer");
+    if (this.mode !== "en-zh") this.renderWordHead(el2, entry);
+    if (this.mode !== "zh-en") el2.createDiv({ cls: "vt-fc-answer", text: zhOf(entry) });
+    if (entry.definition) el2.createDiv({ cls: "vt-fc-def", text: entry.definition });
+    if (entry.example && this.mode !== "cloze") this.renderSentence(el2, entry, "answer");
     if ((_a = entry.source) == null ? void 0 : _a.path) {
-      const src = el.createDiv({ cls: "vt-fc-origin" });
+      const src = el2.createDiv({ cls: "vt-fc-origin" });
       (0, import_obsidian33.setIcon)(src.createSpan({ cls: "vt-fc-icon" }), "file-text");
       src.createSpan({ text: entry.source.path.split("/").pop().replace(/\.md$/, "") });
       src.onclick = () => {
@@ -19053,9 +19081,9 @@ function zhOf(entry) {
   return entry.definitionZh || entry.definition || t("flashcards.noTranslation");
 }
 function tile(container, value, label) {
-  const el = container.createDiv({ cls: "vt-fc-tile" });
-  el.createDiv({ cls: "vt-fc-tile-value", text: value });
-  el.createDiv({ cls: "vt-fc-tile-label", text: label });
+  const el2 = container.createDiv({ cls: "vt-fc-tile" });
+  el2.createDiv({ cls: "vt-fc-tile-value", text: value });
+  el2.createDiv({ cls: "vt-fc-tile-label", text: label });
 }
 
 // src/ui/blocks/grammarMap.ts
@@ -19120,10 +19148,10 @@ var SseParser = class {
   }
   dispatch(out) {
     if (this.dataLines.length > 0) {
-      const ev = { data: this.dataLines.join("\n") };
-      if (this.eventName) ev.event = this.eventName;
-      if (this.id !== void 0) ev.id = this.id;
-      out.push(ev);
+      const ev2 = { data: this.dataLines.join("\n") };
+      if (this.eventName) ev2.event = this.eventName;
+      if (this.id !== void 0) ev2.id = this.id;
+      out.push(ev2);
     }
     this.dataLines = [];
     this.eventName = void 0;
@@ -19132,15 +19160,15 @@ var SseParser = class {
 async function* parseSse(chunks) {
   const parser = new SseParser();
   for await (const chunk of chunks) {
-    for (const ev of parser.push(chunk)) yield ev;
+    for (const ev2 of parser.push(chunk)) yield ev2;
   }
-  for (const ev of parser.end()) yield ev;
+  for (const ev2 of parser.end()) yield ev2;
 }
 
 // src/services/ai/transport/types.ts
 async function readAll(chunks) {
   let out = "";
-  for await (const c2 of chunks) out += c2;
+  for await (const c4 of chunks) out += c4;
   return out;
 }
 
@@ -19159,9 +19187,9 @@ async function consumeBody(res, signal, onEvent, onJson) {
       onJson(parseJson(text));
       return;
     }
-    for await (const ev of parseSse(res.chunks)) {
+    for await (const ev2 of parseSse(res.chunks)) {
       if (signal.aborted) throw new AiError("aborted");
-      if (onEvent(ev) === true) return;
+      if (onEvent(ev2) === true) return;
     }
   } catch (e) {
     if (signal.aborted) throw new AiError("aborted", void 0, { cause: e });
@@ -19273,11 +19301,11 @@ function wordLine(w2) {
   const zh = (_b = w2.zh) == null ? void 0 : _b.trim();
   return `- ${w2.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
 }
-function isObj(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
+function isObj(v5) {
+  return typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
 }
-function str(v) {
-  return typeof v === "string" ? v.trim() : "";
+function str(v5) {
+  return typeof v5 === "string" ? v5.trim() : "";
 }
 function structuredJson(r) {
   if (r.json !== void 0) return r.json;
@@ -19435,11 +19463,11 @@ var MIN_OPTION_WORDS = 4;
 var WORD_RE3 = /[A-Za-z]+(?:['’-][A-Za-z]+)*/g;
 var CJK_RE2 = /[\u3400-\u9fff\uf900-\ufaff\u3001-\u303f\uff00-\uffef]/;
 var GAP_ANY = /_{3,}/g;
-var englishWords = (s) => {
+var englishWords = (s2) => {
   var _a;
-  return (_a = s.match(WORD_RE3)) != null ? _a : [];
+  return (_a = s2.match(WORD_RE3)) != null ? _a : [];
 };
-var hasCjk = (s) => CJK_RE2.test(s);
+var hasCjk = (s2) => CJK_RE2.test(s2);
 function sentenceWordCount(text) {
   return englishWords(text.replace(/\[\[|\]\]/g, "").replace(GAP_ANY, " ")).length;
 }
@@ -19474,9 +19502,9 @@ var IRREGULAR = {
   catch: ["caught"],
   bring: ["brought"]
 };
-function isTargetForm(marked, target) {
+function isTargetForm(marked2, target) {
   var _a, _b, _c;
-  const a2 = ((_a = englishWords(marked)[0]) != null ? _a : "").toLowerCase();
+  const a2 = ((_a = englishWords(marked2)[0]) != null ? _a : "").toLowerCase();
   const b = ((_b = englishWords(target)[0]) != null ? _b : "").toLowerCase();
   if (!a2 || !b) return false;
   if ((_c = IRREGULAR[b]) == null ? void 0 : _c.includes(a2)) return true;
@@ -19629,10 +19657,10 @@ function cleanSentences(list2) {
   const out = [];
   const seen = /* @__PURE__ */ new Set();
   for (const x3 of list2 != null ? list2 : []) {
-    const sentence = ((_a = x3 == null ? void 0 : x3.sentence) != null ? _a : "").replace(/\s+/g, " ").trim().slice(0, MAX_SENTENCE_CHARS);
-    if (!sentence || seen.has(sentence.toLowerCase())) continue;
-    seen.add(sentence.toLowerCase());
-    out.push({ path: x3.path, sentence });
+    const sentence2 = ((_a = x3 == null ? void 0 : x3.sentence) != null ? _a : "").replace(/\s+/g, " ").trim().slice(0, MAX_SENTENCE_CHARS);
+    if (!sentence2 || seen.has(sentence2.toLowerCase())) continue;
+    seen.add(sentence2.toLowerCase());
+    out.push({ path: x3.path, sentence: sentence2 });
     if (out.length >= MAX_SENTENCES) break;
   }
   return out;
@@ -19640,11 +19668,11 @@ function cleanSentences(list2) {
 function clean(list2, max) {
   const out = [];
   const seen = /* @__PURE__ */ new Set();
-  for (const s of list2 != null ? list2 : []) {
-    const v = (s != null ? s : "").replace(/\s+/g, " ").trim();
-    if (!v || seen.has(v.toLowerCase())) continue;
-    seen.add(v.toLowerCase());
-    out.push(v);
+  for (const s2 of list2 != null ? list2 : []) {
+    const v5 = (s2 != null ? s2 : "").replace(/\s+/g, " ").trim();
+    if (!v5 || seen.has(v5.toLowerCase())) continue;
+    seen.add(v5.toLowerCase());
+    out.push(v5);
     if (out.length >= max) break;
   }
   return out;
@@ -19658,32 +19686,32 @@ function targetRefs(targets) {
   }
   return out;
 }
-function isObj2(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
+function isObj2(v5) {
+  return typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
 }
-function str2(v) {
-  return typeof v === "string" ? v.trim() : "";
+function str2(v5) {
+  return typeof v5 === "string" ? v5.trim() : "";
 }
-function strList(v) {
-  return Array.isArray(v) ? v.map(str2).filter(Boolean) : [];
+function strList(v5) {
+  return Array.isArray(v5) ? v5.map(str2).filter(Boolean) : [];
 }
 function uniq(list2) {
   const out = [];
-  for (const s of list2) if (!out.includes(s)) out.push(s);
+  for (const s2 of list2) if (!out.includes(s2)) out.push(s2);
   return out;
 }
 var GAP_RE = /_{3,}/g;
-function parseDistractors(v) {
+function parseDistractors(v5) {
   const out = {};
-  if (Array.isArray(v)) {
-    for (const d of v) {
+  if (Array.isArray(v5)) {
+    for (const d of v5) {
       if (!isObj2(d)) continue;
       const option = str2(d.option);
       const why = str2(d.why);
       if (option && why) out[option] = why;
     }
-  } else if (isObj2(v)) {
-    for (const [k, w2] of Object.entries(v)) {
+  } else if (isObj2(v5)) {
+    for (const [k, w2] of Object.entries(v5)) {
       const option = k.trim();
       const why = str2(w2);
       if (option && why) out[option] = why;
@@ -19832,7 +19860,7 @@ var grammarQuestions = {
       }) : "",
       known2.length ? renderTemplate(KNOWN_BLOCK_TEMPLATE, { titles: known2.join("\u3001") }) : "",
       words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE, { words: words.join(", ") }) : "",
-      avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE, { stems: avoid.map((s) => `- ${s}`).join("\n") }) : "",
+      avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE, { stems: avoid.map((s2) => `- ${s2}`).join("\n") }) : "",
       sentences.length ? renderTemplate(SENTENCES_BLOCK_TEMPLATE, { sentences: sentences.map((x3, i) => `${i + 1}. ${x3.sentence}`).join("\n") }) : ""
     ];
     return composeRequest({
@@ -19917,10 +19945,10 @@ errorTag \u6E05\u55AE\uFF1A{{errorTags}}`;
 var AVOID_BLOCK_TEMPLATE2 = `\u3014\u5DF2\u51FA\u904E\u7684\u53E5\u5B50\u3015
 {{sentences}}`;
 function polyLines(p) {
-  const line2 = (tag, s) => `${tag} ${s.id}\uFF5C${s.zh}\uFF5C${s.example}\uFF5C${s.cue}`;
-  return [...p.tested.map((s) => line2("\u8003", s)), ...p.reference.map((s) => line2("\u53C3\u8003", s))];
+  const line2 = (tag, s2) => `${tag} ${s2.id}\uFF5C${s2.zh}\uFF5C${s2.example}\uFF5C${s2.cue}`;
+  return [...p.tested.map((s2) => line2("\u8003", s2)), ...p.reference.map((s2) => line2("\u53C3\u8003", s2))];
 }
-var vocabLines = (list2) => list2.map((v) => `${v.id}\uFF5C${v.word}\uFF5C${v.zh}\uFF5C${v.pos}`);
+var vocabLines = (list2) => list2.map((v5) => `${v5.id}\uFF5C${v5.word}\uFF5C${v5.zh}\uFF5C${v5.pos}`);
 var grammarLines = (list2) => list2.map((g) => `${objectiveRef(g.topicId, g.objectiveId)}\uFF5C${g.text}\uFF5C${g.title}\uFF08${g.pattern}\uFF09`);
 function refsOf(req) {
   var _a, _b, _c;
@@ -19929,12 +19957,12 @@ function refsOf(req) {
   const poly = req.track === "poly" ? req : req.track === "mix" ? req.poly : void 0;
   const vocab = req.track === "vocab" ? req.words : req.track === "mix" ? req.vocab : void 0;
   const grammar = req.track === "mix" ? req.grammar : void 0;
-  for (const s of (_a = poly == null ? void 0 : poly.tested) != null ? _a : []) tested.set(s.id, { category: "poly", kind: "sense" });
-  for (const s of [...(_b = poly == null ? void 0 : poly.tested) != null ? _b : [], ...(_c = poly == null ? void 0 : poly.reference) != null ? _c : []]) senseWord.set(s.id, s.word);
+  for (const s2 of (_a = poly == null ? void 0 : poly.tested) != null ? _a : []) tested.set(s2.id, { category: "poly", kind: "sense" });
+  for (const s2 of [...(_b = poly == null ? void 0 : poly.tested) != null ? _b : [], ...(_c = poly == null ? void 0 : poly.reference) != null ? _c : []]) senseWord.set(s2.id, s2.word);
   const vocabWord = /* @__PURE__ */ new Map();
-  for (const v of vocab != null ? vocab : []) {
-    tested.set(v.id, { category: "vocab", kind: "word" });
-    vocabWord.set(v.id, v.word);
+  for (const v5 of vocab != null ? vocab : []) {
+    tested.set(v5.id, { category: "vocab", kind: "word" });
+    vocabWord.set(v5.id, v5.word);
   }
   for (const g of grammar != null ? grammar : []) tested.set(objectiveRef(g.topicId, g.objectiveId), { category: "grammar", kind: "grammar-objective" });
   return { tested, senseWord, vocabWord };
@@ -20014,11 +20042,11 @@ var PRACTICE_SCENARIO_SCHEMA = {
     }
   }
 };
-function isObj3(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
+function isObj3(v5) {
+  return typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
 }
-var str3 = (v) => typeof v === "string" ? v.trim() : "";
-var strList2 = (v) => Array.isArray(v) ? v.map(str3).filter(Boolean) : [];
+var str3 = (v5) => typeof v5 === "string" ? v5.trim() : "";
+var strList2 = (v5) => Array.isArray(v5) ? v5.map(str3).filter(Boolean) : [];
 var uniq2 = (list2) => [...new Set(list2)];
 var GAP_RE2 = /_{3,}/g;
 var MARK_RE = /\[\[[^[\]]+\]\]/g;
@@ -20027,10 +20055,10 @@ function inferInfo(id2) {
   if (id2.includes(".")) return { category: "poly", kind: "sense" };
   return { category: "vocab", kind: "word" };
 }
-function parseOptions(v) {
-  if (!Array.isArray(v)) return null;
+function parseOptions(v5) {
+  if (!Array.isArray(v5)) return null;
   const out = [];
-  for (const o of v) {
+  for (const o of v5) {
     if (typeof o === "string") {
       const t2 = o.trim();
       if (t2) out.push({ id: t2, text: t2 });
@@ -20043,17 +20071,17 @@ function parseOptions(v) {
   }
   return out;
 }
-function parseNotes(v, options, answerId) {
+function parseNotes(v5, options, answerId) {
   const out = {};
   const put = (key6, note) => {
     var _a;
     const opt = (_a = options.find((o) => o.id === key6)) != null ? _a : options.find((o) => o.text === key6);
     if (opt && opt.id !== answerId && note) out[opt.id] = note;
   };
-  if (Array.isArray(v)) {
-    for (const n of v) if (isObj3(n)) put(str3(n.id) || str3(n.option), str3(n.note) || str3(n.why));
-  } else if (isObj3(v)) {
-    for (const [k, w2] of Object.entries(v)) put(k.trim(), str3(w2));
+  if (Array.isArray(v5)) {
+    for (const n of v5) if (isObj3(n)) put(str3(n.id) || str3(n.option), str3(n.note) || str3(n.why));
+  } else if (isObj3(v5)) {
+    for (const [k, w2] of Object.entries(v5)) put(k.trim(), str3(w2));
   }
   return out;
 }
@@ -20080,8 +20108,8 @@ function parsePracticeQuestion(raw, refs) {
     if (/\[\[|\]\]/.test(text.replace(MARK_RE, ""))) return null;
     if (!isFullSentence(text)) return null;
     const target = info.category === "poly" ? (_b = refs == null ? void 0 : refs.senseWord.get(focusId)) != null ? _b : focusId.split(".")[0] : (_c = refs == null ? void 0 : refs.vocabWord) == null ? void 0 : _c.get(focusId);
-    const marked = (_e = (_d = /\[\[([^[\]]+)\]\]/.exec(text)) == null ? void 0 : _d[1]) != null ? _e : "";
-    if (target && !isTargetForm(marked, target)) return null;
+    const marked2 = (_e = (_d = /\[\[([^[\]]+)\]\]/.exec(text)) == null ? void 0 : _d[1]) != null ? _e : "";
+    if (target && !isTargetForm(marked2, target)) return null;
     if (kind === "same-sense" && !options.every((o) => isOptionSentence(o.text, target))) return null;
   } else if (kind === "pick-word" || kind === "choice") {
     if (((_f = text.match(GAP_RE2)) != null ? _f : []).length !== 1) return null;
@@ -20165,11 +20193,11 @@ function parsePracticeScenario(json, refs) {
 function clean2(list2, max) {
   const out = [];
   const seen = /* @__PURE__ */ new Set();
-  for (const s of list2 != null ? list2 : []) {
-    const v = (s != null ? s : "").replace(/\s+/g, " ").trim();
-    if (!v || seen.has(v.toLowerCase())) continue;
-    seen.add(v.toLowerCase());
-    out.push(v);
+  for (const s2 of list2 != null ? list2 : []) {
+    const v5 = (s2 != null ? s2 : "").replace(/\s+/g, " ").trim();
+    if (!v5 || seen.has(v5.toLowerCase())) continue;
+    seen.add(v5.toLowerCase());
+    out.push(v5);
     if (out.length >= max) break;
   }
   return out;
@@ -20178,7 +20206,7 @@ function referenceAndTask(req, count2) {
   var _a, _b;
   const errorTags = errorTagsOf(req).join("\u3001");
   if (req.track === "poly") {
-    const words = [...new Set(req.tested.map((s) => s.word))];
+    const words = [...new Set(req.tested.map((s2) => s2.word))];
     return {
       reference: polyLines(req).join("\n"),
       user: renderTemplate(POLY_TEMPLATE, { words: words.join("\u3001"), count: count2, errorTags })
@@ -20223,7 +20251,7 @@ var practiceScenario = {
         lines: prev.lastLines.slice(-2).map((l4) => `- ${l4}`).join("\n")
       }) : "",
       words.length ? renderTemplate(WORDS_BLOCK_TEMPLATE, { words: words.join(", ") }) : "",
-      avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE2, { sentences: avoid.map((s) => `- ${s}`).join("\n") }) : ""
+      avoid.length ? renderTemplate(AVOID_BLOCK_TEMPLATE2, { sentences: avoid.map((s2) => `- ${s2}`).join("\n") }) : ""
     ];
     return composeRequest({
       base: PRACTICE_SCENARIO_BASE_PROMPT,
@@ -20327,17 +20355,17 @@ var PARAPHRASE_SCHEMA = {
     }
   }
 };
-function isObj4(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
+function isObj4(v5) {
+  return typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
 }
-var str4 = (v) => typeof v === "string" ? v.trim() : "";
-var key2 = (s) => s.replace(/[\s.,;:!?"'“”‘’]+/g, " ").trim().toLowerCase();
-function hash(s) {
+var str4 = (v5) => typeof v5 === "string" ? v5.trim() : "";
+var key2 = (s2) => s2.replace(/[\s.,;:!?"'“”‘’]+/g, " ").trim().toLowerCase();
+function hash(s2) {
   let h = 2166136261;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  for (let i = 0; i < s2.length; i++) h = Math.imul(h ^ s2.charCodeAt(i), 16777619);
   return h >>> 0;
 }
-var isOptionSentence2 = (s) => !hasCjk(s) && englishWords(s).length >= MIN_OPTION_WORDS2;
+var isOptionSentence2 = (s2) => !hasCjk(s2) && englishWords(s2).length >= MIN_OPTION_WORDS2;
 function parseParaphraseQuestion(raw, p) {
   if (!isObj4(raw)) return null;
   const n = typeof raw.sourceIndex === "number" ? raw.sourceIndex : Number(str4(raw.sourceIndex));
@@ -20415,7 +20443,7 @@ var practiceParaphrase = {
     const weakness = ((_a = input.weakness) != null ? _a : "").trim();
     const asked = [...new Set((_b = input.asked) != null ? _b : [])].filter((n) => n >= 1 && n <= p.sentences.length).sort((a2, b) => a2 - b);
     const context = [
-      renderTemplate(SENTENCES_BLOCK_TEMPLATE2, { lines: p.sentences.map((s, i) => `${i + 1}. ${s}`).join("\n") }),
+      renderTemplate(SENTENCES_BLOCK_TEMPLATE2, { lines: p.sentences.map((s2, i) => `${i + 1}. ${s2}`).join("\n") }),
       p.discussed.length ? renderTemplate(DISCUSSED_BLOCK_TEMPLATE, { lines: p.discussed.map((d) => `- ${d}`).join("\n") }) : "",
       weakness ? renderTemplate(WEAKNESS_BLOCK_TEMPLATE, { weakness }) : "",
       asked.length ? renderTemplate(ASKED_BLOCK_TEMPLATE, { asked: asked.join("\u3001") }) : ""
@@ -20483,17 +20511,17 @@ function mistakeLine(text, max = MISTAKE_LINE_MAX) {
 }
 
 // src/ui/blocks/practice/filterBar.ts
-function renderFilterBar(el, opts) {
-  const root2 = el.createDiv({ cls: "vt-pr-filter" });
+function renderFilterBar(el2, opts) {
+  const root2 = el2.createDiv({ cls: "vt-pr-filter" });
   let applied = opts.value;
   let draft = opts.value;
   let open = !document.body.classList.contains("is-mobile");
   const groupsOf = () => opts.groupsFor ? opts.groupsFor(draft) : opts.groups;
   const edit = (next) => {
     draft = opts.groupsFor ? pruneValue(next, opts.groupsFor(next)) : next;
-    render();
+    render5();
   };
-  const render = () => {
+  const render5 = () => {
     var _a;
     root2.empty();
     root2.toggleClass("is-open", open);
@@ -20506,7 +20534,7 @@ function renderFilterBar(el, opts) {
     head.createSpan({ cls: "vt-pr-filter-caret", text: "\u203A" });
     head.addEventListener("click", () => {
       open = !open;
-      render();
+      render5();
     });
     if (!open) return;
     const body = root2.createDiv({ cls: "vt-pr-filter-body" });
@@ -20514,11 +20542,11 @@ function renderFilterBar(el, opts) {
     for (const g of groups) {
       const row = body.createDiv({ cls: "vt-pr-filter-group" });
       row.createSpan({ cls: "vt-pr-filter-label", text: g.label });
-      const chips = row.createDiv({ cls: "vt-pr-chips" });
+      const chips2 = row.createDiv({ cls: "vt-pr-chips" });
       const sel = (_a = draft[g.id]) != null ? _a : [];
       for (const o of g.options) {
         const on = sel.includes(o.id);
-        const chip2 = chips.createEl("button", {
+        const chip2 = chips2.createEl("button", {
           cls: "vt-pr-chip",
           text: o.label,
           attr: { type: "button", "aria-pressed": String(on) }
@@ -20542,18 +20570,18 @@ function renderFilterBar(el, opts) {
         cta: true,
         onClick: () => {
           applied = draft;
-          render();
+          render5();
           opts.onChange(draft);
         }
       });
     }
   };
-  render();
+  render5();
   return {
     update(next) {
       applied = next;
       draft = next;
-      render();
+      render5();
     }
   };
 }
@@ -20646,19 +20674,19 @@ function grammarTab(deps) {
     id: "grammar",
     label: t("practice.grammar.label"),
     order: 1,
-    mount(el, ctx) {
-      el.addClass("vt-pr-grammar");
+    mount(el2, ctx) {
+      el2.addClass("vt-pr-grammar");
       let alive = true;
       ctx.component.register(() => alive = false);
       void deps.ready().then(() => {
-        if (alive) new GrammarTabView(el, deps, ctx.filters, ctx.component).start();
+        if (alive) new GrammarTabView(el2, deps, ctx.filters, ctx.component).start();
       });
     }
   };
 }
 var GrammarTabView = class {
-  constructor(el, deps, filters, owner) {
-    this.el = el;
+  constructor(el2, deps, filters, owner) {
+    this.el = el2;
     this.deps = deps;
     this.filters = filters;
     this.owner = owner;
@@ -20740,12 +20768,12 @@ var GrammarTabView = class {
     );
     const bar2 = renderFilterBar(barEl, {
       groups,
-      groupsFor: (v) => grammarGroups(valueToFilter(v, level), level),
+      groupsFor: (v5) => grammarGroups(valueToFilter(v5, level), level),
       quick,
       value: filterToValue(this.filter),
-      summary: (v) => grammarSummary(valueToFilter(v, level), level),
-      onChange: (v) => {
-        this.filter = valueToFilter(v, level);
+      summary: (v5) => grammarSummary(valueToFilter(v5, level), level),
+      onChange: (v5) => {
+        this.filter = valueToFilter(v5, level);
         this.filters.set("grammar", this.filter);
         groups.splice(0, groups.length, ...grammarGroups(this.filter, level));
         bar2.update(filterToValue(this.filter));
@@ -20795,10 +20823,10 @@ var GrammarTabView = class {
   emptyText() {
     if (this.deps.api.isRefilling()) return t("practice.grammar.preparing");
     if (this.canStart()) return t("practice.startHint");
-    const s = this.deps.aiStatus();
-    if (s === "disabled") return t("practice.grammar.aiOff");
-    if (s === "no_key") return t("practice.grammar.noKey");
-    if (s === "offline") return t("practice.grammar.offline");
+    const s2 = this.deps.aiStatus();
+    if (s2 === "disabled") return t("practice.grammar.aiOff");
+    if (s2 === "no_key") return t("practice.grammar.noKey");
+    if (s2 === "offline") return t("practice.grammar.offline");
     return t("practice.grammar.none");
   }
   showError(error) {
@@ -20916,8 +20944,8 @@ function mountMistakeRedo(host, o) {
 
 // src/ui/blocks/grammarMap.ts
 var pickedStage = /* @__PURE__ */ new Map();
-function renderGrammarMap(deps, source, el, ctx) {
-  ctx.addChild(new GrammarMapBlock(el, deps, source, ctx.sourcePath));
+function renderGrammarMap(deps, source, el2, ctx) {
+  ctx.addChild(new GrammarMapBlock(el2, deps, source, ctx.sourcePath));
 }
 var GrammarMapBlock = class extends import_obsidian34.MarkdownRenderChild {
   constructor(containerEl, deps, source, sourcePath) {
@@ -20984,11 +21012,11 @@ var GrammarMapBlock = class extends import_obsidian34.MarkdownRenderChild {
     const head = this.root.createDiv({ cls: "vt-gr-head" });
     head.createDiv({ cls: "vt-gr-title", text: t("grammar.map.title") });
     segmented(head, {
-      options: STAGES2.map((s) => ({ value: String(s), label: stageLabel(s) })),
+      options: STAGES2.map((s2) => ({ value: String(s2), label: stageLabel(s2) })),
       value: String(this.stage),
       ariaLabel: t("grammar.map.stage"),
-      onChange: (v) => {
-        this.stage = Number(v);
+      onChange: (v5) => {
+        this.stage = Number(v5);
         pickedStage.set(this.sourcePath, this.stage);
         this.render();
       }
@@ -21091,10 +21119,10 @@ var GrammarMapBlock = class extends import_obsidian34.MarkdownRenderChild {
 
 // src/ui/blocks/grammarPractice.ts
 var import_obsidian35 = require("obsidian");
-function renderGrammarPractice(deps, source, el, ctx) {
+function renderGrammarPractice(deps, source, el2, ctx) {
   var _a;
   const topic = ((_a = parseBlockParams(source).topic) != null ? _a : "").trim().replace(/^["']|["']$/g, "").trim();
-  ctx.addChild(new GrammarPracticeCard(el, deps, topic));
+  ctx.addChild(new GrammarPracticeCard(el2, deps, topic));
 }
 var GrammarPracticeCard = class extends import_obsidian35.MarkdownRenderChild {
   constructor(containerEl, deps, topicId) {
@@ -21114,25 +21142,27 @@ var GrammarPracticeCard = class extends import_obsidian35.MarkdownRenderChild {
       this.root.createDiv({ cls: "vt-gr-empty", text: t("grammar.practiceCard.noTopic") });
       return;
     }
-    const card = this.root.createDiv({ cls: "vt-gr-bar vt-gr-practice-bar" });
-    const text = card.createDiv({ cls: "vt-gr-practice-text" });
+    this.renderHubCard(topic.id, `${stageLabel(topic.stage)} \xB7 ${topic.title}`);
+  }
+  renderHubCard(topicId, sub) {
+    const card2 = this.root.createDiv({ cls: "vt-gr-bar vt-gr-practice-bar" });
+    const text = card2.createDiv({ cls: "vt-gr-practice-text" });
     text.createDiv({ cls: "vt-gr-bar-main", text: t("grammar.practiceCard.title") });
-    text.createDiv({ cls: "vt-gr-bar-sub", text: `${stageLabel(topic.stage)} \xB7 ${topic.title}` });
+    text.createDiv({ cls: "vt-gr-bar-sub", text: sub });
     this.countEl = text.createDiv({ cls: "vt-gr-practice-count" });
     const { setGrammarFilter, openPractice } = this.deps;
     if (setGrammarFilter && openPractice) {
-      learnButton(card, {
+      learnButton(card2, {
         label: t("grammar.practiceCard.go"),
         icon: "play",
-        cta: true,
-        onClick: () => routeToPractice({ setGrammarFilter, openPractice }, topic.id)
+        onClick: () => routeToPractice({ setGrammarFilter, openPractice }, topicId)
       });
     }
     const { api, ready } = this.deps;
     if (!api) return;
     const refresh = () => {
       if (!this.alive || !this.countEl) return;
-      const n = api.mistakeQuestions().filter((q) => q.topicId === topic.id).length;
+      const n = api.mistakeQuestions().filter((q) => q.topicId === topicId).length;
       this.countEl.setText(n > 0 ? t("grammar.practiceCard.mistakes", { n }) : t("grammar.practiceCard.noMistakes"));
     };
     this.register(api.events.on("pool:change", refresh));
@@ -23277,8 +23307,8 @@ function oneLine(text) {
   return normalizeNewlines(text).replace(/\s*\n\s*/g, " ").trim();
 }
 function inlineCode(text) {
-  const s = oneLine(text);
-  return s.includes("`") ? `\`\` ${s} \`\`` : `\`${s}\``;
+  const s2 = oneLine(text);
+  return s2.includes("`") ? `\`\` ${s2} \`\`` : `\`${s2}\``;
 }
 function italic(text) {
   return `*${text}*`;
@@ -23306,11 +23336,11 @@ function fill(template, vars) {
   return template.replace(/\{(\w+)\}/g, (m2, k) => k in vars ? String(vars[k]) : m2);
 }
 var YAML_KEYWORDS = /^(true|false|yes|no|on|off|null|~)$/i;
-function yamlValue(v) {
-  return /^[a-z][\w-]*$/i.test(v) && !YAML_KEYWORDS.test(v) ? v : JSON.stringify(v);
+function yamlValue(v5) {
+  return /^[a-z][\w-]*$/i.test(v5) && !YAML_KEYWORDS.test(v5) ? v5 : JSON.stringify(v5);
 }
 function frontmatter(fields) {
-  return ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${yamlValue(v)}`), "---"].join("\n");
+  return ["---", ...Object.entries(fields).map(([k, v5]) => `${k}: ${yamlValue(v5)}`), "---"].join("\n");
 }
 
 // src/services/grammar/topicPage.ts
@@ -23433,10 +23463,10 @@ function objectiveRows(topic, attempts) {
   const stats = objectiveStats(topic, attempts);
   return topic.objectives.map((o) => {
     var _a, _b;
-    const s = stats.find((x3) => x3.objectiveId === o.id);
-    const answered = (_a = s == null ? void 0 : s.answered) != null ? _a : 0;
-    const state = !s || answered === 0 ? "none" : isMastered([s]) ? "done" : "partial";
-    return { id: o.id, text: o.text, state, score: answered ? `${(_b = s == null ? void 0 : s.correct) != null ? _b : 0}/${answered}` : "\u2013" };
+    const s2 = stats.find((x3) => x3.objectiveId === o.id);
+    const answered = (_a = s2 == null ? void 0 : s2.answered) != null ? _a : 0;
+    const state = !s2 || answered === 0 ? "none" : isMastered([s2]) ? "done" : "partial";
+    return { id: o.id, text: o.text, state, score: answered ? `${(_b = s2 == null ? void 0 : s2.correct) != null ? _b : 0}/${answered}` : "\u2013" };
   });
 }
 var SIGHTING_LIMIT = 5;
@@ -23447,16 +23477,16 @@ function clipSnapshot(text, max = SNAPSHOT_CHARS) {
   return chars.length > max ? `${chars.slice(0, max).join("").trimEnd()}\u2026` : flat3;
 }
 function noteName2(path) {
-  const base = path.slice(path.lastIndexOf("/") + 1);
-  return base.replace(/\.md$/i, "");
+  const base2 = path.slice(path.lastIndexOf("/") + 1);
+  return base2.replace(/\.md$/i, "");
 }
 function sightingRows(sightings, topicId, limit = SIGHTING_LIMIT) {
-  return sightings.filter((s) => s.topicId === topicId).slice(0, limit).map((s) => ({ key: `${s.threadId}:${s.turnId}`, path: s.path, note: noteName2(s.path), snapshot: clipSnapshot(s.snapshot) }));
+  return sightings.filter((s2) => s2.topicId === topicId).slice(0, limit).map((s2) => ({ key: `${s2.threadId}:${s2.turnId}`, path: s2.path, note: noteName2(s2.path), snapshot: clipSnapshot(s2.snapshot) }));
 }
 function topicChips(topic) {
   const out = [];
   const seen = /* @__PURE__ */ new Set([topic.id]);
-  const add3 = (ids, kind) => {
+  const add4 = (ids, kind) => {
     for (const id2 of ids) {
       const found = topicById(id2);
       if (!found || seen.has(id2)) continue;
@@ -23464,8 +23494,8 @@ function topicChips(topic) {
       out.push({ topic: found, kind, label: t(kind === "prerequisite" ? "grammar.topic.kind.prerequisite" : "grammar.topic.kind.related") });
     }
   };
-  add3(topic.prerequisites, "prerequisite");
-  add3(topic.related, "related");
+  add4(topic.prerequisites, "prerequisite");
+  add4(topic.related, "related");
   return out;
 }
 var PAGE_ERROR_KEY = {
@@ -23477,14 +23507,2992 @@ function pageErrorText(e) {
   return isGrammarPageError(e) ? t(PAGE_ERROR_KEY[e.code]) : null;
 }
 
+// src/grammar-visual/kit/parse.ts
+function obj(raw) {
+  return raw !== null && typeof raw === "object" && !Array.isArray(raw) ? raw : null;
+}
+function str5(raw, max, allowEmpty = false) {
+  if (typeof raw !== "string") return null;
+  const s2 = raw.trim().replace(/\s+/g, " ");
+  if (!allowEmpty && s2 === "") return null;
+  return s2.length > max ? null : s2;
+}
+function num2(raw, min, max) {
+  return typeof raw === "number" && Number.isFinite(raw) && raw >= min && raw <= max ? raw : null;
+}
+function int(raw, min, max) {
+  const n = num2(raw, min, max);
+  return n !== null && Number.isInteger(n) ? n : null;
+}
+function bool(raw) {
+  return typeof raw === "boolean" ? raw : null;
+}
+function oneOf(raw, allowed) {
+  return typeof raw === "string" && allowed.includes(raw) ? raw : null;
+}
+function arr(raw, min, max, item) {
+  if (!Array.isArray(raw) || raw.length < min || raw.length > max) return null;
+  const out = [];
+  for (let i = 0; i < raw.length; i++) {
+    const v5 = item(raw[i], i);
+    if (v5 === null) return null;
+    out.push(v5);
+  }
+  return out;
+}
+var MARK_TONES = ["accent", "amber", "muted", "strike"];
+var SENTENCE_MAX = 160;
+var EXPLAIN_MAX = 120;
+var SHORT_MAX = 60;
+function marked(raw) {
+  const o = obj(raw);
+  if (!o) return null;
+  const text = str5(o.text, SENTENCE_MAX);
+  if (text === null) return null;
+  const marks = arr(o.marks, 0, 6, (m2) => {
+    const mo = obj(m2);
+    if (!mo) return null;
+    const t2 = str5(mo.text, SENTENCE_MAX);
+    const tone = oneOf(mo.tone, MARK_TONES);
+    return t2 !== null && tone !== null ? { text: t2, tone } : null;
+  });
+  return marks === null ? null : { text, marks };
+}
+function base(raw, kind) {
+  const o = obj(raw);
+  if (!o || o.kind !== kind) return null;
+  const sentence2 = marked(o.sentence);
+  const explain2 = str5(o.explain, EXPLAIN_MAX);
+  if (!sentence2 || explain2 === null) return null;
+  return { o, kind, sentence: sentence2, explain: explain2 };
+}
+function sObj(properties, description) {
+  return {
+    type: "object",
+    additionalProperties: false,
+    required: Object.keys(properties),
+    properties,
+    ...description ? { description } : {}
+  };
+}
+var sStr = (description) => ({ type: "string", description });
+var sNum = (description) => ({ type: "number", description });
+var sInt = (description) => ({ type: "integer", description });
+var sBool = (description) => ({ type: "boolean", description });
+var sEnum = (values, description) => ({
+  type: "string",
+  enum: [...values],
+  description
+});
+var sArr = (items, description) => ({
+  type: "array",
+  items,
+  description
+});
+var SENTENCE_SCHEMA = sObj(
+  {
+    text: sStr("\u82F1\u6587\u4F8B\u53E5"),
+    marks: sArr(
+      sObj({
+        text: sStr("\u4F8B\u53E5\u88E1\u8981\u6A19\u51FA\u4F86\u7684\u4E00\u6BB5\uFF0C\u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728\u4F8B\u53E5\u4E2D"),
+        tone: sEnum(MARK_TONES, "accent\uFF1D\u9019\u53E5\u7684\u91CD\u9EDE\uFF1Bamber\uFF1D\u4FEE\u98FE\u3001\u5B50\u53E5\u6216\u5047\u8A2D\uFF1Bmuted\uFF1D\u6B21\u8981\uFF1Bstrike\uFF1D\u5224\u65B7\u6642\u5148\u5283\u6389")
+      }),
+      "\u8981\u6A19\u8272\u7684\u7247\u6BB5\uFF0C\u7531\u5DE6\u5230\u53F3\uFF0C\u6700\u591A 6 \u500B\uFF1B\u4E0D\u6A19\u5C31\u7D66 []"
+    )
+  },
+  "\u4F8B\u53E5"
+);
+function baseSchema(kind) {
+  return {
+    kind: sEnum([kind], "\u56FA\u5B9A\u586B\u9019\u500B\u503C"),
+    sentence: SENTENCE_SCHEMA,
+    explain: sStr("\u4E00\u5169\u53E5\u7E41\u9AD4\u4E2D\u6587\u89E3\u8AAA\uFF0C120 \u5B57\u4EE5\u5167\uFF0C\u8AAA\u6E05\u695A\u70BA\u4EC0\u9EBC\u662F\u9019\u6A23")
+  };
+}
+
+// src/grammar-visual/kit/dom.ts
+function el(ctx, tag, cls, text) {
+  const e = ctx.doc.createElement(tag);
+  if (cls) {
+    for (const c4 of (Array.isArray(cls) ? cls : [cls]).flatMap((x3) => x3.split(/\s+/))) if (c4) e.classList.add(c4);
+  }
+  if (text !== void 0) e.textContent = text;
+  return e;
+}
+function add2(parent, ctx, tag, cls, text) {
+  return parent.appendChild(el(ctx, tag, cls, text));
+}
+function sentencePieces(s2) {
+  const out = [];
+  let pos = 0;
+  for (const m2 of s2.marks) {
+    const i = s2.text.indexOf(m2.text, pos);
+    if (i < 0 || m2.text === "") continue;
+    if (i > pos) out.push({ text: s2.text.slice(pos, i), tone: null });
+    out.push({ text: m2.text, tone: m2.tone });
+    pos = i + m2.text.length;
+  }
+  if (pos < s2.text.length) out.push({ text: s2.text.slice(pos), tone: null });
+  return out;
+}
+function sentence(ctx, s2, cls) {
+  const box = el(ctx, "div", ["gv-sentence", cls != null ? cls : ""]);
+  for (const p of sentencePieces(s2)) {
+    if (p.tone === null) box.appendChild(ctx.doc.createTextNode(p.text));
+    else box.appendChild(el(ctx, p.tone === "accent" ? "strong" : "span", ["gv-mark", `is-${p.tone}`], p.text));
+  }
+  return box;
+}
+function explain(ctx, text) {
+  return el(ctx, "div", "gv-explain", text);
+}
+function card(ctx, tone = "plain", title) {
+  const c4 = el(ctx, "div", ["gv-card", `is-${tone}`]);
+  if (title) add2(c4, ctx, "div", "gv-card-title", title);
+  return c4;
+}
+function badge(ctx, text, tone = "accent") {
+  return el(ctx, "span", ["gv-badge", `is-${tone}`], text);
+}
+function chips(ctx, opts) {
+  const g = el(ctx, "div", "gv-chips");
+  g.setAttribute("role", "group");
+  g.setAttribute("aria-label", opts.label);
+  opts.options.forEach((text, i) => {
+    const b = add2(g, ctx, "button", ["gv-chip", i === opts.selected ? "is-on" : ""], text);
+    b.setAttribute("type", "button");
+    b.setAttribute("aria-pressed", String(i === opts.selected));
+    b.addEventListener("click", () => {
+      if (i !== opts.selected) opts.onSelect(i);
+    });
+  });
+  return g;
+}
+function stateful(host, initial, draw) {
+  let state = initial;
+  const set4 = (next) => {
+    state = next;
+    redraw();
+  };
+  const redraw = () => {
+    while (host.firstChild) host.removeChild(host.firstChild);
+    draw(host, state, set4);
+  };
+  redraw();
+}
+
+// src/grammar-visual/kinds/timeline/builtin.ts
+function ev(label, shape, at, to, focus) {
+  return { label, shape, at, to, focus };
+}
+function tl(text, marks, explain2, events, ref = { at: 0, label: "\u73FE\u5728" }) {
+  return { kind: "timeline", sentence: { text, marks }, explain: explain2, events, ref };
+}
+var acc = (text) => ({ text, tone: "accent" });
+var timelineBuiltin = {
+  "present-simple": tl(
+    "She works at a bank every day.",
+    [acc("works")],
+    "\u4E00\u822C\u73FE\u5728\u5F0F\u8B1B\u7684\u662F\u53CD\u8986\u767C\u751F\u7684\u7FD2\u6163\u6216\u56FA\u5B9A\u7684\u4E8B\u5BE6\uFF0C\u4E0D\u662F\u300C\u53EA\u6709\u6B64\u523B\u300D\u3002\u6240\u4EE5\u5728\u6642\u9593\u8EF8\u4E0A\u662F\u4E00\u4E32\u9EDE\uFF0C\u628A\u73FE\u5728\u5305\u5728\u4E2D\u9593\u3002",
+    [ev("\u6BCF\u5929\u4E0A\u73ED\uFF08\u7FD2\u6163\uFF09", "repeat", -2, 2, true)]
+  ),
+  "present-continuous": tl(
+    "She is working right now.",
+    [acc("is working")],
+    "\u73FE\u5728\u9032\u884C\u5F0F\u63CF\u8FF0\u6B64\u523B\u6B63\u5728\u9032\u884C\u3001\u800C\u4E14\u662F\u66AB\u6642\u7684\u4E8B\uFF1A\u9019\u4E00\u6BB5\u5305\u4F4F\u73FE\u5728\uFF0C\u904E\u53BB\u548C\u672A\u4F86\u90FD\u4E0D\u4E00\u5B9A\u9019\u6A23\u3002",
+    [ev("\u6B64\u523B\u6B63\u5728\u5DE5\u4F5C", "span", -1, 1, true), ev("\u5E73\u5E38\u7684\u7FD2\u6163", "repeat", -3, 3, false)]
+  ),
+  "past-simple": tl(
+    "I visited my aunt last week.",
+    [acc("visited"), { text: "last week", tone: "amber" }],
+    "\u4E00\u822C\u904E\u53BB\u5F0F\u8AAA\u5DF2\u7D93\u7D50\u675F\u7684\u904E\u53BB\u4E8B\u4EF6\uFF0C\u901A\u5E38\u642D\u914D last week\u3001yesterday \u7B49\u660E\u78BA\u7684\u904E\u53BB\u6642\u9593\uFF0C\u8DDF\u73FE\u5728\u5DF2\u7D93\u6C92\u6709\u9023\u7DDA\u3002",
+    [ev("\u4E0A\u9031\u62DC\u8A2A\u963F\u59E8", "point", -2, -2, true)]
+  ),
+  "used-to-past-habit": tl(
+    "I used to play the piano when I was a child.",
+    [acc("used to play"), { text: "when I was a child", tone: "amber" }],
+    "used to \u8AAA\u904E\u53BB\u53CD\u8986\u51FA\u73FE\u3001\u4F46\u73FE\u5728\u5DF2\u7D93\u4E0D\u662F\u9019\u6A23\u7684\u7FD2\u6163\u6216\u72C0\u614B\u3002\u8EF8\u4E0A\u662F\u904E\u53BB\u7684\u4E00\u4E32\u9EDE\uFF0C\u5230\u73FE\u5728\u5C31\u6C92\u6709\u4E86\u3002",
+    [ev("\u5C0F\u6642\u5019\u5E38\u5F48\u7434", "repeat", -3, -2, true), ev("\u73FE\u5728\u4E0D\u5F48\u4E86", "point", 0, 0, false)]
+  ),
+  "present-perfect-intro": tl(
+    "I have lived here since 2018.",
+    [acc("have lived"), { text: "since 2018", tone: "amber" }],
+    "\u73FE\u5728\u5B8C\u6210\u5F0F\u628A\u904E\u53BB\u9023\u5230\u73FE\u5728\uFF1A\u5F9E 2018 \u5E74\u4F4F\u5230\u73FE\u5728\uFF0C\u9019\u689D\u7DDA\u4E00\u76F4\u756B\u5230\u300C\u73FE\u5728\u300D\u624D\u505C\uFF0Csince \u6A19\u51FA\u8D77\u9EDE\u3002",
+    [ev("\u5F9E 2018 \u5E74\u4F4F\u5230\u73FE\u5728", "span-to-now", -2, 0, true)]
+  ),
+  "present-perfect-vs-past": tl(
+    "I have lost my keys, so I can't get in.",
+    [acc("have lost"), { text: "can't get in", tone: "amber" }],
+    "\u52D5\u4F5C\u672C\u8EAB\u767C\u751F\u5728\u904E\u53BB\uFF0C\u4F46\u8AAA\u8A71\u8005\u5728\u610F\u7684\u662F\u5C0D\u73FE\u5728\u7684\u5F71\u97FF\uFF08\u73FE\u5728\u9032\u4E0D\u53BB\uFF09\uFF0C\u6240\u4EE5\u7528\u73FE\u5728\u5B8C\u6210\u5F0F\uFF1B\u53EA\u8B1B\u904E\u53BB\u90A3\u4E00\u523B\u624D\u7528\u904E\u53BB\u5F0F\u3002",
+    [ev("\u5F04\u4E1F\u9470\u5319", "point", -1, -1, true), ev("\u9032\u4E0D\u53BB\uFF08\u5F71\u97FF\u5230\u73FE\u5728\uFF09", "span-to-now", -1, 0, false)]
+  ),
+  "present-perfect-continuous": tl(
+    "She has been waiting for an hour.",
+    [acc("has been waiting"), { text: "for an hour", tone: "amber" }],
+    "\u7DDA\u5F9E\u4E00\u5C0F\u6642\u524D\u756B\u5230\u73FE\u5728\uFF0C\u800C\u4E14\u9084\u6C92\u65B7\uFF0C\u53EF\u80FD\u9084\u6703\u7E7C\u7E8C\uFF1A\u9019\u5C31\u662F\u73FE\u5728\u5B8C\u6210\u9032\u884C\u5F0F\uFF0C\u5F37\u8ABF\u6301\u7E8C\u4E86\u591A\u4E45\u3002",
+    [ev("\u4E00\u5C0F\u6642\u524D\u958B\u59CB\u7B49", "ongoing", -2, 0, true)]
+  ),
+  "past-perfect": tl(
+    "When I arrived, the film had already started.",
+    [{ text: "When I arrived", tone: "amber" }, acc("had already started")],
+    "\u904E\u53BB\u5B8C\u6210\u5F0F\u7528\u5728\u5169\u500B\u904E\u53BB\u4E8B\u4EF6\u88E1\u300C\u6BD4\u8F03\u65E9\u767C\u751F\u300D\u7684\u90A3\u4E00\u500B\uFF1A\u96FB\u5F71\u5148\u958B\u59CB\uFF0C\u6211\u624D\u5230\uFF0C\u6240\u4EE5\u65E9\u7684\u90A3\u4EF6\u7528 had started\u3002",
+    [ev("\u96FB\u5F71\u958B\u59CB", "point", -2, -2, true), ev("\u6211\u5230\u9054", "point", -1, -1, false)],
+    { at: -1, label: "\u6211\u5230\u7684\u6642\u5019" }
+  ),
+  "future-continuous-perfect": tl(
+    "By 6 p.m., I will have finished the report.",
+    [{ text: "By 6 p.m.", tone: "amber" }, acc("will have finished")],
+    "will have done \u7AD9\u5728\u672A\u4F86\u7684\u67D0\u500B\u6642\u9593\u9EDE\u5F80\u56DE\u770B\uFF1A\u5230\u90A3\u4E00\u523B\uFF0C\u4E8B\u60C5\u5DF2\u7D93\u505A\u5B8C\u3002will be doing \u5247\u662F\u90A3\u4E00\u523B\u6B63\u5728\u9032\u884C\u3002",
+    [ev("\u5831\u544A\u5B8C\u6210", "point", 2, 2, true)],
+    { at: 3, label: "\u4E0B\u5348\u516D\u9EDE" }
+  ),
+  "future-will-going-to": tl(
+    "Look at those clouds. It is going to rain.",
+    [acc("is going to rain")],
+    "\u73FE\u5728\u5C31\u770B\u5F97\u5230\u8DE1\u8C61\uFF08\u70CF\u96F2\uFF09\u6642\u7528 be going to\uFF1B\u6C92\u6709\u8DE1\u8C61\u3001\u53EA\u662F\u7576\u4E0B\u7684\u6C7A\u5B9A\u6216\u63A8\u6E2C\u624D\u7528 will\u3002",
+    [ev("\u70CF\u96F2\uFF08\u73FE\u5728\u7684\u8DE1\u8C61\uFF09", "point", 0, 0, false), ev("\u4E0B\u96E8", "point", 1, 1, true)]
+  ),
+  "perfect-vs-progressive-nuance": tl(
+    "I have been painting the fence, so I'm covered in paint.",
+    [acc("have been painting"), { text: "covered in paint", tone: "amber" }],
+    "\u5B8C\u6210\u9032\u884C\u5F0F\u5F37\u8ABF\u300C\u4E00\u76F4\u5728\u505A\u300D\u7684\u6D3B\u52D5\u672C\u8EAB\uFF0C\u800C\u4E14\u770B\u5F97\u898B\u7684\u75D5\u8DE1\u9084\u5728\uFF1B\u82E5\u53EA\u5728\u610F\u505A\u5B8C\u7684\u7D50\u679C\uFF0C\u6703\u6539\u7528 have painted\u3002",
+    [ev("\u4E00\u76F4\u5728\u6CB9\u6F06\uFF08\u5F37\u8ABF\u6D3B\u52D5\uFF09", "ongoing", -2, 0, true), ev("\u6EFF\u8EAB\u6CB9\u6F06\uFF08\u770B\u5F97\u5230\u7684\u7D50\u679C\uFF09", "point", 0, 0, false)]
+  ),
+  "future-in-the-past": tl(
+    "I was going to call you, but I forgot.",
+    [acc("was going to call"), { text: "but I forgot", tone: "amber" }],
+    "\u8AAA\u8A71\u8005\u7AD9\u5728\u904E\u53BB\u7684\u67D0\u4E00\u523B\u5F80\u5F8C\u770B\uFF1A\u7576\u6642\u7684\u300C\u672A\u4F86\u300D\u5176\u5BE6\u4E5F\u5DF2\u7D93\u904E\u53BB\u4E86\u3002was going to \u5E38\u8868\u793A\u539F\u672C\u7684\u6253\u7B97\u6C92\u6709\u5BE6\u73FE\u3002",
+    [ev("\u672C\u4F86\u8981\u6253\u96FB\u8A71\uFF08\u6C92\u6253\uFF09", "point", -1, -1, true)],
+    { at: -2, label: "\u7576\u6642\u7684\u6211" }
+  )
+};
+
+// src/grammar-visual/kinds/timeline/index.ts
+var SHAPES = ["point", "span", "span-to-now", "repeat", "ongoing"];
+var SHAPE_NAME = {
+  point: "\u4E00\u500B\u9EDE",
+  span: "\u4E00\u6BB5",
+  "span-to-now": "\u5EF6\u7E8C\u5230\u73FE\u5728",
+  repeat: "\u53CD\u8986\u767C\u751F",
+  ongoing: "\u9084\u5728\u6301\u7E8C"
+};
+function parseEvent(raw) {
+  const o = obj(raw);
+  if (!o) return null;
+  const label = str5(o.label, SHORT_MAX);
+  const shape = oneOf(o.shape, SHAPES);
+  const at = int(o.at, -3, 3);
+  const to = int(o.to, -3, 3);
+  const focus = bool(o.focus);
+  if (label === null || shape === null || at === null || to === null || focus === null) return null;
+  if (shape === "point" ? to !== at : to < at) return null;
+  return { label, shape, at, to, focus };
+}
+function parse(raw) {
+  const b = base(raw, "timeline");
+  if (!b) return null;
+  const events = arr(b.o.events, 1, 4, parseEvent);
+  const ro = obj(b.o.ref);
+  if (events === null || !ro) return null;
+  const at = int(ro.at, -3, 3);
+  const label = str5(ro.label, SHORT_MAX);
+  if (at === null || label === null) return null;
+  if (!events.some((e) => e.focus)) return null;
+  return { kind: "timeline", sentence: b.sentence, explain: b.explain, events, ref: { at, label } };
+}
+var schema = sObj({
+  ...baseSchema("timeline"),
+  events: sArr(
+    sObj({
+      label: sStr("\u9019\u4EF6\u4E8B\u7684\u7C21\u77ED\u7E41\u4E2D\u8AAA\u660E\uFF0C\u4F8B\u5982\u300C\u4E00\u5C0F\u6642\u524D\u958B\u59CB\u7B49\u300D"),
+      shape: sEnum(
+        SHAPES,
+        "point\uFF1D\u4E00\u500B\u9EDE\uFF08did / will do\uFF09\uFF1Bspan\uFF1D\u4E00\u6BB5\uFF08was doing\uFF09\uFF1Bspan-to-now\uFF1D\u5F9E\u904E\u53BB\u6301\u7E8C\u5230\u73FE\u5728\uFF08have done\uFF09\uFF1Brepeat\uFF1D\u53CD\u8986\uFF08do / used to\uFF09\uFF1Bongoing\uFF1D\u5230\u73FE\u5728\u9084\u6C92\u7D50\u675F\u3001\u53EF\u80FD\u7E7C\u7E8C\uFF08have been doing\uFF09"
+      ),
+      at: sInt("\u8D77\u9EDE\u5728\u8EF8\u4E0A\u7684\u4F4D\u7F6E\uFF0C-3\uFF08\u5F88\u4E45\u4EE5\u524D\uFF09\u5230 3\uFF08\u5F88\u4E45\u4EE5\u5F8C\uFF09\uFF0C0\uFF1D\u73FE\u5728"),
+      to: sInt("\u7D42\u9EDE\u4F4D\u7F6E\u3002point \u5FC5\u9808\u8DDF at \u76F8\u540C\uFF1B\u5176\u4ED6\u5F62\u72C0\u8981\u5927\u65BC\u7B49\u65BC at"),
+      focus: sBool("\u9019\u53E5\u5728\u8B1B\u7684\u5C31\u662F\u9019\u4E00\u4EF6\u4E8B\u586B true\uFF0C\u5176\u9918\uFF08\u5C0D\u7167\u7528\uFF09\u586B false\uFF1B\u81F3\u5C11\u4E00\u500B true")
+    }),
+    "\u8EF8\u4E0A\u7684\u4E8B\u4EF6\uFF0C1 \u5230 4 \u500B\uFF1B\u5148\u653E\u9019\u53E5\u7684\u91CD\u9EDE\uFF0C\u518D\u653E\u5C0D\u7167\u7528\u7684"
+  ),
+  ref: sObj(
+    {
+      at: sInt("\u8AAA\u8A71\u8005\u7AD9\u7684\u6642\u9593\u9EDE\uFF1A\u4E00\u822C\u586B 0\uFF08\u73FE\u5728\uFF09\uFF1B\u904E\u53BB\u5B8C\u6210\u3001\u904E\u53BB\u89C0\u9EDE\u7684\u672A\u4F86\u3001\u672A\u4F86\u5B8C\u6210\u8981\u586B\u90A3\u500B\u53C3\u8003\u6642\u9593\u9EDE"),
+      label: sStr("\u9019\u500B\u6642\u9593\u9EDE\u7684\u7C21\u77ED\u7E41\u4E2D\u540D\u7A31\uFF0C\u4F8B\u5982\u300C\u73FE\u5728\u300D\u300C\u6211\u5230\u7684\u6642\u5019\u300D")
+    },
+    "\u8AAA\u8A71\u8005\u6240\u7AD9\u7684\u6642\u9593\u9EDE"
+  )
+});
+var guide = `\u6642\u9593\u8EF8\u7248\u9762\uFF1A\u7528\u4E00\u689D\u6A6B\u8EF8\u8AAA\u660E\u9019\u53E5\u7684\u6642\u614B\u5728\u6642\u9593\u4E0A\u662F\u300C\u4E00\u500B\u9EDE\u3001\u4E00\u6BB5\u3001\u53CD\u8986\uFF0C\u9084\u662F\u5EF6\u7E8C\u5230\u73FE\u5728\u300D\u3002
+- sentence\uFF1A\u82F1\u6587\u4F8B\u53E5\uFF1Bmarks \u6A19\u51FA\u52D5\u8A5E\u7247\u8A9E\uFF08accent\uFF09\u8207\u6642\u9593\u8A5E\uFF08amber\uFF09\u3002
+- events\uFF1A\u8EF8\u4E0A\u7684\u4E8B\u4EF6 1\u20134 \u500B\u3002\u9019\u53E5\u5728\u8B1B\u7684\u90A3\u4E00\u4EF6 focus=true\uFF0C\u5C0D\u7167\u7528\u7684\uFF08\u4F8B\u5982\u7D50\u679C\u3001\u53E6\u4E00\u500B\u904E\u53BB\u4E8B\u4EF6\uFF09focus=false\u3002shape \u8981\u9078\u5C0D\uFF1A\u4E00\u6B21\u6027\u7684\u52D5\u4F5C\u7528 point\uFF1B\u6709\u8D77\u8A16\u7684\u7528 span\uFF1B\u5F9E\u904E\u53BB\u4E00\u8DEF\u5230\u73FE\u5728\u7528 span-to-now\uFF1B\u5230\u73FE\u5728\u9084\u5728\u9032\u884C\u7528 ongoing\uFF1B\u7FD2\u6163\u3001\u53CD\u8986\u7528 repeat\u3002
+- at / to\uFF1A\u4F4D\u7F6E\u6574\u6578 -3 \u5230 3\uFF0C0 \u662F\u73FE\u5728\uFF0C\u8CA0\u6578\u662F\u904E\u53BB\uFF0C\u6B63\u6578\u662F\u672A\u4F86\u3002point \u7684 to \u5FC5\u9808\u7B49\u65BC at\uFF1B\u5176\u4ED6\u5F62\u72C0 to \u2265 at\u3002
+- ref\uFF1A\u8AAA\u8A71\u8005\u6240\u7AD9\u7684\u6642\u9593\u9EDE\u3002\u591A\u6578\u53E5\u5B50\u586B {at:0, label:"\u73FE\u5728"}\uFF1B\u904E\u53BB\u5B8C\u6210\u5F0F\u586B\u8F03\u665A\u7684\u90A3\u500B\u904E\u53BB\u6642\u9593\u9EDE\uFF1B\u904E\u53BB\u89C0\u9EDE\u7684\u672A\u4F86\u586B\u300C\u7576\u6642\u300D\uFF1B\u672A\u4F86\u5B8C\u6210\u586B\u672A\u4F86\u7684\u53C3\u8003\u9EDE\u3002
+- explain\uFF1A\u4E00\u5169\u53E5\u7E41\u4E2D\u767D\u8A71\uFF0C\u8AAA\u660E\u70BA\u4EC0\u9EBC\u756B\u6210\u9019\u500B\u5F62\u72C0\u3002
+\u5E38\u898B\u932F\u8AA4\uFF1A\u6240\u6709\u4E8B\u4EF6\u90FD\u6A19 focus\uFF1Bpoint \u7684 to \u8207 at \u4E0D\u540C\uFF1B\u628A\u300C\u73FE\u5728\u300D\u653E\u5728 -1 \u6216 1\u3002`;
+function pct3(at) {
+  return 8 + (at + 3) / 6 * 84;
+}
+function setX(e, name, at) {
+  e.style.setProperty(name, `${pct3(at).toFixed(2)}%`);
+}
+var timelineKind = {
+  kind: "timeline",
+  parse,
+  schema,
+  guide,
+  render(parent, v5, ctx) {
+    parent.appendChild(sentence(ctx, v5.sentence));
+    const board = add2(parent, ctx, "div", "gv-tl-board");
+    board.setAttribute("role", "group");
+    board.setAttribute("aria-label", "\u6642\u9593\u8EF8");
+    const nowLine = add2(board, ctx, "div", "gv-tl-now");
+    setX(nowLine, "--gv-x", 0);
+    if (v5.ref.at !== 0) {
+      const refLine = add2(board, ctx, "div", "gv-tl-ref");
+      setX(refLine, "--gv-x", v5.ref.at);
+    }
+    for (const e of v5.events) {
+      const row = add2(board, ctx, "div", ["gv-tl-row", `is-${e.shape}`, e.focus ? "is-focus" : "is-dim"]);
+      row.setAttribute("aria-label", `${e.label}\uFF1A${SHAPE_NAME[e.shape]}`);
+      const x1 = pct3(e.at);
+      const x22 = pct3(e.to);
+      const lab = add2(row, ctx, "div", "gv-tl-label", e.label);
+      if ((x1 + x22) / 2 > 60) {
+        lab.classList.add("is-right");
+        lab.style.setProperty("--gv-x", `${(100 - x22).toFixed(2)}%`);
+      } else {
+        lab.style.setProperty("--gv-x", `${x1.toFixed(2)}%`);
+      }
+      const line2 = add2(row, ctx, "div", "gv-tl-axis");
+      line2.setAttribute("aria-hidden", "true");
+      if (e.shape === "point") {
+        setX(add2(row, ctx, "span", "gv-tl-dot"), "--gv-x", e.at);
+      } else if (e.shape === "repeat") {
+        const n = e.at === e.to ? 1 : 5;
+        for (let i = 0; i < n; i++) {
+          const dot = add2(row, ctx, "span", ["gv-tl-dot", "is-small"]);
+          dot.style.setProperty("--gv-x", `${(x1 + (n === 1 ? 0 : (x22 - x1) * i / (n - 1))).toFixed(2)}%`);
+        }
+      } else {
+        const bar2 = add2(row, ctx, "div", "gv-tl-bar");
+        bar2.style.setProperty("--gv-x", `${x1.toFixed(2)}%`);
+        bar2.style.setProperty("--gv-w", `${Math.max(x22 - x1, 3).toFixed(2)}%`);
+        if (e.shape === "span-to-now" || e.shape === "ongoing") {
+          const tail = add2(row, ctx, "div", ["gv-tl-tail", e.shape === "ongoing" ? "is-open" : ""]);
+          tail.style.setProperty("--gv-x", `${Math.max(x22, x1 + 3).toFixed(2)}%`);
+        }
+      }
+    }
+    const foot = add2(board, ctx, "div", "gv-tl-foot");
+    const nowText = add2(foot, ctx, "span", "gv-tl-tick", v5.ref.at === 0 ? v5.ref.label : "\u73FE\u5728");
+    setX(nowText, "--gv-x", 0);
+    if (v5.ref.at !== 0) {
+      const t2 = add2(foot, ctx, "span", ["gv-tl-tick", "is-ref"], v5.ref.label);
+      setX(t2, "--gv-x", v5.ref.at);
+    }
+    parent.appendChild(explain(ctx, v5.explain));
+  },
+  builtin: timelineBuiltin
+};
+
+// src/grammar-visual/kinds/scale/builtin.ts
+var st = (word, gloss) => ({ word, gloss });
+var set3 = (scale, pick, steps) => ({ scale, steps, pick });
+var acc2 = (text) => ({ text, tone: "accent" });
+function sc(text, marks, explain2, main, evidence = "", alt = []) {
+  return { kind: "scale", sentence: { text, marks }, explain: explain2, ...main, evidence, alt };
+}
+var CERTAINTY = (pick) => set3("certainty", pick, [st("must", "\u5E7E\u4E4E\u78BA\u5B9A"), st("should", "\u61C9\u8A72"), st("might / could", "\u4E5F\u8A31"), st("can't", "\u4E0D\u53EF\u80FD")]);
+var OBLIGATION = (pick) => set3("obligation", pick, [st("must", "\u975E\u505A\u4E0D\u53EF"), st("have to", "\u5FC5\u9808\uFF08\u5916\u5728\u898F\u5B9A\uFF09"), st("should", "\u61C9\u8A72\uFF08\u5EFA\u8B70\uFF09"), st("don't have to", "\u4E0D\u5FC5")]);
+var scaleBuiltin = {
+  "can-cant": sc(
+    "Can I borrow your pen?",
+    [acc2("Can")],
+    "can \u9664\u4E86\u8868\u793A\u80FD\u529B\uFF0C\u4E5F\u80FD\u7528\u4F86\u8ACB\u6C42\u8A31\u53EF\u3002\u540C\u6A23\u662F\u8ACB\u6C42\uFF0Cmay \u6700\u6B63\u5F0F\u3001could \u8F03\u5BA2\u6C23\u3001can \u6700\u65E5\u5E38\uFF0C\u670B\u53CB\u4E4B\u9593\u7528 can \u5C31\u5F88\u81EA\u7136\u3002",
+    set3("politeness", 2, [st("May I", "\u6700\u6B63\u5F0F\u3001\u5F88\u5BA2\u6C23"), st("Could I", "\u5BA2\u6C23"), st("Can I", "\u65E5\u5E38\u3001\u53E3\u8A9E")])
+  ),
+  "modals-deduction": sc(
+    "The lights are off. They must be asleep.",
+    [acc2("must")],
+    "\u8B49\u64DA\u662F\u71C8\u90FD\u95DC\u4E86\uFF0C\u8AAA\u8A71\u7684\u4EBA\u5E7E\u4E4E\u78BA\u5B9A\uFF0C\u7528 must\u3002\u5982\u679C\u53EA\u662F\u731C\uFF0C\u6703\u5F80\u4E0B\u79FB\u5230 might\uFF1B\u6709\u8B49\u64DA\u986F\u793A\u4E0D\u53EF\u80FD\uFF0C\u5C31\u7528 can't\u3002",
+    CERTAINTY(0),
+    "The lights are off.",
+    [OBLIGATION(0)]
+  ),
+  "must-vs-have-to": sc(
+    "You don't have to come early.",
+    [acc2("don't have to")],
+    "must \u662F\u8AAA\u8A71\u8005\u81EA\u5DF1\u8981\u6C42\uFF0Chave to \u591A\u534A\u662F\u5916\u5728\u7684\u898F\u5B9A\u3002don't have to \u662F\u300C\u4E0D\u5FC5\u300D\uFF0C\u53EF\u505A\u53EF\u4E0D\u505A\uFF1Bmustn't \u5247\u662F\u300C\u7981\u6B62\u300D\uFF0C\u610F\u601D\u5B8C\u5168\u4E0D\u540C\u3002",
+    OBLIGATION(3)
+  ),
+  "modals-nuance": sc(
+    "You should see a doctor.",
+    [acc2("should")],
+    "\u540C\u4E00\u500B should \u5728\u4E0D\u540C\u53E5\u5B50\u6709\u4E0D\u540C\u5F37\u5EA6\uFF1A\u7D66\u5EFA\u8B70\u6642\u6BD4 must \u5F31\u3001\u6BD4 might want to \u5F37\u3002\u60F3\u66F4\u59D4\u5A49\uFF0C\u5C31\u63DB\u6210 might \u6216\u52A0 maybe\u3002",
+    set3("obligation", 1, [st("must", "\u5F37\u70C8\u8981\u6C42"), st("should", "\u5EFA\u8B70\u3001\u61C9\u8A72"), st("might want to", "\u59D4\u5A49\u7684\u63D0\u8B70")]),
+    "",
+    [CERTAINTY(1)]
+  ),
+  "would-rather-had-better": sc(
+    "You had better take an umbrella.",
+    [acc2("had better")],
+    "had better \u662F\u5F37\u70C8\u7684\u5EFA\u8B70\uFF0C\u6697\u793A\u4E0D\u7167\u505A\u6703\u6709\u4E0D\u597D\u7684\u5F8C\u679C\uFF1Bshould \u8F03\u6EAB\u548C\uFF1Bwould rather \u5247\u662F\u8AAA\u81EA\u5DF1\u6BD4\u8F03\u60F3\u8981\u4EC0\u9EBC\uFF0C\u662F\u504F\u597D\u4E0D\u662F\u7FA9\u52D9\u3002",
+    set3("obligation", 1, [st("must", "\u975E\u505A\u4E0D\u53EF"), st("had better", "\u6700\u597D\uFF08\u4E0D\u7136\u6709\u9EBB\u7169\uFF09"), st("should", "\u61C9\u8A72"), st("would rather", "\u6211\u5BE7\u9858\uFF08\u504F\u597D\uFF09")])
+  ),
+  "frequency-adverbs": sc(
+    "She usually walks to work.",
+    [acc2("usually")],
+    "\u983B\u7387\u526F\u8A5E\u4F9D\u591A\u5E38\u767C\u751F\u6392\u6210\u4E00\u628A\u5C3A\uFF1Aalways \u662F\u6BCF\u6B21\uFF0Cusually \u5927\u7D04\u516B\u4E5D\u6210\uFF0Cnever \u5247\u662F\u5B8C\u5168\u6C92\u6709\u3002\u4F4D\u7F6E\u901A\u5E38\u5728\u4E00\u822C\u52D5\u8A5E\u524D\u3001be \u52D5\u8A5E\u5F8C\u3002",
+    set3("frequency", 1, [
+      st("always", "\u6BCF\u6B21\uFF08100%\uFF09"),
+      st("usually", "\u901A\u5E38\uFF08\u7D04 80\u201390%\uFF09"),
+      st("often", "\u7D93\u5E38\uFF08\u7D04 60%\uFF09"),
+      st("sometimes", "\u6709\u6642\uFF08\u7D04 30\u201340%\uFF09"),
+      st("rarely", "\u5F88\u5C11"),
+      st("never", "\u5F9E\u4E0D\uFF080%\uFF09")
+    ])
+  ),
+  "stance-adverbs": sc(
+    "The company has reportedly lost millions.",
+    [acc2("reportedly")],
+    "\u9019\u985E\u526F\u8A5E\u6A19\u660E\u8CC7\u8A0A\u7684\u4F86\u6E90\u8207\u53EF\u4FE1\u5EA6\uFF1Areportedly \u662F\u300C\u64DA\u5831\u5C0E\u300D\uFF0Callegedly \u662F\u300C\u64DA\u7A31\u300D\u800C\u4E14\u9084\u6C92\u8B49\u5BE6\uFF0Csupposedly \u5247\u5E36\u6709\u61F7\u7591\u7684\u8A9E\u6C23\u3002",
+    set3("certainty", 1, [st("clearly", "\u660E\u986F\u5982\u6B64"), st("reportedly", "\u64DA\u5831\u5C0E\uFF08\u6709\u4F86\u6E90\uFF09"), st("allegedly", "\u64DA\u7A31\uFF08\u5C1A\u672A\u8B49\u5BE6\uFF09"), st("supposedly", "\u64DA\u8AAA\uFF08\u5E36\u61F7\u7591\uFF09")])
+  ),
+  "register-choice": sc(
+    "I would appreciate it if you could reply soon.",
+    [acc2("I would appreciate it if you could reply soon")],
+    "\u540C\u4E00\u500B\u8ACB\u6C42\u53EF\u4EE5\u7528\u4E0D\u540C\u8A9E\u9AD4\u8AAA\uFF1A\u5BEB\u7D66\u5BA2\u6236\u6216\u4E0A\u53F8\u7528\u6700\u4E0A\u9762\u9019\u7A2E\uFF0C\u8DDF\u670B\u53CB\u5C31\u76F4\u63A5\u8AAA Reply soon\u3002\u9078\u64C7\u8981\u770B\u5C0D\u8C61\u548C\u5834\u5408\u3002",
+    set3("formality", 0, [
+      st("I would appreciate it if you could\u2026", "\u6B63\u5F0F\uFF08\u66F8\u4FE1\u3001\u5BA2\u6236\uFF09"),
+      st("Could you please\u2026?", "\u4E2D\u6027\u6709\u79AE\u8C8C"),
+      st("Can you\u2026?", "\u65E5\u5E38\u53E3\u8A9E"),
+      st("Reply soon.", "\u96A8\u53E3\u3001\u5F88\u76F4\u63A5")
+    ])
+  ),
+  imperatives: sc(
+    "Please close the door.",
+    [acc2("Please close")],
+    "\u547D\u4EE4\u53E5\u76F4\u63A5\u7528\u539F\u5F62\u52D5\u8A5E\u958B\u982D\uFF0C\u8A9E\u6C23\u518D\u9760 please \u6216\u554F\u53E5\u8ABF\u6574\uFF1A\u52A0 please \u8B8A\u6210\u5BA2\u6C23\u7684\u8ACB\u6C42\uFF0CCould you\u2026? \u5247\u66F4\u59D4\u5A49\uFF0C\u53EA\u8B1B Close the door. \u6700\u76F4\u63A5\u3002",
+    set3("politeness", 1, [
+      st("Could you close the door?", "\u5F88\u5BA2\u6C23\u7684\u8ACB\u6C42"),
+      st("Please close the door.", "\u5BA2\u6C23\u7684\u6307\u793A"),
+      st("Close the door.", "\u76F4\u63A5\u7684\u547D\u4EE4"),
+      st("Close the door now!", "\u5F37\u786C\u3001\u4E0D\u8010\u7169")
+    ])
+  ),
+  "advanced-negation": sc(
+    "He is anything but lazy.",
+    [acc2("anything but")],
+    "anything but \u770B\u8D77\u4F86\u50CF\u5728\u8AAA\u300C\u4EC0\u9EBC\u90FD\u662F\u53EA\u9664\u4E86\u2026\u300D\uFF0C\u5176\u5BE6\u662F\u300C\u7D55\u5C0D\u4E0D\u662F\u300D\uFF1AHe is anything but lazy \u7684\u610F\u601D\u662F\u4ED6\u4E00\u9EDE\u4E5F\u4E0D\u61F6\u3002",
+    set3("polarity", 1, [
+      st("by no means", "\u7D55\u4E0D"),
+      st("anything but", "\u7D55\u5C0D\u4E0D\u662F"),
+      st("far from", "\u9060\u9060\u4E0D\u662F"),
+      st("not entirely", "\u4E0D\u5B8C\u5168\u662F")
+    ])
+  ),
+  "negation-quantifiers-advanced": sc(
+    "Few people came to the meeting.",
+    [acc2("Few")],
+    "few\uFF08\u53EF\u6578\uFF09\u548C little\uFF08\u4E0D\u53EF\u6578\uFF09\u5DF2\u7D93\u662F\u5426\u5B9A\u7684\u610F\u601D\uFF1A\u5E7E\u4E4E\u6C92\u6709\uFF1B\u52A0\u4E86 a \u7684 a few / a little \u624D\u662F\u300C\u6709\u4E00\u4E9B\u300D\uFF0C\u8A9E\u6C23\u662F\u80AF\u5B9A\u7684\u3002",
+    set3("amount", 2, [st("many", "\u5F88\u591A"), st("a few", "\u6709\u4E00\u4E9B\uFF08\u80AF\u5B9A\uFF09"), st("few", "\u5E7E\u4E4E\u6C92\u6709\uFF08\u5426\u5B9A\uFF09"), st("none", "\u5B8C\u5168\u6C92\u6709")]),
+    "",
+    [set3("amount", 2, [st("much", "\u5F88\u591A"), st("a little", "\u6709\u4E00\u9EDE\uFF08\u80AF\u5B9A\uFF09"), st("little", "\u5E7E\u4E4E\u6C92\u6709\uFF08\u5426\u5B9A\uFF09"), st("none", "\u5B8C\u5168\u6C92\u6709")])]
+  )
+};
+
+// src/grammar-visual/kinds/scale/index.ts
+var TYPES = ["certainty", "obligation", "frequency", "amount", "formality", "politeness", "polarity"];
+var TYPE_NAME = {
+  certainty: "\u63A8\u8AD6\uFF1A\u6709\u591A\u78BA\u5B9A",
+  obligation: "\u7FA9\u52D9\uFF1A\u6709\u591A\u5FC5\u8981",
+  frequency: "\u983B\u7387\uFF1A\u591A\u5E38\u767C\u751F",
+  amount: "\u6578\u91CF\uFF1A\u591A\u5C11",
+  formality: "\u8A9E\u9AD4\uFF1A\u591A\u6B63\u5F0F",
+  politeness: "\u5BA2\u6C23\uFF1A\u591A\u59D4\u5A49",
+  polarity: "\u5426\u5B9A\uFF1A\u591A\u5F37"
+};
+var ENDS = {
+  certainty: ["\u8D8A\u78BA\u5B9A", "\u8D8A\u4E0D\u78BA\u5B9A"],
+  obligation: ["\u8D8A\u5FC5\u8981", "\u8D8A\u4E0D\u5FC5"],
+  frequency: ["\u8D8A\u5E38\u767C\u751F", "\u8D8A\u5C11\u767C\u751F"],
+  amount: ["\u8D8A\u591A", "\u8D8A\u5C11"],
+  formality: ["\u8D8A\u6B63\u5F0F", "\u8D8A\u53E3\u8A9E"],
+  politeness: ["\u8D8A\u5BA2\u6C23", "\u8D8A\u76F4\u63A5"],
+  polarity: ["\u8D8A\u5F37\u70C8", "\u8D8A\u8F15\u5FAE"]
+};
+function parseStep(raw) {
+  const o = obj(raw);
+  if (!o) return null;
+  const word = str5(o.word, SHORT_MAX);
+  const gloss = str5(o.gloss, SHORT_MAX);
+  return word !== null && gloss !== null ? { word, gloss } : null;
+}
+function parseSet(raw) {
+  const o = obj(raw);
+  if (!o) return null;
+  const scale = oneOf(o.scale, TYPES);
+  const steps = arr(o.steps, 2, 6, parseStep);
+  if (scale === null || steps === null) return null;
+  const pick = int(o.pick, 0, steps.length - 1);
+  return pick === null ? null : { scale, steps, pick };
+}
+function parse2(raw) {
+  const b = base(raw, "scale");
+  if (!b) return null;
+  const main = parseSet(b.o);
+  const evidence = str5(b.o.evidence, SENTENCE_MAX, true);
+  const alt = arr(b.o.alt, 0, 1, parseSet);
+  if (!main || evidence === null || alt === null) return null;
+  return { kind: "scale", sentence: b.sentence, explain: b.explain, ...main, evidence, alt };
+}
+var setProps = {
+  scale: sEnum(
+    TYPES,
+    "\u91CF\u5C3A\u7A2E\u985E\uFF1Acertainty\uFF1D\u63A8\u8AD6\u7684\u78BA\u5B9A\u7A0B\u5EA6\uFF1Bobligation\uFF1D\u7FA9\u52D9\u8207\u5FC5\u8981\uFF1Bfrequency\uFF1D\u983B\u7387\uFF1Bamount\uFF1D\u6578\u91CF\uFF1Bformality\uFF1D\u8A9E\u9AD4\u6B63\u5F0F\u7A0B\u5EA6\uFF1Bpoliteness\uFF1D\u5BA2\u6C23\u8207\u59D4\u5A49\uFF1Bpolarity\uFF1D\u5426\u5B9A\u7684\u5F37\u5F31"
+  ),
+  steps: sArr(
+    sObj({
+      word: sStr("\u9019\u4E00\u683C\u7684\u82F1\u6587\u5B57\u6216\u7247\u8A9E"),
+      gloss: sStr("\u9019\u4E00\u683C\u7684\u7E41\u4E2D\u610F\u601D\uFF0C10 \u5B57\u4EE5\u5167")
+    }),
+    "\u7531\u9AD8\uFF08\u6700\u78BA\u5B9A\uFF0F\u6700\u5F37\uFF0F\u6700\u5E38\uFF0F\u6700\u591A\uFF0F\u6700\u6B63\u5F0F\uFF0F\u6700\u5BA2\u6C23\uFF09\u6392\u5230\u4F4E\uFF0C2 \u5230 6 \u683C"
+  ),
+  pick: sInt("\u9019\u53E5\u843D\u5728 steps \u7684\u7B2C\u5E7E\u683C\uFF0C\u5F9E 0 \u8D77\u7B97")
+};
+var schema2 = sObj({
+  ...baseSchema("scale"),
+  ...setProps,
+  evidence: sStr("\u63A8\u8AD6\u7684\u8B49\u64DA\uFF0C\u8981\u539F\u6A23\u51FA\u81EA\u4F8B\u53E5\uFF1B\u4E0D\u662F\u63A8\u8AD6\u6216\u6C92\u6709\u8B49\u64DA\u5C31\u586B\u7A7A\u5B57\u4E32"),
+  alt: sArr(
+    sObj(setProps),
+    "\u53EF\u5207\u63DB\u7684\u53E6\u4E00\u628A\u91CF\u5C3A\uFF08\u4F8B\u5982\u63A8\u8AD6 \u2194 \u7FA9\u52D9\u3001\u53EF\u6578 \u2194 \u4E0D\u53EF\u6578\uFF09\uFF1B\u6C92\u6709\u5C31\u7D66 []\uFF0C\u6700\u591A 1 \u500B"
+  )
+});
+var guide2 = `\u7A0B\u5EA6\u91CF\u5C3A\u7248\u9762\uFF1A\u628A\u9019\u53E5\u7528\u7684\u5B57\u653E\u5728\u4E00\u628A\u91CF\u5C3A\u4E0A\uFF0C\u8B93\u4EBA\u770B\u51FA\u5B83\u8DDF\u540C\u985E\u5B57\u7684\u5F37\u5F31\u5DEE\u5225\u3002
+- scale\uFF1A\u9078\u5C0D\u91CF\u5C3A\u7A2E\u985E\u3002\u60C5\u614B\u52D5\u8A5E\u7684\u63A8\u8AD6\u7528 certainty\uFF0C\u7FA9\u52D9\u8207\u5FC5\u8981\u7528 obligation\uFF1B\u983B\u7387\u526F\u8A5E\u7528 frequency\uFF1Bfew / little \u7528 amount\uFF1B\u6B63\u5F0F\u8207\u53E3\u8A9E\u7528 formality\uFF1B\u547D\u4EE4\u53E5\u8207\u8ACB\u6C42\u7684\u5BA2\u6C23\u7A0B\u5EA6\u7528 politeness\uFF1Banything but\u3001far from \u9019\u985E\u5426\u5B9A\u7528 polarity\uFF1B\u5F15\u8FF0\u7ACB\u5834\u526F\u8A5E\uFF08reportedly\u3001allegedly\uFF09\u7528 certainty\u3002
+- steps\uFF1A2\u20136 \u683C\uFF0C\u7531\u9AD8\u6392\u5230\u4F4E\uFF08\u6700\u78BA\u5B9A\uFF0F\u6700\u5F37\uFF0F\u6700\u5E38\u5728\u6700\u524D\u9762\uFF09\u3002word \u662F\u82F1\u6587\u5B57\u6216\u7247\u8A9E\uFF0Cgloss \u662F 10 \u5B57\u5167\u7684\u7E41\u4E2D\u610F\u601D\u3002\u6BCF\u4E00\u683C\u90FD\u8981\u662F\u540C\u4E00\u628A\u5C3A\u4E0A\u7684\u6771\u897F\uFF0C\u4E0D\u8981\u6DF7\u9032\u5225\u7684\u6982\u5FF5\u3002
+- pick\uFF1A\u9019\u53E5\u7528\u7684\u5B57\u5728 steps \u7684\u7B2C\u5E7E\u683C\uFF080 \u8D77\u7B97\uFF09\uFF0C\u4E00\u5B9A\u8981\u771F\u7684\u662F\u4F8B\u53E5\u88E1\u7528\u7684\u90A3\u500B\u5B57\u3002
+- evidence\uFF1A\u53EA\u6709\u63A8\u8AD6\u53E5\u624D\u586B\uFF0C\u539F\u6A23\u53D6\u81EA\u4F8B\u53E5\u4E2D\u7576\u8B49\u64DA\u7684\u90A3\u4E00\u6BB5\uFF1B\u5176\u4ED6\u586B ""\u3002
+- alt\uFF1A\u540C\u4E00\u500B\u5B57\u9084\u80FD\u653E\u5728\u53E6\u4E00\u628A\u91CF\u5C3A\u4E0A\u6642\u624D\u586B\u4E00\u628A\uFF08\u4F8B\u5982 must \u65E2\u53EF\u63A8\u8AD6\u4E5F\u53EF\u8868\u7FA9\u52D9\u3001few \u8207 little\uFF09\uFF1B\u5426\u5247\u7D66 []\u3002
+- explain\uFF1A\u4E00\u5169\u53E5\u7E41\u4E2D\u767D\u8A71\uFF0C\u8AAA\u660E\u70BA\u4EC0\u9EBC\u843D\u5728\u9019\u4E00\u683C\u3001\u8DDF\u76F8\u9130\u7684\u5B57\u5DEE\u5728\u54EA\u3002
+\u5E38\u898B\u932F\u8AA4\uFF1Asteps \u6392\u53CD\u65B9\u5411\uFF1Bpick \u8D85\u51FA\u7BC4\u570D\uFF1Balt \u8207\u4E3B\u91CF\u5C3A\u5167\u5BB9\u91CD\u8907\u3002`;
+function altLabel(sets, i) {
+  const s2 = sets[i];
+  const dup = sets.some((o, j) => j !== i && o.scale === s2.scale);
+  return dup ? `${TYPE_NAME[s2.scale].split("\uFF1A")[0]}\uFF08${s2.steps[s2.pick].word}\uFF09` : TYPE_NAME[s2.scale];
+}
+var scaleKind = {
+  kind: "scale",
+  parse: parse2,
+  schema: schema2,
+  guide: guide2,
+  render(parent, v5, ctx) {
+    parent.appendChild(sentence(ctx, v5.sentence));
+    if (v5.evidence !== "") {
+      const ev2 = add2(parent, ctx, "div", "gv-sc-evidence");
+      add2(ev2, ctx, "span", "gv-label", "\u8B49\u64DA");
+      add2(ev2, ctx, "span", "gv-sc-evtext", v5.evidence);
+    }
+    const sets = [v5, ...v5.alt];
+    const host = add2(parent, ctx, "div", "gv-sc-host");
+    stateful(host, { idx: 0, peek: null }, (h, s2, set4) => {
+      if (sets.length > 1) {
+        h.appendChild(
+          chips(ctx, {
+            label: "\u91CF\u5C3A\u7A2E\u985E",
+            options: sets.map((_, i) => altLabel(sets, i)),
+            selected: s2.idx,
+            onSelect: (i) => set4({ idx: i, peek: null })
+          })
+        );
+      }
+      const cur = sets[s2.idx];
+      const ends = ENDS[cur.scale];
+      const caption = add2(h, ctx, "div", "gv-sc-ends");
+      if (ctx.mobile) {
+        add2(caption, ctx, "span", "gv-note", `\u4E0A\uFF1A${ends[0]}`);
+        add2(caption, ctx, "span", "gv-note", `\u4E0B\uFF1A${ends[1]}`);
+      } else {
+        add2(caption, ctx, "span", "gv-note", `\u2190 ${ends[1]}`);
+        add2(caption, ctx, "span", "gv-note", `${ends[0]} \u2192`);
+      }
+      if (ctx.mobile) drawVertical(h, cur, s2, set4);
+      else drawHorizontal(h, cur);
+    });
+    function drawHorizontal(h, cur) {
+      const n = cur.steps.length;
+      const board = add2(h, ctx, "div", "gv-sc-board");
+      board.setAttribute("role", "group");
+      board.setAttribute("aria-label", TYPE_NAME[cur.scale]);
+      board.style.setProperty("--gv-n", String(n));
+      const track2 = add2(board, ctx, "div", "gv-sc-track");
+      const pickCol = n - 1 - cur.pick;
+      const fill2 = add2(track2, ctx, "div", "gv-sc-fill");
+      fill2.style.setProperty("--gv-w", `${(pickCol / (n - 1) * 100).toFixed(2)}%`);
+      const row = add2(board, ctx, "div", "gv-sc-cols");
+      const cells = [];
+      cur.steps.forEach((step, k) => {
+        const on = k === cur.pick;
+        const item = el(ctx, "div", ["gv-sc-step", on ? "is-pick" : ""]);
+        cells[n - 1 - k] = item;
+        if (on) item.setAttribute("aria-current", "true");
+        add2(item, ctx, "span", "gv-sc-dot");
+        add2(item, ctx, "div", "gv-sc-word", step.word);
+        add2(item, ctx, "div", "gv-sc-gloss", step.gloss);
+        if (on) add2(item, ctx, "div", "gv-sc-here", "\u9019\u53E5");
+      });
+      for (const c4 of cells) row.appendChild(c4);
+    }
+    function drawVertical(h, cur, s2, set4) {
+      const wrap = add2(h, ctx, "div", "gv-sc-vwrap");
+      add2(wrap, ctx, "div", "gv-sc-gradient").setAttribute("aria-hidden", "true");
+      const list2 = add2(wrap, ctx, "ol", "gv-sc-list");
+      cur.steps.forEach((step, k) => {
+        const li = add2(list2, ctx, "li", "gv-sc-li");
+        const b = add2(li, ctx, "button", ["gv-sc-row", k === cur.pick ? "is-pick" : "", s2.peek === k ? "is-peek" : ""]);
+        b.setAttribute("type", "button");
+        b.setAttribute("aria-pressed", String(s2.peek === k));
+        add2(b, ctx, "span", "gv-sc-word", step.word);
+        add2(b, ctx, "span", "gv-sc-gloss", k === cur.pick ? `${step.gloss} \u2190 \u9019\u53E5` : step.gloss);
+        b.addEventListener("click", () => set4({ idx: s2.idx, peek: s2.peek === k ? null : k }));
+      });
+      if (s2.peek !== null) {
+        const p = cur.steps[s2.peek];
+        add2(h, ctx, "div", ["gv-note", "gv-sc-peek"], `\u628A ${p.word} \u653E\u9032\u9019\u53E5\uFF1A${p.gloss}`);
+      }
+    }
+    parent.appendChild(explain(ctx, v5.explain));
+  },
+  builtin: scaleBuiltin
+};
+
+// src/grammar-visual/kinds/unreal/builtin.ts
+var kase = (label, time, real, hypo, shifts = []) => ({
+  label,
+  time,
+  real,
+  hypo,
+  shifts: shifts.map(([from, to]) => ({ from, to }))
+});
+function un(text, marks, explain2, current, others) {
+  return { kind: "unreal", sentence: { text, marks }, explain: explain2, current, others };
+}
+var amb = (text) => ({ text, tone: "amber" });
+var SECOND = kase("\u8DDF\u73FE\u5728\u76F8\u53CD\uFF08\u7B2C\u4E8C\u578B\uFF09", "present", "I don't have time.", "If I had time, I would help you.", [
+  ["have", "had"],
+  ["will", "would"]
+]);
+var THIRD = kase("\u8DDF\u904E\u53BB\u76F8\u53CD\uFF08\u7B2C\u4E09\u578B\uFF09", "past", "I didn't know about it.", "If I had known, I would have told you.", [
+  ["knew", "had known"],
+  ["would tell", "would have told"]
+]);
+var FIRST = kase("\u771F\u5BE6\u7684\u672A\u4F86\uFF08\u7B2C\u4E00\u578B\uFF09", "future", "If it rains tomorrow, I will stay home.", "");
+var ZERO = kase("\u666E\u904D\u4E8B\u5BE6\uFF08\u96F6\u578B\uFF09", "present", "If you heat ice, it melts.", "");
+var unrealBuiltin = {
+  "conditionals-basic": un(
+    "If it rains, I will stay home.",
+    [amb("If it rains"), { text: "will stay", tone: "accent" }],
+    "\u9019\u662F\u771F\u7684\u6709\u53EF\u80FD\u767C\u751F\u7684\u60C5\u6CC1\uFF1Aif \u5B50\u53E5\u7528\u73FE\u5728\u5F0F\uFF0C\u7D50\u679C\u7528 will + \u539F\u5F62\u52D5\u8A5E\u3002if \u5B50\u53E5\u653E\u524D\u9762\u6642\uFF0C\u5F8C\u9762\u8981\u52A0\u9017\u865F\u3002",
+    kase("\u771F\u5BE6\u7684\u672A\u4F86\uFF08\u7B2C\u4E00\u578B\uFF09", "future", "If it rains, I will stay home.", ""),
+    [SECOND, THIRD]
+  ),
+  "conditionals-real": un(
+    "If you heat ice, it melts.",
+    [amb("If you heat ice"), { text: "it melts", tone: "accent" }],
+    "\u771F\u5BE6\u689D\u4EF6\u53E5\u8AC7\u7684\u662F\u4E8B\u5BE6\u6216\u6709\u53EF\u80FD\u767C\u751F\u7684\u4E8B\uFF0C\u52D5\u8A5E\u7167\u5E38\uFF0C\u4E0D\u9700\u8981\u5F80\u904E\u53BB\u9000\u4E00\u683C\u3002\u96F6\u578B\u8B1B\u666E\u904D\u7684\u898F\u5F8B\uFF0C\u7B2C\u4E00\u578B\u8B1B\u672A\u4F86\u53EF\u80FD\u7684\u60C5\u6CC1\u3002",
+    ZERO,
+    [FIRST, SECOND]
+  ),
+  "conditionals-unreal": un(
+    "If I had known, I would have called you.",
+    [amb("had known"), { text: "would have called", tone: "accent" }],
+    "\u7B2C\u4E09\u578B\u689D\u4EF6\u53E5\u8AC7\u5DF2\u7D93\u7121\u6CD5\u6539\u8B8A\u7684\u904E\u53BB\uFF1A\u4E8B\u5BE6\u662F\u6211\u4E0D\u77E5\u9053\u3001\u6240\u4EE5\u6C92\u6253\uFF0C\u7528\u904E\u53BB\u5B8C\u6210\u5F0F\u548C would have done \u60F3\u50CF\u76F8\u53CD\u7684\u7D50\u679C\u3002",
+    kase("\u8DDF\u904E\u53BB\u76F8\u53CD\uFF08\u7B2C\u4E09\u578B\uFF09", "past", "I didn't know, so I didn't call you.", "If I had known, I would have called you.", [
+      ["didn't know", "had known"],
+      ["would call", "would have called"]
+    ]),
+    [SECOND, FIRST]
+  ),
+  "mixed-conditionals": un(
+    "If I had taken the job, I would be rich now.",
+    [amb("had taken"), { text: "would be rich now", tone: "accent" }],
+    "\u6DF7\u5408\u689D\u4EF6\u53E5\u7684\u689D\u4EF6\u548C\u7D50\u679C\u767C\u751F\u5728\u4E0D\u540C\u6642\u9593\uFF1A\u904E\u53BB\u6C92\u505A\u7684\u4E8B\uFF08\u689D\u4EF6\uFF0C\u904E\u53BB\u5B8C\u6210\u5F0F\uFF09\uFF0C\u9020\u6210\u73FE\u5728\u7684\u7D50\u679C\uFF08would + \u539F\u5F62\u52D5\u8A5E\uFF09\u3002",
+    kase("\u904E\u53BB\u7684\u689D\u4EF6\u3001\u73FE\u5728\u7684\u7D50\u679C", "mixed", "I didn't take the job, so I'm not rich now.", "If I had taken the job, I would be rich now.", [
+      ["didn't take", "had taken"],
+      ["am not rich", "would be rich"]
+    ]),
+    [
+      kase("\u73FE\u5728\u7684\u72C0\u6CC1\u3001\u904E\u53BB\u7684\u7D50\u679C", "mixed", "I'm not careful, so I made that mistake.", "If I were more careful, I wouldn't have made that mistake.", [
+        ["am not", "were"],
+        ["made", "wouldn't have made"]
+      ]),
+      THIRD
+    ]
+  ),
+  "wish-if-only": un(
+    "I wish I had more time.",
+    [{ text: "wish", tone: "amber" }, { text: "had", tone: "accent" }],
+    "wish \u5F8C\u9762\u7684\u52D5\u8A5E\u8981\u5F80\u904E\u53BB\u9000\u4E00\u683C\uFF1A\u5C0D\u73FE\u5728\u7684\u9858\u671B\u7528\u904E\u53BB\u5F0F\uFF0C\u5C0D\u904E\u53BB\u7684\u907A\u61BE\u7528\u904E\u53BB\u5B8C\u6210\u5F0F\uFF0C\u60F3\u8981\u5225\u4EBA\u6539\u8B8A\u884C\u70BA\u5247\u7528 would\u3002",
+    kase("\u5C0D\u73FE\u5728\u7684\u9858\u671B", "present", "I don't have enough time.", "I wish I had more time.", [["have", "had"]]),
+    [
+      kase("\u5C0D\u904E\u53BB\u7684\u907A\u61BE", "past", "I didn't study harder.", "I wish I had studied harder.", [["studied", "had studied"]]),
+      kase("\u5C0D\u5225\u4EBA\u7684\u4E0D\u6EFF", "future", "He keeps interrupting me.", "I wish he would stop interrupting me.", [["will", "would"]])
+    ]
+  ),
+  "formal-conditional-inversion": un(
+    "Had I known, I would have called you.",
+    [{ text: "Had I known", tone: "amber" }, { text: "would have called", tone: "accent" }],
+    "\u628A if \u7701\u6389\uFF0C\u6539\u628A had \u642C\u5230\u4E3B\u8A5E\u524D\u9762\uFF0C\u610F\u601D\u4E0D\u8B8A\u4F46\u66F4\u6B63\u5F0F\u3002\u7B2C\u4E8C\u578B\u7528 Were ... to\uFF0C\u7B2C\u4E00\u578B\u7684\u300C\u842C\u4E00\u300D\u7528 Should ...\u3002",
+    kase("Had I known\uFF08\u8DDF\u904E\u53BB\u76F8\u53CD\uFF09", "past", "I didn't know, so I didn't call you.", "Had I known, I would have called you.", [
+      ["If I had known", "Had I known"]
+    ]),
+    [
+      kase("Were ... to\uFF08\u5047\u8A2D\u7684\u672A\u4F86\uFF09", "future", "He hasn't asked me yet.", "Were he to ask me, I would help him.", [
+        ["If he asked", "Were he to ask"]
+      ]),
+      kase("Should ...\uFF08\u842C\u4E00\uFF09", "future", "You may need help later.", "Should you need help, please call me.", [
+        ["If you need", "Should you need"]
+      ])
+    ]
+  )
+};
+
+// src/grammar-visual/kinds/unreal/index.ts
+var TIMES = ["present", "past", "future", "mixed"];
+var TIME_NAME = {
+  present: "\u73FE\u5728",
+  past: "\u904E\u53BB",
+  future: "\u672A\u4F86",
+  mixed: "\u904E\u53BB\u8207\u73FE\u5728\u6DF7\u5408"
+};
+function parseCase(raw) {
+  const o = obj(raw);
+  if (!o) return null;
+  const label = str5(o.label, SHORT_MAX);
+  const time = oneOf(o.time, TIMES);
+  const real = str5(o.real, SENTENCE_MAX);
+  const hypo = str5(o.hypo, SENTENCE_MAX, true);
+  const shifts = arr(o.shifts, 0, 3, (s2) => {
+    const so = obj(s2);
+    if (!so) return null;
+    const from = str5(so.from, SHORT_MAX);
+    const to = str5(so.to, SHORT_MAX);
+    return from !== null && to !== null ? { from, to } : null;
+  });
+  if (label === null || time === null || real === null || hypo === null || shifts === null) return null;
+  return { label, time, real, hypo, shifts };
+}
+function parse3(raw) {
+  const b = base(raw, "unreal");
+  if (!b) return null;
+  const current = parseCase(b.o.current);
+  const others = arr(b.o.others, 0, 3, parseCase);
+  return current && others ? { kind: "unreal", sentence: b.sentence, explain: b.explain, current, others } : null;
+}
+var caseSchema = sObj(
+  {
+    label: sStr("\u9019\u7A2E\u689D\u4EF6\u53E5\u7684\u540D\u7A31\uFF0C\u4F8B\u5982\u300C\u8DDF\u73FE\u5728\u76F8\u53CD\uFF08\u7B2C\u4E8C\u578B\uFF09\u300D"),
+    time: sEnum(TIMES, "\u5047\u8A2D\u7684\u6642\u9593\uFF1Apresent\uFF1D\u8DDF\u73FE\u5728\uFF1Bpast\uFF1D\u8DDF\u904E\u53BB\uFF1Bfuture\uFF1D\u672A\u4F86\uFF1Bmixed\uFF1D\u904E\u53BB\u8207\u73FE\u5728\u6DF7\u5408"),
+    real: sStr("\u73FE\u5BE6\u90A3\u5F35\u5361\uFF1A\u771F\u5BE6\u7684\u72C0\u6CC1\uFF0C\u82F1\u6587\u4E00\u53E5\uFF0C\u4F8B\u5982 I don't have time.\uFF1B\u771F\u5BE6\u689D\u4EF6\u53E5\u5247\u586B\u689D\u4EF6\u53E5\u672C\u8EAB"),
+    hypo: sStr("\u5047\u8A2D\u90A3\u5F35\u5361\uFF1A\u60F3\u50CF\u51FA\u4F86\u7684\u82F1\u6587\u53E5\u5B50\uFF1B\u771F\u5BE6\u689D\u4EF6\u53E5\uFF08\u96F6\u578B\u3001\u7B2C\u4E00\u578B\uFF09\u6C92\u6709\u5047\u8A2D\uFF0C\u586B\u7A7A\u5B57\u4E32"),
+    shifts: sArr(
+      sObj({ from: sStr("\u73FE\u5BE6\u7684\u52D5\u8A5E\u5F62\u5F0F"), to: sStr("\u5047\u8A2D\u88E1\u9000\u4E86\u4E00\u683C\u7684\u5F62\u5F0F\uFF0C\u4F8B\u5982 have \u2192 had") }),
+      "\u52D5\u8A5E\u5F80\u904E\u53BB\u9000\u4E00\u683C\u7684\u5C0D\u7167\uFF0C0 \u5230 3 \u7D44\uFF1B\u6C92\u6709\u5C31\u7D66 []"
+    )
+  },
+  "\u4E00\u7A2E\u689D\u4EF6\u53E5\u7684\u73FE\u5BE6\u8207\u5047\u8A2D\u5C0D\u7167"
+);
+var schema3 = sObj({
+  ...baseSchema("unreal"),
+  current: caseSchema,
+  others: sArr(caseSchema, "\u5207\u63DB\u9215\u4E0A\u7684\u5176\u4ED6\u689D\u4EF6\u53E5\u985E\u578B\uFF0C0 \u5230 3 \u500B\uFF1B\u6C92\u6709\u5C31\u7D66 []")
+});
+var guide3 = `\u73FE\u5BE6\u8207\u5047\u8A2D\u7248\u9762\uFF1A\u5DE6\u908A\u653E\u73FE\u5BE6\uFF0C\u53F3\u908A\u653E\u60F3\u50CF\uFF0C\u4E2D\u9593\u6A19\u51FA\u52D5\u8A5E\u5F80\u904E\u53BB\u9000\u4E00\u683C\u3002
+- sentence\uFF1A\u4F8B\u53E5\uFF0Cmarks \u628A if \u5B50\u53E5\u6216 wish \u5B50\u53E5\u6A19 amber\u3001\u7D50\u679C\u5B50\u53E5\u7684\u52D5\u8A5E\u6A19 accent\u3002
+- current\uFF1A\u9019\u53E5\u7684\u985E\u578B\u3002label \u5BEB\u985E\u578B\u540D\u7A31\uFF1Btime \u9078\u73FE\u5728\uFF0F\u904E\u53BB\uFF0F\u672A\u4F86\uFF0F\u6DF7\u5408\uFF1Breal \u662F\u73FE\u5BE6\u7684\u4E8B\u5BE6\uFF08\u82F1\u6587\u4E00\u53E5\uFF0C\u7528\u73FE\u5BE6\u7684\u6642\u614B\uFF0C\u4F8B\u5982 I don't have time.\uFF09\uFF1Bhypo \u662F\u60F3\u50CF\u4E2D\u7684\u53E5\u5B50\uFF08\u901A\u5E38\u5C31\u662F\u4F8B\u53E5\u672C\u8EAB\uFF09\uFF1Bshifts \u5217\u51FA\u9000\u4E86\u4E00\u683C\u7684\u52D5\u8A5E\uFF0C\u4F8B\u5982 have \u2192 had\u3001will \u2192 would\u3002
+- \u96F6\u578B\u8207\u7B2C\u4E00\u578B\u662F\u771F\u7684\u6703\u767C\u751F\u7684\u4E8B\uFF0C\u6C92\u6709\u5047\u8A2D\u4E16\u754C\uFF1Ahypo \u586B ""\uFF0Cshifts \u586B []\uFF0Creal \u653E\u689D\u4EF6\u53E5\u672C\u8EAB\u3002
+- others\uFF1A\u5176\u4ED6\u985E\u578B\u7684\u5C0D\u7167\uFF08\u4F8B\u5982\u7B2C\u4E8C\u578B\u3001\u7B2C\u4E09\u578B\uFF09\uFF0C\u683C\u5F0F\u548C current \u76F8\u540C\uFF0C\u6700\u591A 3 \u500B\uFF1B\u6C92\u6709\u5C31\u7D66 []\u3002\u5207\u63DB\u9215\u6703\u7528\u5B83\u5011\u7684 label\u3002
+- explain\uFF1A\u4E00\u5169\u53E5\u7E41\u4E2D\u767D\u8A71\uFF0C\u8AAA\u660E\u9019\u53E5\u70BA\u4EC0\u9EBC\u52D5\u8A5E\u8981\u9000\u4E00\u683C\u3001\u6216\u70BA\u4EC0\u9EBC\u4E0D\u7528\u3002
+\u5E38\u898B\u932F\u8AA4\uFF1Areal \u5BEB\u6210\u5047\u8A2D\uFF1B\u5047\u8A2D\u53E5\u7684\u52D5\u8A5E\u6C92\u6709\u9000\u683C\uFF1B\u7B2C\u4E00\u578B\u4E5F\u586B\u4E86 hypo\u3002`;
+var unrealKind = {
+  kind: "unreal",
+  parse: parse3,
+  schema: schema3,
+  guide: guide3,
+  render(parent, v5, ctx) {
+    parent.appendChild(sentence(ctx, v5.sentence));
+    const cases = [v5.current, ...v5.others];
+    const host = add2(parent, ctx, "div", "gv-un-host");
+    stateful(host, 0, (h, idx, set4) => {
+      if (cases.length > 1) {
+        h.appendChild(
+          chips(ctx, { label: "\u689D\u4EF6\u53E5\u985E\u578B", options: cases.map((c5) => c5.label), selected: idx, onSelect: set4 })
+        );
+      }
+      const c4 = cases[idx];
+      const grid = add2(h, ctx, "div", ["gv-un-grid", c4.hypo === "" ? "is-single" : ""]);
+      const real = card(ctx, c4.hypo === "" ? "accent" : "plain", c4.hypo === "" ? "\u53EF\u80FD\u6210\u771F\u7684\u4E8B" : "\u73FE\u5BE6\u4E16\u754C");
+      add2(real, ctx, "div", "gv-un-text", c4.real);
+      add2(
+        real,
+        ctx,
+        "div",
+        "gv-note",
+        c4.hypo === "" ? "\u52D5\u8A5E\u7167\u5E38\uFF0C\u4E0D\u7528\u5F80\u904E\u53BB\u9000\u4E00\u683C" : `${TIME_NAME[c4.time]}\u7684\u4E8B\u5BE6\uFF0C\u7528\u771F\u5BE6\u7684\u6642\u614B`
+      );
+      grid.appendChild(real);
+      if (c4.hypo !== "") {
+        const arrow = add2(grid, ctx, "div", "gv-un-arrow", ctx.mobile ? "\u2193 \u52D5\u8A5E\u5F80\u904E\u53BB\u9000\u4E00\u683C" : "\u5F80\u904E\u53BB\u9000\u4E00\u683C \u2192");
+        arrow.setAttribute("aria-hidden", "true");
+        const hypo = card(ctx, "amber", "\u5047\u8A2D\u4E16\u754C");
+        add2(hypo, ctx, "div", "gv-un-text", c4.hypo);
+        add2(hypo, ctx, "div", "gv-note", "\u5F80\u904E\u53BB\u9000\u4E00\u683C\uFF1A\u8868\u793A\u300C\u4E0D\u662F\u771F\u7684\u300D");
+        grid.appendChild(hypo);
+        if (c4.shifts.length > 0) {
+          const row = add2(h, ctx, "ul", "gv-un-shifts");
+          for (const s2 of c4.shifts) add2(row, ctx, "li", "gv-un-shift").appendChild(badge(ctx, `${s2.from} \u2192 ${s2.to}`, "amber"));
+        }
+      }
+    });
+    parent.appendChild(explain(ctx, v5.explain));
+  },
+  builtin: unrealBuiltin
+};
+
+// src/grammar-visual/kit/locate.ts
+function locate(text, word) {
+  var _a;
+  if (word === "") return -1;
+  let from = 0;
+  for (; ; ) {
+    const i = text.indexOf(word, from);
+    if (i < 0) return -1;
+    const before = i === 0 ? "" : text[i - 1];
+    const after = (_a = text[i + word.length]) != null ? _a : "";
+    const isWordChar = (c4) => /[A-Za-z]/.test(c4);
+    const startOk = !isWordChar(word[0]) || !isWordChar(before);
+    const endOk = !isWordChar(word[word.length - 1]) || !isWordChar(after);
+    if (startOk && endOk) return i;
+    from = i + 1;
+  }
+}
+function markWords(text, words, tone) {
+  const hits = words.map((w2) => ({ w: w2, i: locate(text, w2) })).filter((h) => h.i >= 0).sort((a2, b) => a2.i - b.i);
+  const marks = [];
+  let end = 0;
+  for (const h of hits) {
+    if (h.i < end) continue;
+    marks.push({ text: h.w, tone });
+    end = h.i + h.w.length;
+  }
+  return { text, marks };
+}
+
+// src/grammar-visual/kinds/backshift/builtin.ts
+var BUILTIN = {
+  "reported-speech": {
+    kind: "backshift",
+    sentence: {
+      text: "She said she would call me the next day.",
+      marks: [
+        { text: "she", tone: "accent" },
+        { text: "would", tone: "accent" },
+        { text: "me", tone: "accent" },
+        { text: "the next day", tone: "accent" }
+      ]
+    },
+    explain: "\u9019\u4E9B\u5B57\u90FD\u5728\u56DE\u7B54\u540C\u4E00\u4EF6\u4E8B\uFF1A\u5F9E\u8F49\u8FF0\u7684\u9019\u4E00\u523B\u770B\u56DE\u53BB\uFF0C\u90A3\u53E5\u8A71\u88E1\u7684\u6642\u9593\u548C\u4EBA\u662F\u8AB0\u3002",
+    direct: "I will call you tomorrow.",
+    swaps: [
+      { from: "I", to: "she", type: "person", why: "\u63DB\u6210\u8F49\u8FF0\u8005\u770B\u5230\u7684\u8AAA\u8A71\u7684\u4EBA" },
+      { from: "will", to: "would", type: "tense", why: "\u8AAA\u8A71\u7684\u6642\u9593\u5DF2\u7D93\u904E\u53BB\uFF0C\u5F80\u904E\u53BB\u9000\u4E00\u683C" },
+      { from: "you", to: "me", type: "person", why: "\u63DB\u6210\u8F49\u8FF0\u8005\u7684\u89D2\u5EA6" },
+      { from: "tomorrow", to: "the next day", type: "time", why: "\u300C\u660E\u5929\u300D\u5DF2\u7D93\u4E0D\u662F\u660E\u5929\u4E86" }
+    ]
+  }
+};
+
+// src/grammar-visual/kinds/backshift/index.ts
+var TYPES2 = ["tense", "person", "time", "place"];
+var TYPE_LABEL2 = {
+  tense: "\u6642\u614B",
+  person: "\u4EBA\u7A31",
+  time: "\u6642\u9593\u8A5E",
+  place: "\u5730\u9EDE\u8A5E"
+};
+function parse4(raw) {
+  const b = base(raw, "backshift");
+  if (!b) return null;
+  const direct = str5(b.o.direct, SENTENCE_MAX);
+  const swaps = arr(b.o.swaps, 1, 6, (x3) => {
+    const o = obj(x3);
+    if (!o) return null;
+    const from = str5(o.from, 30);
+    const to = str5(o.to, 30);
+    const type = oneOf(o.type, TYPES2);
+    const why = str5(o.why, SHORT_MAX);
+    return from !== null && to !== null && type !== null && why !== null ? { from, to, type, why } : null;
+  });
+  if (direct === null || !swaps) return null;
+  for (const s2 of swaps) if (locate(direct, s2.from) < 0 || locate(b.sentence.text, s2.to) < 0) return null;
+  return { kind: "backshift", sentence: b.sentence, explain: b.explain, direct, swaps };
+}
+var backshiftKind = {
+  kind: "backshift",
+  parse: parse4,
+  schema: sObj({
+    ...baseSchema("backshift"),
+    direct: sStr("\u539F\u672C\u76F4\u63A5\u8AAA\u7684\u90A3\u53E5\u8A71\uFF08\u4E0D\u542B\u5F15\u865F\uFF09"),
+    swaps: sArr(
+      sObj({
+        from: sStr("\u539F\u8A71\u88E1\u8981\u63DB\u6389\u7684\u5B57\uFF0C\u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728 direct \u4E2D"),
+        to: sStr("\u8F49\u8FF0\u5F8C\u63DB\u6210\u7684\u5B57\uFF0C\u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728\u4F8B\u53E5\uFF08\u8F49\u8FF0\u53E5\uFF09\u4E2D"),
+        type: sEnum(TYPES2, "tense\uFF1D\u6642\u614B\uFF1Bperson\uFF1D\u4EBA\u7A31\uFF1Btime\uFF1D\u6642\u9593\u8A5E\uFF1Bplace\uFF1D\u5730\u9EDE\u8A5E"),
+        why: sStr("\u70BA\u4EC0\u9EBC\u8981\u63DB\uFF0C\u4E00\u884C\u7E41\u4E2D")
+      }),
+      "1\u20136 \u7D44\u8981\u63DB\u7684\u5B57\uFF0C\u4F9D\u5728\u53E5\u4E2D\u51FA\u73FE\u7684\u9806\u5E8F"
+    )
+  }),
+  guide: "\u9019\u500B\u7248\u9762\u6BD4\u8F03\u300C\u539F\u8A71\u300D\u548C\u300C\u8F49\u8FF0\u5F8C\u300D\u3002sentence \u653E\u8F49\u8FF0\u5F8C\u7684\u53E5\u5B50\uFF08\u4F8B\u5982 She said she would call me the next day.\uFF09\uFF0Cmarks \u6A19\u51FA\u63DB\u904E\u7684\u5B57\uFF08accent\uFF09\u3002direct \u653E\u539F\u672C\u76F4\u63A5\u8AAA\u7684\u90A3\u53E5\u8A71\uFF0C\u4E0D\u542B\u5F15\u865F\u3002swaps \u6BCF\u4E00\u7D44\u662F from\uFF08\u539F\u8A71\u88E1\u7684\u5B57\uFF09\u2192 to\uFF08\u8F49\u8FF0\u53E5\u88E1\u7684\u5B57\uFF09\uFF0Cfrom \u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728 direct\u3001to \u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728 sentence\u3002type \u586B tense\u3001person\u3001time \u6216 place\uFF0Cwhy \u4E00\u884C\u7E41\u4E2D\u8AAA\u660E\u70BA\u4EC0\u9EBC\u8981\u63DB\uFF0C\u4F8B\u5982\u300C\u8AAA\u8A71\u7684\u6642\u9593\u5DF2\u7D93\u904E\u53BB\u300D\u3002explain \u7528\u4E00\u5169\u53E5\u8B1B\u51FA\u5171\u901A\u7684\u9053\u7406\u3002\u5E38\u898B\u932F\u8AA4\uFF1Aswaps \u6F0F\u6389\u4EBA\u7A31\u6216\u6642\u9593\u8A5E\u3001from / to \u62FC\u6CD5\u548C\u53E5\u5B50\u4E0D\u4E00\u81F4\u3001\u628A\u6C92\u8B8A\u7684\u5B57\u4E5F\u5217\u9032\u53BB\u3002",
+  render(parent, v5, ctx) {
+    const talk = add2(parent, ctx, "div", "gv-backshift-talk");
+    const said = add2(talk, ctx, "div", "gv-backshift-bubble");
+    add2(said, ctx, "div", "gv-note", "\u539F\u672C\u8AAA\u7684");
+    said.appendChild(sentence(ctx, markWords(v5.direct, v5.swaps.map((s2) => s2.from), "muted"), "gv-backshift-direct"));
+    const rep = add2(talk, ctx, "div", ["gv-backshift-bubble", "is-reported"]);
+    add2(rep, ctx, "div", "gv-note", "\u8F49\u8FF0\u6642");
+    rep.appendChild(sentence(ctx, v5.sentence));
+    const table2 = add2(parent, ctx, "div", "gv-backshift-swaps");
+    table2.setAttribute("role", "table");
+    table2.setAttribute("aria-label", "\u8981\u63DB\u7684\u5B57");
+    for (const s2 of v5.swaps) {
+      const row = add2(table2, ctx, "div", "gv-backshift-row");
+      row.setAttribute("role", "row");
+      const pair = add2(row, ctx, "div", "gv-backshift-pair");
+      add2(pair, ctx, "strong", "gv-backshift-from", s2.from);
+      pair.appendChild(el(ctx, "span", "gv-backshift-arrow", " \u2192 "));
+      add2(pair, ctx, "strong", "gv-backshift-to", s2.to);
+      add2(row, ctx, "div", "gv-note", `${TYPE_LABEL2[s2.type]}\uFF1A${s2.why}`);
+    }
+    parent.appendChild(explain(ctx, v5.explain));
+  },
+  builtin: BUILTIN
+};
+
+// src/grammar-visual/kinds/focus/builtin.ts
+var c2 = (label, text, roles, focus, current = false) => ({
+  label,
+  text,
+  roles: roles.map(([t2, role]) => ({ text: t2, role })),
+  focus,
+  current
+});
+var v = (text, marks, explainText, cards) => ({
+  kind: "focus",
+  sentence: { text, marks: marks.map(([t2, tone]) => ({ text: t2, tone })) },
+  explain: explainText,
+  cards
+});
+var BUILTIN2 = {
+  "passive-basic": v(
+    "The bridge was built in 1932.",
+    [["was built", "accent"]],
+    "\u9019\u53E5\u5728\u8B1B\u6A4B\u7684\u6B77\u53F2\uFF0C\u8AB0\u84CB\u7684\u4E0D\u91CD\u8981\uFF0C\u6240\u4EE5\u628A\u6A4B\u653E\u5230\u6700\u524D\u9762\uFF0C\u505A\u4E8B\u7684\u4EBA\u53EF\u4EE5\u6574\u500B\u7701\u7565\u3002\u6642\u614B\u653E\u5728 be \u4E0A\uFF1Awas / has been / will be\u3002",
+    [
+      c2("\u4E3B\u52D5", "\u5148\u770B\u5230\u505A\u4E8B\u7684\u4EBA", [["Workers", "doer"], ["built", "action"], ["the bridge", "receiver"]], "doer"),
+      c2("\u88AB\u52D5", "\u5148\u770B\u5230\u88AB\u84CB\u7684\u6A4B", [["The bridge", "receiver"], ["was built", "action"], ["(by workers)", "doer"]], "receiver", true)
+    ]
+  ),
+  "passive-advanced": v(
+    "The new road is being built.",
+    [["is being built", "accent"]],
+    "\u88AB\u52D5\u8A9E\u614B\u628A\u6642\u614B\u653E\u5728 be \u4E0A\uFF1A\u9032\u884C\u5F0F\u662F is being + \u904E\u53BB\u5206\u8A5E\uFF0C\u5B8C\u6210\u5F0F\u662F has been + \u904E\u53BB\u5206\u8A5E\uFF0C\u60C5\u614B\u52D5\u8A5E\u662F must be + \u904E\u53BB\u5206\u8A5E\u3002",
+    [
+      c2("\u4E3B\u52D5\uFF08\u9032\u884C\u5F0F\uFF09", "\u5148\u770B\u5230\u505A\u4E8B\u7684\u4EBA", [["The council", "doer"], ["is building", "action"], ["the new road", "receiver"]], "doer"),
+      c2("\u88AB\u52D5\uFF08\u9032\u884C\u5F0F\uFF09", "\u5148\u770B\u5230\u6B63\u5728\u88AB\u84CB\u7684\u8DEF", [["The new road", "receiver"], ["is being built", "action"], ["(by the council)", "doer"]], "receiver", true)
+    ]
+  ),
+  "impersonal-passive": v(
+    "He is said to work too hard.",
+    [["is said to work", "accent"]],
+    "\u60F3\u8868\u9054\u300C\u5927\u5BB6\u90FD\u8AAA\u300D\u53C8\u4E0D\u6307\u660E\u662F\u8AB0\u6642\uFF0C\u628A\u88AB\u8AC7\u8AD6\u7684\u4EBA\u653E\u5230\u53E5\u9996\uFF1AHe is said to ...\u3002\u82E5\u52D5\u4F5C\u767C\u751F\u5F97\u66F4\u65E9\uFF0C\u7528 to have done\u3002",
+    [
+      c2("\u4E3B\u52D5", "\u5148\u770B\u5230\u8AAA\u8A71\u7684\u4EBA", [["People", "doer"], ["say", "action"], ["he works too hard", "receiver"]], "doer"),
+      c2("\u88AB\u52D5", "\u5148\u770B\u5230\u88AB\u8AC7\u8AD6\u7684\u4ED6", [["He", "receiver"], ["is said to work", "action"], ["too hard", "action"]], "receiver", true)
+    ]
+  ),
+  "causative-perception-verbs": v(
+    "I had my hair cut.",
+    [["had my hair cut", "accent"]],
+    "have + \u53D7\u8A5E + \u904E\u53BB\u5206\u8A5E\uFF0C\u8868\u793A\u300C\u8B93\u5225\u4EBA\u66FF\u6211\u505A\u9019\u4EF6\u4E8B\u300D\u3002\u505A\u4E8B\u7684\u4EBA\u85CF\u5728\u62EC\u865F\u88E1\uFF0C\u91CD\u9EDE\u653E\u5728\u982D\u9AEE\u88AB\u526A\u9019\u4EF6\u4E8B\u3002",
+    [
+      c2("\u81EA\u5DF1\u505A", "\u5148\u770B\u5230\u505A\u4E8B\u7684\u4EBA", [["I", "doer"], ["cut", "action"], ["my hair", "receiver"]], "doer"),
+      c2("\u4F7F\u5F79\uFF1A\u8B93\u5225\u4EBA\u505A", "\u5148\u770B\u5230\u88AB\u526A\u7684\u982D\u9AEE", [["I", "doer"], ["had", "action"], ["my hair", "receiver"], ["cut", "action"], ["(by someone)", "doer"]], "receiver", true)
+    ]
+  ),
+  "participle-adjectives": v(
+    "The film was boring.",
+    [["boring", "accent"]],
+    "-ing \u5F62\u5BB9\u8A5E\u63CF\u8FF0\u300C\u9020\u6210\u611F\u53D7\u7684\u4E8B\u7269\u300D\uFF0C-ed \u5F62\u5BB9\u8A5E\u63CF\u8FF0\u300C\u611F\u53D7\u5230\u7684\u4EBA\u300D\u3002\u96FB\u5F71\u8B93\u4EBA\u7121\u804A\uFF0C\u6240\u4EE5\u96FB\u5F71\u662F boring\uFF1B\u6211\u662F\u611F\u53D7\u7684\u4EBA\uFF0C\u6240\u4EE5\u662F bored\u3002",
+    [
+      c2("-ing\uFF1A\u9020\u6210\u611F\u53D7", "\u5148\u770B\u5230\u9020\u6210\u7121\u804A\u7684\u96FB\u5F71", [["The film", "cause"], ["was boring", "action"]], "cause", true),
+      c2("-ed\uFF1A\u611F\u53D7\u5230", "\u5148\u770B\u5230\u89BA\u5F97\u7121\u804A\u7684\u4EBA", [["I", "feeler"], ["was bored", "action"]], "feeler")
+    ]
+  )
+};
+
+// src/grammar-visual/kinds/focus/index.ts
+var FOCUS_ROLES = ["doer", "action", "receiver", "cause", "feeler"];
+var ROLE_NAME = {
+  doer: "\u505A\u4E8B\u7684\u4EBA",
+  action: "\u52D5\u4F5C",
+  receiver: "\u627F\u53D7\u7684\u4EBA\u4E8B\u7269",
+  cause: "\u9020\u6210\u611F\u53D7\u7684",
+  feeler: "\u611F\u53D7\u5230\u7684\u4EBA"
+};
+function parseCard(x3) {
+  const o = obj(x3);
+  if (!o) return null;
+  const label = str5(o.label, SHORT_MAX);
+  const text = str5(o.text, SHORT_MAX);
+  const focus = oneOf(o.focus, FOCUS_ROLES);
+  const current = bool(o.current);
+  const roles = arr(o.roles, 2, 5, (r) => {
+    const ro = obj(r);
+    if (!ro) return null;
+    const t2 = str5(ro.text, SHORT_MAX);
+    const role = oneOf(ro.role, FOCUS_ROLES);
+    return t2 !== null && role !== null ? { text: t2, role } : null;
+  });
+  if (label === null || text === null || focus === null || current === null || roles === null) return null;
+  return { label, text, roles, focus, current };
+}
+function parse5(raw) {
+  const b = base(raw, "focus");
+  if (!b) return null;
+  const cards = arr(b.o.cards, 2, 3, parseCard);
+  if (cards === null || cards.filter((c4) => c4.current).length !== 1) return null;
+  return { kind: "focus", sentence: b.sentence, explain: b.explain, cards };
+}
+var schema4 = sObj({
+  ...baseSchema("focus"),
+  cards: sArr(
+    sObj({
+      label: sStr("\u9019\u5F35\u5361\u7684\u540D\u7A31\uFF0C\u4F8B\u5982\u300C\u4E3B\u52D5\u300D\u300C\u88AB\u52D5\u300D\u300C-ing\uFF1A\u9020\u6210\u611F\u53D7\u300D"),
+      text: sStr("\u4E00\u884C\u8AAA\u660E\u9019\u500B\u8AAA\u6CD5\u6703\u5148\u8B93\u4EBA\u770B\u5230\u8AB0\uFF0C\u4F8B\u5982\u300C\u5148\u770B\u5230\u88AB\u84CB\u7684\u6A4B\u300D"),
+      roles: sArr(
+        sObj({
+          text: sStr("\u9019\u500B\u7247\u6BB5\u7684\u82F1\u6587\uFF0C\u7531\u5DE6\u5230\u53F3\u7167\u53E5\u5B50\u9806\u5E8F\uFF1B\u7701\u7565\u7684\u505A\u4E8B\u8005\u53EF\u5BEB\u6210 (by workers)"),
+          role: sEnum(FOCUS_ROLES, "doer\uFF1D\u505A\u4E8B\u7684\u4EBA\uFF1Baction\uFF1D\u52D5\u4F5C\uFF1Breceiver\uFF1D\u627F\u53D7\u7684\u4EBA\u4E8B\u7269\uFF1Bcause\uFF1D\u9020\u6210\u611F\u53D7\u7684\uFF1Bfeeler\uFF1D\u611F\u53D7\u5230\u7684\u4EBA")
+        }),
+        "\u9019\u500B\u8AAA\u6CD5\u7684\u7247\u6BB5\uFF0C2 \u5230 5 \u500B"
+      ),
+      focus: sEnum(FOCUS_ROLES, "\u9019\u500B\u8AAA\u6CD5\u628A\u7126\u9EDE\u653E\u5728\u54EA\u500B\u89D2\u8272\uFF08\u8981\u51FA\u73FE\u5728 roles \u88E1\uFF09"),
+      current: sBool("\u4F8B\u53E5\u7528\u7684\u662F\u9019\u5F35\u5C31\u586B true\uFF1B\u5168\u90E8\u5361\u7247\u4E2D\u525B\u597D\u4E00\u5F35 true")
+    }),
+    "2 \u5230 3 \u5F35\u5361\uFF1A\u628A\u540C\u4E00\u4EF6\u4E8B\u7684\u4E0D\u540C\u8AAA\u6CD5\u4E26\u6392\u6BD4\u8F03"
+  )
+});
+var guide4 = `\u9019\u500B\u7248\u9762\u7528\u4F86\u6BD4\u8F03\u300C\u540C\u4E00\u4EF6\u4E8B\u7684\u4E0D\u540C\u8AAA\u6CD5\uFF0C\u7126\u9EDE\u653E\u5728\u8AB0\u8EAB\u4E0A\u300D\uFF0C\u9069\u5408\u88AB\u52D5\u8A9E\u614B\u3001\u4F7F\u5F79\u8207\u611F\u5B98\u52D5\u8A5E\u3001-ing / -ed \u5F62\u5BB9\u8A5E\u3002
+- cards\uFF1A2 \u5230 3 \u5F35\uFF0C\u6BCF\u5F35\u662F\u4E00\u7A2E\u8AAA\u6CD5\uFF08\u4F8B\u5982\u4E3B\u52D5\u8207\u88AB\u52D5\uFF09\u3002\u4F8B\u53E5\u7528\u7684\u90A3\u4E00\u5F35 current \u586B true\uFF0C\u5176\u9918 false\uFF0C\u525B\u597D\u4E00\u5F35\u3002
+- roles\uFF1A\u628A\u8A72\u8AAA\u6CD5\u7684\u82F1\u6587\u62C6\u6210 2 \u5230 5 \u500B\u7247\u6BB5\uFF0C\u4F9D\u53E5\u5B50\u9806\u5E8F\uFF0C\u6BCF\u6BB5\u6A19\u89D2\u8272\u3002\u505A\u4E8B\u8005\u88AB\u7701\u7565\u6642\u53EF\u5BEB\u6210 (by workers) \u4E4B\u985E\u7684\u62EC\u865F\u5F62\u5F0F\u3002
+- focus\uFF1A\u8A72\u8AAA\u6CD5\u60F3\u8B93\u8B80\u8005\u5148\u770B\u5230\u7684\u89D2\u8272\uFF0C\u901A\u5E38\u662F roles \u88E1\u7684\u7B2C\u4E00\u500B\u3002
+- \u5206\u8A5E\u5F62\u5BB9\u8A5E\u7528 cause\uFF08\u9020\u6210\u611F\u53D7\u7684\u4E8B\u7269\uFF09\u8207 feeler\uFF08\u611F\u53D7\u5230\u7684\u4EBA\uFF09\uFF0C\u4E0D\u8981\u7528 doer / receiver\u3002
+- text \u4E00\u884C\u8AAA\u660E\u300C\u5148\u770B\u5230\u8AB0\u300D\uFF0C\u4E0D\u8981\u91CD\u8907\u6574\u53E5\u4F8B\u53E5\u3002
+\u5E38\u898B\u932F\u8AA4\uFF1Acurrent \u6C92\u6709\u6216\u8D85\u904E\u4E00\u5F35\uFF1Bfocus \u586B\u7684\u89D2\u8272\u6C92\u6709\u51FA\u73FE\u5728 roles\uFF1B\u7247\u6BB5\u5408\u8D77\u4F86\u4E0D\u662F\u5B8C\u6574\u7684\u53E5\u5B50\u3002`;
+function render(parent, v5, ctx) {
+  const root2 = add2(parent, ctx, "div", "gv-focus-root");
+  root2.appendChild(sentence(ctx, v5.sentence));
+  const list2 = add2(root2, ctx, "div", "gv-focus-cards");
+  for (const c4 of v5.cards) {
+    const k = card(ctx, c4.current ? "accent" : "plain");
+    k.classList.add("gv-focus-card");
+    const head = add2(k, ctx, "div", "gv-focus-head");
+    add2(head, ctx, "span", "gv-card-title", c4.label + (c4.current ? "\uFF08\u9019\u53E5\uFF09" : ""));
+    add2(head, ctx, "span", "gv-note", c4.text);
+    const row = add2(k, ctx, "ol", "gv-focus-row");
+    for (const r of c4.roles) {
+      const li = add2(row, ctx, "li", ["gv-focus-role", `is-${r.role}`, r.role === c4.focus ? "is-focus" : ""]);
+      add2(li, ctx, "span", "gv-focus-text", r.text);
+      add2(li, ctx, "span", "gv-focus-tag", ROLE_NAME[r.role]);
+    }
+    list2.appendChild(k);
+  }
+  root2.appendChild(explain(ctx, v5.explain));
+}
+var focusKind = {
+  kind: "focus",
+  parse: parse5,
+  schema: schema4,
+  guide: guide4,
+  render,
+  builtin: BUILTIN2
+};
+
+// src/grammar-visual/kinds/verbslot/builtin.ts
+var c3 = (pattern, meaning, picture, current = false) => ({
+  pattern,
+  meaning,
+  picture: picture.map(([text, tone]) => ({ text, tone })),
+  current
+});
+var v2 = (text, marks, explainText, verb, cards, family) => ({
+  kind: "verbslot",
+  sentence: { text, marks: marks.map(([t2, tone]) => ({ text: t2, tone })) },
+  explain: explainText,
+  verb,
+  cards,
+  family
+});
+var BUILTIN3 = {
+  "gerund-infinitive-intro": v2(
+    "She enjoys swimming.",
+    [["enjoys swimming", "accent"]],
+    "enjoy \u5F8C\u9762\u53EA\u80FD\u63A5\u52D5\u540D\u8A5E\uFF08-ing\uFF09\uFF0C\u4E0D\u80FD\u63A5 to do\u3002finish\u3001mind\u3001avoid \u4E5F\u4E00\u6A23\uFF1Bwant\u3001hope\u3001decide \u5247\u53CD\u904E\u4F86\u53EA\u63A5 to do\u3002",
+    "enjoy",
+    [
+      c3("enjoy doing", "\u5F8C\u9762\u63A5 -ing", [["enjoy", "plain"], ["swimming", "accent"]], true),
+      c3("enjoy to do", "\u4E0D\u80FD\u9019\u6A23\u7528", [])
+    ],
+    ["finish", "mind", "avoid", "keep", "practise"]
+  ),
+  "gerund-vs-infinitive-meaning": v2(
+    "He stopped to buy coffee.",
+    [["stopped to buy", "accent"]],
+    "to \u6709\u300C\u5F80\u524D\u3001\u76EE\u7684\u300D\u7684\u611F\u89BA\uFF0C\u6240\u4EE5 stop to buy \u662F\u505C\u4E0B\u4F86\u4E4B\u5F8C\u8981\u53BB\u8CB7\u5496\u5561\uFF1Bstop buying \u624D\u662F\u4E0D\u518D\u8CB7\u4E86\u3002",
+    "stop",
+    [
+      c3("stop doing", "\u505C\u6389\u6B63\u5728\u505A\u7684\u4E8B", [["\u8D70\u8DEF", "stop"]]),
+      c3("stop to do", "\u505C\u4E0B\u4F86\uFF0C\u70BA\u4E86\u53BB\u505A\u53E6\u4E00\u4EF6\u4E8B", [["\u8D70\u8DEF", "stop"], ["\u8CB7\u5496\u5561", "accent"]], true)
+    ],
+    ["remember", "forget", "try", "regret", "go on"]
+  ),
+  "verb-preposition": v2(
+    "It depends on the weather.",
+    [["depends on", "accent"]],
+    "depend \u56FA\u5B9A\u642D\u914D on\uFF0C\u5F8C\u9762\u63A5\u540D\u8A5E\uFF1B\u4ECB\u7CFB\u8A5E\u5F8C\u9762\u5982\u679C\u662F\u52D5\u4F5C\uFF0C\u8981\u7528\u52D5\u540D\u8A5E\uFF1Adepend on getting there early\u3002",
+    "depend",
+    [
+      c3("depend on + \u540D\u8A5E", "\u53D6\u6C7A\u65BC\u67D0\u500B\u4E8B\u7269", [["depend", "plain"], ["on", "accent"], ["the weather", "plain"]], true),
+      c3("depend on + V-ing", "\u4ECB\u7CFB\u8A5E\u5F8C\u9762\u7684\u52D5\u4F5C\u7528 -ing", [["depend", "plain"], ["on", "accent"], ["getting there", "plain"]])
+    ],
+    ["belong to", "listen to", "wait for", "look at", "worry about"]
+  ),
+  "adjective-preposition": v2(
+    "She is interested in history.",
+    [["interested in", "accent"]],
+    "\u5F62\u5BB9\u8A5E\u8981\u8A18\u6574\u7D44\u642D\u914D\uFF1Ainterested in\u3001afraid of\u3001good at\u3002\u4ECB\u7CFB\u8A5E\u5F8C\u9762\u63A5\u540D\u8A5E\uFF0C\u6216\u662F\u52D5\u540D\u8A5E\uFF1Ainterested in learning\u3002",
+    "interested",
+    [
+      c3("interested in + \u540D\u8A5E", "\u5C0D\u67D0\u4E8B\u7269\u6709\u8208\u8DA3", [["interested", "plain"], ["in", "accent"], ["history", "plain"]], true),
+      c3("interested in + V-ing", "\u5C0D\u505A\u67D0\u4E8B\u6709\u8208\u8DA3", [["interested", "plain"], ["in", "accent"], ["learning", "plain"]])
+    ],
+    ["afraid of", "good at", "keen on", "proud of", "tired of"]
+  ),
+  "used-to-be-used-to": v2(
+    "I am used to getting up early.",
+    [["am used to getting", "accent"]],
+    "used to + \u539F\u5F62\u52D5\u8A5E\u662F\u904E\u53BB\u7684\u7FD2\u6163\uFF0C\u73FE\u5728\u5DF2\u7D93\u4E0D\u505A\uFF1Bbe used to + -ing \u662F\u5DF2\u7D93\u7FD2\u6163\uFF1Bget used to + -ing \u662F\u9010\u6F38\u7FD2\u6163\u4E2D\u3002\u9019\u88E1\u7684 to \u662F\u4ECB\u7CFB\u8A5E\u3002",
+    "used to",
+    [
+      c3("used to + \u539F\u5F62", "\u4EE5\u524D\u5E38\u505A\uFF0C\u73FE\u5728\u4E0D\u505A\u4E86", [["\u4EE5\u524D\u5E38\u505A", "plain"], ["\u73FE\u5728\u4E0D\u505A", "stop"]]),
+      c3("be used to + -ing", "\u5DF2\u7D93\u7FD2\u6163\u4E86", [["\u5DF2\u7D93\u7FD2\u6163", "accent"]], true),
+      c3("get used to + -ing", "\u9010\u6F38\u7FD2\u6163\u4E2D", [["\u9084\u4E0D\u7FD2\u6163", "plain"], ["\u6162\u6162\u7FD2\u6163", "accent"]])
+    ],
+    []
+  )
+};
+
+// src/grammar-visual/kinds/verbslot/index.ts
+var TONES = ["plain", "stop", "accent"];
+function parseCard2(x3) {
+  const o = obj(x3);
+  if (!o) return null;
+  const pattern = str5(o.pattern, SHORT_MAX);
+  const meaning = str5(o.meaning, SHORT_MAX);
+  const current = bool(o.current);
+  const picture = arr(o.picture, 0, 5, (p) => {
+    const po = obj(p);
+    if (!po) return null;
+    const t2 = str5(po.text, SHORT_MAX);
+    const tone = oneOf(po.tone, TONES);
+    return t2 !== null && tone !== null ? { text: t2, tone } : null;
+  });
+  if (pattern === null || meaning === null || current === null || picture === null) return null;
+  return { pattern, meaning, picture, current };
+}
+function parse6(raw) {
+  const b = base(raw, "verbslot");
+  if (!b) return null;
+  const verb = str5(b.o.verb, SHORT_MAX);
+  const cards = arr(b.o.cards, 1, 4, parseCard2);
+  const family = arr(b.o.family, 0, 6, (x3) => str5(x3, SHORT_MAX));
+  if (verb === null || cards === null || family === null) return null;
+  if (cards.filter((c4) => c4.current).length !== 1) return null;
+  return { kind: "verbslot", sentence: b.sentence, explain: b.explain, verb, cards, family };
+}
+var schema5 = sObj({
+  ...baseSchema("verbslot"),
+  verb: sStr("\u9019\u7D44\u5728\u8B1B\u7684\u52D5\u8A5E\u6216\u8A5E\u7D44\uFF0C\u4F8B\u5982 stop\u3001depend\u3001used to"),
+  cards: sArr(
+    sObj({
+      pattern: sStr("\u63A5\u6CD5\uFF0C\u4F8B\u5982\u300Cstop doing\u300D\u300Cdepend on + \u540D\u8A5E\u300D"),
+      meaning: sStr("\u4E00\u884C\u8AAA\u660E\u9019\u7A2E\u63A5\u6CD5\u7684\u610F\u601D\uFF1B\u4E0D\u80FD\u9019\u6A23\u7528\u7684\u63A5\u6CD5\u5BEB\u300C\u4E0D\u80FD\u9019\u6A23\u7528\u300D"),
+      picture: sArr(
+        sObj({
+          text: sStr("\u5C0F\u5716\u7684\u4E00\u683C\uFF0C\u4F8B\u5982\u300C\u8D70\u8DEF\u300D\u300C\u8CB7\u5496\u5561\u300D"),
+          tone: sEnum(TONES, "plain\uFF1D\u4E00\u822C\uFF1Bstop\uFF1D\u505C\u6389\u6216\u6253\u53C9\uFF1Baccent\uFF1D\u63A5\u8457\u53BB\u505A\u7684\u4E8B\u6216\u91CD\u9EDE")
+        }),
+        "\u5C0F\u5716\uFF1A\u4E00\u4E32\u65B9\u584A\uFF0C0 \u5230 5 \u683C\uFF1B\u6C92\u6709\u756B\u9762\u5C31\u7D66 []"
+      ),
+      current: sBool("\u4F8B\u53E5\u7528\u7684\u662F\u9019\u5F35\u5C31\u586B true\uFF1B\u5168\u90E8\u5361\u7247\u4E2D\u525B\u597D\u4E00\u5F35 true")
+    }),
+    "1 \u5230 4 \u5F35\u5361\uFF1A\u9019\u500B\u52D5\u8A5E\u4E0D\u540C\u63A5\u6CD5\u7684\u5C0D\u7167"
+  ),
+  family: sArr(sStr("\u540C\u4E00\u7D44\u7684\u53E6\u4E00\u500B\u52D5\u8A5E"), "\u540C\u4E00\u7D44\u7684\u5176\u4ED6\u52D5\u8A5E\uFF0C\u6700\u591A 6 \u500B\uFF1B\u6C92\u6709\u7D66 []")
+});
+var guide5 = `\u9019\u500B\u7248\u9762\u7528\u4F86\u8AAA\u660E\u300C\u52D5\u8A5E\u5F8C\u9762\u63A5\u4EC0\u9EBC\u300D\uFF1A\u52D5\u540D\u8A5E\u8207\u4E0D\u5B9A\u8A5E\u3001\u52D5\u8A5E\u52A0\u4ECB\u7CFB\u8A5E\u3001\u5F62\u5BB9\u8A5E\u52A0\u4ECB\u7CFB\u8A5E\u3001used to \u7CFB\u5217\u3002
+- verb\uFF1A\u9019\u7D44\u7684\u4E3B\u89D2\uFF0C\u4F8B\u5982 stop\u3001depend\u3001interested\u3001used to\u3002
+- cards\uFF1A1 \u5230 4 \u5F35\uFF0C\u6BCF\u5F35\u662F\u4E00\u7A2E\u63A5\u6CD5\u3002\u4F8B\u53E5\u7528\u7684\u90A3\u5F35 current \u70BA true\uFF0C\u525B\u597D\u4E00\u5F35\u3002
+- pattern \u5BEB\u51FA\u63A5\u6CD5\uFF08stop to do\u3001depend on + \u540D\u8A5E\uFF09\uFF1Bmeaning \u4E00\u884C\u767D\u8A71\u8AAA\u660E\u610F\u601D\u3002
+- picture \u662F\u5C0F\u5716\uFF1A\u7528\u4E00\u4E32\u65B9\u584A\u8868\u9054\u52D5\u4F5C\u9806\u5E8F\u3002stop \u6A19\u88AB\u505C\u6389\u7684\u4E8B\uFF08\u6703\u6253\u53C9\uFF09\uFF0Caccent \u6A19\u63A5\u8457\u53BB\u505A\u6216\u91CD\u9EDE\u7684\u4E8B\uFF0Cplain \u662F\u4E00\u822C\u3002\u6C92\u6709\u756B\u9762\u7684\u642D\u914D\u7D66 []\u3002
+- \u53EA\u80FD\u63A5\u4E00\u7A2E\u7684\u52D5\u8A5E\uFF08enjoy doing\uFF09\uFF1A\u518D\u653E\u4E00\u5F35\u300Cenjoy to do\u300D\uFF0Cmeaning \u5BEB\u300C\u4E0D\u80FD\u9019\u6A23\u7528\u300D\uFF0Cpicture \u7D66 []\u3002
+- family\uFF1A\u540C\u4E00\u7D44\u5BB9\u6613\u6DF7\u7684\u5176\u4ED6\u52D5\u8A5E\uFF0C\u6C92\u6709\u5C31\u7D66 []\u3002
+\u5E38\u898B\u932F\u8AA4\uFF1Acurrent \u8D85\u904E\u4E00\u5F35\uFF1Bpicture \u8D85\u904E 5 \u683C\uFF1Bmeaning \u5BEB\u6210\u6574\u6BB5\u6587\u7AE0\u3002`;
+function render2(parent, v5, ctx) {
+  const root2 = add2(parent, ctx, "div", "gv-verbslot-root");
+  root2.appendChild(sentence(ctx, v5.sentence));
+  const list2 = add2(root2, ctx, "div", "gv-verbslot-cards");
+  for (const c4 of v5.cards) {
+    const off = c4.meaning.startsWith("\u4E0D\u80FD");
+    const k = card(ctx, c4.current ? "accent" : "plain");
+    k.classList.add("gv-verbslot-card");
+    if (off) k.classList.add("is-off");
+    const head = add2(k, ctx, "div", "gv-verbslot-head");
+    add2(head, ctx, "span", "gv-verbslot-pattern", c4.pattern);
+    if (c4.current) head.appendChild(badge(ctx, "\u9019\u53E5"));
+    if (c4.picture.length > 0) {
+      const pic = add2(k, ctx, "ol", "gv-verbslot-pic");
+      c4.picture.forEach((p, i) => {
+        const li = add2(pic, ctx, "li", ["gv-verbslot-box", `is-${p.tone}`]);
+        add2(li, ctx, "span", "gv-verbslot-box-text", p.text);
+        if (p.tone === "stop") add2(li, ctx, "span", "gv-verbslot-x", "\u2715").setAttribute("aria-hidden", "true");
+        if (i < c4.picture.length - 1) li.classList.add("has-next");
+      });
+    }
+    add2(k, ctx, "div", "gv-note", c4.meaning);
+    list2.appendChild(k);
+  }
+  if (v5.family.length > 0) {
+    const fam = add2(root2, ctx, "div", "gv-verbslot-family");
+    add2(fam, ctx, "span", "gv-label", "\u540C\u4E00\u7D44\uFF1A");
+    add2(fam, ctx, "span", "gv-note", v5.family.join(" / "));
+  }
+  root2.appendChild(explain(ctx, v5.explain));
+}
+var verbslotKind = {
+  kind: "verbslot",
+  parse: parse6,
+  schema: schema5,
+  guide: guide5,
+  render: render2,
+  builtin: BUILTIN3
+};
+
+// src/grammar-visual/kinds/path/builtin.ts
+var s = (q, note, result) => ({ q, note, result });
+var v3 = (text, marks, explainText, steps, stopAt) => ({
+  kind: "path",
+  sentence: { text, marks: marks.map(([t2, tone]) => ({ text: t2, tone })) },
+  explain: explainText,
+  steps,
+  stopAt
+});
+var BUILTIN4 = {
+  "articles-basic": v3(
+    "I saw a dog in the park. The dog was barking.",
+    [["a dog", "accent"], ["The dog", "accent"]],
+    "\u540C\u4E00\u96BB\u72D7\uFF0C\u7B2C\u4E00\u6B21\u51FA\u73FE\u6642\u807D\u7684\u4EBA\u9084\u4E0D\u8A8D\u8B58\uFF0C\u7528 a\uFF1B\u7B2C\u4E8C\u6B21\u5DF2\u7D93\u8A8D\u8B58\u4E86\uFF0C\u5C31\u63DB\u6210 the\u3002a / an \u770B\u5F8C\u9762\u5B57\u7684\u767C\u97F3\uFF1Aan hour\u3001a university\u3002",
+    [
+      s("\u807D\u7684\u4EBA\u77E5\u9053\u662F\u54EA\u4E00\u96BB\u55CE\uFF1F", "\u77E5\u9053\uFF1A\u524D\u4E00\u53E5\u525B\u63D0\u904E", "the"),
+      s("\u662F\u53EF\u6578\u540D\u8A5E\u7684\u55AE\u6578\u55CE\uFF1F", "\u7B2C\u4E00\u6B21\u63D0\u5230\u6642\u8D70\u9019\u4E00\u6B65\uFF1B\u6BCD\u97F3\u767C\u97F3\u958B\u982D\u7528 an", "a / an"),
+      s("\u662F\u8907\u6578\u6216\u4E0D\u53EF\u6578\uFF0C\u800C\u4E14\u662F\u6CDB\u6307\uFF1F", "Dogs are loyal. / I like music.", "\u4E0D\u52A0\u51A0\u8A5E")
+    ],
+    0
+  ),
+  "articles-advanced": v3(
+    "Dogs are loyal animals.",
+    [["Dogs", "accent"]],
+    "\u6CDB\u6307\u6574\u500B\u985E\u5225\u6642\uFF0C\u8907\u6578\u540D\u8A5E\u76F4\u63A5\u8AAA\u5C31\u597D\uFF0C\u4E0D\u52A0\u51A0\u8A5E\uFF1B\u55AE\u6578\u6CDB\u6307\u53EF\u4EE5\u8AAA A dog is loyal\u3002\u56FA\u5B9A\u642D\u914D\u8981\u6574\u7D44\u8A18\uFF1Ain hospital\u3001at school\u3001the sea\u3002",
+    [
+      s("\u662F\u96D9\u65B9\u90FD\u77E5\u9053\u3001\u6216\u7368\u4E00\u7121\u4E8C\u7684\u7279\u5B9A\u5C0D\u8C61\u55CE\uFF1F", "the sun / the Internet / the dog we saw", "the"),
+      s("\u662F\u56FA\u5B9A\u642D\u914D\u55CE\uFF1F", "in hospital\u3001at school\uFF1B\u4F46 the sea\u3001the cinema", "\u7167\u56FA\u5B9A\u642D\u914D\u7528"),
+      s("\u662F\u8907\u6578\u6216\u4E0D\u53EF\u6578\u540D\u8A5E\u7684\u6CDB\u6307\u55CE\uFF1F", "Dogs are loyal. / Music helps me relax.", "\u4E0D\u52A0\u51A0\u8A5E"),
+      s("\u662F\u55AE\u6578\u53EF\u6578\u540D\u8A5E\u7684\u6CDB\u6307\u55CE\uFF1F", "A dog is loyal.", "a / an")
+    ],
+    2
+  ),
+  "countable-uncountable": v3(
+    "We need some information.",
+    [["some information", "accent"]],
+    "information \u662F\u4E0D\u53EF\u6578\u540D\u8A5E\uFF1A\u4E0D\u52A0 a\u3001\u6C92\u6709 -s\uFF0C\u52D5\u8A5E\u7528\u55AE\u6578\u3002\u8981\u8AAA\u300C\u4E00\u4EFD\u300D\u5C31\u501F\u55AE\u4F4D\u8A5E\uFF1Aa piece of information\u3002",
+    [
+      s("\u53EF\u4EE5\u76F4\u63A5\u6578\u6210 one\u3001two\u3001three \u55CE\uFF1F", "a book / two books", "\u53EF\u6578\uFF1Aa / an \u6216\u52A0 -s"),
+      s("\u662F\u6DB2\u9AD4\u3001\u6750\u6599\u3001\u62BD\u8C61\u6982\u5FF5\u6216\u96C6\u5408\u55CE\uFF1F", "water\u3001rice\u3001advice\u3001information", "\u4E0D\u53EF\u6578\uFF1A\u4E0D\u52A0 a\u3001\u4E0D\u52A0 -s"),
+      s("\u9084\u60F3\u8AAA\u300C\u4E00\u4EFD\u3001\u4E00\u676F\u300D\u55CE\uFF1F", "a piece of / a cup of / a bottle of", "\u7528\u55AE\u4F4D\u8A5E")
+    ],
+    1
+  ),
+  "some-any-much-many": v3(
+    "Do you have any money?",
+    [["any money", "accent"]],
+    "\u7591\u554F\u53E5\u8207\u5426\u5B9A\u53E5\u7528 any\uFF1B\u80AF\u5B9A\u53E5\u7528 some\u3002\u8981\u554F\u6216\u8AAA\u300C\u591A\u5C11\u300D\u6642\uFF0C\u53EF\u6578\u7528 many\uFF0C\u4E0D\u53EF\u6578\u7528 much\uFF1B\u80AF\u5B9A\u53E5\u5E38\u6539\u7528 a lot of\u3002",
+    [
+      s("\u662F\u80AF\u5B9A\u53E5\u55CE\uFF1F", "I have some money.", "some"),
+      s("\u662F\u5426\u5B9A\u53E5\u6216\u7591\u554F\u53E5\u55CE\uFF1F", "Do you have any money? / I don't have any.", "any"),
+      s("\u8981\u8AC7\u591A\u5C11\uFF0C\u540D\u8A5E\u53EF\u6578\u55CE\uFF1F", "\u53EF\u6578 many books\uFF1B\u4E0D\u53EF\u6578 much money", "many / much")
+    ],
+    1
+  ),
+  "all-both-each": v3(
+    "Both of my parents work.",
+    [["Both of my parents", "accent"]],
+    "\u525B\u597D\u5169\u500B\u3001\u800C\u4E14\u5169\u500B\u90FD\u5305\u542B\u6642\u7528 both\uFF1B\u4E09\u500B\u4EE5\u4E0A\u5168\u90E8\u7528 all\uFF1B\u60F3\u4E00\u500B\u4E00\u500B\u5206\u958B\u770B\u7528 each\uFF0C\u5F8C\u9762\u63A5\u55AE\u6578\u3002",
+    [
+      s("\u525B\u597D\u5169\u500B\uFF0C\u800C\u4E14\u5169\u500B\u90FD\u5305\u542B\u55CE\uFF1F", "Both of my parents work. / Both books are new.", "both + \u8907\u6578"),
+      s("\u4E09\u500B\u4EE5\u4E0A\uFF0C\u6574\u9AD4\u5168\u90E8\u55CE\uFF1F", "All the students passed.", "all + \u8907\u6578\u6216\u4E0D\u53EF\u6578"),
+      s("\u8981\u4E00\u500B\u4E00\u500B\u5206\u958B\u770B\u55CE\uFF1F", "Each student has a book.", "each + \u55AE\u6578")
+    ],
+    0
+  ),
+  "determiners-reference": v3(
+    "Neither answer is correct.",
+    [["Neither answer", "accent"]],
+    "\u5169\u500B\u9078\u9805\u6642\uFF0Ceither \u662F\u300C\u4EFB\u4E00\u500B\u300D\uFF0Cneither \u662F\u300C\u5169\u500B\u90FD\u4E0D\u300D\uFF0C\u5F8C\u9762\u90FD\u63A5\u55AE\u6578\u540D\u8A5E\u8207\u55AE\u6578\u52D5\u8A5E\u3002\u4E09\u500B\u4EE5\u4E0A\u624D\u7528 each \u8207 every\u3002",
+    [
+      s("\u53EA\u6709\u5169\u500B\u9078\u9805\uFF0C\u800C\u4E14\u9078\u5176\u4E2D\u4EFB\u4E00\u500B\u55CE\uFF1F", "You can take either road.", "either + \u55AE\u6578"),
+      s("\u53EA\u6709\u5169\u500B\u9078\u9805\uFF0C\u800C\u4E14\u5169\u500B\u90FD\u4E0D\u662F\u55CE\uFF1F", "Neither answer is correct.", "neither + \u55AE\u6578"),
+      s("\u4E09\u500B\u4EE5\u4E0A\uFF0C\u4E00\u500B\u4E00\u500B\u5206\u958B\u770B\u55CE\uFF1F", "Each student has a desk.", "each + \u55AE\u6578"),
+      s("\u4E09\u500B\u4EE5\u4E0A\uFF0C\u6CDB\u6307\u6BCF\u4E00\u500B\u55CE\uFF1F", "Every student has a desk.", "every + \u55AE\u6578")
+    ],
+    1
+  ),
+  "noun-plurals": v3(
+    "There are three boxes on the table.",
+    [["three boxes", "accent"]],
+    "\u5148\u770B\u662F\u4E0D\u662F\u4E0D\u898F\u5247\u8907\u6578\uFF08child \u2192 children\uFF09\uFF1B\u5B57\u5C3E\u662F s\u3001x\u3001z\u3001ch\u3001sh \u8981\u52A0 -es\uFF1B\u5B50\u97F3\u52A0 y \u8981\u8B8A\u6210 -ies\uFF1B\u5176\u9918\u76F4\u63A5\u52A0 -s\u3002",
+    [
+      s("\u662F\u4E0D\u898F\u5247\u8907\u6578\u55CE\uFF1F", "child \u2192 children\u3001man \u2192 men\u3001person \u2192 people", "\u7528\u4E0D\u898F\u5247\u5F62"),
+      s("\u5B57\u5C3E\u662F s\u3001x\u3001z\u3001ch\u3001sh \u55CE\uFF1F", "box \u2192 boxes\u3001watch \u2192 watches", "\u52A0 -es"),
+      s("\u5B57\u5C3E\u662F\u300C\u5B50\u97F3 + y\u300D\u55CE\uFF1F", "city \u2192 cities\u3001baby \u2192 babies", "y \u6539\u6210 -ies"),
+      s("\u4EE5\u4E0A\u90FD\u4E0D\u662F\u55CE\uFF1F", "book \u2192 books", "\u76F4\u63A5\u52A0 -s")
+    ],
+    1
+  )
+};
+
+// src/grammar-visual/kinds/path/index.ts
+function parseStep2(x3) {
+  const o = obj(x3);
+  if (!o) return null;
+  const q = str5(o.q, SHORT_MAX);
+  const note = str5(o.note, SHORT_MAX, true);
+  const result = str5(o.result, SHORT_MAX);
+  return q !== null && note !== null && result !== null ? { q, note, result } : null;
+}
+function parse7(raw) {
+  const b = base(raw, "path");
+  if (!b) return null;
+  const steps = arr(b.o.steps, 2, 6, parseStep2);
+  if (steps === null) return null;
+  const stopAt = int(b.o.stopAt, 0, steps.length - 1);
+  if (stopAt === null) return null;
+  return { kind: "path", sentence: b.sentence, explain: b.explain, steps, stopAt };
+}
+var schema6 = sObj({
+  ...baseSchema("path"),
+  steps: sArr(
+    sObj({
+      q: sStr("\u9019\u4E00\u6B65\u8981\u554F\u7684\u554F\u984C\uFF0C\u4F8B\u5982\u300C\u807D\u7684\u4EBA\u77E5\u9053\u662F\u54EA\u4E00\u96BB\u55CE\uFF1F\u300D"),
+      note: sStr('\u8D70\u5230\u9019\u4E00\u6B65\u6642\uFF0C\u9019\u53E5\u7684\u72C0\u6CC1\u6216\u4F8B\u5B50\uFF1B\u6C92\u6709\u5C31\u7D66 ""'),
+      result: sStr("\u9019\u4E00\u6B65\u6210\u7ACB\u6642\u7684\u7B54\u6848\uFF0C\u4F8B\u5982\u300Cthe\u300D\u300C\u4E0D\u52A0\u300D\u300Cboth + \u8907\u6578\u540D\u8A5E\u300D")
+    }),
+    "\u7531\u4E0A\u5F80\u4E0B\u7684\u5224\u65B7\u6B65\u9A5F\uFF0C2 \u5230 6 \u6B65\uFF0C\u8981\u7167\u771F\u6B63\u8A72\u554F\u7684\u9806\u5E8F"
+  ),
+  stopAt: sInt("\u9019\u53E5\u505C\u5728\u7B2C\u5E7E\u6B65\uFF080 \u8D77\u7B97\uFF0C\u5FC5\u9808\u5728 steps \u7BC4\u570D\u5167\uFF09")
+});
+var guide6 = `\u9019\u500B\u7248\u9762\u628A\u300C\u8A72\u7528\u54EA\u500B\u5B57\u300D\u756B\u6210\u4E00\u689D\u7531\u4E0A\u5F80\u4E0B\u7684\u5224\u65B7\u8DEF\u5F91\uFF0C\u9069\u5408\u51A0\u8A5E\u3001\u53EF\u6578\u8207\u4E0D\u53EF\u6578\u3001\u91CF\u8A5E\u3001all / both / each\u3001\u9650\u5B9A\u8A5E\u3001\u540D\u8A5E\u55AE\u8907\u6578\u3002
+- steps\uFF1A2 \u5230 6 \u6B65\uFF0C\u6BCF\u6B65\u662F\u4E00\u500B\u8981\u554F\u7684\u554F\u984C q\uFF0C\u6210\u7ACB\u6642\u7684\u7B54\u6848\u662F result\u3002\u9806\u5E8F\u8981\u7167\u771F\u6B63\u7684\u5224\u65B7\u9806\u5E8F\uFF0C\u524D\u9762\u7684\u6B65\u9A5F\u4E0D\u6210\u7ACB\u624D\u8D70\u5230\u5F8C\u9762\u3002
+- note\uFF1A\u8D70\u5230\u9019\u4E00\u6B65\u6642\u9019\u53E5\u7684\u72C0\u6CC1\uFF0C\u6216\u4E00\u500B\u5C0F\u4F8B\u5B50\uFF08Dogs are loyal.\uFF09\uFF1B\u6C92\u6709\u5C31\u7D66 ""\u3002
+- stopAt\uFF1A\u9019\u53E5\u7684\u7B54\u6848\u5728\u7B2C\u5E7E\u6B65\u6210\u7ACB\uFF080 \u8D77\u7B97\uFF09\u3002\u524D\u9762\u7684\u6B65\u9A5F\u6703\u986F\u793A\u70BA\u300C\u4E0D\u662F\u300D\uFF0C\u5F8C\u9762\u7684\u6B65\u9A5F\u6703\u6DE1\u6389\u3002
+- result \u8981\u7C21\u77ED\uFF1A\u53EA\u5BEB\u7B54\u6848\u8207\u5FC5\u8981\u7684\u642D\u914D\uFF0C\u4F8B\u5982\u300Cthe\u300D\u300Ca / an\u300D\u300C\u4E0D\u52A0\u51A0\u8A5E\u300D\u300Cmany + \u8907\u6578\u540D\u8A5E\u300D\u3002
+\u5E38\u898B\u932F\u8AA4\uFF1AstopAt \u8D85\u51FA\u6B65\u9A5F\u6578\uFF1B\u6B65\u9A5F\u9806\u5E8F\u985B\u5012\uFF0C\u5C0E\u81F4\u524D\u9762\u7684\u554F\u984C\u5176\u5BE6\u4E5F\u6210\u7ACB\uFF1Bq \u5BEB\u6210\u9673\u8FF0\u53E5\u3002`;
+function render3(parent, v5, ctx) {
+  const root2 = add2(parent, ctx, "div", "gv-path-root");
+  root2.appendChild(sentence(ctx, v5.sentence));
+  const ol = add2(root2, ctx, "ol", "gv-path-steps");
+  ol.setAttribute("aria-label", "\u5224\u65B7\u8DEF\u5F91");
+  v5.steps.forEach((s2, i) => {
+    const state = i < v5.stopAt ? "is-skip" : i === v5.stopAt ? "is-hit" : "is-after";
+    const li = add2(ol, ctx, "li", ["gv-path-step", state]);
+    add2(li, ctx, "span", "gv-path-num", String(i + 1));
+    const body = add2(li, ctx, "div", "gv-path-body");
+    add2(body, ctx, "div", "gv-path-q", s2.q);
+    if (s2.note) add2(body, ctx, "div", "gv-note", s2.note);
+    const res = add2(li, ctx, "div", "gv-path-result");
+    if (i < v5.stopAt) add2(res, ctx, "span", "gv-note", "\u4E0D\u662F\uFF0C\u5F80\u4E0B");
+    else res.appendChild(badge(ctx, `\u662F \u2192 ${s2.result}`, i === v5.stopAt ? "accent" : "plain"));
+  });
+  root2.appendChild(explain(ctx, v5.explain));
+}
+var pathKind = {
+  kind: "path",
+  parse: parse7,
+  schema: schema6,
+  guide: guide6,
+  render: render3,
+  builtin: BUILTIN4
+};
+
+// src/grammar-visual/kinds/connector/builtin.ts
+var v4 = (text, link2, relation, explainText, left, right, compare) => ({
+  kind: "connector",
+  sentence: { text, marks: [{ text: link2, tone: "accent" }] },
+  explain: explainText,
+  relation,
+  link: link2.toLowerCase(),
+  left: { text: left[0], note: left[1] },
+  right: { text: right[0], note: right[1] },
+  compare: compare.map(([word, form, example]) => ({ word, form, example }))
+});
+var BUILTIN5 = {
+  "basic-conjunctions": v4(
+    "It rained, so we stayed home.",
+    "so",
+    "cause",
+    "so \u5F15\u51FA\u7D50\u679C\uFF0Cbecause \u5F15\u51FA\u539F\u56E0\uFF0C\u5169\u8005\u53EA\u662F\u63DB\u500B\u4F4D\u7F6E\u8AAA\u540C\u4E00\u4EF6\u4E8B\u3002\u9023\u63A5\u5169\u500B\u5B8C\u6574\u7684\u53E5\u5B50\u6642\uFF0C\u524D\u9762\u5E38\u52A0\u9017\u865F\u3002",
+    ["\u4E0B\u96E8\u4E86", "\u539F\u56E0"],
+    ["\u6211\u5011\u5F85\u5728\u5BB6", "\u7D50\u679C"],
+    [
+      ["so", "\u653E\u5728\u7D50\u679C\u524D\u9762", "It rained, so we stayed home."],
+      ["because", "+ \u5B50\u53E5", "We stayed home because it rained."],
+      ["because of", "+ \u540D\u8A5E", "because of the rain"]
+    ]
+  ),
+  "concession-contrast": v4(
+    "Although it rained, we went hiking.",
+    "Although",
+    "contrast",
+    "although \u5F8C\u9762\u63A5\u5B8C\u6574\u5B50\u53E5\uFF0Cdespite \u5F8C\u9762\u63A5\u540D\u8A5E\uFF1Bhowever \u5247\u662F\u53E6\u8D77\u4E00\u53E5\u7684\u8F49\u6298\u526F\u8A5E\uFF0C\u524D\u9762\u8981\u65B7\u53E5\u3002",
+    ["\u4E0B\u96E8\u4E86", "\u901A\u5E38\u6703\u8B93\u4EBA\u4E0D\u51FA\u9580"],
+    ["\u6211\u5011\u9084\u662F\u53BB\u722C\u5C71", "\u7D50\u679C\u8DDF\u9810\u671F\u76F8\u53CD"],
+    [
+      ["although", "+ \u5B50\u53E5", "although it rained"],
+      ["despite", "+ \u540D\u8A5E / V-ing", "despite the rain"],
+      ["however", "\u53E6\u8D77\u4E00\u53E5", "It rained. However, we went hiking."]
+    ]
+  ),
+  "unless-in-case-as-long-as": v4(
+    "Take an umbrella in case it rains.",
+    "in case",
+    "condition",
+    "in case \u662F\u300C\u4EE5\u9632\u842C\u4E00\u300D\uFF0C\u5148\u505A\u6E96\u5099\uFF1Bunless \u7B49\u65BC if ... not\uFF1Bas long as \u662F\u300C\u53EA\u8981\u300D\u3002\u5B83\u5011\u5F8C\u9762\u90FD\u63A5\u5B50\u53E5\uFF0C\u4E14\u4E0D\u7528 will\u3002",
+    ["\u5E36\u5098", "\u5148\u505A\u7684\u6E96\u5099"],
+    ["\u53EF\u80FD\u6703\u4E0B\u96E8", "\u9084\u6C92\u767C\u751F"],
+    [
+      ["in case", "+ \u5B50\u53E5\uFF08\u4EE5\u9632\uFF09", "in case it rains"],
+      ["unless", "+ \u5B50\u53E5\uFF08\u9664\u975E\uFF09", "unless it stops raining"],
+      ["as long as", "+ \u5B50\u53E5\uFF08\u53EA\u8981\uFF09", "as long as it stays dry"]
+    ]
+  ),
+  "purpose-to-infinitive": v4(
+    "We left early to catch the train.",
+    "to",
+    "purpose",
+    "to + \u539F\u5F62\u52D5\u8A5E\u8AAA\u660E\u505A\u9019\u4EF6\u4E8B\u7684\u76EE\u7684\u3002for \u5F8C\u9762\u63A5\u540D\u8A5E\uFF08for a walk\uFF09\uFF1B\u60F3\u9023\u63A5\u5B8C\u6574\u5B50\u53E5\u6642\u7528 so that\u3002",
+    ["\u6211\u5011\u63D0\u65E9\u51FA\u9580", "\u505A\u7684\u4E8B"],
+    ["\u8D95\u4E0A\u706B\u8ECA", "\u60F3\u9054\u5230\u7684\u76EE\u7684"],
+    [
+      ["to", "+ \u539F\u5F62\u52D5\u8A5E", "to catch the train"],
+      ["in order to", "+ \u539F\u5F62\u52D5\u8A5E\uFF08\u8F03\u6B63\u5F0F\uFF09", "in order to catch the train"],
+      ["so that", "+ \u5B50\u53E5", "so that we could catch it"]
+    ]
+  ),
+  "future-time-clauses": v4(
+    "When I get home, I will call you.",
+    "When",
+    "sequence",
+    "\u8AC7\u672A\u4F86\u6642\uFF0Cwhen\u3001after\u3001before\u3001until\u3001as soon as \u5F8C\u9762\u7684\u6642\u9593\u5B50\u53E5\u7528\u73FE\u5728\u5F0F\uFF0C\u4E0D\u7528 will\uFF1Bwill \u53EA\u653E\u5728\u4E3B\u8981\u5B50\u53E5\u3002",
+    ["\u6211\u5230\u5BB6", "\u6642\u9593\u5B50\u53E5\u7528\u73FE\u5728\u5F0F"],
+    ["\u6211\u6703\u6253\u7D66\u4F60", "\u4E3B\u8981\u5B50\u53E5\u7528 will"],
+    [
+      ["when", "+ \u73FE\u5728\u5F0F\uFF08\u8868\u672A\u4F86\uFF09", "when I get home"],
+      ["as soon as", "+ \u73FE\u5728\u5F0F\uFF08\u4E00\u2026\u5C31\u2026\uFF09", "as soon as I arrive"],
+      ["until", "+ \u73FE\u5728\u5F0F\uFF08\u76F4\u5230\uFF09", "until she comes back"]
+    ]
+  ),
+  "discourse-connectors": v4(
+    "Tom likes tea, whereas Anna prefers coffee.",
+    "whereas",
+    "contrast",
+    "whereas \u548C while \u628A\u5169\u500B\u4E26\u5217\u7684\u4E8B\u7269\u62FF\u4F86\u5C0D\u6BD4\uFF0C\u8A9E\u6C23\u504F\u6B63\u5F0F\uFF1Bnotwithstanding \u662F\u66F4\u6B63\u5F0F\u7684\u8B93\u6B65\uFF0C\u5F8C\u9762\u63A5\u540D\u8A5E\u3002",
+    ["Tom \u559C\u6B61\u8336", "\u5C0D\u6BD4\u7684\u4E00\u65B9"],
+    ["Anna \u6BD4\u8F03\u611B\u5496\u5561", "\u5C0D\u6BD4\u7684\u53E6\u4E00\u65B9"],
+    [
+      ["whereas", "+ \u5B50\u53E5\uFF08\u5C0D\u6BD4\uFF0C\u8F03\u6B63\u5F0F\uFF09", "whereas Anna prefers coffee"],
+      ["while", "+ \u5B50\u53E5\uFF08\u5C0D\u6BD4\uFF09", "while Anna prefers coffee"],
+      ["notwithstanding", "+ \u540D\u8A5E\uFF08\u6B63\u5F0F\u8B93\u6B65\uFF09", "notwithstanding the rain"]
+    ]
+  )
+};
+
+// src/grammar-visual/kinds/connector/relations.ts
+var RELATIONS = ["cause", "contrast", "condition", "purpose", "addition", "sequence"];
+var RELATION_LABEL = {
+  cause: { name: "\u56E0\u679C", sym: "\u2192" },
+  contrast: { name: "\u8F49\u6298", sym: "\u21C4" },
+  condition: { name: "\u689D\u4EF6", sym: "\u22A3" },
+  purpose: { name: "\u76EE\u7684", sym: "\u27F6" },
+  addition: { name: "\u4E26\u5217", sym: "+" },
+  sequence: { name: "\u6642\u9593\u5148\u5F8C", sym: "\u22EF" }
+};
+var ex = (pre, link2, post, set4) => ({ sentence: { text: pre + link2 + post, marks: [{ text: link2, tone: "accent" }] }, set: set4 });
+var RELATION_EXAMPLES = {
+  cause: ex("", "Because", " it rained, we stayed home.", {
+    relation: "cause",
+    link: "because",
+    left: { text: "\u4E0B\u96E8\u4E86", note: "\u539F\u56E0" },
+    right: { text: "\u6211\u5011\u5F85\u5728\u5BB6", note: "\u7D50\u679C" },
+    compare: [
+      { word: "because", form: "+ \u5B50\u53E5", example: "because it rained" },
+      { word: "because of", form: "+ \u540D\u8A5E", example: "because of the rain" },
+      { word: "so", form: "\u653E\u5728\u7D50\u679C\u524D\u9762", example: "It rained, so we stayed home." }
+    ]
+  }),
+  contrast: ex("", "Although", " it rained, we went hiking.", {
+    relation: "contrast",
+    link: "although",
+    left: { text: "\u4E0B\u96E8\u4E86", note: "\u901A\u5E38\u6703\u8B93\u4EBA\u4E0D\u51FA\u9580" },
+    right: { text: "\u6211\u5011\u9084\u662F\u53BB\u722C\u5C71", note: "\u7D50\u679C\u8DDF\u9810\u671F\u76F8\u53CD" },
+    compare: [
+      { word: "although", form: "+ \u5B50\u53E5", example: "although it rained" },
+      { word: "despite", form: "+ \u540D\u8A5E / V-ing", example: "despite the rain" },
+      { word: "however", form: "\u53E6\u8D77\u4E00\u53E5", example: "It rained. However, \u2026" }
+    ]
+  }),
+  condition: ex("", "If", " it rains, we will stay home.", {
+    relation: "condition",
+    link: "if",
+    left: { text: "\u5982\u679C\u4E0B\u96E8", note: "\u689D\u4EF6" },
+    right: { text: "\u6211\u5011\u5C31\u5F85\u5728\u5BB6", note: "\u689D\u4EF6\u6210\u7ACB\u624D\u6703\u767C\u751F" },
+    compare: [
+      { word: "if", form: "+ \u5B50\u53E5\uFF08\u5982\u679C\uFF09", example: "if it rains" },
+      { word: "unless", form: "+ \u5B50\u53E5\uFF08\u9664\u975E\uFF09", example: "unless it stops raining" },
+      { word: "in case", form: "+ \u5B50\u53E5\uFF08\u4EE5\u9632\uFF09", example: "in case it rains" }
+    ]
+  }),
+  purpose: ex("We left early ", "to", " catch the train.", {
+    relation: "purpose",
+    link: "to",
+    left: { text: "\u6211\u5011\u63D0\u65E9\u51FA\u9580", note: "\u505A\u7684\u4E8B" },
+    right: { text: "\u8D95\u4E0A\u706B\u8ECA", note: "\u60F3\u9054\u5230\u7684\u7D50\u679C" },
+    compare: [
+      { word: "to", form: "+ \u539F\u5F62\u52D5\u8A5E", example: "to catch the train" },
+      { word: "in order to", form: "+ \u539F\u5F62\u52D5\u8A5E\uFF08\u8F03\u6B63\u5F0F\uFF09", example: "in order to catch the train" },
+      { word: "so that", form: "+ \u5B50\u53E5", example: "so that we could catch it" }
+    ]
+  }),
+  addition: ex("She sings ", "and", " plays the piano.", {
+    relation: "addition",
+    link: "and",
+    left: { text: "\u5979\u6703\u5531\u6B4C", note: "\u4E00\u4EF6\u4E8B" },
+    right: { text: "\u5979\u6703\u5F48\u7434", note: "\u518D\u52A0\u4E00\u4EF6" },
+    compare: [
+      { word: "and", form: "\u9023\u63A5\u5169\u500B\u8A5E\u6216\u5B50\u53E5", example: "sings and plays" },
+      { word: "both \u2026 and", form: "\u5169\u500B\u90FD\uFF0C\u8A9E\u6C23\u8F03\u5F37", example: "both sings and plays" },
+      { word: "not only \u2026 but also", form: "\u4E0D\u53EA\u2026\u9084\u2026", example: "not only sings but also plays" }
+    ]
+  }),
+  sequence: ex("", "After", " we had lunch, we went hiking.", {
+    relation: "sequence",
+    link: "after",
+    left: { text: "\u5403\u5B8C\u5348\u9910", note: "\u5148\u767C\u751F" },
+    right: { text: "\u53BB\u722C\u5C71", note: "\u5F8C\u767C\u751F" },
+    compare: [
+      { word: "after", form: "+ \u5B50\u53E5 / \u540D\u8A5E", example: "after lunch" },
+      { word: "before", form: "+ \u5B50\u53E5 / \u540D\u8A5E", example: "before it got dark" },
+      { word: "when", form: "+ \u5B50\u53E5\uFF08\u540C\u6642\u6216\u7DCA\u63A5\u8457\uFF09", example: "when we arrived" }
+    ]
+  })
+};
+
+// src/grammar-visual/kinds/connector/index.ts
+function side(x3) {
+  const o = obj(x3);
+  if (!o) return null;
+  const text = str5(o.text, SHORT_MAX);
+  const note = str5(o.note, SHORT_MAX, true);
+  return text !== null && note !== null ? { text, note } : null;
+}
+function parse8(raw) {
+  const b = base(raw, "connector");
+  if (!b) return null;
+  const relation = oneOf(b.o.relation, RELATIONS);
+  const link2 = str5(b.o.link, SHORT_MAX);
+  const left = side(b.o.left);
+  const right = side(b.o.right);
+  const compare = arr(b.o.compare, 2, 4, (x3) => {
+    const o = obj(x3);
+    if (!o) return null;
+    const word = str5(o.word, SHORT_MAX);
+    const form = str5(o.form, SHORT_MAX);
+    const example = str5(o.example, SHORT_MAX);
+    return word !== null && form !== null && example !== null ? { word, form, example } : null;
+  });
+  if (relation === null || link2 === null || !left || !right || compare === null) return null;
+  return { kind: "connector", sentence: b.sentence, explain: b.explain, relation, link: link2, left, right, compare };
+}
+var sSide = (what) => sObj({ text: sStr(`${what}\uFF0C\u7E41\u9AD4\u4E2D\u6587`), note: sStr('\u4E00\u500B\u77ED\u8A9E\u8AAA\u660E\u9019\u4EF6\u4E8B\u7684\u89D2\u8272\uFF0C\u4F8B\u5982\u300C\u539F\u56E0\u300D\u300C\u7D50\u679C\u300D\uFF1B\u6C92\u6709\u5C31\u7D66 ""') });
+var schema7 = sObj({
+  ...baseSchema("connector"),
+  relation: sEnum(RELATIONS, "\u5169\u4EF6\u4E8B\u7684\u95DC\u4FC2\uFF1Acause \u56E0\u679C\u3001contrast \u8F49\u6298\u3001condition \u689D\u4EF6\u3001purpose \u76EE\u7684\u3001addition \u4E26\u5217\u3001sequence \u6642\u9593\u5148\u5F8C"),
+  link: sStr("\u9019\u53E5\u7528\u7684\u9023\u63A5\u8A5E\uFF0C\u5C0F\u5BEB\uFF0C\u4F8B\u5982 although"),
+  left: sSide("\u524D\u9762\u90A3\u4EF6\u4E8B"),
+  right: sSide("\u5F8C\u9762\u90A3\u4EF6\u4E8B"),
+  compare: sArr(
+    sObj({
+      word: sStr("\u540C\u4E00\u7A2E\u95DC\u4FC2\u7684\u9023\u63A5\u8A5E"),
+      form: sStr("\u5F8C\u9762\u63A5\u4EC0\u9EBC\uFF0C\u4F8B\u5982\u300C+ \u5B50\u53E5\u300D\u300C+ \u540D\u8A5E\u300D\u300C\u53E6\u8D77\u4E00\u53E5\u300D"),
+      example: sStr("\u82F1\u6587\u77ED\u4F8B")
+    }),
+    "2 \u5230 4 \u500B\u540C\u4E00\u7A2E\u95DC\u4FC2\u3001\u63A5\u6CD5\u4E0D\u540C\u7684\u5B57\uFF1B\u7B2C\u4E00\u500B\u662F\u9019\u53E5\u7528\u7684"
+  )
+});
+var guide7 = `\u9019\u500B\u7248\u9762\u8AAA\u660E\u300C\u5169\u4EF6\u4E8B\u662F\u4EC0\u9EBC\u95DC\u4FC2\uFF0C\u9023\u63A5\u8A5E\u5F8C\u9762\u63A5\u53E5\u5B50\u9084\u662F\u540D\u8A5E\u300D\u3002
+- relation\uFF1A\u53EA\u80FD\u5F9E\u516D\u7A2E\u6311\u4E00\u7A2E\uFF1Acause\uFF08\u56E0\u679C\uFF09\u3001contrast\uFF08\u8F49\u6298\uFF09\u3001condition\uFF08\u689D\u4EF6\uFF09\u3001purpose\uFF08\u76EE\u7684\uFF09\u3001addition\uFF08\u4E26\u5217\uFF09\u3001sequence\uFF08\u6642\u9593\u5148\u5F8C\uFF09\u3002
+- link\uFF1A\u4F8B\u53E5\u88E1\u7528\u7684\u9023\u63A5\u8A5E\uFF08\u5C0F\u5BEB\uFF09\u3002\u4F8B\u53E5 marks \u8981\u628A\u5B83\u6A19\u6210 accent\u3002
+- left / right\uFF1A\u628A\u53E5\u5B50\u62C6\u6210\u300C\u524D\u9762\u90A3\u4EF6\u4E8B\u300D\u548C\u300C\u5F8C\u9762\u90A3\u4EF6\u4E8B\u300D\uFF0C\u7528\u7E41\u9AD4\u4E2D\u6587\u5BEB\uFF1Bnote \u5BEB\u5B83\u5728\u9019\u500B\u95DC\u4FC2\u88E1\u7684\u89D2\u8272\uFF08\u539F\u56E0\uFF0F\u7D50\u679C\u3001\u5148\u767C\u751F\uFF0F\u5F8C\u767C\u751F\u2026\uFF09\u3002
+- compare\uFF1A2 \u5230 4 \u500B\u540C\u4E00\u7A2E\u95DC\u4FC2\u7684\u9023\u63A5\u8A5E\uFF0C\u91CD\u9EDE\u662F\u300C\u5F8C\u9762\u63A5\u7684\u6771\u897F\u4E0D\u4E00\u6A23\u300D\uFF0Cform \u5BEB\u63A5\u6CD5\uFF0Cexample \u7D66\u77ED\u82F1\u6587\u4F8B\u5B50\u3002\u7B2C\u4E00\u500B\u5FC5\u9808\u662F\u9019\u53E5\u7528\u7684\u5B57\u3002
+\u756B\u9762\u4E0A\u9084\u6709\u516D\u7A2E\u95DC\u4FC2\u7684\u5207\u63DB\u9215\uFF0C\u5176\u4ED6\u4E94\u7A2E\u7531\u7A0B\u5F0F\u5167\u5EFA\uFF0C\u4E0D\u7528\u4F60\u586B\u3002
+\u5E38\u898B\u932F\u8AA4\uFF1Arelation \u8207 link \u4E0D\u4E00\u81F4\uFF1Bcompare \u7B2C\u4E00\u500B\u4E0D\u662F\u4F8B\u53E5\u7528\u7684\u5B57\uFF1Bform \u5BEB\u6210\u6574\u53E5\u89E3\u91CB\u3002`;
+function render4(parent, v5, ctx) {
+  const root2 = add2(parent, ctx, "div", "gv-connector-root");
+  stateful(root2, v5.relation, (host, picked2, set4) => {
+    host.appendChild(
+      chips(ctx, {
+        label: "\u5207\u63DB\u95DC\u4FC2\u7A2E\u985E",
+        options: RELATIONS.map((r) => `${RELATION_LABEL[r].name} ${RELATION_LABEL[r].sym}`),
+        selected: RELATIONS.indexOf(picked2),
+        onSelect: (i) => set4(RELATIONS[i])
+      })
+    );
+    const own = picked2 === v5.relation;
+    const s2 = own ? v5.sentence : RELATION_EXAMPLES[picked2].sentence;
+    const d = own ? v5 : RELATION_EXAMPLES[picked2].set;
+    host.appendChild(sentence(ctx, s2));
+    const flow = add2(host, ctx, "div", "gv-connector-flow");
+    for (const [i, part] of [d.left, d.right].entries()) {
+      if (i === 1) {
+        const mid = add2(flow, ctx, "div", "gv-connector-rel");
+        add2(mid, ctx, "span", ["gv-badge", "is-accent"], RELATION_LABEL[picked2].name);
+        add2(mid, ctx, "span", "gv-connector-sym", RELATION_LABEL[picked2].sym).setAttribute("aria-hidden", "true");
+      }
+      const k = card(ctx, "plain");
+      k.classList.add("gv-connector-side");
+      add2(k, ctx, "div", "gv-connector-text", part.text);
+      if (part.note) add2(k, ctx, "div", "gv-note", part.note);
+      flow.appendChild(k);
+    }
+    const cmp = add2(host, ctx, "div", "gv-connector-compare");
+    add2(cmp, ctx, "div", "gv-label", `\u540C\u6A23\u662F${RELATION_LABEL[picked2].name}\uFF0C\u5F8C\u9762\u63A5\u7684\u6771\u897F\u4E0D\u4E00\u6A23`);
+    d.compare.forEach((row, i) => {
+      const r = add2(cmp, ctx, "div", ["gv-connector-row", i === 0 ? "is-first" : ""]);
+      add2(r, ctx, "strong", "gv-connector-word", row.word);
+      add2(r, ctx, "span", "gv-connector-form", row.form);
+      add2(r, ctx, "span", "gv-note", row.example);
+    });
+    if (own) host.appendChild(explain(ctx, v5.explain));
+  });
+}
+var connectorKind = {
+  kind: "connector",
+  parse: parse8,
+  schema: schema7,
+  guide: guide7,
+  render: render4,
+  builtin: BUILTIN5
+};
+
+// src/grammar-visual/kinds/order/builtin.ts
+var P = (text) => ({ text, role: "plain", step: 0 });
+var M = (text, step) => ({ text, role: "moved", step });
+var A = (text, step) => ({ text, role: "aux", step });
+var ORDER_BUILTIN = {
+  "do-does-did-questions": {
+    kind: "order",
+    sentence: { text: "Does she like coffee?", marks: [{ text: "Does", tone: "accent" }] },
+    explain: "\u4E00\u822C\u53E5\u88E1\u6C92\u6709\u52A9\u52D5\u8A5E\uFF0C\u9020\u554F\u53E5\u8981\u5148\u88DC\u4E00\u500B do / does / did \u653E\u53E5\u9996\uFF1B\u52D5\u8A5E\u56E0\u70BA\u6709\u52A9\u52D5\u8A5E\u625B\u6642\u614B\uFF0C\u6240\u4EE5\u56DE\u5230\u539F\u5F62\u3002\u5426\u5B9A\u53E5\u4E5F\u4E00\u6A23\uFF1AShe doesn't like coffee.",
+    baseLabel: "\u4E00\u822C\u8A9E\u5E8F",
+    base: [P("She"), M("likes", 2), P("coffee.")],
+    resultLabel: "\u554F\u53E5",
+    result: [A("Does", 1), P("she"), M("like", 2), P("coffee?")],
+    steps: ["\u88DC\u4E0A\u52A9\u52D5\u8A5E does \u653E\u53E5\u9996", "likes \u7684 -s \u4EA4\u7D66 does\uFF0C\u52D5\u8A5E\u9084\u539F\u6210 like"]
+  },
+  "wh-questions": {
+    kind: "order",
+    sentence: { text: "Where does she work?", marks: [{ text: "Where does she", tone: "accent" }] },
+    explain: "\u7591\u554F\u8A5E\u53D6\u4EE3\u60F3\u554F\u7684\u8CC7\u8A0A\u4E26\u642C\u5230\u53E5\u9996\uFF0C\u5F8C\u9762\u63A5\u7684\u662F\u554F\u53E5\u8A9E\u5E8F\uFF1A\u52A9\u52D5\u8A5E\u5728\u4E3B\u8A5E\u524D\u3001\u52D5\u8A5E\u7528\u539F\u5F62\u3002",
+    baseLabel: "\u4E00\u822C\u8A9E\u5E8F",
+    base: [P("She"), M("works", 3), M("in Taipei.", 1)],
+    resultLabel: "\u7591\u554F\u8A5E\u554F\u53E5",
+    result: [M("Where", 1), A("does", 2), P("she"), M("work?", 3)],
+    steps: ["\u7528 where \u53D6\u4EE3\u5730\u9EDE in Taipei\uFF0C\u642C\u5230\u53E5\u9996", "\u88DC\u4E0A\u52A9\u52D5\u8A5E does\uFF0C\u653E\u5728\u4E3B\u8A5E\u524D\u9762", "works \u9084\u539F\u6210\u539F\u5F62 work"]
+  },
+  "question-tags": {
+    kind: "order",
+    sentence: { text: "The weather is nice, isn't it?", marks: [{ text: "isn't it?", tone: "accent" }] },
+    explain: "\u53E5\u5C3E\u88DC\u4E00\u500B\u7E2E\u77ED\u7684\u554F\u53E5\uFF1A\u52A9\u52D5\u8A5E\u8DDF\u4E3B\u53E5\u4E00\u6A23\uFF0C\u4F46\u80AF\u5B9A\u6539\u5426\u5B9A\u3001\u5426\u5B9A\u6539\u80AF\u5B9A\uFF1B\u4E3B\u8A5E\u63DB\u6210\u4EE3\u540D\u8A5E\u3002",
+    baseLabel: "\u4E3B\u53E5",
+    base: [M("The weather", 2), A("is", 1), P("nice.")],
+    resultLabel: "\u52A0\u4E0A\u9644\u52A0\u554F\u53E5",
+    result: [P("The weather"), P("is"), P("nice,"), A("isn't", 1), M("it?", 2)],
+    steps: ["\u8907\u88FD\u4E3B\u53E5\u7684\u52A9\u52D5\u8A5E is\uFF0C\u80AF\u5B9A\u6539\u6210\u5426\u5B9A isn't", "\u4E3B\u8A5E the weather \u63DB\u6210\u4EE3\u540D\u8A5E it"]
+  },
+  "negative-inversion": {
+    kind: "order",
+    sentence: { text: "Rarely have I seen such a view.", marks: [{ text: "Rarely have I", tone: "accent" }] },
+    explain: "\u52A9\u52D5\u8A5E\u63DB\u5230\u4E3B\u8A5E\u524D\u9762\uFF0C\u5C31\u8DDF\u554F\u53E5 Have I seen\u2026? \u7684\u8A9E\u5E8F\u4E00\u6A23\uFF1B\u9019\u7A2E\u5BEB\u6CD5\u6BD4\u8F03\u6B63\u5F0F\uFF0C\u7528\u4F86\u5F37\u8ABF\u300C\u5F88\u5C11\u300D\u3002",
+    baseLabel: "\u4E00\u822C\u8A9E\u5E8F",
+    base: [P("I"), A("have", 2), M("rarely", 1), P("seen such a view.")],
+    resultLabel: "\u5012\u88DD\u5F8C",
+    result: [M("Rarely", 1), A("have", 2), P("I"), P("seen such a view.")],
+    steps: ["\u5426\u5B9A\u526F\u8A5E rarely \u642C\u5230\u53E5\u9996", "\u52A9\u52D5\u8A5E have \u8DDF\u8457\u8DF3\u5230\u4E3B\u8A5E\u524D\u9762"]
+  },
+  "emphasis-do-so-such": {
+    kind: "order",
+    sentence: {
+      text: "It was such a good film that we watched it twice.",
+      marks: [{ text: "such a good film", tone: "accent" }, { text: "that we watched it twice", tone: "amber" }]
+    },
+    explain: "such \u63A5\u300C\u5F62\u5BB9\u8A5E\uFF0B\u540D\u8A5E\u300D\uFF0Cso \u63A5\u5F62\u5BB9\u8A5E\uFF0C\u90FD\u5728\u5F37\u8ABF\u7A0B\u5EA6\uFF0C\u5F8C\u9762\u5E38\u7528 that \u8AAA\u51FA\u7D50\u679C\u3002\u5F37\u8ABF\u52D5\u4F5C\u5247\u5728\u52D5\u8A5E\u524D\u52A0 do\uFF1AI do like it.",
+    baseLabel: "\u4E00\u822C\u8A9E\u5E8F",
+    base: [P("It was"), M("a good film.", 1)],
+    resultLabel: "\u52A0\u4E0A\u5F37\u8ABF",
+    result: [P("It was"), M("such a good film", 1), M("that we watched it twice.", 2)],
+    steps: ["\u540D\u8A5E\u7247\u8A9E\u524D\u52A0 such\uFF0C\u5F37\u8ABF\u7A0B\u5EA6", "\u52A0\u4E0A that \u5B50\u53E5\u8AAA\u51FA\u7D50\u679C"]
+  },
+  "cleft-sentences": {
+    kind: "order",
+    sentence: { text: "It was Tom that broke the window.", marks: [{ text: "It was Tom that", tone: "accent" }] },
+    explain: "\u5206\u88C2\u53E5\u628A\u60F3\u5F37\u8ABF\u7684\u4EBA\u4E8B\u7269\u653E\u9032 It was \u2026 that \u7684\u4E2D\u9593\uFF0C\u7126\u9EDE\u4E00\u773C\u5C31\u770B\u5230\uFF1B\u5176\u9918\u7684\u8CC7\u8A0A\u9000\u5230 that \u5F8C\u9762\u3002",
+    baseLabel: "\u4E00\u822C\u8A9E\u5E8F",
+    base: [M("Tom", 2), P("broke the window.")],
+    resultLabel: "\u5206\u88C2\u53E5",
+    result: [A("It was", 1), M("Tom", 2), A("that", 3), P("broke the window.")],
+    steps: ["\u53E5\u9996\u52A0\u4E0A It was", "\u60F3\u5F37\u8ABF\u7684 Tom \u653E\u5728 was \u5F8C\u9762", "\u5176\u9918\u90E8\u5206\u7528 that \u63A5\u4E0A\u53BB"]
+  },
+  "concessive-inversion": {
+    kind: "order",
+    sentence: { text: "Much as I like him, I can't agree.", marks: [{ text: "Much as I like him", tone: "amber" }] },
+    explain: "\u8B93\u6B65\u7684 although \u63DB\u6210 as\uFF0C\u539F\u672C\u653E\u5728\u5F8C\u9762\u7684\u7A0B\u5EA6\uFF08a lot\uFF09\u8B8A\u6210 much \u642C\u5230\u53E5\u9996\uFF0C\u610F\u601D\u662F\u300C\u5118\u7BA1\u6211\u5F88\u559C\u6B61\u4ED6\u300D\u3002",
+    baseLabel: "\u4E00\u822C\u8A9E\u5E8F",
+    base: [M("Although", 1), P("I like him"), M("a lot,", 2), P("I can't agree.")],
+    resultLabel: "\u8B93\u6B65\u5012\u88DD",
+    result: [M("Much", 2), A("as", 1), P("I like him,"), P("I can't agree.")],
+    steps: ["although \u63DB\u6210 as", "\u7A0B\u5EA6 a lot \u8B8A\u6210 much\uFF0C\u642C\u5230\u53E5\u9996"]
+  },
+  "word-order-information-structure": {
+    kind: "order",
+    sentence: {
+      text: "At the end of the road stands an old church.",
+      marks: [{ text: "At the end of the road", tone: "accent" }, { text: "an old church", tone: "amber" }]
+    },
+    explain: "\u820A\u8CC7\u8A0A\uFF08\u5927\u5BB6\u90FD\u77E5\u9053\u7684\u5730\u9EDE\uFF09\u653E\u524D\u9762\u7576\u8D77\u9EDE\uFF0C\u65B0\u800C\u9577\u7684\u8CC7\u8A0A\uFF08an old church\uFF09\u653E\u53E5\u5C3E\uFF0C\u8B80\u8D77\u4F86\u624D\u4E0D\u982D\u91CD\u8173\u8F15\u3002",
+    baseLabel: "\u4E00\u822C\u8A9E\u5E8F",
+    base: [M("An old church", 3), A("stands", 2), M("at the end of the road.", 1)],
+    resultLabel: "\u4F9D\u8CC7\u8A0A\u5B89\u6392",
+    result: [M("At the end of the road", 1), A("stands", 2), M("an old church.", 3)],
+    steps: ["\u820A\u8CC7\u8A0A\uFF08\u5730\u9EDE\uFF09\u642C\u5230\u53E5\u9996", "\u52D5\u8A5E stands \u79FB\u5230\u4E3B\u8A5E\u524D\u9762", "\u9577\u800C\u65B0\u7684 an old church \u653E\u5728\u53E5\u5C3E"]
+  },
+  "phrasal-verbs": {
+    kind: "order",
+    sentence: { text: "She turned it down.", marks: [{ text: "turned it down", tone: "accent" }] },
+    explain: "\u53EF\u5206\u96E2\u7684\u7247\u8A9E\u52D5\u8A5E\uFF0C\u53D7\u8A5E\u662F\u540D\u8A5E\u6642\u53EF\u4EE5\u653E\u4E2D\u9593\u6216\u5F8C\u9762\uFF1B\u53D7\u8A5E\u662F\u4EE3\u540D\u8A5E\uFF08it\u3001them\uFF09\u6642\u4E00\u5B9A\u8981\u593E\u5728\u52D5\u8A5E\u8207\u526F\u8A5E\u4E2D\u9593\u3002",
+    baseLabel: "\u540D\u8A5E\u53D7\u8A5E",
+    base: [P("She"), P("turned"), A("down", 2), M("the offer.", 1)],
+    resultLabel: "\u4EE3\u540D\u8A5E\u53D7\u8A5E",
+    result: [P("She"), P("turned"), M("it", 1), A("down.", 2)],
+    steps: ["\u53D7\u8A5E the offer \u63DB\u6210\u4EE3\u540D\u8A5E it", "down \u79FB\u5230 it \u5F8C\u9762\uFF0C\u4EE3\u540D\u8A5E\u593E\u5728\u4E2D\u9593"]
+  },
+  "formal-it-object": {
+    kind: "order",
+    sentence: { text: "I find it hard to learn Japanese.", marks: [{ text: "it", tone: "accent" }, { text: "to learn Japanese", tone: "amber" }] },
+    explain: "to learn Japanese \u592A\u9577\uFF0C\u76F4\u63A5\u653E\u5728 find \u5F8C\u9762\u4E0D\u597D\u8B80\uFF0C\u6240\u4EE5\u7528 it \u5148\u4F54\u4F4D\uFF0C\u628A\u9577\u7684\u4E0D\u5B9A\u8A5E\u63A8\u5230\u53E5\u5C3E\u3002",
+    baseLabel: "\u9084\u539F\u8A9E\u5E8F",
+    base: [P("I find"), M("to learn Japanese", 1), P("hard.")],
+    resultLabel: "\u7528\u5F62\u5F0F\u53D7\u8A5E it",
+    result: [P("I find"), A("it", 2), P("hard"), M("to learn Japanese.", 1)],
+    steps: ["\u9577\u7684\u4E0D\u5B9A\u8A5E to learn Japanese \u79FB\u5230\u53E5\u5C3E", "\u539F\u4F86\u7684\u4F4D\u7F6E\u653E\u5F62\u5F0F\u53D7\u8A5E it"]
+  },
+  "have-got": {
+    kind: "order",
+    sentence: { text: "Has she got a car?", marks: [{ text: "Has she got", tone: "accent" }] },
+    explain: "have got \u88E1\u7684 have \u672C\u8EAB\u5C31\u662F\u52A9\u52D5\u8A5E\uFF0C\u554F\u53E5\u76F4\u63A5\u628A\u5B83\u642C\u5230\u4E3B\u8A5E\u524D\uFF0C\u4E0D\u5FC5\u518D\u52A0 do\uFF1B\u5426\u5B9A\u52A0 not\uFF1AShe hasn't got a car.",
+    baseLabel: "\u4E00\u822C\u8A9E\u5E8F",
+    base: [P("She"), A("has", 1), P("got a car.")],
+    resultLabel: "\u554F\u53E5",
+    result: [A("Has", 1), P("she"), P("got a car?")],
+    steps: ["has \u642C\u5230\u4E3B\u8A5E\u524D\u9762\uFF08\u4E0D\u7528 do / does\uFF09"]
+  }
+};
+
+// src/grammar-visual/kinds/order/index.ts
+var ROLES = ["plain", "moved", "aux"];
+var NUMS = "\u2460\u2461\u2462\u2463\u2464\u2465";
+function parseTokens(raw, steps) {
+  return arr(raw, 2, 12, (x3) => {
+    if (x3 === null || typeof x3 !== "object" || Array.isArray(x3)) return null;
+    const o = x3;
+    const text = str5(o.text, SHORT_MAX);
+    const role = oneOf(o.role, ROLES);
+    const step = int(o.step, 0, steps);
+    if (text === null || role === null || step === null) return null;
+    if (role === "plain" !== (step === 0)) return null;
+    return { text, role, step };
+  });
+}
+var tokenSchema = sObj({
+  text: sStr("\u9019\u4E00\u683C\u7684\u6587\u5B57\uFF0C\u4F8B\u5982 Rarely\u3001have\u3001seen such a view."),
+  role: sEnum(ROLES, "plain\uFF1D\u6C92\u52D5\uFF1Bmoved\uFF1D\u88AB\u642C\u8D70\u7684\u6210\u5206\uFF1Baux\uFF1D\u52A9\u52D5\u8A5E\u3001\u4EE3\u540D\u8A5E\u6216\u88DC\u9032\u4F86\u7684\u529F\u80FD\u5B57"),
+  step: sInt("\u5C0D\u61C9\u642C\u79FB\u6B65\u9A5F\u7684\u7DE8\u865F\uFF08\u5F9E 1 \u8D77\u7B97\uFF09\uFF1Bplain \u586B 0\uFF0C\u5176\u4ED6\u4E00\u5B9A\u8981 \u2265 1")
+});
+var orderKind = {
+  kind: "order",
+  parse(raw) {
+    const b = base(raw, "order");
+    if (!b) return null;
+    const baseLabel = str5(b.o.baseLabel, SHORT_MAX);
+    const resultLabel = str5(b.o.resultLabel, SHORT_MAX);
+    const steps = arr(b.o.steps, 1, 6, (s2) => str5(s2, SHORT_MAX));
+    if (baseLabel === null || resultLabel === null || steps === null) return null;
+    const tokens2 = parseTokens(b.o.base, steps.length);
+    const result = parseTokens(b.o.result, steps.length);
+    if (tokens2 === null || result === null) return null;
+    for (let i = 1; i <= steps.length; i++) if (!result.some((t2) => t2.step === i)) return null;
+    return { kind: "order", sentence: b.sentence, explain: b.explain, baseLabel, base: tokens2, resultLabel, result, steps };
+  },
+  schema: sObj({
+    ...baseSchema("order"),
+    baseLabel: sStr("\u4E00\u822C\u8A9E\u5E8F\u90A3\u4E00\u5217\u7684\u6A19\u7C64\uFF0C\u4F8B\u5982\u300C\u4E00\u822C\u8A9E\u5E8F\u300D\u300C\u4E3B\u53E5\u300D"),
+    base: sArr(tokenSchema, "\u4E00\u822C\u8A9E\u5E8F\uFF0C\u7531\u5DE6\u5230\u53F3\u5207\u6210 2\u201312 \u683C"),
+    resultLabel: sStr("\u642C\u79FB\u5F8C\u90A3\u4E00\u5217\u7684\u6A19\u7C64\uFF0C\u4F8B\u5982\u300C\u5012\u88DD\u5F8C\u300D\u300C\u554F\u53E5\u300D"),
+    result: sArr(tokenSchema, "\u642C\u79FB\u5F8C\u7684\u8A9E\u5E8F\uFF0C\u7531\u5DE6\u5230\u53F3\u5207\u6210 2\u201312 \u683C"),
+    steps: sArr(sStr("\u4E00\u500B\u642C\u79FB\u6B65\u9A5F\uFF0C\u4E00\u884C\u767D\u8A71\u7E41\u4E2D"), "\u642C\u79FB\u6B65\u9A5F\uFF0C1\u20136 \u500B\uFF0C\u4F9D\u9806\u5E8F")
+  }),
+  guide: "\u8A9E\u5E8F\u642C\u79FB\uFF1A\u5148\u7D66\u4E00\u822C\uFF08\u9673\u8FF0\uFF09\u8A9E\u5E8F\uFF0C\u518D\u8AAA\u660E\u54EA\u4E9B\u5B57\u88AB\u642C\u5230\u54EA\u88E1\uFF0C\u6700\u5F8C\u662F\u4F8B\u53E5\u7684\u8A9E\u5E8F\u3002\nsentence \u662F\u642C\u79FB\u5F8C\u7684\u53E5\u5B50\uFF0Cmarks \u6A19\u51FA\u88AB\u642C\u52D5\u7684\u90A3\u4E00\u6BB5\u3002\nbase \u8207 result \u628A\u53E5\u5B50\u5207\u6210 2\u201312 \u683C\uFF1B\u6C92\u642C\u52D5\u7684\u683C\u7528 role=plain\u3001step=0\uFF1B\u88AB\u642C\u8D70\u7684\u6210\u5206\u7528 moved\uFF1B\u88DC\u9032\u4F86\u6216\u8DDF\u8457\u8DF3\u4F4D\u7684\u52A9\u52D5\u8A5E\u3001it \u7B49\u7528 aux\uFF1Bmoved / aux \u7684 step \u5C0D\u61C9 steps \u7684\u7DE8\u865F\uFF08\u5F9E 1 \u8D77\u7B97\uFF09\u3002\nsteps \u4E00\u500B\u6B65\u9A5F\u4E00\u884C\uFF0C\u767D\u8A71\u8AAA\u660E\u300C\u4EC0\u9EBC\u642C\u5230\u54EA\u300D\uFF0C\u6BCF\u500B\u6B65\u9A5F\u7DE8\u865F\u90FD\u5FC5\u9808\u5728 result \u51FA\u73FE\u81F3\u5C11\u4E00\u6B21\u3002\n\u5E38\u898B\u932F\u8AA4\uFF1Abase \u5207\u592A\u7D30\u3001plain \u537B\u586B\u4E86\u6B65\u9A5F\u7DE8\u865F\u3001steps \u5BEB\u6210\u6587\u6CD5\u8853\u8A9E\u5806\u758A\u3002base \u82E5\u672C\u8EAB\u4E0D\u662F\u901A\u9806\u53E5\u5B50\uFF08\u4F8B\u5982\u9084\u539F\u8A9E\u5E8F\uFF09\uFF0CbaseLabel \u8981\u8AAA\u6E05\u695A\u3002",
+  render(parent, v5, ctx) {
+    parent.appendChild(sentence(ctx, v5.sentence));
+    const row = (label, tokens2, isResult) => {
+      var _a;
+      const r = add2(parent, ctx, "div", ["gv-order-row", isResult ? "is-result" : ""]);
+      add2(r, ctx, "div", "gv-order-label", label);
+      const list2 = add2(r, ctx, "div", "gv-order-tokens");
+      for (const t2 of tokens2) {
+        const prefix = isResult && t2.step > 0 ? `${(_a = NUMS[t2.step - 1]) != null ? _a : t2.step} ` : "";
+        add2(list2, ctx, "span", ["gv-order-tok", `is-${t2.role}`], prefix + t2.text);
+      }
+    };
+    row(v5.baseLabel, v5.base, false);
+    const ol = add2(parent, ctx, "ol", "gv-order-steps");
+    v5.steps.forEach((s2, i) => {
+      var _a;
+      return add2(ol, ctx, "li", "gv-order-step", `${(_a = NUMS[i]) != null ? _a : i + 1} ${s2}`);
+    });
+    row(v5.resultLabel, v5.result, true);
+    parent.appendChild(explain(ctx, v5.explain));
+  },
+  builtin: ORDER_BUILTIN
+};
+
+// src/grammar-visual/kinds/scope/builtin.ts
+var SCOPE_BUILTIN = {
+  "prepositions-time-place": {
+    kind: "scope",
+    sentence: {
+      text: "The meeting is on Monday at 3 p.m.",
+      marks: [{ text: "on", tone: "accent" }, { text: "at", tone: "accent" }]
+    },
+    explain: "Monday \u662F\u300C\u4E00\u6574\u5929\u300D\uFF0C\u6BD4\u6708\u4EFD\u5C0F\u3001\u6BD4\u6642\u9593\u9EDE\u5927\uFF0C\u6240\u4EE5\u7528 on\uFF1B3 p.m. \u662F\u4E00\u500B\u9EDE\uFF0C\u7528 at\u3002\u5730\u9EDE\u7684\u908F\u8F2F\u4E00\u6A23\uFF1A\u5927\u7BC4\u570D in\u3001\u8868\u9762 on\u3001\u5B9A\u9EDE at\u3002",
+    domain: "time",
+    levels: [
+      { word: "in", examples: "in 2026 \xB7 in May \xB7 in the morning", gloss: "\u5E74\u3001\u6708\u3001\u5B63\u7BC0\u3001\u4E00\u5929\u4E2D\u7684\u6642\u6BB5" },
+      { word: "on", examples: "on Monday \xB7 on May 5th", gloss: "\u67D0\u4E00\u5929" },
+      { word: "at", examples: "at 3 p.m. \xB7 at noon", gloss: "\u4E00\u500B\u6642\u9593\u9EDE" }
+    ],
+    hit: 1,
+    alt: [
+      {
+        domain: "place",
+        levels: [
+          { word: "in", examples: "in Taipei \xB7 in a room", gloss: "\u57CE\u5E02\u3001\u570B\u5BB6\u3001\u5C01\u9589\u7684\u7A7A\u9593" },
+          { word: "on", examples: "on Main Street \xB7 on the wall", gloss: "\u8857\u9053\u3001\u8868\u9762" },
+          { word: "at", examples: "at the station \xB7 at the door", gloss: "\u4E00\u500B\u5B9A\u9EDE" }
+        ],
+        hit: 2
+      }
+    ]
+  },
+  "preposition-meaning": {
+    kind: "scope",
+    sentence: {
+      text: "She cut the cake with a knife for her friend.",
+      marks: [{ text: "with a knife", tone: "accent" }, { text: "for her friend", tone: "amber" }]
+    },
+    explain: "\u4ECB\u7CFB\u8A5E\u7684\u6838\u5FC3\u610F\u601D\u6C7A\u5B9A\u7528\u6CD5\uFF1Afor \u671D\u5411\u76EE\u6A19\u6216\u5C0D\u8C61\uFF0Cby \u5728\u65C1\u908A\u6216\u7D93\u624B\uFF0Cwith \u7DCA\u8CBC\u8457\u3001\u4F34\u96A8\u6216\u7576\u5DE5\u5177\u3002\u7528 with a knife \u5207\uFF0C\u56E0\u70BA\u5200\u8DDF\u624B\u8CBC\u5728\u4E00\u8D77\u3002",
+    domain: "abstract",
+    levels: [
+      { word: "for", examples: "for you \xB7 for two hours \xB7 for lunch", gloss: "\u671D\u5411\u76EE\u6A19\u3001\u5C0D\u8C61\u8207\u671F\u9593" },
+      { word: "by", examples: "by the door \xB7 by bus \xB7 by Orwell", gloss: "\u5728\u65C1\u908A\u3001\u7D93\u7531\u3001\u7D93\u624B\u7684\u4EBA" },
+      { word: "with", examples: "with a friend \xB7 with a knife \xB7 with care", gloss: "\u8CBC\u5728\u4E00\u8D77\uFF1A\u4F34\u96A8\u3001\u5DE5\u5177\u3001\u65B9\u5F0F" }
+    ],
+    hit: 2,
+    alt: [
+      {
+        domain: "abstract",
+        levels: [
+          { word: "of", examples: "a cup of tea \xB7 the end of the day", gloss: "\u6574\u9AD4\u8207\u90E8\u5206\u3001\u5167\u5BB9" },
+          { word: "of", examples: "a friend of mine \xB7 the author of the book", gloss: "\u5C6C\u65BC\u3001\u4F86\u6E90" }
+        ],
+        hit: 0
+      }
+    ]
+  },
+  "preposition-abstract": {
+    kind: "scope",
+    sentence: { text: "She is in trouble and on a diet.", marks: [{ text: "in trouble", tone: "accent" }, { text: "on a diet", tone: "accent" }] },
+    explain: "\u62BD\u8C61\u7684\u72C0\u614B\u4E5F\u7576\u6210\u7A7A\u9593\uFF1Ain \u50CF\u88AB\u5305\u5728\u88E1\u9762\u7684\u8655\u5883\uFF0Con \u50CF\u8CBC\u8457\u3001\u6301\u7E8C\u9032\u884C\u7684\u72C0\u6CC1\uFF0Cat \u50CF\u7AD9\u5728\u67D0\u500B\u5B9A\u9EDE\u4E0A\u7684\u72C0\u614B\u3002",
+    domain: "abstract",
+    levels: [
+      { word: "in", examples: "in trouble \xB7 in love \xB7 in a hurry", gloss: "\u88AB\u5305\u5728\u88E1\u9762\u7684\u8655\u5883\u8207\u60C5\u7DD2" },
+      { word: "on", examples: "on a diet \xB7 on duty \xB7 on fire", gloss: "\u8CBC\u8457\u3001\u6301\u7E8C\u9032\u884C\u4E2D\u7684\u72C0\u6CC1" },
+      { word: "at", examples: "at risk \xB7 at peace \xB7 at work", gloss: "\u67D0\u4E00\u500B\u5B9A\u9EDE\u4E0A\u7684\u72C0\u614B" }
+    ],
+    hit: 0,
+    alt: [
+      {
+        domain: "abstract",
+        levels: [
+          { word: "of", examples: "a member of the team \xB7 the top of the hill", gloss: "\u6574\u9AD4\u8207\u90E8\u5206" },
+          { word: "of", examples: "a cup of tea \xB7 a sense of humor", gloss: "\u5167\u5BB9\u8207\u7279\u8CEA" }
+        ],
+        hit: 0
+      }
+    ]
+  }
+};
+
+// src/grammar-visual/kinds/scope/index.ts
+var DOMAINS = ["time", "place", "abstract"];
+function parseSet2(o) {
+  const domain = oneOf(o.domain, DOMAINS);
+  const levels = arr(o.levels, 2, 3, (x3) => {
+    const lo2 = obj(x3);
+    if (!lo2) return null;
+    const word = str5(lo2.word, SHORT_MAX);
+    const examples = str5(lo2.examples, SHORT_MAX);
+    const gloss = str5(lo2.gloss, SHORT_MAX);
+    return word !== null && examples !== null && gloss !== null ? { word, examples, gloss } : null;
+  });
+  if (domain === null || levels === null) return null;
+  const hit = int(o.hit, 0, levels.length - 1);
+  return hit === null ? null : { domain, levels, hit };
+}
+var setProps2 = {
+  domain: sEnum(DOMAINS, "time\uFF1D\u6642\u9593\uFF1Bplace\uFF1D\u5730\u9EDE\uFF1Babstract\uFF1D\u62BD\u8C61\u95DC\u4FC2"),
+  levels: sArr(
+    sObj({
+      word: sStr("\u9019\u4E00\u5C64\u7684\u4ECB\u7CFB\u8A5E\uFF0C\u4F8B\u5982 in"),
+      examples: sStr("\u9019\u4E00\u5C64\u7684 2\u20133 \u500B\u4F8B\u5B50\uFF0C\u7528 \xB7 \u9694\u958B"),
+      gloss: sStr("\u9019\u4E00\u5C64\u662F\u4EC0\u9EBC\u7BC4\u570D\uFF0C\u7E41\u4E2D\u77ED\u53E5")
+    }),
+    "\u7531\u5927\uFF08\u5916\u5C64\uFF09\u5230\u5C0F\uFF08\u5167\u5C64\uFF092\u20133 \u5C64"
+  ),
+  hit: sInt("\u9019\u53E5\u7528\u5230\u7684\u662F\u7B2C\u5E7E\u5C64\uFF08\u5F9E 0 \u8D77\u7B97\uFF09")
+};
+var DOMAIN_LABEL = { time: "\u6642\u9593", place: "\u5730\u9EDE" };
+function setLabel(s2) {
+  return s2.domain === "abstract" ? s2.levels.map((l4) => l4.word).filter((w2, i, a2) => a2.indexOf(w2) === i).join(" / ") : DOMAIN_LABEL[s2.domain];
+}
+var scopeKind = {
+  kind: "scope",
+  parse(raw) {
+    const b = base(raw, "scope");
+    if (!b) return null;
+    const main = parseSet2(b.o);
+    const alt = arr(b.o.alt, 0, 1, (x3) => {
+      const ao = obj(x3);
+      return ao ? parseSet2(ao) : null;
+    });
+    if (main === null || alt === null) return null;
+    return { kind: "scope", sentence: b.sentence, explain: b.explain, ...main, alt };
+  },
+  schema: sObj({
+    ...baseSchema("scope"),
+    ...setProps2,
+    alt: sArr(sObj(setProps2), "\u5207\u63DB\u9215\u7684\u53E6\u4E00\u7D44\uFF08\u4F8B\u5982\u6642\u9593 \u2194 \u5730\u9EDE\uFF09\uFF1B\u6C92\u6709\u5C31\u7D66 []\uFF0C\u6700\u591A 1 \u500B")
+  }),
+  guide: "\u7BC4\u570D\u5927\u5C0F\uFF1A\u7528\u5C64\u5C64\u5957\u758A\u7684\u6846\u8868\u793A\u7BC4\u570D\u7531\u5927\u5230\u5C0F\uFF0C\u5927\u7684\u5728\u5916\u3002\ndomain \u586B time\u3001place \u6216 abstract\uFF1Blevels \u7531\u5927\u5230\u5C0F 2\u20133 \u5C64\uFF0C\u6BCF\u5C64\u6709 word\uFF08\u4ECB\u7CFB\u8A5E\uFF09\u3001examples\uFF082\u20133 \u500B\u4F8B\u5B50\u7528 \xB7 \u9694\u958B\uFF09\u3001gloss\uFF08\u9019\u5C64\u662F\u4EC0\u9EBC\u7BC4\u570D\uFF09\uFF1Bhit \u662F\u9019\u53E5\u7528\u5230\u7684\u90A3\u4E00\u5C64\uFF08\u5F9E 0 \u8D77\u7B97\uFF09\u3002\nalt \u653E\u53E6\u4E00\u7D44\u53EF\u5207\u63DB\u7684\u6846\uFF08\u4F8B\u5982\u4E3B\u7D44\u662F\u6642\u9593\uFF0Calt \u653E\u5730\u9EDE\uFF09\uFF0C\u6C92\u6709\u5C31\u7D66 []\u3002\nsentence \u7684 marks \u6A19\u51FA\u7528\u5230\u7684\u4ECB\u7CFB\u8A5E\u7247\u8A9E\u3002\n\u5E38\u898B\u932F\u8AA4\uFF1Alevels \u4E0D\u662F\u7531\u5927\u5230\u5C0F\u3001hit \u8D85\u51FA\u5C64\u6578\u3001\u4F8B\u5B50\u592A\u9577\u3002\u4F8B\u5916\uFF08at night\u3001in time / on time\uFF09\u5BEB\u9032 explain\u3002",
+  render(parent, v5, ctx) {
+    parent.appendChild(sentence(ctx, v5.sentence));
+    const sets = [{ domain: v5.domain, levels: v5.levels, hit: v5.hit }, ...v5.alt];
+    const host = add2(parent, ctx, "div", "gv-scope-host");
+    stateful(host, 0, (h, idx, set4) => {
+      const s2 = sets[idx];
+      if (sets.length > 1) h.appendChild(chips(ctx, { label: "\u5207\u63DB\u7BC4\u570D", options: sets.map(setLabel), selected: idx, onSelect: set4 }));
+      let box = add2(h, ctx, "div", "gv-scope-outer");
+      box.setAttribute("aria-label", "\u7BC4\u570D\u7531\u5927\u5230\u5C0F");
+      s2.levels.forEach((lv, i) => {
+        const isHit = i === s2.hit;
+        const layer = add2(box, ctx, "div", ["gv-scope-layer", isHit ? "is-hit" : "", i === s2.levels.length - 1 ? "is-last" : ""]);
+        const head = add2(layer, ctx, "div", "gv-scope-head");
+        if (i === s2.levels.length - 1) add2(head, ctx, "span", "gv-scope-dot");
+        add2(head, ctx, "strong", "gv-scope-word", lv.word);
+        add2(head, ctx, "span", "gv-scope-examples", lv.examples);
+        add2(head, ctx, "span", "gv-scope-gloss", isHit ? `${lv.gloss}\uFF08\u9019\u53E5\uFF09` : lv.gloss);
+        box = layer;
+      });
+    });
+    parent.appendChild(explain(ctx, v5.explain));
+  },
+  builtin: SCOPE_BUILTIN
+};
+
+// src/grammar-visual/kinds/clause/builtin.ts
+var CLAUSE_BUILTIN = {
+  "relative-clauses-basic": {
+    kind: "clause",
+    sentence: { text: "The woman who lives next door is a doctor.", marks: [{ text: "who lives next door", tone: "amber" }] },
+    explain: "\u95DC\u4FC2\u5B50\u53E5\u7DCA\u8DDF\u5728\u88AB\u4FEE\u98FE\u7684\u540D\u8A5E\u5F8C\u9762\uFF1B\u4EBA\u7528 who\uFF0C\u4E8B\u7269\u7528 which\uFF0Cthat \u5169\u8005\u90FD\u53EF\u4EE5\u3002\u62FF\u6389\u9EC3\u8272\u90A3\u6BB5\uFF0C\u4E3B\u5E79\u4ECD\u7136\u6210\u7ACB\u3002",
+    core: "The woman \u2026 is a doctor.",
+    clauses: [{ text: "who lives next door", type: "\u95DC\u4FC2\u5B50\u53E5\uFF08\u9650\u5B9A\uFF09", attachTo: "The woman", gloss: "\u4F4F\u5728\u9694\u58C1\u7684\uFF08\u90A3\u4F4D\u5973\u58EB\uFF09", depth: 1 }]
+  },
+  "relative-clauses-defining-non": {
+    kind: "clause",
+    sentence: { text: "My brother, who lives in Tokyo, is a nurse.", marks: [{ text: "who lives in Tokyo", tone: "amber" }] },
+    explain: "\u6709\u9017\u865F\u7684\u662F\u975E\u9650\u5B9A\u5B50\u53E5\uFF0C\u53EA\u662F\u88DC\u5145\u8CC7\u8A0A\uFF0C\u62FF\u6389\u4E0D\u5F71\u97FF\u4F60\u77E5\u9053\u662F\u8AB0\uFF1B\u6C92\u6709\u9017\u865F\u7684\u9650\u5B9A\u5B50\u53E5\u5247\u662F\u8FA8\u8B58\u7528\u7684\uFF0C\u62FF\u6389\u5C31\u4E0D\u77E5\u9053\u6307\u54EA\u4E00\u500B\u3002",
+    core: "My brother \u2026 is a nurse.",
+    clauses: [{ text: "who lives in Tokyo", type: "\u95DC\u4FC2\u5B50\u53E5\uFF08\u975E\u9650\u5B9A\uFF09", attachTo: "My brother", gloss: "\u88DC\u5145\uFF1A\u4ED6\u4F4F\u5728\u6771\u4EAC", depth: 1 }]
+  },
+  "advanced-relative-clauses": {
+    kind: "clause",
+    sentence: {
+      text: "I know the author whose book, which won a prize, was translated into ten languages.",
+      marks: [{ text: "whose book, which won a prize, was translated into ten languages", tone: "amber" }]
+    },
+    explain: "whose \u8868\u793A\u6240\u5C6C\uFF0C\u5F8C\u9762\u63A5\u540D\u8A5E\uFF1B\u5B50\u53E5\u88E1\u9084\u53EF\u4EE5\u518D\u5957\u4E00\u500B\u95DC\u4FC2\u5B50\u53E5\uFF08which won a prize \u4FEE\u98FE book\uFF09\uFF0C\u4E00\u5C64\u4E00\u5C64\u5F80\u5167\u8B80\u3002",
+    core: "I know the author.",
+    clauses: [
+      { text: "whose book was translated into ten languages", type: "\u95DC\u4FC2\u5B50\u53E5\uFF08whose\uFF09", attachTo: "the author", gloss: "\uFF08\u90A3\u4F4D\u4F5C\u8005\uFF09\u4ED6\u7684\u66F8\u88AB\u7FFB\u6210\u5341\u7A2E\u8A9E\u8A00", depth: 1 },
+      { text: "which won a prize", type: "\u95DC\u4FC2\u5B50\u53E5\uFF08\u975E\u9650\u5B9A\uFF09", attachTo: "book", gloss: "\u90A3\u672C\u66F8\u5F97\u904E\u734E", depth: 2 }
+    ]
+  },
+  "noun-clauses": {
+    kind: "clause",
+    sentence: { text: "I don't know what she wants.", marks: [{ text: "what she wants", tone: "amber" }] },
+    explain: "\u540D\u8A5E\u5B50\u53E5\u6574\u6BB5\u7576\u4E00\u500B\u540D\u8A5E\u7528\uFF0C\u9019\u88E1\u662F know \u7684\u53D7\u8A5E\u3002\u7591\u554F\u8A5E\u5F15\u5C0E\u7684\u540D\u8A5E\u5B50\u53E5\u7528\u9673\u8FF0\u8A9E\u5E8F\uFF08what she wants\uFF09\uFF0C\u4E0D\u7528\u554F\u53E5\u8A9E\u5E8F\u3002",
+    core: "I don't know \u2026",
+    clauses: [{ text: "what she wants", type: "\u540D\u8A5E\u5B50\u53E5\uFF08\u53D7\u8A5E\uFF09", attachTo: "know", gloss: "\u5979\u60F3\u8981\u4EC0\u9EBC\uFF08\u7576\u4F5C know \u7684\u53D7\u8A5E\uFF09", depth: 1 }]
+  },
+  "participle-clauses-intro": {
+    kind: "clause",
+    sentence: { text: "Walking down the street, I met an old friend.", marks: [{ text: "Walking down the street", tone: "amber" }] },
+    explain: "-ing \u5206\u8A5E\u5B50\u53E5\u8868\u793A\u4E3B\u52D5\u3001\u540C\u6642\u767C\u751F\uFF1B\u5B83\u7684\u610F\u7FA9\u4E3B\u8A5E\u5FC5\u9808\u548C\u4E3B\u53E5\u7684\u4E3B\u8A5E\u4E00\u6A23\uFF0C\u9019\u88E1\u8D70\u8DEF\u7684\u4EBA\u5C31\u662F I\u3002",
+    core: "I met an old friend.",
+    clauses: [{ text: "Walking down the street", type: "\u5206\u8A5E\u5B50\u53E5\uFF08-ing\uFF09", attachTo: "I met", gloss: "\u6211\u8D70\u5728\u8857\u4E0A\u7684\u6642\u5019\uFF08= While I was walking\u2026\uFF09", depth: 1 }]
+  },
+  "participle-reduced-clauses": {
+    kind: "clause",
+    sentence: { text: "Having finished the report, she went home.", marks: [{ text: "Having finished the report", tone: "amber" }] },
+    explain: "Having done \u8868\u793A\u9019\u500B\u52D5\u4F5C\u6BD4\u4E3B\u53E5\u5148\u5B8C\u6210\uFF0C\u7E2E\u6E1B\u81EA After she had finished\u2026\uFF1B\u5206\u8A5E\u7684\u610F\u7FA9\u4E3B\u8A5E\u8981\u548C\u4E3B\u53E5\u4E3B\u8A5E\u4E00\u81F4\uFF0C\u5426\u5247\u6703\u9020\u6210\u8AA4\u6703\u3002",
+    core: "She went home.",
+    clauses: [{ text: "Having finished the report", type: "\u5206\u8A5E\u5B50\u53E5\uFF08\u5B8C\u6210\uFF09", attachTo: "She went", gloss: "\u5BEB\u5B8C\u5831\u544A\u4E4B\u5F8C\uFF08= After she had finished\u2026\uFF09", depth: 1 }]
+  },
+  nominalization: {
+    kind: "clause",
+    sentence: {
+      text: "The rapid expansion of the company surprised everyone.",
+      marks: [{ text: "rapid expansion of the company", tone: "amber" }]
+    },
+    explain: "\u540D\u8A5E\u5316\u628A\u6574\u4EF6\u4E8B\u58D3\u6210\u4E00\u500B\u540D\u8A5E\u7247\u8A9E\u3002\u8B80\u4E0D\u61C2\u6642\u628A\u5B83\u9084\u539F\uFF1Athe company expanded rapidly\uFF08\u8AB0\u505A\u4E86\u4EC0\u9EBC\uFF09\uFF0C\u53E5\u5B50\u5C31\u6524\u958B\u4E86\u3002",
+    core: "The \u2026 surprised everyone.",
+    clauses: [{ text: "rapid expansion of the company", type: "\u540D\u8A5E\u5316", attachTo: "The", gloss: "\u9084\u539F\uFF1A\u516C\u53F8\u5FEB\u901F\u64F4\u5F35\uFF08The company expanded rapidly\uFF09", depth: 1 }]
+  }
+};
+
+// src/grammar-visual/kinds/clause/index.ts
+var clauseKind = {
+  kind: "clause",
+  parse(raw) {
+    const b = base(raw, "clause");
+    if (!b) return null;
+    const core = str5(b.o.core, SENTENCE_MAX);
+    let prev = 0;
+    let ok = true;
+    const clauses = arr(b.o.clauses, 1, 4, (x3) => {
+      const o = obj(x3);
+      if (!o) return null;
+      const text = str5(o.text, SENTENCE_MAX);
+      const type = str5(o.type, SHORT_MAX);
+      const attachTo = str5(o.attachTo, SHORT_MAX);
+      const gloss = str5(o.gloss, SENTENCE_MAX);
+      const depth = int(o.depth, 1, 3);
+      if (text === null || type === null || attachTo === null || gloss === null || depth === null) return null;
+      if (depth > prev + 1) ok = false;
+      prev = depth;
+      return { text, type, attachTo, gloss, depth };
+    });
+    if (core === null || clauses === null || !ok) return null;
+    return { kind: "clause", sentence: b.sentence, explain: b.explain, core, clauses };
+  },
+  schema: sObj({
+    ...baseSchema("clause"),
+    core: sStr("\u4E3B\u5E79\uFF1A\u628A\u5B50\u53E5\u62FF\u6389\u3001\u7528 \u2026 \u6A19\u51FA\u7F3A\u53E3\uFF0C\u4F8B\u5982\u300CThe book \u2026 was great.\u300D"),
+    clauses: sArr(
+      sObj({
+        text: sStr("\u5B50\u53E5\u539F\u6587\uFF0C\u5FC5\u9808\u662F\u4F8B\u53E5\u88E1\u7684\u4E00\u6BB5"),
+        type: sStr("\u7A2E\u985E\u540D\u7A31\uFF0C\u4F8B\u5982\u300C\u95DC\u4FC2\u5B50\u53E5\uFF08\u9650\u5B9A\uFF09\u300D\u300C\u540D\u8A5E\u5B50\u53E5\uFF08\u53D7\u8A5E\uFF09\u300D\u300C\u5206\u8A5E\u5B50\u53E5\uFF08-ing\uFF09\u300D\u300C\u540D\u8A5E\u5316\u300D"),
+        attachTo: sStr("\u639B\u5728\u54EA\u500B\u5B57\u6216\u7247\u8A9E\u5F8C\u9762"),
+        gloss: sStr("\u9019\u4E00\u6BB5\u7684\u767D\u8A71\u610F\u601D\uFF08\u7E41\u4E2D\uFF1B\u540D\u8A5E\u5316\u8981\u5BEB\u51FA\u9084\u539F\u5F8C\u7684\u53E5\u5B50\uFF09"),
+        depth: sInt("\u5957\u758A\u5C64\u6B21\uFF1A\u76F4\u63A5\u639B\u5728\u4E3B\u5E79\u662F 1\uFF0C\u639B\u5728\u5B50\u53E5\u88E1\u9762\u662F 2\uFF0C\u6700\u591A 3")
+      }),
+      "\u5B50\u53E5 1\u20134 \u500B\uFF0C\u4F9D\u51FA\u73FE\u9806\u5E8F\uFF1B\u5C64\u6B21\u4E0D\u80FD\u4E00\u6B21\u8DF3\u5169\u5C64"
+    )
+  }),
+  guide: "\u5B50\u53E5\u5957\u758A\uFF1A\u5148\u770B\u4E3B\u5E79\uFF0C\u518D\u770B\u6BCF\u500B\u5B50\u53E5\u639B\u5728\u54EA\u88E1\u3002\nsentence \u662F\u5B8C\u6574\u4F8B\u53E5\uFF0Cmarks \u7528 amber \u6A19\u51FA\u5B50\u53E5\u3002\ncore \u662F\u62FF\u6389\u5B50\u53E5\u5F8C\u7684\u4E3B\u5E79\uFF0C\u7F3A\u53E3\u7528\u300C\u2026\u300D\u8868\u793A\uFF0C\u4F8B\u5982\u300CThe book \u2026 was great.\u300D\u3002\nclauses \u4F9D\u51FA\u73FE\u9806\u5E8F\uFF0C\u6BCF\u500B\u6709 text\uFF08\u539F\u6587\uFF09\u3001type\uFF08\u7A2E\u985E\u540D\u7A31\uFF09\u3001attachTo\uFF08\u639B\u5728\u54EA\u500B\u5B57\u5F8C\u9762\uFF09\u3001gloss\uFF08\u767D\u8A71\u610F\u601D\uFF09\u3001depth\uFF08\u76F4\u63A5\u639B\u4E3B\u5E79\uFF1D1\uFF1B\u639B\u5728\u5B50\u53E5\u88E1\u9762\uFF1D2\uFF1B\u6700\u591A 3\uFF09\u3002\n\u540D\u8A5E\u5316\uFF08the rapid expansion of\u2026\uFF09\u4E5F\u7528\u9019\u500B\u7248\u9762\uFF1Atext \u586B\u540D\u8A5E\u5316\u7247\u8A9E\uFF0Cgloss \u5BEB\u9084\u539F\u6210\u300C\u8AB0\u505A\u4E86\u4EC0\u9EBC\u300D\u7684\u53E5\u5B50\u3002\n\u5E38\u898B\u932F\u8AA4\uFF1Adepth \u4E00\u6B21\u8DF3\u5169\u5C64\u3001core \u6C92\u62FF\u6389\u5B50\u53E5\u3001gloss \u5BEB\u6210\u6587\u6CD5\u8853\u8A9E\u3002",
+  render(parent, v5, ctx) {
+    parent.appendChild(sentence(ctx, v5.sentence));
+    const host = add2(parent, ctx, "div", "gv-clause-host");
+    stateful(host, true, (h, expanded, set4) => {
+      h.appendChild(
+        chips(ctx, { label: "\u986F\u793A\u65B9\u5F0F", options: ["\u5C55\u958B\u5B50\u53E5", "\u53EA\u770B\u4E3B\u5E79"], selected: expanded ? 0 : 1, onSelect: (i) => set4(i === 0) })
+      );
+      const main = card(ctx, "accent", "\u4E3B\u5E79\uFF08\u5148\u8B80\u9019\u500B\uFF09");
+      main.classList.add("gv-clause-core");
+      add2(main, ctx, "div", "gv-clause-core-text", v5.core);
+      h.appendChild(main);
+      if (!expanded) {
+        add2(h, ctx, "div", "gv-note", "\u5B50\u53E5\u5148\u6536\u8D77\u4F86\u4E86\uFF1B\u6309\u300C\u5C55\u958B\u5B50\u53E5\u300D\u770B\u5B83\u5011\u639B\u5728\u54EA\u88E1\u3002");
+        return;
+      }
+      for (const c4 of v5.clauses) {
+        const row = add2(h, ctx, "div", ["gv-clause-row", `gv-clause-d${c4.depth}`]);
+        const link2 = add2(row, ctx, "div", "gv-clause-link");
+        add2(link2, ctx, "span", "gv-clause-arrow", "\u21B3");
+        const at = add2(link2, ctx, "span", void 0, "\u639B\u5728 ");
+        add2(at, ctx, "strong", void 0, c4.attachTo);
+        at.appendChild(ctx.doc.createTextNode(" \u5F8C\u9762"));
+        const box = card(ctx, "amber", `\u5B50\u53E5 \xB7 ${c4.type}`);
+        add2(box, ctx, "div", "gv-clause-text", c4.text);
+        add2(box, ctx, "div", "gv-note", `= ${c4.gloss}`);
+        row.appendChild(box);
+      }
+    });
+    parent.appendChild(explain(ctx, v5.explain));
+  },
+  builtin: CLAUSE_BUILTIN
+};
+
+// src/grammar-visual/kinds/compare/builtin.ts
+var BUILTIN6 = {
+  "comparatives-superlatives": {
+    kind: "compare",
+    sentence: {
+      text: "Tom is taller than Amy, but Ben is the tallest.",
+      marks: [
+        { text: "taller than", tone: "accent" },
+        { text: "the tallest", tone: "accent" }
+      ]
+    },
+    explain: "\u5169\u500B\u4EBA\u6BD4\u7528 taller than\uFF1B\u4E09\u500B\u4EE5\u4E0A\u6311\u51FA\u7B2C\u4E00\u540D\u7528 the tallest\uFF0C\u524D\u9762\u4E00\u5B9A\u6709 the\u3002",
+    items: [
+      { label: "Amy", value: 50, note: "" },
+      { label: "Tom", value: 70, note: "\u6BD4 Amy \u9AD8" },
+      { label: "Ben", value: 85, note: "\u5168\u90E8\u88E1\u6700\u9AD8" }
+    ],
+    relation: "comparative",
+    focus: "Tom",
+    forms: ["tall", "taller", "tallest"]
+  },
+  "comparison-advanced": {
+    kind: "compare",
+    sentence: {
+      text: "The red bag is as expensive as the blue bag, but less expensive than the black one.",
+      marks: [
+        { text: "as expensive as", tone: "accent" },
+        { text: "less expensive than", tone: "amber" }
+      ]
+    },
+    explain: "as ... as \u8868\u793A\u5169\u8005\u4E00\u6A23\uFF1Bless ... than \u8868\u793A\u6BD4\u8F03\u5C11\uFF0C\u548C more ... than \u525B\u597D\u76F8\u53CD\u3002",
+    items: [
+      { label: "Red", value: 60, note: "\u548C Blue \u4E00\u6A23\u8CB4" },
+      { label: "Blue", value: 60, note: "\u548C Red \u4E00\u6A23\u8CB4" },
+      { label: "Black", value: 90, note: "\u6700\u8CB4" }
+    ],
+    relation: "equal",
+    focus: "Red",
+    forms: ["expensive", "as expensive as", "less expensive than"]
+  }
+};
+
+// src/grammar-visual/kinds/compare/index.ts
+var RELATIONS2 = ["comparative", "equal", "superlative"];
+var RELATION_LABEL2 = {
+  comparative: "\u6BD4\u8F03",
+  equal: "\u4E00\u6A23",
+  superlative: "\u6700\u9AD8"
+};
+var RELATION_HINT = {
+  comparative: "\u5169\u8005\u76F8\u6BD4\uFF1A\u5F62\u5BB9\u8A5E\u52A0 -er\uFF08\u6216 more\uFF09\u518D\u63A5 than\uFF0C\u770B\u8AB0\u6BD4\u8F03\u591A\u3002",
+  equal: "\u7A0B\u5EA6\u4E00\u6A23\uFF1Aas + \u5F62\u5BB9\u8A5E + as\uFF0C\u5169\u689D\u9577\u5EA6\u4E00\u6A23\u3002",
+  superlative: "\u4E09\u8005\u4EE5\u4E0A\u6311\u7B2C\u4E00\u540D\uFF1Athe + -est\uFF08\u6216 the most\uFF09\uFF0C\u524D\u9762\u4E00\u5B9A\u6709 the\u3002"
+};
+function parse9(raw) {
+  const b = base(raw, "compare");
+  if (!b) return null;
+  const items = arr(b.o.items, 2, 6, (x3) => {
+    const o = obj(x3);
+    if (!o) return null;
+    const label = str5(o.label, 20);
+    const value = num2(o.value, 1, 100);
+    const note = str5(o.note, SHORT_MAX, true);
+    return label !== null && value !== null && note !== null ? { label, value, note } : null;
+  });
+  const relation = oneOf(b.o.relation, RELATIONS2);
+  const focus = str5(b.o.focus, 20);
+  const forms = arr(b.o.forms, 0, 4, (x3) => str5(x3, 30));
+  if (!items || !relation || focus === null || !forms) return null;
+  if (!items.some((it) => it.label === focus)) return null;
+  return { kind: "compare", sentence: b.sentence, explain: b.explain, items, relation, focus, forms };
+}
+var compareKind = {
+  kind: "compare",
+  parse: parse9,
+  schema: sObj({
+    ...baseSchema("compare"),
+    items: sArr(
+      sObj({
+        label: sStr("\u6BD4\u8F03\u5C0D\u8C61\u7684\u540D\u5B57\uFF0C20 \u5B57\u4EE5\u5167\uFF0C\u4F8B\u5982 Amy"),
+        value: sNum("\u9577\u689D\u9577\u5EA6\uFF0C1\u2013100\uFF0C\u4F9D\u771F\u5BE6\u5927\u5C0F\u6BD4\u4F8B\uFF1B\u300C\u4E00\u6A23\u300D\u7684\u5169\u8005\u586B\u76F8\u540C\u7684\u503C"),
+        note: sStr('\u9577\u689D\u65C1\u7684\u77ED\u8AAA\u660E\uFF0C\u4F8B\u5982\u300C\u6BD4 Amy \u9AD8\u300D\uFF1B\u4E0D\u9700\u8981\u586B ""')
+      }),
+      "2\u20136 \u500B\u6BD4\u8F03\u5C0D\u8C61\uFF0C\u7531\u5C0F\u5230\u5927\u6392\u5217"
+    ),
+    relation: sEnum(RELATIONS2, "\u9019\u53E5\u5728\u6BD4\u4EC0\u9EBC\uFF1Acomparative\uFF1D\u5169\u8005\u6BD4\u8F03\uFF1Bequal\uFF1D\u4E00\u6A23\uFF1Bsuperlative\uFF1D\u6700\u9AD8\u7D1A"),
+    focus: sStr("\u9019\u53E5\u4E3B\u8981\u5728\u8B1B\u7684\u90A3\u4E00\u500B\uFF0C\u5FC5\u9808\u7B49\u65BC items \u88E1\u67D0\u500B label"),
+    forms: sArr(sStr("\u5F62\u5BB9\u8A5E\u7684\u4E00\u7A2E\u8B8A\u5316\uFF0C\u4F8B\u5982 taller"), "\u5F62\u5BB9\u8A5E\u7684\u8B8A\u5316\uFF0C\u5982 tall\u3001taller\u3001tallest\uFF1B\u6C92\u6709\u586B []")
+  }),
+  guide: '\u7528\u6A6B\u5411\u9577\u689D\u8868\u9054\u300C\u8AB0\u6BD4\u8F03\u591A\u300D\u3002sentence \u653E\u4E00\u53E5\u6BD4\u8F03\u53E5\uFF0Cmarks \u6A19\u51FA taller than\u3001as ... as\u3001the tallest \u9019\u985E\u6BD4\u8F03\u7D50\u69CB\uFF08accent\uFF09\u3002items \u653E\u53E5\u4E2D\u63D0\u5230\u7684\u5C0D\u8C61\uFF0Cvalue \u662F 1\u2013100 \u7684\u9577\u5EA6\uFF0C\u8981\u548C\u53E5\u5B50\u610F\u601D\u4E00\u81F4\uFF08\u8F03\u9AD8\u7684\u503C\u8F03\u5927\uFF1Bas ... as \u7684\u5169\u8005\u503C\u76F8\u540C\uFF09\u3002note \u662F\u9577\u689D\u65C1\u7684\u4E00\u884C\u5C0F\u5B57\uFF0C\u4F8B\u5982\u300C\u6BD4 Amy \u9AD8\u300D\u300C\u5168\u90E8\u88E1\u6700\u9AD8\u300D\uFF0C\u4E0D\u9700\u8981\u586B ""\u3002focus \u5FC5\u9808\u662F items \u88E1\u7684\u4E00\u500B label\uFF0C\u5373\u53E5\u5B50\u7684\u4E3B\u89D2\u3002relation \u586B\u9019\u53E5\u5C6C\u65BC\u54EA\u4E00\u985E\u3002forms \u653E\u5F62\u5BB9\u8A5E\u7684\u8B8A\u5316\uFF08tall, taller, tallest\uFF09\uFF0C\u6C92\u6709\u5C31 []\u3002\u5E38\u898B\u932F\u8AA4\uFF1Avalue \u8207\u53E5\u610F\u76F8\u53CD\u3001focus \u4E0D\u5728 items \u88E1\u3001items \u653E\u4E86\u53E5\u5B50\u6C92\u63D0\u5230\u7684\u5C0D\u8C61\u3002',
+  render(parent, v5, ctx) {
+    parent.appendChild(sentence(ctx, v5.sentence));
+    const host = add2(parent, ctx, "div", "gv-compare-host");
+    stateful(host, RELATIONS2.indexOf(v5.relation), (h, sel, set4) => {
+      const rel = RELATIONS2[sel];
+      const bars = add2(h, ctx, "div", "gv-compare-bars");
+      bars.setAttribute("role", "list");
+      const max = Math.max(...v5.items.map((it) => it.value));
+      for (const it of v5.items) {
+        const isFocus = it.label === v5.focus;
+        const isTop = it.value === max;
+        const row = add2(bars, ctx, "div", ["gv-compare-row", isFocus ? "is-focus" : "", isTop ? "is-top" : ""]);
+        row.setAttribute("role", "listitem");
+        add2(row, ctx, "span", "gv-compare-label", it.label);
+        const track2 = add2(row, ctx, "div", "gv-compare-track");
+        const bar2 = add2(track2, ctx, "div", "gv-compare-bar");
+        bar2.style.width = `${it.value}%`;
+        if (it.note) add2(track2, ctx, "span", "gv-compare-note", it.note);
+      }
+      add2(h, ctx, "div", "gv-explain", RELATION_HINT[rel]);
+      h.appendChild(
+        chips(ctx, {
+          label: "\u5207\u63DB\u6BD4\u8F03\u65B9\u5F0F",
+          options: RELATIONS2.map((r) => RELATION_LABEL2[r]),
+          selected: sel,
+          onSelect: set4
+        })
+      );
+    });
+    parent.appendChild(explain(ctx, v5.explain));
+    if (v5.forms.length > 0) {
+      const f = add2(parent, ctx, "div", "gv-compare-forms");
+      f.setAttribute("aria-label", "\u5F62\u5BB9\u8A5E\u8B8A\u5316");
+      add2(f, ctx, "span", "gv-compare-form", v5.forms.join(" \u2192 "));
+    }
+  },
+  builtin: BUILTIN6
+};
+
+// src/grammar-visual/kinds/link/builtin.ts
+var BUILTIN7 = {
+  "personal-pronouns": {
+    kind: "link",
+    sentence: { text: "Mia lost her keys, so she looked for them.", marks: [{ text: "she", tone: "accent" }] },
+    explain: "\u4EE3\u540D\u8A5E\u8981\u6307\u56DE\u524D\u9762\u63D0\u904E\u7684\u4EBA\u4E8B\u7269\uFF1B\u4E3B\u8A5E\u4F4D\u7F6E\u7528\u4E3B\u683C she\uFF0C\u653E\u5728\u540D\u8A5E\u524D\u8AAA\u660E\u8AB0\u7684\u7528\u6240\u6709\u683C her\uFF0C\u53D7\u8A5E\u4F4D\u7F6E\u7528\u53D7\u683C them\u3002",
+    links: [
+      { from: "she", to: "Mia", kind: "refer", why: "\u4E3B\u8A5E\u4F4D\u7F6E\u7528\u4E3B\u683C she\uFF0C\u4E0D\u662F her" },
+      { from: "her", to: "Mia", kind: "modify", why: "her \u662F\u6240\u6709\u683C\uFF0C\u8AAA\u660E\u662F\u8AB0\u7684\u9470\u5319" },
+      { from: "them", to: "keys", kind: "refer", why: "keys \u662F\u8907\u6578\uFF0C\u6240\u4EE5\u7528\u53D7\u683C them" }
+    ]
+  },
+  "reflexive-pronouns": {
+    kind: "link",
+    sentence: { text: "Tom cut himself while he was cooking by himself.", marks: [{ text: "himself", tone: "accent" }] },
+    explain: "\u52D5\u4F5C\u56DE\u5230\u505A\u52D5\u4F5C\u7684\u4EBA\u8EAB\u4E0A\uFF0C\u5C31\u7528\u53CD\u8EAB\u4EE3\u540D\u8A5E\uFF1Bby himself \u5247\u8868\u793A\u300C\u81EA\u5DF1\u4E00\u500B\u4EBA\u300D\u3002",
+    links: [
+      { from: "himself", to: "Tom", kind: "refer", why: "\u4E3B\u8A5E\u548C\u53D7\u8A5E\u662F\u540C\u4E00\u500B\u4EBA\uFF0C\u53D7\u8A5E\u7528 himself" },
+      { from: "he", to: "Tom", kind: "refer", why: "he \u662F\u4E00\u822C\u4E3B\u683C\u4EE3\u540D\u8A5E\uFF0C\u4E0D\u662F\u53CD\u8EAB" },
+      { from: "by himself", to: "Tom", kind: "refer", why: "by himself \u8868\u793A\u7368\u81EA\u3001\u6C92\u4EBA\u5E6B\u5FD9" }
+    ]
+  },
+  "possessive-s": {
+    kind: "link",
+    sentence: { text: "Tom's sister borrowed the boys' bikes.", marks: [{ text: "Tom's", tone: "accent" }] },
+    explain: "\u55AE\u6578\u540D\u8A5E\u52A0 's\uFF0C\u8907\u6578\u540D\u8A5E\uFF08\u5DF2\u7D93\u6709 s\uFF09\u53EA\u52A0 '\uFF1B\u6240\u6709\u683C\u7684\u5B57\u90FD\u9023\u5230\u300C\u88AB\u64C1\u6709\u300D\u7684\u6771\u897F\u3002",
+    links: [
+      { from: "Tom's", to: "sister", kind: "modify", why: "\u55AE\u6578 Tom \u52A0 's\uFF0C\u8868\u793A\u9019\u500B\u59CA\u59CA\u662F Tom \u7684" },
+      { from: "boys'", to: "bikes", kind: "modify", why: "\u8907\u6578 boys \u5DF2\u7D93\u6709 s\uFF0C\u53EA\u52A0 '" }
+    ]
+  },
+  demonstratives: {
+    kind: "link",
+    sentence: { text: "These apples are fresh, but those over there are old.", marks: [{ text: "These", tone: "accent" }] },
+    explain: "\u8FD1\u7684\u7528 this / these\uFF0C\u9060\u7684\u7528 that / those\uFF1B\u55AE\u8907\u6578\u8981\u8DDF\u5F8C\u9762\u7684\u540D\u8A5E\u4E00\u81F4\uFF0C\u55AE\u7368\u51FA\u73FE\u6642\u5C31\u662F\u4EE3\u540D\u8A5E\u3002",
+    links: [
+      { from: "These", to: "apples", kind: "modify", why: "apples \u662F\u8907\u6578\u53C8\u5728\u8FD1\u8655\uFF0C\u7528 These" },
+      { from: "those", to: "apples", kind: "refer", why: "those \u55AE\u7368\u7576\u4EE3\u540D\u8A5E\uFF0C\u6307\u9060\u8655\u90A3\u4E9B\u860B\u679C" },
+      { from: "over there", to: "those", kind: "modify", why: "over there \u8868\u793A\u8DDD\u96E2\u9060\uFF0C\u6240\u4EE5\u7528 those" }
+    ]
+  },
+  "ellipsis-substitution": {
+    kind: "link",
+    sentence: {
+      text: "Tom likes tea, and so does Amy, but I don't, and neither does Ben.",
+      marks: [{ text: "so does", tone: "accent" }]
+    },
+    explain: "so does Amy \u53D6\u4EE3\u300CAmy \u4E5F\u559C\u6B61\u8336\u300D\uFF0Cneither does Ben \u53D6\u4EE3\u300CBen \u4E5F\u4E0D\u559C\u6B61\u300D\uFF0C\u4E0D\u7528\u91CD\u8907\u524D\u9762\u6574\u53E5\u3002",
+    links: [
+      { from: "so does Amy", to: "likes tea", kind: "refer", why: "\u80AF\u5B9A\u53E5\u5F8C\u9762\u7528 so + \u52A9\u52D5\u8A5E + \u4E3B\u8A5E\uFF0C\u8868\u793A\u300C\u4E5F\u662F\u300D" },
+      { from: "neither does Ben", to: "don't", kind: "refer", why: "\u5426\u5B9A\u53E5\u5F8C\u9762\u7528 neither + \u52A9\u52D5\u8A5E + \u4E3B\u8A5E\uFF0C\u8868\u793A\u300C\u4E5F\u4E0D\u300D" }
+    ]
+  },
+  "adjectives-adverbs": {
+    kind: "link",
+    sentence: { text: "Mia is a careful driver, and she drives carefully.", marks: [{ text: "careful", tone: "amber" }] },
+    explain: "\u5F62\u5BB9\u8A5E\u4FEE\u98FE\u540D\u8A5E\uFF0C\u526F\u8A5E\uFF08\u901A\u5E38\u662F\u5F62\u5BB9\u8A5E\u52A0 -ly\uFF09\u4FEE\u98FE\u52D5\u4F5C\uFF1B\u5169\u500B\u9577\u5F97\u50CF\uFF0C\u4F46\u9023\u5230\u7684\u5B57\u4E0D\u540C\u3002",
+    links: [
+      { from: "careful", to: "driver", kind: "modify", why: "\u5F62\u5BB9\u8A5E\u4FEE\u98FE\u540D\u8A5E driver" },
+      { from: "carefully", to: "drives", kind: "modify", why: "\u526F\u8A5E\u4FEE\u98FE\u52D5\u4F5C drives" },
+      { from: "she", to: "Mia", kind: "refer", why: "she \u6307\u56DE\u524D\u9762\u7684 Mia" }
+    ]
+  }
+};
+
+// src/grammar-visual/kinds/link/index.ts
+var KINDS = ["refer", "modify"];
+function parse10(raw) {
+  const b = base(raw, "link");
+  if (!b) return null;
+  const links = arr(b.o.links, 1, 6, (x3) => {
+    const o = obj(x3);
+    if (!o) return null;
+    const from = str5(o.from, 40);
+    const to = str5(o.to, 40);
+    const kind = oneOf(o.kind, KINDS);
+    const why = str5(o.why, SHORT_MAX);
+    if (from === null || to === null || kind === null || why === null) return null;
+    if (locate(b.sentence.text, from) < 0 || locate(b.sentence.text, to) < 0) return null;
+    return { from, to, kind, why };
+  });
+  if (!links) return null;
+  return { kind: "link", sentence: b.sentence, explain: b.explain, links };
+}
+var linkKind = {
+  kind: "link",
+  parse: parse10,
+  schema: sObj({
+    ...baseSchema("link"),
+    links: sArr(
+      sObj({
+        from: sStr("\u88AB\u8FFD\u554F\u7684\u90A3\u500B\u5B57\uFF08\u4F8B\u5982\u4EE3\u540D\u8A5E\u6216\u526F\u8A5E\uFF09\uFF0C\u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728\u4F8B\u53E5\u4E2D"),
+        to: sStr("\u5B83\u9023\u5230\u7684\u5B57\uFF08\u6307\u56DE\u7684\u540D\u8A5E\u6216\u88AB\u4FEE\u98FE\u7684\u5B57\uFF09\uFF0C\u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728\u4F8B\u53E5\u4E2D"),
+        kind: sEnum(KINDS, "refer\uFF1D\u6307\u56DE\u67D0\u4EBA\u4E8B\u7269\uFF08\u4EE3\u540D\u8A5E\uFF09\uFF1Bmodify\uFF1D\u4FEE\u98FE\u67D0\u500B\u5B57\uFF08\u5F62\u5BB9\u8A5E\u3001\u526F\u8A5E\u3001\u6307\u793A\u8A5E\uFF09"),
+        why: sStr("\u70BA\u4EC0\u9EBC\u9019\u6A23\u9023\uFF0C\u4E00\u884C\u7E41\u4E2D\uFF0C60 \u5B57\u4EE5\u5167")
+      }),
+      "1\u20136 \u689D\u9023\u7DDA\uFF0C\u7531\u91CD\u8981\u5230\u6B21\u8981"
+    )
+  }),
+  guide: "\u9019\u500B\u7248\u9762\u56DE\u7B54\u300C\u9019\u500B\u5B57\u6307\u8AB0\u3001\u4FEE\u98FE\u8AB0\u300D\u3002sentence \u653E\u4E00\u53E5\u6709\u4EE3\u540D\u8A5E\u3001\u53CD\u8EAB\u4EE3\u540D\u8A5E\u3001\u6240\u6709\u683C\u3001\u6307\u793A\u8A5E\u3001\u66FF\u4EE3\u8A5E\u6216\u5F62\u5BB9\u8A5E\u526F\u8A5E\u7684\u82F1\u6587\u4F8B\u53E5\u3002links \u6BCF\u4E00\u689D\u662F\u4E00\u500B from \u2192 to\uFF1Afrom \u662F\u88AB\u554F\u7684\u5B57\uFF0Cto \u662F\u5B83\u9023\u5230\u7684\u5B57\uFF0C\u5169\u500B\u90FD\u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728\u4F8B\u53E5\u88E1\uFF08\u5927\u5C0F\u5BEB\u4E00\u81F4\uFF09\u3002kind \u586B refer\uFF08\u6307\u56DE\u4EBA\u4E8B\u7269\uFF09\u6216 modify\uFF08\u4FEE\u98FE\uFF09\u3002why \u7528\u4E00\u884C\u7E41\u4E2D\u8AAA\u660E\u70BA\u4EC0\u9EBC\u9019\u6A23\u9023\uFF0C\u4E5F\u53EF\u4EE5\u9EDE\u51FA\u7528\u932F\u7684\u5E38\u898B\u539F\u56E0\u3002\u7B2C\u4E00\u689D\u653E\u6700\u91CD\u8981\u7684\uFF0C\u4F7F\u7528\u8005\u6703\u5148\u770B\u5230\u5B83\u3002\u5E38\u898B\u932F\u8AA4\uFF1Afrom \u6216 to \u6C92\u51FA\u73FE\u5728\u53E5\u5B50\u88E1\u3001\u4E00\u53E5\u585E\u592A\u591A\u9023\u7DDA\uFF08\u8D85\u904E 6 \u689D\uFF09\u3002",
+  render(parent, v5, ctx) {
+    const host = add2(parent, ctx, "div", "gv-link-host");
+    stateful(host, 0, (h, sel, set4) => {
+      const cur = v5.links[sel];
+      const words = [cur.from, cur.to].filter((w2, i, a2) => a2.indexOf(w2) === i);
+      h.appendChild(sentence(ctx, markWords(v5.sentence.text, words, cur.kind === "refer" ? "accent" : "amber")));
+      const list2 = add2(h, ctx, "ul", "gv-link-list");
+      list2.setAttribute("aria-label", "\u9023\u7DDA\u6E05\u55AE");
+      v5.links.forEach((l4, i) => {
+        const li = add2(list2, ctx, "li", "gv-link-item");
+        const btn = add2(li, ctx, "button", ["gv-link-row", `is-${l4.kind}`, i === sel ? "is-on" : ""]);
+        btn.setAttribute("type", "button");
+        btn.setAttribute("aria-pressed", String(i === sel));
+        add2(btn, ctx, "span", "gv-link-pair", `${l4.from} \u2192 ${l4.to}`);
+        add2(btn, ctx, "span", "gv-link-kind", l4.kind === "refer" ? "\u6307\u56DE" : "\u4FEE\u98FE");
+        if (i === sel) add2(btn, ctx, "span", "gv-link-why", l4.why);
+        btn.addEventListener("click", () => {
+          if (i !== sel) set4(i);
+        });
+      });
+    });
+    parent.appendChild(explain(ctx, v5.explain));
+    add2(parent, ctx, "div", "gv-note", "\u9EDE\u4E00\u5217\uFF0C\u53E5\u5B50\u88E1\u5169\u7AEF\u7684\u5B57\u6703\u4E00\u8D77\u4EAE\u8D77\u4F86\u3002\u6307\u56DE\u4EBA\u4E8B\u7269\u7528\u7D2B\u8272\uFF0C\u4FEE\u98FE\u7528\u9EC3\u8272\u3002");
+  },
+  builtin: BUILTIN7
+};
+
+// src/grammar-visual/kinds/agreement/builtin.ts
+var BUILTIN8 = {
+  "be-verb": {
+    kind: "agreement",
+    sentence: {
+      text: "My sister and I are in the same class.",
+      marks: [
+        { text: "sister and I", tone: "accent" },
+        { text: "are", tone: "accent" }
+      ]
+    },
+    explain: "\u7528 and \u9023\u8D77\u4F86\u7684\u5169\u500B\u4EBA\u662F\u8907\u6578\uFF0C\u6240\u4EE5\u4E0D\u7BA1\u88E1\u9762\u6709\u6C92\u6709 I\uFF0C\u90FD\u7528 are\uFF0C\u4E0D\u7528 am\u3002",
+    head: "sister and I",
+    number: "plural",
+    skip: "",
+    verb: "are",
+    steps: [
+      "\u627E\u4E3B\u8A5E\uFF1Asister and I\uFF0C\u5169\u500B\u4EBA\u7528 and \u9023\u8D77\u4F86",
+      "\u5169\u500B\u4EE5\u4E0A\u7528 and \u9023\u63A5 \u2192 \u8907\u6578",
+      "\u8907\u6578\u4E3B\u8A5E\u914D are\uFF0C\u4E0D\u662F am / is"
+    ],
+    traps: [
+      { example: "Are you ready?", note: "\u7591\u554F\u53E5\u628A be \u63D0\u524D\uFF0C\u4ECD\u7136\u770B you \u4F86\u9078 are" },
+      { example: "She is not tired.", note: "\u5426\u5B9A\u7684 not \u653E\u5728 be \u52D5\u8A5E\u5F8C\u9762" },
+      { example: "I am a student.", note: "\u53EA\u6709 I \u914D am\uFF0C\u5176\u4ED6\u55AE\u6578\u7528 is" }
+    ]
+  },
+  "there-is-are": {
+    kind: "agreement",
+    sentence: {
+      text: "There are two cats on the sofa.",
+      marks: [
+        { text: "are", tone: "accent" },
+        { text: "cats", tone: "accent" },
+        { text: "on the sofa", tone: "strike" }
+      ]
+    },
+    explain: "there \u53EA\u662F\u5F15\u51FA\u53E5\u5B50\uFF0C\u771F\u6B63\u7684\u4E3B\u8A5E\u5728 be \u52D5\u8A5E\u5F8C\u9762\uFF1B\u52D5\u8A5E\u8981\u8DDF\u5F8C\u9762\u7684\u540D\u8A5E cats \u4E00\u81F4\u3002",
+    head: "cats",
+    number: "plural",
+    skip: "on the sofa",
+    verb: "are",
+    steps: [
+      "there \u4E0D\u662F\u4E3B\u8A5E\uFF0C\u5148\u8DF3\u904E",
+      "\u770B be \u52D5\u8A5E\u5F8C\u9762\u7684\u540D\u8A5E\uFF1Atwo cats\uFF0C\u6838\u5FC3\u662F cats\uFF08\u8907\u6578\uFF09",
+      "on the sofa \u53EA\u8AAA\u660E\u4F4D\u7F6E\uFF0C\u5148\u5283\u6389",
+      "\u52D5\u8A5E\u8DDF cats \u914D \u2192 are"
+    ],
+    traps: [
+      { example: "There is a cat and two dogs.", note: "\u53E3\u8A9E\u5E38\u770B\u96E2\u52D5\u8A5E\u6700\u8FD1\u7684\u540D\u8A5E\uFF0C\u6B63\u5F0F\u5BEB\u6CD5\u770B\u5168\u90E8" },
+      { example: "Is there any milk?", note: "\u7591\u554F\u53E5\u628A is \u63D0\u524D\uFF0Cmilk \u4E0D\u53EF\u6578\u7528 is" },
+      { example: "There aren't any seats.", note: "\u5426\u5B9A\u53E5 not \u52A0\u5728 be \u5F8C\u9762" }
+    ]
+  },
+  "agreement-difficult": {
+    kind: "agreement",
+    sentence: {
+      text: "The number of students in the classes is growing.",
+      marks: [
+        { text: "number", tone: "accent" },
+        { text: "of students in the classes", tone: "strike" },
+        { text: "is", tone: "accent" }
+      ]
+    },
+    explain: "the number of \u7684\u6838\u5FC3\u662F number\uFF08\u55AE\u6578\uFF09\uFF1Bstudents \u96E2\u52D5\u8A5E\u518D\u8FD1\u4E5F\u53EA\u662F\u4FEE\u98FE\uFF0C\u6240\u4EE5\u7528 is\u3002",
+    head: "number",
+    number: "singular",
+    skip: "of students in the classes",
+    verb: "is",
+    steps: [
+      "\u627E\u4E3B\u8A5E\u7684\u6838\u5FC3\u540D\u8A5E\uFF1Anumber\uFF08\u55AE\u6578\uFF09",
+      "\u4E2D\u9593\u7684 of students in the classes \u53EA\u662F\u4FEE\u98FE\uFF0C\u5148\u5283\u6389",
+      "\u52D5\u8A5E\u8DDF number \u914D \u2192 is"
+    ],
+    traps: [
+      { example: "A number of students are late.", note: "a number of \u7B49\u65BC\u300C\u5F88\u591A\u300D\uFF0C\u52D5\u8A5E\u770B students\uFF0C\u7528\u8907\u6578" },
+      { example: "The team is winning. / The team are arguing.", note: "\u96C6\u5408\u540D\u8A5E\u8996\u70BA\u4E00\u9AD4\u7528\u55AE\u6578\uFF0C\u5F37\u8ABF\u6BCF\u500B\u4EBA\u7528\u8907\u6578" },
+      { example: "Each of them has a key.", note: "\u6838\u5FC3\u662F each\uFF0C\u55AE\u6578" }
+    ]
+  }
+};
+
+// src/grammar-visual/kinds/agreement/index.ts
+var NUMBERS = ["singular", "plural"];
+function parse11(raw) {
+  const b = base(raw, "agreement");
+  if (!b) return null;
+  const head = str5(b.o.head, 30);
+  const number = oneOf(b.o.number, NUMBERS);
+  const skip = str5(b.o.skip, SHORT_MAX, true);
+  const verb = str5(b.o.verb, 20);
+  const steps = arr(b.o.steps, 2, 5, (x3) => str5(x3, SHORT_MAX + 20));
+  const traps = arr(b.o.traps, 0, 4, (x3) => {
+    const o = obj(x3);
+    if (!o) return null;
+    const example = str5(o.example, SHORT_MAX + 20);
+    const note = str5(o.note, SHORT_MAX);
+    return example !== null && note !== null ? { example, note } : null;
+  });
+  if (head === null || !number || skip === null || verb === null || !steps || !traps) return null;
+  const text = b.sentence.text;
+  if (!text.includes(head) || !text.includes(verb) || skip !== "" && !text.includes(skip)) return null;
+  return { kind: "agreement", sentence: b.sentence, explain: b.explain, head, number, skip, verb, steps, traps };
+}
+var agreementKind = {
+  kind: "agreement",
+  parse: parse11,
+  schema: sObj({
+    ...baseSchema("agreement"),
+    head: sStr("\u4E3B\u8A5E\u7684\u6838\u5FC3\u540D\u8A5E\uFF0C\u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728\u4F8B\u53E5\u4E2D"),
+    number: sEnum(NUMBERS, "\u6838\u5FC3\u540D\u8A5E\u662F\u55AE\u6578\u9084\u662F\u8907\u6578"),
+    skip: sStr('\u8981\u5148\u5283\u6389\u7684\u4FEE\u98FE\uFF08\u4F8B\u5982 of ... \u7247\u8A9E\uFF09\uFF0C\u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728\u4F8B\u53E5\u4E2D\uFF1B\u6C92\u6709\u586B ""'),
+    verb: sStr("\u8A72\u8DDF\u6838\u5FC3\u540D\u8A5E\u914D\u5C0D\u7684\u52D5\u8A5E\uFF0C\u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728\u4F8B\u53E5\u4E2D"),
+    steps: sArr(sStr("\u4E00\u500B\u5224\u65B7\u6B65\u9A5F\uFF0C\u7E41\u4E2D"), "2\u20135 \u500B\u5224\u65B7\u6B65\u9A5F\uFF1A\u627E\u6838\u5FC3\u3001\u5283\u6389\u4FEE\u98FE\u3001\u914D\u52D5\u8A5E\uFF1B\u6700\u5F8C\u4E00\u6B65\u662F\u7D50\u8AD6"),
+    traps: sArr(
+      sObj({ example: sStr("\u5BB9\u6613\u770B\u932F\u7684\u82F1\u6587\u4F8B\u5B50"), note: sStr("\u4E00\u884C\u7E41\u4E2D\u8AAA\u660E\u70BA\u4EC0\u9EBC") }),
+      "\u5BB9\u6613\u770B\u932F\u7684\u4F8B\u5B50\uFF0C\u6700\u591A 4 \u500B\uFF1B\u6C92\u6709\u586B []"
+    )
+  }),
+  guide: '\u9019\u500B\u7248\u9762\u56DE\u7B54\u300C\u52D5\u8A5E\u8981\u8DDF\u54EA\u500B\u5B57\u914D\u300D\u3002sentence \u653E\u4E00\u53E5\u4E3B\u8A5E\u52D5\u8A5E\u4E00\u81F4\u7684\u4F8B\u53E5\uFF0Cmarks \u4F9D\u5E8F\u6A19\u51FA\u6838\u5FC3\u540D\u8A5E\uFF08accent\uFF09\u3001\u8A72\u5283\u6389\u7684\u4FEE\u98FE\uFF08strike\uFF09\u3001\u52D5\u8A5E\uFF08accent\uFF09\u3002head \u662F\u6838\u5FC3\u540D\u8A5E\uFF0Cnumber \u662F\u5B83\u7684\u55AE\u8907\u6578\uFF0Cskip \u662F\u4E2D\u9593\u88AB\u5283\u6389\u7684\u4FEE\u98FE\u7247\u8A9E\uFF08\u6C92\u6709\u586B ""\uFF09\uFF0Cverb \u662F\u914D\u5C0D\u7684\u52D5\u8A5E\uFF1B\u4E09\u8005\u90FD\u5FC5\u9808\u539F\u6A23\u51FA\u73FE\u5728\u4F8B\u53E5\u4E2D\u3002steps \u5BEB 2\u20135 \u6B65\u5224\u65B7\u904E\u7A0B\uFF0C\u6700\u5F8C\u4E00\u6B65\u662F\u7D50\u8AD6\uFF0C\u4F8B\u5982\u300C\u52D5\u8A5E\u8DDF list \u914D \u2192 is\u300D\u3002traps \u653E 0\u20134 \u500B\u5BB9\u6613\u770B\u932F\u7684\u4F8B\u5B50\uFF0C\u6BCF\u500B\u9644\u4E00\u884C note\u3002\u5E38\u898B\u932F\u8AA4\uFF1Ahead \u586B\u6210\u96E2\u52D5\u8A5E\u6700\u8FD1\u7684\u540D\u8A5E\u3001marks \u7684\u9806\u5E8F\u4E0D\u662F\u7531\u5DE6\u5230\u53F3\u3002',
+  render(parent, v5, ctx) {
+    parent.appendChild(sentence(ctx, v5.sentence));
+    const info = add2(parent, ctx, "div", "gv-agreement-core");
+    info.appendChild(badge(ctx, v5.number === "singular" ? "\u55AE\u6578" : "\u8907\u6578", "accent"));
+    add2(info, ctx, "span", "gv-agreement-pair", `${v5.head} \u2192 ${v5.verb}`);
+    const ol = add2(parent, ctx, "ol", "gv-agreement-steps");
+    ol.setAttribute("aria-label", "\u5224\u65B7\u6B65\u9A5F");
+    v5.steps.forEach((s2, i) => {
+      const last2 = i === v5.steps.length - 1;
+      const li = add2(ol, ctx, "li", ["gv-agreement-step", last2 ? "is-last" : ""]);
+      add2(li, ctx, "strong", "gv-agreement-no", `${i + 1}.`);
+      li.appendChild(ctx.doc.createTextNode(` ${s2}`));
+    });
+    parent.appendChild(explain(ctx, v5.explain));
+    if (v5.traps.length > 0) {
+      add2(parent, ctx, "div", "gv-label", `\u5BB9\u6613\u770B\u932F\u7684 ${v5.traps.length} \u7A2E`);
+      const ul = add2(parent, ctx, "ul", "gv-agreement-traps");
+      for (const t2 of v5.traps) {
+        const li = add2(ul, ctx, "li", "gv-agreement-trap");
+        add2(li, ctx, "div", "gv-agreement-example", t2.example);
+        add2(li, ctx, "div", "gv-note", t2.note);
+      }
+    }
+  },
+  builtin: BUILTIN8
+};
+
+// src/grammar-visual/kinds/index.ts
+var KINDS2 = {
+  timeline: timelineKind,
+  scale: scaleKind,
+  unreal: unrealKind,
+  backshift: backshiftKind,
+  focus: focusKind,
+  verbslot: verbslotKind,
+  path: pathKind,
+  connector: connectorKind,
+  order: orderKind,
+  scope: scopeKind,
+  clause: clauseKind,
+  compare: compareKind,
+  link: linkKind,
+  agreement: agreementKind
+};
+
+// src/grammar-visual/layouts.ts
+var LAYOUT_TITLES = {
+  timeline: "\u6642\u9593\u8EF8",
+  scale: "\u7A0B\u5EA6\u91CF\u5C3A",
+  unreal: "\u73FE\u5BE6\u8207\u5047\u8A2D",
+  backshift: "\u5F80\u904E\u53BB\u9000\u4E00\u683C",
+  focus: "\u7126\u9EDE\u8F49\u79FB",
+  verbslot: "\u52D5\u8A5E\u5F8C\u9762\u63A5\u4EC0\u9EBC",
+  path: "\u5224\u65B7\u8DEF\u5F91",
+  connector: "\u908F\u8F2F\u9023\u63A5",
+  order: "\u8A9E\u5E8F\u642C\u79FB",
+  scope: "\u7BC4\u570D\u5927\u5C0F",
+  clause: "\u5B50\u53E5\u5957\u758A",
+  compare: "\u6BD4\u8F03\u9577\u689D",
+  link: "\u9023\u5230\u54EA\u500B\u5B57",
+  agreement: "\u4E3B\u8A5E\u52D5\u8A5E\u4E00\u81F4"
+};
+var BY_LAYOUT = {
+  timeline: [
+    "present-simple",
+    "present-continuous",
+    "past-simple",
+    "used-to-past-habit",
+    "present-perfect-intro",
+    "present-perfect-vs-past",
+    "present-perfect-continuous",
+    "past-perfect",
+    "future-continuous-perfect",
+    "future-will-going-to",
+    "perfect-vs-progressive-nuance",
+    "future-in-the-past"
+  ],
+  scale: [
+    "can-cant",
+    "modals-deduction",
+    "must-vs-have-to",
+    "modals-nuance",
+    "would-rather-had-better",
+    "frequency-adverbs",
+    "stance-adverbs",
+    "register-choice",
+    "imperatives",
+    "advanced-negation",
+    "negation-quantifiers-advanced"
+  ],
+  unreal: [
+    "conditionals-basic",
+    "conditionals-real",
+    "conditionals-unreal",
+    "mixed-conditionals",
+    "wish-if-only",
+    "formal-conditional-inversion"
+  ],
+  backshift: ["reported-speech"],
+  focus: ["passive-basic", "passive-advanced", "impersonal-passive", "causative-perception-verbs", "participle-adjectives"],
+  verbslot: [
+    "gerund-infinitive-intro",
+    "gerund-vs-infinitive-meaning",
+    "verb-preposition",
+    "adjective-preposition",
+    "used-to-be-used-to"
+  ],
+  path: [
+    "articles-basic",
+    "articles-advanced",
+    "countable-uncountable",
+    "some-any-much-many",
+    "all-both-each",
+    "determiners-reference",
+    "noun-plurals"
+  ],
+  connector: [
+    "basic-conjunctions",
+    "concession-contrast",
+    "unless-in-case-as-long-as",
+    "purpose-to-infinitive",
+    "future-time-clauses",
+    "discourse-connectors"
+  ],
+  order: [
+    "do-does-did-questions",
+    "wh-questions",
+    "question-tags",
+    "negative-inversion",
+    "emphasis-do-so-such",
+    "cleft-sentences",
+    "concessive-inversion",
+    "word-order-information-structure",
+    "phrasal-verbs",
+    "formal-it-object",
+    "have-got"
+  ],
+  scope: ["prepositions-time-place", "preposition-meaning", "preposition-abstract"],
+  clause: [
+    "relative-clauses-basic",
+    "relative-clauses-defining-non",
+    "advanced-relative-clauses",
+    "noun-clauses",
+    "participle-clauses-intro",
+    "participle-reduced-clauses",
+    "nominalization"
+  ],
+  compare: ["comparatives-superlatives", "comparison-advanced"],
+  link: ["personal-pronouns", "reflexive-pronouns", "possessive-s", "demonstratives", "ellipsis-substitution", "adjectives-adverbs"],
+  agreement: ["be-verb", "there-is-are", "agreement-difficult"]
+};
+var TOPIC_LAYOUT = /* @__PURE__ */ new Map();
+for (const [kind, ids] of Object.entries(BY_LAYOUT)) {
+  for (const id2 of ids) TOPIC_LAYOUT.set(id2, kind);
+}
+function layoutOf(topicId) {
+  var _a;
+  return (_a = TOPIC_LAYOUT.get(topicId)) != null ? _a : null;
+}
+
+// src/grammar-visual/types.ts
+var LAYOUT_KINDS = [
+  "timeline",
+  "scale",
+  "unreal",
+  "backshift",
+  "focus",
+  "verbslot",
+  "path",
+  "connector",
+  "order",
+  "scope",
+  "clause",
+  "compare",
+  "link",
+  "agreement"
+];
+
+// src/grammar-visual/index.ts
+function isKind(x3) {
+  return typeof x3 === "string" && LAYOUT_KINDS.includes(x3);
+}
+function parseVisual(raw) {
+  const o = obj(raw);
+  if (!o || !isKind(o.kind)) return null;
+  try {
+    return KINDS2[o.kind].parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+function builtinVisual(topicId) {
+  var _a;
+  const kind = layoutOf(topicId);
+  return kind ? (_a = KINDS2[kind].builtin[topicId]) != null ? _a : null : null;
+}
+function visualSchema(kind) {
+  return KINDS2[kind].schema;
+}
+function visualGuide(kind) {
+  return KINDS2[kind].guide;
+}
+function renderGrammarVisual(parent, v5, opts = {}) {
+  var _a;
+  const ctx = { doc: parent.ownerDocument, mobile: !!opts.mobile };
+  const root2 = el(ctx, "section", ["gv", `gv-${v5.kind}`, ctx.mobile ? "is-mobile" : ""]);
+  root2.setAttribute("aria-label", LAYOUT_TITLES[v5.kind]);
+  const heading = (_a = opts.heading) != null ? _a : LAYOUT_TITLES[v5.kind];
+  if (heading) root2.appendChild(el(ctx, "div", "gv-head", heading));
+  const body = el(ctx, "div", "gv-body");
+  root2.appendChild(body);
+  try {
+    renderKind(body, v5, ctx);
+  } catch (e) {
+    while (body.firstChild) body.removeChild(body.firstChild);
+    body.appendChild(el(ctx, "div", "gv-explain", v5.explain));
+  }
+  parent.appendChild(root2);
+  return root2;
+}
+function renderKind(body, v5, ctx) {
+  KINDS2[v5.kind].render(body, v5, ctx);
+}
+
+// src/ui/blocks/grammarVisualPanel.ts
+var isMobile = () => document.body.classList.contains("is-mobile");
+function mountVisualPanel(el2, deps, topicId, owner) {
+  const { visuals } = deps;
+  if (!visuals) return;
+  let error = "";
+  let alive = true;
+  owner.register(() => alive = false);
+  const canAsk = () => deps.aiReady ? deps.aiReady() : true;
+  const regenerate = async () => {
+    error = "";
+    try {
+      await visuals.regenerate(topicId);
+    } catch (e) {
+      if (!isAbort(e)) error = t("grammar.visual.failed", { error: learnErrorText(e) });
+      render5();
+    }
+  };
+  const render5 = () => {
+    if (!alive) return;
+    el2.empty();
+    const v5 = visuals.current(topicId);
+    if (!v5) {
+      el2.createDiv({ cls: "vt-gr-empty", text: t("grammar.visual.none") });
+      return;
+    }
+    renderGrammarVisual(el2, v5, { mobile: isMobile() });
+    if (!canAsk()) return;
+    const row = el2.createDiv({ cls: "vt-gr-visual-actions" });
+    if (visuals.isBusy(topicId)) {
+      row.createSpan({ cls: "vt-gr-visual-busy", text: t("grammar.visual.regenBusy") });
+      learnButton(row, { label: t("grammar.visual.stop"), ghost: true, onClick: () => visuals.stop(topicId) });
+      return;
+    }
+    learnButton(row, { label: t("grammar.visual.regen"), icon: "sparkles", ghost: true, onClick: () => void regenerate() });
+    if (visuals.isGenerated(topicId)) {
+      learnButton(row, { label: t("grammar.visual.reset"), ghost: true, onClick: () => visuals.reset(topicId) });
+    }
+    if (error) row.createDiv({ cls: "vt-learn-error", text: error });
+  };
+  owner.register(
+    visuals.events.on("visual:change", (e) => {
+      if (e.topicId === topicId) render5();
+    })
+  );
+  render5();
+}
+
+// src/ui/blocks/grammarPracticeModel.ts
+function dockSummary(answers) {
+  const first = /* @__PURE__ */ new Map();
+  for (const a2 of answers) if (!first.has(a2.id)) first.set(a2.id, a2.correct);
+  let right = 0;
+  for (const c4 of first.values()) if (c4) right++;
+  return { right, total: first.size };
+}
+
+// src/ui/blocks/grammarPracticeDock.ts
+var DOCK_COUNT = 3;
+function mountPracticeDock(el2, deps, topicId, owner) {
+  const dock = new PracticeDock(el2, deps, topicId, owner);
+  owner.register(() => dock.dispose());
+  dock.render();
+}
+var PracticeDock = class {
+  constructor(dockEl, deps, topicId, owner) {
+    this.dockEl = dockEl;
+    this.deps = deps;
+    this.topicId = topicId;
+    this.owner = owner;
+    this.alive = true;
+    this.batch = [];
+    this.answers = [];
+    this.done = /* @__PURE__ */ new Set();
+    this.dockBusy = false;
+    this.dockError = "";
+    this.player = null;
+  }
+  dispose() {
+    var _a;
+    this.alive = false;
+    (_a = this.player) == null ? void 0 : _a.unload();
+  }
+  render() {
+    this.renderDock();
+  }
+  canAsk() {
+    return this.deps.aiReady ? this.deps.aiReady() : true;
+  }
+  renderDock() {
+    var _a;
+    if (!this.alive) return;
+    const { generate, mountPlayer, api } = this.deps;
+    if (!generate || !mountPlayer || !api) return;
+    const el2 = this.dockEl;
+    (_a = this.player) == null ? void 0 : _a.unload();
+    this.player = null;
+    el2.empty();
+    const head = el2.createDiv({ cls: "vt-gr-dock-head" });
+    const text = head.createDiv({ cls: "vt-gr-dock-text" });
+    text.createDiv({ cls: "vt-gr-bar-main", text: t("grammar.dock.title") });
+    text.createDiv({ cls: "vt-gr-bar-sub", text: t("grammar.dock.sub") });
+    const started = this.batch.length > 0;
+    if (!this.canAsk()) {
+      el2.createDiv({ cls: "vt-gr-empty", text: t("grammar.dock.noAi") });
+      return;
+    }
+    if (this.dockBusy) {
+      head.createSpan({ cls: "vt-gr-visual-busy", text: t("grammar.dock.busy") });
+    } else if (!started || this.finished()) {
+      learnButton(head, {
+        label: started ? t("grammar.dock.more") : t("grammar.dock.start"),
+        icon: "list-checks",
+        cta: !started,
+        onClick: () => void this.startBatch()
+      });
+    }
+    if (this.dockError) el2.createDiv({ cls: "vt-learn-error", text: this.dockError });
+    if (!started) return;
+    if (this.finished()) {
+      const s2 = dockSummary(this.answers);
+      el2.createDiv({ cls: "vt-gr-dock-done", text: t("grammar.dock.done", { right: s2.right, total: s2.total }) });
+      return;
+    }
+    const byId = new Map(this.batch.map((q) => [q.id, q]));
+    this.player = mountPlayer(
+      el2,
+      {
+        questions: () => this.remaining(),
+        callbacks: {
+          onAnswer: (a2) => {
+            this.done.add(a2.question.id);
+            this.answers.push({ id: a2.question.id, correct: a2.correct });
+            const q = byId.get(a2.question.id);
+            if (q) api.answer(q, a2.optionId, a2.correct, { hinted: a2.hinted, fromMistakes: false });
+          },
+          onSkip: (pq) => {
+            this.done.add(pq.id);
+            const q = byId.get(pq.id);
+            if (q) api.skip(q);
+          },
+          // 三題都做完、按了「下一題」。
+          onEmpty: () => queueMicrotask(() => this.renderDock())
+        }
+      },
+      this.owner
+    );
+  }
+  remaining() {
+    const out = [];
+    for (const q of this.batch) {
+      if (this.done.has(q.id)) continue;
+      const pq = toPlayerQuestion(q);
+      if (pq) out.push(pq);
+    }
+    return out;
+  }
+  finished() {
+    return this.batch.length > 0 && this.remaining().length === 0;
+  }
+  async startBatch() {
+    const { generate, ready } = this.deps;
+    if (!generate || this.dockBusy) return;
+    this.dockBusy = true;
+    this.dockError = "";
+    this.renderDock();
+    try {
+      await (ready ? ready() : Promise.resolve());
+      const qs = await generate(this.topicId, DOCK_COUNT);
+      this.batch = qs.filter((q) => toPlayerQuestion(q) !== null);
+      this.answers = [];
+      this.done.clear();
+    } catch (e) {
+      if (!isAbort(e)) this.dockError = t("grammar.dock.failed", { error: learnErrorText(e) });
+    } finally {
+      this.dockBusy = false;
+      this.renderDock();
+    }
+  }
+};
+
 // src/ui/blocks/grammarTopic.ts
-function renderGrammarTopic(deps, source, el, ctx) {
+function renderGrammarTopic(deps, source, el2, ctx) {
   const explainEmpty = () => {
     var _a, _b, _c;
-    const text = (_a = ctx.getSectionInfo(el)) == null ? void 0 : _a.text;
+    const text = (_a = ctx.getSectionInfo(el2)) == null ? void 0 : _a.text;
     return text === void 0 ? void 0 : (_c = (_b = findExplanationSection(text)) == null ? void 0 : _b.empty) != null ? _c : false;
   };
-  ctx.addChild(new GrammarTopicBlock(el, deps, parseTopicParams(source).id, explainEmpty));
+  ctx.addChild(new GrammarTopicBlock(el2, deps, parseTopicParams(source).id, explainEmpty));
 }
 function renderAiGate3(parent, status, onOpenSettings) {
   if (status === "ready") return false;
@@ -23521,6 +26529,12 @@ var GrammarTopicBlock = class extends import_obsidian36.MarkdownRenderChild {
   }
   onload() {
     this.containerEl.empty();
+    const head = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-concept"] });
+    guardReadingClicks(this, head);
+    if (this.topic) {
+      mountVisualPanel(head.createDiv({ cls: "vt-gr-visual" }), this.deps, this.topic.id, this);
+      mountPracticeDock(head.createDiv({ cls: "vt-gr-dock" }), this.deps, this.topic.id, this);
+    }
     this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-topic"] });
     guardReadingClicks(this, this.root);
     if (!this.topic) {
@@ -23669,17 +26683,17 @@ var GrammarTopicBlock = class extends import_obsidian36.MarkdownRenderChild {
     }
   }
   renderRelated(topic) {
-    const chips = topicChips(topic);
-    if (!chips.length) return;
+    const chips2 = topicChips(topic);
+    if (!chips2.length) return;
     const sec = this.root.createDiv({ cls: "vt-gr-sec" });
     sec.createDiv({ cls: "vt-gr-sec-title", text: t("grammar.topic.related") });
     const row = sec.createDiv({ cls: "vt-gr-chips" });
-    for (const c2 of chips) {
-      const chip2 = row.createEl("button", { cls: ["vt-gr-chip", `is-${c2.kind}`], attr: { type: "button" } });
-      chip2.createSpan({ cls: ["vt-gr-stage", `is-stage-${c2.topic.stage}`, "is-dot"], attr: { "aria-hidden": "true" } });
-      chip2.createSpan({ text: c2.topic.title });
-      chip2.createSpan({ cls: "vt-gr-chip-kind", text: c2.label });
-      chip2.addEventListener("click", () => this.open(c2.topic.id));
+    for (const c4 of chips2) {
+      const chip2 = row.createEl("button", { cls: ["vt-gr-chip", `is-${c4.kind}`], attr: { type: "button" } });
+      chip2.createSpan({ cls: ["vt-gr-stage", `is-stage-${c4.topic.stage}`, "is-dot"], attr: { "aria-hidden": "true" } });
+      chip2.createSpan({ text: c4.topic.title });
+      chip2.createSpan({ cls: "vt-gr-chip-kind", text: c4.label });
+      chip2.addEventListener("click", () => this.open(c4.topic.id));
     }
   }
 };
@@ -24500,7 +27514,7 @@ var POLY_WORDS = [
 // src/core/poly/catalog.ts
 var POLY_CATEGORIES = ["A", "B", "C", "D", "E"];
 var byWord2 = new Map(POLY_WORDS.map((w2) => [w2.word, w2]));
-var bySense = new Map(POLY_WORDS.flatMap((w2) => w2.senses.map((s) => [s.id, s])));
+var bySense = new Map(POLY_WORDS.flatMap((w2) => w2.senses.map((s2) => [s2.id, s2])));
 function polyWord(word) {
   return byWord2.get(word.trim().toLowerCase());
 }
@@ -24511,10 +27525,10 @@ function wordsInCategory(category) {
   return POLY_WORDS.filter((w2) => w2.category === category);
 }
 var isLevel = (n) => n === 1 || n === 2 || n === 3;
-function parsePolyFilter(v) {
+function parsePolyFilter(v5) {
   const out = { words: [], levels: [], excluded: [] };
-  if (!v || typeof v !== "object") return out;
-  const o = v;
+  if (!v5 || typeof v5 !== "object") return out;
+  const o = v5;
   if (Array.isArray(o.words)) {
     out.words = [...new Set(o.words.filter((x3) => typeof x3 === "string" && byWord2.has(x3)))];
   }
@@ -24530,9 +27544,9 @@ function sensesInFilter(f) {
   const reference = [];
   const excluded = new Set(f.excluded);
   for (const word of f.words) {
-    for (const s of (_b = (_a = polyWord(word)) == null ? void 0 : _a.senses) != null ? _b : []) {
-      const inLevel = f.levels.length === 0 || f.levels.includes(s.level);
-      (inLevel && !excluded.has(s.id) ? tested : reference).push(s);
+    for (const s2 of (_b = (_a = polyWord(word)) == null ? void 0 : _a.senses) != null ? _b : []) {
+      const inLevel = f.levels.length === 0 || f.levels.includes(s2.level);
+      (inLevel && !excluded.has(s2.id) ? tested : reference).push(s2);
     }
   }
   return { tested, reference };
@@ -24566,14 +27580,14 @@ function questionHints(q) {
   return Object.keys(hints).length > 0 ? hints : void 0;
 }
 function toPlayerQuestion2(q, labels = {}) {
-  const sc = q.scenario;
+  const sc2 = q.scenario;
   const hints = questionHints(q);
   return {
     id: q.id,
-    scenarioId: sc.id,
-    scene: sc.scene,
-    ...sc.lead && sc.lead.length > 0 ? { lead: sc.lead.map((l4) => ({ ...l4.speaker ? { speaker: l4.speaker } : {}, text: l4.text })) } : {},
-    ...sc.speaker ? { speaker: sc.speaker } : {},
+    scenarioId: sc2.id,
+    scene: sc2.scene,
+    ...sc2.lead && sc2.lead.length > 0 ? { lead: sc2.lead.map((l4) => ({ ...l4.speaker ? { speaker: l4.speaker } : {}, text: l4.text })) } : {},
+    ...sc2.speaker ? { speaker: sc2.speaker } : {},
     kind: q.kind,
     text: q.text,
     options: q.options.map((o) => ({ id: o.id, text: o.text })),
@@ -24587,7 +27601,7 @@ function toPlayerQuestion2(q, labels = {}) {
 }
 
 // src/ui/blocks/practice/scenarioPane.ts
-function mountScenarioPane(el, o) {
+function mountScenarioPane(el2, o) {
   var _a;
   const { api, track: track2 } = o;
   let alive = true;
@@ -24604,9 +27618,9 @@ function mountScenarioPane(el, o) {
     alive = false;
     ctl.dispose();
   });
-  const headEl = el.createDiv({ cls: "vt-pr-mix-head" });
-  const noteEl = el.createDiv({ cls: "vt-pr-grammar-note" });
-  const playerEl = el.createDiv({ cls: "vt-pr-scenario-player" });
+  const headEl = el2.createDiv({ cls: "vt-pr-mix-head" });
+  const noteEl = el2.createDiv({ cls: "vt-pr-grammar-note" });
+  const playerEl = el2.createDiv({ cls: "vt-pr-scenario-player" });
   const showError = (error) => {
     if (!alive) return;
     const failed = renderRefillError(noteEl, error, () => {
@@ -24620,10 +27634,10 @@ function mountScenarioPane(el, o) {
     if (!req) return o.idleText();
     if (api.isRefilling(track2)) return t("practice.grammar.preparing");
     if (canStart()) return t("practice.startHint");
-    const s = o.aiStatus();
-    if (s === "disabled") return t("practice.grammar.aiOff");
-    if (s === "no_key") return t("practice.grammar.noKey");
-    if (s === "offline") return t("practice.grammar.offline");
+    const s2 = o.aiStatus();
+    if (s2 === "disabled") return t("practice.grammar.aiOff");
+    if (s2 === "no_key") return t("practice.grammar.noKey");
+    if (s2 === "offline") return t("practice.grammar.offline");
     return t("practice.grammar.none");
   };
   const run = (signal) => {
@@ -24671,7 +27685,7 @@ function mountScenarioPane(el, o) {
     },
     o.owner
   );
-  const mistakes = (_a = o.mountMistakes) == null ? void 0 : _a.call(o, el.createDiv({ cls: "vt-pr-mistakes" }), track2, o.owner);
+  const mistakes = (_a = o.mountMistakes) == null ? void 0 : _a.call(o, el2.createDiv({ cls: "vt-pr-mistakes" }), track2, o.owner);
   o.owner.register(
     api.events.on("pool:change", (tr) => {
       if (tr !== track2) return;
@@ -24765,8 +27779,8 @@ function vocabQuickPicks() {
   ];
 }
 function statusOf(value) {
-  const s = selectedIds(value, "status")[0];
-  return s === "new" || s === "all" ? s : "due";
+  const s2 = selectedIds(value, "status")[0];
+  return s2 === "new" || s2 === "all" ? s2 : "due";
 }
 function vocabSummary(value, groups) {
   var _a, _b;
@@ -24849,14 +27863,14 @@ function vocabTab(host, scenario) {
     id: "vocab",
     label: t("practice.vocab.label"),
     order: 0,
-    mount(el, ctx) {
+    mount(el2, ctx) {
       const groups = vocabGroups(collectVocabOptions(host.store.entries));
       let value = pruneValue(parseFilterValue(ctx.filters.get("vocab")), groups);
       let mode = scenario ? loadMode() : "cards";
-      el.addClass("vt-pr-vocab");
-      const barEl = el.createDiv();
-      const switchEl = scenario ? el.createDiv({ cls: "vt-pr-segmented", attr: { role: "group" } }) : null;
-      const bodyEl = el.createDiv({ cls: "vt-pr-vocab-body" });
+      el2.addClass("vt-pr-vocab");
+      const barEl = el2.createDiv();
+      const switchEl = scenario ? el2.createDiv({ cls: "vt-pr-segmented", attr: { role: "group" } }) : null;
+      const bodyEl = el2.createDiv({ cls: "vt-pr-vocab-body" });
       let view = null;
       let onFilter = () => {
       };
@@ -24871,31 +27885,31 @@ function vocabTab(host, scenario) {
         owner.addChild(block);
         onFilter = () => block.restart();
       };
-      const mountScenario = (box, owner, s) => {
+      const mountScenario = (box, owner, s2) => {
         const entries = () => host.store.entries;
         const refs = () => {
           var _a, _b;
-          return pickVocabRefs(entries(), value, (_b = (_a = s.now) == null ? void 0 : _a.call(s)) != null ? _b : /* @__PURE__ */ new Date());
+          return pickVocabRefs(entries(), value, (_b = (_a = s2.now) == null ? void 0 : _a.call(s2)) != null ? _b : /* @__PURE__ */ new Date());
         };
         let alive = true;
         owner.register(() => alive = false);
-        void s.ready().then(() => {
+        void s2.ready().then(() => {
           if (!alive) return;
           const pane = mountScenarioPane(box, {
             track: "vocab",
-            api: s.api,
-            mountPlayer: s.mountPlayer,
-            mountMistakes: s.mountMistakes,
+            api: s2.api,
+            mountPlayer: s2.mountPlayer,
+            mountMistakes: s2.mountMistakes,
             owner,
             toPlayer: (q) => toPlayerQuestion2(q),
-            aiStatus: s.aiStatus,
+            aiStatus: s2.aiStatus,
             idleText: () => t("practice.vocab.scenarioFew")
           });
           const apply = () => {
             var _a, _b;
             const r = refs();
             const req = vocabScenarioRequest(r);
-            pane.setRequest(req, req ? vocabScopeIds(entries(), value, (_b = (_a = s.now) == null ? void 0 : _a.call(s)) != null ? _b : /* @__PURE__ */ new Date()) : /* @__PURE__ */ new Set());
+            pane.setRequest(req, req ? vocabScopeIds(entries(), value, (_b = (_a = s2.now) == null ? void 0 : _a.call(s2)) != null ? _b : /* @__PURE__ */ new Date()) : /* @__PURE__ */ new Set());
           };
           onFilter = apply;
           apply();
@@ -24917,7 +27931,7 @@ function vocabTab(host, scenario) {
         groups,
         quick: vocabQuickPicks(),
         value,
-        summary: (v) => vocabSummary(v, groups),
+        summary: (v5) => vocabSummary(v5, groups),
         onChange: (next) => {
           value = next;
           ctx.filters.set("vocab", next);
@@ -24954,8 +27968,8 @@ function vocabTab(host, scenario) {
 }
 
 // src/ui/blocks/practice.ts
-function renderPractice(host, source, el, ctx) {
-  ctx.addChild(new PracticeBlock(el, host, source));
+function renderPractice(host, source, el2, ctx) {
+  ctx.addChild(new PracticeBlock(el2, host, source));
 }
 var PracticeBlock = class extends import_obsidian38.MarkdownRenderChild {
   constructor(containerEl, host, source) {
@@ -25033,24 +28047,24 @@ var MIX_CATEGORIES = ["vocab", "grammar", "poly"];
 function parseMixFilter(raw) {
   const inc = raw == null ? void 0 : raw.include;
   if (!Array.isArray(inc)) return { include: [...MIX_CATEGORIES] };
-  return { include: MIX_CATEGORIES.filter((c2) => inc.includes(c2)) };
+  return { include: MIX_CATEGORIES.filter((c4) => inc.includes(c4)) };
 }
-function categoryLabel(c2) {
-  return t(c2 === "vocab" ? "practice.mix.catVocab" : c2 === "grammar" ? "practice.mix.catGrammar" : "practice.mix.catPoly");
+function categoryLabel(c4) {
+  return t(c4 === "vocab" ? "practice.mix.catVocab" : c4 === "grammar" ? "practice.mix.catGrammar" : "practice.mix.catPoly");
 }
-function mixCount(c2, src) {
-  if (c2 === "vocab") return src.vocab.length;
-  if (c2 === "grammar") return new Set(src.grammar.map((g) => g.topicId)).size;
-  return new Set(src.poly.tested.map((s) => s.word)).size;
+function mixCount(c4, src) {
+  if (c4 === "vocab") return src.vocab.length;
+  if (c4 === "grammar") return new Set(src.grammar.map((g) => g.topicId)).size;
+  return new Set(src.poly.tested.map((s2) => s2.word)).size;
 }
 function mixTags(f, src) {
-  return MIX_CATEGORIES.map((c2) => {
-    const count2 = mixCount(c2, src);
-    return { id: c2, label: `${categoryLabel(c2)} ${count2}`, count: count2, on: f.include.includes(c2) && count2 > 0, disabled: count2 === 0 };
+  return MIX_CATEGORIES.map((c4) => {
+    const count2 = mixCount(c4, src);
+    return { id: c4, label: `${categoryLabel(c4)} ${count2}`, count: count2, on: f.include.includes(c4) && count2 > 0, disabled: count2 === 0 };
   });
 }
-function toggleMixCategory(f, c2) {
-  return { include: MIX_CATEGORIES.filter((x3) => x3 === c2 ? !f.include.includes(c2) : f.include.includes(x3)) };
+function toggleMixCategory(f, c4) {
+  return { include: MIX_CATEGORIES.filter((x3) => x3 === c4 ? !f.include.includes(c4) : f.include.includes(x3)) };
 }
 function buildMixRequest(f, src) {
   const req = { track: "mix" };
@@ -25065,9 +28079,9 @@ function mixFocusIds(req, vocabScope) {
   var _a, _b, _c;
   const ids = /* @__PURE__ */ new Set();
   if ((req == null ? void 0 : req.track) !== "mix") return ids;
-  if (req.vocab) for (const id2 of vocabScope != null ? vocabScope : req.vocab.map((v) => v.id)) ids.add(id2);
+  if (req.vocab) for (const id2 of vocabScope != null ? vocabScope : req.vocab.map((v5) => v5.id)) ids.add(id2);
   for (const g of (_a = req.grammar) != null ? _a : []) ids.add(`${g.topicId}/${g.objectiveId}`);
-  for (const s of (_c = (_b = req.poly) == null ? void 0 : _b.tested) != null ? _c : []) ids.add(s.id);
+  for (const s2 of (_c = (_b = req.poly) == null ? void 0 : _b.tested) != null ? _c : []) ids.add(s2.id);
   return ids;
 }
 function emptyTally() {
@@ -25075,20 +28089,20 @@ function emptyTally() {
 }
 function categoryOfTag(tag) {
   if (!tag) return null;
-  for (const c2 of MIX_CATEGORIES) {
-    const l4 = categoryLabel(c2);
-    if (tag === l4 || tag.startsWith(`${l4} \xB7`)) return c2;
+  for (const c4 of MIX_CATEGORIES) {
+    const l4 = categoryLabel(c4);
+    if (tag === l4 || tag.startsWith(`${l4} \xB7`)) return c4;
   }
   return null;
 }
 function recordAnswer(tally, tag, correct, hinted) {
-  const c2 = categoryOfTag(tag);
-  if (!c2) return;
-  tally[c2].total += 1;
-  if (correct && !hinted) tally[c2].right += 1;
+  const c4 = categoryOfTag(tag);
+  if (!c4) return;
+  tally[c4].total += 1;
+  if (correct && !hinted) tally[c4].right += 1;
 }
 function tallyText(tally) {
-  return MIX_CATEGORIES.filter((c2) => tally[c2].total > 0).map((c2) => `${categoryLabel(c2)} ${tally[c2].right}/${tally[c2].total}`).join(" \xB7 ");
+  return MIX_CATEGORIES.filter((c4) => tally[c4].total > 0).map((c4) => `${categoryLabel(c4)} ${tally[c4].right}/${tally[c4].total}`).join(" \xB7 ");
 }
 
 // src/ui/blocks/practice/mixTab.ts
@@ -25097,18 +28111,18 @@ function mixTab(deps) {
     id: "mix",
     label: t("practice.mix.label"),
     order: 3,
-    mount(el, ctx) {
-      el.addClass("vt-pr-mix");
+    mount(el2, ctx) {
+      el2.addClass("vt-pr-mix");
       let alive = true;
       ctx.component.register(() => alive = false);
       void deps.ready().then(() => {
         if (!alive) return;
-        start2(el, deps, ctx.filters, ctx.component);
+        start2(el2, deps, ctx.filters, ctx.component);
       });
     }
   };
 }
-function start2(el, deps, filters, owner) {
+function start2(el2, deps, filters, owner) {
   let filter2 = parseMixFilter(filters.get("mix"));
   const tally = emptyTally();
   let pane = null;
@@ -25123,7 +28137,7 @@ function start2(el, deps, filters, owner) {
     const req = buildMixRequest(filter2, sources());
     pane == null ? void 0 : pane.setRequest(req, mixFocusIds(req, (_a = deps.vocabScopeIds) == null ? void 0 : _a.call(deps)));
   };
-  const barEl = el.createDiv({ cls: "vt-pr-mix-tags" });
+  const barEl = el2.createDiv({ cls: "vt-pr-mix-tags" });
   const drawTags = () => {
     barEl.empty();
     barEl.createSpan({ cls: "vt-pr-mix-tags-label", text: t("practice.filter.title") });
@@ -25144,7 +28158,7 @@ function start2(el, deps, filters, owner) {
     }
   };
   drawTags();
-  pane = mountScenarioPane(el, {
+  pane = mountScenarioPane(el2, {
     track: "mix",
     api: deps.api,
     mountPlayer: deps.mountPlayer,
@@ -25182,24 +28196,24 @@ function splitSentences(text) {
     const flat3 = block.replace(/\s*\n\s*/g, " ").trim();
     if (!flat3) continue;
     for (const part of flat3.split(/(?<=[.!?…]["'”’)\]]?)\s+(?=["'“‘([]?[A-Z0-9])/)) {
-      const s = part.trim();
-      if (s) out.push(s);
+      const s2 = part.trim();
+      if (s2) out.push(s2);
     }
   }
   return out;
 }
-function englishWords2(s) {
+function englishWords2(s2) {
   var _a;
-  return (_a = s.match(WORD_RE4)) != null ? _a : [];
+  return (_a = s2.match(WORD_RE4)) != null ? _a : [];
 }
-function isUsableSentence(s) {
+function isUsableSentence(s2) {
   var _a;
-  const n = englishWords2(s).length;
+  const n = englishWords2(s2).length;
   if (n < MIN_WORDS || n > MAX_WORDS2) return false;
-  const cjk = ((_a = s.match(CJK_RE3)) != null ? _a : []).length;
-  return cjk <= s.length * 0.1;
+  const cjk = ((_a = s2.match(CJK_RE3)) != null ? _a : []).length;
+  return cjk <= s2.length * 0.1;
 }
-var key3 = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
+var key3 = (s2) => s2.replace(/\s+/g, " ").trim().toLowerCase();
 function patternWords(pattern) {
   var _a;
   const out = [];
@@ -25209,25 +28223,25 @@ function patternWords(pattern) {
   }
   return out;
 }
-function score(sentence, words) {
+function score(sentence2, words) {
   if (!words.length) return 0;
-  const have = new Set(englishWords2(sentence).map((w2) => w2.toLowerCase().replace(/’/g, "'")));
+  const have = new Set(englishWords2(sentence2).map((w2) => w2.toLowerCase().replace(/’/g, "'")));
   return words.reduce((n, w2) => n + (have.has(w2) ? 1 : 0), 0);
 }
 function pickSentence(candidates, pattern) {
   const words = patternWords(pattern);
   let best;
-  for (const s of candidates) {
-    if (!isUsableSentence(s)) continue;
-    const cur = { s, score: score(s, words), len: englishWords2(s).length };
+  for (const s2 of candidates) {
+    if (!isUsableSentence(s2)) continue;
+    const cur = { s: s2, score: score(s2, words), len: englishWords2(s2).length };
     if (!best || cur.score > best.score || cur.score === best.score && cur.len > best.len) best = cur;
   }
   return best == null ? void 0 : best.s;
 }
-function candidatesOf(s) {
+function candidatesOf(s2) {
   var _a;
-  const sel = (_a = s.selection) == null ? void 0 : _a.trim();
-  const all = splitSentences(s.snapshot);
+  const sel = (_a = s2.selection) == null ? void 0 : _a.trim();
+  const all = splitSentences(s2.snapshot);
   if (!sel) return all;
   const flatSel = key3(plain(sel));
   const inside = all.filter((x3) => key3(x3).includes(flatSel));
@@ -25240,13 +28254,13 @@ function topicSentences(sightings, topicId, max = DEFAULT_MAX_SENTENCES) {
   const pattern = (_b = (_a = topicById(topicId)) == null ? void 0 : _a.pattern) != null ? _b : "";
   const out = [];
   const seen = /* @__PURE__ */ new Set();
-  for (const s of sightings) {
+  for (const s2 of sightings) {
     if (out.length >= max) break;
-    if (s.topicId !== topicId) continue;
-    const sentence = (_c = pickSentence(candidatesOf(s), pattern)) != null ? _c : pickSentence(splitSentences(s.snapshot), pattern);
-    if (!sentence || seen.has(key3(sentence))) continue;
-    seen.add(key3(sentence));
-    out.push({ path: s.path, sentence });
+    if (s2.topicId !== topicId) continue;
+    const sentence2 = (_c = pickSentence(candidatesOf(s2), pattern)) != null ? _c : pickSentence(splitSentences(s2.snapshot), pattern);
+    if (!sentence2 || seen.has(key3(sentence2))) continue;
+    seen.add(key3(sentence2));
+    out.push({ path: s2.path, sentence: sentence2 });
   }
   return out;
 }
@@ -25259,17 +28273,17 @@ var MAX_DISCUSSED = 8;
 var MAX_POINT_CHARS = 80;
 var WORD_RE5 = /[A-Za-z][A-Za-z'’-]*/g;
 var CJK_RE4 = /[぀-ヿ㐀-鿿가-힯]/g;
-function isParaphrasable(s) {
+function isParaphrasable(s2) {
   var _a, _b;
-  const n = ((_a = s.match(WORD_RE5)) != null ? _a : []).length;
+  const n = ((_a = s2.match(WORD_RE5)) != null ? _a : []).length;
   if (n < PARA_MIN_WORDS || n > PARA_MAX_WORDS) return false;
-  return ((_b = s.match(CJK_RE4)) != null ? _b : []).length <= s.length * 0.1;
+  return ((_b = s2.match(CJK_RE4)) != null ? _b : []).length <= s2.length * 0.1;
 }
 function paragraphSentences(snapshot2) {
   return splitSentences(snapshot2).filter(isParaphrasable).slice(0, MAX_PARA_SENTENCES);
 }
-var flat = (s) => s.replace(/\s+/g, " ").trim();
-var cut = (s) => s.length > MAX_POINT_CHARS ? `${s.slice(0, MAX_POINT_CHARS - 1).trimEnd()}\u2026` : s;
+var flat = (s2) => s2.replace(/\s+/g, " ").trim();
+var cut = (s2) => s2.length > MAX_POINT_CHARS ? `${s2.slice(0, MAX_POINT_CHARS - 1).trimEnd()}\u2026` : s2;
 function discussedPoints(thread) {
   var _a, _b;
   const out = [];
@@ -25345,8 +28359,8 @@ function nextParagraph(refs, asked) {
   return best;
 }
 function excerpt(text, max = 40) {
-  const s = flat(text);
-  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}\u2026` : s;
+  const s2 = flat(text);
+  return s2.length > max ? `${s2.slice(0, max - 1).trimEnd()}\u2026` : s2;
 }
 
 // src/ui/blocks/practice/paraTab.ts
@@ -25355,22 +28369,22 @@ function paraTab(deps) {
     id: "para",
     label: t("practice.para.label"),
     order: 4,
-    mount(el, ctx) {
-      el.addClass("vt-pr-para");
+    mount(el2, ctx) {
+      el2.addClass("vt-pr-para");
       let alive = true;
       ctx.component.register(() => alive = false);
       void deps.ready().then(() => {
         if (!alive) return;
-        start3(el, deps, ctx.filters, ctx.component);
+        start3(el2, deps, ctx.filters, ctx.component);
       });
     }
   };
 }
-function start3(el, deps, filters, owner) {
+function start3(el2, deps, filters, owner) {
   let filter2 = parseParaFilter(filters.get("para"));
   let pane = null;
   const effective = () => filter2.scope !== "all" && paragraphsInFilter(deps.threads(), filter2).length === 0 ? { scope: "all" } : filter2;
-  const bar2 = el.createDiv({ cls: "vt-pr-para-scope" });
+  const bar2 = el2.createDiv({ cls: "vt-pr-para-scope" });
   bar2.createSpan({ cls: "vt-pr-mix-tags-label", text: t("practice.para.scope") });
   const select = bar2.createEl("select", { cls: "dropdown vt-pr-para-select" });
   const choices = /* @__PURE__ */ new Map();
@@ -25379,19 +28393,19 @@ function start3(el, deps, filters, owner) {
     choices.clear();
     const threads = deps.threads();
     const { all, notes } = paraScopeOptions(threads);
-    const add3 = (f, text) => {
+    const add4 = (f, text) => {
       const key6 = filterKey(f);
       choices.set(key6, f);
       select.createEl("option", { text, attr: { value: key6 } });
     };
-    add3({ scope: "all" }, t("practice.para.scopeAll", { n: all }));
+    add4({ scope: "all" }, t("practice.para.scopeAll", { n: all }));
     const cur = effective();
     if (cur.scope === "thread") {
       const th = threads.find((x3) => x3.id === cur.threadId);
       const text = (th == null ? void 0 : th.anchor.kind) === "paragraph" ? excerpt(th.anchor.snapshot) : cur.threadId;
-      add3(cur, t("practice.para.scopeThread", { text }));
+      add4(cur, t("practice.para.scopeThread", { text }));
     }
-    for (const n of notes) add3(n.filter, t("practice.para.scopeNote", { title: n.title, n: n.count }));
+    for (const n of notes) add4(n.filter, t("practice.para.scopeNote", { title: n.title, n: n.count }));
     select.value = filterKey(cur);
     select.disabled = all === 0;
   };
@@ -25418,7 +28432,7 @@ function start3(el, deps, filters, owner) {
       })
     );
   }
-  pane = mountScenarioPane(el, {
+  pane = mountScenarioPane(el2, {
     track: "para",
     api: deps.api,
     mountPlayer: deps.mountPlayer,
@@ -25433,9 +28447,9 @@ function start3(el, deps, filters, owner) {
 }
 
 // src/ui/blocks/practice/mistakesPanel.ts
-function renderMistakesPanel(el, deps, owner) {
+function renderMistakesPanel(el2, deps, owner) {
   const { api } = deps;
-  const box = el.createDiv({ cls: "vt-pr-mistakes" });
+  const box = el2.createDiv({ cls: "vt-pr-mistakes" });
   let open = false;
   let redoKey = null;
   let redoHandle = null;
@@ -25540,8 +28554,8 @@ function renderMistakesPanel(el, deps, owner) {
 // src/ui/blocks/practice/polyTabModel.ts
 var POLY_REFILL_THRESHOLD = 4;
 var POLY_LEVELS = [1, 2, 3];
-function categoryLabel2(c2) {
-  return t(`poly.cat.${c2}`);
+function categoryLabel2(c4) {
+  return t(`poly.cat.${c4}`);
 }
 function levelLabel(l4) {
   return t(`poly.level.${l4}`);
@@ -25554,17 +28568,17 @@ function initialCategory(f) {
   return f.words[0] && categoryOfWord(f.words[0]) || "A";
 }
 function filterToValue2(f, category) {
-  const v = { category: [category] };
-  if (f.words.length > 0) v.word = [...f.words];
-  if (f.levels.length > 0) v.level = f.levels.map(String);
-  return v;
+  const v5 = { category: [category] };
+  if (f.words.length > 0) v5.word = [...f.words];
+  if (f.levels.length > 0) v5.level = f.levels.map(String);
+  return v5;
 }
-function valueToFilter2(v, prev) {
+function valueToFilter2(v5, prev) {
   var _a, _b, _c, _d;
-  const category = (_b = (_a = v.category) == null ? void 0 : _a[0]) != null ? _b : initialCategory(prev);
+  const category = (_b = (_a = v5.category) == null ? void 0 : _a[0]) != null ? _b : initialCategory(prev);
   const filter2 = parsePolyFilter({
-    words: (_c = v.word) != null ? _c : [],
-    levels: ((_d = v.level) != null ? _d : []).map(Number),
+    words: (_c = v5.word) != null ? _c : [],
+    levels: ((_d = v5.level) != null ? _d : []).map(Number),
     excluded: prev.excluded
   });
   const wordSet = new Set(filter2.words);
@@ -25577,7 +28591,7 @@ function polyGroups(category) {
       id: "category",
       label: t("practice.poly.category"),
       multi: false,
-      options: POLY_CATEGORIES.map((c2) => ({ id: c2, label: categoryLabel2(c2) }))
+      options: POLY_CATEGORIES.map((c4) => ({ id: c4, label: categoryLabel2(c4) }))
     },
     {
       id: "word",
@@ -25622,9 +28636,9 @@ function polyQuickPicks(src) {
     ...pick("weak", "practice.poly.quickWeak", weakPolyWords(src.weakSenseIds))
   ];
 }
-function progressDot(s) {
-  if (!s || s.correct + s.wrong === 0) return "none";
-  const last3 = s.recent.slice(-3);
+function progressDot(s2) {
+  if (!s2 || s2.correct + s2.wrong === 0) return "none";
+  const last3 = s2.recent.slice(-3);
   if (last3.length === 3 && last3.every(Boolean)) return "done";
   return "partial";
 }
@@ -25637,16 +28651,16 @@ function senseSections(f, stats) {
     return [
       {
         word,
-        rows: w2.senses.map((s) => ({
-          id: s.id,
+        rows: w2.senses.map((s2) => ({
+          id: s2.id,
           word,
-          zh: s.zh,
-          example: s.example,
-          cue: s.cue,
-          level: s.level,
-          checked: !excluded.has(s.id),
-          outOfLevel: f.levels.length > 0 && !f.levels.includes(s.level),
-          dot: progressDot(stats(s.id))
+          zh: s2.zh,
+          example: s2.example,
+          cue: s2.cue,
+          level: s2.level,
+          checked: !excluded.has(s2.id),
+          outOfLevel: f.levels.length > 0 && !f.levels.includes(s2.level),
+          dot: progressDot(stats(s2.id))
         }))
       }
     ];
@@ -25657,7 +28671,7 @@ function toggleExcluded(f, senseId) {
   return { ...f, excluded };
 }
 function testedSenseIds(f) {
-  return new Set(sensesInFilter(f).tested.map((s) => s.id));
+  return new Set(sensesInFilter(f).tested.map((s2) => s2.id));
 }
 function wordCollapsed(word, wordCount2, overrides) {
   var _a;
@@ -25673,19 +28687,19 @@ function polyTab(deps) {
     id: "poly",
     label: t("practice.poly.label"),
     order: 2,
-    mount(el, ctx) {
-      el.addClass("vt-pr-poly");
+    mount(el2, ctx) {
+      el2.addClass("vt-pr-poly");
       let alive = true;
       ctx.component.register(() => alive = false);
       void deps.ready().then(() => {
-        if (alive) new PolyTabView(el, deps, ctx.filters, ctx.component).start();
+        if (alive) new PolyTabView(el2, deps, ctx.filters, ctx.component).start();
       });
     }
   };
 }
 var PolyTabView = class {
-  constructor(el, deps, filters, owner) {
-    this.el = el;
+  constructor(el2, deps, filters, owner) {
+    this.el = el2;
     this.deps = deps;
     this.filters = filters;
     this.owner = owner;
@@ -25774,12 +28788,12 @@ var PolyTabView = class {
     const quick = polyQuickPicks({ saved: deps.savedWords(), weakSenseIds: deps.weakSenseIds() });
     const bar2 = renderFilterBar(barEl, {
       groups,
-      groupsFor: (v) => polyGroups(valueToFilter2(v, this.filter).category),
+      groupsFor: (v5) => polyGroups(valueToFilter2(v5, this.filter).category),
       quick,
       value: filterToValue2(this.filter, this.category),
-      summary: (v) => polySummary(valueToFilter2(v, this.filter).filter),
-      onChange: (v) => {
-        const next = valueToFilter2(v, this.filter);
+      summary: (v5) => polySummary(valueToFilter2(v5, this.filter).filter),
+      onChange: (v5) => {
+        const next = valueToFilter2(v5, this.filter);
         this.filter = next.filter;
         this.category = next.category;
         this.filters.set("poly", this.filter);
@@ -25802,15 +28816,15 @@ var PolyTabView = class {
   }
   // ── Sense map ──────────────────────────────────────────────────
   renderMap() {
-    const el = this.mapEl;
-    el.empty();
+    const el2 = this.mapEl;
+    el2.empty();
     const sections = senseSections(this.filter, (id2) => this.deps.senseStats(id2));
     if (sections.length === 0) {
-      el.addClass("is-hidden");
+      el2.addClass("is-hidden");
       return;
     }
-    el.removeClass("is-hidden");
-    const head = el.createEl("button", {
+    el2.removeClass("is-hidden");
+    const head = el2.createEl("button", {
       cls: "vt-pr-poly-map-head",
       attr: { type: "button", "aria-expanded": String(this.mapOpen) }
     });
@@ -25821,7 +28835,7 @@ var PolyTabView = class {
       this.renderMap();
     });
     if (!this.mapOpen) return;
-    const body = el.createDiv({ cls: "vt-pr-poly-map-body" });
+    const body = el2.createDiv({ cls: "vt-pr-poly-map-body" });
     for (const sec of sections) {
       const box = body.createDiv({ cls: "vt-pr-poly-word" });
       const folded = wordCollapsed(sec.word, sections.length, this.wordFold);
@@ -25897,10 +28911,10 @@ var PolyTabView = class {
     if (this.filter.words.length === 0) return t("practice.poly.pickWord");
     if (this.deps.api.isRefilling("poly")) return t("practice.poly.preparing");
     if (this.canStart()) return t("practice.startHint");
-    const s = this.deps.aiStatus();
-    if (s === "disabled") return t("practice.poly.aiOff");
-    if (s === "no_key") return t("practice.poly.noKey");
-    if (s === "offline") return t("practice.poly.offline");
+    const s2 = this.deps.aiStatus();
+    if (s2 === "disabled") return t("practice.poly.aiOff");
+    if (s2 === "no_key") return t("practice.poly.noKey");
+    if (s2 === "offline") return t("practice.poly.offline");
     return t("practice.poly.none");
   }
   showError(error) {
@@ -25931,10 +28945,10 @@ function filterPolyWords(category, query, words = POLY_WORDS) {
     const rank = (w2) => w2.word === q ? 0 : w2.word.startsWith(q) ? 1 : 2;
     return inCat.map((w2) => ({ w: w2, r: rank(w2) })).filter((x3) => x3.r < 2).sort((a2, b) => a2.r - b.r).map((x3) => x3.w);
   }
-  return inCat.filter((w2) => w2.senses.some((s) => stripBrackets(s.zh).includes(q)));
+  return inCat.filter((w2) => w2.senses.some((s2) => stripBrackets(s2.zh).includes(q)));
 }
 function wordProgress(w2, stats) {
-  return { done: w2.senses.filter((s) => progressDot(stats(s.id)) === "done").length, total: w2.senses.length };
+  return { done: w2.senses.filter((s2) => progressDot(stats(s2.id)) === "done").length, total: w2.senses.length };
 }
 function practiceFilterFor(word) {
   return { words: [word], levels: [], excluded: [] };
@@ -25942,8 +28956,8 @@ function practiceFilterFor(word) {
 
 // src/ui/blocks/polysemyMap.ts
 var picked = /* @__PURE__ */ new Map();
-function renderPolysemyMap(deps, _source, el, ctx) {
-  ctx.addChild(new PolysemyMapBlock(el, deps, ctx.sourcePath));
+function renderPolysemyMap(deps, _source, el2, ctx) {
+  ctx.addChild(new PolysemyMapBlock(el2, deps, ctx.sourcePath));
 }
 var PolysemyMapBlock = class extends import_obsidian39.MarkdownRenderChild {
   constructor(containerEl, deps, sourcePath) {
@@ -25968,12 +28982,12 @@ var PolysemyMapBlock = class extends import_obsidian39.MarkdownRenderChild {
       segmented(segHost, {
         options: [
           { value: "all", label: t("poly.map.all") },
-          ...POLY_CATEGORIES.map((c2) => ({ value: c2, label: categoryLabel2(c2) }))
+          ...POLY_CATEGORIES.map((c4) => ({ value: c4, label: categoryLabel2(c4) }))
         ],
         value: this.category,
         ariaLabel: t("practice.poly.category"),
-        onChange: (v) => {
-          this.category = v;
+        onChange: (v5) => {
+          this.category = v5;
           this.remember();
           drawSeg();
           this.renderList();
@@ -25998,20 +29012,20 @@ var PolysemyMapBlock = class extends import_obsidian39.MarkdownRenderChild {
     picked.set(this.sourcePath, { category: this.category, query: this.query });
   }
   renderList() {
-    const el = this.listEl;
-    el.empty();
+    const el2 = this.listEl;
+    el2.empty();
     const words = filterPolyWords(this.category, this.query);
     if (words.length === 0) {
-      el.createDiv({ cls: "vt-pr-empty", text: t("poly.map.none") });
+      el2.createDiv({ cls: "vt-pr-empty", text: t("poly.map.none") });
       return;
     }
-    for (const w2 of words) this.renderCard(el, w2);
+    for (const w2 of words) this.renderCard(el2, w2);
   }
   renderCard(parent, w2) {
     const stats = (id2) => this.deps.senseStats(id2);
     const isOpen2 = this.open.has(w2.word);
-    const card = parent.createDiv({ cls: "vt-pm-card" });
-    const head = card.createEl("button", {
+    const card2 = parent.createDiv({ cls: "vt-pm-card" });
+    const head = card2.createEl("button", {
       cls: "vt-pm-card-head",
       attr: { type: "button", "aria-expanded": String(isOpen2) }
     });
@@ -26029,18 +29043,18 @@ var PolysemyMapBlock = class extends import_obsidian39.MarkdownRenderChild {
       this.renderList();
     });
     if (!isOpen2) return;
-    const body = card.createDiv({ cls: "vt-pm-card-body" });
+    const body = card2.createDiv({ cls: "vt-pm-card-body" });
     const table2 = body.createDiv({ cls: "vt-pm-senses" });
-    for (const s of w2.senses) {
+    for (const s2 of w2.senses) {
       const row = table2.createDiv({ cls: "vt-pm-sense" });
       const main = row.createDiv({ cls: "vt-pm-sense-main" });
       const top = main.createDiv({ cls: "vt-pm-sense-top" });
-      top.createSpan({ cls: "vt-pm-zh", text: s.zh });
-      top.createSpan({ cls: "vt-pm-eg", text: s.example });
-      main.createDiv({ cls: "vt-pm-cue", text: s.cue });
+      top.createSpan({ cls: "vt-pm-zh", text: s2.zh });
+      top.createSpan({ cls: "vt-pm-eg", text: s2.example });
+      main.createDiv({ cls: "vt-pm-cue", text: s2.cue });
       const meta = row.createDiv({ cls: "vt-pm-meta" });
-      meta.createSpan({ cls: "vt-pm-level", text: levelLabel(s.level) });
-      const dot = progressDot(stats(s.id));
+      meta.createSpan({ cls: "vt-pm-level", text: levelLabel(s2.level) });
+      const dot = progressDot(stats(s2.id));
       meta.createSpan({
         cls: ["vt-pr-poly-dot", `is-${dot}`],
         text: DOT_CHAR[dot],
@@ -26096,7 +29110,7 @@ function segmentFragments(text, options) {
       const i = text.indexOf(o.text, from);
       if (i < 0) break;
       const end = i + o.text.length;
-      if (!claimed.some((c2) => i < c2.end && end > c2.start)) {
+      if (!claimed.some((c4) => i < c4.end && end > c4.start)) {
         claimed.push({ start: i, end, optionId: o.id });
         break;
       }
@@ -26106,10 +29120,10 @@ function segmentFragments(text, options) {
   claimed.sort((a2, b) => a2.start - b.start);
   const out = [];
   let pos = 0;
-  for (const c2 of claimed) {
-    if (c2.start > pos) out.push({ t: "text", text: text.slice(pos, c2.start) });
-    out.push({ t: "frag", text: text.slice(c2.start, c2.end), optionId: c2.optionId });
-    pos = c2.end;
+  for (const c4 of claimed) {
+    if (c4.start > pos) out.push({ t: "text", text: text.slice(pos, c4.start) });
+    out.push({ t: "frag", text: text.slice(c4.start, c4.end), optionId: c4.optionId });
+    pos = c4.end;
   }
   if (pos < text.length) out.push({ t: "text", text: text.slice(pos) });
   return out;
@@ -26132,9 +29146,9 @@ function optionText(q, id2) {
 function answeredParts(q) {
   if (q.kind === "find-error") {
     const wrong = optionText(q, q.answerId);
-    const parts = questionSegments(q).map((s) => {
-      if (s.t === "frag") return { t: s.optionId === q.answerId ? "strike" : "text", text: s.text };
-      return { t: "text", text: s.t === "blank" ? "" : s.text };
+    const parts = questionSegments(q).map((s2) => {
+      if (s2.t === "frag") return { t: s2.optionId === q.answerId ? "strike" : "text", text: s2.text };
+      return { t: "text", text: s2.t === "blank" ? "" : s2.text };
     });
     if (!parts.some((p) => p.t === "strike") && wrong) parts.push({ t: "strike", text: wrong });
     if (q.answered && q.answered !== q.text) parts.push({ t: "fix", text: q.answered });
@@ -26143,7 +29157,7 @@ function answeredParts(q) {
   if (q.answered) return [{ t: "text", text: q.answered }];
   if (q.kind === "which-sense" || q.kind === "same-sense") {
     return segmentTargets(q.text).map(
-      (s) => s.t === "target" ? { t: "target", text: s.text } : { t: "text", text: s.t === "text" ? s.text : "" }
+      (s2) => s2.t === "target" ? { t: "target", text: s2.text } : { t: "text", text: s2.t === "text" ? s2.text : "" }
     );
   }
   const ans = optionText(q, q.answerId);
@@ -26156,9 +29170,9 @@ function pickNext(done, questions2) {
   var _a;
   return (_a = questions2.find((q) => !done.includes(q.id))) != null ? _a : null;
 }
-function withCurrent(s, q) {
+function withCurrent(s2, q) {
   return {
-    ...s,
+    ...s2,
     current: q,
     phase: q ? "asking" : "empty",
     chosen: void 0,
@@ -26167,36 +29181,36 @@ function withCurrent(s, q) {
     hintShown: false
   };
 }
-function refreshState(s, questions2) {
-  if (s.current) {
-    if (s.phase === "feedback") return s;
-    if (questions2.some((q) => q.id === s.current.id)) return s;
+function refreshState(s2, questions2) {
+  if (s2.current) {
+    if (s2.phase === "feedback") return s2;
+    if (questions2.some((q) => q.id === s2.current.id)) return s2;
   }
-  const next = pickNext(s.done, questions2);
-  if (!next && !s.current) return s;
-  return withCurrent(s, next);
+  const next = pickNext(s2.done, questions2);
+  if (!next && !s2.current) return s2;
+  return withCurrent(s2, next);
 }
-function canHint(s) {
+function canHint(s2) {
   var _a;
-  return s.phase === "asking" && !!((_a = s.current) == null ? void 0 : _a.hints) && Object.keys(s.current.hints).length > 0;
+  return s2.phase === "asking" && !!((_a = s2.current) == null ? void 0 : _a.hints) && Object.keys(s2.current.hints).length > 0;
 }
-function showHint(s) {
-  if (!canHint(s)) return s;
-  return { ...s, hinted: true, hintShown: true };
+function showHint(s2) {
+  if (!canHint(s2)) return s2;
+  return { ...s2, hinted: true, hintShown: true };
 }
-function answerState(s, optionId) {
-  const q = s.current;
-  if (s.phase !== "asking" || !q || !q.options.some((o) => o.id === optionId)) return null;
+function answerState(s2, optionId) {
+  const q = s2.current;
+  if (s2.phase !== "asking" || !q || !q.options.some((o) => o.id === optionId)) return null;
   const correct = optionId === q.answerId;
   return {
     correct,
     state: {
-      ...s,
+      ...s2,
       phase: "feedback",
       chosen: optionId,
       correct,
-      answered: s.answered + 1,
-      correctCount: s.correctCount + (correct ? 1 : 0)
+      answered: s2.answered + 1,
+      correctCount: s2.correctCount + (correct ? 1 : 0)
     }
   };
 }
@@ -26212,24 +29226,24 @@ function toHistory(q, skipped, withLine) {
     skipped
   };
 }
-function advance(s, item, questions2) {
-  const done = [...s.done, item.qid];
-  return withCurrent({ ...s, done, history: [...s.history, item] }, pickNext(done, questions2));
+function advance(s2, item, questions2) {
+  const done = [...s2.done, item.qid];
+  return withCurrent({ ...s2, done, history: [...s2.history, item] }, pickNext(done, questions2));
 }
-function nextState(s, questions2) {
-  if (s.phase !== "feedback" || !s.current) return s;
-  return advance(s, toHistory(s.current, false, true), questions2);
+function nextState(s2, questions2) {
+  if (s2.phase !== "feedback" || !s2.current) return s2;
+  return advance(s2, toHistory(s2.current, false, true), questions2);
 }
-function skipState(s, questions2) {
-  if (!s.current || s.phase === "empty") return { state: s, skipped: false };
-  if (s.phase === "feedback") return { state: nextState(s, questions2), skipped: false };
-  return { state: advance(s, toHistory(s.current, true, true), questions2), skipped: true };
+function skipState(s2, questions2) {
+  if (!s2.current || s2.phase === "empty") return { state: s2, skipped: false };
+  if (s2.phase === "feedback") return { state: nextState(s2, questions2), skipped: false };
+  return { state: advance(s2, toHistory(s2.current, true, true), questions2), skipped: true };
 }
-function feedbackNote(s) {
+function feedbackNote(s2) {
   var _a;
-  const q = s.current;
-  if (!q || s.phase !== "feedback" || s.correct || !s.chosen) return void 0;
-  return (_a = q.optionNotes) == null ? void 0 : _a[s.chosen];
+  const q = s2.current;
+  if (!q || s2.phase !== "feedback" || s2.correct || !s2.chosen) return void 0;
+  return (_a = q.optionNotes) == null ? void 0 : _a[s2.chosen];
 }
 function historyEntries(items) {
   const out = [];
@@ -26253,7 +29267,7 @@ function trimHistory2(entries, limit) {
 var MOBILE_HISTORY_LIMIT = 3;
 function speakerSides(speakers) {
   const order = [];
-  for (const s of speakers) if (s && !order.includes(s)) order.push(s);
+  for (const s2 of speakers) if (s2 && !order.includes(s2)) order.push(s2);
   return (sp) => sp && order.indexOf(sp) === 1 ? "right" : "left";
 }
 function entrySpeakers(entries, current) {
@@ -26314,11 +29328,11 @@ function push(parts, text, diff) {
 function askLine(q) {
   switch (q.kind) {
     case "which-sense": {
-      const word = questionSegments(q).find((s) => s.t === "target");
+      const word = questionSegments(q).find((s2) => s2.t === "target");
       return t("practice.player.ask.which-sense", { word: word && word.t === "target" ? word.text : "" });
     }
     case "same-sense": {
-      const word = questionSegments(q).find((s) => s.t === "target");
+      const word = questionSegments(q).find((s2) => s2.t === "target");
       return t("practice.player.ask.same-sense", { word: word && word.t === "target" ? word.text : "" });
     }
     case "pick-word":
@@ -26334,23 +29348,23 @@ function optionColumns(kind, mobile) {
   if (kind === "same-sense" || kind === "paraphrase" || mobile) return 1;
   return 2;
 }
-function keyAction(key6, s) {
-  if (!s.current || s.phase === "empty") return null;
+function keyAction(key6, s2) {
+  if (!s2.current || s2.phase === "empty") return null;
   if (/^[1-9]$/.test(key6)) {
     const index2 = Number(key6) - 1;
-    return s.phase === "asking" && index2 < Math.min(4, s.current.options.length) ? { type: "pick", index: index2 } : null;
+    return s2.phase === "asking" && index2 < Math.min(4, s2.current.options.length) ? { type: "pick", index: index2 } : null;
   }
-  if (key6 === "Enter") return s.phase === "feedback" ? { type: "next" } : null;
+  if (key6 === "Enter") return s2.phase === "feedback" ? { type: "next" } : null;
   const k = key6.toLowerCase();
   if (k === "s") return { type: "skip" };
-  if (k === "h") return canHint(s) ? { type: "hint" } : null;
+  if (k === "h") return canHint(s2) ? { type: "hint" } : null;
   return null;
 }
 
 // src/ui/blocks/practice/scenarioPlayer.ts
-var isMobile = () => document.body.classList.contains("is-mobile");
-function mountScenarioPlayer(el, opts, owner) {
-  const root2 = el.createDiv({ cls: "vt-pr-player" });
+var isMobile2 = () => document.body.classList.contains("is-mobile");
+function mountScenarioPlayer(el2, opts, owner) {
+  const root2 = el2.createDiv({ cls: "vt-pr-player" });
   root2.tabIndex = 0;
   let state = initialState();
   let expanded = false;
@@ -26366,7 +29380,7 @@ function mountScenarioPlayer(el, opts, owner) {
         (_b = (_a = opts.callbacks).onEmpty) == null ? void 0 : _b.call(_a);
       }
     } else emptyNotified = false;
-    render();
+    render5();
   }
   function pick(optionId) {
     const r = answerState(state, optionId);
@@ -26374,7 +29388,7 @@ function mountScenarioPlayer(el, opts, owner) {
     const q = state.current;
     state = r.state;
     opts.callbacks.onAnswer({ question: q, optionId, correct: r.correct, hinted: state.hinted });
-    render();
+    render5();
   }
   function next() {
     sync(nextState(state, questions2()));
@@ -26387,7 +29401,7 @@ function mountScenarioPlayer(el, opts, owner) {
   }
   function hint() {
     state = showHint(state);
-    render();
+    render5();
   }
   owner.registerDomEvent(root2, "keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -26410,15 +29424,15 @@ function mountScenarioPlayer(el, opts, owner) {
   function renderHistory(parent) {
     const all = historyEntries(state.history);
     if (!all.length) return;
-    const limited = isMobile() && !expanded;
+    const limited = isMobile2() && !expanded;
     const { shown, hidden } = limited ? trimHistory2(all, MOBILE_HISTORY_LIMIT) : { shown: all, hidden: 0 };
-    const side = speakerSides(entrySpeakers(all, state.current));
+    const side2 = speakerSides(entrySpeakers(all, state.current));
     const box = parent.createDiv({ cls: "vt-pr-history" });
     if (hidden > 0) {
       const more = box.createEl("button", { cls: "vt-pr-more", text: `${t("practice.player.earlier")} (${hidden})` });
       more.addEventListener("click", () => {
         expanded = true;
-        render();
+        render5();
       });
     }
     for (const e of shown) {
@@ -26430,7 +29444,7 @@ function mountScenarioPlayer(el, opts, owner) {
       const line2 = box.createDiv({ cls: "vt-pr-line" });
       if (e.lead) line2.addClass("is-lead");
       if (e.skipped) line2.addClass("is-skipped");
-      if (bubble2) line2.addClass("is-bubble", side(e.speaker) === "right" ? "is-right" : "is-left");
+      if (bubble2) line2.addClass("is-bubble", side2(e.speaker) === "right" ? "is-right" : "is-left");
       if (bubble2) line2.createDiv({ cls: "vt-pr-speaker", text: e.speaker });
       renderParts(line2.createDiv({ cls: "vt-pr-text" }), e.parts);
     }
@@ -26440,10 +29454,10 @@ function mountScenarioPlayer(el, opts, owner) {
     const box = parent.createDiv({ cls: "vt-pr-current" });
     if (q.tag) box.createDiv({ cls: "vt-pr-tag", text: q.tag });
     const all = [...historyEntries(state.history)];
-    const side = speakerSides(entrySpeakers(all, q));
+    const side2 = speakerSides(entrySpeakers(all, q));
     const wrap = (cls, speaker) => {
       const d = box.createDiv({ cls });
-      if (speaker) d.addClass("is-bubble", side(speaker) === "right" ? "is-right" : "is-left");
+      if (speaker) d.addClass("is-bubble", side2(speaker) === "right" ? "is-right" : "is-left");
       if (speaker) d.createDiv({ cls: "vt-pr-speaker", text: speaker });
       return d.createDiv({ cls: "vt-pr-text" });
     };
@@ -26451,27 +29465,27 @@ function mountScenarioPlayer(el, opts, owner) {
     const feedback = state.phase === "feedback";
     const body = wrap("vt-pr-line is-question", q.speaker);
     const fragMode = q.kind === "find-error";
-    for (const s of questionSegments(q)) {
-      if (s.t === "text") body.appendText(s.text);
-      else if (s.t === "blank") {
+    for (const s2 of questionSegments(q)) {
+      if (s2.t === "text") body.appendText(s2.text);
+      else if (s2.t === "blank") {
         const b = body.createSpan({ cls: "vt-pr-blank" });
         if (feedback) b.setText((_c = (_b = q.options.find((o) => o.id === q.answerId)) == null ? void 0 : _b.text) != null ? _c : "");
         else b.setText("\xA0\xA0\xA0\xA0\xA0\xA0");
-      } else if (s.t === "target") body.createEl("strong", { cls: "vt-pr-target", text: s.text });
+      } else if (s2.t === "target") body.createEl("strong", { cls: "vt-pr-target", text: s2.text });
       else {
-        const f = body.createEl("button", { cls: "vt-pr-frag", text: s.text, attr: { type: "button" } });
+        const f = body.createEl("button", { cls: "vt-pr-frag", text: s2.text, attr: { type: "button" } });
         if (feedback) {
           f.disabled = true;
-          if (s.optionId === q.answerId) f.addClass("is-answer");
-          else if (s.optionId === state.chosen) f.addClass("is-wrong");
-        } else f.addEventListener("click", () => pick(s.optionId));
+          if (s2.optionId === q.answerId) f.addClass("is-answer");
+          else if (s2.optionId === state.chosen) f.addClass("is-wrong");
+        } else f.addEventListener("click", () => pick(s2.optionId));
       }
     }
     box.createDiv({ cls: "vt-pr-ask", text: askLine(q) });
-    const located = new Set(questionSegments(q).flatMap((s) => s.t === "frag" ? [s.optionId] : []));
+    const located = new Set(questionSegments(q).flatMap((s2) => s2.t === "frag" ? [s2.optionId] : []));
     const buttons2 = q.options.filter((o) => !fragMode || !located.has(o.id));
     if (buttons2.length) {
-      const grid = box.createDiv({ cls: `vt-pr-options cols-${optionColumns(q.kind, isMobile())}` });
+      const grid = box.createDiv({ cls: `vt-pr-options cols-${optionColumns(q.kind, isMobile2())}` });
       const diffs = q.kind === "paraphrase" ? optionDiffParts(q.options) : null;
       q.options.forEach((o, i) => {
         var _a2;
@@ -26517,7 +29531,7 @@ function mountScenarioPlayer(el, opts, owner) {
     const nb = learnButton(row, { label: `${t("practice.player.next")}  \u21B5`, cta: true, onClick: next });
     nb.addClass("vt-pr-next");
   }
-  function render() {
+  function render5() {
     var _a, _b, _c;
     if (dead) return;
     const hadFocus = root2.contains(document.activeElement);
@@ -26816,26 +29830,26 @@ var GRAMMAR_MIN_QUESTIONS = 10;
 var BAND_PASS = 0.7;
 var BAND_MIN = 3;
 var GRAMMAR_BAND_LEVEL = ["A1\u2013A2", "B1\u2013B2", "C1"];
-var pct3 = (r) => `${Math.round(r * 100)}%`;
+var pct4 = (r) => `${Math.round(r * 100)}%`;
 function grammarLevel(data) {
   var _a;
   const area = "\u6587\u6CD5";
   const bands = data.grammar.bands;
-  const total2 = bands.reduce((s, b) => s + b.total, 0);
+  const total2 = bands.reduce((s2, b) => s2 + b.total, 0);
   if (total2 < GRAMMAR_MIN_QUESTIONS) {
     return { area, level: UNKNOWN_LEVEL, basis: `\u6587\u6CD5\u984C\u53EA\u505A\u4E86 ${total2} \u984C\uFF0C\u81F3\u5C11 ${GRAMMAR_MIN_QUESTIONS} \u984C\u624D\u770B\u5F97\u51FA\u4F86`, rough: true };
   }
   for (let i = bands.length - 1; i >= 0; i--) {
     const b = bands[i];
     if (b.total >= BAND_MIN && b.rate !== null && b.rate >= BAND_PASS) {
-      return { area, level: `\u7D04 ${(_a = GRAMMAR_BAND_LEVEL[i]) != null ? _a : b.label}`, basis: `\u96E3\u5EA6 ${b.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct3(b.rate)}\uFF08${b.total} \u984C\uFF09`, rough: true };
+      return { area, level: `\u7D04 ${(_a = GRAMMAR_BAND_LEVEL[i]) != null ? _a : b.label}`, basis: `\u96E3\u5EA6 ${b.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct4(b.rate)}\uFF08${b.total} \u984C\uFF09`, rough: true };
     }
   }
   const low = bands.find((b) => b.total > 0);
   return {
     area,
     level: "\u7D04 A1\u2013A2 \u4EE5\u4E0B",
-    basis: low && low.rate !== null ? `\u96E3\u5EA6 ${low.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct3(low.rate)}\uFF08${low.total} \u984C\uFF09\uFF0C\u9084\u6C92\u5230\u4E03\u6210` : "\u6587\u6CD5\u984C\u7B54\u5C0D\u7387\u9084\u6C92\u5230\u4E03\u6210",
+    basis: low && low.rate !== null ? `\u96E3\u5EA6 ${low.label} \u7684\u6587\u6CD5\u984C\u7B54\u5C0D ${pct4(low.rate)}\uFF08${low.total} \u984C\uFF09\uFF0C\u9084\u6C92\u5230\u4E03\u6210` : "\u6587\u6CD5\u984C\u7B54\u5C0D\u7387\u9084\u6C92\u5230\u4E03\u6210",
     rough: true
   };
 }
@@ -26879,7 +29893,7 @@ function taskName(id2) {
   return (_a = TASK_NAMES[id2]) != null ? _a : id2;
 }
 var TRACK_NAMES = { grammar: "\u6587\u6CD5", poly: "\u591A\u7FA9\u5B57", vocab: "\u55AE\u5B57", mix: "\u6DF7\u5408", para: "\u6BB5\u843D" };
-var pct4 = (r) => `${Math.round(r * 100)}%`;
+var pct5 = (r) => `${Math.round(r * 100)}%`;
 function verdictHeadline(verdict, suggestedLevel) {
   switch (verdict) {
     case "up":
@@ -26932,18 +29946,18 @@ function numbers(data) {
   if (w2.savedStillLooked.length) wl.push(`- \u6536\u85CF\u537B\u9084\u5728\u67E5\uFF1A${w2.savedStillLooked.map((x3) => `${x3.word}\uFF08${x3.lookups}\uFF09`).join("\u3001")}`);
   if (w2.mostPronounced.length) wl.push(`- \u807D\u6700\u591A\u6B21\uFF1A${w2.mostPronounced.map((x3) => `${x3.word}\uFF08${x3.pronounce}\uFF09`).join("\u3001")}`);
   out.push(...section2("\u67E5\u5B57\uFF0F\u767C\u97F3", wl));
-  const v = data.vocab;
+  const v5 = data.vocab;
   const vl = [];
-  if (v.newSaved > 0) vl.push(`- \u65B0\u6536\u85CF ${v.newSaved} \u500B\u5B57`);
-  if (v.reviews > 0) {
-    const rate = v.recallRate === null ? "" : `\uFF0C\u8A18\u4F4F\u7387 ${pct4(v.recallRate)}${deltaRate(v.recallRate, v.prevRecallRate)}`;
-    vl.push(`- \u8907\u7FD2 ${v.reviews} \u6B21${rate}${v.avgSeconds !== null ? `\uFF0C\u5E73\u5747\u505C\u7559 ${v.avgSeconds} \u79D2` : ""}`);
+  if (v5.newSaved > 0) vl.push(`- \u65B0\u6536\u85CF ${v5.newSaved} \u500B\u5B57`);
+  if (v5.reviews > 0) {
+    const rate = v5.recallRate === null ? "" : `\uFF0C\u8A18\u4F4F\u7387 ${pct5(v5.recallRate)}${deltaRate(v5.recallRate, v5.prevRecallRate)}`;
+    vl.push(`- \u8907\u7FD2 ${v5.reviews} \u6B21${rate}${v5.avgSeconds !== null ? `\uFF0C\u5E73\u5747\u505C\u7559 ${v5.avgSeconds} \u79D2` : ""}`);
   }
   out.push(...section2("\u55AE\u5B57\u8907\u7FD2", vl));
   const pl = data.practice.tracks.map(
     (t2) => {
       var _a;
-      return `- ${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\uFF1A${t2.correct}/${t2.total}\uFF08${pct4(t2.rate)}${t2.prevRate !== null ? deltaRate(t2.rate, t2.prevRate) : ""}\uFF09`;
+      return `- ${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\uFF1A${t2.correct}/${t2.total}\uFF08${pct5(t2.rate)}${t2.prevRate !== null ? deltaRate(t2.rate, t2.prevRate) : ""}\uFF09`;
     }
   );
   out.push(...section2("\u7DF4\u7FD2\u7B54\u5C0D\u7387", pl));
@@ -26953,7 +29967,7 @@ function numbers(data) {
   const gl = [];
   const bands = data.grammar.bands.filter((b) => b.total > 0 && b.rate !== null);
   if (data.grammar.mastered > 0) gl.push(`- \u5DF2\u7CBE\u719F ${data.grammar.mastered} \u500B\u6587\u6CD5\u4E3B\u984C`);
-  for (const b of bands) gl.push(`- \u96E3\u5EA6 ${b.label}\uFF1A${b.correct}/${b.total}\uFF08${pct4(b.rate)}\uFF09`);
+  for (const b of bands) gl.push(`- \u96E3\u5EA6 ${b.label}\uFF1A${b.correct}/${b.total}\uFF08${pct5(b.rate)}\uFF09`);
   out.push(...section2("\u6587\u6CD5\u7CBE\u719F", gl));
   if (data.tags.length) out.push(...section2("\u8003\u8A66\u6A19\u7C64", [`- ${data.tags.map((t2) => `${t2.key}\uFF08${t2.count}\uFF09`).join("\u3001")}`]));
   return out;
@@ -26966,7 +29980,7 @@ function calloutLines(kind, fold, title, body) {
   while (trimmed.length && trimmed[trimmed.length - 1] === "") trimmed.pop();
   return [`> [!${kind}]${fold} ${title}`, ...trimmed.map((l4) => l4 === "" ? ">" : `> ${l4}`)];
 }
-var cell = (s) => s.replace(/\|/g, "\uFF0F").replace(/\s*\n\s*/g, " ").trim();
+var cell = (s2) => s2.replace(/\|/g, "\uFF0F").replace(/\s*\n\s*/g, " ").trim();
 function levelTable(levels) {
   const rows = levels.map((l4) => {
     const detail = l4.detail ? `\uFF08${l4.detail}\uFF09` : "";
@@ -27002,7 +30016,7 @@ function renderReportFile(data, meta) {
   if (ai == null ? void 0 : ai.letter) body.push(ai.letter, "");
   const tiers = data.tiers && hasTierData(data.tiers) ? ["", "```" + TIERS_LANG, tiersFenceJson(data.tiers), "```"] : [];
   const now2 = [...radarFence(axes), "", ...levelTable(levels), ...tiers, "", "#### \u7A0B\u5EA6\u5EFA\u8B70", "", `**${verdictHeadline(adv.verdict, adv.suggestedLevel)}**`, ""];
-  for (const s of adv.signals) now2.push(`- ${s.reason}`);
+  for (const s2 of adv.signals) now2.push(`- ${s2.reason}`);
   body.push(...calloutLines("abstract", "+", "\u73FE\u5728\u7684\u7A0B\u5EA6", now2), "");
   const next = ["#### \u7167\u4F60\u7684\u7A0B\u5EA6\u53EF\u4EE5\u52A0\u5F37", ""];
   if (ai == null ? void 0 : ai.focus.length) next.push(...ai.focus.map((p) => `- ${p}`), "");
@@ -27069,15 +30083,15 @@ function reportDigest(data) {
   if (w2.lookups) L.push(`\u67E5\u5B57 ${w2.lookups} \u6B21`);
   if (w2.repeated.length) L.push(`\u53CD\u8986\u67E5\u7684\u5B57\uFF1A${w2.repeated.map((x3) => x3.word).join("\u3001")}`);
   if (w2.savedStillLooked.length) L.push(`\u6536\u85CF\u537B\u9084\u5728\u67E5\uFF1A${w2.savedStillLooked.map((x3) => x3.word).join("\u3001")}`);
-  const v = data.vocab;
-  if (v.reviews) L.push(`\u55AE\u5B57\u8907\u7FD2 ${v.reviews} \u6B21\uFF0C\u8A18\u4F4F\u7387 ${v.recallRate === null ? "-" : pct4(v.recallRate)}`);
-  if (v.newSaved) L.push(`\u65B0\u6536\u85CF ${v.newSaved} \u500B\u5B57`);
-  for (const t2 of data.practice.tracks) L.push(`${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\u7DF4\u7FD2\u7B54\u5C0D\u7387 ${pct4(t2.rate)}\uFF08${t2.total} \u984C\uFF09`);
+  const v5 = data.vocab;
+  if (v5.reviews) L.push(`\u55AE\u5B57\u8907\u7FD2 ${v5.reviews} \u6B21\uFF0C\u8A18\u4F4F\u7387 ${v5.recallRate === null ? "-" : pct5(v5.recallRate)}`);
+  if (v5.newSaved) L.push(`\u65B0\u6536\u85CF ${v5.newSaved} \u500B\u5B57`);
+  for (const t2 of data.practice.tracks) L.push(`${(_a = TRACK_NAMES[t2.track]) != null ? _a : t2.track}\u7DF4\u7FD2\u7B54\u5C0D\u7387 ${pct5(t2.rate)}\uFF08${t2.total} \u984C\uFF09`);
   if (data.practice.weak.length) L.push(`\u5F31\u9EDE\uFF1A${data.practice.weak.map(weakLabel).join("\u3001")}`);
   if (data.grammar.mastered) L.push(`\u6587\u6CD5\u5DF2\u7CBE\u719F ${data.grammar.mastered} \u500B\u4E3B\u984C`);
   if (data.tags.length) L.push(`\u8003\u8A66\u6A19\u7C64\uFF1A${data.tags.map((t2) => t2.key).join("\u3001")}`);
   L.push(`\u7A0B\u5EA6\u5224\u65B7\uFF1A${verdictHeadline(data.advice.verdict, data.advice.suggestedLevel)}`);
-  for (const s of data.advice.signals) L.push(`- ${s.reason}`);
+  for (const s2 of data.advice.signals) L.push(`- ${s2.reason}`);
   return L.join("\n");
 }
 
@@ -27087,9 +30101,9 @@ var RECENT_DISCUSSION_MAX = 20;
 var TEXT_MAX = 120;
 var PARAGRAPH_TEXT_MAX = 400;
 var DAY_MS3 = 864e5;
-var flat2 = (s) => s.replace(/\s+/g, " ").trim();
-function clip(s, max = TEXT_MAX) {
-  const chars = [...flat2(s)];
+var flat2 = (s2) => s2.replace(/\s+/g, " ").trim();
+function clip(s2, max = TEXT_MAX) {
+  const chars = [...flat2(s2)];
   return chars.length > max ? `${chars.slice(0, max).join("")}\u2026` : chars.join("");
 }
 function plainParagraph2(md) {
@@ -27202,10 +30216,10 @@ var SHARE_STYLES = [
 ];
 var GIST_BIAS = 0.4;
 function pickShareStyle(kind, lastId, random) {
-  const fit = SHARE_STYLES.filter((s) => s.scope === "both" || s.scope === kind);
-  if (kind === "paragraph" && lastId !== "gist" && random() < GIST_BIAS) return fit.find((s) => s.id === "gist");
-  const others = fit.filter((s) => s.id !== "gist");
-  const pool = others.filter((s) => s.id !== lastId);
+  const fit = SHARE_STYLES.filter((s2) => s2.scope === "both" || s2.scope === kind);
+  if (kind === "paragraph" && lastId !== "gist" && random() < GIST_BIAS) return fit.find((s2) => s2.id === "gist");
+  const others = fit.filter((s2) => s2.id !== "gist");
+  const pool = others.filter((s2) => s2.id !== lastId);
   const from = pool.length ? pool : others;
   return from[Math.min(from.length - 1, Math.floor(random() * from.length))];
 }
@@ -27246,7 +30260,7 @@ function shareSourceOf(item) {
     ...item.sourceParagraph ? { text: item.sourceParagraph } : {}
   };
 }
-var escapeRe2 = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+var escapeRe2 = (s2) => s2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 function highlightWord(text, word) {
   var _a;
   const w2 = word.trim();
@@ -27288,8 +30302,8 @@ function buddyThreadTitle(thread) {
   if (!chars.length) return t("buddy.untitled");
   return chars.length > TITLE_CHARS ? `${chars.slice(0, TITLE_CHARS).join("")}\u2026` : text;
 }
-function renderBuddy(plugin, _source, el, ctx) {
-  ctx.addChild(new BuddyBlock(el, plugin, ctx.sourcePath));
+function renderBuddy(plugin, _source, el2, ctx) {
+  ctx.addChild(new BuddyBlock(el2, plugin, ctx.sourcePath));
 }
 var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
   constructor(containerEl, plugin, sourcePath) {
@@ -27370,8 +30384,8 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     this.open(this.plugin.threads.newBuddyThreadId());
   }
   renderList() {
-    const el = this.listEl;
-    el.empty();
+    const el2 = this.listEl;
+    el2.empty();
     const now2 = /* @__PURE__ */ new Date();
     const threads = this.listed();
     const byId = new Map(threads.map((th) => [th.id, th]));
@@ -27384,7 +30398,7 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     );
     const title = today > 0 ? t("buddy.listToday", { n: today }) : t("buddy.list");
     this.listBtn.setText(title);
-    el.createDiv({ cls: "vt-buddy-list-title", text: title });
+    el2.createDiv({ cls: "vt-buddy-list-title", text: title });
     const groups = groupByDay(
       threads.map((th) => {
         var _a, _b;
@@ -27395,7 +30409,7 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
     const defaults = defaultExpandedKeys(groups, this.threadId, now2);
     for (const g of groups) {
       const collapsed = isGroupCollapsed(g.key, this.groupOverrides, defaults);
-      const heading = el.createDiv({ cls: "vt-buddy-group-head" });
+      const heading = el2.createDiv({ cls: "vt-buddy-group-head" });
       (0, import_obsidian41.setIcon)(heading.createSpan({ cls: "vt-buddy-group-arrow" }), collapsed ? "chevron-right" : "chevron-down");
       heading.createSpan({ cls: "vt-buddy-group-title", text: this.groupLabel(g) });
       heading.createSpan({ cls: "vt-buddy-group-count", text: String(g.ids.length) });
@@ -27407,7 +30421,7 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
       for (const id2 of g.ids) {
         const th = byId.get(id2);
         if (!th) continue;
-        const row = el.createEl("button", { cls: "vt-buddy-item", attr: { type: "button" } });
+        const row = el2.createEl("button", { cls: "vt-buddy-item", attr: { type: "button" } });
         row.toggleClass("is-active", th.id === this.threadId);
         row.createSpan({ cls: "vt-buddy-item-title", text: buddyThreadTitle(th) });
         row.addEventListener("click", () => {
@@ -27416,7 +30430,7 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
         });
       }
     }
-    el.toggleClass("is-empty", groups.length === 0);
+    el2.toggleClass("is-empty", groups.length === 0);
   }
   groupLabel(g) {
     const label = g.label;
@@ -27482,8 +30496,8 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
   findScroller() {
     const hit = this.containerEl.closest(SCROLLER_SELECTOR);
     if (hit) return hit;
-    for (let el = this.containerEl.parentElement; el; el = el.parentElement) {
-      if (isScrollableOverflow(getComputedStyle(el).overflowY)) return el;
+    for (let el2 = this.containerEl.parentElement; el2; el2 = el2.parentElement) {
+      if (isScrollableOverflow(getComputedStyle(el2).overflowY)) return el2;
     }
     return null;
   }
@@ -27585,22 +30599,22 @@ var BuddyBlock = class extends import_obsidian41.MarkdownRenderChild {
   }
   // 聊聊最近讀的: the picked word or paragraph, quoted above the buddy's question.
   quoteCardEl(turn) {
-    const card = quoteCard(turn.shareSource);
-    if (!card) return null;
-    const el = createDiv({ cls: "vt-buddy-quote" });
-    if (card.heading) el.createDiv({ cls: "vt-buddy-quote-head", text: card.heading });
-    if (card.wordLine) {
-      const line2 = el.createDiv({ cls: "vt-buddy-quote-body" });
-      line2.createEl("strong", { text: card.wordLine.word });
-      if (card.wordLine.meaning) line2.createSpan({ text: `\u3000${card.wordLine.meaning}` });
-      return el;
+    const card2 = quoteCard(turn.shareSource);
+    if (!card2) return null;
+    const el2 = createDiv({ cls: "vt-buddy-quote" });
+    if (card2.heading) el2.createDiv({ cls: "vt-buddy-quote-head", text: card2.heading });
+    if (card2.wordLine) {
+      const line2 = el2.createDiv({ cls: "vt-buddy-quote-body" });
+      line2.createEl("strong", { text: card2.wordLine.word });
+      if (card2.wordLine.meaning) line2.createSpan({ text: `\u3000${card2.wordLine.meaning}` });
+      return el2;
     }
-    const body = el.createDiv({ cls: "vt-buddy-quote-body" });
-    for (const seg of card.body) {
+    const body = el2.createDiv({ cls: "vt-buddy-quote-body" });
+    for (const seg of card2.body) {
       if (seg.hit) body.createEl("mark", { text: seg.text });
       else body.appendText(seg.text);
     }
-    return el;
+    return el2;
   }
   async send(req) {
     var _a;
@@ -27661,7 +30675,7 @@ function knownWordList(entries, max = MAX_KNOWN_WORDS) {
 }
 function buildTriviaContext(input) {
   var _a, _b, _c, _d, _e, _f, _g, _h;
-  const s = input.subject;
+  const s2 = input.subject;
   const total2 = Math.max((_a = input.knownTotal) != null ? _a : 0, input.knownWords.length);
   const told = ((_b = input.told) != null ? _b : []).slice(0, MAX_TOLD);
   return {
@@ -27671,17 +30685,17 @@ function buildTriviaContext(input) {
       count: input.knownWords.length,
       words: input.knownWords.join(", ")
     }),
-    subjectBlock: s ? renderTemplate(SUBJECT_TEMPLATE, {
-      word: s.word,
-      phonetic: s.phonetic,
-      partOfSpeech: s.partOfSpeech,
-      definitionZh: s.definitionZh,
-      definition: s.definition,
-      example: (_c = s.example) == null ? void 0 : _c.trim()
+    subjectBlock: s2 ? renderTemplate(SUBJECT_TEMPLATE, {
+      word: s2.word,
+      phonetic: s2.phonetic,
+      partOfSpeech: s2.partOfSpeech,
+      definitionZh: s2.definitionZh,
+      definition: s2.definition,
+      example: (_c = s2.example) == null ? void 0 : _c.trim()
     }) : "",
     toldBlock: told.length ? renderTemplate(TOLD_TEMPLATE, { told: told.map((t2) => `- ${t2.word}\uFF1A${t2.title}`).join("\n") }) : "",
     slots: {
-      word: (_d = s == null ? void 0 : s.word) != null ? _d : "",
+      word: (_d = s2 == null ? void 0 : s2.word) != null ? _d : "",
       question: (_f = (_e = input.question) == null ? void 0 : _e.trim()) != null ? _f : "",
       selection: (_h = (_g = input.selection) == null ? void 0 : _g.trim()) != null ? _h : ""
     }
@@ -27719,8 +30733,8 @@ var TRIVIA_TEMPLATES = {
 var TITLE_MAX = 40;
 var BOLD_LINE_RE = /^\s*(?:#+\s*)?\*\*(.+?)\*\*\s*[:：]?\s*$/;
 var LABEL_LINE_RE = /^\s*(?:標題|title)\s*[:：]\s*(.+)$/i;
-function clip2(s, max) {
-  return s.length > max ? `${s.slice(0, max - 1)}\u2026` : s;
+function clip2(s2, max) {
+  return s2.length > max ? `${s2.slice(0, max - 1)}\u2026` : s2;
 }
 function splitTrivia(text) {
   var _a, _b, _c;
@@ -27731,8 +30745,8 @@ function splitTrivia(text) {
   const titled = (_a = BOLD_LINE_RE.exec(first)) != null ? _a : LABEL_LINE_RE.exec(first);
   if (titled && rest) return { title: clip2(titled[1].trim(), TITLE_MAX), body: rest };
   const plain2 = trimmed.replace(/\*\*|__|`/g, "");
-  const sentence = (_c = (_b = /^[^。！？!?\n]+[。！？!?]?/.exec(plain2)) == null ? void 0 : _b[0]) != null ? _c : plain2;
-  return { title: clip2(sentence.trim(), TITLE_MAX), body: trimmed };
+  const sentence2 = (_c = (_b = /^[^。！？!?\n]+[。！？!?]?/.exec(plain2)) == null ? void 0 : _b[0]) != null ? _c : plain2;
+  return { title: clip2(sentence2.trim(), TITLE_MAX), body: trimmed };
 }
 function triviaTask(id2, opts) {
   const task = {
@@ -27745,16 +30759,16 @@ function triviaTask(id2, opts) {
     maxTokens: 4096,
     ...opts,
     build(input, ctx) {
-      const c2 = buildTriviaContext(input);
+      const c4 = buildTriviaContext(input);
       return composeRequest({
         base: TRIVIA_BASE_PROMPT,
-        cached: [c2.knownBlock],
+        cached: [c4.knownBlock],
         profile: profileForTask(ctx.profile, task, input),
         history: ctx.history,
         // The subject and the told list change every round, so they ride
         // in this round's message: kept in the system prompt they would
         // break the history cache on every request (規劃書 06 §6.4.1 #5).
-        user: [c2.subjectBlock, c2.toldBlock, renderTemplate(TRIVIA_TEMPLATES[id2], c2.slots)].filter(Boolean).join("\n\n"),
+        user: [c4.subjectBlock, c4.toldBlock, renderTemplate(TRIVIA_TEMPLATES[id2], c4.slots)].filter(Boolean).join("\n\n"),
         tier: task.tier,
         maxTokens: task.maxTokens
       });
@@ -27913,8 +30927,8 @@ function favoriteViews(items, wordOf, dateOf) {
 }
 
 // src/ui/blocks/trivia.ts
-function renderTrivia(plugin, source, el, ctx) {
-  ctx.addChild(new TriviaBlock(el, plugin, parseTriviaParams(source), ctx.sourcePath));
+function renderTrivia(plugin, source, el2, ctx) {
+  ctx.addChild(new TriviaBlock(el2, plugin, parseTriviaParams(source), ctx.sourcePath));
 }
 var WordPickModal = class extends import_obsidian42.FuzzySuggestModal {
   constructor(app, entries, onPick) {
@@ -28008,17 +31022,17 @@ var TriviaBlock = class extends import_obsidian42.MarkdownRenderChild {
         emptyState({ icon: "lightbulb", title: t("learn.trivia.empty.title"), body: t("learn.trivia.empty.body") })
       );
     } else {
-      const card = root2.createDiv({ cls: "vt-trivia-card" });
-      const head = card.createDiv({ cls: "vt-trivia-head" });
+      const card2 = root2.createDiv({ cls: "vt-trivia-card" });
+      const head = card2.createDiv({ cls: "vt-trivia-head" });
       const title = head.createSpan({ cls: "vt-trivia-title" });
       (0, import_obsidian42.setIcon)(title.createSpan({ cls: "vt-trivia-title-icon" }), "lightbulb");
       title.createSpan({ text: t("learn.trivia.title") });
       this.chipEl = head.createEl("button", { cls: "vt-trivia-subject" });
       this.chipEl.addEventListener("click", () => this.pickWord());
       this.updateChip();
-      this.chatHost = card.createDiv({ cls: "vt-trivia-chat" });
+      this.chatHost = card2.createDiv({ cls: "vt-trivia-chat" });
       this.mountChat();
-      card.createDiv({ cls: "vt-trivia-footer", text: t("learn.trivia.footer") });
+      card2.createDiv({ cls: "vt-trivia-footer", text: t("learn.trivia.footer") });
     }
     if (this.params.favorites) {
       this.favEl = root2.createDiv({ cls: "vt-trivia-favs" });
@@ -28071,21 +31085,21 @@ var TriviaBlock = class extends import_obsidian42.MarkdownRenderChild {
     this.chat = this.addChild(new ChatPanel(host, opts));
   }
   // ── Conversation ──────────────────────────────────────────────
-  async call(c2) {
-    if (c2.type === "followup") return this.plugin.trivia.followup(c2.question, c2.selection);
-    const result = await this.plugin.trivia.ask(c2.kind, c2.entryId ? { entryId: c2.entryId } : {});
+  async call(c4) {
+    if (c4.type === "followup") return this.plugin.trivia.followup(c4.question, c4.selection);
+    const result = await this.plugin.trivia.ask(c4.kind, c4.entryId ? { entryId: c4.entryId } : {});
     if (!result && !this.plugin.trivia.isBusy()) new import_obsidian42.Notice(t("learn.trivia.noWords"));
   }
-  run(c2) {
-    this.call(c2).catch((e) => {
+  run(c4) {
+    this.call(c4).catch((e) => {
       console.error("Vocab Tracker: trivia request failed", e);
       new import_obsidian42.Notice(learnErrorText(e));
     });
   }
   async send(req) {
     var _a;
-    const c2 = triviaCall(req, (_a = this.pinned()) == null ? void 0 : _a.id);
-    if (c2) await this.call(c2);
+    const c4 = triviaCall(req, (_a = this.pinned()) == null ? void 0 : _a.id);
+    if (c4) await this.call(c4);
   }
   retry(turnId) {
     return this.plugin.trivia.retry(turnId);
@@ -28106,21 +31120,21 @@ var TriviaBlock = class extends import_obsidian42.MarkdownRenderChild {
     const { threads, trivia } = this.plugin;
     const favorite = trivia.favoriteOf(turn.id);
     const specs = triviaTurnActions(turn, { subjectWord: this.subjectWord(turn), favorite, feedback: false });
-    return specs.map((s) => {
-      const label = t(s.label, s.params);
-      const base = { label, icon: s.icon, active: s.active, iconOnly: s.iconOnly };
-      switch (s.kind) {
+    return specs.map((s2) => {
+      const label = t(s2.label, s2.params);
+      const base2 = { label, icon: s2.icon, active: s2.active, iconOnly: s2.iconOnly };
+      switch (s2.kind) {
         case "up":
         case "down": {
-          const kind = s.kind;
+          const kind = s2.kind;
           return {
-            ...base,
+            ...base2,
             onClick: () => void threads.setFeedback(TRIVIA_THREAD_ID, turn.id, nextFeedback(turn.feedback, kind))
           };
         }
         case "favorite":
           return {
-            ...base,
+            ...base2,
             onClick: () => {
               const item = this.plugin.trivia.favorite(turn.id);
               if (!item) return void new import_obsidian42.Notice(t("learn.trivia.noWords"));
@@ -28131,18 +31145,18 @@ var TriviaBlock = class extends import_obsidian42.MarkdownRenderChild {
             }
           };
         case "unfavorite":
-          return { ...base, onClick: () => favorite && this.plugin.trivia.unfavorite(favorite.id) };
+          return { ...base2, onClick: () => favorite && this.plugin.trivia.unfavorite(favorite.id) };
       }
     });
   }
   // ── 收藏的冷知識 ───────────────────────────────────────────────
   renderFavorites() {
-    const el = this.favEl;
-    if (!el) return;
-    el.empty();
+    const el2 = this.favEl;
+    if (!el2) return;
+    el2.empty();
     if (this.favScope) this.removeChild(this.favScope);
     const scope = this.favScope = this.addChild(new import_obsidian42.Component());
-    el.createDiv({ cls: "vt-trivia-favs-title", text: t("learn.trivia.favorites") });
+    el2.createDiv({ cls: "vt-trivia-favs-title", text: t("learn.trivia.favorites") });
     const pinned = this.pinned();
     const items = this.plugin.trivia.favorites(pinned == null ? void 0 : pinned.id);
     const now2 = /* @__PURE__ */ new Date();
@@ -28151,37 +31165,37 @@ var TriviaBlock = class extends import_obsidian42.MarkdownRenderChild {
       return (_a = this.entryById(id2)) == null ? void 0 : _a.word;
     }, (iso) => dayLabel(iso, now2));
     if (!views.length) {
-      el.createDiv({ cls: "vt-trivia-favs-empty", text: t("learn.trivia.favorites.empty") });
+      el2.createDiv({ cls: "vt-trivia-favs-empty", text: t("learn.trivia.favorites.empty") });
       return;
     }
-    for (const v of views) {
-      const card = el.createDiv({ cls: "vt-trivia-fav" });
-      const head = card.createDiv({ cls: "vt-trivia-fav-head" });
-      head.createSpan({ cls: "vt-trivia-fav-title", text: v.heading });
+    for (const v5 of views) {
+      const card2 = el2.createDiv({ cls: "vt-trivia-fav" });
+      const head = card2.createDiv({ cls: "vt-trivia-fav-head" });
+      head.createSpan({ cls: "vt-trivia-fav-title", text: v5.heading });
       const remove2 = head.createEl("button", { cls: "vt-trivia-fav-remove clickable-icon" });
       (0, import_obsidian42.setIcon)(remove2, "bookmark-minus");
       remove2.setAttr("aria-label", t("learn.trivia.unfavorite"));
-      remove2.addEventListener("click", () => this.plugin.trivia.unfavorite(v.id));
-      const body = card.createDiv({ cls: "vt-trivia-fav-body" });
-      void import_obsidian42.MarkdownRenderer.render(this.plugin.app, v.body, body, this.sourcePath, scope);
-      if (v.date || v.mentions.length) this.renderFavoriteMeta(card.createDiv({ cls: "vt-trivia-fav-meta" }), v);
+      remove2.addEventListener("click", () => this.plugin.trivia.unfavorite(v5.id));
+      const body = card2.createDiv({ cls: "vt-trivia-fav-body" });
+      void import_obsidian42.MarkdownRenderer.render(this.plugin.app, v5.body, body, this.sourcePath, scope);
+      if (v5.date || v5.mentions.length) this.renderFavoriteMeta(card2.createDiv({ cls: "vt-trivia-fav-meta" }), v5);
     }
   }
   // 「收藏 10/03 · 也提到 napkin、kitchenware」 — each mentioned word opens its card.
-  renderFavoriteMeta(el, v) {
-    const dates = datesText({ added: v.date, updated: v.updated }, "saved");
-    if (dates) el.appendText(dates);
-    if (!v.mentions.length) return;
-    if (dates) el.appendText(" \xB7 ");
+  renderFavoriteMeta(el2, v5) {
+    const dates = datesText({ added: v5.date, updated: v5.updated }, "saved");
+    if (dates) el2.appendText(dates);
+    if (!v5.mentions.length) return;
+    if (dates) el2.appendText(" \xB7 ");
     const marker = "\0";
     const [before, after] = splitAround(t("learn.trivia.mentions", { words: marker }), marker);
-    el.appendText(before);
+    el2.appendText(before);
     const sep = joinWords(["", ""]);
-    v.mentions.forEach((m2, i) => {
-      if (i) el.appendText(sep);
-      wordChip(el, this.plugin, this.entryById(m2.entryId), "vt-trivia-fav-mention").setText(m2.word);
+    v5.mentions.forEach((m2, i) => {
+      if (i) el2.appendText(sep);
+      wordChip(el2, this.plugin, this.entryById(m2.entryId), "vt-trivia-fav-mention").setText(m2.word);
     });
-    el.appendText(after);
+    el2.appendText(after);
   }
 };
 
@@ -28199,8 +31213,8 @@ function defaultOpen(section4) {
 }
 function isOpen(state, entryId, section4) {
   var _a;
-  const v = (_a = state[entryId]) == null ? void 0 : _a[section4];
-  return typeof v === "boolean" ? v : defaultOpen(section4);
+  const v5 = (_a = state[entryId]) == null ? void 0 : _a[section4];
+  return typeof v5 === "boolean" ? v5 : defaultOpen(section4);
 }
 function toggle(state, entryId, section4) {
   const open = !isOpen(state, entryId, section4);
@@ -28220,9 +31234,9 @@ function parseFolds(raw) {
   for (const [id2, secs] of Object.entries(data)) {
     if (!secs || typeof secs !== "object" || Array.isArray(secs)) continue;
     const clean4 = {};
-    for (const s of FOLD_SECTIONS) {
-      const v = secs[s];
-      if (typeof v === "boolean") clean4[s] = v;
+    for (const s2 of FOLD_SECTIONS) {
+      const v5 = secs[s2];
+      if (typeof v5 === "boolean") clean4[s2] = v5;
     }
     out[id2] = clean4;
   }
@@ -28286,7 +31300,7 @@ function sectionByTitle(title) {
   var _a;
   const labels = exportLabels();
   const text = title.trim();
-  return (_a = SECTIONS.find((s) => labels[s] === text)) != null ? _a : null;
+  return (_a = SECTIONS.find((s2) => labels[s2] === text)) != null ? _a : null;
 }
 var running = /* @__PURE__ */ new Set();
 var pendingTrivia = /* @__PURE__ */ new Map();
@@ -28295,10 +31309,10 @@ function syncTriviaCard(h, entry, deps, ctx) {
   if (next instanceof HTMLElement && next.hasClass("vt-wp-trivia-pending")) next.remove();
   const pending = pendingTrivia.get(entry.id);
   if (!pending) return;
-  const card = createDiv({ cls: ["vt", "vt-wp-trivia-pending", "vt-wp-sec-body"] });
-  card.dataset.vtSection = "trivia";
-  card.toggleClass("is-collapsed", !isOpenStored(deps.app, entry.id, "trivia"));
-  const head = card.createDiv({ cls: "vt-wp-trivia-pending-head" });
+  const card2 = createDiv({ cls: ["vt", "vt-wp-trivia-pending", "vt-wp-sec-body"] });
+  card2.dataset.vtSection = "trivia";
+  card2.toggleClass("is-collapsed", !isOpenStored(deps.app, entry.id, "trivia"));
+  const head = card2.createDiv({ cls: "vt-wp-trivia-pending-head" });
   head.createSpan({ cls: "vt-wp-trivia-pending-badge", text: t("wordPage.trivia.pending.badge") });
   const save = head.createEl("button", { cls: "vt-wp-btn" });
   (0, import_obsidian43.setIcon)(save.createSpan({ cls: "vt-wp-btn-icon" }), "bookmark");
@@ -28310,13 +31324,13 @@ function syncTriviaCard(h, entry, deps, ctx) {
     pendingTrivia.delete(entry.id);
     syncTriviaCard(h, entry, deps, ctx);
   });
-  if (pending.title) card.createDiv({ cls: "vt-wp-trivia-pending-title", text: pending.title });
-  const body = card.createDiv({ cls: "vt-wp-trivia-pending-body" });
+  if (pending.title) card2.createDiv({ cls: "vt-wp-trivia-pending-title", text: pending.title });
+  const body = card2.createDiv({ cls: "vt-wp-trivia-pending-body" });
   const scope = new import_obsidian43.MarkdownRenderChild(body);
   ctx.addChild(scope);
   void import_obsidian43.MarkdownRenderer.render(deps.app, pending.body, body, ctx.sourcePath, scope);
-  card.createDiv({ cls: "vt-wp-trivia-pending-hint", text: t("wordPage.trivia.pending.hint") });
-  h.insertAdjacentElement("afterend", card);
+  card2.createDiv({ cls: "vt-wp-trivia-pending-hint", text: t("wordPage.trivia.pending.hint") });
+  h.insertAdjacentElement("afterend", card2);
 }
 var END = /^[ \t]*%%[ \t]*vt:end\b/;
 function sectionContaining(text, lineStart) {
@@ -28393,24 +31407,24 @@ function foldHeading(h, section4, entry, deps) {
   });
 }
 function createWordPageDecorator(deps) {
-  return (el, ctx) => {
+  return (el2, ctx) => {
     var _a, _b, _c;
     const fm = (_a = ctx.frontmatter) != null ? _a : deps.frontmatterOf(ctx.sourcePath);
     const entryId = wordPageEntryId(fm);
     if (!entryId) return;
-    const info0 = ctx.getSectionInfo(el);
+    const info0 = ctx.getSectionInfo(el2);
     if (info0) {
       const at = sectionContaining(info0.text, info0.lineStart);
       if (at && !at.isHeading) {
-        el.addClass("vt-wp-sec-body");
-        el.dataset.vtSection = at.section;
-        el.toggleClass("is-collapsed", !isOpenStored(deps.app, entryId, FOLD_OF[at.section]));
-        el.toggleClass("is-empty", isSectionEmpty(entryId, FOLD_OF[at.section]));
+        el2.addClass("vt-wp-sec-body");
+        el2.dataset.vtSection = at.section;
+        el2.toggleClass("is-collapsed", !isOpenStored(deps.app, entryId, FOLD_OF[at.section]));
+        el2.toggleClass("is-empty", isSectionEmpty(entryId, FOLD_OF[at.section]));
       }
     }
-    const headings = [...el.matches("h2, h3") ? [el] : [], ...Array.from(el.querySelectorAll("h2, h3"))];
+    const headings = [...el2.matches("h2, h3") ? [el2] : [], ...Array.from(el2.querySelectorAll("h2, h3"))];
     if (!headings.length) return;
-    const info = ctx.getSectionInfo(el);
+    const info = ctx.getSectionInfo(el2);
     for (const h of headings) {
       if (h.querySelector(".vt-wp-actions")) continue;
       const entry = deps.entry(entryId);
@@ -28531,17 +31545,17 @@ var WORD_DNA_LANG = "vocab-word-dna";
 function hasInfo(vis) {
   return vis.showInfo;
 }
-function renderWordInfo(host, source, el, ctx) {
-  addBlock(host, source, el, ctx, "info");
+function renderWordInfo(host, source, el2, ctx) {
+  addBlock(host, source, el2, ctx, "info");
 }
-function renderWordDna(host, source, el, ctx) {
-  addBlock(host, source, el, ctx, "dna");
+function renderWordDna(host, source, el2, ctx) {
+  addBlock(host, source, el2, ctx, "dna");
 }
-function addBlock(host, source, el, ctx, kind) {
+function addBlock(host, source, el2, ctx, kind) {
   var _a;
   const frontmatter3 = (_a = ctx.frontmatter) != null ? _a : host.frontmatterOf(ctx.sourcePath);
   const target = wordTarget(parseBlockParams(source), frontmatter3, ctx.sourcePath);
-  ctx.addChild(new WordSectionBlock(el, host, target, kind));
+  ctx.addChild(new WordSectionBlock(el2, host, target, kind));
 }
 var WordSectionBlock = class extends import_obsidian44.MarkdownRenderChild {
   constructor(containerEl, host, target, kind) {
@@ -28578,16 +31592,16 @@ var WordSectionBlock = class extends import_obsidian44.MarkdownRenderChild {
   }
   render() {
     if (this.disposed) return;
-    const el = this.containerEl;
-    el.empty();
+    const el2 = this.containerEl;
+    el2.empty();
     const entry = findTarget(this.host.store.entries, this.target);
     if (!entry) {
-      el.addClass("is-empty");
+      el2.addClass("is-empty");
       return;
     }
-    const root2 = el.createDiv({ cls: ["vt", "vt-word-section", `vt-ws-${this.kind}`] });
+    const root2 = el2.createDiv({ cls: ["vt", "vt-word-section", `vt-ws-${this.kind}`] });
     const shown = this.kind === "info" ? this.drawInfo(root2, entry) : this.drawDna(root2, entry);
-    el.toggleClass("is-empty", !shown);
+    el2.toggleClass("is-empty", !shown);
     this.syncEmpty(entry.id, !shown);
   }
   // Hide (or show) the section's heading and body. The heading may not
@@ -28676,11 +31690,21 @@ function grammarTopicDeps(plugin) {
     pages: plugin.grammarPages,
     openTopic: (id2) => plugin.grammarPages.open(id2),
     openNote: (path) => plugin.openNote(path),
-    openSettings: () => openPluginSettings(plugin.app, plugin.manifest.id)
+    openSettings: () => openPluginSettings(plugin.app, plugin.manifest.id),
+    visuals: plugin.grammarVisuals,
+    aiReady: () => plugin.ai.status() === "ready",
+    api: plugin.grammarQuestions,
+    ready: () => grammarReady(plugin),
+    generate: (topicId, count2) => plugin.grammarQuestions.generate(topicId, { count: count2 }),
+    mountPlayer: mountScenarioPlayer
   };
 }
 function grammarPracticeDeps(plugin) {
-  return { api: plugin.grammarQuestions, ready: () => grammarReady(plugin), ...grammarRouting(plugin) };
+  return {
+    api: plugin.grammarQuestions,
+    ready: () => grammarReady(plugin),
+    ...grammarRouting(plugin)
+  };
 }
 async function grammarReady(plugin) {
   await Promise.all([plugin.grammar.ensureLoaded(), plugin.learner.ensureLoaded()]);
@@ -28708,8 +31732,8 @@ function scenarioReady(plugin) {
   return grammarReady(plugin);
 }
 function mountMistakes(plugin) {
-  return (el, track2, owner) => renderMistakesPanel(
-    el,
+  return (el2, track2, owner) => renderMistakesPanel(
+    el2,
     {
       api: plugin.scenario,
       ...track2 === "mix" ? {} : { track: track2 },
@@ -28833,23 +31857,23 @@ var BLOCKS = [
   { lang: "vocab-eureka", render: renderTrivia },
   { lang: "vocab-buddy", render: renderBuddy },
   // Wave 9 (規劃書 09 §7): Word DNA — morpheme breakdown, timeline, 冷知識.
-  { lang: "vocab-dna", render: (plugin, source, el, ctx) => (
+  { lang: "vocab-dna", render: (plugin, source, el2, ctx) => (
     // Only the Word DNA entry file feeds the sidebar (規劃書 10 §2.1).
-    renderDna({ ...dnaDeps(plugin), isEntryFile: plugin.files.entryFilePath("dna") === ctx.sourcePath }, source, el, ctx)
+    renderDna({ ...dnaDeps(plugin), isEntryFile: plugin.files.entryFilePath("dna") === ctx.sourcePath }, source, el2, ctx)
   ) },
-  { lang: "vocab-practice", render: (p, s, el, ctx) => renderPractice(practiceHost(p), s, el, ctx) },
+  { lang: "vocab-practice", render: (p, s2, el2, ctx) => renderPractice(practiceHost(p), s2, el2, ctx) },
   // Wave 15: 文法學習.
-  { lang: "vocab-grammar", render: (p, s, el, ctx) => renderGrammarMap(grammarMapDeps(p), s, el, ctx) },
-  { lang: "vocab-grammar-topic", render: (p, s, el, ctx) => renderGrammarTopic(grammarTopicDeps(p), s, el, ctx) },
+  { lang: "vocab-grammar", render: (p, s2, el2, ctx) => renderGrammarMap(grammarMapDeps(p), s2, el2, ctx) },
+  { lang: "vocab-grammar-topic", render: (p, s2, el2, ctx) => renderGrammarTopic(grammarTopicDeps(p), s2, el2, ctx) },
   // 第十七波 Q: Polysemy.md 的意思地圖.
-  { lang: "vocab-polysemy", render: (p, s, el, ctx) => renderPolysemyMap(polysemyDeps(p), s, el, ctx) },
-  { lang: "vocab-grammar-practice", render: (p, s, el, ctx) => renderGrammarPractice(grammarPracticeDeps(p), s, el, ctx) }
+  { lang: "vocab-polysemy", render: (p, s2, el2, ctx) => renderPolysemyMap(polysemyDeps(p), s2, el2, ctx) },
+  { lang: "vocab-grammar-practice", render: (p, s2, el2, ctx) => renderGrammarPractice(grammarPracticeDeps(p), s2, el2, ctx) }
 ];
 function registerBlocks(plugin) {
   for (const def of BLOCKS) {
     plugin.registerMarkdownCodeBlockProcessor(
       def.lang,
-      (source, el, ctx) => def.render(plugin, source, el, ctx)
+      (source, el2, ctx) => def.render(plugin, source, el2, ctx)
     );
   }
 }
@@ -28887,12 +31911,12 @@ var Rating2 = /* @__PURE__ */ ((Rating22) => {
   return Rating22;
 })(Rating2 || {});
 var TypeConvert = class _TypeConvert {
-  static card(card) {
+  static card(card2) {
     return {
-      ...card,
-      state: _TypeConvert.state(card.state),
-      due: _TypeConvert.time(card.due),
-      last_review: card.last_review ? _TypeConvert.time(card.last_review) : void 0
+      ...card2,
+      state: _TypeConvert.state(card2.state),
+      due: _TypeConvert.time(card2.due),
+      last_review: card2.last_review ? _TypeConvert.time(card2.last_review) : void 0
     };
   }
   static rating(value) {
@@ -28997,8 +32021,8 @@ function formatDate(dateInput) {
     minutes
   )}:${padZero(seconds)}`;
 }
-function padZero(num2) {
-  return num2 < 10 ? `0${num2}` : `${num2}`;
+function padZero(num3) {
+  return num3 < 10 ? `0${num3}` : `${num3}`;
 }
 var TIMEUNIT = [60, 60, 24, 31, 12];
 var TIMEUNITFORMAT = ["second", "min", "hour", "day", "month", "year"];
@@ -29060,9 +32084,9 @@ function get_fuzz_range(interval2, elapsed_days, maximum_interval) {
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
-function roundTo(num2, decimals) {
+function roundTo(num3, decimals) {
   const factor = 10 ** decimals;
-  return Math.round(num2 * factor) / factor;
+  return Math.round(num3 * factor) / factor;
 }
 function dateDiffInDays(last2, cur) {
   const utc1 = Date.UTC(
@@ -29167,7 +32191,7 @@ var StrategyMode = /* @__PURE__ */ ((StrategyMode2) => {
 })(StrategyMode || {});
 var AbstractScheduler = class {
   // init
-  constructor(card, now2, algorithm, strategies) {
+  constructor(card2, now2, algorithm, strategies) {
     __publicField(this, "last");
     __publicField(this, "current");
     __publicField(this, "review_time");
@@ -29176,8 +32200,8 @@ var AbstractScheduler = class {
     __publicField(this, "strategies");
     __publicField(this, "elapsed_days", 0);
     this.algorithm = algorithm;
-    this.last = TypeConvert.card(card);
-    this.current = TypeConvert.card(card);
+    this.last = TypeConvert.card(card2);
+    this.current = TypeConvert.card(card2);
     this.review_time = TypeConvert.time(now2);
     this.strategies = strategies;
     this.init();
@@ -29646,9 +32670,9 @@ var FSRSAlgorithm = class {
    *   @param {number} s - Stability (interval when R=90%)
    *   @param {number} elapsed_days t days since the last review
    */
-  next_interval(s, elapsed_days) {
+  next_interval(s2, elapsed_days) {
     const newInterval = Math.min(
-      Math.max(1, Math.round(s * this.intervalModifier)),
+      Math.max(1, Math.round(s2 * this.intervalModifier)),
       this.param.maximum_interval
     );
     return this.apply_fuzz(newInterval, elapsed_days);
@@ -29697,13 +32721,13 @@ var FSRSAlgorithm = class {
    * @param {Grade} g Grade (Rating[0.again,1.hard,2.good,3.easy])
    * @return {number} S^\prime_r new stability after recall
    */
-  next_recall_stability(d, s, r, g) {
+  next_recall_stability(d, s2, r, g) {
     const w2 = this.param.w;
     const hard_penalty = Rating2.Hard === g ? w2[15] : 1;
     const easy_bound = Rating2.Easy === g ? w2[16] : 1;
     return roundTo(
       clamp(
-        s * (1 + Math.exp(w2[8]) * (11 - d) * Math.pow(s, -w2[9]) * (Math.exp((1 - r) * w2[10]) - 1) * hard_penalty * easy_bound),
+        s2 * (1 + Math.exp(w2[8]) * (11 - d) * Math.pow(s2, -w2[9]) * (Math.exp((1 - r) * w2[10]) - 1) * hard_penalty * easy_bound),
         S_MIN,
         36500
       ),
@@ -29720,11 +32744,11 @@ var FSRSAlgorithm = class {
    * @param {number} r Retrievability (probability of recall)
    * @return {number} S^\prime_f new stability after forgetting
    */
-  next_forget_stability(d, s, r) {
+  next_forget_stability(d, s2, r) {
     const w2 = this.param.w;
     return roundTo(
       clamp(
-        w2[11] * Math.pow(d, -w2[12]) * (Math.pow(s + 1, w2[13]) - 1) * Math.exp((1 - r) * w2[14]),
+        w2[11] * Math.pow(d, -w2[12]) * (Math.pow(s2 + 1, w2[13]) - 1) * Math.exp((1 - r) * w2[14]),
         S_MIN,
         36500
       ),
@@ -29737,11 +32761,11 @@ var FSRSAlgorithm = class {
    * @param {number} s Stability (interval when R=90%)
    * @param {Grade} g Grade (Rating[0.again,1.hard,2.good,3.easy])
    */
-  next_short_term_stability(s, g) {
+  next_short_term_stability(s2, g) {
     const w2 = this.param.w;
-    const sinc = Math.pow(s, -w2[19]) * Math.exp(w2[17] * (g - 3 + w2[18]));
+    const sinc = Math.pow(s2, -w2[19]) * Math.exp(w2[17] * (g - 3 + w2[18]));
     const maskedSinc = g >= Rating2.Hard ? Math.max(sinc, 1) : sinc;
-    return roundTo(clamp(s * maskedSinc, S_MIN, 36500), 8);
+    return roundTo(clamp(s2 * maskedSinc, S_MIN, 36500), 8);
   }
   /**
    * Calculates the next state of memory based on the current state, time elapsed, and grade.
@@ -29753,7 +32777,7 @@ var FSRSAlgorithm = class {
    * @returns The next state of memory with updated difficulty and stability.
    */
   next_state(memory_state, t2, g, r) {
-    const { difficulty: d, stability: s } = memory_state != null ? memory_state : {
+    const { difficulty: d, stability: s2 } = memory_state != null ? memory_state : {
       difficulty: 0,
       stability: 0
     };
@@ -29763,7 +32787,7 @@ var FSRSAlgorithm = class {
     if (g < 0 || g > 4) {
       throw new FSRSValidationError(`Invalid grade "${g}"`);
     }
-    if (d === 0 && s === 0) {
+    if (d === 0 && s2 === 0) {
       return {
         difficulty: clamp(this.init_difficulty(g), 1, 10),
         stability: this.init_stability(g)
@@ -29772,38 +32796,38 @@ var FSRSAlgorithm = class {
     if (g === 0) {
       return {
         difficulty: d,
-        stability: s
+        stability: s2
       };
     }
-    if (d < 1 || s < S_MIN) {
+    if (d < 1 || s2 < S_MIN) {
       throw new FSRSValidationError(
-        `Invalid memory state { difficulty: ${d}, stability: ${s} }`
+        `Invalid memory state { difficulty: ${d}, stability: ${s2} }`
       );
     }
     const w2 = this.param.w;
-    r = typeof r === "number" ? r : this.forgetting_curve(t2, s);
+    r = typeof r === "number" ? r : this.forgetting_curve(t2, s2);
     let new_s;
     if (t2 === 0 && this.param.enable_short_term) {
-      new_s = this.next_short_term_stability(s, g);
+      new_s = this.next_short_term_stability(s2, g);
     } else if (g === 1) {
-      const s_after_fail = this.next_forget_stability(d, s, r);
+      const s_after_fail = this.next_forget_stability(d, s2, r);
       let [w_17, w_18] = [0, 0];
       if (this.param.enable_short_term) {
         w_17 = w2[17];
         w_18 = w2[18];
       }
-      const next_s_min = s / Math.exp(w_17 * w_18);
+      const next_s_min = s2 / Math.exp(w_17 * w_18);
       new_s = clamp(roundTo(next_s_min, 8), S_MIN, s_after_fail);
     } else {
-      new_s = this.next_recall_stability(d, s, r, g);
+      new_s = this.next_recall_stability(d, s2, r, g);
     }
     const new_d = this.next_difficulty(d, g);
     return { difficulty: new_d, stability: new_s };
   }
 };
 var BasicScheduler = class extends AbstractScheduler {
-  constructor(card, now2, algorithm, strategies) {
-    super(card, now2, algorithm, strategies);
+  constructor(card2, now2, algorithm, strategies) {
+    super(card2, now2, algorithm, strategies);
     __publicField(this, "learningStepsStrategy");
     let learningStepStrategy = BasicLearningStepsStrategy;
     if (this.strategies) {
@@ -29814,14 +32838,14 @@ var BasicScheduler = class extends AbstractScheduler {
     }
     this.learningStepsStrategy = learningStepStrategy;
   }
-  getLearningInfo(card, grade) {
+  getLearningInfo(card2, grade) {
     var _a, _b, _c, _d;
     const parameters = this.algorithm.parameters;
-    card.learning_steps = card.learning_steps || 0;
+    card2.learning_steps = card2.learning_steps || 0;
     const steps_strategy = this.learningStepsStrategy(
       parameters,
-      card.state,
-      card.learning_steps
+      card2.state,
+      card2.learning_steps
     );
     const scheduled_minutes = Math.max(
       0,
@@ -29959,10 +32983,10 @@ var BasicScheduler = class extends AbstractScheduler {
       g,
       r
     );
-    const card = TypeConvert.card(this.current);
-    card.difficulty = next_state.difficulty;
-    card.stability = next_state.stability;
-    return card;
+    const card2 = TypeConvert.card(this.current);
+    card2.difficulty = next_state.difficulty;
+    card2.stability = next_state.stability;
+    return card2;
   }
   /**
    * Review next_interval
@@ -30030,10 +33054,10 @@ var LongTermScheduler = class extends AbstractScheduler {
       g,
       r
     );
-    const card = TypeConvert.card(this.current);
-    card.difficulty = next_state.difficulty;
-    card.stability = next_state.stability;
-    return card;
+    const card2 = TypeConvert.card(this.current);
+    card2.difficulty = next_state.difficulty;
+    card2.stability = next_state.stability;
+    return card2;
   }
   /**
    * @see https://github.com/open-spaced-repetition/ts-fsrs/issues/98#issuecomment-2241923194
@@ -30138,8 +33162,8 @@ var Reschedule = class {
    * @param rating - The grade given to the card during the review.
    * @returns A `RecordLogItem` containing the updated card and review log.
    */
-  replay(card, reviewed, rating) {
-    return this.fsrs.next(card, reviewed, rating);
+  replay(card2, reviewed, rating) {
+    return this.fsrs.next(card2, reviewed, rating);
   }
   /**
    * Processes a manual review for a card, allowing for custom state, stability, difficulty, and due date.
@@ -30153,7 +33177,7 @@ var Reschedule = class {
    * @returns A `RecordLogItem` containing the updated card and review log.
    * @throws Will throw an error if the state or due date is not provided when required.
    */
-  handleManualRating(card, state, reviewed, elapsed_days, stability, difficulty, due) {
+  handleManualRating(card2, state, reviewed, elapsed_days, stability, difficulty, due) {
     if (typeof state === "undefined") {
       throw new FSRSValidationError(
         "reschedule: state is required for manual rating"
@@ -30166,12 +33190,12 @@ var Reschedule = class {
         rating: Rating2.Manual,
         state,
         due: due != null ? due : reviewed,
-        stability: card.stability,
-        difficulty: card.difficulty,
+        stability: card2.stability,
+        difficulty: card2.difficulty,
         elapsed_days,
-        last_elapsed_days: card.elapsed_days,
-        scheduled_days: card.scheduled_days,
-        learning_steps: card.learning_steps,
+        last_elapsed_days: card2.elapsed_days,
+        scheduled_days: card2.scheduled_days,
+        learning_steps: card2.learning_steps,
         review: reviewed
       };
       next_card = createEmptyCard(reviewed);
@@ -30185,26 +33209,26 @@ var Reschedule = class {
       const scheduled_days = date_diff(due, reviewed, "days");
       log = {
         rating: Rating2.Manual,
-        state: card.state,
-        due: card.last_review || card.due,
-        stability: card.stability,
-        difficulty: card.difficulty,
+        state: card2.state,
+        due: card2.last_review || card2.due,
+        stability: card2.stability,
+        difficulty: card2.difficulty,
         elapsed_days,
-        last_elapsed_days: card.elapsed_days,
-        scheduled_days: card.scheduled_days,
-        learning_steps: card.learning_steps,
+        last_elapsed_days: card2.elapsed_days,
+        scheduled_days: card2.scheduled_days,
+        learning_steps: card2.learning_steps,
         review: reviewed
       };
       next_card = {
-        ...card,
+        ...card2,
         state,
         due,
         last_review: reviewed,
-        stability: stability || card.stability,
-        difficulty: difficulty || card.difficulty,
+        stability: stability || card2.stability,
+        difficulty: difficulty || card2.difficulty,
         elapsed_days,
         scheduled_days,
-        reps: card.reps + 1
+        reps: card2.reps + 1
       };
     }
     return { card: next_card, log };
@@ -30323,12 +33347,12 @@ var FSRS = class extends FSRSAlgorithm {
     }
     return this;
   }
-  getScheduler(card, now2) {
+  getScheduler(card2, now2) {
     const schedulerStrategy = this.strategyHandler.get(
       StrategyMode.SCHEDULER
     );
     const Scheduler = schedulerStrategy || this.Scheduler;
-    const instance = new Scheduler(card, now2, this, this.strategyHandler);
+    const instance = new Scheduler(card2, now2, this, this.strategyHandler);
     return instance;
   }
   /**
@@ -30389,8 +33413,8 @@ var FSRS = class extends FSRSAlgorithm {
    * const recordLog = f.repeat(card, new Date(), repeatAfterHandler);
    * ```
    */
-  repeat(card, now2, afterHandler) {
-    const instance = this.getScheduler(card, now2);
+  repeat(card2, now2, afterHandler) {
+    const instance = this.getScheduler(card2, now2);
     const recordLog = instance.preview();
     return applyAfterHandler(recordLog, afterHandler);
   }
@@ -30448,8 +33472,8 @@ var FSRS = class extends FSRSAlgorithm {
    * const recordLogItem = f.repeat(card, new Date(), Rating.Again, nextAfterHandler);
    * ```
    */
-  next(card, now2, grade, afterHandler) {
-    const instance = this.getScheduler(card, now2);
+  next(card2, now2, grade, afterHandler) {
+    const instance = this.getScheduler(card2, now2);
     const g = TypeConvert.rating(grade);
     if (g === Rating2.Manual) {
       throw new FSRSValidationError("Cannot review a manual rating");
@@ -30464,8 +33488,8 @@ var FSRS = class extends FSRSAlgorithm {
    * @param format  default:true , Convert the result to another type. (Optional)
    * @returns  The retrievability of the card,if format is true, the result is a string, otherwise it is a number
    */
-  get_retrievability(card, now2, format = true) {
-    const processedCard = TypeConvert.card(card);
+  get_retrievability(card2, now2, format = true) {
+    const processedCard = TypeConvert.card(card2);
     now2 = now2 ? TypeConvert.time(now2) : /* @__PURE__ */ new Date();
     const t2 = processedCard.state !== State.New ? Math.max(date_diff(now2, processedCard.last_review, "days"), 0) : 0;
     const r = processedCard.state !== State.New ? this.forgetting_curve(t2, +processedCard.stability.toFixed(8)) : 0;
@@ -30496,8 +33520,8 @@ var FSRS = class extends FSRSAlgorithm {
    * const rollbackFromAfterHandler = f.rollback(card, log, cardAfterHandler);
    * ```
    */
-  rollback(card, log, afterHandler) {
-    const processedCard = TypeConvert.card(card);
+  rollback(card2, log, afterHandler) {
+    const processedCard = TypeConvert.card(card2);
     const processedLog = TypeConvert.review_log(log);
     if (processedLog.rating === Rating2.Manual) {
       throw new FSRSValidationError("Cannot rollback a manual rating");
@@ -30585,8 +33609,8 @@ var FSRS = class extends FSRSAlgorithm {
    * const forgetFromAfterHandler = f.forget(card, date_scheduler(now, 1, true), false, forgetAfterHandler);
    * ```
    */
-  forget(card, now2, reset_count = false, afterHandler) {
-    const processedCard = TypeConvert.card(card);
+  forget(card2, now2, reset_count = false, afterHandler) {
+    const processedCard = TypeConvert.card(card2);
     now2 = TypeConvert.time(now2);
     const scheduled_days = processedCard.state === State.New ? 0 : date_diff(now2, processedCard.due, "days");
     const forget_log = {
@@ -30699,34 +33723,34 @@ var GRADE = {
   3: Rating2.Good,
   4: Rating2.Easy
 };
-function toFsrsCard(card) {
+function toFsrsCard(card2) {
   var _a;
   return {
-    due: new Date(card.due),
-    stability: card.stability,
-    difficulty: card.difficulty,
-    elapsed_days: card.elapsedDays,
-    scheduled_days: card.scheduledDays,
-    learning_steps: (_a = card.learningSteps) != null ? _a : 0,
-    reps: card.reps,
-    lapses: card.lapses,
-    state: card.state,
-    last_review: card.lastReview ? new Date(card.lastReview) : void 0
+    due: new Date(card2.due),
+    stability: card2.stability,
+    difficulty: card2.difficulty,
+    elapsed_days: card2.elapsedDays,
+    scheduled_days: card2.scheduledDays,
+    learning_steps: (_a = card2.learningSteps) != null ? _a : 0,
+    reps: card2.reps,
+    lapses: card2.lapses,
+    state: card2.state,
+    last_review: card2.lastReview ? new Date(card2.lastReview) : void 0
   };
 }
-function fromFsrsCard(card) {
+function fromFsrsCard(card2) {
   const out = {
-    due: card.due.toISOString(),
-    stability: card.stability,
-    difficulty: card.difficulty,
-    elapsedDays: card.elapsed_days,
-    scheduledDays: card.scheduled_days,
-    learningSteps: card.learning_steps,
-    reps: card.reps,
-    lapses: card.lapses,
-    state: card.state
+    due: card2.due.toISOString(),
+    stability: card2.stability,
+    difficulty: card2.difficulty,
+    elapsedDays: card2.elapsed_days,
+    scheduledDays: card2.scheduled_days,
+    learningSteps: card2.learning_steps,
+    reps: card2.reps,
+    lapses: card2.lapses,
+    state: card2.state
   };
-  if (card.last_review) out.lastReview = card.last_review.toISOString();
+  if (card2.last_review) out.lastReview = card2.last_review.toISOString();
   return out;
 }
 function makeFsrs(retention, opts = {}) {
@@ -30859,10 +33883,10 @@ var SrsService = class {
   // is exactly the interval that pressing it produces.
   preview(entry, now2 = this.clock()) {
     const f = this.fsrs();
-    const card = this.cardOf(entry, now2);
+    const card2 = this.cardOf(entry, now2);
     const out = {};
     for (const rating of RATINGS) {
-      const next = f.next(card, now2, GRADE[rating]).card;
+      const next = f.next(card2, now2, GRADE[rating]).card;
       out[rating] = { due: next.due.toISOString(), intervalMs: next.due.getTime() - now2.getTime() };
     }
     return out;
@@ -30870,8 +33894,8 @@ var SrsService = class {
   async rate(entry, rating, mode, elapsedMs = 0) {
     var _a;
     const now2 = this.clock();
-    const card = this.cardOf(entry, now2);
-    const next = this.fsrs().next(card, now2, GRADE[rating]).card;
+    const card2 = this.cardOf(entry, now2);
+    const next = this.fsrs().next(card2, now2, GRADE[rating]).card;
     const log = {
       id: this.newId(),
       entryId: entry.id,
@@ -30879,7 +33903,7 @@ var SrsService = class {
       rating,
       mode,
       elapsedMs: Math.max(0, Math.round(elapsedMs)),
-      prevState: card.state
+      prevState: card2.state
     };
     entry.srs = fromFsrsCard(next);
     entry.lastReviewed = nowStamp(now2);
@@ -31106,9 +34130,9 @@ function previewSectionAt(view, line2) {
   const renderer = view.previewMode.renderer;
   const sections = renderer == null ? void 0 : renderer.sections;
   if (!Array.isArray(sections)) return null;
-  return (_a = sections.find((s) => {
+  return (_a = sections.find((s2) => {
     var _a2;
-    return s.lineStart <= line2 && line2 <= s.lineEnd && ((_a2 = s.el) == null ? void 0 : _a2.isConnected);
+    return s2.lineStart <= line2 && line2 <= s2.lineEnd && ((_a2 = s2.el) == null ? void 0 : _a2.isConnected);
   })) != null ? _a : null;
 }
 async function flashInPreview(view, occurrences, index2, word, inflections) {
@@ -31308,8 +34332,8 @@ var ObsidianDeviceState = class {
   // older apps fall back to plain localStorage with a plugin prefix.
   get(key6) {
     if (typeof this.app.loadLocalStorage === "function") {
-      const v = this.app.loadLocalStorage(LS_PREFIX + key6);
-      return typeof v === "string" ? v : null;
+      const v5 = this.app.loadLocalStorage(LS_PREFIX + key6);
+      return typeof v5 === "string" ? v5 : null;
     }
     try {
       return window.localStorage.getItem(LS_PREFIX + key6);
@@ -31334,8 +34358,8 @@ var ObsidianSecrets = class {
     this.app = app;
   }
   get available() {
-    const s = this.app.secretStorage;
-    return !!s && typeof s.getSecret === "function";
+    const s2 = this.app.secretStorage;
+    return !!s2 && typeof s2.getSecret === "function";
   }
   get(id2) {
     return this.available ? this.app.secretStorage.getSecret(id2) : null;
@@ -31446,9 +34470,9 @@ function sonnetVersion(model) {
   return { major: Number(m2[1]), minor: m2[2] ? Number(m2[2]) : 0 };
 }
 function effortFor(model) {
-  const v = sonnetVersion(model);
-  if (!v) return void 0;
-  return v.major > 4 || v.major === 4 && v.minor >= 6 ? "low" : void 0;
+  const v5 = sonnetVersion(model);
+  if (!v5) return void 0;
+  return v5.major > 4 || v5.major === 4 && v5.minor >= 6 ? "low" : void 0;
 }
 function outputConfig(model, output) {
   const effort = effortFor(model);
@@ -31506,15 +34530,15 @@ var AnthropicStreamState = class {
     this.stop = "end";
   }
   // Returns true on the terminal event.
-  handle(ev) {
+  handle(ev2) {
     var _a, _b, _c;
     let data;
     try {
-      data = JSON.parse(ev.data);
+      data = JSON.parse(ev2.data);
     } catch (e) {
       return false;
     }
-    const type = (_a = data.type) != null ? _a : ev.event;
+    const type = (_a = data.type) != null ? _a : ev2.event;
     switch (type) {
       case "message_start": {
         const msg = data.message;
@@ -31590,7 +34614,7 @@ var AnthropicProvider = class {
     const res = await this.deps.transport.send(httpReq, opt.signal);
     await throwIfHttpError(res);
     const state = new AnthropicStreamState(opt.onDelta);
-    await consumeBody(res, opt.signal, (ev) => state.handle(ev), (j) => state.handleJson(j));
+    await consumeBody(res, opt.signal, (ev2) => state.handle(ev2), (j) => state.handleJson(j));
     const result = {
       text: state.text,
       usage: state.usage,
@@ -31624,7 +34648,7 @@ var AnthropicProvider = class {
       await throwIfHttpError(res);
       transport = res.mode;
       const state = new AnthropicStreamState();
-      await consumeBody(res, signal, (ev) => state.handle(ev), (j) => state.handleJson(j));
+      await consumeBody(res, signal, (ev2) => state.handle(ev2), (j) => state.handleJson(j));
     }
     return { models, transport, latencyMs: now2() - started };
   }
@@ -31710,12 +34734,12 @@ var OpenAiStreamState = class {
     this.model = "";
     this.stop = "end";
   }
-  handle(ev) {
+  handle(ev2) {
     var _a, _b, _c;
-    if (ev.data.trim() === "[DONE]") return true;
+    if (ev2.data.trim() === "[DONE]") return true;
     let chunk;
     try {
-      chunk = JSON.parse(ev.data);
+      chunk = JSON.parse(ev2.data);
     } catch (e) {
       return false;
     }
@@ -31772,7 +34796,7 @@ var OpenAiCompatProvider = class {
     const res = await this.deps.transport.send(this.request(buildOpenAiBody(req, model, this.baseUrl)), opt.signal);
     await throwIfHttpError(res);
     const state = new OpenAiStreamState(opt.onDelta);
-    await consumeBody(res, opt.signal, (ev) => state.handle(ev), (j) => state.handleJson(j));
+    await consumeBody(res, opt.signal, (ev2) => state.handle(ev2), (j) => state.handleJson(j));
     const usage = state.usageReported ? state.usage : {
       ...emptyUsage(),
       input: estimateTokens(req.system.map((b) => b.text).join("\n") + req.messages.map((m2) => m2.content).join("\n")),
@@ -31802,7 +34826,7 @@ var OpenAiCompatProvider = class {
       await throwIfHttpError(res);
       transport = res.mode;
       const state = new OpenAiStreamState();
-      await consumeBody(res, signal, (ev) => state.handle(ev), (j) => state.handleJson(j));
+      await consumeBody(res, signal, (ev2) => state.handle(ev2), (j) => state.handleJson(j));
     }
     return { models, transport, latencyMs: now2() - started };
   }
@@ -31908,8 +34932,8 @@ ${input.avoid.map((a2) => `- ${a2}`).join("\n")}`);
 }
 var FENCE_RE4 = /^\s*```[a-z]*\s*$/i;
 var PICK_RE = /^\s*(?:\*\*)?PICK(?:\*\*)?\s*[:：]\s*(.*)$/i;
-function cleanPick(s) {
-  return s.replace(/^[\s"“'‘*]+|[\s"”'’*]+$/g, "").trim();
+function cleanPick(s2) {
+  return s2.replace(/^[\s"“'‘*]+|[\s"”'’*]+$/g, "").trim();
 }
 function parseDiaryAnswer(text) {
   const lines4 = text.split(/\r?\n/).filter((l4) => !FENCE_RE4.test(l4));
@@ -32063,11 +35087,11 @@ var ANALYZE_TEMPLATE = `\u3014\u5DF2\u77E5\u5B57\u7D20\u3015\uFF08{{knownCount}}
 
 \u3014\u8981\u5206\u6790\u7684\u55AE\u5B57\u3015\uFF08{{count}} \u500B\uFF09
 {{words}}`;
-function isObj5(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
+function isObj5(v5) {
+  return typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
 }
-function isStrArr(v) {
-  return Array.isArray(v) && v.every((x3) => typeof x3 === "string");
+function isStrArr(v5) {
+  return Array.isArray(v5) && v5.every((x3) => typeof x3 === "string");
 }
 var PART_TYPES = /* @__PURE__ */ new Set(["prefix", "root", "suffix", "inflection"]);
 var MORPHEME_TYPES = /* @__PURE__ */ new Set(["prefix", "root", "suffix"]);
@@ -32083,28 +35107,28 @@ function parseWord(w2) {
   }
   return { word: w2.word.trim(), emoji: w2.emoji, status: w2.status, parts: w2.parts.map(parsePart), gloss: w2.gloss };
 }
-function parseTimeline2(v) {
-  if (!Array.isArray(v)) throw new AiError("bad_output", "dna.analyze: malformed timeline");
-  return v.map((t2) => {
+function parseTimeline2(v5) {
+  if (!Array.isArray(v5)) throw new AiError("bad_output", "dna.analyze: malformed timeline");
+  return v5.map((t2) => {
     if (!isObj5(t2) || typeof t2.stage !== "string" || typeof t2.form !== "string") {
       throw new AiError("bad_output", "dna.analyze: malformed timeline entry");
     }
     return { stage: t2.stage, form: t2.form };
   });
 }
-function parseSuggestedWords(v, errPrefix) {
-  if (!Array.isArray(v)) throw new AiError("bad_output", `${errPrefix}: malformed suggested`);
+function parseSuggestedWords(v5, errPrefix) {
+  if (!Array.isArray(v5)) throw new AiError("bad_output", `${errPrefix}: malformed suggested`);
   const out = [];
   const seen = /* @__PURE__ */ new Set();
-  for (const s of v) {
-    if (!isObj5(s) || typeof s.word !== "string" || typeof s.zh !== "string" || typeof s.emoji !== "string") {
+  for (const s2 of v5) {
+    if (!isObj5(s2) || typeof s2.word !== "string" || typeof s2.zh !== "string" || typeof s2.emoji !== "string") {
       throw new AiError("bad_output", `${errPrefix}: malformed suggested entry`);
     }
-    const word = s.word.trim();
+    const word = s2.word.trim();
     const key6 = word.toLowerCase();
     if (!word || seen.has(key6)) continue;
     seen.add(key6);
-    out.push({ word, zh: s.zh, emoji: s.emoji });
+    out.push({ word, zh: s2.zh, emoji: s2.emoji });
   }
   return out;
 }
@@ -32323,11 +35347,11 @@ function wordLine3(w2) {
   const zh = (_b = w2.zh) == null ? void 0 : _b.trim();
   return `- ${w2.word}${pos ? `\uFF08${pos}\uFF09` : ""}${zh ? ` ${zh}` : ""}`;
 }
-function isObj6(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
+function isObj6(v5) {
+  return typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
 }
-function str5(v) {
-  return typeof v === "string" ? v.trim() : "";
+function str6(v5) {
+  return typeof v5 === "string" ? v5.trim() : "";
 }
 function parseWordEmojiItems(json) {
   if (!isObj6(json) || !Array.isArray(json.items)) {
@@ -32337,11 +35361,11 @@ function parseWordEmojiItems(json) {
   const seen = /* @__PURE__ */ new Set();
   for (const it of json.items) {
     if (!isObj6(it)) throw new AiError("bad_output", "word.emoji: malformed item");
-    const word = str5(it.word);
+    const word = str6(it.word);
     const key6 = word.toLowerCase();
     if (!word || seen.has(key6)) continue;
     seen.add(key6);
-    out.push({ word, emoji: str5(it.emoji) });
+    out.push({ word, emoji: str6(it.emoji) });
   }
   return out;
 }
@@ -32409,11 +35433,11 @@ var GLOSS_TEMPLATE = `\u3014\u6587\u7AE0\u3015{{title}}
 \u3014\u8981\u89E3\u91CB\u7684\u5B57\u3015\uFF08\u5171 {{count}} \u500B\uFF09
 {{words}}`;
 var GLOSS_USER_TEMPLATE = `\u4EFB\u52D9\uFF1A\u7167\u3014\u6BB5\u843D\u3015\u7684\u8A9E\u5883\uFF0C\u89E3\u91CB\u3014\u8981\u89E3\u91CB\u7684\u5B57\u3015\u88E1\u7684\u6BCF\u500B\u5B57`;
-function isObj7(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
+function isObj7(v5) {
+  return typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
 }
-function str6(v) {
-  return typeof v === "string" ? v.trim() : "";
+function str7(v5) {
+  return typeof v5 === "string" ? v5.trim() : "";
 }
 function parseGloss(json, asked) {
   if (!isObj7(json) || !Array.isArray(json.items)) throw new AiError("bad_output", "paragraph.gloss: expected { items: [...] }");
@@ -32422,11 +35446,11 @@ function parseGloss(json, asked) {
   const out = [];
   for (const it of json.items) {
     if (!isObj7(it)) continue;
-    const word = str6(it.word).toLowerCase();
-    const zh = str6(it.zh);
+    const word = str7(it.word).toLowerCase();
+    const zh = str7(it.zh);
     if (!word || !zh || seen.has(word) || want.size && !want.has(word)) continue;
     seen.add(word);
-    out.push({ word, pos: str6(it.pos), zh, en: str6(it.en) });
+    out.push({ word, pos: str7(it.pos), zh, en: str7(it.en) });
   }
   return out;
 }
@@ -32572,8 +35596,8 @@ var GRAMMAR_GRADE_TEMPLATE = `\u3014\u5B78\u7FD2\u8005\u7684\u4F5C\u7B54\u3015
 
 \u4EFB\u52D9\uFF1A\u6279\u6539\u9019\u500B\u4F5C\u7B54\u3002`;
 var KIND = { rewrite: "\u6539\u5BEB\u984C", translate: "\u7FFB\u8B6F\u984C" };
-function str7(v) {
-  return typeof v === "string" ? v.trim() : "";
+function str8(v5) {
+  return typeof v5 === "string" ? v5.trim() : "";
 }
 function parseGrammarGrade(json) {
   if (typeof json !== "object" || json === null || Array.isArray(json)) {
@@ -32581,11 +35605,11 @@ function parseGrammarGrade(json) {
   }
   const o = json;
   if (typeof o.correct !== "boolean") throw new AiError("bad_output", "grammar.grade: correct must be true or false");
-  let feedback = str7(o.feedback);
+  let feedback = str8(o.feedback);
   if (!feedback) throw new AiError("bad_output", "grammar.grade: empty feedback");
   if (feedback.length > MAX_FEEDBACK_CHARS) feedback = `${feedback.slice(0, MAX_FEEDBACK_CHARS - 1)}\u2026`;
   const out = { correct: o.correct, feedback };
-  const corrected = str7(o.corrected);
+  const corrected = str8(o.corrected);
   if (!o.correct && corrected) out.corrected = corrected;
   return out;
 }
@@ -32628,6 +35652,56 @@ var grammarGrade = {
   }
 };
 var GRAMMAR_TASKS3 = [grammarGrade];
+
+// src/services/ai/tasks/grammarVisual.ts
+var GRAMMAR_VISUAL_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u6587\u6CD5\u8001\u5E2B\uFF0C\u8981\u7528\u4E00\u500B\u56FA\u5B9A\u7684\u5716\u89E3\u7248\u9762\uFF0C\u5E6B\u4EE5\u4E2D\u6587\u70BA\u6BCD\u8A9E\u7684\u5B78\u7FD2\u8005\u770B\u61C2\u4E00\u500B\u6587\u6CD5\u6982\u5FF5\u3002\u3014\u6587\u6CD5\u4E3B\u984C\u3015\u662F\u8981\u8B1B\u7684\u4E3B\u984C\uFF0C\u3014\u7248\u9762\u3015\u8AAA\u660E\u9019\u7A2E\u5716\u89E3\u6BCF\u500B\u6B04\u4F4D\u600E\u9EBC\u586B\u3002
+
+\u898F\u5247\uFF1A
+1. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\uFF0C\u6240\u6709\u6B04\u4F4D\u90FD\u8981\u7D66\uFF1B\u8AAA\u660E\u88E1\u5BEB\u300C\u6C92\u6709\u5C31\u586B\u7A7A\u5B57\u4E32\u6216\u7A7A\u9663\u5217\u300D\u7684\u6B04\u4F4D\uFF0C\u6C92\u6709\u5167\u5BB9\u6642\u7167\u505A\u3002
+2. \u4F8B\u53E5\u8981\u81EA\u7136\u3001\u5E38\u898B\u3001\u6587\u6CD5\u5B8C\u5168\u6B63\u78BA\uFF0C\u9577\u5EA6\u9069\u4E2D\uFF1B\u5168\u90E8\u81EA\u5DF1\u539F\u5275\uFF0C\u4E0D\u8981\u5F15\u7528\u51FA\u7248\u6559\u6750\u3001\u8003\u984C\u6216\u6587\u7AE0\u3002
+3. \u89E3\u8AAA\u8207\u6A19\u7C64\u7528\u7E41\u9AD4\u4E2D\u6587\uFF08\u53F0\u7063\u7528\u8A9E\uFF09\uFF0C\u767D\u8A71\u3001\u5177\u9AD4\uFF0C\u8AAA\u51FA\u300C\u70BA\u4EC0\u9EBC\u662F\u9019\u6A23\u300D\uFF1B\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u6307\u5B9A\u4E86\u5176\u4ED6\u56DE\u7B54\u8A9E\u8A00\u6642\u4EE5\u5B78\u7FD2\u8005\u8A2D\u5B9A\u70BA\u6E96\u3002
+4. \u4F8B\u53E5\u8981\u5207\u4E2D\u3014\u6587\u6CD5\u4E3B\u984C\u3015\u7684\u5B78\u7FD2\u76EE\u6A19\uFF0C\u8B93\u5716\u89E3\u4E00\u773C\u5C31\u770B\u5F97\u51FA\u91CD\u9EDE\uFF1B\u7528\u8A5E\u96E3\u5EA6\u4F9D\u3014\u5B78\u7FD2\u8005\u8A2D\u5B9A\u3015\u7684\u7A0B\u5EA6\u8ABF\u6574\u3002
+5. \u4E0D\u78BA\u5B9A\u7684\u898F\u5247\u4E0D\u8981\u5BEB\uFF1B\u5BE7\u53EF\u9078\u4E00\u500B\u55AE\u7D14\u3001\u5178\u578B\u7684\u4F8B\u5B50\u3002`;
+var VISUAL_TEMPLATE = `\u4EFB\u52D9\uFF1A\u70BA\u300C{{title}}\u300D\u505A\u4E00\u4EFD\u300C{{layout}}\u300D\u5716\u89E3\u3002
+{{#avoid}}\u4E0D\u8981\u518D\u7528\u9019\u4E9B\u4F8B\u53E5\uFF0C\u63DB\u4E00\u500B\u60C5\u5883\uFF1A
+{{avoid}}
+{{/avoid}}`;
+var MAX_AVOID2 = 5;
+var grammarVisual = {
+  id: "grammar.visual",
+  version: 1,
+  surface: "grammar",
+  tier: "smart",
+  maxTokens: 4096,
+  answerChars: () => 0,
+  build(input, ctx) {
+    var _a;
+    const kind = layoutOf(input.topic.id);
+    if (!kind) throw new AiError("bad_output", `no layout for grammar topic "${input.topic.id}"`);
+    const avoid = ((_a = input.avoid) != null ? _a : []).map((s2) => s2.trim()).filter(Boolean).slice(-MAX_AVOID2);
+    return composeRequest({
+      base: GRAMMAR_VISUAL_BASE_PROMPT,
+      context: [topicBlock(input.topic), `\u3014\u7248\u9762\u3015${LAYOUT_TITLES[kind]}
+${visualGuide(kind)}`],
+      profile: ctx.profile,
+      history: [],
+      user: renderTemplate(VISUAL_TEMPLATE, {
+        title: input.topic.title,
+        layout: LAYOUT_TITLES[kind],
+        avoid: avoid.map((s2) => `- ${s2}`).join("\n")
+      }),
+      tier: grammarVisual.tier,
+      maxTokens: grammarVisual.maxTokens,
+      output: { name: "grammar_visual", schema: visualSchema(kind) }
+    });
+  },
+  parse(r) {
+    const v5 = parseVisual(structuredJson(r));
+    if (!v5) throw new AiError("bad_output", "grammar visual did not match its layout");
+    return v5;
+  }
+};
+var GRAMMAR_TASKS4 = [grammarVisual];
 
 // src/services/ai/tasks/report.ts
 var REPORT_ADVICE_SCHEMA = {
@@ -32703,9 +35777,9 @@ ${WARM_TONE}
 7. letter\uFF08\u4FE1\uFF09\uFF1A2 \u5230 4 \u53E5\uFF0C\u4E00\u6BB5\uFF0C\u50CF\u670B\u53CB\u8AAA\u8A71\uFF1B\u8AAA\u770B\u5230\u7684\u9032\u6B65\u6216\u56F0\u96E3\uFF0C\u548C\u4E0B\u9031\u6700\u503C\u5F97\u505A\u7684\u4E00\u4EF6\u4E8B\u3002\u4E0D\u8981\u91CD\u8907\u5217\u6578\u5B57\u3002
 
 \u53EA\u6839\u64DA\u8CC7\u6599\u5BEB\uFF0C\u4E0D\u8981\u7DE8\u9020\u8CC7\u6599\u88E1\u6C92\u6709\u7684\u4E8B\u3002`;
-var isObj8 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
-var str8 = (v) => typeof v === "string" ? v.trim() : "";
-var strings = (v, max) => Array.isArray(v) ? v.map(str8).filter(Boolean).slice(0, max) : [];
+var isObj8 = (v5) => typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
+var str9 = (v5) => typeof v5 === "string" ? v5.trim() : "";
+var strings = (v5, max) => Array.isArray(v5) ? v5.map(str9).filter(Boolean).slice(0, max) : [];
 var MIN_AXES = 3;
 var MAX_AXES = 7;
 function parseReportAdvice(json) {
@@ -32713,31 +35787,31 @@ function parseReportAdvice(json) {
   const axes = [];
   for (const a2 of Array.isArray(o.axes) ? o.axes : []) {
     if (!isObj8(a2)) continue;
-    const name = str8(a2.name);
+    const name = str9(a2.name);
     if (!name) continue;
     const n = Number(a2.value);
     const value = Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0;
-    const hint = str8(a2.hint);
+    const hint = str9(a2.hint);
     axes.push({ name, value, clear: typeof a2.clear === "boolean" ? a2.clear : true, ...hint ? { hint } : {} });
     if (axes.length === MAX_AXES) break;
   }
   const levels = [];
   for (const l4 of Array.isArray(o.levels) ? o.levels : []) {
     if (!isObj8(l4)) continue;
-    const area = str8(l4.area);
-    const level = str8(l4.level);
+    const area = str9(l4.area);
+    const level = str9(l4.level);
     if (!area || !level) continue;
-    const detail = str8(l4.detail);
-    levels.push({ area, level, ...detail ? { detail } : {}, basis: str8(l4.basis) });
+    const detail = str9(l4.detail);
+    levels.push({ area, level, ...detail ? { detail } : {}, basis: str9(l4.basis) });
   }
   const wordLevels = [];
   for (const w2 of Array.isArray(o.wordLevels) ? o.wordLevels : []) {
     if (!isObj8(w2)) continue;
-    const word = str8(w2.word).toLowerCase();
-    const level = str8(w2.level).toUpperCase();
+    const word = str9(w2.word).toLowerCase();
+    const level = str9(w2.level).toUpperCase();
     if (word && isCefrTier(level)) wordLevels.push({ word, level });
   }
-  return { letter: str8(o.letter), axes, levels, focus: strings(o.focus, 6), tryNext: strings(o.tryNext, 5), reading: strings(o.reading, 3), wordLevels };
+  return { letter: str9(o.letter), axes, levels, focus: strings(o.focus, 6), tryNext: strings(o.tryNext, 5), reading: strings(o.reading, 3), wordLevels };
 }
 function resolveAdvice(draft, baseline, baselineLevels2) {
   return {
@@ -32823,7 +35897,7 @@ next\uFF08\u56DB\u9031\u65B9\u5411\uFF09\u4F9D\u4ED6\u7684\u7A0B\u5EA6\u5206\u62
 2. \u300C\u7A0B\u5EA6\u5224\u65B7\u300D\u8981\u548C\u4ED6\u81EA\u8FF0\u7684\u7A0B\u5EA6\u6BD4\u5C0D\uFF0C\u4E26\u5F15\u7528\u5BE6\u969B\u7684\u554F\u7B54\u6216\u932F\u984C\u7576\u4F9D\u64DA\uFF1B\u8CC7\u6599\u4E0D\u5920\u5C31\u8001\u5BE6\u8AAA\u8CC7\u6599\u4E0D\u5920\u3002
 3. \u53EA\u6839\u64DA\u6750\u6599\u5BEB\uFF0C\u4E0D\u8981\u7DE8\u9020\u6750\u6599\u88E1\u6C92\u6709\u7684\u4E8B\uFF1B\u6C92\u6709\u6750\u6599\u7684\u6BB5\u843D\u7C21\u77ED\u8AAA\u660E\u5373\u53EF\uFF0C\u4E0D\u8981\u786C\u6E4A\u3002
 4. \u4E0D\u8981\u524D\u8A00\u3001\u7D50\u8A9E\uFF0C\u4E0D\u8981\u7528 code fence \u5305\u4F4F\u5167\u5BB9\u3002`;
-var strip = (s) => s.trim().replace(/^```(?:markdown|md)?\s*\n/i, "").replace(/\n```\s*$/, "").trim();
+var strip = (s2) => s2.trim().replace(/^```(?:markdown|md)?\s*\n/i, "").replace(/\n```\s*$/, "").trim();
 function parseMarkdownAnswer(text) {
   const t2 = strip(text);
   if (!t2) throw new AiError("bad_output", "empty analysis");
@@ -32956,11 +36030,11 @@ var VERB_BASE_PROMPT = `\u4F60\u662F\u4E00\u4F4D\u82F1\u6587\u5B57\u5F59\u8001\u
 8. \u53EA\u8F38\u51FA\u7B26\u5408 schema \u7684 JSON\u3002`;
 var VERB_TEMPLATE = `\u4EFB\u52D9\uFF1A\u7528\u6CD5\uFF08{{word}}\uFF09
 \u5217\u51FA {{word}} \u5E38\u898B\u7684\u8A5E\u6027\uFF0C\u6574\u7406\u6BCF\u500B\u8A5E\u6027\u7684\u5E38\u898B\u53E5\u578B\u8207\u76F8\u8FD1\u8AAA\u6CD5\u3002{{#onlyPos}}\u9019\u6B21\u53EA\u9700\u8981 {{onlyPos}} \u9019\u500B\u8A5E\u6027\u7684\u7528\u6CD5\uFF0Centries \u53EA\u8981\u4E00\u9805\u3002{{/onlyPos}}{{#hasSource}}\u3014\u51FA\u8655\u6BB5\u843D\u3015\u6216\u3014\u51FA\u8655\u53E5\u5B50\u3015\u88E1\u7684\u7528\u6CD5\u5982\u679C\u5C6C\u65BC\u5176\u4E2D\u4E00\u7A2E\uFF0C\u628A\u90A3\u500B\u53E5\u578B\u6392\u5728\u7B2C\u4E00\u500B\u3002{{/hasSource}}`;
-function isObj9(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
+function isObj9(v5) {
+  return typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
 }
-function str9(v) {
-  return typeof v === "string" ? v.trim() : "";
+function str10(v5) {
+  return typeof v5 === "string" ? v5.trim() : "";
 }
 function parseVerbUsage(json) {
   if (!isObj9(json) || !Array.isArray(json.entries)) {
@@ -32969,20 +36043,20 @@ function parseVerbUsage(json) {
   const entries = [];
   for (const raw of json.entries) {
     if (!isObj9(raw)) continue;
-    const [pos] = parsePos(str9(raw.pos));
+    const [pos] = parsePos(str10(raw.pos));
     if (!pos) continue;
     const patterns = [];
     for (const p of Array.isArray(raw.patterns) ? raw.patterns : []) {
       if (!isObj9(p)) continue;
-      const pattern = str9(p.pattern);
-      if (pattern) patterns.push({ pattern, meaningZh: str9(p.meaningZh), example: str9(p.example) });
+      const pattern = str10(p.pattern);
+      if (pattern) patterns.push({ pattern, meaningZh: str10(p.meaningZh), example: str10(p.example) });
     }
     if (!patterns.length) continue;
     const related = [];
     for (const r of Array.isArray(raw.related) ? raw.related : []) {
       if (!isObj9(r)) continue;
-      const phrase = str9(r.phrase);
-      if (phrase) related.push({ phrase, zh: str9(r.zh) });
+      const phrase = str10(r.phrase);
+      if (phrase) related.push({ phrase, zh: str10(r.zh) });
     }
     entries.push({ pos, patterns, related });
   }
@@ -32999,13 +36073,13 @@ var verbUsage = {
   answerChars: () => 0,
   build(input, ctx) {
     var _a;
-    const c2 = buildWordContext(input);
+    const c4 = buildWordContext(input);
     return composeRequest({
       base: VERB_BASE_PROMPT,
-      context: [c2.wordBlock],
+      context: [c4.wordBlock],
       profile: profileForTask(ctx.profile, verbUsage, input),
       history: [],
-      user: renderTemplate(VERB_TEMPLATE, { ...c2.slots, onlyPos: (_a = input.onlyPos) != null ? _a : "" }),
+      user: renderTemplate(VERB_TEMPLATE, { ...c4.slots, onlyPos: (_a = input.onlyPos) != null ? _a : "" }),
       tier: verbUsage.tier,
       maxTokens: verbUsage.maxTokens,
       output: { name: "verb_usage", schema: VERB_USAGE_SCHEMA }
@@ -33051,6 +36125,7 @@ function defaultTaskRegistry() {
     ...GRAMMAR_TASKS2,
     ...GRAMMAR_TASKS,
     ...GRAMMAR_TASKS3,
+    ...GRAMMAR_TASKS4,
     ...PRACTICE_TASKS,
     ...PARAPHRASE_TASKS,
     ...GLOSS_TASKS,
@@ -33154,7 +36229,7 @@ var RequestUrlTransport = class {
 };
 function lowerKeys(h) {
   const out = {};
-  for (const [k, v] of Object.entries(h != null ? h : {})) out[k.toLowerCase()] = v;
+  for (const [k, v5] of Object.entries(h != null ? h : {})) out[k.toLowerCase()] = v5;
   return out;
 }
 async function* once(text) {
@@ -33174,7 +36249,7 @@ function maskSecret(value) {
 }
 function maskHeaders(headers) {
   const out = {};
-  for (const [k, v] of Object.entries(headers)) out[k] = SECRET_HEADERS.has(k.toLowerCase()) ? maskSecret(v) : v;
+  for (const [k, v5] of Object.entries(headers)) out[k] = SECRET_HEADERS.has(k.toLowerCase()) ? maskSecret(v5) : v5;
   return out;
 }
 var TracingTransport = class {
@@ -33203,9 +36278,9 @@ var TracingTransport = class {
   }
 };
 async function* tee(chunks, into) {
-  for await (const c2 of chunks) {
-    if (into.body.length < MAX_BODY_CHARS) into.body += c2.slice(0, MAX_BODY_CHARS - into.body.length);
-    yield c2;
+  for await (const c4 of chunks) {
+    if (into.body.length < MAX_BODY_CHARS) into.body += c4.slice(0, MAX_BODY_CHARS - into.body.length);
+    yield c4;
   }
 }
 
@@ -33367,7 +36442,7 @@ var AiService = class {
     (_a = this.inFlight.get(threadId)) == null ? void 0 : _a.abort();
   }
   dispose() {
-    for (const c2 of this.inFlight.values()) c2.abort();
+    for (const c4 of this.inFlight.values()) c4.abort();
     this.inFlight.clear();
   }
 };
@@ -33397,14 +36472,14 @@ var ApiKeys = class _ApiKeys {
     if (this.secrets.available) {
       this.secrets.set(_ApiKeys.secretId(provider), trimmed);
       if (this.settings().ai.providers[provider].apiKey) {
-        await this.updateSettings((s) => {
-          s.ai.providers[provider].apiKey = "";
+        await this.updateSettings((s2) => {
+          s2.ai.providers[provider].apiKey = "";
         });
       }
       return;
     }
-    await this.updateSettings((s) => {
-      s.ai.providers[provider].apiKey = trimmed;
+    await this.updateSettings((s2) => {
+      s2.ai.providers[provider].apiKey = trimmed;
     });
   }
 };
@@ -33423,7 +36498,7 @@ function localDayKey(d) {
   const dd = String(d.getDate()).padStart(2, "0");
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
-function add2(a2, b) {
+function add3(a2, b) {
   return {
     input: a2.input + b.input,
     output: a2.output + b.output,
@@ -33458,7 +36533,7 @@ var UsageTracker = class {
       const id2 = this.deviceId();
       const days = (_b = (_a = shard.devices)[id2]) != null ? _b : _a[id2] = {};
       const key6 = localDayKey(this.now());
-      days[key6] = add2((_c = days[key6]) != null ? _c : emptyDay(), {
+      days[key6] = add3((_c = days[key6]) != null ? _c : emptyDay(), {
         input: u.input,
         output: u.output,
         cacheRead: u.cacheRead,
@@ -33480,8 +36555,8 @@ var UsageTracker = class {
     let month = emptyDay();
     for (const days of Object.values(shard.devices)) {
       for (const [day, u] of Object.entries(days)) {
-        if (day === todayKey) today = add2(today, u);
-        if (day.startsWith(monthPrefix)) month = add2(month, u);
+        if (day === todayKey) today = add3(today, u);
+        if (day.startsWith(monthPrefix)) month = add3(month, u);
       }
     }
     return { today, month, monthWeighted: weightedTokens(month) };
@@ -33526,8 +36601,8 @@ function createAiService(store, ports) {
 var import_obsidian48 = require("obsidian");
 function scrollableChain(start4) {
   const out = [start4];
-  for (let el = start4.parentElement; el; el = el.parentElement) {
-    if (el.scrollHeight > el.clientHeight && el.scrollTop > 0) out.push(el);
+  for (let el2 = start4.parentElement; el2; el2 = el2.parentElement) {
+    if (el2.scrollHeight > el2.clientHeight && el2.scrollTop > 0) out.push(el2);
   }
   return out;
 }
@@ -33544,7 +36619,7 @@ var VocabSettingsTab = class extends import_obsidian48.PluginSettingTab {
   // back where it was. A fresh open from Obsidian starts at the top.
   render(keepScroll) {
     const { containerEl } = this;
-    const scrollers = keepScroll ? scrollableChain(containerEl).map((el) => [el, el.scrollTop]) : [];
+    const scrollers = keepScroll ? scrollableChain(containerEl).map((el2) => [el2, el2.scrollTop]) : [];
     containerEl.empty();
     containerEl.addClass("vt-settings");
     const ctx = { ...this.ctx, redisplay: () => this.render(true) };
@@ -33553,7 +36628,7 @@ var VocabSettingsTab = class extends import_obsidian48.PluginSettingTab {
       section4.render(containerEl.createDiv({ cls: `vt-settings-section vt-settings-${section4.id}` }), ctx);
     }
     const restore = () => {
-      for (const [el, top] of scrollers) el.scrollTop = top;
+      for (const [el2, top] of scrollers) el2.scrollTop = top;
     };
     restore();
     if (scrollers.length) requestAnimationFrame(restore);
@@ -33581,12 +36656,12 @@ function formatTrace(trace) {
   const { request: req, response: res } = trace;
   const ms9 = (_a = trace.ms) != null ? _a : 0;
   const lines4 = [`${req.method} ${req.url}`];
-  for (const [k, v] of Object.entries(req.headers)) lines4.push(`${k}: ${v}`);
+  for (const [k, v5] of Object.entries(req.headers)) lines4.push(`${k}: ${v5}`);
   if (req.body) lines4.push("", prettyBody(req.body));
   lines4.push("");
   if (res) {
     lines4.push(t("settings.ai.test.response", { mode: res.mode, ms: ms9 }), `HTTP ${res.status}`);
-    for (const [k, v] of Object.entries(res.headers)) lines4.push(`${k}: ${v}`);
+    for (const [k, v5] of Object.entries(res.headers)) lines4.push(`${k}: ${v5}`);
     lines4.push("", prettyBody(res.body) || t("settings.ai.test.emptyBody"));
     if (res.body.length >= MAX_BODY_CHARS) lines4.push(t("settings.ai.test.truncated", { n: MAX_BODY_CHARS }));
   } else {
@@ -33601,8 +36676,8 @@ function renderTraces(parent, traces, open) {
   details.open = open;
   const summary = details.createEl("summary", { text: t("settings.ai.test.details", { n: traces.length }) });
   const copy = summary.createEl("button", { cls: "vt-settings-trace-copy", text: t("settings.ai.test.copy") });
-  copy.addEventListener("click", (ev) => {
-    ev.preventDefault();
+  copy.addEventListener("click", (ev2) => {
+    ev2.preventDefault();
     void navigator.clipboard.writeText(text).then(() => copy.setText(t("settings.ai.test.copied")));
   });
   details.createEl("pre", { text });
@@ -33610,53 +36685,53 @@ function renderTraces(parent, traces, open) {
 
 // src/ui/settings/sections/ai.ts
 var fmt2 = (n) => n.toLocaleString();
-function renderProviderFields(el, ctx, id2) {
+function renderProviderFields(el2, ctx, id2) {
   var _a, _b;
   const def = providerDef(id2);
   const cfg = () => ctx.store.settings.ai.providers[id2];
-  const update = (mutate) => ctx.store.updateSettings((s) => mutate(s.ai.providers[id2]));
+  const update = (mutate) => ctx.store.updateSettings((s2) => mutate(s2.ai.providers[id2]));
   const keyDesc = [t(ctx.keys.usesSecretStorage ? "settings.ai.key.descSecret" : "settings.ai.key.descData")];
   if (def.key === "optional") keyDesc.unshift(t("settings.ai.key.optional"));
-  new import_obsidian49.Setting(el).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
+  new import_obsidian49.Setting(el2).setName(t("settings.ai.key.name")).setDesc(keyDesc.join(" ")).addText((text) => {
     text.inputEl.type = "password";
     text.inputEl.autocomplete = "off";
     text.setPlaceholder(id2 === "anthropic" ? "sk-ant-\u2026" : "sk-\u2026").setValue(ctx.keys.get(id2));
-    text.onChange((v) => void ctx.keys.set(id2, v));
+    text.onChange((v5) => void ctx.keys.set(id2, v5));
   });
   if (def.editableBaseUrl) {
-    const baseUrl = new import_obsidian49.Setting(el).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
+    const baseUrl = new import_obsidian49.Setting(el2).setName(t("settings.ai.baseUrl.name")).setDesc(t("settings.ai.baseUrl.desc"));
     baseUrl.settingEl.addClass("vt-settings-baseurl");
     baseUrl.addText((text) => {
       text.inputEl.addClass("vt-settings-wide");
       text.setPlaceholder("https://\u2026/v1").setValue(cfg().baseUrl);
-      text.onChange((v) => void update((c2) => c2.baseUrl = v.trim()));
+      text.onChange((v5) => void update((c4) => c4.baseUrl = v5.trim()));
     });
     for (const preset of (_a = def.baseUrlPresets) != null ? _a : []) {
       baseUrl.addButton(
         (b) => b.setButtonText(preset.label).onClick(async () => {
-          await update((c2) => c2.baseUrl = preset.url);
+          await update((c4) => c4.baseUrl = preset.url);
           ctx.redisplay();
         })
       );
     }
   }
-  const modelSetting = new import_obsidian49.Setting(el).setName(t("settings.ai.model.name")).setDesc(t("settings.ai.model.desc"));
+  const modelSetting = new import_obsidian49.Setting(el2).setName(t("settings.ai.model.name")).setDesc(t("settings.ai.model.desc"));
   const options = (_b = def.models) == null ? void 0 : _b.smart;
   if (options) {
     const cur = cfg().smartModel || cfg().fastModel;
     const all = options.includes(cur) || !cur ? options : [...options, cur];
     modelSetting.addDropdown((d) => {
       for (const m2 of all) d.addOption(m2, m2);
-      d.setValue(cur || all[0]).onChange((v) => void update((c2) => c2.smartModel = v));
+      d.setValue(cur || all[0]).onChange((v5) => void update((c4) => c4.smartModel = v5));
     });
   } else {
     modelSetting.addText(
-      (text) => text.setPlaceholder(t("settings.ai.model.placeholder")).setValue(cfg().smartModel || cfg().fastModel).onChange((v) => void update((c2) => c2.smartModel = v.trim()))
+      (text) => text.setPlaceholder(t("settings.ai.model.placeholder")).setValue(cfg().smartModel || cfg().fastModel).onChange((v5) => void update((c4) => c4.smartModel = v5.trim()))
     );
   }
-  const testSetting = new import_obsidian49.Setting(el).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
-  const result = el.createDiv({ cls: "vt-settings-test-result" });
-  const trace = el.createDiv();
+  const testSetting = new import_obsidian49.Setting(el2).setName(t("settings.ai.test.name")).setDesc(t("settings.ai.test.desc"));
+  const result = el2.createDiv({ cls: "vt-settings-test-result" });
+  const trace = el2.createDiv();
   testSetting.addButton((b) => {
     b.setButtonText(t("settings.ai.test.button")).onClick(async () => {
       result.empty();
@@ -33694,41 +36769,41 @@ function renderProviderFields(el, ctx, id2) {
 var aiSection = {
   id: "ai",
   title: "settings.section.ai",
-  render(el, ctx) {
+  render(el2, ctx) {
     const ai = () => ctx.store.settings.ai;
-    new import_obsidian49.Setting(el).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle(
-      (tg) => tg.setValue(ai().enabled).onChange(async (v) => {
+    new import_obsidian49.Setting(el2).setName(t("settings.ai.enabled.name")).setDesc(t("settings.ai.enabled.desc")).addToggle(
+      (tg) => tg.setValue(ai().enabled).onChange(async (v5) => {
         var _a;
-        await ctx.store.updateSettings((s) => s.ai.enabled = v);
+        await ctx.store.updateSettings((s2) => s2.ai.enabled = v5);
         (_a = ctx.onAiEnabledChanged) == null ? void 0 : _a.call(ctx);
       })
     );
-    new import_obsidian49.Setting(el).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
+    new import_obsidian49.Setting(el2).setName(t("settings.ai.provider.name")).setDesc(t("settings.ai.provider.desc")).addDropdown((d) => {
       for (const p of PROVIDERS) d.addOption(p.id, t(p.label));
-      d.setValue(ai().provider).onChange(async (v) => {
-        await ctx.store.updateSettings((s) => s.ai.provider = v);
+      d.setValue(ai().provider).onChange(async (v5) => {
+        await ctx.store.updateSettings((s2) => s2.ai.provider = v5);
         ctx.redisplay();
       });
     });
-    renderProviderFields(el, ctx, ai().provider);
-    new import_obsidian49.Setting(el).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
+    renderProviderFields(el2, ctx, ai().provider);
+    new import_obsidian49.Setting(el2).setName(t("settings.ai.budget.name")).setDesc(t("settings.ai.budget.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
       text.setPlaceholder("0").setValue(ai().monthlyTokenBudget ? String(ai().monthlyTokenBudget) : "");
-      text.onChange((v) => {
-        const n = v.trim() === "" ? 0 : parseNonNegativeInt(v);
-        if (n !== null) void ctx.store.updateSettings((s) => s.ai.monthlyTokenBudget = n);
+      text.onChange((v5) => {
+        const n = v5.trim() === "" ? 0 : parseNonNegativeInt(v5);
+        if (n !== null) void ctx.store.updateSettings((s2) => s2.ai.monthlyTokenBudget = n);
       });
     });
-    new import_obsidian49.Setting(el).setName(t("settings.ai.dnaDailyBatches.name")).addText((text) => {
+    new import_obsidian49.Setting(el2).setName(t("settings.ai.dnaDailyBatches.name")).addText((text) => {
       var _a;
       text.inputEl.inputMode = "numeric";
       text.setPlaceholder("10").setValue(String((_a = ai().dnaDailyBatches) != null ? _a : 10));
-      text.onChange((v) => {
-        const n = v.trim() === "" ? 10 : parseNonNegativeInt(v);
-        if (n !== null) void ctx.store.updateSettings((s) => s.ai.dnaDailyBatches = n);
+      text.onChange((v5) => {
+        const n = v5.trim() === "" ? 10 : parseNonNegativeInt(v5);
+        if (n !== null) void ctx.store.updateSettings((s2) => s2.ai.dnaDailyBatches = n);
       });
     });
-    const usage = new import_obsidian49.Setting(el).setName(t("settings.ai.usage.name")).setDesc("\u2026");
+    const usage = new import_obsidian49.Setting(el2).setName(t("settings.ai.usage.name")).setDesc("\u2026");
     ctx.ai.usageSummary().then((u) => {
       const desc = createFragment((f) => {
         f.createDiv({ text: t("settings.ai.usage.value", { month: fmt2(u.monthWeighted), today: fmt2(u.today.input + u.today.output) }) });
@@ -33745,7 +36820,7 @@ var aiSection = {
       });
       usage.setDesc(desc);
     }).catch(() => usage.setDesc("\u2014"));
-    el.appendChild(inlineNote({ tone: "info", text: t("settings.ai.privacy") }));
+    el2.appendChild(inlineNote({ tone: "info", text: t("settings.ai.privacy") }));
   }
 };
 
@@ -33754,11 +36829,11 @@ var import_obsidian50 = require("obsidian");
 var generalSection = {
   id: "general",
   title: "settings.section.general",
-  render(el, ctx) {
-    new import_obsidian50.Setting(el).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
-      (d) => d.addOptions({ auto: t("settings.general.locale.auto"), "zh-TW": "\u7E41\u9AD4\u4E2D\u6587", en: "English" }).setValue(ctx.store.settings.ui.locale).onChange(async (v) => {
-        await ctx.store.updateSettings((s) => {
-          s.ui.locale = v;
+  render(el2, ctx) {
+    new import_obsidian50.Setting(el2).setName(t("settings.general.locale.name")).setDesc(t("settings.general.locale.desc")).addDropdown(
+      (d) => d.addOptions({ auto: t("settings.general.locale.auto"), "zh-TW": "\u7E41\u9AD4\u4E2D\u6587", en: "English" }).setValue(ctx.store.settings.ui.locale).onChange(async (v5) => {
+        await ctx.store.updateSettings((s2) => {
+          s2.ui.locale = v5;
         });
         ctx.applyLocale();
         ctx.redisplay();
@@ -33772,80 +36847,80 @@ var import_obsidian51 = require("obsidian");
 var learnerSection = {
   id: "learner",
   title: "settings.section.learner",
-  render(el, ctx) {
+  render(el2, ctx) {
     const profile = () => ctx.store.settings.learner;
-    el.createDiv({ cls: "setting-item-description vt-settings-intro", text: t("settings.learner.desc") });
+    el2.createDiv({ cls: "setting-item-description vt-settings-intro", text: t("settings.learner.desc") });
     const preview2 = createEl("pre", { cls: "vt-settings-preview", text: renderProfile(profile()) });
     const update = async (mutate) => {
-      await ctx.store.updateSettings((s) => mutate(s.learner));
+      await ctx.store.updateSettings((s2) => mutate(s2.learner));
       preview2.setText(renderProfile(profile()));
     };
-    new import_obsidian51.Setting(el).setName(t("settings.learner.level.name")).addDropdown((d) => {
+    new import_obsidian51.Setting(el2).setName(t("settings.learner.level.name")).addDropdown((d) => {
       d.addOption("", t("settings.learner.level.none"));
       for (const lv of CEFR_LEVELS) d.addOption(lv, lv);
-      d.setValue(profile().level).onChange((v) => void update((p) => p.level = v));
+      d.setValue(profile().level).onChange((v5) => void update((p) => p.level = v5));
     });
-    new import_obsidian51.Setting(el).setName(t("settings.learner.goal.name")).addDropdown((d) => {
+    new import_obsidian51.Setting(el2).setName(t("settings.learner.goal.name")).addDropdown((d) => {
       for (const g of LEARNER_GOALS) d.addOption(g, t(`settings.learner.goal.${g}`));
-      d.setValue(profile().goal).onChange((v) => void update((p) => p.goal = v));
+      d.setValue(profile().goal).onChange((v5) => void update((p) => p.goal = v5));
     });
     const stepName = (i) => t(`settings.learner.english.${ENGLISH_STEPS[i]}`);
     let slider = null;
     const showSlider = () => {
       slider == null ? void 0 : slider.settingEl.toggle(languageModeOf(profile()) === "manual");
     };
-    new import_obsidian51.Setting(el).setName(t("settings.learner.language.name")).setDesc(t("settings.learner.language.desc")).addDropdown((d) => {
+    new import_obsidian51.Setting(el2).setName(t("settings.learner.language.name")).setDesc(t("settings.learner.language.desc")).addDropdown((d) => {
       for (const m2 of LANGUAGE_MODES) d.addOption(m2, t(`settings.learner.language.mode.${m2}`));
       d.setValue(languageModeOf(profile())).onChange(
-        (v) => void update((p) => {
-          p.languageMode = v;
+        (v5) => void update((p) => {
+          p.languageMode = v5;
           p.englishStep = englishStepOf(p);
         }).then(showSlider)
       );
     });
-    slider = new import_obsidian51.Setting(el).setName(t("settings.learner.english.name"));
+    slider = new import_obsidian51.Setting(el2).setName(t("settings.learner.english.name"));
     const sliderDesc = () => {
       slider == null ? void 0 : slider.setDesc(`${t("settings.learner.english.scale")} \u2192 ${stepName(ENGLISH_STEPS.indexOf(englishStepOf(profile())))}`);
     };
     slider.addSlider(
-      (s) => s.setLimits(0, ENGLISH_STEPS.length - 1, 1).setValue(ENGLISH_STEPS.indexOf(englishStepOf(profile()))).setDynamicTooltip().onChange((v) => void update((p) => {
+      (s2) => s2.setLimits(0, ENGLISH_STEPS.length - 1, 1).setValue(ENGLISH_STEPS.indexOf(englishStepOf(profile()))).setDynamicTooltip().onChange((v5) => void update((p) => {
         var _a;
-        return p.englishStep = (_a = ENGLISH_STEPS[v]) != null ? _a : "zh";
+        return p.englishStep = (_a = ENGLISH_STEPS[v5]) != null ? _a : "zh";
       }).then(sliderDesc))
     );
     sliderDesc();
     showSlider();
-    new import_obsidian51.Setting(el).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
+    new import_obsidian51.Setting(el2).setName(t("settings.learner.maxChars.name")).setDesc(t("settings.learner.maxChars.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
-      text.setValue(String(profile().maxAnswerChars)).onChange((v) => {
-        const n = parseNonNegativeInt(v);
+      text.setValue(String(profile().maxAnswerChars)).onChange((v5) => {
+        const n = parseNonNegativeInt(v5);
         if (n !== null) void update((p) => p.maxAnswerChars = n);
       });
     });
-    new import_obsidian51.Setting(el).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
+    new import_obsidian51.Setting(el2).setName(t("settings.learner.extra.name")).setDesc(t("settings.learner.extra.desc")).addTextArea((ta) => {
       ta.inputEl.rows = 3;
       ta.inputEl.addClass("vt-settings-wide");
-      ta.setValue(profile().extra).onChange((v) => void update((p) => p.extra = v));
+      ta.setValue(profile().extra).onChange((v5) => void update((p) => p.extra = v5));
     });
-    new import_obsidian51.Setting(el).setName(t("settings.grammar.useMyWords.name")).setDesc(t("settings.grammar.useMyWords.desc")).addToggle(
+    new import_obsidian51.Setting(el2).setName(t("settings.grammar.useMyWords.name")).setDesc(t("settings.grammar.useMyWords.desc")).addToggle(
       (tg) => tg.setValue(resolveGrammarSettings(ctx.store.settings.grammar).useMyWords).onChange(
-        (v) => void ctx.store.updateSettings((s) => {
+        (v5) => void ctx.store.updateSettings((s2) => {
           var _a;
-          s.grammar = { ...(_a = s.grammar) != null ? _a : {}, ...resolveGrammarSettings(s.grammar), useMyWords: v };
+          s2.grammar = { ...(_a = s2.grammar) != null ? _a : {}, ...resolveGrammarSettings(s2.grammar), useMyWords: v5 };
         })
       )
     );
-    new import_obsidian51.Setting(el).setName(t("settings.grammar.useMySentences.name")).setDesc(t("settings.grammar.useMySentences.desc")).addToggle(
+    new import_obsidian51.Setting(el2).setName(t("settings.grammar.useMySentences.name")).setDesc(t("settings.grammar.useMySentences.desc")).addToggle(
       (tg) => tg.setValue(resolveGrammarSettings(ctx.store.settings.grammar).useMySentences).onChange(
-        (v) => void ctx.store.updateSettings((s) => {
+        (v5) => void ctx.store.updateSettings((s2) => {
           var _a;
-          s.grammar = { ...(_a = s.grammar) != null ? _a : {}, ...resolveGrammarSettings(s.grammar), useMySentences: v };
+          s2.grammar = { ...(_a = s2.grammar) != null ? _a : {}, ...resolveGrammarSettings(s2.grammar), useMySentences: v5 };
         })
       )
     );
-    const previewSetting = new import_obsidian51.Setting(el).setName(t("settings.learner.preview.name"));
+    const previewSetting = new import_obsidian51.Setting(el2).setName(t("settings.learner.preview.name"));
     previewSetting.settingEl.addClass("vt-settings-preview-row");
-    el.appendChild(preview2);
+    el2.appendChild(preview2);
   }
 };
 
@@ -33854,16 +36929,16 @@ var import_obsidian52 = require("obsidian");
 var srsSection = {
   id: "srs",
   title: "settings.section.srs",
-  render(el, ctx) {
+  render(el2, ctx) {
     const current = () => resolveSrsSettings(ctx.store.settings.srs);
-    const update = (patch) => ctx.store.updateSettings((s) => s.srs = { ...current(), ...patch });
-    new import_obsidian52.Setting(el).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
-      (s) => s.setLimits(0.7, 0.99, 0.01).setValue(current().retention).setDynamicTooltip().onChange((v) => void update({ retention: v }))
+    const update = (patch) => ctx.store.updateSettings((s2) => s2.srs = { ...current(), ...patch });
+    new import_obsidian52.Setting(el2).setName(t("settings.srs.retention.name")).setDesc(t("settings.srs.retention.desc")).addSlider(
+      (s2) => s2.setLimits(0.7, 0.99, 0.01).setValue(current().retention).setDynamicTooltip().onChange((v5) => void update({ retention: v5 }))
     );
-    new import_obsidian52.Setting(el).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
+    new import_obsidian52.Setting(el2).setName(t("settings.srs.dailyNew.name")).setDesc(t("settings.srs.dailyNew.desc")).addText((text) => {
       text.inputEl.inputMode = "numeric";
-      text.setValue(String(current().dailyNew)).onChange((v) => {
-        const n = parseNonNegativeInt(v);
+      text.setValue(String(current().dailyNew)).onChange((v5) => {
+        const n = parseNonNegativeInt(v5);
         if (n !== null) void update({ dailyNew: n });
       });
     });
@@ -33875,30 +36950,30 @@ var import_obsidian53 = require("obsidian");
 var wordlistsSection = {
   id: "wordlists",
   title: "settings.section.wordlists",
-  render(el, ctx) {
+  render(el2, ctx) {
     const current = () => resolveWordlistSettings(ctx.store.settings.wordlists);
     const update = async (patch, change) => {
-      await ctx.store.updateSettings((s2) => s2.wordlists = { ...current(), ...patch });
+      await ctx.store.updateSettings((s3) => s3.wordlists = { ...current(), ...patch });
       ctx.onWordlistsChanged(change);
     };
     const updateTag = (tag, patch) => {
       const tags = current().tags;
       return update({ tags: { ...tags, [tag]: { ...tags[tag], ...patch } } }, "display");
     };
-    el.createDiv({ cls: "setting-item-description", text: t("settings.wordlists.desc") });
-    new import_obsidian53.Setting(el).setName(t("settings.wordlists.folder.name")).setDesc(t("settings.wordlists.folder.desc")).addText((text) => {
+    el2.createDiv({ cls: "setting-item-description", text: t("settings.wordlists.desc") });
+    new import_obsidian53.Setting(el2).setName(t("settings.wordlists.folder.name")).setDesc(t("settings.wordlists.folder.desc")).addText((text) => {
       text.setValue(current().folder);
       text.inputEl.addEventListener("change", () => void update({ folder: text.getValue() }, "reload"));
     });
-    new import_obsidian53.Setting(el).setName(t("settings.wordlists.highlight.name")).setDesc(t("settings.wordlists.highlight.desc")).addToggle((tg) => tg.setValue(current().highlight).onChange((v) => void update({ highlight: v }, "display")));
-    new import_obsidian53.Setting(el).setName(t("settings.wordlists.inflections.name")).setDesc(t("settings.wordlists.inflections.desc")).addToggle(
-      (tg) => tg.setValue(current().inflections).onChange((v) => void update({ inflections: v }, "scan"))
+    new import_obsidian53.Setting(el2).setName(t("settings.wordlists.highlight.name")).setDesc(t("settings.wordlists.highlight.desc")).addToggle((tg) => tg.setValue(current().highlight).onChange((v5) => void update({ highlight: v5 }, "display")));
+    new import_obsidian53.Setting(el2).setName(t("settings.wordlists.inflections.name")).setDesc(t("settings.wordlists.inflections.desc")).addToggle(
+      (tg) => tg.setValue(current().inflections).onChange((v5) => void update({ inflections: v5 }, "scan"))
     );
-    new import_obsidian53.Setting(el).setName(t("settings.wordlists.autoImport.name")).setDesc(t("settings.wordlists.autoImport.desc")).addToggle(
-      (tg) => tg.setValue(current().autoImport).onChange((v) => void update({ autoImport: v }, "display"))
+    new import_obsidian53.Setting(el2).setName(t("settings.wordlists.autoImport.name")).setDesc(t("settings.wordlists.autoImport.desc")).addToggle(
+      (tg) => tg.setValue(current().autoImport).onChange((v5) => void update({ autoImport: v5 }, "display"))
     );
     const lists = ctx.wordlists.index.lists;
-    new import_obsidian53.Setting(el).setName(t("settings.wordlists.loaded.name")).setDesc(
+    new import_obsidian53.Setting(el2).setName(t("settings.wordlists.loaded.name")).setDesc(
       lists.length === 0 ? t("settings.wordlists.loaded.none", { folder: current().folder }) : t("settings.wordlists.loaded.some", { n: lists.length })
     ).addButton(
       (b) => b.setButtonText(t("settings.wordlists.reload")).onClick(async () => {
@@ -33906,9 +36981,9 @@ var wordlistsSection = {
         ctx.redisplay();
       })
     );
-    const s = current();
+    const s2 = current();
     for (const list2 of lists) {
-      const row = new import_obsidian53.Setting(el).setName(tagLabel(list2.tag)).setDesc(t("settings.wordlists.list.desc", { n: list2.words.toLocaleString(), paths: list2.paths.join(", ") })).addColorPicker((c2) => c2.setValue(tagColor(s, list2.tag)).onChange((v) => void updateTag(list2.tag, { color: v }))).addToggle((tg) => tg.setValue(tagEnabled(s, list2.tag)).onChange((v) => void updateTag(list2.tag, { enabled: v })));
+      const row = new import_obsidian53.Setting(el2).setName(tagLabel(list2.tag)).setDesc(t("settings.wordlists.list.desc", { n: list2.words.toLocaleString(), paths: list2.paths.join(", ") })).addColorPicker((c4) => c4.setValue(tagColor(s2, list2.tag)).onChange((v5) => void updateTag(list2.tag, { color: v5 }))).addToggle((tg) => tg.setValue(tagEnabled(s2, list2.tag)).onChange((v5) => void updateTag(list2.tag, { enabled: v5 })));
       row.settingEl.addClass("vt-wordlist-row");
     }
   }
@@ -33940,13 +37015,13 @@ function resolveFilesSettings(raw) {
     reportFolder: (_e = cleanFolder(raw == null ? void 0 : raw.reportFolder)) != null ? _e : DEFAULT_FILES_SETTINGS.reportFolder
   };
 }
-function filesPaths(s) {
+function filesPaths(s2) {
   return {
-    folder: s.folder,
-    words: joinPath(s.folder, s.wordsFolder),
-    threads: joinPath(s.folder, s.threadsFolder),
-    diary: joinPath(s.folder, s.diaryFolder),
-    report: joinPath(s.folder, s.reportFolder)
+    folder: s2.folder,
+    words: joinPath(s2.folder, s2.wordsFolder),
+    threads: joinPath(s2.folder, s2.threadsFolder),
+    diary: joinPath(s2.folder, s2.diaryFolder),
+    report: joinPath(s2.folder, s2.reportFolder)
   };
 }
 function inFolderPath(path, folder) {
@@ -33964,12 +37039,12 @@ var FIELDS = [
 var filesSection = {
   id: "files",
   title: "settings.section.files",
-  render(el, ctx) {
+  render(el2, ctx) {
     const current = () => resolveFilesSettings(ctx.store.settings.files);
-    const update = (patch) => ctx.store.updateSettings((s) => s.files = { ...current(), ...patch });
-    el.createDiv({ cls: "setting-item-description", text: t("settings.files.desc") });
+    const update = (patch) => ctx.store.updateSettings((s2) => s2.files = { ...current(), ...patch });
+    el2.createDiv({ cls: "setting-item-description", text: t("settings.files.desc") });
     for (const field of FIELDS) {
-      new import_obsidian54.Setting(el).setName(t(field.name)).setDesc(t(field.desc)).addText((text) => {
+      new import_obsidian54.Setting(el2).setName(t(field.name)).setDesc(t(field.desc)).addText((text) => {
         text.setValue(current()[field.key]);
         text.inputEl.addEventListener("change", async () => {
           await update({ [field.key]: text.getValue() });
@@ -33985,10 +37060,10 @@ var import_obsidian55 = require("obsidian");
 var paragraphsSection = {
   id: "paragraphs",
   title: "settings.section.paragraphs",
-  render(el, ctx) {
-    new import_obsidian55.Setting(el).setName(t("settings.paragraphs.hashMode.name")).setDesc(t("settings.paragraphs.hashMode.desc")).addToggle(
+  render(el2, ctx) {
+    new import_obsidian55.Setting(el2).setName(t("settings.paragraphs.hashMode.name")).setDesc(t("settings.paragraphs.hashMode.desc")).addToggle(
       (tg) => tg.setValue(resolveAnchorSettings(ctx.store.settings).mode === "hash").onChange(
-        (on) => ctx.store.updateSettings((s) => patchAnchorSettings(s, { mode: on ? "hash" : "block", blockIdNoticeSeen: true }))
+        (on) => ctx.store.updateSettings((s2) => patchAnchorSettings(s2, { mode: on ? "hash" : "block", blockIdNoticeSeen: true }))
       )
     );
   }
@@ -34003,34 +37078,34 @@ function tapOptions() {
 }
 function pronounceOptions() {
   const out = {};
-  for (const s of PRONOUNCE_SOURCES) out[s] = t(`settings.reading.pronounceSource.${s}`);
+  for (const s2 of PRONOUNCE_SOURCES) out[s2] = t(`settings.reading.pronounceSource.${s2}`);
   return out;
 }
 async function setPref(ctx, key6, value) {
-  await ctx.store.updateSettings((s) => {
+  await ctx.store.updateSettings((s2) => {
     const patch = { [key6]: value };
-    Object.assign(s.ui, patch);
+    Object.assign(s2.ui, patch);
   });
 }
 async function setWordTapAction(ctx, value) {
-  await ctx.store.updateSettings((s) => {
-    s.ui.wordTapAction = value;
+  await ctx.store.updateSettings((s2) => {
+    s2.ui.wordTapAction = value;
   });
 }
 var readingSection = {
   id: "reading",
   title: "settings.section.reading",
-  render(el, ctx) {
+  render(el2, ctx) {
     const prefs = resolveUiPrefs(ctx.store.settings.ui);
-    new import_obsidian56.Setting(el).setName(t("settings.reading.tapAction.name")).setDesc(t("settings.reading.tapAction.desc")).addDropdown(
-      (d) => d.addOptions(tapOptions()).setValue(prefs.tapAction).onChange((v) => setWordTapAction(ctx, v))
+    new import_obsidian56.Setting(el2).setName(t("settings.reading.tapAction.name")).setDesc(t("settings.reading.tapAction.desc")).addDropdown(
+      (d) => d.addOptions(tapOptions()).setValue(prefs.tapAction).onChange((v5) => setWordTapAction(ctx, v5))
     );
-    new import_obsidian56.Setting(el).setName(t("settings.reading.pronounceSource.name")).setDesc(t("settings.reading.pronounceSource.desc")).addDropdown(
-      (d) => d.addOptions(pronounceOptions()).setValue(prefs.pronounceSource).onChange((v) => setPref(ctx, "pronounceSource", v))
+    new import_obsidian56.Setting(el2).setName(t("settings.reading.pronounceSource.name")).setDesc(t("settings.reading.pronounceSource.desc")).addDropdown(
+      (d) => d.addOptions(pronounceOptions()).setValue(prefs.pronounceSource).onChange((v5) => setPref(ctx, "pronounceSource", v5))
     );
-    new import_obsidian56.Setting(el).setName(t("settings.reading.livePreviewHint.name")).setDesc(t("settings.reading.livePreviewHint.desc")).addToggle((tg) => tg.setValue(prefs.livePreviewHint).onChange((on) => setPref(ctx, "livePreviewHint", on)));
-    new import_obsidian56.Setting(el).setName(t("settings.reading.highlightSaved.name")).setDesc(t("settings.reading.highlightSaved.desc")).addToggle((tg) => tg.setValue(prefs.highlightSaved).onChange((on) => setPref(ctx, "highlightSaved", on)));
-    new import_obsidian56.Setting(el).setName(t("settings.reading.sidebarOnPhone.name")).setDesc(t("settings.reading.sidebarOnPhone.desc")).addToggle((tg) => tg.setValue(prefs.sidebarOnPhone).onChange((on) => setPref(ctx, "sidebarOnPhone", on)));
+    new import_obsidian56.Setting(el2).setName(t("settings.reading.livePreviewHint.name")).setDesc(t("settings.reading.livePreviewHint.desc")).addToggle((tg) => tg.setValue(prefs.livePreviewHint).onChange((on) => setPref(ctx, "livePreviewHint", on)));
+    new import_obsidian56.Setting(el2).setName(t("settings.reading.highlightSaved.name")).setDesc(t("settings.reading.highlightSaved.desc")).addToggle((tg) => tg.setValue(prefs.highlightSaved).onChange((on) => setPref(ctx, "highlightSaved", on)));
+    new import_obsidian56.Setting(el2).setName(t("settings.reading.sidebarOnPhone.name")).setDesc(t("settings.reading.sidebarOnPhone.desc")).addToggle((tg) => tg.setValue(prefs.sidebarOnPhone).onChange((on) => setPref(ctx, "sidebarOnPhone", on)));
   }
 };
 
@@ -34039,14 +37114,14 @@ var import_obsidian57 = require("obsidian");
 var diarySection = {
   id: "diary",
   title: "settings.section.diary",
-  render(el, ctx) {
+  render(el2, ctx) {
     const current = () => resolveDiarySettings(ctx.store.settings.diary);
-    const update = (patch) => ctx.store.updateSettings((s) => {
+    const update = (patch) => ctx.store.updateSettings((s2) => {
       var _a;
-      s.diary = { ...(_a = s.diary) != null ? _a : {}, ...resolveDiarySettings(s.diary), ...patch };
+      s2.diary = { ...(_a = s2.diary) != null ? _a : {}, ...resolveDiarySettings(s2.diary), ...patch };
     });
-    new import_obsidian57.Setting(el).setName(t("settings.diary.enabled.name")).setDesc(t("settings.diary.enabled.desc")).addToggle((tg) => tg.setValue(current().enabled).onChange((v) => void update({ enabled: v })));
-    new import_obsidian57.Setting(el).setName(t("settings.diary.specialEvery.name")).setDesc(t("settings.diary.specialEvery.desc")).addText((text) => {
+    new import_obsidian57.Setting(el2).setName(t("settings.diary.enabled.name")).setDesc(t("settings.diary.enabled.desc")).addToggle((tg) => tg.setValue(current().enabled).onChange((v5) => void update({ enabled: v5 })));
+    new import_obsidian57.Setting(el2).setName(t("settings.diary.specialEvery.name")).setDesc(t("settings.diary.specialEvery.desc")).addText((text) => {
       text.setValue(String(current().specialEvery));
       text.inputEl.addEventListener("change", async () => {
         const n = parseNonNegativeInt(text.getValue());
@@ -34062,14 +37137,14 @@ var import_obsidian58 = require("obsidian");
 var reportSection = {
   id: "report",
   title: "settings.section.report",
-  render(el, ctx) {
+  render(el2, ctx) {
     const current = () => resolveReportSettings(ctx.store.settings.report);
-    const update = (patch) => ctx.store.updateSettings((s) => {
+    const update = (patch) => ctx.store.updateSettings((s2) => {
       var _a;
-      s.report = { ...(_a = s.report) != null ? _a : {}, ...resolveReportSettings(s.report), ...patch };
+      s2.report = { ...(_a = s2.report) != null ? _a : {}, ...resolveReportSettings(s2.report), ...patch };
     });
-    new import_obsidian58.Setting(el).setName(t("settings.report.enabled.name")).setDesc(t("settings.report.enabled.desc")).addToggle((tg) => tg.setValue(current().enabled).onChange((v) => void update({ enabled: v })));
-    el.createEl("p", { cls: "setting-item-description vt-report-source", text: t("settings.report.source") });
+    new import_obsidian58.Setting(el2).setName(t("settings.report.enabled.name")).setDesc(t("settings.report.enabled.desc")).addToggle((tg) => tg.setValue(current().enabled).onChange((v5) => void update({ enabled: v5 })));
+    el2.createEl("p", { cls: "setting-item-description vt-report-source", text: t("settings.report.source") });
   }
 };
 
@@ -34096,45 +37171,45 @@ function backupTitle(item) {
   if (item.kind === "unreadable") return `${backupTime(item.createdAt)} \xB7 ${item.name}`;
   return `${backupTime(item.createdAt)} \xB7 ${t(REASON[item.reason])}`;
 }
-function summaryText(s) {
+function summaryText(s2) {
   var _a;
-  const parts = [t("settings.backup.summary.words", { n: s.words })];
-  if (s.threads !== void 0) parts.push(t("settings.backup.summary.threads", { n: s.threads, q: (_a = s.questions) != null ? _a : 0 }));
-  if (s.families !== void 0) parts.push(t("settings.backup.summary.families", { n: s.families }));
-  if (s.trivia !== void 0) parts.push(t("settings.backup.summary.trivia", { n: s.trivia }));
-  if (s.morphemes !== void 0) parts.push(t("settings.backup.summary.morphemes", { n: s.morphemes }));
-  if (s.grammar !== void 0) parts.push(t("settings.backup.summary.grammar", { n: s.grammar }));
-  if (s.reviews !== void 0) parts.push(t("settings.backup.summary.reviews", { n: s.reviews }));
+  const parts = [t("settings.backup.summary.words", { n: s2.words })];
+  if (s2.threads !== void 0) parts.push(t("settings.backup.summary.threads", { n: s2.threads, q: (_a = s2.questions) != null ? _a : 0 }));
+  if (s2.families !== void 0) parts.push(t("settings.backup.summary.families", { n: s2.families }));
+  if (s2.trivia !== void 0) parts.push(t("settings.backup.summary.trivia", { n: s2.trivia }));
+  if (s2.morphemes !== void 0) parts.push(t("settings.backup.summary.morphemes", { n: s2.morphemes }));
+  if (s2.grammar !== void 0) parts.push(t("settings.backup.summary.grammar", { n: s2.grammar }));
+  if (s2.reviews !== void 0) parts.push(t("settings.backup.summary.reviews", { n: s2.reviews }));
   return parts.join(" \xB7 ");
 }
 function backupDesc(item) {
   return item.summary ? summaryText(item.summary) : t("settings.backup.unreadable");
 }
 function previewText(p) {
-  const c2 = p.counts;
+  const c4 = p.counts;
   const what = [];
-  if (c2.words.changed || c2.words.revived) {
-    what.push(t("backup.restore.words", { changed: c2.words.changed, revived: c2.words.revived }));
+  if (c4.words.changed || c4.words.revived) {
+    what.push(t("backup.restore.words", { changed: c4.words.changed, revived: c4.words.revived }));
   }
-  const threads = c2.threads.changed + c2.threads.revived;
-  if (threads || c2.questions.revived) {
-    what.push(t("backup.restore.threads", { n: threads, q: c2.questions.revived }));
+  const threads = c4.threads.changed + c4.threads.revived;
+  if (threads || c4.questions.revived) {
+    what.push(t("backup.restore.threads", { n: threads, q: c4.questions.revived }));
   }
-  const families = c2.families.changed + c2.families.revived;
-  const trivia = c2.trivia.changed + c2.trivia.revived;
+  const families = c4.families.changed + c4.families.revived;
+  const trivia = c4.trivia.changed + c4.trivia.revived;
   if (families || trivia) what.push(t("backup.restore.learn", { families, trivia }));
-  const grammar = c2.grammar.changed + c2.grammar.revived;
-  if (grammar || c2.attemptsAdded) what.push(t("backup.restore.grammar", { n: grammar, a: c2.attemptsAdded }));
-  if (c2.reviewsAdded) what.push(t("backup.restore.reviews", { n: c2.reviewsAdded }));
+  const grammar = c4.grammar.changed + c4.grammar.revived;
+  if (grammar || c4.attemptsAdded) what.push(t("backup.restore.grammar", { n: grammar, a: c4.attemptsAdded }));
+  if (c4.reviewsAdded) what.push(t("backup.restore.reviews", { n: c4.reviewsAdded }));
   if (!what.length) what.push(t("backup.restore.same"));
   if (p.missing.length) {
     const parts = p.missing.map((m2) => t(`backup.restore.part.${m2}`));
     what.push(t("backup.restore.missing", { parts: joinWords(parts) }));
   }
   what.push(t("backup.restore.settings"));
-  const learn = c2.families.extra + c2.trivia.extra;
-  const anyExtra = c2.words.extra || c2.questions.extra || c2.threads.extra || learn || c2.grammar.extra;
-  const extras = anyExtra ? t("backup.restore.extras.desc", { words: c2.words.extra, questions: c2.questions.extra, learn, grammar: c2.grammar.extra }) : null;
+  const learn = c4.families.extra + c4.trivia.extra;
+  const anyExtra = c4.words.extra || c4.questions.extra || c4.threads.extra || learn || c4.grammar.extra;
+  const extras = anyExtra ? t("backup.restore.extras.desc", { words: c4.words.extra, questions: c4.questions.extra, learn, grammar: c4.grammar.extra }) : null;
   return { what, extras };
 }
 function deviceLines() {
@@ -34191,13 +37266,13 @@ function emptyLearnShard() {
   return { families: [], trivia: [], verbs: [], morphemes: [], wordMeta: [] };
 }
 function normalizeLearnShard(raw) {
-  const s = raw != null ? raw : {};
+  const s2 = raw != null ? raw : {};
   return {
-    families: Array.isArray(s.families) ? s.families : [],
-    trivia: Array.isArray(s.trivia) ? s.trivia : [],
-    verbs: Array.isArray(s.verbs) ? s.verbs : [],
-    morphemes: Array.isArray(s.morphemes) ? s.morphemes : [],
-    wordMeta: Array.isArray(s.wordMeta) ? s.wordMeta : []
+    families: Array.isArray(s2.families) ? s2.families : [],
+    trivia: Array.isArray(s2.trivia) ? s2.trivia : [],
+    verbs: Array.isArray(s2.verbs) ? s2.verbs : [],
+    morphemes: Array.isArray(s2.morphemes) ? s2.morphemes : [],
+    wordMeta: Array.isArray(s2.wordMeta) ? s2.wordMeta : []
   };
 }
 function learnFingerprint(shard) {
@@ -34272,22 +37347,22 @@ function dedupeMorphemes(list2) {
     const variantKeys = new Set(canonical2.variants.map(normalizeForm));
     const variants = [...canonical2.variants];
     for (const o of others) {
-      for (const v of [o.form, ...o.variants]) {
-        const key6 = normalizeForm(v);
+      for (const v5 of [o.form, ...o.variants]) {
+        const key6 = normalizeForm(v5);
         if (key6 !== canonicalFormKey && !variantKeys.has(key6)) {
           variantKeys.add(key6);
-          variants.push(v);
+          variants.push(v5);
         }
       }
     }
-    const suggestedKeys = new Set(canonical2.suggested.map((s) => s.word.toLowerCase()));
+    const suggestedKeys = new Set(canonical2.suggested.map((s2) => s2.word.toLowerCase()));
     const suggested = [...canonical2.suggested];
     for (const o of others) {
-      for (const s of o.suggested) {
-        const key6 = s.word.toLowerCase();
+      for (const s2 of o.suggested) {
+        const key6 = s2.word.toLowerCase();
         if (!suggestedKeys.has(key6)) {
           suggestedKeys.add(key6);
-          suggested.push(s);
+          suggested.push(s2);
         }
       }
     }
@@ -34329,30 +37404,30 @@ function ms6(iso) {
 function emptyGrammarShard() {
   return { questions: [], attempts: [], progress: [] };
 }
-var str10 = (v) => typeof v === "string" && v !== "";
-var isObj10 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var str11 = (v5) => typeof v5 === "string" && v5 !== "";
+var isObj10 = (v5) => typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
 function normalizeScenario(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !str10(raw.scene)) return null;
+  if (!isObj10(raw) || !str11(raw.id) || !str11(raw.scene)) return null;
   const seq = typeof raw.seq === "number" && Number.isFinite(raw.seq) && raw.seq >= 0 ? Math.floor(raw.seq) : null;
   if (seq === null) return null;
   const out = { id: raw.id, scene: raw.scene, seq };
-  if (str10(raw.speaker)) out.speaker = raw.speaker;
+  if (str11(raw.speaker)) out.speaker = raw.speaker;
   if (Array.isArray(raw.lead)) {
     const lead = [];
     for (const l4 of raw.lead) {
-      if (!isObj10(l4) || !str10(l4.text)) continue;
-      lead.push(str10(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
+      if (!isObj10(l4) || !str11(l4.text)) continue;
+      lead.push(str11(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
     }
     if (lead.length) out.lead = lead;
   }
   return out;
 }
 function normalizeQuestion(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !str10(raw.topicId) || !str10(raw.objectiveId)) return null;
+  if (!isObj10(raw) || !str11(raw.id) || !str11(raw.topicId) || !str11(raw.objectiveId)) return null;
   if (typeof raw.stem !== "string" || typeof raw.answer !== "string") return null;
   const type = GRAMMAR_QUESTION_TYPES.includes(raw.type) ? raw.type : null;
   if (!type) return null;
-  const strings3 = (v) => Array.isArray(v) ? v.filter((x3) => typeof x3 === "string") : void 0;
+  const strings3 = (v5) => Array.isArray(v5) ? v5.filter((x3) => typeof x3 === "string") : void 0;
   const q = {
     ...raw,
     type,
@@ -34369,13 +37444,13 @@ function normalizeQuestion(raw) {
   const scenario = normalizeScenario(raw.scenario);
   if (scenario) q.scenario = scenario;
   else delete q.scenario;
-  if (str10(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
+  if (str11(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh.trim();
   else delete q.sentenceZh;
   return q;
 }
 function normalizeAttempt(raw) {
-  if (!isObj10(raw) || !str10(raw.id) || !str10(raw.questionId) || !str10(raw.topicId) || !str10(raw.objectiveId)) return null;
-  if (!str10(raw.at) || Number.isNaN(Date.parse(raw.at))) return null;
+  if (!isObj10(raw) || !str11(raw.id) || !str11(raw.questionId) || !str11(raw.topicId) || !str11(raw.objectiveId)) return null;
+  if (!str11(raw.at) || Number.isNaN(Date.parse(raw.at))) return null;
   return {
     id: raw.id,
     questionId: raw.questionId,
@@ -34387,7 +37462,7 @@ function normalizeAttempt(raw) {
   };
 }
 function normalizeProgress(raw) {
-  if (!isObj10(raw) || !str10(raw.id)) return null;
+  if (!isObj10(raw) || !str11(raw.id)) return null;
   const p = { ...raw };
   if (!isObj10(p.srs)) delete p.srs;
   return p;
@@ -34396,17 +37471,17 @@ function normList(raw, one2) {
   if (!Array.isArray(raw)) return [];
   const out = [];
   for (const r of raw) {
-    const v = one2(r);
-    if (v) out.push(v);
+    const v5 = one2(r);
+    if (v5) out.push(v5);
   }
   return out;
 }
 function normalizeGrammarShard(raw) {
-  const s = isObj10(raw) ? raw : {};
+  const s2 = isObj10(raw) ? raw : {};
   return {
-    questions: normList(s.questions, normalizeQuestion),
-    attempts: normList(s.attempts, normalizeAttempt),
-    progress: normList(s.progress, normalizeProgress)
+    questions: normList(s2.questions, normalizeQuestion),
+    attempts: normList(s2.attempts, normalizeAttempt),
+    progress: normList(s2.progress, normalizeProgress)
   };
 }
 function sortAttempts(list2) {
@@ -34458,27 +37533,27 @@ function ms7(iso) {
 function emptyLearnerShard() {
   return { events: [], pool: [], mistakes: [], filters: [], questions: [], meta: {}, reading: [], diaryPicks: [], asks: [], wordTouches: [], wordCefr: [], glosses: [] };
 }
-var str11 = (v) => typeof v === "string" && v !== "";
-var isObj11 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
-var isIso = (v) => str11(v) && !Number.isNaN(Date.parse(v));
-var isTrack = (v) => TRACKS.includes(v);
+var str12 = (v5) => typeof v5 === "string" && v5 !== "";
+var isObj11 = (v5) => typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
+var isIso = (v5) => str12(v5) && !Number.isNaN(Date.parse(v5));
+var isTrack = (v5) => TRACKS.includes(v5);
 var REASONS = ["answered", "skipped", "retired", "filtered"];
 function focusOf(raw) {
-  if (!isObj11(raw) || !str11(raw.id) || !FOCUS_KINDS.includes(raw.kind)) return null;
+  if (!isObj11(raw) || !str12(raw.id) || !FOCUS_KINDS.includes(raw.kind)) return null;
   return { kind: raw.kind, id: raw.id };
 }
 function normalizeEvent(raw) {
-  if (!isObj11(raw) || !str11(raw.id) || !isIso(raw.at) || !isTrack(raw.track)) return null;
+  if (!isObj11(raw) || !str12(raw.id) || !isIso(raw.at) || !isTrack(raw.track)) return null;
   const focus = focusOf(raw.focus);
   if (!focus || !LEARN_RESULTS.includes(raw.result)) return null;
   const e = { id: raw.id, at: raw.at, track: raw.track, focus, result: raw.result };
   if (typeof raw.given === "string") e.given = raw.given;
-  if (str11(raw.errorTag)) e.errorTag = raw.errorTag;
-  if (str11(raw.questionId)) e.questionId = raw.questionId;
+  if (str12(raw.errorTag)) e.errorTag = raw.errorTag;
+  if (str12(raw.questionId)) e.questionId = raw.questionId;
   return e;
 }
 function normalizePool(raw) {
-  if (!isObj11(raw) || !str11(raw.id) || !isTrack(raw.track) || !str11(raw.questionId)) return null;
+  if (!isObj11(raw) || !str12(raw.id) || !isTrack(raw.track) || !str12(raw.questionId)) return null;
   if (!isIso(raw.addedAt)) return null;
   const p = {
     id: raw.id,
@@ -34488,8 +37563,8 @@ function normalizePool(raw) {
     addedAt: raw.addedAt,
     updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : raw.addedAt
   };
-  if (str11(raw.scenarioId)) p.scenarioId = raw.scenarioId;
-  if (str11(raw.lane)) p.lane = raw.lane;
+  if (str12(raw.scenarioId)) p.scenarioId = raw.scenarioId;
+  if (str12(raw.lane)) p.lane = raw.lane;
   if (isIso(raw.removedAt)) {
     p.removedAt = raw.removedAt;
     p.removeReason = REASONS.includes(raw.removeReason) ? raw.removeReason : "answered";
@@ -34497,7 +37572,7 @@ function normalizePool(raw) {
   return p;
 }
 function normalizeMistake(raw) {
-  if (!isObj11(raw) || !str11(raw.id) || !isTrack(raw.track) || !str11(raw.questionId)) return null;
+  if (!isObj11(raw) || !str12(raw.id) || !isTrack(raw.track) || !str12(raw.questionId)) return null;
   const focus = focusOf(raw.focus);
   if (!focus || !isIso(raw.lastWrongAt)) return null;
   const addedAt = isIso(raw.addedAt) ? raw.addedAt : raw.lastWrongAt;
@@ -34519,29 +37594,29 @@ function normalizeFilter(raw) {
 }
 var SCENARIO_TRACKS = ["poly", "vocab", "mix", "para"];
 function normalizeQuestion2(raw) {
-  if (!isObj11(raw) || !str11(raw.id) || !SCENARIO_TRACKS.includes(raw.track)) return null;
+  if (!isObj11(raw) || !str12(raw.id) || !SCENARIO_TRACKS.includes(raw.track)) return null;
   if (!PRACTICE_KINDS.includes(raw.kind)) return null;
-  if (!str11(raw.text) || !str11(raw.answerId) || !str11(raw.explanation)) return null;
+  if (!str12(raw.text) || !str12(raw.answerId) || !str12(raw.explanation)) return null;
   const focus = focusOf(raw.focus);
-  if (!focus || !isObj11(raw.scenario) || !str11(raw.scenario.id) || !str11(raw.scenario.scene)) return null;
+  if (!focus || !isObj11(raw.scenario) || !str12(raw.scenario.id) || !str12(raw.scenario.scene)) return null;
   if (!Array.isArray(raw.options)) return null;
   const options = [];
   for (const o of raw.options) {
-    if (isObj11(o) && str11(o.id) && typeof o.text === "string" && o.text !== "") options.push({ id: o.id, text: o.text });
+    if (isObj11(o) && str12(o.id) && typeof o.text === "string" && o.text !== "") options.push({ id: o.id, text: o.text });
   }
   if (options.length < 2 || !options.some((o) => o.id === raw.answerId)) return null;
-  const sc = raw.scenario;
+  const sc2 = raw.scenario;
   const scenario = {
-    id: sc.id,
-    scene: sc.scene,
-    seq: typeof sc.seq === "number" && Number.isFinite(sc.seq) ? sc.seq : 0
+    id: sc2.id,
+    scene: sc2.scene,
+    seq: typeof sc2.seq === "number" && Number.isFinite(sc2.seq) ? sc2.seq : 0
   };
-  if (str11(sc.speaker)) scenario.speaker = sc.speaker;
-  if (Array.isArray(sc.lead)) {
+  if (str12(sc2.speaker)) scenario.speaker = sc2.speaker;
+  if (Array.isArray(sc2.lead)) {
     const lead = [];
-    for (const l4 of sc.lead) {
-      if (!isObj11(l4) || !str11(l4.text)) continue;
-      lead.push(str11(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
+    for (const l4 of sc2.lead) {
+      if (!isObj11(l4) || !str12(l4.text)) continue;
+      lead.push(str12(l4.speaker) ? { speaker: l4.speaker, text: l4.text } : { text: l4.text });
     }
     if (lead.length) scenario.lead = lead;
   }
@@ -34561,20 +37636,20 @@ function normalizeQuestion2(raw) {
   };
   if (isObj11(raw.optionNotes)) {
     const notes = {};
-    for (const [k, v] of Object.entries(raw.optionNotes)) if (str11(v)) notes[k] = v;
+    for (const [k, v5] of Object.entries(raw.optionNotes)) if (str12(v5)) notes[k] = v5;
     if (Object.keys(notes).length) q.optionNotes = notes;
   }
-  if (str11(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh;
-  if (str11(raw.errorTag)) q.errorTag = raw.errorTag;
+  if (str12(raw.sentenceZh)) q.sentenceZh = raw.sentenceZh;
+  if (str12(raw.errorTag)) q.errorTag = raw.errorTag;
   if (isIso(raw.retiredAt)) q.retiredAt = raw.retiredAt;
   return q;
 }
 var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 function normalizeVisit(raw) {
-  if (!isObj11(raw) || !str11(raw.id) || !str11(raw.path) || !str11(raw.day) || !DAY_RE.test(raw.day) || !isIso(raw.at)) return null;
+  if (!isObj11(raw) || !str12(raw.id) || !str12(raw.path) || !str12(raw.day) || !DAY_RE.test(raw.day) || !isIso(raw.at)) return null;
   const kinds = Array.isArray(raw.kinds) ? sortKinds(raw.kinds.filter((k) => READING_KINDS.includes(k))) : [];
   if (kinds.length === 0) return null;
-  const v = {
+  const v5 = {
     id: raw.id,
     day: raw.day,
     at: raw.at,
@@ -34583,11 +37658,11 @@ function normalizeVisit(raw) {
     title: typeof raw.title === "string" ? raw.title : "",
     kinds
   };
-  if (str11(raw.heading)) v.heading = raw.heading;
-  return v;
+  if (str12(raw.heading)) v5.heading = raw.heading;
+  return v5;
 }
 function normalizePick(raw) {
-  if (!isObj11(raw) || !str11(raw.id) || !str11(raw.key) || !str11(raw.day) || !isIso(raw.at)) return null;
+  if (!isObj11(raw) || !str12(raw.id) || !str12(raw.key) || !str12(raw.day) || !isIso(raw.at)) return null;
   if (!DIARY_PICK_KINDS.includes(raw.kind)) return null;
   return { id: raw.id, kind: raw.kind, key: raw.key, day: raw.day, at: raw.at };
 }
@@ -34600,7 +37675,7 @@ function mergePicks(a2, b) {
   return [...map.values()];
 }
 function normalizeAsk(raw) {
-  if (!isObj11(raw) || !str11(raw.id) || !isIso(raw.at) || typeof raw.taskId !== "string") return null;
+  if (!isObj11(raw) || !str12(raw.id) || !isIso(raw.at) || typeof raw.taskId !== "string") return null;
   const e = {
     id: raw.id,
     at: raw.at,
@@ -34609,15 +37684,15 @@ function normalizeAsk(raw) {
     custom: raw.custom === true,
     ok: raw.ok === true
   };
-  if (str11(raw.entryId)) e.entryId = raw.entryId;
-  if (str11(raw.path)) e.path = raw.path;
-  if (str11(raw.selection)) e.selection = raw.selection;
-  if (str11(raw.question)) e.question = raw.question;
+  if (str12(raw.entryId)) e.entryId = raw.entryId;
+  if (str12(raw.path)) e.path = raw.path;
+  if (str12(raw.selection)) e.selection = raw.selection;
+  if (str12(raw.question)) e.question = raw.question;
   return e;
 }
-var count = (v) => typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
+var count = (v5) => typeof v5 === "number" && Number.isFinite(v5) && v5 > 0 ? Math.floor(v5) : 0;
 function normalizeTouch(raw) {
-  if (!isObj11(raw) || !str11(raw.word) || !str11(raw.day) || !DAY_RE.test(raw.day)) return null;
+  if (!isObj11(raw) || !str12(raw.word) || !str12(raw.day) || !DAY_RE.test(raw.day)) return null;
   const lookup = count(raw.lookup);
   const pronounce2 = count(raw.pronounce);
   if (lookup + pronounce2 === 0) return null;
@@ -34626,7 +37701,7 @@ function normalizeTouch(raw) {
   return { id: id2, day: raw.day, word, lookup, pronounce: pronounce2, saved: raw.saved === true, updatedAt: isIso(raw.updatedAt) ? raw.updatedAt : `${raw.day}T00:00:00.000Z` };
 }
 function normalizeWordCefr(raw) {
-  if (!isObj11(raw) || !str11(raw.id) || !isCefrTier(raw.level) || !isIso(raw.at)) return null;
+  if (!isObj11(raw) || !str12(raw.id) || !isCefrTier(raw.level) || !isIso(raw.at)) return null;
   const id2 = raw.id.trim().toLowerCase();
   return id2 ? { id: id2, level: raw.level, at: raw.at } : null;
 }
@@ -34639,12 +37714,12 @@ function mergeWordCefr(a2, b) {
   return [...map.values()].sort((x3, y3) => x3.id < y3.id ? -1 : x3.id > y3.id ? 1 : 0);
 }
 function normalizeGloss(raw) {
-  if (!isObj11(raw) || !str11(raw.id) || typeof raw.path !== "string" || !isIso(raw.at) || !Array.isArray(raw.words)) return null;
+  if (!isObj11(raw) || !str12(raw.id) || typeof raw.path !== "string" || !isIso(raw.at) || !Array.isArray(raw.words)) return null;
   const words = [];
   for (const w2 of raw.words) {
-    if (!isObj11(w2) || !str11(w2.w) || typeof w2.zh !== "string" || typeof w2.en !== "string") continue;
+    if (!isObj11(w2) || !str12(w2.w) || typeof w2.zh !== "string" || typeof w2.en !== "string") continue;
     const g = { w: w2.w.toLowerCase(), zh: w2.zh, en: w2.en };
-    if (str11(w2.pos)) g.pos = w2.pos;
+    if (str12(w2.pos)) g.pos = w2.pos;
     words.push(g);
   }
   return { id: raw.id, path: raw.path, words, at: raw.at };
@@ -34687,29 +37762,29 @@ function normList2(raw, one2) {
   if (!Array.isArray(raw)) return [];
   const out = [];
   for (const r of raw) {
-    const v = one2(r);
-    if (v) out.push(v);
+    const v5 = one2(r);
+    if (v5) out.push(v5);
   }
   return out;
 }
 function normalizeLearnerShard(raw) {
-  const s = isObj11(raw) ? raw : {};
+  const s2 = isObj11(raw) ? raw : {};
   const meta = {};
-  if (isObj11(s.meta) && isIso(s.meta.grammarMigratedAt)) meta.grammarMigratedAt = s.meta.grammarMigratedAt;
-  if (isObj11(s.meta) && isIso(s.meta.asksMigratedAt)) meta.asksMigratedAt = s.meta.asksMigratedAt;
+  if (isObj11(s2.meta) && isIso(s2.meta.grammarMigratedAt)) meta.grammarMigratedAt = s2.meta.grammarMigratedAt;
+  if (isObj11(s2.meta) && isIso(s2.meta.asksMigratedAt)) meta.asksMigratedAt = s2.meta.asksMigratedAt;
   return {
-    events: sortEvents(normList2(s.events, normalizeEvent)),
-    pool: normList2(s.pool, normalizePool),
-    mistakes: normList2(s.mistakes, normalizeMistake),
-    filters: normList2(s.filters, normalizeFilter),
-    questions: normList2(s.questions, normalizeQuestion2),
+    events: sortEvents(normList2(s2.events, normalizeEvent)),
+    pool: normList2(s2.pool, normalizePool),
+    mistakes: normList2(s2.mistakes, normalizeMistake),
+    filters: normList2(s2.filters, normalizeFilter),
+    questions: normList2(s2.questions, normalizeQuestion2),
     meta,
-    reading: normList2(s.reading, normalizeVisit),
-    diaryPicks: normList2(s.diaryPicks, normalizePick),
-    asks: normList2(s.asks, normalizeAsk),
-    wordTouches: normList2(s.wordTouches, normalizeTouch),
-    wordCefr: mergeWordCefr(normList2(s.wordCefr, normalizeWordCefr), []),
-    glosses: mergeGlosses(normList2(s.glosses, normalizeGloss), [])
+    reading: normList2(s2.reading, normalizeVisit),
+    diaryPicks: normList2(s2.diaryPicks, normalizePick),
+    asks: normList2(s2.asks, normalizeAsk),
+    wordTouches: normList2(s2.wordTouches, normalizeTouch),
+    wordCefr: mergeWordCefr(normList2(s2.wordCefr, normalizeWordCefr), []),
+    glosses: mergeGlosses(normList2(s2.glosses, normalizeGloss), [])
   };
 }
 function sortEvents(list2) {
@@ -34753,7 +37828,7 @@ function learnerFingerprint(shard) {
   for (const d of (_f = shard.diaryPicks) != null ? _f : []) rows.push(`d|${d.id}|${d.at}`);
   for (const a2 of (_g = shard.asks) != null ? _g : []) rows.push(`a|${a2.id}|${a2.ok}`);
   for (const w2 of (_h = shard.wordTouches) != null ? _h : []) rows.push(`w|${w2.id}|${w2.lookup}|${w2.pronounce}|${w2.saved}`);
-  for (const c2 of (_i = shard.wordCefr) != null ? _i : []) rows.push(`c|${c2.id}|${c2.level}|${c2.at}`);
+  for (const c4 of (_i = shard.wordCefr) != null ? _i : []) rows.push(`c|${c4.id}|${c4.level}|${c4.at}`);
   for (const g of (_j = shard.glosses) != null ? _j : []) rows.push(`g|${g.id}|${g.at}`);
   return rows.sort().join("\n");
 }
@@ -34786,18 +37861,18 @@ function pruneQuestions(shard, now2) {
 // src/services/backup/format.ts
 var FULL_BACKUP_FORMAT = 1;
 var RESTORABLE_SHARDS = ["threads", "learn", "grammar", "learner", "reviews", "imports", "files"];
-function isObject(v) {
-  return !!v && typeof v === "object" && !Array.isArray(v);
+function isObject(v5) {
+  return !!v5 && typeof v5 === "object" && !Array.isArray(v5);
 }
-function stringMap(v) {
-  if (!isObject(v)) return {};
+function stringMap(v5) {
+  if (!isObject(v5)) return {};
   const out = {};
-  for (const [k, x3] of Object.entries(v)) if (typeof x3 === "string") out[k] = x3;
+  for (const [k, x3] of Object.entries(v5)) if (typeof x3 === "string") out[k] = x3;
   return out;
 }
 function arrayField(shard, key6) {
-  const v = isObject(shard) ? shard[key6] : void 0;
-  return Array.isArray(v) ? v : [];
+  const v5 = isObject(shard) ? shard[key6] : void 0;
+  return Array.isArray(v5) ? v5 : [];
 }
 function parseData(raw) {
   if (!isObject(raw) || !Array.isArray(raw.entries)) return null;
@@ -34863,21 +37938,21 @@ function liveQuestions(thread) {
   if (thread.deletedAt) return 0;
   return thread.turns.filter((t2) => t2.role === "user" && !t2.deletedAt).length;
 }
-function summarize(s) {
+function summarize(s2) {
   var _a, _b, _c;
-  const out = { words: ((_b = (_a = s.data) == null ? void 0 : _a.entries) != null ? _b : []).filter((e) => !e.deletedAt).length };
-  if (s.threads) {
-    const asked = s.threads.map(liveQuestions).filter((n) => n > 0);
+  const out = { words: ((_b = (_a = s2.data) == null ? void 0 : _a.entries) != null ? _b : []).filter((e) => !e.deletedAt).length };
+  if (s2.threads) {
+    const asked = s2.threads.map(liveQuestions).filter((n) => n > 0);
     out.threads = asked.length;
     out.questions = asked.reduce((a2, b) => a2 + b, 0);
   }
-  if (s.learn) {
-    out.families = s.learn.families.filter((f) => !f.deletedAt).length;
-    out.trivia = s.learn.trivia.filter((t2) => !t2.deletedAt).length;
-    out.morphemes = ((_c = s.learn.morphemes) != null ? _c : []).filter((m2) => !m2.deletedAt && !m2.mergedInto).length;
+  if (s2.learn) {
+    out.families = s2.learn.families.filter((f) => !f.deletedAt).length;
+    out.trivia = s2.learn.trivia.filter((t2) => !t2.deletedAt).length;
+    out.morphemes = ((_c = s2.learn.morphemes) != null ? _c : []).filter((m2) => !m2.deletedAt && !m2.mergedInto).length;
   }
-  if (s.grammar) out.grammar = s.grammar.questions.filter((q) => !q.deletedAt && !q.retiredAt).length;
-  if (s.reviews) out.reviews = s.reviews.length;
+  if (s2.grammar) out.grammar = s2.grammar.questions.filter((q) => !q.deletedAt && !q.retiredAt).length;
+  if (s2.reviews) out.reviews = s2.reviews.length;
   return out;
 }
 
@@ -34885,7 +37960,7 @@ function summarize(s) {
 var META = /* @__PURE__ */ new Set(["updatedAt", "rev", "deletedAt"]);
 function canonical(value, skip = META) {
   var _a;
-  if (Array.isArray(value)) return `[${value.map((v) => canonical(v, /* @__PURE__ */ new Set())).join(",")}]`;
+  if (Array.isArray(value)) return `[${value.map((v5) => canonical(v5, /* @__PURE__ */ new Set())).join(",")}]`;
   if (value && typeof value === "object") {
     const keys = Object.keys(value).filter((k) => !skip.has(k) && value[k] !== void 0).sort();
     return `{${keys.map((k) => `${JSON.stringify(k)}:${canonical(value[k], /* @__PURE__ */ new Set())}`).join(",")}}`;
@@ -34913,26 +37988,26 @@ function rebaseRecords(current, backup, opts, counts, changed) {
   for (const b of backup) if (!b.deletedAt) live.set(b.id, b);
   const seen = /* @__PURE__ */ new Set();
   const out = [];
-  for (const c2 of current) {
-    seen.add(c2.id);
-    const b = live.get(c2.id);
+  for (const c4 of current) {
+    seen.add(c4.id);
+    const b = live.get(c4.id);
     if (b) {
-      if (!c2.deletedAt && canonical(c2) === canonical(b)) {
-        out.push(c2);
+      if (!c4.deletedAt && canonical(c4) === canonical(b)) {
+        out.push(c4);
         continue;
       }
-      out.push(restored(b, c2, opts.now));
-      if (c2.deletedAt) counts.revived++;
+      out.push(restored(b, c4, opts.now));
+      if (c4.deletedAt) counts.revived++;
       else counts.changed++;
-    } else if (!c2.deletedAt) {
+    } else if (!c4.deletedAt) {
       counts.extra++;
       if (!opts.removeExtras) {
-        out.push(c2);
+        out.push(c4);
         continue;
       }
-      out.push(tombstone(c2, opts.now));
+      out.push(tombstone(c4, opts.now));
     } else {
-      out.push(c2);
+      out.push(c4);
       continue;
     }
     changed.push(out[out.length - 1]);
@@ -34960,27 +38035,27 @@ function rebaseTurns(current, backup, opts, questions2) {
   const turns = [];
   let touched = false;
   const isQ = (t2) => t2.role === "user";
-  for (const c2 of current) {
-    seen.add(c2.id);
-    const b = live.get(c2.id);
+  for (const c4 of current) {
+    seen.add(c4.id);
+    const b = live.get(c4.id);
     if (b) {
-      if (!c2.deletedAt && canonical(c2, TURN_META) === canonical(b, TURN_META)) {
-        turns.push(c2);
+      if (!c4.deletedAt && canonical(c4, TURN_META) === canonical(b, TURN_META)) {
+        turns.push(c4);
         continue;
       }
       turns.push(restoredTurn(b, opts.now));
       touched = true;
       if (isQ(b)) {
-        if (c2.deletedAt) questions2.revived++;
+        if (c4.deletedAt) questions2.revived++;
         else questions2.changed++;
       }
-    } else if (!c2.deletedAt) {
-      if (isQ(c2)) questions2.extra++;
+    } else if (!c4.deletedAt) {
+      if (isQ(c4)) questions2.extra++;
       if (opts.removeExtras) {
-        turns.push({ ...c2, deletedAt: opts.now, updatedAt: opts.now });
+        turns.push({ ...c4, deletedAt: opts.now, updatedAt: opts.now });
         touched = true;
-      } else turns.push(c2);
-    } else turns.push(c2);
+      } else turns.push(c4);
+    } else turns.push(c4);
   }
   for (const b of live.values()) {
     if (seen.has(b.id)) continue;
@@ -34996,29 +38071,29 @@ function rebaseThreads(current, backup, opts, counts, changed) {
   for (const b of backup) if (!b.deletedAt) live.set(b.id, b);
   const seen = /* @__PURE__ */ new Set();
   const out = [];
-  for (const c2 of current) {
-    seen.add(c2.id);
-    const b = live.get(c2.id);
+  for (const c4 of current) {
+    seen.add(c4.id);
+    const b = live.get(c4.id);
     if (b) {
-      const { turns, touched } = rebaseTurns(c2.turns, b.turns, opts, counts.questions);
-      const fieldsSame = !c2.deletedAt && canonical(c2, THREAD_META) === canonical(b, THREAD_META);
+      const { turns, touched } = rebaseTurns(c4.turns, b.turns, opts, counts.questions);
+      const fieldsSame = !c4.deletedAt && canonical(c4, THREAD_META) === canonical(b, THREAD_META);
       if (fieldsSame && !touched) {
-        out.push(c2);
+        out.push(c4);
         continue;
       }
-      out.push({ ...restored(b, c2, opts.now), turns });
-      if (c2.deletedAt) counts.threads.revived++;
+      out.push({ ...restored(b, c4, opts.now), turns });
+      if (c4.deletedAt) counts.threads.revived++;
       else counts.threads.changed++;
-    } else if (!c2.deletedAt) {
+    } else if (!c4.deletedAt) {
       counts.threads.extra++;
-      counts.questions.extra += c2.turns.filter((t2) => t2.role === "user" && !t2.deletedAt).length;
+      counts.questions.extra += c4.turns.filter((t2) => t2.role === "user" && !t2.deletedAt).length;
       if (!opts.removeExtras) {
-        out.push(c2);
+        out.push(c4);
         continue;
       }
-      out.push(tombstone(c2, opts.now));
+      out.push(tombstone(c4, opts.now));
     } else {
-      out.push(c2);
+      out.push(c4);
       continue;
     }
     changed.push(out[out.length - 1]);
@@ -35060,9 +38135,9 @@ function currentShard(current, shard) {
       return { seeded: (_h = current.files) != null ? _h : {} };
   }
 }
-function newest(iso, acc) {
+function newest(iso, acc3) {
   const t2 = iso ? new Date(iso).getTime() : NaN;
-  return Number.isNaN(t2) ? acc : Math.max(acc, t2);
+  return Number.isNaN(t2) ? acc3 : Math.max(acc3, t2);
 }
 function restoreStamp(current, now2) {
   var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n;
@@ -35186,9 +38261,9 @@ var BackupService = class {
   }
   async item(name) {
     const parsed = await this.load(name);
-    const base = { name, path: this.pathOf(name) };
-    if (!parsed) return { ...base, kind: "unreadable", createdAt: stampFromName(name), reason: "unknown", summary: null };
-    return { ...base, kind: parsed.kind, createdAt: parsed.createdAt, reason: parsed.reason, summary: summarize(parsed.snapshot) };
+    const base2 = { name, path: this.pathOf(name) };
+    if (!parsed) return { ...base2, kind: "unreadable", createdAt: stampFromName(name), reason: "unknown", summary: null };
+    return { ...base2, kind: parsed.kind, createdAt: parsed.createdAt, reason: parsed.reason, summary: summarize(parsed.snapshot) };
   }
   // 立即備份: everything on disk right now. Resolves to the file's path.
   async create() {
@@ -35286,26 +38361,26 @@ var RestoreModal = class extends import_obsidian59.Modal {
     }
   }
   render(text, folder, item) {
-    const el = this.contentEl;
-    el.empty();
+    const el2 = this.contentEl;
+    el2.empty();
     const summary = item.summary ? summaryText(item.summary) : "";
-    el.createEl("p", { text: t("backup.restore.from", { time: backupTime(item.createdAt), summary }) });
-    el.createEl("h4", { text: t("backup.restore.what") });
-    const what = el.createEl("ul");
+    el2.createEl("p", { text: t("backup.restore.from", { time: backupTime(item.createdAt), summary }) });
+    el2.createEl("h4", { text: t("backup.restore.what") });
+    const what = el2.createEl("ul");
     for (const line2 of text.what) what.createEl("li", { text: line2 });
     if (text.extras) {
-      el.createEl("h4", { text: t("backup.restore.extras.title") });
-      el.createEl("p", { text: text.extras });
-      const remove2 = new import_obsidian59.Setting(el).setName(t("backup.restore.extras.remove")).addToggle(
-        (toggle2) => toggle2.setValue(this.removeExtras).onChange((v) => this.removeExtras = v)
+      el2.createEl("h4", { text: t("backup.restore.extras.title") });
+      el2.createEl("p", { text: text.extras });
+      const remove2 = new import_obsidian59.Setting(el2).setName(t("backup.restore.extras.remove")).addToggle(
+        (toggle2) => toggle2.setValue(this.removeExtras).onChange((v5) => this.removeExtras = v5)
       );
       if (item.reason === "before-restore") remove2.setDesc(t("backup.restore.extras.undoHint"));
     }
-    el.createEl("p", { text: t("backup.restore.safety", { folder }) });
-    el.createEl("h4", { text: t("backup.restore.devices.title") });
-    const devices = el.createEl("ul");
+    el2.createEl("p", { text: t("backup.restore.safety", { folder }) });
+    el2.createEl("h4", { text: t("backup.restore.devices.title") });
+    const devices = el2.createEl("ul");
     for (const line2 of deviceLines()) devices.createEl("li", { text: line2 });
-    new import_obsidian59.Setting(el).addButton((b) => b.setButtonText(t("backup.restore.cancel")).onClick(() => this.close())).addButton(
+    new import_obsidian59.Setting(el2).addButton((b) => b.setButtonText(t("backup.restore.cancel")).onClick(() => this.close())).addButton(
       (b) => b.setButtonText(t("backup.restore.confirm")).setWarning().onClick(async () => {
         if (this.running) return;
         this.running = true;
@@ -35334,16 +38409,16 @@ var lastSafetyPath = null;
 var backupSection = {
   id: "backup",
   title: "settings.section.backup",
-  render(el, ctx) {
+  render(el2, ctx) {
     const backups = ctx.backups;
     if (!backups) return;
-    el.createDiv({ cls: "setting-item-description", text: t("settings.backup.desc", { folder: backups.folder }) });
+    el2.createDiv({ cls: "setting-item-description", text: t("settings.backup.desc", { folder: backups.folder }) });
     if (lastSafetyPath) {
-      el.createDiv({ cls: "setting-item-description vt-backup-last", text: t("settings.backup.lastRestore", { path: lastSafetyPath }) });
+      el2.createDiv({ cls: "setting-item-description vt-backup-last", text: t("settings.backup.lastRestore", { path: lastSafetyPath }) });
     }
     const listEl = createDiv();
     const fill2 = () => void renderList(listEl, backups, ctx);
-    new import_obsidian60.Setting(el).setName(t("settings.backup.create.name")).setDesc(t("settings.backup.create.desc")).addButton(
+    new import_obsidian60.Setting(el2).setName(t("settings.backup.create.name")).setDesc(t("settings.backup.create.desc")).addButton(
       (b) => b.setButtonText(t("settings.backup.create.button")).onClick(async () => {
         b.setDisabled(true);
         try {
@@ -35357,8 +38432,8 @@ var backupSection = {
         }
       })
     );
-    new import_obsidian60.Setting(el).setName(t("settings.backup.list.name")).addExtraButton((b) => b.setIcon("refresh-cw").setTooltip(t("settings.backup.list.reload")).onClick(fill2));
-    el.appendChild(listEl);
+    new import_obsidian60.Setting(el2).setName(t("settings.backup.list.name")).addExtraButton((b) => b.setIcon("refresh-cw").setTooltip(t("settings.backup.list.reload")).onClick(fill2));
+    el2.appendChild(listEl);
     fill2();
   }
 };
@@ -35521,8 +38596,8 @@ function paragraphInput(anchor, where, extra = {}) {
   if (where.status === "found") {
     const { section: section4, content } = where;
     const spans = splitParagraphSpans(content);
-    const before = spans.filter((s) => s.lineEnd < section4.lineStart).map((s) => plainParagraph(s.text));
-    const after = spans.filter((s) => s.lineStart > section4.lineEnd).map((s) => plainParagraph(s.text));
+    const before = spans.filter((s2) => s2.lineEnd < section4.lineStart).map((s2) => plainParagraph(s2.text));
+    const after = spans.filter((s2) => s2.lineStart > section4.lineEnd).map((s2) => plainParagraph(s2.text));
     paragraphs = [...before, plainParagraph(section4.text), ...after];
     paragraphIndex = before.length;
   } else {
@@ -35566,20 +38641,20 @@ function asksOf(th) {
   return asks;
 }
 function wordStatus(e, now2) {
-  const s = e.srs;
-  if (!s || s.state === SrsState.New) return "\u65B0";
-  if (Date.parse(s.due) <= now2.getTime()) return "\u5230\u671F";
-  return s.state === SrsState.Review && s.stability >= MATURE_STABILITY_DAYS2 ? "\u719F" : "\u5B78\u7FD2\u4E2D";
+  const s2 = e.srs;
+  if (!s2 || s2.state === SrsState.New) return "\u65B0";
+  if (Date.parse(s2.due) <= now2.getTime()) return "\u5230\u671F";
+  return s2.state === SrsState.Review && s2.stability >= MATURE_STABILITY_DAYS2 ? "\u719F" : "\u5B78\u7FD2\u4E2D";
 }
-function clip3(s) {
-  const one2 = s.replace(/\s+/g, " ").trim();
+function clip3(s2) {
+  const one2 = s2.replace(/\s+/g, " ").trim();
   return one2.length > MAX_QUESTION ? `${one2.slice(0, MAX_QUESTION - 1)}\u2026` : one2;
 }
 function paragraphNumber2(content, anchor) {
   if (anchor.kind !== "paragraph") return null;
   const spans = splitParagraphSpans(content);
   const i = spans.findIndex(
-    (s) => anchor.blockId && trailingBlockId(s.text) === anchor.blockId || paragraphHash(s.text) === anchor.hash
+    (s2) => anchor.blockId && trailingBlockId(s2.text) === anchor.blockId || paragraphHash(s2.text) === anchor.hash
   );
   return i < 0 ? null : i + 1;
 }
@@ -35614,9 +38689,9 @@ function noteLearnerContext(content, words, paragraphThreads, now2) {
 
 // src/core/learner/asks.ts
 function truncateAsk(text) {
-  const s = text == null ? void 0 : text.trim();
-  if (!s) return void 0;
-  return [...s].slice(0, ASK_TEXT_MAX).join("");
+  const s2 = text == null ? void 0 : text.trim();
+  if (!s2) return void 0;
+  return [...s2].slice(0, ASK_TEXT_MAX).join("");
 }
 function askSurfaceOf(taskId, surface) {
   const raw = surface != null ? surface : taskId.split(".")[0];
@@ -35676,11 +38751,11 @@ function pickedText(subject, skipped) {
   return subject.startsWith("\u3008") ? `\uFF08\u5925\u4F34\u6311\u4E86${subject}\u90A3\u6BB5${tail}\uFF09` : `\uFF08\u5925\u4F34\u6311\u4E86 **${subject}**${tail}\uFF09`;
 }
 function quoteLines(turn) {
-  const card = quoteCard(turn.shareSource);
-  if (!card) return [];
-  if (card.wordLine) return [`> **${card.wordLine.word}**${card.wordLine.meaning ? `\uFF08${card.wordLine.meaning}\uFF09` : ""}`];
-  const body = card.body.map((s) => s.hit ? `**${s.text}**` : s.text).join("").replace(/\s*\n\s*/g, " ");
-  return [...card.heading ? [`> ${card.heading}`, ">"] : [], `> ${body}`];
+  const card2 = quoteCard(turn.shareSource);
+  if (!card2) return [];
+  if (card2.wordLine) return [`> **${card2.wordLine.word}**${card2.wordLine.meaning ? `\uFF08${card2.wordLine.meaning}\uFF09` : ""}`];
+  const body = card2.body.map((s2) => s2.hit ? `**${s2.text}**` : s2.text).join("").replace(/\s*\n\s*/g, " ");
+  return [...card2.heading ? [`> ${card2.heading}`, ">"] : [], `> ${body}`];
 }
 function buildEntries(pairs, next, labelOf) {
   return pairs.map((p, i) => {
@@ -35708,13 +38783,13 @@ function digestConversation(entries) {
 var BOLD_ENGLISH = /\*\*([A-Za-z][A-Za-z'-]{1,30})\*\*/g;
 function fallbackWords(entries, isSaved) {
   const out = [];
-  const add3 = (w2) => {
+  const add4 = (w2) => {
     const word = w2.trim();
     if (word && !out.some((x3) => x3.toLowerCase() === word.toLowerCase()) && isSaved(word)) out.push(word);
   };
   for (const e of entries) {
-    if (e.subject && !e.subject.startsWith("\u3008")) add3(e.subject);
-    for (const m2 of e.answer.matchAll(BOLD_ENGLISH)) add3(m2[1]);
+    if (e.subject && !e.subject.startsWith("\u3008")) add4(e.subject);
+    for (const m2 of e.answer.matchAll(BOLD_ENGLISH)) add4(m2[1]);
   }
   return out;
 }
@@ -35761,7 +38836,7 @@ function harvest(input) {
   const out = [];
   if (digest == null ? void 0 : digest.corrections.length) {
     out.push("**\u4F60\u5BEB\u7684 \u2192 \u66F4\u81EA\u7136\u7684\u5BEB\u6CD5**");
-    for (const c2 of digest.corrections) out.push(`- ${c2.yours} \u2192 ${c2.better}${c2.why ? `\uFF08${c2.why}\uFF09` : ""}`);
+    for (const c4 of digest.corrections) out.push(`- ${c4.yours} \u2192 ${c4.better}${c4.why ? `\uFF08${c4.why}\uFF09` : ""}`);
     out.push("");
   }
   if (digest == null ? void 0 : digest.understandings.length) {
@@ -35824,14 +38899,14 @@ ${section4}`.replace(/\n+$/, "\n");
 }
 
 // src/core/learner/buddyDigest.ts
-var str12 = (v) => typeof v === "string" ? v.trim() : "";
-var isObj12 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
-var list = (v) => Array.isArray(v) ? v : [];
-var strings2 = (v, max) => {
+var str13 = (v5) => typeof v5 === "string" ? v5.trim() : "";
+var isObj12 = (v5) => typeof v5 === "object" && v5 !== null && !Array.isArray(v5);
+var list = (v5) => Array.isArray(v5) ? v5 : [];
+var strings2 = (v5, max) => {
   const out = [];
-  for (const x3 of list(v)) {
-    const s = str12(x3);
-    if (s && !out.includes(s)) out.push(s);
+  for (const x3 of list(v5)) {
+    const s2 = str13(x3);
+    if (s2 && !out.includes(s2)) out.push(s2);
     if (out.length >= max) break;
   }
   return out;
@@ -35848,18 +38923,18 @@ function parseDigest(text) {
   }
   if (!isObj12(raw)) return null;
   const corrections = [];
-  for (const c2 of list(raw.corrections)) {
-    if (!isObj12(c2)) continue;
-    const yours = str12(c2.yours);
-    const better = str12(c2.better);
-    if (yours && better) corrections.push({ yours, better, why: str12(c2.why) });
+  for (const c4 of list(raw.corrections)) {
+    if (!isObj12(c4)) continue;
+    const yours = str13(c4.yours);
+    const better = str13(c4.better);
+    if (yours && better) corrections.push({ yours, better, why: str13(c4.why) });
   }
   const understandings = [];
   for (const u of list(raw.understandings)) {
     if (!isObj12(u)) continue;
-    const subject = str12(u.subject);
-    const yours = str12(u.yours);
-    if (subject && yours) understandings.push({ subject, yours, ok: u.ok === true, feedback: str12(u.feedback) });
+    const subject = str13(u.subject);
+    const yours = str13(u.yours);
+    if (subject && yours) understandings.push({ subject, yours, ok: u.ok === true, feedback: str13(u.feedback) });
   }
   return { topics: strings2(raw.topics, 3), corrections, understandings, words: strings2(raw.words, 20) };
 }
@@ -36360,9 +39435,9 @@ ${ref.lineStart}`;
   noteThreadId(path) {
     const live = this.threads.find((th) => !th.deletedAt && th.anchor.kind === "note" && th.anchor.path === path);
     if (live) return live.id;
-    const base = `note:${sha1(path).slice(0, 12)}`;
-    let id2 = base;
-    for (let n = 2; this.threads.some((th) => th.id === id2); n++) id2 = `${base}-${n}`;
+    const base2 = `note:${sha1(path).slice(0, 12)}`;
+    let id2 = base2;
+    for (let n = 2; this.threads.some((th) => th.id === id2); n++) id2 = `${base2}-${n}`;
     return id2;
   }
   noteThread(path) {
@@ -36375,7 +39450,7 @@ ${ref.lineStart}`;
     if (content === null) return null;
     const threadId = this.noteThreadId(path);
     if (this.isBusy(threadId)) return null;
-    const paragraphs = splitParagraphSpans(content).map((s) => plainParagraph(s.text));
+    const paragraphs = splitParagraphSpans(content).map((s2) => plainParagraph(s2.text));
     const input = { article: { title: noteTitle3(path), paragraphs } };
     if (req.question) input.question = req.question;
     const words = this.deps.store.entries.filter((e) => {
@@ -36697,11 +39772,11 @@ var LearnStore = class {
     return (_b = (_a = this.data).verbs) != null ? _b : _a.verbs = [];
   }
   verbFavorites() {
-    return this.verbList.filter((v) => !v.deletedAt);
+    return this.verbList.filter((v5) => !v5.deletedAt);
   }
   verbFavorite(entryId) {
     const id2 = verbFavoriteId(entryId);
-    return this.verbList.find((v) => v.id === id2 && !v.deletedAt);
+    return this.verbList.find((v5) => v5.id === id2 && !v5.deletedAt);
   }
   // Saves the verb (idempotent). Saving again after an unsave revives the
   // same id as a fresh record — a newer updatedAt than the tombstone, so
@@ -36710,7 +39785,7 @@ var LearnStore = class {
     const live = this.verbFavorite(entry.id);
     if (live) return live;
     const id2 = verbFavoriteId(entry.id);
-    const dead = this.verbList.find((v) => v.id === id2);
+    const dead = this.verbList.find((v5) => v5.id === id2);
     const rec = { id: id2, entryId: entry.id, word: entry.word, rev: dead == null ? void 0 : dead.rev };
     this.stamp(rec);
     this.upsert(this.verbList, rec);
@@ -36735,14 +39810,14 @@ var LearnStore = class {
   usageFavorite(entryId, pos) {
     if (pos === "v") return this.verbFavorite(entryId);
     const id2 = usageFavoriteId(entryId, pos);
-    return this.verbList.find((v) => v.id === id2 && !v.deletedAt);
+    return this.verbList.find((v5) => v5.id === id2 && !v5.deletedAt);
   }
   favoriteUsage(entry, pos) {
     if (pos === "v") return this.favoriteVerb(entry);
     const live = this.usageFavorite(entry.id, pos);
     if (live) return live;
     const id2 = usageFavoriteId(entry.id, pos);
-    const dead = this.verbList.find((v) => v.id === id2);
+    const dead = this.verbList.find((v5) => v5.id === id2);
     const rec = { id: id2, entryId: entry.id, word: entry.word, pos, rev: dead == null ? void 0 : dead.rev };
     this.stamp(rec);
     this.upsert(this.verbList, rec);
@@ -36763,7 +39838,7 @@ var LearnStore = class {
   // delete confirm dialog's count (EntryLinkageService.impact()) and the
   // basis for unfavoriteAllUsages() below need "any pos", not just "v".
   usageFavoritesFor(entryId) {
-    return this.verbList.filter((v) => v.entryId === entryId && !v.deletedAt);
+    return this.verbList.filter((v5) => v5.entryId === entryId && !v5.deletedAt);
   }
   // Called when a word is deleted (EntryLinkageService.unlink()): clears
   // every pos's favorite, not just "v" — a word deleted with its noun AND
@@ -37030,13 +40105,13 @@ function needsRefill(items, track2) {
 function poolRoom(items, track2) {
   return Math.max(0, POOL_SIZE - livePool(items, track2).length);
 }
-function addToPool(items, track2, add3, now2) {
+function addToPool(items, track2, add4, now2) {
   const seen = new Set(items.filter((i) => i.track === track2).map((i) => i.questionId));
   let seq = items.reduce((m2, i) => i.track === track2 ? Math.max(m2, i.seq) : m2, 0);
   let room = poolRoom(items, track2);
   const iso = now2.toISOString();
   const out = [];
-  for (const a2 of add3) {
+  for (const a2 of add4) {
     if (room <= 0) break;
     if (seen.has(a2.questionId)) continue;
     seen.add(a2.questionId);
@@ -37255,9 +40330,9 @@ var LearnerStore = class {
       cur.updatedAt = iso;
       if (input.title) cur.title = input.title;
     } else {
-      const v = { id: id2, day, at: iso, updatedAt: iso, path: input.path, title: input.title, kinds: [input.kind] };
-      if (input.heading) v.heading = input.heading;
-      list2.push(v);
+      const v5 = { id: id2, day, at: iso, updatedAt: iso, path: input.path, title: input.title, kinds: [input.kind] };
+      if (input.heading) v5.heading = input.heading;
+      list2.push(v5);
     }
     this.scheduleWrite();
   }
@@ -37683,7 +40758,7 @@ function removeManagedBlock(text, name) {
   return text.slice(0, start4) + text.slice(end);
 }
 function buildManagedFile(head, sections, tail = "") {
-  const parts = [head.replace(/\n+$/, ""), ...sections.map((s) => renderSection(s)), tail.replace(/\n+$/, "")];
+  const parts = [head.replace(/\n+$/, ""), ...sections.map((s2) => renderSection(s2)), tail.replace(/\n+$/, "")];
   return parts.filter((p) => p !== "").join("\n\n") + "\n";
 }
 
@@ -37753,11 +40828,11 @@ function legacyTitleHeading(basename2, headings, frontmatterEndLine) {
 }
 
 // src/ui/reading/pluginNote.ts
-var KINDS = ["word", "entry", "ai-note", "grammar", "diary", "report"];
+var KINDS3 = ["word", "entry", "ai-note", "grammar", "diary", "report"];
 function pluginNoteKind(frontmatter3) {
   const kind = frontmatter3 == null ? void 0 : frontmatter3["vocab-tracker"];
   const id2 = frontmatter3 == null ? void 0 : frontmatter3["vocab-tracker-id"];
-  if (typeof kind !== "string" || !KINDS.includes(kind)) return null;
+  if (typeof kind !== "string" || !KINDS3.includes(kind)) return null;
   if (!(typeof id2 === "string" && id2.trim()) && !(typeof id2 === "number" && Number.isFinite(id2))) return null;
   return kind;
 }
@@ -37824,17 +40899,17 @@ var ParagraphBadges = class {
     this.lines = new SectionLines();
     this.healed = /* @__PURE__ */ new Set();
     // registerMarkdownPostProcessor(badges.process)
-    this.process = (el, ctx) => {
+    this.process = (el2, ctx) => {
       var _a, _b, _c;
-      const first = el.firstElementChild;
+      const first = el2.firstElementChild;
       if (!isAnchorableTag(first == null ? void 0 : first.tagName)) return;
       const fm = (_c = ctx.frontmatter) != null ? _c : (_b = (_a = this.deps).frontmatterOf) == null ? void 0 : _b.call(_a, ctx.sourcePath);
       if (skipsBadges(fm)) return;
-      if (!ctx.getSectionInfo(el)) return;
+      if (!ctx.getSectionInfo(el2)) return;
       let handles = [];
       let unloaded = false;
       let timer2 = 0;
-      const child = new import_obsidian62.MarkdownRenderChild(el);
+      const child = new import_obsidian62.MarkdownRenderChild(el2);
       child.register(() => {
         unloaded = true;
         if (timer2) window.clearTimeout(timer2);
@@ -37843,18 +40918,18 @@ var ParagraphBadges = class {
       ctx.addChild(child);
       const attach = (tries) => {
         if (unloaded) return;
-        const info = ctx.getSectionInfo(el);
+        const info = ctx.getSectionInfo(el2);
         if (!info) return;
         if (!sectionReady(info)) {
           if (tries < NOT_READY_MAX_TRIES) timer2 = window.setTimeout(() => attach(tries + 1), NOT_READY_RETRY_MS);
           return;
         }
-        handles = this.handlesFor(ctx.sourcePath, el, first, info.lineStart, info.lineEnd, this.lines.slice(info));
+        handles = this.handlesFor(ctx.sourcePath, el2, first, info.lineStart, info.lineEnd, this.lines.slice(info));
         handles.forEach((h, i) => {
           h.fresh = () => {
-            const now2 = ctx.getSectionInfo(el);
+            const now2 = ctx.getSectionInfo(el2);
             if (!now2 || !sectionReady(now2)) return null;
-            const again = this.handlesFor(ctx.sourcePath, el, first, now2.lineStart, now2.lineEnd, this.lines.slice(now2));
+            const again = this.handlesFor(ctx.sourcePath, el2, first, now2.lineStart, now2.lineEnd, this.lines.slice(now2));
             return again.length === handles.length ? again[i].ref : null;
           };
           this.draw(h);
@@ -37899,17 +40974,17 @@ ${id2}`);
   // element. Falls back to the whole list if the DOM's `<li>` count
   // doesn't match the split — e.g. a task-list item rendered with extra
   // wrapper elements — rather than guessing at a mismatched mapping.
-  handlesFor(path, el, first, lineStart, lineEnd, text) {
+  handlesFor(path, el2, first, lineStart, lineEnd, text) {
     var _a, _b;
-    const whole = () => [{ ref: { path, lineStart, lineEnd, text }, host: el, badge: null, fresh: () => null }];
+    const whole = () => [{ ref: { path, lineStart, lineEnd, text }, host: el2, badge: null, fresh: () => null }];
     const tag = (_a = first == null ? void 0 : first.tagName) == null ? void 0 : _a.toUpperCase();
     if (tag !== "UL" && tag !== "OL") return whole();
     const lines4 = text.split("\n");
     if (!shouldSplitList(lines4)) return whole();
     const items = splitListItems(lines4, lineStart);
-    const lis = Array.from((_b = first == null ? void 0 : first.children) != null ? _b : []).filter((c2) => {
+    const lis = Array.from((_b = first == null ? void 0 : first.children) != null ? _b : []).filter((c4) => {
       var _a2;
-      return ((_a2 = c2.tagName) == null ? void 0 : _a2.toUpperCase()) === "LI";
+      return ((_a2 = c4.tagName) == null ? void 0 : _a2.toUpperCase()) === "LI";
     });
     if (lis.length !== items.length) return whole();
     return items.map((item, i) => ({
@@ -37920,27 +40995,27 @@ ${id2}`);
     }));
   }
   track(h) {
-    let set3 = this.live.get(h.ref.path);
-    if (!set3) {
-      set3 = /* @__PURE__ */ new Set();
-      this.live.set(h.ref.path, set3);
+    let set4 = this.live.get(h.ref.path);
+    if (!set4) {
+      set4 = /* @__PURE__ */ new Set();
+      this.live.set(h.ref.path, set4);
     }
-    set3.add(h);
+    set4.add(h);
   }
   untrack(h) {
-    const set3 = this.live.get(h.ref.path);
-    if (!set3) return;
-    set3.delete(h);
-    if (!set3.size) this.live.delete(h.ref.path);
+    const set4 = this.live.get(h.ref.path);
+    if (!set4) return;
+    set4.delete(h);
+    if (!set4.size) this.live.delete(h.ref.path);
   }
   draw(h) {
     const state = badgeState(this.deps.index.count(h.ref.path, h.ref.text), this.deps.showGhost());
-    let badge = h.badge;
-    if (!badge) {
+    let badge2 = h.badge;
+    if (!badge2) {
       h.host.addClass(BADGE_HOST_CLS);
-      badge = h.badge = h.host.createSpan({ cls: BADGE_CLS });
-      badge.setAttr("role", "button");
-      badge.setAttr("tabindex", "0");
+      badge2 = h.badge = h.host.createSpan({ cls: BADGE_CLS });
+      badge2.setAttr("role", "button");
+      badge2.setAttr("tabindex", "0");
       const open = (e) => {
         var _a;
         e.preventDefault();
@@ -37948,20 +41023,20 @@ ${id2}`);
         h.ref = (_a = h.fresh()) != null ? _a : h.ref;
         this.deps.onOpen(h.ref);
       };
-      badge.addEventListener("click", open);
-      badge.addEventListener("keydown", (e) => {
+      badge2.addEventListener("click", open);
+      badge2.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") open(e);
       });
-      (0, import_obsidian62.setIcon)(badge.createSpan({ cls: "vt-pbadge-icon" }), "sparkles");
-      badge.createSpan({ cls: "vt-pbadge-count" });
+      (0, import_obsidian62.setIcon)(badge2.createSpan({ cls: "vt-pbadge-icon" }), "sparkles");
+      badge2.createSpan({ cls: "vt-pbadge-count" });
     }
-    const countEl = badge.querySelector(".vt-pbadge-count");
-    badge.toggleClass("has-count", state.kind === "count");
-    badge.toggleClass("is-ghost", state.kind === "ghost");
-    badge.toggleClass("is-quiet", state.kind === "ghost" && state.quiet);
+    const countEl = badge2.querySelector(".vt-pbadge-count");
+    badge2.toggleClass("has-count", state.kind === "count");
+    badge2.toggleClass("is-ghost", state.kind === "ghost");
+    badge2.toggleClass("is-quiet", state.kind === "ghost" && state.quiet);
     countEl == null ? void 0 : countEl.setText(state.kind === "count" ? String(state.count) : "");
     const label = state.kind === "count" ? t("paragraph.badge.count", { n: state.count }) : t("paragraph.badge.open");
-    badge.setAttr("aria-label", label);
+    badge2.setAttr("aria-label", label);
   }
 };
 
@@ -37971,9 +41046,9 @@ var DEFAULT_PREFS = { open: false, tab: "vocab" };
 function parseReviewPrefs(raw) {
   const out = /* @__PURE__ */ new Map();
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return out;
-  for (const [path, v] of Object.entries(raw)) {
-    if (typeof v !== "object" || v === null) continue;
-    const r = v;
+  for (const [path, v5] of Object.entries(raw)) {
+    if (typeof v5 !== "object" || v5 === null) continue;
+    const r = v5;
     const p = { open: r.open === true, tab: r.tab === "ai" ? "ai" : "vocab" };
     if (typeof r.roundAt === "string" && r.roundAt) p.roundAt = r.roundAt;
     out.set(path, p);
@@ -38099,10 +41174,10 @@ var NoteReviewPanels = class {
       if (!(view instanceof import_obsidian63.MarkdownView)) continue;
       seen.add(view);
       const file = view.file;
-      const el = file ? await this.eligibility(file) : null;
+      const el2 = file ? await this.eligibility(file) : null;
       if (this.disposed) return;
       let panel = this.panels.get(view);
-      if (!file || !(el == null ? void 0 : el.show)) {
+      if (!file || !(el2 == null ? void 0 : el2.show)) {
         if (panel) this.drop(view, panel);
         continue;
       }
@@ -38115,7 +41190,7 @@ var NoteReviewPanels = class {
         panel.load();
         this.panels.set(view, panel);
       }
-      panel.setScope(el.scope);
+      panel.setScope(el2.scope);
       panel.place(view);
     }
     for (const [view, panel] of this.panels) if (!seen.has(view)) this.drop(view, panel);
@@ -38278,10 +41353,10 @@ var ReviewPanel = class extends import_obsidian63.Component {
   }
   // 「單字 (3)17」: 3 of the note's 17 words reviewed this round.
   updateCount() {
-    const el = this.vocabTabEl;
-    if (!(el == null ? void 0 : el.isConnected)) return;
+    const el2 = this.vocabTabEl;
+    if (!(el2 == null ? void 0 : el2.isConnected)) return;
     const { done, total: total2 } = this.progress();
-    el.setText(`${t("noteReview.tab.vocab")} ${vocabTabCount(done.size, total2)}`);
+    el2.setText(`${t("noteReview.tab.vocab")} ${vocabTabCount(done.size, total2)}`);
   }
   closeTabs() {
     for (const { owner } of this.tabBodies.values()) this.removeChild(owner);
@@ -38289,19 +41364,19 @@ var ReviewPanel = class extends import_obsidian63.Component {
   }
   mountTab(tab, holder) {
     const owner = this.addChild(new import_obsidian63.Component());
-    const el = holder.createDiv({ cls: `vt-nr-${tab}` });
-    const entry = { el, owner };
+    const el2 = holder.createDiv({ cls: `vt-nr-${tab}` });
+    const entry = { el: el2, owner };
     this.tabBodies.set(tab, entry);
-    if (tab === "ai") this.mountAi(el, owner);
-    else entry.refresh = this.mountVocab(el, owner);
+    if (tab === "ai") this.mountAi(el2, owner);
+    else entry.refresh = this.mountVocab(el2, owner);
   }
   // 單字: the practice hub's scenario player alone — no filter bar, no
   // 錯題區 — on this note's words, in this note's own pool lane.
-  mountVocab(el, owner) {
-    el.addClass("vt-learn", "vt-pr");
+  mountVocab(el2, owner) {
+    el2.addClass("vt-learn", "vt-pr");
     const api = this.host.noteScenario(this.path);
     let ready = false;
-    const pane = mountScenarioPane(el, {
+    const pane = mountScenarioPane(el2, {
       track: "vocab",
       api,
       mountPlayer: mountScenarioPlayer,
@@ -38340,9 +41415,9 @@ var ReviewPanel = class extends import_obsidian63.Component {
     if (line2 !== null) await jumpToLine(view, line2);
   }
   // AI 討論: the note's whole-article discussion.
-  mountAi(el, owner) {
+  mountAi(el2, owner) {
     const { threads } = this.host;
-    const chat = new ChatPanel(el, {
+    const chat = new ChatPanel(el2, {
       app: this.host.app,
       threads,
       ai: this.host.ai,
@@ -38474,8 +41549,8 @@ function sessionRating(results) {
   return Rating.Again;
 }
 function scheduleTopic(progress, rating, now2, retention) {
-  const card = (progress == null ? void 0 : progress.srs) ? toFsrsCard(progress.srs) : createEmptyCard(now2);
-  return fromFsrsCard(makeFsrs(retention, { shortTerm: false }).next(card, now2, GRADE[rating]).card);
+  const card2 = (progress == null ? void 0 : progress.srs) ? toFsrsCard(progress.srs) : createEmptyCard(now2);
+  return fromFsrsCard(makeFsrs(retention, { shortTerm: false }).next(card2, now2, GRADE[rating]).card);
 }
 
 // src/services/learn/structured.ts
@@ -38525,7 +41600,7 @@ function gradeThreadId(questionId) {
 function defaultId3(now2) {
   return `${now2.getTime().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
-var stemKey = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
+var stemKey = (s2) => s2.replace(/\s+/g, " ").trim().toLowerCase();
 var MAX_SCENARIO_TOPICS = 3;
 var MAX_WEAK_TOPICS = 2;
 var GRAMMAR = "grammar";
@@ -38727,8 +41802,8 @@ var QuestionService = class {
     return weaknessDigest(weak, (f) => {
       const [tid, oid] = f.id.split("/");
       const topic = topicById(tid);
-      const obj = topic == null ? void 0 : topic.objectives.find((o) => o.id === oid);
-      return obj ? `${f.id}\uFF08${obj.text}\uFF09` : f.id;
+      const obj2 = topic == null ? void 0 : topic.objectives.find((o) => o.id === oid);
+      return obj2 ? `${f.id}\uFF08${obj2.text}\uFF09` : f.id;
     });
   }
   // 〔上一段〕: the scene and last two sentences of the scenario at the end
@@ -38987,6 +42062,56 @@ var QuestionService = class {
   }
 };
 
+// src/services/grammar/VisualService.ts
+var visualThreadId = (topicId) => `grammar-visual:${topicId}`;
+var VisualService = class {
+  constructor(deps) {
+    this.deps = deps;
+    this.events = new TypedEmitter();
+    this.generated = /* @__PURE__ */ new Map();
+    // 每個主題看過的例句，下次請 AI 換一個。
+    this.seen = /* @__PURE__ */ new Map();
+    this.busy = /* @__PURE__ */ new Set();
+  }
+  current(topicId) {
+    var _a;
+    return (_a = this.generated.get(topicId)) != null ? _a : builtinVisual(topicId);
+  }
+  isGenerated(topicId) {
+    return this.generated.has(topicId);
+  }
+  isBusy(topicId) {
+    return this.busy.has(topicId);
+  }
+  // 回到內建那份。
+  reset(topicId) {
+    if (this.generated.delete(topicId)) this.events.emit("visual:change", { topicId });
+  }
+  async regenerate(topicId) {
+    var _a;
+    const topic = topicById(topicId);
+    if (!topic) throw new Error(`Unknown grammar topic "${topicId}"`);
+    if (this.busy.has(topicId)) throw new Error(`Already generating a visual for "${topicId}"`);
+    const seen = (_a = this.seen.get(topicId)) != null ? _a : [];
+    const now2 = this.current(topicId);
+    if (now2 && !seen.includes(now2.sentence.text)) seen.push(now2.sentence.text);
+    this.seen.set(topicId, seen);
+    this.busy.add(topicId);
+    this.events.emit("visual:change", { topicId });
+    try {
+      const { value } = await runStructured(this.deps.ai, grammarVisual, { topic, avoid: seen }, { threadId: visualThreadId(topicId) });
+      this.generated.set(topicId, value);
+      return value;
+    } finally {
+      this.busy.delete(topicId);
+      this.events.emit("visual:change", { topicId });
+    }
+  }
+  stop(topicId) {
+    this.deps.ai.cancel(visualThreadId(topicId));
+  }
+};
+
 // src/services/practice/ScenarioService.ts
 var SCENARIO_REFILL_COUNT = 6;
 function refillThreadId(track2, lane) {
@@ -38996,13 +42121,13 @@ function defaultId4(now2) {
   return `${now2.getTime().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 var poolItemId2 = (track2, questionId) => `${track2}:${questionId}`;
-var textKey = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
+var textKey = (s2) => s2.replace(/\s+/g, " ").trim().toLowerCase();
 var questionKey = (q) => {
   var _a, _b;
   return q.kind === "paraphrase" ? `${textKey(q.text)}|${textKey((_b = (_a = q.options.find((o) => o.id === q.answerId)) == null ? void 0 : _a.text) != null ? _b : "")}` : textKey(q.text);
 };
 var PARA_WEAK_DAYS = 30;
-var unmark = (s) => s.replace(/\[\[([^[\]]+)\]\]/g, "$1");
+var unmark = (s2) => s2.replace(/\[\[([^[\]]+)\]\]/g, "$1");
 function practiceLine(q) {
   var _a;
   let text = unmark(q.text);
@@ -39134,7 +42259,7 @@ var ScenarioService = class {
     const paragraph = nextParagraph(req.paragraphs, (id2) => stored.filter((q) => q.focus.id === id2).length);
     if (!paragraph) return null;
     const mine = new Set(stored.filter((q) => q.focus.id === paragraph.threadId).map((q) => textKey(q.text)));
-    const asked = paragraph.sentences.flatMap((s, i) => mine.has(textKey(s)) ? [i + 1] : []);
+    const asked = paragraph.sentences.flatMap((s2, i) => mine.has(textKey(s2)) ? [i + 1] : []);
     const input = { paragraph, count: count2, weakness: this.paraWeakness(), asked };
     return async (signal) => (await runStructured(this.deps.ai, practiceParaphraseFor(paragraph), input, { threadId: refillThreadId("para", this.deps.lane), signal })).value;
   }
@@ -39163,11 +42288,11 @@ var ScenarioService = class {
     var _a, _b, _c, _d;
     const refs = refsOf(req);
     const label = /* @__PURE__ */ new Map();
-    if (req.track === "poly") for (const s of req.tested) label.set(s.id, s.zh);
-    if (req.track === "vocab") for (const v of req.words) label.set(v.id, v.word);
+    if (req.track === "poly") for (const s2 of req.tested) label.set(s2.id, s2.zh);
+    if (req.track === "vocab") for (const v5 of req.words) label.set(v5.id, v5.word);
     if (req.track === "mix") {
-      for (const s of (_b = (_a = req.poly) == null ? void 0 : _a.tested) != null ? _b : []) label.set(s.id, s.zh);
-      for (const v of (_c = req.vocab) != null ? _c : []) label.set(v.id, v.word);
+      for (const s2 of (_b = (_a = req.poly) == null ? void 0 : _a.tested) != null ? _b : []) label.set(s2.id, s2.zh);
+      for (const v5 of (_c = req.vocab) != null ? _c : []) label.set(v5.id, v5.word);
       for (const g of (_d = req.grammar) != null ? _d : []) label.set(`${g.topicId}/${g.objectiveId}`, g.text);
     }
     const weak = weakFocuses(this.deps.learner.learnEvents(), {
@@ -39397,11 +42522,11 @@ var LearnerModel = class {
     for (const e of this.deps.vocab()) {
       if (e.deletedAt || e.liked !== true) continue;
       out.total++;
-      const s = e.srs;
-      if (!s || s.state === SrsState.New) continue;
-      if (s.state === SrsState.Review && s.stability >= MATURE_STABILITY_DAYS3) out.mature++;
+      const s2 = e.srs;
+      if (!s2 || s2.state === SrsState.New) continue;
+      if (s2.state === SrsState.Review && s2.stability >= MATURE_STABILITY_DAYS3) out.mature++;
       else out.learning++;
-      if (Date.parse(s.due) <= now2.getTime()) out.due++;
+      if (Date.parse(s2.due) <= now2.getTime()) out.due++;
     }
     return out;
   }
@@ -39409,10 +42534,10 @@ var LearnerModel = class {
     const g = this.deps.grammar;
     const status = topicStatuses(GRAMMAR_TOPICS, g.attempts(), (id2) => g.progress(id2), now2);
     const out = { started: 0, mastered: 0, due: 0 };
-    for (const s of status.values()) {
-      if (s !== "new") out.started++;
-      if (s === "mastered") out.mastered++;
-      else if (s === "due") out.due++;
+    for (const s2 of status.values()) {
+      if (s2 !== "new") out.started++;
+      if (s2 === "mastered") out.mastered++;
+      else if (s2 === "due") out.due++;
     }
     return out;
   }
@@ -39472,8 +42597,8 @@ var RECENT_DIARIES = 3;
 function materialSources(m2) {
   const out = [];
   const seen = /* @__PURE__ */ new Set();
-  for (const s of [...m2.articles.map((a2) => a2.title), ...m2.points.map((p) => p.label)]) {
-    const t2 = s.trim();
+  for (const s2 of [...m2.articles.map((a2) => a2.title), ...m2.points.map((p) => p.label)]) {
+    const t2 = s2.trim();
     if (!t2 || seen.has(t2.toLowerCase())) continue;
     seen.add(t2.toLowerCase());
     out.push(t2);
@@ -39485,8 +42610,8 @@ function repeatRatio(m2, recent) {
   if (!mine.length) return 0;
   const used = /* @__PURE__ */ new Set();
   const latest = [...recent].sort((a2, b) => b.day.localeCompare(a2.day)).slice(0, RECENT_DIARIES);
-  for (const r of latest) for (const s of r.sources) used.add(s.trim().toLowerCase());
-  return mine.filter((s) => used.has(s.toLowerCase())).length / mine.length;
+  for (const r of latest) for (const s2 of r.sources) used.add(s2.trim().toLowerCase());
+  return mine.filter((s2) => used.has(s2.toLowerCase())).length / mine.length;
 }
 function chooseDiaryKind(m2, recent, opts) {
   const pickOther = () => opts.random() < 0.5 ? "quote" : "place";
@@ -39502,8 +42627,8 @@ var ABBREVIATIONS = /* @__PURE__ */ new Set(["mr", "mrs", "ms", "dr", "st", "vs"
 var BREAK_RE2 = /([.?!]+)([)"'”’\]]*)\s+(?=[A-Z0-9"“‘'([])/g;
 var SHORT_WORDS = 8;
 var HEADING_WORDS = 7;
-function wordCount(s) {
-  return s.split(/\s+/).filter(Boolean).length;
+function wordCount(s2) {
+  return s2.split(/\s+/).filter(Boolean).length;
 }
 function isAbbreviation(before) {
   var _a, _b;
@@ -39531,8 +42656,8 @@ function splitSentences2(text) {
 function segmentParagraph(text) {
   const out = [];
   let buf = "";
-  for (const s of splitSentences2(text)) {
-    buf = buf ? `${buf} ${s}` : s;
+  for (const s2 of splitSentences2(text)) {
+    buf = buf ? `${buf} ${s2}` : s2;
     if (wordCount(buf) > SHORT_WORDS) {
       out.push(buf);
       buf = "";
@@ -39564,8 +42689,8 @@ function renderDiaryBody(paragraphs) {
 function wikilink(a2) {
   var _a;
   const target = a2.path.replace(/\.md$/i, "");
-  const base = (_a = target.split("/").pop()) != null ? _a : target;
-  return a2.title && a2.title !== base ? `[[${target}|${a2.title}]]` : `[[${target}]]`;
+  const base2 = (_a = target.split("/").pop()) != null ? _a : target;
+  return a2.title && a2.title !== base2 ? `[[${target}|${a2.title}]]` : `[[${target}]]`;
 }
 function renderDiaryFile(i) {
   const fm = [
@@ -39574,7 +42699,7 @@ function renderDiaryFile(i) {
     `vocab-tracker-id: diary-${i.day}`,
     `diary-kind: ${i.kind}`,
     i.sources.length ? "diary-sources:" : "diary-sources: []",
-    ...i.sources.map((s) => `  - ${JSON.stringify(s)}`),
+    ...i.sources.map((s2) => `  - ${JSON.stringify(s2)}`),
     "---"
   ].join("\n");
   const links = i.articles.map(wikilink).join("\u3001");
@@ -39595,10 +42720,10 @@ var MAX_PER_KIND = 12;
 var MAX_BOLD = 40;
 var DAY_FILE = /^(\d{4}-\d{2}-\d{2})\.md$/;
 var NEVER = 1e9;
-function dayOfStamp(s) {
-  if (!s) return "";
-  if (/^\d{4}-\d{2}-\d{2}[ ]/.test(s) || /^\d{4}-\d{2}-\d{2}$/.test(s)) return s.slice(0, 10);
-  const d = new Date(s);
+function dayOfStamp(s2) {
+  if (!s2) return "";
+  if (/^\d{4}-\d{2}-\d{2}[ ]/.test(s2) || /^\d{4}-\d{2}-\d{2}$/.test(s2)) return s2.slice(0, 10);
+  const d = new Date(s2);
   return Number.isNaN(d.getTime()) ? "" : localDayOf(d);
 }
 function shiftDay(day, delta2) {
@@ -39607,9 +42732,9 @@ function shiftDay(day, delta2) {
 }
 function uniq3(list2) {
   const seen = /* @__PURE__ */ new Set();
-  return list2.filter((s) => {
-    const k = s.toLowerCase();
-    if (!s || seen.has(k)) return false;
+  return list2.filter((s2) => {
+    const k = s2.toLowerCase();
+    if (!s2 || seen.has(k)) return false;
     seen.add(k);
     return true;
   });
@@ -39640,8 +42765,8 @@ var DiaryService = class {
     this.listeners.add(cb);
     return () => this.listeners.delete(cb);
   }
-  setState(s) {
-    this.state = s;
+  setState(s2) {
+    this.state = s2;
     for (const l4 of this.listeners) l4();
   }
   // ── material ──────────────────────────────────────────────────
@@ -39661,12 +42786,12 @@ var DiaryService = class {
         out.push({ kind: "review-word", label: e.word, day });
       }
     }
-    for (const ev of this.deps.learner.learnEvents()) {
-      if (ev.track !== "grammar" || dayOfStamp(ev.at) !== day) continue;
-      if (ev.result !== "wrong" && ev.result !== "correct") continue;
-      const topic = topicById(ev.focus.id.split("/")[0]);
-      const label = topic ? `${topic.title} (${topic.pattern})` : (_b = (_a = ev.focus.id.split("/").pop()) == null ? void 0 : _a.replace(/[-_]+/g, " ")) != null ? _b : ev.focus.id;
-      out.push({ kind: ev.result === "wrong" ? "grammar-wrong" : "grammar-right", label, day });
+    for (const ev2 of this.deps.learner.learnEvents()) {
+      if (ev2.track !== "grammar" || dayOfStamp(ev2.at) !== day) continue;
+      if (ev2.result !== "wrong" && ev2.result !== "correct") continue;
+      const topic = topicById(ev2.focus.id.split("/")[0]);
+      const label = topic ? `${topic.title} (${topic.pattern})` : (_b = (_a = ev2.focus.id.split("/").pop()) == null ? void 0 : _a.replace(/[-_]+/g, " ")) != null ? _b : ev2.focus.id;
+      out.push({ kind: ev2.result === "wrong" ? "grammar-wrong" : "grammar-right", label, day });
     }
     for (const tv of this.deps.learn.trivia()) {
       if (dayOfStamp(tv.createdAt) === day) out.push({ kind: "trivia", label: tv.title, day });
@@ -39687,10 +42812,10 @@ var DiaryService = class {
   }
   collectMaterial(day) {
     const byPath = /* @__PURE__ */ new Map();
-    for (const v of this.deps.learner.readingOn(day)) {
-      let a2 = byPath.get(v.path);
-      if (!a2) byPath.set(v.path, a2 = { path: v.path, title: v.title, headings: [] });
-      if (v.heading && !a2.headings.includes(v.heading)) a2.headings.push(v.heading);
+    for (const v5 of this.deps.learner.readingOn(day)) {
+      let a2 = byPath.get(v5.path);
+      if (!a2) byPath.set(v5.path, a2 = { path: v5.path, title: v5.title, headings: [] });
+      if (v5.heading && !a2.headings.includes(v5.heading)) a2.headings.push(v5.heading);
     }
     let points = this.pointsOn(day);
     for (let i = 1; points.length === 0 && i <= LOOKBACK_DAYS; i++) points = this.pointsOn(shiftDay(day, -i));
@@ -39848,7 +42973,7 @@ function oldParts(lines4) {
     if (/^```vocab-report-analyze/.test(line2)) cur = null;
     cur == null ? void 0 : cur.push(line2);
   }
-  return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, clean3(v)]));
+  return Object.fromEntries(Object.entries(out).map(([k, v5]) => [k, clean3(v5)]));
 }
 function newParts(lines4) {
   const out = {};
@@ -39889,7 +43014,7 @@ function newParts(lines4) {
     }
     cur == null ? void 0 : cur.push(body);
   }
-  const parts = Object.fromEntries(Object.entries(out).map(([k, v]) => [k, clean3(v)]).filter(([, v]) => v));
+  const parts = Object.fromEntries(Object.entries(out).map(([k, v5]) => [k, clean3(v5)]).filter(([, v5]) => v5));
   const halves = [];
   if (parts[ANALYSIS_NOW]) halves.push(`\u3010\u73FE\u6CC1\u3011
 ${parts[ANALYSIS_NOW]}`);
@@ -39915,9 +43040,9 @@ var ANSWER_MAX = 800;
 var SNAPSHOT_MAX = 500;
 var WRONG_MAX = 60;
 var WORDS_MAX = 20;
-var cut2 = (s, n) => {
-  const a2 = [...s];
-  return a2.length > n ? a2.slice(0, n).join("") + "\u2026" : s;
+var cut2 = (s2, n) => {
+  const a2 = [...s2];
+  return a2.length > n ? a2.slice(0, n).join("") + "\u2026" : s2;
 };
 var inPeriod = (iso, p) => {
   const d = localDayOf(new Date(iso));
@@ -39978,8 +43103,8 @@ function tiersSection(t2) {
   var _a;
   if (!t2) return "";
   const both = askedAndLooked(t2.profile);
-  const known2 = CEFR_TIERS.reduce((s, k) => s + both[k], 0);
-  if (known2 + both["?"] + CEFR_TIERS.reduce((s, k) => s + t2.profile.mature[k], 0) === 0) return "";
+  const known2 = CEFR_TIERS.reduce((s2, k) => s2 + both[k], 0);
+  if (known2 + both["?"] + CEFR_TIERS.reduce((s2, k) => s2 + t2.profile.mature[k], 0) === 0) return "";
   const lines4 = [tierSummary(t2.profile)];
   for (const k of CEFR_TIERS) if ((_a = t2.examples[k]) == null ? void 0 : _a.length) lines4.push(`- ${k} \u4F8B\u5B57\uFF1A${t2.examples[k].slice(0, 10).join("\u3001")}`);
   return `## \u4F60\u67E5\uFF0F\u554F\u7684\u5B57\u7684\u7A0B\u5EA6\u5206\u5E03
@@ -40034,15 +43159,15 @@ function collectReviewMaterial(weeks) {
     const sec = Object.fromEntries(REVIEW_SECTIONS.map((n) => [n, extractReportSection(w2.text, n)]));
     return { key: w2.key, sec };
   });
-  const render = (p, order, limit) => {
+  const render5 = (p, order, limit) => {
     const body = order.filter((n) => p.sec[n]).map((n) => `\u3010${n}\u3011
 ${p.sec[n]}`).join("\n\n");
     return `# \u9031\u5831 ${p.key}
 ${limit ? cut2(body, limit) : body}`;
   };
-  const full = parts.map((p) => render(p, REVIEW_SECTIONS)).join("\n\n");
+  const full = parts.map((p) => render5(p, REVIEW_SECTIONS)).join("\n\n");
   if ([...full].length <= MATERIAL_MAX_CHARS) return { text: full, weeks: parts.length, truncated: false };
-  const short = parts.map((p) => render(p, REVIEW_PRIORITY, REVIEW_WEEK_MAX)).join("\n\n");
+  const short = parts.map((p) => render5(p, REVIEW_PRIORITY, REVIEW_WEEK_MAX)).join("\n\n");
   return { text: short, weeks: parts.length, truncated: true };
 }
 
@@ -40148,8 +43273,8 @@ var ReportService = class {
   notify() {
     for (const l4 of this.listeners) l4();
   }
-  setState(s) {
-    this.state = s;
+  setState(s2) {
+    this.state = s2;
     this.notify();
   }
   isAnalyzing(key6) {
@@ -40408,8 +43533,8 @@ var ReportService = class {
     if (!key6) return null;
     const path = this.pathOf(key6);
     const fm = this.deps.vault.frontmatterOf(path);
-    const v = String((_a = fm == null ? void 0 : fm.verdict) != null ? _a : "");
-    const verdict = VERDICTS.has(v) ? v : "insufficient";
+    const v5 = String((_a = fm == null ? void 0 : fm.verdict) != null ? _a : "");
+    const verdict = VERDICTS.has(v5) ? v5 : "insufficient";
     const sl = fm == null ? void 0 : fm["suggested-level"];
     const suggestedLevel = typeof sl === "string" && sl ? sl : void 0;
     return { key: key6, path, verdict, ...suggestedLevel ? { suggestedLevel } : {}, headline: verdictHeadline(verdict, suggestedLevel) };
@@ -40434,21 +43559,21 @@ function clip4(text, max) {
 function reportSection2(markdown, name) {
   return reportPart(markdown, name);
 }
-function snapshotLines(s) {
+function snapshotLines(s2) {
   const out = [];
-  if (s.level) out.push(`- \u76EE\u524D\u8A2D\u5B9A\u7684\u7A0B\u5EA6\uFF1A${s.level}`);
-  if (s.vocab.total > 0) {
-    out.push(`- \u55AE\u5B57\uFF1A\u5171 ${s.vocab.total} \u500B\uFF0C\u5B78\u7FD2\u4E2D ${s.vocab.learning} \u500B\u3001\u5DF2\u719F\u6089 ${s.vocab.mature} \u500B\uFF0C${s.vocab.due} \u500B\u7B49\u8457\u8907\u7FD2`);
+  if (s2.level) out.push(`- \u76EE\u524D\u8A2D\u5B9A\u7684\u7A0B\u5EA6\uFF1A${s2.level}`);
+  if (s2.vocab.total > 0) {
+    out.push(`- \u55AE\u5B57\uFF1A\u5171 ${s2.vocab.total} \u500B\uFF0C\u5B78\u7FD2\u4E2D ${s2.vocab.learning} \u500B\u3001\u5DF2\u719F\u6089 ${s2.vocab.mature} \u500B\uFF0C${s2.vocab.due} \u500B\u7B49\u8457\u8907\u7FD2`);
   }
-  if (s.grammar.started > 0 || s.grammar.mastered > 0) {
-    out.push(`- \u6587\u6CD5\uFF1A\u958B\u59CB\u7DF4\u4E86 ${s.grammar.started} \u500B\u4E3B\u984C\uFF0C\u5DF2\u638C\u63E1 ${s.grammar.mastered} \u500B\uFF0C${s.grammar.due} \u500B\u7B49\u8457\u8907\u7FD2`);
+  if (s2.grammar.started > 0 || s2.grammar.mastered > 0) {
+    out.push(`- \u6587\u6CD5\uFF1A\u958B\u59CB\u7DF4\u4E86 ${s2.grammar.started} \u500B\u4E3B\u984C\uFF0C\u5DF2\u638C\u63E1 ${s2.grammar.mastered} \u500B\uFF0C${s2.grammar.due} \u500B\u7B49\u8457\u8907\u7FD2`);
   }
-  if (s.poly.practisedSenses > 0) {
-    out.push(`- \u591A\u7FA9\u5B57\uFF1A\u7DF4\u904E ${s.poly.practisedSenses} \u500B\u610F\u601D\uFF0C\u5176\u4E2D ${s.poly.weakSenses} \u500B\u9084\u4E0D\u592A\u7A69`);
+  if (s2.poly.practisedSenses > 0) {
+    out.push(`- \u591A\u7FA9\u5B57\uFF1A\u7DF4\u904E ${s2.poly.practisedSenses} \u500B\u610F\u601D\uFF0C\u5176\u4E2D ${s2.poly.weakSenses} \u500B\u9084\u4E0D\u592A\u7A69`);
   }
-  if (s.weak.length) {
+  if (s2.weak.length) {
     out.push("- \u6700\u8FD1\u6BD4\u8F03\u5361\u4F4F\u7684\u5730\u65B9\uFF1A");
-    for (const w2 of s.weak) {
+    for (const w2 of s2.weak) {
       const given = w2.commonGiven ? `\uFF0C\u5E38\u9078\u6210\u300C${w2.commonGiven}\u300D` : "";
       out.push(`  - ${w2.focus.id}\uFF08${w2.track}\uFF09\uFF1A\u6700\u8FD1\u932F ${w2.wrong} \u6B21${given}`);
     }
@@ -40581,8 +43706,8 @@ var REGROUP_GROWTH = 1.2;
 function familyExpandThreadId(familyId) {
   return `family:expand:${familyId}`;
 }
-function candidateScope(c2) {
-  return c2.seedEntryIds.length ? "word" : "list";
+function candidateScope(c4) {
+  return c4.seedEntryIds.length ? "word" : "list";
 }
 function toWord(e) {
   return { word: e.word, partOfSpeech: e.partOfSpeech, zh: e.definitionZh };
@@ -40624,8 +43749,8 @@ var FamilyService = class {
       var _a2, _b;
       return ((_a2 = b.createdAt) != null ? _a2 : "") > ((_b = a2.createdAt) != null ? _b : "") ? b : a2;
     });
-    const base = (_a = newest2.entryCountAtGenerate) != null ? _a : 0;
-    return this.deps.vocab.entries.length >= base * REGROUP_GROWTH && this.deps.vocab.entries.length > base;
+    const base2 = (_a = newest2.entryCountAtGenerate) != null ? _a : 0;
+    return this.deps.vocab.entries.length >= base2 * REGROUP_GROWTH && this.deps.vocab.entries.length > base2;
   }
   stop() {
     this.deps.ai.cancel(FAMILY_THREAD_ID);
@@ -40671,8 +43796,8 @@ var FamilyService = class {
   newWords(candidates) {
     const seen = /* @__PURE__ */ new Set();
     const out = [];
-    for (const c2 of candidates) {
-      for (const m2 of c2.groups.flatMap((g) => g.members)) {
+    for (const c4 of candidates) {
+      for (const m2 of c4.groups.flatMap((g) => g.members)) {
         if (m2.entryId || seen.has(key4(m2.word))) continue;
         seen.add(key4(m2.word));
         out.push(m2);
@@ -40688,14 +43813,14 @@ var FamilyService = class {
     await this.ensureLoaded();
     const renewed = /* @__PURE__ */ new Set();
     if (opts.replace) {
-      const topics = new Set(candidates.map((c2) => key4(c2.topic)));
+      const topics = new Set(candidates.map((c4) => key4(c4.topic)));
       for (const f of this.regroupable()) {
         if (topics.has(key4(f.topic))) renewed.add(f.id);
         else this.deps.learn.deleteFamily(f.id, "regroup");
       }
     }
     const count2 = this.deps.vocab.entries.length;
-    const families = candidates.map((c2) => this.toFamily(c2, count2, renewed));
+    const families = candidates.map((c4) => this.toFamily(c4, count2, renewed));
     const wanted = new Set(((_a = opts.addWords) != null ? _a : []).map(key4));
     const toAdd = /* @__PURE__ */ new Map();
     for (const f of families) {
@@ -40711,7 +43836,7 @@ var FamilyService = class {
       this.link(f, index2);
       this.deps.learn.putFamily(f);
     }
-    const seedEntryIds = [...new Set(candidates.flatMap((c2) => c2.seedEntryIds))];
+    const seedEntryIds = [...new Set(candidates.flatMap((c4) => c4.seedEntryIds))];
     this.events.emit("family:saved", { seedEntryIds });
     return { families, added: added2 };
   }
@@ -40795,30 +43920,30 @@ var FamilyService = class {
     }
     return added2;
   }
-  toFamily(c2, entryCount, renewed = /* @__PURE__ */ new Set()) {
-    const existing = this.families().find((f) => key4(f.topic) === key4(c2.topic));
+  toFamily(c4, entryCount, renewed = /* @__PURE__ */ new Set()) {
+    const existing = this.families().find((f) => key4(f.topic) === key4(c4.topic));
     if (existing && renewed.has(existing.id)) {
       renewed.delete(existing.id);
       return {
         ...existing,
-        label: c2.label,
-        emoji: c2.emoji,
-        scope: candidateScope(c2),
-        groups: c2.groups.map((g) => ({ label: g.label, members: g.members.map((m2) => ({ ...m2 })) })),
-        seedEntryIds: c2.seedEntryIds,
+        label: c4.label,
+        emoji: c4.emoji,
+        scope: candidateScope(c4),
+        groups: c4.groups.map((g) => ({ label: g.label, members: g.members.map((m2) => ({ ...m2 })) })),
+        seedEntryIds: c4.seedEntryIds,
         entryCountAtGenerate: entryCount
       };
     }
-    if (existing) return mergeFamily(existing, c2);
+    if (existing) return mergeFamily(existing, c4);
     return {
       id: this.newId(),
-      topic: c2.topic,
-      label: c2.label,
-      emoji: c2.emoji,
+      topic: c4.topic,
+      label: c4.label,
+      emoji: c4.emoji,
       source: "ai",
-      scope: candidateScope(c2),
-      groups: c2.groups.map((g) => ({ label: g.label, members: g.members.map((m2) => ({ ...m2 })) })),
-      seedEntryIds: c2.seedEntryIds,
+      scope: candidateScope(c4),
+      groups: c4.groups.map((g) => ({ label: g.label, members: g.members.map((m2) => ({ ...m2 })) })),
+      seedEntryIds: c4.seedEntryIds,
       entryCountAtGenerate: entryCount
     };
   }
@@ -40896,9 +44021,9 @@ var FamilyService = class {
         partOfSpeech: d.partOfSpeech
       };
       let changed = false;
-      for (const [k, v] of Object.entries(fill2)) {
-        if (v && !entry[k]) {
-          entry[k] = v;
+      for (const [k, v5] of Object.entries(fill2)) {
+        if (v5 && !entry[k]) {
+          entry[k] = v5;
           changed = true;
         }
       }
@@ -40914,10 +44039,10 @@ var FamilyService = class {
     }
   }
 };
-function mergeFamily(f, c2) {
+function mergeFamily(f, c4) {
   var _a, _b;
   const groups = f.groups.map((g) => ({ label: g.label, members: [...g.members] }));
-  for (const cg of c2.groups) {
+  for (const cg of c4.groups) {
     let g = groups.find((x3) => key4(x3.label) === key4(cg.label));
     if (!g) {
       g = { label: cg.label, members: [] };
@@ -40925,9 +44050,9 @@ function mergeFamily(f, c2) {
     }
     for (const m2 of cg.members) if (!g.members.some((x3) => key4(x3.word) === key4(m2.word))) g.members.push({ ...m2 });
   }
-  const seeds = [.../* @__PURE__ */ new Set([...(_a = f.seedEntryIds) != null ? _a : [], ...c2.seedEntryIds])];
-  const scope = familyScope(f) === "word" || candidateScope(c2) === "word" ? "word" : "list";
-  return { ...f, groups, seedEntryIds: seeds, scope, emoji: (_b = f.emoji) != null ? _b : c2.emoji };
+  const seeds = [.../* @__PURE__ */ new Set([...(_a = f.seedEntryIds) != null ? _a : [], ...c4.seedEntryIds])];
+  const scope = familyScope(f) === "word" || candidateScope(c4) === "word" ? "word" : "list";
+  return { ...f, groups, seedEntryIds: seeds, scope, emoji: (_b = f.emoji) != null ? _b : c4.emoji };
 }
 
 // src/services/learn/VerbUsageService.ts
@@ -41482,8 +44607,8 @@ var MorphemeService = class {
   }
   // verified 絕不覆蓋 (只補 suggested 沒有的字); 未 verified 只補空欄位。
   mergeIntoExisting(target, dm) {
-    const already = new Set(target.suggested.map((s) => key5(s.word)));
-    const extraSuggested = dm.suggested.filter((s) => s.word.trim() && !already.has(key5(s.word)));
+    const already = new Set(target.suggested.map((s2) => key5(s2.word)));
+    const extraSuggested = dm.suggested.filter((s2) => s2.word.trim() && !already.has(key5(s2.word)));
     if (target.verified) {
       if (!extraSuggested.length) return target;
       const merged = { ...target, suggested: [...target.suggested, ...extraSuggested] };
@@ -41537,8 +44662,8 @@ var MorphemeService = class {
         const id2 = resolveMorphemeId(list2, part.morphemeId);
         if (seen.has(id2)) continue;
         seen.add(id2);
-        const arr = learnedMap.get(id2);
-        if (arr) arr.push(e);
+        const arr2 = learnedMap.get(id2);
+        if (arr2) arr2.push(e);
         else learnedMap.set(id2, [e]);
       }
     }
@@ -41547,7 +44672,7 @@ var MorphemeService = class {
       const learned = (_a = learnedMap.get(m2.id)) != null ? _a : [];
       if (!learned.length) continue;
       const learnedWords = new Set(learned.map((e) => key5(e.word)));
-      out.push({ morpheme: m2, learned, suggested: m2.suggested.filter((s) => !learnedWords.has(key5(s.word))) });
+      out.push({ morpheme: m2, learned, suggested: m2.suggested.filter((s2) => !learnedWords.has(key5(s2.word))) });
     }
     out.sort((a2, b) => b.learned.length - a2.learned.length);
     return out;
@@ -41569,7 +44694,7 @@ var MorphemeService = class {
     const m2 = this.deps.learn.morpheme(resolveMorphemeId(list2, id2));
     if (!m2) return [];
     const exclude = this.learnedWordsFor(m2.id);
-    for (const s of m2.suggested) exclude.add(key5(s.word));
+    for (const s2 of m2.suggested) exclude.add(key5(s2.word));
     const { value } = await runStructured(
       this.deps.ai,
       dnaExpand,
@@ -41587,7 +44712,7 @@ var MorphemeService = class {
     await this.deps.learn.ensureLoaded();
     const resolvedId = resolveMorphemeId(this.deps.learn.morphemes(), id2);
     const m2 = this.deps.learn.morpheme(resolvedId);
-    const match = m2 == null ? void 0 : m2.suggested.find((s) => key5(s.word) === key5(word));
+    const match = m2 == null ? void 0 : m2.suggested.find((s2) => key5(s2.word) === key5(word));
     const w2 = (_a = match == null ? void 0 : match.word) != null ? _a : word;
     const zh = (_b = match == null ? void 0 : match.zh) != null ? _b : "";
     const index2 = new WordIndex(this.deps.vocab.entries);
@@ -41632,10 +44757,10 @@ var MorphemeService = class {
     return entryRec;
   }
   // ── Verify / manual edit ─────────────────────────────────────────────
-  setVerified(id2, v) {
+  setVerified(id2, v5) {
     const m2 = this.deps.learn.morpheme(resolveMorphemeId(this.deps.learn.morphemes(), id2));
     if (!m2) return;
-    this.deps.learn.putMorpheme({ ...m2, verified: v });
+    this.deps.learn.putMorpheme({ ...m2, verified: v5 });
   }
   edit(id2, patch) {
     const m2 = this.deps.learn.morpheme(resolveMorphemeId(this.deps.learn.morphemes(), id2));
@@ -41742,9 +44867,9 @@ var SelectionTracker = class {
     const sel = window.getSelection();
     const node = sel == null ? void 0 : sel.anchorNode;
     if (!sel || !node) return;
-    const el = node instanceof HTMLElement ? node : node.parentElement;
-    if (!(el == null ? void 0 : el.closest('.workspace-leaf-content[data-type="markdown"]'))) return;
-    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v) => v instanceof import_obsidian64.MarkdownView && v.containerEl.contains(el));
+    const el2 = node instanceof HTMLElement ? node : node.parentElement;
+    if (!(el2 == null ? void 0 : el2.closest('.workspace-leaf-content[data-type="markdown"]'))) return;
+    const view = this.app.workspace.getLeavesOfType("markdown").map((leaf) => leaf.view).find((v5) => v5 instanceof import_obsidian64.MarkdownView && v5.containerEl.contains(el2));
     const raw = (view == null ? void 0 : view.getMode()) === "source" ? view.editor.getSelection() : sel.toString();
     const text = raw.replace(/\s+/g, " ").trim().slice(0, MAX_SELECTION_CHARS);
     if (!text) {
@@ -41829,10 +44954,10 @@ var WordlistIndex = class {
     const exact = this.byWord.get(lower2);
     if (exact) hit = { base: lower2, tags: exact };
     else if (inflections) {
-      for (const base of lemmaCandidates(lower2)) {
-        const tags = this.byWord.get(base);
+      for (const base2 of lemmaCandidates(lower2)) {
+        const tags = this.byWord.get(base2);
         if (tags) {
-          hit = { base, tags };
+          hit = { base: base2, tags };
           break;
         }
       }
@@ -41887,13 +45012,13 @@ var WordlistService = class extends TypedEmitter {
   // highlighting is off or there's nothing loaded, so the post-processor
   // can skip walking the DOM at all.
   highlightLookup() {
-    const s = this.deps.settings();
-    if (!s.highlight || this.index.isEmpty) return null;
-    const enabled = new Set(this.index.tags.filter((t2) => tagEnabled(s, t2)));
+    const s2 = this.deps.settings();
+    if (!s2.highlight || this.index.isEmpty) return null;
+    const enabled = new Set(this.index.tags.filter((t2) => tagEnabled(s2, t2)));
     if (enabled.size === 0) return null;
     const memo = /* @__PURE__ */ new Map();
     return (word) => {
-      const tags = this.index.lookup(word, s.inflections);
+      const tags = this.index.lookup(word, s2.inflections);
       if (tags.length === 0) return tags;
       let hit = memo.get(tags);
       if (!hit) memo.set(tags, hit = tags.filter((t2) => enabled.has(t2)));
@@ -41915,12 +45040,12 @@ var WordlistService = class extends TypedEmitter {
     const token2 = { mtime, promise: null };
     const run = async () => {
       const lines4 = proseLines(await read());
-      const acc = new ScanAccumulator(this.match);
+      const acc3 = new ScanAccumulator(this.match);
       for (let i = 0; i < lines4.length; i++) {
         if (i > 0 && i % SLICE_LINES === 0) await this.yieldToUi();
-        acc.add(lines4[i], i);
+        acc3.add(lines4[i], i);
       }
-      const result = acc.result();
+      const result = acc3.result();
       if (gen === this.generation && this.inflight.get(path) === token2) {
         this.inflight.delete(path);
         this.scans.delete(path);
@@ -41962,9 +45087,9 @@ var SKIP3 = [
   "[class*='block-language-']",
   `.${EXAM_WORD_CLS}`
 ].join(", ");
-function highlightExamWords(el, lookup, colorOf) {
+function highlightExamWords(el2, lookup, colorOf) {
   var _a;
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+  const walker = document.createTreeWalker(el2, NodeFilter.SHOW_TEXT, {
     acceptNode: (n) => {
       var _a2, _b;
       return ((_a2 = n.parentElement) == null ? void 0 : _a2.closest(SKIP3)) || !/[A-Za-z]/.test((_b = n.nodeValue) != null ? _b : "") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
@@ -42011,8 +45136,8 @@ function vocabLookup(words, inflections) {
     hit = NONE2;
     if (words.has(lower2)) hit = [lower2];
     else if (inflections) {
-      const base = lemmaCandidates(lower2).find((b) => words.has(b));
-      if (base) hit = [base];
+      const base2 = lemmaCandidates(lower2).find((b) => words.has(b));
+      if (base2) hit = [base2];
     }
     memo.set(lower2, hit);
     return hit;
@@ -42021,9 +45146,9 @@ function vocabLookup(words, inflections) {
 
 // src/ui/reading/vocabHighlight.ts
 var VOCAB_AUTO_CLS = "vt-vocab-auto";
-function highlightVocabWords(el, lookup) {
+function highlightVocabWords(el2, lookup) {
   var _a;
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+  const walker = document.createTreeWalker(el2, NodeFilter.SHOW_TEXT, {
     acceptNode: (n) => {
       var _a2, _b;
       return ((_a2 = n.parentElement) == null ? void 0 : _a2.closest(SKIP3)) || !/[A-Za-z]/.test((_b = n.nodeValue) != null ? _b : "") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
@@ -42051,9 +45176,9 @@ var VocabHighlighter = class {
     this.deps = deps;
     this.key = null;
     this.lookup = null;
-    this.process = (el) => {
+    this.process = (el2) => {
       if (this.key === null) this.build();
-      if (this.lookup) highlightVocabWords(el, this.lookup);
+      if (this.lookup) highlightVocabWords(el2, this.lookup);
     };
   }
   // Call on the store's data:changed.
@@ -42552,9 +45677,9 @@ var ObsidianVault = class {
 };
 var KIND_KEY = "vocab-tracker";
 var ID_KEY = "vocab-tracker-id";
-function scalar(v) {
-  if (typeof v === "string") return v.trim() || null;
-  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+function scalar(v5) {
+  if (typeof v5 === "string") return v5.trim() || null;
+  if (typeof v5 === "number" && Number.isFinite(v5)) return String(v5);
   return null;
 }
 function managedRefOf(frontmatter3) {
@@ -42660,7 +45785,7 @@ var BOM = "\uFEFF";
 function bomLength(text) {
   return text.startsWith(BOM) ? BOM.length : 0;
 }
-function locate(text) {
+function locate2(text) {
   const bom = bomLength(text);
   const open = /^---[ \t]*\r?\n/.exec(text.slice(bom));
   if (!open) return null;
@@ -42673,8 +45798,8 @@ var LINE = /^([\w-]+):[ \t]*(.*?)[ \t]*$/;
 function unquote2(raw) {
   if (raw.startsWith('"')) {
     try {
-      const v = JSON.parse(raw);
-      if (typeof v === "string") return v;
+      const v5 = JSON.parse(raw);
+      if (typeof v5 === "string") return v5;
     } catch (e) {
     }
     return raw;
@@ -42686,7 +45811,7 @@ function lines3(text) {
   return text.split(/(?<=\n)/).filter((l4) => l4 !== "");
 }
 function readFrontmatter(text) {
-  const at = locate(text);
+  const at = locate2(text);
   if (!at) return null;
   const out = {};
   for (const line2 of lines3(text.slice(at.start, at.end))) {
@@ -42697,11 +45822,11 @@ function readFrontmatter(text) {
 }
 function editFrontmatter(text, fields, opts = {}) {
   var _a, _b, _c, _d, _e;
-  const at = locate(text);
+  const at = locate2(text);
   if (!at) {
     if (!opts.add || !opts.create) return text;
     const eol2 = (_b = (_a = /\r\n/.exec(text)) == null ? void 0 : _a[0]) != null ? _b : "\n";
-    const head = ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${yamlValue(v)}`), "---", ""].join(eol2);
+    const head = ["---", ...Object.entries(fields).map(([k, v5]) => `${k}: ${yamlValue(v5)}`), "---", ""].join(eol2);
     const bom = bomLength(text);
     return text.slice(0, bom) + head + text.slice(bom);
   }
@@ -42849,14 +45974,14 @@ function triviaMentioning(items, entry) {
 }
 function usageFavoriteOf(input, pos) {
   var _a;
-  return (_a = input.verbFavorites) == null ? void 0 : _a.find((v) => {
+  return (_a = input.verbFavorites) == null ? void 0 : _a.find((v5) => {
     var _a2;
-    return v.entryId === input.entry.id && !v.deletedAt && ((_a2 = v.pos) != null ? _a2 : "v") === pos;
+    return v5.entryId === input.entry.id && !v5.deletedAt && ((_a2 = v5.pos) != null ? _a2 : "v") === pos;
   });
 }
 function hasWordPageContent(input) {
   var _a;
-  return threadRounds(input.thread).length > 0 || triviaAbout(input.trivia, input.entry.id).length > 0 || !!((_a = input.verbFavorites) == null ? void 0 : _a.some((v) => v.entryId === input.entry.id && !v.deletedAt));
+  return threadRounds(input.thread).length > 0 || triviaAbout(input.trivia, input.entry.id).length > 0 || !!((_a = input.verbFavorites) == null ? void 0 : _a.some((v5) => v5.entryId === input.entry.id && !v5.deletedAt));
 }
 function section3(name, heading, body, before) {
   return { name, body: `## ${heading}
@@ -43047,8 +46172,8 @@ var ExportService = class {
   aiNoteNames(articlePath) {
     const folder = this.folders().threads;
     const budget = MAX_NAME_BYTES - utf8Bytes2(AI_NOTE_EXT);
-    const base = noteBasename(articlePath);
-    const name = (suffix) => joinPath(folder, `${slugify(base, "untitled", budget - utf8Bytes2(suffix))}${suffix}${AI_NOTE_EXT}`);
+    const base2 = noteBasename(articlePath);
+    const name = (suffix) => joinPath(folder, `${slugify(base2, "untitled", budget - utf8Bytes2(suffix))}${suffix}${AI_NOTE_EXT}`);
     const dir = articlePath.slice(0, Math.max(0, articlePath.lastIndexOf("/")));
     const label = slugify(dir.slice(dir.lastIndexOf("/") + 1), "", FOLDER_LABEL_BYTES);
     const tag = label ? ` (${label})` : "";
@@ -43475,7 +46600,7 @@ function createExportData(src) {
     trivia: () => src.learn.trivia().filter((t2) => !t2.deletedAt),
     verbFavorites: () => {
       var _a, _b, _c;
-      return ((_c = (_b = (_a = src.learn).verbFavorites) == null ? void 0 : _b.call(_a)) != null ? _c : []).filter((v) => !v.deletedAt);
+      return ((_c = (_b = (_a = src.learn).verbFavorites) == null ? void 0 : _b.call(_a)) != null ? _c : []).filter((v5) => !v5.deletedAt);
     },
     wordBreakdown: (entryId) => {
       var _a, _b, _c;
@@ -43731,12 +46856,12 @@ var PluginNoteChrome = class {
       if (!(view instanceof import_obsidian69.MarkdownView)) continue;
       const file = view.file;
       const cache2 = file ? this.app.metadataCache.getFileCache(file) : null;
-      const el = view.containerEl;
-      const hasDashboardBlock = !!el.querySelector(".vt-dash");
+      const el2 = view.containerEl;
+      const hasDashboardBlock = !!el2.querySelector(".vt-dash");
       const state = chromeState(cache2, (_a = file == null ? void 0 : file.basename) != null ? _a : "", hasDashboardBlock);
-      el.toggleClass(PLUGIN_NOTE_CLASS, state.pluginNote);
-      el.toggleClass(HIDE_TITLE_CLASS, state.hideInlineTitle);
-      el.toggleClass(HIDE_FIRST_HEADING_CLASS, state.hideFirstHeading);
+      el2.toggleClass(PLUGIN_NOTE_CLASS, state.pluginNote);
+      el2.toggleClass(HIDE_TITLE_CLASS, state.hideInlineTitle);
+      el2.toggleClass(HIDE_FIRST_HEADING_CLASS, state.hideFirstHeading);
     }
   }
   dispose() {
@@ -44075,7 +47200,7 @@ var BottomSheet = class {
     var _a, _b, _c, _d, _e;
     const doc = this.panel.ownerDocument;
     const view = doc == null ? void 0 : doc.defaultView;
-    const css = (el, name) => el && view ? view.getComputedStyle(el).getPropertyValue(name).trim() || "(unset)" : "(n/a)";
+    const css = (el2, name) => el2 && view ? view.getComputedStyle(el2).getPropertyValue(name).trim() || "(unset)" : "(n/a)";
     const vv = this.win.visualViewport;
     const panelRect = (_b = (_a = this.panel).getBoundingClientRect) == null ? void 0 : _b.call(_a);
     const active2 = doc == null ? void 0 : doc.activeElement;
@@ -44108,9 +47233,9 @@ var BottomSheet = class {
 };
 function isTextInput(target) {
   var _a;
-  const el = target;
-  const tag = (_a = el == null ? void 0 : el.tagName) == null ? void 0 : _a.toUpperCase();
-  return tag === "TEXTAREA" || tag === "INPUT" || !!(el == null ? void 0 : el.isContentEditable);
+  const el2 = target;
+  const tag = (_a = el2 == null ? void 0 : el2.tagName) == null ? void 0 : _a.toUpperCase();
+  return tag === "TEXTAREA" || tag === "INPUT" || !!(el2 == null ? void 0 : el2.isContentEditable);
 }
 
 // src/ui/mobile/WordSheet.ts
@@ -44226,7 +47351,7 @@ var WordSheet = class extends import_obsidian72.Component {
   async writeKeyboardProbe(probe2) {
     try {
       const adapter = this.plugin.app.vault.adapter;
-      const lines4 = Object.entries(probe2).map(([k, v]) => `- ${k}: \`${String(v)}\``);
+      const lines4 = Object.entries(probe2).map(([k, v5]) => `- ${k}: \`${String(v5)}\``);
       const block = `
 ## ${(/* @__PURE__ */ new Date()).toISOString()}
 
@@ -44258,7 +47383,7 @@ ${block}`);
       sheet.content,
       entry,
       this.expand,
-      (s) => this.expand = s === "collapsed" ? "half" : s,
+      (s2) => this.expand = s2 === "collapsed" ? "half" : s2,
       () => this.draw(),
       {
         ui: this.wordUi,
@@ -44281,7 +47406,7 @@ ${block}`);
   // store) finds for it. ♥, or the AI tab's first question, is the only
   // thing that ever adds it (previewEntry.ts's promotePreview()); closing
   // the sheet without either leaves nothing behind.
-  drawPreview(el, view) {
+  drawPreview(el2, view) {
     var _a, _b, _c;
     const dict = loadPreviewDictionary(this.plugin.dictionary, view.word, () => {
       if (this.isOpen && this.view === view) this.draw();
@@ -44290,10 +47415,10 @@ ${block}`);
     if (dict.status === "ready" && dict.data) mergeDictionaryInto(draft, dict.data);
     renderVocabRow(
       this.plugin,
-      el,
+      el2,
       draft,
       this.expand,
-      (s) => this.expand = s === "collapsed" ? "half" : s,
+      (s2) => this.expand = s2 === "collapsed" ? "half" : s2,
       () => this.draw(),
       {
         ui: this.wordUi,
@@ -44326,8 +47451,8 @@ ${block}`);
       threadStarted: (section4, threadId) => {
         const view = this.view;
         if ((view == null ? void 0 : view.kind) !== "paragraph" || view.route.name !== "paragraph-draft") return;
-        const s = view.route.section;
-        if (s.path !== section4.path || s.lineStart !== section4.lineStart) return;
+        const s2 = view.route.section;
+        if (s2.path !== section4.path || s2.lineStart !== section4.lineStart) return;
         const draftKey = routeKey(view.route);
         view.route = { name: "paragraph", threadId };
         const chat = this.wordUi.chat;
@@ -44445,8 +47570,8 @@ var MIN_PREFIX = 20;
 function firstPiece(sections, snapshot2) {
   const want = bare(snapshot2);
   if (!want) return void 0;
-  return sections.find((s) => {
-    const have = bare(s.text);
+  return sections.find((s2) => {
+    const have = bare(s2.text);
     return have === want || have.length >= MIN_PREFIX && want.startsWith(have);
   });
 }
@@ -44457,8 +47582,8 @@ function restoreArticle(content, anchors, words) {
   const present = blockIdsIn(out);
   for (const a2 of anchors) {
     if (!a2.blockId || present.has(a2.blockId)) continue;
-    const free = noteSections(out).filter((s) => isAnchorable(s.type) && !trailingBlockId(ownBlockIdText(s)));
-    const section4 = (_a = free.find((s) => paragraphHash(s.text) === a2.hash)) != null ? _a : a2.snapshot ? firstPiece(free, a2.snapshot) : void 0;
+    const free = noteSections(out).filter((s2) => isAnchorable(s2.type) && !trailingBlockId(ownBlockIdText(s2)));
+    const section4 = (_a = free.find((s2) => paragraphHash(s2.text) === a2.hash)) != null ? _a : a2.snapshot ? firstPiece(free, a2.snapshot) : void 0;
     if (!section4) continue;
     out = withBlockId(out, ownBlockIdLine(section4), a2.blockId);
     present.add(a2.blockId);
@@ -44477,8 +47602,8 @@ function lostParts(content, anchors, words) {
   const ids = anchors.filter((a2) => a2.blockId);
   const present = blockIdsIn(content);
   const idsLost = ids.length > 0 && ids.every((a2) => !present.has(a2.blockId));
-  const marked = (w2) => new RegExp(`==${w2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}==`, "i").test(content);
-  const wordsLost = words.length > 0 && !words.some(marked);
+  const marked2 = (w2) => new RegExp(`==${w2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}==`, "i").test(content);
+  const wordsLost = words.length > 0 && !words.some(marked2);
   return { anchors: idsLost ? ids : [], words: wordsLost ? [...words] : [] };
 }
 
@@ -44686,21 +47811,21 @@ var DeleteEntryModal = class extends import_obsidian73.Modal {
     if (!this.confirmed) this.onResult(null);
   }
   render() {
-    const el = this.contentEl;
-    el.empty();
+    const el2 = this.contentEl;
+    el2.empty();
     const lines4 = deletionImpactLines(this.impact);
     if (lines4.length) {
-      const ul = el.createEl("ul", { cls: "vt-delete-entry-impact" });
+      const ul = el2.createEl("ul", { cls: "vt-delete-entry-impact" });
       for (const line2 of lines4) ul.createEl("li", { text: line2 });
     } else {
-      el.createEl("p", { text: t("deleteEntry.noLinks"), cls: "vt-settings-muted" });
+      el2.createEl("p", { text: t("deleteEntry.noLinks"), cls: "vt-settings-muted" });
     }
     if (this.impact.wordPageExists) {
-      new import_obsidian73.Setting(el).setName(t("deleteEntry.trashWordPage")).addToggle(
-        (toggle2) => toggle2.setValue(this.trashWordPage).onChange((v) => this.trashWordPage = v)
+      new import_obsidian73.Setting(el2).setName(t("deleteEntry.trashWordPage")).addToggle(
+        (toggle2) => toggle2.setValue(this.trashWordPage).onChange((v5) => this.trashWordPage = v5)
       );
     }
-    new import_obsidian73.Setting(el).addButton((b) => b.setButtonText(t("deleteEntry.cancel")).onClick(() => this.close())).addButton(
+    new import_obsidian73.Setting(el2).addButton((b) => b.setButtonText(t("deleteEntry.cancel")).onClick(() => this.close())).addButton(
       (b) => b.setButtonText(t("deleteEntry.confirm")).setWarning().onClick(() => {
         this.confirmed = true;
         this.onResult({ trashWordPage: this.trashWordPage });
@@ -44724,15 +47849,15 @@ function loadDnaBudget() {
   try {
     const raw = window.localStorage.getItem(DNA_BUDGET_KEY);
     if (!raw) return { day: "", used: 0 };
-    const v = JSON.parse(raw);
-    return { day: typeof v.day === "string" ? v.day : "", used: typeof v.used === "number" ? v.used : 0 };
+    const v5 = JSON.parse(raw);
+    return { day: typeof v5.day === "string" ? v5.day : "", used: typeof v5.used === "number" ? v5.used : 0 };
   } catch (e) {
     return { day: "", used: 0 };
   }
 }
-function saveDnaBudget(v) {
+function saveDnaBudget(v5) {
   try {
-    window.localStorage.setItem(DNA_BUDGET_KEY, JSON.stringify(v));
+    window.localStorage.setItem(DNA_BUDGET_KEY, JSON.stringify(v5));
   } catch (e) {
   }
 }
@@ -44872,7 +47997,7 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
       buddyArchive: {
         folder: () => this.files.paths().threads,
         exists: (p) => this.vault.exists(p),
-        create: (p, c2) => this.vault.create(p, c2),
+        create: (p, c4) => this.vault.create(p, c4),
         process: (p, fn) => this.vault.process(p, fn),
         findNote: (id2) => this.vault.findManaged("ai-note", id2),
         onSaved: (path) => new import_obsidian74.Notice(t("buddy.archived", { path })),
@@ -44923,6 +48048,7 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
       },
       this.learner
     );
+    this.grammarVisuals = new VisualService({ ai });
     this.grammarQuestions = new QuestionService({
       grammar: this.grammar,
       ai,
@@ -44957,9 +48083,9 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
     this.scenario = new ScenarioService(scenarioDeps);
     const noteScenarios = /* @__PURE__ */ new Map();
     this.noteScenario = (path) => {
-      let s = noteScenarios.get(path);
-      if (!s) noteScenarios.set(path, s = new ScenarioService({ ...scenarioDeps, lane: `note:${path}` }));
-      return s;
+      let s2 = noteScenarios.get(path);
+      if (!s2) noteScenarios.set(path, s2 = new ScenarioService({ ...scenarioDeps, lane: `note:${path}` }));
+      return s2;
     };
     this.learnerModel = new LearnerModel({
       vocab: () => this.store.entries,
@@ -44992,12 +48118,12 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
       learn: this.learn,
       vault: {
         exists: (p) => this.vault.exists(p),
-        create: (p, c2) => this.vault.create(p, c2),
+        create: (p, c4) => this.vault.create(p, c4),
         process: (p, fn) => this.vault.process(p, fn),
         read: (p) => this.vault.read(p),
         list: (folder) => {
           const f = this.app.vault.getAbstractFileByPath(folder);
-          return f instanceof import_obsidian74.TFolder ? f.children.map((c2) => c2.path) : [];
+          return f instanceof import_obsidian74.TFolder ? f.children.map((c4) => c4.path) : [];
         },
         frontmatterOf: (p) => this.frontmatterOf(p)
       },
@@ -45019,11 +48145,11 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
       vocab: this.store,
       vault: {
         exists: (p) => this.vault.exists(p),
-        create: (p, c2) => this.vault.create(p, c2),
+        create: (p, c4) => this.vault.create(p, c4),
         process: (p, fn) => this.vault.process(p, fn),
         list: (folder) => {
           const f = this.app.vault.getAbstractFileByPath(folder);
-          return f instanceof import_obsidian74.TFolder ? f.children.map((c2) => c2.path) : [];
+          return f instanceof import_obsidian74.TFolder ? f.children.map((c4) => c4.path) : [];
         },
         frontmatterOf: (p) => this.frontmatterOf(p)
       },
@@ -45188,8 +48314,8 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
       enabled: () => resolveUiPrefs(this.store.settings.ui).livePreviewHint,
       notify: (text, actions) => actionNotice(text, actions, 8e3),
       switchToReading: () => void this.switchToReadingView(),
-      disable: () => void this.store.updateSettings((s) => {
-        s.ui.livePreviewHint = false;
+      disable: () => void this.store.updateSettings((s2) => {
+        s2.ui.livePreviewHint = false;
       })
     });
     this.paragraphIndex = new ParagraphIndex();
@@ -45220,11 +48346,11 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
     this.register(this.store.events.on("data:changed", () => vocabHighlight.refresh()));
     this.registerMarkdownPostProcessor(vocabHighlight.process);
     this.registerMarkdownPostProcessor(this.processMarks.bind(this));
-    this.registerMarkdownPostProcessor((el) => {
+    this.registerMarkdownPostProcessor((el2) => {
       const lookup = this.wordlists.highlightLookup();
       if (!lookup) return;
-      const s = this.wordlistSettings();
-      highlightExamWords(el, lookup, (tag) => tagColor(s, tag));
+      const s2 = this.wordlistSettings();
+      highlightExamWords(el2, lookup, (tag) => tagColor(s2, tag));
     });
     this.registerDomEvent(document, "click", this.handleReadingClick.bind(this));
     registerBlocks(this);
@@ -45429,17 +48555,17 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
     return resolveWordlistSettings(this.store.settings.wordlists);
   }
   async updateWordlistSettings(patch) {
-    await this.store.updateSettings((s) => s.wordlists = { ...this.wordlistSettings(), ...patch });
+    await this.store.updateSettings((s2) => s2.wordlists = { ...this.wordlistSettings(), ...patch });
     await this.onWordlistsChanged("display");
   }
   // Sidebar chip: turn one list's underlines on/off. If underlining is off
   // altogether, a click means "show me this one", so it turns that on too.
   async toggleExamTag(tag) {
-    const s = this.wordlistSettings();
-    const on = s.highlight && tagEnabled(s, tag);
+    const s2 = this.wordlistSettings();
+    const on = s2.highlight && tagEnabled(s2, tag);
     await this.updateWordlistSettings({
-      highlight: s.highlight || !on,
-      tags: { ...s.tags, [tag]: { ...s.tags[tag], enabled: !on } }
+      highlight: s2.highlight || !on,
+      tags: { ...s2.tags, [tag]: { ...s2.tags[tag], enabled: !on } }
     });
   }
   async onWordlistsChanged(change) {
@@ -45470,8 +48596,8 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
   }
   // Exam labels for a word's list tags — enabled lists only ("TOEFL, IELTS").
   examLabels(tags) {
-    const s = this.wordlistSettings();
-    return tags.filter((tag) => tagEnabled(s, tag)).map(tagLabel);
+    const s2 = this.wordlistSettings();
+    return tags.filter((tag) => tagEnabled(s2, tag)).map(tagLabel);
   }
   // Adds every exam-list word in the note to the vocab list (level = its
   // exams, liked:false — 1006 #25), and adds the exam labels to words
@@ -45485,9 +48611,9 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
     try {
       const result = (_a = opts.result) != null ? _a : await this.wordlists.scan(file.path, file.stat.mtime, () => this.app.vault.cachedRead(file));
       const plan = planImport(result.hits, this.examWordIndex, (tags) => this.examLabels(tags), { now: Date.now() });
-      const base = Date.now();
+      const base2 = Date.now();
       const created2 = plan.create.map(
-        (w2, i) => this.newEntry(`${base}-${i}`, w2.word, {
+        (w2, i) => this.newEntry(`${base2}-${i}`, w2.word, {
           level: w2.level,
           example: w2.example,
           source: { path: file.path, line: w2.line },
@@ -45776,13 +48902,13 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
     const w2 = word.trim().toLowerCase();
     return this.store.entries.some((e) => !e.deletedAt && e.word.trim().toLowerCase() === w2);
   }
-  async noteReadingClick(word, sentence) {
+  async noteReadingClick(word, sentence2) {
     this.learner.recordWordTouch({ word, kind: "lookup", saved: this.isWordSaved(word) });
     try {
       const file = this.app.workspace.getActiveFile();
       if (!file || file.extension !== "md") return;
       const content = await this.app.vault.read(file);
-      const line2 = findSourceLine(content, word, sentence);
+      const line2 = findSourceLine(content, word, sentence2);
       await this.reading.note(file.path, line2 < 0 ? null : line2, "word");
     } catch (e) {
       console.error("Vocab Tracker: couldn't record reading", e);
@@ -45843,7 +48969,7 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
     }
     if (!node || node.nodeType !== Node.TEXT_NODE) return { word: "", sentence: "" };
     const text = node.textContent || "";
-    const isWordChar = (c2) => c2 !== void 0 && /[A-Za-z'\-]/.test(c2);
+    const isWordChar = (c4) => c4 !== void 0 && /[A-Za-z'\-]/.test(c4);
     let start4 = offset;
     let end = offset;
     while (start4 > 0 && isWordChar(text[start4 - 1])) start4--;
@@ -45860,8 +48986,8 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
       const blockText = block.textContent || "";
       return { word, sentence: extractSentence(blockText, before, before + (end - start4), null) };
     }
-    const sentence = extractSentence(text, start4, end, node);
-    return { word, sentence };
+    const sentence2 = extractSentence(text, start4, end, node);
+    return { word, sentence: sentence2 };
   }
   // `reveal` (default): show the word afterwards — sidebar, or the bottom
   // sheet on iPhone. Quick save and the sheet's own 「加入」 pass false.
@@ -46070,8 +49196,8 @@ var VocabTrackerPlugin = class extends import_obsidian74.Plugin {
     if (updated !== content) await this.app.vault.modify(file, updated);
   }
   // ── Mark click handler ─────────────────────────────────────────
-  processMarks(el, _ctx) {
-    el.querySelectorAll("mark").forEach((mark) => {
+  processMarks(el2, _ctx) {
+    el2.querySelectorAll("mark").forEach((mark) => {
       var _a, _b, _c;
       const word = (_c = (_b = mark.dataset.vtWord) != null ? _b : (_a = mark.textContent) == null ? void 0 : _a.trim()) != null ? _c : "";
       if (!word) return;

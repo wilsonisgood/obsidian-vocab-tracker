@@ -54,6 +54,7 @@ import type { Track } from "./src/core/model/learner";
 import { TAB_EVENT as PRACTICE_TAB_EVENT, TAB_KEY as PRACTICE_TAB_KEY } from "./src/ui/blocks/practice/practiceModel";
 import { GrammarPages } from "./src/services/grammar/GrammarPages";
 import { QuestionService } from "./src/services/grammar/QuestionService";
+import { VisualService } from "./src/services/grammar/VisualService";
 import { ScenarioService } from "./src/services/practice/ScenarioService";
 import { LearnerModel } from "./src/services/learner/LearnerModel";
 import { setProfileDeps } from "./src/services/ai/context/profile";
@@ -214,6 +215,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
   reading!: ReadingTracker;
   grammarPages!: GrammarPages;
   grammarQuestions!: QuestionService;
+  grammarVisuals!: VisualService;
   scenario!: ScenarioService;
   learnerModel!: LearnerModel;
   families!: FamilyService;
@@ -432,6 +434,7 @@ export default class VocabTrackerPlugin extends Plugin implements WordHeaderHost
       },
       this.learner
     );
+    this.grammarVisuals = new VisualService({ ai });
     this.grammarQuestions = new QuestionService({
       grammar: this.grammar,
       ai,

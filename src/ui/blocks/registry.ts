@@ -76,12 +76,22 @@ function grammarTopicDeps(plugin: VocabTrackerPlugin): GrammarTopicDeps {
     openTopic: (id) => plugin.grammarPages.open(id),
     openNote: (path) => plugin.openNote(path),
     openSettings: () => openPluginSettings(plugin.app, plugin.manifest.id),
+    visuals: plugin.grammarVisuals,
+    aiReady: () => plugin.ai.status() === "ready",
+    api: plugin.grammarQuestions,
+    ready: () => grammarReady(plugin),
+    generate: (topicId, count) => plugin.grammarQuestions.generate(topicId, { count }),
+    mountPlayer: mountScenarioPlayer,
   };
 }
 
 // The card needs api / ready / setGrammarFilter / openPractice at integration.
 function grammarPracticeDeps(plugin: VocabTrackerPlugin): GrammarPracticeDeps {
-  return { api: plugin.grammarQuestions, ready: () => grammarReady(plugin), ...grammarRouting(plugin) };
+  return {
+    api: plugin.grammarQuestions,
+    ready: () => grammarReady(plugin),
+    ...grammarRouting(plugin),
+  };
 }
 
 // 第十六波: the grammar stores both load before a grammar practice surface draws.
