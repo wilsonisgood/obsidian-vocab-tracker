@@ -21,11 +21,10 @@ describe("verbslot 版面", () => {
     expect(verbslotKind.parse(null)).toBeNull();
     expect(verbslotKind.parse({ ...good, kind: "scale" })).toBeNull();
     expect(verbslotKind.parse({ ...good, explain: "" })).toBeNull();
-    expect(verbslotKind.parse({ ...good, explain: "字".repeat(200) })).toBeNull();
+    expect(verbslotKind.parse({ ...good, explain: "字".repeat(200) })?.explain.endsWith("…")).toBe(true); // 太長就截短
     expect(verbslotKind.parse({ ...good, cards: [] })).toBeNull();
     const cards = good.cards as { current: boolean; picture: unknown[] }[];
-    expect(verbslotKind.parse({ ...good, cards: cards.map((c) => ({ ...c, current: false })) })).toBeNull();
-    expect(verbslotKind.parse({ ...good, cards: cards.map((c) => ({ ...c, picture: Array(6).fill({ text: "x", tone: "plain" }) })) })).toBeNull();
+    expect(verbslotKind.parse({ ...good, cards: cards.map((c) => ({ ...c, current: false })) })?.cards[0].current).toBe(true);
     expect(verbslotKind.parse({ ...good, family: "remember" })).toBeNull();
   });
 

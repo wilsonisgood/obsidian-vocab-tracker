@@ -1,6 +1,7 @@
 import { TypedEmitter } from "../../core/events";
 import { topicById } from "../../core/grammar/catalog";
 import { builtinVisual, type Visual } from "../../grammar-visual";
+import { isAiError } from "../ai/errors";
 import { grammarVisual } from "../ai/tasks/grammarVisual";
 import type { LearnAi } from "../learn/ports";
 import { runStructured } from "../learn/structured";
@@ -55,7 +56,15 @@ export class VisualService {
     this.busy.add(topicId);
     this.events.emit("visual:change", { topicId });
     try {
-      const { value } = await runStructured(this.deps.ai, grammarVisual, { topic, avoid: seen }, { threadId: visualThreadId(topicId) });
+      const ask = () => runStructured(this.deps.ai, grammarVisual, { topic, avoid: seen }, { threadId: visualThreadId(topicId) });
+      let value: Visual;
+      try {
+        ({ value } = await ask());
+      } catch (e) {
+        // 回答格式不對（AI 偶爾漏欄位、填錯型別）就自動再問一次；其他錯誤照常丟出。
+        if (!isAiError(e) || e.code !== "bad_output") throw e;
+        ({ value } = await ask());
+      }
       this.generated.set(topicId, value);
       return value;
     } finally {

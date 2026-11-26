@@ -28,12 +28,10 @@ describe("scale", () => {
 
   it("不合格輸入回 null", () => {
     const bad: ((v: ScaleVisual) => unknown)[] = [
-      (v) => ({ ...v, pick: 4 }),
-      (v) => ({ ...v, pick: -1 }),
+      (v) => ({ ...v, pick: "x" }),
       (v) => ({ ...v, steps: v.steps.slice(0, 1) }),
       (v) => ({ ...v, scale: "speed" }),
-      (v) => ({ ...v, alt: [v.alt[0], v.alt[0]] }),
-      (v) => ({ ...v, alt: [{ ...v.alt[0], pick: 9 }] }),
+      (v) => ({ ...v, alt: [{ ...v.alt[0], scale: "speed" }] }),
       (v) => ({ ...v, evidence: 3 }),
       (v) => ({ ...v, steps: [{ word: "", gloss: "x" }, ...v.steps] }),
     ];

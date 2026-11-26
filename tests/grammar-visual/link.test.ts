@@ -33,12 +33,24 @@ describe("link parse 擋掉不合格", () => {
     expect(linkKind.parse(noExplain)).toBeNull();
   });
   it("連線的字不在句子裡、沒有連線、kind 錯", () => {
+    // 對不到的那條略過；全部對不到才 null。
     const a = sample(); a.links[0].from = "zzz";
-    expect(linkKind.parse(a)).toBeNull();
+    expect(linkKind.parse(a)?.links.length ?? 0).toBe(sample().links.length - 1);
+    const all = sample(); for (const l of all.links) l.from = "zzz";
+    expect(linkKind.parse(all)).toBeNull();
     const b = sample(); b.links = [];
     expect(linkKind.parse(b)).toBeNull();
     const c = sample(); c.links[0].kind = "x";
-    expect(linkKind.parse(c)).toBeNull();
+    expect(linkKind.parse(c)?.links.length ?? 0).toBe(sample().links.length - 1);
+  });
+  it("所有格：彎引號、大小寫不同也找得到", () => {
+    const v = linkKind.parse({
+      kind: "link",
+      sentence: { text: "Tom's bike is red.", marks: [] },
+      explain: "'s 表示誰的。",
+      links: [{ from: "TOM’S", to: "bike", kind: "refer", why: "誰的腳踏車" }],
+    });
+    expect(v?.links.length).toBe(1);
   });
 });
 

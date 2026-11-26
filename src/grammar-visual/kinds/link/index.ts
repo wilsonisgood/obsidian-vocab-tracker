@@ -1,5 +1,5 @@
 import type { KindModule, LinkVisual } from "../../types";
-import { SHORT_MAX, arr, base, baseSchema, obj, oneOf, sArr, sEnum, sObj, sStr, str } from "../../kit/parse";
+import { SHORT_MAX, arrSome, base, baseSchema, obj, oneOf, sArr, sEnum, sObj, sStr, str } from "../../kit/parse";
 import { add, explain, sentence, stateful } from "../../kit/dom";
 import { BUILTIN } from "./builtin";
 import { locate, markWords } from "../../kit/locate";
@@ -9,7 +9,7 @@ const KINDS = ["refer", "modify"] as const;
 function parse(raw: unknown): LinkVisual | null {
   const b = base(raw, "link");
   if (!b) return null;
-  const links = arr(b.o.links, 1, 6, (x) => {
+  const links = arrSome(b.o.links, 1, 6, (x) => {
     const o = obj(x);
     if (!o) return null;
     const from = str(o.from, 40);
@@ -17,7 +17,7 @@ function parse(raw: unknown): LinkVisual | null {
     const kind = oneOf(o.kind, KINDS);
     const why = str(o.why, SHORT_MAX);
     if (from === null || to === null || kind === null || why === null) return null;
-    // 兩端的字都要真的出現在句子裡，點下去才有東西可以亮。
+    // 兩端的字都要真的出現在句子裡，點下去才有東西可以亮；找不到的那條略過。
     if (locate(b.sentence.text, from) < 0 || locate(b.sentence.text, to) < 0) return null;
     return { from, to, kind, why };
   });

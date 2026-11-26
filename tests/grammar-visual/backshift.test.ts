@@ -33,8 +33,11 @@ describe("backshift parse 擋掉不合格", () => {
     expect(backshiftKind.parse(noExplain)).toBeNull();
   });
   it("swap 的字不在句子裡、沒有 swaps", () => {
+    // 對不到的那組略過；全部對不到才 null。
     const a = sample(); a.swaps[0].from = "zzz";
-    expect(backshiftKind.parse(a)).toBeNull();
+    expect(backshiftKind.parse(a)?.swaps.length ?? 0).toBe(sample().swaps.length - 1);
+    const all = sample(); for (const s of all.swaps) s.from = "zzz";
+    expect(backshiftKind.parse(all)).toBeNull();
     const b = sample(); b.swaps = [];
     expect(backshiftKind.parse(b)).toBeNull();
     const c = sample(); c.swaps[0].type = "mood";

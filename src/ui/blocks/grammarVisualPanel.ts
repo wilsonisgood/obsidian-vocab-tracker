@@ -2,6 +2,7 @@ import type { Component } from "obsidian";
 import { t } from "../../core/i18n";
 import { renderGrammarVisual } from "../../grammar-visual";
 import type { VisualService } from "../../services/grammar/VisualService";
+import { aiErrorBox } from "../kit/aiDebug";
 import { isAbort, learnButton, learnErrorText } from "./learnUi";
 
 // 主題頁最上面的概念版面（grammar-visual 模組畫）：內建一份，
@@ -17,18 +18,18 @@ const isMobile = (): boolean => document.body.classList.contains("is-mobile");
 export function mountVisualPanel(el: HTMLElement, deps: VisualPanelDeps, topicId: string, owner: Component): void {
   const { visuals } = deps;
   if (!visuals) return;
-  let error = "";
+  let error: { text: string; cause: unknown } | null = null;
   let alive = true;
   owner.register(() => (alive = false));
 
   const canAsk = (): boolean => (deps.aiReady ? deps.aiReady() : true);
 
   const regenerate = async (): Promise<void> => {
-    error = "";
+    error = null;
     try {
       await visuals.regenerate(topicId);
     } catch (e) {
-      if (!isAbort(e)) error = t("grammar.visual.failed", { error: learnErrorText(e) });
+      if (!isAbort(e)) error = { text: t("grammar.visual.failed", { error: learnErrorText(e) }), cause: e };
       render();
     }
   };
@@ -53,7 +54,8 @@ export function mountVisualPanel(el: HTMLElement, deps: VisualPanelDeps, topicId
     if (visuals.isGenerated(topicId)) {
       learnButton(row, { label: t("grammar.visual.reset"), ghost: true, onClick: () => visuals.reset(topicId) });
     }
-    if (error) row.createDiv({ cls: "vt-learn-error", text: error });
+    // 格式不對時下面多一個可展開的「除錯資訊」（送出的提示與 AI 的原始回答）。
+    if (error) el.appendChild(aiErrorBox({ text: error.text, error: error.cause }));
   };
 
   owner.register(

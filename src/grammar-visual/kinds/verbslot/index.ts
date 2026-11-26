@@ -22,6 +22,12 @@ function parseCard(x: unknown): VerbSlotCard | null {
   return { pattern, meaning, picture, current };
 }
 
+// 「這句」那張剛好一張：沒有就第一張，多張就留第一張。
+function oneCurrent<T extends { current: boolean }>(cards: T[]): T[] {
+  const first = Math.max(0, cards.findIndex((c) => c.current));
+  return cards.map((c, i) => ({ ...c, current: i === first }));
+}
+
 function parse(raw: unknown): VerbSlotVisual | null {
   const b = base(raw, "verbslot");
   if (!b) return null;
@@ -29,8 +35,7 @@ function parse(raw: unknown): VerbSlotVisual | null {
   const cards = arr(b.o.cards, 1, 4, parseCard);
   const family = arr(b.o.family, 0, 6, (x) => str(x, SHORT_MAX));
   if (verb === null || cards === null || family === null) return null;
-  if (cards.filter((c) => c.current).length !== 1) return null;
-  return { kind: "verbslot", sentence: b.sentence, explain: b.explain, verb, cards, family };
+  return { kind: "verbslot", sentence: b.sentence, explain: b.explain, verb, cards: oneCurrent(cards), family };
 }
 
 const schema = sObj({

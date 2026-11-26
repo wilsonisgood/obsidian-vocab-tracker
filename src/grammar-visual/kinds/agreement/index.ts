@@ -21,9 +21,11 @@ function parse(raw: unknown): AgreementVisual | null {
     return example !== null && note !== null ? { example, note } : null;
   });
   if (head === null || !number || skip === null || verb === null || !steps || !traps) return null;
-  const text = b.sentence.text;
-  if (!text.includes(head) || !text.includes(verb) || (skip !== "" && !text.includes(skip))) return null;
-  return { kind: "agreement", sentence: b.sentence, explain: b.explain, head, number, skip, verb, steps, traps };
+  // 核心名詞與動詞要在句子裡（不分大小寫）；劃掉的那段對不到就不劃。
+  const text = b.sentence.text.toLowerCase();
+  if (!text.includes(head.toLowerCase()) || !text.includes(verb.toLowerCase())) return null;
+  const skipped = skip !== "" && text.includes(skip.toLowerCase()) ? skip : "";
+  return { kind: "agreement", sentence: b.sentence, explain: b.explain, head, number, skip: skipped, verb, steps, traps };
 }
 
 export const agreementKind: KindModule<"agreement"> = {

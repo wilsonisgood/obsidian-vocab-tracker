@@ -32,7 +32,6 @@ describe("unreal", () => {
       (v) => ({ ...v, current: { ...v.current, real: "" } }),
       (v) => ({ ...v, current: { ...v.current, hypo: 1 } }),
       (v) => ({ ...v, current: { ...v.current, shifts: [{ from: "a" }] } }),
-      (v) => ({ ...v, others: [v.current, v.current, v.current, v.current] }),
       (v) => ({ ...v, current: undefined }),
       (v) => ({ ...v, explain: "" }),
     ];

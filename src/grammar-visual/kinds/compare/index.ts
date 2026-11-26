@@ -31,8 +31,9 @@ function parse(raw: unknown): CompareVisual | null {
   const focus = str(b.o.focus, 20);
   const forms = arr(b.o.forms, 0, 4, (x) => str(x, 30));
   if (!items || !relation || focus === null || !forms) return null;
-  if (!items.some((it) => it.label === focus)) return null;
-  return { kind: "compare", sentence: b.sentence, explain: b.explain, items, relation, focus, forms };
+  // 重點對不到任何一條長條，就用第一條。
+  const hit = items.some((it) => it.label === focus) ? focus : items[0].label;
+  return { kind: "compare", sentence: b.sentence, explain: b.explain, items, relation, focus: hit, forms };
 }
 
 export const compareKind: KindModule<"compare"> = {

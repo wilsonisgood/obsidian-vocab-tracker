@@ -21,11 +21,12 @@ describe("focus 版面", () => {
     expect(focusKind.parse(null)).toBeNull();
     expect(focusKind.parse({ ...good, kind: "scale" })).toBeNull();
     expect(focusKind.parse({ ...good, explain: "" })).toBeNull();
-    expect(focusKind.parse({ ...good, explain: "字".repeat(200) })).toBeNull();
+    expect(focusKind.parse({ ...good, explain: "字".repeat(200) })?.explain.endsWith("…")).toBe(true); // 太長就截短
     expect(focusKind.parse({ ...good, cards: [] })).toBeNull();
     const cards = good.cards as { current: boolean }[];
-    expect(focusKind.parse({ ...good, cards: cards.map((c) => ({ ...c, current: true })) })).toBeNull();
-    expect(focusKind.parse({ ...good, cards: cards.map((c) => ({ ...c, current: false })) })).toBeNull();
+    // 「這句」那張剛好一張：多了留第一張，沒有就第一張。
+    expect(focusKind.parse({ ...good, cards: cards.map((c) => ({ ...c, current: true })) })?.cards.map((c) => c.current)).toEqual(cards.map((_, i) => i === 0));
+    expect(focusKind.parse({ ...good, cards: cards.map((c) => ({ ...c, current: false })) })?.cards.map((c) => c.current)).toEqual(cards.map((_, i) => i === 0));
     expect(focusKind.parse({ ...good, cards: cards.map((c) => ({ ...c, focus: "boss" })) })).toBeNull();
   });
 

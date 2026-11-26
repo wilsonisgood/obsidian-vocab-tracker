@@ -10,7 +10,6 @@ export const clauseKind: KindModule<"clause"> = {
     if (!b) return null;
     const core = str(b.o.core, SENTENCE_MAX);
     let prev = 0;
-    let ok = true;
     const clauses = arr(b.o.clauses, 1, 4, (x): ClausePart | null => {
       const o = obj(x);
       if (!o) return null;
@@ -18,14 +17,14 @@ export const clauseKind: KindModule<"clause"> = {
       const type = str(o.type, SHORT_MAX);
       const attachTo = str(o.attachTo, SHORT_MAX);
       const gloss = str(o.gloss, SENTENCE_MAX);
-      const depth = int(o.depth, 1, 3);
-      if (text === null || type === null || attachTo === null || gloss === null || depth === null) return null;
-      // 套疊要一層一層來：不能一下跳兩層。
-      if (depth > prev + 1) ok = false;
+      const raw = int(o.depth, 1, 3);
+      if (text === null || type === null || attachTo === null || gloss === null || raw === null) return null;
+      // 套疊要一層一層來：一下跳兩層的就拉回上一層 +1。
+      const depth = Math.min(raw, prev + 1);
       prev = depth;
       return { text, type, attachTo, gloss, depth };
     });
-    if (core === null || clauses === null || !ok) return null;
+    if (core === null || clauses === null) return null;
     return { kind: "clause", sentence: b.sentence, explain: b.explain, core, clauses };
   },
   schema: sObj({

@@ -55,7 +55,23 @@ describe("VisualService", () => {
     expect(s.isGenerated("agreement-difficult")).toBe(false);
   });
 
-  it("AI 給的不合版面就丟錯，不存", async () => {
+  it("第一次格式不對會自動再問一次", async () => {
+    let n = 0;
+    const ai: LearnAi = {
+      run: async () => {
+        n++;
+        const json = n === 1 ? { kind: "agreement" } : sample;
+        return { text: JSON.stringify(json), json, model: "m", stop: "end" } as never;
+      },
+      cancel: () => {},
+    };
+    const s = new VisualService({ ai });
+    const v = await s.regenerate("agreement-difficult");
+    expect(n).toBe(2);
+    expect(v.kind).toBe("agreement");
+  });
+
+  it("兩次都不合版面就丟錯，不存", async () => {
     const s = new VisualService({ ai: fakeAi({ kind: "agreement" }) });
     await expect(s.regenerate("agreement-difficult")).rejects.toThrow();
     expect(s.isGenerated("agreement-difficult")).toBe(false);

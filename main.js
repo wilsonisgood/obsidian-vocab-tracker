@@ -23515,14 +23515,16 @@ function str5(raw, max, allowEmpty = false) {
   if (typeof raw !== "string") return null;
   const s2 = raw.trim().replace(/\s+/g, " ");
   if (!allowEmpty && s2 === "") return null;
-  return s2.length > max ? null : s2;
+  return s2.length > max ? `${s2.slice(0, Math.max(1, max - 1)).trimEnd()}\u2026` : s2;
 }
 function num2(raw, min, max) {
-  return typeof raw === "number" && Number.isFinite(raw) && raw >= min && raw <= max ? raw : null;
+  const n = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : raw;
+  if (typeof n !== "number" || !Number.isFinite(n) || min > max) return null;
+  return Math.min(max, Math.max(min, n));
 }
 function int(raw, min, max) {
   const n = num2(raw, min, max);
-  return n !== null && Number.isInteger(n) ? n : null;
+  return n === null ? null : Math.min(max, Math.max(min, Math.round(n)));
 }
 function bool(raw) {
   return typeof raw === "boolean" ? raw : null;
@@ -23531,7 +23533,9 @@ function oneOf(raw, allowed) {
   return typeof raw === "string" && allowed.includes(raw) ? raw : null;
 }
 function arr(raw, min, max, item) {
-  if (!Array.isArray(raw) || raw.length < min || raw.length > max) return null;
+  if (!Array.isArray(raw) || raw.length < min) return null;
+  raw = raw.slice(0, max);
+  if (!Array.isArray(raw)) return null;
   const out = [];
   for (let i = 0; i < raw.length; i++) {
     const v5 = item(raw[i], i);
@@ -23539,6 +23543,15 @@ function arr(raw, min, max, item) {
     out.push(v5);
   }
   return out;
+}
+function arrSome(raw, min, max, item) {
+  if (!Array.isArray(raw)) return null;
+  const out = [];
+  for (let i = 0; i < raw.length && out.length < max; i++) {
+    const v5 = item(raw[i], i);
+    if (v5 !== null) out.push(v5);
+  }
+  return out.length >= min ? out : null;
 }
 var MARK_TONES = ["accent", "amber", "muted", "strike"];
 var SENTENCE_MAX = 160;
@@ -23549,7 +23562,7 @@ function marked(raw) {
   if (!o) return null;
   const text = str5(o.text, SENTENCE_MAX);
   if (text === null) return null;
-  const marks = arr(o.marks, 0, 6, (m2) => {
+  const marks = arrSome(o.marks, 0, 6, (m2) => {
     const mo = obj(m2);
     if (!mo) return null;
     const t2 = str5(mo.text, SENTENCE_MAX);
@@ -23785,8 +23798,8 @@ function parseEvent(raw) {
   const to = int(o.to, -3, 3);
   const focus = bool(o.focus);
   if (label === null || shape === null || at === null || to === null || focus === null) return null;
-  if (shape === "point" ? to !== at : to < at) return null;
-  return { label, shape, at, to, focus };
+  if (shape === "point") return { label, shape, at, to: at, focus };
+  return { label, shape, at: Math.min(at, to), to: Math.max(at, to), focus };
 }
 function parse(raw) {
   const b = base(raw, "timeline");
@@ -23797,7 +23810,7 @@ function parse(raw) {
   const at = int(ro.at, -3, 3);
   const label = str5(ro.label, SHORT_MAX);
   if (at === null || label === null) return null;
-  if (!events.some((e) => e.focus)) return null;
+  if (!events.some((e) => e.focus)) events[0] = { ...events[0], focus: true };
   return { kind: "timeline", sentence: b.sentence, explain: b.explain, events, ref: { at, label } };
 }
 var schema = sObj({
@@ -24362,24 +24375,37 @@ var unrealKind = {
 };
 
 // src/grammar-visual/kit/locate.ts
+function fold(s2) {
+  return s2.toLowerCase().replace(/[\u2018\u2019\u02bc]/g, "'").replace(/[\u201c\u201d]/g, '"');
+}
 function locate(text, word) {
   var _a;
   if (word === "") return -1;
-  let from = 0;
-  for (; ; ) {
-    const i = text.indexOf(word, from);
-    if (i < 0) return -1;
-    const before = i === 0 ? "" : text[i - 1];
-    const after = (_a = text[i + word.length]) != null ? _a : "";
-    const isWordChar = (c4) => /[A-Za-z]/.test(c4);
-    const startOk = !isWordChar(word[0]) || !isWordChar(before);
-    const endOk = !isWordChar(word[word.length - 1]) || !isWordChar(after);
+  const t2 = fold(text);
+  const w2 = fold(word.trim());
+  if (w2 === "") return -1;
+  const isWordChar = (c4) => /[a-z]/.test(c4);
+  for (let from = 0; ; ) {
+    const i = t2.indexOf(w2, from);
+    if (i < 0) break;
+    const before = i === 0 ? "" : t2[i - 1];
+    const after = (_a = t2[i + w2.length]) != null ? _a : "";
+    const startOk = !isWordChar(w2[0]) || !isWordChar(before);
+    const endOk = !isWordChar(w2[w2.length - 1]) || !isWordChar(after);
     if (startOk && endOk) return i;
     from = i + 1;
   }
+  return t2.indexOf(w2);
+}
+function located(text, word) {
+  const i = locate(text, word);
+  return i < 0 ? null : text.slice(i, i + fold(word.trim()).length);
 }
 function markWords(text, words, tone) {
-  const hits = words.map((w2) => ({ w: w2, i: locate(text, w2) })).filter((h) => h.i >= 0).sort((a2, b) => a2.i - b.i);
+  const hits = words.map((w2) => {
+    var _a;
+    return { i: locate(text, w2), w: (_a = located(text, w2)) != null ? _a : "" };
+  }).filter((h) => h.i >= 0 && h.w !== "").sort((a2, b) => a2.i - b.i);
   const marks = [];
   let end = 0;
   for (const h of hits) {
@@ -24436,8 +24462,9 @@ function parse4(raw) {
     return from !== null && to !== null && type !== null && why !== null ? { from, to, type, why } : null;
   });
   if (direct === null || !swaps) return null;
-  for (const s2 of swaps) if (locate(direct, s2.from) < 0 || locate(b.sentence.text, s2.to) < 0) return null;
-  return { kind: "backshift", sentence: b.sentence, explain: b.explain, direct, swaps };
+  const found = swaps.filter((s2) => locate(direct, s2.from) >= 0 && locate(b.sentence.text, s2.to) >= 0);
+  if (!found.length) return null;
+  return { kind: "backshift", sentence: b.sentence, explain: b.explain, direct, swaps: found };
 }
 var backshiftKind = {
   kind: "backshift",
@@ -24573,8 +24600,9 @@ function parse5(raw) {
   const b = base(raw, "focus");
   if (!b) return null;
   const cards = arr(b.o.cards, 2, 3, parseCard);
-  if (cards === null || cards.filter((c4) => c4.current).length !== 1) return null;
-  return { kind: "focus", sentence: b.sentence, explain: b.explain, cards };
+  if (cards === null) return null;
+  const first = Math.max(0, cards.findIndex((c4) => c4.current));
+  return { kind: "focus", sentence: b.sentence, explain: b.explain, cards: cards.map((c4, i) => ({ ...c4, current: i === first })) };
 }
 var schema4 = sObj({
   ...baseSchema("focus"),
@@ -24723,6 +24751,10 @@ function parseCard2(x3) {
   if (pattern === null || meaning === null || current === null || picture === null) return null;
   return { pattern, meaning, picture, current };
 }
+function oneCurrent(cards) {
+  const first = Math.max(0, cards.findIndex((c4) => c4.current));
+  return cards.map((c4, i) => ({ ...c4, current: i === first }));
+}
 function parse6(raw) {
   const b = base(raw, "verbslot");
   if (!b) return null;
@@ -24730,8 +24762,7 @@ function parse6(raw) {
   const cards = arr(b.o.cards, 1, 4, parseCard2);
   const family = arr(b.o.family, 0, 6, (x3) => str5(x3, SHORT_MAX));
   if (verb === null || cards === null || family === null) return null;
-  if (cards.filter((c4) => c4.current).length !== 1) return null;
-  return { kind: "verbslot", sentence: b.sentence, explain: b.explain, verb, cards, family };
+  return { kind: "verbslot", sentence: b.sentence, explain: b.explain, verb, cards: oneCurrent(cards), family };
 }
 var schema5 = sObj({
   ...baseSchema("verbslot"),
@@ -25359,8 +25390,8 @@ function parseTokens(raw, steps) {
     const role = oneOf(o.role, ROLES);
     const step = int(o.step, 0, steps);
     if (text === null || role === null || step === null) return null;
-    if (role === "plain" !== (step === 0)) return null;
-    return { text, role, step };
+    if (step === 0) return { text, role: "plain", step };
+    return { text, role: role === "plain" ? "moved" : role, step };
   });
 }
 var tokenSchema = sObj({
@@ -25380,7 +25411,6 @@ var orderKind = {
     const tokens2 = parseTokens(b.o.base, steps.length);
     const result = parseTokens(b.o.result, steps.length);
     if (tokens2 === null || result === null) return null;
-    for (let i = 1; i <= steps.length; i++) if (!result.some((t2) => t2.step === i)) return null;
     return { kind: "order", sentence: b.sentence, explain: b.explain, baseLabel, base: tokens2, resultLabel, result, steps };
   },
   schema: sObj({
@@ -25639,7 +25669,6 @@ var clauseKind = {
     if (!b) return null;
     const core = str5(b.o.core, SENTENCE_MAX);
     let prev = 0;
-    let ok = true;
     const clauses = arr(b.o.clauses, 1, 4, (x3) => {
       const o = obj(x3);
       if (!o) return null;
@@ -25647,13 +25676,13 @@ var clauseKind = {
       const type = str5(o.type, SHORT_MAX);
       const attachTo = str5(o.attachTo, SHORT_MAX);
       const gloss = str5(o.gloss, SENTENCE_MAX);
-      const depth = int(o.depth, 1, 3);
-      if (text === null || type === null || attachTo === null || gloss === null || depth === null) return null;
-      if (depth > prev + 1) ok = false;
+      const raw2 = int(o.depth, 1, 3);
+      if (text === null || type === null || attachTo === null || gloss === null || raw2 === null) return null;
+      const depth = Math.min(raw2, prev + 1);
       prev = depth;
       return { text, type, attachTo, gloss, depth };
     });
-    if (core === null || clauses === null || !ok) return null;
+    if (core === null || clauses === null) return null;
     return { kind: "clause", sentence: b.sentence, explain: b.explain, core, clauses };
   },
   schema: sObj({
@@ -25773,8 +25802,8 @@ function parse9(raw) {
   const focus = str5(b.o.focus, 20);
   const forms = arr(b.o.forms, 0, 4, (x3) => str5(x3, 30));
   if (!items || !relation || focus === null || !forms) return null;
-  if (!items.some((it) => it.label === focus)) return null;
-  return { kind: "compare", sentence: b.sentence, explain: b.explain, items, relation, focus, forms };
+  const hit = items.some((it) => it.label === focus) ? focus : items[0].label;
+  return { kind: "compare", sentence: b.sentence, explain: b.explain, items, relation, focus: hit, forms };
 }
 var compareKind = {
   kind: "compare",
@@ -25903,7 +25932,7 @@ var KINDS = ["refer", "modify"];
 function parse10(raw) {
   const b = base(raw, "link");
   if (!b) return null;
-  const links = arr(b.o.links, 1, 6, (x3) => {
+  const links = arrSome(b.o.links, 1, 6, (x3) => {
     const o = obj(x3);
     if (!o) return null;
     const from = str5(o.from, 40);
@@ -26060,9 +26089,10 @@ function parse11(raw) {
     return example !== null && note !== null ? { example, note } : null;
   });
   if (head === null || !number || skip === null || verb === null || !steps || !traps) return null;
-  const text = b.sentence.text;
-  if (!text.includes(head) || !text.includes(verb) || skip !== "" && !text.includes(skip)) return null;
-  return { kind: "agreement", sentence: b.sentence, explain: b.explain, head, number, skip, verb, steps, traps };
+  const text = b.sentence.text.toLowerCase();
+  if (!text.includes(head.toLowerCase()) || !text.includes(verb.toLowerCase())) return null;
+  const skipped = skip !== "" && text.includes(skip.toLowerCase()) ? skip : "";
+  return { kind: "agreement", sentence: b.sentence, explain: b.explain, head, number, skip: skipped, verb, steps, traps };
 }
 var agreementKind = {
   kind: "agreement",
@@ -26309,16 +26339,16 @@ var isMobile = () => document.body.classList.contains("is-mobile");
 function mountVisualPanel(el2, deps, topicId, owner) {
   const { visuals } = deps;
   if (!visuals) return;
-  let error = "";
+  let error = null;
   let alive = true;
   owner.register(() => alive = false);
   const canAsk = () => deps.aiReady ? deps.aiReady() : true;
   const regenerate = async () => {
-    error = "";
+    error = null;
     try {
       await visuals.regenerate(topicId);
     } catch (e) {
-      if (!isAbort(e)) error = t("grammar.visual.failed", { error: learnErrorText(e) });
+      if (!isAbort(e)) error = { text: t("grammar.visual.failed", { error: learnErrorText(e) }), cause: e };
       render5();
     }
   };
@@ -26342,7 +26372,7 @@ function mountVisualPanel(el2, deps, topicId, owner) {
     if (visuals.isGenerated(topicId)) {
       learnButton(row, { label: t("grammar.visual.reset"), ghost: true, onClick: () => visuals.reset(topicId) });
     }
-    if (error) row.createDiv({ cls: "vt-learn-error", text: error });
+    if (error) el2.appendChild(aiErrorBox({ text: error.text, error: error.cause }));
   };
   owner.register(
     visuals.events.on("visual:change", (e) => {
@@ -28840,12 +28870,12 @@ var PolyTabView = class {
       const box = body.createDiv({ cls: "vt-pr-poly-word" });
       const folded = wordCollapsed(sec.word, sections.length, this.wordFold);
       const title = box.createDiv({ cls: "vt-pr-poly-word-title" });
-      const fold = title.createEl("button", {
+      const fold2 = title.createEl("button", {
         cls: "vt-pr-poly-fold",
         text: folded ? "\u25B8" : "\u25BE",
         attr: { type: "button", "aria-expanded": String(!folded), "aria-label": sec.word }
       });
-      fold.addEventListener("click", () => {
+      fold2.addEventListener("click", () => {
         this.wordFold.set(sec.word, !folded);
         this.renderMap();
       });
@@ -29482,8 +29512,8 @@ function mountScenarioPlayer(el2, opts, owner) {
       }
     }
     box.createDiv({ cls: "vt-pr-ask", text: askLine(q) });
-    const located = new Set(questionSegments(q).flatMap((s2) => s2.t === "frag" ? [s2.optionId] : []));
-    const buttons2 = q.options.filter((o) => !fragMode || !located.has(o.id));
+    const located2 = new Set(questionSegments(q).flatMap((s2) => s2.t === "frag" ? [s2.optionId] : []));
+    const buttons2 = q.options.filter((o) => !fragMode || !located2.has(o.id));
     if (buttons2.length) {
       const grid = box.createDiv({ cls: `vt-pr-options cols-${optionColumns(q.kind, isMobile2())}` });
       const diffs = q.kind === "paraphrase" ? optionDiffParts(q.options) : null;
@@ -29975,10 +30005,10 @@ function numbers(data) {
 var RADAR_LANG = "vocab-report-radar";
 var TIERS_LANG = "vocab-report-tiers";
 var GREY = (text) => `<span style="color: gray">${text}</span>`;
-function calloutLines(kind, fold, title, body) {
+function calloutLines(kind, fold2, title, body) {
   const trimmed = [...body];
   while (trimmed.length && trimmed[trimmed.length - 1] === "") trimmed.pop();
-  return [`> [!${kind}]${fold} ${title}`, ...trimmed.map((l4) => l4 === "" ? ">" : `> ${l4}`)];
+  return [`> [!${kind}]${fold2} ${title}`, ...trimmed.map((l4) => l4 === "" ? ">" : `> ${l4}`)];
 }
 var cell = (s2) => s2.replace(/\|/g, "\uFF0F").replace(/\s*\n\s*/g, " ").trim();
 function levelTable(levels) {
@@ -34016,8 +34046,8 @@ function occurrenceIndexFrom(occurrences, index2, fromLine) {
 }
 
 // src/core/text/folds.ts
-function hidesLine(fold, line2) {
-  return fold.from < line2 && line2 <= fold.to;
+function hidesLine(fold2, line2) {
+  return fold2.from < line2 && line2 <= fold2.to;
 }
 function foldsRevealing(folds, line2) {
   const kept = folds.filter((f) => !hidesLine(f, line2));
@@ -42099,7 +42129,14 @@ var VisualService = class {
     this.busy.add(topicId);
     this.events.emit("visual:change", { topicId });
     try {
-      const { value } = await runStructured(this.deps.ai, grammarVisual, { topic, avoid: seen }, { threadId: visualThreadId(topicId) });
+      const ask = () => runStructured(this.deps.ai, grammarVisual, { topic, avoid: seen }, { threadId: visualThreadId(topicId) });
+      let value;
+      try {
+        ({ value } = await ask());
+      } catch (e) {
+        if (!isAiError(e) || e.code !== "bad_output") throw e;
+        ({ value } = await ask());
+      }
       this.generated.set(topicId, value);
       return value;
     } finally {
