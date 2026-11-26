@@ -21119,18 +21119,6 @@ var GrammarMapBlock = class extends import_obsidian34.MarkdownRenderChild {
 
 // src/ui/blocks/grammarPractice.ts
 var import_obsidian35 = require("obsidian");
-
-// src/ui/blocks/grammarPracticeModel.ts
-function dockSummary(answers) {
-  const first = /* @__PURE__ */ new Map();
-  for (const a2 of answers) if (!first.has(a2.id)) first.set(a2.id, a2.correct);
-  let right = 0;
-  for (const c4 of first.values()) if (c4) right++;
-  return { right, total: first.size };
-}
-
-// src/ui/blocks/grammarPractice.ts
-var DOCK_COUNT = 3;
 function renderGrammarPractice(deps, source, el2, ctx) {
   var _a;
   const topic = ((_a = parseBlockParams(source).topic) != null ? _a : "").trim().replace(/^["']|["']$/g, "").trim();
@@ -21143,127 +21131,19 @@ var GrammarPracticeCard = class extends import_obsidian35.MarkdownRenderChild {
     this.topicId = topicId;
     this.countEl = null;
     this.alive = true;
-    // 練習區
-    this.batch = [];
-    this.answers = [];
-    this.done = /* @__PURE__ */ new Set();
-    this.dockBusy = false;
-    this.dockError = "";
-    this.player = null;
   }
   onload() {
     this.containerEl.empty();
     this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-practice-card"] });
     guardReadingClicks(this, this.root);
-    this.register(() => {
-      var _a;
-      this.alive = false;
-      (_a = this.player) == null ? void 0 : _a.unload();
-    });
+    this.register(() => this.alive = false);
     const topic = topicById(this.topicId);
     if (!topic) {
       this.root.createDiv({ cls: "vt-gr-empty", text: t("grammar.practiceCard.noTopic") });
       return;
     }
-    this.dockEl = this.root.createDiv({ cls: "vt-gr-dock" });
-    this.renderDock();
     this.renderHubCard(topic.id, `${stageLabel(topic.stage)} \xB7 ${topic.title}`);
   }
-  canAsk() {
-    return this.deps.aiReady ? this.deps.aiReady() : true;
-  }
-  // ── 1. 練習這個概念 ────────────────────────────────────────────
-  renderDock() {
-    var _a;
-    if (!this.alive) return;
-    const { generate, mountPlayer, api } = this.deps;
-    if (!generate || !mountPlayer || !api) return;
-    const el2 = this.dockEl;
-    (_a = this.player) == null ? void 0 : _a.unload();
-    this.player = null;
-    el2.empty();
-    const head = el2.createDiv({ cls: "vt-gr-dock-head" });
-    const text = head.createDiv({ cls: "vt-gr-dock-text" });
-    text.createDiv({ cls: "vt-gr-bar-main", text: t("grammar.dock.title") });
-    text.createDiv({ cls: "vt-gr-bar-sub", text: t("grammar.dock.sub") });
-    const started = this.batch.length > 0;
-    if (!this.canAsk()) {
-      el2.createDiv({ cls: "vt-gr-empty", text: t("grammar.dock.noAi") });
-      return;
-    }
-    if (this.dockBusy) {
-      head.createSpan({ cls: "vt-gr-visual-busy", text: t("grammar.dock.busy") });
-    } else if (!started || this.finished()) {
-      learnButton(head, {
-        label: started ? t("grammar.dock.more") : t("grammar.dock.start"),
-        icon: "list-checks",
-        cta: !started,
-        onClick: () => void this.startBatch()
-      });
-    }
-    if (this.dockError) el2.createDiv({ cls: "vt-learn-error", text: this.dockError });
-    if (!started) return;
-    if (this.finished()) {
-      const s2 = dockSummary(this.answers);
-      el2.createDiv({ cls: "vt-gr-dock-done", text: t("grammar.dock.done", { right: s2.right, total: s2.total }) });
-      return;
-    }
-    const byId = new Map(this.batch.map((q) => [q.id, q]));
-    this.player = mountPlayer(
-      el2,
-      {
-        questions: () => this.remaining(),
-        callbacks: {
-          onAnswer: (a2) => {
-            this.done.add(a2.question.id);
-            this.answers.push({ id: a2.question.id, correct: a2.correct });
-            const q = byId.get(a2.question.id);
-            if (q) api.answer(q, a2.optionId, a2.correct, { hinted: a2.hinted, fromMistakes: false });
-          },
-          onSkip: (pq) => {
-            this.done.add(pq.id);
-            const q = byId.get(pq.id);
-            if (q) api.skip(q);
-          },
-          // 三題都做完、按了「下一題」。
-          onEmpty: () => queueMicrotask(() => this.renderDock())
-        }
-      },
-      this
-    );
-  }
-  remaining() {
-    const out = [];
-    for (const q of this.batch) {
-      if (this.done.has(q.id)) continue;
-      const pq = toPlayerQuestion(q);
-      if (pq) out.push(pq);
-    }
-    return out;
-  }
-  finished() {
-    return this.batch.length > 0 && this.remaining().length === 0;
-  }
-  async startBatch() {
-    const { generate, ready } = this.deps;
-    if (!generate || this.dockBusy) return;
-    this.dockBusy = true;
-    this.dockError = "";
-    this.renderDock();
-    try {
-      await (ready ? ready() : Promise.resolve());
-      const qs = await generate(this.topicId, DOCK_COUNT);
-      this.batch = qs.filter((q) => toPlayerQuestion(q) !== null);
-      this.answers = [];
-      this.done.clear();
-    } catch (e) {
-      if (!isAbort(e)) this.dockError = t("grammar.dock.failed", { error: learnErrorText(e) });
-    } finally {
-      this.dockBusy = false;
-      this.renderDock();
-    }
-  }
-  // ── 2. 練習中心卡 ──────────────────────────────────────────────
   renderHubCard(topicId, sub) {
     const card2 = this.root.createDiv({ cls: "vt-gr-bar vt-gr-practice-bar" });
     const text = card2.createDiv({ cls: "vt-gr-practice-text" });
@@ -26471,6 +26351,139 @@ function mountVisualPanel(el2, deps, topicId, owner) {
   render5();
 }
 
+// src/ui/blocks/grammarPracticeModel.ts
+function dockSummary(answers) {
+  const first = /* @__PURE__ */ new Map();
+  for (const a2 of answers) if (!first.has(a2.id)) first.set(a2.id, a2.correct);
+  let right = 0;
+  for (const c4 of first.values()) if (c4) right++;
+  return { right, total: first.size };
+}
+
+// src/ui/blocks/grammarPracticeDock.ts
+var DOCK_COUNT = 3;
+function mountPracticeDock(el2, deps, topicId, owner) {
+  const dock = new PracticeDock(el2, deps, topicId, owner);
+  owner.register(() => dock.dispose());
+  dock.render();
+}
+var PracticeDock = class {
+  constructor(dockEl, deps, topicId, owner) {
+    this.dockEl = dockEl;
+    this.deps = deps;
+    this.topicId = topicId;
+    this.owner = owner;
+    this.alive = true;
+    this.batch = [];
+    this.answers = [];
+    this.done = /* @__PURE__ */ new Set();
+    this.dockBusy = false;
+    this.dockError = "";
+    this.player = null;
+  }
+  dispose() {
+    var _a;
+    this.alive = false;
+    (_a = this.player) == null ? void 0 : _a.unload();
+  }
+  render() {
+    this.renderDock();
+  }
+  canAsk() {
+    return this.deps.aiReady ? this.deps.aiReady() : true;
+  }
+  renderDock() {
+    var _a;
+    if (!this.alive) return;
+    const { generate, mountPlayer, api } = this.deps;
+    if (!generate || !mountPlayer || !api) return;
+    const el2 = this.dockEl;
+    (_a = this.player) == null ? void 0 : _a.unload();
+    this.player = null;
+    el2.empty();
+    const head = el2.createDiv({ cls: "vt-gr-dock-head" });
+    const text = head.createDiv({ cls: "vt-gr-dock-text" });
+    text.createDiv({ cls: "vt-gr-bar-main", text: t("grammar.dock.title") });
+    text.createDiv({ cls: "vt-gr-bar-sub", text: t("grammar.dock.sub") });
+    const started = this.batch.length > 0;
+    if (!this.canAsk()) {
+      el2.createDiv({ cls: "vt-gr-empty", text: t("grammar.dock.noAi") });
+      return;
+    }
+    if (this.dockBusy) {
+      head.createSpan({ cls: "vt-gr-visual-busy", text: t("grammar.dock.busy") });
+    } else if (!started || this.finished()) {
+      learnButton(head, {
+        label: started ? t("grammar.dock.more") : t("grammar.dock.start"),
+        icon: "list-checks",
+        cta: !started,
+        onClick: () => void this.startBatch()
+      });
+    }
+    if (this.dockError) el2.createDiv({ cls: "vt-learn-error", text: this.dockError });
+    if (!started) return;
+    if (this.finished()) {
+      const s2 = dockSummary(this.answers);
+      el2.createDiv({ cls: "vt-gr-dock-done", text: t("grammar.dock.done", { right: s2.right, total: s2.total }) });
+      return;
+    }
+    const byId = new Map(this.batch.map((q) => [q.id, q]));
+    this.player = mountPlayer(
+      el2,
+      {
+        questions: () => this.remaining(),
+        callbacks: {
+          onAnswer: (a2) => {
+            this.done.add(a2.question.id);
+            this.answers.push({ id: a2.question.id, correct: a2.correct });
+            const q = byId.get(a2.question.id);
+            if (q) api.answer(q, a2.optionId, a2.correct, { hinted: a2.hinted, fromMistakes: false });
+          },
+          onSkip: (pq) => {
+            this.done.add(pq.id);
+            const q = byId.get(pq.id);
+            if (q) api.skip(q);
+          },
+          // 三題都做完、按了「下一題」。
+          onEmpty: () => queueMicrotask(() => this.renderDock())
+        }
+      },
+      this.owner
+    );
+  }
+  remaining() {
+    const out = [];
+    for (const q of this.batch) {
+      if (this.done.has(q.id)) continue;
+      const pq = toPlayerQuestion(q);
+      if (pq) out.push(pq);
+    }
+    return out;
+  }
+  finished() {
+    return this.batch.length > 0 && this.remaining().length === 0;
+  }
+  async startBatch() {
+    const { generate, ready } = this.deps;
+    if (!generate || this.dockBusy) return;
+    this.dockBusy = true;
+    this.dockError = "";
+    this.renderDock();
+    try {
+      await (ready ? ready() : Promise.resolve());
+      const qs = await generate(this.topicId, DOCK_COUNT);
+      this.batch = qs.filter((q) => toPlayerQuestion(q) !== null);
+      this.answers = [];
+      this.done.clear();
+    } catch (e) {
+      if (!isAbort(e)) this.dockError = t("grammar.dock.failed", { error: learnErrorText(e) });
+    } finally {
+      this.dockBusy = false;
+      this.renderDock();
+    }
+  }
+};
+
 // src/ui/blocks/grammarTopic.ts
 function renderGrammarTopic(deps, source, el2, ctx) {
   const explainEmpty = () => {
@@ -26515,9 +26528,12 @@ var GrammarTopicBlock = class extends import_obsidian36.MarkdownRenderChild {
   }
   onload() {
     this.containerEl.empty();
-    const visualEl = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-visual"] });
-    guardReadingClicks(this, visualEl);
-    if (this.topic) mountVisualPanel(visualEl, this.deps, this.topic.id, this);
+    const head = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-concept"] });
+    guardReadingClicks(this, head);
+    if (this.topic) {
+      mountVisualPanel(head.createDiv({ cls: "vt-gr-visual" }), this.deps, this.topic.id, this);
+      mountPracticeDock(head.createDiv({ cls: "vt-gr-dock" }), this.deps, this.topic.id, this);
+    }
     this.root = this.containerEl.createDiv({ cls: ["vt", "vt-learn", "vt-gr", "vt-gr-topic"] });
     guardReadingClicks(this, this.root);
     if (!this.topic) {
@@ -31675,17 +31691,18 @@ function grammarTopicDeps(plugin) {
     openNote: (path) => plugin.openNote(path),
     openSettings: () => openPluginSettings(plugin.app, plugin.manifest.id),
     visuals: plugin.grammarVisuals,
-    aiReady: () => plugin.ai.status() === "ready"
+    aiReady: () => plugin.ai.status() === "ready",
+    api: plugin.grammarQuestions,
+    ready: () => grammarReady(plugin),
+    generate: (topicId, count2) => plugin.grammarQuestions.generate(topicId, { count: count2 }),
+    mountPlayer: mountScenarioPlayer
   };
 }
 function grammarPracticeDeps(plugin) {
   return {
     api: plugin.grammarQuestions,
     ready: () => grammarReady(plugin),
-    ...grammarRouting(plugin),
-    generate: (topicId, count2) => plugin.grammarQuestions.generate(topicId, { count: count2 }),
-    aiReady: () => plugin.ai.status() === "ready",
-    mountPlayer: mountScenarioPlayer
+    ...grammarRouting(plugin)
   };
 }
 async function grammarReady(plugin) {

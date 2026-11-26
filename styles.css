@@ -4514,11 +4514,16 @@ body.is-mobile .vt-pr-mistake {
   flex-direction: column;
   gap: 14px;
 }
+.vt-gr-concept {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+}
 .vt-gr-visual {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 14px;
 }
 .vt-gr-visual:empty {
   display: none;

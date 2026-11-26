@@ -125,7 +125,8 @@ body.is-mobile .vt-pr-mistake { min-height: 44px; }
 
 /* 主題頁：概念版面 + 練習這個概念（grammar-visual） */
 .vt-gr-practice-card { display: flex; flex-direction: column; gap: 14px; }
-.vt-gr-visual { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.vt-gr-concept { display: flex; flex-direction: column; gap: 14px; margin-bottom: 14px; }
+.vt-gr-visual { display: flex; flex-direction: column; gap: 8px; }
 .vt-gr-visual:empty { display: none; }
 .vt-gr-visual-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .vt-gr-visual-busy { font-size: var(--font-ui-smaller); color: var(--text-muted); }
